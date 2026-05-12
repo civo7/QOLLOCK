@@ -172,6 +172,7 @@
         itemMirrorRuntimePanelIds: [],
         itemMirrorNextRuntimePanelId: 1,
         itemMirrorExceptionGroupAssignments: {},
+        itemMirrorLastShopOpen: false,
         customHudSuppressed: false,
         keyboardBoxCaches: [],
         heroShopNextSearchMs: 0,
@@ -185,6 +186,9 @@
         urnTrackerLastDebugSig: "",
         urnTrackerLastIdolMood: "",
         urnTrackerIdolNextScanMs: 0,
+        urnTrackerNextSampleMs: 0,
+        urnTrackerNextPanelSearchMs: 0,
+        urnTrackerCachedState: null,
         spmNextSampleMs: 0,
         spmPanelCacheNextMs: 0,
         spmPlayerHistory: null,
@@ -679,8 +683,9 @@
         "PlayerLevelContainer",
         "gold_and_ap_container"
     ];
-    const ITEM_MIRROR_PROBE_SCAN_MS = 1000;
-    const ITEM_MIRROR_PROBE_SCAN_MS_STABLE = 2000;
+    const ITEM_MIRROR_PROBE_SCAN_MS = 1630;
+    const ITEM_MIRROR_PROBE_SCAN_MS_STABLE = 5270;
+    const ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP = 500;
     const ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE = 120;
     const ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE = 50;
     const ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS = 80;
@@ -737,7 +742,10 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_NICKNAMES_REFRESH_MS = 1000;
+    const TOPBAR_NICKNAMES_REFRESH_MS_STABLE = 4200;
     const TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS = 4000;
+    const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
+    const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
     const STATLOCKER_SCAN_INTERVAL_MS = 1200;
     const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
     const ULT_CD_MAX_PLAYERS = 12;
@@ -759,9 +767,12 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const UNSPENT_MAX_PLAYERS = SPM_MAX_PLAYERS;
     const UNSPENT_SAMPLE_INTERVAL_MS = 1000;
     const UNSPENT_PANEL_CACHE_REFRESH_MS = 9000;
-    const UNSPENT_TIER_SCAN_INTERVAL_MS = 2000;
-    const UNSPENT_TIER_SCAN_STAGGER_MS = 120;
+    const UNSPENT_TIER_SCAN_INTERVAL_MS = 3000;
+    const UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS = 5000;
+    const UNSPENT_TIER_SCAN_STAGGER_MS = 250;
     const UNSPENT_TIER_SCAN_MAX_PANELS = 300;
+    const UNSPENT_TIER_SIG_MAX_DEPTH = 2;
+    const UNSPENT_TIER_SIG_MAX_NODES = 48;
     const UNSPENT_TIER_COST = {
         1: 800,
         2: 1600,
@@ -1036,6 +1047,10 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const LANE_PREF_SELECTOR_ID = "LanePreferenceSelector";
     const LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
     const LANE_PREF_APPLY_INTERVAL_MS = 650;
+    const LANE_PREF_HIDDEN_INTERVAL_MS = 2630;
+    const LANE_PREF_SELECTED_INTERVAL_MS = 4870;
+    const HERO_SHOP_PANEL_SEARCH_MS = 2470;
+    const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -6037,15 +6052,66 @@ function GetUIRoot() {
         return 0;
     }
 
+    function FindFirstScoreLabelInTeamPanel(teamPanel) {
+        if (!teamPanel || !teamPanel.FindChildrenWithClassTraverse) return null;
+        var labels = teamPanel.FindChildrenWithClassTraverse("ScoreLabel") || [];
+        for (var i = 0; i < labels.length; i++) {
+            var label = labels[i];
+            if (!IsPanelValid(label)) continue;
+            return label;
+        }
+        return null;
+    }
+
+    function RefreshUrnTrackerScoreCache(root, nowMs) {
+        if (!root) return;
+        var nextSearchMs = Number(State.urnTrackerNextPanelSearchMs) || 0;
+        var friendlyPanel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScorePanel) ? State.cachedPanels.urnTrackerFriendlyScorePanel : null;
+        var enemyPanel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScorePanel) ? State.cachedPanels.urnTrackerEnemyScorePanel : null;
+        var friendlyLabel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScoreLabel) ? State.cachedPanels.urnTrackerFriendlyScoreLabel : null;
+        var enemyLabel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScoreLabel) ? State.cachedPanels.urnTrackerEnemyScoreLabel : null;
+        var shouldRescan =
+            nowMs >= nextSearchMs ||
+            !friendlyPanel ||
+            !enemyPanel ||
+            !friendlyLabel ||
+            !enemyLabel;
+
+        if (!shouldRescan) return;
+
+        if (!friendlyPanel) friendlyPanel = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
+        if (!enemyPanel) enemyPanel = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
+        if (!friendlyPanel) friendlyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreFriendly") || null) : null;
+        if (!enemyPanel) enemyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreEnemy") || null) : null;
+        friendlyLabel = friendlyPanel ? FindFirstScoreLabelInTeamPanel(friendlyPanel) : null;
+        enemyLabel = enemyPanel ? FindFirstScoreLabelInTeamPanel(enemyPanel) : null;
+
+        State.cachedPanels.urnTrackerFriendlyScorePanel = friendlyPanel || null;
+        State.cachedPanels.urnTrackerEnemyScorePanel = enemyPanel || null;
+        State.cachedPanels.urnTrackerFriendlyScoreLabel = friendlyLabel || null;
+        State.cachedPanels.urnTrackerEnemyScoreLabel = enemyLabel || null;
+        State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+    }
+
+    function GetCachedUrnTeamNetworthValue(teamPanelKey, labelKey) {
+        var scoreLabel = IsPanelValid(State.cachedPanels[labelKey]) ? State.cachedPanels[labelKey] : null;
+        var teamPanel = IsPanelValid(State.cachedPanels[teamPanelKey]) ? State.cachedPanels[teamPanelKey] : null;
+        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
+        if (parsed !== null) return parsed;
+        if (!teamPanel) return 0;
+        scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
+        State.cachedPanels[labelKey] = scoreLabel || null;
+        parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
+        return parsed === null ? 0 : parsed;
+    }
+
     function GetTeamNetworthValue(root, panelId) {
         if (!root || !panelId) return 0;
         var teamPanel = root.FindChildTraverse(panelId);
         if (!teamPanel) return 0;
-        var labels = teamPanel.FindChildrenWithClassTraverse ? (teamPanel.FindChildrenWithClassTraverse("ScoreLabel") || []) : [];
-        for (var i = 0; i < labels.length; i++) {
-            var parsed = ParseUrnScoreNumber(labels[i] ? labels[i].text : "");
-            if (parsed !== null) return parsed;
-        }
+        var scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
+        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
+        if (parsed !== null) return parsed;
         return 0;
     }
 
@@ -6179,42 +6245,58 @@ function GetUIRoot() {
         if (IsPanelValid(panel)) panel.visible = false;
     }
 
-    function ComputeUrnTrackerState(root) {
-        var friendlyVal = GetTeamNetworthValue(root, "TeamScoreFriendly");
-        var enemyVal = GetTeamNetworthValue(root, "TeamScoreEnemy");
+    function ComputeUrnTrackerState(root, nowMs) {
+        var now = isFinite(Number(nowMs)) ? Number(nowMs) : (Date.now ? Date.now() : (new Date()).getTime());
+        if (now < (State.urnTrackerNextSampleMs || 0) && State.urnTrackerCachedState) {
+            return State.urnTrackerCachedState;
+        }
+
+        RefreshUrnTrackerScoreCache(root, now);
+        var friendlyVal = GetCachedUrnTeamNetworthValue("urnTrackerFriendlyScorePanel", "urnTrackerFriendlyScoreLabel");
+        var enemyVal = GetCachedUrnTeamNetworthValue("urnTrackerEnemyScorePanel", "urnTrackerEnemyScoreLabel");
         var gameSec = GetGameSecondsForUrn(root);
         var gameMin = gameSec / 60.0;
         var mood = "neutral";
         var display = "--";
+        var result = null;
 
         if (friendlyVal <= 0 && enemyVal <= 0) {
-            return {
+            result = {
                 friendlyVal: friendlyVal,
                 enemyVal: enemyVal,
                 mood: "neutral",
                 display: "--",
                 debugText: "--"
             };
+            State.urnTrackerCachedState = result;
+            State.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
         }
 
         if (friendlyVal > 0 && enemyVal <= 0) {
-            return {
+            result = {
                 friendlyVal: friendlyVal,
                 enemyVal: enemyVal,
                 mood: "good",
                 display: "100%",
                 debugText: "100%"
             };
+            State.urnTrackerCachedState = result;
+            State.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
         }
 
         if (enemyVal > 0 && friendlyVal <= 0) {
-            return {
+            result = {
                 friendlyVal: friendlyVal,
                 enemyVal: enemyVal,
                 mood: "bad",
                 display: "-8",
                 debugText: "-inf"
             };
+            State.urnTrackerCachedState = result;
+            State.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
         }
 
         var higher = Math.max(friendlyVal, enemyVal);
@@ -6230,16 +6312,19 @@ function GetUIRoot() {
         else if (diffPct <= -threshold) mood = "bad";
 
         display = (diffPct > 0 ? "+" : "") + diffPct.toFixed(1) + "%";
-        return {
+        result = {
             friendlyVal: friendlyVal,
             enemyVal: enemyVal,
             mood: mood,
             display: display,
             debugText: display
         };
+        State.urnTrackerCachedState = result;
+        State.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+        return result;
     }
 
-    function UpdateUrnTrackerOverlay(root, cfg) {
+    function UpdateUrnTrackerOverlay(root, cfg, nowMs) {
         if (!root) return;
         var enabledVal = Number(cfg ? cfg.ENABLE_URN_DIFF : 0);
         if (!isFinite(enabledVal)) enabledVal = 0;
@@ -6250,6 +6335,8 @@ function GetUIRoot() {
         if (!enabled || inHideout) {
             HideUrnTrackerOverlay(root);
             State.urnTrackerDisplayMode = inHideout ? "hideout" : "disabled";
+            State.urnTrackerNextSampleMs = 0;
+            State.urnTrackerCachedState = null;
             var hiddenSig = "hidden|diff=" + String(enabled ? 1 : 0) + "|colors=" + String(urnColorsEnabled ? 1 : 0) + "|hideout=" + String(inHideout);
             if (State.urnTrackerLastDebugSig !== hiddenSig) {
                 UrnTrackerLog(hiddenSig);
@@ -6258,7 +6345,7 @@ function GetUIRoot() {
             return;
         }
 
-        var urnState = ComputeUrnTrackerState(root);
+        var urnState = ComputeUrnTrackerState(root, nowMs);
 
         var panel = EnsureUrnTrackerOverlay(root);
         var label = IsPanelValid(State.cachedPanels.urnTrackerLabel) ? State.cachedPanels.urnTrackerLabel : null;
@@ -7168,6 +7255,45 @@ function GetUIRoot() {
         State.topbarSoulSnapshotUntilMs = 0;
     }
 
+    function ResolveTopBarNicknameSource(playerPanel, cachedLabel) {
+        var sourceLabel = IsPanelValid(cachedLabel) ? cachedLabel : null;
+        var sourceText = "";
+        if (sourceLabel && typeof sourceLabel.text === "string") {
+            sourceText = String(sourceLabel.text || "").trim();
+            if (sourceText && sourceText !== "{s:player_name}") {
+                return {
+                    label: sourceLabel,
+                    text: sourceText
+                };
+            }
+        }
+        if (!playerPanel || !playerPanel.FindChildrenWithClassTraverse) {
+            return {
+                label: sourceLabel,
+                text: ""
+            };
+        }
+
+        var labels = playerPanel.FindChildrenWithClassTraverse("PlayerName") || [];
+        for (var i = 0; i < labels.length; i++) {
+            var candidate = labels[i];
+            if (!IsPanelValid(candidate)) continue;
+            if (!sourceLabel) sourceLabel = candidate;
+            var candidateText = "";
+            try { candidateText = typeof candidate.text === "string" ? String(candidate.text || "").trim() : ""; } catch (eNameText) { candidateText = ""; }
+            if (!candidateText || candidateText === "{s:player_name}") continue;
+            return {
+                label: candidate,
+                text: candidateText
+            };
+        }
+
+        return {
+            label: sourceLabel,
+            text: ""
+        };
+    }
+
     function UpdateTopBarNicknames(root, nowMs, cfg) {
         if (!root) return;
         var enabled = Number(cfg && cfg.ENABLE_NICKNAMES) === 1;
@@ -7180,6 +7306,7 @@ function GetUIRoot() {
         if (!State.topbarNicknameResolvedTexts) State.topbarNicknameResolvedTexts = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarNicknameResolveStates) State.topbarNicknameResolveStates = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarNicknameRetryNextMs) State.topbarNicknameRetryNextMs = new Array(SPM_MAX_PLAYERS);
+        RefreshSpmPanelCache(root, now);
 
         function resetNicknameSlotState(index) {
             if (index < 0 || index >= SPM_MAX_PLAYERS) return;
@@ -7277,6 +7404,8 @@ function GetUIRoot() {
         var forceRefresh = (enabled !== State.topbarNicknamesWasEnabled);
         if (!forceRefresh && now < (State.topbarNicknamesNextRefreshMs || 0)) return;
 
+        var allResolved = enabled;
+        var sawPlayerPanel = false;
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
             var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
             var playerPanel = cachedPlayerPanel;
@@ -7290,7 +7419,7 @@ function GetUIRoot() {
                 resetNicknameSlotState(i);
             }
             State.topbarNicknamePlayers[i] = playerPanel || null;
-            var displayLabel = ensureDisplayLabel(playerPanel, i);
+            var displayLabel = playerPanel ? ensureDisplayLabel(playerPanel, i) : (IsPanelValid(State.topbarNicknameFallbackLabels[i]) ? State.topbarNicknameFallbackLabels[i] : null);
             var shouldShow = false;
             var renderText = "";
 
@@ -7299,6 +7428,7 @@ function GetUIRoot() {
                 renderDisplayLabel(displayLabel, false, "");
                 continue;
             }
+            sawPlayerPanel = true;
             SetPanelClassIfChanged(playerPanel, "qol_nickname_active", enabled);
 
             var resolveState = String(State.topbarNicknameResolveStates[i] || "unknown");
@@ -7309,14 +7439,10 @@ function GetUIRoot() {
                 State.topbarNicknameResolveStates[i] = resolveState;
             }
             if (enabled && (resolveState !== "resolved") && now >= retryAt) {
-                if (!sourceLabel && playerPanel.FindChildrenWithClassTraverse) {
-                    var sourceLabels = playerPanel.FindChildrenWithClassTraverse("PlayerName") || [];
-                    if (sourceLabels.length > 0) sourceLabel = sourceLabels[0];
-                }
+                var resolvedSource = ResolveTopBarNicknameSource(playerPanel, sourceLabel);
+                sourceLabel = resolvedSource.label;
                 State.topbarNicknameSourceLabels[i] = sourceLabel || null;
-                var nextText = "";
-                if (sourceLabel && sourceLabel.text && sourceLabel.text.length > 0) nextText = String(sourceLabel.text);
-                if (!nextText || nextText === "{s:player_name}") nextText = GetFirstPanelTextByClass(playerPanel, "PlayerName");
+                var nextText = resolvedSource.text;
                 if (nextText && nextText !== "{s:player_name}") {
                     State.topbarNicknameResolvedTexts[i] = String(nextText);
                     State.topbarNicknameResolveStates[i] = "resolved";
@@ -7328,6 +7454,13 @@ function GetUIRoot() {
                 }
             }
 
+            if (enabled && String(State.topbarNicknameResolveStates[i] || "unknown") !== "resolved") {
+                allResolved = false;
+            }
+            if (enabled && !displayLabel) {
+                allResolved = false;
+            }
+
             if (enabled) {
                 renderText = String(State.topbarNicknameResolvedTexts[i] || "");
                 shouldShow = renderText.length > 0;
@@ -7336,7 +7469,11 @@ function GetUIRoot() {
         }
 
         State.topbarNicknamesWasEnabled = enabled;
-        State.topbarNicknamesNextRefreshMs = now + TOPBAR_NICKNAMES_REFRESH_MS;
+        var nextRefreshMs = TOPBAR_NICKNAMES_REFRESH_MS;
+        if (enabled && sawPlayerPanel && allResolved && !forceRefresh) {
+            nextRefreshMs = TOPBAR_NICKNAMES_REFRESH_MS_STABLE;
+        }
+        State.topbarNicknamesNextRefreshMs = now + nextRefreshMs;
     }
 
     function ParseAccountIdDigitsFromText(rawText) {
@@ -7772,6 +7909,7 @@ function GetUIRoot() {
         if (!State.unspentSoulValueLabelsFallback) State.unspentSoulValueLabelsFallback = new Array(UNSPENT_MAX_PLAYERS);
         if (!State.unspentCachedSpentSouls) State.unspentCachedSpentSouls = new Array(UNSPENT_MAX_PLAYERS);
         if (!State.unspentModsChildCount) State.unspentModsChildCount = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentModsStructureSig) State.unspentModsStructureSig = new Array(UNSPENT_MAX_PLAYERS);
         if (!State.unspentNextTierScanMs) State.unspentNextTierScanMs = new Array(UNSPENT_MAX_PLAYERS);
         if (!State.unspentLastDisplayText) State.unspentLastDisplayText = new Array(UNSPENT_MAX_PLAYERS);
     }
@@ -7808,6 +7946,7 @@ function GetUIRoot() {
             if (panelChanged || modsChanged) {
                 State.unspentCachedSpentSouls[i] = 0;
                 State.unspentModsChildCount[i] = -1;
+                State.unspentModsStructureSig[i] = "";
                 State.unspentLastDisplayText[i] = "";
                 State.unspentNextTierScanMs[i] = nowMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
             }
@@ -7852,6 +7991,42 @@ function GetUIRoot() {
         }
 
         return result;
+    }
+
+    function BuildUnspentModsStructureSignature(modsContainer) {
+        if (!modsContainer) return "";
+        var sig = [];
+        var stack = [{ panel: modsContainer, depth: 0 }];
+        var scanned = 0;
+        while (stack.length > 0 && scanned < UNSPENT_TIER_SIG_MAX_NODES) {
+            var entry = stack.pop();
+            var panel = entry ? entry.panel : null;
+            var depth = entry ? Number(entry.depth) || 0 : 0;
+            if (!panel) continue;
+            scanned++;
+
+            var childCount = 0;
+            try {
+                childCount = panel.GetChildCount ? panel.GetChildCount() : 0;
+            } catch (e0) {
+                childCount = 0;
+            }
+            var panelId = "";
+            try { panelId = String(panel.id || ""); } catch (e1) { panelId = ""; }
+            var panelType = "";
+            try { panelType = String(panel.paneltype || ""); } catch (e2) { panelType = ""; }
+            var classAttr = "";
+            try { classAttr = panel.GetAttributeString ? String(panel.GetAttributeString("class", "") || "") : ""; } catch (e3) { classAttr = ""; }
+            sig.push(depth + ":" + panelId + ":" + panelType + ":" + childCount + ":" + classAttr);
+
+            if (depth >= UNSPENT_TIER_SIG_MAX_DEPTH || !panel.GetChild) continue;
+            for (var i = childCount - 1; i >= 0; i--) {
+                var child = null;
+                try { child = panel.GetChild(i); } catch (e4) { child = null; }
+                if (child) stack.push({ panel: child, depth: depth + 1 });
+            }
+        }
+        return sig.join("|");
     }
 
     function ClearUnspentDisplayValues(root, nowMs) {
@@ -7907,6 +8082,7 @@ function GetUIRoot() {
             var needsTierScan = false;
             if (modsContainer && modsContainer.GetChildCount) {
                 var childCount = -1;
+                var childCountChanged = false;
                 try {
                     childCount = modsContainer.GetChildCount();
                 } catch (e2) {
@@ -7916,6 +8092,14 @@ function GetUIRoot() {
                 if (!isFinite(prevChildCount)) prevChildCount = -1;
                 if (childCount !== prevChildCount) {
                     State.unspentModsChildCount[i] = childCount;
+                    childCountChanged = true;
+                    needsTierScan = true;
+                }
+                var structureSig = BuildUnspentModsStructureSignature(modsContainer);
+                var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
+                var structureChanged = (structureSig !== prevStructureSig);
+                if (structureChanged) {
+                    State.unspentModsStructureSig[i] = structureSig;
                     needsTierScan = true;
                 }
                 if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
@@ -7929,13 +8113,17 @@ function GetUIRoot() {
                         (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
                         (tierCounts.t4 * UNSPENT_TIER_COST[4]);
                     State.unspentCachedSpentSouls[i] = spentSouls;
-                    State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * 13);
+                    var nextTierDelayMs = (childCountChanged || structureChanged)
+                        ? UNSPENT_TIER_SCAN_INTERVAL_MS
+                        : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
+                    State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
                 }
             } else {
                 spentSouls = 0;
                 State.unspentCachedSpentSouls[i] = 0;
                 State.unspentModsChildCount[i] = -1;
-                State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * 13);
+                State.unspentModsStructureSig[i] = "";
+                State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
             }
 
             var unspentSouls = totalNetWorth - spentSouls;
@@ -8512,11 +8700,16 @@ function GetUIRoot() {
             buffCounter: 0,
             lastSec: -1,
             lastGlobalSec: -1,
+            lastRuntimeSec: -1,
+            lastRuntimeFeatureSig: "",
             nextScanMs: 0,
             rotatingUntilMs: 0,
             rejuvBuffHideAtMs: 0,
             lastChargesLookupMs: 0,
+            lastChargeCountReadMs: 0,
+            lastChargeCountValue: 0,
             nextMidBossLookupMs: 0,
+            lastMinimapRenderSig: "",
             cacheTopBar: null,
             cacheCharges: null,
             cacheFriendly: null,
@@ -8577,6 +8770,14 @@ function GetUIRoot() {
         if (rLabHUD && rLabHUD.text !== timeText) rLabHUD.text = timeText;
         if (rNum && rNum.text !== numText) rNum.text = numText;
         if (rNumHUD && rNumHUD.text !== numText) rNumHUD.text = numText;
+    }
+
+    function ApplyRedYellowPanelClasses(panel, red, yellow) {
+        if (!panel) return;
+        var showRed = !!red;
+        var showYellow = !showRed && !!yellow;
+        SetPanelClassIfChanged(panel, "red", showRed);
+        SetPanelClassIfChanged(panel, "yellow", showYellow);
     }
 
     function RejuvShowSpawn(state, root) {
@@ -8688,8 +8889,41 @@ function GetUIRoot() {
         return false;
     }
 
-    function RejuvHasAnyCharges(state, root, nowMs) {
-        if (!state) return false;
+    function GetHighestRejuvChargeTokenOnPanel(panel) {
+        if (!panel) return 0;
+        var max = 0;
+
+        function scanNode(node) {
+            if (!node) return;
+            var tokens = GetPanelClassTokens(node);
+            for (var i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (!token || token.indexOf("RejuvCount_") !== 0) continue;
+                var value = parseInt(token.slice("RejuvCount_".length), 10);
+                if (isFinite(value) && value > max) max = value;
+            }
+            if (node.BHasClass) {
+                for (var count = 1; count <= 4; count++) {
+                    if (node.BHasClass("RejuvCount_" + String(count)) && count > max) {
+                        max = count;
+                    }
+                }
+            }
+        }
+
+        scanNode(panel);
+        var kids = (panel.Children && panel.Children()) || [];
+        for (var k = 0; k < kids.length; k++) {
+            scanNode(kids[k]);
+        }
+        return max;
+    }
+
+    function RejuvReadChargeCount(state, root, nowMs) {
+        if (!state) return 0;
+        if (state.lastChargeCountReadMs === nowMs) {
+            return Number(state.lastChargeCountValue) || 0;
+        }
         var needLookup =
             !IsPanelValid(state.cacheTopBar) ||
             !IsPanelValid(state.cacheCharges) ||
@@ -8704,20 +8938,21 @@ function GetUIRoot() {
             state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
         }
 
-        var TOKENS = ["RejuvCount_1", "RejuvCount_2", "RejuvCount_3", "RejuvCount_4"];
-        return PanelHasAnyToken(state.cacheFriendly, TOKENS) || PanelHasAnyToken(state.cacheEnemy, TOKENS);
+        var chargeCount = Math.max(
+            GetHighestRejuvChargeTokenOnPanel(state.cacheFriendly),
+            GetHighestRejuvChargeTokenOnPanel(state.cacheEnemy)
+        );
+        state.lastChargeCountReadMs = nowMs;
+        state.lastChargeCountValue = chargeCount;
+        return chargeCount;
+    }
+
+    function RejuvHasAnyCharges(state, root, nowMs) {
+        return RejuvReadChargeCount(state, root, nowMs) > 0;
     }
 
     function RejuvGetChargeCount(state, root, nowMs) {
-        if (!state) return 0;
-        RejuvHasAnyCharges(state, root, nowMs);
-        var count = 0;
-        for (var i = 1; i <= 4; i++) {
-            var token = "RejuvCount_" + String(i);
-            if (PanelHasClassToken(state.cacheFriendly, token)) count = Math.max(count, i);
-            if (PanelHasClassToken(state.cacheEnemy, token)) count = Math.max(count, i);
-        }
-        return count;
+        return RejuvReadChargeCount(state, root, nowMs);
     }
 
     function RejuvFindMidBossButton(root) {
@@ -8763,11 +8998,16 @@ function GetUIRoot() {
         state.lastMidBossActive = false;
         state.lastSec = -1;
         state.lastGlobalSec = -1;
+        state.lastRuntimeSec = -1;
+        state.lastRuntimeFeatureSig = "";
         state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
         state.rotatingUntilMs = 0;
         state.rejuvBuffHideAtMs = 0;
         state.lastChargesLookupMs = 0;
+        state.lastChargeCountReadMs = 0;
+        state.lastChargeCountValue = 0;
         state.nextMidBossLookupMs = 0;
+        state.lastMinimapRenderSig = "";
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
@@ -8811,6 +9051,15 @@ function GetUIRoot() {
         State.rejuvWasDisabled = false;
 
         var state = EnsureRejuvState();
+        var runtimeFeatureSig = [
+            rejuvHudEnabled ? "1" : "0",
+            buffHudEnabled ? "1" : "0",
+            minimapRejuvEnabled ? "1" : "0",
+            minimapBuffEnabled ? "1" : "0",
+            cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? "1" : "0",
+            cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? "1" : "0",
+            String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : "")
+        ].join("|");
 
         var rLab = GetRejuvPanel(state, root, "rLab", "RejuvTime");
         var rNum = GetRejuvPanel(state, root, "rNum", "RejuvNum");
@@ -8855,6 +9104,17 @@ function GetUIRoot() {
             state.lastGlobalSec = nowSec;
         }
 
+        if (
+            state.lastRuntimeSec === nowSec &&
+            state.lastRuntimeFeatureSig === runtimeFeatureSig &&
+            nowMs < (state.nextScanMs || 0) &&
+            (state.rotatingUntilMs <= 0 || nowMs < state.rotatingUntilMs) &&
+            (state.rejuvBuffHideAtMs <= 0 || nowMs < state.rejuvBuffHideAtMs) &&
+            state.buffStartTime <= 0
+        ) {
+            return;
+        }
+
         if (state.rotatingUntilMs > 0 && nowMs >= state.rotatingUntilMs) {
             state.rotatingUntilMs = 0;
             var rImgA = GetRejuvPanel(state, root, "rImg", "RejuvImg");
@@ -8880,12 +9140,11 @@ function GetUIRoot() {
                 RejuvSetLabels(state, root, FormatClockMmSs(remaining), REJUV_SEQ[state.idx].num);
 
                 var rejuvHUD = GetRejuvPanel(state, root, "rejuvHUD", "RejuvHUD");
-                if (rejuvHUD) {
-                    rejuvHUD.RemoveClass("red");
-                    rejuvHUD.RemoveClass("yellow");
-                    if (remaining < 10 && (remaining % 2) === 1) rejuvHUD.AddClass("red");
-                    else if (remaining < 20 && (remaining % 2) === 1) rejuvHUD.AddClass("yellow");
-                }
+                ApplyRedYellowPanelClasses(
+                    rejuvHUD,
+                    remaining < 10 && (remaining % 2) === 1,
+                    remaining < 20 && (remaining % 2) === 1
+                );
             }
         }
 
@@ -8893,10 +9152,11 @@ function GetUIRoot() {
             var elapsed = nowSec - state.buffStartTime;
             state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed);
             var rejuvBuffTime = GetRejuvPanel(state, root, "rejuvBuffTime", "RejuvTimeBuff");
-            if (rejuvBuffTime) rejuvBuffTime.text = FormatClockMmSs(state.buffCounter);
+            var buffTimeText = FormatClockMmSs(state.buffCounter);
+            if (rejuvBuffTime && rejuvBuffTime.text !== buffTimeText) rejuvBuffTime.text = buffTimeText;
 
-            var hasCharges = RejuvHasAnyCharges(state, root, nowMs);
-            if (!hasCharges || state.buffCounter <= 0) {
+            var liveChargeCount = RejuvGetChargeCount(state, root, nowMs);
+            if (liveChargeCount <= 0 || state.buffCounter <= 0) {
                 RejuvEndBuff(state, root, nowMs, false);
             }
         }
@@ -8908,24 +9168,41 @@ function GetUIRoot() {
         if (buffLabelHUD && buffLabelHUD.text !== bridgeText) buffLabelHUD.text = bridgeText;
 
         var buffHUD = GetRejuvPanel(state, root, "buffHUD", "BuffHUD");
-        if (buffHUD) {
-            buffHUD.RemoveClass("red");
-            buffHUD.RemoveClass("yellow");
-            if (remainingBridge < 10 && (remainingBridge % 2) === 1) buffHUD.AddClass("red");
-            else if (remainingBridge < 20 && (remainingBridge % 2) === 1) buffHUD.AddClass("yellow");
-        }
+        ApplyRedYellowPanelClasses(
+            buffHUD,
+            remainingBridge < 10 && (remainingBridge % 2) === 1,
+            remainingBridge < 20 && (remainingBridge % 2) === 1
+        );
 
         var rejuvTextForMinimap = state.spawnWaiting ? "Spawn" : FormatClockMmSs(state.counter);
         var rejuvRemainForMinimap = state.spawnWaiting ? 0 : state.counter;
-        UpdateMinimapObjectiveTimers(
-            root,
-            cfg,
+        var minimapRenderSig = [
+            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1 ? 1 : 0,
+            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? 1 : 0,
+            Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ? 1 : 0,
+            Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? 1 : 0,
+            String(Number(cfg.MINIMAP_SMALL_SIZE) || 0),
             bridgeText,
-            remainingBridge,
+            String(remainingBridge),
             rejuvTextForMinimap,
-            rejuvRemainForMinimap,
-            state.spawnWaiting
-        );
+            String(rejuvRemainForMinimap),
+            state.spawnWaiting ? "1" : "0"
+        ].join("|");
+        if (
+            minimapRenderSig !== String(state.lastMinimapRenderSig || "") ||
+            !IsPanelValid(State.cachedPanels.minimapObjectiveTimersRoot)
+        ) {
+            UpdateMinimapObjectiveTimers(
+                root,
+                cfg,
+                bridgeText,
+                remainingBridge,
+                rejuvTextForMinimap,
+                rejuvRemainForMinimap,
+                state.spawnWaiting
+            );
+            state.lastMinimapRenderSig = minimapRenderSig;
+        }
 
         if (nowMs >= (state.nextScanMs || 0)) {
             var found = RejuvHasAnyCharges(state, root, nowMs);
@@ -8953,6 +9230,8 @@ function GetUIRoot() {
             state.lastMidBossActive = midBossActive;
             state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
         }
+        state.lastRuntimeSec = nowSec;
+        state.lastRuntimeFeatureSig = runtimeFeatureSig;
     }
 
     function GetGameplayHudPanel(root) {
@@ -15763,9 +16042,11 @@ function GetUIRoot() {
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (now < (State.laneWithPartyNextApplyMs || 0)) return;
-        State.laneWithPartyNextApplyMs = now + LANE_PREF_APPLY_INTERVAL_MS;
 
-        if (!root || !root.FindChildTraverse) return;
+        if (!root || !root.FindChildTraverse) {
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
+            return;
+        }
 
         var selector = IsPanelValid(State.cachedPanels.lanePreferenceSelector) ? State.cachedPanels.lanePreferenceSelector : null;
         if (!selector) {
@@ -15775,11 +16056,19 @@ function GetUIRoot() {
         if (!selector || !IsPanelValid(selector)) {
             State.cachedPanels.lanePreferenceSelector = null;
             State.cachedPanels.lanePreferenceWithPartyOption = null;
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
+            return;
+        }
+
+        if (!IsPanelVisibleMaybe(selector)) {
+            State.laneWithPartyLastState = "hidden";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
             return;
         }
 
         if (IsLanePreferenceWithPartySelected(selector)) {
             State.laneWithPartyLastState = "selected";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
             return;
         }
 
@@ -15812,8 +16101,10 @@ function GetUIRoot() {
         if (IsLanePreferenceWithPartySelected(selector)) {
             State.laneWithPartyLastApplyMs = now;
             State.laneWithPartyLastState = "applied";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
         } else {
             State.laneWithPartyLastState = (selectorActivated || optionActivated || setAttempted) ? "pending_retry" : "option_missing";
+            State.laneWithPartyNextApplyMs = now + (option ? LANE_PREF_APPLY_INTERVAL_MS : LANE_PREF_HIDDEN_INTERVAL_MS);
         }
     }
 
@@ -17689,10 +17980,16 @@ function GetUIRoot() {
             shopOffsetXRaw !== 0;
 
         var heroShop = IsPanelValid(State.cachedPanels.heroShop) ? State.cachedPanels.heroShop : null;
+        if (heroShop && needsHeroShopFeatures) {
+            try {
+                var shopVis = heroShop.style && heroShop.style.visibility;
+                if (shopVis === "collapse") return;
+            } catch (eVis) {}
+        }
         if (needsHeroShopFeatures && !heroShop && nowMsClass >= (State.heroShopNextSearchMs || 0)) {
             heroShop = root.FindChildTraverse("CitadelHudHeroShop");
             State.cachedPanels.heroShop = heroShop || null;
-            State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + 1000);
+            State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
         }
         if (needsHeroShopFeatures) {
             if (heroShop) {
@@ -18783,7 +19080,7 @@ function GetUIRoot() {
             source = null;
             if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
                 source = FindZipBoostSource(root);
-                State.zipBoostNextSourceSearchMs = source ? 0 : (nowMs + 500);
+                State.zipBoostNextSourceSearchMs = source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
                 State.cachedPanels.zipBoostSource = source || null;
                 State.cachedPanels.zipBoostAbilityName = null;
                 State.cachedPanels.zipBoostCountdown = null;
@@ -21554,6 +21851,7 @@ function GetUIRoot() {
         State.itemMirrorRuntimePanelIds = [];
         State.itemMirrorNextRuntimePanelId = 1;
         State.itemMirrorExceptionGroupAssignments = {};
+        State.itemMirrorLastShopOpen = false;
         State.itemMirrorProbeLastScanMs = 0;
         State.itemMirrorProbeLastSignature = "";
         State.itemMirrorProbeWasEnabled = false;
@@ -22041,15 +22339,21 @@ function GetUIRoot() {
         }
 
         var summary = [];
+        var structureSummary = [];
         for (var si = 0; si < outMatches.length; si++) {
-            summary.push(outMatches[si].itemClassName + "::" + outMatches[si].ownerId + "|" + outMatches[si].cooldownState + "|" + outMatches[si].iconSrc);
+            var match = outMatches[si];
+            summary.push(match.itemClassName + "::" + match.ownerId + "|" + match.cooldownState + "|" + match.iconSrc);
+            // Cooldown state changes are read from the live panel during render.
+            // They should not force a structural rescan of every owned item.
+            structureSummary.push(match.itemClassName + "::" + match.ownerId + "|" + match.iconSrc);
         }
 
         return {
             modsContainersCount: sourceIndex.modsContainersCount,
             scannedCount: sourceIndex.scannedCount,
             matches: outMatches,
-            summary: summary
+            summary: summary,
+            structureSummary: structureSummary
         };
     }
 
@@ -22613,6 +22917,23 @@ function GetUIRoot() {
         State.itemMirrorProbeWasEnabled = true;
         State.itemMirrorDisplayMode = "active";
         var sources = State.itemMirrorSources || [];
+        var abilitiesContainer = State.cachedPanels.abilitiesContainer;
+        if (!abilitiesContainer || (abilitiesContainer.IsValid && !abilitiesContainer.IsValid())) {
+            abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
+            State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
+        }
+        var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
+        var shopJustClosed = !!State.itemMirrorLastShopOpen && !passiveInShop;
+        State.itemMirrorLastShopOpen = !!passiveInShop;
+
+        if (passiveInShop) {
+            EnsureItemMirrorOverlayMulti(root);
+            var hiddenOverlay = State.cachedPanels.itemMirrorOverlay;
+            if (hiddenOverlay && hiddenOverlay.style.visibility !== "collapse") {
+                hiddenOverlay.style.visibility = "collapse";
+            }
+            return;
+        }
 
         var sourcesValid = true;
         for (var i = 0; i < sources.length; i++) {
@@ -22622,10 +22943,16 @@ function GetUIRoot() {
             }
         }
 
+        if (shopJustClosed) {
+            sourcesValid = false;
+            State.itemMirrorProbeLastSignature = "";
+            RuntimeTaskSetDelay("item_mirror_scan", nowMs, ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP);
+        }
+
         if (!sourcesValid || sources.length === 0 || RuntimeTaskIsDue("item_mirror_scan", nowMs)) {
             State.itemMirrorProbeLastScanMs = nowMs;
             var scan = BuildItemMirrorSourcesMulti(root, cfg);
-            var signature = "modsContainers=" + scan.modsContainersCount + ";scan=" + scan.scannedCount + ";found=" + scan.matches.length + ";" + scan.summary.join(";");
+            var signature = "modsContainers=" + scan.modsContainersCount + ";scan=" + scan.scannedCount + ";found=" + scan.matches.length + ";" + (scan.structureSummary || []).join(";");
             var signatureChanged = (signature !== State.itemMirrorProbeLastSignature);
             var nextScanDelayMs = ITEM_MIRROR_PROBE_SCAN_MS;
             if (scan.matches.length > 0 && !signatureChanged && sourcesValid && sources.length > 0) {
@@ -22684,19 +23011,6 @@ function GetUIRoot() {
         State.itemMirrorVisualOpacityText = rowOpacity.toFixed(2);
         if (mirrorRow) {
             SetPanelOpacitySafe(mirrorRow, State.itemMirrorVisualOpacityText, 1.0);
-        }
-
-        var abilitiesContainer = State.cachedPanels.abilitiesContainer;
-        if (!abilitiesContainer || (abilitiesContainer.IsValid && !abilitiesContainer.IsValid())) {
-            abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
-            State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
-        }
-        var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
-        if (passiveInShop) {
-            if (mirrorOverlay.style.visibility !== "collapse") {
-                mirrorOverlay.style.visibility = "collapse";
-            }
-            return;
         }
 
         if (!sources || sources.length === 0) {
@@ -23618,11 +23932,14 @@ function GetUIRoot() {
                 }
                 State.perfLastCompassStartMs = perfLoopStartMs;
             }
+            var itemMirrorEnabled = false;
+            var itemMirrorRuntimeActive = false;
             if (root) {
                 var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
                 var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
                 var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
-                var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
+                itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
+                itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
                 var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
                 var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
                 var perfSection = 0;
@@ -23639,7 +23956,7 @@ function GetUIRoot() {
                     PerfEnd("compass.minimap_rotate", perfSection);
                 }
 
-                if (itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active") {
+                if (itemMirrorRuntimeActive) {
                     perfSection = PerfStart();
                     UpdateItemMirrorProbe(root, cfg);
                     PerfEnd("compass.item_mirror", perfSection);
@@ -23665,10 +23982,12 @@ function GetUIRoot() {
                     PerfEnd("compass.target_shapes_fast", perfSection);
                 }
             }
+            var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
+            var itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
             var useFastInterval = (cfg && (
                 Number(cfg.ENABLE_COMPASS) === 1 ||
                 Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-                IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) ||
+                itemMirrorFastActive ||
                 Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
                 Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
                 unitTargetFastMode
@@ -23677,7 +23996,13 @@ function GetUIRoot() {
                 PerfRecord("compass.total", PerfNowMs() - perfLoopStartMs);
                 FlushPerfIfNeeded(false);
             }
-            nextDelaySec = useFastInterval ? COMPASS_INTERVAL_SEC : COMPASS_INTERVAL_IDLE_SEC;
+            if (useFastInterval) {
+                nextDelaySec = COMPASS_INTERVAL_SEC;
+            } else if (itemMirrorRuntimeActive) {
+                nextDelaySec = ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000.0;
+            } else {
+                nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
+            }
         } catch (err) {
             LogLoopException("compassLoop", err, "compassErrorNextLogMs", PerfNowMs());
         } finally {
@@ -24246,7 +24571,7 @@ function GetUIRoot() {
             UpdateChatRuntime(root, cfg);
         }
         UpdateDamageReportOffsets(root, cfg);
-        UpdateUrnTrackerOverlay(root, cfg);
+        UpdateUrnTrackerOverlay(root, cfg, nowMsLoop);
         return redDiamondEnabled;
     }
 
@@ -24569,21 +24894,23 @@ function GetUIRoot() {
         perfSection = PerfStart();
         var spmEnabled = Number(cfg.ENABLE_MIN_SOULS) === 1;
         var shouldRunSpmCleanupNow = (!spmEnabled && !State.spmWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1));
-        if (spmEnabled || shouldRunSpmCleanupNow) {
+        var runSpmPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1);
+        if ((spmEnabled || shouldRunSpmCleanupNow) && runSpmPhase) {
             UpdateSoulsPerMinute(root, nowMsLoop, cfg);
         }
         PerfEnd("loop.souls_per_min", perfSection);
         perfSection = PerfStart();
         var unspentEnabled = Number(cfg.ENABLE_UNSPENT_SOULS) === 1;
         var shouldRunUnspentCleanupNow = (!unspentEnabled && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2));
-        if (unspentEnabled || shouldRunUnspentCleanupNow) {
+        var runUnspentPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2);
+        if ((unspentEnabled || shouldRunUnspentCleanupNow) && runUnspentPhase) {
             UpdateUnspentSouls(root, nowMsLoop, cfg);
         }
         PerfEnd("loop.unspent", perfSection);
         perfSection = PerfStart();
         var shouldRunNicknames =
             Number(cfg.ENABLE_NICKNAMES) === 1 ||
-            !State.topbarNicknamesWasEnabled;
+            !!State.topbarNicknamesWasEnabled;
         var runNicknamesPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0);
         if (shouldRunNicknames && runNicknamesPhase) {
             UpdateTopBarNicknames(root, nowMsLoop, cfg);
@@ -24659,10 +24986,12 @@ function GetUIRoot() {
         if (Number(cfg.ENABLE_ZIP_BOOST) === 1 || State.zipBoostDisplayMode !== "") {
             UpdateZipBoostOverlay(root, cfg, hideoutConnected);
         }
-        if (Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1 || State.unsecuredSoulsDisplayMode !== "") {
+        var runUnsecuredSoulsPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3);
+        if ((Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1 || State.unsecuredSoulsDisplayMode !== "") && runUnsecuredSoulsPhase) {
             UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
         }
-        if (Number(cfg.ENABLE_STAT_BONUSES) === 1 || State.statBonusesDisplayMode !== "") {
+        var runStatBonusesPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4);
+        if ((Number(cfg.ENABLE_STAT_BONUSES) === 1 || State.statBonusesDisplayMode !== "") && runStatBonusesPhase) {
             UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
         }
         if (Number(cfg.ENABLE_COMBAT_STATUS) === 1 || State.combatStatusDisplayMode !== "") {
