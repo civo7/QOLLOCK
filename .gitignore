@@ -1,0 +1,12 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local temp/debug artifacts
+.tmp_*
+scripts/tmp_*.ps1
+*.log
+
+# Local backup/restore scratch folders (if created inside repo)
+_restore_*/
+backup_*/

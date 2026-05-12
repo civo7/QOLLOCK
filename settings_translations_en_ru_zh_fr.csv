@@ -1,0 +1,501 @@
+English,Russian,Chinese,French,Portuguese,Brazilian Portuguese,Spanish
+Config,Конфиг,配置,Configuration,Configuração,Configurações,Configuración
+Presets,Пресеты,预设,Préréglages,Predefinições,Predefinições,Ajustes predefinidos
+Crosshair,Прицел,十字线,Réticule,Mira,Mira,Mira
+HUD,HUD,HUD,HUD,HUD,HUD,HUD
+UI,UI,UI,UI,UI,UI,UI
+Overlay,Оверлей,覆盖,Overlay,Sobreposição,Sobreposição,Overlay
+Minimap,Миникарта,小地图,Mini-carte,Minimapa,Minimapa,Minimapa
+Audio,Аудио,声音的,Audio,Áudio,Áudio,Audio
+Console,Консоль,安慰,Console,Console,Console,Consola
+General,Общее,常规,Général,Em geral,Geral,General
+Discord,Discord,不和谐,Discord,Discord,Discord,Discord
+Support,Поддержка,支持,Support,Apoiar,Apoiar,Soporte
+Meta Settings,Настройки мода,基本设置,Autres paramètres,Metaconfigurações,Metaconfigurações,Metaconfiguraciones
+Preview,Показывать изменения,预览,Aperçu,Visualização,Pré-visualização,Vista previa
+Drag,Перетаскивание,拖,Déplaçable,Arrastar,Arrastar,Arrastrar
+Language,Язык,语言,Langue,Linguagem,Linguagem,Lenguaje
+Default Hero,Герой по умолчанию,默认英雄,Héro par défaut,Herói padrão,Herói padrão,Héroe predeterminado
+English,Английский,英语,Anglais,English,English,Inglés
+French,Французский,法语,Français,French,French,Francés
+Russian,Русский,俄语,Russe,,Russian,Ruso
+Chinese,Китайский,中文,Chinois,,Chinese,Chino
+Portuguese,Португальский,葡萄牙语,Portugais,,Portuguese,Portugués
+BR Portuguese,БР Португальский,巴西葡萄牙语,BR Portugais,,BR Portuguese,Portugués (Brasil)
+Spanish,Испанский,西班牙语,Espagnol,,Spanish,Español
+Settings UI Language,Язык интерфейса,设置界面语言,Paramètres Langue de l'interface utilisateur,Idioma da IU de configurações,Idioma da UI de configurações,Lenguaje de la interfaz
+Hero on Load or Save,Герой для загрузки или сохранения,加载或保存时的英雄,Héros en chargement ou en sauvegarde,Herói ao carregar ou salvar,Herói ao carregar ou salvar,Héroe al cargar o guardar
+Realtime Settings Changes,отображение изменений в настройках,实时设置更改,Modifications des paramètres en temps réel,Alterações nas configurações em tempo real,Alterações nas configurações em tempo real,Cambios de configuración en tiempo real
+Realtime Changes,Показывает изменения в реальном времени,实时更改,Modifications en temps réel,Mudanças em tempo real,Mudanças em tempo real,Cambios en tiempo real
+Draggable UI,перетаскиваемый интерфейс,可拖动的用户界面,Interface utilisateur déplaçable,IU arrastável,IU arrastável,UI arrastrable
+Enable,Включить,启用,Activer,Habilitar,Habilitar,Activar
+Export Settings,Экспорт настроек,导出设置,Exporter les paramètres,Exportar configurações,Exportar configurações,Exportar configuración
+Import Settings,Импорт настроек,导入设置,Importer les paramètres,Configurações de importação,Importar configurações,Importar configuración
+Export String,Строка экспорта,导出字符串,Exporter la chaîne de code,Exportar sequência,Exportar sequência,Exportar cadena 
+Import String,Строка импорта,导入字符串,Importer la chaîne de code,String de importação,Importar sequência,Importar cadena
+How to Save Settings,Как сохранить настройки,如何保存设置,Comment enregistrer les paramètres,Como salvar configurações,Como salvar configurações,Cómo guardar configuraciones
+Share your settings string,Поделиться строкой настроек,分享您的设置字符串,Partage ta chaîne de code,Compartilhe sua string de configurações,Compartilhe sua sequência de configurações,Comparte tu cadena de configuración
+Paste and apply an exported settings string,Вставить и применить экспортированную строку,粘贴并应用导出的设置字符串,Colle et applique la chaîne de code,Cole e aplique uma string de configurações exportada,Cole e aplique uma sequência de configurações exportada,Pegar y aplicar una cadena de configuración exportada
+Search Results,Результаты поиска,搜索结果,Résultats de la recherche,Resultados da pesquisa,Resultados da pesquisa,Resultados de la búsqueda
+No results found,Ничего не найдено,没有找到结果,Aucun résultat,Nenhum resultado encontrado,Nenhum resultado encontrado,No se encontraron resultados
+Better Item Cooldowns,Улучшенные перезарядки предметов,更好的物品冷却时间,Meilleurs cooldowns,Melhores tempos de espera de itens,Melhores Cooldowns,Mejores tiempos de recarga
+Item Cooldowns,Перезарядки предметов,物品冷却时间,Cooldowns,Recargas de itens,Cooldowns de itens,Tiempo de recarga de objetos
+Tracked cooldowns near crosshair,Отслеживаемые кулдауны у прицела,追踪十字准线附近的冷却时间,Cooldowns près de la réticule,Cooldowns rastreados perto da mira,Cooldowns perto da mira,Tiempo de recarga cerca de la mira
+Light Item Cooldowns,Легкие перезарядки предметов,Light Item Cooldowns,Light Item Cooldowns,Recargas de itens leves,Recargas de itens leve,Tiempos de recarga de objetos ligero
+Optimize Mode,Режим оптимизации,优化模式,Mode Optimisé,Modo de otimização,Modo de otimização,Modo de optimización
+Optimize Filters,Фильтры оптимизации,优化过滤器,Filtres optimisés,Otimizar filtros,Otimizar filtros,Optimizar filtros
+No filter settings but better FPS.,"Без настроек фильтров, но с более хорошим FPS",没有滤镜设置，但 FPS 更高。,Aucun filtre mais de meilleurs FPS.,"Sem configurações de filtro, mas melhor FPS.","Sem configurações de filtro, mas melhor FPS.",Sin configuraciones de filtro pero con mejores FPS.
+Filters,Фильтры,过滤器,Filtres,Filtros,Filtros,Filtros
+Get Filter File Only,Взять только файл фильтра,仅获取过滤器文件,Télécharger le filtre uniquement,Obter apenas arquivo de filtro,Obter apenas arquivo de filtro,Obtener solo archivo de filtro
+Download,Скачать,下载,Télécharger,Download,Download,Descargar
+Shown Items,Фильтр предметов,显示的项目,Items visible,Itens mostrados,Itens mostrados,Items mostrados
+Defensive Passive,Оборонительные пассивные,防御被动,Défensifs passif,Passivo Defensivo,Passivo Defensivo,Pasivo Defensivo
+Offensive Passive,"Агрессивные
+ пассивные",攻击被动,Offensifs passif,Passivo Ofensivo,Passivo Ofensivo,Pasivo Ofensivo
+Defensive Active,Оборонительные активные,防御主动,Défensifs actifs,Ativo Defensivo,Ativo Defensivo,Defensivo Activo
+Offensive Active,"Агрессивные
+ активные",攻击主动,Offensifs actifs,Ofensiva Ativa,Ativo Ofensivo,Ofensivo Activo
+Damage Numbers,Числа урона,伤害数字,Numéros de dégâts,Números de danos,Números de danos,Números de daño
+Ammo,Боезапас,弹药,Munitions,Munição,Munição,Munición
+Reload Cooldown,Время перезарядки,换弹冷却,Recharge,Tempo de recarga de recarga,Tempo de recarga da arma,Tiempo de recarga del arma
+Reloading,Перезарядка,换弹,Rechargement,Recarregando,Recarregando,Recargando
+Item Target Reticle,Прицел предметов,目标准星指示,Cible réticule,Retículo alvo do item,Retículo alvo do item,Mira de objetos
+Top Bar Plus,Верхняя панель+,顶栏加,Barre supérieure plus,Barra superior mais,Top Bar Plus,Barra superior Plus
+Top Bar,Верхняя панель,顶栏,Barre supérieure,Barra superior,Barra superior,Barra superior
+Shop,Магазин,商店,Boutique,Comprar,Loja,Tienda
+HUD Controls,Управление HUD,HUD控制,Commandes du HUD,Controles do HUD,Controles do HUD,Controles del HUD
+UI Controls,Управление UI,UI控制,Contrôles UI,Controles de IU,Controles de UI,Controles de interfaz de usuario
+Chat,Чат,聊天,Chat,Bater papo,Bate-papo,Chat
+Legacy Durations,Старые полосы длительности,传统持续时间条,Durées classiques,Durações legadas,Durações legado,Duraciones clásicas
+Healthbar,Полоса здоровья,健康栏,Barre de vie,Barra de saúde,Barra de saúde,Barra de vida
+Player,Игрок,玩家,Joueur,Jogador,Jogador,Jugador
+Bottom Bar,Нижняя панель,底栏,Barre inférieure,Barra inferior,Barra inferior,Barra inferior
+Simplify,Упрощение,简化,Simplifier,Simplificar,Simplificar,Simplificar
+Zipline Boost,Ускорение на зиплайне,滑索提升,Boost tyrolienne,Impulso de tirolesa,Impulso de tirolesa,Boost de via rápida
+Souls Timer,Таймер душ,灵魂计时器,Timer âmes,Temporizador de almas,Temporizador de almas,Temporizador de almas
+Unsecured Souls Timer,Таймер ненадежных душ,不安全的灵魂计时器,Timer âmes non-sécurisées,Temporizador de almas inseguras,Temporizador de almas inseguras,Temporizador de almas no aseguradas
+Unsecured Timer,Таймер ненадежных душ,魂魄计时器,Timer non-sécurisé,Temporizador inseguro,Temporizador inseguro,Temporizador no seguro
+Better Unsecured,улучшение теряемых душ,更好的无保障,Better Unsecured,Melhor inseguro,Better Unsecured,Better Unsecured
+Better Unsecured Souls,Улучшенные ненадежные души,更好的无保障的灵魂,Better Unsecured Souls,Almas melhores e inseguras,Almas Inseguras Melhoradas,Mejores almas sin asegurar
+Unsecured Plus,Улучшенные ненадежные души,魂魄数量,Âmes non sécurisées+,Mais inseguro,Unsecured Plus,Unsecured Plus
+Keyboard,Клавиатура,键盘,Overlay clavier,Teclado,Teclado,Teclado
+Compass,Компас,罗盘,Boussole,Bússola,Bússola,Brújula
+Ult Cooldowns,Кулдауны ультов,大招冷却时间,Cooldown Ulti,Tempos de Recarga Ult,Cooldowns da Suprema,Cooldown de definitiva
+Alt Zoom,Зум миникарты на ALT,Alt 缩放,Zoom ALT,Zoom alternativo,Alt Zoom,Zoom alternativo
+Tab Zoom,Зум миникарты на TAB,Tab 缩放,Zoom TAB,Zoom da guia,Tab Zoom,Zoom TAB
+Announcer,Озвучка событий,提示音效,Annonceur,Locutor,Locutor,Locutor
+Arcade,Аркада,小游戏,Arcade,Arcada,Fliperama,Arcade
+Game Settings,Настройки игр,游戏设置,Paramètres du jeu,Configurações do jogo,Configurações do jogo,Configuración del juego
+Games,Игры,游戏,Jeux,Jogos,Jogos,Juegos
+Game Audio,Звуки игр,游戏音效,Audio du jeu,Áudio do jogo,Áudio do jogo,Audio del juego
+Difficulty,Сложность,难度,Difficulté,Dificuldade,Dificuldade,Dificultad
+Supporting and Feature Requests,Поддержка и запросы фич,支持和功能请求,Support et demande de fonctionnalités,Solicitações de suporte e recursos,Solicitações de suporte e recursos,Soporte y solicitudes de funciones
+"Issues, Feedback and Ideas","Проблемы, отзывы и идеи",问题、反馈和想法,"Problèmes, commentaires et idées","Problemas, comentários e ideias","Problemas, comentários e ideias","Problemas, comentarios e ideas"
+Contact,Контакт,接触,Contact,Contato,Contato,Contacto
+Special Thanks,Особая благодарность,特别感谢,Remerciements spéciaux,Agradecimentos especiais,Agradecimentos especiais,Agrademicientos especial
+Size,Размер,尺寸,Taille,Tamanho,Tamanho,Tamaño
+Opacity,Прозрачность,不透明度,Opacité,Opacidade,Opacidade,Opacidad
+Scale,Масштаб,规模,Échelle,Escala,Escala,Escala
+Horizontal Offset,Гориз. положение,水平偏移,Décalage horizontal,Deslocamento Horizontal,Deslocamento Horizontal,Desplazamiento horizontal
+Vertical Offset,Верт. положение,垂直偏移,Décalage vertical,Deslocamento vertical,Deslocamento vertical,Desplazamiento vertical
+Horizontal Stretch,Гориз. размер,水平拉伸,Étirement horizontal,Alongamento horizontal,Alongamento horizontal,Estiramiento horizontal
+Vertical Stretch,Верт. Размер,垂直拉伸,Étirement vertical,Alongamento Vertical,Alongamento Vertical,Estiramiento vertical
+Visual,Визуализация патронов,视觉效果,Visuel,Visual,Visual,Visual
+Hide All,Скрыть все,全部隐藏,Tout masquer,Ocultar tudo,Ocultar tudo,Ocultar todo
+Current,Текущее кол-во,当前尺寸,Actuel,Atual,Atual,Actual
+Total,Общее кол-во,总计,Total,Total,Total,Total
+Icon,Иконка,图标,Icône,Ícone,Ícone,Icono
+Circle,Круг,圆圈,Cercle,Círculo,Círculo,Círculo
+Big Number,Большие числа,大数字,Grand nombre,Grande número,Grande número,Número grande
+Big Numbers,Большие числа,大数字,Grands nombres,Grandes números,Grandes números,Grandes números
+Damage Fountain,Эффект фонтана на урон,伤害数字喷泉特效,Fontaine de dégâts,Fonte de Dano,Dano estilo Fonte,Daño estilo fuente
+Small Numbers,Малые числа,小数字,Petits nombres,Números Pequenos,Números Pequenos,Números pequeños
+Trooper Damage,Урон по крипам,士兵伤害,Dégâts aux troopers,Danos ao soldado,Danos ao soldado,Daño a los soldados
+Hide Current,Скрыть текущие,隐藏当前,Masquer l'actuel,Ocultar atual,Ocultar atual,Ocultar actual
+Hide Total,Скрыть общее,隐藏总计,Masquer le total,Ocultar total,Ocultar total,Ocultar total
+Hide Icon,Скрыть иконку,隐藏图标,Masquer l'icône,Ocultar ícone,Ocultar ícone,Ocultar icono
+Hide Circle,Скрыть общее кол-во,隐藏圆圈,Masquer le cercle,Ocultar Círculo,Ocultar Círculo,Ocultar círculo
+Hide Big Number,Скрыть большие числа,隐藏大数字,Masquer les gros nombres,Ocultar grande número,Ocultar grande número,Ocultar número grande
+Hide Small Numbers,Скрыть малые числа,隐藏小数字,Masquer les petits nombres,Ocultar números pequenos,Ocultar números pequenos,Ocultar números pequeños
+Hide Trooper Damage,Скрыть урон по крипам,隐藏士兵伤害,Masquer les dégâts faits aux troopers,Ocultar dano do soldado,Ocultar dano do soldado,Ocultar daño a los soldado
+Highlight Mode,Улучшенная видимость,高亮模式,Mode surbrillance,Modo de destaque,Modo de destaque,Modo de resaltado
+Big Red,Большой и красный,大红色,Grand rouge,Grande Vermelho,Grande Vermelho,Rojo grande
+Unspent Souls,Непотраченные души игроков,未使用的魂魄,Souls non dépensées,Almas não gastas,Almas não gastas,Almas sin gastar
+Souls Per Minute,Души в минуту,每分钟魂魄数,Souls par minute,Almas por minuto,Almas por minuto,Almas por minuto
+Objective Damage,Урон по строениям,目标伤害,Dégâts aux objectifs,Dano Objetivo,Dano Objetivo,Daño al objetivo
+Objective Map,Карта строений,目标地图,Carte des objectifs,Mapa Objetivo,Mapa do Objetivo,Mapa de objetivo
+Urn Difference,Разница урны,团队魂魄百分比差値,Différence d'urne,Diferença de Urna,Diferença de Urna,Diferencia de urna
+Buff Timer,Таймер баффов,增益计时器,Buff Timer,Temporizador de bônus,Temporizador de Buff,Temporizador de mejora
+Bridge Buff Timer,Таймер рун,桥梁 Buff  计时器,Bridge Buff Timer,Temporizador de Buff de Ponte,Temporizador de Buff de Ponte,Temporizador de mejora del puente
+Mid Boss Timer,Таймер мид-босса,Mid Boss 计时器,Mid Boss Timer,Temporizador de chefe médio,Temporizador do Mid Boss,Temporizador del jefe central
+Missing Hero Opaque,Скрыть пропавших героев,消失的英雄不透明化,Héros manquant assombris,Herói desaparecido opaco,Herói desaparecido opaco,Héroe perdido opaco
+Display Stats,Показать статистику героя,显示统计数据,Afficher les statistiques,Exibir estatísticas,Exibir estatísticas,Mostrar estadísticas
+Display Hero,Показать героя,显示英雄,Afficher le héro,Herói de exibição,Exibir Herói,Mostrar héroe
+Simplify Shop,Упростить магазин,简化商店,Simplifier la boutique,Simplifique a loja,Loja Simplificada,Tienda simplificada
+Stats,Статы,统计数据,Stats,Estatísticas,Estatísticas,Estadísticas
+Hero,Герой,英雄,Héro,Herói,Herói,Héroe
+Minimalist,Минималистичный,极简,Minimaliste,Minimalista,Minimalista,Minimalista
+Blur,Размытие,模糊,Flou,Borrão,Borrão,Desenfoque
+Quick Buy,Быстрая покупка,快速购买,Achat rapide,Compra rápida,Compra rápida,Compra rápida
+Hide Blur,Убрать размытие,隐藏模糊,Masquer le flou,Ocultar desfoque,Ocultar desfoque,Ocultar desenfoque
+Hide Quick Buy,Скрыть быструю покупку,隐藏快速购买,Masquer le menu d'achat rapide,Ocultar compra rápida,Ocultar compra rápida,Ocultar compra rápida
+16:10 Support,Поддержка 16:10,16:10 支持,16:10 Fix,16h10 Suporte,16:10 Suporte,Soporte para 16:10
+4:3 Support,Поддержка 4:3,4:3 支持,4:3 Fix,4:3 Suporte,4:3 Suporte,Soporte para 4:3
+21:9 Stream Fix,Фикс 21:9 для стримов,21:9 Stream 修复,21:9 Stream Fix,Correção de transmissão 21:9,Correção 21:9,Corrección para 21:9
+Centered ESC Menu,Отцентровать меню паузы,居中 ESC 菜单,Menu ESC centré,Menu ESC centralizado,Menu ESC centralizado,Menú ESC centrado
+Centered Friends List,Отцентровать список друзей,居中好友列表,Liste d'amis centrée,Lista de amigos centralizada,Lista de amigos centralizada,Lista de amigos centrada
+Statlocker,Statlocker,Statlocker,Statlocker,Statlocker,Statlocker,Statlocker
+Force Testing Tools,Всегда показывать инструменты,力测试工具,Forcer les outils de test,Ferramentas de teste de força,Forçar Ferramentas de Teste,Forzar herramientas de prueba
+Show Testing Tools,Показывать инструменты,显示测试工具,Afficher les outils de test,Mostrar ferramentas de teste,Mostrar Ferramentas de Teste,Mostrar herramientas de prueba
+Hide Testing Tools,Скрыть инструменты,隐藏测试工具,Masquer les outils de test,Ocultar ferramentas de teste,Ocultar Ferramentas de Teste,Ocultar herramientas de prueba
+Behavior Summary,Плашка поведения,行为总结,Trust Factor/Comportement,Resumo de comportamento,Resumo de comportamento,Resumen de comportamiento
+Failed Hint,Уведомления выносливости,失败提示,Stamina fail pop-up,Dica falhada,Dica de falha,Fallo de resistencia
+Ability Suggestion,Рекомендация способности,能力建议,Suggestion de capacité,Sugestão de habilidade,Sugestão de habilidade,Sugerencia de habilidad
+Cosmetic Ability,Ивентовые способности,装饰技能,Capacités cosmétique,Habilidade cosmética,Habilidade cosmética,Habilidad cosmética
+Hide Behavior Summary,Скрыть плашку поведения,隐藏行为摘要,Masquer le Trust Factor/Comportement,Ocultar resumo de comportamento,Ocultar resumo de comportamento,Ocultar resumen de comportamiento
+Hide Failed Hint,Скрыть уведомления выносливости,隐藏失败提示,Masquer le pop-up d'échec de stamina,Ocultar dica com falha,Ocultar dica de falha,Ocultar fallo de resistencia
+Hide Ability Suggestion,Скрыть рекомендации способностей,隐藏能力建议,Masquer la suggestion de capacité,Ocultar sugestão de habilidade,Ocultar sugestão de habilidade,Ocultar sugerencia de habilidad
+Hide Cosmetic Ability,Скрыть косметическую способность,隐藏装饰能力,Masquer la capacité cosmétique,Ocultar habilidade cosmética,Ocultar habilidade cosmética,Ocultar habilidad cosmética
+Damage Report,Отчет урона,伤害报告,Rapport de dégâts,Relatório de danos,Relatório de danos,Reporte de daño
+Adjust the in-game chat position and scale.,Настраивает позицию и масштаб игрового чата.,调整游戏内聊天的位置和缩放。,Ajuste la position et l'échelle du chat en jeu.,Ajuste a posição e a escala do bate-papo no jogo.,Ajuste a posição e a escala do bate-papo no jogo.,Ajusta la posición y escala del chat en el juego.
+Adjust size of the in-game chat.,Настраивает размер игрового чата.,调整游戏内聊天的大小。,Ajuste la taille du chat en jeu.,Ajuste o tamanho do chat do jogo.,Ajuste o tamanho do bate-papo do jogo.,Ajusta el tamaño del chat del juego.
+Adjust horizontal position of the in-game chat.,Настраивает горизонтальное положение игрового чата.,调整游戏内聊天的水平位置。,Ajuste la position horizontale du chat en jeu.,Ajuste a posição horizontal do chat do jogo.,Ajuste a posição horizontal do bate-papo do jogo.,Ajusta la posición horizontal del chat del juego.
+Adjust vertical position of the in-game chat.,Настраивает вертикальное положение игрового чата.,调整游戏内聊天的垂直位置。,Ajuste la position verticale du chat en jeu.,Ajuste a posição vertical do chat do jogo.,Ajuste a posição vertical do bate-papo do jogo.,Ajusta la posición vertical del chat del juego.
+Show the in-game chat panel.,Показывает игровой чат.,显示游戏内聊天面板。,Affiche le panneau de chat en jeu.,Mostre o painel de bate-papo do jogo.,Mostre o painel de bate-papo do jogo.,Muestra el panel de chat del juego.
+Hide Damage Report,Скрыть отчет урона,隐藏损坏报告,Masquer le rapport de dégâts,Ocultar relatório de danos,Ocultar relatório de danos,Ocultar reporte de daños
+Colored Healthbar,Цветной HP-бар,彩色健康条,Barre de santé colorée,Barra de saúde colorida,Barra de saúde colorida,Barra de vida coloreada
+Colored Health,Цветное здоровье,有色健康,Santé colorée,Saúde Colorida,Saúde Colorida,Vida coloreada
+Color Warning,Цветовое предупреждение,颜色警告,Couleur d'alerte,Aviso de cor,Aviso de colorido,Advertencia por color
+Enemy,Враг,敌人,Ennemi,Inimigo,Inimigo,Enemigo
+Minimalist Healthbar,Маленькая полоска HP,极简健康栏,Barre de santé minimaliste,Barra de saúde minimalista,Barra de saúde minimalista,Barra de vida minimalista
+Simplify Ability Icons,Упростить иконки способностей,简化能力图标,Simplifier les icônes de capacité,Simplifique os ícones de habilidade,Simplifique os ícones de habilidade,Simplificar iconos de habilidades
+Simplify Items,Упростить интерфейс предметов,简化项目,Simplifier les items,Simplifique os itens,Simplifique os itens,Simplificar objetos
+Minimalist Abilities,Минималистичные способности,极简技能栏,Capacités minimalistes,Habilidades minimalistas,Habilidades minimalistas,Habilidades minimalistas
+Minimalist Item Bar,Минималистичная панель предметов,极简物品栏,Barre d'items minimaliste,Barra de itens minimalista,Barra de itens minimalista,Barra de objetos minimalista
+Show Icon,Показать иконку,显示图标,Afficher l'icône,Mostrar ícone,Mostrar ícone,Mostrar icono
+Show Text,Показать текст,显示文字,Afficher le texte,Mostrar texto,Mostrar texto,Mostrar texto
+Text,Текст,文本,Texte,Texto,Texto,Texto
+Full Keybinds,Полная раскладка,完整按键绑定,Raccourcis clavier complets,Atalhos de teclado completos,Atalhos de teclado completos,Combinaciones de teclas completas
+Full Keys,Полные клавиши,全键位,Toutes les touches,Chaves completas,Chaves completas,Teclas completas
+Show Speed,Показывать скорость,显示速度,Afficher la vitesse,Mostrar velocidade,Mostrar velocidade,Mostrar velocidad
+Speed,Скорость,速度,Vitesse,Velocidade,Velocidade,Velocidad
+Minimalist Minimap,Минимал. миникарта,极简小地图,Mini-carte minimaliste,Minimapa minimalista,Minimapa minimalista,Minimapa minimalista
+Spinny Map,Вращающаяся карта,斯宾尼地图,Carte rotative,Mapa giratório,Mapa giratório,Mapa giratorio
+Spinny Mode,Режим вращения,旋转模式,Mode rotatif,Modo giratório,Modo giratório,Modo giratorio
+Urn Colors,Цвета урны,瓮的颜色,Couleurs de l'urne,Cores da urna,Cores da urna,Colores de urna
+Draw Over UI,Рисовать поверх интерфейса,覆盖在 UI 上方绘制,Apparaître au-dessus de l'UI,Desenhar sobre a IU,Desenhar sobre a UI,Dibujar sobre la interfaz de usuario
+Neutral Camps,Нейтралы,中立阵营,Camps neutres,Acampamentos Neutros,Acampamentos Neutros,Campamentos neutrales
+Type,Тип,类型,Type,Tipo,Tipo,Tipo
+Bridge Buffs,Руны,桥牌爱好者,Bridge Buffs,Bônus da ponte,Buff da ponte,Mejoras del puente
+Bridge Buff,Руна,桥牌爱好者,Bridge Buff,Bridge Buff,Buff da ponte,Mejoras del puente
+Buff,Бафф,Buff,Buff,Buff,Buff,Mejora
+Bridge Buff Delay,Время до напоминания о рунах,桥增益延迟,Délai du Bridge Buff,Atraso de Buff da Ponte,Atraso de Buff da Ponte,Retraso de mejora del puente
+Buff Delay,Задержка баффа,Buff 延迟,Délai du buff,Atraso de bônus,Atraso de Buff,Retraso de mejora
+Tier 1,Тир 1,1 级,Niveau 1,Camada 1,Nível 1,Nivel 1
+Tier 2,Тир 2,2 级,Niveau 2,Camada 2,Nível 2,Nivel 2
+Tier 3,Тир 3,3 级,Niveau 3,Nível 3,Nível 3,Nivel 3
+Voice,Голос,声音类型,Voix,Voz,Voz,Voz
+Custom,Кастомный,风俗,Personnalisée,Personalizado,Personalizado,Personalizado
+Beep,Beep,Beep,Bip,Bip,Beep,Pitido
+Volume,Громкость,音量,Volume,Volume,Volume,Volumen
+Quiet,Тихо,安静的,Bas,Quieto,Quieto,Tranquilo
+Normal,Средне,普通的,Normale,Normal,Normal,Normal
+Loud,Громко,大声,Fort,Alto,Alto,Alto
+Preview Announcer,Прослушать озвучку,预览播音员,Tester l'Annonceur,Locutor de pré-visualização,Pré-visualização de locutor,Vista previa del locutor
+Test Announcer,Тест озвучки,测试播音员,Teste de l'Annonceur,Locutor de teste,Teste de Locutor,Probar locutor
+Minimap Reminder,Напоминание о миникарте,小地图提醒,Rappel mini-carte,Lembrete de minimapa,Lembrete de minimapa,Recordatorio de minimapa
+Timer,Таймер,定时器,Minuteur,Temporizador,Temporizador,Temporizador
+On Death Games,Игры после смерти,论死亡游戏,Mini-jeux quand mort,Sobre Jogos da Morte,Jogos durante a morte,Juegos al morir
+On Death,Показывать во время смерти,在死亡的时候,à la mort,Na morte,Durante a morte,Al morir
+Bebop Sweeper,Bebop Sweeper,比波普扫雷,Bebop le démineur,Bebop Sweeper,Bebop Sweeper,Bebop Sweeper
+Flappy Bat,Flappy Bat,下坠的蝙蝠,Flappy Bat,Flappy Bat,Flappy Bat,Flappy Bat
+Graves Trainer,Graves Trainer,格瑞墓瞄准训练,Graves aim trainer,Treinador de Túmulos,Graves Trainer,Graves Trainer
+Whack a Rem,Whack a Rem,打雷姆,Paf le Rem !,Bata em um Rem,Whack a Rem,Whack-a-Rem
+Zerggy Mania,Zerggy Mania,Zerggy 狂热,Zerggy Spam,Zerggy Mania,Zerggy Mania,Zerggy Mania
+Hitmarkers,Хитмаркеры,命中标记,Hitmarkers,Marcadores de sucesso,Hitmarkers,Indicadores de impacto
+Off,Выкл,关闭,Désactivé,Desligado,Desligado,Apagado
+On,Вкл,开启,Activé,Sobre,Ligado,Encendido
+Play,Играть,游玩,Jouer,Jogar,Jogar,Jugar
+Show Support,Поддержать разработчика,显示支持,Afficher l'assistance,Mostrar suporte,Mostrar suporte,Mostrar soporte
+Change Log,Список изменений,变更日志,Journal des modifications,Registro de alterações,Registro de alterações,Registro de cambios
+Contributors,Участники,贡献者,Contributeurs,Colaboradores,Colaboradores,Colaboradores
+Open,Открыть,打开,Ouvrir,Abrir,Abrir,Abrir
+Support development,Поддержка разработки,支持发展,Supporter le développement,Apoiar o desenvolvimento,Apoiar o desenvolvimento,Apoyar el desarrollo
+View updates,Просмотр обновлений,查看更新,Afficher les mises à  jour,Ver atualizações,Ver atualizações,Ver actualizaciones
+Community acknowledgements,Благодарности сообществу,社区致谢,Remerciements de la communauté,Reconhecimentos da comunidade,Reconhecimentos da comunidade,Reconocimientos a la comunidad
+Open Config,Открыть конфиг,打开配置,Ouvrir la configuration,Abrir configuração,Abrir configuração,Abrir configuración
+You can support development by commissioning features or presets.,"Вы можете поддержать разработку, заказав фичи или пресеты.",您可以通过调试功能或预设来支持开发。,Vous pouvez supporter le développement en commissionnant des fonctionnalités ou des préréglages.,Você pode apoiar o desenvolvimento comissionando recursos ou predefinições.,Você pode apoiar o desenvolvimento comissionando recursos ou predefinições.,Puedes apoyar el desarrollo encargando funciones o preajustes.
+Support development by commissioning features or presets.,"Поддержите разработку, заказав функции или пресеты.",通过调试功能或预设来支持开发。,Soutenez le développement en demandant des fonctionnalités ou des préréglages.,Apoie o desenvolvimento comissionando recursos ou predefinições.,Apoie o desenvolvimento comissionando recursos ou predefinições.,Apoya el desarrollo con funciones o preajustes por encargo.
+This is a way for me to give something back to the supporters.,Это способ отблагодарить разработчика мода.,这是我回馈支持者的一种方式。,C'est une façon pour moi de donner quelque chose aux supporters.,Esta é uma forma de retribuir algo aos apoiadores.,Esta é uma forma de retribuir algo aos apoiadores.,Esta es una forma de devolver algo a quienes apoyan el proyecto.
+All commissioned additions are released publicly and available to everyone.,Все заказанные изменения добавляются в публичную версию и доступны всем.,所有委托添加的内容都会公开发布并提供给所有人。,Tous les ajouts commandés sont rendus publics et accessibles à  tous.,Todas as adições comissionadas são divulgadas publicamente e estão disponíveis para todos.,Todas as adições comissionadas são divulgadas publicamente e estão disponíveis para todos.,Todas las funciones por encargo se publican y están disponibles para todos.
+"The mod is <font color=""#66cc99"">fully functional</font> and <font color=""#66cc99"">free</font> for all users.","Мод <font color=""#66cc99"">полностью функционален</font> и <font color=""#66cc99"">бесплатен</font> для всех пользователей.","该 MOD 对所有用户均为 <font color=""#66cc99"">完整可用</font>，且 <font color=""#66cc99"">免费</font>。","Le mod est <font color=""#66cc99"">entièrement fonctionnel</font> et <font color=""#66cc99"">gratuit</font> pour tous les utilisateurs.","O mod é <font color=""#66cc99"">totalmente funcional</font> e <font color=""#66cc99"">gratuito</font> para todos os usuários.","O mod é <font color=""#66cc99"">totalmente funcional</font> e <font color=""#66cc99"">gratuito</font> para todos os usuários.","El mod es <font color=""#66cc99"">complementamente funcional</font> y <font color=""#66cc99"">gratuito</font> para todos los usuarios."
+"Custom Preset Commission: <font color=""#66cc99"">$25</font>","Заказ персонального пресета: <font color=""#66cc99"">$25</font>","自定义预设委托：<font color=""#66cc99"">$25</font>","Commission d'un préréglage : <font color=""#66cc99"">25Â $</font>","Comissão predefinida personalizada: <font color=""#66cc99"">$25</font>","Comissão predefinida personalizada: <font color=""#66cc99"">$25</font>","Preajuste personalizado por encargo: <font color=""#66cc99"">$25 USD</font>"
+"<font color=""#66cc99"">Free</font> updates for new features, <font color=""#66cc99"">$5</font> for arbitrary changes","<font color=""#66cc99"">Бесплатные</font> изменения для новых функций, <font color=""#66cc99"">$5</font> за произвольные правки","<font color=""#66cc99"">Free</font> updates for new features, <font color=""#66cc99"">$5</font> for arbitrary changes","Mises à  jour <font color=""#66cc99"">gratuites</font> pour les nouvelles fonctionnalités, <font color=""#66cc99"">5Â $</font> pour les modifications arbitraires","Atualizações <font color=""#66cc99"">gratuitas</font> para novos recursos, <font color=""#66cc99"">$5</font> para alterações arbitrárias","Atualizações <font color=""#66cc99"">gratuitas</font> para novos recursos, <font color=""#66cc99"">$5</font> para alterações arbitrárias","Actualizaciones <font color=""#66cc99"">gratuitas</font> para nuevas funciones, <font color=""#66cc99"">$5 USD</font> por cambios arbitrarios."
+Settings now load from your saved build string,Настройки теперь загружаются из вашей сохраненной строки билда,现在从您保存的构建字符串加载设置,Les paramètres sont désormais sauvegardés à  partir de votre chaîne de build enregistrée,As configurações agora são carregadas a partir da string de compilação salva,As configurações agora são carregadas a partir da string de compilação salva,La configuración ahora se carga desde tu cadena de configuración guardada.
+"New Feature Commission: <font color=""#66cc99"">$10</font> to <font color=""#66cc99"">$100</font>","Заказ новой фичи: <font color=""#66cc99"">$10</font> до <font color=""#66cc99"">$100</font>","新功能委托：<font color=""#66cc99"">$10</font> 至 <font color=""#66cc99"">$100</font>","Commission d'une nouvelle fonctionnalité : de <font color=""#66cc99"">10Â $</font> à  <font color=""#66cc99"">100Â $</font>","Comissão de novos recursos: <font color=""#66cc99"">$10</font> a <font color=""#66cc99"">$100</font>","Comissão de novos recursos: <font color=""#66cc99"">$10</font> a <font color=""#66cc99"">$100</font>","Encargo de nueva función: <font color=""#66cc99"">$10 USD</font> a <font color=""#66cc99"">$100 USD</font>"
+Depending on complexity and work involved,Зависит от сложности и объема работ,取决于复杂性和涉及的工作,En fonction de la complexité et du travail impliqué,Dependendo da complexidade e do trabalho envolvido,Dependendo da complexidade e do trabalho envolvido,Según la complejidad y el trabajo requerido
+"Discord: <font color=""#66cc99"">civocivocivo</font>","Discord: <font color=""#66cc99"">civocivocivo</font>","Discord: <font color=""#66cc99"">civocivocivo</font>","Discord : <font color=""#66cc99"">civocivocivo</font>","Discord: <font color=""#66cc99"">civocivocivo</font>","Discord: <font color=""#66cc99"">civocivocivo</font>","Discord: <font color=""#66cc99"">civocivocivo</font>"
+Without them QOL Lock would not be possible.,Без них QOL Lock был бы невозможен.,没有他们，QOL Lock 就不可能实现。,"Sans eux, QOL Lock ne serait pas possible.",Sem eles o QOL Lock não seria possível.,Sem eles o QOL Lock não seria possível.,"Sin ellos, QOL Lock no sería posible."
+If you encounter issues please join the Discord,"Если вы столкнулись с проблемами, присоединяйтесь к Discord",如果您遇到问题，请加入 Discord,"Si vous rencontrez des problèmes, veuillez rejoindre le Discord","Se você encontrar problemas, entre no Discord","Se você encontrar problemas, entre no Discord","Si tienes algún problema, únete al Discord."
+"I am open to all feedback, suggestions, and ideas!","Я открыт к любым отзывам, предложениям и идеям!",我对所有反馈、建议和想法持开放态度！,"Je suis ouvert à  tous commentaires, suggestions et idées !","Estou aberto a todos os comentários, sugestões e ideias!","Estou aberto a todos os comentários, sugestões e ideias!","¡Estoy abierto a todo tipo de comentarios, sugerencias e ideas!"
+Default 18,По умолчанию 18,默认 18,Par défaut 18,Padrão 18,Padrão 18,Predeterminado 18
+Default 400,По умолчанию 400,默认 400,Par défaut 400,Padrão 400,Padrão 400,Predeterminado 400
+Hud Shift,Сдвиг HUD,平视显示器移位,Changement HUD,Mudança de Hud,Mudança de Hud,Desplazamiento del HUD
+Easier Access,Облегченный доступ,更方便的访问,Accès plus facile,Acesso mais fácil,Acesso mais fácil,Acceso más fácil
+Always Visible Override,Принудит. всегда видимо,始终可见覆盖,Remplacement toujours visible,Substituição sempre visível,Substituição sempre visível,Forzar visibilidad permanente
+Always Shown,всегда отображать чит-меню,始终显示,Toujours affiché,Sempre mostrado,Sempre mostrado,Siempre visible
+Always Hidden,Принудит. всегда скрыто,始终隐藏,Toujours caché,Sempre oculto,Sempre oculto,Siempre oculto
+Metro Button,Функция для ABL,地铁按钮,Bouton Metro,Botão Metrô,Botão Metro,Botón Metro
+Low Stamina Popup,убирает выскакивающие уведомления,低耐力弹出窗口,Fenêtre contextuelle de stamina bass,Pop-up de baixa resistência,Pop-up de baixa stamina,Aviso de resistencia baja
+On Ability Upgrade,скрывает рекомендации сборок,关于能力提升,Sur l'upgrade des capacités,Na atualização de habilidade,Na melhoria de habilidade,Al mejorar una habilidad
+Snowball or Poster,Снежок или постер,雪球或海报,Boule de neige ou Poster,Bola de neve ou pôster,Bola de neve ou pôster,Bola de nieve o póster
+Recommended for 4:3,Рекоменд. для 4:3,推荐4:3,Recommandé pour 4:3,Recomendado para 4:3,Recomendado para 4:3,Recomendado para 4:3
+HP Warning,меняется от здоровья,惠普警告,Avertissement HP,Aviso HP,Aviso de Vida,Aviso de vida baja
+Enemy HP Warning,меняется от здоровья врага,敌方生命值警告,Avertissement HP ennemi,Aviso de HP inimigo,Aviso de Vida inimigo,Aviso de vida baja del enemigo
+Compact Layout,Компактный вид,布局紧凑,Disposition compacte,Layout compacto,Layout compacto,Diseño compacto
+Cleaner Skills,Убрать фон способностей,清洁技能,Compétences plus propres,Habilidades de limpeza,Habilidades mais limpas,Habilidades más limpias
+Cleaner Items,Убрать фон у предметов,清洁用品,Articles plus propres,Itens mais limpos,Itens mais limpos,Objetos más limpios
+Always Visible Boost,Всегда видно ускорение,始终可见的提升,Boost toujours visible,Impulso sempre visível,Impulso sempre visível,Boost siempre visible
+Realtime Drain Countdown,Показать время до перехода в чистые души,实时排水倒计时,Compte à  rebours du vidage de vie en temps réel,Contagem regressiva de drenagem em tempo real,Contagem regressiva de drenagem em tempo real,Cuenta regresiva de recarga en tiempo real
+Mirror unsecured gold number,Отзеркаливать ненадежные души,镜像无担保金号,Mirroiter l'or non-sécurisé,Espelhar número ouro inseguro,Espelhar número ouro inseguro,Reflejar número de almas no aseguradas
+Realtime Key Inputs,Нажатия в реальном времени,实时按键输入,Inputs des touches en temps réel,Principais entradas em tempo real,Teclas em tempo real,Pulsaciones de teclas en tiempo real
+Angle and Speed,Угол и скорость,角度和速度,Angle et vitesse,Ângulo e Velocidade,Ângulo e Velocidade,Ángulo y velocidad
+Estimated ult cooldowns under top-bar ult icons,Примерная оценка кулдаунов ульт под иконками сверху,顶栏 ult 图标下的预计 ult 冷却时间,Cooldown Ulti estimé en-dessous des icônes des persos,Cooldowns estimados de ult nos ícones de ult da barra superior,Cooldowns estimados de suprema nos ícones de suprema da barra superior,Tiempos de reutilización estimados de ult bajo los íconos de ult de la barra superior
+HIGH FPS IMPACT WARNING!,ВНИМАНИЕ: ВЫСОКАЯ НАГРУЗКА НА FPS!,高帧率冲击警告！,AVERTISSEMENT D'IMPACT FPS ÉLEVÉ !,AVISO DE IMPACTO DE ALTO FPS!,AVISO DE IMPACTO DE FPS ALTO!,¡ADVERTENCIA DE IMPACTO DE ALTOS FPS!
+Customizable Unsecured Souls,Настраиваемые ненадежные души,可定制的无保障灵魂,Âmes non-sécurisées personnalisables,Almas Inseguras Personalizáveis,Almas Inseguras Personalizáveis,Almas no seguras personalizables
+Simplified Minimap,Упрощенная миникарта,简化的小地图,Mini-carte simplifiée,Minimapa simplificado,Minimapa simplificado,Minimapa simplificado
+Ability Menu Open,Открыто меню скиллов,能力菜单打开,Menu de capacité ouvert,Menu de habilidades aberto,Menu de habilidades aberto,Menú de habilidades abierto
+Scoreboard Open,Открыта таблица счёта,记分牌公开赛,Tableau de bord ouvert,Placar aberto,Placar aberto,Marcador abierto
+Play current announcer voice and volume.,Проиграть текущий голос и громкость озвучки.,播放当前播音员的声音和音量。,Jouez la voix et le volume actuels de l'annonceur.,Reproduza a voz e o volume do locutor atual.,Reproduza a voz e o volume do locutor atual.,Reproduzca la voz y el volumen del locutor actual.
+Play current announcer voice.,Проиграть текущий голос.,播放当前提示音效的声音,Jouer la voix actuelle de l'annonceur.,Reproduzir a voz do locutor atual.,Reproduzir a voz do locutor atual.,Reproduce la voz del locutor actual.
+First Spawns,Первые спавны,第一个产卵,Premières apparitions,Primeiras desovas,Primeiro Nascimento,Primeros engendros
+Buff Reminder,Напоминание о рунах,增益提醒,Rappel de buff,Lembrete de bônus,Lembrete de Buff,Recordatorio de mejora
+Seconds Before Spawn,Секунд до появления,生成前几秒,Secondes avant l'apparition,Segundos antes do nascimento,Segundos antes do nascimento,Segundos antes del desove
+Ding to Check Minimap,Звуковое напоминание о миникарте,叮查看小地图,Ding de rappel pour vérifier la mini-carte,Ding para verificar o minimapa,Ding para verificar o minimapa,Ding para comprobar el minimapa
+In Seconds,В секундах,几秒钟内,En secondes,Em segundos,Em segundos,En Segundos
+Open random game when dead,Открывать случайную игру при смерти,死亡时打开随机游戏,Ouvrir un jeu aléatoire une fois mort,Abra o jogo aleatório quando estiver morto,Abra o jogo aleatório quando estiver morto,Abrir juego aleatorio cuando esté muerto.
+Wraithjack,Wraithjack,二十一点,Wraithjack,Wraithjack,Wraithjack,Wraithjack
+Buff Filter,Фильтр баффов,Buff 过滤,Filtre des buffs,Filtro de bônus,Filtro de Buff,Filtro de mejora
+click here,нажмите сюда,点击这里,Clique ici,Clique aqui,Clique aqui,haga clic aquí
+Click Radius,Радиус клика,单击半径,Zone de clic,Clique em Raio,Raio do click,Haga clic en Radio
+Current Size,Размер текущего,当前尺寸,Taille actuelle,Tamanho atual,Tamanho atual,Tamaño actual
+Enable Clean Stacks,Чистые стаки,启用整洁层数显示,Activer des stacks plus clean,Habilitar pilhas limpas,Habilitar pilhas limpas,Habilitar pilas limpias
+Hero Icon Size,Размер иконок героев,英雄图标大小,Taille de l'icône des héros,Tamanho do ícone do herói,Tamanho do ícone do herói,Tamaño del icono del héroe
+Icon Shrink,Сжатие иконок,图标缩小,Rétrécicement des icônes,Encolher ícone,Encolher ícone,Icono Reducir
+Improved Hint,Улучшенная подсказка,改进的提示,Indice amélioré,Dica melhorada,Dica melhorada,Pista mejorada
+Lane with Party,Линия с группой,与队伍同路线,Lane avec le groupe,Pista com Festa,Lane com grupo,Carril con fiesta
+Minimalist Opacity,Прозрачность минималистичной карты,极简不透明度,Opacité minimaliste,Opacidade minimalista,Opacidade minimalista,Opacidad minimalista
+Nicknames,Никнеймы,昵称,Pseudos,Apelidos,Apelidos,Apodos
+Player Icon Size,Размер иконки игрока,玩家图标大小,Taille de l'icône du joueur,Tamanho do ícone do jogador,Tamanho do ícone do jogador,Tamaño del icono del jugador
+Refresh Rate,Частота обновления,刷新率,Taux de rafraîchissement,Taxa de atualização,Taxa de atualização,Frecuencia de actualización
+Show FPS,Показать FPS,显示帧率,Afficher les FPS,Mostrar FPS,Mostrar FPS,Mostrar FPS
+Show Frame,Показать кадр,显示框架,Afficher les frames,Mostrar quadro,Mostrar quadro,Mostrar marco
+Show Memory,Показать память,显示内存,Afficher la mémoire,Mostrar memória,Mostrar memória,Mostrar memoria
+Show Position,Показать позицию,显示位置,Afficher la position,Mostrar posição,Mostrar posição,Mostrar posición
+Show Tick,Показать тики,显示Tick,Afficher les ticks,Mostrar marca,Mostrar marca,Mostrar garrapata
+Shrink Distance,Дистанция сжатия,收缩距离,Distance de rétrécissement,Diminuir distância,Diminuir distância,Reducir la distancia
+Total Size,Размер общего,总大小,Taille totale,Tamanho total,Tamanho total,Tamaño total
+Ult Indicator,Индикатор ульты,大招指示器,Indicateur Ult,Indicador Ult,Indicador de suprema,Indicador definitivo
+Zip Thickness,Толщина зиплайна,滑索厚度,Épaisseur de la tyrolienne,Espessura da Tirolesa,Espessura da tirolesa,Grosor de la cremallera
+"Depending on complexity and work involved, contact me on","В зависимости от сложности и объема работ, свяжитесь со мной в",具体价格取决于复杂度和工作量，请通过以下方式联系我：,"En fonction de la complexité et du travail à  réaliser, contactez-moi au","Dependendo da complexidade e do trabalho envolvido, entre em contato comigo pelo telefone","Dependendo da complexidade e do trabalho envolvido, entre em contato comigo pelo telefone","Dependiendo de la complejidad y el trabajo involucrado, contácteme al"
+"If you encounter issues, need help, or have any feedback join the Discord.","Если возникли проблемы, нужна помощь или есть идеи, присоединяйтесь к Discord.",如果您遇到问题、需要帮助或有任何反馈，请加入 Discord。,"Si vous rencontrez des problèmes, avez besoin d'aide ou avez des commentaires, rejoignez le Discord.","Se você encontrar problemas, precisar de ajuda ou tiver algum comentário, junte-se ao Discord.","Se você encontrar problemas, precisar de ajuda ou tiver algum comentário, junte-se ao Discord.","Si tiene problemas, necesita ayuda o tiene algún comentario, únase a Discord."
+Reset section runtime options,Сбросить runtime-настройки секции,重置部分运行时选项,Réinitialiser les options d'exécution de la section,Redefinir opções de tempo de execução da seção,Redefinir opções de tempo de execução da seção,Restablecer opciones de tiempo de ejecución de sección
+Reset section to defaults,Сбросить секцию к значениям по умолчанию,将部分重置为默认值,Réinitialiser la section aux valeurs par défaut,Redefinir seção para os padrões,Redefinir seção para os padrões,Restablecer sección a los valores predeterminados
+DO NOT PRESS ANY KEYS UNTIL COMPLETE UNLESS PROMPTED,НЕ НАЖИМАЙТЕ КЛАВИШИ ДО ЗАВЕРШЕНИЯ ЕСЛИ НЕ БЫЛО ЗАПРОСОВ НА ЭТО,除非出现提示，否则请勿按任何键直至完成,APPUIE SUR RIEN DU TOUT SAUF SI PRÉCISÉ (JE TE VOIS HYN),"NÃO PRESSIONE NENHUMA TECLA ATÉ CONCLUIR, A MENOS QUE SOLICITADO","NÃO PRESSIONE NENHUMA TECLA ATÉ CONCLUIR, A MENOS QUE SOLICITADO",NO PRESIONE NINGUNA TECLA HASTA COMPLETAR A MENOS QUE SE LE SOLICITE
+"If saving stalls, open your shop.","Если сохранение зависло, откройте магазин.",如果节省摊位，就开店。,"Si la sauvegarde bloque, ouvre le shop","Se estiver salvando barracas, abra sua loja.","Se o salvamento travar, abra a loja.","Si ahorras puestos, abre tu tienda."
+Play Sound,Воспроизвести звук,播放声音,Jouer le son,Reproduzir som,Reproduzir som,Reproducir sonido
+1st,1-й,1st,1er,1º,1º,1er
+2nd,2-й,2nd,2ème,2º,2º,2do
+3rd,3-й,3rd,3ème,3º,3º,3er
+Size of your current ammo.,Размер текущих патронов.,当前弹药显示的大小,La taille de l'affichage des munitions actuelles.,Tamanho da sua munição atual.,Tamanho da sua munição atual.,Tamaño de tu munición actual.
+Size of your total ammo.,Размер общего количества патронов.,总弹药显示的大小,La taille de l'affichage des munitions totales.,Tamanho da sua munição total.,Tamanho da sua munição total.,Tamaño de tu munición total.
+Cleans up the styling of reticle hints.,Улучшает стиль подсказок прицела.,清理准星提示（reticle hints）的样式,Nettoie le style des indices du réticule.,Limpa o estilo das dicas do retículo.,Limpa o estilo das dicas do retículo.,Limpia el estilo de las sugerencias de retícula.
+Automatically selects Lane Preference: With Party for matchmaking.,Автоматически выбирает предпочтение линии: с группой.,匹配时自动选择“分路偏好：与队伍一起,Sélectionne automatiquement la préférence de lane : Avec le groupe pour le matchmaking.,Seleciona automaticamente Preferência de pista: Com grupo para matchmaking.,Seleciona automaticamente Preferência de lane: Com grupo para matchmaking.,Selecciona automáticamente Preferencia de carril: Con grupo para emparejamiento.
+Shows nicknames of all players in the game within the top bar.,Показывает никнеймы всех игроков на верхней панели.,在顶栏显示本局所有玩家的昵称,Affiche les pseudos de tous les joueurs dans la barre supérieure.,Mostra os apelidos de todos os jogadores do jogo na barra superior.,Mostra os apelidos de todos os jogadores do jogo na barra superior.,Muestra apodos de todos los jugadores del juego en la barra superior.
+Show the ultimate indicator for V1 healthbars.,Показывает индикатор ульты для V1-полосок здоровья.,为 V1 血条显示大招指示器,Affiche l'indicateur d'ultime pour les barres de vie V1,Mostre o indicador final para barras de saúde V1.,Mostre o indicador de suprema para barras de saúde V1.,Muestra el indicador definitivo para las barras de salud V1.
+Colored enemy healthbar warnings when at significant thresholds.,Цветовые предупреждения по HP врага на важных порогах.,当敌人的生命值达到重要阈值时，会发出彩色的敌人生命值警告。,Avertissements colorés de barre de vie ennemie à  des seuils importants,Avisos coloridos da barra de saúde do inimigo quando em limites significativos.,Avisos coloridos da barra de saúde do inimigo quando em limites significativos.,Advertencias coloreadas en la barra de salud del enemigo cuando se encuentran en umbrales significativos.
+Enemy healthbar enhancements.,Улучшения полосы здоровья врага.,敌人生命值栏增强。,Améliorations des barres de vie ennemies,Melhorias na barra de saúde do inimigo.,Melhorias na barra de saúde do inimigo.,Mejoras en la barra de salud del enemigo.
+Opacity of the background of Minimalist Minimap.,Прозрачность фона минималистичной миникарты.,极简小地图背景的不透明度,Opacité de l'arrière-plan de la mini-carte minimaliste.,Opacidade do fundo do Minimapa Minimalista.,Opacidade do fundo do Minimapa Minimalista.,Opacidad del fondo del Minimapa minimalista.
+"The click hitbox of your pings or clicks, this can help make pings more accurate.",Радиус области клика для пингов и отметок; помогает делать их точнее.,你的标记/点击的判定框（hitbox），可帮助提高标记准确性,La hitbox des pings ou des clicks afin d'être + précis,A hitbox de cliques de seus pings ou cliques pode ajudar a tornar os pings mais precisos.,A hitbox de cliques de seus pings ou cliques pode ajudar a tornar os pings mais precisos.,"El hitbox de clic de sus pings o clics, esto puede ayudar a que los pings sean más precisos."
+How much icons will shrink when overlapping with others.,Насколько иконки сжимаются при перекрытии.,图标重叠时缩小的幅度,Comment les icônes se rétrécissent quand elles se superposent,Quanto os ícones diminuirão ao se sobreporem a outros.,Quanto os ícones diminuirão ao se sobreporem a outros.,Cuánto se reducirán los iconos al superponerse con otros.
+The size of other players on the minimap.,Размер иконок других игроков на миникарте.,小地图上其他玩家图标的大小,La taille des autres joueurs sur la mini-carte.,O tamanho dos outros jogadores no minimapa.,O tamanho dos outros jogadores no minimapa.,El tamaño de otros jugadores en el minimapa.
+The size of yourself on the minimap.,Размер вашей иконки на миникарте.,小地图上自己图标的大小,La taille de ton icône sur la mini-carte.,O seu tamanho no minimapa.,O seu tamanho no minimapa.,El tamaño de ti mismo en el minimapa.
+"The distance threshold in which icons will start shrinking. Lower is more accurate positions, higher is easier visibility.","Дистанция, при которой иконки начинают сжиматься. Меньше — точнее позиции, больше — лучше видимость.",图标开始缩小的距离阈值数值越低位置越准确，越高越易看清,"La distance à partir de laquelle les icônes commencent à rétrécir. Plus bas = positions plus précises, plus haut = meilleure visibilité","O limite de distância no qual os ícones começarão a diminuir. Quanto mais baixas são as posições mais precisas, mais altas são as visibilidades mais fáceis.","O limite de distância no qual os ícones começarão a diminuir. Quanto mais baixas são as posições mais precisas, mais altas são as visibilidades mais fáceis.","El umbral de distancia en el que los iconos comenzarán a reducirse. Más abajo son posiciones más precisas, más arriba es una visibilidad más fácil."
+The thickness of the Zipline lines across the map.,Толщина линий зиплайна на миникарте.,地图上滑索（Zipline）线条的粗细,L'épaisseur de la tyrolienne sur la carte,A espessura das linhas de Tirolesa no mapa.,A espessura das Tirolesas no mapa.,El grosor de las líneas de Zipline a lo largo del mapa.
+How fast the minimap refreshes.,Частота обновлений миникарты.,小地图刷新速度,La fréquence de rafraîchissement de la carte,A rapidez com que o minimapa é atualizado.,A rapidez com que o minimapa é atualizado.,Qué tan rápido se actualiza el minimapa.
+RAM and GPU Memory real time usage statistics.,Статистика использования RAM и видеопамяти в реальном времени.,内存 与 GPU 显存的实时占用统计,Affiche les statistiques en temps réel de la RAM et de la mémoire GPU.,Estatísticas de uso de memória RAM e GPU em tempo real.,Estatísticas de uso de memória RAM e GPU em tempo real.,Estadísticas de uso de memoria RAM y GPU en tiempo real.
+Position and Velocity real time statistics.,Статистика позиции и скорости в реальном времени.,位置与速度的实时统计,Affiche les statistiques en temps réel de position et de vitesse.,Estatísticas de posição e velocidade em tempo real.,Estatísticas de posição e velocidade em tempo real.,Estadísticas de posición y velocidad en tiempo real.
+"Shows real time tick information, mostly useless.","Показывает информацию о тиках в реальном времени, в основном бесполезно.",显示实时 tick 信息（基本没用）,"Affiche les informations de tick en temps réel, globalement peu utile.","Mostra informações de ticks em tempo real, em sua maioria inúteis.","Mostra informações de ticks em tempo real, em sua maioria inúteis.","Muestra información de ticks en tiempo real, en su mayoría inútil."
+Shows raw FPS count.,Показывает текущий FPS.,显示原始 FPS 数值,Affiche le nombre brut de FPS.,Mostra a contagem bruta de FPS.,Mostra a contagem bruta de FPS.,Muestra el recuento de FPS sin procesar.
+"Shows current frame count, mostly useless.","Показывает текущий номер кадра, в основном бесполезно.",显示当前帧数（基本没用）,Affiche le nombre actuel de frames (pas utile),"Mostra a contagem de quadros atual, quase sempre inútil.","Mostra a contagem de quadros atual, quase sempre inútil.","Muestra el recuento de fotogramas actual, en su mayoría inútiles."
+The hero you automatically switch to on launch or after saving..,"Герой, на которого автоматически переключает при запуске или после сохранения.",启动时或保存后自动切换到的英雄,Le perso avec lequel tu vas automatiquement charger après le lancement ou la sauvegarde,O herói para o qual você muda automaticamente ao iniciar ou após salvar.,O herói para o qual você muda automaticamente ao iniciar ou após salvar.,El héroe al que cambias automáticamente al iniciar o después de guardar.
+Toggle the hitmarkers when attacking enemies.,Включает/выключает хитмаркеры при атаке врагов.,切换攻击敌人时的命中标记（hitmarkers）,Montre ou non les hitmarkers quand tu touche un ennemi,Alterne os marcadores de acerto ao atacar inimigos.,Alterne os marcadores de acerto ao atacar inimigos.,Alterna los marcadores de impacto al atacar a los enemigos.
+Choose which bridge buff sound variants can play.,"Выберите, какие варианты звука руны могут воспроизводиться.",选择 桥梁buff 可播放的音效变体,Choisit quelles variantes sonores du buff de pont peuvent jouer.,Escolha quais variantes de som de buff de ponte podem ser reproduzidas.,Escolha quais variantes de som de buff de ponte podem ser reproduzidas.,Elija qué variantes de sonido de mejora del puente pueden reproducir.
+"Which events cause a sound to play. Camps are one time, Buff is every 5 minutes.","Какие события воспроизводят звук. Крипы — один раз, руна — каждые 5 минут.",哪些事件会触发声音播放Camps 只播一次，Buff 每 5 分钟播放一次,"Définit quels événements déclenchent un son. Camps = une seule fois (spawn) , Buff = toutes les 5 minutes","Quais eventos fazem com que um som seja reproduzido. Os acampamentos são únicos, o Buff é a cada 5 minutos.","Quais eventos fazem com que um som seja reproduzido. Os acampamentos são únicos, o Buff é a cada 5 minutos.","Qué eventos hacen que se reproduzca un sonido. Los campamentos son una vez, Buff es cada 5 minutos."
+FPS Impact:,Влияние на FPS:,FPS 影响：,Impact sur les FPS  :,Impacto FPS:,Impacto no FPS:,Impacto de FPS:
+Created By:,Автор фичи:,创建者：,Créé par :,Criado por:,Criado por:,Creado por:
+Author:,Автор:,作者：,Auteur:,Autor:,Autor:,Autor:
+Voice Actor:,Актёр озвучки:,配音演员：,Acteur vocal :,Ator de voz:,Ator de voz:,Actor de voz:
+None,Нет,没有任何,Aucun,Nenhum,Nenhum,Ninguno
+Low,Низкая,低的,Faible,Baixo,Baixo,Bajo
+Medium,Средняя,中等,Moyen,Médio,Médio,Medio
+High,Высокая,高的,Haut,Alto,Alto,Alto
+Adjust horizontal position of the player healthbar.,Изменяет горизонтальное положение панели здоровья игрока.,调整玩家血条水平位置,Ajuste la position horizontale de la barre de vie du joueur.,Ajuste a posição horizontal da barra de saúde do jogador.,Ajuste a posição horizontal da barra de saúde do jogador.,Ajusta la posición horizontal de la barra de salud del jugador.
+Adjust opacity of the player healthbar.,Изменяет прозрачность панели здоровья игрока.,调整玩家血条不透明度,Ajuste l'opacité de la barre de vie du joueur.,Ajuste a opacidade da barra de saúde do jogador.,Ajuste a opacidade da barra de saúde do jogador.,Ajusta la opacidad de la barra de salud del jugador.
+Adjust size of the player healthbar.,Изменяет размер панели здоровья игрока.,调整玩家血条大小,Ajuste la taille de la barre de vie du joueur.,Ajuste o tamanho da barra de saúde do jogador.,Ajuste o tamanho da barra de saúde do jogador.,Ajusta el tamaño de la barra de salud del jugador.
+Adjust vertical position of the player healthbar.,Изменяет вертикальное положение панели здоровья игрока.,调整玩家血条垂直位置,Ajuste la position verticale de la barre de vie du joueur.,Ajuste a posição vertical da barra de saúde do jogador.,Ajuste a posição vertical da barra de saúde do jogador.,Ajusta la posición vertical de la barra de salud del jugador.
+An always visible zipline boost overlay.,Постоянно отображаемый оверлей буста зиплайна.,始终可见的滑索加速（zipline boost）叠加层,Un overlay du boost tyrolienne tjrs visible,Uma sobreposição de tirolesa sempre visível.,Uma sobreposição de tirolesa sempre visível.,Una superposición de refuerzo de tirolesa siempre visible.
+Centers ESC menu elements to make them easier to access.,Центрирует элементы меню ESC для более удобного доступа.,将 ESC 菜单元素居中，便于操作,Centre les éléments du menu ESC pour les rendre plus faciles d'accès.,Centraliza os elementos do menu ESC para torná-los mais fáceis de acessar.,Centraliza os elementos do menu ESC para torná-los mais fáceis de acessar.,Centra los elementos del menú ESC para facilitar el acceso a ellos.
+Centers friends list area in ESC menu.,Центрирует блок списка друзей в меню ESC.,将 ESC 菜单中的好友列表区域居中,Centre la liste d'amis dans le menu ESC.,Centraliza a área da lista de amigos no menu ESC.,Centraliza a área da lista de amigos no menu ESC.,Centros de área de lista de amigos en el menú ESC.
+Adds a STAT button on profile rows that opens Statlocker for that account.,Добавляет кнопку STAT в строки профиля и открывает Statlocker для этого account ID.,在资料行上添加 STAT 按钮，并为该账号打开 Statlocker,Ajoute un bouton STAT sur le profil qui ouvre Statlocker pour ce profil,Adiciona um botão STAT nas linhas do perfil que abre o Statlocker para essa conta.,Adiciona um botão STAT nas linhas do perfil que abre o Statlocker para essa conta.,Agrega un botón STAT en las filas del perfil que abre Statlocker para esa cuenta.
+Cleans up visuals of abilities significantly to reduce clutter.,"Сильно упрощает визуал способностей, уменьшая перегрузку.",大幅清理技能特效以减少画面杂乱,Nettoie considérablement les visuels des capacités pour faciliter la vue,Limpa significativamente o visual das habilidades para reduzir a desordem.,Limpa significativamente o visual das habilidades para reduzir a confusão.,Limpia significativamente las imágenes de las habilidades para reducir el desorden.
+Cleans up visuals of the item bar significantly to reduce clutter.,"Сильно упрощает визуал панели предметов, уменьшая перегрузку.",大幅清理物品栏视觉效果以减少杂乱,Nettoie considérablement les visuels de la barre d'éléments pour faciliter la vue,Limpa significativamente o visual da barra de itens para reduzir a confusão.,Limpa significativamente o visual da barra de itens para reduzir a confusão.,Limpia significativamente las imágenes de la barra de elementos para reducir el desorden.
+Cleans up visuals of the minimap significantly to reduce clutter.,"Сильно упрощает визуал миникарты, уменьшая перегрузку.",大幅清理小地图视觉效果以减少杂乱,Simplifie fortement les visuels de la mini-carte pour faciliter la vue,Limpa significativamente o visual do minimapa para reduzir a confusão.,Limpa significativamente o visual do minimapa para reduzir a confusão.,Limpia significativamente las imágenes del minimapa para reducir el desorden.
+Cleans up visuals of the shop menu significantly to reduce clutter.,"Сильно упрощает визуал магазина, уменьшая перегрузку.",大幅清理商店菜单视觉效果以减少杂乱,Simplifie fortement les visuels du menu boutique pour faciliter la vue,Limpa significativamente o visual do menu da loja para reduzir a desordem.,Limpa significativamente o visual do menu da loja para reduzir a confusão.,Limpia significativamente las imágenes del menú de la tienda para reducir el desorden.
+Colored healthbar warnings when at significant thresholds.,Цветовые предупреждения полосы здоровья на важных порогах.,生命值在关键阈值时的彩色血条警告,Avertissements colorés de barre de vie à  des seuils importants.,Avisos coloridos da barra de saúde quando em limites significativos.,Avisos coloridos da barra de saúde quando em limites significativos.,Advertencias de colores en la barra de salud cuando se encuentran en umbrales significativos.
+Current ammo inside of your magazine.,Текущее количество патронов в магазине.,弹匣内当前子弹数,La quantité actuelle de munitions dans votre chargeur.,Munição atual dentro da sua revista.,Munição atual dentro do seu pente.,Munición actual dentro de tu cargador.
+Customize the styling of damage numbers.,Настраивает стиль чисел урона.,自定义伤害数字的样式,Personnalise le style des nombres de dégâts.,Personalize o estilo dos números de danos.,Personalize o estilo dos números de danos.,Personaliza el estilo de los números de daños.
+Customize the visuals of the incoming damage panel.,Настраивает внешний вид панели входящего урона.,自定义受击面板的视觉效果,Personnalise les visuels du panneau de dégâts subis.,Personalize o visual do painel de danos recebidos.,Personalize o visual do painel de danos recebidos.,Personaliza las imágenes del panel de daños entrante.
+Customize unsecured souls visuals.,Настраивает внешний вид ненадёжных душ.,自定义“未稳获魂魄”的视觉效果,Personnalise les visuels des âmes non sécurisées.,Personalize o visual das almas inseguras.,Personalize o visual das almas inseguras.,Personaliza imágenes de almas no seguras.
+Customize visibility of target reticle when abilities or items visually show on allies and enemies.,"Настраивает видимость ромба-цели, когда способности или предметы отображаются на союзниках и врагах.",自定义目标准星可见性（当技能/物品在友军和敌人身上有视觉表现时）,Personnalise la visibilité du réticule lorsque des capacités ou objets s'affichent sur alliés et ennemis.,Personalize a visibilidade do retículo alvo quando habilidades ou itens aparecerem visualmente em aliados e inimigos.,Personalize a visibilidade do retículo alvo quando habilidades ou itens aparecerem visualmente em aliados e inimigos.,Personaliza la visibilidad de la retícula del objetivo cuando las habilidades o los elementos se muestran visualmente en aliados y enemigos.
+Customized healthbars for better visibility or flair.,Кастомные полосы здоровья для лучшей читаемости и стиля.,自定义血条，以提升可见性或风格效果,Barres de vie personnalisées pour une meilleure lisibilité ou un meilleur style.,Barras de saúde personalizadas para melhor visibilidade ou talento.,Barras de saúde personalizadas para melhor visibilidade ou talento.,Barras de salud personalizadas para una mejor visibilidad o estilo.
+Decide what style of item to display the cooldown of.,"Выберите, какие типы предметов показывать в кулдаунах.",决定用哪种物品样式来显示冷却,Détermine quel style d'objet affiche le cooldown,Decida qual estilo de item exibir o tempo de espera.,Decida qual estilo de item exibir o tempo de espera.,Decide de qué estilo de elemento mostrar el tiempo de reutilización.
+Draws the minimap over all other UI elements for improved visibility.,Рисует миникарту поверх всех элементов интерфейса для лучшей видимости.,将小地图绘制在所有其他 UI 元素之上，以提升可见性,Affiche la mini-carte au-dessus des autres éléments d'interface pour une meilleure visibilité.,Desenha o minimapa sobre todos os outros elementos da IU para melhorar a visibilidade.,Desenha o minimapa sobre todos os outros elementos da UI para melhorar a visibilidade.,Dibuja el minimapa sobre todos los demás elementos de la interfaz de usuario para mejorar la visibilidad.
+Forcibly hides testing tools at all times.,Принудительно скрывает инструменты тестирования всегда.,强制始终隐藏测试工具,Force le masquage permanent des outils de test.,Oculta à força as ferramentas de teste em todos os momentos.,Oculta à força as ferramentas de teste em todos os momentos.,Oculta a la fuerza las herramientas de prueba en todo momento.
+Forcibly shows testing tools at all times.,Принудительно показывает инструменты тестирования всегда.,强制始终显示测试工具,Force l'affichage permanent des outils de test.,Mostra à força ferramentas de teste em todos os momentos.,Mostra à força ferramentas de teste em todos os momentos.,Muestra a la fuerza herramientas de prueba en todo momento.
+Greys out heros in the top bar when missing on the map.,"Затемняет героев на верхней панели, когда они пропали с карты.",当英雄在地图上消失时，在顶栏将其置灰,Assombris fortement les héros dans la barre supérieure lorsqu'ils ne sont pas visibles,Desaparece os heróis na barra superior quando faltam no mapa.,Acinzenta os heróis na barra superior quando somem do mapa.,Atenúa a los héroes en la barra superior cuando faltan en el mapa.
+Highlighted abilities showing you what you should upgrade depending on build.,"Подсвечивает способности, которые стоит улучшать в зависимости от билда.",高亮技能，提示你根据流派/构筑应该升级什么,Montre ou non les capacités suggérées du build,Habilidades destacadas mostrando o que você deve atualizar dependendo da construção.,Habilidades destacadas mostrando o que você deve melhorar dependendo da build.,Habilidades resaltadas que te muestran lo que debes actualizar según la compilación.
+Improve Ability Stacks,Улучшает отображение стаков способностей.,改进技能层数（Ability Stacks）,Améliore l'affichage des stacks de capacités.,Melhore as pilhas de habilidades,Melhore as pilhas de habilidades,Mejorar las pilas de habilidades
+"Makes the minimap rotate with player view, this is just for fun.","Поворачивает миникарту вместе с направлением игрока, опция для фана.",让小地图随玩家视角旋转（仅供娱乐）,"Fait pivoter la mini-carte avec la vue du joueur,(ça donne v'là le tournis)","Faz o minimapa girar com a visualização do jogador, isso é apenas para diversão.","Faz o minimapa girar com a visualização do jogador, isso é apenas para diversão.","Hace que el minimapa gire con la vista del jugador, esto es sólo por diversión."
+Menu when you receive a punishment for breaking game rules.,"Меню, которое появляется при наказании за нарушение правил игры.",违反游戏规则受到惩罚时弹出的菜单,"C'est genre si t'es toxique et que t'as un cooldown, ou parce que t'as quitté et que dcp t'as une mauvaise rép",Menu quando você recebe uma punição por quebrar as regras do jogo.,Menu quando você recebe uma punição por quebrar as regras do jogo.,Menú cuando recibes un castigo por romper las reglas del juego.
+"Only download the filter file of the filter you want, nothing else.","Скачивайте только файл нужного фильтра, ничего лишнего.",只下载你想要的滤镜文件，不需要其他内容,Télécharge juste le filtre voulu et rien d'autre,"Baixe apenas o arquivo de filtro do filtro desejado, nada mais.","Baixe apenas o arquivo de filtro do filtro desejado, nada mais.","Descargue solo el archivo de filtro del filtro que desee, nada más."
+Play an audio reminder to remember to look at the minimap.,"Проигрывает звуковое напоминание, чтобы не забывать смотреть на миникарту.",播放音效提醒，提醒你查看小地图,Joue un rappel audio pour penser à  regarder la mini-carte.,Reproduza um lembrete de áudio para lembrar de olhar o minimapa.,Reproduza um lembrete de áudio para lembrar de olhar o minimapa.,Reproduzca un recordatorio de audio para recordar mirar el minimapa.
+Ragnarok Online damage visuals with improved fancy styling.,Визуал чисел урона в стиле Ragnarok Online с улучшенным оформлением.,Ragnarok Online 风格的伤害显示，并增强华丽样式,Visuels de dégâts façon Ragnarok Online avec un style plus travaillé,Ragnarok Online causa danos visuais com estilo sofisticado aprimorado.,Visuais de dano melhorados com estilo chique do Ragnarok Online,Imágenes de daños de Ragnarok Online con un estilo elegante mejorado.
+Real time key input visual.,Визуализация нажатий клавиш в реальном времени.,实时按键输入可视化,Bah tu sais ce que c'est un overlay non?,Visual de entrada de teclas em tempo real.,Visual de entrada de teclas em tempo real.,Visualización de entrada clave en tiempo real.
+See your view angle and speed.,Показывает угол обзора и скорость.,查看你的视角角度与速度,"Affiche l'angle de vue (N,S,E,O) et la vitesse.",Veja seu ângulo de visão e velocidade.,Veja seu ângulo de visão e velocidade.,Vea su ángulo de visión y velocidad.
+Shifts the HUD for better visual support for 16:10 resolutions.,Смещает HUD для лучшей поддержки разрешений 16:10.,为 16:10 分辨率提供更好的视觉支持，调整 HUD 位置,Adapte le HUD pour les gens en 16:10,Muda o HUD para melhor suporte visual para resoluções 16:10.,Muda o HUD para melhor suporte visual para resoluções 16:10.,Cambia el HUD para un mejor soporte visual para resoluciones 16:10.
+Shifts the HUD for better visual support for 4:3 resolutions.,Смещает HUD для лучшей поддержки разрешений 4:3.,为 4:3 分辨率提供更好的视觉支持，调整 HUD 位置,Adapte le HUD pour les gens en 4:3,Muda o HUD para melhor suporte visual para resoluções 4:3.,Muda o HUD para melhor suporte visual para resoluções 4:3.,Cambia el HUD para un mejor soporte visual para resoluciones 4:3.
+"Show a visual indicator in the top bar of the current Guardians, Walkers, and Base.","Показывает индикатор текущих Гвардов, Уокеров и Базы на верхней панели.",在顶栏显示当前一塔、二塔和基地的视觉指示,"Affiche une minimap avec les Gardiens, Walkers et la Base actuelle","Mostra um indicador visual na barra superior dos Guardiões, Caminhantes e Base atuais.","Mostra um indicador visual na barra superior dos Guardiões, Caminhantes e Base atuais.","Muestra un indicador visual en la barra superior de los Guardianes, Caminantes y Base actuales."
+Show if you are in combat or not.,"Показывает, находитесь ли вы в бою.",显示你是否处于战斗中,Indique si vous êtes en combat ou non.,Mostre se você está em combate ou não.,Mostre se você está em combate ou não.,Muestra si estás en combate o no.
+Show player ultimate indicators on V1 healthbars.,Показывает индикаторы ульты игроков на полосах здоровья V1.,在 V1 血条上显示玩家大招指示器,Afficher les indicateurs d'ultimes du perso sur les barres de santé V1.,Mostre os indicadores finais do jogador nas barras de saúde V1.,Mostre os indicadores finais do jogador nas barras de saúde V1.,Muestra los indicadores finales del jugador en las barras de salud V1.
+Show the estimated time for unsecured souls to dissapear.,Показывает примерное время до исчезновения ненадёжных душ.,显示未稳获魂魄预计消失的时间,Affiche le temps estimé avant la disparition des âmes non sécurisées.,Mostre o tempo estimado para que as almas inseguras desapareçam.,Mostre o tempo estimado para que as almas inseguras desapareçam.,Muestra el tiempo estimado para que desaparezcan las almas inseguras.
+Shows a visual indicator in the minimap of when Bridge Buffs will spawn.,"Показывает индикатор на миникарте, когда появятся руны.",在小地图中显示桥梁 Buff 即将生成的视觉提示,Affiche un indicateur visuel sur la mini-carte pour l'apparition des Bridge Buff,Mostra um indicador visual no minimapa de quando os Bridge Buffs irão aparecer.,Mostra um indicador visual no minimapa de quando os Bridge Buffs irão aparecer.,Muestra un indicador visual en el minimapa de cuándo se generarán Bridge Buffs.
+Shows a visual indicator in the minimap of when Mid Boss will spawn.,"Показывает индикатор на миникарте, когда появится мид-босс.",在小地图中显示 Mid Boss 即将生成的视觉提示,Affiche un indicateur visuel sur la mini-carte pour l'apparition du Mid Boss,Mostra um indicador visual no minimapa de quando Mid Boss irá aparecer.,Mostra um indicador visual no minimapa de quando Mid Boss irá aparecer.,Muestra un indicador visual en el minimapa de cuándo aparecerá Mid Boss.
+"Changes urn color to know which side is favored, green for your team, red for the enemy.",Перекрашивает урну в зависимости от перевеса команд.,根据喜欢哪一边来重新着色瓮。,"Change la couleur de l'urne pour savoir quel camp est favorisé, vert pour votre équipe, rouge pour l'ennemi.","Muda a cor da urna para saber qual lado é o favorito, verde para o seu time, vermelho para o inimigo.","Muda a cor da urna para saber qual lado é o favorito, verde para o seu time, vermelho para o inimigo.","Cambia el color de la urna para saber qué bando es el favorito, verde para tu equipo, rojo para el enemigo."
+Shows a visual indicator in the top bar of the percentage difference of souls between teams.,Показывает на верхней панели процентную разницу душ между командами.,在顶栏显示两队魂魄差距百分比的视觉提示,Affiche un indicateur visuel dans la barre supérieure pour la différence en pourcentage d'âmes entre les équipes.,Mostra um indicador visual na barra superior da diferença percentual de almas entre as equipes.,Mostra um indicador visual na barra superior da diferença percentual de almas entre as equipes.,Muestra un indicador visual en la barra superior de la diferencia porcentual de almas entre equipos.
+Shows a visual indicator in the top bar of when Bridge Buffs will spawn.,"Показывает индикатор на верхней панели, когда появятся руны.",在顶栏显示桥梁 Buff 即将生成的视觉提示,Affiche un indicateur visuel dans la barre supérieure pour l'apparition des Bridge Buff,Mostra um indicador visual na barra superior de quando os Bridge Buffs irão aparecer.,Mostra um indicador visual na barra superior de quando os Buff da Ponte irão aparecer.,Muestra un indicador visual en la barra superior de cuándo se generarán Bridge Buffs.
+Shows a visual indicator in the top bar of when Mid Boss will spawn.,"Показывает индикатор на верхней панели, когда появится мид-босс.",在顶栏显示 Mid Boss 即将生成的视觉提示,Affiche un indicateur visuel dans la barre supérieure pour l'apparition du Mid Boss,Mostra um indicador visual na barra superior de quando Mid Boss irá aparecer.,Mostra um indicador visual na barra superior de quando Mid Boss irá aparecer.,Muestra un indicador visual en la barra superior de cuándo aparecerá Mid Boss.
+Shows all of your keybinds.,Показывает все ваши бинды.,显示你的所有按键绑定,Affiche tous les raccourcis clavier.,Mostra todos os seus atalhos de teclado.,Mostra todos as suas teclas.,Muestra todas sus combinaciones de teclas.
+Shows all of your player stats within the shop menu.,Показывает все ваши характеристики игрока в меню магазина.,在商店菜单中显示你的所有角色属性,Affiche toutes les statistiques du joueur dans le menu de la boutique.,Mostra todas as estatísticas do seu jogador no menu da loja.,Mostra todas as estatísticas do seu jogador no menu da loja.,Muestra todas las estadísticas de tu jugador dentro del menú de la tienda.
+Shows item cooldowns near crosshair for easier readability.,Показывает кулдауны предметов рядом с прицелом для удобства.,在准星附近显示物品冷却，便于阅读,Affiche les temps de recharge des objets près du réticule pour une meilleure lisibilité.,Mostra o tempo de espera dos itens perto da mira para facilitar a leitura.,Mostra o tempo de espera dos itens perto da mira para facilitar a leitura.,Muestra los tiempos de reutilización de los elementos cerca del punto de mira para facilitar la lectura.
+Shows the individual player souls per minute on scoreboard and the team in the top bar.,Показывает души в минуту для игроков на табло и для команды на верхней панели.,在计分板显示每位玩家的每分钟魂魄数，并在顶栏显示团队数据,Affiche les âmes par minute de chaque joueur dans le tableau des scores et l'équipe dans la barre supérieure.,Mostra as almas individuais dos jogadores por minuto no placar e o time na barra superior.,Mostra as almas individuais dos jogadores por minuto no placar e o time na barra superior.,Muestra las almas de los jugadores individuales por minuto en el marcador y el equipo en la barra superior.
+Shows the individual player's objective damage in the top bar.,Показывает урон по объектам для каждого игрока на верхней панели.,在顶栏显示每位玩家的目标物伤害,Affiche les dégâts aux objectifs de chaque joueur dans la barre supérieure.,Mostra o dano objetivo do jogador individual na barra superior.,Mostra o dano objetivo do jogador individual na barra superior.,Muestra el daño objetivo del jugador individual en la barra superior.
+Shows the individual player's unspent souls in the top bar.,Показывает непотраченные души каждого игрока на верхней панели.,在顶栏显示每位玩家未花费的魂魄数,Affiche les âmes non dépensées de chaque joueur dans la barre supérieure.,Mostra as almas não gastas de cada jogador na barra superior.,Mostra as almas não gastas de cada jogador na barra superior.,Muestra las almas no gastadas de cada jugador en la barra superior.
+Shows your character in the shop menu.,Показывает вашего героя в меню магазина.,在商店菜单中显示你的角色,Affiche le personnage dans le menu de la boutique.,Mostra seu personagem no menu da loja.,Mostra seu personagem no menu da loja.,Muestra tu personaje en el menú de la tienda.
+Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).,Сильно повышает видимость ромба-цели и подсветки порога добивания (Shiv).,显著提升目标准星可见性，并高亮处决范围（西弗）,Améliore nettement la visibilité du réticule et la mise en évidence des portées d'exécution.,Melhora significativamente a visibilidade do retículo alvo e destaque para intervalos de execução (Shiv).,Melhora significativamente a visibilidade do retículo alvo e destaque para intervalos de execução (Shiv).,Mejore significativamente la visibilidad de la retícula del objetivo y resalte los rangos de ejecución (Shiv).
+Simplifies the Compass overlay to its bare elements.,Упрощает оверлей компаса до базовых элементов.,将罗盘叠加层简化到最基本元素,Simplifie l'overlay de la boussole en mettant juste les essentiels,Simplifica a sobreposição da Bússola para seus elementos simples.,Simplifica a sobreposição da Bússola para seus elementos simples.,Simplifica la superposición de Compass a sus elementos básicos.
+Slight adjustments to the HUD for better streaming output.,Небольшие сдвиги HUD для более удобного стрим-вывода.,轻微调整 HUD，使直播画面输出更清晰,Légers ajustements du HUD pour un meilleur de streaming.,Pequenos ajustes no HUD para melhor saída de streaming.,Pequenos ajustes no HUD para melhor saída de streaming.,Ligeros ajustes al HUD para una mejor salida de transmisión.
+Speed number tracker.,Трекер числового значения скорости.,速度数值追踪器,Affiche un indicateur numérique de vitesse.,Rastreador de número de velocidade.,Rastreador de número de velocidade.,Rastreador de números de velocidad.
+Stretch the compass horizontally.,Растягивает компас по горизонтали.,水平拉伸罗盘,Étire la boussole horizontalement.,Estique a bússola horizontalmente.,Estique a bússola horizontalmente.,Estire la brújula horizontalmente.
+Stretch the compass vertically.,Растягивает компас по вертикали.,垂直拉伸罗盘,Étire la boussole verticalement.,Estique a bússola verticalmente.,Estique a bússola verticalmente.,Estire la brújula verticalmente.
+The circle countdown for when you are reloading.,Круговой таймер обратного отсчёта при перезарядке.,换弹时的圆形倒计时,Le compte à  rebours circulaire pendant le rechargement.,A contagem regressiva do círculo para quando você estiver recarregando.,A contagem regressiva do círculo para quando você estiver recarregando.,La cuenta atrás del círculo para cuando estés recargando.
+"The cosmetic ability on your default 5 key, like posters and snowballs.","Косметическая способность на клавише 5 по умолчанию, например постеры и снежки.",默认 5 键上的外观类技能（如海报、雪球等）,La capacité cosmétique (genre les affiches et des boules de neige),"A habilidade cosmética em sua tecla 5 padrão, como pôsteres e bolas de neve.","A habilidade cosmética em sua tecla 5 padrão, como pôsteres e bolas de neve.","La habilidad cosmética en tu tecla 5 predeterminada, como carteles y bolas de nieve."
+The damage dealt to Trooper minions.,"Урон, нанесённый крипам-труперам.",对小兵造成的伤害显示,Les dégâts infligés aux Trooper.,O dano causado aos lacaios Trooper.,O dano causado aos Soldadinhos.,El daño causado a los súbditos de Trooper.
+The icon that replaces your crosshair when reloading.,"Иконка, которая заменяет прицел во время перезарядки.",换弹时替换准星的图标,L'icône qui remplace votre réticule pendant le rechargement.,O ícone que substitui a mira ao recarregar.,O ícone que substitui a mira ao recarregar.,El ícono que reemplaza tu punto de mira al recargar.
+The interval in which the sound plays in seconds.,Интервал воспроизведения звука в секундах.,声音播放的间隔（秒）,"L'intervalle, en secondes, auquel le son est joué.",O intervalo em que o som é reproduzido em segundos.,O intervalo em que o som é reproduzido em segundos.,El intervalo en el que se reproduce el sonido en segundos.
+The item buying auto queue system in the shop menu.,Система автоочереди покупки предметов в меню магазина.,商店菜单中的物品购买自动队列系统,Le système de file d'achat automatique dans le menu de la boutique.,O sistema de fila automática de compra de itens no menu da loja.,O sistema de fila automática de compra de itens no menu da loja.,El sistema de cola automática de compra de artículos en el menú de la tienda.
+The large cumulative damage number.,Большое суммарное число урона.,累计伤害的大号数字显示,Le grand nombre de dégâts cumulés.,O grande número de danos cumulativos.,O grande número de danos cumulativos.,El gran número de daños acumulados.
+The popup signifying you are too low on stamina to cast another movement input.,"Всплывающее предупреждение, что у вас слишком мало выносливости для следующего мувмента.",当体力过低无法再次施放移动输入时的弹窗提示,La fenêtre contextuelle indiquant que votre endurance est trop faible pour lancer une autre action de mouvement.,O pop-up significa que você está com pouca resistência para lançar outra entrada de movimento.,O pop-up significa que você está com pouca resistência para lançar outra entrada de movimento.,La ventana emergente indica que tienes muy poca resistencia para realizar otra entrada de movimiento.
+The small incremental damage numbers.,Малые инкрементальные числа урона.,小号的递增伤害数字,Les petits nombres de dégâts incrémentaux.,Os pequenos números de dano incremental.,Os pequenos números de dano incremental.,Las pequeñas cifras de daños incrementales.
+The small visual icon.,Маленькая визуальная иконка.,小图标,La petite icône visuelle.,O pequeno ícone visual.,O pequeno ícone visual.,El pequeño icono visual.
+The unsecured text.,Текст ненадёжных душ.,未锁定文本,Le texte des âmes non sécurisées.,O texto não seguro.,O texto não seguro.,El texto no seguro.
+The world background blur effect behind the shop menu.,Эффект размытия мира на фоне меню магазина.,商店菜单后方的世界背景模糊效果,L'effet de flou d'arrière-plan derrière le menu de la boutique.,O efeito de desfoque de fundo do mundo atrás do menu da loja.,O efeito de desfoque de fundo do mundo atrás do menu da loja.,El efecto de desenfoque del fondo mundial detrás del menú de la tienda.
+This is a lightweight version with significant FPS improvements but requires a seperate file for filters.,"Это лёгкая версия с заметно лучшим FPS, но требуется отдельный файл фильтров.",这是一个轻量版本，FPS 提升显著，但需要单独的滤镜文件,"Il s'agit d'une version légère avec un net gain de FPS, mais qui nécessite un fichier de filtres séparé.","Esta é uma versão leve com melhorias significativas de FPS, mas requer um arquivo separado para filtros.","Esta é uma versão leve com melhorias significativas de FPS, mas requer um arquivo separado para filtros.",Esta es una versión liviana con importantes mejoras en FPS pero requiere un archivo separado para los filtros.
+Time before the announcement happens in seconds.,Время до срабатывания уведомления в секундах.,公告触发前的时间（秒）,"Délai avant l'annonce, en secondes.",Tempo antes do anúncio acontecer em segundos.,Tempo antes do anúncio acontecer em segundos.,Tiempo antes de que ocurra el anuncio en segundos.
+Total ammo amount.,Общее количество патронов.,总弹药量,La quantité totale de munitions.,Quantidade total de munição.,Quantidade total de munição.,Cantidad total de munición.
+View a cooldown timer for reloading time.,Показывает таймер кулдауна времени перезарядки.,查看换弹耗时的冷却计时器,Affiche un minuteur pour la durée de rechargement.,Veja um temporizador de resfriamento para recarregar o tempo.,Veja um temporizador de resfriamento para recarregar o tempo.,Vea un temporizador de recuperación para el tiempo de recarga.
+View an enhanced minimap on opening ability menu.,Показывает расширенную миникарту при открытии меню способностей.,打开技能菜单时查看增强版小地图,Affiche une mini-carte agrandie à  l'ouverture du menu des capacités.,Veja um minimapa aprimorado ao abrir o menu de habilidades.,Veja um minimapa aprimorado ao abrir o menu de habilidades.,Vea un minimapa mejorado al abrir el menú de habilidades.
+View an enhanced minimap on opening scoreboard menu.,Показывает расширенную миникарту при открытии табло.,打开计分板菜单时查看增强版小地图,Affiche une mini-carte agrandie à  l'ouverture du tableau des scores.,Veja um minimapa aprimorado ao abrir o menu do placar.,Veja um minimapa aprimorado ao abrir o menu do placar.,Vea un minimapa mejorado al abrir el menú del marcador.
+View the cooldown time of player ultimates.,Показывает время кулдауна ультимейтов игроков.,查看玩家大招的冷却时间,Affiche le temps de recharge des ultimes des joueurs.,Veja o tempo de espera dos ultimates do jogador.,Veja o tempo de espera dos ultimates do jogador.,Ver el tiempo de recuperación de las definitivas del jugador.
+Visual indicator of your current ammo.,Визуальный индикатор текущих патронов.,当前弹药量的视觉指示器,Indicateur visuel de vos munitions actuelles.,Indicador visual da sua munição atual.,Indicador visual da sua munição atual.,Indicador visual de tu munición actual.
+"You can download custom announcer packs, just download the correct one for the slot you want to replace.","Вы можете скачать кастомные наборы озвучки, просто скачайте правильный для того слота, который хотите заменить.",你可以下载自定义提示音效包，只需下载对应你要替换的槽位版本,"Vous pouvez télécharger des packs d'annonceur personnalisés, il suffit de prendre celui du slot que vous voulez remplacer.","Você pode baixar pacotes de locutores personalizados, basta baixar o correto para o slot que deseja substituir.","Você pode baixar pacotes de locutores personalizados, basta baixar o correto para o slot que deseja substituir.","Puede descargar paquetes de locutores personalizados, simplemente descargue el correcto para el espacio que desea reemplazar."
+COPY,СКОПИРОВАТЬ,复制,COPIER,COPY,COPY,COPY
+COPIED,СКОПИРОВАНО,已复制,COPIÉ,COPIED,COPIED,COPIED
+FAILED,ОШИБКА,失败,ÉCHEC,FAILED,FAILED,FAILED
+SAVE,СОХРАНИТЬ,保存,SAUVEGARDER,SAVE,SAVE,SAVE
+HIDEOUT,УБЕЖИЩЕ,藏身处,CACHETTE,HIDEOUT,HIDEOUT,HIDEOUT
+QUEUED,В ОЧЕРЕДИ,已排队,EN QUEUE,QUEUED,QUEUED,QUEUED
+APPLY,ПРИМЕНИТЬ,应用,APPLIQUER,APPLY,APPLY,APPLY
+APPLIED,ПРИМЕНЕНО,已应用,APPLIQUÉ,APPLIED,APPLIED,APPLIED
+AIRHEART,AIRHEART,AIRHEART,AIRHEART,AIRHEART,AIRHEART,AIRHEART
+SAVING,СОХРАНЕНИЕ,保存,EN TRAIN DE SAUVEGARDER,SAVING,SAVING,SAVING
+VERIFY,ПРОВЕРКА,核实,VÉRIFIFICATION,VERIFY,VERIFY,VERIFY
+SAVED,СОХРАНЕНО,已保存,SAUVEGARDÉ,SAVED,SAVED,SAVED
+TIMEOUT,ТАЙМ-АУТ,暂停,TEMPS MORT,TIMEOUT,TIMEOUT,TIMEOUT
+CLEAR,ОЧИСТИТЬ,清除,EFFACER,CLEAR,CLEAR,CLEAR
+CLEARING,ОЧИСТКА,清除中,CLAIRIÈRE,CLEARING,CLEARING,CLEARING
+CLEARED,ОЧИЩЕНО,已清除,EFFACÉ,CLEARED,CLEARED,CLEARED
+Statistics,Статистика,统计数据,Statistiques,Estatísticas,Estatísticas,Estadística
+Combat Status,Состояние боя,战斗状态,Statut de combat,Status de Combate,Status de Combate,Estado de combate
+Easy,Легкий,简单,Facile,Fácil,Fácil,Fácil
+Hard,Тяжелый,困难,Difficile,Duro,Difícil,Duro
+SUPPORT THE MOD,ПОДДЕРЖАТЬ МОД,支持该模组,SOUTENIR LE MOD,SUPPORT THE MOD,SUPPORT THE MOD,SUPPORT THE MOD
+CHANGE LOG,СПИСОК ИЗМЕНЕНИЙ,更新日志,CHANGE LOG,CHANGE LOG,CHANGE LOG,CHANGE LOG
+Play Sound,Проиграть звук,播放声音,Jouer le son,Reproduzir som,Reproduzir som,Reproducir sonido
+Fighting Game,Файтинг,格斗游戏,Jeu de combat,Jogo de luta,Jogo de luta,Juego de lucha
+Open shop to continue save.,Откройте магазин что бы продолжить сохранение.,打开商店以继续保存,Ouvre la boutique pour continuer à sauvegarder,Abra a loja para continuar economizando.,Abra a loja para continuar economizando.,Abra la tienda para continuar ahorrando.
+Switching to Airheart...,Меняем героя на Airheart...,正在切换到 Airheart……,Passer à  Airheart...,Mudando para Airheart...,Mudando para Airheart...,Cambiando a Airheart...
+Writing settings string to build...,Записываем строку настроек в билд...,正在写入构筑的设置字符串……,Écriture de la chaîne de code de paramètres à  construire...,Escrevendo string de configurações para construir...,Escrevendo string de configurações para construir...,Escribiendo cadena de configuración para construir...
+Save in progress...,Сохранение в процессе...,保存进行中……,Sauvegarde en cours...,Salvar em andamento...,Salvar em andamento...,Guardar en curso...
+Save timed out. Try again.,Сохранение не вернуло ответ вовремя. Попробуйте ещё раз.,保存超时请重试,Le délai d'enregistrement a expiré. Essayer à  nouveau.,Salvar expirou. Tente novamente.,Salvar expirou. Tente novamente.,Guardar tiempo de espera agotado. Intentar otra vez.
+Save completed.,Сохранение закончено.,保存完成,Sauvegarde terminée.,Salvamento concluído.,Salvamento concluído.,Guardar completado.
+Save failed.,Ошибка сохранения.,保存失败,L'enregistrement a échoué.,Falha ao salvar.,Falha ao salvar.,Error al guardar.
+Save works only in hideout.,Сохранение работает только в убежище.,只能在藏身处（hideout）保存,La sauvegarde ne fonctionne que dans la cachette.,Salvar funciona apenas no esconderijo.,Salvar funciona apenas no esconderijo.,Guardar funciona sólo en el escondite.
+Failed to queue save request.,Ошибка при добавлении сохранения в очередь.,保存请求加入队列失败,Échec de la mise en file d'attente de la demande de sauvegarde.,Falha ao colocar a solicitação de salvamento na fila.,Falha ao colocar a solicitação de salvamento na fila.,No se pudo poner en cola la solicitud para guardar.
+Save queued.,Сохранение поставлено в очередь.,保存请求已加入队列,Enregistrement en file d'attente.,Salvar na fila.,Salvar na fila.,Guardar en cola.
+Open shop to continue clear.,Откройте магазин что бы продолжить очистку.,打开商店以继续清除,Ouvre la boutique pour continuer à supprimer,Abra a loja para continuar limpo.,Abra a loja para continuar limpo.,Abrir tienda para continuar despejado.
+Confirming Airheart for clear...,Проверка Airheart для чистки...,正在确认用于清除的 Airheart……,Confirmation d'Airheart pour la suppression...,Confirmando Airheart para limpar...,Confirmando Airheart para limpar...,Confirmando Airheart para claro...
+Clearing builds...,Очищаем билды...,正在清除构筑……,Effacement des builds...,Limpando compilações...,Limpando compilações...,Borrando compilaciones...
+Clear in progress...,Идёт очистка...,清除进行中……,Suppression en cours...,Limpeza em andamento...,Limpeza em andamento...,Borrado en progreso...
+Clear timed out. Try again.,Очистка не вернула ответ вовремя. Попробуйте ещё раз.,清除超时请重试,Le délai d'effacement a expiré. Essayer à  nouveau.,A limpeza expirou. Tente novamente.,A limpeza expirou. Tente novamente.,Se agotó el tiempo de borrado. Intentar otra vez.
+Clear completed.,Очистка завершена.,清除完成,Effacement terminé.,Limpeza concluída.,Limpeza concluída.,Borrar completado.
+Clear failed.,Очистка не удалась.,清除失败,Échec de la suppression.,Falha ao limpar.,Falha ao limpar.,Borrado fallido.
+en,en,en,fr,pt,pt,es
+Section already at defaults.,Секция уже имеет изначальные значения.,该分区已是默认值。,Section déjà  par défaut.,Seção já está nos padrões.,Seção já está nos padrões.,Sección ya en valores predeterminados.
+Ready.,Готово.,就绪。,Prêt.,Preparar.,Preparar.,Listo.
+Share or save your settings configuration!,Поделитесь или сохраните свои настройки!,分享或保存你的设置配置！,Partagez ou enregistrez la configuration de vos paramètres !,Compartilhe ou salve suas configurações!,Compartilhe ou salve suas configurações!,¡Comparte o guarda tu configuración de configuración!
+Local settings loaded.,Локальные настройки загружены.,本地设置已加载。,Paramètres locaux chargés.,Configurações locais carregadas.,Configurações locais carregadas.,Configuración local cargada.
+Export string copied.,Строка экспорта скопирована.,导出字符串已复制。,Chaîne d'exportation copiée.,String de exportação copiada.,String de exportação copiada.,Cadena de exportación copiada.
+Clipboard copy failed.,Копирование в буфер обмена не удалось.,剪贴板复制失败。,La copie du Presse-papiers a échoué.,Falha na cópia da área de transferência.,Falha na cópia da área de transferência.,Error al copiar el portapapeles.
+Airheart switch sent.,Запрос на смену героя на Airheart,已发送切换到 Airheart 的指令。,Changement de perso Airheart,Interruptor Airheart enviado.,Interruptor Airheart enviado.,Se envió el interruptor Airheart.
+Failed to switch hero.,Не удалось поменять героя.,切换英雄失败。,Échec du changement de héros.,Falha ao trocar de herói.,Falha ao trocar de herói.,No se pudo cambiar de héroe.
+Strings may sometimes break between mod versions.,Строки настроек могут ломаться после обновлений.,不同模组版本之间字符串有时可能会失效。,Les chaînes de code (pour la sauvegarde) peuvent parfois se corompre entre les versions du mod.,"Às vezes, as strings podem quebrar entre as versões do mod.","Às vezes, as strings podem quebrar entre as versões do mod.","A veces, las cadenas pueden romperse entre las versiones del mod."
+Import: parsing string...,Импорт: обработка строки...,导入：正在解析字符串……,Importer : analyse de la chaîne...,Importar: analisando string...,Importar: analisando string...,Importar: cadena de análisis...
+Import: applying settings...,Импорт: применяются настройки...,导入：正在应用设置……,Importer : appliquer les paramètres...,Importar: aplicando configurações...,Importar: aplicando configurações...,Importar: aplicar configuración...
+Import: refreshing UI...,Импорт: перезагружается интерфейс...,导入：正在刷新 UI……,Importer : rafraîchissement de l'UI...,Importar: atualizando a IU...,Importar: atualizando a IU...,Importar: actualizar la interfaz de usuario...
+Import failed.,Импорт не удался,导入失败。,L'importation a échoué.,Falha na importação.,Falha na importação.,La importación falló.
+Invalid import string.,Неверный код настроек,导入字符串无效。,Chaîne d'importation invalide.,String de importação inválida.,String de importação inválida.,Cadena de importación no válida.
+Row already at defaults.,Ряды уже приведены к изначальным значениям,该行已是默认值。,Ligne déjà  aux valeurs par défaut.,Linha já está nos padrões.,Linha já está nos padrões.,La fila ya está en los valores predeterminados.
+Preset apply failed.,Попытка применения пресета не удалась,预设应用失败。,L'application du préréglage a échoué.,Falha na aplicação da predefinição.,Falha na aplicação da predefinição.,Error en la aplicación de ajustes preestablecidos.
+Scales the element.,Изменяет размеры элемента,缩放该元素。,Met à  l'échelle l'élément.,Dimensiona o elemento.,Dimensiona o elemento.,Escala el elemento.
+Changes the element's transparency.,Изменяет прозрачность элемента,更改该元素的透明度。,Modifie la transparence de l'élément.,Altera a transparência do elemento.,Altera a transparência do elemento.,Cambia la transparencia del elemento.
+Moves the element horizontally.,Двигает элемент горизонтально,水平移动该元素。,Déplace l'élément horizontalement.,Move o elemento horizontalmente.,Move o elemento horizontalmente.,Mueve el elemento horizontalmente.
+Moves the element vertically.,Двигает элемент вертикально,垂直移动该元素。,Déplace l'élément verticalement.,Move o elemento verticalmente.,Move o elemento verticalmente.,Mueve el elemento verticalmente.
+Reset to default value,Вернуть значение к изначальному,重置为默认值,Réinitialiser à  la valeur par défaut,Redefinir para o valor padrão,Redefinir para o valor padrão,Restablecer el valor predeterminado
+Reset row to defaults,Сбросить ряды до изначальных значений,将此行重置为默认值,Réinitialiser la ligne aux valeurs par défaut,Redefinir linha para os padrões,Redefinir linha para os padrões,Restablecer fila a los valores predeterminados
+Randomly opens an enabled arcade game while dead.,Открывает случайную аркаду из выбранных во время смерти,死亡时随机打开一个已启用的小游戏。,Ouvre aléatoirement un jeu d'arcade activé alors qu'il est mort.,Abre aleatoriamente um jogo de arcade habilitado enquanto estiver morto.,Abre aleatoriamente um jogo de arcade habilitado enquanto estiver morto.,Abre aleatoriamente un juego de arcade habilitado mientras estás muerto.
+Fountain-style damage number animation.,"Стиль урона, в котором числа вылетают как фонтан",喷泉风格的伤害数字动画。,Animation du numéro de dégâts de style fontaine.,Animação do número de danos no estilo fonte.,Animação do número de danos no estilo de Chafariz.,Animación de números de daños estilo fuente.
+Troubleshoot,Решить неисправность,故障排除,Résolution de problèmes,Solucionar problemas,Solucionar problemas,Solucionar problemas
+Settings Changes,Изменения настроек,设置更改,Modifications des paramètres,Alterações nas configurações,Alterações nas configurações,Cambios de configuración
+Changes:,Изменения:,更改：,Modifications :,Mudanças:,Mudanças:,Cambios:
+Confirm,Подтвердить,确认,Confirmer,Confirmar,Confirmar,Confirmar
+Cancel,Отменить,取消,Annuler,Cancelar,Cancelar,Cancelar
+The displayed language of the settings menu.,Язык отображения меню настроек,设置菜单中显示的语言。,La langue affichée dans le menu des paramètres.,O idioma exibido no menu de configurações.,O idioma exibido no menu de configurações.,El idioma mostrado en el menú de configuración.
+Preview realtime changes to settings when modifying them.,"Отображать изменения в реальном времени там, где это возможно",在修改设置时实时预览更改效果。,Prévisualise en temps réel les modifications des paramètres pendant leur ajustement.,Visualize alterações em tempo real nas configurações ao modificá-las.,Visualize alterações em tempo real nas configurações ao modificá-las.,Obtenga una vista previa de los cambios en la configuración en tiempo real al modificarlos.
+Restores the legacy removed duration bars for abilities.,Восстанавливает старые полоски каста способностей,恢复已移除的旧版技能持续时间条。,Restaure les anciennes barres de durée supprimées pour les capacités.,Restaura as barras de duração removidas do legado para habilidades.,Restaura as barras de duração antigas removidas para habilidades.,Restaura las barras de duración heredadas eliminadas de las habilidades.
+Centers the friends list area within the ESC menu.,Отцентровывает список друзей в ESC,在 ESC 菜单中将好友列表区域居中。,Centre la zone de liste d'amis dans le menu ESC.,Centraliza a área da lista de amigos no menu ESC.,Centraliza a área da lista de amigos no menu ESC.,Centra el área de la lista de amigos dentro del menú ESC.
+Enhanced V2 enemy healthbar visuals and readability.,Улучшенный стиль полосок здоровья v2 ,增强版 V2 敌人生命条的视觉效果与可读性。,Améliore les visuels et la lisibilité des barres de vie ennemies V2.,Visual e legibilidade aprimorados da barra de saúde do inimigo V2.,Visual e legibilidade aprimorados da barra de saúde do inimigo V2.,Imágenes y legibilidad mejoradas de la barra de salud del enemigo V2.
+Show the UnitInfo panel on V2 enemy healthbars.,Показывать панель UnitInfo с полосками здоровья v2  ,在 V2 敌人生命条上显示单位信息面板。,Affiche le panneau UnitInfo sur les barres de vie ennemies V2.,Mostre o painel UnitInfo nas barras de saúde inimigas V2.,Mostre o painel UnitInfo nas barras de saúde inimigas V2.,Muestra el panel UnitInfo en las barras de salud enemigas V2.
+Show level text on V2 enemy healthbars.,Показывать уровень около полосок здоровья v2,在 V2 敌人生命条上显示等级文本。,Affiche le niveau sur les barres de vie ennemies V2.,Mostrar texto de nível nas barras de saúde inimigas V2.,Mostrar texto de nível nas barras de saúde inimigas V2.,Muestra texto de nivel en las barras de salud enemigas V2.
+V2 enemy healthbar enhancements.,Улучшения полосок здоровья v2,V2 敌人生命条增强功能。,Améliorations des barres de vie ennemies V2.,Melhorias na barra de saúde do inimigo V2.,Melhorias na barra de saúde do inimigo V2.,Mejoras en la barra de salud del enemigo V2.
+Welcome to QOL Lock,Добро пожаловать в QOL Lock,欢迎使用 QOL Lock,Bienvenue sur QOL Lock,Bem-vindo ao QOL Lock,Bem-vindo ao QOL Lock,Bienvenido a QOL Lock
