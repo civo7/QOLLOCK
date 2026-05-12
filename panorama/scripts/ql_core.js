@@ -317,6 +317,9 @@
         buildCategoryPayloadHeroProbeShopProbeTried: false,
         buildCategoryPayloadStorageConfirmSig: "",
         buildCategoryPayloadStorageConfirmHits: 0,
+        storageHeroSignatureConfirmSig: "",
+        storageHeroSignatureConfirmHits: 0,
+        storageHeroSignatureLastDetail: "",
         buildCategoryPayloadHeroProbeRetryAfterMs: 0,
         buildCategoryPayloadHeroProbeMisses: 0,
         buildCategoryPayloadMissingScanAdvances: 0,
@@ -1000,6 +1003,25 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_TARGET_LOCK_QUIET_MS = 320;
     const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 140;
     const BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
+    const BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
+    const BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS = [
+        "slot_signature_1",
+        "slot_signature_2",
+        "slot_signature_3",
+        "slot_signature_4"
+    ];
+    const BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED = [
+        "rutger_rocket",
+        "",
+        "",
+        "hyper_beam"
+    ];
+    const BUILD_SAVE_STORAGE_SIGNATURE_LABELS = [
+        "RUTGER_ROCKET",
+        "Waiting...",
+        "Waiting...",
+        "HYPER BEAM"
+    ];
     const BUILD_CLEAR_ACTION_DELAY_MS = 180;
     const BUILD_CLEAR_POST_DELETE_DELAY_MS = 420;
     const BUILD_CLEAR_POST_SELECT_DELAY_MS = 220;
@@ -11445,6 +11467,7 @@ function GetUIRoot() {
         if (msg === "locking_target_build") return "Locking target build selection.";
         if (msg === "target_locked") return "Target build selection locked.";
         if (msg === "initializing_storage_build") return "Initializing storage build.";
+        if (msg === "validating_airheart_signature") return "Validating Airheart signature abilities.";
         if (msg === "opening_edit_mode") return "Opening edit mode.";
         if (msg === "focusing_category") return "Selecting build category.";
         if (msg === "writing_category_name") return "Writing payload into category name.";
@@ -12267,6 +12290,9 @@ function GetUIRoot() {
         State.buildCategoryPayloadHeroProbeShopProbeTried = false;
         State.buildCategoryPayloadStorageConfirmSig = "";
         State.buildCategoryPayloadStorageConfirmHits = 0;
+        State.storageHeroSignatureConfirmSig = "";
+        State.storageHeroSignatureConfirmHits = 0;
+        State.storageHeroSignatureLastDetail = "";
         State.buildCategoryPayloadMissingScanAdvances = 0;
         State.buildCategoryPayloadCorruptRepairActive = false;
         State.buildCategoryPayloadCorruptRepairStartedMs = 0;
@@ -12791,6 +12817,197 @@ function GetUIRoot() {
         return State.buildCategoryPayloadStorageConfirmHits >= required;
     }
 
+    function CleanStorageHeroSignatureText(text) {
+        if (text === null || text === undefined) return "";
+        var clean = String(text).replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+        if (!clean || clean.length === 0) return "";
+        if (/^\{[a-zA-Z]:.+\}$/.test(clean)) return "";
+        if (/^waiting\.?\.?\.?$/i.test(clean)) return "";
+        return clean;
+    }
+
+    function NormalizeStorageHeroSignatureAbilityName(text) {
+        var clean = CleanStorageHeroSignatureText(text);
+        if (!clean) return "";
+        var normalized = clean
+            .toLowerCase()
+            .replace(/&amp;/g, "and")
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+        if (!normalized) return "";
+        if (normalized.indexOf("rutger") !== -1 && normalized.indexOf("rocket") !== -1) return "rutger_rocket";
+        if (normalized.indexOf("hyper") !== -1 && normalized.indexOf("beam") !== -1) return "hyper_beam";
+        return normalized;
+    }
+
+    function AddStorageSignatureScanRoot(roots, panel) {
+        if (!panel || !IsPanelValid(panel)) return;
+        for (var i = 0; i < roots.length; i++) {
+            if (roots[i] === panel) return;
+        }
+        roots.push(panel);
+    }
+
+    function FindStorageHeroSignatureHud(root) {
+        var roots = [];
+        AddStorageSignatureScanRoot(roots, root);
+        try {
+            var contextPanel = $.GetContextPanel ? $.GetContextPanel() : null;
+            AddStorageSignatureScanRoot(roots, contextPanel);
+            var top = contextPanel;
+            while (top && IsPanelValid(top) && top.GetParent && top.GetParent()) {
+                top = top.GetParent();
+            }
+            AddStorageSignatureScanRoot(roots, top);
+        } catch (e0) {}
+
+        for (var i = 0; i < roots.length; i++) {
+            var scanRoot = roots[i];
+            if (!scanRoot || !IsPanelValid(scanRoot)) continue;
+            if (ReadPanelIdTextMaybe(scanRoot) === "hud_signature") return scanRoot;
+            if (!scanRoot.FindChildTraverse) continue;
+            try {
+                var hud = scanRoot.FindChildTraverse("hud_signature");
+                if (hud && IsPanelValid(hud)) return hud;
+            } catch (e1) {}
+        }
+        return null;
+    }
+
+    function GetStorageHeroSignatureSlotPanel(root, signatureHud, index) {
+        var slotId = BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS[index] || "";
+        var slot = null;
+        if (signatureHud && IsPanelValid(signatureHud) && signatureHud.FindChildTraverse && slotId) {
+            try { slot = signatureHud.FindChildTraverse(slotId); } catch (e0) { slot = null; }
+        }
+        if ((!slot || !IsPanelValid(slot)) && root && IsPanelValid(root) && root.FindChildTraverse && slotId) {
+            try { slot = root.FindChildTraverse(slotId); } catch (e1) { slot = null; }
+        }
+        if ((!slot || !IsPanelValid(slot)) && signatureHud && IsPanelValid(signatureHud) && signatureHud.GetChildCount) {
+            try {
+                if (signatureHud.GetChildCount() > index) {
+                    slot = signatureHud.GetChild(index);
+                }
+            } catch (e2) {
+                slot = null;
+            }
+        }
+        return (slot && IsPanelValid(slot)) ? slot : null;
+    }
+
+    function ReadStorageHeroSignatureAbilityName(slotPanel) {
+        if (!slotPanel || !IsPanelValid(slotPanel) || !slotPanel.FindChildrenWithClassTraverse) return "";
+        var nameLabels = null;
+        try { nameLabels = slotPanel.FindChildrenWithClassTraverse("ability_name"); } catch (e0) { nameLabels = null; }
+        if (!nameLabels || nameLabels.length < 1) return "";
+        for (var i = 0; i < nameLabels.length; i++) {
+            var label = nameLabels[i];
+            if (!label || !IsPanelValid(label)) continue;
+            var text = CleanStorageHeroSignatureText(ReadPanelTextMaybe(label));
+            if (text) return text;
+        }
+        return "";
+    }
+
+    function ReadStorageHeroSignatureSlots(root) {
+        var signatureHud = FindStorageHeroSignatureHud(root);
+        var scan = {
+            hudFound: !!(signatureHud && IsPanelValid(signatureHud)),
+            foundSlots: 0,
+            names: [],
+            normalized: [],
+            sig: ""
+        };
+        var sigParts = [];
+        for (var i = 0; i < BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS.length; i++) {
+            var slot = GetStorageHeroSignatureSlotPanel(root, signatureHud, i);
+            if (slot) scan.foundSlots += 1;
+            var name = ReadStorageHeroSignatureAbilityName(slot);
+            var normalized = NormalizeStorageHeroSignatureAbilityName(name);
+            scan.names[i] = name;
+            scan.normalized[i] = normalized;
+            sigParts.push(normalized || "-");
+        }
+        scan.sig = "hud:" + (scan.hudFound ? "1" : "0") +
+            "|slots:" + String(scan.foundSlots) +
+            "|names:" + sigParts.join("|");
+        return scan;
+    }
+
+    function ValidateStorageHeroSignatureScan(scan) {
+        if (!scan || (!scan.hudFound && Number(scan.foundSlots) <= 0)) {
+            return { ok: false, detail: "Waiting for Airheart signature HUD." };
+        }
+        for (var i = 0; i < BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED.length; i++) {
+            var expected = BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED[i] || "";
+            var expectedLabel = BUILD_SAVE_STORAGE_SIGNATURE_LABELS[i] || expected || "Waiting...";
+            var actual = (scan.normalized && scan.normalized[i]) ? String(scan.normalized[i]) : "";
+            var actualLabel = (scan.names && scan.names[i]) ? String(scan.names[i]) : (actual || "Waiting...");
+            if (expected) {
+                if (!actual) {
+                    return {
+                        ok: false,
+                        detail: "Waiting for Airheart signature slot " + String(i + 1) + " (" + expectedLabel + ")."
+                    };
+                }
+                if (actual !== expected) {
+                    return {
+                        ok: false,
+                        detail: "Airheart signature mismatch slot " + String(i + 1) + ": expected " + expectedLabel + ", saw " + actualLabel + "."
+                    };
+                }
+            } else if (actual) {
+                return {
+                    ok: false,
+                    detail: "Airheart signature mismatch slot " + String(i + 1) + ": expected Waiting..., saw " + actualLabel + "."
+                };
+            }
+        }
+        return { ok: true, detail: "Airheart signature abilities confirmed." };
+    }
+
+    function ConfirmStorageHeroSignatureAbilities(root, nowMs, requiredHits) {
+        var required = Number(requiredHits);
+        if (!isFinite(required) || required < 1) required = 1;
+        var scan = ReadStorageHeroSignatureSlots(root);
+        var validation = ValidateStorageHeroSignatureScan(scan);
+        var sig = (scan && scan.sig ? scan.sig : "missing") + "|ok:" + (validation.ok ? "1" : "0");
+        if (!validation.ok) {
+            if (State.storageHeroSignatureConfirmSig !== sig) {
+                State.storageHeroSignatureConfirmSig = sig;
+            }
+            State.storageHeroSignatureConfirmHits = 0;
+            State.storageHeroSignatureLastDetail = validation.detail || "Waiting for Airheart signature abilities.";
+            return {
+                confirmed: false,
+                source: "signature_abilities",
+                detail: State.storageHeroSignatureLastDetail,
+                signature: sig,
+                hits: 0
+            };
+        }
+
+        if (State.storageHeroSignatureConfirmSig !== sig) {
+            State.storageHeroSignatureConfirmSig = sig;
+            State.storageHeroSignatureConfirmHits = 1;
+        } else {
+            State.storageHeroSignatureConfirmHits = (Number(State.storageHeroSignatureConfirmHits) || 0) + 1;
+        }
+
+        var hits = Number(State.storageHeroSignatureConfirmHits) || 0;
+        var confirmed = hits >= required;
+        State.storageHeroSignatureLastDetail = confirmed
+            ? validation.detail
+            : "Airheart signature pending hits " + String(hits) + "/" + String(required) + ".";
+        return {
+            confirmed: confirmed,
+            source: "signature_abilities",
+            detail: State.storageHeroSignatureLastDetail,
+            signature: sig,
+            hits: hits
+        };
+    }
+
     function TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root) {
         if (!root || !root.FindChildTraverse) return { hero: "", source: "shopFavoritesHeaderMissing" };
         var shopPanel = root.FindChildTraverse("CitadelHudHeroShop");
@@ -12865,41 +13082,68 @@ function GetUIRoot() {
         }
 
         if (hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            var requiredDirectHits = GetBuildCategoryStorageConfirmRequiredHits(source, false);
-            var sigDirect = "hero:" + hero + "|src:" + source;
-            if (TrackBuildCategoryStorageConfirmHit(sigDirect, requiredDirectHits)) {
+            var directSignature = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            var sigDirect = "hero:" + hero + "|src:" + source + "|sig:" + (directSignature.signature || "-");
+            State.buildCategoryPayloadStorageConfirmSig = sigDirect;
+            State.buildCategoryPayloadStorageConfirmHits = Number(directSignature.hits) || 0;
+            if (directSignature.confirmed) {
                 var confirmedDirect = {
                     confirmed: true,
-                    source: source,
-                    detail: "storage hero confirmed source=" + source + " hits=" + State.buildCategoryPayloadStorageConfirmHits
+                    source: source + "+signature",
+                    detail: "storage hero confirmed source=" + source + " with signature abilities"
                 };
-                traceConfirm(true, source, hero, confirmedDirect.detail);
+                traceConfirm(true, confirmedDirect.source, hero, confirmedDirect.detail);
                 return confirmedDirect;
             }
             var pendingDirect = {
                 confirmed: false,
-                source: source,
-                detail: "storage hero pending source=" + source + " hits=" + State.buildCategoryPayloadStorageConfirmHits + "/" + requiredDirectHits
+                source: source + "+signature",
+                detail: directSignature.detail || "Waiting for Airheart signature abilities."
             };
-            traceConfirm(false, source, hero, pendingDirect.detail);
+            traceConfirm(false, pendingDirect.source, hero, pendingDirect.detail);
             return pendingDirect;
         }
 
         if (hero && hero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && !IsBuildSaveStorageRuntimeSourceStale(source)) {
-            State.buildCategoryPayloadStorageConfirmSig = "";
-            State.buildCategoryPayloadStorageConfirmHits = 0;
-            var conflictDirect = {
-                confirmed: false,
-                source: source,
-                detail: "storage hero conflict hero=" + hero + " source=" + source
-            };
-            traceConfirm(false, source, hero, conflictDirect.detail);
-            return conflictDirect;
+            var conflictSignature = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (conflictSignature.confirmed && (IsBuildCategoryPayloadSourceReady(root) || HasBuildSaveStorageUiReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+                var confirmedByConflictSignature = {
+                    confirmed: true,
+                    source: "signature_abilities",
+                    detail: "storage hero confirmed by signature abilities; ignoring stale " + source + " signal"
+                };
+                State.buildCategoryPayloadStorageConfirmSig = "hero:" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID + "|src:signature_abilities|override:" + source;
+                State.buildCategoryPayloadStorageConfirmHits = Number(conflictSignature.hits) || 0;
+                traceConfirm(true, confirmedByConflictSignature.source, BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, confirmedByConflictSignature.detail);
+                return confirmedByConflictSignature;
+            } else {
+                State.buildCategoryPayloadStorageConfirmSig = "";
+                State.buildCategoryPayloadStorageConfirmHits = 0;
+                var conflictDirect = {
+                    confirmed: false,
+                    source: source,
+                    detail: "storage hero conflict hero=" + hero + " source=" + source
+                };
+                traceConfirm(false, source, hero, conflictDirect.detail);
+                return conflictDirect;
+            }
         }
 
         State.buildCategoryPayloadStorageConfirmSig = "";
         State.buildCategoryPayloadStorageConfirmHits = 0;
         var sourceReady = IsBuildCategoryPayloadSourceReady(root);
+        var signatureOnly = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+        if (signatureOnly.confirmed && (sourceReady || HasBuildSaveStorageUiReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+            var confirmedSignatureOnly = {
+                confirmed: true,
+                source: "signature_abilities",
+                detail: "storage hero confirmed by signature abilities"
+            };
+            State.buildCategoryPayloadStorageConfirmSig = "hero:" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID + "|src:signature_abilities|sig:" + (signatureOnly.signature || "-");
+            State.buildCategoryPayloadStorageConfirmHits = Number(signatureOnly.hits) || 0;
+            traceConfirm(true, confirmedSignatureOnly.source, BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, confirmedSignatureOnly.detail);
+            return confirmedSignatureOnly;
+        }
 
         var canUseRuntimeFallback = !!allowFallback && !!(sourceReady || IsHudClassActive(root, "gShopOpen"));
         if (canUseRuntimeFallback) {
@@ -12910,23 +13154,25 @@ function GetUIRoot() {
             var runtimeUiReady = !!(HasBuildSaveStorageUiReady(root) || sourceReady);
 
             if (runtimeHero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && runtimeUiReady) {
-                var requiredRuntimeHits = GetBuildCategoryStorageConfirmRequiredHits(runtimeSourceTagged, true);
-                var sigRuntime = "hero:" + runtimeHero + "|src:" + runtimeSourceTagged + "|uiready:" + (runtimeUiReady ? "1" : "0");
-                if (TrackBuildCategoryStorageConfirmHit(sigRuntime, requiredRuntimeHits)) {
+                var runtimeSignature = signatureOnly;
+                var sigRuntime = "hero:" + runtimeHero + "|src:" + runtimeSourceTagged + "|uiready:" + (runtimeUiReady ? "1" : "0") + "|sig:" + (runtimeSignature.signature || "-");
+                State.buildCategoryPayloadStorageConfirmSig = sigRuntime;
+                State.buildCategoryPayloadStorageConfirmHits = Number(runtimeSignature.hits) || 0;
+                if (runtimeSignature.confirmed) {
                     var confirmedRuntime = {
                         confirmed: true,
-                        source: runtimeSourceTagged,
-                        detail: "storage hero confirmed source=" + runtimeSourceTagged + " hits=" + State.buildCategoryPayloadStorageConfirmHits
+                        source: runtimeSourceTagged + "+signature",
+                        detail: "storage hero confirmed source=" + runtimeSourceTagged + " with signature abilities"
                     };
-                    traceConfirm(true, runtimeSourceTagged, runtimeHero, confirmedRuntime.detail);
+                    traceConfirm(true, confirmedRuntime.source, runtimeHero, confirmedRuntime.detail);
                     return confirmedRuntime;
                 }
                 var pendingRuntime = {
                     confirmed: false,
-                    source: runtimeSourceTagged,
-                    detail: "storage hero pending source=" + runtimeSourceTagged + " hits=" + State.buildCategoryPayloadStorageConfirmHits + "/" + requiredRuntimeHits
+                    source: runtimeSourceTagged + "+signature",
+                    detail: runtimeSignature.detail || "Waiting for Airheart signature abilities."
                 };
-                traceConfirm(false, runtimeSourceTagged, runtimeHero, pendingRuntime.detail);
+                traceConfirm(false, pendingRuntime.source, runtimeHero, pendingRuntime.detail);
                 return pendingRuntime;
             }
 
@@ -13240,19 +13486,25 @@ function GetUIRoot() {
                 if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
                     var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
                     var timeoutHero = NormalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
-                    SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with UI-ready storage context.");
-                    SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
-                    SettingsLoaderDebugLog(
-                        "probe_wait_storage_timeout_degraded_scan account=" + accountId +
-                        " hero=" + (timeoutHero || "-") +
-                        " source=" + timeoutSource
-                    );
-                    SetSettingsLoaderDebugOverlayLine(
-                        "wait_storage_degraded_scan hero=" + (timeoutHero || "-") +
-                        " source=" + timeoutSource
-                    );
-                    State.buildCategoryPayloadHeroProbeStage = "scan_storage";
-                    return "ready";
+                    var timeoutSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+                    if (timeoutSignature.confirmed) {
+                        SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
+                        SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
+                        SettingsLoaderDebugLog(
+                            "probe_wait_storage_timeout_degraded_scan account=" + accountId +
+                            " hero=" + (timeoutHero || "-") +
+                            " source=" + timeoutSource +
+                            " signature=1"
+                        );
+                        SetSettingsLoaderDebugOverlayLine(
+                            "wait_storage_degraded_scan hero=" + (timeoutHero || "-") +
+                            " source=" + timeoutSource +
+                            " signature=1"
+                        );
+                        State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+                        return "ready";
+                    }
+                    SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Airheart signature abilities.");
                 }
             }
             // Timed out confirming Airheart. Retry later; do not read from non-storage hero context.
@@ -14481,6 +14733,9 @@ function GetUIRoot() {
         State.buildSaveStorageShopReopenAttempts = 0;
         State.buildSaveFavoritesActionNextMs = 0;
         State.buildSaveStorageProvisionalHits = 0;
+        State.storageHeroSignatureConfirmSig = "";
+        State.storageHeroSignatureConfirmHits = 0;
+        State.storageHeroSignatureLastDetail = "";
         State.buildSaveMutationClosed = false;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
@@ -16586,20 +16841,39 @@ function GetUIRoot() {
         var hero = NormalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         if (hero === BUILD_SAVE_STORAGE_HERO_ID) {
+            var directSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (!directSignature.confirmed) {
+                State.buildSaveStorageProvisionalHits = 0;
+                BuildSaveDebugLogThrottled(
+                    "storage_signature_wait|" + (directSignature.signature || "-"),
+                    "storage signature wait detail=" + (directSignature.detail || "-"),
+                    nowMs
+                );
+                return false;
+            }
             State.buildSaveStorageHeroConfirmed = true;
-            State.buildSaveStorageHeroConfirmedSource = source;
+            State.buildSaveStorageHeroConfirmedSource = source + "+signature";
             State.buildSaveStorageProvisionalHits = 0;
-            BuildSaveDebugLog("storage hero confirmed hero=" + hero + " source=" + source);
+            BuildSaveDebugLog("storage hero confirmed hero=" + hero + " source=" + source + " signature=1");
             return true;
         }
         if (hero && hero !== BUILD_SAVE_STORAGE_HERO_ID) {
-            State.buildSaveStorageProvisionalHits = 0;
-            BuildSaveDebugLogThrottled(
-                "storage_confirm_conflict|" + hero + "|" + source,
-                "storage hero conflict current=" + hero + " source=" + source,
-                nowMs
-            );
-            return false;
+            var conflictSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (conflictSignature.confirmed && (HasBuildSaveStorageUiReady(root) || IsBuildCategoryPayloadSourceReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+                State.buildSaveStorageHeroConfirmed = true;
+                State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
+                State.buildSaveStorageProvisionalHits = 0;
+                BuildSaveDebugLog("storage hero confirmed by signature despite stale " + source + " hero=" + hero);
+                return true;
+            } else {
+                State.buildSaveStorageProvisionalHits = 0;
+                BuildSaveDebugLogThrottled(
+                    "storage_confirm_conflict|" + hero + "|" + source,
+                    "storage hero conflict current=" + hero + " source=" + source,
+                    nowMs
+                );
+                return false;
+            }
         }
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -16615,8 +16889,20 @@ function GetUIRoot() {
             !!runtimeHero &&
             runtimeHero !== BUILD_SAVE_STORAGE_HERO_ID &&
             !IsBuildSaveStorageRuntimeSourceStale(runtimeSource);
+        var signatureOnly = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+
+        if (signatureOnly.confirmed && uiReady && (IsHudClassActive(root, "gShopOpen") || sourceReady)) {
+            State.buildSaveStorageHeroConfirmed = true;
+            State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
+            State.buildSaveStorageProvisionalHits = 0;
+            BuildSaveDebugLog(
+                "storage hero confirmed by signature runtime=" + (runtimeHero || "-") + "@" + (runtimeSource || "-")
+            );
+            return true;
+        }
 
         if (!runtimeConflict &&
+            signatureOnly.confirmed &&
             uiReady &&
             (IsHudClassActive(root, "gShopOpen") || sourceReady) &&
             retries >= BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES &&
@@ -16730,7 +17016,8 @@ function GetUIRoot() {
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
         if (hero !== BUILD_SAVE_STORAGE_HERO_ID) return false;
-        return true;
+        var signature = ConfirmStorageHeroSignatureAbilities(root, now, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+        return !!(signature && signature.confirmed);
     }
 
     function IsBuildSaveMutationStage(stageName) {
@@ -17547,7 +17834,10 @@ function GetUIRoot() {
                     FinishBuildSaveRequest(root, requestToken, "failed", "storage_not_confirmed");
                     return;
                 }
-                SetBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
+                var confirmMessage = "confirming_airheart";
+                var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
+                if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
+                SetBuildSaveStatus(root, "pending", confirmMessage, requestToken);
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
                 return;
             }
@@ -17681,6 +17971,21 @@ function GetUIRoot() {
         }
 
         if (State.buildSaveStage === "write") {
+            var writeSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (!writeSignature.confirmed) {
+                State.buildSaveStorageHeroConfirmed = false;
+                State.buildSaveStorageHeroConfirmedSource = "";
+                State.buildSaveStorageConfirmStartedMs = nowMs;
+                State.buildSaveStage = "confirm_storage_context";
+                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
+                SetBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
+                BuildSaveDebugLogThrottled(
+                    "write_signature_wait|" + (writeSignature.signature || "-"),
+                    "write blocked until storage signature validates detail=" + (writeSignature.detail || "-"),
+                    nowMs
+                );
+                return;
+            }
             if (!SetBuildCategoryNameText(root, payloadText)) {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
@@ -17842,6 +18147,11 @@ function GetUIRoot() {
         State.buildSaveStorageShopReopenAttempts = 0;
         State.buildSaveFavoritesActionNextMs = 0;
         State.buildSaveStorageProvisionalHits = 0;
+        if (!reuseLoaderAirheartSave) {
+            State.storageHeroSignatureConfirmSig = "";
+            State.storageHeroSignatureConfirmHits = 0;
+            State.storageHeroSignatureLastDetail = "";
+        }
         State.buildSaveMutationClosed = false;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
