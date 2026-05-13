@@ -468,7 +468,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	font-size: 18px;
 	font-weight: bold;
 	vertical-align: center;
-	text-align: left;
+	text-align: center;
 	color: black;
 	text-overflow: shrink;
 	font-family: oracle;
@@ -508,7 +508,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 #UrnTracker.bad #UrnTrackerLabel
 {
-	color: #999999;
+	color: black;
 }
 
 #UrnTracker.neutral
