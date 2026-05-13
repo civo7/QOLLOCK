@@ -1,0 +1,12 @@
+@import url("s2r://panorama/styles/base/unit_status_icons.vcss_c");
+
+#gameplay_hud #stacks
+{
+	text-align: right;
+	font-family: "Mojang";
+}
+
+CitadelHud #StatusEffectContainer
+{
+	height: fit-children;
+}
