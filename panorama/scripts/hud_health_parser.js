@@ -91,6 +91,7 @@
         cachedTotemContainer:         null,
         cachedBarriersContainer:      null,
         cachedHeartsContainer:        null,
+        cachedHeartsParentContainer:  null,
         cachedBarrierHeartsContainer: null,
         cachedBarrierHearts:          null,
         cachedFoodContainer:          null,

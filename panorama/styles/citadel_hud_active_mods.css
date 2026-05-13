@@ -1,6 +1,6 @@
 @import url("s2r://panorama/styles/base/citadel_hud_active_mods.vcss_c");
 
-#abilitiesContainer
+.minecraft_healthbar_active #abilitiesContainer
 {
 	vertical-align: bottom;
 	margin-bottom: 6px;

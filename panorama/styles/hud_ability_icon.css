@@ -302,9 +302,6 @@
 {
 	wash-color: keybindBGColor;
 	animation-name: QOLAbilityCastFailedAnimation;
-	animation-timing-function: ease-out;
-	animation-duration: 0.06666s;
-	animation-iteration-count: 4;
 }
 
 #hud_signature CitadelAbilityIcon.signature.qol_signature_cooldown_pressed .button_container
@@ -638,4 +635,8 @@ CitadelHudTopBarPlayer #PlayerAbilitiesContainer .AbilityCastFailed .button_cont
 .minecraft_healthbar_active .AspectRatio16x10 .abilitiesContainer .button_container
 {
 	transform: translate3d(2px, -1px, 0px);
+}
+.minecraft_healthbar_active .abilities_container .HasKeyBind .ability_key_container
+{
+	visibility: collapse;
 }

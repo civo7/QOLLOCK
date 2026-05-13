@@ -634,20 +634,17 @@
 
 .klutz_healthbar_active #HealthRegenAndTotal .recentDamageCounterLabel
 {
-	font-weight: semi-bold;
+	font-weight: bold;
 	color: #D74949;
 	font-size: 16px;
-	font-weight: bold;
 	text-shadow: 0px 0px 3.0 offBlack;
 }
 
 .klutz_healthbar_active #HealthRegenAndTotal .healCounterLabel
 {
-	font-weight: semi-bold;
-	color: lightgreen;
-	font-size: 12px;
-	font-size: 16px;
 	font-weight: bold;
+	color: lightgreen;
+	font-size: 16px;
 	text-shadow: 0px 0px 3.0 offBlack;
 }
 
@@ -761,12 +758,11 @@
 
 .klutz_healthbar_active .shield_bar_numbers .progress_bar_max
 {
-	color: offBlack;
+	color: #ffffff30;
 	font-family: numericSans;
 	font-weight: semi-bold;
 	font-size: 12px;
 	vertical-align: bottom;
-	color: #ffffff30;
 	visibility: collapse;
 }
 
@@ -791,7 +787,6 @@
 
 .klutz_healthbar_active #TechShieldNumbers .progress_bar_current
 {
-	color: spiritBrightColor;
 	color: spiritLightColor;
 }
 
@@ -877,7 +872,6 @@
 {
 	horizontal-align: left;
 	vertical-align: top;
-	transform: rotateZ(270deg) translateX(-1px) translateY(-1px);
 	transform: rotateZ(270deg);
 }
 
@@ -911,10 +905,9 @@
 {
 	font-size: 20px;
 	vertical-align: middle;
-	color: blueAPTextColor;
+	color: #e3fcff;
 	font-weight: semi-bold;
 	font-family: numericSans;
-	color: #e3fcff;
 }
 
 .klutz_healthbar_active #hudAPPointsAvailable
@@ -966,6 +959,25 @@
 	visibility: collapse;
 }
 
+.HealthContainerRoot
+{
+	height: 100%;
+	width: 100%;
+}
+
+.minecraft_healthbar_active .currentHealthLabel
+{
+	font-family: sans;
+}
+
+.minecraft_healthbar_active #StatusEffects
+{
+	ignore-parent-flow: false;
+	ui-scale: 50%;
+	margin-left: 0px;
+	height: fit-children;
+}
+
 #MinecraftHeartsRoot
 {
 	flow-children: down;
@@ -1012,7 +1024,6 @@
 	flow-children: right;
 	horizontal-align: center;
 	vertical-align: center;
-	ignore-parent-flow: true;
 	margin-left: 0px;
 	margin-bottom: 0px;
 	z-index: 2;
@@ -1020,10 +1031,7 @@
 	/* HP nums toggle */
 }
 
-#MinecraftHeartsHealthNumbers .currentHealthLabel,
-.localPlayerLowHealth #MinecraftHeartsHealthNumbers .currentHealthLabel,
-.healthLow #MinecraftHeartsHealthNumbers .currentHealthLabel,
-.localPlayerMidHealth #MinecraftHeartsHealthNumbers .currentHealthLabel
+#MinecraftHeartsHealthNumbers .currentHealthLabel
 {
 	font-size: 14px;
 	text-shadow: 0px 0px 0px 3.0 offBlack;
@@ -1031,8 +1039,6 @@
 	margin-top: 0px;
 	padding-left: 0px;
 	margin-left: 0px;
-	max-width: none;
-	text-overflow: clip;
 	font-family: "Mojang", numericOracle;
 	font-weight: semi-bold;
 }
@@ -1043,7 +1049,6 @@
 	opacity: 1;
 	transform: none;
 	margin-right: 0px;
-	horizontal-align: left;
 	font-family: "Mojang", numericOracle;
 	text-shadow: 0px 0px 0px 3.0 offBlack;
 }
@@ -1061,7 +1066,7 @@
 #HealthRegenAndTotal .currentHealthLabel,
 #HealthRegenAndTotal .totalHealthLabel
 {
-	visibility: collapse;
+	visibility: visible;
 }
 
 #MinecraftFoodContainer
@@ -1238,10 +1243,9 @@
 
 #MinecraftHeartsRoot .recentDamageCounterLabel
 {
-	font-weight: semi-bold;
+	font-weight: bold;
 	color: #D74949;
 	font-size: 14px;
-	font-weight: bold;
 	text-shadow: 0px 0px 3.0 offBlack;
 	font-family: "Mojang";
 	vertical-align: center;
@@ -1249,10 +1253,9 @@
 
 #MinecraftHeartsRoot .healCounterLabel
 {
-	font-weight: semi-bold;
+	font-weight: bold;
 	color: lightgreen;
 	font-size: 14px;
-	font-weight: bold;
 	text-shadow: 0px 0px 3.0 offBlack;
 	font-family: "Mojang";
 	vertical-align: center;
@@ -1409,4 +1412,3 @@
 	font-size: 16px;
 	text-shadow: 0px 0px 3.0 offBlack;
 }
-
