@@ -22,7 +22,7 @@
 			</Panel>
 		</snippet>
 	</snippets>
-	<Panel hittest="false">
+	<Panel class="HealthContainerRoot" hittest="false">
 		<GlobalClassListener id="healthbar_container" hittest="false" classes="gAbilityUpgradeMenu" />
 		<Panel id="MinecraftHeartsRoot" class="MinecraftHeartsRoot">
 			<Panel id="RecentHealContainer" class="recentHealCounters" />

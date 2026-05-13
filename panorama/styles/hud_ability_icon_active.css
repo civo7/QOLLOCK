@@ -1,6 +1,6 @@
 @import url("s2r://panorama/styles/base/hud_ability_icon_active.vcss_c");
 
-DraggableAbilityIcon
+.minecraft_healthbar_active DraggableAbilityIcon
 {
 	width: 36px;
 	height: 36px;
@@ -8,31 +8,31 @@ DraggableAbilityIcon
 	margin-left: 9.25px;
 }
 
-.button_container
+.minecraft_healthbar_active .button_container
 {
 	height: 36px;
 	width: 36px;
 	margin-bottom: 0px;
 }
 
-.ability_bg
+.minecraft_healthbar_active .ability_bg
 {
 	visibility: collapse;
 }
 
-.image_container .ability_image
+.minecraft_healthbar_active .image_container .ability_image
 {
 	opacity: 1;
 	height: 36px;
 	margin-top: 0px;
 }
 
-.ability_key_container
+.minecraft_healthbar_active .ability_key_container
 {
 	visibility: collapse;
 }
 
-#cooldown_mask
+.minecraft_healthbar_active #cooldown_mask
 {
 	transform: scale3d(-2, 2, 2);
 }
