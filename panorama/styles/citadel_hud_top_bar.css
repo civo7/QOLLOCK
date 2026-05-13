@@ -95,11 +95,40 @@
 .ult_cooldowns_active #StatusRow
 {
 	flow-children: down;
+	height: 45px;
 }
 
 .ult_cooldowns_active .UltimateUnlocked .UltimateStatus
 {
 	horizontal-align: center;
+}
+
+#UltimateCooldownTextHidden
+{
+	visibility: collapse;
+}
+
+#UltimateCooldownTextShown
+{
+	visibility: collapse;
+	width: 40px;
+	text-align: center;
+	font-family: numericOracle;
+	font-weight: bold;
+	text-shadow: 0px 0px 0px 4.0 offBlack;
+	z-index: 999;
+}
+
+.ult_cooldowns_active .UltimateUnlocked #UltimateCooldownTextShown
+{
+	visibility: visible;
+}
+
+.ult_cooldowns_active .UltimateCooldownReady #UltimateCooldownTextShown,
+.ult_cooldowns_active.gScoreboardOpen #UltimateCooldownTextShown,
+.ult_cooldowns_active .gScoreboardOpen #UltimateCooldownTextShown
+{
+	visibility: collapse;
 }
 
 .AlwaysPlayerName
@@ -271,7 +300,6 @@ CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
 
 .TeamScore
 {
-	width: 145px;
 	border-radius: 0px;
 }
 
@@ -368,7 +396,7 @@ CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
 
 .support_16_10_active #BuffHUD,.support_16_10_active #RejuvHUD,.support_16_10_active #BuffHud,.support_16_10_active #RejuvHud
 {
-	width: fit-children;
+	width: 75px;
 	vertical-align: top;
 	horizontal-align: center;
 	background-color: #00000090;
@@ -376,7 +404,6 @@ CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
 	world-blur: ingameHudBlur;
 	overflow: noclip;
 	border-radius: 5px;
-	width: 75px;
 	height: 30px;
 	margin-top: 8px;
 }
@@ -537,7 +564,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 #RejuvBuff
 {
-	width: fit-children;
+	width: 50px;
 	vertical-align: top;
 	horizontal-align: center;
 	background-color: #00000090;
@@ -545,7 +572,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	world-blur: ingameHudBlur;
 	overflow: noclip;
 	border-radius: 5px;
-	width: 50px;
 	height: 20px;
 	y: 100px;
 	opacity: 0;
@@ -654,7 +680,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 #BuffHUD
 {
-	width: fit-children;
+	width: 75px;
 	vertical-align: top;
 	horizontal-align: center;
 	background-color: #00000090;
@@ -664,7 +690,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	border-radius: 5px;
 	border-top-right-radius: 15px;
 	border-bottom-right-radius: 15px;
-	width: 75px;
 	height: 31px;
 	margin-top: 8px;
 	x: 65px;
@@ -672,7 +697,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 #RejuvHUD
 {
-	width: fit-children;
+	width: 75px;
 	vertical-align: top;
 	horizontal-align: center;
 	background-color: #00000090;
@@ -682,7 +707,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	border-radius: 5px;
 	border-top-left-radius: 15px;
 	border-bottom-left-radius: 15px;
-	width: 75px;
 	height: 31px;
 	margin-top: 8px;
 	x: -65px;
@@ -934,4 +958,3 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity: 0;
 	visibility: collapse;
 }
-
