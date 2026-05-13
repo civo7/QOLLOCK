@@ -447,7 +447,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_SIMPLIFY_ITEMS: "none",
     ENABLE_SIMPLIFY_SHOP: "none",
     ENABLE_TAB_ZOOM: "low",
-    ENABLE_ULT_COOLDOWNS: "high",
+    ENABLE_ULT_COOLDOWNS: "none",
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
     ENABLE_UNSPENT_SOULS: "medium",
     ENABLE_URN_DIFF: "low",
@@ -519,8 +519,6 @@ const SETTING_PERF_IMPACT_TIERS = {
     SUPPORT_4_3: "none",
     TAB_ZOOM_DRAW_OVER_UI: "low",
     TAB_ZOOM_OPACITY: "low",
-    ULT_COOLDOWN_OPACITY: "high",
-    ULT_COOLDOWN_SIZE: "high",
     UNIT_TARGET_OPACITY: "medium",
     UNIT_TARGET_SIZE: "medium",
     UNSECURED_SOULS_HUD_SCALE: "low",
@@ -805,9 +803,6 @@ var gShopPreviewPanel = null;
 var gShopPreviewBox = null;
 var gShopPreviewLabel = null;
 var gShopPreviewHideToken = 0;
-var gUltCooldownPreviewPanel = null;
-var gUltCooldownPreviewRow = null;
-var gUltCooldownPreviewHideToken = 0;
 var gUnsecuredPlusPreviewPanel = null;
 var gUnsecuredPlusPreviewIcon = null;
 var gUnsecuredPlusPreviewText = null;
@@ -4884,48 +4879,6 @@ function EnsureShopPreviewPanel() {
     return panel;
 }
 
-function EnsureUltCooldownPreviewPanel() {
-    if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-        SetPanelNonInteractive(gUltCooldownPreviewPanel);
-        SetPanelNonInteractive(gUltCooldownPreviewRow);
-        return gUltCooldownPreviewPanel;
-    }
-    var root = $.GetContextPanel();
-    if (!root) return null;
-
-    var panel = root.FindChildTraverse("UltCooldownPreview");
-    if (!panel) panel = $.CreatePanel("Panel", root, "UltCooldownPreview");
-    if (!panel) return null;
-
-    var row = panel.FindChildTraverse("UltCooldownPreviewRow");
-    if (!row) row = $.CreatePanel("Panel", panel, "UltCooldownPreviewRow");
-    if (row) {
-        for (var i = row.GetChildCount(); i < 3; i++) {
-            var chip = $.CreatePanel("Panel", row, "");
-            chip.AddClass("UltCooldownPreviewChip");
-            var chipText = $.CreatePanel("Label", chip, "");
-            chipText.AddClass("UltCooldownPreviewChipText");
-            chipText.text = String((i + 1) * 7);
-        }
-    }
-
-    SetPanelNonInteractive(panel);
-    SetPanelNonInteractive(row);
-    if (row && row.GetChildCount) {
-        for (var ci = 0; ci < row.GetChildCount(); ci++) {
-            var child = row.GetChild(ci);
-            SetPanelNonInteractive(child);
-            if (child && child.GetChildCount && child.GetChildCount() > 0) {
-                SetPanelNonInteractive(child.GetChild(0));
-            }
-        }
-    }
-
-    gUltCooldownPreviewPanel = panel;
-    gUltCooldownPreviewRow = row;
-    return panel;
-}
-
 function EnsureUnsecuredPlusPreviewPanel() {
     if (gUnsecuredPlusPreviewPanel && gUnsecuredPlusPreviewPanel.IsValid && gUnsecuredPlusPreviewPanel.IsValid()) {
         SetPanelNonInteractive(gUnsecuredPlusPreviewPanel);
@@ -5322,11 +5275,6 @@ function IsShopPreviewConfig(configId) {
     return configId === "SHOP_OFFSET_X";
 }
 
-function IsUltCooldownPreviewConfig(configId) {
-    return configId === "ULT_COOLDOWN_SIZE" ||
-        configId === "ULT_COOLDOWN_OPACITY";
-}
-
 function IsUnsecuredPlusPreviewConfig(configId) {
     return configId === "UNSECURED_SOULS_HUD_SCALE" ||
         configId === "UNSECURED_SOULS_HUD_X_OFFSET" ||
@@ -5371,9 +5319,6 @@ function HideMinimapSizePreview() {
     }
     if (gShopPreviewPanel && gShopPreviewPanel.IsValid && gShopPreviewPanel.IsValid()) {
         gShopPreviewPanel.RemoveClass("Visible");
-    }
-    if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-        gUltCooldownPreviewPanel.RemoveClass("Visible");
     }
     if (gUnsecuredPlusPreviewPanel && gUnsecuredPlusPreviewPanel.IsValid && gUnsecuredPlusPreviewPanel.IsValid()) {
         gUnsecuredPlusPreviewPanel.RemoveClass("Visible");
@@ -5636,9 +5581,6 @@ function ShowConfigPreviewForConfigId(configId) {
     }
     if (IsShopPreviewConfig(configId)) {
         ShowShopPreview();
-    }
-    if (IsUltCooldownPreviewConfig(configId)) {
-        ShowUltCooldownPreview();
     }
     if (IsUnsecuredPlusPreviewConfig(configId)) {
         ShowUnsecuredPlusPreview();
@@ -6074,61 +6016,6 @@ function ShowShopPreview() {
     gShopPreviewLabel.text = "SHOP";
     panel.AddClass("Visible");
     ScheduleHideShopPreview(1.2);
-}
-
-function ShowUltCooldownPreview() {
-    if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
-        HideMinimapSizePreview();
-        return;
-    }
-    var panel = EnsureUltCooldownPreviewPanel();
-    if (!panel || !gUltCooldownPreviewRow) return;
-    if (!IsSettingsWindowVisible()) return;
-
-    var opacity = Number(MOD_CONFIG.ULT_COOLDOWN_OPACITY);
-    if (!isFinite(opacity)) opacity = 0.9;
-    if (opacity < 0) opacity = 0;
-    if (opacity > 1) opacity = 1;
-    var size = Math.round(Number(MOD_CONFIG.ULT_COOLDOWN_SIZE));
-    if (!isFinite(size)) size = 13;
-    if (size < 10) size = 10;
-    if (size > 32) size = 32;
-
-    var context = $.GetContextPanel();
-    var fallbackX = 760;
-    var fallbackY = 56;
-    var contextW = Number(context && context.actuallayoutwidth);
-    if (isFinite(contextW) && contextW > 0) fallbackX = Math.round(contextW * 0.40);
-
-    var baseX = fallbackX;
-    var baseY = fallbackY;
-    var anchoredToLive = false;
-    var root = FindRootPanel();
-    var topBar = root && root.FindChildTraverse ? (root.FindChildTraverse("CitadelHudTopBar") || root.FindChildTraverse("TopBar")) : null;
-    var liveRect = GetPanelRectRelativeToContext(topBar);
-    if (liveRect) {
-        baseX = liveRect.x + Math.round(liveRect.width * 0.38);
-        baseY = liveRect.y + 10;
-    }
-    SetPreviewPanelPosition(panel, baseX, baseY);
-
-    SetPanelOpacitySafe(gUltCooldownPreviewRow, opacity, 0.9);
-    for (var i = 0; i < gUltCooldownPreviewRow.GetChildCount(); i++) {
-        var chip = gUltCooldownPreviewRow.GetChild(i);
-        if (!chip) continue;
-        var chipWidth = Math.max(28, Math.round(size * 2.8));
-        var chipHeight = Math.max(18, Math.round(size * 1.7));
-        chip.style.width = String(chipWidth) + "px";
-        chip.style.height = String(chipHeight) + "px";
-        var chipLabel = chip.GetChildCount && chip.GetChildCount() > 0 ? chip.GetChild(0) : null;
-        if (chipLabel) {
-            chipLabel.style.fontSize = String(size) + "px";
-            chipLabel.text = (i === 0) ? "8" : ((i === 1) ? "22" : "RDY");
-        }
-    }
-
-    panel.AddClass("Visible");
-    ScheduleHideUltCooldownPreview(1.2);
 }
 
 function ShowUnsecuredPlusPreview() {
@@ -9840,17 +9727,6 @@ function ScheduleHideShopPreview(delaySec) {
         if (token !== gShopPreviewHideToken) return;
         if (gShopPreviewPanel && gShopPreviewPanel.IsValid && gShopPreviewPanel.IsValid()) {
             gShopPreviewPanel.RemoveClass("Visible");
-        }
-    });
-}
-
-function ScheduleHideUltCooldownPreview(delaySec) {
-    gUltCooldownPreviewHideToken++;
-    var token = gUltCooldownPreviewHideToken;
-    $.Schedule(delaySec, function() {
-        if (token !== gUltCooldownPreviewHideToken) return;
-        if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-            gUltCooldownPreviewPanel.RemoveClass("Visible");
         }
     });
 }
@@ -17292,10 +17168,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "slider", 0, 1000, 5);
         });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", "HIGH FPS IMPACT WARNING!", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "ULT_COOLDOWN_SIZE", "slider", 10, 32, 1, null);
-            CreateRow(sectionParent, "Opacity", "ULT_COOLDOWN_OPACITY", "slider", 0, 1.0, 0.05, null);
-        });
+        CreateAnimatedInlineToggleSection(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", null, null);
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", function(sectionParent) {
             CreateRow(sectionParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "slider", 50, 200, 1, null, "");
