@@ -884,7 +884,7 @@
 
 .support_4_3_active .gShopOpen #BarGraphContainer
 {
-	visibility: collapse;
+	visibility: visible;
 }
 
 .support_4_3_active #NavPanel
@@ -1198,11 +1198,6 @@
 .connectedToTutorial #CosmeticAbilitiesMenu
 {
 	visibility: visible;
-}
-
-.ExperimentalBranch #CosmeticAbilitiesMenu
-{
-	visibility: collapse;
 }
 
 #hud_reportcard
@@ -1536,7 +1531,6 @@
 	margin-bottom: 165px;
 	margin-left: 0px;
 	flow-children: down;
-	horizontal-align: center;
 	padding: 5px 12px 4px 12px;
 	background-color: #0f141ccc;
 	border: 1px solid #2d3f54bb;
@@ -2283,4 +2277,3 @@
 {
 	cursor: none;
 }
-
