@@ -5,9 +5,6 @@
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hud_health_container.vcss_c" />
 	</styles>
-	<scripts>
-		<include src="s2r://panorama/scripts/hud_health_parser.js" />
-	</scripts>
 	<snippets>
 		<snippet name="RecentHealCounter">
 			<Panel class="recentHealCounter">
