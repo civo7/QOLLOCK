@@ -75,6 +75,8 @@
         zipBoostLastTitle: "",
         zipBoostLastStatus: "",
         zipBoostNextSourceSearchMs: 0,
+        imagesInChatTopNextSearchMs: 0,
+        imagesInChatBottomNextSearchMs: 0,
         unsecuredSoulsDisplayMode: "",
         unsecuredSoulsLastLayoutSig: "",
         unsecuredSoulsLastClassSig: "",
@@ -25146,6 +25148,129 @@ function GetUIRoot() {
         return !!(State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted);
     }
 
+    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(\?\S*)?$/i;
+    var IMAGES_IN_CHAT_MAX_W = 150;
+    var IMAGES_IN_CHAT_MAX_H = 150;
+    var IMAGES_IN_CHAT_MAX_RETRIES = 30;
+    var IMAGES_IN_CHAT_RETRY_INTERVAL = 0.5;
+
+    function FindChatMessageLabel(msgPanel) {
+        var msgText = msgPanel.FindChildTraverse("MessageText");
+        if (msgText) return msgText;
+        var msgContents = msgPanel.FindChildTraverse("MessageContents");
+        if (!msgContents) return null;
+        for (var i = 0; i < msgContents.GetChildCount(); i++) {
+            var child = msgContents.GetChild(i);
+            if (child && child.paneltype === "Label") return child;
+        }
+        return null;
+    }
+
+    function InjectTopChatImage(msgPanel, url) {
+        var msgContainer = msgPanel.FindChildTraverse("MessageContents");
+        if (!msgContainer) return;
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        msgContainer.style.opacity = 0.00001;
+        textContainer.style.maxWidth = "9999px";
+        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        img.SetImage(url);
+        img.style.uiScale = "10%";
+        var retries = 0;
+        function tryScale() {
+            if (!IsPanelValid(img)) return;
+            var w = img.actuallayoutwidth * 10.0;
+            var h = img.actuallayoutheight * 10.0;
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "8px 8px 8px 8px";
+                msgContainer.style.opacity = 1;
+                return;
+            }
+            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                retries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+            } else {
+                msgContainer.style.opacity = 1;
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+    }
+
+    function InjectBottomChatImage(msgPanel, url) {
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        textContainer.style.maxWidth = "9999px";
+        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        img.SetImage(url);
+        img.style.uiScale = "10%";
+        var retries = 0;
+        function tryScale() {
+            if (!IsPanelValid(img)) return;
+            var w = img.actuallayoutwidth * 10.0;
+            var h = img.actuallayoutheight * 10.0;
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "4px 4px 4px 4px";
+                return;
+            }
+            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                retries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+            } else {
+                img.DeleteAsync(0);
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+    }
+
+    function ProcessChatContainerImages(container, isBottomChat) {
+        if (!IsPanelValid(container)) return;
+        var messages = container.FindChildrenWithClassTraverse("ChatMessage");
+        if (!messages) return;
+        for (var i = 0; i < messages.length; i++) {
+            var msg = messages[i];
+            if (!IsPanelValid(msg) || msg.BHasClass("imageProcessed")) continue;
+            msg.AddClass("imageProcessed");
+            var label = FindChatMessageLabel(msg);
+            if (!label) continue;
+            var text = label.text ? String(label.text).trim() : "";
+            if (!text) continue;
+            var match = text.match(IMAGES_IN_CHAT_URL_REGEX);
+            if (!match) continue;
+            if (isBottomChat) {
+                InjectBottomChatImage(msg, match[0]);
+            } else {
+                InjectTopChatImage(msg, match[0]);
+            }
+        }
+    }
+
+    function UpdateImagesInChat(root, cfg) {
+        if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
+        var nowMs = PerfNowMs();
+        if (nowMs >= State.imagesInChatTopNextSearchMs) {
+            State.imagesInChatTopNextSearchMs = nowMs + 200;
+            ProcessChatContainerImages(root.FindChildTraverse("Messages"), false);
+        }
+        if (nowMs >= State.imagesInChatBottomNextSearchMs) {
+            State.imagesInChatBottomNextSearchMs = nowMs + 200;
+            ProcessChatContainerImages(root.FindChildTraverse("ChatMessages"), true);
+        }
+    }
+
     function loop() {
         var nextDelaySec = LOOP_INTERVAL_SEC;
         try {
@@ -25361,6 +25486,10 @@ function GetUIRoot() {
             UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
         }
         PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+
+        perfSection = PerfStart();
+        UpdateImagesInChat(root, cfg);
+        PerfEnd("loop.images_in_chat", perfSection);
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
         if (State.accountPresetTestActive) {
