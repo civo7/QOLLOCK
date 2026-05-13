@@ -529,7 +529,53 @@
         healthbarVisDebugLastSig: "",
         healthbarVisDebugNextMs: 0,
         loopErrorNextLogMs: 0,
-        compassErrorNextLogMs: 0
+        compassErrorNextLogMs: 0,
+        // ── Minecraft healthbar ────────────────────────────────────────────────
+        mcWasEnabled: false,
+        mcNextUpdateMs: 0,
+        mcHeartsBlinkTimer: null,
+        mcLowHealthJiggleTimer: null,
+        mcHealingWaveTimer: null,
+        mcLastBlinkHalfSegments: null,
+        mcHeartsBlinking: false,
+        mcHeartsBlinkPhase: 0,
+        mcLowHealthJiggleActive: false,
+        mcHealingWaveActive: false,
+        mcHealingWaveCurrentIndex: 0,
+        mcIsAfflicted: false,
+        mcCheckModifierNextMs: 0,
+        mcLastModifierResult: false,
+        mcLoggedHealthContainerMiss: false,
+        mcLoggedGoldApMiss: false,
+        mcLoggedBulletBarrierMiss: false,
+        mcHeartSlots: [],
+        mcHeartContainerImages: [],
+        mcHeartHealingImages: [],
+        mcHeartDeferredImages: [],
+        mcHeartFillImages: [],
+        mcHeartsCapacity: 0,
+        mcHeartsRowCount: 0,
+        mcLastVisibleHeartsCount: 0,
+        mcBarrierHeartsPanels: [],
+        mcBarrierHeartContainerImages: [],
+        mcBarrierHeartFillImages: [],
+        mcBarrierHeartsCapacity: 0,
+        mcCachedFoodIcons: [],
+        mcLastIsBlinkOn: null,
+        mcLastContainerHeartsNeeded: -1,
+        mcLastContainerLastSlotIsHalf: null,
+        mcLastFillFullHearts: -1,
+        mcLastFillHasHalf: null,
+        mcLastFillAfflicted: null,
+        mcLastDeferredFullHearts: -1,
+        mcLastDeferredHasHalf: null,
+        mcLastDeferredStartSlots: -1,
+        mcLastHealingFullHearts: -1,
+        mcLastHealingHasHalf: null,
+        mcLastHealingStartSlots: -1,
+        mcLastBarrierFullHearts: -1,
+        mcLastBarrierHasHalf: null,
+        mcLastBarrierLastSlotIsHalf: null
     };
 
     var INTERNAL_CONFIG = {
@@ -1054,6 +1100,25 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const LANE_PREF_SELECTED_INTERVAL_MS = 4870;
     const HERO_SHOP_PANEL_SEARCH_MS = 2470;
     const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+    // ── Minecraft healthbar ────────────────────────────────────────────────────
+    const MC_CHARGE_MAX_ANGLES = { 1: 90, 2: 42, 3: 26, 4: 20, 5: 15.5, 6: 13, 7: 10.86 };
+    const MC_HP_PER_HALF_SEGMENT = 50;
+    const MC_LOW_HEALTH_HALF_SEGMENTS = 4;
+    const MC_HEARTS_PER_ROW = 10;
+    const MC_MAX_HEART_ROWS = 5;
+    const MC_HEART_ROW_HEIGHT_PX = 22;
+    const MC_HEALTH_BAR_PIXEL_HEIGHT = 367;
+    const MC_HEALTH_BAR_SCALE = 52 / 30;
+    const MC_SOULS_BAR_MAX_HEIGHT_PX = 52;
+    const MC_FOOD_PERCENT_PER_HALF = 5;
+    const MC_TICK_INTERVAL_MS = 50;
+    const MC_MODIFIER_THROTTLE_MS = 500;
+    const MC_BLINK_INTERVAL_S = 0.1;
+    const MC_BLINK_PHASE_COUNT = 4;
+    const MC_JIGGLE_INTERVAL_S = 0.05;
+    const MC_JIGGLE_CHANCE = 0.5;
+    const MC_HEALING_WAVE_STEP_S = 0.05;
+    const MC_HEALING_WAVE_PAUSE_S = 0.5;
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -4962,6 +5027,711 @@ function GetUIRoot() {
         State.budhudNextUpdateMs = (Number(nowMs) || 0) + 100;
     }
 
+    // ── Minecraft Healthbar ───────────────────────────────────────────────────
+
+    function McResolveHudRoot(root) {
+        var cached = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+        if (cached) return cached;
+        var heartsRoot = root && root.FindChildTraverse ? root.FindChildTraverse("MinecraftHeartsRoot") : null;
+        var panel = (heartsRoot && heartsRoot.GetParent) ? heartsRoot.GetParent() : null;
+        State.cachedPanels.mcHudRoot = IsPanelValid(panel) ? panel : null;
+        return State.cachedPanels.mcHudRoot;
+    }
+
+    function McResetRuntime() {
+        if (State.mcHeartsBlinkTimer !== null) {
+            $.CancelScheduled(State.mcHeartsBlinkTimer);
+            State.mcHeartsBlinkTimer = null;
+        }
+        if (State.mcLowHealthJiggleTimer !== null) {
+            $.CancelScheduled(State.mcLowHealthJiggleTimer);
+            State.mcLowHealthJiggleTimer = null;
+        }
+        if (State.mcHealingWaveTimer !== null) {
+            $.CancelScheduled(State.mcHealingWaveTimer);
+            State.mcHealingWaveTimer = null;
+        }
+        State.mcHeartsBlinking = false;
+        State.mcHeartsBlinkPhase = 0;
+        State.mcLowHealthJiggleActive = false;
+        State.mcHealingWaveActive = false;
+        State.mcHealingWaveCurrentIndex = 0;
+        State.mcLastBlinkHalfSegments = null;
+        State.mcLastIsBlinkOn = null;
+        State.mcLastContainerHeartsNeeded = -1;
+        State.mcLastContainerLastSlotIsHalf = null;
+        State.mcLastFillFullHearts = -1;
+        State.mcLastFillHasHalf = null;
+        State.mcLastFillAfflicted = null;
+        State.mcLastDeferredFullHearts = -1;
+        State.mcLastDeferredHasHalf = null;
+        State.mcLastDeferredStartSlots = -1;
+        State.mcLastHealingFullHearts = -1;
+        State.mcLastHealingHasHalf = null;
+        State.mcLastHealingStartSlots = -1;
+        State.mcLastBarrierFullHearts = -1;
+        State.mcLastBarrierHasHalf = null;
+        State.mcLastBarrierLastSlotIsHalf = null;
+        State.mcWasEnabled = false;
+    }
+
+    function McStartHeartsBlink() {
+        if (State.mcHeartsBlinkTimer !== null) {
+            $.CancelScheduled(State.mcHeartsBlinkTimer);
+            State.mcHeartsBlinkTimer = null;
+        }
+        State.mcHeartsBlinking = true;
+        State.mcHeartsBlinkPhase = 0;
+        function scheduleNextPhase() {
+            State.mcHeartsBlinkTimer = $.Schedule(MC_BLINK_INTERVAL_S, function () {
+                if (!State.mcHeartsBlinking) { State.mcHeartsBlinkTimer = null; return; }
+                State.mcHeartsBlinkPhase += 1;
+                if (State.mcHeartsBlinkPhase >= MC_BLINK_PHASE_COUNT) {
+                    State.mcHeartsBlinking = false;
+                    State.mcHeartsBlinkTimer = null;
+                    return;
+                }
+                scheduleNextPhase();
+            });
+        }
+        scheduleNextPhase();
+    }
+
+    function McLowHealthJiggleTick() {
+        try {
+            var hearts = State.mcHeartSlots;
+            if (!hearts || hearts.length === 0) return;
+            var visibleCount = Math.min(State.mcLastVisibleHeartsCount, hearts.length);
+            for (var i = 0; i < visibleCount; i += 1) {
+                var heart = hearts[i];
+                if (Math.random() < MC_JIGGLE_CHANCE) {
+                    if (heart.BHasClass("LoweredHeart")) heart.RemoveClass("LoweredHeart");
+                    else heart.AddClass("LoweredHeart");
+                }
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McLowHealthJiggleTick: " + e); }
+    }
+
+    function McResetAllHeartsPosition() {
+        try {
+            if (!State.mcHeartSlots || State.mcHeartSlots.length === 0) return;
+            for (var i = 0; i < State.mcHeartSlots.length; i += 1) {
+                State.mcHeartSlots[i].RemoveClass("RaisedHeart");
+                State.mcHeartSlots[i].RemoveClass("LoweredHeart");
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McResetAllHeartsPosition: " + e); }
+    }
+
+    function McSetLowHealthJiggleEnabled(enabled) {
+        if (enabled) {
+            if (State.mcLowHealthJiggleActive) return;
+            State.mcLowHealthJiggleActive = true;
+            function scheduleNext() {
+                State.mcLowHealthJiggleTimer = $.Schedule(MC_JIGGLE_INTERVAL_S, function () {
+                    if (!State.mcLowHealthJiggleActive) { State.mcLowHealthJiggleTimer = null; return; }
+                    McLowHealthJiggleTick();
+                    scheduleNext();
+                });
+            }
+            scheduleNext();
+        } else {
+            if (!State.mcLowHealthJiggleActive) return;
+            State.mcLowHealthJiggleActive = false;
+            if (State.mcLowHealthJiggleTimer !== null) {
+                $.CancelScheduled(State.mcLowHealthJiggleTimer);
+                State.mcLowHealthJiggleTimer = null;
+            }
+            McResetAllHeartsPosition();
+        }
+    }
+
+    function McHealingWaveTick() {
+        try {
+            var hearts = State.mcHeartSlots;
+            if (!hearts || hearts.length === 0) return;
+            var visibleCount = Math.min(State.mcLastVisibleHeartsCount, hearts.length);
+            if (visibleCount === 0) return;
+            if (State.mcHealingWaveCurrentIndex > visibleCount) State.mcHealingWaveCurrentIndex = 0;
+            if (State.mcHealingWaveCurrentIndex > 0) hearts[State.mcHealingWaveCurrentIndex - 1].RemoveClass("RaisedHeart");
+            if (State.mcHealingWaveCurrentIndex >= visibleCount) {
+                State.mcHealingWaveTimer = $.Schedule(MC_HEALING_WAVE_PAUSE_S, function () {
+                    if (!State.mcHealingWaveActive) { State.mcHealingWaveTimer = null; return; }
+                    State.mcHealingWaveCurrentIndex = 0;
+                    McHealingWaveTick();
+                });
+                return;
+            }
+            hearts[State.mcHealingWaveCurrentIndex].AddClass("RaisedHeart");
+            State.mcHealingWaveCurrentIndex += 1;
+            State.mcHealingWaveTimer = $.Schedule(MC_HEALING_WAVE_STEP_S, function () {
+                if (!State.mcHealingWaveActive) { State.mcHealingWaveTimer = null; return; }
+                McHealingWaveTick();
+            });
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McHealingWaveTick: " + e); }
+    }
+
+    function McSetHealingWaveEnabled(enabled) {
+        if (enabled) {
+            if (State.mcHealingWaveActive) return;
+            if (State.mcLowHealthJiggleActive) return;
+            State.mcHealingWaveActive = true;
+            State.mcHealingWaveCurrentIndex = 0;
+            McResetAllHeartsPosition();
+            McHealingWaveTick();
+        } else {
+            if (!State.mcHealingWaveActive) return;
+            State.mcHealingWaveActive = false;
+            if (State.mcHealingWaveTimer !== null) {
+                $.CancelScheduled(State.mcHealingWaveTimer);
+                State.mcHealingWaveTimer = null;
+            }
+            McResetAllHeartsPosition();
+        }
+    }
+
+    function McCheckModifierActive(root, name) {
+        try {
+            var modifierLabels = root && root.FindChildrenWithClassTraverse ? root.FindChildrenWithClassTraverse("modifier_name") : null;
+            if (!modifierLabels || modifierLabels.length === 0) return false;
+            for (var i = 0; i < modifierLabels.length; i += 1) {
+                var label = modifierLabels[i];
+                if (label.text && label.text.toUpperCase().indexOf(name) !== -1) return true;
+            }
+            return false;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McCheckModifierActive: " + e); return false; }
+    }
+
+    function McEnsureHeartsCapacity(hudRoot, heartsNeeded) {
+        if (heartsNeeded <= 0) return false;
+        if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+            State.cachedPanels.mcHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHearts") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+                $.Msg("[QOLLock][MC] MinecraftHearts container not found");
+                return false;
+            }
+        }
+        var heartsNeededRowCount = Math.ceil(heartsNeeded / MC_HEARTS_PER_ROW);
+        if (State.mcHeartsCapacity >= heartsNeeded && State.mcHeartSlots.length >= State.mcHeartsCapacity && State.mcHeartsRowCount === heartsNeededRowCount) return true;
+        State.cachedPanels.mcHeartsContainer.RemoveAndDeleteChildren();
+        State.mcHeartSlots = [];
+        State.mcHeartContainerImages = [];
+        State.mcHeartHealingImages = [];
+        State.mcHeartDeferredImages = [];
+        State.mcHeartFillImages = [];
+        State.mcHeartsCapacity = heartsNeeded;
+        State.mcLastVisibleHeartsCount = 0;
+        State.mcLastIsBlinkOn = null;
+        State.mcLastContainerHeartsNeeded = -1;
+        State.mcLastContainerLastSlotIsHalf = null;
+        State.mcLastFillFullHearts = -1;
+        State.mcLastFillHasHalf = null;
+        State.mcLastFillAfflicted = null;
+        State.mcLastDeferredFullHearts = -1;
+        State.mcLastDeferredHasHalf = null;
+        State.mcLastDeferredStartSlots = -1;
+        State.mcLastHealingFullHearts = -1;
+        State.mcLastHealingHasHalf = null;
+        State.mcLastHealingStartSlots = -1;
+        var currentRow = null;
+        var heartsInCurrentRow = 0;
+        var rowPanels = [];
+        function ensureRow() {
+            if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
+                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcHeartsContainer, "");
+                currentRow.AddClass("HeartsRow");
+                var firstChild = State.cachedPanels.mcHeartsContainer.GetChild(0);
+                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcHeartsContainer.MoveChildBefore(currentRow, firstChild);
+                rowPanels.push(currentRow);
+                heartsInCurrentRow = 0;
+            }
+        }
+        for (var i = 0; i < heartsNeeded; i += 1) {
+            ensureRow();
+            var slot = $.CreatePanel("Panel", currentRow, "");
+            slot.AddClass("HeartSlot");
+            var containerImg = $.CreatePanel("Image", slot, "");
+            containerImg.AddClass("HeartContainer");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            var healingImg = $.CreatePanel("Image", slot, "");
+            healingImg.AddClass("HeartHealing");
+            healingImg.style.visibility = "collapse";
+            var frozenImg = $.CreatePanel("Image", slot, "");
+            frozenImg.AddClass("HeartDeferred");
+            frozenImg.style.visibility = "collapse";
+            var fillImg = $.CreatePanel("Image", slot, "");
+            fillImg.AddClass("HeartFill");
+            fillImg.style.visibility = "collapse";
+            State.mcHeartSlots.push(slot);
+            State.mcHeartContainerImages.push(containerImg);
+            State.mcHeartHealingImages.push(healingImg);
+            State.mcHeartDeferredImages.push(frozenImg);
+            State.mcHeartFillImages.push(fillImg);
+            heartsInCurrentRow += 1;
+        }
+        State.mcHeartsRowCount = rowPanels.length;
+        if (rowPanels.length > MC_MAX_HEART_ROWS) {
+            var marginTop = ((MC_MAX_HEART_ROWS * MC_HEART_ROW_HEIGHT_PX) / rowPanels.length) - MC_HEART_ROW_HEIGHT_PX;
+            for (var j = 0; j < rowPanels.length - 1; j += 1) rowPanels[j].style.marginTop = marginTop + "px";
+        }
+        return true;
+    }
+
+    function McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded) {
+        if (heartsNeeded <= 0) return false;
+        if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+            State.cachedPanels.mcBarrierHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHeartsContainer") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+                $.Msg("[QOLLock][MC] MinecraftBarrierHeartsContainer not found");
+                return false;
+            }
+        }
+        if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+            State.cachedPanels.mcBarrierHearts = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHearts") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+                $.Msg("[QOLLock][MC] MinecraftBarrierHearts not found");
+                return false;
+            }
+        }
+        if (State.mcBarrierHeartsCapacity === heartsNeeded && State.mcBarrierHeartsPanels.length === State.mcBarrierHeartsCapacity) return true;
+        State.cachedPanels.mcBarrierHearts.RemoveAndDeleteChildren();
+        State.mcBarrierHeartsPanels = [];
+        State.mcBarrierHeartContainerImages = [];
+        State.mcBarrierHeartFillImages = [];
+        State.mcBarrierHeartsCapacity = heartsNeeded;
+        var currentRow = null;
+        var heartsInCurrentRow = 0;
+        function ensureRow() {
+            if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
+                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcBarrierHearts, "");
+                currentRow.AddClass("HeartsRow");
+                var firstChild = State.cachedPanels.mcBarrierHearts.GetChild(0);
+                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcBarrierHearts.MoveChildBefore(currentRow, firstChild);
+                heartsInCurrentRow = 0;
+            }
+        }
+        for (var i = 0; i < heartsNeeded; i += 1) {
+            ensureRow();
+            var slot = $.CreatePanel("Panel", currentRow, "");
+            slot.AddClass("HeartSlot");
+            var containerImg = $.CreatePanel("Image", slot, "");
+            containerImg.AddClass("HeartContainer");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            var fillImg = $.CreatePanel("Image", slot, "");
+            fillImg.AddClass("HeartFill");
+            fillImg.style.visibility = "collapse";
+            State.mcBarrierHeartsPanels.push(slot);
+            State.mcBarrierHeartContainerImages.push(containerImg);
+            State.mcBarrierHeartFillImages.push(fillImg);
+            heartsInCurrentRow += 1;
+        }
+        return true;
+    }
+
+    function McUpdateHearts(trueHp, totalHp, afflicted) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            var isBlinkOn = State.mcHeartsBlinking && (State.mcHeartsBlinkPhase % 2 === 0);
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var heartsNeeded = Math.max(1, Math.ceil(totalHalfSegments / 2));
+            var currentHalfSegments = Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT);
+            if (currentHalfSegments < 0) currentHalfSegments = 0;
+            if (currentHalfSegments > totalHalfSegments) currentHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(currentHalfSegments / 2);
+            var hasHalfHeart = (currentHalfSegments % 2) === 1;
+            if (!McEnsureHeartsCapacity(hudRoot, heartsNeeded)) return;
+            var lastSlotIsHalf = (totalHalfSegments % 2) === 1;
+            if (isBlinkOn !== State.mcLastIsBlinkOn || heartsNeeded !== State.mcLastContainerHeartsNeeded || lastSlotIsHalf !== State.mcLastContainerLastSlotIsHalf) {
+                State.mcLastIsBlinkOn = isBlinkOn;
+                State.mcLastContainerHeartsNeeded = heartsNeeded;
+                State.mcLastContainerLastSlotIsHalf = lastSlotIsHalf;
+                for (var i = 0; i < State.mcHeartSlots.length; i += 1) {
+                    var slot = State.mcHeartSlots[i];
+                    var container = State.mcHeartContainerImages[i];
+                    if (i >= heartsNeeded) { slot.style.visibility = "collapse"; continue; }
+                    slot.style.visibility = "visible";
+                    var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
+                    if (isLastSlot) container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_half_8x.vtex" : "s2r://panorama/images/minecraft/container_half_8x.vtex");
+                    else container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                }
+            }
+            if (fullHearts !== State.mcLastFillFullHearts || hasHalfHeart !== State.mcLastFillHasHalf || afflicted !== State.mcLastFillAfflicted) {
+                State.mcLastFillFullHearts = fullHearts;
+                State.mcLastFillHasHalf = hasHalfHeart;
+                State.mcLastFillAfflicted = afflicted;
+                var texturePrefix = afflicted ? "poisoned_" : "";
+                for (var i = 0; i < State.mcHeartFillImages.length; i += 1) {
+                    var fill = State.mcHeartFillImages[i];
+                    fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
+                    if (i < fullHearts) {
+                        fill.AddClass("full"); fill.style.visibility = "visible";
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "full_8x.vtex");
+                    } else if (i === fullHearts && hasHalfHeart) {
+                        fill.AddClass("half"); fill.style.visibility = "visible";
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "half_8x.vtex");
+                    } else {
+                        fill.AddClass("empty"); fill.style.visibility = "collapse";
+                    }
+                }
+            }
+            State.mcLastVisibleHeartsCount = heartsNeeded;
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateHearts: " + error); }
+    }
+
+    function McUpdateDeferredHearts(trueHp, deferredDamage, totalHp) {
+        try {
+            if (State.mcHeartDeferredImages.length === 0) return;
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var trueHalfSegs = Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT);
+            var deferredHalfSegs = deferredDamage > 0 ? Math.ceil(deferredDamage / MC_HP_PER_HALF_SEGMENT) : 0;
+            var orangeHalfSegments = trueHalfSegs + deferredHalfSegs;
+            if (orangeHalfSegments < 0) orangeHalfSegments = 0;
+            if (orangeHalfSegments > totalHalfSegments) orangeHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(orangeHalfSegments / 2);
+            var hasHalfHeart = (orangeHalfSegments % 2) === 1;
+            var fillFullSlots = Math.floor(Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT) / 2);
+            if (fullHearts === State.mcLastDeferredFullHearts && hasHalfHeart === State.mcLastDeferredHasHalf && fillFullSlots === State.mcLastDeferredStartSlots) return;
+            State.mcLastDeferredFullHearts = fullHearts;
+            State.mcLastDeferredHasHalf = hasHalfHeart;
+            State.mcLastDeferredStartSlots = fillFullSlots;
+            for (var i = 0; i < State.mcHeartDeferredImages.length; i += 1) {
+                var deferred = State.mcHeartDeferredImages[i];
+                if (i < fillFullSlots) { deferred.style.visibility = "collapse"; continue; }
+                deferred.RemoveClass("full"); deferred.RemoveClass("half"); deferred.RemoveClass("empty");
+                if (i < fullHearts) {
+                    deferred.AddClass("full"); deferred.style.visibility = "visible";
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    deferred.AddClass("half"); deferred.style.visibility = "visible";
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_half_8x.vtex");
+                } else {
+                    deferred.AddClass("empty"); deferred.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateDeferredHearts: " + error); }
+    }
+
+    function McUpdateHealingHearts(currentHp, healingHp, totalHp) {
+        try {
+            if (State.mcHeartHealingImages.length === 0) return;
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var healingHalfSegments = Math.ceil(healingHp / MC_HP_PER_HALF_SEGMENT);
+            if (healingHalfSegments < 0) healingHalfSegments = 0;
+            if (healingHalfSegments > totalHalfSegments) healingHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(healingHalfSegments / 2);
+            var hasHalfHeart = (healingHalfSegments % 2) === 1;
+            var healingStartSlots = Math.floor(Math.ceil(currentHp / MC_HP_PER_HALF_SEGMENT) / 2);
+            if (fullHearts === State.mcLastHealingFullHearts && hasHalfHeart === State.mcLastHealingHasHalf && healingStartSlots === State.mcLastHealingStartSlots) return;
+            State.mcLastHealingFullHearts = fullHearts;
+            State.mcLastHealingHasHalf = hasHalfHeart;
+            State.mcLastHealingStartSlots = healingStartSlots;
+            for (var i = 0; i < State.mcHeartHealingImages.length; i += 1) {
+                var healing = State.mcHeartHealingImages[i];
+                if (i < healingStartSlots) { healing.style.visibility = "collapse"; continue; }
+                healing.RemoveClass("full"); healing.RemoveClass("half"); healing.RemoveClass("empty");
+                if (i < fullHearts) {
+                    healing.AddClass("full"); healing.style.visibility = "visible";
+                    healing.SetImage("s2r://panorama/images/minecraft/green_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    healing.AddClass("half"); healing.style.visibility = "visible";
+                    healing.SetImage("s2r://panorama/images/minecraft/green_half_8x.vtex");
+                } else {
+                    healing.AddClass("empty"); healing.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateHealingHearts: " + error); }
+    }
+
+    function McUpdateBarrierHearts(currentBarrier, totalBarrier, hasBarrier) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            if (!hasBarrier) {
+                if (IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "collapse";
+                State.mcLastBarrierFullHearts = -1;
+                State.mcLastBarrierHasHalf = null;
+                State.mcLastBarrierLastSlotIsHalf = null;
+                return;
+            }
+            var totalHalfSegments = Math.ceil(totalBarrier / MC_HP_PER_HALF_SEGMENT);
+            var heartsNeeded = Math.ceil(totalHalfSegments / 2);
+            if (!McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded)) return;
+            State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "visible";
+            var lastSlotIsHalf = (totalHalfSegments % 2) === 1;
+            var currentHalfSegments = Math.ceil(currentBarrier / MC_HP_PER_HALF_SEGMENT);
+            var fullHearts = Math.floor(currentHalfSegments / 2);
+            var hasHalfHeart = (currentHalfSegments % 2) === 1;
+            if (fullHearts === State.mcLastBarrierFullHearts && hasHalfHeart === State.mcLastBarrierHasHalf && lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf) return;
+            State.mcLastBarrierFullHearts = fullHearts;
+            State.mcLastBarrierHasHalf = hasHalfHeart;
+            State.mcLastBarrierLastSlotIsHalf = lastSlotIsHalf;
+            for (var i = 0; i < State.mcBarrierHeartsPanels.length; i += 1) {
+                var container = State.mcBarrierHeartContainerImages[i];
+                var fill = State.mcBarrierHeartFillImages[i];
+                var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
+                container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
+                if (i < fullHearts) {
+                    fill.AddClass("full"); fill.style.visibility = "visible";
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    fill.AddClass("half"); fill.style.visibility = "visible";
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_half_8x.vtex");
+                } else {
+                    fill.AddClass("empty"); fill.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateBarrierHearts: " + error); }
+    }
+
+    function McParseDeferredDamage(hudRoot) {
+        try {
+            var damageBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_damage_Middle") : null;
+            if (!damageBar) return 0;
+            var heightStr = damageBar.style && damageBar.style.height ? damageBar.style.height.toString() : "";
+            var heightValue = parseFloat(heightStr) || 0;
+            return heightValue / MC_HEALTH_BAR_PIXEL_HEIGHT * MC_HEALTH_BAR_SCALE;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseDeferredDamage: " + e); return 0; }
+    }
+
+    function McParseIncomingHeal(hudRoot) {
+        try {
+            var healBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_heal_Middle") : null;
+            if (!healBar) return 0;
+            var heightStr = healBar.style && healBar.style.height ? healBar.style.height.toString() : "";
+            var heightValue = parseFloat(heightStr) || 0;
+            return (heightValue / MC_HEALTH_BAR_PIXEL_HEIGHT) * MC_HEALTH_BAR_SCALE;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseIncomingHeal: " + e); return 0; }
+    }
+
+    function McReadHealthValues(hudRoot) {
+        if (!IsPanelValid(State.cachedPanels.mcHealthContainer)) {
+            var hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
+            if (!hc) {
+                var all = hudRoot.FindChildrenWithClassTraverse ? hudRoot.FindChildrenWithClassTraverse("healthContainer") : null;
+                if (all && all.length > 0) hc = all[0];
+            }
+            if (!hc) {
+                if (!State.mcLoggedHealthContainerMiss) { $.Msg("[QOLLock][MC] Health container panel not found"); State.mcLoggedHealthContainerMiss = true; }
+                return null;
+            }
+            State.mcLoggedHealthContainerMiss = false;
+            State.cachedPanels.mcHealthContainer = hc;
+        }
+        if (!IsPanelValid(State.cachedPanels.mcCurrentHealthLabel)) {
+            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
+            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
+            if (!lbl) return null;
+            State.cachedPanels.mcCurrentHealthLabel = lbl;
+        }
+        if (!IsPanelValid(State.cachedPanels.mcTotalHealthLabel)) {
+            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
+            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
+            if (!lbl) return null;
+            State.cachedPanels.mcTotalHealthLabel = lbl;
+        }
+        var currentHealth = parseInt(State.cachedPanels.mcCurrentHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
+        var totalHealth = parseInt(State.cachedPanels.mcTotalHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
+        return { currentHealth: currentHealth, totalHealth: totalHealth };
+    }
+
+    function McComputeHealthState(currentHealth, totalHealth, hudRoot) {
+        var deferredFraction = McParseDeferredDamage(hudRoot);
+        var deferredDamage = Math.round(deferredFraction * totalHealth);
+        var trueCurrentHealth = Math.max(0, currentHealth - deferredDamage);
+        var incomingHealFraction = McParseIncomingHeal(hudRoot);
+        var incomingHealAmount = Math.round(incomingHealFraction * totalHealth);
+        var healingHealth = Math.min(totalHealth, currentHealth + incomingHealAmount);
+        var currentHalfSegments = Math.ceil(trueCurrentHealth / MC_HP_PER_HALF_SEGMENT);
+        var effectiveHalfSegments = Math.ceil(currentHealth / MC_HP_PER_HALF_SEGMENT);
+        var hasIncomingHeal = incomingHealAmount > 0;
+        return { deferredDamage: deferredDamage, trueCurrentHealth: trueCurrentHealth, healingHealth: healingHealth, currentHalfSegments: currentHalfSegments, effectiveHalfSegments: effectiveHalfSegments, hasIncomingHeal: hasIncomingHeal };
+    }
+
+    function McParseChargesForHunger(root) {
+        try {
+            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) {
+                State.cachedPanels.mcChargesContainer = root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null;
+            }
+            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) return null;
+            var allCharges = State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse ? State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse("charge") : null;
+            if (!allCharges || allCharges.length === 0) return null;
+            var maxCharges = 0;
+            var activeCharges = [];
+            for (var i = 0; i < allCharges.length; i += 1) {
+                if (allCharges[i].BHasClass("has_charge")) { maxCharges += 1; activeCharges.push(allCharges[i]); }
+            }
+            if (maxCharges === 0) return null;
+            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
+            var totalChargeValue = 0;
+            for (var i = 0; i < activeCharges.length; i += 1) {
+                var charge = activeCharges[i];
+                var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
+                if (!chargeFgElements || chargeFgElements.length === 0) continue;
+                var chargeFg = chargeFgElements[0];
+                if (chargeFg.BHasClass("finished")) {
+                    totalChargeValue += 1.0;
+                } else {
+                    var clipStyle = chargeFg.style && chargeFg.style.clip ? chargeFg.style.clip.toString() : "";
+                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
+                    if (match) totalChargeValue += Math.min(parseFloat(match[1]) / maxAngle, 1.0);
+                }
+            }
+            return { percent: Math.round((totalChargeValue / maxCharges) * 100), chargesFilled: totalChargeValue, maxCharges: maxCharges };
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e); return null; }
+    }
+
+    function McUpdateFood(percent) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) {
+                State.cachedPanels.mcFoodContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null;
+                if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
+                var children = State.cachedPanels.mcFoodContainer.Children();
+                State.mcCachedFoodIcons = [];
+                for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
+            }
+            if (State.mcCachedFoodIcons.length === 0) return;
+            if (percent < 0) percent = 0;
+            if (percent > 100) percent = 100;
+            var totalHalfSegments = Math.round(percent / MC_FOOD_PERCENT_PER_HALF);
+            var fullIcons = Math.floor(totalHalfSegments / 2);
+            var hasHalfIcon = (totalHalfSegments % 2) === 1;
+            var iconCount = State.mcCachedFoodIcons.length;
+            for (var i = 0; i < iconCount; i += 1) {
+                var reverseIndex = iconCount - 1 - i;
+                if (reverseIndex < fullIcons) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_8x.vtex");
+                else if (reverseIndex === fullIcons && hasHalfIcon) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_half_8x.vtex");
+                else State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_empty_8x.vtex");
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McUpdateFood: " + e); }
+    }
+
+    function McParseSoulsAndLevel(root) {
+        try {
+            if (!IsPanelValid(State.cachedPanels.mcGoldApContainer)) {
+                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse("gold_and_ap_container") || null) : null;
+                if (!panel) {
+                    if (!State.mcLoggedGoldApMiss) { $.Msg("[QOLLock][MC] gold_and_ap_container not found"); State.mcLoggedGoldApMiss = true; }
+                    return;
+                }
+                State.mcLoggedGoldApMiss = false;
+                State.cachedPanels.mcGoldApContainer = panel;
+            }
+            if (!IsPanelValid(State.cachedPanels.mcSoulsFill)) State.cachedPanels.mcSoulsFill = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcSoulsFill)) {
+                var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
+                var heightValue = parseFloat(heightStr) || 0;
+                var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
+                if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
+                if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) State.cachedPanels.mcXpBarFill = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null;
+                if (IsPanelValid(State.cachedPanels.mcXpBarFill) && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
+            }
+            if (!IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) State.cachedPanels.mcPlayerLevelLabel = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) {
+                var levelValue = parseInt((State.cachedPanels.mcPlayerLevelLabel.text || "").replace(/[^0-9]/g, "")) || 0;
+                if (!IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null;
+                if (IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McParseSoulsAndLevel: " + error); }
+    }
+
+    function McUpdateAnimationState(currentHalfSegments, effectiveHalfSegments, hasIncomingHeal) {
+        if (State.mcLastBlinkHalfSegments !== null && effectiveHalfSegments !== State.mcLastBlinkHalfSegments) McStartHeartsBlink();
+        State.mcLastBlinkHalfSegments = effectiveHalfSegments;
+        var isLowHealth = currentHalfSegments <= MC_LOW_HEALTH_HALF_SEGMENTS;
+        McSetLowHealthJiggleEnabled(isLowHealth);
+        McSetHealingWaveEnabled(!isLowHealth && hasIncomingHeal);
+    }
+
+    function McUpdateTotem() {
+        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) return;
+        var hasRejuvenator = IsPanelValid(State.cachedPanels.mcHudHealthBars) ? State.cachedPanels.mcHudHealthBars.BHasClass("HasRejuvenator") : false;
+        State.cachedPanels.mcTotemContainer.style.visibility = hasRejuvenator ? "visible" : "collapse";
+    }
+
+    function McUpdateBulletBarrier(hudRoot) {
+        var hasBarrier = false;
+        var bulletBarrierCurrent = 0;
+        var bulletBarrierMax = 0;
+        if (IsPanelValid(State.cachedPanels.mcBarriersContainer)) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
+        if (hasBarrier) {
+            if (!IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) State.cachedPanels.mcBulletBarrierNumbers = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) {
+                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) {
+                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_current") : null;
+                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierCurrentLabel = lbls[0];
+                }
+                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) {
+                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_max") : null;
+                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierMaxLabel = lbls[0];
+                }
+                if (IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
+                if (IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
+                McUpdateBarrierHearts(bulletBarrierCurrent, bulletBarrierMax, true);
+            } else {
+                if (!State.mcLoggedBulletBarrierMiss) { $.Msg("[QOLLock][MC] BulletBarrierNumbers panel not found"); State.mcLoggedBulletBarrierMiss = true; }
+                McUpdateBarrierHearts(0, 0, false);
+            }
+        } else {
+            McUpdateBarrierHearts(0, 0, false);
+        }
+        return { hasBarrier: hasBarrier, bulletBarrierCurrent: bulletBarrierCurrent, bulletBarrierMax: bulletBarrierMax };
+    }
+
+    function UpdateMinecraftHealthbar(root, cfg, nowMs, enabled) {
+        if (!enabled) {
+            if (State.mcWasEnabled) McResetRuntime();
+            return;
+        }
+        var nowMsNum = Number(nowMs) || 0;
+        if (nowMsNum < (Number(State.mcNextUpdateMs) || 0)) return;
+
+        var hudRoot = McResolveHudRoot(root);
+        if (!hudRoot) { State.mcNextUpdateMs = nowMsNum + 400; return; }
+
+        State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
+
+        if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) State.cachedPanels.mcHudHealthBars = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null;
+        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) State.cachedPanels.mcTotemContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null;
+        if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) {
+            State.cachedPanels.mcBarriersContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("HudShieldsContainer") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) $.Msg("[QOLLock][MC] HudBarriersContainer not found");
+        }
+
+        var hv = McReadHealthValues(hudRoot);
+        if (!hv) return;
+        var currentHealth = hv.currentHealth;
+        var totalHealth = hv.totalHealth;
+
+        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot);
+
+        McUpdateAnimationState(hs.currentHalfSegments, hs.effectiveHalfSegments, hs.hasIncomingHeal);
+
+        var nowMsForMod = Date.now();
+        if (nowMsForMod >= (Number(State.mcCheckModifierNextMs) || 0)) {
+            State.mcLastModifierResult = McCheckModifierActive(root, "AFFLICTED");
+            State.mcCheckModifierNextMs = nowMsForMod + MC_MODIFIER_THROTTLE_MS;
+        }
+        State.mcIsAfflicted = State.mcLastModifierResult;
+
+        McUpdateHearts(hs.trueCurrentHealth, totalHealth, State.mcIsAfflicted);
+        McUpdateHealingHearts(currentHealth, hs.healingHealth, totalHealth);
+        McUpdateDeferredHearts(hs.trueCurrentHealth, hs.deferredDamage, totalHealth);
+        McUpdateTotem();
+        McUpdateBulletBarrier(hudRoot);
+        McParseSoulsAndLevel(root);
+        var hungerData = McParseChargesForHunger(root);
+        if (hungerData !== null) McUpdateFood(hungerData.percent);
+
+        State.mcWasEnabled = true;
+    }
+
+    // ── End Minecraft Healthbar ───────────────────────────────────────────────
+
     function CaptureFgHeroImageOriginalParent(levelAmount, fgAnchor) {
         if (!IsPanelValid(levelAmount)) return;
         if (IsPanelValid(State.fgHeroImageOriginalParent)) return;
@@ -5322,6 +6092,11 @@ function GetUIRoot() {
         var shouldRunBudhudRuntime = (Number(healthbarType) === 4) || State.budhudWasEnabled;
         if (shouldRunBudhudRuntime) {
             UpdateBudhudHealthbar(root, cfg, healthbarType, nowMsLoop);
+        }
+
+        var shouldRunMinecraftRuntime = (Number(healthbarType) === 5) || State.mcWasEnabled;
+        if (shouldRunMinecraftRuntime) {
+            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === 5));
         }
     }
 
