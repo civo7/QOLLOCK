@@ -1012,6 +1012,7 @@
 	flow-children: right;
 	horizontal-align: center;
 	vertical-align: center;
+	ignore-parent-flow: true;
 	margin-left: 0px;
 	margin-bottom: 0px;
 	z-index: 2;
@@ -1019,7 +1020,10 @@
 	/* HP nums toggle */
 }
 
-#MinecraftHeartsHealthNumbers .currentHealthLabel
+#MinecraftHeartsHealthNumbers .currentHealthLabel,
+.localPlayerLowHealth #MinecraftHeartsHealthNumbers .currentHealthLabel,
+.healthLow #MinecraftHeartsHealthNumbers .currentHealthLabel,
+.localPlayerMidHealth #MinecraftHeartsHealthNumbers .currentHealthLabel
 {
 	font-size: 14px;
 	text-shadow: 0px 0px 0px 3.0 offBlack;
@@ -1027,6 +1031,8 @@
 	margin-top: 0px;
 	padding-left: 0px;
 	margin-left: 0px;
+	max-width: none;
+	text-overflow: clip;
 	font-family: "Mojang", numericOracle;
 	font-weight: semi-bold;
 }
@@ -1037,6 +1043,7 @@
 	opacity: 1;
 	transform: none;
 	margin-right: 0px;
+	horizontal-align: left;
 	font-family: "Mojang", numericOracle;
 	text-shadow: 0px 0px 0px 3.0 offBlack;
 }

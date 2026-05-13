@@ -19,3 +19,75 @@
 	flow-children: none;
 }
 
+
+/* Minecraft healthbar ability pip overrides */
+.minecraft_healthbar_active .hud_abilities CitadelHudAbilityUpgradePips
+{
+	width: 100%;
+	margin-right: 0px;
+	margin-left: 0px;
+	padding-top: 0px;
+	vertical-align: bottom;
+	margin-bottom: 50px;
+}
+
+.minecraft_healthbar_active .abilityUpgradeContainer
+{
+	border-radius: 12px;
+}
+
+.minecraft_healthbar_active .hud_abilities #AbilityUpgradePips
+{
+	width: 50%;
+	horizontal-align: center;
+}
+
+.minecraft_healthbar_active .isUnlocked .canAffordUpgrade .abilityUpgradeCostLabel
+{
+	color: offWhite;
+}
+
+.minecraft_healthbar_active .unlockText
+{
+	font-size: 20px;
+	text-align: center;
+}
+
+.minecraft_healthbar_active #TrainButton
+{
+	width: 50%;
+	horizontal-align: center;
+}
+
+.minecraft_healthbar_active .abilityLevelPip
+{
+	img-shadow: 0px 0px 0px 2.0 offBlack;
+	margin-right: 3px;
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+}
+
+.minecraft_healthbar_active .isUnlocked .canAffordUpgrade .abilityLevelPip,
+.minecraft_healthbar_active .isReadOnly .abilityLevelPip,
+.minecraft_healthbar_active .isReadOnly .canAffordUpgrade .abilityLevelPip,
+.minecraft_healthbar_active .isUnlocked .canUnlock .abilityLevelPip
+{
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+}
+
+.minecraft_healthbar_active .isUnlocked .hasAbilityUpgrade .abilityLevelPip
+{
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+}
+
+.minecraft_healthbar_active .abilityUpgradeCostLabel
+{
+	margin-top: 1.5px;
+	font-size: 24px;
+	font-family: "Mojang";
+	text-shadow: 0px 0px 0px 4.0 offBlack;
+}
+
+.minecraft_healthbar_active .isUnlocked .canAffordUpgrade .abilityLevelPip
+{
+	wash-color: spiritBrightColor;
+}
