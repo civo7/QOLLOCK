@@ -3778,6 +3778,16 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1 = AppendUniquePayloadSchemaFields(
         { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
     ]
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3_OVERRIDE_FIELDS = [
+    { key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3 = AppendUniquePayloadSchemaFields(
+    ClonePayloadSchemaWithFieldOverrides(
+        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1,
+        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3_OVERRIDE_FIELDS
+    ),
+    [{ key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }]
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -3855,6 +3865,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.3.2": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1
+    },
+    "2.3.3": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -24680,6 +24694,7 @@ function GetUIRoot() {
         var fgHealthbarEnabled = (healthbarType === 2);
         var klutzHealthbarEnabled = (healthbarType === 3);
         var budhudHealthbarEnabled = (healthbarType === 4);
+        var minecraftHealthbarEnabled = (healthbarType === 5);
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = Number(cfg.ENABLE_CLEAN_STACKS) === 1;
@@ -24715,6 +24730,8 @@ function GetUIRoot() {
             cfg.ENABLE_MINIMAP_REJUV_TIMER,
             cfg.ENABLE_BHOP,
             healthbarType,
+            minecraftHealthbarEnabled ? 1 : 0,
+            Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS),
             colorWarningEnabled ? 1 : 0,
             cleanStacksEnabled ? 1 : 0,
             compassEnabled ? 1 : 0,
@@ -24790,6 +24807,8 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "fg_healthbar_active", fgHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "klutz_healthbar_active", klutzHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "budhud_healthbar_active", budhudHealthbarEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "minecraft_healthbar_active", minecraftHealthbarEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);

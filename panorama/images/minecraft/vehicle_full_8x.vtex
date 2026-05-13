@@ -6,7 +6,7 @@
         "CDmeInputTexture"
         {
             "m_name" "string" "InputTexture0"
-            "m_fileName" "string" "panorama/images/qollock/qol_fg_healthbar_border.png"
+            "m_fileName" "string" "panorama/images/minecraft/vehicle_full_8x.png"
             "m_colorSpace" "string" "srgb"
             "m_typeString" "string" "2D"
             "m_imageProcessorArray" "element_array"

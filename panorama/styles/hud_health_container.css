@@ -956,3 +956,450 @@
 	margin-left: 0px;
 }
 
+.minecraft_healthbar_active #HealthBarContent
+{
+	opacity: 0.0001;
+}
+
+.minecraft_health_numbers_disabled #MinecraftHeartsHealthNumbers
+{
+	visibility: collapse;
+}
+
+#MinecraftHeartsRoot
+{
+	flow-children: down;
+	horizontal-align: left;
+	width: fit-children;
+	height: fit-children;
+	vertical-align: bottom;
+	visibility: collapse;
+}
+
+.minecraft_healthbar_active #MinecraftHeartsRoot
+{
+	visibility: visible;
+}
+
+.replay_playback #MinecraftHeartsRoot
+{
+	margin-bottom: 26.5px;
+}
+
+#MinecraftHeartsContainer
+{
+	flow-children: right;
+	horizontal-align: left;
+	width: fill-parent-flow(1);
+	height: fit-children;
+	margin-top: 0px;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+
+#MinecraftHearts
+{
+	flow-children: down;
+	horizontal-align: left;
+	width: fit-children;
+	height: fit-children;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
+#MinecraftHeartsHealthNumbers
+{
+	flow-children: right;
+	horizontal-align: center;
+	vertical-align: center;
+	margin-left: 0px;
+	margin-bottom: 0px;
+	z-index: 2;
+	visibility: visible;
+	/* HP nums toggle */
+}
+
+#MinecraftHeartsHealthNumbers .currentHealthLabel
+{
+	font-size: 14px;
+	text-shadow: 0px 0px 0px 3.0 offBlack;
+	margin-bottom: 0px;
+	margin-top: 0px;
+	padding-left: 0px;
+	margin-left: 0px;
+	font-family: "Mojang", numericOracle;
+	font-weight: semi-bold;
+}
+
+#MinecraftHeartsHealthNumbers .totalHealthLabel
+{
+	font-size: 14px;
+	opacity: 1;
+	transform: none;
+	margin-right: 0px;
+	font-family: "Mojang", numericOracle;
+	text-shadow: 0px 0px 0px 3.0 offBlack;
+}
+
+#MinecraftHeartsHealthNumbersContainer
+{
+	width: 180px;
+	ignore-parent-flow: true;
+	z-index: 2;
+	vertical-align: bottom;
+	margin-bottom: 3px;
+	opacity: 1;
+}
+
+#HealthRegenAndTotal .currentHealthLabel,
+#HealthRegenAndTotal .totalHealthLabel
+{
+	visibility: collapse;
+}
+
+#MinecraftFoodContainer
+{
+	flow-children: right;
+	horizontal-align: right;
+	vertical-align: bottom;
+	width: fit-children;
+	height: fit-children;
+	margin-bottom: 2px;
+	margin-right: 2px;
+}
+
+.HeartsRow
+{
+	flow-children: right;
+	horizontal-align: left;
+	width: fit-children;
+	height: 18px;
+	margin-top: 2px;
+	overflow: noclip;
+}
+
+.HeartSlot
+{
+	width: 18px;
+	height: 18px;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	flow-children: none;
+}
+
+.HeartContainer,
+.HeartHealing,
+.HeartDeferred,
+.HeartFill
+{
+	width: 18px;
+	height: 18px;
+	ignore-parent-flow: true;
+}
+
+.LoweredHeart
+{
+	margin-top: 4px;
+	margin-bottom: 0px;
+}
+
+.RaisedHeart
+{
+	margin-top: 0px;
+	margin-bottom: 4px;
+}
+
+.FoodIcon
+{
+	width: 18px;
+	height: 18px;
+	margin: 0px;
+}
+
+#MinecraftXPBarContainer
+{
+	flow-children: none;
+	horizontal-align: left;
+	width: fill-parent-flow(1);
+	height: 20px;
+	margin-top: -8px;
+	overflow: noclip;
+}
+
+#MinecraftXPLevelLabel
+{
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: bottom;
+	margin-bottom: 10px;
+	text-align: center;
+	font-family: "Mojang";
+	height: 22px;
+	padding: 2px;
+	font-weight: bold;
+	font-size: 18px;
+	color: #90E090;
+	text-shadow: 0px 0px 0px 3.0 offBlack;
+	z-index: 1;
+	margin-left: 2.5px;
+}
+
+#MinecraftXPBarBackground
+{
+	width: 100%;
+	height: 10px;
+	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_background_8x.vtex");
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	ignore-parent-flow: true;
+	z-index: 0;
+	margin-top: 5px;
+	vertical-align: bottom;
+}
+
+#MinecraftXPBarFill
+{
+	width: 100%;
+	height: 10px;
+	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_progress_8x.vtex");
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-position: 0% 50%;
+	ignore-parent-flow: true;
+	horizontal-align: left;
+	z-index: 1;
+	margin-top: 5px;
+	vertical-align: bottom;
+}
+
+#MinecraftHotbarContainer
+{
+	flow-children: none;
+	horizontal-align: center;
+	width: fit-children;
+	height: fit-children;
+	margin-top: 6px;
+}
+
+#MinecraftHotbar
+{
+	width: 410px;
+	height: 49.5px;
+	background-image: url("s2r://panorama/images/minecraft/hotbar_8x.vtex");
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#MinecraftShieldHeartsContainer
+{
+	flow-children: down;
+	horizontal-align: left;
+	width: fit-children;
+	height: fit-children;
+	margin-bottom: -2px;
+	visibility: collapse;
+	margin-left: 2px;
+}
+
+#MinecraftShieldHearts
+{
+	flow-children: down;
+	horizontal-align: left;
+	width: fit-children;
+	height: fit-children;
+}
+
+.MinecraftTotemContainer
+{
+	visibility: collapse;
+	ignore-parent-flow: true;
+	height: 100%;
+	width: 100%;
+}
+
+.MinecraftTotem
+{
+	visibility: visible;
+	width: 36px;
+	height: 36px;
+	padding: 2px;
+	horizontal-align: center;
+	vertical-align: center;
+}
+
+#MinecraftHeartsRoot .recentDamageCounterLabel
+{
+	font-weight: semi-bold;
+	color: #D74949;
+	font-size: 14px;
+	font-weight: bold;
+	text-shadow: 0px 0px 3.0 offBlack;
+	font-family: "Mojang";
+	vertical-align: center;
+}
+
+#MinecraftHeartsRoot .healCounterLabel
+{
+	font-weight: semi-bold;
+	color: lightgreen;
+	font-size: 14px;
+	font-weight: bold;
+	text-shadow: 0px 0px 3.0 offBlack;
+	font-family: "Mojang";
+	vertical-align: center;
+}
+
+.recentDamageCounters
+{
+	margin-top: 0px;
+	margin-left: 0px;
+	flow-children: right;
+	margin-bottom: 2px;
+}
+
+#RecentHealContainer
+{
+	margin-top: 0px;
+	margin-left: 0px;
+	flow-children: right;
+	margin-bottom: 2px;
+}
+
+.recentDamageCounter
+{
+	margin-bottom: 0px;
+	padding: 2px 1px;
+}
+
+.recentHealCounter
+{
+	margin-bottom: 0px;
+	padding: 2px 1px;
+}
+
+.recentHealCounters
+{
+	flow-children: down;
+	horizontal-align: left;
+	margin-left: 35px;
+	visibility: collapse;
+	margin-bottom: 5px;
+	vertical-align: top;
+	margin-top: 30px;
+}
+
+.healCountersActive .recentHealCounters
+{
+	visibility: visible;
+}
+
+.healthHealCounter
+{
+	vertical-align: bottom;
+	opacity: 0;
+	visibility: collapse;
+	transition-property: opacity;
+	transition-duration: 0.2s;
+	flow-children: right;
+	margin-bottom: 3px;
+	background-color: #00000000;
+	padding: 2px 3px;
+}
+
+.healCounter1Active .healthHealCounter.healCounter1
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.healCounter1Active.healCounter1Fading .healthHealCounter.healCounter1
+{
+	opacity: 0;
+}
+
+.healCounter2Active .healthHealCounter.healCounter2
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.healCounter2Active.healCounter2Fading .healthHealCounter.healCounter1
+{
+	opacity: 0;
+}
+
+.healCounter3Active .healthHealCounter.healCounter3
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.healCounter3Active.healCounter3Fading .healthHealCounter.healCounter1
+{
+	opacity: 0;
+}
+
+.healthDamageCounter
+{
+	vertical-align: bottom;
+	opacity: 0;
+	visibility: collapse;
+	transition-property: opacity;
+	transition-duration: 0.2s;
+	flow-children: right;
+	margin-bottom: 3px;
+	background-color: #6d030300;
+	padding: 2px 3px;
+}
+
+.damageCounter1Active .healthDamageCounter.damageCounter1
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.damageCounter1Active.damageCounter1Fading .healthDamageCounter.damageCounter1
+{
+	opacity: 0;
+}
+
+.damageCounter2Active .healthDamageCounter.damageCounter2
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.damageCounter2Active.damageCounter2Fading .healthDamageCounter.damageCounter1
+{
+	opacity: 0;
+}
+
+.damageCounter3Active .healthDamageCounter.damageCounter3
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.damageCounter3Active.healCounter3Fading .healthDamageCounter.damageCounter1
+{
+	opacity: 0;
+}
+
+#HealthRegenAndTotal .healthDamageCounterLabel
+{
+	font-weight: bold;
+	color: #D74949;
+	font-size: 16px;
+	text-shadow: 0px 0px 3.0 offBlack;
+}
+
+#HealthRegenAndTotal .healthHealCounterLabel
+{
+	font-weight: bold;
+	color: lightgreen;
+	font-size: 16px;
+	text-shadow: 0px 0px 3.0 offBlack;
+}
+

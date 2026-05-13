@@ -173,6 +173,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_ENEMY_V2_ULT_INDICATOR": "Show the UnitInfo panel on V2 enemy healthbars.",
     "ENABLE_ENEMY_V2_LEVEL": "Show level text on V2 enemy healthbars.",
     "HEALTHBAR_TYPE": "Customized healthbars for better visibility or flair.",
+    "ENABLE_MINECRAFT_HEALTH_NUMBERS": "Show current / max HP numbers over the Minecraft hearts.",
     "PLAYER_HEALTHBAR_SCALE": "Adjust size of the player healthbar.",
     "PLAYER_HEALTHBAR_OPACITY": "Adjust opacity of the player healthbar.",
     "PLAYER_HEALTHBAR_X_OFFSET": "Adjust horizontal position of the player healthbar.",
@@ -453,6 +454,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_URN_COLORS: "low",
     ENABLE_ZIP_BOOST: "low",
     HEALTHBAR_TYPE: "medium",
+    ENABLE_MINECRAFT_HEALTH_NUMBERS: "none",
     PLAYER_HEALTHBAR_SCALE: "low",
     PLAYER_HEALTHBAR_OPACITY: "low",
     PLAYER_HEALTHBAR_X_OFFSET: "low",
@@ -461,7 +463,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     CHAT_X_OFFSET: "low",
     CHAT_Y_OFFSET: "low",
     ENABLE_CHAT: "none",
-    ENABLE_IMAGES_IN_CHAT: "none",
+    ENABLE_IMAGES_IN_CHAT: "low",
     HITMARKERS_RUNTIME: "none",
     HUD_INDICATOR_SIZE: "low",
     ITEM_FILTER_DEF_ACTIVE: "medium",
@@ -542,7 +544,8 @@ const HEALTHBAR_TYPE_DROPDOWN_OPTIONS = [
     { label: "Minimalist", value: 1 },
     { label: "Fighting Game", value: 2 },
     { label: "Klutz's Bar", value: 3 },
-    { label: "Budhud", value: 4 }
+    { label: "Budhud", value: 4 },
+    { label: "Minecraft", value: 5 }
 ];
 const COLOR_WARNING_THRESHOLD_OPTIONS = [
     { label: "25%", key: "ENABLE_COLOR_WARNING_25" },
@@ -733,6 +736,7 @@ var gCurrentSettingsSectionTitle = "";
 var currentSearchQuery = "";
 var gSearchCollectMode = false;
 var gSearchCollectState = null;
+var gEnumSectionSyncCallbacks = [];
 var gSearchResultRenderMode = false;
 var gSearchSectionIndexCacheKey = "";
 var gSearchSectionIndexCache = null;
@@ -6702,8 +6706,14 @@ const COMPACT_SCHEMA_2_3_1 = AppendUniqueSchemaFields(
     ]
 );
 const COMPACT_SCHEMA_2_3_3 = AppendUniqueSchemaFields(
-    COMPACT_SCHEMA_2_3_1,
-    [{ key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 }]
+    CloneSchemaWithFieldOverrides(
+        COMPACT_SCHEMA_2_3_1,
+        [{ key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }]
+    ),
+    [
+        { key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 },
+        { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
+    ]
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
@@ -7792,6 +7802,7 @@ function SaveAndSync() {
     PersistStatlockerProfileState(data, MOD_CONFIG);
     EnsureOnDeathArcadeBridgePoller();
     QueueActivePresetHighlightRefresh(0.05);
+    RefreshEnumSections();
 }
 
 function GetSettingsListPanel() {
@@ -14459,6 +14470,75 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     return body;
 }
 
+function CreateAnimatedInlineEnumSection(parent, title, configId, activeValue, buildRowsFn) {
+    var getSectionEnabled = function() {
+        return MOD_CONFIG[configId] === activeValue;
+    };
+
+    if (gSearchCollectMode && gSearchCollectState) {
+        CreateSectionTitle(parent, title);
+        if (buildRowsFn) buildRowsFn(parent);
+        return null;
+    }
+
+    var safeTitleId = String(title || "Section").replace(/[^A-Za-z0-9]/g, "");
+    var body = $.CreatePanel("Panel", parent, safeTitleId + "EnumSectionBody");
+    body.AddClass("SettingsSectionBody");
+
+    var animToken = 0;
+    var applyBodyState = function(enabled, animate) {
+        animToken++;
+        var token = animToken;
+        if (!animate) {
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("Collapsed", !enabled);
+            body.hittest = enabled;
+            body.hittestchildren = enabled;
+            return;
+        }
+        if (enabled) {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("ShowPrep", true);
+            body.hittest = true;
+            body.hittestchildren = true;
+            $.Schedule(0.01, function() {
+                if (!body || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("ShowPrep", false);
+            });
+        } else {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", true);
+            body.hittest = false;
+            body.hittestchildren = false;
+            $.Schedule(0.17, function() {
+                if (!body || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("Hiding", false);
+                body.SetHasClass("Collapsed", true);
+            });
+        }
+    };
+    applyBodyState(getSectionEnabled(), false);
+
+    gEnumSectionSyncCallbacks.push(function() {
+        if (!body || !body.IsValid()) return;
+        applyBodyState(getSectionEnabled(), true);
+    });
+
+    if (buildRowsFn) buildRowsFn(body);
+    return body;
+}
+
+function RefreshEnumSections() {
+    for (var i = 0; i < gEnumSectionSyncCallbacks.length; i++) {
+        try { gEnumSectionSyncCallbacks[i](); } catch (e) {}
+    }
+}
+
 function GetAnnouncerVoiceToken(rawVoiceType) {
     var utils = GetSharedSchemaUtils();
     if (utils && typeof utils.GetAnnouncerVoiceToken === "function") {
@@ -17169,9 +17249,13 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
         CreateRow(list, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
     } else if (currentTab === "Healthbar") {
+        gEnumSectionSyncCallbacks = [];
         CreateSectionTitle(list, "Player");
         CreateRow(list, "Color Warning", "ENABLE_COLORED_HEALTHBAR", "multitoggle", null, null, null, COLOR_WARNING_THRESHOLD_OPTIONS, "HP Warning");
         CreateRow(list, "Type", "HEALTHBAR_TYPE", "dropdown", null, null, null, HEALTHBAR_TYPE_DROPDOWN_OPTIONS);
+        CreateAnimatedInlineEnumSection(list, "Minecraft Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
+            CreateRow(sectionParent, "Health Numbers", "ENABLE_MINECRAFT_HEALTH_NUMBERS", "toggle", null, null, null, null, "");
+        });
         CreateRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "slider", 50, 200, 1, null, "");
         CreateRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "slider", 0, 1.0, 0.05, null, "");
         CreateRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "slider", -1000, 1000, 5, null, "");
