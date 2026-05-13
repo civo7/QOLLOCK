@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.3.2";
+var QOL_SCHEMA_SEMVER = "2.3.3";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -843,6 +843,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,
@@ -1658,6 +1659,7 @@ var QOL_PRESETS = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,
@@ -5596,6 +5598,7 @@ var QOL_PRESETS = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,

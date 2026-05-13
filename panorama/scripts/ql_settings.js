@@ -181,6 +181,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "CHAT_X_OFFSET": "Adjust horizontal position of the in-game chat.",
     "CHAT_Y_OFFSET": "Adjust vertical position of the in-game chat.",
     "ENABLE_CHAT": "Show the in-game chat panel.",
+    "ENABLE_IMAGES_IN_CHAT": "Render image URLs as images.",
     "HITMARKERS_RUNTIME": "Toggle the hitmarkers when attacking enemies.",
     "MINIMAL_MINIMAP": "Cleans up visuals of the minimap significantly to reduce clutter.",
     "MINIMAP_FLIP": "Rotates the static minimap 180 degrees.",
@@ -460,6 +461,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     CHAT_X_OFFSET: "low",
     CHAT_Y_OFFSET: "low",
     ENABLE_CHAT: "none",
+    ENABLE_IMAGES_IN_CHAT: "none",
     HITMARKERS_RUNTIME: "none",
     HUD_INDICATOR_SIZE: "low",
     ITEM_FILTER_DEF_ACTIVE: "medium",
@@ -6699,6 +6701,10 @@ const COMPACT_SCHEMA_2_3_1 = AppendUniqueSchemaFields(
         { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
     ]
 );
+const COMPACT_SCHEMA_2_3_3 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_3_1,
+    [{ key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 }]
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -6776,6 +6782,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.3.2": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_3_1
+    },
+    "2.3.3": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_3
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -17188,6 +17198,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Size", "CHAT_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "slider", -1500, 1500, 5, null, "");
             CreateRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "slider", -250, 800, 5, null, "");
+            CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
         //CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Improve Ability Stacks");
