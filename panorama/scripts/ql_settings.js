@@ -79,7 +79,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_OBJ_MAP: "bonclide",
     ENABLE_REJUV_HUD: "BreadRollius",
     ENABLE_BUFF_HUD: "BreadRollius",
-    ENABLE_URN_DIFF: "BreadRollius",
+    ENABLE_URN_DIFF: "BreadRollius, bytenode",
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
@@ -110,7 +110,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     MINIMAL_MINIMAP: "Lightbringer",
     ENABLE_MINIMAP_BUFF_TIMER: "BreadRollius",
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
-    ENABLE_URN_COLORS: "Civo"
+    ENABLE_URN_COLORS: "Civo",
+    ENABLE_ULT_COOLDOWNS: "bytenode"
 };
 const SETTING_CREATED_BY_BY_LABEL = {
 };

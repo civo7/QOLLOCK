@@ -6086,53 +6086,65 @@ function GetUIRoot() {
     function RefreshUrnTrackerScoreCache(root, nowMs) {
         if (!root) return;
         var nextSearchMs = Number(State.urnTrackerNextPanelSearchMs) || 0;
-        var friendlyPanel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScorePanel) ? State.cachedPanels.urnTrackerFriendlyScorePanel : null;
-        var enemyPanel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScorePanel) ? State.cachedPanels.urnTrackerEnemyScorePanel : null;
-        var friendlyLabel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScoreLabel) ? State.cachedPanels.urnTrackerFriendlyScoreLabel : null;
-        var enemyLabel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScoreLabel) ? State.cachedPanels.urnTrackerEnemyScoreLabel : null;
-        var shouldRescan =
-            nowMs >= nextSearchMs ||
-            !friendlyPanel ||
-            !enemyPanel ||
-            !friendlyLabel ||
-            !enemyLabel;
 
+        var teamsContainer = IsPanelValid(State.cachedPanels.urnTrackerTeamsContainer) ? State.cachedPanels.urnTrackerTeamsContainer : null;
+        var friendlyTeamPanel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyTeamPanel) ? State.cachedPanels.urnTrackerFriendlyTeamPanel : null;
+        var enemyTeamPanel = IsPanelValid(State.cachedPanels.urnTrackerEnemyTeamPanel) ? State.cachedPanels.urnTrackerEnemyTeamPanel : null;
+        var friendlyLabels = Array.isArray(State.cachedPanels.urnTrackerFriendlyGoldLabels) ? State.cachedPanels.urnTrackerFriendlyGoldLabels : null;
+        var enemyLabels = Array.isArray(State.cachedPanels.urnTrackerEnemyGoldLabels) ? State.cachedPanels.urnTrackerEnemyGoldLabels : null;
+
+        var friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every(function(p) { return IsPanelValid(p); });
+        var enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every(function(p) { return IsPanelValid(p); });
+
+        var shouldRescan = nowMs >= nextSearchMs || !teamsContainer || !friendlyTeamPanel || !enemyTeamPanel || !friendlyLabelsOk || !enemyLabelsOk;
         if (!shouldRescan) return;
 
-        if (!friendlyPanel) friendlyPanel = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        if (!enemyPanel) enemyPanel = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
-        if (!friendlyPanel) friendlyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreFriendly") || null) : null;
-        if (!enemyPanel) enemyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreEnemy") || null) : null;
-        friendlyLabel = friendlyPanel ? FindFirstScoreLabelInTeamPanel(friendlyPanel) : null;
-        enemyLabel = enemyPanel ? FindFirstScoreLabelInTeamPanel(enemyPanel) : null;
+        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
+        if (!topBar && root.FindChildTraverse) {
+            topBar = root.FindChildTraverse("TopBar") || null;
+            State.cachedPanels.topBarPanel = topBar;
+        }
+        if (!topBar) return;
 
-        State.cachedPanels.urnTrackerFriendlyScorePanel = friendlyPanel || null;
-        State.cachedPanels.urnTrackerEnemyScorePanel = enemyPanel || null;
-        State.cachedPanels.urnTrackerFriendlyScoreLabel = friendlyLabel || null;
-        State.cachedPanels.urnTrackerEnemyScoreLabel = enemyLabel || null;
+        teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
+        State.cachedPanels.urnTrackerTeamsContainer = teamsContainer;
+
+        if (!teamsContainer) {
+            State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+            return;
+        }
+
+        var friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("friend") || []) : [];
+        if (friendlyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse("team1") || [];
+        }
+        var enemyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("enemy") || []) : [];
+        if (enemyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            enemyCandidates = teamsContainer.FindChildrenWithClassTraverse("team2") || [];
+        }
+
+        friendlyTeamPanel = friendlyCandidates.length > 0 ? friendlyCandidates[0] : null;
+        enemyTeamPanel = enemyCandidates.length > 0 ? enemyCandidates[0] : null;
+        friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse) ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+        enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse) ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+
+        State.cachedPanels.urnTrackerFriendlyTeamPanel = friendlyTeamPanel || null;
+        State.cachedPanels.urnTrackerEnemyTeamPanel = enemyTeamPanel || null;
+        State.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
+        State.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
         State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
     }
 
-    function GetCachedUrnTeamNetworthValue(teamPanelKey, labelKey) {
-        var scoreLabel = IsPanelValid(State.cachedPanels[labelKey]) ? State.cachedPanels[labelKey] : null;
-        var teamPanel = IsPanelValid(State.cachedPanels[teamPanelKey]) ? State.cachedPanels[teamPanelKey] : null;
-        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        if (parsed !== null) return parsed;
-        if (!teamPanel) return 0;
-        scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
-        State.cachedPanels[labelKey] = scoreLabel || null;
-        parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        return parsed === null ? 0 : parsed;
-    }
-
-    function GetTeamNetworthValue(root, panelId) {
-        if (!root || !panelId) return 0;
-        var teamPanel = root.FindChildTraverse(panelId);
-        if (!teamPanel) return 0;
-        var scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
-        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        if (parsed !== null) return parsed;
-        return 0;
+    function GetCachedUrnTeamNetworthValue(labelsKey) {
+        var labels = Array.isArray(State.cachedPanels[labelsKey]) ? State.cachedPanels[labelsKey] : [];
+        if (labels.length === 0) return 0;
+        var total = 0;
+        for (var i = 0; i < labels.length; i++) {
+            if (!IsPanelValid(labels[i])) return 0;
+            var v = parseInt(String(labels[i].text).replace(/,/g, ""), 10);
+            if (isFinite(v)) total += v;
+        }
+        return total;
     }
 
     function GetUrnIdolSpawnButtons(root, forceRescan) {
@@ -6272,8 +6284,8 @@ function GetUIRoot() {
         }
 
         RefreshUrnTrackerScoreCache(root, now);
-        var friendlyVal = GetCachedUrnTeamNetworthValue("urnTrackerFriendlyScorePanel", "urnTrackerFriendlyScoreLabel");
-        var enemyVal = GetCachedUrnTeamNetworthValue("urnTrackerEnemyScorePanel", "urnTrackerEnemyScoreLabel");
+        var friendlyVal = GetCachedUrnTeamNetworthValue("urnTrackerFriendlyGoldLabels");
+        var enemyVal = GetCachedUrnTeamNetworthValue("urnTrackerEnemyGoldLabels");
         var gameSec = GetGameSecondsForUrn(root);
         var gameMin = gameSec / 60.0;
         var mood = "neutral";
@@ -6311,7 +6323,7 @@ function GetUIRoot() {
                 friendlyVal: friendlyVal,
                 enemyVal: enemyVal,
                 mood: "bad",
-                display: "-8",
+                display: "-100.0%",
                 debugText: "-inf"
             };
             State.urnTrackerCachedState = result;
