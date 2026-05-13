@@ -110,8 +110,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     MINIMAL_MINIMAP: "Lightbringer",
     ENABLE_MINIMAP_BUFF_TIMER: "BreadRollius",
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
-    ENABLE_URN_COLORS: "Civo",
-    ENABLE_ULT_COOLDOWNS: "bytenode"
+    ENABLE_URN_COLORS: "Civo"
 };
 const SETTING_CREATED_BY_BY_LABEL = {
 };
@@ -17130,7 +17129,7 @@ function RenderCurrentTabContent(list) {
         CreateSectionTitle(list, "Player");
         CreateRow(list, "Color Warning", "ENABLE_COLORED_HEALTHBAR", "multitoggle", null, null, null, COLOR_WARNING_THRESHOLD_OPTIONS, "HP Warning");
         CreateRow(list, "Type", "HEALTHBAR_TYPE", "dropdown", null, null, null, HEALTHBAR_TYPE_DROPDOWN_OPTIONS);
-        CreateAnimatedInlineEnumSection(list, "Minecraft Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
+        CreateAnimatedInlineEnumSection(list, "Healthbar Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
             CreateRow(sectionParent, "Health Numbers", "ENABLE_MINECRAFT_HEALTH_NUMBERS", "toggle", null, null, null, null, "");
         });
         CreateRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "slider", 50, 200, 1, null, "");
