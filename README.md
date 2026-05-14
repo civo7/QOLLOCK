@@ -22,7 +22,10 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 6. `docs/PRESET_BINDINGS.md`
 - Preset/binding tracking notes and maintenance flow.
 
-7. `docs/ROLLBACK_POINTS.md`
+7. `docs/ADDING_SETTINGS.md`
+- Checklist for adding settings safely, including schema/version rules.
+
+8. `docs/ROLLBACK_POINTS.md`
 - Recent known pack milestones and rollback procedure.
 
 ## Build / Pack / Launch

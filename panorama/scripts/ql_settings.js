@@ -719,7 +719,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.3.3";
+    : "2.3.4";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -6592,7 +6592,8 @@ const COMPACT_SCHEMA_2_3_1 = AppendUniqueSchemaFields(
         { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
     ]
 );
-const COMPACT_SCHEMA_2_3_3 = AppendUniqueSchemaFields(
+const COMPACT_SCHEMA_2_3_3 = COMPACT_SCHEMA_2_3_1;
+const COMPACT_SCHEMA_2_3_4 = AppendUniqueSchemaFields(
     CloneSchemaWithFieldOverrides(
         COMPACT_SCHEMA_2_3_1,
         [{ key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }]
@@ -6683,6 +6684,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.3.3": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_3_3
+    },
+    "2.3.4": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_4
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
