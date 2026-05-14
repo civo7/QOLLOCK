@@ -7934,6 +7934,27 @@ function RequestSettingsListRefresh(delaySec, forceRebuild) {
     });
 }
 
+function RefreshSettingsLanguageUiAfterConfigChange(previousLanguage) {
+    if (Math.round(Number(previousLanguage)) === GetSettingsLanguage()) return false;
+    InvalidateSearchSectionIndexCache();
+
+    $.Schedule(0.02, function() {
+        if (typeof $.BuildUI === "function" && IsSettingsWindowVisible()) {
+            $.BuildUI();
+            return;
+        }
+
+        var rootPanel = $.GetContextPanel();
+        var tabBar = rootPanel ? rootPanel.FindChildTraverse("SettingsTabBar") : null;
+        var settingsList = rootPanel ? rootPanel.FindChildTraverse("SettingsList") : null;
+        SyncTabActiveStates(tabBar);
+        if (settingsList && settingsList.IsValid && settingsList.IsValid()) {
+            RequestSettingsListRefresh(0, true);
+        }
+    });
+    return true;
+}
+
 function RefreshSettingsListContent() {
     RequestSettingsListSoftRefresh(0);
 }
@@ -8939,8 +8960,10 @@ function RenderConfigTabContent(list) {
                 onApply: function() {
                     try {
                         SetLocalizedConfigFeedbackMessage("Import: applying settings...", "info", 0);
+                        var previousLanguage = GetSettingsLanguage();
                         var appliedDiag = ApplyParsedConfigWithDiagnostics(importResult.parsedConfig, importResult.schemaVersion || LATEST_COMPACT_SEMVER);
                         SaveAndSync();
+                        var didRefreshLanguageUi = RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
                         SetLocalizedConfigFeedbackMessage("Import: refreshing UI...", "info", 0);
                         if (importHeader && importHeader.IsValid && importHeader.IsValid()) {
                             importHeader.text = LocalizeSettingsText("Import Settings", true);
@@ -8952,7 +8975,9 @@ function RenderConfigTabContent(list) {
                             : ("Import " + schemaText + " applied. clamped=" + String(appliedDiag.clampedKeys) + " unknown=" + String(appliedDiag.unknownKeys));
                         var diagTone = (appliedDiag.unknownKeys > 0 || appliedDiag.clampedKeys > 0) ? "warning" : "success";
                         SetConfigFeedbackMessage(diagText, diagTone, 3000);
-                        RequestSettingsListRefresh(0.02, true);
+                        if (!didRefreshLanguageUi) {
+                            RequestSettingsListRefresh(0.02, true);
+                        }
                         $.Schedule(0.6, function() {
                             if (!applyBtn || !applyBtn.IsValid || !applyBtn.IsValid()) return;
                             applyBtn.RemoveClass("SuccessState");
@@ -16382,10 +16407,12 @@ function ApplyPresetConfig(presetData) {
 
 function ApplyPresetByName(presetName) {
     var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
+    var previousLanguage = GetSettingsLanguage();
     if (!ApplyPresetConfig(presetData)) return false;
     gLastAppliedPresetName = String(presetName || "");
     SetRuntimePresetName(presetName);
     SaveAndSync();
+    RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
     return true;
 }
 
@@ -16676,10 +16703,12 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
                                 cancelText: "Cancel",
                                 onApply: function() {
                                     try {
+                                        var previousLanguage = GetSettingsLanguage();
                                         ApplyParsedConfigWithDiagnostics(parsedImport.parsedConfig, parsedImport.schemaVersion || LATEST_COMPACT_SEMVER);
                                         gLastAppliedPresetName = String(presetName || "");
                                         SetRuntimePresetName(presetName);
                                         SaveAndSync();
+                                        RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
                                         ShowPresetApplySuccess(button, labelPanel, originalLabel);
                                         return true;
                                     } catch (eImportApply) {
@@ -17953,7 +17982,7 @@ var UpdateListContent = function(list, forceRebuild) {
         return;
     }
 
-    var shouldRebuildCurrentSig = shouldForce && !leavingSearchMode && renderSig === gSettingsListLastRenderSig;
+    var shouldRebuildCurrentSig = shouldForce && !leavingSearchMode;
     var panelEntry = EnsureSettingsListContentPanelForSignature(list, renderSig, shouldRebuildCurrentSig);
     var contentPanel = panelEntry ? panelEntry.panel : null;
     var contentCreated = panelEntry ? (panelEntry.created === true) : false;
