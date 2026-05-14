@@ -7449,17 +7449,32 @@ function GetUIRoot() {
         State.topbarSoulSnapshotUntilMs = 0;
     }
 
+    function NormalizeTopBarNicknameText(rawText) {
+        var text = "";
+        try {
+            text = (rawText === undefined || rawText === null) ? "" : String(rawText || "").trim();
+        } catch (eText) {
+            text = "";
+        }
+        if (!text || text === "{s:player_name}") return "";
+        return text;
+    }
+
+    function ReadTopBarNicknameLabelText(label) {
+        if (!IsPanelValid(label)) return "";
+        var rawText = "";
+        try { rawText = typeof label.text === "string" ? String(label.text || "") : ""; } catch (eLabelText) { rawText = ""; }
+        return NormalizeTopBarNicknameText(rawText);
+    }
+
     function ResolveTopBarNicknameSource(playerPanel, cachedLabel) {
         var sourceLabel = IsPanelValid(cachedLabel) ? cachedLabel : null;
-        var sourceText = "";
-        if (sourceLabel && typeof sourceLabel.text === "string") {
-            sourceText = String(sourceLabel.text || "").trim();
-            if (sourceText && sourceText !== "{s:player_name}") {
-                return {
-                    label: sourceLabel,
-                    text: sourceText
-                };
-            }
+        var sourceText = ReadTopBarNicknameLabelText(sourceLabel);
+        if (sourceText) {
+            return {
+                label: sourceLabel,
+                text: sourceText
+            };
         }
         if (!playerPanel || !playerPanel.FindChildrenWithClassTraverse) {
             return {
@@ -7473,9 +7488,8 @@ function GetUIRoot() {
             var candidate = labels[i];
             if (!IsPanelValid(candidate)) continue;
             if (!sourceLabel) sourceLabel = candidate;
-            var candidateText = "";
-            try { candidateText = typeof candidate.text === "string" ? String(candidate.text || "").trim() : ""; } catch (eNameText) { candidateText = ""; }
-            if (!candidateText || candidateText === "{s:player_name}") continue;
+            var candidateText = ReadTopBarNicknameLabelText(candidate);
+            if (!candidateText) continue;
             return {
                 label: candidate,
                 text: candidateText
@@ -7632,12 +7646,25 @@ function GetUIRoot() {
                 resolveState = "unknown";
                 State.topbarNicknameResolveStates[i] = resolveState;
             }
+            if (enabled && resolveState === "resolved") {
+                var liveSourceText = ReadTopBarNicknameLabelText(sourceLabel);
+                if (liveSourceText) {
+                    if (liveSourceText !== String(State.topbarNicknameResolvedTexts[i] || "")) {
+                        State.topbarNicknameResolvedTexts[i] = liveSourceText;
+                    }
+                } else {
+                    resolveState = "unknown";
+                    State.topbarNicknameResolveStates[i] = resolveState;
+                    State.topbarNicknameRetryNextMs[i] = 0;
+                    retryAt = 0;
+                }
+            }
             if (enabled && (resolveState !== "resolved") && now >= retryAt) {
                 var resolvedSource = ResolveTopBarNicknameSource(playerPanel, sourceLabel);
                 sourceLabel = resolvedSource.label;
                 State.topbarNicknameSourceLabels[i] = sourceLabel || null;
                 var nextText = resolvedSource.text;
-                if (nextText && nextText !== "{s:player_name}") {
+                if (nextText) {
                     State.topbarNicknameResolvedTexts[i] = String(nextText);
                     State.topbarNicknameResolveStates[i] = "resolved";
                     State.topbarNicknameRetryNextMs[i] = 0;
