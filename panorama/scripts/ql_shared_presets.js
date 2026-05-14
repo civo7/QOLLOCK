@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.3.3";
+var QOL_SCHEMA_SEMVER = "2.3.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
