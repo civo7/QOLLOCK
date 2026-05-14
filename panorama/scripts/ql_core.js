@@ -876,7 +876,7 @@ const BUILD_LOADER_TEMP_DISABLED = false;
     const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 30;
 const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.3.4";
+    : "2.3.5";
     const BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_0 = 1;
     const BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1 = 2;
     const BUILD_CATEGORY_PAYLOAD_SCHEMA_WIRE_VERSION = (String(BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER || "") === "2.0.0")
@@ -3836,6 +3836,12 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4 = AppendUniquePayloadSchemaFields(
         { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
     ]
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4,
+    [
+        { key: "DISABLE_PLAYER_NAME_BLUR", min: 0, max: 1, step: 1 }
+    ]
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -3921,6 +3927,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.3.4": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4
+    },
+    "2.3.5": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -10683,12 +10693,6 @@ function GetUIRoot() {
         if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
             appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
         }
-        if (rawObj.hasOwnProperty("LANGUAGE")) {
-            appliedObj.LANGUAGE = rawObj.LANGUAGE;
-        }
-        if (rawObj.hasOwnProperty("DEFAULT_HERO")) {
-            appliedObj.DEFAULT_HERO = rawObj.DEFAULT_HERO;
-        }
 
         var appliedRaw = JSON.stringify(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
@@ -14819,11 +14823,11 @@ function GetUIRoot() {
 
         var defaults = BuildDefaultConfig();
         var appliedObj = {};
-        for (var defKey in defaults) {
-            appliedObj[defKey] = defaults[defKey];
-        }
         for (var rawKey in rawObj) {
             appliedObj[rawKey] = rawObj[rawKey];
+        }
+        for (var defKey in defaults) {
+            appliedObj[defKey] = defaults[defKey];
         }
         for (var parsedKey in parsedResult.parsed) {
             appliedObj[parsedKey] = parsedResult.parsed[parsedKey];
@@ -14834,9 +14838,6 @@ function GetUIRoot() {
         }
         if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
             appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
-        }
-        if (rawObj.hasOwnProperty("LANGUAGE")) {
-            appliedObj.LANGUAGE = rawObj.LANGUAGE;
         }
         // DEFAULT_HERO should come from decoded payload when present.
         NormalizeNeutralCampTierConfig(appliedObj, parsedResult.parsed);
@@ -24900,6 +24901,7 @@ function GetUIRoot() {
             cfg.ENABLE_URN_DIFF,
             cfg.ENABLE_MISSING_HERO,
             cfg.ENABLE_NICKNAMES,
+            cfg.DISABLE_PLAYER_NAME_BLUR,
             cfg.ENABLE_CUMULATIVE_DMG,
             cfg.ENABLE_DAMAGE_FOUNTAIN,
             cfg.ENABLE_HIDE_SMALL_NUMBERS,
@@ -24979,6 +24981,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "urn_diff_disabled", cfg.ENABLE_URN_DIFF === 0);
             SetPanelClassCached(root, State.rootClassCache, "missing_hero_disabled", cfg.ENABLE_MISSING_HERO === 0);
             SetPanelClassCached(root, State.rootClassCache, "nicknames_active", Number(cfg.ENABLE_NICKNAMES) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", Number(cfg.DISABLE_PLAYER_NAME_BLUR) === 1);
             SetPanelClassCached(root, State.rootClassCache, "cumulative_dmg_disabled", cfg.ENABLE_CUMULATIVE_DMG === 0);
             SetPanelClassCached(root, State.rootClassCache, "damage_fountain_active", cfg.ENABLE_DAMAGE_FOUNTAIN === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
