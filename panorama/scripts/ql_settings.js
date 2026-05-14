@@ -8489,7 +8489,10 @@ function SyncTabActiveStates(tabBar) {
                     var tabLabel = tabBtn.FindChildTraverse("TabLabel");
                     if (tabLabel) {
                         var baseTabName = String(tabBtn.id).slice("TabButton_".length);
-                        tabLabel.text = LocalizeSettingsText(baseTabName, true);
+                        var displayTabName = GetSettingsTabDisplayName(baseTabName);
+                        tabLabel.text = (baseTabName === "Config")
+                            ? displayTabName
+                            : LocalizeSettingsText(displayTabName, true);
                     }
                 }
             }
@@ -8772,11 +8775,8 @@ function RenderConfigTabContent(list) {
     gConfigFeedbackClearToken++;
 
     if (gSearchCollectMode && gSearchCollectState) {
-        CreateSectionTitle(list, "Meta Settings");
+        CreateSectionTitle(list, "General");
         CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
-        CreateRow(list, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
-            { label: "Swap" }
-        ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
         CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, [
             { label: "English", value: 0 },
             { label: "Russian", value: 1 },
@@ -8787,27 +8787,28 @@ function RenderConfigTabContent(list) {
             { label: "Spanish", value: 6 }
         ]);
         CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
+        CreateRow(list, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
+            { label: "Swap" }
+        ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
 
         CreateSeparator(list);
-        CreateSectionTitle(list, "Export Settings");
+        CreateSectionTitle(list, "Backup & Restore");
         CreateRow(list, "Export String", "SEARCH_TAB:Config", "actionbutton", null, null, null, [
-            { label: "Open Config" }
+            { label: "Open Settings" }
         ], "Share your settings string");
-
-        CreateSeparator(list);
-        CreateSectionTitle(list, "Import Settings");
         CreateRow(list, "Import String", "SEARCH_TAB:Config", "actionbutton", null, null, null, [
-            { label: "Open Config" }
+            { label: "Open Settings" }
         ], "Paste and apply an exported settings string");
         return;
     }
 
-    CreateSectionTitle(list, "Meta Settings");
-    CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
-    CreateRow(list, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
-        { label: "Swap" }
-    ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
-    CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, [
+    list.AddClass("ConfigTabSurface");
+
+    var cardGeneral = $.CreatePanel("Panel", list, "ConfigCardGeneral");
+    cardGeneral.AddClass("ConfigTabCard");
+    CreateSectionTitle(cardGeneral, "General");
+    CreateRow(cardGeneral, "Preview Changes", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
+    CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, [
         { label: "English", value: 0 },
         { label: "Russian", value: 1 },
         { label: "Chinese", value: 2 },
@@ -8816,13 +8817,17 @@ function RenderConfigTabContent(list) {
         { label: "BR Portuguese", value: 5 },
         { label: "Spanish", value: 6 }
     ]);
-    CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
+    CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
+    CreateRow(cardGeneral, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
+        { label: "Swap" }
+    ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
 
-    CreateSeparator(list);
+    var cardExport = $.CreatePanel("Panel", list, "ConfigCardExport");
+    cardExport.AddClass("ConfigTabCard");
 
-    var exportHeader = CreateSectionTitle(list, "Export Settings");
+    var exportHeader = CreateSectionTitle(cardExport, "Export Settings");
     var copyBtn = CreateSectionInlineIconButton(exportHeader, "ConfigCopyBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Copy our settings code to clipboard.");
-    var exportTextEntry = $.CreatePanel("TextEntry", list, "ConfigExportTextEntry");
+    var exportTextEntry = $.CreatePanel("TextEntry", cardExport, "ConfigExportTextEntry");
     exportTextEntry.AddClass("ConfigTextEntry");
     exportTextEntry.multiline = true;
     exportTextEntry.maxchars = 2000;
@@ -8854,17 +8859,13 @@ function RenderConfigTabContent(list) {
         }
     });
 
-    var configFeedback = $.CreatePanel("Label", list, "ConfigFeedbackLabel");
-    configFeedback.AddClass("ConfigFeedbackLabel");
-    gConfigFeedbackLabel = configFeedback;
-    SetConfigFeedbackMessage("", "info", 0);
+    var cardImport = $.CreatePanel("Panel", list, "ConfigCardImport");
+    cardImport.AddClass("ConfigTabCard");
 
-    CreateSeparator(list);
+    var importHeader = CreateSectionTitle(cardImport, "Import Settings");
+    var applyBtn = CreateSectionInlineIconButton(importHeader, "ConfigApplyBtn", "s2r://panorama/images/icons/icon_checkmark.vsvg", "Apply your settings code to your configuration.");
 
-    var importHeader = CreateSectionTitle(list, "Import Settings");
-    var applyBtn = CreateSectionInlineIconButton(importHeader, "ConfigApplyBtn", "s2r://panorama/images/icons/checkbox_check.vsvg", "Apply your settings code to your configuration.");
-
-    var importTextEntry = $.CreatePanel("TextEntry", list, "ConfigImportTextEntry");
+    var importTextEntry = $.CreatePanel("TextEntry", cardImport, "ConfigImportTextEntry");
     importTextEntry.AddClass("ConfigTextEntry");
     importTextEntry.multiline = true;
     importTextEntry.text = "";
@@ -8879,6 +8880,11 @@ function RenderConfigTabContent(list) {
             importFormattingInProgress = false;
         }
     });
+
+    var configFeedback = $.CreatePanel("Label", cardImport, "ConfigFeedbackLabel");
+    configFeedback.AddClass("ConfigFeedbackLabel");
+    gConfigFeedbackLabel = configFeedback;
+    SetConfigFeedbackMessage("", "info", 0);
 
     applyBtn.SetPanelEvent("onactivate", function() {
         var raw = importTextEntry.text;
@@ -8911,9 +8917,8 @@ function RenderConfigTabContent(list) {
                         var appliedDiag = ApplyParsedConfigWithDiagnostics(importResult.parsedConfig, importResult.schemaVersion || LATEST_COMPACT_SEMVER);
                         SaveAndSync();
                         SetLocalizedConfigFeedbackMessage("Import: refreshing UI...", "info", 0);
-                        if (importHeader) {
+                        if (importHeader && importHeader.IsValid && importHeader.IsValid()) {
                             importHeader.text = LocalizeSettingsText("Import Settings", true);
-                            importHeader.style.color = "#ffffff";
                         }
                         applyBtn.RemoveClass("FailureState");
                         applyBtn.AddClass("SuccessState");
@@ -16732,6 +16737,12 @@ function GetSettingsTabOrder() {
     return ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "MOG", "Console"];
 }
 
+function GetSettingsTabDisplayName(tabName) {
+    var raw = String(tabName || "");
+    if (raw === "Config") return "Settings";
+    return raw;
+}
+
 function GetSettingsTabGroups() {
     return [
         {
@@ -16743,6 +16754,25 @@ function GetSettingsTabGroups() {
             tabs: ["Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio"]
         }
     ];
+}
+
+function GetSettingsTabIconSource(tabName) {
+    switch (String(tabName || "")) {
+        case "Support": return "s2r://panorama/images/icons/icon_thumbsup.vsvg";
+        case "Config": return "s2r://panorama/images/icons/icon_gear.vsvg";
+        case "Presets": return "s2r://panorama/images/icons/icon_player.vsvg";
+        case "Console": return "s2r://panorama/images/icons/icon_feedback.vsvg";
+        case "MOG": return "s2r://panorama/images/icons/properties/armor_alt.vsvg";
+        case "Arcade": return "s2r://panorama/images/icons/properties/condition_burn.vsvg";
+        case "Crosshair": return "s2r://panorama/images/icons/properties/range_aoe.vsvg";
+        case "Healthbar": return "s2r://panorama/images/icons/properties/health.vsvg";
+        case "HUD": return "s2r://panorama/images/icons/properties/spirit.vsvg";
+        case "UI": return "s2r://panorama/images/icons/icon_reorder.vsvg";
+        case "Overlay": return "s2r://panorama/images/icons/icon_graph.vsvg";
+        case "Minimap": return "s2r://panorama/images/icons/icon_report.vsvg";
+        case "Audio": return "s2r://panorama/images/icons/icon_sound_on.vsvg";
+        default: return "";
+    }
 }
 
 function GetActiveSearchCollectSection() {
@@ -18399,11 +18429,26 @@ $.BuildUI = function() {
 
         for (var ti = 0; ti < group.tabs.length; ti++) {
             (function(catName) {
+                var tabClassSuffix = String(catName || "").replace(/[^A-Za-z0-9]/g, "");
                 var tabId = "TabButton_" + catName.replace(" ", "");
                 var tab = $.CreatePanel("Button", groupTabs, tabId);
                 tab.AddClass("TabItem");
+                tab.AddClass("TabItem_" + tabClassSuffix);
+                var tabIconSrc = GetSettingsTabIconSource(catName);
+                if (tabIconSrc) {
+                    var tabIcon = $.CreatePanel("Image", tab, "TabIcon", {
+                        src: tabIconSrc,
+                        defaultsrc: "",
+                        scaling: "contain"
+                    });
+                    tabIcon.AddClass("TabIcon");
+                    tabIcon.AddClass("TabIcon_" + tabClassSuffix);
+                }
                 var tabLbl = $.CreatePanel("Label", tab, "TabLabel");
-                tabLbl.text = LocalizeSettingsText(catName, true);
+                var displayName = GetSettingsTabDisplayName(catName);
+                tabLbl.text = (catName === "Config")
+                    ? displayName
+                    : LocalizeSettingsText(displayName, true);
                 tab.SetHasClass("Active", catName === currentTab);
                 tab.SetPanelEvent("onactivate", function() {
                     SetActiveTabAndRefresh(catName);
@@ -18494,10 +18539,17 @@ $.BuildUI = function() {
     footerVersionLabel = $.CreatePanel("Panel", tabFooter, "FooterVersionLabel");
     footerVersionLabel.AddClass("TabItem");
     footerVersionLabel.AddClass("FooterVersionLabel");
+    var footerVersionIcon = $.CreatePanel("Image", footerVersionLabel, "FooterVersionIcon", {
+        src: "s2r://panorama/images/icons/properties/charge.vsvg",
+        defaultsrc: "",
+        scaling: "contain"
+    });
+    footerVersionIcon.AddClass("TabIcon");
+    footerVersionIcon.AddClass("FooterVersionIcon");
     var footerVersionText = $.CreatePanel("Label", footerVersionLabel, "FooterVersionLabelText");
     footerVersionText.AddClass("VersionLabelStyle");
     footerVersionText.AddClass("FooterVersionLabelText");
-    footerVersionText.text = MOD_DISPLAY_VERSION + " by Civo";
+    footerVersionText.text = "Version " + MOD_DISPLAY_VERSION;
     footerVersionLabel.hittest = false;
     footerVersionLabel.hittestchildren = false;
 
@@ -18641,11 +18693,21 @@ $.BuildUI = function() {
         headerLogo.hittestchildren = false;
         try { headerLogo.SetImage("s2r://panorama/images/qollock/mog_site_logo2.vtex"); } catch (eHeaderLogo) {}
         if (headerTitle) {
-            headerTitle.text = "QOL LOCK";
+            headerTitle.text = "LOCK";
+            headerTitle.AddClass("SettingsHeaderTitleWordmark");
             headerTitle.hittest = false;
             headerTitle.hittestchildren = false;
+            var headerTitleAccent = header.FindChildTraverse("SettingsTitleAccent");
+            if (!headerTitleAccent) {
+                headerTitleAccent = $.CreatePanel("Label", header, "SettingsTitleAccent");
+            }
+            headerTitleAccent.AddClass("SettingsHeaderTitleWordmark");
+            headerTitleAccent.text = "QOL";
+            headerTitleAccent.hittest = false;
+            headerTitleAccent.hittestchildren = false;
             if (header.MoveChildBefore) {
                 try { header.MoveChildBefore(headerLogo, headerTitle); } catch (eMoveHeaderLogo) {}
+                try { header.MoveChildBefore(headerTitleAccent, headerTitle); } catch (eMoveHeaderAccent) {}
             }
         }
         var headerVer = header.FindChildTraverse("ModVersionLabelTop");
@@ -18657,11 +18719,12 @@ $.BuildUI = function() {
                 header.MoveChildBefore(headerVer, closeBtn);
             }
         }
-        headerVer.text = MOD_DISPLAY_VERSION + " by Civo";
+        headerVer.AddClass("HeaderByCivoLabel");
+        headerVer.text = "by civo";
         headerVer.hittest = false;
         headerVer.hittestchildren = false;
-        headerVer.visible = false;
-        headerVer.style.visibility = "collapse";
+        headerVer.visible = true;
+        headerVer.style.visibility = "visible";
         var closeBtnHeader = header.FindChildTraverse("CloseBtn");
         if (closeBtnHeader) {
             var headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
@@ -18681,6 +18744,9 @@ $.BuildUI = function() {
                 if (searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {
                     searchWrapExisting.SetParent(headerCenterHost);
                 }
+            }
+            if (header.MoveChildBefore) {
+                try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (eMoveHeaderVer) {}
             }
             closeBtnHeader.style.horizontalAlign = "right";
             closeBtnHeader.style.verticalAlign = "center";
