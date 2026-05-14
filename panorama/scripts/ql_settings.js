@@ -79,7 +79,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_OBJ_MAP: "bonclide",
     ENABLE_REJUV_HUD: "BreadRollius",
     ENABLE_BUFF_HUD: "BreadRollius",
-    ENABLE_URN_DIFF: "BreadRollius",
+    ENABLE_URN_DIFF: "BreadRollius, bytenode",
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
@@ -173,6 +173,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_ENEMY_V2_ULT_INDICATOR": "Show the UnitInfo panel on V2 enemy healthbars.",
     "ENABLE_ENEMY_V2_LEVEL": "Show level text on V2 enemy healthbars.",
     "HEALTHBAR_TYPE": "Customized healthbars for better visibility or flair.",
+    "ENABLE_MINECRAFT_HEALTH_NUMBERS": "Show current / max HP numbers over the Minecraft hearts.",
     "PLAYER_HEALTHBAR_SCALE": "Adjust size of the player healthbar.",
     "PLAYER_HEALTHBAR_OPACITY": "Adjust opacity of the player healthbar.",
     "PLAYER_HEALTHBAR_X_OFFSET": "Adjust horizontal position of the player healthbar.",
@@ -181,6 +182,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "CHAT_X_OFFSET": "Adjust horizontal position of the in-game chat.",
     "CHAT_Y_OFFSET": "Adjust vertical position of the in-game chat.",
     "ENABLE_CHAT": "Show the in-game chat panel.",
+    "ENABLE_IMAGES_IN_CHAT": "Render image URLs as images.",
     "HITMARKERS_RUNTIME": "Toggle the hitmarkers when attacking enemies.",
     "MINIMAL_MINIMAP": "Cleans up visuals of the minimap significantly to reduce clutter.",
     "MINIMAP_FLIP": "Rotates the static minimap 180 degrees.",
@@ -445,13 +447,14 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_SIMPLIFY_ITEMS: "none",
     ENABLE_SIMPLIFY_SHOP: "none",
     ENABLE_TAB_ZOOM: "low",
-    ENABLE_ULT_COOLDOWNS: "high",
+    ENABLE_ULT_COOLDOWNS: "none",
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
     ENABLE_UNSPENT_SOULS: "medium",
     ENABLE_URN_DIFF: "low",
     ENABLE_URN_COLORS: "low",
     ENABLE_ZIP_BOOST: "low",
     HEALTHBAR_TYPE: "medium",
+    ENABLE_MINECRAFT_HEALTH_NUMBERS: "none",
     PLAYER_HEALTHBAR_SCALE: "low",
     PLAYER_HEALTHBAR_OPACITY: "low",
     PLAYER_HEALTHBAR_X_OFFSET: "low",
@@ -460,6 +463,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     CHAT_X_OFFSET: "low",
     CHAT_Y_OFFSET: "low",
     ENABLE_CHAT: "none",
+    ENABLE_IMAGES_IN_CHAT: "low",
     HITMARKERS_RUNTIME: "none",
     HUD_INDICATOR_SIZE: "low",
     ITEM_FILTER_DEF_ACTIVE: "medium",
@@ -515,8 +519,6 @@ const SETTING_PERF_IMPACT_TIERS = {
     SUPPORT_4_3: "none",
     TAB_ZOOM_DRAW_OVER_UI: "low",
     TAB_ZOOM_OPACITY: "low",
-    ULT_COOLDOWN_OPACITY: "high",
-    ULT_COOLDOWN_SIZE: "high",
     UNIT_TARGET_OPACITY: "medium",
     UNIT_TARGET_SIZE: "medium",
     UNSECURED_SOULS_HUD_SCALE: "low",
@@ -540,7 +542,8 @@ const HEALTHBAR_TYPE_DROPDOWN_OPTIONS = [
     { label: "Minimalist", value: 1 },
     { label: "Fighting Game", value: 2 },
     { label: "Klutz's Bar", value: 3 },
-    { label: "Budhud", value: 4 }
+    { label: "Budhud", value: 4 },
+    { label: "Minecraft", value: 5 }
 ];
 const COLOR_WARNING_THRESHOLD_OPTIONS = [
     { label: "25%", key: "ENABLE_COLOR_WARNING_25" },
@@ -731,6 +734,7 @@ var gCurrentSettingsSectionTitle = "";
 var currentSearchQuery = "";
 var gSearchCollectMode = false;
 var gSearchCollectState = null;
+var gEnumSectionSyncCallbacks = [];
 var gSearchResultRenderMode = false;
 var gSearchSectionIndexCacheKey = "";
 var gSearchSectionIndexCache = null;
@@ -799,9 +803,6 @@ var gShopPreviewPanel = null;
 var gShopPreviewBox = null;
 var gShopPreviewLabel = null;
 var gShopPreviewHideToken = 0;
-var gUltCooldownPreviewPanel = null;
-var gUltCooldownPreviewRow = null;
-var gUltCooldownPreviewHideToken = 0;
 var gUnsecuredPlusPreviewPanel = null;
 var gUnsecuredPlusPreviewIcon = null;
 var gUnsecuredPlusPreviewText = null;
@@ -4878,48 +4879,6 @@ function EnsureShopPreviewPanel() {
     return panel;
 }
 
-function EnsureUltCooldownPreviewPanel() {
-    if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-        SetPanelNonInteractive(gUltCooldownPreviewPanel);
-        SetPanelNonInteractive(gUltCooldownPreviewRow);
-        return gUltCooldownPreviewPanel;
-    }
-    var root = $.GetContextPanel();
-    if (!root) return null;
-
-    var panel = root.FindChildTraverse("UltCooldownPreview");
-    if (!panel) panel = $.CreatePanel("Panel", root, "UltCooldownPreview");
-    if (!panel) return null;
-
-    var row = panel.FindChildTraverse("UltCooldownPreviewRow");
-    if (!row) row = $.CreatePanel("Panel", panel, "UltCooldownPreviewRow");
-    if (row) {
-        for (var i = row.GetChildCount(); i < 3; i++) {
-            var chip = $.CreatePanel("Panel", row, "");
-            chip.AddClass("UltCooldownPreviewChip");
-            var chipText = $.CreatePanel("Label", chip, "");
-            chipText.AddClass("UltCooldownPreviewChipText");
-            chipText.text = String((i + 1) * 7);
-        }
-    }
-
-    SetPanelNonInteractive(panel);
-    SetPanelNonInteractive(row);
-    if (row && row.GetChildCount) {
-        for (var ci = 0; ci < row.GetChildCount(); ci++) {
-            var child = row.GetChild(ci);
-            SetPanelNonInteractive(child);
-            if (child && child.GetChildCount && child.GetChildCount() > 0) {
-                SetPanelNonInteractive(child.GetChild(0));
-            }
-        }
-    }
-
-    gUltCooldownPreviewPanel = panel;
-    gUltCooldownPreviewRow = row;
-    return panel;
-}
-
 function EnsureUnsecuredPlusPreviewPanel() {
     if (gUnsecuredPlusPreviewPanel && gUnsecuredPlusPreviewPanel.IsValid && gUnsecuredPlusPreviewPanel.IsValid()) {
         SetPanelNonInteractive(gUnsecuredPlusPreviewPanel);
@@ -5316,11 +5275,6 @@ function IsShopPreviewConfig(configId) {
     return configId === "SHOP_OFFSET_X";
 }
 
-function IsUltCooldownPreviewConfig(configId) {
-    return configId === "ULT_COOLDOWN_SIZE" ||
-        configId === "ULT_COOLDOWN_OPACITY";
-}
-
 function IsUnsecuredPlusPreviewConfig(configId) {
     return configId === "UNSECURED_SOULS_HUD_SCALE" ||
         configId === "UNSECURED_SOULS_HUD_X_OFFSET" ||
@@ -5365,9 +5319,6 @@ function HideMinimapSizePreview() {
     }
     if (gShopPreviewPanel && gShopPreviewPanel.IsValid && gShopPreviewPanel.IsValid()) {
         gShopPreviewPanel.RemoveClass("Visible");
-    }
-    if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-        gUltCooldownPreviewPanel.RemoveClass("Visible");
     }
     if (gUnsecuredPlusPreviewPanel && gUnsecuredPlusPreviewPanel.IsValid && gUnsecuredPlusPreviewPanel.IsValid()) {
         gUnsecuredPlusPreviewPanel.RemoveClass("Visible");
@@ -5630,9 +5581,6 @@ function ShowConfigPreviewForConfigId(configId) {
     }
     if (IsShopPreviewConfig(configId)) {
         ShowShopPreview();
-    }
-    if (IsUltCooldownPreviewConfig(configId)) {
-        ShowUltCooldownPreview();
     }
     if (IsUnsecuredPlusPreviewConfig(configId)) {
         ShowUnsecuredPlusPreview();
@@ -6068,61 +6016,6 @@ function ShowShopPreview() {
     gShopPreviewLabel.text = "SHOP";
     panel.AddClass("Visible");
     ScheduleHideShopPreview(1.2);
-}
-
-function ShowUltCooldownPreview() {
-    if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
-        HideMinimapSizePreview();
-        return;
-    }
-    var panel = EnsureUltCooldownPreviewPanel();
-    if (!panel || !gUltCooldownPreviewRow) return;
-    if (!IsSettingsWindowVisible()) return;
-
-    var opacity = Number(MOD_CONFIG.ULT_COOLDOWN_OPACITY);
-    if (!isFinite(opacity)) opacity = 0.9;
-    if (opacity < 0) opacity = 0;
-    if (opacity > 1) opacity = 1;
-    var size = Math.round(Number(MOD_CONFIG.ULT_COOLDOWN_SIZE));
-    if (!isFinite(size)) size = 13;
-    if (size < 10) size = 10;
-    if (size > 32) size = 32;
-
-    var context = $.GetContextPanel();
-    var fallbackX = 760;
-    var fallbackY = 56;
-    var contextW = Number(context && context.actuallayoutwidth);
-    if (isFinite(contextW) && contextW > 0) fallbackX = Math.round(contextW * 0.40);
-
-    var baseX = fallbackX;
-    var baseY = fallbackY;
-    var anchoredToLive = false;
-    var root = FindRootPanel();
-    var topBar = root && root.FindChildTraverse ? (root.FindChildTraverse("CitadelHudTopBar") || root.FindChildTraverse("TopBar")) : null;
-    var liveRect = GetPanelRectRelativeToContext(topBar);
-    if (liveRect) {
-        baseX = liveRect.x + Math.round(liveRect.width * 0.38);
-        baseY = liveRect.y + 10;
-    }
-    SetPreviewPanelPosition(panel, baseX, baseY);
-
-    SetPanelOpacitySafe(gUltCooldownPreviewRow, opacity, 0.9);
-    for (var i = 0; i < gUltCooldownPreviewRow.GetChildCount(); i++) {
-        var chip = gUltCooldownPreviewRow.GetChild(i);
-        if (!chip) continue;
-        var chipWidth = Math.max(28, Math.round(size * 2.8));
-        var chipHeight = Math.max(18, Math.round(size * 1.7));
-        chip.style.width = String(chipWidth) + "px";
-        chip.style.height = String(chipHeight) + "px";
-        var chipLabel = chip.GetChildCount && chip.GetChildCount() > 0 ? chip.GetChild(0) : null;
-        if (chipLabel) {
-            chipLabel.style.fontSize = String(size) + "px";
-            chipLabel.text = (i === 0) ? "8" : ((i === 1) ? "22" : "RDY");
-        }
-    }
-
-    panel.AddClass("Visible");
-    ScheduleHideUltCooldownPreview(1.2);
 }
 
 function ShowUnsecuredPlusPreview() {
@@ -6699,6 +6592,16 @@ const COMPACT_SCHEMA_2_3_1 = AppendUniqueSchemaFields(
         { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
     ]
 );
+const COMPACT_SCHEMA_2_3_3 = AppendUniqueSchemaFields(
+    CloneSchemaWithFieldOverrides(
+        COMPACT_SCHEMA_2_3_1,
+        [{ key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }]
+    ),
+    [
+        { key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 },
+        { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
+    ]
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -6779,7 +6682,7 @@ const COMPACT_SCHEMA_REGISTRY = {
     },
     "2.3.3": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
-        schema: COMPACT_SCHEMA_2_3_1
+        schema: COMPACT_SCHEMA_2_3_3
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -7786,6 +7689,7 @@ function SaveAndSync() {
     PersistStatlockerProfileState(data, MOD_CONFIG);
     EnsureOnDeathArcadeBridgePoller();
     QueueActivePresetHighlightRefresh(0.05);
+    RefreshEnumSections();
 }
 
 function GetSettingsListPanel() {
@@ -9834,17 +9738,6 @@ function ScheduleHideShopPreview(delaySec) {
         if (token !== gShopPreviewHideToken) return;
         if (gShopPreviewPanel && gShopPreviewPanel.IsValid && gShopPreviewPanel.IsValid()) {
             gShopPreviewPanel.RemoveClass("Visible");
-        }
-    });
-}
-
-function ScheduleHideUltCooldownPreview(delaySec) {
-    gUltCooldownPreviewHideToken++;
-    var token = gUltCooldownPreviewHideToken;
-    $.Schedule(delaySec, function() {
-        if (token !== gUltCooldownPreviewHideToken) return;
-        if (gUltCooldownPreviewPanel && gUltCooldownPreviewPanel.IsValid && gUltCooldownPreviewPanel.IsValid()) {
-            gUltCooldownPreviewPanel.RemoveClass("Visible");
         }
     });
 }
@@ -14469,6 +14362,75 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     return body;
 }
 
+function CreateAnimatedInlineEnumSection(parent, title, configId, activeValue, buildRowsFn) {
+    var getSectionEnabled = function() {
+        return MOD_CONFIG[configId] === activeValue;
+    };
+
+    if (gSearchCollectMode && gSearchCollectState) {
+        CreateSectionTitle(parent, title);
+        if (buildRowsFn) buildRowsFn(parent);
+        return null;
+    }
+
+    var safeTitleId = String(title || "Section").replace(/[^A-Za-z0-9]/g, "");
+    var body = $.CreatePanel("Panel", parent, safeTitleId + "EnumSectionBody");
+    body.AddClass("SettingsSectionBody");
+
+    var animToken = 0;
+    var applyBodyState = function(enabled, animate) {
+        animToken++;
+        var token = animToken;
+        if (!animate) {
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("Collapsed", !enabled);
+            body.hittest = enabled;
+            body.hittestchildren = enabled;
+            return;
+        }
+        if (enabled) {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("ShowPrep", true);
+            body.hittest = true;
+            body.hittestchildren = true;
+            $.Schedule(0.01, function() {
+                if (!body || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("ShowPrep", false);
+            });
+        } else {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", true);
+            body.hittest = false;
+            body.hittestchildren = false;
+            $.Schedule(0.17, function() {
+                if (!body || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("Hiding", false);
+                body.SetHasClass("Collapsed", true);
+            });
+        }
+    };
+    applyBodyState(getSectionEnabled(), false);
+
+    gEnumSectionSyncCallbacks.push(function() {
+        if (!body || !body.IsValid()) return;
+        applyBodyState(getSectionEnabled(), true);
+    });
+
+    if (buildRowsFn) buildRowsFn(body);
+    return body;
+}
+
+function RefreshEnumSections() {
+    for (var i = 0; i < gEnumSectionSyncCallbacks.length; i++) {
+        try { gEnumSectionSyncCallbacks[i](); } catch (e) {}
+    }
+}
+
 function GetAnnouncerVoiceToken(rawVoiceType) {
     var utils = GetSharedSchemaUtils();
     if (utils && typeof utils.GetAnnouncerVoiceToken === "function") {
@@ -17224,9 +17186,13 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
         CreateRow(list, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
     } else if (currentTab === "Healthbar") {
+        gEnumSectionSyncCallbacks = [];
         CreateSectionTitle(list, "Player");
         CreateRow(list, "Color Warning", "ENABLE_COLORED_HEALTHBAR", "multitoggle", null, null, null, COLOR_WARNING_THRESHOLD_OPTIONS, "HP Warning");
         CreateRow(list, "Type", "HEALTHBAR_TYPE", "dropdown", null, null, null, HEALTHBAR_TYPE_DROPDOWN_OPTIONS);
+        CreateAnimatedInlineEnumSection(list, "Healthbar Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
+            CreateRow(sectionParent, "Health Numbers", "ENABLE_MINECRAFT_HEALTH_NUMBERS", "toggle", null, null, null, null, "");
+        });
         CreateRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "slider", 50, 200, 1, null, "");
         CreateRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "slider", 0, 1.0, 0.05, null, "");
         CreateRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "slider", -1000, 1000, 5, null, "");
@@ -17253,6 +17219,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Size", "CHAT_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "slider", -1500, 1500, 5, null, "");
             CreateRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "slider", -250, 800, 5, null, "");
+            CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
         //CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Improve Ability Stacks");
@@ -17262,10 +17229,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "slider", 0, 1000, 5);
         });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", "HIGH FPS IMPACT WARNING!", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "ULT_COOLDOWN_SIZE", "slider", 10, 32, 1, null);
-            CreateRow(sectionParent, "Opacity", "ULT_COOLDOWN_OPACITY", "slider", 0, 1.0, 0.05, null);
-        });
+        CreateAnimatedInlineToggleSection(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", null, null);
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", function(sectionParent) {
             CreateRow(sectionParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "slider", 50, 200, 1, null, "");

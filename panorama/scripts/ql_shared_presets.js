@@ -606,7 +606,7 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeVoiceTypeConfig !== "function") {
 if (typeof QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue !== "function") {
     QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue = function(rawValue) {
         var asInt = Math.round(Number(rawValue));
-        if (asInt !== 1 && asInt !== 2 && asInt !== 3 && asInt !== 4) return 0;
+        if (asInt !== 1 && asInt !== 2 && asInt !== 3 && asInt !== 4 && asInt !== 5) return 0;
         return asInt;
     };
 }
@@ -843,6 +843,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,
@@ -872,6 +873,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_FG_HEALTHBAR: 0,
         ENABLE_MINIMALIST_HEALTHBAR: 0,
         HEALTHBAR_TYPE: 0,
+        ENABLE_MINECRAFT_HEALTH_NUMBERS: 0,
         PLAYER_HEALTHBAR_SCALE: 100,
         PLAYER_HEALTHBAR_OPACITY: 1.0,
         PLAYER_HEALTHBAR_X_OFFSET: 0,
@@ -2465,6 +2467,7 @@ var QOL_PRESETS = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,
@@ -5850,6 +5853,7 @@ var QOL_PRESETS = {
         ENABLE_LEGACY_COOLDOWNS: 0,
         ENABLE_STATLOCKER: 0,
         ENABLE_CHAT: 1,
+        ENABLE_IMAGES_IN_CHAT: 0,
         CHAT_SCALE: 100,
         CHAT_X_OFFSET: 0,
         CHAT_Y_OFFSET: 0,

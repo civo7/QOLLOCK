@@ -34,7 +34,7 @@
             "m_dstChannels" "string" "rgba"
             "m_mipAlgorithm" "CDmeImageProcessor"
             {
-                "m_algorithm" "string" "Box"
+                "m_algorithm" "string" "None"
                 "m_stringArg" "string" ""
                 "m_vFloat4Arg" "vector4" "0 0 0 0"
             }

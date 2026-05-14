@@ -33,3 +33,42 @@
 	ui-scale: 90%;
 }
 
+
+.minecraft_healthbar_active #hud_signature:hover .hud_abilities,
+.minecraft_healthbar_active .wants_scoreboard #hud_signature .hud_abilities,
+.minecraft_healthbar_active .gDetailView #hud_signature .hud_abilities
+{
+	padding: 0px;
+	border-top: 0px;
+}
+
+.minecraft_healthbar_active .Tier1 .button_container
+{
+	width: 65px;
+}
+
+.minecraft_healthbar_active #abilities
+{
+	height: 150px;
+}
+
+.minecraft_healthbar_active .gShopOpen CitadelHudAbilities:hover #abilities,
+.minecraft_healthbar_active .wants_scoreboard #abilities,
+.minecraft_healthbar_active .gDetailView #abilities
+{
+	height: 150px;
+}
+
+.minecraft_healthbar_active .stack_charges
+{
+	width: 85%;
+	border-radius: 5px;
+	margin-bottom: 50px;
+}
+
+.minecraft_healthbar_active .hud_abilities
+{
+	margin-right: 0px;
+	margin-bottom: 5px;
+	border-radius: 6px;
+}

@@ -302,9 +302,6 @@
 {
 	wash-color: keybindBGColor;
 	animation-name: QOLAbilityCastFailedAnimation;
-	animation-timing-function: ease-out;
-	animation-duration: 0.06666s;
-	animation-iteration-count: 4;
 }
 
 #hud_signature CitadelAbilityIcon.signature.qol_signature_cooldown_pressed .button_container
@@ -351,3 +348,295 @@ CitadelHudTopBarPlayer #PlayerAbilitiesContainer .AbilityCastFailed .button_cont
 	
 }
 
+
+/* Minecraft healthbar ability icon overrides */
+.minecraft_healthbar_active .abilitiesContainer .ability_container
+{
+	overflow: squish;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #hud_signature .ability_container,
+.minecraft_healthbar_active .wants_scoreboard .gShopOpen #hud_signature .ability_container,
+.minecraft_healthbar_active .gDetailView .gShopOpen #hud_signature .ability_container,
+.minecraft_healthbar_active .gShopOpen #hud_signature .ability_container
+{
+	height: 160px;
+	width: 90px;
+	margin: 0px -17.2px;
+	padding: 0px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_2 #button_container,
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_3 #button_container
+{
+	margin-bottom: 0px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .button_container
+{
+	width: 44px;
+	height: 49px;
+	margin: 0px;
+	transform: translateX(1px);
+	horizontal-align: center;
+}
+
+.minecraft_healthbar_active .abilitiesContainer CitadelAbilityIcon.Tier1 .button_container
+{
+	width: 44px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_bg
+{
+	visibility: collapse;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .build_suggestion_container
+{
+	margin-bottom: 0px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_2 .build_suggestion_container,
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_3 .build_suggestion_container
+{
+	margin-bottom: 0px;
+}
+
+.minecraft_healthbar_active #hud_signature .build_next
+{
+	max-width: 50px;
+	height: 10px;
+	margin-left: 1px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_ring
+{
+	visibility: collapse;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .Tier1 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_0.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .Tier2 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_2_psd.vtex");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .Tier3 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_3_psd.vtex");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .signature.item_passive.Tier0 .ability_bg,
+.minecraft_healthbar_active .abilitiesContainer .usingControllerSpecificGlyphs.isUsingController .signature.Tier0 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_0.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .signature.item_passive.Tier0.not_trained .ability_bg,
+.minecraft_healthbar_active .usingControllerSpecificGlyphs.isUsingController .signature.Tier0.not_trained .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_1.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .signature.item_passive.Tier1 .ability_bg,
+.minecraft_healthbar_active .usingControllerSpecificGlyphs.isUsingController .signature.Tier1 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_1.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .signature.item_passive.Tier2 .ability_bg,
+.minecraft_healthbar_active .usingControllerSpecificGlyphs.isUsingController .signature.Tier2 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_2.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .signature.item_passive.Tier3 .ability_bg,
+.minecraft_healthbar_active .usingControllerSpecificGlyphs.isUsingController .signature.Tier3 .ability_bg
+{
+	background-image: url("s2r://panorama/images/hud/core/ability_frame_passive_3.vsvg");
+}
+
+.minecraft_healthbar_active .abilitiesContainer .cooling_down .ability_bg,
+.minecraft_healthbar_active .abilitiesContainer .ability_not_ready .ability_bg
+{
+	opacity: 0.05;
+	transition-property: opacity, pre-transform-scale2d;
+	transition-duration: 0.2s;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_upgradable .ability_image
+{
+	height: 100%;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .hasBonusCounter .bonusCounter
+{
+	opacity: 1;
+	z-index: 1;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_not_ready.hasBonusCounter .bonusCounter
+{
+	opacity: 0.3;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .stack_charges
+{
+	width: 50%;
+	border-radius: 6px;
+	margin-bottom: 45px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .has_stack_charges .stack_charges
+{
+	height: 7px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_2 .stack_charges,
+.minecraft_healthbar_active .abilitiesContainer #slot_signature_3 .stack_charges
+{
+	margin-bottom: 45px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .stack_charges .ProgressBarMiddle
+{
+	background-color: #9C5EFF;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .stack_charges .ProgressBarRight
+{
+	background-color: #4F3080DD;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .wants_scoreboard CitadelHudAbilities CitadelHudAbilityUpgradePips,
+.minecraft_healthbar_active .abilitiesContainer .gDetailView CitadelHudAbilities CitadelHudAbilityUpgradePips,
+.minecraft_healthbar_active .abilitiesContainer .gShopOpen CitadelHudAbilities:hover CitadelHudAbilityUpgradePips,
+.minecraft_healthbar_active .abilitiesContainer .alwaysShowPips CitadelHudAbilityUpgradePips
+{
+	visibility: visible;
+	background-color: none;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .image_container
+{
+	height: 90%;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .cooldown_timer
+{
+	font-size: 22px;
+	margin-left: 3px;
+	margin-top: 4px;
+	width: 100%;
+	height: 50%;
+	font-family: "Mojang";
+}
+
+.minecraft_healthbar_active .abilitiesContainer #cooldown_mask
+{
+	transform: scale3d(-2, 2, 2);
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_not_ready .ability_image
+{
+	wash-color: offBlack;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .not_trained .ability_image
+{
+	wash-color: offWhite;
+	height: 90%;
+	opacity: 0.2;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_image
+{
+	wash-color: offWhite;
+	contrast: 0;
+	height: 90%;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #ability_subcasts
+{
+	ui-scale: 75%;
+	margin-top: 91px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .subcast_icon_container
+{
+	height: 18px;
+	width: 18px;
+	margin: 0px 1px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .Tier3 .subcast_icon_container:nth-child(1),
+.minecraft_healthbar_active .abilitiesContainer .Tier3 .subcast_icon_container:nth-child(4)
+{
+	margin-top: 8px;
+}
+
+.minecraft_healthbar_active #hud_signature .hasBonusCounter #BonusContainer
+{
+	opacity: 1;
+	margin-top: 108px;
+	height: 40px;
+	width: 55%;
+	margin-left: 1px;
+}
+
+.minecraft_healthbar_active #hud_signature #slot_signature_2 #BonusContainer,
+.minecraft_healthbar_active #hud_signature #slot_signature_3 #BonusContainer
+{
+	margin-top: 108px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #hud_signature .bonusCounter
+{
+	color: offWhite;
+	padding: 1px;
+	font-family: "Mojang";
+	width: 100%;
+	text-align: center;
+	vertical-align: bottom;
+	text-shadow: 0px 0px 4.0 offBlack&90;
+	font-size: 16px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer #hud_signature .bonusBG
+{
+	visibility: collapse;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .ability_upgradable .image_container
+{
+	opacity: 0.6;
+	wash-color: offWhite;
+}
+
+.minecraft_healthbar_active .abilitiesContainer .not_trained .image_container
+{
+	saturation: 1;
+}
+
+.minecraft_healthbar_active.AspectRatio16x9 .abilitiesContainer .stack_charges,
+.minecraft_healthbar_active .AspectRatio16x9 .abilitiesContainer .stack_charges,
+.minecraft_healthbar_active.AspectRatio16x10 .abilitiesContainer .stack_charges,
+.minecraft_healthbar_active .AspectRatio16x10 .abilitiesContainer .stack_charges
+{
+	margin-left: 5px;
+}
+
+.minecraft_healthbar_active.AspectRatio16x9 .abilitiesContainer .button_container,
+.minecraft_healthbar_active .AspectRatio16x9 .abilitiesContainer .button_container,
+.minecraft_healthbar_active.AspectRatio16x10 .abilitiesContainer .button_container,
+.minecraft_healthbar_active .AspectRatio16x10 .abilitiesContainer .button_container
+{
+	transform: translate3d(2px, -1px, 0px);
+}
+.minecraft_healthbar_active .abilities_container .HasKeyBind .ability_key_container
+{
+	visibility: collapse;
+}

@@ -75,6 +75,8 @@
         zipBoostLastTitle: "",
         zipBoostLastStatus: "",
         zipBoostNextSourceSearchMs: 0,
+        imagesInChatTopNextSearchMs: 0,
+        imagesInChatBottomNextSearchMs: 0,
         unsecuredSoulsDisplayMode: "",
         unsecuredSoulsLastLayoutSig: "",
         unsecuredSoulsLastClassSig: "",
@@ -223,19 +225,6 @@
         statlockerNextScanMs: 0,
         statlockerCorePanels: null,
         statlockerButtons: null,
-        ultCdPanelCacheNextMs: 0,
-        ultCdPlayerPanels: null,
-        ultCdRowPanels: null,
-        ultCdStatusPanels: null,
-        ultCdBgPanels: null,
-        ultCdLabels: null,
-        ultCdOverlayRoot: null,
-        ultCdTeamByIndex: null,
-        ultCdSlotState: null,
-        ultCdStyleSig: "",
-        ultCdWasDisabled: false,
-        ultCdDebugLastSig: "",
-        ultCdDebugNextMs: 0,
         unspentNextSampleMs: 0,
         unspentPanelCacheNextMs: 0,
         unspentPlayerPanels: null,
@@ -540,7 +529,53 @@
         healthbarVisDebugLastSig: "",
         healthbarVisDebugNextMs: 0,
         loopErrorNextLogMs: 0,
-        compassErrorNextLogMs: 0
+        compassErrorNextLogMs: 0,
+        // ── Minecraft healthbar ────────────────────────────────────────────────
+        mcWasEnabled: false,
+        mcNextUpdateMs: 0,
+        mcHeartsBlinkTimer: null,
+        mcLowHealthJiggleTimer: null,
+        mcHealingWaveTimer: null,
+        mcLastBlinkHalfSegments: null,
+        mcHeartsBlinking: false,
+        mcHeartsBlinkPhase: 0,
+        mcLowHealthJiggleActive: false,
+        mcHealingWaveActive: false,
+        mcHealingWaveCurrentIndex: 0,
+        mcIsAfflicted: false,
+        mcCheckModifierNextMs: 0,
+        mcLastModifierResult: false,
+        mcLoggedHealthContainerMiss: false,
+        mcLoggedGoldApMiss: false,
+        mcLoggedBulletBarrierMiss: false,
+        mcHeartSlots: [],
+        mcHeartContainerImages: [],
+        mcHeartHealingImages: [],
+        mcHeartDeferredImages: [],
+        mcHeartFillImages: [],
+        mcHeartsCapacity: 0,
+        mcHeartsRowCount: 0,
+        mcLastVisibleHeartsCount: 0,
+        mcBarrierHeartsPanels: [],
+        mcBarrierHeartContainerImages: [],
+        mcBarrierHeartFillImages: [],
+        mcBarrierHeartsCapacity: 0,
+        mcCachedFoodIcons: [],
+        mcLastIsBlinkOn: null,
+        mcLastContainerHeartsNeeded: -1,
+        mcLastContainerLastSlotIsHalf: null,
+        mcLastFillFullHearts: -1,
+        mcLastFillHasHalf: null,
+        mcLastFillAfflicted: null,
+        mcLastDeferredFullHearts: -1,
+        mcLastDeferredHasHalf: null,
+        mcLastDeferredStartSlots: -1,
+        mcLastHealingFullHearts: -1,
+        mcLastHealingHasHalf: null,
+        mcLastHealingStartSlots: -1,
+        mcLastBarrierFullHearts: -1,
+        mcLastBarrierHasHalf: null,
+        mcLastBarrierLastSlotIsHalf: null
     };
 
     var INTERNAL_CONFIG = {
@@ -752,16 +787,8 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const STATLOCKER_SCAN_INTERVAL_MS = 1200;
     const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
     const ULT_CD_MAX_PLAYERS = 12;
-    const ULT_CD_SLOT_MIN_INDEX = 0; // Track all top-bar players (indices 0-11).
+    const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
-    const ULT_CD_PANEL_CACHE_REFRESH_MS = 3000;
-    const ULT_CD_TEXT_PROBE_INTERVAL_MS = 250;
-    const ULT_CD_MIN_DEG_DELTA = 0.05;
-    const ULT_CD_LABEL_BASE_Y = 2;
-    const ULT_CD_PROJECT_MAX_SEC = 1.25;
-    const ULT_CD_TEXT_HOLD_MS = 1200;
-    const ULT_CD_DEBUG = false;
-    const ULT_CD_DEBUG_THROTTLE_MS = 500;
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
@@ -1073,6 +1100,25 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const LANE_PREF_SELECTED_INTERVAL_MS = 4870;
     const HERO_SHOP_PANEL_SEARCH_MS = 2470;
     const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+    // ── Minecraft healthbar ────────────────────────────────────────────────────
+    const MC_CHARGE_MAX_ANGLES = { 1: 90, 2: 42, 3: 26, 4: 20, 5: 15.5, 6: 13, 7: 10.86 };
+    const MC_HP_PER_HALF_SEGMENT = 50;
+    const MC_LOW_HEALTH_HALF_SEGMENTS = 4;
+    const MC_HEARTS_PER_ROW = 10;
+    const MC_MAX_HEART_ROWS = 5;
+    const MC_HEART_ROW_HEIGHT_PX = 22;
+    const MC_HEALTH_BAR_PIXEL_HEIGHT = 367;
+    const MC_HEALTH_BAR_SCALE = 52 / 30;
+    const MC_SOULS_BAR_MAX_HEIGHT_PX = 52;
+    const MC_FOOD_PERCENT_PER_HALF = 5;
+    const MC_TICK_INTERVAL_MS = 50;
+    const MC_MODIFIER_THROTTLE_MS = 500;
+    const MC_BLINK_INTERVAL_S = 0.1;
+    const MC_BLINK_PHASE_COUNT = 4;
+    const MC_JIGGLE_INTERVAL_S = 0.05;
+    const MC_JIGGLE_CHANCE = 0.5;
+    const MC_HEALING_WAVE_STEP_S = 0.05;
+    const MC_HEALING_WAVE_PAUSE_S = 0.5;
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -3776,6 +3822,19 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1 = AppendUniquePayloadSchemaFields(
         { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
     ]
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3_OVERRIDE_FIELDS = [
+    { key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3 = AppendUniquePayloadSchemaFields(
+    ClonePayloadSchemaWithFieldOverrides(
+        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1,
+        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3_OVERRIDE_FIELDS
+    ),
+    [
+        { key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 },
+        { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
+    ]
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -3856,7 +3915,7 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     },
     "2.3.3": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -4968,6 +5027,711 @@ function GetUIRoot() {
         State.budhudNextUpdateMs = (Number(nowMs) || 0) + 100;
     }
 
+    // ── Minecraft Healthbar ───────────────────────────────────────────────────
+
+    function McResolveHudRoot(root) {
+        var cached = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+        if (cached) return cached;
+        var heartsRoot = root && root.FindChildTraverse ? root.FindChildTraverse("MinecraftHeartsRoot") : null;
+        var panel = (heartsRoot && heartsRoot.GetParent) ? heartsRoot.GetParent() : null;
+        State.cachedPanels.mcHudRoot = IsPanelValid(panel) ? panel : null;
+        return State.cachedPanels.mcHudRoot;
+    }
+
+    function McResetRuntime() {
+        if (State.mcHeartsBlinkTimer !== null) {
+            $.CancelScheduled(State.mcHeartsBlinkTimer);
+            State.mcHeartsBlinkTimer = null;
+        }
+        if (State.mcLowHealthJiggleTimer !== null) {
+            $.CancelScheduled(State.mcLowHealthJiggleTimer);
+            State.mcLowHealthJiggleTimer = null;
+        }
+        if (State.mcHealingWaveTimer !== null) {
+            $.CancelScheduled(State.mcHealingWaveTimer);
+            State.mcHealingWaveTimer = null;
+        }
+        State.mcHeartsBlinking = false;
+        State.mcHeartsBlinkPhase = 0;
+        State.mcLowHealthJiggleActive = false;
+        State.mcHealingWaveActive = false;
+        State.mcHealingWaveCurrentIndex = 0;
+        State.mcLastBlinkHalfSegments = null;
+        State.mcLastIsBlinkOn = null;
+        State.mcLastContainerHeartsNeeded = -1;
+        State.mcLastContainerLastSlotIsHalf = null;
+        State.mcLastFillFullHearts = -1;
+        State.mcLastFillHasHalf = null;
+        State.mcLastFillAfflicted = null;
+        State.mcLastDeferredFullHearts = -1;
+        State.mcLastDeferredHasHalf = null;
+        State.mcLastDeferredStartSlots = -1;
+        State.mcLastHealingFullHearts = -1;
+        State.mcLastHealingHasHalf = null;
+        State.mcLastHealingStartSlots = -1;
+        State.mcLastBarrierFullHearts = -1;
+        State.mcLastBarrierHasHalf = null;
+        State.mcLastBarrierLastSlotIsHalf = null;
+        State.mcWasEnabled = false;
+    }
+
+    function McStartHeartsBlink() {
+        if (State.mcHeartsBlinkTimer !== null) {
+            $.CancelScheduled(State.mcHeartsBlinkTimer);
+            State.mcHeartsBlinkTimer = null;
+        }
+        State.mcHeartsBlinking = true;
+        State.mcHeartsBlinkPhase = 0;
+        function scheduleNextPhase() {
+            State.mcHeartsBlinkTimer = $.Schedule(MC_BLINK_INTERVAL_S, function () {
+                if (!State.mcHeartsBlinking) { State.mcHeartsBlinkTimer = null; return; }
+                State.mcHeartsBlinkPhase += 1;
+                if (State.mcHeartsBlinkPhase >= MC_BLINK_PHASE_COUNT) {
+                    State.mcHeartsBlinking = false;
+                    State.mcHeartsBlinkTimer = null;
+                    return;
+                }
+                scheduleNextPhase();
+            });
+        }
+        scheduleNextPhase();
+    }
+
+    function McLowHealthJiggleTick() {
+        try {
+            var hearts = State.mcHeartSlots;
+            if (!hearts || hearts.length === 0) return;
+            var visibleCount = Math.min(State.mcLastVisibleHeartsCount, hearts.length);
+            for (var i = 0; i < visibleCount; i += 1) {
+                var heart = hearts[i];
+                if (Math.random() < MC_JIGGLE_CHANCE) {
+                    if (heart.BHasClass("LoweredHeart")) heart.RemoveClass("LoweredHeart");
+                    else heart.AddClass("LoweredHeart");
+                }
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McLowHealthJiggleTick: " + e); }
+    }
+
+    function McResetAllHeartsPosition() {
+        try {
+            if (!State.mcHeartSlots || State.mcHeartSlots.length === 0) return;
+            for (var i = 0; i < State.mcHeartSlots.length; i += 1) {
+                State.mcHeartSlots[i].RemoveClass("RaisedHeart");
+                State.mcHeartSlots[i].RemoveClass("LoweredHeart");
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McResetAllHeartsPosition: " + e); }
+    }
+
+    function McSetLowHealthJiggleEnabled(enabled) {
+        if (enabled) {
+            if (State.mcLowHealthJiggleActive) return;
+            State.mcLowHealthJiggleActive = true;
+            function scheduleNext() {
+                State.mcLowHealthJiggleTimer = $.Schedule(MC_JIGGLE_INTERVAL_S, function () {
+                    if (!State.mcLowHealthJiggleActive) { State.mcLowHealthJiggleTimer = null; return; }
+                    McLowHealthJiggleTick();
+                    scheduleNext();
+                });
+            }
+            scheduleNext();
+        } else {
+            if (!State.mcLowHealthJiggleActive) return;
+            State.mcLowHealthJiggleActive = false;
+            if (State.mcLowHealthJiggleTimer !== null) {
+                $.CancelScheduled(State.mcLowHealthJiggleTimer);
+                State.mcLowHealthJiggleTimer = null;
+            }
+            McResetAllHeartsPosition();
+        }
+    }
+
+    function McHealingWaveTick() {
+        try {
+            var hearts = State.mcHeartSlots;
+            if (!hearts || hearts.length === 0) return;
+            var visibleCount = Math.min(State.mcLastVisibleHeartsCount, hearts.length);
+            if (visibleCount === 0) return;
+            if (State.mcHealingWaveCurrentIndex > visibleCount) State.mcHealingWaveCurrentIndex = 0;
+            if (State.mcHealingWaveCurrentIndex > 0) hearts[State.mcHealingWaveCurrentIndex - 1].RemoveClass("RaisedHeart");
+            if (State.mcHealingWaveCurrentIndex >= visibleCount) {
+                State.mcHealingWaveTimer = $.Schedule(MC_HEALING_WAVE_PAUSE_S, function () {
+                    if (!State.mcHealingWaveActive) { State.mcHealingWaveTimer = null; return; }
+                    State.mcHealingWaveCurrentIndex = 0;
+                    McHealingWaveTick();
+                });
+                return;
+            }
+            hearts[State.mcHealingWaveCurrentIndex].AddClass("RaisedHeart");
+            State.mcHealingWaveCurrentIndex += 1;
+            State.mcHealingWaveTimer = $.Schedule(MC_HEALING_WAVE_STEP_S, function () {
+                if (!State.mcHealingWaveActive) { State.mcHealingWaveTimer = null; return; }
+                McHealingWaveTick();
+            });
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McHealingWaveTick: " + e); }
+    }
+
+    function McSetHealingWaveEnabled(enabled) {
+        if (enabled) {
+            if (State.mcHealingWaveActive) return;
+            if (State.mcLowHealthJiggleActive) return;
+            State.mcHealingWaveActive = true;
+            State.mcHealingWaveCurrentIndex = 0;
+            McResetAllHeartsPosition();
+            McHealingWaveTick();
+        } else {
+            if (!State.mcHealingWaveActive) return;
+            State.mcHealingWaveActive = false;
+            if (State.mcHealingWaveTimer !== null) {
+                $.CancelScheduled(State.mcHealingWaveTimer);
+                State.mcHealingWaveTimer = null;
+            }
+            McResetAllHeartsPosition();
+        }
+    }
+
+    function McCheckModifierActive(root, name) {
+        try {
+            var modifierLabels = root && root.FindChildrenWithClassTraverse ? root.FindChildrenWithClassTraverse("modifier_name") : null;
+            if (!modifierLabels || modifierLabels.length === 0) return false;
+            for (var i = 0; i < modifierLabels.length; i += 1) {
+                var label = modifierLabels[i];
+                if (label.text && label.text.toUpperCase().indexOf(name) !== -1) return true;
+            }
+            return false;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McCheckModifierActive: " + e); return false; }
+    }
+
+    function McEnsureHeartsCapacity(hudRoot, heartsNeeded) {
+        if (heartsNeeded <= 0) return false;
+        if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+            State.cachedPanels.mcHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHearts") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+                $.Msg("[QOLLock][MC] MinecraftHearts container not found");
+                return false;
+            }
+        }
+        var heartsNeededRowCount = Math.ceil(heartsNeeded / MC_HEARTS_PER_ROW);
+        if (State.mcHeartsCapacity >= heartsNeeded && State.mcHeartSlots.length >= State.mcHeartsCapacity && State.mcHeartsRowCount === heartsNeededRowCount) return true;
+        State.cachedPanels.mcHeartsContainer.RemoveAndDeleteChildren();
+        State.mcHeartSlots = [];
+        State.mcHeartContainerImages = [];
+        State.mcHeartHealingImages = [];
+        State.mcHeartDeferredImages = [];
+        State.mcHeartFillImages = [];
+        State.mcHeartsCapacity = heartsNeeded;
+        State.mcLastVisibleHeartsCount = 0;
+        State.mcLastIsBlinkOn = null;
+        State.mcLastContainerHeartsNeeded = -1;
+        State.mcLastContainerLastSlotIsHalf = null;
+        State.mcLastFillFullHearts = -1;
+        State.mcLastFillHasHalf = null;
+        State.mcLastFillAfflicted = null;
+        State.mcLastDeferredFullHearts = -1;
+        State.mcLastDeferredHasHalf = null;
+        State.mcLastDeferredStartSlots = -1;
+        State.mcLastHealingFullHearts = -1;
+        State.mcLastHealingHasHalf = null;
+        State.mcLastHealingStartSlots = -1;
+        var currentRow = null;
+        var heartsInCurrentRow = 0;
+        var rowPanels = [];
+        function ensureRow() {
+            if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
+                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcHeartsContainer, "");
+                currentRow.AddClass("HeartsRow");
+                var firstChild = State.cachedPanels.mcHeartsContainer.GetChild(0);
+                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcHeartsContainer.MoveChildBefore(currentRow, firstChild);
+                rowPanels.push(currentRow);
+                heartsInCurrentRow = 0;
+            }
+        }
+        for (var i = 0; i < heartsNeeded; i += 1) {
+            ensureRow();
+            var slot = $.CreatePanel("Panel", currentRow, "");
+            slot.AddClass("HeartSlot");
+            var containerImg = $.CreatePanel("Image", slot, "");
+            containerImg.AddClass("HeartContainer");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            var healingImg = $.CreatePanel("Image", slot, "");
+            healingImg.AddClass("HeartHealing");
+            healingImg.style.visibility = "collapse";
+            var frozenImg = $.CreatePanel("Image", slot, "");
+            frozenImg.AddClass("HeartDeferred");
+            frozenImg.style.visibility = "collapse";
+            var fillImg = $.CreatePanel("Image", slot, "");
+            fillImg.AddClass("HeartFill");
+            fillImg.style.visibility = "collapse";
+            State.mcHeartSlots.push(slot);
+            State.mcHeartContainerImages.push(containerImg);
+            State.mcHeartHealingImages.push(healingImg);
+            State.mcHeartDeferredImages.push(frozenImg);
+            State.mcHeartFillImages.push(fillImg);
+            heartsInCurrentRow += 1;
+        }
+        State.mcHeartsRowCount = rowPanels.length;
+        if (rowPanels.length > MC_MAX_HEART_ROWS) {
+            var marginTop = ((MC_MAX_HEART_ROWS * MC_HEART_ROW_HEIGHT_PX) / rowPanels.length) - MC_HEART_ROW_HEIGHT_PX;
+            for (var j = 0; j < rowPanels.length - 1; j += 1) rowPanels[j].style.marginTop = marginTop + "px";
+        }
+        return true;
+    }
+
+    function McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded) {
+        if (heartsNeeded <= 0) return false;
+        if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+            State.cachedPanels.mcBarrierHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHeartsContainer") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+                $.Msg("[QOLLock][MC] MinecraftBarrierHeartsContainer not found");
+                return false;
+            }
+        }
+        if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+            State.cachedPanels.mcBarrierHearts = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHearts") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+                $.Msg("[QOLLock][MC] MinecraftBarrierHearts not found");
+                return false;
+            }
+        }
+        if (State.mcBarrierHeartsCapacity === heartsNeeded && State.mcBarrierHeartsPanels.length === State.mcBarrierHeartsCapacity) return true;
+        State.cachedPanels.mcBarrierHearts.RemoveAndDeleteChildren();
+        State.mcBarrierHeartsPanels = [];
+        State.mcBarrierHeartContainerImages = [];
+        State.mcBarrierHeartFillImages = [];
+        State.mcBarrierHeartsCapacity = heartsNeeded;
+        var currentRow = null;
+        var heartsInCurrentRow = 0;
+        function ensureRow() {
+            if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
+                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcBarrierHearts, "");
+                currentRow.AddClass("HeartsRow");
+                var firstChild = State.cachedPanels.mcBarrierHearts.GetChild(0);
+                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcBarrierHearts.MoveChildBefore(currentRow, firstChild);
+                heartsInCurrentRow = 0;
+            }
+        }
+        for (var i = 0; i < heartsNeeded; i += 1) {
+            ensureRow();
+            var slot = $.CreatePanel("Panel", currentRow, "");
+            slot.AddClass("HeartSlot");
+            var containerImg = $.CreatePanel("Image", slot, "");
+            containerImg.AddClass("HeartContainer");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            var fillImg = $.CreatePanel("Image", slot, "");
+            fillImg.AddClass("HeartFill");
+            fillImg.style.visibility = "collapse";
+            State.mcBarrierHeartsPanels.push(slot);
+            State.mcBarrierHeartContainerImages.push(containerImg);
+            State.mcBarrierHeartFillImages.push(fillImg);
+            heartsInCurrentRow += 1;
+        }
+        return true;
+    }
+
+    function McUpdateHearts(trueHp, totalHp, afflicted) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            var isBlinkOn = State.mcHeartsBlinking && (State.mcHeartsBlinkPhase % 2 === 0);
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var heartsNeeded = Math.max(1, Math.ceil(totalHalfSegments / 2));
+            var currentHalfSegments = Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT);
+            if (currentHalfSegments < 0) currentHalfSegments = 0;
+            if (currentHalfSegments > totalHalfSegments) currentHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(currentHalfSegments / 2);
+            var hasHalfHeart = (currentHalfSegments % 2) === 1;
+            if (!McEnsureHeartsCapacity(hudRoot, heartsNeeded)) return;
+            var lastSlotIsHalf = (totalHalfSegments % 2) === 1;
+            if (isBlinkOn !== State.mcLastIsBlinkOn || heartsNeeded !== State.mcLastContainerHeartsNeeded || lastSlotIsHalf !== State.mcLastContainerLastSlotIsHalf) {
+                State.mcLastIsBlinkOn = isBlinkOn;
+                State.mcLastContainerHeartsNeeded = heartsNeeded;
+                State.mcLastContainerLastSlotIsHalf = lastSlotIsHalf;
+                for (var i = 0; i < State.mcHeartSlots.length; i += 1) {
+                    var slot = State.mcHeartSlots[i];
+                    var container = State.mcHeartContainerImages[i];
+                    if (i >= heartsNeeded) { slot.style.visibility = "collapse"; continue; }
+                    slot.style.visibility = "visible";
+                    var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
+                    if (isLastSlot) container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_half_8x.vtex" : "s2r://panorama/images/minecraft/container_half_8x.vtex");
+                    else container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                }
+            }
+            if (fullHearts !== State.mcLastFillFullHearts || hasHalfHeart !== State.mcLastFillHasHalf || afflicted !== State.mcLastFillAfflicted) {
+                State.mcLastFillFullHearts = fullHearts;
+                State.mcLastFillHasHalf = hasHalfHeart;
+                State.mcLastFillAfflicted = afflicted;
+                var texturePrefix = afflicted ? "poisoned_" : "";
+                for (var i = 0; i < State.mcHeartFillImages.length; i += 1) {
+                    var fill = State.mcHeartFillImages[i];
+                    fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
+                    if (i < fullHearts) {
+                        fill.AddClass("full"); fill.style.visibility = "visible";
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "full_8x.vtex");
+                    } else if (i === fullHearts && hasHalfHeart) {
+                        fill.AddClass("half"); fill.style.visibility = "visible";
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "half_8x.vtex");
+                    } else {
+                        fill.AddClass("empty"); fill.style.visibility = "collapse";
+                    }
+                }
+            }
+            State.mcLastVisibleHeartsCount = heartsNeeded;
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateHearts: " + error); }
+    }
+
+    function McUpdateDeferredHearts(trueHp, deferredDamage, totalHp) {
+        try {
+            if (State.mcHeartDeferredImages.length === 0) return;
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var trueHalfSegs = Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT);
+            var deferredHalfSegs = deferredDamage > 0 ? Math.ceil(deferredDamage / MC_HP_PER_HALF_SEGMENT) : 0;
+            var orangeHalfSegments = trueHalfSegs + deferredHalfSegs;
+            if (orangeHalfSegments < 0) orangeHalfSegments = 0;
+            if (orangeHalfSegments > totalHalfSegments) orangeHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(orangeHalfSegments / 2);
+            var hasHalfHeart = (orangeHalfSegments % 2) === 1;
+            var fillFullSlots = Math.floor(Math.ceil(trueHp / MC_HP_PER_HALF_SEGMENT) / 2);
+            if (fullHearts === State.mcLastDeferredFullHearts && hasHalfHeart === State.mcLastDeferredHasHalf && fillFullSlots === State.mcLastDeferredStartSlots) return;
+            State.mcLastDeferredFullHearts = fullHearts;
+            State.mcLastDeferredHasHalf = hasHalfHeart;
+            State.mcLastDeferredStartSlots = fillFullSlots;
+            for (var i = 0; i < State.mcHeartDeferredImages.length; i += 1) {
+                var deferred = State.mcHeartDeferredImages[i];
+                if (i < fillFullSlots) { deferred.style.visibility = "collapse"; continue; }
+                deferred.RemoveClass("full"); deferred.RemoveClass("half"); deferred.RemoveClass("empty");
+                if (i < fullHearts) {
+                    deferred.AddClass("full"); deferred.style.visibility = "visible";
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    deferred.AddClass("half"); deferred.style.visibility = "visible";
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_half_8x.vtex");
+                } else {
+                    deferred.AddClass("empty"); deferred.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateDeferredHearts: " + error); }
+    }
+
+    function McUpdateHealingHearts(currentHp, healingHp, totalHp) {
+        try {
+            if (State.mcHeartHealingImages.length === 0) return;
+            var totalHalfSegments = Math.max(0, Math.ceil(totalHp / MC_HP_PER_HALF_SEGMENT));
+            var healingHalfSegments = Math.ceil(healingHp / MC_HP_PER_HALF_SEGMENT);
+            if (healingHalfSegments < 0) healingHalfSegments = 0;
+            if (healingHalfSegments > totalHalfSegments) healingHalfSegments = totalHalfSegments;
+            var fullHearts = Math.floor(healingHalfSegments / 2);
+            var hasHalfHeart = (healingHalfSegments % 2) === 1;
+            var healingStartSlots = Math.floor(Math.ceil(currentHp / MC_HP_PER_HALF_SEGMENT) / 2);
+            if (fullHearts === State.mcLastHealingFullHearts && hasHalfHeart === State.mcLastHealingHasHalf && healingStartSlots === State.mcLastHealingStartSlots) return;
+            State.mcLastHealingFullHearts = fullHearts;
+            State.mcLastHealingHasHalf = hasHalfHeart;
+            State.mcLastHealingStartSlots = healingStartSlots;
+            for (var i = 0; i < State.mcHeartHealingImages.length; i += 1) {
+                var healing = State.mcHeartHealingImages[i];
+                if (i < healingStartSlots) { healing.style.visibility = "collapse"; continue; }
+                healing.RemoveClass("full"); healing.RemoveClass("half"); healing.RemoveClass("empty");
+                if (i < fullHearts) {
+                    healing.AddClass("full"); healing.style.visibility = "visible";
+                    healing.SetImage("s2r://panorama/images/minecraft/green_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    healing.AddClass("half"); healing.style.visibility = "visible";
+                    healing.SetImage("s2r://panorama/images/minecraft/green_half_8x.vtex");
+                } else {
+                    healing.AddClass("empty"); healing.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateHealingHearts: " + error); }
+    }
+
+    function McUpdateBarrierHearts(currentBarrier, totalBarrier, hasBarrier) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            if (!hasBarrier) {
+                if (IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "collapse";
+                State.mcLastBarrierFullHearts = -1;
+                State.mcLastBarrierHasHalf = null;
+                State.mcLastBarrierLastSlotIsHalf = null;
+                return;
+            }
+            var totalHalfSegments = Math.ceil(totalBarrier / MC_HP_PER_HALF_SEGMENT);
+            var heartsNeeded = Math.ceil(totalHalfSegments / 2);
+            if (!McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded)) return;
+            State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "visible";
+            var lastSlotIsHalf = (totalHalfSegments % 2) === 1;
+            var currentHalfSegments = Math.ceil(currentBarrier / MC_HP_PER_HALF_SEGMENT);
+            var fullHearts = Math.floor(currentHalfSegments / 2);
+            var hasHalfHeart = (currentHalfSegments % 2) === 1;
+            if (fullHearts === State.mcLastBarrierFullHearts && hasHalfHeart === State.mcLastBarrierHasHalf && lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf) return;
+            State.mcLastBarrierFullHearts = fullHearts;
+            State.mcLastBarrierHasHalf = hasHalfHeart;
+            State.mcLastBarrierLastSlotIsHalf = lastSlotIsHalf;
+            for (var i = 0; i < State.mcBarrierHeartsPanels.length; i += 1) {
+                var container = State.mcBarrierHeartContainerImages[i];
+                var fill = State.mcBarrierHeartFillImages[i];
+                var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
+                container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
+                if (i < fullHearts) {
+                    fill.AddClass("full"); fill.style.visibility = "visible";
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_full_8x.vtex");
+                } else if (i === fullHearts && hasHalfHeart) {
+                    fill.AddClass("half"); fill.style.visibility = "visible";
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_half_8x.vtex");
+                } else {
+                    fill.AddClass("empty"); fill.style.visibility = "collapse";
+                }
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateBarrierHearts: " + error); }
+    }
+
+    function McParseDeferredDamage(hudRoot) {
+        try {
+            var damageBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_damage_Middle") : null;
+            if (!damageBar) return 0;
+            var heightStr = damageBar.style && damageBar.style.height ? damageBar.style.height.toString() : "";
+            var heightValue = parseFloat(heightStr) || 0;
+            return heightValue / MC_HEALTH_BAR_PIXEL_HEIGHT * MC_HEALTH_BAR_SCALE;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseDeferredDamage: " + e); return 0; }
+    }
+
+    function McParseIncomingHeal(hudRoot) {
+        try {
+            var healBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_heal_Middle") : null;
+            if (!healBar) return 0;
+            var heightStr = healBar.style && healBar.style.height ? healBar.style.height.toString() : "";
+            var heightValue = parseFloat(heightStr) || 0;
+            return (heightValue / MC_HEALTH_BAR_PIXEL_HEIGHT) * MC_HEALTH_BAR_SCALE;
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseIncomingHeal: " + e); return 0; }
+    }
+
+    function McReadHealthValues(hudRoot) {
+        if (!IsPanelValid(State.cachedPanels.mcHealthContainer)) {
+            var hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
+            if (!hc) {
+                var all = hudRoot.FindChildrenWithClassTraverse ? hudRoot.FindChildrenWithClassTraverse("healthContainer") : null;
+                if (all && all.length > 0) hc = all[0];
+            }
+            if (!hc) {
+                if (!State.mcLoggedHealthContainerMiss) { $.Msg("[QOLLock][MC] Health container panel not found"); State.mcLoggedHealthContainerMiss = true; }
+                return null;
+            }
+            State.mcLoggedHealthContainerMiss = false;
+            State.cachedPanels.mcHealthContainer = hc;
+        }
+        if (!IsPanelValid(State.cachedPanels.mcCurrentHealthLabel)) {
+            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
+            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
+            if (!lbl) return null;
+            State.cachedPanels.mcCurrentHealthLabel = lbl;
+        }
+        if (!IsPanelValid(State.cachedPanels.mcTotalHealthLabel)) {
+            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
+            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
+            if (!lbl) return null;
+            State.cachedPanels.mcTotalHealthLabel = lbl;
+        }
+        var currentHealth = parseInt(State.cachedPanels.mcCurrentHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
+        var totalHealth = parseInt(State.cachedPanels.mcTotalHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
+        return { currentHealth: currentHealth, totalHealth: totalHealth };
+    }
+
+    function McComputeHealthState(currentHealth, totalHealth, hudRoot) {
+        var deferredFraction = McParseDeferredDamage(hudRoot);
+        var deferredDamage = Math.round(deferredFraction * totalHealth);
+        var trueCurrentHealth = Math.max(0, currentHealth - deferredDamage);
+        var incomingHealFraction = McParseIncomingHeal(hudRoot);
+        var incomingHealAmount = Math.round(incomingHealFraction * totalHealth);
+        var healingHealth = Math.min(totalHealth, currentHealth + incomingHealAmount);
+        var currentHalfSegments = Math.ceil(trueCurrentHealth / MC_HP_PER_HALF_SEGMENT);
+        var effectiveHalfSegments = Math.ceil(currentHealth / MC_HP_PER_HALF_SEGMENT);
+        var hasIncomingHeal = incomingHealAmount > 0;
+        return { deferredDamage: deferredDamage, trueCurrentHealth: trueCurrentHealth, healingHealth: healingHealth, currentHalfSegments: currentHalfSegments, effectiveHalfSegments: effectiveHalfSegments, hasIncomingHeal: hasIncomingHeal };
+    }
+
+    function McParseChargesForHunger(root) {
+        try {
+            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) {
+                State.cachedPanels.mcChargesContainer = root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null;
+            }
+            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) return null;
+            var allCharges = State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse ? State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse("charge") : null;
+            if (!allCharges || allCharges.length === 0) return null;
+            var maxCharges = 0;
+            var activeCharges = [];
+            for (var i = 0; i < allCharges.length; i += 1) {
+                if (allCharges[i].BHasClass("has_charge")) { maxCharges += 1; activeCharges.push(allCharges[i]); }
+            }
+            if (maxCharges === 0) return null;
+            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
+            var totalChargeValue = 0;
+            for (var i = 0; i < activeCharges.length; i += 1) {
+                var charge = activeCharges[i];
+                var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
+                if (!chargeFgElements || chargeFgElements.length === 0) continue;
+                var chargeFg = chargeFgElements[0];
+                if (chargeFg.BHasClass("finished")) {
+                    totalChargeValue += 1.0;
+                } else {
+                    var clipStyle = chargeFg.style && chargeFg.style.clip ? chargeFg.style.clip.toString() : "";
+                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
+                    if (match) totalChargeValue += Math.min(parseFloat(match[1]) / maxAngle, 1.0);
+                }
+            }
+            return { percent: Math.round((totalChargeValue / maxCharges) * 100), chargesFilled: totalChargeValue, maxCharges: maxCharges };
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e); return null; }
+    }
+
+    function McUpdateFood(percent) {
+        try {
+            var hudRoot = IsPanelValid(State.cachedPanels.mcHudRoot) ? State.cachedPanels.mcHudRoot : null;
+            if (!hudRoot) return;
+            if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) {
+                State.cachedPanels.mcFoodContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null;
+                if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
+                var children = State.cachedPanels.mcFoodContainer.Children();
+                State.mcCachedFoodIcons = [];
+                for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
+            }
+            if (State.mcCachedFoodIcons.length === 0) return;
+            if (percent < 0) percent = 0;
+            if (percent > 100) percent = 100;
+            var totalHalfSegments = Math.round(percent / MC_FOOD_PERCENT_PER_HALF);
+            var fullIcons = Math.floor(totalHalfSegments / 2);
+            var hasHalfIcon = (totalHalfSegments % 2) === 1;
+            var iconCount = State.mcCachedFoodIcons.length;
+            for (var i = 0; i < iconCount; i += 1) {
+                var reverseIndex = iconCount - 1 - i;
+                if (reverseIndex < fullIcons) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_8x.vtex");
+                else if (reverseIndex === fullIcons && hasHalfIcon) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_half_8x.vtex");
+                else State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_empty_8x.vtex");
+            }
+        } catch (e) { $.Msg("[QOLLock][MC] Error in McUpdateFood: " + e); }
+    }
+
+    function McParseSoulsAndLevel(root) {
+        try {
+            if (!IsPanelValid(State.cachedPanels.mcGoldApContainer)) {
+                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse("gold_and_ap_container") || null) : null;
+                if (!panel) {
+                    if (!State.mcLoggedGoldApMiss) { $.Msg("[QOLLock][MC] gold_and_ap_container not found"); State.mcLoggedGoldApMiss = true; }
+                    return;
+                }
+                State.mcLoggedGoldApMiss = false;
+                State.cachedPanels.mcGoldApContainer = panel;
+            }
+            if (!IsPanelValid(State.cachedPanels.mcSoulsFill)) State.cachedPanels.mcSoulsFill = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcSoulsFill)) {
+                var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
+                var heightValue = parseFloat(heightStr) || 0;
+                var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
+                if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
+                if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) State.cachedPanels.mcXpBarFill = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null;
+                if (IsPanelValid(State.cachedPanels.mcXpBarFill) && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
+            }
+            if (!IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) State.cachedPanels.mcPlayerLevelLabel = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) {
+                var levelValue = parseInt((State.cachedPanels.mcPlayerLevelLabel.text || "").replace(/[^0-9]/g, "")) || 0;
+                if (!IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null;
+                if (IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
+            }
+        } catch (error) { $.Msg("[QOLLock][MC] Error in McParseSoulsAndLevel: " + error); }
+    }
+
+    function McUpdateAnimationState(currentHalfSegments, effectiveHalfSegments, hasIncomingHeal) {
+        if (State.mcLastBlinkHalfSegments !== null && effectiveHalfSegments !== State.mcLastBlinkHalfSegments) McStartHeartsBlink();
+        State.mcLastBlinkHalfSegments = effectiveHalfSegments;
+        var isLowHealth = currentHalfSegments <= MC_LOW_HEALTH_HALF_SEGMENTS;
+        McSetLowHealthJiggleEnabled(isLowHealth);
+        McSetHealingWaveEnabled(!isLowHealth && hasIncomingHeal);
+    }
+
+    function McUpdateTotem() {
+        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) return;
+        var hasRejuvenator = IsPanelValid(State.cachedPanels.mcHudHealthBars) ? State.cachedPanels.mcHudHealthBars.BHasClass("HasRejuvenator") : false;
+        State.cachedPanels.mcTotemContainer.style.visibility = hasRejuvenator ? "visible" : "collapse";
+    }
+
+    function McUpdateBulletBarrier(hudRoot) {
+        var hasBarrier = false;
+        var bulletBarrierCurrent = 0;
+        var bulletBarrierMax = 0;
+        if (IsPanelValid(State.cachedPanels.mcBarriersContainer)) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
+        if (hasBarrier) {
+            if (!IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) State.cachedPanels.mcBulletBarrierNumbers = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null;
+            if (IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) {
+                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) {
+                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_current") : null;
+                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierCurrentLabel = lbls[0];
+                }
+                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) {
+                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_max") : null;
+                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierMaxLabel = lbls[0];
+                }
+                if (IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
+                if (IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
+                McUpdateBarrierHearts(bulletBarrierCurrent, bulletBarrierMax, true);
+            } else {
+                if (!State.mcLoggedBulletBarrierMiss) { $.Msg("[QOLLock][MC] BulletBarrierNumbers panel not found"); State.mcLoggedBulletBarrierMiss = true; }
+                McUpdateBarrierHearts(0, 0, false);
+            }
+        } else {
+            McUpdateBarrierHearts(0, 0, false);
+        }
+        return { hasBarrier: hasBarrier, bulletBarrierCurrent: bulletBarrierCurrent, bulletBarrierMax: bulletBarrierMax };
+    }
+
+    function UpdateMinecraftHealthbar(root, cfg, nowMs, enabled) {
+        if (!enabled) {
+            if (State.mcWasEnabled) McResetRuntime();
+            return;
+        }
+        var nowMsNum = Number(nowMs) || 0;
+        if (nowMsNum < (Number(State.mcNextUpdateMs) || 0)) return;
+
+        var hudRoot = McResolveHudRoot(root);
+        if (!hudRoot) { State.mcNextUpdateMs = nowMsNum + 400; return; }
+
+        State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
+
+        if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) State.cachedPanels.mcHudHealthBars = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null;
+        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) State.cachedPanels.mcTotemContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null;
+        if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) {
+            State.cachedPanels.mcBarriersContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("HudShieldsContainer") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) $.Msg("[QOLLock][MC] HudBarriersContainer not found");
+        }
+
+        var hv = McReadHealthValues(hudRoot);
+        if (!hv) return;
+        var currentHealth = hv.currentHealth;
+        var totalHealth = hv.totalHealth;
+
+        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot);
+
+        McUpdateAnimationState(hs.currentHalfSegments, hs.effectiveHalfSegments, hs.hasIncomingHeal);
+
+        var nowMsForMod = Date.now();
+        if (nowMsForMod >= (Number(State.mcCheckModifierNextMs) || 0)) {
+            State.mcLastModifierResult = McCheckModifierActive(root, "AFFLICTED");
+            State.mcCheckModifierNextMs = nowMsForMod + MC_MODIFIER_THROTTLE_MS;
+        }
+        State.mcIsAfflicted = State.mcLastModifierResult;
+
+        McUpdateHearts(hs.trueCurrentHealth, totalHealth, State.mcIsAfflicted);
+        McUpdateHealingHearts(currentHealth, hs.healingHealth, totalHealth);
+        McUpdateDeferredHearts(hs.trueCurrentHealth, hs.deferredDamage, totalHealth);
+        McUpdateTotem();
+        McUpdateBulletBarrier(hudRoot);
+        McParseSoulsAndLevel(root);
+        var hungerData = McParseChargesForHunger(root);
+        if (hungerData !== null) McUpdateFood(hungerData.percent);
+
+        State.mcWasEnabled = true;
+    }
+
+    // ── End Minecraft Healthbar ───────────────────────────────────────────────
+
     function CaptureFgHeroImageOriginalParent(levelAmount, fgAnchor) {
         if (!IsPanelValid(levelAmount)) return;
         if (IsPanelValid(State.fgHeroImageOriginalParent)) return;
@@ -5328,6 +6092,11 @@ function GetUIRoot() {
         var shouldRunBudhudRuntime = (Number(healthbarType) === 4) || State.budhudWasEnabled;
         if (shouldRunBudhudRuntime) {
             UpdateBudhudHealthbar(root, cfg, healthbarType, nowMsLoop);
+        }
+
+        var shouldRunMinecraftRuntime = (Number(healthbarType) === 5) || State.mcWasEnabled;
+        if (shouldRunMinecraftRuntime) {
+            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === 5));
         }
     }
 
@@ -6092,53 +6861,65 @@ function GetUIRoot() {
     function RefreshUrnTrackerScoreCache(root, nowMs) {
         if (!root) return;
         var nextSearchMs = Number(State.urnTrackerNextPanelSearchMs) || 0;
-        var friendlyPanel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScorePanel) ? State.cachedPanels.urnTrackerFriendlyScorePanel : null;
-        var enemyPanel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScorePanel) ? State.cachedPanels.urnTrackerEnemyScorePanel : null;
-        var friendlyLabel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyScoreLabel) ? State.cachedPanels.urnTrackerFriendlyScoreLabel : null;
-        var enemyLabel = IsPanelValid(State.cachedPanels.urnTrackerEnemyScoreLabel) ? State.cachedPanels.urnTrackerEnemyScoreLabel : null;
-        var shouldRescan =
-            nowMs >= nextSearchMs ||
-            !friendlyPanel ||
-            !enemyPanel ||
-            !friendlyLabel ||
-            !enemyLabel;
 
+        var teamsContainer = IsPanelValid(State.cachedPanels.urnTrackerTeamsContainer) ? State.cachedPanels.urnTrackerTeamsContainer : null;
+        var friendlyTeamPanel = IsPanelValid(State.cachedPanels.urnTrackerFriendlyTeamPanel) ? State.cachedPanels.urnTrackerFriendlyTeamPanel : null;
+        var enemyTeamPanel = IsPanelValid(State.cachedPanels.urnTrackerEnemyTeamPanel) ? State.cachedPanels.urnTrackerEnemyTeamPanel : null;
+        var friendlyLabels = Array.isArray(State.cachedPanels.urnTrackerFriendlyGoldLabels) ? State.cachedPanels.urnTrackerFriendlyGoldLabels : null;
+        var enemyLabels = Array.isArray(State.cachedPanels.urnTrackerEnemyGoldLabels) ? State.cachedPanels.urnTrackerEnemyGoldLabels : null;
+
+        var friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every(function(p) { return IsPanelValid(p); });
+        var enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every(function(p) { return IsPanelValid(p); });
+
+        var shouldRescan = nowMs >= nextSearchMs || !teamsContainer || !friendlyTeamPanel || !enemyTeamPanel || !friendlyLabelsOk || !enemyLabelsOk;
         if (!shouldRescan) return;
 
-        if (!friendlyPanel) friendlyPanel = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        if (!enemyPanel) enemyPanel = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
-        if (!friendlyPanel) friendlyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreFriendly") || null) : null;
-        if (!enemyPanel) enemyPanel = root.FindChildTraverse ? (root.FindChildTraverse("TeamScoreEnemy") || null) : null;
-        friendlyLabel = friendlyPanel ? FindFirstScoreLabelInTeamPanel(friendlyPanel) : null;
-        enemyLabel = enemyPanel ? FindFirstScoreLabelInTeamPanel(enemyPanel) : null;
+        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
+        if (!topBar && root.FindChildTraverse) {
+            topBar = root.FindChildTraverse("TopBar") || null;
+            State.cachedPanels.topBarPanel = topBar;
+        }
+        if (!topBar) return;
 
-        State.cachedPanels.urnTrackerFriendlyScorePanel = friendlyPanel || null;
-        State.cachedPanels.urnTrackerEnemyScorePanel = enemyPanel || null;
-        State.cachedPanels.urnTrackerFriendlyScoreLabel = friendlyLabel || null;
-        State.cachedPanels.urnTrackerEnemyScoreLabel = enemyLabel || null;
+        teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
+        State.cachedPanels.urnTrackerTeamsContainer = teamsContainer;
+
+        if (!teamsContainer) {
+            State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+            return;
+        }
+
+        var friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("friend") || []) : [];
+        if (friendlyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse("team1") || [];
+        }
+        var enemyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("enemy") || []) : [];
+        if (enemyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            enemyCandidates = teamsContainer.FindChildrenWithClassTraverse("team2") || [];
+        }
+
+        friendlyTeamPanel = friendlyCandidates.length > 0 ? friendlyCandidates[0] : null;
+        enemyTeamPanel = enemyCandidates.length > 0 ? enemyCandidates[0] : null;
+        friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse) ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+        enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse) ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+
+        State.cachedPanels.urnTrackerFriendlyTeamPanel = friendlyTeamPanel || null;
+        State.cachedPanels.urnTrackerEnemyTeamPanel = enemyTeamPanel || null;
+        State.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
+        State.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
         State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
     }
 
-    function GetCachedUrnTeamNetworthValue(teamPanelKey, labelKey) {
-        var scoreLabel = IsPanelValid(State.cachedPanels[labelKey]) ? State.cachedPanels[labelKey] : null;
-        var teamPanel = IsPanelValid(State.cachedPanels[teamPanelKey]) ? State.cachedPanels[teamPanelKey] : null;
-        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        if (parsed !== null) return parsed;
-        if (!teamPanel) return 0;
-        scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
-        State.cachedPanels[labelKey] = scoreLabel || null;
-        parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        return parsed === null ? 0 : parsed;
-    }
-
-    function GetTeamNetworthValue(root, panelId) {
-        if (!root || !panelId) return 0;
-        var teamPanel = root.FindChildTraverse(panelId);
-        if (!teamPanel) return 0;
-        var scoreLabel = FindFirstScoreLabelInTeamPanel(teamPanel);
-        var parsed = ParseUrnScoreNumber(scoreLabel ? scoreLabel.text : "");
-        if (parsed !== null) return parsed;
-        return 0;
+    function GetCachedUrnTeamNetworthValue(labelsKey) {
+        var labels = Array.isArray(State.cachedPanels[labelsKey]) ? State.cachedPanels[labelsKey] : [];
+        if (labels.length === 0) return 0;
+        var total = 0;
+        for (var i = 0; i < labels.length; i++) {
+            if (!IsPanelValid(labels[i])) return 0;
+            var v = parseInt(String(labels[i].text).replace(/,/g, ""), 10);
+            if (isFinite(v)) total += v;
+        }
+        return total;
     }
 
     function GetUrnIdolSpawnButtons(root, forceRescan) {
@@ -6278,8 +7059,8 @@ function GetUIRoot() {
         }
 
         RefreshUrnTrackerScoreCache(root, now);
-        var friendlyVal = GetCachedUrnTeamNetworthValue("urnTrackerFriendlyScorePanel", "urnTrackerFriendlyScoreLabel");
-        var enemyVal = GetCachedUrnTeamNetworthValue("urnTrackerEnemyScorePanel", "urnTrackerEnemyScoreLabel");
+        var friendlyVal = GetCachedUrnTeamNetworthValue("urnTrackerFriendlyGoldLabels");
+        var enemyVal = GetCachedUrnTeamNetworthValue("urnTrackerEnemyGoldLabels");
         var gameSec = GetGameSecondsForUrn(root);
         var gameMin = gameSec / 60.0;
         var mood = "neutral";
@@ -6317,7 +7098,7 @@ function GetUIRoot() {
                 friendlyVal: friendlyVal,
                 enemyVal: enemyVal,
                 mood: "bad",
-                display: "-8",
+                display: "-100.0%",
                 debugText: "-inf"
             };
             State.urnTrackerCachedState = result;
@@ -6553,652 +7334,24 @@ function GetUIRoot() {
         return null;
     }
 
-    function UltCdDebugLog(msg) {
-        if (!ULT_CD_DEBUG) return;
-        $.Msg("[QOLLock][UltCdDbg] " + msg);
-    }
-
-    function UltCdDebugLogThrottled(sig, msg, nowMs) {
-        if (!ULT_CD_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.ultCdDebugLastSig;
-        if (sameSig && now < (State.ultCdDebugNextMs || 0)) return;
-        State.ultCdDebugLastSig = sig || "";
-        State.ultCdDebugNextMs = now + ULT_CD_DEBUG_THROTTLE_MS;
-        UltCdDebugLog(msg);
-    }
-
     function IsUltCooldownTrackedIndex(index) {
         return index >= ULT_CD_SLOT_MIN_INDEX && index <= ULT_CD_SLOT_MAX_INDEX;
     }
 
-    function CreateUltCooldownSlotState() {
-        return {
-            lastDeg: null,
-            lastMs: 0,
-            slopeEma: null,
-            direction: 0,
-            displayLock: null,
-            cdLastDisplayNum: null,
-            cdLastDisplayMs: 0,
-            lastShownText: "",
-            lastShownMs: 0,
-            nextTextProbeMs: 0,
-            lastProbeCooldownText: "",
-            stableStatusW: null,
-            stableStatusH: null,
-            stableLocalX: null,
-            stableLocalY: null
-        };
-    }
-
-    function ResetUltCooldownSlotState(slot) {
-        if (!slot) return;
-        slot.lastDeg = null;
-        slot.lastMs = 0;
-        slot.slopeEma = null;
-        slot.direction = 0;
-        slot.displayLock = null;
-        slot.cdLastDisplayNum = null;
-        slot.cdLastDisplayMs = 0;
-        slot.lastShownText = "";
-        slot.lastShownMs = 0;
-        slot.nextTextProbeMs = 0;
-        slot.lastProbeCooldownText = "";
-        slot.stableStatusW = null;
-        slot.stableStatusH = null;
-        slot.stableLocalX = null;
-        slot.stableLocalY = null;
-    }
-
-    function EnsureUltCooldownState() {
-        if (!State.ultCdPlayerPanels) State.ultCdPlayerPanels = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdRowPanels) State.ultCdRowPanels = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdStatusPanels) State.ultCdStatusPanels = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdBgPanels) State.ultCdBgPanels = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdLabels) State.ultCdLabels = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdTeamByIndex) State.ultCdTeamByIndex = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdSlotState) State.ultCdSlotState = new Array(ULT_CD_MAX_PLAYERS);
-        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
-            if (!State.ultCdSlotState[i]) {
-                State.ultCdSlotState[i] = CreateUltCooldownSlotState();
-            }
-        }
-    }
-
-    function IsUltCooldownPanelCacheValid() {
-        if (!State.ultCdPlayerPanels || !State.ultCdRowPanels || !State.ultCdStatusPanels || !State.ultCdBgPanels || !State.ultCdLabels) return false;
-        if (!State.ultCdSlotState || State.ultCdSlotState.length < ULT_CD_MAX_PLAYERS) return false;
-        return true;
-    }
-
-    function HideUltCooldownLabel(label) {
-        if (!label || (label.IsValid && !label.IsValid())) return;
-        try { label.style.visibility = "collapse"; } catch (e0) {}
-        try {
-            if (label.text !== "") label.text = "";
-        } catch (e1) {}
-    }
-
-    function HideAllUltCooldownLabels(resetSlots) {
-        EnsureUltCooldownState();
-        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
-            var label = IsPanelValid(State.ultCdLabels[i]) ? State.ultCdLabels[i] : null;
-            if (label) HideUltCooldownLabel(label);
-            if (resetSlots) ResetUltCooldownSlotState(State.ultCdSlotState[i]);
-        }
-    }
-
-    function EnsureUltCooldownOverlayRoot(root) {
-        var overlay = IsPanelValid(State.ultCdOverlayRoot) ? State.ultCdOverlayRoot : null;
-        if (!overlay) {
-            overlay = root && root.FindChildTraverse ? (root.FindChildTraverse("QOLUltCooldownRoot") || null) : null;
-        }
-        if (!overlay) {
-            var parent = GetGameplayHudPanel(root);
-            if (!parent) return null;
-            overlay = $.CreatePanel("Panel", parent, "QOLUltCooldownRoot", {
-                hittest: "false",
-                hittestchildren: "false"
-            });
-        }
-        if (!overlay) return null;
-        overlay.style.horizontalAlign = "left";
-        overlay.style.verticalAlign = "top";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.overflow = "noclip";
-        overlay.style.visibility = "visible";
-        overlay.style.zIndex = "220";
-        State.ultCdOverlayRoot = overlay;
-        return overlay;
-    }
-
-    function RefreshUltCooldownPanelCache(root, nowMs) {
-        if (!root) return;
-        EnsureUltCooldownState();
-        var shouldRefresh = !IsUltCooldownPanelCacheValid() || nowMs >= (State.ultCdPanelCacheNextMs || 0);
-        if (!shouldRefresh) return;
-        var directReadyCount = 0;
-        var overlayRoot = EnsureUltCooldownOverlayRoot(root);
-
-        function ParseTopBarPlayerIndex(panel) {
-            if (!panel) return -1;
-            var idText = ReadPanelIdTextMaybe(panel);
-            if (!idText || idText.length === 0) return -1;
-            var m = /^TopBarPlayer(\d+)$/i.exec(idText);
-            if (!m || !m[1]) return -1;
-            var idx = parseInt(m[1], 10);
-            return isFinite(idx) ? idx : -1;
-        }
-
-        function FindTopBarPlayerAncestor(panel) {
-            var p = panel;
-            while (p) {
-                var pId = ReadPanelIdTextMaybe(p);
-                var pType = ReadPanelTypeTextMaybe(p);
-                if (pId && /^TopBarPlayer\d+$/i.test(pId)) return p;
-                if (pType && String(pType).toLowerCase().indexOf("citadelhudtopbarplayer") !== -1) return p;
-                try { p = p.GetParent ? p.GetParent() : null; } catch (e0) { p = null; }
-            }
-            return null;
-        }
-
-        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
-            if (!IsUltCooldownTrackedIndex(i)) {
-                var skippedLabelId = "QOLUltCooldownTextRow_" + String(i);
-                var skippedLabel = root && root.FindChildTraverse ? (root.FindChildTraverse(skippedLabelId) || null) : null;
-                if (!skippedLabel && overlayRoot && overlayRoot.FindChildTraverse) {
-                    skippedLabel = overlayRoot.FindChildTraverse("QOLUltCooldownText_" + String(i)) || null;
-                }
-                if (skippedLabel) {
-                    try { skippedLabel.style.visibility = "collapse"; } catch (eSkip0) {}
-                }
-                State.ultCdPlayerPanels[i] = null;
-                State.ultCdRowPanels[i] = null;
-                State.ultCdStatusPanels[i] = null;
-                State.ultCdBgPanels[i] = null;
-                State.ultCdLabels[i] = skippedLabel || null;
-                State.ultCdTeamByIndex[i] = null;
-                continue;
-            }
-            var playerPanel = root.FindChildTraverse ? (root.FindChildTraverse("TopBarPlayer" + i) || null) : null;
-            var rowPanel = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
-            var statusPanel = rowPanel && rowPanel.FindChildTraverse ? (rowPanel.FindChildTraverse("UltimateStatus") || null) : null;
-            var bgPanel = statusPanel && statusPanel.FindChildTraverse ? (statusPanel.FindChildTraverse("UltimateStatusBG") || null) : null;
-            var statusW = statusPanel ? Number(statusPanel.actuallayoutwidth) : 0;
-            var statusH = statusPanel ? Number(statusPanel.actuallayoutheight) : 0;
-            if (!isFinite(statusW) || !isFinite(statusH) || statusW < 4 || statusH < 4) {
-                statusPanel = null;
-                bgPanel = null;
-            }
-            if (statusPanel && bgPanel) directReadyCount += 1;
-            var labelId = "QOLUltCooldownTextRow_" + String(i);
-            var labelParent = rowPanel || statusPanel || overlayRoot || null;
-            var label = labelParent && labelParent.FindChildTraverse ? (labelParent.FindChildTraverse(labelId) || null) : null;
-            if (!label && labelParent) {
-                label = $.CreatePanel("Label", labelParent, labelId);
-                if (label) {
-                    label.AddClass("QOLUltCooldownText");
-                    label.hittest = false;
-                    label.hittestchildren = false;
-                }
-            }
-            var oldOverlayLabelId = "QOLUltCooldownText_" + String(i);
-            var oldOverlayLabel = overlayRoot && overlayRoot.FindChildTraverse ? (overlayRoot.FindChildTraverse(oldOverlayLabelId) || null) : null;
-            if (oldOverlayLabel && oldOverlayLabel !== label) {
-                try { oldOverlayLabel.DeleteAsync(0); } catch (eLegacyOverlay0) {}
-            }
-            var legacyStatusLabel = statusPanel && statusPanel.FindChildTraverse ? (statusPanel.FindChildTraverse("QOLUltCooldownText") || null) : null;
-            if (legacyStatusLabel && legacyStatusLabel !== label) {
-                try { legacyStatusLabel.DeleteAsync(0); } catch (eLegacy) {}
-            }
-            var staleRowLabel = rowPanel && rowPanel.FindChildTraverse ? (rowPanel.FindChildTraverse("QOLUltCooldownTextRow") || null) : null;
-            if (staleRowLabel && staleRowLabel !== label) {
-                try { staleRowLabel.DeleteAsync(0); } catch (e0) {}
-            }
-
-            State.ultCdPlayerPanels[i] = playerPanel || null;
-            State.ultCdRowPanels[i] = rowPanel || null;
-            State.ultCdStatusPanels[i] = statusPanel || null;
-            State.ultCdBgPanels[i] = bgPanel || null;
-            State.ultCdLabels[i] = label || null;
-            State.ultCdTeamByIndex[i] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
-        }
-
-        var fallbackAssigned = 0;
-        if (directReadyCount <= 1 && root.FindChildrenWithClassTraverse) {
-            var usedSlots = {};
-            for (var u = 0; u < ULT_CD_MAX_PLAYERS; u++) {
-                if (!IsUltCooldownTrackedIndex(u)) continue;
-                if (IsPanelValid(State.ultCdStatusPanels[u])) usedSlots[u] = true;
-            }
-            function IsStatusPanelAlreadyAssigned(panel) {
-                if (!panel) return false;
-                for (var a = 0; a < ULT_CD_MAX_PLAYERS; a++) {
-                    if (!IsUltCooldownTrackedIndex(a)) continue;
-                    if (State.ultCdStatusPanels[a] === panel) return true;
-                }
-                return false;
-            }
-
-            var discovered = root.FindChildrenWithClassTraverse("UltimateStatus") || [];
-            for (var d = 0; d < discovered.length; d++) {
-                var statusPanelD = IsPanelValid(discovered[d]) ? discovered[d] : null;
-                if (!statusPanelD) continue;
-                if (IsStatusPanelAlreadyAssigned(statusPanelD)) continue;
-                var statusDW = Number(statusPanelD.actuallayoutwidth);
-                var statusDH = Number(statusPanelD.actuallayoutheight);
-                if (!isFinite(statusDW) || !isFinite(statusDH) || statusDW < 4 || statusDH < 4) continue;
-                var posWinD = GetPanelPositionInWindow(statusPanelD);
-                if (!posWinD) continue;
-                if (Math.abs(posWinD.x) < 2 && Math.abs(posWinD.y) < 2) continue;
-                var rowPanelD = null;
-                try { rowPanelD = statusPanelD.GetParent ? statusPanelD.GetParent() : null; } catch (e1) { rowPanelD = null; }
-                if (!rowPanelD || ReadPanelIdTextMaybe(rowPanelD) !== "StatusRow") continue;
-
-                var bgPanelD = statusPanelD.FindChildTraverse ? (statusPanelD.FindChildTraverse("UltimateStatusBG") || null) : null;
-                if (!bgPanelD) continue;
-
-                var playerPanelD = FindTopBarPlayerAncestor(statusPanelD);
-                var targetIndex = ParseTopBarPlayerIndex(playerPanelD);
-                if (!IsUltCooldownTrackedIndex(targetIndex) || usedSlots[targetIndex]) {
-                    targetIndex = -1;
-                    for (var f = ULT_CD_SLOT_MIN_INDEX; f <= ULT_CD_SLOT_MAX_INDEX; f++) {
-                        if (!usedSlots[f]) {
-                            targetIndex = f;
-                            break;
-                        }
-                    }
-                }
-                if (!IsUltCooldownTrackedIndex(targetIndex)) continue;
-
-                var labelIdD = "QOLUltCooldownTextRow_" + String(targetIndex);
-                var labelParentD = rowPanelD || statusPanelD || overlayRoot || null;
-                var labelD = labelParentD && labelParentD.FindChildTraverse ? (labelParentD.FindChildTraverse(labelIdD) || null) : null;
-                if (!labelD && labelParentD) {
-                    labelD = $.CreatePanel("Label", labelParentD, labelIdD);
-                    if (labelD) {
-                        labelD.AddClass("QOLUltCooldownText");
-                        labelD.hittest = false;
-                        labelD.hittestchildren = false;
-                    }
-                }
-                var oldOverlayLabelIdD = "QOLUltCooldownText_" + String(targetIndex);
-                var oldOverlayLabelD = overlayRoot && overlayRoot.FindChildTraverse ? (overlayRoot.FindChildTraverse(oldOverlayLabelIdD) || null) : null;
-                if (oldOverlayLabelD && oldOverlayLabelD !== labelD) {
-                    try { oldOverlayLabelD.DeleteAsync(0); } catch (eLegacyOverlay1) {}
-                }
-                var legacyStatusLabelD = statusPanelD && statusPanelD.FindChildTraverse ? (statusPanelD.FindChildTraverse("QOLUltCooldownText") || null) : null;
-                if (legacyStatusLabelD && legacyStatusLabelD !== labelD) {
-                    try { legacyStatusLabelD.DeleteAsync(0); } catch (eLegacy2) {}
-                }
-                var staleRowLabelD = rowPanelD && rowPanelD.FindChildTraverse ? (rowPanelD.FindChildTraverse("QOLUltCooldownTextRow") || null) : null;
-                if (staleRowLabelD && staleRowLabelD !== labelD) {
-                    try { staleRowLabelD.DeleteAsync(0); } catch (e2) {}
-                }
-
-                State.ultCdPlayerPanels[targetIndex] = playerPanelD || null;
-                State.ultCdRowPanels[targetIndex] = rowPanelD || null;
-                State.ultCdStatusPanels[targetIndex] = statusPanelD || null;
-                State.ultCdBgPanels[targetIndex] = bgPanelD || null;
-                State.ultCdLabels[targetIndex] = labelD || null;
-                State.ultCdTeamByIndex[targetIndex] = playerPanelD ? DetectTopBarPlayerTeam(playerPanelD) : null;
-                usedSlots[targetIndex] = true;
-                fallbackAssigned += 1;
-            }
-        }
-
-        UltCdDebugLogThrottled(
-            "ult_cache_counts|" + directReadyCount + "|" + fallbackAssigned,
-            "cache refresh directReady=" + String(directReadyCount) + " fallbackAssigned=" + String(fallbackAssigned),
-            nowMs
-        );
-
-        State.ultCdPanelCacheNextMs = nowMs + ULT_CD_PANEL_CACHE_REFRESH_MS;
-    }
-
-    function ResolveUltCooldownStyleConfig(cfg) {
-        var opacity = (cfg && cfg.ULT_COOLDOWN_OPACITY !== undefined && cfg.ULT_COOLDOWN_OPACITY !== null)
-            ? parseFloat(cfg.ULT_COOLDOWN_OPACITY)
-            : 0.9;
-        if (!isFinite(opacity)) opacity = 0.9;
-        if (opacity < 0) opacity = 0;
-        if (opacity > 1) opacity = 1;
-
-        var size = (cfg && cfg.ULT_COOLDOWN_SIZE !== undefined && cfg.ULT_COOLDOWN_SIZE !== null)
-            ? Math.round(Number(cfg.ULT_COOLDOWN_SIZE))
-            : 13;
-        if (!isFinite(size)) size = 13;
-        if (size < 10) size = 10;
-        if (size > 32) size = 32;
-
-        return {
-            opacity: opacity,
-            size: size,
-            offsetX: 0,
-            offsetY: 0,
-            sig: opacity.toFixed(2) + "|" + String(size)
-        };
-    }
-
-    function ApplyUltCooldownLabelStyle(label, styleCfg) {
-        if (!label || !styleCfg) return;
-        SetPanelOpacitySafe(label, styleCfg.opacity, 0.9);
-        try { label.style.fontSize = String(styleCfg.size) + "px"; } catch (e1) {}
-        try { label.style.width = String(Math.max(28, Math.round(styleCfg.size * 3.0))) + "px"; } catch (e2) {}
-        try { label.style.textAlign = "center"; } catch (e3) {}
-    }
-
-    function GetPanelPositionRelativeToOverlayRoot(panel, overlayRoot) {
-        if (!panel || !overlayRoot) return null;
-
-        // Prefer a shared-ancestor conversion so coordinates stay stable across UI scale/res changes.
-        var overlayParent = null;
-        try { overlayParent = overlayRoot.GetParent ? overlayRoot.GetParent() : null; } catch (e0) { overlayParent = null; }
-        if (overlayParent) {
-            var panelInParent = GetPanelPositionRelativeToAncestor(panel, overlayParent);
-            var overlayInParent = GetPanelPositionRelativeToAncestor(overlayRoot, overlayParent);
-            if (panelInParent && overlayInParent) {
-                return {
-                    x: panelInParent.x - overlayInParent.x,
-                    y: panelInParent.y - overlayInParent.y
-                };
-            }
-        }
-
-        // Fallback for edge trees where the shared ancestor cannot be resolved.
-        var panelWin = GetPanelPositionInWindow(panel);
-        var overlayWin = GetPanelPositionInWindow(overlayRoot);
-        if (panelWin && overlayWin) {
-            return {
-                x: panelWin.x - overlayWin.x,
-                y: panelWin.y - overlayWin.y
-            };
-        }
-        return null;
-    }
-
-    function PositionUltCooldownLabel(label, statusPanel, styleCfg, slot) {
-        if (!label || !statusPanel) return null;
-        var labelParent = null;
-        try { labelParent = label.GetParent ? label.GetParent() : null; } catch (eParent) { labelParent = null; }
-        var localPos = labelParent ? GetPanelPositionRelativeToAncestor(statusPanel, labelParent) : null;
-        if (!localPos) {
-            var overlayRoot = IsPanelValid(State.ultCdOverlayRoot) ? State.ultCdOverlayRoot : null;
-            localPos = GetPanelPositionRelativeToOverlayRoot(statusPanel, overlayRoot);
-        }
-        if (!localPos) return null;
-
-        if (slot) {
-            // Prevent tiny ancestor-offset jitter from producing visible vertical wobble.
-            if (isFinite(slot.stableLocalX) && Math.abs(localPos.x - slot.stableLocalX) <= 1.1) {
-                localPos.x = slot.stableLocalX;
-            } else {
-                slot.stableLocalX = localPos.x;
-            }
-            if (isFinite(slot.stableLocalY) && Math.abs(localPos.y - slot.stableLocalY) <= 2.1) {
-                localPos.y = slot.stableLocalY;
-            } else {
-                slot.stableLocalY = localPos.y;
-            }
-        }
-
-        var liveStatusW = Number(statusPanel.actuallayoutwidth);
-        var liveStatusH = Number(statusPanel.actuallayoutheight);
-        if (!isFinite(liveStatusW) || liveStatusW <= 0) liveStatusW = 22;
-        if (!isFinite(liveStatusH) || liveStatusH <= 0) liveStatusH = 22;
-
-        var statusW = liveStatusW;
-        var statusH = liveStatusH;
-        // Prevent 1px layout oscillation from re-anchoring the label every frame.
-        if (slot) {
-            if (isFinite(slot.stableStatusW) && slot.stableStatusW > 0 && Math.abs(liveStatusW - slot.stableStatusW) <= 1.1) {
-                statusW = slot.stableStatusW;
-            } else {
-                slot.stableStatusW = liveStatusW;
-                statusW = liveStatusW;
-            }
-            if (isFinite(slot.stableStatusH) && slot.stableStatusH > 0 && Math.abs(liveStatusH - slot.stableStatusH) <= 1.1) {
-                statusH = slot.stableStatusH;
-            } else {
-                slot.stableStatusH = liveStatusH;
-                statusH = liveStatusH;
-            }
-        }
-
-        var labelW = Number(label.actuallayoutwidth);
-        if (!isFinite(labelW) || labelW <= 0) {
-            labelW = Math.max(28, Math.round((styleCfg && styleCfg.size ? styleCfg.size : 13) * 3.0));
-        }
-
-        var x = Math.round(localPos.x + (statusW * 0.5) - (labelW * 0.5) + ((styleCfg && isFinite(styleCfg.offsetX)) ? styleCfg.offsetX : 0));
-        var y = Math.round(localPos.y + statusH + ULT_CD_LABEL_BASE_Y + ((styleCfg && isFinite(styleCfg.offsetY)) ? styleCfg.offsetY : 0));
-        try { label.style.x = String(x) + "px"; } catch (e0) {}
-        try { label.style.y = String(y) + "px"; } catch (e1) {}
-        return { x: x, y: y };
-    }
-
-    function ReadUltCooldownClipText(bgPanel) {
-        if (!bgPanel) return "";
-        var clipText = "";
-        try {
-            if (bgPanel.style && bgPanel.style.clip) {
-                clipText = String(bgPanel.style.clip || "");
-            }
-        } catch (e0) {
-            clipText = "";
-        }
-        if (!clipText || clipText.length === 0) {
-            clipText = GetInlineStyleProperty(bgPanel, "clip");
-        }
-        return clipText || "";
-    }
-
-    function UpdateUltCooldownSlot(index, playerPanel, statusPanel, bgPanel, label, styleCfg, nowMs) {
-        var slot = State.ultCdSlotState[index];
-        if (!slot) return;
-
-        if (!statusPanel || !bgPanel || !label) {
-            UltCdDebugLogThrottled(
-                "ult_slot_missing_" + index + "|" + (statusPanel ? "1" : "0") + (bgPanel ? "1" : "0") + (label ? "1" : "0"),
-                "slot=" + index + " missing status=" + (statusPanel ? "0" : "1") + " bg=" + (bgPanel ? "0" : "1") + " label=" + (label ? "0" : "1"),
-                nowMs
-            );
-            HideUltCooldownLabel(label);
-            ResetUltCooldownSlotState(slot);
-            return;
-        }
-
-        ApplyUltCooldownLabelStyle(label, styleCfg);
-        var labelPos = PositionUltCooldownLabel(label, statusPanel, styleCfg, slot);
-        if (!labelPos) {
-            UltCdDebugLogThrottled(
-                "ult_slot_pos_missing_" + index,
-                "slot=" + index + " position unresolved (overlay/ancestor)",
-                nowMs
-            );
-        }
-
-        var clipText = ReadUltCooldownClipText(bgPanel);
-        var currentDeg = ResolveRadialProgressDeg(clipText, slot.lastDeg);
-        if (isFinite(currentDeg)) {
-            if (currentDeg < 0) currentDeg = 0;
-            if (currentDeg > 360 && currentDeg <= 720) currentDeg = currentDeg % 360;
-            if (currentDeg > 360) currentDeg = 360;
-        } else {
-            currentDeg = null;
-        }
-
-        var unlocked =
-            !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked")) ||
-            hasClassInHierarchy(statusPanel, "UltimateUnlocked") ||
-            hasClassInHierarchy(playerPanel, "UltimateUnlocked");
-        var ready =
-            !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady")) ||
-            hasClassInHierarchy(statusPanel, "UltimateCooldownReady") ||
-            hasClassInHierarchy(playerPanel, "UltimateCooldownReady");
-        var hasRadialProgress = (currentDeg !== null && currentDeg > 0.01 && currentDeg < 359.99);
-        var onCooldown = (unlocked && !ready) || hasRadialProgress;
-        if (!onCooldown) {
-            HideUltCooldownLabel(label);
-            ResetUltCooldownSlotState(slot);
-            UltCdDebugLogThrottled(
-                "ult_slot_off_" + index,
-                "slot=" + index + " onCooldown=0 unlocked=" + (unlocked ? "1" : "0") + " ready=" + (ready ? "1" : "0") + " deg=" + (currentDeg === null ? "-" : currentDeg.toFixed(2)),
-                nowMs
-            );
-            return;
-        }
-
-        if (nowMs >= (slot.nextTextProbeMs || 0)) {
-            slot.lastProbeCooldownText = NormalizeCooldownNumberText(FindNumericLabelTextInTree(statusPanel)) || "";
-            slot.nextTextProbeMs = nowMs + ULT_CD_TEXT_PROBE_INTERVAL_MS;
-        }
-
-        if (currentDeg !== null) {
-            if (slot.lastDeg === null || slot.lastMs <= 0) {
-                slot.lastDeg = currentDeg;
-                slot.lastMs = nowMs;
-            } else {
-                var dtSec = (nowMs - slot.lastMs) / 1000.0;
-                var delta = currentDeg - slot.lastDeg;
-                if (dtSec > 0.01 && dtSec < 4.0 && Math.abs(delta) >= ULT_CD_MIN_DEG_DELTA && Math.abs(delta) < 300) {
-                    if (slot.direction === 0) slot.direction = (delta >= 0) ? 1 : -1;
-                    var progressDelta = (slot.direction > 0) ? delta : (-delta);
-                    if (progressDelta <= -ULT_CD_MIN_DEG_DELTA && Math.abs(delta) >= 2.0) {
-                        slot.direction = (delta >= 0) ? 1 : -1;
-                        progressDelta = Math.abs(delta);
-                    }
-                    if (progressDelta > ULT_CD_MIN_DEG_DELTA) {
-                        var slope = progressDelta / dtSec;
-                        if (isFinite(slope) && slope > 0.001 && slope < 5000) {
-                            slot.slopeEma = (slot.slopeEma === null) ? slope : ((slot.slopeEma * 0.75) + (slope * 0.25));
-                        }
-                    }
-                    slot.lastDeg = currentDeg;
-                    slot.lastMs = nowMs;
-                }
-            }
-        }
-
-        var effectiveDeg = currentDeg;
-        if (
-            effectiveDeg !== null &&
-            slot.slopeEma !== null &&
-            slot.slopeEma > 0.001 &&
-            slot.direction !== 0 &&
-            slot.lastMs > 0
-        ) {
-            var sampleAgeSec = Math.max(0, (nowMs - slot.lastMs) / 1000.0);
-            if (sampleAgeSec > 0.01) {
-                var projectSec = Math.min(ULT_CD_PROJECT_MAX_SEC, sampleAgeSec);
-                effectiveDeg = effectiveDeg + ((slot.direction > 0 ? 1 : -1) * slot.slopeEma * projectSec);
-                if (!isFinite(effectiveDeg)) {
-                    effectiveDeg = currentDeg;
-                } else {
-                    if (effectiveDeg < 0) effectiveDeg = 0;
-                    if (effectiveDeg > 360) effectiveDeg = 360;
-                }
-            }
-        }
-
-        var cooldownText = "";
-        if (effectiveDeg !== null && slot.slopeEma !== null && slot.slopeEma > 0.001 && slot.direction !== 0) {
-            var remainingDeg = (slot.direction > 0) ? (360 - effectiveDeg) : effectiveDeg;
-            if (!isFinite(remainingDeg)) remainingDeg = 0;
-            if (remainingDeg < 0) remainingDeg = 0;
-            var remainingSec = remainingDeg / slot.slopeEma;
-            var rawText = FormatDerivedCooldownSeconds(remainingSec);
-            if (rawText && rawText.length > 0) {
-                cooldownText = StabilizeItemMirrorCooldownText(slot, rawText, nowMs);
-            }
-        }
-
-        if ((!cooldownText || cooldownText.length === 0) && slot.lastProbeCooldownText) {
-            cooldownText = slot.lastProbeCooldownText;
-        }
-        if ((!cooldownText || cooldownText.length === 0) && slot.lastShownText && (nowMs - (slot.lastShownMs || 0) <= ULT_CD_TEXT_HOLD_MS)) {
-            cooldownText = slot.lastShownText;
-        }
-
-        if (cooldownText && cooldownText.length > 0) {
-            if (label.text !== cooldownText) label.text = cooldownText;
-            label.style.visibility = "visible";
-            slot.lastShownText = cooldownText;
-            slot.lastShownMs = nowMs;
-        } else {
-            HideUltCooldownLabel(label);
-        }
-
-        var clipShort = clipText || "";
-        if (clipShort.length > 64) clipShort = clipShort.slice(0, 64) + "...";
-        UltCdDebugLogThrottled(
-            "ult_slot_" + index + "|" + (cooldownText || "-"),
-            "slot=" + index +
-            " onCooldown=" + (onCooldown ? "1" : "0") +
-            " unlocked=" + (unlocked ? "1" : "0") +
-            " ready=" + (ready ? "1" : "0") +
-            " deg=" + (currentDeg === null ? "-" : currentDeg.toFixed(2)) +
-            " eff=" + (effectiveDeg === null ? "-" : effectiveDeg.toFixed(2)) +
-            " slope=" + (slot.slopeEma === null ? "-" : slot.slopeEma.toFixed(3)) +
-            " dir=" + String(slot.direction || 0) +
-            " text=" + (cooldownText || "-") +
-            " pos=" + (labelPos ? (String(labelPos.x) + "," + String(labelPos.y)) : "-") +
-            " clip=" + (clipShort || "-"),
-            nowMs
-        );
-    }
-
     function UpdateUltimateCooldownOverlay(root, cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_ULT_COOLDOWNS) === 1);
-        if (!enabled) {
-            UltCdDebugLogThrottled("ult_cd_disabled", "overlay disabled cfg.ENABLE_ULT_COOLDOWNS=0", Date.now ? Date.now() : (new Date()).getTime());
-            if (!State.ultCdWasDisabled || (State.ultCdLabels && State.ultCdLabels.length > 0)) {
-                HideAllUltCooldownLabels(true);
-            }
-            var overlayRootDisabled = IsPanelValid(State.ultCdOverlayRoot) ? State.ultCdOverlayRoot : null;
-            if (overlayRootDisabled) {
-                try { overlayRootDisabled.style.visibility = "collapse"; } catch (e0) {}
-            }
-            State.ultCdWasDisabled = true;
-            return;
-        }
-
-        State.ultCdWasDisabled = false;
-        var overlayRootEnabled = EnsureUltCooldownOverlayRoot(root);
-        if (overlayRootEnabled) {
-            try { overlayRootEnabled.style.visibility = "visible"; } catch (e1) {}
-        }
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        RefreshUltCooldownPanelCache(root, nowMs);
-        EnsureUltCooldownState();
-
-        var styleCfg = ResolveUltCooldownStyleConfig(cfg);
-        if (State.ultCdStyleSig !== styleCfg.sig) {
-            State.ultCdStyleSig = styleCfg.sig;
-        }
-
-        var scoreboardOpen = IsHudClassActive(root, "gScoreboardOpen");
-        if (scoreboardOpen) {
-            HideAllUltCooldownLabels(false);
-            return;
-        }
-
-        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
-            if (!IsUltCooldownTrackedIndex(i)) {
-                var ignoredLabel = IsPanelValid(State.ultCdLabels[i]) ? State.ultCdLabels[i] : null;
-                if (ignoredLabel) HideUltCooldownLabel(ignoredLabel);
-                ResetUltCooldownSlotState(State.ultCdSlotState[i]);
-                continue;
-            }
-            var playerPanel = IsPanelValid(State.ultCdPlayerPanels[i]) ? State.ultCdPlayerPanels[i] : null;
-            var statusPanel = IsPanelValid(State.ultCdStatusPanels[i]) ? State.ultCdStatusPanels[i] : null;
-            var bgPanel = IsPanelValid(State.ultCdBgPanels[i]) ? State.ultCdBgPanels[i] : null;
-            var label = IsPanelValid(State.ultCdLabels[i]) ? State.ultCdLabels[i] : null;
-            UpdateUltCooldownSlot(i, playerPanel, statusPanel, bgPanel, label, styleCfg, nowMs);
+        if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
+        for (var i = 0; i < 12; i++) {
+            var playerPanel = root && root.FindChildTraverse ? root.FindChildTraverse("TopBarPlayer" + i) : null;
+            if (!playerPanel) continue;
+            var elHidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
+            var elShown  = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
+            if (!elHidden || !elShown) continue;
+            var cd = String(Number(elHidden.text) + 1);
+            if (elShown.text !== cd) elShown.text = cd;
         }
     }
+
+
 
     function SetSpmLabel(label, spm, scorePanel) {
         if (!label) return;
@@ -24282,7 +24435,7 @@ function GetUIRoot() {
                     PerfEnd("compass.reload_cd", perfSection);
                 }
 
-                if (ultCooldownEnabled || ULT_CD_DEBUG || !State.ultCdWasDisabled || (State.ultCdLabels && State.ultCdLabels.length > 0)) {
+                if (ultCooldownEnabled) {
                     perfSection = PerfStart();
                     UpdateUltimateCooldownOverlay(root, cfg);
                     PerfEnd("compass.ult_cd", perfSection);
@@ -24682,6 +24835,7 @@ function GetUIRoot() {
         var fgHealthbarEnabled = (healthbarType === 2);
         var klutzHealthbarEnabled = (healthbarType === 3);
         var budhudHealthbarEnabled = (healthbarType === 4);
+        var minecraftHealthbarEnabled = (healthbarType === 5);
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = Number(cfg.ENABLE_CLEAN_STACKS) === 1;
@@ -24717,6 +24871,8 @@ function GetUIRoot() {
             cfg.ENABLE_MINIMAP_REJUV_TIMER,
             cfg.ENABLE_BHOP,
             healthbarType,
+            minecraftHealthbarEnabled ? 1 : 0,
+            Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS),
             colorWarningEnabled ? 1 : 0,
             cleanStacksEnabled ? 1 : 0,
             compassEnabled ? 1 : 0,
@@ -24792,6 +24948,8 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "fg_healthbar_active", fgHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "klutz_healthbar_active", klutzHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "budhud_healthbar_active", budhudHealthbarEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "minecraft_healthbar_active", minecraftHealthbarEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);
@@ -25150,6 +25308,129 @@ function GetUIRoot() {
         return !!(State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted);
     }
 
+    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(\?\S*)?$/i;
+    var IMAGES_IN_CHAT_MAX_W = 150;
+    var IMAGES_IN_CHAT_MAX_H = 150;
+    var IMAGES_IN_CHAT_MAX_RETRIES = 30;
+    var IMAGES_IN_CHAT_RETRY_INTERVAL = 0.5;
+
+    function FindChatMessageLabel(msgPanel) {
+        var msgText = msgPanel.FindChildTraverse("MessageText");
+        if (msgText) return msgText;
+        var msgContents = msgPanel.FindChildTraverse("MessageContents");
+        if (!msgContents) return null;
+        for (var i = 0; i < msgContents.GetChildCount(); i++) {
+            var child = msgContents.GetChild(i);
+            if (child && child.paneltype === "Label") return child;
+        }
+        return null;
+    }
+
+    function InjectTopChatImage(msgPanel, url) {
+        var msgContainer = msgPanel.FindChildTraverse("MessageContents");
+        if (!msgContainer) return;
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        msgContainer.style.opacity = 0.00001;
+        textContainer.style.maxWidth = "9999px";
+        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        img.SetImage(url);
+        img.style.uiScale = "10%";
+        var retries = 0;
+        function tryScale() {
+            if (!IsPanelValid(img)) return;
+            var w = img.actuallayoutwidth * 10.0;
+            var h = img.actuallayoutheight * 10.0;
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "8px 8px 8px 8px";
+                msgContainer.style.opacity = 1;
+                return;
+            }
+            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                retries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+            } else {
+                msgContainer.style.opacity = 1;
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+    }
+
+    function InjectBottomChatImage(msgPanel, url) {
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        textContainer.style.maxWidth = "9999px";
+        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        img.SetImage(url);
+        img.style.uiScale = "10%";
+        var retries = 0;
+        function tryScale() {
+            if (!IsPanelValid(img)) return;
+            var w = img.actuallayoutwidth * 10.0;
+            var h = img.actuallayoutheight * 10.0;
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "4px 4px 4px 4px";
+                return;
+            }
+            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                retries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+            } else {
+                img.DeleteAsync(0);
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+    }
+
+    function ProcessChatContainerImages(container, isBottomChat) {
+        if (!IsPanelValid(container)) return;
+        var messages = container.FindChildrenWithClassTraverse("ChatMessage");
+        if (!messages) return;
+        for (var i = 0; i < messages.length; i++) {
+            var msg = messages[i];
+            if (!IsPanelValid(msg) || msg.BHasClass("imageProcessed")) continue;
+            msg.AddClass("imageProcessed");
+            var label = FindChatMessageLabel(msg);
+            if (!label) continue;
+            var text = label.text ? String(label.text).trim() : "";
+            if (!text) continue;
+            var match = text.match(IMAGES_IN_CHAT_URL_REGEX);
+            if (!match) continue;
+            if (isBottomChat) {
+                InjectBottomChatImage(msg, match[0]);
+            } else {
+                InjectTopChatImage(msg, match[0]);
+            }
+        }
+    }
+
+    function UpdateImagesInChat(root, cfg) {
+        if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
+        var nowMs = PerfNowMs();
+        if (nowMs >= State.imagesInChatTopNextSearchMs) {
+            State.imagesInChatTopNextSearchMs = nowMs + 200;
+            ProcessChatContainerImages(root.FindChildTraverse("Messages"), false);
+        }
+        if (nowMs >= State.imagesInChatBottomNextSearchMs) {
+            State.imagesInChatBottomNextSearchMs = nowMs + 200;
+            ProcessChatContainerImages(root.FindChildTraverse("ChatMessages"), true);
+        }
+    }
+
     function loop() {
         var nextDelaySec = LOOP_INTERVAL_SEC;
         try {
@@ -25365,6 +25646,10 @@ function GetUIRoot() {
             UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
         }
         PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+
+        perfSection = PerfStart();
+        UpdateImagesInChat(root, cfg);
+        PerfEnd("loop.images_in_chat", perfSection);
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
         if (State.accountPresetTestActive) {

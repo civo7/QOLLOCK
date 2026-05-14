@@ -64,7 +64,9 @@
 			</Panel>
 			<Panel id="StatusRow">
 				<Panel id="UltimateStatus" class="UltimateStatus">
-					<Panel id="UltimateStatusBG" class="UltimateStatusBG" />
+					<Panel id="UltimateStatusBG" class="UltimateStatusBG">
+						<Label id="UltimateCooldownTextHidden" text="{i:ult_cooldown}" />
+					</Panel>
 					<Panel id="UltimateAbilityIconMini" />
 					<Panel class="LockedOverlay">
 						<Panel class="LockedIcon" />
@@ -75,6 +77,7 @@
 					<Panel class="RebirthIcon" />
 					<Panel class="RebirthAndRejuvenator" />
 				</Panel>
+				<Label id="UltimateCooldownTextShown" />
 			</Panel>
 		</Panel>
 		<Label class="AlwaysPlayerName" text="{s:player_name}" />
