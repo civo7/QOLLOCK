@@ -365,54 +365,14 @@
 	visibility: collapse;
 }
 
-.InHideout #QOLKeyboardOverlayRoot,.InHideout #QOLZipBoostOverlay,.InHideout #QOLUnsecuredSoulsOverlay,.InHideout #QOLStatBonusesOverlay,.InHideout #QOLItemMirrorRoot,.InHideout #QOLCompassRoot,.InHideout #QOLBetterUnsecuredOverlay,.InHideout #QOLUltCooldownRoot
+.InHideout #QOLKeyboardOverlayRoot,.InHideout #QOLZipBoostOverlay,.InHideout #QOLUnsecuredSoulsOverlay,.InHideout #QOLStatBonusesOverlay,.InHideout #QOLItemMirrorRoot,.InHideout #QOLCompassRoot,.InHideout #QOLBetterUnsecuredOverlay
 {
 	opacity: 0;
-}
-
-#QOLUltCooldownRoot
-{
-	visibility: collapse;
-	horizontal-align: left;
-	vertical-align: top;
-	width: 100%;
-	height: 100%;
-	overflow: noclip;
-}
-
-.QOLUltCooldownText
-{
-	horizontal-align: left;
-	vertical-align: top;
-	width: 56px;
-	x: 0px;
-	y: 0px;
-	ignore-parent-flow: true;
-	font-family: sansMono;
-	font-size: 13px;
-	font-weight: bold;
-	color: offWhite;
-	text-align: center;
-	text-shadow: 0px 0px 4px 2.0 #000000;
-	visibility: collapse;
-	opacity: 0.90;
-	z-index: 120;
-	overflow: noclip;
 }
 
 #StatusRow
 {
 	overflow: noclip;
-}
-
-.team1 .QOLUltCooldownText
-{
-	color: team1Color;
-}
-
-.team2 .QOLUltCooldownText
-{
-	color: team2Color;
 }
 
 #QOLItemMirrorRoot
@@ -2276,4 +2236,146 @@
 .qol_custom_cursor_replace_active,.qol_custom_cursor_replace_active *
 {
 	cursor: none;
+}
+
+/* Minecraft healthbar heart animations */
+@keyframes 'healthMid'
+{
+	0%   { pre-transform-scale2d: 1; }
+	20%  { pre-transform-scale2d: 1.25; }
+	40%  { pre-transform-scale2d: 1.20; }
+	60%  { pre-transform-scale2d: 1.25; }
+	100% { pre-transform-scale2d: 1; }
+}
+
+@keyframes 'healthLow'
+{
+	0%   { pre-transform-scale2d: 1; }
+	30%  { pre-transform-scale2d: 1.3; }
+	50%  { pre-transform-scale2d: 1.20; }
+	70%  { pre-transform-scale2d: 1.3; }
+	100% { pre-transform-scale2d: 1; }
+}
+
+/* Minecraft healthbar HUD layout overrides */
+.minecraft_healthbar_active #ability_resource
+{
+	vertical-align: bottom;
+	horizontal-align: center;
+	margin-bottom: 140px;
+	margin-left: 290px;
+	width: 233px;
+}
+
+.minecraft_healthbar_active #health_and_abilities_container
+{
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-bottom: 20px;
+	ui-scale: 130%;
+	width: 410px;
+	vertical-align: bottom;
+}
+
+.minecraft_healthbar_active #context_action_container
+{
+	width: fit-children;
+	height: fit-children;
+	flow-children: right;
+	vertical-align: bottom;
+	horizontal-align: center;
+	margin-bottom: 280px;
+	visibility: collapse;
+}
+
+.minecraft_healthbar_active #ActiveAbilitiesMenu
+{
+	horizontal-align: center;
+	height: 85px;
+	width: fit-children;
+	vertical-align: bottom;
+	transition-property: transform;
+	transition-duration: 0.1s;
+	z-index: -1;
+	margin-left: 297px;
+	margin-bottom: 1px;
+}
+
+.minecraft_healthbar_active #status_bars
+{
+	width: 550px;
+}
+
+.minecraft_healthbar_active #hud_modifiers
+{
+	width: 550px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer
+{
+	width: 1035px;
+	ui-scale: 130%;
+	margin-bottom: 20px;
+}
+
+.minecraft_healthbar_active #APContainer
+{
+	margin-bottom: 8px;
+	margin-right: 470px;
+}
+
+.minecraft_healthbar_active #hud_signature
+{
+	transform: translateX(-114px);
+}
+
+.minecraft_healthbar_active .gShopOpen #hud_signature
+{
+	ui-scale: 90%;
+}
+
+.minecraft_healthbar_active.AspectRatio21x9 #health_and_abilities_container,
+.minecraft_healthbar_active .AspectRatio21x9 #health_and_abilities_container
+{
+	margin-right: 0px;
+}
+
+.minecraft_healthbar_active.AspectRatio16x10 #health_and_abilities_container,
+.minecraft_healthbar_active .AspectRatio16x10 #health_and_abilities_container
+{
+	margin-right: 0px;
+}
+
+.minecraft_healthbar_active .APCurrencyAmount
+{
+	padding: 3px;
+	font-family: "Mojang Bold";
+	text-shadow: 0px 0px 0px 5.0 offBlack;
+}
+
+.minecraft_healthbar_active .APCurrencyIcon
+{
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+	width: 24px;
+	height: 24px;
+	margin-right: 4px;
+	margin-bottom: 4px;
+	img-shadow: 0px 0px 0px 4.0 offBlack;
+}
+
+.minecraft_healthbar_active #APContainer .APUnlockBinding
+{
+	height: 0px;
+}
+
+.minecraft_healthbar_active .APValues
+{
+	margin-right: 10px;
+	margin-bottom: -3px;
+}
+
+.minecraft_healthbar_active .infiniteMoney #hudAPInfinite
+{
+	margin-top: -4.5px;
+	margin-left: 0px;
 }

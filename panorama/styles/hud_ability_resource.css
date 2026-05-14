@@ -37,3 +37,19 @@
 	margin-top: -35px;
 }
 
+
+.minecraft_healthbar_active .rage #ability_resource_progress
+{
+	border-radius: 6px;
+}
+
+.minecraft_healthbar_active #ability_resource_progress .ProgressBarLeft
+{
+	border-radius: 4px;
+}
+
+.minecraft_healthbar_active .rage #type_label
+{
+	font-family: "Mojang Bold";
+	margin-top: 1px;
+}

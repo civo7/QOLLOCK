@@ -127,3 +127,9 @@
 	
 }
 
+
+.minecraft_healthbar_active #slot_signature_2 #button_container,
+.minecraft_healthbar_active #slot_signature_3 #button_container
+{
+	margin-bottom: 0px;
+}

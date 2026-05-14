@@ -1,0 +1,6 @@
+@import url("s2r://panorama/styles/base/citadel_hud_top_bar_chat.vcss_c");
+
+.ChatMessage .ChatBubble .TextContainer .bubble_bg
+{
+	animation-name: none;
+}
