@@ -8571,12 +8571,23 @@ function SyncTabActiveStates(tabBar) {
     if (tabListHost) {
         var children = tabListHost.Children();
         for (var i = 0; i < children.length; i++) {
-            if (!children[i] || !children[i].id || children[i].id.indexOf("TabButton_") !== 0) continue;
-            children[i].SetHasClass("Active", children[i].id === ("TabButton_" + currentTab.replace(" ", "")));
-            var tabLabel = children[i].FindChildTraverse("TabLabel");
-            if (tabLabel) {
-                var baseTabName = String(children[i].id).slice("TabButton_".length);
-                tabLabel.text = LocalizeSettingsText(baseTabName, true);
+            var groupPanel = children[i];
+            if (!groupPanel || !groupPanel.IsValid || !groupPanel.IsValid()) continue;
+            var groupChildren = groupPanel.Children ? groupPanel.Children() : [];
+            for (var gc = 0; gc < groupChildren.length; gc++) {
+                var maybeTabsHost = groupChildren[gc];
+                if (!maybeTabsHost || !maybeTabsHost.IsValid || !maybeTabsHost.IsValid()) continue;
+                var tabs = maybeTabsHost.Children ? maybeTabsHost.Children() : [];
+                for (var ti = 0; ti < tabs.length; ti++) {
+                    var tabBtn = tabs[ti];
+                    if (!tabBtn || !tabBtn.id || tabBtn.id.indexOf("TabButton_") !== 0) continue;
+                    tabBtn.SetHasClass("Active", tabBtn.id === ("TabButton_" + currentTab.replace(" ", "")));
+                    var tabLabel = tabBtn.FindChildTraverse("TabLabel");
+                    if (tabLabel) {
+                        var baseTabName = String(tabBtn.id).slice("TabButton_".length);
+                        tabLabel.text = LocalizeSettingsText(baseTabName, true);
+                    }
+                }
             }
         }
     }
@@ -13455,7 +13466,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Veradox", preset: "Veradox" });
     entries.push({ label: "Antetheosis", preset: "Antetheosis" });
     entries.push({ label: "k49", preset: "k49" });
-    entries.push({ label: "ninjabladeJr", preset: "ninjabladeJr" });
+    entries.push({ label: "ninjablade", preset: "ninjabladeJr" });
     entries.push({ label: "FlintSnow", preset: "FlintSnow" });
     entries.push({ label: "Steqdyy", preset: "Steqdyy" });
     for (var i = entries.length; i < 54; i++) {
@@ -16375,6 +16386,7 @@ function ApplyPresetConfig(presetData) {
 function ApplyPresetByName(presetName) {
     var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
     if (!ApplyPresetConfig(presetData)) return false;
+    gLastAppliedPresetName = String(presetName || "");
     SetRuntimePresetName(presetName);
     SaveAndSync();
     return true;
@@ -16385,6 +16397,7 @@ var gPresetButtonOrder = [];
 var gPresetHighlightPollToken = 0;
 var gPresetHighlightPollRunning = false;
 var gPresetHighlightRefreshToken = 0;
+var gLastAppliedPresetName = "";
 var PRESET_MATCH_EXCLUDED_KEYS = {
     DRAG_ENABLED: 1,
     PREVIEWS_ENABLED: 1,
@@ -16405,6 +16418,15 @@ function RegisterPresetButton(presetName, button, labelPanel, originalText) {
         text: originalText || presetName
     };
     gPresetButtonOrder.push(presetName);
+}
+
+function SetExplicitActivePresetButton(button) {
+    for (var i = 0; i < gPresetButtonOrder.length; i++) {
+        var presetName = gPresetButtonOrder[i];
+        var entry = gPresetButtonRegistry[presetName];
+        if (!entry || !entry.button || !entry.button.IsValid || !entry.button.IsValid()) continue;
+        entry.button.SetHasClass("PresetActive", entry.button === button);
+    }
 }
 
 function ResolvePresetConfigByName(presetName) {
@@ -16462,17 +16484,23 @@ function DoesCurrentConfigMatchPreset(presetName) {
 
 function RefreshActivePresetHighlight() {
     var matchedPreset = null;
-    for (var i = 0; i < gPresetButtonOrder.length; i++) {
-        var presetName = gPresetButtonOrder[i];
-        var entry = gPresetButtonRegistry[presetName];
-        if (!entry || !entry.button || !entry.button.IsValid || !entry.button.IsValid()) continue;
-        if (matchedPreset === null && DoesCurrentConfigMatchPreset(presetName)) {
-            matchedPreset = presetName;
+    if (gLastAppliedPresetName) {
+        var lastAppliedEntry = gPresetButtonRegistry[gLastAppliedPresetName];
+        if (
+            lastAppliedEntry &&
+            lastAppliedEntry.button &&
+            lastAppliedEntry.button.IsValid &&
+            lastAppliedEntry.button.IsValid() &&
+            DoesCurrentConfigMatchPreset(gLastAppliedPresetName)
+        ) {
+            matchedPreset = gLastAppliedPresetName;
+        } else {
+            gLastAppliedPresetName = "";
         }
     }
 
     var runtimePreset = GetRuntimePresetName();
-    if (runtimePreset) {
+    if (matchedPreset === null && runtimePreset) {
         var runtimeEntry = gPresetButtonRegistry[runtimePreset];
         if (
             runtimeEntry &&
@@ -16482,6 +16510,18 @@ function RefreshActivePresetHighlight() {
             DoesCurrentConfigMatchPreset(runtimePreset)
         ) {
             matchedPreset = runtimePreset;
+        }
+    }
+
+    if (matchedPreset === null) {
+        for (var i = 0; i < gPresetButtonOrder.length; i++) {
+            var presetName = gPresetButtonOrder[i];
+            var entry = gPresetButtonRegistry[presetName];
+            if (!entry || !entry.button || !entry.button.IsValid || !entry.button.IsValid()) continue;
+            if (DoesCurrentConfigMatchPreset(presetName)) {
+                matchedPreset = presetName;
+                break;
+            }
         }
     }
 
@@ -16554,8 +16594,9 @@ function ShowPresetApplySuccess(button, labelPanel, originalText) {
     var fallbackText = originalText || labelPanel.text || "";
 
     button.AddClass("PresetApplySuccess");
+    SetExplicitActivePresetButton(button);
     labelPanel.text = "SUCCESS";
-    RefreshActivePresetHighlight();
+    QueueActivePresetHighlightRefresh(0.01);
 
     $.Schedule(0.6, function() {
         if (labelPanel && labelPanel.IsValid && labelPanel.IsValid()) {
@@ -16564,7 +16605,7 @@ function ShowPresetApplySuccess(button, labelPanel, originalText) {
         if (button && button.IsValid && button.IsValid()) {
             button.RemoveClass("PresetApplySuccess");
         }
-        RefreshActivePresetHighlight();
+        QueueActivePresetHighlightRefresh(0.01);
     });
 }
 
@@ -16641,6 +16682,7 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
                                 onApply: function() {
                                     try {
                                         ApplyParsedConfigWithDiagnostics(parsedImport.parsedConfig, parsedImport.schemaVersion || LATEST_COMPACT_SEMVER);
+                                        gLastAppliedPresetName = String(presetName || "");
                                         SetRuntimePresetName(presetName);
                                         SaveAndSync();
                                         ShowPresetApplySuccess(button, labelPanel, originalLabel);
@@ -16726,6 +16768,19 @@ function NormalizeSearchText(value) {
 
 function GetSettingsTabOrder() {
     return ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "MOG", "Console"];
+}
+
+function GetSettingsTabGroups() {
+    return [
+        {
+            title: "General",
+            tabs: ["Support", "Config", "Presets", "Console", "MOG", "Arcade"]
+        },
+        {
+            title: "Gameplay",
+            tabs: ["Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio"]
+        }
+    ];
 }
 
 function GetActiveSearchCollectSection() {
@@ -17666,93 +17721,146 @@ function RenderCurrentTabContent(list) {
         RenderConfigTabContent(list);
     } else if (currentTab === "Support") {
         if (gSearchCollectMode && gSearchCollectState) {
-            CreateSectionTitle(list, "Welcome to QOL Lock");
+            CreateSectionTitle(list, "Help, Contact & Support");
             CreateRow(list, "Discord", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
                 { label: "Open" }
             ], "Help and feedback");
             CreateRow(list, "Commission", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
                 { label: "Open" }
-            ], "Commission details");
+            ], "Request a custom feature or preset");
             CreateRow(list, "Change Log", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
                 { label: "Open" }
-            ], "View updates");
+            ], "Latest updates and version notes");
+            CreateRow(list, "Support", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
+                { label: "Open" }
+            ], "Support the mod - donate via Ko-fi (kofi) to help fund continued development");
             CreateSectionTitle(list, "Special Thanks");
             CreateRow(list, "Contributors", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
                 { label: "Open" }
             ], "Community acknowledgements");
             return;
         }
+        // --- Section 1: Hero / intro card ---
         var supportIntroCard = $.CreatePanel("Panel", list, "SupportIntroCard");
         supportIntroCard.AddClass("SupportTabCard");
         supportIntroCard.AddClass("SupportIntroCard");
-        var supportCardTitle = $.CreatePanel("Label", supportIntroCard, "");
-        supportCardTitle.AddClass("SupportTabSectionTitle");
-        supportCardTitle.text = LocalizeSettingsText("Welcome to QOL Lock", true);
+        supportIntroCard.AddClass("SupportHeroCard");
 
-        function AddSupportBlockText(text) {
-            var line = $.CreatePanel("Label", supportIntroCard, "");
-            line.AddClass("SupportTabText");
-            line.AddClass("SupportIntroBodyText");
-            var localized = LocalizeSettingsText(text, true);
-            line.text = (localized && localized.endsWith(".")) ? localized.slice(0, -1) : localized;
-            return line;
+        var supportHeroTitle = $.CreatePanel("Label", supportIntroCard, "");
+        supportHeroTitle.AddClass("SupportTabSectionTitle");
+        supportHeroTitle.AddClass("SupportHeroTitle");
+        supportHeroTitle.text = LocalizeSettingsText("Welcome to QOL Lock", true);
+
+        var heroBodyLines = [
+            "This is a mod designed to give you complete freedom over your game.",
+            "By default everything is disabled and has nearly zero performance cost.",
+            "Be conscious of the features you are using and read carefully.",
+            "The majority of issues are caused by improper installation or conflicting mods."
+        ];
+        var supportHeroBulletList = $.CreatePanel("Panel", supportIntroCard, "SupportHeroBulletList");
+        supportHeroBulletList.AddClass("SupportHeroBulletList");
+        for (var heroLineIdx = 0; heroLineIdx < heroBodyLines.length; heroLineIdx++) {
+            var bulletRow = $.CreatePanel("Panel", supportHeroBulletList, "");
+            bulletRow.AddClass("SupportHeroBullet");
+            var marker = $.CreatePanel("Panel", bulletRow, "");
+            marker.AddClass("SupportHeroBulletMarker");
+            var bulletLabel = $.CreatePanel("Label", bulletRow, "");
+            bulletLabel.AddClass("SupportTabText");
+            bulletLabel.AddClass("SupportHeroBulletLabel");
+            var heroLineText = LocalizeSettingsText(heroBodyLines[heroLineIdx], true);
+            bulletLabel.text = (heroLineText && heroLineText.endsWith(".")) ? heroLineText.slice(0, -1) : heroLineText;
         }
 
-        function AddSupportInlineActionRow(fullText, onActivate) {
-            var row = $.CreatePanel("Panel", supportIntroCard, "");
-            row.AddClass("SupportIntroActionRow");
+        // --- Section 2: Help, Contact & Support CTA grid (merged) ---
+        var supportCtaSection = $.CreatePanel("Panel", list, "SupportCtaSection");
+        supportCtaSection.AddClass("SupportTabCard");
+        supportCtaSection.AddClass("SupportCtaCard");
 
-            var sentenceBtn = $.CreatePanel("Button", row, "");
-            sentenceBtn.AddClass("SupportInlineSentenceBtn");
-            var sentenceLbl = $.CreatePanel("Label", sentenceBtn, "");
-            sentenceLbl.AddClass("SupportInlineSentenceLabel");
-            var localizedText = LocalizeSettingsText(fullText, true);
-            sentenceLbl.text = (localizedText && localizedText.endsWith(".")) ? localizedText.slice(0, -1) : localizedText;
-            sentenceBtn.SetPanelEvent("onactivate", onActivate);
+        var supportCtaSectionTitle = $.CreatePanel("Label", supportCtaSection, "");
+        supportCtaSectionTitle.AddClass("SupportTabSectionTitle");
+        supportCtaSectionTitle.AddClass("SupportCtaSectionTitle");
+        supportCtaSectionTitle.text = LocalizeSettingsText("Help, Contact & Support", true);
+
+        var supportCtaGrid = $.CreatePanel("Panel", supportCtaSection, "SupportCtaGrid");
+        supportCtaGrid.AddClass("SupportCtaGrid");
+
+        var ctaDefs = [
+            {
+                id: "SupportCtaSupportBtn",
+                title: "Support",
+                hint: "Help fund continued development",
+                iconSrc: "s2r://panorama/images/icons/icon_thumbsup.vsvg",
+                primary: true,
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo"); }
+            },
+            {
+                id: "SupportCtaDiscordBtn",
+                title: "Discord",
+                hint: "Help, feedback, and community",
+                iconSrc: "s2r://panorama/images/qollock/discord_logo.vtex",
+                iconClass: "SupportCtaBtnIconDiscord",
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S"); }
+            },
+            {
+                id: "SupportCtaCommissionBtn",
+                title: "Commission",
+                hint: "Request a custom feature or preset",
+                iconSrc: "s2r://panorama/images/icons/icon_feedback.vsvg",
+                onactivate: function() { OpenSupportCommissionModal(); }
+            },
+            {
+                id: "SupportCtaChangeLogBtn",
+                title: "Change Log",
+                hint: "Latest updates and version notes",
+                iconSrc: "s2r://panorama/images/icons/icon_refresh.vsvg",
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/updates/650634"); }
+            }
+        ];
+
+        for (var ctaRowIdx = 0; ctaRowIdx < ctaDefs.length; ctaRowIdx += 2) {
+            var supportCtaRow = $.CreatePanel("Panel", supportCtaGrid, "");
+            supportCtaRow.AddClass("SupportCtaRow");
+            for (var ctaIdx = ctaRowIdx; ctaIdx < Math.min(ctaRowIdx + 2, ctaDefs.length); ctaIdx++) {
+                (function(def) {
+                    var ctaBtn = $.CreatePanel("Button", supportCtaRow, def.id);
+                    ctaBtn.AddClass("SupportCtaBtn");
+                    if (def.primary) ctaBtn.AddClass("SupportCtaBtnPrimary");
+
+                    var ctaContent = $.CreatePanel("Panel", ctaBtn, "");
+                    ctaContent.AddClass("SupportCtaBtnContent");
+
+                    var ctaBtnIcon = $.CreatePanel("Image", ctaContent, "");
+                    ctaBtnIcon.AddClass("SupportCtaBtnIcon");
+                    if (def.iconClass) ctaBtnIcon.AddClass(def.iconClass);
+                    if (def.iconSrc) {
+                        try { ctaBtnIcon.SetImage(def.iconSrc); } catch (eSupportIcon) {}
+                    }
+
+                    var ctaText = $.CreatePanel("Panel", ctaContent, "");
+                    ctaText.AddClass("SupportCtaBtnText");
+
+                    var ctaBtnTitle = $.CreatePanel("Label", ctaText, "");
+                    ctaBtnTitle.AddClass("SupportCtaBtnTitle");
+                    ctaBtnTitle.text = LocalizeSettingsText(def.title, true);
+
+                    var ctaBtnHint = $.CreatePanel("Label", ctaText, "");
+                    ctaBtnHint.AddClass("SupportCtaBtnHint");
+                    ctaBtnHint.text = LocalizeSettingsText(def.hint, true);
+
+                    ctaBtn.SetPanelEvent("onactivate", def.onactivate);
+                })(ctaDefs[ctaIdx]);
+            }
         }
 
-        AddSupportBlockText("This is a mod designed to give you complete freedom over your game.");
-        AddSupportBlockText("By default everything is disabled and has nearly zero performance cost.");
-        AddSupportBlockText("Be conscious of the features you are using and read carefully.");
-        AddSupportBlockText("The majority of issues are caused by improper installation or conflicting mods.");
-
-        AddSupportInlineActionRow(
-            "If you encounter issues, need help, or have any feedback join the Discord",
-            function() {
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
-            }
-        );
-        AddSupportInlineActionRow(
-            "You can commission custom features and presets for the mod",
-            function() {
-                OpenSupportCommissionModal();
-            }
-        );
-        AddSupportInlineActionRow(
-            "For a list of changes and current version checkout the Change Log",
-            function() {
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/updates/650634");
-            }
-        );
-
-        var supportPrimaryRow = $.CreatePanel("Panel", supportIntroCard, "SupportPrimaryActionRow");
-        supportPrimaryRow.AddClass("SupportPrimaryActionRow");
-        var supportPrimaryBtn = $.CreatePanel("Button", supportPrimaryRow, "SupportTabCoffeeBtn");
-        supportPrimaryBtn.AddClass("PresetGridBtn");
-        supportPrimaryBtn.AddClass("PresetGridBtnBase");
-        supportPrimaryBtn.AddClass("SupportPrimaryActionBtn");
-        var supportPrimaryBtnLbl = $.CreatePanel("Label", supportPrimaryBtn, "");
-        supportPrimaryBtnLbl.text = LocalizeSettingsText("SUPPORT THE MOD", true);
-        supportPrimaryBtn.SetPanelEvent("onactivate", function() {
-            $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo");
-        });
-
+        // --- Section 3: Community / Special Thanks ---
         var supportThanksBlock = $.CreatePanel("Panel", list, "SupportTabThanksBlock");
         supportThanksBlock.AddClass("SupportTabThanksBlock");
         supportThanksBlock.AddClass("SupportTabCard");
         var supportThanksTitle = $.CreatePanel("Label", supportThanksBlock, "");
         supportThanksTitle.AddClass("SupportTabSectionTitle");
         supportThanksTitle.text = LocalizeSettingsText("Special Thanks", true);
+        var supportThanksRule = $.CreatePanel("Panel", supportThanksBlock, "");
+        supportThanksRule.AddClass("SupportThanksRule");
 
         var supportThanksIntro = $.CreatePanel("Label", supportThanksBlock, "");
         var supportThanksIntroText = LocalizeSettingsText("Without them QOL Lock would not be possible.", true);
@@ -17783,9 +17891,11 @@ function RenderCurrentTabContent(list) {
                 supportThanksNames.push(name);
             }
         }
-        CreateSupportThanksPlaques(supportThanksBlock, supportThanksNames, 5);
+        CreateSupportThanksPlaques(supportThanksBlock, supportThanksNames, 4);
 
-        var supportFooterSubtext = $.CreatePanel("Label", list, "");
+        var supportFooter = $.CreatePanel("Panel", list, "SupportYoshiFooter");
+        supportFooter.AddClass("SupportYoshiFooter");
+        var supportFooterSubtext = $.CreatePanel("Label", supportFooter, "");
         supportFooterSubtext.AddClass("SupportTabActionsSubtitle");
         supportFooterSubtext.AddClass("SupportYoshiFooterText");
         supportFooterSubtext.text = "yoshi pls hire me";
@@ -18305,25 +18415,37 @@ $.BuildUI = function() {
         tabListHost = $.CreatePanel("Panel", tabBar, "SettingsTabRailTabs");
     }
 
-    var categories = GetSettingsTabOrder();
-    for (var ci = 0; ci < categories.length; ci++) {
-        (function(catName) {
-            var tabId = "TabButton_" + catName.replace(" ", "");
-            var tab = tabListHost.FindChildTraverse(tabId);
-            if (!tab) {
-                tab = $.CreatePanel("Button", tabListHost, tabId);
-            }
-            tab.AddClass("TabItem");
-            var tabLbl = tab.FindChildTraverse("TabLabel");
-            if (!tabLbl) {
-                tabLbl = $.CreatePanel("Label", tab, "TabLabel");
-            }
-            tabLbl.text = LocalizeSettingsText(catName, true);
-            tab.SetHasClass("Active", catName === currentTab);
-            tab.SetPanelEvent("onactivate", function() {
-                SetActiveTabAndRefresh(catName);
-            });
-        })(categories[ci]);
+    if (typeof tabListHost.RemoveAndDeleteChildren === "function") {
+        tabListHost.RemoveAndDeleteChildren();
+    }
+
+    var tabGroups = GetSettingsTabGroups();
+    for (var gi = 0; gi < tabGroups.length; gi++) {
+        var group = tabGroups[gi];
+        var groupPanel = $.CreatePanel("Panel", tabListHost, "SettingsTabRailGroup_" + group.title.replace(" ", ""));
+        groupPanel.AddClass("SettingsTabRailGroup");
+        var groupLabel = $.CreatePanel("Label", groupPanel, "");
+        groupLabel.AddClass("SettingsTabRailGroupLabel");
+        groupLabel.text = LocalizeSettingsText(group.title, true);
+        var groupRule = $.CreatePanel("Panel", groupPanel, "");
+        groupRule.AddClass("SettingsTabRailGroupRule");
+
+        var groupTabs = $.CreatePanel("Panel", groupPanel, "");
+        groupTabs.AddClass("SettingsTabRailGroupTabs");
+
+        for (var ti = 0; ti < group.tabs.length; ti++) {
+            (function(catName) {
+                var tabId = "TabButton_" + catName.replace(" ", "");
+                var tab = $.CreatePanel("Button", groupTabs, tabId);
+                tab.AddClass("TabItem");
+                var tabLbl = $.CreatePanel("Label", tab, "TabLabel");
+                tabLbl.text = LocalizeSettingsText(catName, true);
+                tab.SetHasClass("Active", catName === currentTab);
+                tab.SetPanelEvent("onactivate", function() {
+                    SetActiveTabAndRefresh(catName);
+                });
+            })(group.tabs[ti]);
+        }
     }
     var tabSpacerMain = tabBar.FindChildTraverse("SettingsTabRailSpacerMain");
     if (!tabSpacerMain) {
@@ -18336,6 +18458,11 @@ $.BuildUI = function() {
         tabFooter = $.CreatePanel("Panel", tabBar, "SettingsTabRailFooter");
     }
     tabFooter.AddClass("SettingsTabRailFooter");
+    var footerRule = tabFooter.FindChildTraverse("SettingsTabRailFooterRule");
+    if (!footerRule) {
+        footerRule = $.CreatePanel("Panel", tabFooter, "SettingsTabRailFooterRule");
+    }
+    footerRule.AddClass("SettingsTabRailFooterRule");
 
     var isRuFooter = IsRussianSettingsLanguage();
     var newsFooterBtn = tabFooter.FindChildTraverse("FooterNewsLinkButton");
@@ -18400,10 +18527,13 @@ $.BuildUI = function() {
         footerVersionLabel.DeleteAsync(0);
         footerVersionLabel = null;
     }
-    footerVersionLabel = $.CreatePanel("Label", tabFooter, "FooterVersionLabel");
-    footerVersionLabel.AddClass("VersionLabelStyle");
+    footerVersionLabel = $.CreatePanel("Panel", tabFooter, "FooterVersionLabel");
+    footerVersionLabel.AddClass("TabItem");
     footerVersionLabel.AddClass("FooterVersionLabel");
-    footerVersionLabel.text = MOD_DISPLAY_VERSION + " by Civo";
+    var footerVersionText = $.CreatePanel("Label", footerVersionLabel, "FooterVersionLabelText");
+    footerVersionText.AddClass("VersionLabelStyle");
+    footerVersionText.AddClass("FooterVersionLabelText");
+    footerVersionText.text = MOD_DISPLAY_VERSION + " by Civo";
     footerVersionLabel.hittest = false;
     footerVersionLabel.hittestchildren = false;
 
