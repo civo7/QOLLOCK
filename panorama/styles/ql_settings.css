@@ -1122,17 +1122,30 @@
 	z-index: 1;
 }
 
+#SettingsHeader .SettingsHeaderTitleWordmark
+{
+	font-size: 19px;
+	font-family: oracle;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 1.9px;
+	vertical-align: center;
+	text-shadow: none;
+	margin-top: 0px;
+}
+
 #SettingsTitle
 {
-	font-size: 21px;
+	font-size: 19px;
 	color: #ffffff;
 	vertical-align: center;
 	text-transform: uppercase;
-	letter-spacing: 2.5px;
+	letter-spacing: 1.9px;
 	font-weight: bold;
+	font-family: oracle;
 	width: fit-children;
 	margin-left: 0px;
-	margin-right: 10px;
+	margin-right: 0px;
 	animation-name: PulseWhiteTitle;
 	animation-duration: 3.0s;
 	animation-timing-function: ease-in-out;
@@ -1140,13 +1153,29 @@
 	hittest: false;
 }
 
+#SettingsTitleAccent
+{
+	font-size: 19px;
+	color: #66cc99;
+	vertical-align: center;
+	text-transform: uppercase;
+	letter-spacing: 1.9px;
+	font-weight: bold;
+	font-family: oracle;
+	width: fit-children;
+	margin-left: 0px;
+	margin-right: -1px;
+	text-shadow: none;
+	hittest: false;
+}
+
 #SettingsHeaderMogLogo
 {
-	width: 40px;
-	height: 40px;
+	width: 34px;
+	height: 34px;
 	vertical-align: center;
 	margin-left: 0px;
-	margin-right: 10px;
+	margin-right: 6px;
 	opacity: 1.0;
 	hittest: false;
 }
@@ -1238,7 +1267,7 @@
 
 #SettingsTabBar
 {
-	width: 128px;
+	width: 150px;
 	height: 100%;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( #0d1114 ), to( #080a0d ) );
 	flow-children: down;
@@ -1249,27 +1278,27 @@
 
 #SettingsWindow.SettingsLangRU #SettingsTabBar
 {
-	width: 156px;
+	width: 176px;
 }
 
 #SettingsWindow.SettingsLangES #SettingsTabBar
 {
-	width: 156px;
+	width: 176px;
 }
 
 #SettingsWindow.SettingsLangFR #SettingsTabBar
 {
-	width: 160px;
+	width: 180px;
 }
 
 #SettingsWindow.SettingsLangPT #SettingsTabBar
 {
-	width: 160px;
+	width: 180px;
 }
 
 #SettingsWindow.SettingsLangPTBR #SettingsTabBar
 {
-	width: 160px;
+	width: 180px;
 }
 
 #SettingsTabRailSpacerMain
@@ -1650,6 +1679,7 @@
 	width: 100%;
 	height: 38px;
 	padding: 0px 12px;
+	flow-children: right;
 	transition-property: background-color, border, brightness, transform;
 	transition-duration: 0.16s;
 	border-left: 2px solid transparent;
@@ -1677,6 +1707,8 @@
 	vertical-align: center;
 	horizontal-align: left;
 	text-align: left;
+	width: fill-parent-flow(1.0);
+	margin-top: 1px;
 	color: #a6a196;
 	font-size: 14px;
 	text-transform: uppercase;
@@ -9735,18 +9767,18 @@
 
 .TabItem .TabIcon
 {
-	width: 14px;
-	height: 14px;
+	width: 13px;
+	height: 13px;
 	vertical-align: center;
 	horizontal-align: left;
 	margin-left: 0px;
-	margin-right: 6px;
-	wash-color: #9e978c;
+	margin-right: 10px;
+	wash-color: #9fa8a3;
 }
 
 .FooterSaveBuildTab Label
 {
-	margin-left: 22px;
+	margin-left: 0px;
 }
 
 .FooterSaveBuildTab .FooterSaveBuildIcon
@@ -10126,26 +10158,52 @@
 #SettingsTitle
 {
 	color: #eef4f6;
-	letter-spacing: 2.2px;
+	letter-spacing: 1.9px;
 	text-shadow: 0px 0px 0px transparent;
 	animation-duration: 4.4s;
+	vertical-align: center;
+	margin-top: 0px;
+}
+
+#SettingsTitleAccent
+{
+	color: #66cc99;
+	letter-spacing: 1.9px;
+	text-shadow: 0px 0px 0px transparent;
+	vertical-align: center;
+	margin-top: 0px;
 }
 
 #SettingsHeaderMogLogo
 {
-	margin-right: 12px;
+	margin-right: 6px;
+}
+
+#ModVersionLabelTop.HeaderByCivoLabel
+{
+	margin-left: 2px;
+	margin-right: 10px;
+	vertical-align: center;
+	color: #8b948f;
+	font-family: oracle;
+	font-size: 18px;
+	font-weight: normal;
+	letter-spacing: 0.35px;
+	text-transform: none;
+	text-shadow: none;
+	margin-top: 0px;
 }
 
 #CloseBtn Label
 {
-	color: #878072;
+	color: #8f989d;
 	text-shadow: none;
 }
 
 #CloseBtn:hover Label
 {
-	color: #d98489;
-	text-shadow: 0px 0px 5px rgba(184, 94, 99, 0.22);
+	color: #d5dde1;
+	text-shadow: 0px 0px 5px rgba(160, 189, 204, 0.18);
 }
 
 #HeaderDiscordLinkButton,
@@ -10216,7 +10274,7 @@
 #SettingsNavigationSearchIcon
 {
 	opacity: 0.7;
-	wash-color: #878072;
+	wash-color: #8f989d;
 }
 
 #SettingsSearchInput,
@@ -10937,6 +10995,186 @@
 {
 	border: 1px solid rgba(106, 231, 154, 0.18);
 	brightness: 1.02;
+}
+
+/* ============================================================
+   pass3: Settings tab - card layout & polish (Config tab key)
+   Scoped under #SettingsWindow .ConfigTabSurface so nothing
+   leaks into other tabs. Selectors anchor to the card IDs so
+   they out-specify the later pass10/pass11 ConfigCopyBtn rules
+   that target only #SettingsWindow #ConfigCopyBtn.
+   ============================================================ */
+
+#SettingsWindow .ConfigTabSurface
+{
+	width: 100%;
+	flow-children: down;
+	padding: 8px 0px 14px 0px;
+}
+
+#SettingsWindow .ConfigTabCard
+{
+	width: 100%;
+	margin-bottom: 14px;
+	padding: 12px 14px 12px 14px;
+	border-radius: 5px;
+	border: 0px solid transparent;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 24, 26, 0.94) ), to( rgba(14, 16, 18, 0.90) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.04) 0px 0px 7px 0px;
+	flow-children: down;
+	overflow: noclip;
+}
+
+#SettingsWindow #ConfigCardGeneral
+{
+	box-shadow: fill rgba(106, 231, 154, 0.035) 0px 0px 7px 0px;
+}
+
+#SettingsWindow #ConfigCardExport
+{
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SettingsWindow #ConfigCardImport
+{
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SettingsWindow #ConfigCardExport,
+#SettingsWindow #ConfigCardImport
+{
+	padding-bottom: 14px;
+}
+
+#SettingsWindow .ConfigTabCard .SectionTitleRow
+{
+	margin: 0px 0px 4px 0px;
+}
+
+#SettingsWindow .ConfigTabCard .SectionTitle,
+#SettingsWindow .ConfigTabCard .SectionTitleInlineLabel
+{
+	margin: 0px;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 1.4px;
+	text-transform: uppercase;
+	color: #eaf2ec;
+	text-shadow: none;
+}
+
+#SettingsWindow .ConfigTabCard .ConfigTextEntry
+{
+	width: fill-parent-flow(1.0);
+	height: 118px;
+	min-height: 118px;
+	max-height: 118px;
+	margin-top: 3px;
+	margin-bottom: 9px;
+	padding: 10px 12px;
+	border: 1px solid rgba(255, 252, 244, 0.07);
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(12, 14, 16, 0.92) ), to( rgba(8, 10, 12, 0.92) ) );
+}
+
+#SettingsWindow .ConfigTabCard .ConfigTextEntry:focus
+{
+	border: 1px solid rgba(106, 231, 154, 0.22);
+	box-shadow: fill rgba(106, 231, 154, 0.06) 0px 0px 4px 0px;
+}
+
+#SettingsWindow #ConfigFeedbackLabel
+{
+	width: 100%;
+	min-height: 18px;
+	margin-top: 0px;
+	margin-bottom: 2px;
+	text-overflow: noclip;
+}
+
+#SettingsWindow #ConfigCardExport .ConfigBtnRow,
+#SettingsWindow #ConfigCardExport #ConfigExportBtnRow,
+#SettingsWindow #ConfigCardImport .ConfigBtnRow
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: 100%;
+	horizontal-align: stretch;
+	overflow: noclip;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn
+{
+	width: 28px;
+	min-width: 28px;
+	max-width: 28px;
+	height: 28px;
+	min-height: 28px;
+	max-height: 28px;
+	margin-right: 0px;
+	padding: 4px;
+	border: 1px solid rgba(255, 252, 244, 0.07);
+	border-radius: 4px;
+	background-color: rgba(255, 255, 255, 0.025);
+	box-shadow: fill rgba(0, 0, 0, 0.10) 0px 1px 2px 0px;
+	animation-name: none;
+	brightness: 1.0;
+	transition-property: border-color, background-color, brightness, box-shadow;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-in-out;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn:hover,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.28);
+	background-color: rgba(106, 231, 154, 0.08);
+	brightness: 1.04;
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 6px 0px;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn .ConfigSectionIconBtnIcon,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn .ConfigSectionIconBtnIcon
+{
+	width: 14px;
+	height: 14px;
+	wash-color: rgba(236, 245, 239, 0.92);
+	img-shadow: none;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn:hover .ConfigSectionIconBtnIcon,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn:hover .ConfigSectionIconBtnIcon
+{
+	wash-color: #c1f6d7;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn.SuccessState,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn.SuccessState
+{
+	border: 1px solid rgba(106, 231, 154, 0.28);
+	background-color: rgba(28, 43, 34, 0.80);
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 5px 0px;
+	brightness: 1.0;
+	animation-name: none;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn.SuccessState .ConfigSectionIconBtnIcon,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn.SuccessState .ConfigSectionIconBtnIcon,
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn.SuccessState .SectionTitleActionIcon
+{
+	wash-color: #f4fff8;
+}
+
+#SettingsWindow #ConfigCardExport #ConfigCopyBtn.FailureState,
+#SettingsWindow #ConfigCardImport #ConfigApplyBtn.FailureState
+{
+	border: 1px solid rgba(233, 141, 141, 0.28);
+	background-color: rgba(43, 20, 20, 0.80);
+	box-shadow: fill rgba(233, 141, 141, 0.08) 0px 0px 5px 0px;
+	brightness: 1.0;
+	animation-name: none;
 }
 
 /* --- pass2: SliderThumb restrained green border --- */
@@ -11689,6 +11927,87 @@
 .TabItem .TabIcon
 {
 	wash-color: #9aa097;
+}
+
+.TabItem_Presets .TabIcon_Presets,
+.TabItem_Support .TabIcon_Support,
+.TabItem_Config .TabIcon_Config,
+.TabItem_Console .TabIcon_Console
+{
+	width: 13px;
+	height: 13px;
+}
+
+.TabItem_Crosshair .TabIcon_Crosshair
+{
+	width: 13px;
+	height: 13px;
+}
+
+.TabItem_HUD .TabIcon_HUD
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_UI .TabIcon_UI
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_Overlay .TabIcon_Overlay
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_Minimap .TabIcon_Minimap
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_MOG .TabIcon_MOG
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_Arcade .TabIcon_Arcade
+{
+	width: 13px;
+	height: 13px;
+}
+
+.TabItem_Crosshair .TabIcon_Crosshair
+{
+	width: 12px;
+	height: 12px;
+}
+
+.TabItem_Healthbar .TabIcon_Healthbar
+{
+	width: 13px;
+	height: 13px;
+}
+
+.TabItem_Audio .TabIcon_Audio
+{
+	width: 14px;
+	height: 14px;
+	margin-right: 10px;
+	wash-color: #d7e2dc;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+.TabItem_Audio:hover .TabIcon_Audio,
+.SettingsTabRailGroup .TabItem_Audio.Active .TabIcon_Audio
+{
+	wash-color: #d5f7e4;
+	opacity: 1.0;
+	brightness: 1.0;
 }
 
 .TabItem:hover Label
@@ -13028,14 +13347,14 @@
 
 #SettingsWindow
 {
-	width: 804px;
+	width: 832px;
 	height: 764px;
 }
 
 #SettingsWindow.SettingsLangRU,
 #SettingsWindow.SettingsLangES
 {
-	width: 888px;
+	width: 920px;
 	height: 780px;
 }
 
@@ -13043,7 +13362,7 @@
 #SettingsWindow.SettingsLangPT,
 #SettingsWindow.SettingsLangPTBR
 {
-	width: 844px;
+	width: 876px;
 	height: 764px;
 }
 
@@ -14784,20 +15103,32 @@
 
 .FooterVersionLabelText
 {
-	width: 100%;
-	horizontal-align: center;
-	text-align: center;
+	width: fill-parent-flow(1.0);
+	horizontal-align: left;
+	text-align: left;
 	vertical-align: center;
+	margin-top: 1px;
 	font-family: oracle;
-	font-size: 10px;
+	font-size: 8px;
 	font-weight: semi-bold;
-	letter-spacing: 0.8px;
+	letter-spacing: 0.45px;
 	color: #858d89;
 	text-transform: uppercase;
 	text-shadow: none;
 	white-space: nowrap;
 	text-overflow: shrink;
 	overflow: noclip;
+}
+
+.FooterVersionIcon
+{
+	width: 8px;
+	height: 8px;
+	margin-left: 0px;
+	margin-right: 7px;
+	vertical-align: center;
+	horizontal-align: left;
+	wash-color: #95a39a;
 }
 
 /* --- grouped rail sections: clearer navigation split without behavior changes --- */
@@ -14837,9 +15168,9 @@
 
 .FooterVersionLabelText
 {
-	font-size: 9px;
+	font-size: 8px;
 	font-weight: normal;
-	letter-spacing: 0.6px;
+	letter-spacing: 0.4px;
 }
 
 /* ============================================================
@@ -14897,9 +15228,45 @@
 /* Footer version pill should stay slim and quiet. */
 .FooterVersionLabelText
 {
-	font-size: 9px;
+	font-size: 8px;
 	font-weight: normal;
-	letter-spacing: 0.55px;
+	letter-spacing: 0.38px;
+}
+
+/* Final Discord SVG sizing pass after switching to the built-in game icon.
+   The stock icon has different proportions than the old custom texture. */
+#HeaderDiscordLinkButton .HeaderDiscordLogoTexture,
+.HeaderDiscordLinkButton .HeaderDiscordLogoTexture
+{
+	width: 22px;
+	height: 22px;
+	wash-color: #8f989d;
+}
+
+.FooterDiscordRailBtn .FooterDiscordLogoTexture
+{
+	width: 20px;
+	height: 20px;
+	margin-right: 9px;
+	wash-color: none;
+	opacity: 1.0;
+}
+
+.SupportCtaBtnIconDiscord
+{
+	width: 28px;
+	height: 28px;
+	wash-color: none;
+	opacity: 1.0;
+}
+
+#SupportCommissionModalDiscordBtn .HeaderDiscordLogoTexture,
+.SupportTabDiscordInlineIconBtn .HeaderDiscordLogoTexture
+{
+	width: 24px;
+	height: 24px;
+	wash-color: none;
+	opacity: 1.0;
 }
 
 /* ============================================================
