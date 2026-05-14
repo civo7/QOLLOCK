@@ -131,6 +131,8 @@
         enemyColoredHealthLastScanStats: null,
         enemyColoredHealthFriendlyTeamClass: "",
         enemyColoredHealthFriendlyTeamNextMs: 0,
+        ultCdSlotCache: null,
+        ultCdSlotNextRecheckMs: null,
         enemyUltOldPanelCache: [],
         enemyUltOldPanelCacheNextMs: 0,
         enemyUltOldNextUpdateMs: 0,
@@ -7353,16 +7355,56 @@ function GetUIRoot() {
         return index >= ULT_CD_SLOT_MIN_INDEX && index <= ULT_CD_SLOT_MAX_INDEX;
     }
 
+    var ULT_CD_MISSING_RECHECK_MS = 3000;
+    var ULT_CD_DEBUG_SPIKE_MS = 2;
+    var ULT_CD_DEBUG_THROTTLE_MS = 1000;
+    var ultCdDebugLastLogMs = 0;
+
     function UpdateUltimateCooldownOverlay(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
+        var fnStart = PerfNowMs();
+        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(12);
+        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(12);
+        var slots = State.ultCdSlotCache;
+        var recheckMs = State.ultCdSlotNextRecheckMs;
+        var nowMs = PerfNowMs();
+        var debugParts = [];
         for (var i = 0; i < 12; i++) {
-            var playerPanel = root && root.FindChildTraverse ? root.FindChildTraverse("TopBarPlayer" + i) : null;
-            if (!playerPanel) continue;
-            var elHidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
-            var elShown  = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
-            if (!elHidden || !elShown) continue;
-            var cd = String(Number(elHidden.text) + 1);
-            if (elShown.text !== cd) elShown.text = cd;
+            var slotStart = PerfNowMs();
+            var slot = slots[i];
+            var didTraverse = false;
+            if (!slot || !IsPanelValid(slot.elHidden) || !IsPanelValid(slot.elShown)) {
+                if (slot === false && nowMs < (recheckMs[i] || 0)) continue;
+                didTraverse = true;
+                var playerPanel = root && root.FindChildTraverse ? root.FindChildTraverse("TopBarPlayer" + i) : null;
+                if (!playerPanel) {
+                    slots[i] = false;
+                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
+                    debugParts.push(i + ":noPlayer(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
+                    continue;
+                }
+                var elHidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
+                var elShown  = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
+                if (!elHidden || !elShown) {
+                    slots[i] = false;
+                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
+                    debugParts.push(i + ":noEl(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
+                    continue;
+                }
+                slot = { elHidden: elHidden, elShown: elShown };
+                slots[i] = slot;
+            }
+            var cd = String(Number(slot.elHidden.text) + 1);
+            if (slot.elShown.text !== cd) slot.elShown.text = cd;
+            var slotMs = PerfNowMs() - slotStart;
+            if (slotMs >= ULT_CD_DEBUG_SPIKE_MS) debugParts.push(i + (didTraverse ? ":traverse(" : ":cached(") + slotMs.toFixed(2) + "ms)");
+        }
+        var fnMs = PerfNowMs() - fnStart;
+        if (fnMs >= ULT_CD_DEBUG_SPIKE_MS) {
+            if (nowMs - ultCdDebugLastLogMs >= ULT_CD_DEBUG_THROTTLE_MS) {
+                ultCdDebugLastLogMs = nowMs;
+                $.Msg("[QOLLock][UltCdDbg] spike total=" + fnMs.toFixed(2) + "ms slots=[" + (debugParts.length ? debugParts.join(" ") : "none") + "]");
+            }
         }
     }
 
@@ -15096,7 +15138,6 @@ function GetUIRoot() {
     function FocusFirstBuildCategory(selectedBuild) {
         if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) return false;
         if (HasFocusedBuildCategory(selectedBuild)) return true;
-        var activatedAny = false;
         var headers = selectedBuild.FindChildrenWithClassTraverse("BuildCategory") || [];
         for (var i = 0; i < headers.length; i++) {
             var panel = headers[i];
@@ -15108,10 +15149,10 @@ function GetUIRoot() {
                 panelId = "";
             }
             if (panelId !== "BuildCategoryHeader") continue;
-            if (ActivatePanelSafe(panel)) activatedAny = true;
+            ActivatePanelSafe(panel);
             var panelParent = null;
             try { panelParent = panel.GetParent ? panel.GetParent() : null; } catch (e1) { panelParent = null; }
-            if (ActivatePanelSafe(panelParent)) activatedAny = true;
+            ActivatePanelSafe(panelParent);
         }
 
         if (HasFocusedBuildCategory(selectedBuild)) return true;
@@ -20748,43 +20789,51 @@ function GetUIRoot() {
         return -1;
     }
 
-    function IsTopBarUltReadyByIndex(root, index) {
-        if (!root || !IsUltCooldownTrackedIndex(index)) return null;
-        var playerPanel = root.FindChildTraverse ? (root.FindChildTraverse("TopBarPlayer" + String(index)) || null) : null;
+    function IsTopBarUltReadyByIndex(root, index, entry) {
+        if (!IsUltCooldownTrackedIndex(index)) return null;
+        var playerPanel = (entry && entry.cachedTopBarPlayerPanel && IsPanelValid(entry.cachedTopBarPlayerPanel))
+            ? entry.cachedTopBarPlayerPanel
+            : (root && root.FindChildTraverse ? (root.FindChildTraverse("TopBarPlayer" + String(index)) || null) : null);
         if (!playerPanel || !IsPanelValid(playerPanel)) return null;
-        var rowPanel = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
-        var statusPanel = rowPanel && rowPanel.FindChildTraverse ? (rowPanel.FindChildTraverse("UltimateStatus") || null) : null;
+        var statusPanel = (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel))
+            ? entry.cachedTopBarStatusPanel
+            : (function() {
+                var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
+                return rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
+            })();
         if (!statusPanel || !IsPanelValid(statusPanel)) return null;
-        var unlocked =
-            !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked")) ||
-            hasClassInHierarchy(statusPanel, "UltimateUnlocked") ||
-            hasClassInHierarchy(playerPanel, "UltimateUnlocked");
-        var ready =
-            !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady")) ||
-            hasClassInHierarchy(statusPanel, "UltimateCooldownReady") ||
-            hasClassInHierarchy(playerPanel, "UltimateCooldownReady");
+        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked"))
+            || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateUnlocked"));
+        var ready = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady"))
+            || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateCooldownReady"));
         return !!(unlocked && ready);
     }
 
-    function IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot) {
+    function IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot, entry) {
+        var ultIcon = (entry && entry.cachedUltIcon && IsPanelValid(entry.cachedUltIcon))
+            ? entry.cachedUltIcon
+            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_ult_ready_icon") : null) ||
+               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_ult_ready_icon") : null) || null);
+        if (ultIcon && IsPanelValid(ultIcon)) {
+            if (IsPanelVisibleMaybe(ultIcon)) return true;
+            var vis = "";
+            try { vis = ultIcon.style && ultIcon.style.visibility ? String(ultIcon.style.visibility) : ""; } catch (eV0) { vis = ""; }
+            if (vis && vis !== "collapse") return true;
+        }
+        var stateIcon = (entry && entry.cachedStateIcon && IsPanelValid(entry.cachedStateIcon))
+            ? entry.cachedStateIcon
+            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("state_icon") : null) ||
+               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("state_icon") : null) || null);
+        if (stateIcon && IsPanelValid(stateIcon) && stateIcon.GetAttributeString) {
+            var src = "";
+            try { src = String(stateIcon.GetAttributeString("src", "") || ""); } catch (eS0) { src = ""; }
+            var srcLower = src.toLowerCase();
+            if (srcLower.indexOf("ultready") !== -1 || srcLower.indexOf("ultimate") !== -1) return true;
+        }
         var scanRoots = [windowRoot, unitStatusPanel];
         for (var sri = 0; sri < scanRoots.length; sri++) {
             var scanRoot = scanRoots[sri];
             if (!scanRoot || !IsPanelValid(scanRoot)) continue;
-            var ultIcon = scanRoot.FindChildTraverse ? scanRoot.FindChildTraverse("unit_ult_ready_icon") : null;
-            if (ultIcon && IsPanelValid(ultIcon)) {
-                if (IsPanelVisibleMaybe(ultIcon)) return true;
-                var vis = "";
-                try { vis = ultIcon.style && ultIcon.style.visibility ? String(ultIcon.style.visibility) : ""; } catch (eV0) { vis = ""; }
-                if (vis && vis !== "collapse") return true;
-            }
-            var stateIcon = scanRoot.FindChildTraverse ? scanRoot.FindChildTraverse("state_icon") : null;
-            if (stateIcon && IsPanelValid(stateIcon) && stateIcon.GetAttributeString) {
-                var src = "";
-                try { src = String(stateIcon.GetAttributeString("src", "") || ""); } catch (eS0) { src = ""; }
-                var srcLower = src.toLowerCase();
-                if (srcLower.indexOf("ultready") !== -1 || srcLower.indexOf("ultimate") !== -1) return true;
-            }
             var classText = (ReadPanelClassTextMaybe(scanRoot) || "").toLowerCase();
             if (
                 classText.indexOf("ultready") !== -1 ||
@@ -20794,32 +20843,35 @@ function GetUIRoot() {
             ) {
                 return true;
             }
-            var healthbarBg = scanRoot.FindChildTraverse ? scanRoot.FindChildTraverse("unit_healthbar_bg") : null;
-            if (healthbarBg && IsPanelValid(healthbarBg)) {
-                var bgClass = (ReadPanelClassTextMaybe(healthbarBg) || "").toLowerCase();
-                if (
-                    bgClass.indexOf("ultready") !== -1 ||
-                    bgClass.indexOf("ult_ready") !== -1 ||
-                    bgClass.indexOf("ultimate_ready") !== -1 ||
-                    bgClass.indexOf("ultimatecooldownready") !== -1
-                ) {
-                    return true;
-                }
-                if (healthbarBg.GetAttributeString) {
-                    var attrKeys = ["class", "style", "onactivate", "data", "state", "status", "src"];
-                    for (var ai = 0; ai < attrKeys.length; ai++) {
-                        var attrVal = "";
-                        try { attrVal = String(healthbarBg.GetAttributeString(attrKeys[ai], "") || ""); } catch (eA0) { attrVal = ""; }
-                        if (!attrVal) continue;
-                        var attrLower = attrVal.toLowerCase();
-                        if (
-                            attrLower.indexOf("ultready") !== -1 ||
-                            attrLower.indexOf("ult_ready") !== -1 ||
-                            attrLower.indexOf("ultimate_ready") !== -1 ||
-                            attrLower.indexOf("ultimatecooldownready") !== -1
-                        ) {
-                            return true;
-                        }
+        }
+        var healthbarBg = (entry && entry.cachedHealthbarBg && IsPanelValid(entry.cachedHealthbarBg))
+            ? entry.cachedHealthbarBg
+            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_healthbar_bg") : null) ||
+               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_healthbar_bg") : null) || null);
+        if (healthbarBg && IsPanelValid(healthbarBg)) {
+            var bgClass = (ReadPanelClassTextMaybe(healthbarBg) || "").toLowerCase();
+            if (
+                bgClass.indexOf("ultready") !== -1 ||
+                bgClass.indexOf("ult_ready") !== -1 ||
+                bgClass.indexOf("ultimate_ready") !== -1 ||
+                bgClass.indexOf("ultimatecooldownready") !== -1
+            ) {
+                return true;
+            }
+            if (healthbarBg.GetAttributeString) {
+                var attrKeys = ["class", "style", "onactivate", "data", "state", "status", "src"];
+                for (var ai = 0; ai < attrKeys.length; ai++) {
+                    var attrVal = "";
+                    try { attrVal = String(healthbarBg.GetAttributeString(attrKeys[ai], "") || ""); } catch (eA0) { attrVal = ""; }
+                    if (!attrVal) continue;
+                    var attrLower = attrVal.toLowerCase();
+                    if (
+                        attrLower.indexOf("ultready") !== -1 ||
+                        attrLower.indexOf("ult_ready") !== -1 ||
+                        attrLower.indexOf("ultimate_ready") !== -1 ||
+                        attrLower.indexOf("ultimatecooldownready") !== -1
+                    ) {
+                        return true;
                     }
                 }
             }
@@ -20836,17 +20888,22 @@ function GetUIRoot() {
             }
             roots.push({ panel: panel, label: label || "root" });
         }
-        function addAncestors(panel, labelPrefix, maxDepth) {
+        function addTopmostAncestor(panel, labelPrefix, maxDepth) {
             var cur = panel;
+            var top = null;
+            var topLabel = labelPrefix + "0";
             for (var d = 0; d < maxDepth && cur; d++) {
-                addRoot(cur, labelPrefix + String(d));
-                try { cur = cur.GetParent ? cur.GetParent() : null; } catch (e0) { cur = null; }
+                try {
+                    if (IsPanelValid(cur)) { top = cur; topLabel = labelPrefix + String(d); }
+                    cur = cur.GetParent ? cur.GetParent() : null;
+                } catch (e0) { cur = null; }
             }
+            if (top) addRoot(top, topLabel);
         }
         var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        addAncestors(root, "root_", 5);
-        addAncestors(GetGameplayHudPanel(root), "gameplay_", 4);
-        addAncestors(ctx, "ctx_", 5);
+        addTopmostAncestor(root, "root_", 5);
+        addTopmostAncestor(GetGameplayHudPanel(root), "gameplay_", 4);
+        addTopmostAncestor(ctx, "ctx_", 5);
         return roots;
     }
 
@@ -20924,13 +20981,19 @@ function GetUIRoot() {
                 skippedEnemy += 1;
                 continue;
             }
+            var _cUltIcon = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_ult_ready_icon") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_ult_ready_icon") : null) || null;
+            var _cStateIcon = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("state_icon") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("state_icon") : null) || null;
+            var _cHealthbarBg = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_healthbar_bg") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_healthbar_bg") : null) || null;
             next.push({
                 unitStatusPanel: unitStatusPanel,
                 windowRoot: windowRoot,
                 resolvedTopBarIndex: -1,
                 fallbackTopBarIndex: -1,
                 sortY: GetPanelActualOffsetSafe(windowRoot, "y"),
-                sortX: GetPanelActualOffsetSafe(windowRoot, "x")
+                sortX: GetPanelActualOffsetSafe(windowRoot, "x"),
+                cachedUltIcon: _cUltIcon,
+                cachedStateIcon: _cStateIcon,
+                cachedHealthbarBg: _cHealthbarBg
             });
         }
         if (next.length === 0) {
@@ -20951,13 +21014,19 @@ function GetUIRoot() {
                 if (!gUnitStatus || !IsPanelValid(gUnitStatus)) {
                     gUnitStatus = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("UnitStatusOld") || gWindow.FindChildTraverse("UnitStatus") || gWindow) : gWindow;
                 }
+                var _gcUltIcon = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("unit_ult_ready_icon") || null) : null;
+                var _gcStateIcon = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("state_icon") || null) : null;
+                var _gcHealthbarBg = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("unit_healthbar_bg") || null) : null;
                 next.push({
                     unitStatusPanel: gUnitStatus,
                     windowRoot: gWindow,
                     resolvedTopBarIndex: -1,
                     fallbackTopBarIndex: -1,
                     sortY: GetPanelActualOffsetSafe(gWindow, "y"),
-                    sortX: GetPanelActualOffsetSafe(gWindow, "x")
+                    sortX: GetPanelActualOffsetSafe(gWindow, "x"),
+                    cachedUltIcon: _gcUltIcon,
+                    cachedStateIcon: _gcStateIcon,
+                    cachedHealthbarBg: _gcHealthbarBg
                 });
                 fallbackFromGeneralCache += 1;
             }
@@ -20975,19 +21044,24 @@ function GetUIRoot() {
                             if (seenGeneral[sj2] === w) { seen = true; break; }
                         }
                         if (seen) continue;
-                        var hasHealthbarBg = w.FindChildTraverse ? !!w.FindChildTraverse("unit_healthbar_bg") : false;
+                        var _wHealthbarBg = w.FindChildTraverse ? (w.FindChildTraverse("unit_healthbar_bg") || null) : null;
                         var hasStateProgress = w.FindChildTraverse ? !!w.FindChildTraverse("state_progressbar") : false;
                         var hasLaggingBar = w.FindChildTraverse ? !!w.FindChildTraverse("unit_healthbar_lagging") : false;
-                        if (!hasHealthbarBg && !hasStateProgress && !hasLaggingBar) continue;
+                        if (!_wHealthbarBg && !hasStateProgress && !hasLaggingBar) continue;
                         seenGeneral.push(w);
                         var wUnitStatus = w.FindChildTraverse ? (w.FindChildTraverse("UnitStatusOld") || w.FindChildTraverse("UnitStatus") || w) : w;
+                        var _wUltIcon = w.FindChildTraverse ? (w.FindChildTraverse("unit_ult_ready_icon") || null) : null;
+                        var _wStateIcon = w.FindChildTraverse ? (w.FindChildTraverse("state_icon") || null) : null;
                         next.push({
                             unitStatusPanel: wUnitStatus,
                             windowRoot: w,
                             resolvedTopBarIndex: -1,
                             fallbackTopBarIndex: -1,
                             sortY: GetPanelActualOffsetSafe(w, "y"),
-                            sortX: GetPanelActualOffsetSafe(w, "x")
+                            sortX: GetPanelActualOffsetSafe(w, "x"),
+                            cachedUltIcon: _wUltIcon,
+                            cachedStateIcon: _wStateIcon,
+                            cachedHealthbarBg: _wHealthbarBg
                         });
                         fallbackFromGeneralCache += 1;
                     }
@@ -21037,6 +21111,16 @@ function GetUIRoot() {
                     }
                 }
             }
+        }
+        for (var tbi = 0; tbi < next.length; tbi++) {
+            var tbEntry = next[tbi];
+            var tbIndex = IsUltCooldownTrackedIndex(tbEntry.resolvedTopBarIndex) ? tbEntry.resolvedTopBarIndex : -1;
+            if (!IsUltCooldownTrackedIndex(tbIndex)) { tbEntry.cachedTopBarPlayerPanel = null; tbEntry.cachedTopBarStatusPanel = null; continue; }
+            var tbPlayerPanel = root.FindChildTraverse ? (root.FindChildTraverse("TopBarPlayer" + String(tbIndex)) || null) : null;
+            var tbRowPanel = tbPlayerPanel && tbPlayerPanel.FindChildTraverse ? (tbPlayerPanel.FindChildTraverse("StatusRow") || null) : null;
+            var tbStatusPanel = tbRowPanel && tbRowPanel.FindChildTraverse ? (tbRowPanel.FindChildTraverse("UltimateStatus") || null) : null;
+            tbEntry.cachedTopBarPlayerPanel = tbPlayerPanel;
+            tbEntry.cachedTopBarStatusPanel = tbStatusPanel;
         }
         State.enemyUltOldPanelCache = next;
         State.enemyUltOldPanelCacheNextMs = nowMs + ENEMY_ULT_OLD_PANEL_SCAN_MS;
@@ -21103,20 +21187,19 @@ function GetUIRoot() {
             if (!unitStatusPanel || !windowRoot || !IsPanelValid(unitStatusPanel) || !IsPanelValid(windowRoot)) continue;
             try { windowRoot.SetHasClass("qol_enemy_ult_indicator_active", true); } catch (eSetA0) {}
             try { windowRoot.SetHasClass("qol_enemy_ult_indicator_off", false); } catch (eSetA1) {}
-            var topBarIndex = ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root);
-            if (!IsUltCooldownTrackedIndex(topBarIndex)) {
-                var resolvedIndex = entry && IsUltCooldownTrackedIndex(entry.resolvedTopBarIndex) ? entry.resolvedTopBarIndex : -1;
-                if (IsUltCooldownTrackedIndex(resolvedIndex)) topBarIndex = resolvedIndex;
-            }
+            var topBarIndex = IsUltCooldownTrackedIndex(entry && entry.resolvedTopBarIndex) ? entry.resolvedTopBarIndex : -1;
             if (!IsUltCooldownTrackedIndex(topBarIndex)) {
                 var fallbackIndex = entry && IsUltCooldownTrackedIndex(entry.fallbackTopBarIndex) ? entry.fallbackTopBarIndex : -1;
                 if (IsUltCooldownTrackedIndex(fallbackIndex)) topBarIndex = fallbackIndex;
             }
+            if (!IsUltCooldownTrackedIndex(topBarIndex)) {
+                topBarIndex = ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root);
+            }
             var ready = false;
-            var topBarReady = IsTopBarUltReadyByIndex(root, topBarIndex);
+            var topBarReady = IsTopBarUltReadyByIndex(root, topBarIndex, entry);
             if (topBarReady === null) {
                 signalFallbackCount += 1;
-                ready = IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot);
+                ready = IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot, entry);
             } else {
                 topbarMappedCount += 1;
                 ready = !!topBarReady;
@@ -25343,7 +25426,7 @@ function GetUIRoot() {
         return !!(State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted);
     }
 
-    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(\?\S*)?$/i;
+    var IMAGES_IN_CHAT_URL_REGEX = /^https:\/\/i\.postimg\.cc\/\S+\.(?:png|jpg|jpeg|webp)$/i;
     var IMAGES_IN_CHAT_MAX_W = 150;
     var IMAGES_IN_CHAT_MAX_H = 150;
     var IMAGES_IN_CHAT_MAX_RETRIES = 30;
