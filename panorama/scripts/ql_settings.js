@@ -716,7 +716,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.3.2";
+    : "2.3.3";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -6774,6 +6774,10 @@ const COMPACT_SCHEMA_REGISTRY = {
         schema: COMPACT_SCHEMA_2_3_1
     },
     "2.3.2": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_1
+    },
+    "2.3.3": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_3_1
     }
@@ -13449,6 +13453,11 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "iMicro", preset: "iMicro" });
     entries.push({ label: "TW1G", preset: "TW1G" });
     entries.push({ label: "Veradox", preset: "Veradox" });
+    entries.push({ label: "Antetheosis", preset: "Antetheosis" });
+    entries.push({ label: "k49", preset: "k49" });
+    entries.push({ label: "ninjabladeJr", preset: "ninjabladeJr" });
+    entries.push({ label: "FlintSnow", preset: "FlintSnow" });
+    entries.push({ label: "Steqdyy", preset: "Steqdyy" });
     for (var i = entries.length; i < 54; i++) {
         entries.push({ label: "Available", available: false });
     }
@@ -18336,6 +18345,26 @@ $.BuildUI = function() {
     }
 
     var saveFooterBtn = tabFooter.FindChildTraverse("FooterSaveBuildButton");
+    var discordFooterBtn = tabFooter.FindChildTraverse("FooterDiscordRailButton");
+    if (!discordFooterBtn) {
+        discordFooterBtn = $.CreatePanel("Button", tabFooter, "FooterDiscordRailButton");
+    }
+    discordFooterBtn.AddClass("TabItem");
+    discordFooterBtn.AddClass("FooterDiscordRailBtn");
+    var discordFooterLabel = discordFooterBtn.FindChildTraverse("TabLabel");
+    if (!discordFooterLabel) {
+        discordFooterLabel = $.CreatePanel("Label", discordFooterBtn, "TabLabel");
+    }
+    discordFooterLabel.text = "DISCORD";
+    discordFooterBtn.SetPanelEvent("onactivate", function() {
+        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
+    });
+    EnsureDiscordTextureLogo(discordFooterBtn, "FooterDiscordLogoTexture", "FooterDiscordLogoTexture");
+    var discordFooterIcon = discordFooterBtn.FindChildTraverse("FooterDiscordLogoTexture");
+    if (discordFooterIcon && discordFooterBtn.MoveChildBefore) {
+        try { discordFooterBtn.MoveChildBefore(discordFooterIcon, discordFooterLabel); } catch (eMoveDiscordIcon) {}
+    }
+
     if (!saveFooterBtn) {
         saveFooterBtn = $.CreatePanel("Button", tabFooter, "FooterSaveBuildButton");
     }
@@ -18362,6 +18391,21 @@ $.BuildUI = function() {
         saveFooterBtn.SetPanelEvent("onactivate", function() {
             OpenBuildSaveConfirmModal(saveFooterBtn, saveFooterLabel);
         });
+        if (tabFooter.MoveChildBefore) {
+            try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch (eMoveDiscordFooter) {}
+        }
+
+    var footerVersionLabel = tabFooter.FindChildTraverse("FooterVersionLabel");
+    if (footerVersionLabel) {
+        footerVersionLabel.DeleteAsync(0);
+        footerVersionLabel = null;
+    }
+    footerVersionLabel = $.CreatePanel("Label", tabFooter, "FooterVersionLabel");
+    footerVersionLabel.AddClass("VersionLabelStyle");
+    footerVersionLabel.AddClass("FooterVersionLabel");
+    footerVersionLabel.text = MOD_DISPLAY_VERSION + " by Civo";
+    footerVersionLabel.hittest = false;
+    footerVersionLabel.hittestchildren = false;
 
     var staleDiscordFooterBtn = tabFooter.FindChildTraverse("FooterDiscordLinkButton");
     if (staleDiscordFooterBtn) {
@@ -18522,25 +18566,22 @@ $.BuildUI = function() {
         headerVer.text = MOD_DISPLAY_VERSION + " by Civo";
         headerVer.hittest = false;
         headerVer.hittestchildren = false;
+        headerVer.visible = false;
+        headerVer.style.visibility = "collapse";
         var closeBtnHeader = header.FindChildTraverse("CloseBtn");
         if (closeBtnHeader) {
             var headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
-            if (!headerDiscordBtn) {
-                headerDiscordBtn = $.CreatePanel("Button", header, "HeaderDiscordLinkButton");
+            if (headerDiscordBtn) {
+                headerDiscordBtn.DeleteAsync(0);
+                headerDiscordBtn = null;
             }
-            headerDiscordBtn.AddClass("HeaderDiscordLinkButton");
-            headerDiscordBtn.SetPanelEvent("onactivate", function() {
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
-            });
-            EnsureDiscordTextureLogo(headerDiscordBtn, "HeaderDiscordLogoTexture", "HeaderDiscordLogoTexture");
-            header.MoveChildBefore(headerDiscordBtn, closeBtnHeader);
 
             var headerCenterHost = header.FindChildTraverse("SettingsHeaderCenterHost");
             if (!headerCenterHost) {
                 headerCenterHost = $.CreatePanel("Panel", header, "SettingsHeaderCenterHost");
             }
             headerCenterHost.style.zIndex = "4";
-            header.MoveChildBefore(headerCenterHost, headerDiscordBtn);
+            header.MoveChildBefore(headerCenterHost, closeBtnHeader);
 
             if (searchWrapExisting && searchWrapExisting.IsValid && searchWrapExisting.IsValid()) {
                 if (searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {
