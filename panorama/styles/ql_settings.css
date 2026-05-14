@@ -621,7 +621,7 @@
 	margin-bottom: 4px;
 	text-align: center;
 	color: #cde5db;
-	font-size: 12px;
+	font-size: 13px;
 	font-weight: bold;
 	letter-spacing: 1px;
 	text-transform: uppercase;
@@ -1370,6 +1370,50 @@
 }
 
 #SettingsTabRailTabs
+{
+	width: 100%;
+	flow-children: down;
+}
+
+.SettingsTabRailGroup
+{
+	width: 100%;
+	flow-children: down;
+	margin-bottom: 10px;
+}
+
+.SettingsTabRailGroup:last-child
+{
+	margin-bottom: 0px;
+}
+
+.SettingsTabRailGroupLabel
+{
+	width: 100%;
+	padding-left: 12px;
+	padding-right: 8px;
+	margin-bottom: 4px;
+	font-family: oracle;
+	font-size: 10px;
+	font-weight: bold;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	color: #66706c;
+	text-shadow: none;
+}
+
+.SettingsTabRailGroupRule
+{
+	width: 100%;
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	horizontal-align: center;
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(106, 231, 154, 0.0) ), color-stop( 0.5, rgba(106, 231, 154, 0.22) ), color-stop( 1.0, rgba(106, 231, 154, 0.0) ) );
+	margin-bottom: 6px;
+}
+
+.SettingsTabRailGroupTabs
 {
 	width: 100%;
 	flow-children: down;
@@ -2611,7 +2655,8 @@
 	width: 100%;
 	color: #aeb8bb;
 	font-size: 12px;
-	line-height: 16px;
+	font-size: 13px;
+	line-height: 20px;
 	text-align: left;
 	text-transform: none;
 	white-space: normal;
@@ -3998,7 +4043,7 @@
 	horizontal-align: center;
 	flow-children: right;
 	margin-top: 2px;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 	overflow: noclip;
 }
 
@@ -6336,7 +6381,7 @@
 	width: 100%;
 	height: fit-children;
 	flow-children: right;
-	margin-bottom: 3px;
+	margin-bottom: 4px;
 }
 
 .ConfigDiffCell
@@ -13726,9 +13771,1674 @@
    18. SectionTitleActionBtn — already has :active translateY;
        unify easing to ease-out (was ease-in-out)
    ---------------------------------------------------------- */
+
+/* ============================================================
+   pass-hover-b: unify hover text + hover palette to current theme
+   Removes leftover warm/brown hover text and old glow-heavy states.
+   ============================================================ */
+
+.TabItem:hover Label,
+.TabActionBtn:hover Label,
+.FooterSupportTab:hover Label,
+.FooterDiscordRailBtn:hover Label,
+.FooterSaveBuildTab:hover Label,
+.SupportTabActionBtn:hover Label,
+#SupportTabCoffeeBtn:hover Label,
+#SupportTabCoffeBtn:hover Label,
+#SupportTabChangeLogBtn:hover Label,
+#SettingsWindow .SettingActionBtn:hover .SettingActionBtnLabel,
+#SettingsWindow .ArcadePlayActionBtn:hover .SettingActionBtnLabel,
+#SettingsWindow .TestAirheartActionBtn:hover .SettingActionBtnLabel,
+.ModalBtnApply:hover Label,
+.ModalBtnClose:hover Label,
+.ModalBtnCloseSingle:hover Label,
+#ConfigDiffModalContainer .ConfigDiffApplyBtn:hover Label,
+#ConfigDiffModalContainer .ConfigDiffCancelBtn:hover Label,
+.PresetGridBtn:hover Label,
+.PresetGridBtnBase:hover Label,
+.PresetGridBtnGreat:hover Label,
+.PresetGridBtnCustom:hover Label,
+.PresetGridBtnCustomActive:hover Label,
+.PresetGridBtnUnavailable:hover Label,
+.PresetGridBtn.PresetActive:hover Label,
+#SettingsWindow .MultiCheckboxBtn:hover Label,
+#SettingsWindow .MultiCheckboxBtn:hover .MultiCheckboxLabel,
+#SettingsWindow .SegmentBtn:hover Label,
+#SettingsWindow .RuntimeOnOffBtn:hover Label,
+#SettingsWindow .MogTabSiteLink:hover .MogTabSiteLinkLabel,
+.CommunityPresetHintLink:hover Label,
+.SupportThanksPlaque:hover Label,
+.SupportThanksPlaqueAlt:hover Label
+{
+	font-family: oracle;
+	color: #e4ebe7;
+	text-shadow: none;
+}
+
+#DEFAULT_HERO_dropdownDropDownMenu Label:hover,
+#DEFAULT_HERO_dropdownDropDownMenu .DropDownChild:hover,
+#DEFAULT_HERO_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu Label:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .DropDownChild:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#VOICE_TYPE_dropdownDropDownMenu Label:hover,
+#VOICE_TYPE_dropdownDropDownMenu .DropDownChild:hover,
+#VOICE_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#VOICE_VOLUME_dropdownDropDownMenu Label:hover,
+#VOICE_VOLUME_dropdownDropDownMenu .DropDownChild:hover,
+#VOICE_VOLUME_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#LANGUAGE_dropdownDropDownMenu Label:hover,
+#LANGUAGE_dropdownDropDownMenu .DropDownChild:hover,
+#LANGUAGE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover
+{
+	font-family: oracle;
+	color: #eef4f0;
+	background-color: rgba(106, 231, 154, 0.10);
+	text-shadow: none;
+	border: 1px solid rgba(106, 231, 154, 0.18);
+}
+
+#SettingsWindow .SectionTitleActionBtn:hover .SectionTitleActionIcon,
+#SettingsWindow .VoiceDropdownTestBtn:hover .SectionTitleActionIcon,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover .AnnouncerBuffFilterTestIcon,
+#SettingsWindow .SettingActionBtn:hover .SettingActionBtnIcon,
+#SettingsWindow .ArcadePlayActionBtn:hover .ConfigSectionIconBtnIcon,
+#SettingsWindow .TestAirheartActionBtn:hover .ConfigSectionIconBtnIcon,
+#SettingsWindow .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon,
+.FooterDiscordRailBtn:hover .FooterDiscordLogoTexture,
+.FooterSaveBuildTab:hover .FooterSaveBuildIcon
+{
+	wash-color: #cdeedb;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow .ValueInput:hover,
+#SettingsWindow .ValueInput:focus,
+#SettingsWindow .SliderValueGroup .ValueInput:hover,
+#SettingsWindow .SliderValueGroup .ValueInput:focus,
+#SettingsWindow .MultiCheckboxBtn:hover .TickBox,
+#SettingsWindow .HorizontalSlider:hover .SliderThumb,
+#SettingsWindow .HorizontalSlider:active .SliderThumb
+{
+	border-color: rgba(106, 231, 154, 0.22);
+}
+
+#SettingsWindow .SettingRow:hover
+{
+	background-color: rgba(212, 220, 216, 0.028);
+}
+
+.PresetGridBtn:hover,
+.PresetGridBtnBase:hover,
+.PresetGridBtnGreat:hover,
+.PresetGridBtnCustom:hover,
+.PresetGridBtnCustomActive:hover,
+.PresetGridBtnUnavailable:hover,
+.PresetGridBtn.PresetActive:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.22);
+	box-shadow: fill rgba(106, 231, 154, 0.08) 0px 0px 10px 0px;
+	brightness: 1.02;
+}
 .SectionTitleActionBtn
 {
 	transition-timing-function: ease-out;
 }
 
 /* --- end pass-ux-a --- */
+
+/* ============================================================
+   support-tab-ux-pass1: Support tab hierarchy & CTA rework
+   Scope: Support-tab content only. No nav/rail/footer changes.
+
+   Findings addressed:
+     1. Unified section title hierarchy across hero/CTA/thanks.
+     2. Hero tagline robust to longer/localized copy (wraps).
+     3. Primary Ko-Fi CTA reads as primary, not preset-chip.
+     4. Hover hierarchy: primary > secondary CTA > plaque.
+     5. Primary subtitle is readable, not ghosted.
+     6. Footer "yoshi pls hire me" anchored in a wrapper panel.
+     7. Consolidated overrides; dropped redundant per-class blocks.
+     8. Copy allowed to wrap in narrow/localized cases.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. Neutralise pulse + leftover Discord-blue.
+      Pass3 used to pulse the Ko-Fi/ChangeLog CTAs; with the
+      new primary CTA + CTA-card grid, static state already
+      conveys hierarchy.  ChangeLog is replaced by a CTA tile.
+   ---------------------------------------------------------- */
+
+#SupportTabCoffeeBtn,
+#SupportTabCoffeBtn,
+#SupportTabChangeLogBtn
+{
+	animation-name: none;
+}
+
+.SupportTabDiscordLinkText
+{
+	color: #b5c2c8;
+	text-shadow: none;
+	animation-name: none;
+}
+
+.SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #d4dde1;
+	text-shadow: none;
+}
+
+/* ----------------------------------------------------------
+   2. Section title hierarchy — unified across the page.
+      All three section titles (hero, CTA, thanks) share
+      sizing/weight/letter-spacing.  Alignment varies by
+      card content: hero/CTA left-align (vertical body
+      stack); thanks stays centred (centred plaque grid).
+   ---------------------------------------------------------- */
+
+#SupportIntroCard .SupportTabSectionTitle,
+#SupportCtaSection .SupportTabSectionTitle,
+#SupportTabThanksBlock .SupportTabSectionTitle
+{
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	text-transform: uppercase;
+	color: #eef4f6;
+	text-shadow: none;
+	margin-top: 0px;
+	margin-bottom: 8px;
+}
+
+#SupportIntroCard .SupportTabSectionTitle,
+#SupportCtaSection .SupportTabSectionTitle
+{
+	text-align: left;
+	horizontal-align: left;
+}
+
+#SupportTabThanksBlock .SupportTabSectionTitle
+{
+	text-align: center;
+	horizontal-align: center;
+}
+
+/* ----------------------------------------------------------
+   3. Hero card body (Section 1).
+      Tagline must accept longer / localized text without
+      single-line clipping — drop nowrap, allow wrap.
+   ---------------------------------------------------------- */
+
+.SupportHeroCard
+{
+	padding: 14px 16px;
+	margin-bottom: 8px;
+}
+
+.SupportHeroTagline
+{
+	width: 100%;
+	font-size: 12px;
+	font-weight: normal;
+	color: #9aa5ab;
+	letter-spacing: 0.3px;
+	line-height: 16px;
+	margin-top: -2px;
+	margin-bottom: 8px;
+	text-align: left;
+	horizontal-align: left;
+	white-space: normal;
+	text-overflow: noclip;
+	text-shadow: none;
+}
+
+/* Hero body lines — left aligned, natural line-height.
+   Single rule consolidates earlier two-rule override (was
+   .SupportHeroBody + .SupportHeroBody.SupportIntroBodyText).
+   Cancels the pass3 30px fixed line-height that was scoped
+   to .SupportIntroBodyText inside #SupportIntroCard. */
+
+#SupportIntroCard .SupportHeroBody
+{
+	text-align: left;
+	horizontal-align: left;
+	line-height: 18px;
+	min-height: 0px;
+	max-height: none;
+	margin-top: 0px;
+	margin-bottom: 3px;
+	white-space: normal;
+}
+
+/* ----------------------------------------------------------
+   4. CTA card (Section 2 — Help & Contact).
+      Three secondary CTAs.  Hover is gentle so the primary
+      Ko-Fi CTA below remains the visual anchor.
+   ---------------------------------------------------------- */
+
+.SupportCtaCard
+{
+	padding: 14px 16px;
+	margin-bottom: 8px;
+}
+
+.SupportCtaRow
+{
+	width: 100%;
+	flow-children: right;
+	margin-top: 2px;
+	min-height: 72px;
+}
+
+.SupportCtaBtn
+{
+	width: fill-parent-flow(1.0);
+	min-height: 72px;
+	flow-children: down;
+	padding: 11px 12px;
+	margin-right: 8px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	border-radius: 4px;
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 3px 0px;
+	transition-property: brightness, box-shadow, border;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-out;
+}
+
+.SupportCtaRow .SupportCtaBtn:last-child
+{
+	margin-right: 0px;
+}
+
+.SupportCtaBtn:hover
+{
+	brightness: 1.03;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+.SupportCtaBtn:active
+{
+	brightness: 0.94;
+}
+
+.SupportCtaBtnTitle
+{
+	font-size: 13px;
+	font-weight: bold;
+	color: #eef4f6;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	text-shadow: none;
+	margin-bottom: 3px;
+}
+
+/* Allow hint to wrap on narrow / localized strings rather
+   than shrink to illegible — vertical growth via the row
+   min-height instead of a fixed clipped line. */
+
+.SupportCtaBtnHint
+{
+	width: 100%;
+	font-size: 11px;
+	color: #8a949a;
+	letter-spacing: 0.2px;
+	line-height: 14px;
+	margin-top: 0px;
+	text-shadow: none;
+	white-space: normal;
+	text-overflow: noclip;
+}
+
+.SupportCtaBtn:hover .SupportCtaBtnTitle
+{
+	color: #e4ebe7;
+	text-shadow: none;
+}
+
+.SupportCtaBtn:hover .SupportCtaBtnHint
+{
+	color: #b5c2c8;
+	text-shadow: none;
+}
+
+/* ----------------------------------------------------------
+   5. Primary support action (Section 3 — Ko-Fi CTA).
+
+      The Ko-Fi CTA no longer carries the .PresetGridBtn /
+      .PresetGridBtnBase classes — the preset-chip cascade
+      was leaking chip DNA (sizing, label tone) into what
+      should read as the page's primary CTA.  The rules
+      below restate everything the button needs:
+        - generous height + width (240×52)
+        - green-tinted dark gradient surface
+        - visible green hairline at rest, brighter on hover
+        - typography distinct from chip labels
+      Pass10's #SupportTabCoffeeBtn hairline (0.14) and
+      pass-hover-b's hover label color (#e4ebe7) still
+      apply — these rules layer cleanly on top.
+   ---------------------------------------------------------- */
+
+.SupportPrimaryActionRow
+{
+	width: 100%;
+	flow-children: down;
+	margin-top: 4px;
+	margin-bottom: 10px;
+}
+
+.SupportPrimarySubtitle
+{
+	width: 100%;
+	horizontal-align: center;
+	text-align: center;
+	font-size: 12px;
+	font-weight: bold;
+	color: #b5c2c8;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	margin-bottom: 8px;
+	white-space: normal;
+	text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.55);
+}
+
+#SupportTabCoffeeBtn.SupportPrimaryActionBtn,
+#SupportTabCoffeBtn.SupportPrimaryActionBtn
+{
+	width: 260px;
+	min-width: 260px;
+	max-width: 260px;
+	height: 52px;
+	min-height: 52px;
+	max-height: 52px;
+	horizontal-align: center;
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-top: 0px;
+	padding: 0px 18px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 38, 30, 0.94) ), to( rgba(12, 18, 14, 0.92) ) );
+	border: 1px solid rgba(106, 231, 154, 0.22);
+	border-radius: 5px;
+	box-shadow: fill rgba(0, 0, 0, 0.28) 0px 2px 6px 0px;
+	transition-property: brightness, box-shadow, border, background-color;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-out;
+}
+
+#SupportTabCoffeeBtn.SupportPrimaryActionBtn:hover,
+#SupportTabCoffeBtn.SupportPrimaryActionBtn:hover
+{
+	brightness: 1.05;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 48, 38, 0.96) ), to( rgba(14, 22, 17, 0.94) ) );
+	border: 1px solid rgba(106, 231, 154, 0.36);
+	box-shadow: fill rgba(106, 231, 154, 0.14) 0px 0px 14px 0px;
+}
+
+#SupportTabCoffeeBtn.SupportPrimaryActionBtn:active,
+#SupportTabCoffeBtn.SupportPrimaryActionBtn:active
+{
+	brightness: 0.96;
+}
+
+#SupportTabCoffeeBtn.SupportPrimaryActionBtn .SupportPrimaryActionBtnLabel,
+#SupportTabCoffeBtn.SupportPrimaryActionBtn .SupportPrimaryActionBtnLabel
+{
+	width: 100%;
+	text-align: center;
+	horizontal-align: center;
+	vertical-align: center;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 1.4px;
+	text-transform: uppercase;
+	color: #eef4f0;
+	text-shadow: none;
+	white-space: normal;
+}
+
+#SupportTabCoffeeBtn.SupportPrimaryActionBtn:hover .SupportPrimaryActionBtnLabel,
+#SupportTabCoffeBtn.SupportPrimaryActionBtn:hover .SupportPrimaryActionBtnLabel
+{
+	color: #c1f6d7;
+	text-shadow: none;
+}
+
+/* ----------------------------------------------------------
+   6. Plaque hover — small lift to balance the calmer CTA
+      hover above.  Plaques felt comparatively under-resolved.
+   ---------------------------------------------------------- */
+
+#SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.06;
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 10px 0px;
+}
+
+#SupportTabThanksBlock .ThanksMessage
+{
+	font-size: 13px;
+	line-height: 20px;
+}
+
+/* ----------------------------------------------------------
+   7. Yoshi footer — give it a deliberate anchor panel so
+      it does not feel like floating loose text, and let it
+      wrap if localized rather than clip on a single line.
+   ---------------------------------------------------------- */
+
+#SupportYoshiFooter.SupportYoshiFooter
+{
+	width: 100%;
+	flow-children: down;
+	horizontal-align: center;
+	padding-top: 10px;
+	padding-bottom: 8px;
+	margin-top: 6px;
+}
+
+#SupportYoshiFooter .SupportYoshiFooterText
+{
+	width: 100%;
+	min-height: 16px;
+	horizontal-align: center;
+	text-align: center;
+	vertical-align: center;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	font-size: 12px;
+	font-weight: normal;
+	letter-spacing: 0.5px;
+	color: #6a7378;
+	text-transform: lowercase;
+	white-space: normal;
+	text-shadow: none;
+	opacity: 0.85;
+}
+
+/* ----------------------------------------------------------
+   8. Font family coverage for the new support classes.
+   ---------------------------------------------------------- */
+
+.SupportCtaBtnTitle,
+.SupportCtaBtnHint,
+.SupportHeroTagline,
+.SupportPrimarySubtitle,
+.SupportPrimaryActionBtnLabel
+{
+	font-family: oracle;
+}
+
+/* ============================================================
+   end support-tab-ux-pass1
+   ============================================================ */
+
+/* ============================================================
+   support-tab-ux-pass2: Flatten card-in-card framing,
+   merge Ko-Fi support into the Help & Contact CTA grid,
+   compact CTA tiles. Scope: Support tab only.
+
+   Notes:
+     - The Ko-Fi tile now lives inside .SupportCtaRow as a
+       4th tile id'd #SupportCtaSupportBtn (NOT the legacy
+       #SupportTabCoffeeBtn id) so the heavy older
+       #SupportTabCoffeeBtn rules elsewhere in this file do
+       not leak sizing/animations onto the new tile.
+     - The legacy .SupportPrimaryActionRow stack is no longer
+       rendered by JS; defensive collapse below.
+   ============================================================ */
+
+/* Strip the soft elevated-pane shadow from the section
+   wrappers so the page no longer reads as cards-in-cards.
+   The CTA tiles remain the only raised surfaces. */
+#SupportIntroCard.SupportTabCard,
+#SupportCtaSection.SupportTabCard,
+#SupportTabThanksBlock.SupportTabCard
+{
+	box-shadow: none;
+	background-color: none;
+	border: 0px;
+	border-radius: 0px;
+}
+
+/* Tighter section paddings: section title + spacing carry the
+   hierarchy now, no inset card chrome required. */
+#SupportIntroCard.SupportHeroCard
+{
+	padding: 6px 2px 2px 2px;
+	margin-bottom: 6px;
+}
+
+#SupportCtaSection.SupportCtaCard
+{
+	padding: 4px 2px 6px 2px;
+	margin-bottom: 6px;
+}
+
+#SupportTabThanksBlock.SupportTabThanksBlock
+{
+	padding: 8px 2px 4px 2px;
+	margin-top: 6px;
+}
+
+#SupportIntroCard .SupportTabSectionTitle,
+#SupportCtaSection .SupportTabSectionTitle,
+#SupportTabThanksBlock .SupportTabSectionTitle
+{
+	margin-top: 0px;
+	margin-bottom: 6px;
+	font-size: 15px;
+	letter-spacing: 0.9px;
+}
+
+/* Compact, refined CTA tiles (2x2 grid). Smaller min-height
+   and padding so the action grid no longer dominates. */
+.SupportCtaGrid
+{
+	width: 100%;
+	flow-children: down;
+}
+
+.SupportCtaRow
+{
+	width: 100%;
+	flow-children: right;
+	min-height: 0px;
+	margin-top: 0px;
+	margin-bottom: 6px;
+}
+
+.SupportCtaGrid .SupportCtaRow:last-child
+{
+	margin-bottom: 0px;
+}
+
+.SupportCtaBtn
+{
+	width: fill-parent-flow(1.0);
+	min-height: 58px;
+	padding: 8px 10px;
+	margin-right: 6px;
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 32, 34, 0.92) ), to( rgba(16, 18, 20, 0.86) ) );
+	border: 1px solid rgba(255, 252, 244, 0.045);
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 2px 0px;
+}
+
+.SupportCtaRow .SupportCtaBtn:last-child
+{
+	margin-right: 0px;
+}
+
+.SupportCtaBtnContent
+{
+	width: 100%;
+	height: 100%;
+	flow-children: right;
+}
+
+.SupportCtaBtnIcon
+{
+	width: 26px;
+	height: 26px;
+	vertical-align: center;
+	margin-top: 0px;
+	margin-right: 11px;
+	wash-color: #d7e0e5;
+	img-shadow: 0px 0px 0px 0px transparent;
+	opacity: 0.92;
+}
+
+.SupportCtaBtnIconDiscord
+{
+	width: 30px;
+	height: 30px;
+	wash-color: none;
+	opacity: 1;
+}
+
+.SupportCtaBtnText
+{
+	width: fill-parent-flow(1.0);
+	flow-children: down;
+	vertical-align: center;
+}
+
+.SupportCtaBtn:hover
+{
+	brightness: 1.04;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 7px 0px;
+}
+
+.SupportCtaBtnTitle
+{
+	font-size: 14px;
+	letter-spacing: 0.45px;
+	margin-bottom: 2px;
+}
+
+.SupportCtaBtnHint
+{
+	font-size: 12px;
+	line-height: 15px;
+	color: #b8c2c8;
+}
+
+/* Primary support tile — Ko-Fi. Shares the grid footprint so
+   the row stays cohesive, but carries a green-tinted surface
+   + brighter hairline so it reads as the primary action. */
+.SupportCtaBtnPrimary
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 38, 30, 0.94) ), to( rgba(12, 18, 14, 0.92) ) );
+	border: 1px solid rgba(106, 231, 154, 0.24);
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 8px 0px;
+}
+
+.SupportCtaBtnPrimary .SupportCtaBtnTitle
+{
+	color: #c9f5dd;
+	text-shadow: none;
+}
+
+.SupportCtaBtnPrimary .SupportCtaBtnHint
+{
+	color: #94b9a4;
+}
+
+.SupportCtaBtnPrimary .SupportCtaBtnIcon
+{
+	wash-color: #c9f5dd;
+	opacity: 1;
+}
+
+.SupportCtaBtnPrimary:hover
+{
+	brightness: 1.06;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 48, 38, 0.96) ), to( rgba(14, 22, 17, 0.94) ) );
+	border: 1px solid rgba(106, 231, 154, 0.42);
+	box-shadow: fill rgba(106, 231, 154, 0.18) 0px 0px 12px 0px;
+}
+
+.SupportCtaBtnPrimary:hover .SupportCtaBtnTitle
+{
+	color: #e4ffee;
+	text-shadow: none;
+}
+
+.SupportCtaBtnPrimary:hover .SupportCtaBtnHint
+{
+	color: #b8d6c6;
+}
+
+.SupportCtaBtn:hover .SupportCtaBtnIcon
+{
+	wash-color: #eef4f6;
+	opacity: 1;
+}
+
+/* Defensive: legacy primary-action stack is no longer rendered
+   by the Support tab JS, but if any prior cached layout still
+   references it, keep it out of the layout. */
+.SupportPrimaryActionRow
+{
+	visibility: collapse;
+	margin: 0px;
+	padding: 0px;
+}
+
+/* ============================================================
+   end support-tab-ux-pass2
+   ============================================================ */
+
+/* ============================================================
+   support-tab-ux-pass3: Larger Support typography,
+   bullet hero copy, redesigned Special Thanks section
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. Unified section title bump (all three Support sections).
+      Overrides pass1 (14px) and pass2 (15px) rules.
+   ---------------------------------------------------------- */
+
+#SupportIntroCard .SupportTabSectionTitle,
+#SupportCtaSection .SupportTabSectionTitle,
+#SupportTabThanksBlock .SupportTabSectionTitle
+{
+	font-size: 16px;
+	letter-spacing: 0.7px;
+}
+
+/* Tighten the gap between the thanks title and the rule below */
+#SupportTabThanksBlock .SupportTabSectionTitle
+{
+	margin-bottom: 4px;
+}
+
+/* ----------------------------------------------------------
+   2. Hero bullet list (replaces plain .SupportHeroBody labels).
+   ---------------------------------------------------------- */
+
+.SupportHeroBulletList
+{
+	width: 100%;
+	flow-children: down;
+	margin-top: 4px;
+	margin-bottom: 2px;
+}
+
+.SupportHeroBullet
+{
+	width: 100%;
+	flow-children: right;
+	vertical-align: center;
+	min-height: 22px;
+	margin-bottom: 6px;
+}
+
+.SupportHeroBulletMarker
+{
+	width: 6px;
+	min-width: 6px;
+	max-width: 6px;
+	height: 6px;
+	min-height: 6px;
+	max-height: 6px;
+	border-radius: 2px;
+	background-color: rgba(106, 231, 154, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	margin-top: 6px;
+	margin-right: 12px;
+	vertical-align: top;
+}
+
+.SupportHeroBulletLabel
+{
+	width: fill-parent-flow(1.0);
+	font-size: 14px;
+	line-height: 20px;
+	color: #c6cfd3;
+	letter-spacing: 0.25px;
+	white-space: normal;
+	text-overflow: noclip;
+	text-shadow: none;
+}
+
+/* ----------------------------------------------------------
+   3. CTA tile typography bump only.
+      Overrides pass2 values. Do NOT touch button dimensions.
+   ---------------------------------------------------------- */
+
+.SupportCtaBtnTitle
+{
+	font-size: 14px;
+}
+
+.SupportCtaBtnHint
+{
+	font-size: 12px;
+	line-height: 16px;
+}
+
+/* ----------------------------------------------------------
+   4. Special Thanks — rule, intro, grid, plaques.
+   ---------------------------------------------------------- */
+
+.SupportThanksRule
+{
+	width: 100%;
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	horizontal-align: center;
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(106, 231, 154, 0.0) ), color-stop( 0.5, rgba(106, 231, 154, 0.28) ), color-stop( 1.0, rgba(106, 231, 154, 0.0) ) );
+	margin-top: 2px;
+	margin-bottom: 10px;
+}
+
+#SupportTabThanksBlock .SupportThanksIntro,
+#SupportTabThanksBlock .ThanksMessage
+{
+	font-size: 14px;
+	line-height: 21px;
+	color: #b6c0c4;
+	margin-bottom: 14px;
+	horizontal-align: center;
+	text-align: center;
+}
+
+.SupportThanksPlaqueGrid
+{
+	margin-top: 4px;
+}
+
+.SupportThanksPlaqueRow
+{
+	margin-bottom: 6px;
+}
+
+/* Plaque redesign: wider for 4-col layout, accent strip, tighter radius */
+.SupportThanksPlaque
+{
+	width: 132px;
+	min-width: 132px;
+	max-width: 132px;
+	height: 32px;
+	min-height: 32px;
+	max-height: 32px;
+	padding-left: 14px;
+	padding-right: 12px;
+	margin-left: 4px;
+	margin-right: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 29, 27, 0.97) ), to( rgba(13, 17, 15, 0.97) ) );
+	border: 1px solid rgba(255, 252, 244, 0.045);
+	border-radius: 4px;
+	box-shadow: inset rgba(106, 231, 154, 0.32) 3px 0px 0px 0px;
+}
+
+.SupportThanksPlaqueAlt
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 31, 29, 0.97) ), to( rgba(15, 19, 17, 0.97) ) );
+	border: 1px solid rgba(255, 252, 244, 0.045);
+	box-shadow: inset rgba(106, 231, 154, 0.26) 3px 0px 0px 0px;
+}
+
+/* Override earlier center-align rules — label left-aligns past the 3px accent strip */
+#SupportTabThanksBlock .SupportThanksPlaque Label,
+#SupportTabThanksBlock .SupportThanksPlaque > Label,
+.SupportThanksPlaque Label
+{
+	font-size: 13px;
+	letter-spacing: 0.5px;
+	color: #dde4e7;
+	font-weight: normal;
+	text-shadow: none;
+	text-align: left;
+	horizontal-align: left;
+	vertical-align: center;
+	width: 100%;
+}
+
+.SupportThanksPlaque:hover
+{
+	brightness: 1.06;
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	box-shadow: inset rgba(106, 231, 154, 0.6) 3px 0px 0px 0px;
+}
+
+.SupportThanksPlaque:hover Label
+{
+	color: #eaf2ee;
+}
+
+/* ----------------------------------------------------------
+   5. Yoshi footer typography bump.
+   ---------------------------------------------------------- */
+
+#SupportYoshiFooter .SupportYoshiFooterText
+{
+	font-size: 13px;
+	letter-spacing: 0.6px;
+}
+
+/* ============================================================
+   end support-tab-ux-pass3
+   ============================================================ */
+
+/* ============================================================
+   support-tab-ux-pass4 + rail grouping polish
+   ============================================================ */
+
+/* --- support page density trims so Special Thanks stays on one page --- */
+
+#SupportIntroCard.SupportHeroCard
+{
+	margin-bottom: 4px;
+}
+
+.SupportHeroBulletList
+{
+	margin-top: 2px;
+	margin-bottom: 0px;
+}
+
+.SupportHeroBullet
+{
+	min-height: 20px;
+	margin-bottom: 4px;
+}
+
+#SupportCtaSection.SupportCtaCard
+{
+	padding-top: 3px;
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+}
+
+#SupportTabThanksBlock.SupportTabThanksBlock
+{
+	padding-top: 4px;
+	padding-bottom: 1px;
+	margin-top: 4px;
+}
+
+.SupportThanksRule
+{
+	margin-bottom: 8px;
+}
+
+#SupportTabThanksBlock .SupportThanksIntro,
+#SupportTabThanksBlock .ThanksMessage
+{
+	margin-bottom: 10px;
+}
+
+.SupportThanksPlaqueGrid
+{
+	margin-top: 2px;
+}
+
+.SupportThanksPlaqueRow
+{
+	margin-bottom: 4px;
+}
+
+.SupportThanksPlaque
+{
+	width: 128px;
+	min-width: 128px;
+	max-width: 128px;
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	margin-left: 3px;
+	margin-right: 3px;
+}
+
+#SupportYoshiFooter.SupportYoshiFooter
+{
+	padding-top: 6px;
+	padding-bottom: 4px;
+	margin-top: 2px;
+}
+
+/* --- footer version rail item: inert but in the same family as save/discord --- */
+
+.FooterVersionLabel
+{
+	width: 100%;
+	height: 26px;
+	margin-top: 2px;
+	margin-bottom: -1px;
+	padding: 0px 12px;
+	border: 1px solid rgba(210, 218, 214, 0.05);
+	border-left: 3px solid rgba(126, 237, 170, 0.22);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(18, 22, 21, 0.88) ), to( rgba(10, 13, 12, 0.74) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 2px 8px 0px;
+	flow-children: right;
+}
+
+.FooterVersionLabelText
+{
+	width: 100%;
+	horizontal-align: center;
+	text-align: center;
+	vertical-align: center;
+	font-family: oracle;
+	font-size: 10px;
+	font-weight: semi-bold;
+	letter-spacing: 0.8px;
+	color: #858d89;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	text-overflow: shrink;
+	overflow: noclip;
+}
+
+/* --- grouped rail sections: clearer navigation split without behavior changes --- */
+
+.SettingsTabRailGroupLabel
+{
+	margin-top: 2px;
+	margin-bottom: 5px;
+}
+
+.SettingsTabRailGroup .TabItem
+{
+	margin-bottom: 2px;
+}
+
+/* ============================================================
+   end support-tab-ux-pass4 + rail grouping polish
+   ============================================================ */
+
+/* ============================================================
+   support-tab-ux-pass5 + footer micro-polish
+   ============================================================ */
+
+/* Make the support Discord icon visually live in the same system
+   as the other CTA icons instead of reading oversized/custom. */
+.SupportCtaBtnIconDiscord
+{
+	width: 26px;
+	height: 26px;
+}
+
+/* Footer version pill should feel quieter and lighter than save. */
+.FooterVersionLabel
+{
+	margin-top: 4px;
+}
+
+.FooterVersionLabelText
+{
+	font-size: 9px;
+	font-weight: normal;
+	letter-spacing: 0.6px;
+}
+
+/* ============================================================
+   end support-tab-ux-pass5 + footer micro-polish
+   ============================================================ */
+
+/* ============================================================
+   final rail/divider fixes
+   ============================================================ */
+
+/* Active tab styling in grouped rail: force one clean final state. */
+.SettingsTabRailGroup .TabItem
+{
+	border: 1px solid transparent;
+	border-left: 3px solid transparent;
+	border-radius: 4px;
+}
+
+.SettingsTabRailGroup .TabItem.Active
+{
+	border: 1px solid rgba(126, 237, 170, 0.14);
+	border-left: 3px solid rgba(126, 237, 170, 0.62);
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(21, 37, 28, 0.92) ), to( rgba(10, 16, 13, 0.68) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.08) 0px 0px 10px 0px;
+	brightness: 1.0;
+}
+
+.SettingsTabRailGroup .TabItem.Active Label
+{
+	color: #d5f7e4;
+	text-shadow: none;
+}
+
+.SettingsTabRailGroup .TabItem.Active .TabIcon
+{
+	wash-color: #d5f7e4;
+}
+
+/* Section dividers inside tabs: use the same green family as Special Thanks. */
+.GroupHeader
+{
+	border-bottom: 0px solid transparent;
+	color: #aeb8bc;
+}
+
+.RowSeparator
+{
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(106, 231, 154, 0.0) ), color-stop( 0.5, rgba(106, 231, 154, 0.22) ), color-stop( 1.0, rgba(106, 231, 154, 0.0) ) );
+	opacity: 1.0;
+}
+
+/* Footer version pill should stay slim and quiet. */
+.FooterVersionLabelText
+{
+	font-size: 9px;
+	font-weight: normal;
+	letter-spacing: 0.55px;
+}
+
+/* ============================================================
+   end final rail/divider fixes
+   ============================================================ */
+
+/* ============================================================
+   final footer + modal polish
+   ============================================================ */
+
+.SettingsTabRailFooterRule
+{
+	width: 100%;
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	horizontal-align: center;
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(106, 231, 154, 0.0) ), color-stop( 0.5, rgba(106, 231, 154, 0.22) ), color-stop( 1.0, rgba(106, 231, 154, 0.0) ) );
+	margin-top: 2px;
+	margin-bottom: 8px;
+}
+
+#SettingsTabRailFooter
+{
+	border-top: 0px solid transparent;
+	padding-top: 6px;
+}
+
+.CommunityPresetHintRow,
+.CommunityPresetHintInner,
+.CommunityPresetHintLink,
+.CommunityPresetHintLink:hover
+{
+	padding: 0px;
+	border: 0px solid transparent;
+	background-color: none;
+	box-shadow: none;
+}
+
+.CommunityPresetHintLink Label,
+.CommunityPresetHintLink:hover Label
+{
+	text-shadow: none;
+}
+
+/* Preset grid: bring tiles into the same plaque-style glass family. */
+.PresetGridBtn,
+.PresetGridBtnBase,
+.PresetGridBtnGreat,
+.PresetGridBtnCustom,
+.PresetGridBtnCustomActive,
+.PresetGridBtnUnavailable
+{
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	padding: 0px 10px 0px 12px;
+	border: 1px solid rgba(255, 252, 244, 0.045);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 29, 27, 0.97) ), to( rgba(13, 17, 15, 0.97) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.28) 3px 0px 0px 0px;
+	transition-property: brightness, background-color, opacity, box-shadow, border, transform;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-in-out;
+}
+
+.PresetGridBtn Label,
+.PresetGridBtnBase Label,
+.PresetGridBtnGreat Label,
+.PresetGridBtnCustom Label,
+.PresetGridBtnCustomActive Label,
+.PresetGridBtnUnavailable Label
+{
+	color: #dde4e7;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.45px;
+	text-shadow: none;
+}
+
+.PresetGridBtn:hover,
+.PresetGridBtnBase:hover,
+.PresetGridBtnGreat:hover,
+.PresetGridBtnCustom:hover,
+.PresetGridBtnCustomActive:hover,
+.PresetGridBtnUnavailable:hover
+{
+	brightness: 1.05;
+	transform: translateY(-1px);
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 34, 31, 0.98) ), to( rgba(16, 20, 18, 0.98) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 2px 6px 0px, inset rgba(106, 231, 154, 0.58) 3px 0px 0px 0px;
+}
+
+.PresetGridBtn:hover Label,
+.PresetGridBtnBase:hover Label,
+.PresetGridBtnGreat:hover Label,
+.PresetGridBtnCustom:hover Label,
+.PresetGridBtnCustomActive:hover Label,
+.PresetGridBtnUnavailable:hover Label
+{
+	color: #eaf2ee;
+	text-shadow: none;
+}
+
+.PresetGridBtn:active,
+.PresetGridBtnBase:active,
+.PresetGridBtnGreat:active,
+.PresetGridBtnCustom:active,
+.PresetGridBtnCustomActive:active
+{
+	transform: translateY(0px);
+	brightness: 1.08;
+}
+
+.PresetGridBtn.PresetActive
+{
+	border: 1px solid rgba(106, 231, 154, 0.24);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(23, 41, 31, 0.98) ), to( rgba(12, 20, 16, 0.98) ) );
+	box-shadow: fill rgba(10, 18, 13, 0.24) 0px 2px 7px 0px, inset rgba(106, 231, 154, 0.82) 4px 0px 0px 0px;
+	brightness: 1.0;
+	animation-name: none;
+}
+
+.PresetGridBtn.PresetActive Label,
+.PresetGridBtn.PresetActive:hover Label
+{
+	color: #e8f7ef;
+	text-shadow: none;
+}
+
+.PresetGridBtn.PresetActive:hover
+{
+	brightness: 1.05;
+	transform: translateY(-1px);
+	border: 1px solid rgba(106, 231, 154, 0.30);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 45, 35, 0.98) ), to( rgba(14, 23, 18, 0.98) ) );
+	box-shadow: fill rgba(10, 18, 13, 0.28) 0px 2px 8px 0px, inset rgba(106, 231, 154, 0.92) 4px 0px 0px 0px;
+}
+
+.PresetGridBtn.PresetApplySuccess Label
+{
+	color: #7cf0b0;
+	text-shadow: none;
+	animation-name: FlashTextGreen;
+	animation-duration: 0.45s;
+	animation-timing-function: ease-in-out;
+}
+
+.PresetGridBtnUnavailable
+{
+	opacity: 0.46;
+	brightness: 0.90;
+	border: 1px solid rgba(255, 252, 244, 0.028);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 23, 24, 0.94) ), to( rgba(12, 14, 15, 0.94) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 1px 2px 0px, inset rgba(129, 140, 145, 0.18) 3px 0px 0px 0px;
+}
+
+.PresetGridBtnUnavailable Label
+{
+	color: rgba(202, 210, 214, 0.62);
+}
+
+.PresetGridBtnUnavailable:hover
+{
+	opacity: 0.86;
+	border: 1px solid rgba(171, 181, 186, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 28, 29, 0.98) ), to( rgba(15, 18, 19, 0.98) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 2px 6px 0px, inset rgba(171, 181, 186, 0.30) 3px 0px 0px 0px;
+}
+
+/* Modal sweep: bring all ql_settings popups back into the same glass family. */
+.ModalOverlay,
+.ModalOverlay.Show
+{
+	background-color: rgba(4, 7, 8, 0.80);
+}
+
+#ExportModalContainer,
+#ConfigDiffModalContainer,
+.ArcadeModalContainer,
+.OptimizeFilterModalContainer,
+.SupportCommissionModalContainer,
+.MetroModalContainer
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(19, 24, 26, 0.98) ), to( rgba(10, 13, 15, 0.96) ) );
+	border: 1px solid rgba(210, 218, 214, 0.07);
+	border-radius: 4px;
+	box-shadow: rgba(0, 0, 0, 0.52) 0px 18px 42px 0px;
+}
+
+.ModalTitle,
+.ConfigDiffTitle,
+.ArcadeModalContainer .ModalTitle,
+.OptimizeFilterModalContainer .ModalTitle,
+.SupportCommissionModalContainer .ModalTitle
+{
+	font-family: oracle;
+	font-size: 17px;
+	font-weight: bold;
+	letter-spacing: 0.9px;
+	color: #eef4f0;
+	text-shadow: none;
+}
+
+.ModalInstructions,
+.OptimizeFilterModalLine,
+.ConfigDiffSummary,
+.ConfigDiffDetails,
+.ConfigDiffSummaryFooter,
+.SupportCommissionModalContactText
+{
+	font-family: oracle;
+	font-size: 13px;
+	line-height: 19px;
+	color: #b7c1c6;
+	text-shadow: none;
+}
+
+.OptimizeFilterModalWarnAccent
+{
+	color: #9af0c0;
+	text-shadow: none;
+}
+
+.OptimizeFilterModalWarnText
+{
+	color: #d5ddd8;
+	text-shadow: none;
+}
+
+#ExportModalContainer #CloseBtn,
+#ConfigDiffModalContainer #ConfigDiffCloseBtn,
+.OptimizeFilterModalContainer #CloseBtn,
+.SupportCommissionModalContainer #CloseBtn,
+.ArcadeModalContainer #CloseBtn
+{
+	border: 0px solid transparent;
+	background-color: rgba(255, 255, 255, 0.03);
+	border-radius: 3px;
+	box-shadow: none;
+}
+
+#ExportModalContainer #CloseBtn:hover,
+#ConfigDiffModalContainer #ConfigDiffCloseBtn:hover,
+.OptimizeFilterModalContainer #CloseBtn:hover,
+.SupportCommissionModalContainer #CloseBtn:hover,
+.ArcadeModalContainer #CloseBtn:hover
+{
+	background-color: rgba(106, 231, 154, 0.08);
+}
+
+.ModalBtnApply,
+.ModalBtnClose,
+.ModalBtnCloseSingle,
+.OptimizeFilterModalDownloadBtn,
+#ConfigDiffModalContainer .ConfigDiffApplyBtn,
+#ConfigDiffModalContainer .ConfigDiffCancelBtn,
+#BuildSaveConfirmButton,
+#SupportCommissionModalDiscordBtn
+{
+	border-radius: 4px;
+	font-family: oracle;
+}
+
+.ModalBtnApply Label,
+.ModalBtnClose Label,
+.ModalBtnCloseSingle Label,
+.OptimizeFilterModalDownloadBtn Label,
+#ConfigDiffModalContainer .ConfigDiffApplyBtn Label,
+#ConfigDiffModalContainer .ConfigDiffCancelBtn Label,
+#BuildSaveConfirmButton Label
+{
+	font-family: oracle;
+	font-size: 12px;
+	letter-spacing: 0.9px;
+	text-shadow: none;
+}
+
+.ConfigDiffCellTitle,
+.ConfigDiffCellBefore,
+.ConfigDiffCellAfter,
+.ConfigDiffCellArrow
+{
+	text-shadow: none;
+}
+
+/* Tooltip sweep: align settings descriptions with the current glass + oracle theme. */
+.QOLCustomRowTooltip
+{
+	min-width: 240px;
+	max-width: 340px;
+	padding: 10px 12px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 25, 24, 0.985) ), to( rgba(10, 14, 13, 0.97) ) );
+	border: 1px solid rgba(210, 218, 214, 0.06);
+	border-radius: 4px;
+	box-shadow: rgba(0, 0, 0, 0.56) 0px 18px 40px 0px;
+}
+
+.QOLCustomRowTooltipText,
+.QOLCustomRowTooltipCreatorValue,
+.QOLCustomRowTooltipVoiceMetaAuthorValue,
+.QOLCustomRowTooltipVoiceMetaActorValue
+{
+	font-family: oracle;
+	text-shadow: none;
+}
+
+.QOLCustomRowTooltipText
+{
+	color: #b7c1c6;
+	font-size: 13px;
+	line-height: 20px;
+	letter-spacing: 0.2px;
+}
+
+.QOLCustomRowTooltipPerfPrefix,
+.QOLCustomRowTooltipPerfValue,
+.QOLCustomRowTooltipCreatorPrefix,
+.QOLCustomRowTooltipVoiceMetaPrefix
+{
+	font-family: oracle;
+	font-size: 11px;
+	letter-spacing: 0.7px;
+	text-shadow: none;
+}
+
+.QOLCustomRowTooltipPerfPrefix,
+.QOLCustomRowTooltipCreatorPrefix
+{
+	color: #8f9ba0;
+}
+
+.QOLCustomRowTooltipCreatorValue
+{
+	color: #9af0c0;
+}
+
+.QOLCustomRowTooltipVoiceMetaPrefix
+{
+	color: #c9d4d8;
+}
+
+.QOLCustomRowTooltipVoiceMetaAuthorValue
+{
+	color: #eef4f0;
+	font-size: 12px;
+}
+
+.QOLCustomRowTooltipVoiceMetaActorValue
+{
+	color: #9af0c0;
+	font-size: 12px;
+}
+
+#TooltipManager.QOLSettingsTooltipThemeActive TextTooltip,
+.QOLSettingsTooltipThemeActive TextTooltip
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 25, 24, 0.985) ), to( rgba(10, 14, 13, 0.97) ) );
+	border: 1px solid rgba(210, 218, 214, 0.06);
+	border-radius: 4px;
+	box-shadow: rgba(0, 0, 0, 0.56) 0px 18px 40px 0px;
+	padding: 10px 12px;
+}
+
+#TooltipManager.QOLSettingsTooltipThemeActive TextTooltip Label,
+.QOLSettingsTooltipThemeActive TextTooltip Label
+{
+	font-family: oracle;
+	color: #b7c1c6;
+	font-size: 13px;
+	line-height: 20px;
+	letter-spacing: 0.2px;
+	text-shadow: none;
+}
+
+/* Control typography + icon-only utility button cleanup for settings rows. */
+#SettingsWindow .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow .MultiCheckboxBtn .MultiCheckboxLabel,
+#DEFAULT_HERO_dropdownDropDownMenu Label,
+#DEFAULT_HERO_dropdownDropDownMenu .DropDownChild,
+#DEFAULT_HERO_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#HEALTHBAR_TYPE_dropdownDropDownMenu Label,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .DropDownChild,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#VOICE_TYPE_dropdownDropDownMenu Label,
+#VOICE_TYPE_dropdownDropDownMenu .DropDownChild,
+#VOICE_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#VOICE_VOLUME_dropdownDropDownMenu Label,
+#VOICE_VOLUME_dropdownDropDownMenu .DropDownChild,
+#VOICE_VOLUME_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#LANGUAGE_dropdownDropDownMenu Label,
+#LANGUAGE_dropdownDropDownMenu .DropDownChild,
+#LANGUAGE_dropdownDropDownMenu .QOLSettingsDropDownItem
+{
+	font-family: oracle;
+	text-shadow: none;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow .ItemCooldownFilterRow .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerTypeFilterRow .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow .AnnouncerTypeFilterRow .MultiCheckboxBtn .MultiCheckboxLabel
+{
+	font-size: 11px;
+	letter-spacing: 0.5px;
+	font-weight: normal;
+}
+
+#DEFAULT_HERO_dropdownDropDownMenu Label,
+#DEFAULT_HERO_dropdownDropDownMenu .DropDownChild,
+#DEFAULT_HERO_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#HEALTHBAR_TYPE_dropdownDropDownMenu Label,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .DropDownChild,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#VOICE_TYPE_dropdownDropDownMenu Label,
+#VOICE_TYPE_dropdownDropDownMenu .DropDownChild,
+#VOICE_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#VOICE_VOLUME_dropdownDropDownMenu Label,
+#VOICE_VOLUME_dropdownDropDownMenu .DropDownChild,
+#VOICE_VOLUME_dropdownDropDownMenu .QOLSettingsDropDownItem,
+#LANGUAGE_dropdownDropDownMenu Label,
+#LANGUAGE_dropdownDropDownMenu .DropDownChild,
+#LANGUAGE_dropdownDropDownMenu .QOLSettingsDropDownItem
+{
+	font-size: 11px;
+	letter-spacing: 0.6px;
+	font-weight: normal;
+}
+
+#DEFAULT_HERO_dropdownDropDownMenu Label:hover,
+#DEFAULT_HERO_dropdownDropDownMenu .DropDownChild:hover,
+#DEFAULT_HERO_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu Label:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .DropDownChild:hover,
+#HEALTHBAR_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#VOICE_TYPE_dropdownDropDownMenu Label:hover,
+#VOICE_TYPE_dropdownDropDownMenu .DropDownChild:hover,
+#VOICE_TYPE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#VOICE_VOLUME_dropdownDropDownMenu Label:hover,
+#VOICE_VOLUME_dropdownDropDownMenu .DropDownChild:hover,
+#VOICE_VOLUME_dropdownDropDownMenu .QOLSettingsDropDownItem:hover,
+#LANGUAGE_dropdownDropDownMenu Label:hover,
+#LANGUAGE_dropdownDropDownMenu .DropDownChild:hover,
+#LANGUAGE_dropdownDropDownMenu .QOLSettingsDropDownItem:hover
+{
+	text-shadow: none;
+}
+
+#SettingsWindow .SliderValueGroup
+{
+	width: 300px;
+}
+
+#SettingsWindow .ValueInput,
+#SettingsWindow .SliderValueGroup .ValueInput
+{
+	width: 52px;
+	height: 24px;
+	margin-left: 14px;
+	padding: 0px !important;
+	border: 1px solid rgba(210, 218, 214, 0.05);
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 26, 25, 0.96) ), to( rgba(13, 16, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.01) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .ValueInput > Label,
+#SettingsWindow .ValueInput #TextEntryContents,
+#SettingsWindow .ValueInput #PlaceholderText,
+#SettingsWindow .SliderValueGroup .ValueInput > Label,
+#SettingsWindow .SliderValueGroup .ValueInput #TextEntryContents,
+#SettingsWindow .SliderValueGroup .ValueInput #PlaceholderText
+{
+	font-family: oracle;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.35px;
+	color: #aeb8bc;
+	text-shadow: none;
+	padding: 0px !important;
+	margin: 0px !important;
+	x: 0px;
+}
+
+#SettingsWindow .ValueInput:hover,
+#SettingsWindow .ValueInput:focus,
+#SettingsWindow .SliderValueGroup .ValueInput:hover,
+#SettingsWindow .SliderValueGroup .ValueInput:focus
+{
+	border: 1px solid rgba(106, 231, 154, 0.14);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 30, 28, 0.98) ), to( rgba(14, 18, 16, 0.95) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.05) 0px 0px 0px 1px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .ValueInput:focus #TextEntryContents,
+#SettingsWindow .ValueInput:focus > Label,
+#SettingsWindow .ValueInput:focus #PlaceholderText,
+#SettingsWindow .SliderValueGroup .ValueInput:focus #TextEntryContents,
+#SettingsWindow .SliderValueGroup .ValueInput:focus > Label,
+#SettingsWindow .SliderValueGroup .ValueInput:focus #PlaceholderText
+{
+	color: #d6e1e5;
+}
+
+#SettingsWindow .SectionResetBtn,
+#SettingsWindow .SectionResetBtn:hover,
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .VoiceDropdownTestBtn,
+#SettingsWindow .VoiceDropdownTestBtn:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover
+{
+	border: 0px solid transparent;
+	background-color: none;
+	box-shadow: none;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow .SettingRowResetBtn .SettingRowResetIcon,
+#SettingsWindow .VoiceDropdownTestBtn .SectionTitleActionIcon,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestIcon
+{
+	wash-color: #9af0c0;
+	img-shadow: 0px 0px 6px rgba(106, 231, 154, 0.18);
+}
+
+#SettingsWindow .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow .SettingRowResetBtn:hover .SettingRowResetIcon,
+#SettingsWindow .VoiceDropdownTestBtn:hover .SectionTitleActionIcon,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover .AnnouncerBuffFilterTestIcon
+{
+	wash-color: #dff7ea;
+	img-shadow: 0px 0px 8px rgba(106, 231, 154, 0.28);
+}
+
+/* ============================================================
+   end final footer + modal polish
+   ============================================================ */
