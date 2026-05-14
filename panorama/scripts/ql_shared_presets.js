@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.3.4";
+var QOL_SCHEMA_SEMVER = "2.3.5";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -805,6 +805,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_URN_DIFF: 0,
         ENABLE_MISSING_HERO: 0,
         ENABLE_NICKNAMES: 0,
+        DISABLE_PLAYER_NAME_BLUR: 0,
         ENABLE_CUMULATIVE_DMG: 1,
         ENABLE_DAMAGE_FOUNTAIN: 0,
         ENABLE_HIDE_SMALL_NUMBERS: 0,
@@ -1406,14 +1407,14 @@ var QOL_PRESETS = {
         PREVIEWS_ENABLED: 1
     },
     "Bread": {
-        ENABLE_ALT_ZOOM: 1,
         DEFAULT_HERO: "hero_atlas",
+        DISABLE_PLAYER_NAME_BLUR: 1,
         DISABLE_QUICK_BUY: 1,
         DISABLE_SHOP_BLUE: 1,
         ENABLE_BUFF_HUD: 1,
-        ENABLE_FORCE_TESTING_TOOLS: 0,
         ENABLE_HERO_SCENE_PANEL: 0,
         ENABLE_HIDE_FAILED_HINT: 1,
+        ENABLE_HIDE_SMALL_NUMBERS: 1,
         ENABLE_LANE_WITH_PARTY: 1,
         ENABLE_LEGACY_COOLDOWNS: 1,
         ENABLE_MISSING_HERO: 1,
@@ -1421,22 +1422,23 @@ var QOL_PRESETS = {
         ENABLE_OBJ_DMG: 1,
         ENABLE_OBJ_MAP: 1,
         ENABLE_OLD_ITEM_COOLDOWNS: 0,
-        ENABLE_PASSIVE_COOLDOWN: 0,
         ENABLE_REJUV_HUD: 1,
-        ENABLE_SHOP_STATS: 1,
         ENABLE_SIMPLIFY_ITEMS: 1,
+        ENABLE_SIMPLIFY_SHOP: 1,
         ENABLE_STATLOCKER: 1,
-        ENABLE_UNSECURED_SOUL_TIMER: 0,
         ENABLE_UNSPENT_SOULS: 1,
         ENABLE_URN_DIFF: 1,
         ENABLE_ZIP_BOOST: 1,
         GAME_DEFAULT_DIFFICULTY: 2,
         HUD_INDICATOR_SIZE: 22,
         MINIMAL_MINIMAP: 1,
+        MINIMAL_MINIMAP_OPACITY: 0.7,
         MINIMAP_SMALL_SIZE: 460,
         MINIMAP_Y_OFFSET: 375,
+        SHOP_OFFSET_X: -250,
         UNIT_TARGET_SIZE: 100,
-        VOICE_TYPE: 0
+        VOICE_TYPE: 0,
+        LANGUAGE: 0
     },
     "Vegas": {
         MINIMAP_SMALL_SIZE: 465,

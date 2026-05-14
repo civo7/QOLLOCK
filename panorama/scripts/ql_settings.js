@@ -119,6 +119,7 @@ const SECTION_CREATED_BY_BY_TITLE = {
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ALT_ZOOM_DRAW_OVER_UI": "Draws the minimap over all other UI elements for improved visibility.",
     "BRIDGE_BUFF_START": "Time before the announcement happens in seconds.",
+    "DISABLE_PLAYER_NAME_BLUR": "The world blur behind player names in the top bar.",
     "DISABLE_QUICK_BUY": "The item buying auto queue system in the shop menu.",
     "DISABLE_SHOP_BLUE": "The world background blur effect behind the shop menu.",
     "ENABLE_AMMO_STATUS": "Visual indicator of your current ammo.",
@@ -288,6 +289,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Top Bar|Nicknames": "Shows nicknames of all players in the game within the top bar.",
     "HUD / Top Bar|Objective Damage": "Shows the individual player's objective damage in the top bar.",
     "HUD / Top Bar|Objective Map": "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base.",
+    "HUD / Top Bar|Top Bar Background": "The world blur and backing strip behind player names in the top bar.",
     "HUD / Top Bar|Souls Per Minute": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "HUD / Top Bar|Unspent Souls": "Shows the individual player's unspent souls in the top bar.",
     "HUD / Top Bar|Urn Difference": "Shows a visual indicator in the top bar of the percentage difference of souls between teams.",
@@ -374,6 +376,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     DAMAGE_REPORT_Y_OFFSET: "low",
     DEFAULT_HERO: "none",
     DISABLE_DAMAGE_REPORT: "low",
+    DISABLE_PLAYER_NAME_BLUR: "none",
     DISABLE_QUICK_BUY: "none",
     DISABLE_SHOP_BLUE: "none",
     ENABLE_ALT_ZOOM: "low",
@@ -719,7 +722,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.3.4";
+    : "2.3.5";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -6603,6 +6606,12 @@ const COMPACT_SCHEMA_2_3_4 = AppendUniqueSchemaFields(
         { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
     ]
 );
+const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_3_4,
+    [
+        { key: "DISABLE_PLAYER_NAME_BLUR", min: 0, max: 1, step: 1 }
+    ]
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -6688,6 +6697,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.3.4": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_3_4
+    },
+    "2.3.5": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_5
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -6875,7 +6888,12 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     };
     if (!parsed || typeof parsed !== "object") return diagnostics;
 
+    var preservedDragEnabled = MOD_CONFIG.DRAG_ENABLED;
+    var preservedPreviewsEnabled = MOD_CONFIG.PREVIEWS_ENABLED;
     var fieldMap = BuildSchemaFieldMap(schemaVersion);
+    for (var defaultKey in DEFAULT_CONFIG) {
+        MOD_CONFIG[defaultKey] = DEFAULT_CONFIG[defaultKey];
+    }
     for (var key in parsed) {
         if (!MOD_CONFIG.hasOwnProperty(key)) {
             diagnostics.unknownKeys++;
@@ -6899,6 +6917,8 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeHealthbarTypeConfig(MOD_CONFIG, parsed);
     NormalizeColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, parsed);
+    MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
+    MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
     SetRuntimePresetName("");
     return diagnostics;
 }
@@ -8978,6 +8998,17 @@ function CloneConfigSnapshot(source) {
     return out;
 }
 
+function PreserveUiOnlySettings(targetConfig) {
+    if (!targetConfig || typeof targetConfig !== "object") return targetConfig;
+    if (MOD_CONFIG.hasOwnProperty("DRAG_ENABLED")) {
+        targetConfig.DRAG_ENABLED = MOD_CONFIG.DRAG_ENABLED;
+    }
+    if (MOD_CONFIG.hasOwnProperty("PREVIEWS_ENABLED")) {
+        targetConfig.PREVIEWS_ENABLED = MOD_CONFIG.PREVIEWS_ENABLED;
+    }
+    return targetConfig;
+}
+
 function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     var diagnostics = {
         appliedKeys: 0,
@@ -9223,10 +9254,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeColorWarningConfig(candidate, presetData);
     NormalizeEnemyColorWarningConfig(candidate, presetData);
 
-    candidate.DRAG_ENABLED = MOD_CONFIG.DRAG_ENABLED;
-    candidate.PREVIEWS_ENABLED = MOD_CONFIG.PREVIEWS_ENABLED;
-    candidate.LANGUAGE = MOD_CONFIG.LANGUAGE;
-    candidate.DEFAULT_HERO = MOD_CONFIG.DEFAULT_HERO;
+    PreserveUiOnlySettings(candidate);
 
     for (var modKey in MOD_CONFIG) {
         if (candidate.hasOwnProperty(modKey)) continue;
@@ -9425,7 +9453,8 @@ function TryApplyImportStringWithDiagnostics(raw) {
         return result;
     }
 
-    var preview = BuildCandidateConfigFromParsed(result.parsedConfig, result.schemaVersion || LATEST_COMPACT_SEMVER, MOD_CONFIG);
+    var preview = BuildCandidateConfigFromParsed(result.parsedConfig, result.schemaVersion || LATEST_COMPACT_SEMVER, DEFAULT_CONFIG);
+    PreserveUiOnlySettings(preview.candidateConfig);
     result.candidateConfig = preview.candidateConfig;
     result.appliedKeys = preview.diagnostics.appliedKeys;
     result.unknownKeys = preview.diagnostics.unknownKeys;
@@ -16328,11 +16357,9 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
 function ApplyPresetConfig(presetData) {
     if (!presetData) return false;
 
-    // Keep UI-only settings untouched by preset swaps.
+    // Keep UI-only layout settings untouched by preset swaps.
     var preservedDragEnabled = MOD_CONFIG.DRAG_ENABLED;
     var preservedPreviewsEnabled = MOD_CONFIG.PREVIEWS_ENABLED;
-    var preservedLanguage = MOD_CONFIG.LANGUAGE;
-    var preservedDefaultHero = MOD_CONFIG.DEFAULT_HERO;
 
     for (var key in DEFAULT_CONFIG) {
         MOD_CONFIG[key] = DEFAULT_CONFIG[key];
@@ -16350,8 +16377,6 @@ function ApplyPresetConfig(presetData) {
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
-    MOD_CONFIG.LANGUAGE = preservedLanguage;
-    MOD_CONFIG.DEFAULT_HERO = preservedDefaultHero;
     return true;
 }
 
@@ -16372,9 +16397,7 @@ var gPresetHighlightRefreshToken = 0;
 var gLastAppliedPresetName = "";
 var PRESET_MATCH_EXCLUDED_KEYS = {
     DRAG_ENABLED: 1,
-    PREVIEWS_ENABLED: 1,
-    LANGUAGE: 1,
-    DEFAULT_HERO: 1
+    PREVIEWS_ENABLED: 1
 };
 
 function ResetPresetButtonRegistry() {
@@ -17071,7 +17094,7 @@ function RenderCurrentTabContent(list) {
             { label: "Obikym", preset: "Obikym" },
             { label: "Poshy", preset: "Poshy" },
             { label: "Bread", preset: "Bread" },
-            { label: "Saintmxsm", preset: "Saintmxsm", presetExport: "[QOL-2-3-2]:AigUSxQjZMhMTs8ik70hZCADB0AkKBSIQ0MGEEOhYmVkZI5YQjZiCZlkAKBQhBgggwyAjCAcWFoyAicDycHjhSWWYIklpwsyZwAQAAAZZMiQkCGToeQDA0aGJZkBSw" }
+            { label: "Saintmxsm", preset: "Saintmxsm" }
         ];
         var customEntries = BuildCommunityPresetEntries();
 
@@ -17204,6 +17227,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Souls Per Minute", "ENABLE_MIN_SOULS", "toggle", null, null, null, null, "");
         CreateRow(list, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
         CreateRow(list, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
+        CreateRow(list, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
         CreateSeparator(list);
         CreateSectionTitle(list, "Bottom Bar");
         CreateRow(list, "Failed Hint", "ENABLE_HIDE_FAILED_HINT", "toggle", null, null, null, [{ invert: true }], "Low Stamina Popup");
