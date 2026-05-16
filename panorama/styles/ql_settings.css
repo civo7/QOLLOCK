@@ -10179,19 +10179,55 @@
 	margin-right: 6px;
 }
 
-#ModVersionLabelTop.HeaderByCivoLabel
+#ModVersionLabelTop.HeaderMoglockLinkButton
 {
-	margin-left: 2px;
+	flow-children: right;
+	width: fit-children;
+	height: fit-children;
+	margin-left: 4px;
 	margin-right: 10px;
 	vertical-align: center;
-	color: #8b948f;
+	background-color: transparent;
+	border: 0px solid transparent;
+	padding: 0px;
+}
+
+#ModVersionLabelTopPrefix
+{
+	color: #879196;
 	font-family: oracle;
-	font-size: 18px;
+	font-size: 17px;
 	font-weight: normal;
-	letter-spacing: 0.35px;
+	letter-spacing: 0.25px;
 	text-transform: none;
 	text-shadow: none;
+	vertical-align: center;
 	margin-top: 0px;
+	margin-right: 5px;
+}
+
+#ModVersionLabelTopDomain
+{
+	color: #66cc99;
+	font-family: oracle;
+	font-size: 17px;
+	font-weight: normal;
+	letter-spacing: 0.3px;
+	text-transform: none;
+	text-shadow: 0px 0px 6px rgba(102, 204, 153, 0.16);
+	vertical-align: center;
+	margin-top: 0px;
+}
+
+#ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopPrefix
+{
+	color: #95a0a4;
+}
+
+#ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+{
+	color: #7ae0ac;
+	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.24);
 }
 
 #CloseBtn Label
@@ -10200,10 +10236,380 @@
 	text-shadow: none;
 }
 
-#CloseBtn:hover Label
+#SettingsHeader #CloseBtn:hover Label
 {
-	color: #d5dde1;
-	text-shadow: 0px 0px 5px rgba(160, 189, 204, 0.18);
+	color: #ff4d4d;
+	text-shadow: 0 0 8px rgba(255, 77, 77, 0.8), 0 0 12px rgba(255, 77, 77, 0.4);
+}
+
+/* --- support thanks regroup pass: creator / contributor / translator --- */
+
+#SupportTabThanksBlock
+{
+	padding-top: 6px;
+	padding-bottom: 4px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroup
+{
+	width: 100%;
+	flow-children: down;
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTitle
+{
+	width: 100%;
+	color: #8fa59b;
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: normal;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	text-shadow: none;
+	margin: 0px 0px 4px 0px;
+	text-align: center;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreatorTitle
+{
+	color: #90d9ae;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator
+{
+	margin-bottom: 4px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueGrid
+{
+	margin-top: 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueRow
+{
+	margin-bottom: 4px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque
+{
+	height: 28px;
+	min-height: 28px;
+	max-height: 28px;
+	padding: 0px 9px;
+	margin-left: 3px;
+	margin-right: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 24, 26, 0.94) ), to( rgba(11, 14, 16, 0.94) ) );
+	border: 1px solid rgba(163, 184, 176, 0.06);
+	border-radius: 6px;
+	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 3px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque:hover
+{
+	brightness: 1.03;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 31, 34, 0.96) ), to( rgba(14, 18, 20, 0.96) ) );
+	border: 1px solid rgba(122, 181, 149, 0.14);
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueContent
+{
+	width: 100%;
+	height: 100%;
+	flow-children: right;
+	vertical-align: center;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueHasIcon .SupportThanksPlaqueContent
+{
+	padding-left: 1px;
+	padding-right: 1px;
+	width: fit-children;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueIcon
+{
+	width: 14px;
+	height: 14px;
+	vertical-align: center;
+	margin-right: 6px;
+	wash-color: #d8e1e4;
+	opacity: 0.96;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueIcon_Translator
+{
+	width: 15px;
+	height: 15px;
+	margin-right: 7px;
+	wash-color: none;
+	opacity: 1.0;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque Label
+{
+	width: fill-parent-flow(1.0);
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: normal;
+	letter-spacing: 0.3px;
+	color: #eef4f6;
+	text-shadow: none;
+	vertical-align: center;
+	text-align: center;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueHasIcon Label
+{
+	width: fit-children;
+	text-align: center;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	min-width: 132px;
+	max-width: 132px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 37, 29, 0.96) ), to( rgba(11, 19, 15, 0.96) ) );
+	border: 1px solid rgba(106, 231, 154, 0.16);
+	box-shadow: fill rgba(106, 231, 154, 0.07) 0px 0px 10px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueLabel_Creator
+{
+	color: #f2fff8;
+	font-size: 13px;
+	letter-spacing: 0.45px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueRole_Contributor
+{
+	min-width: 112px;
+	max-width: 112px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueRole_Translator
+{
+	min-width: 122px;
+	max-width: 122px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueClickable
+{
+	hittest: true;
+	hittestchildren: true;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueClickable:hover
+{
+	brightness: 1.04;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueClickable:active
+{
+	transform: translateY(1px);
+}
+
+/* --- final credits alignment fix: defeat older left-align plaque rules --- */
+
+#SupportTabThanksBlock .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt
+{
+	flow-children: none;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueContent,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt .SupportThanksPlaqueContent
+{
+	width: 100%;
+	height: 100%;
+	horizontal-align: center;
+	vertical-align: center;
+	flow-children: right;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque:not(.SupportThanksPlaqueHasIcon) .SupportThanksPlaqueContent,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt:not(.SupportThanksPlaqueHasIcon) .SupportThanksPlaqueContent
+{
+	width: 100%;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque:not(.SupportThanksPlaqueHasIcon) Label,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt:not(.SupportThanksPlaqueHasIcon) Label
+{
+	width: 100%;
+	max-width: 100%;
+	horizontal-align: center;
+	vertical-align: center;
+	text-align: center;
+	color: #eef4f6;
+	text-shadow: none;
+	white-space: nowrap;
+	text-overflow: shrink;
+	overflow: noclip;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueHasIcon .SupportThanksPlaqueContent,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt.SupportThanksPlaqueHasIcon .SupportThanksPlaqueContent
+{
+	width: fit-children;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueHasIcon Label,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt.SupportThanksPlaqueHasIcon Label
+{
+	width: fit-children;
+	max-width: 100%;
+	horizontal-align: left;
+	vertical-align: center;
+	text-align: left;
+	color: #eef4f6;
+	text-shadow: none;
+	white-space: nowrap;
+	text-overflow: shrink;
+	overflow: noclip;
+	font-size: 12px;
+	letter-spacing: 0.25px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueIcon,
+#SupportTabThanksBlock .SupportThanksPlaqueIcon_Translator
+{
+	vertical-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaqueIcon_Translator
+{
+	margin-right: 6px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueContent
+{
+	width: fit-children;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label
+{
+	width: fit-children;
+	text-align: left;
+	horizontal-align: left;
+}
+
+#SupportTabThanksBlock .SupportCreatorFooterText
+{
+	width: 100%;
+	horizontal-align: center;
+	text-align: center;
+	margin-top: 1px;
+	margin-bottom: 0px;
+	font-size: 10px;
+	letter-spacing: 0.35px;
+	line-height: 12px;
+	color: #72817b;
+	text-transform: lowercase;
+}
+
+/* --- final support CTA rebuild: stable 2x2 layout with structural row gap --- */
+
+#SupportCtaSection.SupportCtaCard
+{
+	padding: 14px 16px 12px 16px;
+}
+
+#SupportCtaGrid
+{
+	width: 100%;
+	flow-children: down;
+	overflow: noclip;
+}
+
+#SupportCtaGrid .SupportCtaRow
+{
+	width: 100%;
+	flow-children: right;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	margin: 0px 0px 8px 0px;
+	overflow: noclip;
+}
+
+#SupportCtaGrid .SupportCtaRow:last-child
+{
+	margin-bottom: 0px;
+}
+
+#SupportCtaGrid .SupportCtaBtnSlot
+{
+	width: 49%;
+	min-width: 49%;
+	max-width: 49%;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	overflow: noclip;
+}
+
+#SupportCtaGrid .SupportCtaBtn
+{
+	width: 100%;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	margin: 0px;
+	padding: 8px 10px;
+	border-radius: 4px;
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 32, 34, 0.94) ), to( rgba(16, 18, 20, 0.90) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px;
+	transition-property: brightness, border, background-color;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-out;
+}
+
+#SupportCtaGrid .SupportCtaRowGap
+{
+	width: 2%;
+	min-width: 2%;
+	max-width: 2%;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+}
+
+#SupportCtaGrid .SupportCtaBtn:hover
+{
+	brightness: 1.04;
+	border: 1px solid rgba(106, 231, 154, 0.12);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 37, 39, 0.96) ), to( rgba(18, 21, 23, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px;
+}
+
+#SupportCtaGrid .SupportCtaBtn:active
+{
+	brightness: 0.96;
+}
+
+#SupportCtaGrid .SupportCtaBtnPrimary
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 38, 30, 0.96) ), to( rgba(12, 18, 14, 0.94) ) );
+	border: 1px solid rgba(106, 231, 154, 0.20);
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px;
+}
+
+#SupportCtaGrid .SupportCtaBtnPrimary:hover
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 44, 35, 0.98) ), to( rgba(14, 22, 17, 0.96) ) );
+	border: 1px solid rgba(106, 231, 154, 0.30);
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px;
 }
 
 #HeaderDiscordLinkButton,
@@ -14659,15 +15065,19 @@
 {
 	width: 100%;
 	flow-children: down;
+	overflow: noclip;
 }
 
 .SupportCtaRow
 {
 	width: 100%;
 	flow-children: right;
-	min-height: 0px;
+	height: 58px;
+	min-height: 58px;
+	max-height: 58px;
 	margin-top: 0px;
 	margin-bottom: 6px;
+	overflow: noclip;
 }
 
 .SupportCtaGrid .SupportCtaRow:last-child
@@ -14678,13 +15088,16 @@
 .SupportCtaBtn
 {
 	width: fill-parent-flow(1.0);
+	height: 58px;
 	min-height: 58px;
+	max-height: 58px;
 	padding: 8px 10px;
 	margin-right: 6px;
 	border-radius: 3px;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 32, 34, 0.92) ), to( rgba(16, 18, 20, 0.86) ) );
 	border: 1px solid rgba(255, 252, 244, 0.045);
-	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 2px 0px;
+	box-shadow: fill rgba(106, 231, 154, 0.01) 0px 0px 7px 0px;
+	overflow: noclip;
 }
 
 .SupportCtaRow .SupportCtaBtn:last-child
@@ -14722,6 +15135,7 @@
 .SupportCtaBtnText
 {
 	width: fill-parent-flow(1.0);
+	height: 100%;
 	flow-children: down;
 	vertical-align: center;
 }
@@ -14738,6 +15152,10 @@
 	font-size: 14px;
 	letter-spacing: 0.45px;
 	margin-bottom: 2px;
+	height: 16px;
+	max-height: 16px;
+	white-space: nowrap;
+	text-overflow: shrink;
 }
 
 .SupportCtaBtnHint
@@ -14745,6 +15163,10 @@
 	font-size: 12px;
 	line-height: 15px;
 	color: #b8c2c8;
+	height: 30px;
+	max-height: 30px;
+	white-space: normal;
+	text-overflow: noclip;
 }
 
 /* Primary support tile — Ko-Fi. Shares the grid footprint so
@@ -15001,6 +15423,106 @@
 {
 	font-size: 13px;
 	letter-spacing: 0.6px;
+}
+
+/* Final polish: support plaques + preset tiles should read as dark glass, not green chips. */
+.SupportThanksPlaque,
+.SupportThanksPlaqueAlt
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	border-radius: 4px;
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 3px 0px;
+}
+
+.SupportThanksPlaque:hover,
+.SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.03;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.9) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque Label,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt Label,
+.SupportThanksPlaque Label,
+.SupportThanksPlaqueAlt Label
+{
+	color: #dbe5ea;
+	text-shadow: none;
+}
+
+.SupportThanksPlaque:hover Label,
+.SupportThanksPlaqueAlt:hover Label
+{
+	color: #edf4f7;
+}
+
+.PresetGridBtn,
+.PresetGridBtnBase,
+.PresetGridBtnGreat,
+.PresetGridBtnCustom,
+.PresetGridBtnCustomActive,
+.PresetGridBtnUnavailable
+{
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 3px 0px;
+}
+
+.PresetGridBtn Label,
+.PresetGridBtnBase Label,
+.PresetGridBtnGreat Label,
+.PresetGridBtnCustom Label,
+.PresetGridBtnCustomActive Label,
+.PresetGridBtnUnavailable Label
+{
+	color: #d8e2e7;
+}
+
+.PresetGridBtn:hover,
+.PresetGridBtnBase:hover,
+.PresetGridBtnGreat:hover,
+.PresetGridBtnCustom:hover,
+.PresetGridBtnCustomActive:hover,
+.PresetGridBtnUnavailable:hover
+{
+	brightness: 1.04;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.9) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+.PresetGridBtn:hover Label,
+.PresetGridBtnBase:hover Label,
+.PresetGridBtnGreat:hover Label,
+.PresetGridBtnCustom:hover Label,
+.PresetGridBtnCustomActive:hover Label,
+.PresetGridBtnUnavailable:hover Label
+{
+	color: #ecf3f6;
+}
+
+.PresetGridBtn.PresetActive
+{
+	border: 1px solid rgba(106, 231, 154, 0.14);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 39, 37, 0.92) ), to( rgba(18, 24, 22, 0.88) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.07) 0px 0px 10px 0px;
+}
+
+.PresetGridBtn.PresetActive:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(35, 43, 40, 0.94) ), to( rgba(20, 27, 24, 0.9) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.09) 0px 0px 12px 0px;
+}
+
+.PresetGridBtnUnavailable
+{
+	border: 1px solid rgba(255, 252, 244, 0.03);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 24, 26, 0.82) ), to( rgba(14, 15, 17, 0.78) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 1px 2px 0px;
 }
 
 /* ============================================================
@@ -15809,3 +16331,316 @@
 /* ============================================================
    end final footer + modal polish
    ============================================================ */
+
+/* ============================================================
+   final override: preset/support plaque dark-glass family
+   Must live at EOF because earlier preset passes re-apply the
+   old green inset accent and plaques also inherit preset classes.
+   ============================================================ */
+
+#SupportTabThanksBlock .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	border-radius: 4px;
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 3px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.03;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.90) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque Label,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt Label
+{
+	color: #dbe5ea;
+	text-shadow: none;
+}
+
+#SupportTabThanksBlock .SupportThanksPlaque:hover Label,
+#SupportTabThanksBlock .SupportThanksPlaqueAlt:hover Label
+{
+	color: #edf4f7;
+}
+
+#SettingsWindow .PresetGridBtn,
+#SettingsWindow .PresetGridBtnBase,
+#SettingsWindow .PresetGridBtnGreat,
+#SettingsWindow .PresetGridBtnCustom,
+#SettingsWindow .PresetGridBtnCustomActive,
+#SettingsWindow .PresetGridBtnUnavailable
+{
+	border: 1px solid rgba(255, 252, 244, 0.05);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 3px 0px;
+}
+
+#SettingsWindow .PresetGridBtn Label,
+#SettingsWindow .PresetGridBtnBase Label,
+#SettingsWindow .PresetGridBtnGreat Label,
+#SettingsWindow .PresetGridBtnCustom Label,
+#SettingsWindow .PresetGridBtnCustomActive Label,
+#SettingsWindow .PresetGridBtnUnavailable Label
+{
+	color: #d8e2e7;
+	text-shadow: none;
+}
+
+#SettingsWindow .PresetGridBtn:hover,
+#SettingsWindow .PresetGridBtnBase:hover,
+#SettingsWindow .PresetGridBtnGreat:hover,
+#SettingsWindow .PresetGridBtnCustom:hover,
+#SettingsWindow .PresetGridBtnCustomActive:hover,
+#SettingsWindow .PresetGridBtnUnavailable:hover
+{
+	brightness: 1.04;
+	border: 1px solid rgba(106, 231, 154, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.90) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+}
+
+#SettingsWindow .PresetGridBtn:hover Label,
+#SettingsWindow .PresetGridBtnBase:hover Label,
+#SettingsWindow .PresetGridBtnGreat:hover Label,
+#SettingsWindow .PresetGridBtnCustom:hover Label,
+#SettingsWindow .PresetGridBtnCustomActive:hover Label,
+#SettingsWindow .PresetGridBtnUnavailable:hover Label
+{
+	color: #ecf3f6;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive
+{
+	border: 1px solid rgba(106, 231, 154, 0.14);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 39, 37, 0.92) ), to( rgba(18, 24, 22, 0.88) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.07) 0px 0px 10px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(35, 43, 40, 0.94) ), to( rgba(20, 27, 24, 0.90) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.09) 0px 0px 12px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive Label,
+#SettingsWindow .PresetGridBtn.PresetActive:hover Label
+{
+	color: #e8f3ed;
+}
+
+#SettingsWindow .PresetGridBtnUnavailable
+{
+	border: 1px solid rgba(255, 252, 244, 0.03);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 24, 26, 0.82) ), to( rgba(14, 15, 17, 0.78) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 1px 2px 0px;
+}
+
+/* ============================================================
+   final hard-layout override: support CTA grid
+   Panorama has been inconsistent with percentage/fill sizing
+   in this section, so keep the 2x2 grid fully deterministic.
+   ============================================================ */
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid
+{
+	width: 100%;
+	flow-children: down;
+	overflow: noclip;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaRow
+{
+	width: 100%;
+	flow-children: right;
+	horizontal-align: center;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	margin: 0px 0px 8px 0px;
+	overflow: noclip;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaRow:last-child
+{
+	margin-bottom: 0px;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtnSlot
+{
+	width: 312px;
+	min-width: 312px;
+	max-width: 312px;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	flow-children: down;
+	overflow: noclip;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaRowGap
+{
+	width: 10px;
+	min-width: 10px;
+	max-width: 10px;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtn
+{
+	width: 100%;
+	min-width: 312px;
+	max-width: 312px;
+	height: 60px;
+	min-height: 60px;
+	max-height: 60px;
+	margin: 0px;
+	padding: 8px 10px;
+	overflow: noclip;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtnContent
+{
+	width: 100%;
+	height: 100%;
+	flow-children: right;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtnText
+{
+	width: fill-parent-flow(1.0);
+	height: 100%;
+	flow-children: down;
+	vertical-align: center;
+}
+
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtnTitle,
+#SettingsWindow #SupportCtaSection #SupportCtaGrid .SupportCtaBtnHint
+{
+	width: 100%;
+}
+
+/* ============================================================
+   final build-save confirm modal polish
+   ============================================================ */
+
+.BuildSaveConfirmModalContainer
+{
+	padding-top: 18px;
+	padding-bottom: 18px;
+}
+
+.BuildSaveConfirmModalContainer #CloseBtn,
+.BuildSaveConfirmModalContainer .BuildSaveConfirmCloseBtn
+{
+	border: 0px solid transparent;
+	background-color: none;
+	border-radius: 0px;
+	box-shadow: none;
+}
+
+.BuildSaveConfirmModalContainer #CloseBtn:hover,
+.BuildSaveConfirmModalContainer .BuildSaveConfirmCloseBtn:hover
+{
+	background-color: none;
+}
+
+.BuildSaveConfirmModalContainer #CloseBtn Label,
+.BuildSaveConfirmModalContainer .BuildSaveConfirmCloseBtn Label
+{
+	color: #98a09d;
+	font-family: oracle;
+	font-size: 26px;
+	font-weight: bold;
+	text-shadow: none;
+}
+
+.BuildSaveConfirmModalContainer #CloseBtn:hover Label,
+.BuildSaveConfirmModalContainer .BuildSaveConfirmCloseBtn:hover Label
+{
+	color: #e17474;
+}
+
+.BuildSaveConfirmWarning
+{
+	color: #ff7f7f;
+	font-family: oracle;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 0.6px;
+	text-shadow: none;
+}
+
+.BuildSaveConfirmBtnRow
+{
+	width: 100%;
+	horizontal-align: center;
+}
+
+#BuildSaveConfirmButton.BuildSaveConfirmActionBtn
+{
+	width: fit-children;
+	min-width: 230px;
+	height: 40px;
+	padding: 0px 16px;
+	border-radius: 4px;
+	border: 1px solid rgba(146, 234, 182, 0.18);
+	border-left: 3px solid rgba(106, 231, 154, 0.62);
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(24, 34, 29, 0.97) ), to( rgba(12, 18, 15, 0.88) ) );
+	box-shadow: fill rgba(82, 198, 126, 0.10) 0px 0px 12px 0px;
+}
+
+#BuildSaveConfirmButton.BuildSaveConfirmActionBtn:hover
+{
+	border: 1px solid rgba(146, 234, 182, 0.24);
+	border-left: 3px solid rgba(126, 237, 170, 0.78);
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(28, 40, 34, 0.98) ), to( rgba(13, 20, 17, 0.90) ) );
+	box-shadow: fill rgba(82, 198, 126, 0.14) 0px 0px 14px 0px;
+}
+
+#BuildSaveConfirmButton.BuildSaveConfirmActionBtn:active
+{
+	brightness: 0.96;
+}
+
+.BuildSaveConfirmActionContent
+{
+	width: fit-children;
+	min-width: fit-children;
+	height: 100%;
+	horizontal-align: center;
+	vertical-align: center;
+	flow-children: right;
+}
+
+.BuildSaveConfirmActionIcon
+{
+	width: 15px;
+	height: 15px;
+	margin-right: 8px;
+	vertical-align: center;
+	wash-color: #ccf0da;
+}
+
+.BuildSaveConfirmActionLabel
+{
+	width: fit-children;
+	height: fit-children;
+	vertical-align: center;
+	text-align: left;
+	color: #eef4f0;
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 0.9px;
+	text-transform: uppercase;
+	text-shadow: none;
+}
