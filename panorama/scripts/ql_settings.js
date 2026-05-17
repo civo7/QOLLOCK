@@ -14522,11 +14522,15 @@ function CreateAnimatedInlineEnumSection(parent, title, configId, activeValue, b
             });
         }
     };
-    applyBodyState(getSectionEnabled(), false);
+    var lastEnumEnabled = getSectionEnabled();
+    applyBodyState(lastEnumEnabled, false);
 
     gEnumSectionSyncCallbacks.push(function() {
         if (!body || !body.IsValid()) return;
-        applyBodyState(getSectionEnabled(), true);
+        var nowEnabled = getSectionEnabled();
+        var changed = nowEnabled !== lastEnumEnabled;
+        lastEnumEnabled = nowEnabled;
+        applyBodyState(nowEnabled, changed);
     });
 
     if (buildRowsFn) buildRowsFn(body);

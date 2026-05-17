@@ -1,6 +1,21 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_health_container.vcss_c");
+
+#HealthRegenAndTotal
+{
+    overflow: squish;
+	margin-left: 0px;
+	margin-bottom: 0px;
+	flow-children: none;
+}
+
+#RecentHealContainer,
+.recentDamageCounters
+{
+	width: fit-children;
+}
+
 .InHideout #HealthBarContent,
 .InHideout #HealthRegenAndTotal,
 .StreetBrawlInterstitial #HealthBarContent,
@@ -300,7 +315,7 @@
 	width: 400px;
 	height: 320px;
 	horizontal-align: center;
-	margin-top: 50px;
+	margin-top: -60px;
 	transform: rotateZ(0deg);
 	margin-right: 0px;
 }
@@ -323,9 +338,11 @@
 
 .budhud_healthbar_active #RecentHealContainer
 {
-	horizontal-align: right;
-	margin-top: 155px;
-	margin-right: 23px;
+	horizontal-align: left;
+	margin-bottom: 138px;
+	margin-left: 253px;
+    flow-children: up;
+    vertical-align: bottom;
 }
 
 .budhud_healthbar_active .recentHealCounter
@@ -335,8 +352,10 @@
 
 .budhud_healthbar_active .recentDamageCounters
 {
-	margin-left: 43px;
-	margin-top: 155px;
+    horizontal-align: left;
+	margin-left: 253px;
+	margin-top: 240px;
+    flow-children: down;
 }
 
 .budhud_healthbar_active .recentDamageCounter
@@ -516,7 +535,6 @@
 
 .klutz_healthbar_active .healthContainer
 {
-	clip: noclip;
 	overflow: noclip;
 	horizontal-align: right;
 	opacity: 1;
@@ -954,6 +972,22 @@
 	opacity: 0.0001;
 }
 
+.minecraft_healthbar_active #HealthRegenAndTotal
+{
+	horizontal-align: left;
+	vertical-align: bottom;
+	ignore-parent-flow: true;
+	transform: rotateZ(0deg);
+	width: fit-children;
+	height: fit-children;
+	margin-left: 222px;
+	margin-bottom: 90px;
+	margin-top: 0px;
+	margin-right: 0px;
+	flow-children: right;
+	overflow: noclip;
+}
+
 .minecraft_health_numbers_disabled #MinecraftHeartsHealthNumbers
 {
 	visibility: collapse;
@@ -1241,7 +1275,7 @@
 	vertical-align: center;
 }
 
-#MinecraftHeartsRoot .recentDamageCounterLabel
+.minecraft_healthbar_active .recentDamageCounterLabel
 {
 	font-weight: bold;
 	color: #D74949;
@@ -1251,7 +1285,7 @@
 	vertical-align: center;
 }
 
-#MinecraftHeartsRoot .healCounterLabel
+.minecraft_healthbar_active .healCounterLabel
 {
 	font-weight: bold;
 	color: lightgreen;
@@ -1261,32 +1295,33 @@
 	vertical-align: center;
 }
 
-.recentDamageCounters
+.minecraft_healthbar_active .recentDamageCounters,
+.minecraft_healthbar_active #RecentHealContainer
 {
 	margin-top: 0px;
 	margin-left: 0px;
-	flow-children: right;
+	flow-children: up;
 	margin-bottom: 2px;
+	width: 90px;
+	vertical-align: bottom;
 }
 
-#RecentHealContainer
-{
-	margin-top: 0px;
-	margin-left: 0px;
-	flow-children: right;
-	margin-bottom: 2px;
-}
-
-.recentDamageCounter
+.minecraft_healthbar_active .recentDamageCounter
 {
 	margin-bottom: 0px;
 	padding: 2px 1px;
 }
 
-.recentHealCounter
+.minecraft_healthbar_active .recentHealCounter
 {
 	margin-bottom: 0px;
 	padding: 2px 1px;
+}
+
+.minecraft_healthbar_active #HealthRegenAndTotal .shieldNumbersContainer,
+.minecraft_healthbar_active #HealthRegenAndTotal .healthContainer
+{
+	visibility: collapse;
 }
 
 .recentHealCounters

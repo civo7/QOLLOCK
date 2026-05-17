@@ -4890,8 +4890,8 @@ function GetUIRoot() {
         if (!IsPanelValid(content)) return null;
 
         var regenTotal = IsPanelValid(State.cachedPanels.budhudHealthRegenAndTotal) ? State.cachedPanels.budhudHealthRegenAndTotal : null;
-        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== content)) {
-            regenTotal = content.FindChildTraverse ? content.FindChildTraverse("HealthRegenAndTotal") : null;
+        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== root)) {
+            regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
             State.cachedPanels.budhudHealthRegenAndTotal = regenTotal || null;
         }
         if (!IsPanelValid(regenTotal)) return null;
@@ -4905,14 +4905,14 @@ function GetUIRoot() {
 
         var currentLabel = IsPanelValid(State.cachedPanels.budhudCurrentHealthLabel) ? State.cachedPanels.budhudCurrentHealthLabel : null;
         if (!currentLabel || (currentLabel.GetParent && !currentLabel.GetParent())) {
-            currentLabel = FindFirstPanelByClass(content, "currentHealthLabel");
+            currentLabel = FindFirstPanelByClass(regenTotal, "currentHealthLabel");
             State.cachedPanels.budhudCurrentHealthLabel = currentLabel || null;
         }
         if (!IsPanelValid(currentLabel)) return null;
 
         var totalLabel = IsPanelValid(State.cachedPanels.budhudTotalHealthLabel) ? State.cachedPanels.budhudTotalHealthLabel : null;
         if (!totalLabel || (totalLabel.GetParent && !totalLabel.GetParent())) {
-            totalLabel = FindFirstPanelByClass(content, "totalHealthLabel");
+            totalLabel = FindFirstPanelByClass(regenTotal, "totalHealthLabel");
             State.cachedPanels.budhudTotalHealthLabel = totalLabel || null;
         }
         if (!IsPanelValid(totalLabel)) return null;
