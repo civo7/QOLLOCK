@@ -10167,7 +10167,7 @@
 
 #SettingsTitleAccent
 {
-	color: #66cc99;
+	color: #6be8a2;
 	letter-spacing: 1.9px;
 	text-shadow: 0px 0px 0px transparent;
 	vertical-align: center;
@@ -10208,13 +10208,13 @@
 
 #ModVersionLabelTopDomain
 {
-	color: #66cc99;
+	color: #6be8a2;
 	font-family: oracle;
 	font-size: 17px;
 	font-weight: normal;
 	letter-spacing: 0.3px;
 	text-transform: none;
-	text-shadow: 0px 0px 6px rgba(102, 204, 153, 0.16);
+	text-shadow: 0px 0px 6px rgba(107, 232, 162, 0.16);
 	vertical-align: center;
 	margin-top: 0px;
 }
@@ -10226,8 +10226,8 @@
 
 #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
 {
-	color: #7ae0ac;
-	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.24);
+	color: #6be8a2;
+	text-shadow: 0px 0px 8px rgba(107, 232, 162, 0.24);
 }
 
 #CloseBtn Label
@@ -10350,6 +10350,7 @@
 	wash-color: none;
 	opacity: 1.0;
 }
+
 
 #SupportTabThanksBlock .SupportThanksPlaque Label
 {
