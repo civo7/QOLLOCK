@@ -7037,6 +7037,8 @@ function IsSettingsInActiveMatchContext() {
     var root = FindRootPanel();
     if (!root) return false;
 
+    if (HasPanelClassToken(root, "CitadelMainMenu")) return false;
+
     var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
     var gameplayHud = root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
     var hideout = IsInHideoutForBuildSave();
@@ -10450,32 +10452,41 @@ function PlayFlappyFailSound() {
 }
 
 function SpawnFlappyPipe(state) {
-    if (!state || !state.active || !state.pipesLayer || !state.pipesLayer.IsValid || !state.pipesLayer.IsValid()) return;
+        if (!state || !state.active || !state.pipesLayer || !state.pipesLayer.IsValid || !state.pipesLayer.IsValid()) return;
 
-    var gapHalf = Math.floor(state.gapSize / 2);
-    var minCenter = gapHalf + 24;
-    var maxCenter = state.gameHeight - gapHalf - 24;
-    var gapCenter = Math.floor(minCenter + (Math.random() * Math.max(1, (maxCenter - minCenter))));
+        var gapHalf = Math.floor(state.gapSize / 2);
+        var minCenter = gapHalf + 24;
+        var maxCenter = state.gameHeight - gapHalf - 24;
+        var gapCenter = Math.floor(minCenter + (Math.random() * Math.max(1, (maxCenter - minCenter))));
 
-    var pipePanel = $.CreatePanel("Panel", state.pipesLayer, "ArcadeFlappyPipe_" + state.pipeSerial);
-    pipePanel.AddClass("ArcadeFlappyPipe");
-    var topPipe = $.CreatePanel("Panel", pipePanel, "");
-    topPipe.AddClass("ArcadeFlappyPipePart");
-    topPipe.AddClass("Top");
-    var bottomPipe = $.CreatePanel("Panel", pipePanel, "");
-    bottomPipe.AddClass("ArcadeFlappyPipePart");
-    bottomPipe.AddClass("Bottom");
+        var pipePanel = null, topPipe = null, bottomPipe = null;
+        if (state.pipePool && state.pipePool.length > 0) {
+            var pooled = state.pipePool.pop();
+            pipePanel = pooled.panel;
+            topPipe = pooled.top;
+            bottomPipe = pooled.bottom;
+            pipePanel.style.visibility = "visible";
+        } else {
+            pipePanel = $.CreatePanel("Panel", state.pipesLayer, "ArcadeFlappyPipe_" + state.pipeSerial);
+            pipePanel.AddClass("ArcadeFlappyPipe");
+            topPipe = $.CreatePanel("Panel", pipePanel, "");
+            topPipe.AddClass("ArcadeFlappyPipePart");
+            topPipe.AddClass("Top");
+            bottomPipe = $.CreatePanel("Panel", pipePanel, "");
+            bottomPipe.AddClass("ArcadeFlappyPipePart");
+            bottomPipe.AddClass("Bottom");
+            state.pipeSerial++;
+        }
 
-    state.pipes.push({
-        x: state.gameWidth + 18,
-        gapCenter: gapCenter,
-        passed: false,
-        panel: pipePanel,
-        top: topPipe,
-        bottom: bottomPipe
-    });
-    state.pipeSerial++;
-}
+        state.pipes.push({
+            x: state.gameWidth + 18,
+            gapCenter: gapCenter,
+            passed: false,
+            panel: pipePanel,
+            top: topPipe,
+            bottom: bottomPipe
+        });
+    }
 
 function RenderFlappy(state) {
     if (!state || !state.isValid || !state.isValid()) return;
@@ -10578,7 +10589,9 @@ function StepFlappy(state, token) {
 
         if ((pipe.x + state.pipeWidth) < -10) {
             if (pipe.panel && pipe.panel.IsValid && pipe.panel.IsValid()) {
-                pipe.panel.DeleteAsync(0);
+                pipe.panel.style.visibility = "collapse";
+                if (!state.pipePool) state.pipePool = [];
+                state.pipePool.push(pipe);
             }
             state.pipes.splice(i, 1);
         }
@@ -10591,21 +10604,23 @@ function StepFlappy(state, token) {
 }
 
 function ResetFlappyGame(state) {
-    if (!state || !state.active) return;
-    RefreshFlappyBounds(state);
+        if (!state || !state.active) return;
+        RefreshFlappyBounds(state);
 
-    state.gameOver = false;
-    state.score = 0;
-    state.spawnTimer = 42;
-    state.birdY = Math.floor(state.gameHeight * 0.5);
-    state.birdVel = 0;
+        state.gameOver = false;
+        state.score = 0;
+        state.spawnTimer = 42;
+        state.birdY = Math.floor(state.gameHeight * 0.5);
+        state.birdVel = 0;
+        if (!state.pipePool) state.pipePool = [];
 
-    for (var i = 0; i < state.pipes.length; i++) {
-        if (state.pipes[i] && state.pipes[i].panel && state.pipes[i].panel.IsValid && state.pipes[i].panel.IsValid()) {
-            state.pipes[i].panel.DeleteAsync(0);
+        for (var i = 0; i < state.pipes.length; i++) {
+            if (state.pipes[i] && state.pipes[i].panel && state.pipes[i].panel.IsValid && state.pipes[i].panel.IsValid()) {
+                state.pipes[i].panel.style.visibility = "collapse";
+                state.pipePool.push(state.pipes[i]);
+            }
         }
-    }
-    state.pipes = [];
+        state.pipes = [];
 
     UpdateFlappyHud(state);
     UpdateFlappyStatus(state, "");
@@ -18789,7 +18804,7 @@ $.BuildUI = function() {
                 $.CancelScheduled(searchDebounceTimer);
                 searchDebounceTimer = null;
             }
-            searchDebounceTimer = $.Schedule(0.1, function() {
+            searchDebounceTimer = $.Schedule(0.2, function() {
                 searchDebounceTimer = null;
                 currentSearchQuery = searchInputExisting.text || "";
                 UpdateSettingsSearchUiState($.GetContextPanel());
