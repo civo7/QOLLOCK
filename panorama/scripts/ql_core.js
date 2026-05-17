@@ -4902,14 +4902,14 @@ function GetUIRoot() {
 
         var currentLabel = IsPanelValid(State.cachedPanels.budhudCurrentHealthLabel) ? State.cachedPanels.budhudCurrentHealthLabel : null;
         if (!currentLabel || (currentLabel.GetParent && !currentLabel.GetParent())) {
-            currentLabel = FindFirstPanelByClass(content, "currentHealthLabel");
+            currentLabel = FindFirstPanelByClass(regenTotal, "currentHealthLabel");
             State.cachedPanels.budhudCurrentHealthLabel = currentLabel || null;
         }
         if (!IsPanelValid(currentLabel)) return null;
 
         var totalLabel = IsPanelValid(State.cachedPanels.budhudTotalHealthLabel) ? State.cachedPanels.budhudTotalHealthLabel : null;
         if (!totalLabel || (totalLabel.GetParent && !totalLabel.GetParent())) {
-            totalLabel = FindFirstPanelByClass(content, "totalHealthLabel");
+            totalLabel = FindFirstPanelByClass(regenTotal, "totalHealthLabel");
             State.cachedPanels.budhudTotalHealthLabel = totalLabel || null;
         }
         if (!IsPanelValid(totalLabel)) return null;
