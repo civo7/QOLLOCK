@@ -7329,13 +7329,10 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
         : (isRu ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A" : (isCn ? "\u4FDD\u5B58\u8BBE\u7F6E" : "Save Settings"));
     var line1 = saveDisabled
         ? "Saving settings is currently disabled on main branch due to some bugs"
-        : (isRu ? "\u042D\u0442\u043E \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0438\u0442 \u0432\u0430\u0448\u0435\u0433\u043E \u0433\u0435\u0440\u043E\u044F \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442 \u0432\u0430\u0448\u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438" : (isCn ? "\u8FD9\u4F1A\u5207\u6362\u4F60\u7684\u82F1\u96C4\u5E76\u4FDD\u5B58\u4F60\u7684\u8BBE\u7F6E" : "This will swap your character and save your settings"));
+        : "This swaps your character and saves your settings in a build.";
     var line2 = saveDisabled
         ? "Currently it is in Early Access pending rework"
-        : (isRu ? "\u041D\u0415 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \u044D\u0442\u043E \u0432 \u043E\u0447\u0435\u0440\u0435\u0434\u0438 \u0438\u043B\u0438 \u0432 \u0436\u0438\u0432\u043E\u043C \u043C\u0430\u0442\u0447\u0435" : (isCn ? "\u4E0D\u8981\u5728\u6392\u961F\u4E2D\u6216\u5B9E\u65F6\u5BF9\u5C40\u4E2D\u4F7F\u7528\u6B64\u529F\u80FD" : "DO NOT use this in queue or in a live match"));
-    var line3 = saveDisabled
-        ? "Join to Discord if you are interested in Early Access"
-        : (isRu ? "\u0412\u044B \u0431\u044B\u043B\u0438 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u044B" : (isCn ? "\u4F60\u5DF2\u7ECF\u88AB\u8B66\u544A\u4E86" : "You have been warned"));
+        : "DO NOT SAVE IN A LIVE MATCH OR IN QUEUE!";
     var confirmText = saveDisabled ? "Discord" : LocalizeSettingsText("SAVE", true);
 
     var overlay = $.CreatePanel("Panel", rootPanel, "BuildSaveConfirmModalOverlay");
@@ -7347,8 +7344,10 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "560px";
     modalContainer.AddClass("MetroModalContainer");
+    modalContainer.AddClass("BuildSaveConfirmModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("BuildSaveConfirmCloseBtn");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
     closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
@@ -7366,29 +7365,31 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
     var body2 = $.CreatePanel("Label", modalContainer, "");
     body2.AddClass("ModalInstructions");
     body2.AddClass("MetroModalCenteredText");
+    body2.AddClass("BuildSaveConfirmWarning");
     body2.style.color = saveDisabled ? "#c9d3ff" : "#ff8787";
     body2.style.fontWeight = saveDisabled ? "normal" : "bold";
     body2.style.marginTop = "8px";
     body2.text = line2;
 
-    var body3 = $.CreatePanel("Label", modalContainer, "");
-    body3.AddClass("ModalInstructions");
-    body3.AddClass("MetroModalCenteredText");
-    body3.style.marginTop = "6px";
-    if (saveDisabled) {
-        body3.style.color = "#66cc99";
-        body3.style.fontWeight = "bold";
-    }
-    body3.text = line3;
-
     var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
     btnRow.AddClass("MetroModalBtnRow");
+    btnRow.AddClass("BuildSaveConfirmBtnRow");
     btnRow.style.marginTop = "14px";
 
     var confirmBtn = $.CreatePanel("Button", btnRow, "BuildSaveConfirmButton");
     confirmBtn.AddClass("ModalBtnApply");
     confirmBtn.AddClass("MetroModalBtn");
-    var confirmLbl = $.CreatePanel("Label", confirmBtn, "");
+    confirmBtn.AddClass("BuildSaveConfirmActionBtn");
+    var confirmContent = $.CreatePanel("Panel", confirmBtn, "");
+    confirmContent.AddClass("BuildSaveConfirmActionContent");
+    var confirmIcon = $.CreatePanel("Image", confirmContent, "", {
+        src: "s2r://panorama/images/icons/icon_download.vsvg",
+        defaultsrc: "",
+        scaling: "contain"
+    });
+    confirmIcon.AddClass("BuildSaveConfirmActionIcon");
+    var confirmLbl = $.CreatePanel("Label", confirmContent, "");
+    confirmLbl.AddClass("BuildSaveConfirmActionLabel");
     confirmLbl.text = confirmText;
     confirmBtn.SetPanelEvent("onactivate", function() {
         CloseModal(overlay);
@@ -7627,6 +7628,7 @@ function SyncConfigFromStorage() {
     }
     MOD_CONFIG = nextConfig;
     PersistStatlockerProfileState(raw, nextConfig);
+    UpdateOnDeathArcadeBridgePollerState();
 }
 
 function PersistStatlockerProfileState(rawConfig, configObj) {
@@ -7712,7 +7714,7 @@ function SaveAndSync() {
         try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
-    EnsureOnDeathArcadeBridgePoller();
+    UpdateOnDeathArcadeBridgePollerState();
     QueueActivePresetHighlightRefresh(0.05);
     RefreshEnumSections();
 }
@@ -13334,14 +13336,40 @@ function GetOnDeathArcadeBridgeState() {
     return out;
 }
 
+function IsOnDeathArcadeConfigEnabledForSettings() {
+    if (Number(MOD_CONFIG && MOD_CONFIG.ENABLE_ON_DEATH_GAMES) !== 1) return false;
+    for (var i = 0; i < ON_DEATH_ARCADE_GAME_KEYS.length; i++) {
+        if (Number(MOD_CONFIG[ON_DEATH_ARCADE_GAME_KEYS[i]]) === 1) return true;
+    }
+    return false;
+}
+
+function ShouldRunOnDeathArcadeBridgePoller() {
+    return IsOnDeathArcadeConfigEnabledForSettings() || gOnDeathArcadeSessionActive;
+}
+
+function StopOnDeathArcadeBridgePoller() {
+    gOnDeathArcadeBridgePollToken++;
+    gOnDeathArcadeBridgePollRunning = false;
+}
+
 function StartOnDeathArcadeBridgePoller() {
+    if (!ShouldRunOnDeathArcadeBridgePoller()) {
+        gOnDeathArcadeBridgePollRunning = false;
+        return;
+    }
     gOnDeathArcadeBridgePollToken++;
     gOnDeathArcadeBridgePollRunning = true;
     var token = gOnDeathArcadeBridgePollToken;
 
     function tick() {
         if (token !== gOnDeathArcadeBridgePollToken) return;
+        if (!ShouldRunOnDeathArcadeBridgePoller()) {
+            gOnDeathArcadeBridgePollRunning = false;
+            return;
+        }
 
+        var featureEnabled = IsOnDeathArcadeConfigEnabledForSettings();
         var bridge = GetOnDeathArcadeBridgeState();
         if (!bridge.active) {
             if (gOnDeathArcadeSessionActive) {
@@ -13349,7 +13377,7 @@ function StartOnDeathArcadeBridgePoller() {
                 CloseAllArcadeModalsIfOpen();
                 ForceCloseEscapeMenuForOnDeathGames();
             }
-        } else if (bridge.token && bridge.token !== gOnDeathArcadeLastRequestToken) {
+        } else if (featureEnabled && bridge.token && bridge.token !== gOnDeathArcadeLastRequestToken) {
             gOnDeathArcadeLastRequestToken = bridge.token;
             gOnDeathArcadeSessionActive = true;
             if (!IsAnyArcadeModalOpen()) {
@@ -13357,6 +13385,10 @@ function StartOnDeathArcadeBridgePoller() {
             }
         }
 
+        if (!ShouldRunOnDeathArcadeBridgePoller()) {
+            gOnDeathArcadeBridgePollRunning = false;
+            return;
+        }
         $.Schedule(ON_DEATH_GAMES_POLL_SECONDS, tick);
     }
 
@@ -13366,6 +13398,14 @@ function StartOnDeathArcadeBridgePoller() {
 function EnsureOnDeathArcadeBridgePoller() {
     if (gOnDeathArcadeBridgePollRunning) return;
     StartOnDeathArcadeBridgePoller();
+}
+
+function UpdateOnDeathArcadeBridgePollerState() {
+    if (ShouldRunOnDeathArcadeBridgePoller()) {
+        EnsureOnDeathArcadeBridgePoller();
+    } else if (gOnDeathArcadeBridgePollRunning) {
+        StopOnDeathArcadeBridgePoller();
+    }
 }
 
 function OpenAvailableModal() {
@@ -13426,7 +13466,11 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "ninjablade", preset: "ninjabladeJr" });
     entries.push({ label: "FlintSnow", preset: "FlintSnow" });
     entries.push({ label: "Steqdyy", preset: "Steqdyy" });
-    for (var i = entries.length; i < 54; i++) {
+    entries.push({ label: "Synapses_", preset: "Synapses_" });
+    entries.push({ label: "Gerglee", preset: "Gerglee" });
+    entries.push({ label: "Dappa", preset: "Dappa" });
+    entries.push({ label: "Seyer", preset: "Seyer" });
+    for (var i = entries.length; i < 60; i++) {
         entries.push({ label: "Available", available: false });
     }
     return entries;
@@ -16769,20 +16813,58 @@ function CreateSupportThanksPlaques(parent, entries, columns) {
 
         for (var c = 0; c < rowCount; c++) {
             var entry = entries[index + c];
-            var plaque = $.CreatePanel("Panel", rowInner, "");
+            var entryData = (typeof entry === "object" && entry) ? entry : { label: entry };
+            var plaque = $.CreatePanel(entryData.url ? "Button" : "Panel", rowInner, "");
             plaque.AddClass("PresetGridBtn");
             plaque.AddClass("PresetGridBtnBase");
             plaque.AddClass("SupportThanksPlaque");
             if (((index + c) % 2) === 1) plaque.AddClass("SupportThanksPlaqueAlt");
+            if (entryData.role) plaque.AddClass("SupportThanksPlaqueRole_" + entryData.role);
+            if (entryData.iconSrc) plaque.AddClass("SupportThanksPlaqueHasIcon");
+            if (entryData.url) {
+                plaque.AddClass("SupportThanksPlaqueClickable");
+                try { plaque.SetPanelEvent("onactivate", (function (url) {
+                    return function () {
+                        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (eSupportPlaqueClick0) {}
+                        try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (eSupportPlaqueClick1) {}
+                    };
+                })(entryData.url)); } catch (eSupportPlaqueClick) {}
+            }
 
-            var label = $.CreatePanel("Label", plaque, "");
-            label.text = entry;
+            var plaqueContent = $.CreatePanel("Panel", plaque, "");
+            plaqueContent.AddClass("SupportThanksPlaqueContent");
+
+            if (entryData.iconSrc) {
+                var icon = $.CreatePanel("Image", plaqueContent, "");
+                icon.AddClass("SupportThanksPlaqueIcon");
+                if (entryData.role) icon.AddClass("SupportThanksPlaqueIcon_" + entryData.role);
+                try { icon.SetImage(entryData.iconSrc); } catch (eSupportPlaqueIcon) {}
+            }
+
+            var label = $.CreatePanel("Label", plaqueContent, "");
+            label.text = entryData.label || "";
+            if (entryData.role) label.AddClass("SupportThanksPlaqueLabel_" + entryData.role);
         }
 
         index += rowCount;
     }
 
     return grid;
+}
+
+function CreateSupportThanksGroup(parent, title, entries, columns, roleClass) {
+    if (!parent || !Array.isArray(entries) || entries.length === 0) return null;
+    var group = $.CreatePanel("Panel", parent, "");
+    group.AddClass("SupportThanksGroup");
+    if (roleClass) group.AddClass(roleClass);
+
+    var groupTitle = $.CreatePanel("Label", group, "");
+    groupTitle.AddClass("SupportThanksGroupTitle");
+    if (roleClass) groupTitle.AddClass(roleClass + "Title");
+    groupTitle.text = LocalizeSettingsText(title || "", true);
+
+    group.thanksGrid = CreateSupportThanksPlaques(group, entries, columns || 4);
+    return group;
 }
 
 function NormalizeSearchText(value) {
@@ -17869,13 +17951,23 @@ function RenderCurrentTabContent(list) {
             }
         ];
 
-        for (var ctaRowIdx = 0; ctaRowIdx < ctaDefs.length; ctaRowIdx += 2) {
-            var supportCtaRow = $.CreatePanel("Panel", supportCtaGrid, "");
-            supportCtaRow.AddClass("SupportCtaRow");
-            for (var ctaIdx = ctaRowIdx; ctaIdx < Math.min(ctaRowIdx + 2, ctaDefs.length); ctaIdx++) {
+        for (var ctaIdx = 0; ctaIdx < ctaDefs.length; ctaIdx += 2) {
+            var ctaRow = $.CreatePanel("Panel", supportCtaGrid, "");
+            ctaRow.AddClass("SupportCtaRow");
+
+            for (var ctaColumn = 0; ctaColumn < 2 && (ctaIdx + ctaColumn) < ctaDefs.length; ctaColumn++) {
+                if (ctaColumn > 0) {
+                    var ctaGap = $.CreatePanel("Panel", ctaRow, "");
+                    ctaGap.AddClass("SupportCtaRowGap");
+                }
+
                 (function(def) {
-                    var ctaBtn = $.CreatePanel("Button", supportCtaRow, def.id);
+                    var ctaSlot = $.CreatePanel("Panel", ctaRow, "");
+                    ctaSlot.AddClass("SupportCtaBtnSlot");
+
+                    var ctaBtn = $.CreatePanel("Button", ctaSlot, def.id);
                     ctaBtn.AddClass("SupportCtaBtn");
+                    ctaBtn.AddClass("SupportCtaGridBtn");
                     if (def.primary) ctaBtn.AddClass("SupportCtaBtnPrimary");
 
                     var ctaContent = $.CreatePanel("Panel", ctaBtn, "");
@@ -17900,7 +17992,7 @@ function RenderCurrentTabContent(list) {
                     ctaBtnHint.text = LocalizeSettingsText(def.hint, true);
 
                     ctaBtn.SetPanelEvent("onactivate", def.onactivate);
-                })(ctaDefs[ctaIdx]);
+                })(ctaDefs[ctaIdx + ctaColumn]);
             }
         }
 
@@ -17910,47 +18002,49 @@ function RenderCurrentTabContent(list) {
         supportThanksBlock.AddClass("SupportTabCard");
         var supportThanksTitle = $.CreatePanel("Label", supportThanksBlock, "");
         supportThanksTitle.AddClass("SupportTabSectionTitle");
-        supportThanksTitle.text = LocalizeSettingsText("Special Thanks", true);
+        supportThanksTitle.text = "Credits";
         var supportThanksRule = $.CreatePanel("Panel", supportThanksBlock, "");
         supportThanksRule.AddClass("SupportThanksRule");
 
-        var supportThanksIntro = $.CreatePanel("Label", supportThanksBlock, "");
-        var supportThanksIntroText = LocalizeSettingsText("Without them QOL Lock would not be possible.", true);
-        supportThanksIntro.text = (supportThanksIntroText && supportThanksIntroText.endsWith(".")) ? supportThanksIntroText.slice(0, -1) : supportThanksIntroText;
-        supportThanksIntro.AddClass("SupportTabText");
-        supportThanksIntro.AddClass("SupportIntroBodyText");
-        supportThanksIntro.AddClass("ThanksMessage");
-        supportThanksIntro.AddClass("SupportThanksIntro");
-
-        var supportThanksRawLines = [
-            "bonclide - Gyzeh - Predi_i - Hanturaya - BreadRollius",
-            "Goblin Man Sam - RizoBoy - Fascilux - mikoboy",
-            "wouwei - bytenode - des_ - ninjabladejr",
-            "ArkanoidVFX - flameblast12 - Klutzz - somarotsaway - Emily Vasquez",
-            "Karma - Mo_Difier - QuicklyRemove",
-            "Milorime - Theran"
+        var supportThanksCreatorEntries = [
+            { label: "Civo", role: "Creator" }
         ];
-        var supportThanksNameSeen = {};
-        var supportThanksNames = [];
-        for (var lineIndex = 0; lineIndex < supportThanksRawLines.length; lineIndex++) {
-            var rawLine = supportThanksRawLines[lineIndex];
-            if (!rawLine) continue;
-            var rawNames = rawLine.split(" - ");
-            for (var nameIndex = 0; nameIndex < rawNames.length; nameIndex++) {
-                var name = rawNames[nameIndex] ? rawNames[nameIndex].trim() : "";
-                if (!name || supportThanksNameSeen[name]) continue;
-                supportThanksNameSeen[name] = true;
-                supportThanksNames.push(name);
-            }
+        var supportThanksContributorEntries = [
+            { label: "Bonclide", role: "Contributor", url: "https://gamebanana.com/members/2408486" },
+            { label: "BreadRollius", role: "Contributor", url: "https://gamebanana.com/members/4296197" },
+            { label: "Bytenode", role: "Contributor", url: "https://gamebanana.com/members/5222690" },
+            { label: "Hanturaya", role: "Contributor", url: "https://gamebanana.com/members/4577138" },
+            { label: "Predi_i", role: "Contributor", url: "https://gamebanana.com/members/5107678" },
+            { label: "RizoBoy", role: "Contributor", url: "https://gamebanana.com/members/4436032" },
+            { label: "Klutzz", role: "Contributor", url: "https://gamebanana.com/members/4745216" },
+            { label: "ArkanoidVFX", role: "Contributor", url: "https://gamebanana.com/members/1359230" },
+            { label: "Goblin Man Sam", role: "Contributor", url: "https://gamebanana.com/members/4762321" },
+            { label: "NinjabladeJR", role: "Contributor", url: "https://gamebanana.com/members/4779465" },
+            { label: "Mikoboy", role: "Contributor", url: "https://gamebanana.com/members/2814130" },
+            { label: "Wouwei", role: "Contributor", url: "https://gamebanana.com/members/4788864" },
+            { label: "Mo_Difier", role: "Contributor", url: "https://gamebanana.com/members/4795931" },
+            { label: "Flameblast12", role: "Contributor", url: "https://gamebanana.com/members/4789815" },
+            { label: "Fascilux", role: "Contributor", url: "https://gamebanana.com/members/4690723" },
+            { label: "Karma", role: "Contributor" },
+            { label: "Somarotsaway", role: "Contributor", url: "https://gamebanana.com/members/3961199" },
+            { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" }
+        ];
+        var supportThanksTranslatorEntries = [
+            { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex" },
+            { label: "QuicklyRemove", role: "Translator", iconSrc: "s2r://panorama/images/qollock/chinese.vtex" },
+            { label: "Gyzeh", role: "Translator", iconSrc: "s2r://panorama/images/qollock/french.vtex" },
+            { label: "Theran", role: "Translator", iconSrc: "s2r://panorama/images/qollock/brazil.vtex" },
+            { label: "Milorime", role: "Translator", iconSrc: "s2r://panorama/images/qollock/spanish.vtex" }
+        ];
+        var supportCreatorGroup = CreateSupportThanksGroup(supportThanksBlock, "Created By", supportThanksCreatorEntries, 1, "SupportThanksGroupCreator");
+        if (supportCreatorGroup) {
+            var creatorFooter = $.CreatePanel("Label", supportCreatorGroup, "");
+            creatorFooter.AddClass("SupportYoshiFooterText");
+            creatorFooter.AddClass("SupportCreatorFooterText");
+            creatorFooter.text = "yoshii pls hire me";
         }
-        CreateSupportThanksPlaques(supportThanksBlock, supportThanksNames, 4);
-
-        var supportFooter = $.CreatePanel("Panel", list, "SupportYoshiFooter");
-        supportFooter.AddClass("SupportYoshiFooter");
-        var supportFooterSubtext = $.CreatePanel("Label", supportFooter, "");
-        supportFooterSubtext.AddClass("SupportTabActionsSubtitle");
-        supportFooterSubtext.AddClass("SupportYoshiFooterText");
-        supportFooterSubtext.text = "yoshi pls hire me";
+        CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 5, "SupportThanksGroupContributor");
+        CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 5, "SupportThanksGroupTranslator");
     }
 }
 
@@ -18253,16 +18347,28 @@ function UpdateSettingsHeaderDragAreaBounds(headerPanel, dragHandleLeft, dragHan
         }
     }
 
-    var searchLeft = -1;
-    var searchWidth = 0;
+    var interactiveLeft = -1;
+    var interactiveRight = -1;
     var searchWrap = null;
     try { searchWrap = headerPanel.FindChildTraverse("SettingsSearchWrap"); } catch (e0) { searchWrap = null; }
     if (searchWrap && searchWrap.IsValid && searchWrap.IsValid()) {
         var searchX = GetPanelXOffsetWithinAncestor(searchWrap, headerPanel);
         var searchW = Number(searchWrap.actuallayoutwidth);
         if (isFinite(searchX) && searchX >= 0 && searchX <= headerWidth && isFinite(searchW) && searchW > 20 && searchW <= headerWidth) {
-            searchLeft = searchX;
-            searchWidth = searchW;
+            interactiveLeft = searchX;
+            interactiveRight = searchX + searchW;
+        }
+    }
+
+    var headerLink = null;
+    try { headerLink = headerPanel.FindChildTraverse("ModVersionLabelTop"); } catch (eHeaderLink0) { headerLink = null; }
+    if (headerLink && headerLink.IsValid && headerLink.IsValid()) {
+        var linkX = GetPanelXOffsetWithinAncestor(headerLink, headerPanel);
+        var linkW = Number(headerLink.actuallayoutwidth);
+        if (isFinite(linkX) && linkX >= 0 && linkX <= headerWidth && isFinite(linkW) && linkW > 20 && linkW <= headerWidth) {
+            if (interactiveLeft < 0 || linkX < interactiveLeft) interactiveLeft = linkX;
+            var linkRight = linkX + linkW;
+            if (interactiveRight < 0 || linkRight > interactiveRight) interactiveRight = linkRight;
         }
     }
 
@@ -18270,9 +18376,9 @@ function UpdateSettingsHeaderDragAreaBounds(headerPanel, dragHandleLeft, dragHan
     var leftWidth = 0;
     var rightX = 0;
     var rightWidth = 0;
-    if (searchLeft >= 0 && searchWidth > 0) {
-        leftWidth = Math.max(0, Math.floor(searchLeft - gapPx));
-        rightX = Math.min(headerWidth, Math.floor(searchLeft + searchWidth + gapPx));
+    if (interactiveLeft >= 0 && interactiveRight > interactiveLeft) {
+        leftWidth = Math.max(0, Math.floor(interactiveLeft - gapPx));
+        rightX = Math.min(headerWidth, Math.floor(interactiveRight + gapPx));
         var rightEnd = Math.max(rightX, Math.floor(closeLeft - 8));
         rightWidth = Math.max(0, rightEnd - rightX);
     } else {
@@ -18769,20 +18875,29 @@ $.BuildUI = function() {
             }
         }
         var headerVer = header.FindChildTraverse("ModVersionLabelTop");
-        if (!headerVer) {
-            headerVer = $.CreatePanel("Label", header, "ModVersionLabelTop");
-            headerVer.AddClass("VersionLabelStyle");
-            var closeBtn = header.FindChildTraverse("CloseBtn");
-            if (closeBtn) {
-                header.MoveChildBefore(headerVer, closeBtn);
-            }
+        if (headerVer) {
+            try { headerVer.DeleteAsync(0); } catch (eDeleteHeaderVer) {}
+            headerVer = null;
         }
-        headerVer.AddClass("HeaderByCivoLabel");
-        headerVer.text = "by civo";
-        headerVer.hittest = false;
-        headerVer.hittestchildren = false;
+        headerVer = $.CreatePanel("Button", header, "ModVersionLabelTop");
+        headerVer.AddClass("HeaderMoglockLinkButton");
         headerVer.visible = true;
         headerVer.style.visibility = "visible";
+        headerVer.hittest = true;
+        headerVer.hittestchildren = true;
+        headerVer.style.zIndex = "7";
+        try { headerVer.SetPanelEvent("onactivate", function () {
+            try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick1) {}
+            try { $.DispatchEvent("SteamOverlayOpenURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick2) {}
+        }); } catch (eHeaderMoglockClick) {}
+        var headerVerPrefix = $.CreatePanel("Label", headerVer, "ModVersionLabelTopPrefix");
+        headerVerPrefix.text = "by";
+        var headerVerDomain = $.CreatePanel("Label", headerVer, "ModVersionLabelTopDomain");
+        headerVerDomain.text = "moglock.gg";
+        var closeBtn = header.FindChildTraverse("CloseBtn");
+        if (closeBtn) {
+            header.MoveChildBefore(headerVer, closeBtn);
+        }
         var closeBtnHeader = header.FindChildTraverse("CloseBtn");
         if (closeBtnHeader) {
             var headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
@@ -18797,14 +18912,14 @@ $.BuildUI = function() {
             }
             headerCenterHost.style.zIndex = "4";
             header.MoveChildBefore(headerCenterHost, closeBtnHeader);
+            if (header.MoveChildBefore) {
+                try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (eMoveHeaderVerBack) {}
+            }
 
             if (searchWrapExisting && searchWrapExisting.IsValid && searchWrapExisting.IsValid()) {
                 if (searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {
                     searchWrapExisting.SetParent(headerCenterHost);
                 }
-            }
-            if (header.MoveChildBefore) {
-                try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (eMoveHeaderVer) {}
             }
             closeBtnHeader.style.horizontalAlign = "right";
             closeBtnHeader.style.verticalAlign = "center";
@@ -20037,5 +20152,5 @@ var DEPRECATED_SETTINGS_FOOTER_REGISTRY = {
 };
 
 
-EnsureOnDeathArcadeBridgePoller();
+SyncConfigFromStorage();
 StartHeroHintPublisher();

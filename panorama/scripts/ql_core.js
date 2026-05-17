@@ -51,6 +51,11 @@
         minimapRotateHeadingVelDegPerSec: 0,
         minimapRotateLastValidHeadingDeg: null,
         minimapRotateLastValidHeadingMs: 0,
+        minimapHeadingSnapshotMs: 0,
+        minimapHeadingSnapshotAggressive: false,
+        minimapHeadingSnapshotHeading: null,
+        minimapHeadingSnapshotPlayerPanel: null,
+        minimapHeadingSnapshotMainImage: null,
         minimapFlipClassCache: { panel: null, values: {} },
         minimapMinimalistOpacityApplied: false,
         compassEnabled: false,
@@ -66,6 +71,8 @@
         compassLastPosTimeMs: 0,
         compassSpeedSmoothed: null,
         compassSpeedDisplay: null,
+        compassTickClassSigs: [],
+        compassTickXTexts: [],
         lastConfig: null,
         zipBoostLastState: null,
         zipBoostReadyFlashUntilMs: 0,
@@ -77,6 +84,8 @@
         zipBoostNextSourceSearchMs: 0,
         imagesInChatTopNextSearchMs: 0,
         imagesInChatBottomNextSearchMs: 0,
+        imagesInChatTopIdleMisses: 0,
+        imagesInChatBottomIdleMisses: 0,
         unsecuredSoulsDisplayMode: "",
         unsecuredSoulsLastLayoutSig: "",
         unsecuredSoulsLastClassSig: "",
@@ -528,6 +537,10 @@
         perfLastCompassStartMs: 0,
         coreLoopTickSerial: 0,
         coreLoopPhaseLast: 0,
+        runtimeGateSig: "",
+        runtimeGates: null,
+        coreRootGateSig: "",
+        onDeathArcadeRuntimeWasActive: false,
         healthbarVisDebugLastSig: "",
         healthbarVisDebugNextMs: 0,
         loopErrorNextLogMs: 0,
@@ -607,6 +620,7 @@
     const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;
     const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;
     const COMPASS_INTERVAL_IDLE_SEC = 0.50;
+    const COMPASS_INTERVAL_DEEP_IDLE_SEC = 0.85;
     const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;
     const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;
     const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
@@ -682,7 +696,6 @@
         "#citadel_shopstats_boons",
         "boons"
     ];
-    const STAT_BONUSES_IDOL_COUNT_SEARCH_MS = 1000;
     const STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
     const STAT_BONUSES_ABILITY_COOLDOWN_IDS = [
         "StatContainer_TechCooldown",
@@ -715,14 +728,6 @@
         "StatContainer_BaseHealth",
         "StatContainer_ArmorPower"
     ];
-    const STAT_BONUSES_IDOL_COUNT_IDS = [
-        "PlayerLevelNumber",
-        "HeroLevelNumber",
-        "LevelAmount",
-        "PlayerLevelInfo",
-        "PlayerLevelContainer",
-        "gold_and_ap_container"
-    ];
     const ITEM_MIRROR_PROBE_SCAN_MS = 1630;
     const ITEM_MIRROR_PROBE_SCAN_MS_STABLE = 5270;
     const ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP = 500;
@@ -730,7 +735,6 @@
     const ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE = 50;
     const ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS = 80;
     const ITEM_MIRROR_ICON_BASE_SIZE_PX = 45;
-    const ITEM_MIRROR_COOLDOWN_END_TAIL_DEG = 1.75;
     const COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
     const COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
     const COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
@@ -746,23 +750,6 @@
     const ENEMY_COLORED_HEALTH_PULSE_COLOR = [225, 97, 97];
     const ENEMY_COLORED_HEALTH_PULSE_DARK_COLOR = [85, 28, 28];
     const ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
-    const ITEM_MIRROR_COOLDOWN_TEXT_HIDE_TAIL_DEG = 1.25;
-    const ITEM_MIRROR_COOLDOWN_END_DEBOUNCE_MS = 100;
-    const ITEM_MIRROR_COOLDOWN_TAIL_LOCK_DEG = 0.8;
-    const ITEM_MIRROR_COOLDOWN_TAIL_CLEAR_START_DEG = 20.0;
-    const ITEM_MIRROR_COOLDOWN_START_WARMUP_MS = 260;
-    const ITEM_MIRROR_COOLDOWN_EST_MIN_SAMPLES = 2;
-    const ITEM_MIRROR_COOLDOWN_TEXT_UPDATE_MIN_MS = 100;
-    const ITEM_MIRROR_COOLDOWN_START_STEP_WINDOW_MS = 650;
-    const ITEM_MIRROR_COOLDOWN_START_MAX_DROP_PER_UPDATE = 1;
-    const ITEM_MIRROR_COOLDOWN_PROBE_DIVERGENCE_INT = 2;
-    const ITEM_MIRROR_COOLDOWN_START_TEXT_LOCK_MS = 320;
-    const ITEM_MIRROR_COOLDOWN_START_REJECT_SMALL_PROBE_MS = 450;
-    const ITEM_MIRROR_COOLDOWN_START_REJECT_TINY_TEXT_MS = 520;
-    const ITEM_MIRROR_COOLDOWN_START_TINY_TEXT_MAX = 0.2;
-    const ITEM_MIRROR_COOLDOWN_START_MIN_VALID_PROBE = 0.8;
-    const ITEM_MIRROR_COOLDOWN_START_MIN_DEG_FOR_NEW_CYCLE = 20.0;
-    const ITEM_MIRROR_COOLDOWN_START_SUPPRESS_SUB1_MS = 1500;
     const ITEM_MIRROR_RAPID_RETRIGGER_WINDOW_MS = 1300;
     const ITEM_MIRROR_RAPID_RETRIGGER_SUPPRESS_MS = 900;
     const ITEM_MIRROR_READY_FLASH_COOLDOWN_MS = 140;
@@ -909,7 +896,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SETTINGS_LOADER_TRACE = false;
     const SETTINGS_LOADER_TRACE_THROTTLE_MS = 1000;
     const SETTINGS_LOADER_REASSERT_MS = 250;
-    const SETTINGS_LOADER_HOLD_MS = 2000;
+    const SETTINGS_LOADER_HOLD_MS = 0;
     const SETTINGS_LOADER_OVERLAY_ID = "QOLSettingsLoaderOverlay";
     const SETTINGS_LOADER_CARD_ID = "QOLSettingsLoaderCard";
     const SETTINGS_LOADER_WARNING_ID = "QOLSettingsLoaderWarning";
@@ -947,7 +934,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     const SAVE_SETTINGS_LOADER_ENABLED = true;
     const SAVE_SETTINGS_LOADER_REASSERT_MS = 250;
-    const SAVE_SETTINGS_LOADER_HOLD_MS = 2000;
+    const SAVE_SETTINGS_LOADER_HOLD_MS = 0;
     const SAVE_SETTINGS_LOADER_OVERLAY_ID = "QOLSaveSettingsLoaderOverlay";
     const SAVE_SETTINGS_LOADER_CARD_ID = "QOLSaveSettingsLoaderCard";
     const SAVE_SETTINGS_LOADER_WARNING_ID = "QOLSaveSettingsLoaderWarning";
@@ -972,7 +959,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     const CLEAR_SETTINGS_LOADER_ENABLED = true;
     const CLEAR_SETTINGS_LOADER_REASSERT_MS = 250;
-    const CLEAR_SETTINGS_LOADER_HOLD_MS = 2000;
+    const CLEAR_SETTINGS_LOADER_HOLD_MS = 0;
     const CLEAR_SETTINGS_LOADER_OVERLAY_ID = "QOLClearSettingsLoaderOverlay";
     const CLEAR_SETTINGS_LOADER_CARD_ID = "QOLClearSettingsLoaderCard";
     const CLEAR_SETTINGS_LOADER_WARNING_ID = "QOLClearSettingsLoaderWarning";
@@ -6096,6 +6083,18 @@ function GetUIRoot() {
         ResetFgHeroImageOriginalParentState();
     }
 
+    function NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled) {
+        var shouldRunMinimalistRuntime =
+            minimalistHealthbarEnabled ||
+            HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
+            State.minimalistHealthbarOffsetApplied ||
+            State.playerHealthbarScaleOpacityRuntimeApplied;
+        if (shouldRunMinimalistRuntime) return true;
+        if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
+        if ((Number(healthbarType) === 5) || State.mcWasEnabled) return true;
+        return false;
+    }
+
     function UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled) {
         var shouldRunMinimalistRuntime =
             minimalistHealthbarEnabled ||
@@ -6121,6 +6120,20 @@ function GetUIRoot() {
         if (!IsPanelValid(panel)) return;
         try { panel.style.x = "0px"; } catch (e0) {}
         try { panel.style.y = "0px"; } catch (e1) {}
+    }
+
+    function NeedsDamageReportOffsetWork(cfg) {
+        if (!cfg) return false;
+        var offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
+        var offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
+        if (!isFinite(offsetX)) offsetX = 0;
+        if (!isFinite(offsetY)) offsetY = 0;
+        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
+        return !!(
+            State.damageReportOffsetApplied ||
+            State.damageReportOffsetSig ||
+            IsPanelValid(State.damageReportOffsetPanel)
+        );
     }
 
     function SyncLegacyCooldownsUiFlag(enabled) {
@@ -6264,9 +6277,15 @@ function GetUIRoot() {
         damageReportPanel.style.x = String(offsetX) + "px";
         damageReportPanel.style.y = String(-offsetY) + "px";
 
-        State.damageReportOffsetSig = styleSig;
-        State.damageReportOffsetApplied = true;
-        State.damageReportOffsetPanel = damageReportPanel;
+        if (offsetX === 0 && offsetY === 0) {
+            State.damageReportOffsetSig = "";
+            State.damageReportOffsetApplied = false;
+            State.damageReportOffsetPanel = null;
+        } else {
+            State.damageReportOffsetSig = styleSig;
+            State.damageReportOffsetApplied = true;
+            State.damageReportOffsetPanel = damageReportPanel;
+        }
     }
 
     function IsStreetBrawlModeActive(root) {
@@ -6321,32 +6340,12 @@ function GetUIRoot() {
         State.itemMirrorClassCache[cacheKey] = tokens;
     }
 
-    function CopyStyleProps(sourcePanel, targetPanel, props) {
-        if (!sourcePanel || !targetPanel || !props) return;
-        for (var i = 0; i < props.length; i++) {
-            var prop = props[i];
-            var val = sourcePanel.style[prop];
-            if (val === undefined || val === null || val === "") continue;
-            try {
-                targetPanel.style[prop] = val;
-            } catch (e) {}
-        }
-    }
-
     function GetInlineStyleProperty(panel, propName) {
         if (!panel || !panel.GetAttributeString || !propName) return "";
         var styleText = panel.GetAttributeString("style", "");
         if (!styleText || styleText.length === 0) return "";
         var match = new RegExp(propName + "\\s*:\\s*([^;]+)", "i").exec(styleText);
         return match && match[1] ? match[1].trim() : "";
-    }
-
-    function ExtractStyleSizePx(panel, propName) {
-        if (!panel || !propName) return "";
-        var inline = GetInlineStyleProperty(panel, propName);
-        if (inline && inline.length > 0) return inline;
-        if (panel.style && panel.style[propName]) return panel.style[propName];
-        return "";
     }
 
     function ResolveMirrorItemSize(sourceIcon, sourceMod) {
@@ -6431,49 +6430,6 @@ function GetUIRoot() {
         // Keep sub-1s smooth.
         var rounded = Math.round(sec * 10) / 10;
         return rounded.toFixed(1);
-    }
-
-    function StabilizeItemMirrorCooldownText(slotState, rawText, nowMs) {
-        if (!slotState || !rawText || typeof rawText !== "string") return rawText || "";
-        var normalized = NormalizeCooldownNumberText(rawText);
-        if (!normalized || normalized.length === 0) return rawText;
-
-        var value = parseFloat(normalized);
-        if (!isFinite(value) || value <= 0) return "";
-
-        var prevValue = slotState.cdLastDisplayNum;
-        var prevMs = Number(slotState.cdLastDisplayMs || 0);
-        if (prevValue !== null && isFinite(prevValue) && prevMs > 0 && nowMs > prevMs) {
-            var dtMs = nowMs - prevMs;
-            // During an active cooldown, display should not rise.
-            if (value > prevValue) value = prevValue;
-
-            // Rate-limit drops to avoid large visual jumps (e.g. 12 -> 9 in one tick).
-            if (dtMs < 2500) {
-                var maxDrop = (value >= 1 && prevValue >= 1)
-                    ? Math.max(1, Math.floor(dtMs / 1000))
-                    : Math.max(0.1, Math.floor(dtMs / 100) / 10);
-                var minAllowed = prevValue - maxDrop;
-                if (value < minAllowed) value = minAllowed;
-            }
-        }
-
-        var outText = rawText;
-        if (value >= 1) {
-            var intVal = Math.ceil(value);
-            if (prevValue !== null && isFinite(prevValue) && prevValue >= 1) {
-                var prevInt = Math.ceil(prevValue);
-                if (intVal > prevInt) intVal = prevInt;
-            }
-            outText = String(intVal);
-            slotState.cdLastDisplayNum = intVal;
-        } else {
-            value = Math.round(value * 10) / 10;
-            outText = value.toFixed(1);
-            slotState.cdLastDisplayNum = value;
-        }
-        slotState.cdLastDisplayMs = nowMs;
-        return outText;
     }
 
     function ResetReloadCooldownEstimate() {
@@ -6673,6 +6629,7 @@ function GetUIRoot() {
         var hideReloadCircleEnabled = !!(cfg && Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1);
         if (!hideReloadCircleEnabled) {
             SetPanelClassCached(root, State.rootClassCache, "hide_reload_circle_exception_active", false);
+            State.cachedPanels.activeReloadProgressBar = null;
             return;
         }
 
@@ -6718,35 +6675,6 @@ function GetUIRoot() {
         var hud = root.FindChildTraverse("Hud");
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
         return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout");
-    }
-
-    function GetCurrentMapNameLower() {
-        try {
-            if (typeof Game !== "undefined" && Game.GetMapInfo) {
-                var mapInfo = Game.GetMapInfo() || null;
-                var rawName = "";
-                if (mapInfo) {
-                    rawName = mapInfo.map_display_name || mapInfo.map_name || mapInfo.name || "";
-                }
-                rawName = String(rawName || "").trim().toLowerCase();
-                if (rawName.length > 0) return rawName;
-            }
-        } catch (e0) {}
-        return "";
-    }
-
-    function IsHideoutMapName(mapNameLower) {
-        var name = String(mapNameLower || "").trim().toLowerCase();
-        if (!name) return false;
-        if (name === "hero_testing_hideout" || name === "hideout" || name === "dl_hideout") return true;
-        return name.indexOf("hideout") !== -1;
-    }
-
-    function HasGameStateClassToken(panel) {
-        if (!panel || !panel.GetAttributeString) return false;
-        var classAttr = String(panel.GetAttributeString("class", "") || "");
-        if (!classAttr) return false;
-        return /\bGameState[A-Za-z0-9_]+\b/.test(classAttr);
     }
 
     function IsStartupLoaderInActiveMatchContext(root) {
@@ -6800,33 +6728,6 @@ function GetUIRoot() {
         return false;
     }
 
-    function ParseUrnScoreNumber(text) {
-        if (text === undefined || text === null) return null;
-        var s = String(text).replace(/,/g, "").trim();
-        if (s.length === 0) return null;
-        var m = s.match(/^([0-9]*\.?[0-9]+)\s*([A-Za-z.]+)?$/);
-        if (!m) return null;
-        var val = parseFloat(m[1]);
-        if (!isFinite(val)) return null;
-        var suf = String(m[2] || "").toLowerCase().replace(/\./g, "");
-        if (
-            suf === "k" ||
-            suf === "tsd" ||
-            suf === "tys" ||
-            suf === "tis" ||
-            suf === "t"
-        ) {
-            val *= 1000;
-        } else if (suf === "m" || suf === "mil") {
-            val *= 1000000;
-        } else if (suf === "b" || suf === "bin") {
-            val *= 1000000000;
-        } else if (suf.length > 0) {
-            return null;
-        }
-        return Math.round(val);
-    }
-
     function ParseClockSeconds(text) {
         if (!text || typeof text !== "string") return 0;
         var m = text.match(/(\d+):(\d{1,2})/);
@@ -6862,17 +6763,6 @@ function GetUIRoot() {
             return ParseClockSeconds(gameTimePanel.text);
         }
         return 0;
-    }
-
-    function FindFirstScoreLabelInTeamPanel(teamPanel) {
-        if (!teamPanel || !teamPanel.FindChildrenWithClassTraverse) return null;
-        var labels = teamPanel.FindChildrenWithClassTraverse("ScoreLabel") || [];
-        for (var i = 0; i < labels.length; i++) {
-            var label = labels[i];
-            if (!IsPanelValid(label)) continue;
-            return label;
-        }
-        return null;
     }
 
     function RefreshUrnTrackerScoreCache(root, nowMs) {
@@ -6937,62 +6827,6 @@ function GetUIRoot() {
             if (isFinite(v)) total += v;
         }
         return total;
-    }
-
-    function GetUrnIdolSpawnButtons(root, forceRescan) {
-        var cached = Array.isArray(State.cachedPanels.urnTrackerIdolButtons) ? State.cachedPanels.urnTrackerIdolButtons : null;
-        var needsRescan = !!forceRescan;
-        if (!needsRescan) {
-            if (!cached || cached.length <= 0) {
-                needsRescan = true;
-            } else {
-                for (var i = 0; i < cached.length; i++) {
-                    if (!IsPanelValid(cached[i])) {
-                        needsRescan = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!needsRescan) return cached || [];
-
-        var found = [];
-        if (root && root.FindChildrenWithClassTraverse) {
-            var candidates = root.FindChildrenWithClassTraverse("idol_spawn") || [];
-            for (var ci = 0; ci < candidates.length; ci++) {
-                var panel = candidates[ci];
-                if (!IsPanelValid(panel)) continue;
-                if (panel.BHasClass && !panel.BHasClass("map_button")) continue;
-                found.push(panel);
-            }
-        }
-        State.cachedPanels.urnTrackerIdolButtons = found;
-        return found;
-    }
-
-    function ApplyUrnIdolSpawnWash(root, moodClass) {
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var mood = (moodClass === "good" || moodClass === "bad") ? moodClass : "neutral";
-        var targetWash = "none";
-        if (mood === "good") targetWash = "#CD5C5C";
-        else if (mood === "bad") targetWash = "#00FF7F";
-
-        var moodChanged = (State.urnTrackerLastIdolMood !== mood);
-        var shouldRescan = moodChanged || (nowMs >= (State.urnTrackerIdolNextScanMs || 0));
-        var panels = GetUrnIdolSpawnButtons(root, shouldRescan);
-        if (shouldRescan) {
-            State.urnTrackerIdolNextScanMs = nowMs + 2000;
-        }
-
-        if (!moodChanged && !shouldRescan) return;
-        for (var i = 0; i < panels.length; i++) {
-            var panel = panels[i];
-            if (!IsPanelValid(panel) || !panel.style) continue;
-            if (panel.style.washColor !== targetWash) {
-                panel.style.washColor = targetWash;
-            }
-        }
-        State.urnTrackerLastIdolMood = mood;
     }
 
     function EnsureUrnTrackerOverlay(root) {
@@ -7191,6 +7025,14 @@ function GetUIRoot() {
         }
     }
 
+    function NeedsUrnTrackerRuntimeWork(cfg) {
+        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) return true;
+        return !!(
+            State.urnTrackerDisplayMode === "active" ||
+            (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
+        );
+    }
+
     function EnsureSpmState() {
         if (!State.spmPlayerHistory || !State.spmTeamHistory) {
             var histories = [];
@@ -7322,18 +7164,6 @@ function GetUIRoot() {
         return sign + text + "k";
     }
 
-    function GetSoulValueFromTopBarPlayerPanel(panel) {
-        if (!panel) return 0;
-        var soulValue = 0;
-        var hiddenGoldLabel = panel.FindChildTraverse ? panel.FindChildTraverse("HiddenGoldValue") : null;
-        if (hiddenGoldLabel && hiddenGoldLabel.text) soulValue = ParseSpmNumber(hiddenGoldLabel.text);
-        if (soulValue === 0) {
-            var soulsLabel = panel.FindChildTraverse ? panel.FindChildTraverse("SoulsValue") : null;
-            if (soulsLabel && soulsLabel.text) soulValue = ParseSpmNumber(soulsLabel.text);
-        }
-        return soulValue;
-    }
-
     function GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel) {
         var soulValue = 0;
         if (hiddenGoldLabel && hiddenGoldLabel.text) soulValue = ParseSpmNumber(hiddenGoldLabel.text);
@@ -7421,13 +7251,6 @@ function GetUIRoot() {
             SetPanelClassIfChanged(label, "isTeam1", isTeam1);
             SetPanelClassIfChanged(label, "isTeam2", !isTeam1);
         }
-    }
-
-    function IsSpmPanelCacheValid() {
-        if (!IsPanelValid(State.spmCachedFriendlyScore) || !IsPanelValid(State.spmCachedEnemyScore)) return false;
-        if (!IsPanelValid(State.spmCachedFriendlyLabel) || !IsPanelValid(State.spmCachedEnemyLabel)) return false;
-        if (!State.spmPlayerPanels || !State.spmPlayerDisplayLabels || !State.spmPlayerTeamByIndex) return false;
-        return true;
     }
 
     function RefreshSpmPlayerSlotCache(root, index) {
@@ -10138,6 +9961,17 @@ function GetUIRoot() {
         return style.scaleText !== defaultStyle.scaleText || style.opacityText !== defaultStyle.opacityText;
     }
 
+    function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
+        if (!!redDiamondEnabled) return true;
+        if (IsUnitTargetStyleCustomized(cfg)) return true;
+        return !!(
+            State.targetShapeHadNonDefaultRuntime ||
+            State.targetShapeStyleSig ||
+            State.nextTargetShapeRefreshMs ||
+            (State.targetShapesCache && State.targetShapesCache.length > 0)
+        );
+    }
+
     function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint) {
         function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
             if (!TARGET_SHAPE_DEBUG) return;
@@ -10168,6 +10002,9 @@ function GetUIRoot() {
         // Default style should be fully idle unless we need one restore pass
         // after leaving customized/red-diamond runtime.
         if (isDefaultUnitTargetStyle && !needsCleanupPass) {
+            State.targetShapesCache = [];
+            State.targetShapeStyleSig = "";
+            State.nextTargetShapeRefreshMs = 0;
             TargetShapeDebugLogThrottled(
                 "default_skip",
                 "default_skip scale=" + scaleText + " opacity=" + opacityText + " red=0",
@@ -18574,10 +18411,36 @@ function GetUIRoot() {
                     resetMainPanel.style.marginLeft = "0px";
                     resetMainPanel.style.marginRight = "0px";
                     resetMainPanel.style.x = "0px";
-                    State.heroShopMainPanelMarginSig = resetSig;
                 }
             }
+            State.cachedPanels.heroShop = null;
+            State.cachedPanels.heroShopMainPanel = null;
+            State.heroShopMainPanelMarginSig = "";
         }
+    }
+
+    function ResolveDamageNumbersRuntimeSig(cfg) {
+        var rawOpacity = cfg ? cfg.DAMAGE_NUMBER_OPACITY : null;
+        var indicatorOpacity = (rawOpacity === undefined || rawOpacity === null) ? 1.0 : parseFloat(rawOpacity);
+        if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
+        if (indicatorOpacity < 0) indicatorOpacity = 0;
+        if (indicatorOpacity > 1) indicatorOpacity = 1;
+        var rawSize = cfg ? cfg.HUD_INDICATOR_SIZE : null;
+        var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
+        if (!isFinite(indicatorSize)) indicatorSize = 18;
+        var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
+        var hideTrooperDamage = (cfg && cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
+        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (hideTrooperDamage ? "1" : "0");
+    }
+
+    function NeedsDamageNumbersRuntimeWork(cfg, raw) {
+        var sig = ResolveDamageNumbersRuntimeSig(cfg);
+        var defaultSig = "18|1.00|0|0";
+        if (sig !== defaultSig) return true;
+        if (State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
+        if (State.accountPresetTestActive) return true;
+        if (raw !== State.lastRawConfig && State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
+        return false;
     }
 
     function UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop) {
@@ -18669,6 +18532,19 @@ function GetUIRoot() {
             State.lastIndicatorHideModesSig = hideModesSig;
             RuntimeTaskSetDelay("hud_indicator_refresh", nowMsLoop, indicatorRefreshIntervalMs);
         }
+    }
+
+    function NeedsMinimapRuntimeWork(cfg, raw) {
+        if (!cfg) return false;
+        if (raw !== State.lastRawConfig || State.accountPresetTestActive || State.lastZoomState === null) return true;
+        if (State.minimapDrawOverUiActive || State.minimapMinimalistOpacityApplied) return true;
+        if (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1) return true;
+        if (Number(cfg.MINIMAL_MINIMAP) === 1) return true;
+        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400) !== 400) return true;
+        if (Number(cfg.MINIMAP_BASE_OPACITY) !== 1) return true;
+        if (Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0) !== 0) return true;
+        if (Math.round(Number(cfg.MINIMAP_Y_OFFSET) || 0) !== 0) return true;
+        return false;
     }
 
     function UpdateMinimapRuntime(root, cfg, raw) {
@@ -19089,24 +18965,6 @@ function GetUIRoot() {
             guard++;
         }
         if (p !== ancestor) return null;
-        return { x: x, y: y };
-    }
-
-    function GetPanelPositionInWindow(panel) {
-        if (!panel) return null;
-        var x = 0;
-        var y = 0;
-        var p = panel;
-        var guard = 0;
-        while (p && guard < 128) {
-            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
-            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
-            if (ox === null || oy === null) return null;
-            x += ox;
-            y += oy;
-            try { p = p.GetParent ? p.GetParent() : null; } catch (e0) { p = null; }
-            guard++;
-        }
         return { x: x, y: y };
     }
 
@@ -19751,119 +19609,6 @@ function GetUIRoot() {
             for (var k = 0; k < kids.length; k++) queue.push(kids[k]);
         }
         return "";
-    }
-
-    function ParseIntegerFromText(text) {
-        if (text === undefined || text === null) return null;
-        var raw = String(text).trim();
-        if (!raw || raw.length === 0) return null;
-        var m = raw.match(/([+\-]?\d+)/);
-        if (!m || !m[1]) return null;
-        var value = parseInt(m[1], 10);
-        if (!isFinite(value)) return null;
-        return value;
-    }
-
-    function FindFirstIntegerInTree(panel, maxNodes) {
-        if (!panel || !panel.Children) return null;
-        var queue = [panel];
-        var visited = 0;
-        var limit = Math.max(10, Number(maxNodes) || 80);
-        while (queue.length > 0 && visited < limit) {
-            var current = queue.shift();
-            visited++;
-            if (!current) continue;
-            if (typeof current.text === "string") {
-                var parsed = ParseIntegerFromText(current.text);
-                if (parsed !== null) return parsed;
-            }
-            var kids = current.Children ? current.Children() : [];
-            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
-        }
-        return null;
-    }
-
-    function GetIdolCountFromPanel(panel) {
-        if (!panel) return 0;
-        var direct = (typeof panel.text === "string") ? ParseIntegerFromText(panel.text) : null;
-        if (direct !== null) return Math.max(0, direct);
-        var nested = FindFirstIntegerInTree(panel, 120);
-        if (nested !== null) return Math.max(0, nested);
-        return 0;
-    }
-
-    function ResolveStatBonusesIdolCount(root, nowMs) {
-        var cached = State.cachedPanels.statBonusesIdolCountSource;
-        if (cached && (!cached.IsValid || cached.IsValid())) {
-            return GetIdolCountFromPanel(cached);
-        }
-        if (nowMs < (State.statBonusesNextIdolCountSearchMs || 0)) {
-            return 0;
-        }
-
-        var source = null;
-        for (var i = 0; i < STAT_BONUSES_IDOL_COUNT_IDS.length; i++) {
-            var candidateId = STAT_BONUSES_IDOL_COUNT_IDS[i];
-            if (!candidateId || !root.FindChildTraverse) continue;
-            var panelById = root.FindChildTraverse(candidateId);
-            if (!panelById) continue;
-            var countFromId = GetIdolCountFromPanel(panelById);
-            if (countFromId > 0) {
-                source = panelById;
-                break;
-            }
-            if (!source) source = panelById;
-        }
-
-        if (!source) {
-            var classCandidates = [
-                "PlayerLevelContainer",
-                "PlayerLevel",
-                "RewardLabel"
-            ];
-            for (var c = 0; c < classCandidates.length; c++) {
-                var panelByClass = FindFirstPanelByClass(root, classCandidates[c]);
-                if (!panelByClass) continue;
-                var countFromClass = GetIdolCountFromPanel(panelByClass);
-                if (countFromClass > 0) {
-                    source = panelByClass;
-                    break;
-                }
-                if (!source) source = panelByClass;
-            }
-        }
-
-        State.cachedPanels.statBonusesIdolCountSource = source || null;
-        State.statBonusesNextIdolCountSearchMs = source ? 0 : (nowMs + STAT_BONUSES_IDOL_COUNT_SEARCH_MS);
-        return source ? GetIdolCountFromPanel(source) : 0;
-    }
-
-    function ConvertStatTokenToPerIdol(token, idolCount) {
-        if (idolCount <= 0) return token;
-        if (!token || token === "--") return token;
-        var raw = String(token).trim();
-        var m = raw.match(/^([+\-]?)(\d+(?:\.\d+)?)(%?)$/);
-        if (!m) return token;
-
-        var prefix = m[1] || "";
-        var value = parseFloat(m[2]);
-        var suffix = m[3] || "";
-        if (!isFinite(value)) return token;
-        if (prefix === "-") value = -value;
-
-        var perIdol = value / idolCount;
-        if (!isFinite(perIdol)) return token;
-
-        var absVal = Math.abs(perIdol);
-        var decimals = 2;
-        if (absVal >= 100) decimals = 0;
-        else if (absVal >= 10) decimals = 1;
-        var rounded = perIdol.toFixed(decimals).replace(/\.?0+$/, "");
-        if (rounded === "-0") rounded = "0";
-        if (perIdol > 0 && prefix === "+" && rounded.charAt(0) !== "+") {
-            rounded = "+" + rounded;
-        }
-        return rounded + suffix;
     }
 
     function ResolveStatBonusesSource(root, cacheKey, candidateIds, nowMs) {
@@ -23746,6 +23491,8 @@ function GetUIRoot() {
                 }
             }
             State.cachedPanels.compassTicks = ticks;
+            State.compassTickClassSigs = [];
+            State.compassTickXTexts = [];
         }
 
         return compassRoot;
@@ -23856,19 +23603,47 @@ function GetUIRoot() {
         return delta;
     }
 
+    function CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) {
+        var now = Number(nowMs) || 0;
+        if (now <= 0 || State.minimapHeadingSnapshotMs !== now) return false;
+        return !!State.minimapHeadingSnapshotAggressive || aggressiveScan !== true;
+    }
+
+    function StoreMinimapHeadingSnapshot(nowMs, aggressiveScan, mainImage, playerPanel, heading) {
+        State.minimapHeadingSnapshotMs = Number(nowMs) || 0;
+        State.minimapHeadingSnapshotAggressive = aggressiveScan === true;
+        State.minimapHeadingSnapshotMainImage = IsPanelValid(mainImage) ? mainImage : null;
+        State.minimapHeadingSnapshotPlayerPanel = IsPanelValid(playerPanel) ? playerPanel : null;
+        State.minimapHeadingSnapshotHeading = heading;
+    }
+
     function GetLocalPlayerHeadingDegrees(root, nowMs, aggressiveScan) {
+        if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan)) {
+            return State.minimapHeadingSnapshotHeading;
+        }
         var mainImage = FindLocalMinimapMainImage(root, nowMs, aggressiveScan === true);
         var heading = ReadPanelHeadingDegrees(mainImage);
-        if (heading !== null) return heading;
+        var playerPanel = IsPanelValid(State.cachedPanels.minimapLocalPlayerPanel) ? State.cachedPanels.minimapLocalPlayerPanel : null;
+        if (heading !== null) {
+            StoreMinimapHeadingSnapshot(nowMs, aggressiveScan === true, mainImage, playerPanel, heading);
+            return heading;
+        }
 
-        var playerPanel = FindLocalMinimapPlayerPanel(root, nowMs, aggressiveScan === true);
+        playerPanel = FindLocalMinimapPlayerPanel(root, nowMs, aggressiveScan === true);
         heading = ReadPanelHeadingDegrees(playerPanel);
-        if (heading !== null) return heading;
+        if (heading !== null) {
+            StoreMinimapHeadingSnapshot(nowMs, aggressiveScan === true, mainImage, playerPanel, heading);
+            return heading;
+        }
 
+        StoreMinimapHeadingSnapshot(nowMs, aggressiveScan === true, mainImage, playerPanel, null);
         return null;
     }
 
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
+        if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
+            return State.minimapHeadingSnapshotMainImage;
+        }
         var cached = State.cachedPanels.minimapLocalMainImage;
         if (cached && (!cached.IsValid || cached.IsValid())) {
             var parent = cached.GetParent ? cached.GetParent() : null;
@@ -23912,6 +23687,9 @@ function GetUIRoot() {
     }
 
     function FindLocalMinimapPlayerPanel(root, nowMs, aggressiveScan) {
+        if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotPlayerPanel)) {
+            return State.minimapHeadingSnapshotPlayerPanel;
+        }
         var cached = State.cachedPanels.minimapLocalPlayerPanel;
         if (cached && (!cached.IsValid || cached.IsValid())) {
             if (PanelHasAllClasses(cached, ["active", "player", "client_cone_fov", "enemy"]) ||
@@ -24033,9 +23811,10 @@ function GetUIRoot() {
         ResetMinimapRotateTracking(nowMs, roundedDeg);
     }
 
-    function UpdateMinimapRotateWithPlayer(root, cfg) {
+    function UpdateMinimapRotateWithPlayer(root, cfg, nowMsHint) {
         if (!root || !cfg) return;
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        var nowMs = Number(nowMsHint);
+        if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
         var enabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
         var staticFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
@@ -24300,16 +24079,23 @@ function GetUIRoot() {
             var isMajor45 = (tickStepIndex % 2) === 0;
             var isCardinal = (tickStepIndex % 4) === 0;
 
-            tick.SetHasClass("Major", isMajor45);
-            tick.SetHasClass("Cardinal", isCardinal);
-
             var tickWidth = isCardinal ? 3 : 2;
             var baseTickHeight = isCardinal ? 34 : (isMajor45 ? 24 : 16);
             var tickHeight = Math.max(4, Math.round(baseTickHeight * stretchY));
+            var classSig = (isMajor45 ? "1" : "0") + "|" + (isCardinal ? "1" : "0") + "|" + String(tickHeight);
+            if (State.compassTickClassSigs[i] !== classSig) {
+                tick.SetHasClass("Major", isMajor45);
+                tick.SetHasClass("Cardinal", isCardinal);
+                tick.style.height = tickHeight + "px";
+                State.compassTickClassSigs[i] = classSig;
+            }
 
             var x = (halfWidth - (tickWidth * 0.5)) + ((rel - frac) * spacing);
-            tick.style.x = x.toFixed(2) + "px";
-            tick.style.height = tickHeight + "px";
+            var xText = x.toFixed(2) + "px";
+            if (State.compassTickXTexts[i] !== xText) {
+                tick.style.x = xText;
+                State.compassTickXTexts[i] = xText;
+            }
         }
     }
 
@@ -24320,9 +24106,11 @@ function GetUIRoot() {
         State.compassLastPosTimeMs = 0;
         State.compassSpeedSmoothed = null;
         State.compassSpeedDisplay = null;
+        State.compassTickClassSigs = [];
+        State.compassTickXTexts = [];
     }
 
-    function UpdateCompassOverlay(root) {
+    function UpdateCompassOverlay(root, nowMsHint) {
         if (!IsCustomHudContextActive(root)) {
             var existing = State.cachedPanels.compassRoot;
             if ((!existing || (existing.IsValid && !existing.IsValid())) && root && root.FindChildTraverse) {
@@ -24330,7 +24118,7 @@ function GetUIRoot() {
                 State.cachedPanels.compassRoot = existing || null;
             }
             if (existing && (!existing.IsValid || existing.IsValid())) {
-                existing.style.visibility = "collapse";
+                if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
             }
             ResetCompassRuntimeState();
             return;
@@ -24339,18 +24127,18 @@ function GetUIRoot() {
         if (!compassRoot) return;
 
         if (!State.compassEnabled) {
-            compassRoot.style.visibility = "collapse";
+            if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
         if (isConnectedToHideout(root)) {
-            compassRoot.style.visibility = "collapse";
+            if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
-        compassRoot.style.visibility = "visible";
+        if (compassRoot.style.visibility !== "visible") compassRoot.style.visibility = "visible";
         var scale = Number(State.compassScale);
         if (!isFinite(scale)) scale = 100;
         if (scale < 50) scale = 50;
@@ -24375,10 +24163,13 @@ function GetUIRoot() {
         var compassBaselineY = Number(DEFAULT_CONFIG.COMPASS_Y_OFFSET);
         if (!isFinite(compassBaselineY)) compassBaselineY = 120;
         var appliedCompassOffsetY = (2 * compassBaselineY) - offsetY;
-        compassRoot.style.marginTop = Math.round(appliedCompassOffsetY) + "px";
-        compassRoot.style.marginLeft = Math.round(offsetX) + "px";
+        var marginTopText = Math.round(appliedCompassOffsetY) + "px";
+        var marginLeftText = Math.round(offsetX) + "px";
+        if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
+        if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
         var uniformScale = (scale / 100).toFixed(3);
-        compassRoot.style.preTransformScale2d = uniformScale + ", " + uniformScale;
+        var scaleText = uniformScale + ", " + uniformScale;
+        if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
 
         var compassBox = State.cachedPanels.compassBox;
         if (!compassBox || (compassBox.IsValid && !compassBox.IsValid())) {
@@ -24389,10 +24180,12 @@ function GetUIRoot() {
         var boxHeight = Math.round(50 * (stretchY / 100));
         if (boxWidth < 100) boxWidth = 100;
         if (boxHeight < 25) boxHeight = 25;
-        compassRoot.style.width = boxWidth + "px";
+        var boxWidthText = boxWidth + "px";
+        var boxHeightText = boxHeight + "px";
+        if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
         if (compassBox) {
-            compassBox.style.width = boxWidth + "px";
-            compassBox.style.height = boxHeight + "px";
+            if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
+            if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
         }
 
         var degreeLabel = State.cachedPanels.compassDegree;
@@ -24407,15 +24200,17 @@ function GetUIRoot() {
         }
         var showSpeed = (State.compassShowSpeed !== false);
         if (speedLabel) {
-            speedLabel.style.visibility = showSpeed ? "visible" : "collapse";
-            if (!showSpeed) speedLabel.text = "";
+            var speedVisibility = showSpeed ? "visible" : "collapse";
+            if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
+            if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
 
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        var nowMs = Number(nowMsHint);
+        if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
         if (heading360 === null) {
-            if (degreeLabel) degreeLabel.text = "N/A";
-            if (showSpeed && speedLabel) speedLabel.text = "--";
+            if (degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
+            if (showSpeed && speedLabel && speedLabel.text !== "--") speedLabel.text = "--";
             return;
         }
 
@@ -24493,7 +24288,7 @@ function GetUIRoot() {
             speedValueText = String(quantized);
         }
         if (speedLabel) {
-            speedLabel.text = speedValueText;
+            if (speedLabel.text !== speedValueText) speedLabel.text = speedValueText;
         }
     }
 
@@ -24517,7 +24312,9 @@ function GetUIRoot() {
             }
             var itemMirrorEnabled = false;
             var itemMirrorRuntimeActive = false;
+            var hasCompassRuntimeWork = false;
             if (root) {
+                var nowMsCompassLoop = Date.now ? Date.now() : (new Date()).getTime();
                 var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
                 var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
                 var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
@@ -24528,40 +24325,45 @@ function GetUIRoot() {
                 var perfSection = 0;
 
                 if (compassEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
-                    UpdateCompassOverlay(root);
+                    UpdateCompassOverlay(root, nowMsCompassLoop);
                     PerfEnd("compass.overlay", perfSection);
                 }
 
                 if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
-                    UpdateMinimapRotateWithPlayer(root, cfg);
+                    UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
                     PerfEnd("compass.minimap_rotate", perfSection);
                 }
 
                 if (itemMirrorRuntimeActive) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
                     UpdateItemMirrorProbe(root, cfg);
                     PerfEnd("compass.item_mirror", perfSection);
                 }
 
                 if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
                     UpdateReloadCooldownOverlay(root, cfg);
                     PerfEnd("compass.reload_cd", perfSection);
                 }
 
                 if (ultCooldownEnabled) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
                     UpdateUltimateCooldownOverlay(root, cfg);
                     PerfEnd("compass.ult_cd", perfSection);
                 }
 
                 if (unitTargetFastMode) {
+                    hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
-                    var nowMsUnitTarget = Date.now ? Date.now() : (new Date()).getTime();
                     var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                    ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsUnitTarget, redDiamondEnabled);
+                    ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
                     PerfEnd("compass.target_shapes_fast", perfSection);
                 }
             }
@@ -24583,8 +24385,10 @@ function GetUIRoot() {
                 nextDelaySec = COMPASS_INTERVAL_SEC;
             } else if (itemMirrorRuntimeActive) {
                 nextDelaySec = ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000.0;
-            } else {
+            } else if (hasCompassRuntimeWork) {
                 nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
+            } else {
+                nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
             }
         } catch (err) {
             LogLoopException("compassLoop", err, "compassErrorNextLogMs", PerfNowMs());
@@ -24724,8 +24528,12 @@ function GetUIRoot() {
         SetGameplayMouseCursorRootClass(root, false);
         var panel = IsPanelValid(State.customMouseCursorPanel) ? State.customMouseCursorPanel : null;
         if (panel) {
-            try { panel.style.visibility = "collapse"; } catch (e0) {}
+            try {
+                if (panel.style.visibility !== "collapse") panel.style.visibility = "collapse";
+            } catch (e0) {}
         }
+        State.customMouseCursorLastX = null;
+        State.customMouseCursorLastY = null;
     }
 
     function IsGameplayMouseCursorContextActive(root, hideoutConnected) {
@@ -24938,7 +24746,7 @@ function GetUIRoot() {
             panel.style.y = y + "px";
             State.customMouseCursorLastY = y;
         }
-        panel.style.visibility = "visible";
+        if (panel.style.visibility !== "visible") panel.style.visibility = "visible";
         SetGameplayMouseCursorRootClass(root, true);
     }
 
@@ -25102,45 +24910,61 @@ function GetUIRoot() {
             State.coreRootStaticSig = staticSig;
         }
 
-        UpdateReloadCircleExceptionState(root, cfg);
-        UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
-        if (
+        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
+            UpdateReloadCircleExceptionState(root, cfg);
+        }
+        var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
+        if (needsHealthbarRuntime) {
+            UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
+        }
+        var needsFgHeroRuntime =
             fgHealthbarEnabled ||
             State.fgHeroImageMoved ||
             State.fgHeroImageRuntimeStyleSig !== "" ||
-            State.fgHeroImageCurrentSig !== ""
-        ) {
+            State.fgHeroImageCurrentSig !== "";
+        if (needsFgHeroRuntime) {
             SyncFgHeroImageMotionState(root, cfg);
         }
-        var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
-        if (!healthContainer) {
-            healthContainer = root.FindChildTraverse("health_and_abilities_container");
-            State.cachedPanels.healthContainer = healthContainer || null;
-        }
-        LogHealthbarVisibilityDebug(root, healthContainer, cfg);
-        var fgIconPulseMid = false;
-        var fgIconPulseLow = false;
-        if (fgHealthbarEnabled && healthContainer && healthContainer.BHasClass) {
-            try { fgIconPulseMid = !!healthContainer.BHasClass("localPlayerMidHealth"); } catch (eMid) { fgIconPulseMid = false; }
-            try { fgIconPulseLow = !!healthContainer.BHasClass("localPlayerLowHealth"); } catch (eLow) { fgIconPulseLow = false; }
-        }
-        SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_mid", fgIconPulseMid);
-        SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_low", fgIconPulseLow);
-        if (healthContainer && healthContainer.SetAttributeString) {
-            var coloredHealthbarFlag = colorWarningEnabled ? "1" : "0";
-            if (State.coloredHealthbarBridgeValue !== coloredHealthbarFlag) {
-                healthContainer.SetAttributeString("QOL_COLORED_HEALTHBAR", coloredHealthbarFlag);
-                State.coloredHealthbarBridgeValue = coloredHealthbarFlag;
+        var needsHealthContainerWork =
+            needsHealthbarRuntime ||
+            needsFgHeroRuntime ||
+            HEALTHBAR_VIS_DEBUG ||
+            colorWarningEnabled ||
+            State.coloredHealthbarBridgeValue !== "" ||
+            shouldApplyStaticClasses;
+        if (needsHealthContainerWork) {
+            var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
+            if (!healthContainer) {
+                healthContainer = root.FindChildTraverse("health_and_abilities_container");
+                State.cachedPanels.healthContainer = healthContainer || null;
             }
-        } else {
-            State.coloredHealthbarBridgeValue = "";
+            LogHealthbarVisibilityDebug(root, healthContainer, cfg);
+            var fgIconPulseMid = false;
+            var fgIconPulseLow = false;
+            if (fgHealthbarEnabled && healthContainer && healthContainer.BHasClass) {
+                try { fgIconPulseMid = !!healthContainer.BHasClass("localPlayerMidHealth"); } catch (eMid) { fgIconPulseMid = false; }
+                try { fgIconPulseLow = !!healthContainer.BHasClass("localPlayerLowHealth"); } catch (eLow) { fgIconPulseLow = false; }
+            }
+            SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_mid", fgIconPulseMid);
+            SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_low", fgIconPulseLow);
+            if (healthContainer && healthContainer.SetAttributeString) {
+                var coloredHealthbarFlag = colorWarningEnabled ? "1" : "0";
+                if (State.coloredHealthbarBridgeValue !== coloredHealthbarFlag) {
+                    healthContainer.SetAttributeString("QOL_COLORED_HEALTHBAR", coloredHealthbarFlag);
+                    State.coloredHealthbarBridgeValue = coloredHealthbarFlag;
+                }
+            } else if (State.coloredHealthbarBridgeValue !== "") {
+                State.coloredHealthbarBridgeValue = "";
+            }
         }
         var abilitiesContainerForClass = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
-        if (!abilitiesContainerForClass) {
-            abilitiesContainerForClass = root.FindChildTraverse("AbilitiesContainer");
-            State.cachedPanels.abilitiesContainer = abilitiesContainerForClass || null;
+        if (shouldApplyStaticClasses || abilitiesContainerForClass) {
+            if (!abilitiesContainerForClass) {
+                abilitiesContainerForClass = root.FindChildTraverse("AbilitiesContainer");
+                State.cachedPanels.abilitiesContainer = abilitiesContainerForClass || null;
+            }
         }
-        if (abilitiesContainerForClass) {
+        if (abilitiesContainerForClass && shouldApplyStaticClasses) {
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_active", false);
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_inactive", false);
         }
@@ -25151,17 +24975,28 @@ function GetUIRoot() {
         State.compassStretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
         State.compassOffsetX = (cfg.COMPASS_X_OFFSET === undefined || cfg.COMPASS_X_OFFSET === null) ? 0 : cfg.COMPASS_X_OFFSET;
         State.compassOffsetY = (cfg.COMPASS_Y_OFFSET === undefined || cfg.COMPASS_Y_OFFSET === null) ? 120 : cfg.COMPASS_Y_OFFSET;
-        var passiveHudPanelForClass = IsPanelValid(State.cachedPanels.passiveHud) ? State.cachedPanels.passiveHud : null;
-        if (!passiveHudPanelForClass) {
-            passiveHudPanelForClass = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
-            State.cachedPanels.passiveHud = passiveHudPanelForClass || null;
+        if (
+            shouldApplyStaticClasses ||
+            State.passiveCooldownModeApplied !== passiveCooldownMode ||
+            (passiveCooldownMode !== "default" && !IsPanelValid(State.cachedPanels.passiveHud)) ||
+            State.oldItemCooldownRuntimeWasActive
+        ) {
+            var passiveHudPanelForClass = IsPanelValid(State.cachedPanels.passiveHud) ? State.cachedPanels.passiveHud : null;
+            if (!passiveHudPanelForClass) {
+                passiveHudPanelForClass = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
+                State.cachedPanels.passiveHud = passiveHudPanelForClass || null;
+            }
+            ApplyPassiveCooldownModeClasses(root, passiveHudPanelForClass, passiveCooldownMode);
         }
-        ApplyPassiveCooldownModeClasses(root, passiveHudPanelForClass, passiveCooldownMode);
         if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) {
             UpdateChatRuntime(root, cfg);
         }
-        UpdateDamageReportOffsets(root, cfg);
-        UpdateUrnTrackerOverlay(root, cfg, nowMsLoop);
+        if (NeedsDamageReportOffsetWork(cfg)) {
+            UpdateDamageReportOffsets(root, cfg);
+        }
+        if (NeedsUrnTrackerRuntimeWork(cfg)) {
+            UpdateUrnTrackerOverlay(root, cfg, nowMsLoop);
+        }
         return redDiamondEnabled;
     }
 
@@ -25414,6 +25249,151 @@ function GetUIRoot() {
         return needsPassiveRuntime || needsReminderRuntime;
     }
 
+    function IsOnDeathArcadeConfigActive(cfg) {
+        if (!cfg || Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
+        return (
+            Number(cfg.ON_DEATH_GAME_MINESWEEPER) === 1 ||
+            Number(cfg.ON_DEATH_GAME_BLACKJACK) === 1 ||
+            Number(cfg.ON_DEATH_GAME_FLAPPY_BAT) === 1 ||
+            Number(cfg.ON_DEATH_GAME_GRAVES_TRAINER) === 1 ||
+            Number(cfg.ON_DEATH_GAME_ZERGGY_MANIA) === 1 ||
+            Number(cfg.ON_DEATH_GAME_WHACK_A_REM) === 1
+        );
+    }
+
+    function NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected) {
+        if (!GAMEPLAY_MOUSE_CURSOR_ENABLED || !root) return false;
+        if (State.customMouseCursorClassActive || IsPanelValid(State.customMouseCursorPanel)) return true;
+        if (hideoutConnected) return false;
+        var uiContextActive =
+            IsHudClassActive(root, "gShopOpen") ||
+            IsHudClassActive(root, "gScoreboardOpen") ||
+            IsHudClassActive(root, "gAbilityUpgradeMenu") ||
+            IsHudClassActive(root, "gDetailView") ||
+            (root.BHasClass && root.BHasClass("ShowEscapeMenu"));
+        if (!uiContextActive) return false;
+        return IsStartupLoaderInActiveMatchContext(root);
+    }
+
+    function NeedsCoreRootDynamicRuntimeWork(cfg) {
+        if (!cfg) return false;
+        var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
+        var minimalistHealthbarEnabled = (healthbarType === 1);
+        var fgHealthbarEnabled = (healthbarType === 2);
+        var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
+        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
+        if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
+        if (fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
+        if (State.passiveCooldownModeApplied !== passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
+        if (passiveCooldownMode !== "default" && !IsPanelValid(State.cachedPanels.passiveHud)) return true;
+        if (HEALTHBAR_VIS_DEBUG) return true;
+        var colorBridgeTarget = IsColorWarningEnabled(cfg) ? "1" : "0";
+        if (colorBridgeTarget === "1" && State.coloredHealthbarBridgeValue !== "1") return true;
+        if (colorBridgeTarget === "0" && State.coloredHealthbarBridgeValue !== "" && State.coloredHealthbarBridgeValue !== "0") return true;
+        if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) return true;
+        if (NeedsDamageReportOffsetWork(cfg)) return true;
+        if (NeedsUrnTrackerRuntimeWork(cfg)) return true;
+        return false;
+    }
+
+    function BuildRuntimeGateSignature(cfg, raw, hideoutConnected, hasConfigSource) {
+        if (!cfg) return "";
+        return [
+            raw || "",
+            hideoutConnected ? 1 : 0,
+            hasConfigSource ? 1 : 0,
+            cfg.ENABLE_REJUV_HUD,
+            cfg.ENABLE_BUFF_HUD,
+            cfg.ENABLE_MINIMAP_REJUV_TIMER,
+            cfg.ENABLE_MINIMAP_BUFF_TIMER,
+            cfg.ENABLE_MIN_SOULS,
+            cfg.ENABLE_UNSPENT_SOULS,
+            cfg.ENABLE_NICKNAMES,
+            cfg.ENABLE_STATLOCKER,
+            cfg.ENABLE_LANE_WITH_PARTY,
+            cfg.ENABLE_ON_DEATH_GAMES,
+            cfg.ON_DEATH_GAME_MINESWEEPER,
+            cfg.ON_DEATH_GAME_BLACKJACK,
+            cfg.ON_DEATH_GAME_FLAPPY_BAT,
+            cfg.ON_DEATH_GAME_GRAVES_TRAINER,
+            cfg.ON_DEATH_GAME_ZERGGY_MANIA,
+            cfg.ON_DEATH_GAME_WHACK_A_REM,
+            cfg.ENABLE_KEYBOARD_OVERLAY,
+            cfg.ENABLE_ZIP_BOOST,
+            cfg.ENABLE_UNSECURED_SOUL_TIMER,
+            cfg.ENABLE_STAT_BONUSES,
+            cfg.ENABLE_COMBAT_STATUS,
+            cfg.ENABLE_PASSIVE_COOLDOWN,
+            cfg.ENABLE_OLD_ITEM_COOLDOWNS,
+            cfg.ENABLE_IMAGES_IN_CHAT,
+            cfg.HEALTHBAR_TYPE,
+            cfg.ENABLE_RED_DIAMOND,
+            cfg.ENABLE_COMPASS,
+            cfg.MINIMAP_ROTATE_WITH_PLAYER,
+            cfg.MINIMAP_FLIP,
+            cfg.ENABLE_RELOAD_COOLDOWN,
+            cfg.ENABLE_ULT_COOLDOWNS
+        ].join("|");
+    }
+
+    function ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase) {
+        var sig = BuildRuntimeGateSignature(cfg, raw, hideoutConnected, hasConfigSource);
+        var gates = State.runtimeGates;
+        if (!gates || State.runtimeGateSig !== sig) {
+            gates = {
+                sig: sig,
+                redDiamondEnabled: Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1,
+                rejuvTimersActive: (
+                    Number(cfg && cfg.ENABLE_REJUV_HUD) === 1 ||
+                    Number(cfg && cfg.ENABLE_BUFF_HUD) === 1 ||
+                    Number(cfg && cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ||
+                    Number(cfg && cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1
+                ),
+                spmActive: Number(cfg && cfg.ENABLE_MIN_SOULS) === 1,
+                unspentActive: Number(cfg && cfg.ENABLE_UNSPENT_SOULS) === 1,
+                nicknamesActive: Number(cfg && cfg.ENABLE_NICKNAMES) === 1,
+                statlockerActive: Number(cfg && cfg.ENABLE_STATLOCKER) === 1,
+                laneWithPartyActive: Number(cfg && cfg.ENABLE_LANE_WITH_PARTY) === 1,
+                onDeathArcadeActive: IsOnDeathArcadeConfigActive(cfg),
+                zipBoostActive: Number(cfg && cfg.ENABLE_ZIP_BOOST) === 1,
+                unsecuredSoulsActive: Number(cfg && cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1,
+                statBonusesActive: Number(cfg && cfg.ENABLE_STAT_BONUSES) === 1,
+                combatStatusActive: Number(cfg && cfg.ENABLE_COMBAT_STATUS) === 1,
+                signatureFlashActive: Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1,
+                imagesInChatActive: Number(cfg && cfg.ENABLE_IMAGES_IN_CHAT) === 1
+            };
+            State.runtimeGateSig = sig;
+            State.runtimeGates = gates;
+        }
+
+        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 0));
+        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spmWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
+        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
+        gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0));
+        gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
+        gates.onDeathArcade = gates.onDeathArcadeActive || State.onDeathArcadeRuntimeWasActive || State.onDeathArcadeWasDead;
+        gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
+        gates.keyboardRuntime = NeedsKeyboardRuntimeWork(cfg);
+        gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
+        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSoulsDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
+        gates.statBonuses = (gates.statBonusesActive || State.statBonusesDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
+        gates.combatStatus = gates.combatStatusActive || State.combatStatusDisplayMode !== "";
+        gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
+        gates.legacyAudioPassive = NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected);
+        gates.imagesInChat = gates.imagesInChatActive;
+        gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
+        gates.betterUnsecuredHud = NeedsBetterUnsecuredHudLayoutWork(cfg);
+        gates.colorWarning = NeedsColorWarningRuntimeWork(cfg);
+        gates.ammo = NeedsAmmoRuntimeWork(cfg);
+        gates.heroShop = NeedsHeroShopRuntimeWork(cfg);
+        gates.targetShapes = NeedsTargetShapeRuntimeWork(cfg, gates.redDiamondEnabled);
+        gates.damageNumbers = NeedsDamageNumbersRuntimeWork(cfg, raw);
+        gates.minimapRuntime = NeedsMinimapRuntimeWork(cfg, raw);
+        gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWork(cfg);
+        gates.panelCache = gates.coreRoot || gates.rejuvTimers || gates.spm || gates.unspent || gates.legacyAudioPassive || gates.minimapRuntime || gates.damageNumbers;
+        return gates;
+    }
+
     function ShouldUpdateStartupLoaderOverlay() {
         return !!(State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted);
     }
@@ -25431,6 +25411,10 @@ function GetUIRoot() {
     var IMAGES_IN_CHAT_MAX_H = 150;
     var IMAGES_IN_CHAT_MAX_RETRIES = 30;
     var IMAGES_IN_CHAT_RETRY_INTERVAL = 0.5;
+
+    function IsImagesInChatEnabledNow() {
+        return !!(State.lastConfig && Number(State.lastConfig.ENABLE_IMAGES_IN_CHAT) === 1);
+    }
 
     function FindChatMessageLabel(msgPanel) {
         var msgText = msgPanel.FindChildTraverse("MessageText");
@@ -25459,6 +25443,11 @@ function GetUIRoot() {
         var retries = 0;
         function tryScale() {
             if (!IsPanelValid(img)) return;
+            if (!IsImagesInChatEnabledNow()) {
+                try { msgContainer.style.opacity = 1; } catch (eOffTopA) {}
+                try { img.DeleteAsync(0); } catch (eOffTopB) {}
+                return;
+            }
             var w = img.actuallayoutwidth * 10.0;
             var h = img.actuallayoutheight * 10.0;
             if (w > 1 && h > 1) {
@@ -25493,6 +25482,10 @@ function GetUIRoot() {
         var retries = 0;
         function tryScale() {
             if (!IsPanelValid(img)) return;
+            if (!IsImagesInChatEnabledNow()) {
+                try { img.DeleteAsync(0); } catch (eOffBottomA) {}
+                return;
+            }
             var w = img.actuallayoutwidth * 10.0;
             var h = img.actuallayoutheight * 10.0;
             if (w > 1 && h > 1) {
@@ -25515,13 +25508,15 @@ function GetUIRoot() {
     }
 
     function ProcessChatContainerImages(container, isBottomChat) {
-        if (!IsPanelValid(container)) return;
+        if (!IsPanelValid(container)) return 0;
         var messages = container.FindChildrenWithClassTraverse("ChatMessage");
-        if (!messages) return;
+        if (!messages) return 0;
+        var touched = 0;
         for (var i = 0; i < messages.length; i++) {
             var msg = messages[i];
             if (!IsPanelValid(msg) || msg.BHasClass("imageProcessed")) continue;
             msg.AddClass("imageProcessed");
+            touched++;
             var label = FindChatMessageLabel(msg);
             if (!label) continue;
             var text = label.text ? String(label.text).trim() : "";
@@ -25534,18 +25529,41 @@ function GetUIRoot() {
                 InjectTopChatImage(msg, match[0]);
             }
         }
+        return touched;
+    }
+
+    function GetImagesInChatContainer(root, cacheKey, panelId) {
+        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+        if (!panel && root && root.FindChildTraverse) {
+            panel = root.FindChildTraverse(panelId);
+            State.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    }
+
+    function GetImagesInChatNextDelayMs(touchedCount, idleKey) {
+        if (touchedCount > 0) {
+            State[idleKey] = 0;
+            return 200;
+        }
+        var idleMisses = Number(State[idleKey]) || 0;
+        idleMisses = Math.min(4, idleMisses + 1);
+        State[idleKey] = idleMisses;
+        return Math.min(1000, 200 + (idleMisses * 200));
     }
 
     function UpdateImagesInChat(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
         var nowMs = PerfNowMs();
         if (nowMs >= State.imagesInChatTopNextSearchMs) {
-            State.imagesInChatTopNextSearchMs = nowMs + 200;
-            ProcessChatContainerImages(root.FindChildTraverse("Messages"), false);
+            var topContainer = GetImagesInChatContainer(root, "imagesInChatTopContainer", "Messages");
+            var topTouched = ProcessChatContainerImages(topContainer, false);
+            State.imagesInChatTopNextSearchMs = nowMs + GetImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
         }
         if (nowMs >= State.imagesInChatBottomNextSearchMs) {
-            State.imagesInChatBottomNextSearchMs = nowMs + 200;
-            ProcessChatContainerImages(root.FindChildTraverse("ChatMessages"), true);
+            var bottomContainer = GetImagesInChatContainer(root, "imagesInChatBottomContainer", "ChatMessages");
+            var bottomTouched = ProcessChatContainerImages(bottomContainer, true);
+            State.imagesInChatBottomNextSearchMs = nowMs + GetImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
         }
     }
 
@@ -25581,151 +25599,155 @@ function GetUIRoot() {
         var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
         var corePhase = NextCoreSchedulerPhase();
         ProcessPendingHeroRestore(nowMsLoop);
-        var perfSection = PerfStart();
-        var rejuvTimersEnabled =
-            Number(cfg.ENABLE_REJUV_HUD) === 1 ||
-            Number(cfg.ENABLE_BUFF_HUD) === 1 ||
-            Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ||
-            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1;
-        var shouldRunRejuvCleanupNow = (!rejuvTimersEnabled && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 0));
-        if (rejuvTimersEnabled || shouldRunRejuvCleanupNow) {
-            UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
-        }
-        PerfEnd("loop.rejuv_timers", perfSection);
+        var perfSection = 0;
 
-        perfSection = PerfStart();
         if (ShouldRunBuildCategoryPayloadOverride(root)) {
+            perfSection = PerfStart();
             cfg = ApplyBuildCategoryPayloadOverride(root, cfg, nowMsLoop, raw);
             cfg = ApplyForcedFeatureDisables(cfg);
+            PerfEnd("loop.build_category_payload_override", perfSection);
         }
-        PerfEnd("loop.build_category_payload_override", perfSection);
         if (State.accountPresetRawOverride && State.accountPresetRawOverride.length > 0) {
             raw = State.accountPresetRawOverride;
             State.accountPresetRawOverride = "";
         }
         State.lastConfig = cfg;
-        perfSection = PerfStart();
-        var spmEnabled = Number(cfg.ENABLE_MIN_SOULS) === 1;
-        var shouldRunSpmCleanupNow = (!spmEnabled && !State.spmWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1));
-        var runSpmPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1);
-        if ((spmEnabled || shouldRunSpmCleanupNow) && runSpmPhase) {
-            UpdateSoulsPerMinute(root, nowMsLoop, cfg);
-        }
-        PerfEnd("loop.souls_per_min", perfSection);
-        perfSection = PerfStart();
-        var unspentEnabled = Number(cfg.ENABLE_UNSPENT_SOULS) === 1;
-        var shouldRunUnspentCleanupNow = (!unspentEnabled && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2));
-        var runUnspentPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2);
-        if ((unspentEnabled || shouldRunUnspentCleanupNow) && runUnspentPhase) {
-            UpdateUnspentSouls(root, nowMsLoop, cfg);
-        }
-        PerfEnd("loop.unspent", perfSection);
-        perfSection = PerfStart();
-        var shouldRunNicknames =
-            Number(cfg.ENABLE_NICKNAMES) === 1 ||
-            !!State.topbarNicknamesWasEnabled;
-        var runNicknamesPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0);
-        if (shouldRunNicknames && runNicknamesPhase) {
-            UpdateTopBarNicknames(root, nowMsLoop, cfg);
-        }
-        PerfEnd("loop.topbar_nicknames", perfSection);
-        perfSection = PerfStart();
-        var shouldRunStatlocker =
-            Number(cfg.ENABLE_STATLOCKER) === 1 ||
-            State.statlockerWasEnabled;
-        var runStatlockerPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1);
-        if (shouldRunStatlocker && runStatlockerPhase) {
-            UpdateStatlockerButtons(root, nowMsLoop, cfg);
-        }
-        PerfEnd("loop.statlocker", perfSection);
-
-        perfSection = PerfStart();
-        EnsureCoreLoopPanelCaches(root);
-        PerfEnd("loop.panel_cache", perfSection);
-
-        var hideoutConnected = isConnectedToHideout(root);
+        var hideoutConnected = root ? isConnectedToHideout(root) : false;
         var hasConfigSource = !!(raw && raw.length > 0);
-        perfSection = PerfStart();
-        UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
-        PerfEnd("loop.on_death_arcade", perfSection);
+        var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
+        var redDiamondEnabled = gates.redDiamondEnabled;
 
-        perfSection = PerfStart();
-        var redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
-        PerfEnd("loop.root_classes", perfSection);
+        if (gates.rejuvTimers) {
+            perfSection = PerfStart();
+            UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
+            PerfEnd("loop.rejuv_timers", perfSection);
+        }
 
-        perfSection = PerfStart();
-        var runLanePrefPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2);
-        if (Number(cfg.ENABLE_LANE_WITH_PARTY) === 1 && runLanePrefPhase) {
+        if (gates.spm) {
+            perfSection = PerfStart();
+            UpdateSoulsPerMinute(root, nowMsLoop, cfg);
+            PerfEnd("loop.souls_per_min", perfSection);
+        }
+
+        if (gates.unspent) {
+            perfSection = PerfStart();
+            UpdateUnspentSouls(root, nowMsLoop, cfg);
+            PerfEnd("loop.unspent", perfSection);
+        }
+
+        if (gates.nicknames) {
+            perfSection = PerfStart();
+            UpdateTopBarNicknames(root, nowMsLoop, cfg);
+            PerfEnd("loop.topbar_nicknames", perfSection);
+        }
+
+        if (gates.statlocker) {
+            perfSection = PerfStart();
+            UpdateStatlockerButtons(root, nowMsLoop, cfg);
+            PerfEnd("loop.statlocker", perfSection);
+        }
+
+        if (gates.panelCache) {
+            perfSection = PerfStart();
+            EnsureCoreLoopPanelCaches(root);
+            PerfEnd("loop.panel_cache", perfSection);
+        }
+
+        if (gates.onDeathArcade) {
+            perfSection = PerfStart();
+            UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
+            State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
+            PerfEnd("loop.on_death_arcade", perfSection);
+        }
+
+        if (root && gates.coreRoot) {
+            perfSection = PerfStart();
+            redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
+            State.coreRootGateSig = gates.sig;
+            PerfEnd("loop.root_classes", perfSection);
+        }
+
+        if (gates.laneWithParty) {
+            perfSection = PerfStart();
             UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
+            PerfEnd("loop.lane_with_party", perfSection);
         }
-        PerfEnd("loop.lane_with_party", perfSection);
 
-        perfSection = PerfStart();
-        UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
-        PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+        if (gates.gameplayMouseCursor) {
+            perfSection = PerfStart();
+            UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
+            PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+        }
 
-        perfSection = PerfStart();
-        if (NeedsBetterUnsecuredHudLayoutWork(cfg)) {
+        if (gates.betterUnsecuredHud) {
+            perfSection = PerfStart();
             UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
+            PerfEnd("loop.unsecured_souls_hud", perfSection);
         }
-        PerfEnd("loop.unsecured_souls_hud", perfSection);
 
-        perfSection = PerfStart();
-        if (NeedsColorWarningRuntimeWork(cfg)) {
+        if (gates.colorWarning) {
+            perfSection = PerfStart();
             UpdateColoredHealthbarRuntime(root, cfg);
+            PerfEnd("loop.colored_healthbar", perfSection);
         }
-        PerfEnd("loop.colored_healthbar", perfSection);
 
-        perfSection = PerfStart();
-        if (NeedsAmmoRuntimeWork(cfg)) {
+        if (gates.ammo) {
+            perfSection = PerfStart();
             UpdateAmmoPanelRuntime(root, cfg);
+            PerfEnd("loop.ammo_panel", perfSection);
         }
-        PerfEnd("loop.ammo_panel", perfSection);
 
-        perfSection = PerfStart();
-        if (NeedsHeroShopRuntimeWork(cfg)) {
+        if (gates.heroShop) {
+            perfSection = PerfStart();
             var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
             UpdateHeroShopRuntime(root, cfg, nowMsClass);
+            PerfEnd("loop.hero_shop", perfSection);
         }
-        PerfEnd("loop.hero_shop", perfSection);
-        perfSection = PerfStart();
-        if (NeedsKeyboardRuntimeWork(cfg)) {
-            if (cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
-                EnsureKeyboardOverlay(root);
-            } else if (State.cachedPanels.keyboardOverlayRoot) {
-                RemoveKeyboardOverlay(root);
+
+        if (
+            gates.keyboardRuntime ||
+            gates.zipBoost ||
+            gates.unsecuredSouls ||
+            gates.statBonuses ||
+            gates.combatStatus ||
+            gates.signatureFlash
+        ) {
+            perfSection = PerfStart();
+            if (gates.keyboardRuntime) {
+                if (cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
+                    EnsureKeyboardOverlay(root);
+                } else if (State.cachedPanels.keyboardOverlayRoot) {
+                    RemoveKeyboardOverlay(root);
+                }
             }
+            if (gates.zipBoost) {
+                UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+            }
+            if (gates.unsecuredSouls) {
+                UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
+            }
+            if (gates.statBonuses) {
+                UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
+            }
+            if (gates.combatStatus) {
+                UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
+            }
+            if (gates.signatureFlash) {
+                UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
+            }
+            PerfEnd("loop.keyboard_zip", perfSection);
         }
-        if (Number(cfg.ENABLE_ZIP_BOOST) === 1 || State.zipBoostDisplayMode !== "") {
-            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
-        }
-        var runUnsecuredSoulsPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3);
-        if ((Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1 || State.unsecuredSoulsDisplayMode !== "") && runUnsecuredSoulsPhase) {
-            UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
-        }
-        var runStatBonusesPhase = (!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4);
-        if ((Number(cfg.ENABLE_STAT_BONUSES) === 1 || State.statBonusesDisplayMode !== "") && runStatBonusesPhase) {
-            UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
-        }
-        if (Number(cfg.ENABLE_COMBAT_STATUS) === 1 || State.combatStatusDisplayMode !== "") {
-            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
-        }
-        var needsSignatureFlashWork =
-            Number(cfg.ENABLE_PASSIVE_COOLDOWN) === 1 ||
-            !!State.signatureCooldownFlashWasEnabled;
-        if (needsSignatureFlashWork) {
-            UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
-        }
-        PerfEnd("loop.keyboard_zip", perfSection);
 
-        perfSection = PerfStart();
-        var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-        nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-        ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
-        PerfEnd("loop.target_shapes", perfSection);
+        if (gates.targetShapes) {
+            perfSection = PerfStart();
+            var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
+            nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
+            ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
+            PerfEnd("loop.target_shapes", perfSection);
+        }
 
-        perfSection = PerfStart();
-        if (NeedsKeyboardRuntimeWork(cfg)) {
+        if (gates.keyboardRuntime) {
+            perfSection = PerfStart();
             if (cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
                 var allBindingsBoxes = State.allBindingsBoxes || [];
                 var validBoxes = [];
@@ -25748,26 +25770,32 @@ function GetUIRoot() {
                 State.allBindingsBoxes = [];
                 ResetKeyboardOverlayCaches();
             }
+            PerfEnd("loop.keyboard_runtime", perfSection);
         }
-        PerfEnd("loop.keyboard_runtime", perfSection);
 
-        perfSection = PerfStart();
-        UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
-        PerfEnd("loop.damage_numbers", perfSection);
+        if (gates.damageNumbers) {
+            perfSection = PerfStart();
+            UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
+            PerfEnd("loop.damage_numbers", perfSection);
+        }
 
-        perfSection = PerfStart();
-        UpdateMinimapRuntime(root, cfg, raw);
-        PerfEnd("loop.minimap", perfSection);
+        if (gates.minimapRuntime) {
+            perfSection = PerfStart();
+            UpdateMinimapRuntime(root, cfg, raw);
+            PerfEnd("loop.minimap", perfSection);
+        }
 
-        perfSection = PerfStart();
-        if (NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected)) {
+        if (gates.legacyAudioPassive) {
+            perfSection = PerfStart();
             UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
+            PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
         }
-        PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
 
-        perfSection = PerfStart();
-        UpdateImagesInChat(root, cfg);
-        PerfEnd("loop.images_in_chat", perfSection);
+        if (gates.imagesInChat) {
+            perfSection = PerfStart();
+            UpdateImagesInChat(root, cfg);
+            PerfEnd("loop.images_in_chat", perfSection);
+        }
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
         if (State.accountPresetTestActive) {
@@ -25824,16 +25852,6 @@ function GetUIRoot() {
         }
 
         $.Schedule(UNIT_TARGET_BOOTSTRAP_RETRY_SEC, BootstrapUnitTargetStyles);
-    }
-
-    function BuildHistoricStorageRouteIndex(registry) {
-        var keys = Object.keys(registry || {});
-        var rows = [];
-        for (var i = 0; i < keys.length; i++) {
-            var item = registry[keys[i]];
-            rows.push({ route: item.route, phase: item.phase, stamp: item.stamp, weight: item.weight });
-        }
-        return rows;
     }
 
     $.Schedule(0.0, BootstrapUnitTargetStyles);
