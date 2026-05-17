@@ -4,10 +4,10 @@
 
 #HealthRegenAndTotal
 {
+    overflow: squish;
 	margin-left: 0px;
 	margin-bottom: 0px;
 	flow-children: none;
-	overflow: squish-to-fit;
 }
 
 #RecentHealContainer,
@@ -315,7 +315,7 @@
 	width: 400px;
 	height: 320px;
 	horizontal-align: center;
-	margin-top: 50px;
+	margin-top: -60px;
 	transform: rotateZ(0deg);
 	margin-right: 0px;
 }
@@ -338,9 +338,11 @@
 
 .budhud_healthbar_active #RecentHealContainer
 {
-	horizontal-align: right;
-	margin-top: 155px;
-	margin-right: 23px;
+	horizontal-align: left;
+	margin-bottom: 138px;
+	margin-left: 253px;
+    flow-children: up;
+    vertical-align: bottom;
 }
 
 .budhud_healthbar_active .recentHealCounter
@@ -350,8 +352,10 @@
 
 .budhud_healthbar_active .recentDamageCounters
 {
-	margin-left: 43px;
-	margin-top: 155px;
+    horizontal-align: left;
+	margin-left: 253px;
+	margin-top: 240px;
+    flow-children: down;
 }
 
 .budhud_healthbar_active .recentDamageCounter
@@ -531,7 +535,6 @@
 
 .klutz_healthbar_active .healthContainer
 {
-	clip: noclip;
 	overflow: noclip;
 	horizontal-align: right;
 	opacity: 1;
