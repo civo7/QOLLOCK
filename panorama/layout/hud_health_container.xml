@@ -22,8 +22,6 @@
 	<Panel class="HealthContainerRoot" hittest="false">
 		<GlobalClassListener id="healthbar_container" hittest="false" classes="gAbilityUpgradeMenu" />
 		<Panel id="MinecraftHeartsRoot" class="MinecraftHeartsRoot">
-			<Panel id="RecentHealContainer" class="recentHealCounters" />
-			<Panel id="RecentDamageContainer" class="recentDamageCounters" />
 			<CitadelStatusEffect id="StatusEffects" display_location="healthbar" max_modifiers="6" />
 			<Panel id="MinecraftShieldHeartsContainer" class="MinecraftShieldHeartsContainer">
 				<Panel id="MinecraftShieldHearts" class="MinecraftShieldHearts" />
@@ -68,28 +66,28 @@
 			<CitadelHudAbilities id="hud_held" class="abilities held" slots="ability_held" />
 			<CitadelHudHealth id="hud_health_bars" />
 			<CitadelHudHealthStacked id="hud_health_bars_stacked" />
-			<Panel id="HealthRegenAndTotal">
-				<Panel id="RecentHealContainer" class="recentHealCounters" />
-				<Panel id="RecentDamageContainer" class="recentDamageCounters" />
-				<Panel class="healthRegenContainer">
-					<Panel class="healtRegenArrows" />
-					<Label class="healthRegenLabel" text="{f:health_regen}/s" />
+		</Panel>
+		<Panel id="HealthRegenAndTotal">
+			<Panel id="RecentHealContainer" class="recentHealCounters" />
+			<Panel id="RecentDamageContainer" class="recentDamageCounters" />
+			<Panel class="healthRegenContainer">
+				<Panel class="healtRegenArrows" />
+				<Label class="healthRegenLabel" text="{f:health_regen}/s" />
+			</Panel>
+			<Panel class="shieldNumbersContainer">
+				<Panel id="BulletShieldNumbers" class="shield_bar_numbers">
+					<Label class="progress_bar_current" text="{i:bullet_shield_current}" />
+					<Label class="progress_bar_max" text="/ {i:bullet_shield_max}" />
 				</Panel>
-				<Panel class="shieldNumbersContainer">
-					<Panel id="BulletShieldNumbers" class="shield_bar_numbers">
-						<Label class="progress_bar_current" text="{i:bullet_shield_current}" />
-						<Label class="progress_bar_max" text="/ {i:bullet_shield_max}" />
-					</Panel>
-					<Panel id="TechShieldNumbers" class="shield_bar_numbers">
-						<Label class="progress_bar_current" text="{i:tech_shield_current}" />
-						<Label class="progress_bar_max" text="/ {i:tech_shield_max}" />
-					</Panel>
+				<Panel id="TechShieldNumbers" class="shield_bar_numbers">
+					<Label class="progress_bar_current" text="{i:tech_shield_current}" />
+					<Label class="progress_bar_max" text="/ {i:tech_shield_max}" />
 				</Panel>
-				<Panel class="healthContainer">
-					<Panel class="healthBacker" />
-					<Label class="currentHealthLabel" text="{i:r:current_health}" />
-					<Label class="totalHealthLabel" text="/ {i:r:total_health}" />
-				</Panel>
+			</Panel>
+			<Panel class="healthContainer">
+				<Panel class="healthBacker" />
+				<Label class="currentHealthLabel" text="{i:r:current_health}" />
+				<Label class="totalHealthLabel" text="/ {i:r:total_health}" />
 			</Panel>
 		</Panel>
 	</Panel>

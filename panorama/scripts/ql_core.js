@@ -4887,8 +4887,8 @@ function GetUIRoot() {
         if (!IsPanelValid(content)) return null;
 
         var regenTotal = IsPanelValid(State.cachedPanels.budhudHealthRegenAndTotal) ? State.cachedPanels.budhudHealthRegenAndTotal : null;
-        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== content)) {
-            regenTotal = content.FindChildTraverse ? content.FindChildTraverse("HealthRegenAndTotal") : null;
+        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== root)) {
+            regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
             State.cachedPanels.budhudHealthRegenAndTotal = regenTotal || null;
         }
         if (!IsPanelValid(regenTotal)) return null;
