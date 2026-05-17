@@ -838,6 +838,7 @@ var gOnDeathArcadeSessionActive = false;
 var gArcadeOnDeathSyncFns = [];
 var gSettingsUiBuilt = false;
 var gUserEditRevision = 0;
+var gLastSavedConfigRaw = "";
 var gMissingRuSettingsStrings = {};
 var gConfigFeedbackLabel = null;
 var gConfigFeedbackClearToken = 0;
@@ -7629,6 +7630,7 @@ function SyncConfigFromStorage() {
         } catch (e) {}
     }
     MOD_CONFIG = nextConfig;
+    gLastSavedConfigRaw = JSON.stringify(MOD_CONFIG);
     PersistStatlockerProfileState(raw, nextConfig);
     UpdateOnDeathArcadeBridgePollerState();
 }
@@ -7693,6 +7695,10 @@ function SaveAndSync() {
     NormalizeColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
     var data = JSON.stringify(MOD_CONFIG);
+    if (data === gLastSavedConfigRaw) {
+        return;
+    }
+    gLastSavedConfigRaw = data;
     panel.SetAttributeString(STORAGE_KEY, data);
     if (root && root.SetAttributeString) {
         root.SetAttributeString(STORAGE_KEY, data);
