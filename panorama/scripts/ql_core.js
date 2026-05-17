@@ -1513,6 +1513,8 @@ function ExpressShotLog(msg) {
     function ExtractHeroTokenFromText(rawText) {
         if (!rawText) return "";
         var text = String(rawText);
+        var lowerText = text.toLowerCase();
+        if (lowerText.indexOf("hero") === -1 && lowerText.indexOf("/") === -1) return "";
 
         // Highest-confidence path: canonical internal name token.
         var canonical = text.match(/\b(hero_[a-z0-9_]+)\b/i);
@@ -4148,8 +4150,11 @@ function GetUIRoot() {
         var rootRaw = "";
         try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
 
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e1) { hud = null; }
+        var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
+        if (!hud && root.FindChildTraverse) {
+            try { hud = root.FindChildTraverse("Hud"); } catch (e1) { hud = null; }
+            State.cachedPanels.hudPanel = hud || null;
+        }
         if (!hud || !hud.GetAttributeString) return rootRaw;
 
         var hudRaw = "";
@@ -4669,11 +4674,17 @@ function GetUIRoot() {
         if (!panel || !panel.style || !runtimeState) return;
         var applyOffsets = (includeOffsets !== false);
         if (applyOffsets) {
-            panel.style.x = String(runtimeState.finalOffsetX) + "px";
-            panel.style.y = String(runtimeState.finalOffsetY) + "px";
+            var newX = String(runtimeState.finalOffsetX) + "px";
+            var newY = String(runtimeState.finalOffsetY) + "px";
+            if (panel.style.x !== newX) panel.style.x = newX;
+            if (panel.style.y !== newY) panel.style.y = newY;
         }
-        panel.style.preTransformScale2d = runtimeState.scaleText;
-        panel.style.opacity = runtimeState.opacityText;
+        if (panel.style.preTransformScale2d !== runtimeState.scaleText) {
+            panel.style.preTransformScale2d = runtimeState.scaleText;
+        }
+        if (panel.style.opacity !== runtimeState.opacityText) {
+            panel.style.opacity = runtimeState.opacityText;
+        }
     }
 
     function ResetPlayerHealthbarRuntimeStyle(panel) {
@@ -6756,8 +6767,12 @@ function GetUIRoot() {
 
         var gameTimePanel = IsPanelValid(State.cachedPanels.gameTime) ? State.cachedPanels.gameTime : null;
         if (!gameTimePanel && root) {
-            gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
-            State.cachedPanels.gameTime = gameTimePanel || null;
+            var nowMs = Date.now();
+            if (nowMs >= (State.gameTimeNextScanMs || 0)) {
+                gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
+                State.cachedPanels.gameTime = gameTimePanel || null;
+                State.gameTimeNextScanMs = gameTimePanel ? 0 : nowMs + 2000;
+            }
         }
         if (gameTimePanel && gameTimePanel.text) {
             return ParseClockSeconds(gameTimePanel.text);
@@ -7727,15 +7742,18 @@ function GetUIRoot() {
         if (label && label.text !== "STAT") label.text = "STAT";
 
         ApplyStatlockerButtonStyle(button, label);
-        try {
-            button.SetPanelEvent("onactivate", function() {
-                var runtimeRoot = GetUIRoot();
-                if (!IsPanelValid(runtimeRoot)) runtimeRoot = root;
-                var accountId = TryResolveStatlockerAccountId(corePanel, runtimeRoot);
-                if (!accountId) return;
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
-            });
-        } catch (e2) {}
+        if (button && !button.qol_event_bound) {
+            try {
+                button.SetPanelEvent("onactivate", function() {
+                    var runtimeRoot = GetUIRoot();
+                    if (!IsPanelValid(runtimeRoot)) runtimeRoot = root;
+                    var accountId = TryResolveStatlockerAccountId(corePanel, runtimeRoot);
+                    if (!accountId) return;
+                    $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
+                });
+                button.qol_event_bound = true;
+            } catch (e2) {}
+        }
 
         return button;
     }
@@ -8042,42 +8060,16 @@ function GetUIRoot() {
     }
 
     function ScanTierCountsOnModsContainer(modsContainer) {
-        var result = { t1: 0, t2: 0, t3: 0, t4: 0 };
-        if (!modsContainer) return result;
+    var result = { t1: 0, t2: 0, t3: 0, t4: 0 };
+    if (!modsContainer || !modsContainer.FindChildrenWithClassTraverse) return result;
 
-        var stack = [modsContainer];
-        var scanned = 0;
-        while (stack.length > 0 && scanned < UNSPENT_TIER_SCAN_MAX_PANELS) {
-            var panel = stack.pop();
-            if (!panel) continue;
-            scanned++;
+    result.t1 = (modsContainer.FindChildrenWithClassTraverse("isTier1") || []).length;
+    result.t2 = (modsContainer.FindChildrenWithClassTraverse("isTier2") || []).length;
+    result.t3 = (modsContainer.FindChildrenWithClassTraverse("isTier3") || []).length;
+    result.t4 = (modsContainer.FindChildrenWithClassTraverse("isTier4") || []).length;
 
-            if (panel !== modsContainer && panel.BHasClass) {
-                if (panel.BHasClass("isTier1") || panel.BHasClass("IsTier1")) result.t1++;
-                else if (panel.BHasClass("isTier2") || panel.BHasClass("IsTier2")) result.t2++;
-                else if (panel.BHasClass("isTier3") || panel.BHasClass("IsTier3")) result.t3++;
-                else if (panel.BHasClass("isTier4") || panel.BHasClass("IsTier4")) result.t4++;
-            }
-
-            var childCount = 0;
-            try {
-                childCount = panel.GetChildCount ? panel.GetChildCount() : 0;
-            } catch (e0) {
-                childCount = 0;
-            }
-            for (var i = 0; i < childCount; i++) {
-                var child = null;
-                try {
-                    child = panel.GetChild(i);
-                } catch (e1) {
-                    child = null;
-                }
-                if (child) stack.push(child);
-            }
-        }
-
-        return result;
-    }
+    return result;
+}
 
     function BuildUnspentModsStructureSignature(modsContainer) {
         if (!modsContainer) return "";
@@ -8128,7 +8120,6 @@ function GetUIRoot() {
 
     function UpdateUnspentSouls(root, nowMs, cfg) {
         if (!root) return;
-        EnsureUnspentState();
 
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
@@ -8142,6 +8133,7 @@ function GetUIRoot() {
             State.unspentNextSampleMs = 0;
             return;
         }
+        EnsureUnspentState();
         State.unspentWasDisabled = false;
 
         if (nowMs < (State.unspentNextSampleMs || 0)) return;
@@ -9870,19 +9862,23 @@ function GetUIRoot() {
         return text;
     }
 
+    var SMALL_DAMAGE_CLASSES = [
+        "bullet_damage_new", "ability_damage_new", "melee_damage_new",
+        "pure_damage_new", "damage_type_gun", "damage_type_melee",
+        "damage_type_ability", "damage_type_pure", "damage_type_poison"
+    ];
+
     function IsIndicatorSmallDamage(panel) {
-        if (!panel) return false;
-        return (
-            hasClassInHierarchy(panel, "bullet_damage_new") ||
-            hasClassInHierarchy(panel, "ability_damage_new") ||
-            hasClassInHierarchy(panel, "melee_damage_new") ||
-            hasClassInHierarchy(panel, "pure_damage_new") ||
-            hasClassInHierarchy(panel, "damage_type_gun") ||
-            hasClassInHierarchy(panel, "damage_type_melee") ||
-            hasClassInHierarchy(panel, "damage_type_ability") ||
-            hasClassInHierarchy(panel, "damage_type_pure") ||
-            hasClassInHierarchy(panel, "damage_type_poison")
-        );
+        var current = panel;
+        while (current && current.IsValid && current.IsValid()) {
+            if (current.BHasClass) {
+                for (var i = 0; i < SMALL_DAMAGE_CLASSES.length; i++) {
+                    if (current.BHasClass(SMALL_DAMAGE_CLASSES[i])) return true;
+                }
+            }
+            current = current.GetParent ? current.GetParent() : null;
+        }
+        return false;
     }
 
     function BuildIndicatorMetaCache(indicators) {
@@ -18230,12 +18226,14 @@ function GetUIRoot() {
         State.buildSaveCaptureStartedMs = nowMs;
         ResetBuildCategoryPayloadProbeInitState();
         SetBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
-        BuildSaveDebugLog(
-            "start token=" + requestToken +
-            " payloadLen=" + payloadText.length +
-            " reuseLoaderAirheart=" + (reuseLoaderAirheartSave ? "1" : "0") +
-            " " + BuildSaveDebugSnapshot(root)
-        );
+        if (BUILD_SAVE_DEBUG) {
+            BuildSaveDebugLog(
+                "start token=" + requestToken +
+                " payloadLen=" + payloadText.length +
+                " reuseLoaderAirheart=" + (reuseLoaderAirheartSave ? "1" : "0") +
+                " " + BuildSaveDebugSnapshot(root)
+            );
+        }
     }
 
     function TickBuildSaveRequestRuntime(root, nowMs, requestToken, payloadText) {
@@ -18479,19 +18477,44 @@ function GetUIRoot() {
                 var indicatorCacheValid = IsPanelListValid(State.indicatorPanelsCache);
                 var indicatorPanelCacheDue = RuntimeTaskIsDue("hud_indicator_panel_cache", nowMsLoop);
                 var shouldRefreshIndicatorPanels =
-                    !indicatorCacheValid ||
-                    indicatorPanelCacheDue ||
-                    indicatorConfigSig !== State.lastIndicatorConfigSig;
-                if (shouldRefreshIndicatorPanels) {
-                    State.indicatorPanelsCache = root.FindChildrenWithClassTraverse("HudIndicatorText") || [];
-                    RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
+                !indicatorCacheValid ||
+                indicatorPanelCacheDue ||
+                indicatorConfigSig !== State.lastIndicatorConfigSig;
+            if (shouldRefreshIndicatorPanels) {
+                var dmgContainer = IsPanelValid(State.cachedPanels.dmgIndicators) ? State.cachedPanels.dmgIndicators : null;
+                if (!dmgContainer && root.FindChildTraverse) {
+                    dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
+                    State.cachedPanels.dmgIndicators = dmgContainer || null;
                 }
-                if (shouldRefreshIndicatorPanels) {
-                    State.indicatorMetaCache = BuildIndicatorMetaCache(State.indicatorPanelsCache);
-                }
+                var searchRoot = dmgContainer ? dmgContainer : root;
+                State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
+            }
                 var indicatorMeta = State.indicatorMetaCache || [];
-                if (indicatorMeta.length !== (State.indicatorPanelsCache || []).length) {
-                    indicatorMeta = BuildIndicatorMetaCache(State.indicatorPanelsCache);
+                if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (State.indicatorPanelsCache || []).length) {
+                    var newMeta = [];
+                    var cacheLen = State.indicatorPanelsCache ? State.indicatorPanelsCache.length : 0;
+                    for (var nm = 0; nm < cacheLen; nm++) {
+                        var cPan = State.indicatorPanelsCache[nm];
+                        var existingMeta = null;
+                        for (var em = 0; em < indicatorMeta.length; em++) {
+                            if (indicatorMeta[em].panel === cPan) {
+                                existingMeta = indicatorMeta[em];
+                                break;
+                            }
+                        }
+                        if (existingMeta) {
+                            newMeta.push(existingMeta);
+                        } else {
+                            newMeta.push({
+                                panel: cPan,
+                                container: FindAncestorWithClass(cPan, "HudIndicatorContainer"),
+                                isCumulativeOrBatched: hasClassInHierarchy(cPan, "cumulative") || hasClassInHierarchy(cPan, "batched"),
+                                isSmallDamage: IsIndicatorSmallDamage(cPan)
+                            });
+                        }
+                    }
+                    indicatorMeta = newMeta;
                     State.indicatorMetaCache = indicatorMeta;
                 }
 
@@ -19117,9 +19140,9 @@ function GetUIRoot() {
             return overlay;
         }
 
-        overlay = root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
+        var parent = GetGameplayHudPanel(root);
+        overlay = parent ? parent.FindChildTraverse("QOLUnsecuredSoulsOverlay") : null;
         if (!overlay) {
-            var parent = GetGameplayHudPanel(root);
             if (!parent) return null;
             overlay = $.CreatePanel("Panel", parent, "QOLUnsecuredSoulsOverlay", {
                 hittest: "false",
@@ -19359,9 +19382,9 @@ function GetUIRoot() {
             return overlay;
         }
 
-        overlay = root.FindChildTraverse("QOLZipBoostOverlay");
+        var parent = GetGameplayHudPanel(root);
+        overlay = parent ? parent.FindChildTraverse("QOLZipBoostOverlay") : null;
         if (!overlay) {
-            var parent = GetGameplayHudPanel(root);
             if (!parent) return null;
             overlay = $.CreatePanel("Panel", parent, "QOLZipBoostOverlay", {
                 hittest: "false",
@@ -20499,16 +20522,9 @@ function GetUIRoot() {
     }
 
     function GetPanelActualOffsetSafe(panel, axis) {
-        if (!panel) return 0;
-        var value = 0;
-        try {
-            if (axis === "x") value = Number(panel.actualxoffset) || 0;
-            else value = Number(panel.actualyoffset) || 0;
-        } catch (e0) {
-            value = 0;
-        }
-        if (!isFinite(value)) value = 0;
-        return value;
+        if (!panel || !panel.IsValid || !panel.IsValid()) return 0;
+        var value = Number(panel[axis === "x" ? "actualxoffset" : "actualyoffset"]);
+        return isFinite(value) ? value : 0;
     }
 
     function ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root) {
@@ -23641,6 +23657,8 @@ function GetUIRoot() {
     }
 
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
         }
@@ -23653,8 +23671,6 @@ function GetUIRoot() {
             }
         }
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (now < (State.minimapLocalMainImageNextScanMs || 0)) {
             return null;
         }
@@ -23687,6 +23703,8 @@ function GetUIRoot() {
     }
 
     function FindLocalMinimapPlayerPanel(root, nowMs, aggressiveScan) {
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotPlayerPanel)) {
             return State.minimapHeadingSnapshotPlayerPanel;
         }
@@ -23698,13 +23716,12 @@ function GetUIRoot() {
             }
         }
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (now < (State.minimapLocalPlayerPanelNextScanMs || 0)) {
             return null;
         }
 
-        var cones = root.FindChildrenWithClassTraverse("client_cone_fov") || [];
+        var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
+        var cones = searchRoot.FindChildrenWithClassTraverse("client_cone_fov") || [];
         for (var i = 0; i < cones.length; i++) {
             var cp = cones[i];
             if (!cp) continue;
@@ -25557,13 +25574,21 @@ function GetUIRoot() {
         var nowMs = PerfNowMs();
         if (nowMs >= State.imagesInChatTopNextSearchMs) {
             var topContainer = GetImagesInChatContainer(root, "imagesInChatTopContainer", "Messages");
-            var topTouched = ProcessChatContainerImages(topContainer, false);
-            State.imagesInChatTopNextSearchMs = nowMs + GetImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
+            if (!IsPanelValid(topContainer)) {
+                State.imagesInChatTopNextSearchMs = nowMs + 2000;
+            } else {
+                var topTouched = ProcessChatContainerImages(topContainer, false);
+                State.imagesInChatTopNextSearchMs = nowMs + GetImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
+            }
         }
         if (nowMs >= State.imagesInChatBottomNextSearchMs) {
             var bottomContainer = GetImagesInChatContainer(root, "imagesInChatBottomContainer", "ChatMessages");
-            var bottomTouched = ProcessChatContainerImages(bottomContainer, true);
-            State.imagesInChatBottomNextSearchMs = nowMs + GetImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
+            if (!IsPanelValid(bottomContainer)) {
+                State.imagesInChatBottomNextSearchMs = nowMs + 2000;
+            } else {
+                var bottomTouched = ProcessChatContainerImages(bottomContainer, true);
+                State.imagesInChatBottomNextSearchMs = nowMs + GetImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
+            }
         }
     }
 
