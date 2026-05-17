@@ -4148,8 +4148,11 @@ function GetUIRoot() {
         var rootRaw = "";
         try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
 
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e1) { hud = null; }
+        var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
+        if (!hud && root.FindChildTraverse) {
+            try { hud = root.FindChildTraverse("Hud"); } catch (e1) { hud = null; }
+            State.cachedPanels.hudPanel = hud || null;
+        }
         if (!hud || !hud.GetAttributeString) return rootRaw;
 
         var hudRaw = "";
@@ -10020,7 +10023,8 @@ function GetUIRoot() {
         if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
 
         if (shouldRefreshList) {
-            State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
+            var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
+            State.targetShapesCache = searchRoot.FindChildrenWithClassTraverse("target_shape") || [];
             // Keep default settings low-frequency, but tighten when user customized
             // size/opacity (or red-diamond mode) so newly spawned targets don't
             // flash at default scale.
@@ -18483,7 +18487,8 @@ function GetUIRoot() {
                     indicatorPanelCacheDue ||
                     indicatorConfigSig !== State.lastIndicatorConfigSig;
                 if (shouldRefreshIndicatorPanels) {
-                    State.indicatorPanelsCache = root.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                    var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
+                    State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
                     RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
                 }
                 if (shouldRefreshIndicatorPanels) {
@@ -20653,27 +20658,14 @@ function GetUIRoot() {
     }
 
     function CollectUnitStatusOldPanelsForEnemyUlt(root, nowMs) {
-        var roots = CollectEnemyUltOldScanRoots(root);
-        var panels = [];
-        var rootCounts = [];
-        function pushPanel(panel) {
-            if (!panel || !IsPanelValid(panel)) return;
-            for (var i = 0; i < panels.length; i++) {
-                if (panels[i] === panel) return;
-            }
-            panels.push(panel);
-        }
-        for (var ri = 0; ri < roots.length; ri++) {
-            var scanRoot = roots[ri] && roots[ri].panel ? roots[ri].panel : null;
-            if (!scanRoot || !scanRoot.FindChildrenWithClassTraverse) continue;
-            var found = scanRoot.FindChildrenWithClassTraverse("UnitStatusOld") || [];
-            for (var fi = 0; fi < found.length; fi++) pushPanel(found[fi]);
-            var label = roots[ri] && roots[ri].label ? roots[ri].label : ("r" + String(ri));
-            rootCounts.push(label + ":" + String(found.length));
-        }
+        var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
+        if (!searchRoot || !searchRoot.FindChildrenWithClassTraverse) return [];
+        
+        var panels = searchRoot.FindChildrenWithClassTraverse("UnitStatusOld") || [];
+        
         EnemyUltOldDebugLogThrottled(
-            "scanroots|" + rootCounts.join("|"),
-            "scan_roots " + rootCounts.join(" "),
+            "scanroots|1",
+            "scan_roots gameplay_hud_optimized found: " + panels.length,
             nowMs
         );
         return panels;

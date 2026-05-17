@@ -18779,14 +18779,31 @@ $.BuildUI = function() {
         if (!searchInputExisting) {
             searchInputExisting = $.CreatePanel("TextEntry", searchWrapExisting, "SettingsSearchInput");
         }
+        var searchDebounceTimer = null;
         var applySearchInputQuery = function() {
+            if (searchDebounceTimer !== null) {
+                $.CancelScheduled(searchDebounceTimer);
+                searchDebounceTimer = null;
+            }
+            searchDebounceTimer = $.Schedule(0.1, function() {
+                searchDebounceTimer = null;
+                currentSearchQuery = searchInputExisting.text || "";
+                UpdateSettingsSearchUiState($.GetContextPanel());
+                var liveList = GetSettingsListPanel();
+                if (liveList) UpdateListContent(liveList, true);
+            });
+        };
+        searchInputExisting.SetPanelEvent("ontextentrychange", applySearchInputQuery);
+        searchInputExisting.SetPanelEvent("oninputsubmit", function() {
+            if (searchDebounceTimer !== null) {
+                $.CancelScheduled(searchDebounceTimer);
+                searchDebounceTimer = null;
+            }
             currentSearchQuery = searchInputExisting.text || "";
             UpdateSettingsSearchUiState($.GetContextPanel());
             var liveList = GetSettingsListPanel();
             if (liveList) UpdateListContent(liveList, true);
-        };
-        searchInputExisting.SetPanelEvent("ontextentrychange", applySearchInputQuery);
-        searchInputExisting.SetPanelEvent("oninputsubmit", applySearchInputQuery);
+        });
         var searchClearExisting = searchWrapExisting.FindChildTraverse("SettingsSearchClear");
         if (!searchClearExisting) {
             searchClearExisting = $.CreatePanel("Button", searchWrapExisting, "SettingsSearchClear");
