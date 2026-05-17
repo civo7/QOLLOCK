@@ -10023,8 +10023,7 @@ function GetUIRoot() {
         if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
 
         if (shouldRefreshList) {
-            var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
-            State.targetShapesCache = searchRoot.FindChildrenWithClassTraverse("target_shape") || [];
+            State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
             // Keep default settings low-frequency, but tighten when user customized
             // size/opacity (or red-diamond mode) so newly spawned targets don't
             // flash at default scale.
@@ -18487,8 +18486,7 @@ function GetUIRoot() {
                     indicatorPanelCacheDue ||
                     indicatorConfigSig !== State.lastIndicatorConfigSig;
                 if (shouldRefreshIndicatorPanels) {
-                    var searchRoot = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : root;
-                    State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                    State.indicatorPanelsCache = root.FindChildrenWithClassTraverse("HudIndicatorText") || [];
                     RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
                 }
                 if (shouldRefreshIndicatorPanels) {
