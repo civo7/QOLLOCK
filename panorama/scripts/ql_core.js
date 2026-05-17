@@ -23659,10 +23659,6 @@ function GetUIRoot() {
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
-        if (now < (State.minimapLocalMainImageNextScanMs || 0)) {
-            return null;
-        }
-
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
         }
@@ -23675,8 +23671,6 @@ function GetUIRoot() {
             }
         }
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (now < (State.minimapLocalMainImageNextScanMs || 0)) {
             return null;
         }
@@ -23711,10 +23705,6 @@ function GetUIRoot() {
     function FindLocalMinimapPlayerPanel(root, nowMs, aggressiveScan) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
-        if (now < (State.minimapLocalPlayerPanelNextScanMs || 0)) {
-            return null;
-        }
-
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotPlayerPanel)) {
             return State.minimapHeadingSnapshotPlayerPanel;
         }
@@ -23726,8 +23716,6 @@ function GetUIRoot() {
             }
         }
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var scanCooldownMs = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
         if (now < (State.minimapLocalPlayerPanelNextScanMs || 0)) {
             return null;
         }
