@@ -329,6 +329,15 @@
 	animation-duration: 0.2s;
 }
 
+.combat_indicator_active .regen_image,
+.inCombat .regen_image,
+.in_combat .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
 .colored_healthbar_active .regen_image
 {
 	vertical-align: center;
@@ -339,6 +348,18 @@
 	opacity: 0.3;
 	transition-property: wash-color;
 	transition-duration: 0.2s;
+}
+
+.combat_indicator_active.colored_healthbar_active .regen_image,
+.combat_indicator_active .colored_healthbar_active .regen_image,
+.inCombat.colored_healthbar_active .regen_image,
+.inCombat .colored_healthbar_active .regen_image,
+.in_combat.colored_healthbar_active .regen_image,
+.in_combat .colored_healthbar_active .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
 }
 
 .colored_healthbar_active .health_regen_boosted .regen_image
@@ -361,6 +382,25 @@
 	font-weight: semi-bold;
 	transition-property: color;
 	transition-duration: 0.2s;
+}
+
+.combat_indicator_active .regen_value,
+.inCombat .regen_value,
+.in_combat .regen_value
+{
+	color: #fa6969;
+	transition-duration: 0.1s;
+}
+
+.combat_indicator_active.colored_healthbar_active .regen_value,
+.combat_indicator_active .colored_healthbar_active .regen_value,
+.inCombat.colored_healthbar_active .regen_value,
+.inCombat .colored_healthbar_active .regen_value,
+.in_combat.colored_healthbar_active .regen_value,
+.in_combat .colored_healthbar_active .regen_value
+{
+	color: #fa6969;
+	transition-duration: 0.1s;
 }
 
 .colored_healthbar_active .health_regen_boosted .regen_value
@@ -714,6 +754,29 @@
 	text-overflow: shrink;
 }
 
+.combat_indicator_active.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.combat_indicator_active .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.inCombat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.in_combat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
+.combat_indicator_active.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.combat_indicator_active .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.inCombat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.in_combat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value
+{
+	color: #fa6969;
+	transition-duration: 0.1s;
+}
+
 .fg_healthbar_active:not(.minimalist_healthbar_active) #shield_bar,.fg_healthbar_active:not(.minimalist_healthbar_active) #tech_shield_bar
 {
 	font-size: 12px;
@@ -1036,6 +1099,30 @@
 	margin-left: 8px;
 }
 
+.combat_indicator_active.minimalist_healthbar_active .regen_image,
+.combat_indicator_active .minimalist_healthbar_active .regen_image,
+.inCombat.minimalist_healthbar_active .regen_image,
+.inCombat .minimalist_healthbar_active .regen_image,
+.in_combat.minimalist_healthbar_active .regen_image,
+.in_combat .minimalist_healthbar_active .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
+.combat_indicator_active.minimalist_healthbar_active .regen_value,
+.combat_indicator_active .minimalist_healthbar_active .regen_value,
+.inCombat.minimalist_healthbar_active .regen_value,
+.inCombat .minimalist_healthbar_active .regen_value,
+.in_combat.minimalist_healthbar_active .regen_value,
+.in_combat .minimalist_healthbar_active .regen_value
+{
+	color: #fa6969;
+	text-shadow: 0px 0px 0px 2.0 rgba(15, 10, 10, 0.85);
+	transition-duration: 0.1s;
+}
+
 .minimalist_healthbar_active #shield_bar,.minimalist_healthbar_active #tech_shield_bar
 {
 	border-radius: 4px;
@@ -1152,6 +1239,30 @@
 	color: offBlack;
 	text-shadow: 0px 0px 0px 2.0 #aaaaaa;
 	margin-left: 4px;
+}
+
+.combat_indicator_active.budhud_healthbar_active .regen_image,
+.combat_indicator_active .budhud_healthbar_active .regen_image,
+.inCombat.budhud_healthbar_active .regen_image,
+.inCombat .budhud_healthbar_active .regen_image,
+.in_combat.budhud_healthbar_active .regen_image,
+.in_combat .budhud_healthbar_active .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
+.combat_indicator_active.budhud_healthbar_active .regen_value,
+.combat_indicator_active .budhud_healthbar_active .regen_value,
+.inCombat.budhud_healthbar_active .regen_value,
+.inCombat .budhud_healthbar_active .regen_value,
+.in_combat.budhud_healthbar_active .regen_value,
+.in_combat .budhud_healthbar_active .regen_value
+{
+	color: #fa6969;
+	text-shadow: 0px 0px 0px 2.0 rgba(20, 8, 8, 0.85);
+	transition-duration: 0.1s;
 }
 
 .budhud_healthbar_active #shield_bar,.budhud_healthbar_active #tech_shield_bar
@@ -1576,6 +1687,18 @@
 	transition-duration: 0.2s;
 }
 
+.combat_indicator_active.klutz_healthbar_active .regen_image,
+.combat_indicator_active .klutz_healthbar_active .regen_image,
+.inCombat.klutz_healthbar_active .regen_image,
+.inCombat .klutz_healthbar_active .regen_image,
+.in_combat.klutz_healthbar_active .regen_image,
+.in_combat .klutz_healthbar_active .regen_image
+{
+	wash-color: #fa6969;
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
 .klutz_healthbar_active .health_regen_boosted .regen_image
 {
 	wash-color: colorFriendly;
@@ -1595,6 +1718,17 @@
 	font-weight: semi-bold;
 	transition-property: color;
 	transition-duration: 0.2s;
+}
+
+.combat_indicator_active.klutz_healthbar_active .regen_value,
+.combat_indicator_active .klutz_healthbar_active .regen_value,
+.inCombat.klutz_healthbar_active .regen_value,
+.inCombat .klutz_healthbar_active .regen_value,
+.in_combat.klutz_healthbar_active .regen_value,
+.in_combat .klutz_healthbar_active .regen_value
+{
+	color: #fa6969;
+	transition-duration: 0.1s;
 }
 
 .klutz_healthbar_active .health_regen_boosted .regen_value

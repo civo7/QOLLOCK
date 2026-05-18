@@ -89,8 +89,10 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_SHOP_STATS: "Goblin Man Sam",
     SUPPORT_16_10: "Karma",
     SUPPORT_4_3: "Gyzeh",
+    ENABLE_COMBAT_INDICATOR: "Goblin Man Sam",
     ENABLE_COLORED_HEALTHBAR: "Hanturaya",
-    ENABLE_ENEMY_COLORED_HEALTHBAR: "Hanturaya",
+    ENABLE_TOPBAR_ENEMY_HP_WARNING: "Hanturaya",
+    ENABLE_TOPBAR_ALLY_HP_WARNING: "Hanturaya",
     HEALTHBAR_TYPE: "bytenode, somarotsaway, EmilyVasquez, Klutzz",
     PLAYER_HEALTHBAR_SCALE: "Civo",
     PLAYER_HEALTHBAR_OPACITY: "Civo",
@@ -110,6 +112,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     MINIMAL_MINIMAP: "Lightbringer",
     ENABLE_MINIMAP_BUFF_TIMER: "BreadRollius",
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
+    ENABLE_MINIMAP_CRATE_OVERLAY: "gfkm",
+    ENABLE_ENHANCED_QUICKBUY: "Aminsx",
     ENABLE_URN_COLORS: "Civo"
 };
 const SETTING_CREATED_BY_BY_LABEL = {
@@ -121,6 +125,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "BRIDGE_BUFF_START": "Time before the announcement happens in seconds.",
     "DISABLE_PLAYER_NAME_BLUR": "The world blur behind player names in the top bar.",
     "DISABLE_QUICK_BUY": "The item buying auto queue system in the shop menu.",
+    "ENABLE_ENHANCED_QUICKBUY": "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
     "DISABLE_SHOP_BLUE": "The world background blur effect behind the shop menu.",
     "ENABLE_AMMO_STATUS": "Visual indicator of your current ammo.",
     "ENABLE_BUFF_HUD": "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.",
@@ -129,8 +134,10 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_LEGACY_COOLDOWNS": "Restores the legacy removed duration bars for abilities.",
     "ENABLE_STATLOCKER": "Adds a STAT button on profile rows that opens Statlocker for that account.",
     "ENABLE_CLEAN_STACKS": "Improve Ability Stacks",
+    "ENABLE_COMBAT_INDICATOR": "Highlight regeneration in red for when in combat.",
     "ENABLE_COLORED_HEALTHBAR": "Colored healthbar warnings when at significant thresholds.",
-    "ENABLE_ENEMY_COLORED_HEALTHBAR": "Colored enemy healthbar warnings when at significant thresholds.",
+    "ENABLE_TOPBAR_ENEMY_HP_WARNING": "Colored enemy top-bar health warnings when at significant thresholds.",
+    "ENABLE_TOPBAR_ALLY_HP_WARNING": "Colored ally top-bar health warnings when at significant thresholds.",
     "ENABLE_COMPASS_SPEED": "Speed number tracker.",
     "ENABLE_CUMULATIVE_DMG": "The large cumulative damage number.",
     "ENABLE_DAMAGE_FOUNTAIN": "Ragnarok Online damage visuals with improved fancy styling.",
@@ -153,6 +160,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_MINIMAP_BUFF_TIMER": "Shows a visual indicator in the minimap of when Bridge Buffs will spawn.",
     "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE": "Moves the Bridge Buff timer onto the bridge with two smaller centered copies.",
     "ENABLE_MINIMAP_REJUV_TIMER": "Shows a visual indicator in the minimap of when Mid Boss will spawn.",
+    "ENABLE_MINIMAP_CRATE_OVERLAY": "Shows Midtown crate markers in the minimap.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
     "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "ENABLE_MISSING_HERO": "Greys out heros in the top bar when missing on the map.",
@@ -163,6 +171,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_RED_DIAMOND": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "ENABLE_REJUV_HUD": "Shows a visual indicator in the top bar of when Mid Boss will spawn.",
     "ENABLE_SHOP_STATS": "Shows all of your player stats within the shop menu.",
+    "ENABLE_SIMPLIFY_SHOP_STATS": "Cleans up the visuals of the shop stats display without changing the rest of the shop.",
     "ENABLE_SIMPLIFY_ABILITY_ICONS": "Cleans up visuals of abilities significantly to reduce clutter.",
     "ENABLE_SIMPLIFY_COMPASS": "Simplifies the Compass overlay to its bare elements.",
     "ENABLE_SIMPLIFY_ITEMS": "Cleans up visuals of the item bar significantly to reduce clutter.",
@@ -290,6 +299,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Top Bar|Objective Damage": "Shows the individual player's objective damage in the top bar.",
     "HUD / Top Bar|Objective Map": "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base.",
     "HUD / Top Bar|Top Bar Background": "The world blur and backing strip behind player names in the top bar.",
+    "HUD / Top Bar|Enemy HP Warning": "Colored enemy top-bar health warnings when at significant thresholds.",
+    "HUD / Top Bar|Ally HP Warning": "Colored ally top-bar health warnings when at significant thresholds.",
     "HUD / Top Bar|Souls Per Minute": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "HUD / Top Bar|Unspent Souls": "Shows the individual player's unspent souls in the top bar.",
     "HUD / Top Bar|Urn Difference": "Shows a visual indicator in the top bar of the percentage difference of souls between teams.",
@@ -390,6 +401,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_LEGACY_COOLDOWNS: "low",
     ENABLE_STATLOCKER: "none",
     ENABLE_CLEAN_STACKS: "none",
+    ENABLE_COMBAT_INDICATOR: "low",
     ENABLE_COLORED_HEALTHBAR: "medium",
     ENABLE_COLOR_WARNING_25: "medium",
     ENABLE_COLOR_WARNING_65: "medium",
@@ -399,14 +411,19 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_COMPASS_SPEED: "medium",
     ENABLE_CUMULATIVE_DMG: "low",
     ENABLE_DAMAGE_FOUNTAIN: "low",
-    ENABLE_ENEMY_COLORED_HEALTHBAR: "medium",
-    ENABLE_ENEMY_COLOR_WARNING_25: "medium",
-    ENABLE_ENEMY_COLOR_WARNING_65: "medium",
-    ENABLE_ENEMY_COLOR_WARNING_75: "medium",
+    ENABLE_TOPBAR_ENEMY_HP_WARNING: "medium",
+    ENABLE_TOPBAR_ENEMY_HP_WARNING_25: "medium",
+    ENABLE_TOPBAR_ENEMY_HP_WARNING_65: "medium",
+    ENABLE_TOPBAR_ENEMY_HP_WARNING_75: "medium",
+    ENABLE_TOPBAR_ALLY_HP_WARNING: "medium",
+    ENABLE_TOPBAR_ALLY_HP_WARNING_25: "medium",
+    ENABLE_TOPBAR_ALLY_HP_WARNING_65: "medium",
+    ENABLE_TOPBAR_ALLY_HP_WARNING_75: "medium",
     ENABLE_ENEMY_V2_ENHANCED: "medium",
     ENABLE_ENEMY_V2_ULT_INDICATOR: "low",
     ENABLE_ENEMY_V2_LEVEL: "low",
     ENABLE_ENEMY_ULT_INDICATOR: "medium",
+    ENABLE_ENHANCED_QUICKBUY: "low",
     ENABLE_FORCE_TESTING_TOOLS: "none",
     ENABLE_FULL_KEYBOARD_LAYOUT: "medium",
     ENABLE_HERO_SCENE_PANEL: "none",
@@ -429,6 +446,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_LANE_WITH_PARTY: "low",
     ENABLE_MINIMAP_BUFF_TIMER: "low",
     ENABLE_MINIMAP_REJUV_TIMER: "low",
+    ENABLE_MINIMAP_CRATE_OVERLAY: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
     ENABLE_MIN_SOULS: "medium",
@@ -445,10 +463,16 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_REJUV_HUD: "low",
     ENABLE_RELOAD_COOLDOWN: "medium",
     ENABLE_SHOP_STATS: "low",
+    ENABLE_SIMPLIFY_SHOP_STATS: "low",
     ENABLE_SIMPLIFY_ABILITY_ICONS: "none",
     ENABLE_SIMPLIFY_COMPASS: "medium",
     ENABLE_SIMPLIFY_ITEMS: "none",
     ENABLE_SIMPLIFY_SHOP: "none",
+    HUD_BOTTOM_BAR_ENABLED: "low",
+    HUD_ITEMS_ENABLED: "low",
+    HUD_SHOP_ENABLED: "low",
+    HUD_SOULS_ENABLED: "low",
+    HUD_TOP_BAR_ENABLED: "low",
     ENABLE_TAB_ZOOM: "low",
     ENABLE_ULT_COOLDOWNS: "none",
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
@@ -500,6 +524,9 @@ const SETTING_PERF_IMPACT_TIERS = {
     PASSIVE_COOLDOWN_SIZE: "low",
     PASSIVE_COOLDOWN_X: "low",
     PASSIVE_COOLDOWN_Y: "low",
+    ITEMS_OPACITY: "low",
+    ITEMS_X_OFFSET: "low",
+    ITEMS_Y_OFFSET: "low",
     PREVIEWS_ENABLED: "none",
     RELOAD_COOLDOWN_OPACITY: "medium",
     RELOAD_COOLDOWN_SIZE: "medium",
@@ -517,11 +544,22 @@ const SETTING_PERF_IMPACT_TIERS = {
     RUNTIME_STATS_SHOWMEM: "none",
     RUNTIME_STATS_SHOWPOS: "none",
     RUNTIME_STATS_SHOWTICK: "none",
+    SHOP_OPACITY: "low",
     SHOP_OFFSET_X: "low",
+    SHOP_OFFSET_Y: "low",
+    SOULS_OPACITY: "low",
+    SOULS_X_OFFSET: "low",
+    SOULS_Y_OFFSET: "low",
     SUPPORT_16_10: "none",
     SUPPORT_4_3: "none",
     TAB_ZOOM_DRAW_OVER_UI: "low",
     TAB_ZOOM_OPACITY: "low",
+    TOP_BAR_OPACITY: "low",
+    TOP_BAR_X_OFFSET: "low",
+    TOP_BAR_Y_OFFSET: "low",
+    BOTTOM_BAR_OPACITY: "low",
+    BOTTOM_BAR_X_OFFSET: "low",
+    BOTTOM_BAR_Y_OFFSET: "low",
     UNIT_TARGET_OPACITY: "medium",
     UNIT_TARGET_SIZE: "medium",
     UNSECURED_SOULS_HUD_SCALE: "low",
@@ -553,10 +591,15 @@ const COLOR_WARNING_THRESHOLD_OPTIONS = [
     { label: "65%", key: "ENABLE_COLOR_WARNING_65" },
     { label: "75%", key: "ENABLE_COLOR_WARNING_75" }
 ];
-const ENEMY_COLOR_WARNING_THRESHOLD_OPTIONS = [
-    { label: "25%", key: "ENABLE_ENEMY_COLOR_WARNING_25" },
-    { label: "65%", key: "ENABLE_ENEMY_COLOR_WARNING_65" },
-    { label: "75%", key: "ENABLE_ENEMY_COLOR_WARNING_75" }
+const TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS = [
+    { label: "25%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25" },
+    { label: "65%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65" },
+    { label: "75%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75" }
+];
+const TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS = [
+    { label: "25%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25" },
+    { label: "65%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65" },
+    { label: "75%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75" }
 ];
 const NEUTRAL_CAMP_TIER_OPTIONS = [
     { label: "Tier 1", key: "ENABLE_ONE_TIME_TIER1" },
@@ -722,7 +765,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.3.5";
+    : "2.4.0";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -1116,6 +1159,7 @@ const SETTINGS_RU_TEXT = {
     "Recommended for 4:3": "\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434. \u0434\u043b\u044f 4:3",
     "HP Warning": "\u043c\u0435\u043d\u044f\u0435\u0442\u0441\u044f \u043e\u0442 \u0437\u0434\u043e\u0440\u043e\u0432\u044c\u044f",
     "Enemy HP Warning": "\u043c\u0435\u043d\u044f\u0435\u0442\u0441\u044f \u043e\u0442 \u0437\u0434\u043e\u0440\u043e\u0432\u044c\u044f \u0432\u0440\u0430\u0433\u0430",
+    "Ally HP Warning": "\u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0435 \u043e \u041e\u0417 \u0441\u043e\u044e\u0437\u043d\u0438\u043a\u0430",
     "Compact Layout": "\u041a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0439 \u0432\u0438\u0434",
     "Cleaner Skills": "\u0423\u0431\u0440\u0430\u0442\u044c \u0444\u043e\u043d \u0441\u043f\u043e\u0441\u043e\u0431\u043d\u043e\u0441\u0442\u0435\u0439",
     "Cleaner Items": "\u0423\u0431\u0440\u0430\u0442\u044c \u0444\u043e\u043d \u0443 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u043e\u0432",
@@ -1623,6 +1667,7 @@ const SETTINGS_ZH_TEXT = {
     "Recommended for 4:3": "\u63a8\u83504:3",
     "HP Warning": "\u60e0\u666e\u8b66\u544a",
     "Enemy HP Warning": "\u654c\u65b9\u751f\u547d\u503c\u8b66\u544a",
+    "Ally HP Warning": "\u53cb\u65b9\u751f\u547d\u503c\u8b66\u544a",
     "Compact Layout": "\u5e03\u5c40\u7d27\u51d1",
     "Cleaner Skills": "\u6e05\u6d01\u6280\u80fd",
     "Cleaner Items": "\u6e05\u6d01\u7528\u54c1",
@@ -2128,6 +2173,7 @@ const SETTINGS_FR_TEXT = {
     "Recommended for 4:3": "Recommand\u00e9 pour 4:3",
     "HP Warning": "Avertissement HP",
     "Enemy HP Warning": "Avertissement HP ennemi",
+    "Ally HP Warning": "Avertissement HP alli\u00e9",
     "Compact Layout": "Disposition compacte",
     "Cleaner Skills": "Comp\u00e9tences plus propres",
     "Cleaner Items": "Articles plus propres",
@@ -2636,6 +2682,7 @@ const SETTINGS_PT_TEXT = {
     "Recommended for 4:3": "Recomendado para 4:3",
     "HP Warning": "Aviso HP",
     "Enemy HP Warning": "Aviso de HP inimigo",
+    "Ally HP Warning": "Aviso de HP aliado",
     "Compact Layout": "Layout compacto",
     "Cleaner Skills": "Habilidades de limpeza",
     "Cleaner Items": "Itens mais limpos",
@@ -3143,6 +3190,7 @@ const SETTINGS_PT_BR_TEXT = {
     "Recommended for 4:3": "Recomendado para 4:3",
     "HP Warning": "Aviso de Vida",
     "Enemy HP Warning": "Aviso de Vida inimigo",
+    "Ally HP Warning": "Aviso de Vida aliado",
     "Compact Layout": "Layout compacto",
     "Cleaner Skills": "Habilidades mais limpas",
     "Cleaner Items": "Itens mais limpos",
@@ -3652,6 +3700,7 @@ const SETTINGS_ES_TEXT = {
     "Recommended for 4:3": "Recomendado para 4:3",
     "HP Warning": "Aviso de vida baja",
     "Enemy HP Warning": "Aviso de vida baja del enemigo",
+    "Ally HP Warning": "Aviso de vida baja del aliado",
     "Compact Layout": "Dise\u00f1o compacto",
     "Cleaner Skills": "Habilidades m\u00e1s limpias",
     "Cleaner Items": "Objetos m\u00e1s limpios",
@@ -5208,6 +5257,27 @@ function NormalizeEnemyColorWarningConfig(configTarget, sourceConfig) {
     }
 }
 
+function NormalizeAllyColorWarningConfig(configTarget, sourceConfig) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.NormalizeAllyColorWarningConfig === "function") {
+        utils.NormalizeAllyColorWarningConfig(configTarget, sourceConfig);
+    }
+}
+
+function NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.NormalizeTopbarEnemyHpWarningConfig === "function") {
+        utils.NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig);
+    }
+}
+
+function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.NormalizeTopbarAllyHpWarningConfig === "function") {
+        utils.NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig);
+    }
+}
+
 function IsZipBoostPreviewConfig(configId) {
     return configId === "ZIP_BOOST_X_OFFSET" ||
         configId === "ZIP_BOOST_Y_OFFSET" ||
@@ -5276,7 +5346,9 @@ function IsDamageReportPreviewConfig(configId) {
 }
 
 function IsShopPreviewConfig(configId) {
-    return configId === "SHOP_OFFSET_X";
+    return configId === "SHOP_OFFSET_X" ||
+        configId === "SHOP_OFFSET_Y" ||
+        configId === "SHOP_OPACITY";
 }
 
 function IsUnsecuredPlusPreviewConfig(configId) {
@@ -5993,6 +6065,14 @@ function ShowShopPreview() {
     if (!isFinite(offsetX)) offsetX = 0;
     if (offsetX < -500) offsetX = -500;
     if (offsetX > 500) offsetX = 500;
+    var offsetY = Math.round(Number(MOD_CONFIG.SHOP_OFFSET_Y));
+    if (!isFinite(offsetY)) offsetY = 0;
+    if (offsetY < -500) offsetY = -500;
+    if (offsetY > 500) offsetY = 500;
+    var opacity = Number(MOD_CONFIG.SHOP_OPACITY);
+    if (!isFinite(opacity)) opacity = 1.0;
+    if (opacity < 0) opacity = 0;
+    if (opacity > 1) opacity = 1;
 
     var context = $.GetContextPanel();
     var fallbackX = 240;
@@ -6015,8 +6095,10 @@ function ShowShopPreview() {
         anchoredToLive = true;
     }
 
-    var targetX = anchoredToLive ? baseX : (baseX + offsetX);
-    SetPreviewPanelPosition(panel, targetX, baseY);
+    var targetX = baseX + offsetX;
+    var targetY = baseY - offsetY;
+    SetPreviewPanelPosition(panel, targetX, targetY);
+    SetPanelOpacitySafe(panel, opacity, 1.0);
     gShopPreviewLabel.text = "SHOP";
     panel.AddClass("Visible");
     ScheduleHideShopPreview(1.2);
@@ -6524,6 +6606,31 @@ function CloneSchemaWithFieldOverrides(baseSchema, overrideFields) {
     return out;
 }
 
+function CloneSchemaWithoutFields(baseSchema, fieldKeys) {
+    var out = [];
+    var blocked = {};
+    var i;
+    if (Array.isArray(fieldKeys)) {
+        for (i = 0; i < fieldKeys.length; i++) {
+            if (fieldKeys[i] === undefined || fieldKeys[i] === null) continue;
+            blocked[String(fieldKeys[i])] = true;
+        }
+    }
+    if (!Array.isArray(baseSchema)) return out;
+    for (i = 0; i < baseSchema.length; i++) {
+        var field = baseSchema[i];
+        if (!field || !field.key) continue;
+        if (blocked[String(field.key)]) continue;
+        out.push({
+            key: field.key,
+            min: field.min,
+            max: field.max,
+            step: field.step
+        });
+    }
+    return out;
+}
+
 const COMPACT_SCHEMA_2_0_0 = COMPACT_SCHEMA_V60;
 const COMPACT_SCHEMA_2_0_1 = BuildSchemaWithLanguageMax(COMPACT_SCHEMA_2_0_0, 2);
 for (var iSchemaExtra = 0; iSchemaExtra < COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS.length; iSchemaExtra++) {
@@ -6607,11 +6714,80 @@ const COMPACT_SCHEMA_2_3_4 = AppendUniqueSchemaFields(
         { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
     ]
 );
+const TOPBAR_HP_WARNING_SCHEMA_FIELDS = [
+    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75", min: 0, max: 1, step: 1 }
+];
+const HUD_BAR_AND_SHOP_SCHEMA_FIELDS = [
+    { key: "TOP_BAR_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "TOP_BAR_X_OFFSET", min: -1500, max: 1500, step: 5 },
+    { key: "TOP_BAR_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "BOTTOM_BAR_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "BOTTOM_BAR_X_OFFSET", min: -1500, max: 1500, step: 5 },
+    { key: "BOTTOM_BAR_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "SHOP_OFFSET_Y", min: -500, max: 500, step: 5 },
+    { key: "SHOP_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+const HUD_SECTION_AND_PANEL_SCHEMA_FIELDS = [
+    { key: "HUD_TOP_BAR_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "HUD_BOTTOM_BAR_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "HUD_ITEMS_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "HUD_SOULS_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "HUD_SHOP_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "ITEMS_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "ITEMS_X_OFFSET", min: -1500, max: 1500, step: 5 },
+    { key: "ITEMS_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "SOULS_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "SOULS_X_OFFSET", min: -1500, max: 1500, step: 5 },
+    { key: "SOULS_Y_OFFSET", min: -500, max: 500, step: 5 }
+];
+const MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMAP_CRATE_OVERLAY", min: 0, max: 1, step: 1 }
+];
+const COMBAT_INDICATOR_SCHEMA_FIELDS = [
+    { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
+];
+const SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
+    { key: "ENABLE_SIMPLIFY_SHOP_STATS", min: 0, max: 1, step: 1 }
+];
+const ENHANCED_QUICKBUY_SCHEMA_FIELDS = [
+    { key: "ENABLE_ENHANCED_QUICKBUY", min: 0, max: 1, step: 1 }
+];
 const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_3_4,
     [
         { key: "DISABLE_PLAYER_NAME_BLUR", min: 0, max: 1, step: 1 }
     ]
+);
+const COMPACT_SCHEMA_2_3_6 = COMPACT_SCHEMA_2_3_5;
+const COMPACT_SCHEMA_2_3_7 = COMPACT_SCHEMA_2_3_6;
+const COMPACT_SCHEMA_2_4_0 = AppendUniqueSchemaFields(
+    AppendUniqueSchemaFields(
+        AppendUniqueSchemaFields(
+            AppendUniqueSchemaFields(
+                AppendUniqueSchemaFields(
+                    AppendUniqueSchemaFields(
+                        COMPACT_SCHEMA_2_3_7,
+                        TOPBAR_HP_WARNING_SCHEMA_FIELDS
+                    ),
+                    COMBAT_INDICATOR_SCHEMA_FIELDS
+                ),
+                HUD_BAR_AND_SHOP_SCHEMA_FIELDS
+            ),
+            HUD_SECTION_AND_PANEL_SCHEMA_FIELDS
+        ),
+        MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS
+    ),
+    AppendUniqueSchemaFields(
+        SHOP_STATS_MINIMALIST_SCHEMA_FIELDS,
+        ENHANCED_QUICKBUY_SCHEMA_FIELDS
+    )
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
@@ -6702,6 +6878,18 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.3.5": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_3_5
+    },
+    "2.3.6": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_6
+    },
+    "2.3.7": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_3_7
+    },
+    "2.4.0": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_4_0
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -6852,6 +7040,9 @@ function ApplyParsedConfig(parsed) {
     NormalizeHealthbarTypeConfig(MOD_CONFIG, parsed);
     NormalizeColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, parsed);
+    NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
 }
 
 function ClampToSchemaField(value, field) {
@@ -6918,6 +7109,9 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeHealthbarTypeConfig(MOD_CONFIG, parsed);
     NormalizeColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, parsed);
+    NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
     SetRuntimePresetName("");
@@ -7625,6 +7819,9 @@ function SyncConfigFromStorage() {
             NormalizeHealthbarTypeConfig(nextConfig, parsed);
             NormalizeColorWarningConfig(nextConfig, parsed);
             NormalizeEnemyColorWarningConfig(nextConfig, parsed);
+            NormalizeAllyColorWarningConfig(nextConfig, parsed);
+            NormalizeTopbarEnemyHpWarningConfig(nextConfig, parsed);
+            NormalizeTopbarAllyHpWarningConfig(nextConfig, parsed);
         } catch (e) {}
     }
     MOD_CONFIG = nextConfig;
@@ -7692,6 +7889,9 @@ function SaveAndSync() {
     NormalizeHealthbarTypeConfig(MOD_CONFIG, MOD_CONFIG);
     NormalizeColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
+    NormalizeAllyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
+    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
+    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
     var data = JSON.stringify(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         return;
@@ -9078,6 +9278,9 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeHealthbarTypeConfig(candidateConfig, parsed);
     NormalizeColorWarningConfig(candidateConfig, parsed);
     NormalizeEnemyColorWarningConfig(candidateConfig, parsed);
+    NormalizeAllyColorWarningConfig(candidateConfig, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
+    NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
 
     return { candidateConfig: candidateConfig, diagnostics: diagnostics };
 }
@@ -9286,6 +9489,9 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeHealthbarTypeConfig(candidate, presetData);
     NormalizeColorWarningConfig(candidate, presetData);
     NormalizeEnemyColorWarningConfig(candidate, presetData);
+    NormalizeAllyColorWarningConfig(candidate, presetData);
+    NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
+    NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
 
     PreserveUiOnlySettings(candidate);
 
@@ -13476,6 +13682,10 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Gerglee", preset: "Gerglee" });
     entries.push({ label: "Dappa", preset: "Dappa" });
     entries.push({ label: "Seyer", preset: "Seyer" });
+    entries.push({
+        label: "T1FF4NNY",
+        presetExport: "[QOL-2-3-2]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WVkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkE5g"
+    });
     for (var i = entries.length; i < 60; i++) {
         entries.push({ label: "Available", available: false });
     }
@@ -14997,7 +15207,11 @@ function IsColorWarningThresholdOptions(options) {
 }
 
 function IsEnemyColorWarningThresholdOptions(options) {
-    return OptionsMatchExpectedKeys(options, ENEMY_COLOR_WARNING_THRESHOLD_OPTIONS);
+    return OptionsMatchExpectedKeys(options, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS);
+}
+
+function IsAllyColorWarningThresholdOptions(options) {
+    return OptionsMatchExpectedKeys(options, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS);
 }
 
 function IsBridgeBuffFilterOptions(options) {
@@ -15400,7 +15614,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
     } else if (type === "multitoggle" && Array.isArray(options)) {
         row.AddClass("MultiToggleRow");
         var isItemCooldownFilterRow = false;
-        var isColorWarningFilterRow = IsColorWarningThresholdOptions(options) || IsEnemyColorWarningThresholdOptions(options);
+        var isColorWarningFilterRow = IsColorWarningThresholdOptions(options) || IsEnemyColorWarningThresholdOptions(options) || IsAllyColorWarningThresholdOptions(options);
         var isBridgeBuffFilterRow = IsBridgeBuffFilterOptions(options);
         if (options && options.length === 4) {
             var itemFilterKeyCount = 0;
@@ -16453,6 +16667,9 @@ function ApplyPresetConfig(presetData) {
     NormalizeHealthbarTypeConfig(MOD_CONFIG, presetData);
     NormalizeColorWarningConfig(MOD_CONFIG, presetData);
     NormalizeEnemyColorWarningConfig(MOD_CONFIG, presetData);
+    NormalizeAllyColorWarningConfig(MOD_CONFIG, presetData);
+    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
+    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
@@ -16525,6 +16742,9 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeHealthbarTypeConfig(resolved, presetData);
         NormalizeColorWarningConfig(resolved, presetData);
         NormalizeEnemyColorWarningConfig(resolved, presetData);
+        NormalizeAllyColorWarningConfig(resolved, presetData);
+        NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
+        NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
     } else {
         NormalizeNeutralCampFlags(resolved, resolved);
         NormalizeItemCooldownModeConfig(resolved, resolved);
@@ -16533,6 +16753,9 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeHealthbarTypeConfig(resolved, resolved);
         NormalizeColorWarningConfig(resolved, resolved);
         NormalizeEnemyColorWarningConfig(resolved, resolved);
+        NormalizeAllyColorWarningConfig(resolved, resolved);
+        NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
+        NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
     }
     return resolved;
 }
@@ -17338,36 +17561,71 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Size", "UNIT_TARGET_SIZE", "slider", 50, 300, 5, null);
         CreateRow(list, "Opacity", "UNIT_TARGET_OPACITY", "slider", 0, 1.0, 0.05, null);
     } else if (currentTab === "HUD") {
-        CreateSectionTitle(list, "Top Bar");
-        CreateRow(list, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
-        CreateRow(list, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
-        CreateRow(list, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
-        CreateRow(list, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");
-        CreateRow(list, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
-        CreateRow(list, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
-        CreateRow(list, "Souls Per Minute", "ENABLE_MIN_SOULS", "toggle", null, null, null, null, "");
-        CreateRow(list, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
-        CreateRow(list, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
-        CreateRow(list, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
+        CreateAnimatedInlineToggleSection(list, "Top Bar", "HUD_TOP_BAR_ENABLED", "", function(sectionParent) {
+            CreateRow(sectionParent, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Souls Per Minute", "ENABLE_MIN_SOULS", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
+            CreateRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
+            CreateRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
+            CreateRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Horizontal Offset", "TOP_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "TOP_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
+        });
         CreateSeparator(list);
-        CreateSectionTitle(list, "Bottom Bar");
-        CreateRow(list, "Failed Hint", "ENABLE_HIDE_FAILED_HINT", "toggle", null, null, null, [{ invert: true }], "Low Stamina Popup");
-        CreateRow(list, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
-        CreateRow(list, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
-        // Hidden from UI by request; remains configurable via defaults/presets/import.
-        CreateRow(list, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
-        CreateRow(list, "Minimalist Item Bar", "ENABLE_SIMPLIFY_ITEMS", "toggle", null, null, null, null);
+        CreateAnimatedInlineToggleSection(list, "Bottom Bar", "HUD_BOTTOM_BAR_ENABLED", "", function(sectionParent) {
+            CreateRow(sectionParent, "Failed Hint", "ENABLE_HIDE_FAILED_HINT", "toggle", null, null, null, [{ invert: true }], "Low Stamina Popup");
+            CreateRow(sectionParent, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
+            CreateRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
+            // Hidden from UI by request; remains configurable via defaults/presets/import.
+            CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
+        });
         CreateSeparator(list);
-        CreateSectionTitle(list, "Shop");
-        CreateRow(list, "Stats", "ENABLE_SHOP_STATS", "toggle", null, null, null, null);
-        CreateRow(list, "Hero", "ENABLE_HERO_SCENE_PANEL", "toggle", null, null, null, null);
-        CreateRow(list, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
-        CreateRow(list, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
-        CreateRow(list, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
-        CreateRow(list, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
+        CreateAnimatedInlineToggleSection(list, "Items", "HUD_ITEMS_ENABLED", "", function(sectionParent) {
+            CreateRow(sectionParent, "Minimalist Item Bar", "ENABLE_SIMPLIFY_ITEMS", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Opacity", "ITEMS_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Horizontal Offset", "ITEMS_X_OFFSET", "slider", -1500, 1500, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "ITEMS_Y_OFFSET", "slider", -500, 500, 5, null);
+        });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Souls", "HUD_SOULS_ENABLED", "", function(sectionParent) {
+            CreateRow(sectionParent, "Opacity", "SOULS_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Horizontal Offset", "SOULS_X_OFFSET", "slider", -1500, 1500, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "SOULS_Y_OFFSET", "slider", -500, 500, 5, null);
+        });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Shop", "HUD_SHOP_ENABLED", "", function(sectionParent) {
+            CreateInlineSecondaryCheckboxToggleRow(
+                sectionParent,
+                "Stats",
+                "ENABLE_SHOP_STATS",
+                "Minimalist",
+                "ENABLE_SIMPLIFY_SHOP_STATS",
+                "",
+                "Only simplifies the shop stats display."
+            );
+            CreateRow(sectionParent, "Hero", "ENABLE_HERO_SCENE_PANEL", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
+            CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
+            CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
+        });
     } else if (currentTab === "Healthbar") {
         gEnumSectionSyncCallbacks = [];
         CreateSectionTitle(list, "Player");
+        CreateRow(list, "Combat Indicator", "ENABLE_COMBAT_INDICATOR", "toggle", null, null, null, null);
         CreateRow(list, "Color Warning", "ENABLE_COLORED_HEALTHBAR", "multitoggle", null, null, null, COLOR_WARNING_THRESHOLD_OPTIONS, "HP Warning");
         CreateRow(list, "Type", "HEALTHBAR_TYPE", "dropdown", null, null, null, HEALTHBAR_TYPE_DROPDOWN_OPTIONS);
         CreateAnimatedInlineEnumSection(list, "Healthbar Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
@@ -17465,6 +17723,7 @@ function RenderCurrentTabContent(list) {
             "",
             "Moves the Mid Boss timer onto the bridge area of the minimap."
         );
+        CreateRow(list, "Crate Overlay", "ENABLE_MINIMAP_CRATE_OVERLAY", "toggle", null, null, null, null, "Midtown-only crate markers on the minimap.");
         CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
         CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
         CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
@@ -18037,7 +18296,9 @@ function RenderCurrentTabContent(list) {
             { label: "Fascilux", role: "Contributor", url: "https://gamebanana.com/members/4690723" },
             { label: "Karma", role: "Contributor" },
             { label: "Somarotsaway", role: "Contributor", url: "https://gamebanana.com/members/3961199" },
-            { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" }
+            { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" },
+            { label: "gfkm", role: "Contributor" },
+            { label: "Aminsx", role: "Contributor" }
         ];
         var supportThanksTranslatorEntries = [
             { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex" },

@@ -1089,6 +1089,34 @@
 	z-index: 9999;
 }
 
+#minimap_overlay_root
+{
+	width: 100%;
+	height: 100%;
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: center;
+	z-index: 9998;
+	hittest: false;
+}
+
+#minimap_markers
+{
+	width: 100%;
+	height: 100%;
+	ignore-parent-flow: true;
+	hittest: false;
+}
+
+.minimap_marker
+{
+	width: 2px;
+	height: 2px;
+	transform: translateX(-1px) translateY(-1px);
+	background-color: rgba(255, 213, 74, 0.75);
+	box-shadow: fill rgba(42, 33, 0, 0.45) 0px 0px 0px 1px;
+}
+
 .QOLMinimapTimer
 {
 	flow-children: right;
@@ -1146,6 +1174,11 @@
 }
 
 .connectedToHideout #QOLMinimapTimersRoot,.gamemode_streetbrawl #QOLMinimapTimersRoot,#minimap_persp.gDetailView #QOLMinimapTimersRoot,#minimap_persp.gScoreboardOpen #QOLMinimapTimersRoot,#minimap_persp.gAbilityUpgradeMenu #QOLMinimapTimersRoot
+{
+	visibility: collapse;
+}
+
+.connectedToHideout #minimap_overlay_root,.gamemode_streetbrawl #minimap_overlay_root
 {
 	visibility: collapse;
 }

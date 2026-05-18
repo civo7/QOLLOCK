@@ -6,6 +6,10 @@ const projectRoot = path.resolve(__dirname, "..");
 const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_presets.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
+const mirrorRoot = path.resolve(projectRoot, "..", "MIRROR_QOLLOCK");
+const mirrorSharedPath = path.join(mirrorRoot, "panorama", "scripts", "ql_shared_presets.js");
+const mirrorSettingsPath = path.join(mirrorRoot, "panorama", "scripts", "ql_settings.js");
+const mirrorCorePath = path.join(mirrorRoot, "panorama", "scripts", "ql_core.js");
 
 function readFile(filePath) {
     return fs.readFileSync(filePath, "utf8");
@@ -257,6 +261,18 @@ function compareDecodedAgainstSchema(decoded, effectiveConfig, defaultConfig, sc
     return mismatches;
 }
 
+function compareDecodedObjectsBySchema(leftDecoded, rightDecoded, schema) {
+    const mismatches = [];
+    const comparableSchema = schemaToComparable(schema);
+    for (const field of comparableSchema) {
+        const decodedKey = field.key === "DEFAULT_HERO_INDEX" ? "DEFAULT_HERO" : field.key;
+        if (leftDecoded[decodedKey] !== rightDecoded[decodedKey]) {
+            mismatches.push(`${decodedKey}: ${JSON.stringify(leftDecoded[decodedKey])} !== ${JSON.stringify(rightDecoded[decodedKey])}`);
+        }
+    }
+    return mismatches;
+}
+
 function buildSchemaCompatibleConfig(config, schema) {
     const source = Object.assign({}, config || {});
     const comparableSchema = schemaToComparable(schema);
@@ -327,7 +343,8 @@ function main() {
             registry: COMPACT_SCHEMA_REGISTRY,
             serialize: SerializeCompactV2,
             deserialize: DeserializeCompactV2,
-            buildCandidateConfig: BuildCandidateConfigFromParsed
+            buildCandidateConfig: BuildCandidateConfigFromParsed,
+            tryImport: TryApplyImportStringWithDiagnostics
         };`,
         false
     );
@@ -341,9 +358,35 @@ function main() {
         };`,
         true
     );
+    const mirrorSettingsContext = loadContext(
+        [mirrorSharedPath, mirrorSettingsPath],
+        `globalThis.__schemaGuardExports = {
+            sharedSemver: QOL_SCHEMA_SEMVER,
+            sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
+            defaultConfig: QOL_DEFAULT_CONFIG,
+            latestSemver: LATEST_COMPACT_SEMVER,
+            registry: COMPACT_SCHEMA_REGISTRY,
+            serialize: SerializeCompactV2,
+            deserialize: DeserializeCompactV2,
+            tryImport: TryApplyImportStringWithDiagnostics
+        };`,
+        false
+    );
+    const mirrorCoreContext = loadContext(
+        [mirrorSharedPath, mirrorCorePath],
+        `globalThis.__schemaGuardExports = {
+            latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
+            registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,
+            serialize: SerializeBuildPayloadCompact,
+            deserialize: DeserializeBuildPayloadCompact
+        };`,
+        true
+    );
 
     const settingsExports = getValue(settingsContext, "globalThis.__schemaGuardExports");
     const coreExports = getValue(coreContext, "globalThis.__schemaGuardExports");
+    const mirrorSettingsExports = getValue(mirrorSettingsContext, "globalThis.__schemaGuardExports");
+    const mirrorCoreExports = getValue(mirrorCoreContext, "globalThis.__schemaGuardExports");
     const defaultConfig = JSON.parse(JSON.stringify(settingsExports.defaultConfig));
     const presets = JSON.parse(JSON.stringify(settingsExports.presets));
     const sharedSemver = settingsExports.sharedSemver;
@@ -352,6 +395,9 @@ function main() {
     const coreLatestSemver = coreExports.latestSemver;
     const settingsRegistry = JSON.parse(JSON.stringify(settingsExports.registry));
     const coreRegistry = JSON.parse(JSON.stringify(coreExports.registry));
+    const mirrorDefaultConfig = JSON.parse(JSON.stringify(mirrorSettingsExports.defaultConfig));
+    const mirrorSettingsRegistry = JSON.parse(JSON.stringify(mirrorSettingsExports.registry));
+    const mirrorCoreRegistry = JSON.parse(JSON.stringify(mirrorCoreExports.registry));
 
     if (sharedSemver !== settingsLatestSemver) {
         fail(`Shared schema semver ${sharedSemver} does not match settings latest ${settingsLatestSemver}`);
@@ -420,7 +466,102 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0"];
+    const topBarHpWarningKeys = [
+        "ENABLE_TOPBAR_ENEMY_HP_WARNING",
+        "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
+        "ENABLE_TOPBAR_ENEMY_HP_WARNING_65",
+        "ENABLE_TOPBAR_ENEMY_HP_WARNING_75",
+        "ENABLE_TOPBAR_ALLY_HP_WARNING",
+        "ENABLE_TOPBAR_ALLY_HP_WARNING_25",
+        "ENABLE_TOPBAR_ALLY_HP_WARNING_65",
+        "ENABLE_TOPBAR_ALLY_HP_WARNING_75"
+    ];
+    const hudBarAndShopKeys = [
+        "TOP_BAR_OPACITY",
+        "TOP_BAR_X_OFFSET",
+        "TOP_BAR_Y_OFFSET",
+        "BOTTOM_BAR_OPACITY",
+        "BOTTOM_BAR_X_OFFSET",
+        "BOTTOM_BAR_Y_OFFSET",
+        "SHOP_OFFSET_Y",
+        "SHOP_OPACITY"
+    ];
+    const hudSectionAndPanelKeys = [
+        "HUD_TOP_BAR_ENABLED",
+        "HUD_BOTTOM_BAR_ENABLED",
+        "HUD_ITEMS_ENABLED",
+        "HUD_SOULS_ENABLED",
+        "HUD_SHOP_ENABLED",
+        "ITEMS_OPACITY",
+        "ITEMS_X_OFFSET",
+        "ITEMS_Y_OFFSET",
+        "SOULS_OPACITY",
+        "SOULS_X_OFFSET",
+        "SOULS_Y_OFFSET"
+    ];
+    const minimapCrateOverlayKeys = [
+        "ENABLE_MINIMAP_CRATE_OVERLAY"
+    ];
+    const combatIndicatorKeys = [
+        "ENABLE_COMBAT_INDICATOR"
+    ];
+    const shopStatsMinimalistKeys = [
+        "ENABLE_SIMPLIFY_SHOP_STATS"
+    ];
+    const enhancedQuickbuyKeys = [
+        "ENABLE_ENHANCED_QUICKBUY"
+    ];
+    const releaseCompatSemvers = ["2.3.2", "2.3.5"];
+    for (const semver of releaseCompatSemvers) {
+        const settingsReleaseSchema = mirrorSettingsRegistry[semver] && mirrorSettingsRegistry[semver].schema;
+        const coreReleaseSchema = mirrorCoreRegistry[semver] && mirrorCoreRegistry[semver].schema;
+        if (!settingsReleaseSchema || !coreReleaseSchema) {
+            fail(`Release baseline missing schema for ${semver}`);
+        }
+        const currentSettingsDiff = compareSchemas(settingsRegistry[semver].schema, settingsReleaseSchema);
+        if (currentSettingsDiff) {
+            fail(`Settings ${semver} drifted from release baseline: ${currentSettingsDiff}`);
+        }
+        const currentCoreDiff = compareSchemas(coreRegistry[semver].schema, coreReleaseSchema);
+        if (currentCoreDiff) {
+            fail(`Core ${semver} drifted from release baseline: ${currentCoreDiff}`);
+        }
+    }
+
+    const community232String = "[QOL-2-3-2]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WVkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkE5g";
+    const release232Import = mirrorSettingsExports.tryImport(community232String);
+    const current232Import = settingsExports.tryImport(community232String);
+    if (!release232Import || release232Import.ok !== true || !release232Import.parsedConfig) {
+        fail("Release baseline failed to import known 2.3.2 community string");
+    }
+    if (!current232Import || current232Import.ok !== true || !current232Import.parsedConfig) {
+        fail("Current settings failed to import known 2.3.2 community string");
+    }
+    const release232Schema = mirrorSettingsRegistry["2.3.2"].schema;
+    const release232Decoded = release232Import.parsedConfig;
+    const current232Decoded = current232Import.parsedConfig;
+    const current232Diff = compareDecodedObjectsBySchema(current232Decoded, release232Decoded, release232Schema);
+    if (current232Diff.length > 0) {
+        fail(`2.3.2 community preset decode drift: ${current232Diff[0]}`);
+    }
+
+    const release235FixtureConfig = Object.assign({}, mirrorDefaultConfig, {
+        ENABLE_ENEMY_COLORED_HEALTHBAR: 1,
+        ENABLE_ENEMY_COLOR_WARNING_25: 1,
+        ENABLE_ENEMY_COLOR_WARNING_65: 1,
+        ENABLE_ENEMY_COLOR_WARNING_75: 0,
+        DISABLE_PLAYER_NAME_BLUR: 1
+    });
+    const release235Encoded = mirrorSettingsExports.serialize(release235FixtureConfig, "2.3.5");
+    const release235Schema = mirrorSettingsRegistry["2.3.5"].schema;
+    const release235Decoded = mirrorSettingsExports.deserialize(release235Encoded, "2.3.5");
+    const current235Decoded = settingsExports.deserialize(release235Encoded, "2.3.5");
+    const current235Diff = compareDecodedObjectsBySchema(current235Decoded, release235Decoded, release235Schema);
+    if (current235Diff.length > 0) {
+        fail(`2.3.5 release fixture decode drift: ${current235Diff[0]}`);
+    }
+
     const regressionConfig = Object.assign({}, defaultConfig, {
         LANGUAGE: 2,
         ENABLE_CHAT: 0,
@@ -437,6 +578,21 @@ function main() {
         }
         if (!Object.prototype.hasOwnProperty.call(coreRegistry, semver)) {
             fail(`Targeted semver ${semver} missing from core registry`);
+        }
+
+        const settingsSchemaKeys = new Set((settingsRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
+        const coreSchemaKeys = new Set((coreRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
+        if (semver === "2.3.5" || semver === "2.3.6" || semver === "2.3.7") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys)) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
+            }
+        }
+        if (semver === "2.4.0") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.4.0 missing ${key}`);
+            }
         }
 
         const expectedSchema = settingsRegistry[semver].schema;

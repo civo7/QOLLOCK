@@ -46,3 +46,104 @@
 	opacity: 0.5;
 }
 
+.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer
+{
+	width: 31.8%;
+	height: 60px;
+	margin: 1px;
+	padding: 2px;
+	background-color: #00000070;
+	border-radius: 3px;
+}
+
+.simplify_shop_stats_active .statAttributeContainer CitadelModifiedAttributeLabel,
+CitadelHudHeroShop.simplify_shop_stats_active .statAttributeContainer CitadelModifiedAttributeLabel
+{
+	ui-scale: 86%;
+	margin-right: 0px;
+	height: 100% !important;
+	width: 100% !important;
+	flow-children: down !important;
+	horizontal-align: center;
+	vertical-align: center;
+	padding: 0px;
+}
+
+.simplify_shop_stats_active .HasScalingStat .statAttributeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .HasScalingStat .statAttributeContainer
+{
+	border: 2px solid spiritColor&40;
+	background-color: gradient( radial, 50% 50%, 0% 0%, 100% 100%, from( #00000080 ), to( spiritDarkColor&50 ) );
+}
+
+.simplify_shop_stats_active .LabelsContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .LabelsContainer
+{
+	width: 100% !important;
+	flow-children: right !important;
+	horizontal-align: center;
+	vertical-align: top !important;
+	height: 24px !important;
+	ignore-parent-flow: false;
+	margin: 0px;
+}
+
+.simplify_shop_stats_active #AdditionalText,
+CitadelHudHeroShop.simplify_shop_stats_active #AdditionalText
+{
+	visibility: visible !important;
+	opacity: 1;
+	font-size: 8px;
+	line-height: 9px;
+	color: #ffffff80;
+	height: 18px;
+	max-height: 18px;
+	width: 100% !important;
+	horizontal-align: center;
+	text-align: center !important;
+	text-transform: none;
+	vertical-align: bottom !important;
+	ignore-parent-flow: false;
+	margin-top: 1px;
+	margin-left: 0px;
+	margin-right: 0px;
+	white-space: normal;
+	text-overflow: shrink;
+}
+
+.simplify_shop_stats_active .StatImageArea,
+CitadelHudHeroShop.simplify_shop_stats_active .StatImageArea
+{
+	visibility: visible !important;
+	width: fit-children;
+	margin-right: 4px;
+}
+
+.simplify_shop_stats_active .displayStatsContainer CitadelStatScalingLabel,
+CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer CitadelStatScalingLabel
+{
+	horizontal-align: center;
+	background-color: none;
+	ui-scale: 75%;
+}
+
+.simplify_shop_stats_active .displayStatsContainer .ScalingStatValue,
+.simplify_shop_stats_active .displayStatsContainer .ScalingStatAltMultiply,
+CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .ScalingStatValue,
+CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .ScalingStatAltMultiply
+{
+	font-size: 17px;
+	color: offWhite&aa;
+}
+
+.simplify_shop_stats_active #ModifiedLabel,
+.simplify_shop_stats_active #BaseLabel,
+CitadelHudHeroShop.simplify_shop_stats_active #ModifiedLabel,
+CitadelHudHeroShop.simplify_shop_stats_active #BaseLabel
+{
+	font-size: 16px;
+	horizontal-align: center;
+	text-align: center;
+}
+

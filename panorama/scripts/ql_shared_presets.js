@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.3.5";
+var QOL_SCHEMA_SEMVER = "2.4.0";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -693,6 +693,107 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeEnemyColorWarningConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget || {};
+        var hasOwn = Object.prototype.hasOwnProperty;
+        var thresholdKeys = ["ENABLE_ALLY_COLOR_WARNING_25", "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"];
+        var hasAnyThresholdInSource = false;
+        for (var i = 0; i < thresholdKeys.length; i++) {
+            if (source && hasOwn.call(source, thresholdKeys[i])) {
+                hasAnyThresholdInSource = true;
+                break;
+            }
+        }
+
+        var legacyEnabled = Number(configTarget.ENABLE_ALLY_COLORED_HEALTHBAR) === 1 ? 1 : 0;
+        for (var j = 0; j < thresholdKeys.length; j++) {
+            var key = thresholdKeys[j];
+            if (hasAnyThresholdInSource) {
+                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
+            } else {
+                configTarget[key] = legacyEnabled;
+            }
+        }
+
+        configTarget.ENABLE_ALLY_COLORED_HEALTHBAR =
+            (configTarget.ENABLE_ALLY_COLOR_WARNING_25 === 1 ||
+             configTarget.ENABLE_ALLY_COLOR_WARNING_65 === 1 ||
+             configTarget.ENABLE_ALLY_COLOR_WARNING_75 === 1) ? 1 : 0;
+    };
+}
+
+if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget || {};
+        var hasOwn = Object.prototype.hasOwnProperty;
+        var thresholdKeys = [
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_65",
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_75"
+        ];
+        var hasAnyThresholdInSource = false;
+        for (var i = 0; i < thresholdKeys.length; i++) {
+            if (source && hasOwn.call(source, thresholdKeys[i])) {
+                hasAnyThresholdInSource = true;
+                break;
+            }
+        }
+
+        var legacyEnabled = Number(configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING) === 1 ? 1 : 0;
+        for (var j = 0; j < thresholdKeys.length; j++) {
+            var key = thresholdKeys[j];
+            if (hasAnyThresholdInSource) {
+                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
+            } else {
+                configTarget[key] = legacyEnabled;
+            }
+        }
+
+        configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING =
+            (configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_25 === 1 ||
+             configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_65 === 1 ||
+             configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_75 === 1) ? 1 : 0;
+    };
+}
+
+if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget || {};
+        var hasOwn = Object.prototype.hasOwnProperty;
+        var thresholdKeys = [
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_25",
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_65",
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_75"
+        ];
+        var hasAnyThresholdInSource = false;
+        for (var i = 0; i < thresholdKeys.length; i++) {
+            if (source && hasOwn.call(source, thresholdKeys[i])) {
+                hasAnyThresholdInSource = true;
+                break;
+            }
+        }
+
+        var legacyEnabled = Number(configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING) === 1 ? 1 : 0;
+        for (var j = 0; j < thresholdKeys.length; j++) {
+            var key = thresholdKeys[j];
+            if (hasAnyThresholdInSource) {
+                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
+            } else {
+                configTarget[key] = legacyEnabled;
+            }
+        }
+
+        configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING =
+            (configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_25 === 1 ||
+             configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_65 === 1 ||
+             configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_75 === 1) ? 1 : 0;
+    };
+}
+
 var QOL_DEFAULT_CONFIG = {
     MINIMAP_SMALL_SIZE: 400,
         MINIMAP_BASE_OPACITY: 1.0,
@@ -704,6 +805,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_MINIMAP_BUFF_TIMER: 0,
         ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 0,
         ENABLE_MINIMAP_REJUV_TIMER: 0,
+        ENABLE_MINIMAP_CRATE_OVERLAY: 0,
         ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0,
         MINIMAP_X_OFFSET: 0,
         MINIMAP_Y_OFFSET: 0,
@@ -787,6 +889,7 @@ var QOL_DEFAULT_CONFIG = {
         DAMAGE_REPORT_X_OFFSET: 0,
         DAMAGE_REPORT_Y_OFFSET: 0,
         DISABLE_QUICK_BUY: 0,
+        ENABLE_ENHANCED_QUICKBUY: 0,
         ENABLE_HUD_SHIFT: 0,
         ENABLE_LANE_WITH_PARTY: 0,
         SUPPORT_16_10: 0,
@@ -805,7 +908,11 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_URN_DIFF: 0,
         ENABLE_MISSING_HERO: 0,
         ENABLE_NICKNAMES: 0,
+        HUD_TOP_BAR_ENABLED: 1,
         DISABLE_PLAYER_NAME_BLUR: 0,
+        TOP_BAR_OPACITY: 1.0,
+        TOP_BAR_X_OFFSET: 0,
+        TOP_BAR_Y_OFFSET: 0,
         ENABLE_CUMULATIVE_DMG: 1,
         ENABLE_DAMAGE_FOUNTAIN: 0,
         ENABLE_HIDE_SMALL_NUMBERS: 0,
@@ -821,9 +928,17 @@ var QOL_DEFAULT_CONFIG = {
         ON_DEATH_GAME_ZERGGY_MANIA: 0,
         ON_DEATH_GAME_WHACK_A_REM: 0,
         ENABLE_SHOP_STATS: 0,
+        ENABLE_SIMPLIFY_SHOP_STATS: 0,
+        HUD_SHOP_ENABLED: 1,
         DISABLE_SHOP_BLUE: 0,
         SHOP_OFFSET_X: 90,
+        SHOP_OFFSET_Y: 0,
+        SHOP_OPACITY: 1.0,
         ENABLE_SIMPLIFY_SHOP: 0,
+        HUD_ITEMS_ENABLED: 1,
+        ITEMS_OPACITY: 1.0,
+        ITEMS_X_OFFSET: 0,
+        ITEMS_Y_OFFSET: 0,
         ENABLE_SIMPLIFY_ITEMS: 0,
         DAMAGE_NUMBER_OPACITY: 1.0,
         ENABLE_ZIP_BOOST: 0,
@@ -856,13 +971,22 @@ var QOL_DEFAULT_CONFIG = {
         UNIT_TARGET_SIZE: 150,
         UNIT_TARGET_OPACITY: 1.0,
         ENABLE_HERO_SCENE_PANEL: 1,
+        HUD_BOTTOM_BAR_ENABLED: 1,
         ENABLE_HIDE_FAILED_HINT: 0,
         ENABLE_HIDE_ABILITY_SUGGESTION: 0,
         ENABLE_HIDE_COSMETIC_ABILITY: 0,
+        BOTTOM_BAR_OPACITY: 1.0,
+        BOTTOM_BAR_X_OFFSET: 0,
+        BOTTOM_BAR_Y_OFFSET: 0,
+        HUD_SOULS_ENABLED: 1,
+        SOULS_OPACITY: 1.0,
+        SOULS_X_OFFSET: 0,
+        SOULS_Y_OFFSET: 0,
         ENABLE_SIMPLIFY_ABILITY_ICONS: 0,
         ENABLE_HIDE_BEHAVIOR_SUMMARY: 0,
         ENABLE_BUFF_HUD: 0,
         ENABLE_REJUV_HUD: 0,
+        ENABLE_COMBAT_INDICATOR: 0,
         ENABLE_COLORED_HEALTHBAR: 0,
         ENABLE_COLOR_WARNING_25: 0,
         ENABLE_COLOR_WARNING_65: 0,
@@ -871,6 +995,18 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_ENEMY_COLOR_WARNING_25: 0,
         ENABLE_ENEMY_COLOR_WARNING_65: 0,
         ENABLE_ENEMY_COLOR_WARNING_75: 0,
+        ENABLE_ALLY_COLORED_HEALTHBAR: 0,
+        ENABLE_ALLY_COLOR_WARNING_25: 0,
+        ENABLE_ALLY_COLOR_WARNING_65: 0,
+        ENABLE_ALLY_COLOR_WARNING_75: 0,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING: 0,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING_25: 0,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING_65: 0,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING_75: 0,
+        ENABLE_TOPBAR_ALLY_HP_WARNING: 0,
+        ENABLE_TOPBAR_ALLY_HP_WARNING_25: 0,
+        ENABLE_TOPBAR_ALLY_HP_WARNING_65: 0,
+        ENABLE_TOPBAR_ALLY_HP_WARNING_75: 0,
         ENABLE_FG_HEALTHBAR: 0,
         ENABLE_MINIMALIST_HEALTHBAR: 0,
         HEALTHBAR_TYPE: 0,
