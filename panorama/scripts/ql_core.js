@@ -20233,6 +20233,8 @@ function GetUIRoot() {
         State.zipBoostLastTitle = "";
         State.zipBoostLastStatus = "";
         State.zipBoostNextSourceSearchMs = 0;
+        State.zipBoostWasInUse = false;
+        State.zipBoostActiveEndMs = 0;
     }
 
     function UpdateZipBoostOverlay(root, cfg, hideoutOverride) {
@@ -20327,6 +20329,10 @@ function GetUIRoot() {
             isCooldown = source.BHasClass && source.BHasClass("on_cooldown");
             isInUse = source.BHasClass && source.BHasClass("in_use");
 
+            if (isInUse && !State.zipBoostWasInUse) {
+                State.zipBoostActiveEndMs = nowMs + 32000;
+            }
+
             var abilityNamePanel = State.cachedPanels.zipBoostAbilityName;
             if (!IsPanelValid(abilityNamePanel) && source.FindChildrenWithClassTraverse) {
                 var abilityNames = source.FindChildrenWithClassTraverse("AbilityName") || [];
@@ -20343,11 +20349,21 @@ function GetUIRoot() {
                 State.cachedPanels.zipBoostCountdown = countdownPanel || null;
             }
             var countdown = (countdownPanel && typeof countdownPanel.text === "string") ? countdownPanel.text : "";
+
+            if (isCooldown && (!countdown || countdown.trim() === "")) {
+                countdown = FindNumericLabelTextInTree(source);
+                if (countdown && !countdown.endsWith("s")) countdown += "s"; 
+            }
+
             if (isInUse) {
-                status = "ACTIVE";
+                var timeLeft = Math.ceil((State.zipBoostActiveEndMs - nowMs) / 1000);
+                if (timeLeft < 0) timeLeft = 0;
+                status = "ACTIVE " + timeLeft + "s";
             } else if (isCooldown) {
                 status = countdown && countdown.length > 0 ? ("COOLDOWN " + countdown) : "COOLDOWN";
             }
+
+            State.zipBoostWasInUse = isInUse;
         }
 
         var currentState = isInUse ? "in_use" : (isCooldown ? "cooldown" : "ready");

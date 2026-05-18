@@ -1269,6 +1269,7 @@
 {
 	flow-children: down;
 	vertical-align: center;
+	min-width: 70px;
 }
 
 #QOLZipBoostLabel
@@ -1338,12 +1339,34 @@
 	animation-iteration-count: 1;
 }
 
+@keyframes 'zip_boost_active_pulse'
+{
+	0%
+	{
+		box-shadow: fill #4d9dff66 0px 0px 8px 0px;
+		border: 2px solid #5aaeffaa;
+	}
+	
+	50%
+	{
+		box-shadow: fill #4d9dffef 0px 0px 18px 0px;
+		border: 2px solid #8cc5ffff;
+	}
+	
+	100%
+	{
+		box-shadow: fill #4d9dff66 0px 0px 8px 0px;
+		border: 2px solid #5aaeffaa;
+	}
+}
+
 #QOLZipBoostOverlay.in_use
 {
-	border: 2px solid #5aaeffee;
 	border-radius: 6px;
-	box-shadow: fill #4d9dffbf 0px 0px 12px 0px;
 	background-color: #163a6d66;
+	animation-name: zip_boost_active_pulse;
+	animation-duration: 1.2s;
+	animation-iteration-count: infinite;
 }
 
 #QOLUnsecuredSoulsOverlay
