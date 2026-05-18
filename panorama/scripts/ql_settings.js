@@ -7038,8 +7038,6 @@ function IsSettingsInActiveMatchContext() {
     var root = FindRootPanel();
     if (!root) return false;
 
-    if (HasPanelClassToken(root, "CitadelMainMenu")) return false;
-
     var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
     var gameplayHud = root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
     var hideout = IsInHideoutForBuildSave();
@@ -10458,41 +10456,32 @@ function PlayFlappyFailSound() {
 }
 
 function SpawnFlappyPipe(state) {
-        if (!state || !state.active || !state.pipesLayer || !state.pipesLayer.IsValid || !state.pipesLayer.IsValid()) return;
+    if (!state || !state.active || !state.pipesLayer || !state.pipesLayer.IsValid || !state.pipesLayer.IsValid()) return;
 
-        var gapHalf = Math.floor(state.gapSize / 2);
-        var minCenter = gapHalf + 24;
-        var maxCenter = state.gameHeight - gapHalf - 24;
-        var gapCenter = Math.floor(minCenter + (Math.random() * Math.max(1, (maxCenter - minCenter))));
+    var gapHalf = Math.floor(state.gapSize / 2);
+    var minCenter = gapHalf + 24;
+    var maxCenter = state.gameHeight - gapHalf - 24;
+    var gapCenter = Math.floor(minCenter + (Math.random() * Math.max(1, (maxCenter - minCenter))));
 
-        var pipePanel = null, topPipe = null, bottomPipe = null;
-        if (state.pipePool && state.pipePool.length > 0) {
-            var pooled = state.pipePool.pop();
-            pipePanel = pooled.panel;
-            topPipe = pooled.top;
-            bottomPipe = pooled.bottom;
-            pipePanel.style.visibility = "visible";
-        } else {
-            pipePanel = $.CreatePanel("Panel", state.pipesLayer, "ArcadeFlappyPipe_" + state.pipeSerial);
-            pipePanel.AddClass("ArcadeFlappyPipe");
-            topPipe = $.CreatePanel("Panel", pipePanel, "");
-            topPipe.AddClass("ArcadeFlappyPipePart");
-            topPipe.AddClass("Top");
-            bottomPipe = $.CreatePanel("Panel", pipePanel, "");
-            bottomPipe.AddClass("ArcadeFlappyPipePart");
-            bottomPipe.AddClass("Bottom");
-            state.pipeSerial++;
-        }
+    var pipePanel = $.CreatePanel("Panel", state.pipesLayer, "ArcadeFlappyPipe_" + state.pipeSerial);
+    pipePanel.AddClass("ArcadeFlappyPipe");
+    var topPipe = $.CreatePanel("Panel", pipePanel, "");
+    topPipe.AddClass("ArcadeFlappyPipePart");
+    topPipe.AddClass("Top");
+    var bottomPipe = $.CreatePanel("Panel", pipePanel, "");
+    bottomPipe.AddClass("ArcadeFlappyPipePart");
+    bottomPipe.AddClass("Bottom");
 
-        state.pipes.push({
-            x: state.gameWidth + 18,
-            gapCenter: gapCenter,
-            passed: false,
-            panel: pipePanel,
-            top: topPipe,
-            bottom: bottomPipe
-        });
-    }
+    state.pipes.push({
+        x: state.gameWidth + 18,
+        gapCenter: gapCenter,
+        passed: false,
+        panel: pipePanel,
+        top: topPipe,
+        bottom: bottomPipe
+    });
+    state.pipeSerial++;
+}
 
 function RenderFlappy(state) {
     if (!state || !state.isValid || !state.isValid()) return;
@@ -10595,9 +10584,7 @@ function StepFlappy(state, token) {
 
         if ((pipe.x + state.pipeWidth) < -10) {
             if (pipe.panel && pipe.panel.IsValid && pipe.panel.IsValid()) {
-                pipe.panel.style.visibility = "collapse";
-                if (!state.pipePool) state.pipePool = [];
-                state.pipePool.push(pipe);
+                pipe.panel.DeleteAsync(0);
             }
             state.pipes.splice(i, 1);
         }
@@ -10610,23 +10597,21 @@ function StepFlappy(state, token) {
 }
 
 function ResetFlappyGame(state) {
-        if (!state || !state.active) return;
-        RefreshFlappyBounds(state);
+    if (!state || !state.active) return;
+    RefreshFlappyBounds(state);
 
-        state.gameOver = false;
-        state.score = 0;
-        state.spawnTimer = 42;
-        state.birdY = Math.floor(state.gameHeight * 0.5);
-        state.birdVel = 0;
-        if (!state.pipePool) state.pipePool = [];
+    state.gameOver = false;
+    state.score = 0;
+    state.spawnTimer = 42;
+    state.birdY = Math.floor(state.gameHeight * 0.5);
+    state.birdVel = 0;
 
-        for (var i = 0; i < state.pipes.length; i++) {
-            if (state.pipes[i] && state.pipes[i].panel && state.pipes[i].panel.IsValid && state.pipes[i].panel.IsValid()) {
-                state.pipes[i].panel.style.visibility = "collapse";
-                state.pipePool.push(state.pipes[i]);
-            }
+    for (var i = 0; i < state.pipes.length; i++) {
+        if (state.pipes[i] && state.pipes[i].panel && state.pipes[i].panel.IsValid && state.pipes[i].panel.IsValid()) {
+            state.pipes[i].panel.DeleteAsync(0);
         }
-        state.pipes = [];
+    }
+    state.pipes = [];
 
     UpdateFlappyHud(state);
     UpdateFlappyStatus(state, "");
@@ -16059,7 +16044,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var onDeathLbl = $.CreatePanel("Label", onDeathToggleBtn, "");
             onDeathLbl.AddClass("MultiCheckboxLabel");
             onDeathLbl.AddClass("ArcadeOnDeathCheckLabel");
-            onDeathLbl.text = LocalizeSettingsText("On Death");
+            onDeathLbl.text = LocalizeSettingsText("Play When On Death Enabled");
 
             var syncOnDeathToggleVisual = function() {
                 if (!onDeathToggleBtn || !onDeathToggleBtn.IsValid || !onDeathToggleBtn.IsValid()) return false;
@@ -17664,7 +17649,7 @@ function RenderCurrentTabContent(list) {
         consoleNoteWrap.AddClass("ConsoleTabNoteWrap");
         var consoleNoteText = $.CreatePanel("Label", consoleNoteWrap, "ConsoleTabNoteText");
         consoleNoteText.AddClass("ConsoleTabNoteText");
-        consoleNoteText.text = "This tab is unique, these apply console commands directly and the game will save them, it is not tied to your QOL Lock settings, this is just an easy way to change them directly.";
+        consoleNoteText.text = "These are easy access to common console commands and are not included in QOL settings.\nUse autoexec or other methods to load these automatically.";
 
         CreateRuntimeSectionTitle(list, "General");
         CreateRow(list, "Hitmarkers", "HITMARKERS_RUNTIME", "runtime_buttongroup", null, null, null, HITMARKERS_RUNTIME_OPTIONS);
@@ -17865,14 +17850,14 @@ function RenderCurrentTabContent(list) {
         var mogNoteText = $.CreatePanel("Label", mogNoteWrap, "MogTabNoteText");
         mogNoteText.AddClass("ConsoleTabNoteText");
         mogNoteText.AddClass("MogTabNoteText");
-        mogNoteText.text = "MOG is Deadlock's first custom server network with custom gamemodes!\nYou can find out more on the website";
+        mogNoteText.text = "MOG is Deadlock's first custom gamemode community server network.";
         var mogLinkBtn = $.CreatePanel("Button", mogNoteWrap, "MogTabSiteLink");
         mogLinkBtn.AddClass("MogTabSiteLink");
         var mogLinkLbl = $.CreatePanel("Label", mogLinkBtn, "MogTabSiteLinkLabel");
         mogLinkLbl.AddClass("MogTabSiteLinkLabel");
-        mogLinkLbl.text = "mogdl.com";
+        mogLinkLbl.text = "moglock.gg";
         mogLinkBtn.SetPanelEvent("onactivate", function() {
-            $.DispatchEvent("ExternalBrowserGoToURL", "https://mogdl.com");
+            $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg");
         });
         CreateSectionTitle(list, "Gamemodes");
         CreateRow(list, "BHOP UI", "ENABLE_BHOP", "toggle", null, null, null, null, "For custom BHop gamemode UI changes.");
@@ -18804,31 +18789,14 @@ $.BuildUI = function() {
         if (!searchInputExisting) {
             searchInputExisting = $.CreatePanel("TextEntry", searchWrapExisting, "SettingsSearchInput");
         }
-        var searchDebounceTimer = null;
         var applySearchInputQuery = function() {
-            if (searchDebounceTimer !== null) {
-                $.CancelScheduled(searchDebounceTimer);
-                searchDebounceTimer = null;
-            }
-            searchDebounceTimer = $.Schedule(0.2, function() {
-                searchDebounceTimer = null;
-                currentSearchQuery = searchInputExisting.text || "";
-                UpdateSettingsSearchUiState($.GetContextPanel());
-                var liveList = GetSettingsListPanel();
-                if (liveList) UpdateListContent(liveList, true);
-            });
-        };
-        searchInputExisting.SetPanelEvent("ontextentrychange", applySearchInputQuery);
-        searchInputExisting.SetPanelEvent("oninputsubmit", function() {
-            if (searchDebounceTimer !== null) {
-                $.CancelScheduled(searchDebounceTimer);
-                searchDebounceTimer = null;
-            }
             currentSearchQuery = searchInputExisting.text || "";
             UpdateSettingsSearchUiState($.GetContextPanel());
             var liveList = GetSettingsListPanel();
             if (liveList) UpdateListContent(liveList, true);
-        });
+        };
+        searchInputExisting.SetPanelEvent("ontextentrychange", applySearchInputQuery);
+        searchInputExisting.SetPanelEvent("oninputsubmit", applySearchInputQuery);
         var searchClearExisting = searchWrapExisting.FindChildTraverse("SettingsSearchClear");
         if (!searchClearExisting) {
             searchClearExisting = $.CreatePanel("Button", searchWrapExisting, "SettingsSearchClear");
