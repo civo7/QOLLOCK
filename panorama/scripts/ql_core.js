@@ -26129,7 +26129,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);
-            SetPanelClassCached(root, State.rootClassCache, "clean_stacks_active", false);
+            SetPanelClassCached(root, State.rootClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_inactive", false);
             SetPanelClassCached(root, State.rootClassCache, "compass_active", compassEnabled);
             SetPanelClassCached(root, State.rootClassCache, "simplify_compass_active", cfg.ENABLE_SIMPLIFY_COMPASS === 1);
@@ -26251,7 +26251,7 @@ function GetUIRoot() {
             }
         }
         if (abilitiesContainerForClass && shouldApplyStaticClasses) {
-            SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_active", false);
+            SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_inactive", false);
         }
         State.compassEnabled = compassEnabled;
