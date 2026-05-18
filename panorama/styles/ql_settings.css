@@ -3050,22 +3050,22 @@
 
 #SettingsWindow .MogTabSiteLinkLabel
 {
-	color: #66cc99;
+	color: #6be8a2;
 	font-size: 13px;
 	font-weight: bold;
 	letter-spacing: 0.4px;
-	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.26);
+	text-shadow: 0px 0px 8px rgba(107, 232, 162, 0.26);
 }
 
 #SettingsWindow .MogTabSiteLink:hover .MogTabSiteLinkLabel
 {
-	color: #8cf0bd;
-	text-shadow: 0px 0px 10px rgba(102, 204, 153, 0.45);
+	color: #6be8a2;
+	text-shadow: 0px 0px 10px rgba(107, 232, 162, 0.45);
 }
 
 #SettingsWindow .MogTabSiteLink:active .MogTabSiteLinkLabel
 {
-	color: #58b887;
+	color: #56c98a;
 }
 
 #SettingsWindow .SliderContainer
@@ -7363,9 +7363,14 @@
 
 #SettingsWindow .ArcadePlayActionGroup
 {
-	width: 296px;
-	min-width: 296px;
-	max-width: 296px;
+	width: fit-children;
+	min-width: 0px;
+	max-width: 10000px;
+	horizontal-align: left;
+	vertical-align: center;
+	margin-left: 0px;
+	padding: 0px;
+	border-radius: 0px;
 	padding: 0px;
 	background-color: none;
 	border: 0px solid transparent;
@@ -7375,20 +7380,19 @@
 
 #SettingsWindow .ArcadePlayActionBtn
 {
-	min-width: 62px;
-	max-width: 62px;
-	min-height: 24px;
-	max-height: 24px;
-	padding: 0px 8px;
-	border: 1px solid #66cc99;
+	min-width: 58px;
+	max-width: 58px;
+	min-height: 26px;
+	max-height: 26px;
+	padding: 0px 10px;
+	margin-left: 0px;
+	margin-right: 8px;
+	border: 1px solid rgba(107, 232, 162, 0.2);
 	border-radius: 6px;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5FE6A2 ), to( #A3FFB7 ) );
-	brightness: 1.15;
-	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 2px 0px;
-	animation-name: PulseActiveGreen;
-	animation-duration: 3.0s;
-	animation-timing-function: ease-in-out;
-	animation-iteration-count: infinite;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(27, 34, 30, 0.98) ), to( rgba(16, 21, 18, 0.98) ) );
+	brightness: 1.0;
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 2px 0px;
+	animation-name: none;
 	transition-property: background-color, border, brightness, box-shadow, transform;
 	transition-duration: 0.16s;
 	transition-timing-function: ease-in-out;
@@ -7397,9 +7401,9 @@
 #SettingsWindow .ArcadePlayActionBtn:hover
 {
 	brightness: 1.05;
-	border: 1px solid #66cc99;
+	border: 1px solid rgba(107, 232, 162, 0.32);
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 40, 34, 0.98) ), to( rgba(18, 25, 20, 0.98) ) );
-	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 9px 0px;
+	box-shadow: fill rgba(107, 232, 162, 0.14) 0px 0px 9px 0px;
 	transform: none;
 }
 
@@ -7410,7 +7414,7 @@
 
 #SettingsWindow .ArcadePlayActionBtn .SettingActionBtnLabel
 {
-	color: #0f1512;
+	color: #eef4f6;
 	font-size: 12px;
 	font-weight: bold;
 	letter-spacing: 0.35px;
@@ -7420,7 +7424,7 @@
 #SettingsWindow .ArcadePlayActionBtn:hover .SettingActionBtnLabel
 {
 	color: #ffffff;
-	text-shadow: 0px 0px 7px rgba(102, 204, 153, 0.26);
+	text-shadow: 0px 0px 7px rgba(107, 232, 162, 0.26);
 }
 
 #SettingsWindow .TestAirheartActionBtn
@@ -7540,9 +7544,9 @@
 
 #SettingsWindow .ArcadeOnDeathCheckBtn
 {
-	width: 104px;
-	min-width: 104px;
-	max-width: 104px;
+	width: 168px;
+	min-width: 168px;
+	max-width: 168px;
 	height: 24px;
 	min-height: 24px;
 	max-height: 24px;
@@ -7558,8 +7562,8 @@
 
 #SettingsWindow .ArcadeOnDeathCheckBtn .ArcadeOnDeathCheckLabel
 {
-	font-size: 11px;
-	letter-spacing: 0.3px;
+	font-size: 10px;
+	letter-spacing: 0.22px;
 }
 
 #SettingsWindow .MultiToggleBtn
@@ -7684,6 +7688,24 @@
 {
 	brightness: 1.08;
 	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn:selected,
+#SettingsWindow .MultiCheckboxBtn.selected,
+#SettingsWindow .MultiCheckboxBtn.IsSelected
+{
+	background-color: rgba(107, 232, 162, 0.055);
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn:selected:hover,
+#SettingsWindow .MultiCheckboxBtn.selected:hover,
+#SettingsWindow .MultiCheckboxBtn.IsSelected:hover
+{
+	background-color: rgba(107, 232, 162, 0.075);
 	border: 0px solid transparent;
 	box-shadow: none;
 }
@@ -11427,24 +11449,24 @@
 	border-radius: 5px;
 	border: 0px solid transparent;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 24, 26, 0.94) ), to( rgba(14, 16, 18, 0.90) ) );
-	box-shadow: fill rgba(106, 231, 154, 0.04) 0px 0px 7px 0px;
+	box-shadow: none;
 	flow-children: down;
 	overflow: noclip;
 }
 
 #SettingsWindow #ConfigCardGeneral
 {
-	box-shadow: fill rgba(106, 231, 154, 0.035) 0px 0px 7px 0px;
+	box-shadow: none;
 }
 
 #SettingsWindow #ConfigCardExport
 {
-	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+	box-shadow: none;
 }
 
 #SettingsWindow #ConfigCardImport
 {
-	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
+	box-shadow: none;
 }
 
 #SettingsWindow #ConfigCardExport,
@@ -12401,10 +12423,10 @@
 
 .TabItem_Audio .TabIcon_Audio
 {
-	width: 14px;
-	height: 14px;
+	width: 13px;
+	height: 13px;
 	margin-right: 10px;
-	wash-color: #d7e2dc;
+	wash-color: #9aa097;
 	opacity: 1.0;
 	brightness: 1.0;
 }
@@ -15631,6 +15653,7 @@
 	text-align: left;
 	vertical-align: center;
 	margin-top: 1px;
+	margin-bottom: 7px;
 	font-family: oracle;
 	font-size: 8px;
 	font-weight: semi-bold;
@@ -16644,4 +16667,194 @@
 	letter-spacing: 0.9px;
 	text-transform: uppercase;
 	text-shadow: none;
+}
+
+/* Final segmented-control polish:
+   keep Arcade difficulty and filter-style toggles in the same
+   dark-glass family as the console on/off buttons. */
+
+#SettingsWindow .SegmentBtn,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn,
+#SettingsWindow .MultiToggleBtn
+{
+	border: 0px solid transparent;
+	background-color: rgba(31, 29, 27, 0.96);
+	box-shadow: none;
+	brightness: 1.0;
+	animation-name: none;
+}
+
+#SettingsWindow .SegmentBtn:hover,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn:hover,
+#SettingsWindow .MultiToggleBtn:hover
+{
+	border: 0px solid transparent;
+	background-color: rgba(38, 35, 32, 0.98);
+	box-shadow: inset rgba(255, 252, 244, 0.06) 0px 0px 0px 1px;
+	brightness: 1.04;
+}
+
+#SettingsWindow .SegmentBtn.Active,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active,
+#SettingsWindow .MultiToggleBtn.Active
+{
+	border: 1px solid rgba(106, 231, 154, 0.28);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 6px 14px 0px;
+	brightness: 1.0;
+	animation-name: none;
+}
+
+#SettingsWindow .SegmentBtn.Active:hover,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active:hover,
+#SettingsWindow .MultiToggleBtn.Active:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.42);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.90) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 6px 14px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SegmentBtn.Active Label,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active Label,
+#SettingsWindow .MultiToggleBtn.Active .MultiToggleLabel
+{
+	color: #eef4f0;
+	text-shadow: none;
+}
+
+#SettingsWindow .SegmentBtn.Active:hover Label,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active:hover Label,
+#SettingsWindow .MultiToggleBtn.Active:hover .MultiToggleLabel
+{
+	color: #ffffff;
+	text-shadow: none;
+}
+
+/* Audio/filter row hard override:
+   these rows had older more-specific styling still leaking through. */
+
+#SettingsWindow .AnnouncerTypeFilterRow .MultiToggleBtn.Active,
+#SettingsWindow .AnnouncerBuffFilterRow .MultiToggleBtn.Active,
+#SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn.Active
+{
+	border: 1px solid rgba(106, 231, 154, 0.28);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 6px 14px 0px;
+	brightness: 1.0;
+	animation-name: none;
+}
+
+#SettingsWindow .AnnouncerTypeFilterRow .MultiToggleBtn.Active:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .MultiToggleBtn.Active:hover,
+#SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn.Active:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.42);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 39, 42, 0.90) ), to( rgba(20, 23, 26, 0.84) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 6px 14px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .AnnouncerTypeFilterRow .MultiToggleBtn.Active .MultiToggleLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .MultiToggleBtn.Active .MultiToggleLabel,
+#SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn.Active .MultiToggleLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:selected .MultiCheckboxLabel
+{
+	color: #eef4f0;
+	text-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:selected
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn:selected,
+#SettingsWindow .MultiCheckboxBtn.selected,
+#SettingsWindow .MultiCheckboxBtn.IsSelected
+{
+	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn:selected:hover,
+#SettingsWindow .MultiCheckboxBtn.selected:hover,
+#SettingsWindow .MultiCheckboxBtn.IsSelected:hover
+{
+	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn:selected Label,
+#SettingsWindow .MultiCheckboxBtn.selected Label,
+#SettingsWindow .MultiCheckboxBtn.IsSelected Label,
+#SettingsWindow .MultiCheckboxBtn:selected .MultiCheckboxLabel,
+#SettingsWindow .MultiCheckboxBtn.selected .MultiCheckboxLabel,
+#SettingsWindow .MultiCheckboxBtn.IsSelected .MultiCheckboxLabel
+{
+	color: #eef4f0;
+	text-shadow: none;
+}
+
+/* Final rail/footer icon normalization:
+   keep Audio/Discord/Save/Version in the same icon family and stop older
+   special-case passes from leaking through. */
+
+.SettingsTabRailGroup .TabItem_Audio .TabIcon_Audio
+{
+	width: 13px;
+	height: 13px;
+	wash-color: #9aa097;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+.SettingsTabRailGroup .TabItem_Audio:hover .TabIcon_Audio,
+.SettingsTabRailGroup .TabItem_Audio.Active .TabIcon_Audio
+{
+	wash-color: #d5f7e4;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+.FooterDiscordRailBtn .FooterDiscordLogoTexture,
+.FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #9aa097;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+.FooterDiscordRailBtn .FooterDiscordLogoTexture
+{
+	margin-left: -4px;
+}
+
+.FooterDiscordRailBtn:hover .FooterDiscordLogoTexture,
+.FooterSaveBuildTab:hover .FooterSaveBuildIcon
+{
+	wash-color: #d5f7e4;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+.FooterVersionIcon
+{
+	width: 10px;
+	height: 10px;
+	margin-right: 5px;
+	wash-color: #9aa097;
+}
+
+.FooterDiscordRailBtn Label
+{
+	margin-left: -5px;
 }
