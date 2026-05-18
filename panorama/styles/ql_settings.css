@@ -194,6 +194,109 @@
 	visibility: visible;
 }
 
+.ShowEscapeMenu #EscapeMenu.SettingsOpen
+{
+	opacity: 1;
+	transition-duration: 0.2s;
+}
+
+.QOLHotkeyEscapeOpen .HudCore
+{
+	opacity: 0.0;
+}
+
+.QOLHotkeyEscapeOpen .HudTakeovers
+{
+	opacity: 0.0;
+}
+
+.QOLHotkeyEscapeOpen #EscapeMenu
+{
+	opacity: 1.0;
+}
+
+.QOLHotkeyEscapeOpen #EscapeMenu.SettingsOpen
+{
+	opacity: 1.0;
+	transition-duration: 0.2s;
+}
+
+.QOLHotkeyEscapeOpen #EscapeBackground
+{
+	animation-duration: 0.12s;
+	animation-timing-function: ease-in-out;
+}
+
+.QOLHotkeyEscapeOpen #LeftStripe
+{
+	opacity: 1.0;
+	transform: none;
+}
+
+.QOLHotkeyEscapeOpen #changehero
+{
+	opacity: 1.0;
+}
+
+.QOLHotkeyEscapeOpen #SocialContainer
+{
+	opacity: 1.0;
+}
+
+.QOLHotkeyEscapeOpen #RightSide .FriendsOrPlayersContents
+{
+	opacity: 1.0;
+}
+
+.QOLHotkeyEscapeOpen #CitadelPartyContainer
+{
+	opacity: 1.0;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible
+{
+	opacity: 1.0;
+	background-color: #000c;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible.SettingsOpen
+{
+	opacity: 1.0;
+	transition-duration: 0.2s;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #EscapeBackground
+{
+	animation-duration: 0.12s;
+	animation-timing-function: ease-in-out;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #LeftStripe
+{
+	opacity: 1.0;
+	transform: none;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #changehero
+{
+	opacity: 1.0;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #SocialContainer
+{
+	opacity: 1.0;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #RightSide .FriendsOrPlayersContents
+{
+	opacity: 1.0;
+}
+
+#EscapeMenu.QOLHotkeyEscapeShellVisible #CitadelPartyContainer
+{
+	opacity: 1.0;
+}
+
 @keyframes 'PulseDiscordPurpleText'
 {
 	0%
