@@ -6,9 +6,12 @@
 	world-blur: none !important;
 }
 
-.disable_player_name_blur_active #PlayerNameNWContainer #BackgroundStrip
+.disable_player_name_blur_active #BackgroundStrip
 {
 	width: 0% !important;
+	opacity: 0 !important;
+	world-blur: none !important;
+	transform: translateY(-200px) !important;
 }
 
 CitadelHudTopBar CitadelHudItemBarGraph
@@ -957,6 +960,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 {
 	wash-color: grey;
 }
+
 
 #RejuvImgHUD.offWhite
 {
