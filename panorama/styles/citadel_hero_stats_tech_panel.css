@@ -34,3 +34,17 @@
 	visibility: collapse;
 }
 
+.simplify_shop_stats_active #SpiritImpactContainer,
+.simplify_shop_stats_active #ModifiedAbilitiesPanel,
+.simplify_shop_stats_active CitadelModifiedAbilities,
+CitadelHudHeroShop.simplify_shop_stats_active #SpiritImpactContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #ModifiedAbilitiesPanel,
+CitadelHudHeroShop.simplify_shop_stats_active CitadelModifiedAbilities
+{
+	visibility: collapse !important;
+	height: 0px;
+	width: 0px;
+	margin: 0px;
+	padding: 0px;
+}
+

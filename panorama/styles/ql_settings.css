@@ -7692,7 +7692,6 @@
 	box-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected,
 #SettingsWindow .MultiCheckboxBtn.selected,
 #SettingsWindow .MultiCheckboxBtn.IsSelected
 {
@@ -7701,7 +7700,6 @@
 	box-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected:hover,
 #SettingsWindow .MultiCheckboxBtn.selected:hover,
 #SettingsWindow .MultiCheckboxBtn.IsSelected:hover
 {
@@ -7724,7 +7722,7 @@
 	text-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected .TickBox,#SettingsWindow .MultiCheckboxBtn.selected .TickBox,#SettingsWindow .MultiCheckboxBtn.IsSelected .TickBox
+#SettingsWindow .MultiCheckboxBtn.selected .TickBox,#SettingsWindow .MultiCheckboxBtn.IsSelected .TickBox
 {
 	border: 0px solid transparent;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5FE6A2 ), to( #A3FFB7 ) );
@@ -7736,7 +7734,7 @@
 	pre-transform-scale2d: 1;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected Label,#SettingsWindow .MultiCheckboxBtn.selected Label,#SettingsWindow .MultiCheckboxBtn.IsSelected Label
+#SettingsWindow .MultiCheckboxBtn.selected Label,#SettingsWindow .MultiCheckboxBtn.IsSelected Label
 {
 	color: #d8e5df;
 	text-shadow: none;
@@ -13030,7 +13028,6 @@
 	border: 1px solid rgba(106, 231, 154, 0.28);
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected .TickBox,
 #SettingsWindow .MultiCheckboxBtn.selected .TickBox,
 #SettingsWindow .MultiCheckboxBtn.IsSelected .TickBox
 {
@@ -16759,23 +16756,20 @@
 #SettingsWindow .AnnouncerBuffFilterRow .MultiToggleBtn.Active .MultiToggleLabel,
 #SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn.Active .MultiToggleLabel,
 #SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected .MultiCheckboxLabel,
-#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected .MultiCheckboxLabel,
-#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:selected .MultiCheckboxLabel
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected .MultiCheckboxLabel
 {
 	color: #eef4f0;
 	text-shadow: none;
 }
 
 #SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
-#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
-#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:selected
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected
 {
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 34, 36, 0.88) ), to( rgba(18, 20, 22, 0.82) ) );
 	border: 0px solid transparent;
 	box-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected,
 #SettingsWindow .MultiCheckboxBtn.selected,
 #SettingsWindow .MultiCheckboxBtn.IsSelected
 {
@@ -16784,7 +16778,6 @@
 	box-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected:hover,
 #SettingsWindow .MultiCheckboxBtn.selected:hover,
 #SettingsWindow .MultiCheckboxBtn.IsSelected:hover
 {
@@ -16793,10 +16786,8 @@
 	box-shadow: none;
 }
 
-#SettingsWindow .MultiCheckboxBtn:selected Label,
 #SettingsWindow .MultiCheckboxBtn.selected Label,
 #SettingsWindow .MultiCheckboxBtn.IsSelected Label,
-#SettingsWindow .MultiCheckboxBtn:selected .MultiCheckboxLabel,
 #SettingsWindow .MultiCheckboxBtn.selected .MultiCheckboxLabel,
 #SettingsWindow .MultiCheckboxBtn.IsSelected .MultiCheckboxLabel
 {

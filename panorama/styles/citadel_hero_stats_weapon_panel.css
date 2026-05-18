@@ -57,3 +57,29 @@
 	vertical-align: bottom;
 }
 
+.simplify_shop_stats_active #WeaponInfoContainer,
+.simplify_shop_stats_active .weaponNameAndAttributes,
+.simplify_shop_stats_active #GunImage,
+.simplify_shop_stats_active .WeaponName,
+.simplify_shop_stats_active #WeaponAttributesContainer,
+.simplify_shop_stats_active #BulletDPSContainer,
+.simplify_shop_stats_active #WeaponFalloffRange,
+.simplify_shop_stats_active #WeaponRangeContainer,
+.simplify_shop_stats_active .FalloffLabel,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponInfoContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .weaponNameAndAttributes,
+CitadelHudHeroShop.simplify_shop_stats_active #GunImage,
+CitadelHudHeroShop.simplify_shop_stats_active .WeaponName,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponAttributesContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #BulletDPSContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponFalloffRange,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponRangeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .FalloffLabel
+{
+	visibility: collapse !important;
+	height: 0px;
+	width: 0px;
+	margin: 0px;
+	padding: 0px;
+}
+

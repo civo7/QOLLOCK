@@ -278,3 +278,150 @@ CitadelHudHeroShop.simplify_shop_active #SearchNav,CitadelHudHeroShop.simplify_s
 	opacity: 0.6;
 }
 
+.simplify_shop_stats_active #TestPanel,
+CitadelHudHeroShop.simplify_shop_stats_active #TestPanel
+{
+	width: 313px;
+	height: 675px;
+	margin-left: 15px;
+	margin-top: 130px;
+	margin-bottom: 0px;
+}
+
+.simplify_shop_stats_active .heroStatsDisplay,.simplify_shop_stats_active #HeroStatsWeapon,.simplify_shop_stats_active #HeroStatsArmor,.simplify_shop_stats_active #HeroStatsTech,
+CitadelHudHeroShop.simplify_shop_stats_active .heroStatsDisplay,CitadelHudHeroShop.simplify_shop_stats_active #HeroStatsWeapon,CitadelHudHeroShop.simplify_shop_stats_active #HeroStatsArmor,CitadelHudHeroShop.simplify_shop_stats_active #HeroStatsTech
+{
+	margin-bottom: 0px;
+	opacity: 1;
+	width: 313px;
+	ui-scale: 100%;
+	border-radius: 5px;
+}
+
+.simplify_shop_stats_active CitadelHeroStatsWeapon #BackgroundContainer,
+CitadelHudHeroShop.simplify_shop_stats_active CitadelHeroStatsWeapon #BackgroundContainer
+{
+	background-size: cover;
+	opacity: 0.25;
+	box-shadow: none;
+	border-radius: 5px;
+}
+
+.simplify_shop_stats_active CitadelHeroStatsArmor #BackgroundContainer,
+.simplify_shop_stats_active CitadelHeroStatsTech #BackgroundContainer,
+CitadelHudHeroShop.simplify_shop_stats_active CitadelHeroStatsArmor #BackgroundContainer,
+CitadelHudHeroShop.simplify_shop_stats_active CitadelHeroStatsTech #BackgroundContainer
+{
+	background-size: cover;
+	opacity: 0.5;
+	box-shadow: none;
+	border-radius: 5px;
+}
+
+.simplify_shop_stats_active #WeaponDisplayStats,.simplify_shop_stats_active #SecondaryWeaponDisplayStats,.simplify_shop_stats_active #WeaponOtherStatsDisplay,.simplify_shop_stats_active #ArmorDisplayStats,.simplify_shop_stats_active #ArmorOtherStatsDisplay,.simplify_shop_stats_active #SpiritDisplayStats,.simplify_shop_stats_active #SpiritOtherStatsDisplay,.simplify_shop_stats_active #SpiritImpactContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponDisplayStats,CitadelHudHeroShop.simplify_shop_stats_active #SecondaryWeaponDisplayStats,CitadelHudHeroShop.simplify_shop_stats_active #WeaponOtherStatsDisplay,CitadelHudHeroShop.simplify_shop_stats_active #ArmorDisplayStats,CitadelHudHeroShop.simplify_shop_stats_active #ArmorOtherStatsDisplay,CitadelHudHeroShop.simplify_shop_stats_active #SpiritDisplayStats,CitadelHudHeroShop.simplify_shop_stats_active #SpiritOtherStatsDisplay,CitadelHudHeroShop.simplify_shop_stats_active #SpiritImpactContainer
+{
+	padding-top: 0px;
+	padding-bottom: 0px;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+.simplify_shop_stats_active .statsContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .statsContainer
+{
+	flow-children: right-wrap;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	width: 100%;
+}
+
+.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer
+{
+	width: 31.8%;
+	height: 60px;
+	margin: 1px;
+	padding: 2px;
+	background-color: #00000070;
+	border-radius: 3px;
+	border: 0px;
+}
+
+.simplify_shop_stats_active .HasScalingStat .statAttributeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .HasScalingStat .statAttributeContainer
+{
+	border: 2px solid spiritColor&40;
+	background-color: gradient( radial, 50% 50%, 0% 0%, 100% 100%, from( #00000080 ), to( spiritDarkColor&50 ) );
+}
+
+.simplify_shop_stats_active .statsButton,
+CitadelHudHeroShop.simplify_shop_stats_active .statsButton
+{
+	border: 2px solid #000000aa;
+	margin: 4px 4px 4px 0px;
+	background-image: none;
+	background-color: #333;
+	padding: 6px 8px;
+	border-radius: 4px;
+	box-shadow: none;
+}
+
+.simplify_shop_stats_active .heroStatsLabel,.simplify_shop_stats_active .statTitle,.simplify_shop_stats_active .weaponDesc,.simplify_shop_stats_active .secondaryWeaponDesc,.simplify_shop_stats_active .armorDesc,.simplify_shop_stats_active .spiritDesc,
+CitadelHudHeroShop.simplify_shop_stats_active .heroStatsLabel,CitadelHudHeroShop.simplify_shop_stats_active .statTitle,CitadelHudHeroShop.simplify_shop_stats_active .weaponDesc,CitadelHudHeroShop.simplify_shop_stats_active .secondaryWeaponDesc,CitadelHudHeroShop.simplify_shop_stats_active .armorDesc,CitadelHudHeroShop.simplify_shop_stats_active .spiritDesc
+{
+	letter-spacing: 0px;
+	font-size: 17px;
+	text-transform: none;
+}
+
+.simplify_shop_stats_active .statTitle,
+.simplify_shop_stats_active .weaponDesc,
+.simplify_shop_stats_active .secondaryWeaponDesc,
+.simplify_shop_stats_active .armorDesc,
+.simplify_shop_stats_active .spiritDesc,
+.simplify_shop_stats_active #WeaponInfoContainer,
+.simplify_shop_stats_active .weaponNameAndAttributes,
+.simplify_shop_stats_active #GunImage,
+.simplify_shop_stats_active .WeaponName,
+.simplify_shop_stats_active #WeaponAttributesContainer,
+.simplify_shop_stats_active #BulletDPSContainer,
+.simplify_shop_stats_active #WeaponFalloffRange,
+.simplify_shop_stats_active #WeaponRangeContainer,
+.simplify_shop_stats_active .FalloffLabel,
+.simplify_shop_stats_active #SpiritImpactContainer,
+.simplify_shop_stats_active #ModifiedAbilitiesPanel,
+.simplify_shop_stats_active CitadelModifiedAbilities,
+CitadelHudHeroShop.simplify_shop_stats_active .statTitle,
+CitadelHudHeroShop.simplify_shop_stats_active .weaponDesc,
+CitadelHudHeroShop.simplify_shop_stats_active .secondaryWeaponDesc,
+CitadelHudHeroShop.simplify_shop_stats_active .armorDesc,
+CitadelHudHeroShop.simplify_shop_stats_active .spiritDesc,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponInfoContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .weaponNameAndAttributes,
+CitadelHudHeroShop.simplify_shop_stats_active #GunImage,
+CitadelHudHeroShop.simplify_shop_stats_active .WeaponName,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponAttributesContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #BulletDPSContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponFalloffRange,
+CitadelHudHeroShop.simplify_shop_stats_active #WeaponRangeContainer,
+CitadelHudHeroShop.simplify_shop_stats_active .FalloffLabel,
+CitadelHudHeroShop.simplify_shop_stats_active #SpiritImpactContainer,
+CitadelHudHeroShop.simplify_shop_stats_active #ModifiedAbilitiesPanel,
+CitadelHudHeroShop.simplify_shop_stats_active CitadelModifiedAbilities
+{
+	visibility: collapse;
+}
+
+.simplify_shop_stats_active #ValueFromModsLabel,
+CitadelHudHeroShop.simplify_shop_stats_active #ValueFromModsLabel
+{
+	visibility: collapse;
+}
+
+.simplify_shop_stats_active .hero_stats .GreenUpArrow,.simplify_shop_stats_active .heroStatsDisplay .GreenUpArrow,.simplify_shop_stats_active .hero_stats #AdditionLabel,.simplify_shop_stats_active .hero_stats #ModifiedAdditionLabel,.simplify_shop_stats_active .heroStatsDisplay #AdditionLabel,.simplify_shop_stats_active .heroStatsDisplay #ModifiedAdditionLabel,
+CitadelHudHeroShop.simplify_shop_stats_active .hero_stats .GreenUpArrow,CitadelHudHeroShop.simplify_shop_stats_active .heroStatsDisplay .GreenUpArrow,CitadelHudHeroShop.simplify_shop_stats_active .hero_stats #AdditionLabel,CitadelHudHeroShop.simplify_shop_stats_active .hero_stats #ModifiedAdditionLabel,CitadelHudHeroShop.simplify_shop_stats_active .heroStatsDisplay #AdditionLabel,CitadelHudHeroShop.simplify_shop_stats_active .heroStatsDisplay #ModifiedAdditionLabel
+{
+	visibility: collapse;
+}
+

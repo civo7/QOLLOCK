@@ -20,6 +20,12 @@ $ResourceCompiler = "C:\Users\civ\Desktop\Deadlock Modding\Reduced_CSDK_12\Reduc
 $Packer = "C:\Users\civ\Desktop\Deadlock Modding\Reduced_CSDK_12\Reduced_CSDK_12\game\bin\win64\CSDKCfgVPK.exe"
 $VersionSourceFile = Join-Path $SourceRoot "panorama\scripts\ql_settings.js"
 $SchemaGuardScript = Join-Path $SourceRoot "scripts\validate_compact_schema.js"
+$JsMinifyScript = Join-Path $SourceRoot "scripts\minify_panorama_js.js"
+$RuntimeCompilePathPrefixes = @(
+    "panorama\",
+    "soundevents\",
+    "sounds\"
+)
 
 # Accept additional positional file arguments if the shell failed to bind
 # all values to -ChangedFiles.
@@ -292,7 +298,8 @@ function Get-VersionFromSettings {
 
 function Invoke-NodeScript {
     param(
-        [string]$ScriptPath
+        [string]$ScriptPath,
+        [string[]]$Arguments
     )
 
     $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
@@ -300,10 +307,42 @@ function Invoke-NodeScript {
         throw "node.exe not found in PATH; cannot run schema parity guard."
     }
 
-    & $nodeCmd.Source $ScriptPath
+    & $nodeCmd.Source $ScriptPath @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "Node script failed ($LASTEXITCODE): $ScriptPath"
     }
+}
+
+function Invoke-PanoramaJsMinify {
+    param(
+        [string]$ScriptPath,
+        [string]$TargetFile
+    )
+
+    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+    if (-not $nodeCmd) {
+        throw "node.exe not found in PATH; cannot run JS minify step."
+    }
+
+    $output = & $nodeCmd.Source $ScriptPath $TargetFile
+    if ($LASTEXITCODE -ne 0) {
+        throw "Panorama JS minify failed ($LASTEXITCODE): $TargetFile"
+    }
+
+    if (-not $output) {
+        throw "Panorama JS minify produced no output for: $TargetFile"
+    }
+
+    $jsonLine = ($output | Select-Object -Last 1)
+    $result = $null
+    try {
+        $result = $jsonLine | ConvertFrom-Json
+    }
+    catch {
+        throw "Panorama JS minify returned invalid JSON for: $TargetFile"
+    }
+
+    return $result
 }
 
 function Format-ArchiveVersion {
@@ -459,6 +498,7 @@ try {
     Require-ExistingPath -Path (Split-Path -Path $LivePakPath -Parent) -Label "Live addons directory"
     Require-ExistingPath -Path $VersionSourceFile -Label "Version source file"
     Require-ExistingPath -Path $SchemaGuardScript -Label "Schema guard script"
+    Require-ExistingPath -Path $JsMinifyScript -Label "Panorama JS minify script"
     Require-ExistingPath -Path $DeadlockExe -Label "deadlock.exe"
 
     if (-not $ChangedFiles -or $ChangedFiles.Count -eq 0) {
@@ -470,6 +510,16 @@ try {
         $relativeClean = $relativePath.Replace("/", "\")
         if ($relativeClean.StartsWith("\")) {
             $relativeClean = $relativeClean.Substring(1)
+        }
+        $isRuntimeCompilePath = $false
+        foreach ($prefix in $RuntimeCompilePathPrefixes) {
+            if ($relativeClean.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $isRuntimeCompilePath = $true
+                break
+            }
+        }
+        if (-not $isRuntimeCompilePath) {
+            throw "Build-only path passed to pipeline: $relativeClean"
         }
         $sourceFile = Join-Path $SourceRoot $relativeClean
         if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf)) {
@@ -489,12 +539,24 @@ try {
     Clear-DirectoryContents -Path $ContentStageRoot
     Clear-DirectoryContents -Path $GameStageRoot
     Ensure-Directory -Path $FinalUnpackedRoot
+    $staleCompiledArtifacts = @(
+        "panorama\scripts\hero_testing_plus_plus.vjs_c",
+        "scripts\validate_compact_schema.vjs_c"
+    )
+    foreach ($staleRelative in $staleCompiledArtifacts) {
+        $stalePath = Join-Path $FinalUnpackedRoot $staleRelative
+        if (Test-Path -LiteralPath $stalePath -PathType Leaf) {
+            Remove-Item -LiteralPath $stalePath -Force
+            Write-Host "[Pipeline] Removed stale compiled artifact: $staleRelative"
+        }
+    }
 
     Write-Host "[Pipeline] Step 3/8: Compile changed files one by one..."
     $compileExtensions = @(".xml", ".css", ".js", ".vsndevts", ".wav")
     $totalCopied = 0
     $totalSkippedNew = 0
     $totalCompiledOutputs = 0
+    $totalJsMinifySavedBytes = 0
 
     for ($index = 0; $index -lt $normalizedChanged.Count; $index++) {
         $relative = $normalizedChanged[$index]
@@ -512,6 +574,18 @@ try {
         $ext = [System.IO.Path]::GetExtension($dst).ToLowerInvariant()
         if ($compileExtensions -notcontains $ext) {
             throw "Non-compilable file passed to pipeline: $relative"
+        }
+
+        $relativeNormalized = $relative.Replace("/", "\")
+        if (
+            $ext -eq ".js" -and
+            $relativeNormalized.StartsWith("panorama\scripts\", [System.StringComparison]::OrdinalIgnoreCase) -and
+            -not $relativeNormalized.EndsWith("ql_minimap_crate_data.js", [System.StringComparison]::OrdinalIgnoreCase)
+        ) {
+            $minifyResult = Invoke-PanoramaJsMinify -ScriptPath $JsMinifyScript -TargetFile $dst
+            $savedBytes = [int]($minifyResult.savedBytes)
+            $totalJsMinifySavedBytes += $savedBytes
+            Write-Host ("[Pipeline] Minified JS: {0} ({1} -> {2} bytes, saved {3}, lines {4})" -f $relative, $minifyResult.originalBytes, $minifyResult.minifiedBytes, $savedBytes, $minifyResult.lineCount)
         }
 
         Stop-DeadlockIfRunning
@@ -588,6 +662,7 @@ try {
 
     Write-Host "[Pipeline] Step 4/8: Per-file compile/sync complete."
     Write-Host "[Pipeline] Synced compiled outputs: $totalCompiledOutputs (copied: $totalCopied, skipped new: $totalSkippedNew)"
+    Write-Host "[Pipeline] Total Panorama JS minify savings: $totalJsMinifySavedBytes bytes"
 
     Write-Host "[Pipeline] Step 6/8: Pack final unpacked folder into pak47_dir.vpk..."
     Stop-DeadlockIfRunning
