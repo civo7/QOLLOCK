@@ -640,3 +640,8 @@ CitadelHudTopBarPlayer #PlayerAbilitiesContainer .AbilityCastFailed .button_cont
 {
 	visibility: collapse;
 }
+
+.minecraft_healthbar_active .hasSubAbility #SubAbility
+{
+	visibility: collapse;
+}

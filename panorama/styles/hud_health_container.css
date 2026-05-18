@@ -1306,6 +1306,12 @@
 	vertical-align: bottom;
 }
 
+.minecraft_healthbar_active .recentDamageCounters
+{
+	ignore-parent-flow: true;
+    margin-left: 90px;
+}
+
 .minecraft_healthbar_active .recentDamageCounter
 {
 	margin-bottom: 0px;
