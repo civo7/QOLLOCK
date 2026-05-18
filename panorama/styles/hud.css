@@ -1236,6 +1236,7 @@
 {
 	flow-children: down;
 	vertical-align: center;
+	min-width: 130px;
 }
 
 #QOLZipBoostLabel
