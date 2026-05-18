@@ -17660,7 +17660,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
-        //CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Improve Ability Stacks");
+        CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);

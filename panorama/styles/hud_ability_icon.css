@@ -11,6 +11,7 @@
 	width: 15px;
 }
 
+/* Post-game scoreboard — commented out per design
 .clean_stacks_active CitadelPostGameScoreboardNew #AbilitiesContainer .ability_container
 {
 	height: 120px;
@@ -23,12 +24,11 @@
 	transform: translatey(-33px);
 	ui-scale: 170%;
 }
+*/
 
 .clean_stacks_active #BonusContainer
 {
-	ignore-parent-flow: true;
 	margin-top: 85px;
-	hittest: false;
 }
 
 .clean_stacks_active #slot_signature_2 #BonusContainer,.clean_stacks_active #slot_signature_3 #BonusContainer
@@ -51,18 +51,12 @@
 .clean_stacks_active .hasBonusCounter #BonusContainer
 {
 	opacity: 1;
-	transform: translatey(0px);
-	z-index: 1;
+	transform: translatey(105px);
 }
 
 .clean_stacks_active .gScoreboardOpen #BonusContainer,.clean_stacks_active .gShopOpen #BonusContainer
 {
 	visibility: visible;
-}
-
-.clean_stacks_inactive #slot_signature_2 #BonusContainer,.clean_stacks_inactive #slot_signature_3 #BonusContainer
-{
-	margin-top: -30px;
 }
 
 @keyframes 'QOLFlashBonusCounterCleanStacks'
@@ -71,7 +65,7 @@
 	{
 		opacity: 1;
 	}
-	
+
 	50%
 	{
 		wash-color: spiritLightColor;
@@ -79,12 +73,12 @@
 		pre-transform-scale2d: 1.2;
 		opacity: 1;
 	}
-	
+
 	100%
 	{
 		opacity: 1;
 	}
-	
+
 }
 
 .clean_stacks_active .bonusCounterIncreased #BonusContainer
