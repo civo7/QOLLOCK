@@ -25567,7 +25567,7 @@ function GetUIRoot() {
                 var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
                 var perfSection = 0;
 
-                if (compassEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled) {
+                if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
                     hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
                     UpdateCompassOverlay(root, nowMsCompassLoop);
