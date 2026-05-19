@@ -680,7 +680,7 @@
     const COMPASS_SPEED_MAX_STEP = 12.0;
     const COMPASS_SPEED_QUANT = 2;
     const COMPASS_SPEED_ZERO_FLOOR = 10.0;
-    const COMPASS_SPEED_SAMPLE_MS = 120;
+    const COMPASS_SPEED_SAMPLE_MS = 50;
     const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
     const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
     const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
@@ -25322,7 +25322,10 @@ function GetUIRoot() {
         var compassRoot = EnsureCompassOverlay(root);
         if (!compassRoot) return;
 
-        if (!State.compassEnabled) {
+        var showCompass = State.compassEnabled;
+        var showSpeed = State.compassShowSpeed;
+
+        if (!showCompass && !showSpeed) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
@@ -25335,6 +25338,11 @@ function GetUIRoot() {
         }
 
         if (compassRoot.style.visibility !== "visible") compassRoot.style.visibility = "visible";
+        
+        var compassBox = State.cachedPanels.compassBox;
+        if (compassBox) {
+            compassBox.style.visibility = showCompass ? "visible" : "collapse";
+        }
         var scale = Number(State.compassScale);
         if (!isFinite(scale)) scale = 100;
         if (scale < 50) scale = 50;
@@ -25379,16 +25387,30 @@ function GetUIRoot() {
             marginLeftText,
             scaleText,
             boxWidthText,
-            boxHeightText
+            boxHeightText,
+            showCompass ? "1" : "0",
+            showSpeed ? "1" : "0"
         ].join("|");
         if (layoutSig !== State.compassLayoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
             if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
+            compassRoot.style.height = "fit-children";
+            compassRoot.style.overflow = "noclip";
+
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
+                compassBox.style.visibility = showCompass ? "visible" : "collapse";
+            }
+
+            var readout = State.cachedPanels.compassReadout;
+            if (readout) {
+                readout.style.width = "100%";
+                readout.style.height = "40px";
+                readout.style.flowChildren = "none";
+                readout.style.overflow = "noclip";
             }
             State.compassLayoutSig = layoutSig;
         }
@@ -25403,29 +25425,39 @@ function GetUIRoot() {
             speedLabel = compassRoot.FindChildTraverse("QOLCompassSpeed");
             State.cachedPanels.compassSpeed = speedLabel || null;
         }
-        var showSpeed = (State.compassShowSpeed !== false);
+        if (degreeLabel) {
+            degreeLabel.style.width = showSpeed ? "50%" : "100%";
+            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
+            degreeLabel.style.horizontalAlign = "left";
+            degreeLabel.style.verticalAlign = "center";
+            degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
+        }
         if (speedLabel) {
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
+            speedLabel.style.width = showCompass ? "50%" : "100%";
+            speedLabel.style.textAlign = showCompass ? "right" : "center";
+            speedLabel.style.horizontalAlign = "right";
+            speedLabel.style.verticalAlign = "center";
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
 
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
-        if (heading360 === null) {
-            if (degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
-            if (showSpeed && speedLabel && speedLabel.text !== "--") speedLabel.text = "--";
-            return;
-        }
 
-        UpdateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
-
-        if (degreeLabel) {
-            var degreeText = String(Math.round(heading360)) + "\u00B0";
-            if (degreeText !== State.compassLastDegreeText) {
-                degreeLabel.text = degreeText;
-                State.compassLastDegreeText = degreeText;
+        if (showCompass) {
+            if (heading360 === null) {
+                if (degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
+            } else {
+                UpdateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
+                if (degreeLabel) {
+                    var degreeText = String(Math.round(heading360)) + "\u00B0";
+                    if (degreeText !== State.compassLastDegreeText) {
+                        degreeLabel.text = degreeText;
+                        State.compassLastDegreeText = degreeText;
+                    }
+                }
             }
         }
 
@@ -25455,13 +25487,19 @@ function GetUIRoot() {
                             var dist = Math.sqrt((dx * dx) + (dy * dy));
                             var speedInstant = (dist / dtSec) * 100.0;
                             if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                                if (State.compassSpeedSmoothed === null || !isFinite(State.compassSpeedSmoothed)) {
-                                    State.compassSpeedSmoothed = speedInstant;
-                                } else {
-                                    var alpha = 0.2;
-                                    State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
-                                }
+                        if (State.compassSpeedSmoothed === null || !isFinite(State.compassSpeedSmoothed)) {
+                            State.compassSpeedSmoothed = speedInstant;
+                        } else {
+                            var isDecelerating = speedInstant < State.compassSpeedSmoothed;
+                            var tau = isDecelerating ? 0.25 : 0.02; 
+                            var alpha = 1.0 - Math.exp(-dtSec / tau);
+                            if (Math.abs(speedInstant - State.compassSpeedSmoothed) < State.compassSpeedSmoothed * 0.10) {
+                                alpha *= 0.2;
                             }
+                            if (speedInstant < 0.5) alpha = 1.0;
+                            State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
+                        }
+                    }
                         }
                     }
                     State.compassLastPosX = pos.x;
@@ -25471,28 +25509,19 @@ function GetUIRoot() {
             }
 
             if (State.compassSpeedSmoothed !== null && isFinite(State.compassSpeedSmoothed)) {
-                var calibrated = (State.compassSpeedSmoothed * COMPASS_SPEED_SCALE) + COMPASS_SPEED_OFFSET;
+                var calibrated = State.compassSpeedSmoothed * COMPASS_SPEED_SCALE;
                 if (!isFinite(calibrated)) calibrated = 0;
                 if (calibrated < 0) calibrated = 0;
 
-                if (State.compassSpeedDisplay === null || !isFinite(State.compassSpeedDisplay)) {
-                    State.compassSpeedDisplay = calibrated;
-                } else {
-                    var diff = calibrated - State.compassSpeedDisplay;
-                    if (Math.abs(diff) > COMPASS_SPEED_DEADBAND) {
-                        var step = Math.min(COMPASS_SPEED_MAX_STEP, Math.abs(diff));
-                        State.compassSpeedDisplay += (diff > 0 ? step : -step);
-                    }
-                }
-
+                State.compassSpeedDisplay = calibrated;
                 var quantized = State.compassSpeedDisplay;
+
                 if (COMPASS_SPEED_QUANT > 1) {
                     quantized = Math.round(quantized / COMPASS_SPEED_QUANT) * COMPASS_SPEED_QUANT;
                 } else {
                     quantized = Math.round(quantized);
                 }
-                if (quantized < 0) quantized = 0;
-                if (quantized < COMPASS_SPEED_ZERO_FLOOR) quantized = 0;
+                if (quantized < 5) quantized = 0;
                 speedValueText = String(quantized);
             }
             State.compassLastSpeedValueText = speedValueText;
@@ -25529,6 +25558,7 @@ function GetUIRoot() {
             if (root) {
                 var nowMsCompassLoop = Date.now ? Date.now() : (new Date()).getTime();
                 var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
+                var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
                 var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
                 var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
                 itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
@@ -25537,7 +25567,7 @@ function GetUIRoot() {
                 var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
                 var perfSection = 0;
 
-                if (compassEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled) {
+                if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
                     hasCompassRuntimeWork = true;
                     perfSection = PerfStart();
                     UpdateCompassOverlay(root, nowMsCompassLoop);
@@ -25583,13 +25613,14 @@ function GetUIRoot() {
             var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
             var itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
             var useFastInterval = (cfg && (
-                Number(cfg.ENABLE_COMPASS) === 1 ||
-                Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-                itemMirrorFastActive ||
-                Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
-                Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
-                unitTargetFastMode
-            ));
+            Number(cfg.ENABLE_COMPASS) === 1 ||
+            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
+            Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
+            itemMirrorFastActive ||
+            Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
+            Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
+            unitTargetFastMode
+        ));
             if (State.perfEnabled) {
                 PerfRecord("compass.total", PerfNowMs() - perfLoopStartMs);
                 FlushPerfIfNeeded(false);
@@ -26013,7 +26044,7 @@ function GetUIRoot() {
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = Number(cfg.ENABLE_CLEAN_STACKS) === 1;
-        var compassEnabled = (cfg.ENABLE_COMPASS === 1);
+        var compassEnabled = (cfg.ENABLE_COMPASS === 1) || (cfg.ENABLE_COMPASS_SPEED === 1);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
             hideoutConnected ? 1 : 0,
@@ -26254,8 +26285,8 @@ function GetUIRoot() {
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_inactive", false);
         }
-        State.compassEnabled = compassEnabled;
-        State.compassShowSpeed = (cfg.ENABLE_COMPASS_SPEED !== 0);
+        State.compassEnabled = (cfg.ENABLE_COMPASS === 1);
+        State.compassShowSpeed = (cfg.ENABLE_COMPASS_SPEED === 1);
         State.compassScale = (cfg.COMPASS_SCALE === undefined || cfg.COMPASS_SCALE === null) ? 100 : cfg.COMPASS_SCALE;
         State.compassStretchX = (cfg.COMPASS_STRETCH_X === undefined || cfg.COMPASS_STRETCH_X === null) ? 100 : cfg.COMPASS_STRETCH_X;
         State.compassStretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
@@ -26814,6 +26845,7 @@ function GetUIRoot() {
             cfg.HEALTHBAR_TYPE,
             cfg.ENABLE_RED_DIAMOND,
             cfg.ENABLE_COMPASS,
+            cfg.ENABLE_COMPASS_SPEED,
             cfg.MINIMAP_ROTATE_WITH_PLAYER,
             cfg.MINIMAP_FLIP,
             cfg.ENABLE_RELOAD_COOLDOWN,

@@ -10,3 +10,4 @@ scripts/tmp_*.ps1
 # Local backup/restore scratch folders (if created inside repo)
 _restore_*/
 backup_*/
+scripts/qollock_pipeline.ps1
