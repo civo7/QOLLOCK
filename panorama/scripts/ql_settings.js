@@ -19626,9 +19626,6 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
     SettingsHotkeyDebugLog("resume_event closeSettings=1 escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
 });
 
-$.RegisterForUnhandledEvent("OnGameStateChanged", function() {
-    HandleSettingsGameTransitionSignal("OnGameStateChanged");
-});
 $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
 });
