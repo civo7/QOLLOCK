@@ -680,7 +680,7 @@
     const COMPASS_SPEED_MAX_STEP = 12.0;
     const COMPASS_SPEED_QUANT = 2;
     const COMPASS_SPEED_ZERO_FLOOR = 10.0;
-    const COMPASS_SPEED_SAMPLE_MS = 120;
+    const COMPASS_SPEED_SAMPLE_MS = 50;
     const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
     const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
     const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
@@ -25423,20 +25423,19 @@ function GetUIRoot() {
 
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
-        if (heading360 === null) {
-            if (showCompass && degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
-            if (showSpeed && speedLabel && speedLabel.text !== "--") speedLabel.text = "--";
-            return;
-        }
-
+        
         if (showCompass) {
-            UpdateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
-            if (degreeLabel) {
-                var degreeText = String(Math.round(heading360)) + "\u00B0";
-                if (degreeText !== State.compassLastDegreeText) {
-                    degreeLabel.text = degreeText;
-                    State.compassLastDegreeText = degreeText;
+            var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
+            if (heading360 === null) {
+                if (degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
+            } else {
+                UpdateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
+                if (degreeLabel) {
+                    var degreeText = String(Math.round(heading360)) + "\u00B0";
+                    if (degreeText !== State.compassLastDegreeText) {
+                        degreeLabel.text = degreeText;
+                        State.compassLastDegreeText = degreeText;
+                    }
                 }
             }
         }
@@ -25471,8 +25470,8 @@ function GetUIRoot() {
                                     State.compassSpeedSmoothed = speedInstant;
                                 } else {
                                     var isDecelerating = speedInstant < State.compassSpeedSmoothed;
-                                    var alpha = isDecelerating ? 0.6 : 0.15;
-                                    if (speedInstant < 0.5) alpha = 0.9;
+                                    var alpha = isDecelerating ? 0.8 : 0.4; 
+                                    if (speedInstant < 0.5) alpha = 1.0;
                                     State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
                                 }
                             }
