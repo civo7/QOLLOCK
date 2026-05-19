@@ -358,7 +358,7 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Healthbar|Enemy V2": "V2 enemy healthbar enhancements.",
     "Minimap|Alt Zoom": "View an enhanced minimap on opening ability menu.",
     "Minimap|Tab Zoom": "View an enhanced minimap on opening scoreboard menu.",
-    "Overlay|Compass": "See your view angle and speed.",
+    "Overlay|Compass & Speed": "See your view angle and speed.",
     "Overlay|Enable Clean Stacks": "Improve Ability Stacks",
     "Overlay|Keyboard": "Real time key input visual.",
     "Overlay|Ult Cooldowns": "View the cooldown time of player ultimates.",
@@ -13702,7 +13702,7 @@ function CreateSeparator(parent) {
     return sep;
 }
 
-function CreateSectionTitle(parent, title) {
+function CreateSectionTitle(parent, title, configIdForPerf) {
     var localizedTitle = LocalizeSettingsText(title || "");
     gCurrentSettingsSectionTitle = String(title || "");
     if (gSearchCollectMode && gSearchCollectState) {
@@ -13723,7 +13723,7 @@ function CreateSectionTitle(parent, title) {
     titleLabel.AddClass("SectionTitle");
     titleLabel.AddClass("SectionTitleInlineLabel");
     titleLabel.text = localizedTitle;
-    BindSectionPerfTooltip(titleRow, title, "", currentTab, "", "", null);
+    BindSectionPerfTooltip(titleRow, title, "", currentTab, configIdForPerf || "", "toggle", null);
     CreateSectionResetButton(titleRow, function() {
         return CollectResetKeysFromSectionTitleRow(titleRow);
     }, null, titleHead);
@@ -17690,15 +17690,15 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "slider", -400, 1000, 5);
         });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Compass", "ENABLE_COMPASS", "Angle and Speed", function(sectionParent) {
-            CreateRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "slider", 50, 200, 1);
-            CreateRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "slider", 50, 200, 1);
-            CreateRow(sectionParent, "Size", "COMPASS_SCALE", "slider", 50, 200, 1);
-            CreateRow(sectionParent, "Horizontal Offset", "COMPASS_X_OFFSET", "slider", -2000, 2000, 5);
-            CreateRow(sectionParent, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
-        });
+        CreateSectionTitle(list, "Compass & Speed", "ENABLE_COMPASS");
+        CreateRow(list, "Show Compass", "ENABLE_COMPASS", "toggle", null, null, null, null, "Shows the angle degrees and ticks.");
+        CreateRow(list, "Show Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "Speed number tracker.");
+        CreateRow(list, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
+        CreateRow(list, "Horizontal Stretch", "COMPASS_STRETCH_X", "slider", 50, 200, 1);
+        CreateRow(list, "Vertical Stretch", "COMPASS_STRETCH_Y", "slider", 50, 200, 1);
+        CreateRow(list, "Size", "COMPASS_SCALE", "slider", 50, 200, 1);
+        CreateRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "slider", -2000, 2000, 5);
+        CreateRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
     } else if (currentTab === "Minimap") {
         CreateSectionTitle(list, "Minimap");
         CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null);
