@@ -897,11 +897,19 @@ var gSettingsListSearchModeActive = false;
 var gSettingsTransitionWatchToken = 0;
 var gSettingsTransitionWatchRunning = false;
 var gSettingsOpenedInHideout = false;
+var gSettingsEscapeOpenedByKeybind = false;
+var gSettingsEscapeOpenRequestToken = 0;
+var gSettingsEscapeOpenRequestPending = false;
+var gSettingsKeybindDebounceUntilMs = 0;
 var gSettingsTransitionCloseCooldownUntilMs = 0;
 const SETTINGS_LIST_REFRESH_DEBOUNCE_SEC = 0.06;
 const SETTINGS_TRANSITION_WATCH_INTERVAL_SEC = 0.25;
 const SETTINGS_TRANSITION_CLOSE_COOLDOWN_MS = 1000;
 const SETTINGS_TRANSITION_SIGNAL_RECHECK_SEC = [0.0, 0.2, 0.6];
+const SETTINGS_KEYBIND_DEBOUNCE_MS = 250;
+const SETTINGS_ESCAPE_OPEN_POLL_DELAY_SEC = 0.03;
+const SETTINGS_ESCAPE_OPEN_POLL_MAX_ATTEMPTS = 12;
+const SETTINGS_ESCAPE_OPEN_SETTLE_DELAY_SEC = 0.06;
 
 const SETTINGS_LANGUAGE_ENGLISH = 0;
 const SETTINGS_LANGUAGE_RUSSIAN = 1;
@@ -4096,6 +4104,13 @@ function SetLocalizedConfigFeedbackMessage(text, tone, durationMs) {
 function SettingsRuntimeLog(msg) {
     if (!SETTINGS_RUNTIME_LOG) return;
     $.Msg("[QOLLock][SettingsRuntime] " + String(msg || ""));
+}
+
+const SETTINGS_HOTKEY_DEBUG = false;
+const SETTINGS_HOTKEY_ENABLED = false;
+function SettingsHotkeyDebugLog(msg) {
+    if (!SETTINGS_HOTKEY_DEBUG) return;
+    $.Msg("[QOLLock][SettingsHotkeyDbg] " + String(msg || ""));
 }
 
 const MINESWEEPER_ROWS = 9;
@@ -17583,6 +17598,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Failed Hint", "ENABLE_HIDE_FAILED_HINT", "toggle", null, null, null, [{ invert: true }], "Low Stamina Popup");
             CreateRow(sectionParent, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
             CreateRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
+            CreateRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
             // Hidden from UI by request; remains configurable via defaults/presets/import.
             CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
@@ -17660,7 +17676,6 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
-        CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);
@@ -19262,8 +19277,295 @@ $.ToggleSettingsWindow = function() {
     }
 };
 
+function IsChatOpenForSettingsBind() {
+    try {
+        var chat = $("#Chat");
+        if (chat && chat.BHasClass && chat.BHasClass("ChatExpanded")) return true;
+    } catch (eChatOpen) {}
+    return false;
+}
+
+function IsSettingsPanelVisibleMaybe(panel) {
+    if (!panel || (panel.IsValid && !panel.IsValid())) return false;
+    try {
+        if (panel.visible === false) return false;
+    } catch (e0) {}
+    var vis = "";
+    try {
+        if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
+            vis = String(panel.style.visibility || "").toLowerCase();
+        }
+    } catch (e1) {
+        vis = "";
+    }
+    if (vis === "collapse" || vis === "none" || vis === "hidden") return false;
+    return true;
+}
+
+function BuildSettingsEscapeTargets() {
+    var root = $.GetContextPanel();
+    var targets = [];
+    function pushUnique(panel) {
+        if (!panel || (panel.IsValid && !panel.IsValid())) return;
+        for (var i = 0; i < targets.length; i++) {
+            if (targets[i] === panel) return;
+        }
+        targets.push(panel);
+    }
+
+    var escapeMenu = GetSettingsEscapeMenuPanel();
+    var cursor = null;
+    try {
+        cursor = escapeMenu && escapeMenu.GetParent ? escapeMenu.GetParent() : null;
+    } catch (eEscapeParent) {
+        cursor = null;
+    }
+
+    var guard = 0;
+    while (cursor && guard < 64) {
+        pushUnique(cursor);
+        try {
+            cursor = cursor.GetParent ? cursor.GetParent() : null;
+        } catch (eGetParent) {
+            cursor = null;
+        }
+        guard++;
+    }
+
+    if (targets.length === 0) {
+        cursor = root;
+        guard = 0;
+        while (cursor && guard < 64) {
+            try {
+                if (!(cursor.id && cursor.id === "EscapeMenu")) pushUnique(cursor);
+            } catch (eFallbackId) {
+                pushUnique(cursor);
+            }
+            try {
+                cursor = cursor.GetParent ? cursor.GetParent() : null;
+            } catch (eFallbackParent) {
+                cursor = null;
+            }
+            guard++;
+        }
+    }
+    return targets;
+}
+
+function IsSettingsEscapeMenuOpen() {
+    var targets = BuildSettingsEscapeTargets();
+    for (var i = 0; i < targets.length; i++) {
+        var panel = targets[i];
+        try {
+            if (panel && panel.BHasClass && panel.BHasClass("ShowEscapeMenu")) return true;
+        } catch (eHasClass) {}
+    }
+    return false;
+}
+
+function SetSettingsEscapeMenuOpenFallback(shouldOpen) {
+    var targets = BuildSettingsEscapeTargets();
+    for (var i = 0; i < targets.length; i++) {
+        var panel = targets[i];
+        if (!panel) continue;
+        try {
+            if (shouldOpen && panel.AddClass) panel.AddClass("ShowEscapeMenu");
+            if (!shouldOpen && panel.RemoveClass) panel.RemoveClass("ShowEscapeMenu");
+        } catch (eToggleClass) {}
+        try {
+            if (shouldOpen && panel.AddClass) panel.AddClass("QOLHotkeyEscapeOpen");
+            if (!shouldOpen && panel.RemoveClass) panel.RemoveClass("QOLHotkeyEscapeOpen");
+        } catch (eRootToggleClass) {}
+    }
+    var escapeMenu = GetSettingsEscapeMenuPanel();
+    if (escapeMenu) {
+        try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("ShowEscapeMenu"); } catch (eEscapeMenuClass) {}
+        try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("QOLHotkeyEscapeOpen"); } catch (eEscapeMenuHotkeyClass) {}
+        try {
+            if (shouldOpen && escapeMenu.AddClass) escapeMenu.AddClass("QOLHotkeyEscapeShellVisible");
+            if (!shouldOpen && escapeMenu.RemoveClass) escapeMenu.RemoveClass("QOLHotkeyEscapeShellVisible");
+        } catch (eEscapeMenuShellClass) {}
+    }
+}
+
+function DescribeSettingsEscapeTargetsForDebug() {
+    var targets = BuildSettingsEscapeTargets();
+    var parts = [];
+    for (var i = 0; i < targets.length; i++) {
+        var panel = targets[i];
+        if (!panel) continue;
+        var id = "";
+        var cls = "";
+        try { id = panel.id ? String(panel.id) : ""; } catch (eId) { id = ""; }
+        try { cls = panel.GetAttributeString ? String(panel.GetAttributeString("class", "")) : ""; } catch (eCls) { cls = ""; }
+        parts.push((id || panel.paneltype || "Panel") + "[" + cls + "]");
+    }
+    return parts.join(" > ");
+}
+
+function FindSettingsPanelFromRoot(root, id) {
+    if (!root || !id || !root.FindChildTraverse) return null;
+    try { return root.FindChildTraverse(id); } catch (e0) {}
+    return null;
+}
+
+function GetSettingsEscapeMenuPanel() {
+    var root = $.GetContextPanel();
+    var cursor = root;
+    var guard = 0;
+    while (cursor && guard < 64) {
+        try {
+            if (cursor.id === "EscapeMenu") return cursor;
+        } catch (eIdCheck) {}
+        try {
+            cursor = cursor.GetParent ? cursor.GetParent() : null;
+        } catch (eParent) {
+            cursor = null;
+        }
+        guard++;
+    }
+    if (!root || !root.FindChildTraverse) return null;
+    try { return root.FindChildTraverse("EscapeMenu"); } catch (e0) {}
+    return null;
+}
+
+function NormalizeSettingsEscapeMenuVisualState() {
+    var escapeMenu = GetSettingsEscapeMenuPanel();
+    if (!escapeMenu) return;
+    try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("SettingsOpen"); } catch (e0) {}
+    try { if (escapeMenu.SetHasClass) escapeMenu.SetHasClass("SettingsOpen", false); } catch (e1) {}
+}
+
+function RequestSettingsEscapeMenuOpenNative() {
+    var commands = [
+        "game_action GameControls OpenMainMenu",
+        "game_action GameControls OpenMainMenu, Game Menu, , ",
+        "game_action MenuControls OpenMainMenu",
+        "game_action MenuControls OpenMainMenu, Game Menu, , ",
+        "game_action SpectatorControls OpenMainMenu",
+        "game_action SpectatorControls OpenMainMenu, Game Menu, , ",
+        "game_action ReplayControls OpenMainMenu",
+        "game_action ReplayControls OpenMainMenu, Game Menu, , "
+    ];
+    var didAny = false;
+    for (var i = 0; i < commands.length; i++) {
+        try {
+            var ok = RunConsoleCommandBestEffort(commands[i]);
+            SettingsHotkeyDebugLog("open_try idx=" + i + " ok=" + (ok ? "1" : "0") + " cmd=" + commands[i]);
+            if (ok) didAny = true;
+        } catch (eOpenCmd) {}
+    }
+    SettingsHotkeyDebugLog("open_dispatch didAny=" + (didAny ? "1" : "0"));
+    return didAny;
+}
+
+function CompleteSettingsWindowOpenFromKeybind(requestToken, openedEscapeForKeybind) {
+    if (requestToken !== gSettingsEscapeOpenRequestToken) return;
+    gSettingsEscapeOpenRequestPending = false;
+    gSettingsEscapeOpenedByKeybind = true;
+    var openDelay = openedEscapeForKeybind ? SETTINGS_ESCAPE_OPEN_SETTLE_DELAY_SEC : 0.0;
+    SettingsHotkeyDebugLog("complete_open token=" + requestToken + " delay=" + openDelay + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
+    $.Schedule(openDelay, function() {
+        if (requestToken !== gSettingsEscapeOpenRequestToken) return;
+        SettingsHotkeyDebugLog("complete_open_fire token=" + requestToken + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
+        NormalizeSettingsEscapeMenuVisualState();
+        $.ToggleSettingsWindow();
+        $.Schedule(0.0, NormalizeSettingsEscapeMenuVisualState);
+        $.Schedule(0.05, NormalizeSettingsEscapeMenuVisualState);
+    });
+}
+
+function PollSettingsEscapeMenuAndOpenSettings(requestToken, attemptsRemaining) {
+    if (requestToken !== gSettingsEscapeOpenRequestToken) return;
+    var escapeOpen = IsSettingsEscapeMenuOpen();
+    SettingsHotkeyDebugLog("poll token=" + requestToken + " attemptsRemaining=" + attemptsRemaining + " escapeOpen=" + (escapeOpen ? "1" : "0"));
+    if (escapeOpen) {
+        CompleteSettingsWindowOpenFromKeybind(requestToken, true);
+        return;
+    }
+    if (attemptsRemaining <= 0) {
+        SettingsHotkeyDebugLog("poll_timeout token=" + requestToken + " usingFallback=1");
+        SetSettingsEscapeMenuOpenFallback(true);
+        var fallbackOpen = IsSettingsEscapeMenuOpen();
+        SettingsHotkeyDebugLog("fallback_result token=" + requestToken + " escapeOpen=" + (fallbackOpen ? "1" : "0"));
+        if (fallbackOpen) {
+            CompleteSettingsWindowOpenFromKeybind(requestToken, true);
+            return;
+        }
+        gSettingsEscapeOpenRequestPending = false;
+        gSettingsEscapeOpenedByKeybind = false;
+        return;
+    }
+    $.Schedule(SETTINGS_ESCAPE_OPEN_POLL_DELAY_SEC, function() {
+        PollSettingsEscapeMenuAndOpenSettings(requestToken, attemptsRemaining - 1);
+    });
+}
+
+function QueueSettingsWindowOpenFromKeybind() {
+    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
+    var requestToken = gSettingsEscapeOpenRequestToken;
+    gSettingsEscapeOpenRequestPending = true;
+    gSettingsOpenGuardUntilMs = GetNowMs() + 500;
+    var hadEscapeOpen = IsSettingsEscapeMenuOpen();
+    SettingsHotkeyDebugLog("queue_open token=" + requestToken + " hadEscapeOpen=" + (hadEscapeOpen ? "1" : "0") + " guardUntil=" + gSettingsOpenGuardUntilMs);
+    SettingsHotkeyDebugLog("targets=" + DescribeSettingsEscapeTargetsForDebug());
+    SettingsHotkeyDebugLog("queue_open forceFallbackOpen=1");
+    SetSettingsEscapeMenuOpenFallback(true);
+    NormalizeSettingsEscapeMenuVisualState();
+    var fallbackOpen = IsSettingsEscapeMenuOpen();
+    SettingsHotkeyDebugLog("queue_open fallbackOpen=" + (fallbackOpen ? "1" : "0"));
+    if (fallbackOpen) {
+        CompleteSettingsWindowOpenFromKeybind(requestToken, true);
+        return;
+    }
+    RequestSettingsEscapeMenuOpenNative();
+    $.Schedule(0.0, function() {
+        PollSettingsEscapeMenuAndOpenSettings(requestToken, SETTINGS_ESCAPE_OPEN_POLL_MAX_ATTEMPTS);
+    });
+}
+
+function ToggleSettingsWindowFromKeybind() {
+    if (IsChatOpenForSettingsBind()) {
+        SettingsHotkeyDebugLog("key_ignored reason=chat");
+        return;
+    }
+    var nowKeybindMs = GetNowMs();
+    if (nowKeybindMs < gSettingsKeybindDebounceUntilMs) {
+        SettingsHotkeyDebugLog("key_ignored reason=debounce");
+        return;
+    }
+    gSettingsKeybindDebounceUntilMs = nowKeybindMs + SETTINGS_KEYBIND_DEBOUNCE_MS;
+    if (gSettingsEscapeOpenRequestPending) {
+        SettingsHotkeyDebugLog("key_ignored reason=open_pending");
+        return;
+    }
+    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
+    var isVisible = !!(win && win.BHasClass && win.BHasClass("Visible"));
+    SettingsHotkeyDebugLog("key_toggle visible=" + (isVisible ? "1" : "0") + " escapeOwned=" + (gSettingsEscapeOpenedByKeybind ? "1" : "0") + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
+    if (isVisible) {
+        SetSettingsEscapeMenuOpenFallback(false);
+        NormalizeSettingsEscapeMenuVisualState();
+        gSettingsEscapeOpenedByKeybind = false;
+        SettingsHotkeyDebugLog("close_both dispatchResume=1");
+        $.ForceCloseModSettings();
+        $.Schedule(0.0, function() { SetSettingsEscapeMenuOpenFallback(false); });
+        $.Schedule(0.05, function() { SetSettingsEscapeMenuOpenFallback(false); });
+        return;
+    }
+    QueueSettingsWindowOpenFromKeybind();
+}
+
+if (SETTINGS_HOTKEY_ENABLED) {
+    try {
+        $.RegisterKeyBind($.GetContextPanel(), "key_m", ToggleSettingsWindowFromKeybind);
+    } catch (eSettingsKeybind) {}
+}
+
 $.ForceCloseModSettings = function() {
-    if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
+    if (GetNowMs() < gSettingsOpenGuardUntilMs) {
+        SettingsHotkeyDebugLog("force_close_suppressed guard=1");
+        return;
+    }
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (win) {
         win.RemoveClass("Visible");
@@ -19282,11 +19584,23 @@ $.ForceCloseModSettings = function() {
     CloseTrainTrackingModalIfOpen();
     CloseWhackRemModalIfOpen();
     CloseBlackjackModalIfOpen();
+    gSettingsEscapeOpenRequestPending = false;
+    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
+    if (gSettingsEscapeOpenedByKeybind) {
+        SetSettingsEscapeMenuOpenFallback(false);
+        gSettingsEscapeOpenedByKeybind = false;
+    }
+    SettingsHotkeyDebugLog("force_close dispatchResume=1");
     $.DispatchEvent("CitadelResumePlaying", $.GetContextPanel());
+    $.Schedule(0.0, function() { SetSettingsEscapeMenuOpenFallback(false); });
+    $.Schedule(0.05, function() { SetSettingsEscapeMenuOpenFallback(false); });
 };
 
 $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
-    if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
+    if (GetNowMs() < gSettingsOpenGuardUntilMs) {
+        SettingsHotkeyDebugLog("resume_event_suppressed guard=1");
+        return;
+    }
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (win) {
         win.RemoveClass("Visible");
@@ -19305,11 +19619,13 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
     CloseTrainTrackingModalIfOpen();
     CloseWhackRemModalIfOpen();
     CloseBlackjackModalIfOpen();
+    gSettingsEscapeOpenRequestPending = false;
+    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
+    SetSettingsEscapeMenuOpenFallback(false);
+    gSettingsEscapeOpenedByKeybind = false;
+    SettingsHotkeyDebugLog("resume_event closeSettings=1 escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
 });
 
-$.RegisterForUnhandledEvent("OnGameStateChanged", function() {
-    HandleSettingsGameTransitionSignal("OnGameStateChanged");
-});
 $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
 });
