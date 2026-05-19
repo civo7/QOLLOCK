@@ -25394,11 +25394,20 @@ function GetUIRoot() {
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
             if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
+            compassRoot.style.height = "fit-children";
+            compassRoot.style.overflow = "noclip";
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
             }
             State.compassLayoutSig = layoutSig;
+        }
+
+        var readout = State.cachedPanels.compassReadout;
+        if (readout) {
+            readout.style.width = "100%";
+            readout.style.height = "fit-children";
+            readout.style.flowChildren = "none";
         }
 
         var degreeLabel = State.cachedPanels.compassDegree;
@@ -25412,6 +25421,7 @@ function GetUIRoot() {
             State.cachedPanels.compassSpeed = speedLabel || null;
         }
         if (degreeLabel) {
+            degreeLabel.style.horizontalAlign = showSpeed ? "left" : "center";
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
@@ -25466,15 +25476,16 @@ function GetUIRoot() {
                             var dist = Math.sqrt((dx * dx) + (dy * dy));
                             var speedInstant = (dist / dtSec) * 100.0;
                             if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                                if (State.compassSpeedSmoothed === null || !isFinite(State.compassSpeedSmoothed)) {
-                                    State.compassSpeedSmoothed = speedInstant;
-                                } else {
-                                    var isDecelerating = speedInstant < State.compassSpeedSmoothed;
-                                    var alpha = isDecelerating ? 0.8 : 0.4; 
-                                    if (speedInstant < 0.5) alpha = 1.0;
-                                    State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
-                                }
-                            }
+                        if (State.compassSpeedSmoothed === null || !isFinite(State.compassSpeedSmoothed)) {
+                            State.compassSpeedSmoothed = speedInstant;
+                        } else {
+                            var isDecelerating = speedInstant < State.compassSpeedSmoothed;
+                            var tau = isDecelerating ? 0.15 : 0.4; 
+                            var alpha = 1.0 - Math.exp(-dtSec / tau);
+                            if (speedInstant < 0.5) alpha = 0.8;
+                            State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
+                        }
+                    }
                         }
                     }
                     State.compassLastPosX = pos.x;
