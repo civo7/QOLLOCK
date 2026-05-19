@@ -25387,7 +25387,9 @@ function GetUIRoot() {
             marginLeftText,
             scaleText,
             boxWidthText,
-            boxHeightText
+            boxHeightText,
+            showCompass ? "1" : "0",
+            showSpeed ? "1" : "0"
         ].join("|");
         if (layoutSig !== State.compassLayoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
@@ -25396,18 +25398,21 @@ function GetUIRoot() {
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
             compassRoot.style.height = "fit-children";
             compassRoot.style.overflow = "noclip";
+
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
+                compassBox.style.visibility = showCompass ? "visible" : "collapse";
+            }
+
+            var readout = State.cachedPanels.compassReadout;
+            if (readout) {
+                readout.style.width = "100%";
+                readout.style.height = "40px";
+                readout.style.flowChildren = "none";
+                readout.style.overflow = "noclip";
             }
             State.compassLayoutSig = layoutSig;
-        }
-
-        var readout = State.cachedPanels.compassReadout;
-        if (readout) {
-            readout.style.width = "100%";
-            readout.style.height = "fit-children";
-            readout.style.flowChildren = "none";
         }
 
         var degreeLabel = State.cachedPanels.compassDegree;
@@ -25422,20 +25427,22 @@ function GetUIRoot() {
         }
         if (degreeLabel) {
             degreeLabel.style.horizontalAlign = showSpeed ? "left" : "center";
+            degreeLabel.style.verticalAlign = "center";
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
             speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
+            speedLabel.style.verticalAlign = "center";
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
 
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        
+        var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
+
         if (showCompass) {
-            var heading360 = GetLocalPlayerHeadingDegrees(root, nowMs);
             if (heading360 === null) {
                 if (degreeLabel && degreeLabel.text !== "N/A") degreeLabel.text = "N/A";
             } else {
@@ -25480,9 +25487,13 @@ function GetUIRoot() {
                             State.compassSpeedSmoothed = speedInstant;
                         } else {
                             var isDecelerating = speedInstant < State.compassSpeedSmoothed;
-                            var tau = isDecelerating ? 0.15 : 0.4; 
+                            var tau = isDecelerating ? 0.25 : 0.6; 
                             var alpha = 1.0 - Math.exp(-dtSec / tau);
-                            if (speedInstant < 0.5) alpha = 0.8;
+                            if (Math.abs(speedInstant - State.compassSpeedSmoothed) < State.compassSpeedSmoothed * 0.15) {
+                                alpha *= 0.3;
+                            }
+                            
+                            if (speedInstant < 0.5) alpha = 1.0;
                             State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
                         }
                     }
