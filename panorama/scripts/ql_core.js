@@ -25426,14 +25426,18 @@ function GetUIRoot() {
             State.cachedPanels.compassSpeed = speedLabel || null;
         }
         if (degreeLabel) {
-            degreeLabel.style.horizontalAlign = showSpeed ? "left" : "center";
+            degreeLabel.style.width = showSpeed ? "50%" : "100%";
+            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
+            degreeLabel.style.horizontalAlign = "left";
             degreeLabel.style.verticalAlign = "center";
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
-            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
+            speedLabel.style.width = showCompass ? "50%" : "100%";
+            speedLabel.style.textAlign = showCompass ? "right" : "center";
+            speedLabel.style.horizontalAlign = "right";
             speedLabel.style.verticalAlign = "center";
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
@@ -25487,12 +25491,11 @@ function GetUIRoot() {
                             State.compassSpeedSmoothed = speedInstant;
                         } else {
                             var isDecelerating = speedInstant < State.compassSpeedSmoothed;
-                            var tau = isDecelerating ? 0.25 : 0.6; 
+                            var tau = isDecelerating ? 0.25 : 0.02; 
                             var alpha = 1.0 - Math.exp(-dtSec / tau);
-                            if (Math.abs(speedInstant - State.compassSpeedSmoothed) < State.compassSpeedSmoothed * 0.15) {
-                                alpha *= 0.3;
+                            if (Math.abs(speedInstant - State.compassSpeedSmoothed) < State.compassSpeedSmoothed * 0.10) {
+                                alpha *= 0.2;
                             }
-                            
                             if (speedInstant < 0.5) alpha = 1.0;
                             State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
                         }
