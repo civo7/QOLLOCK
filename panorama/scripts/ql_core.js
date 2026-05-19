@@ -25533,6 +25533,7 @@ function GetUIRoot() {
             if (root) {
                 var nowMsCompassLoop = Date.now ? Date.now() : (new Date()).getTime();
                 var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
+                var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
                 var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
                 var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
                 itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
@@ -25587,13 +25588,14 @@ function GetUIRoot() {
             var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
             var itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
             var useFastInterval = (cfg && (
-                Number(cfg.ENABLE_COMPASS) === 1 ||
-                Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-                itemMirrorFastActive ||
-                Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
-                Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
-                unitTargetFastMode
-            ));
+            Number(cfg.ENABLE_COMPASS) === 1 ||
+            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
+            Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
+            itemMirrorFastActive ||
+            Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
+            Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
+            unitTargetFastMode
+        ));
             if (State.perfEnabled) {
                 PerfRecord("compass.total", PerfNowMs() - perfLoopStartMs);
                 FlushPerfIfNeeded(false);
