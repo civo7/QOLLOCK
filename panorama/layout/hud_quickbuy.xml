@@ -7,8 +7,8 @@
 	<scripts>
 		<include src="s2r://panorama/scripts/hud_quickbuy_total_summary.vjs_c" />
 	</scripts>
-	<Panel class="HudQuickbuy" acceptsfocus="false">
-		<Panel class="EmptyContents HudQuickbuyElement">
+	<Panel class="HudQuickbuy" acceptsfocus="false" hittest="false" hittestchildren="true">
+		<Panel class="EmptyContents HudQuickbuyElement" hittest="false" hittestchildren="true">
 			<Panel class="PurchaseDisabledContainer">
 				<Panel class="purchasingDisabledX disabledX1" />
 				<Panel class="purchasingDisabledX disabledX2" />
@@ -16,7 +16,7 @@
 			<Label class="QuickbuyLabel" text="#Citadel_Hud_Quickbuy" html="true" />
 			<Panel class="rightClick" />
 		</Panel>
-		<Panel id="HudMini" class="HudQuickbuyElement">
+		<Panel id="HudMini" class="HudQuickbuyElement" hittest="false" hittestchildren="true">
 			<Panel class="PurchaseDisabledContainer">
 				<Panel class="purchasingDisabledX disabledX1" />
 				<Panel class="purchasingDisabledX disabledX2" />
@@ -54,19 +54,19 @@
 				</Panel>
 			</Panel>
 		</Panel>
-		<Panel id="KeyboardHints">
+		<Panel id="KeyboardHints" hittest="false" hittestchildren="false">
 			<Label class="hudHint itemName" text="{s:quickbuy_item_name}" />
 			<Label class="hudHint combatText" text="#Citadel_Hud_Autobuy_HudHint_CantPurchase" />
 			<Label class="hudHint buyKey" text="#Citadel_Hud_Autobuy_HudHint_BuyKey" html="true" />
 			<Label class="hudHint shopKey" text="#Citadel_Hud_Autobuy_HudHint_ShopKey" html="true" />
 		</Panel>
-		<Panel id="QuickBuyQueueContainer">
-			<Panel class="QuickbuyQueueOuter">
-				<Label class="BuildOrderLabel" text="#Citadel_Shop_SelectedBuildHeader" />
-				<Label class="InstructionalText" text="#Citadel_Hud_BuildOrder_RemoveText" />
-				<Panel id="QuickbuySellQueue" />
-				<Panel id="QuickbuyQueue" />
-				<Panel id="QueueActions">
+		<Panel id="QuickBuyQueueContainer" hittest="false" hittestchildren="true">
+			<Panel class="QuickbuyQueueOuter" hittest="false" hittestchildren="true">
+				<Label class="BuildOrderLabel" text="#Citadel_Shop_SelectedBuildHeader" hittest="false" />
+				<Label class="InstructionalText" text="#Citadel_Hud_BuildOrder_RemoveText" hittest="false" />
+				<Panel id="QuickbuySellQueue" hittest="true" hittestchildren="true" />
+				<Panel id="QuickbuyQueue" hittest="true" hittestchildren="true" />
+				<Panel id="QueueActions" hittest="false" hittestchildren="true">
 					<CitadelSettingsCheckbox id="AutoQueueToggleButton" convar="citadel_auto_queue_build" text="#Citadel_Hud_BuildOrder_AutoQueue" />
 					<Panel id="ToggleAutoBuyContainer">
 						<ToggleButton id="AutoBuyToggleButton" text="#Citadel_Hud_BuildOrder_AutobuyToggle" html="true" onactivate="CitadelQuickbuyToggleAutoBuy()" />
@@ -78,7 +78,7 @@
 						<Label class="ClearQueue" text="#Citadel_Hud_BuildOrder_ClearQueue" />
 					</Button>
 				</Panel>
-				<Label class="emptyQueueLabel" html="true" text="#Citadel_Hud_Quickbuy_Empty" />
+				<Label class="emptyQueueLabel" html="true" text="#Citadel_Hud_Quickbuy_Empty" hittest="false" />
 			</Panel>
 		</Panel>
 		<Panel id="QuickbuyShopTotalSummary" hittest="false">

@@ -4068,6 +4068,9 @@ const BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_REM_TUNNELS", min: 0, max: 1, step: 1 },
     { key: "MINIMAP_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+const BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", min: 0, max: 1, step: 1 }
+];
 const BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -4117,6 +4120,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0 = AppendUniquePayloadSchemaFields(
         BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS,
         BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS
     )
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0,
+    BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
@@ -4223,6 +4230,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.5.0": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0
+    },
+    "2.5.1": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -10545,6 +10556,62 @@ function GetUIRoot() {
             NormalizeHudOffsetNumber(cfg.TOP_BAR_X_OFFSET, 0) !== 0 ||
             NormalizeHudOffsetNumber(cfg.TOP_BAR_Y_OFFSET, 0) !== 0
         );
+    }
+
+    function IsHudVisibleForTopBarRuntime(root, topBar) {
+        if (!root) return true;
+
+        function hasAnyClassInHierarchySafe(panel, classNames) {
+            if (!panel || !classNames || classNames.length <= 0) return false;
+            for (var i = 0; i < classNames.length; i++) {
+                var cls = classNames[i];
+                if (!cls) continue;
+                try {
+                    if (hasClassInHierarchy(panel, cls)) return true;
+                } catch (e0) {}
+            }
+            return false;
+        }
+
+        var hiddenContextClasses = [
+            "InHideout",
+            "inHideout",
+            "inHideoutIntro",
+            "HideoutIntro"
+        ];
+        var hiddenUiClasses = [
+            "ShowEscapeMenu",
+            "HudTakeoverEnabled"
+        ];
+
+        var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
+        if (!hud && root.FindChildTraverse) {
+            hud = root.FindChildTraverse("Hud");
+            State.cachedPanels.hudPanel = hud || null;
+        }
+
+        if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
+        if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
+        if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
+        if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
+        if (hasAnyClassInHierarchySafe(topBar, hiddenContextClasses)) return false;
+
+        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
+        if (!gameplayHud && root.FindChildTraverse) {
+            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            State.cachedPanels.gameplayHud = gameplayHud || null;
+        }
+
+        var gameplayHudAlive = IsPanelValid(State.cachedPanels.gameplayHudAlive) ? State.cachedPanels.gameplayHudAlive : null;
+        if (!gameplayHudAlive && root.FindChildTraverse) {
+            gameplayHudAlive = root.FindChildTraverse("gameplay_hud_alive");
+            State.cachedPanels.gameplayHudAlive = gameplayHudAlive || null;
+        }
+
+        if (gameplayHud && !IsPanelEffectivelyVisibleMaybe(gameplayHud, root)) return false;
+        if (gameplayHudAlive && !IsPanelEffectivelyVisibleMaybe(gameplayHudAlive, root)) return false;
+
+        return true;
     }
 
     function HasNonDefaultBottomBarRuntimeConfig(cfg) {
@@ -19131,15 +19198,17 @@ function GetUIRoot() {
         }
         if (!topBar) return;
 
+        var hudVisible = IsHudVisibleForTopBarRuntime(root, topBar);
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_X_OFFSET, 0) : 0;
         var offsetY = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_Y_OFFSET, 0) : 0;
         var opacityText = active ? NormalizeOpacityNumber(cfg.TOP_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0");
+        var shouldShow = enabled && hudVisible;
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
         if (State.topBarRuntimeStyleSig === styleSig) return;
 
         topBar.style.x = String(offsetX) + "px";
         topBar.style.y = String(-offsetY) + "px";
-        topBar.style.visibility = enabled ? "visible" : "collapse";
+        topBar.style.visibility = shouldShow ? "visible" : "collapse";
         SetPanelOpacitySafe(topBar, opacityText, 1.0);
         State.topBarRuntimeStyleSig = styleSig;
     }
@@ -26326,6 +26395,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_active", cfg.ENABLE_KEYBOARD_OVERLAY === 1);
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_full_active", cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_minimap_active", cfg.MINIMAL_MINIMAP === 1);
+            SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", Number(cfg.ENABLE_MINIMAP_ELEVATION_MARKERS) === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);

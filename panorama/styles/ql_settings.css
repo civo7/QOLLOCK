@@ -16915,6 +16915,89 @@
 	text-shadow: none;
 }
 
+/* Multi-checkbox rows use ToggleButton internally, which can keep the
+   engine's hover/selected fill around after the pointer leaves. Keep the
+   state on the tick/text only so rows like Top Bar HP Warning do not get a
+   sticky option background. */
+#SettingsWindow .SettingRow.MultiCheckboxRow:hover
+{
+	background-color: none;
+	border: 1px solid transparent;
+}
+
+#SettingsWindow .MultiCheckboxBtn,
+#SettingsWindow .MultiCheckboxBtn:hover,
+#SettingsWindow .MultiCheckboxBtn:focus,
+#SettingsWindow .MultiCheckboxBtn:selected,
+#SettingsWindow .MultiCheckboxBtn:selected:hover,
+#SettingsWindow .MultiCheckboxBtn.selected,
+#SettingsWindow .MultiCheckboxBtn.selected:hover,
+#SettingsWindow .MultiCheckboxBtn.IsSelected,
+#SettingsWindow .MultiCheckboxBtn.IsSelected:hover
+{
+	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+/* Settings motion normalization:
+   keep row hover responsive, but avoid one-off sideways nudges on checkbox
+   rows such as Player/Enemy/Ally color warning thresholds. */
+#SettingsWindow .SettingRow
+{
+	transform: none;
+	brightness: 1.0;
+	transition-property: background-color, border, brightness;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .SettingRow:hover
+{
+	transform: none;
+	brightness: 1.015;
+	background-color: rgba(212, 220, 216, 0.024);
+	border: 1px solid transparent;
+}
+
+#SettingsWindow .SettingRow.MultiCheckboxRow:hover
+{
+	background-color: rgba(212, 220, 216, 0.016);
+}
+
+#SettingsWindow .SettingRow .LabelContainer,
+#SettingsWindow .SettingRow .SettingLabel,
+#SettingsWindow .SettingRow .SettingSubLabel,
+#SettingsWindow .SettingRow .SettingControlRoot,
+#SettingsWindow .SettingRow .SettingButtonGroup,
+#SettingsWindow .SettingRow .MultiCheckboxBtn,
+#SettingsWindow .SettingRow .MultiToggleBtn,
+#SettingsWindow .SettingRow .SegmentBtn
+{
+	transform: none;
+}
+
+#SettingsWindow .SettingRow:hover .LabelContainer,
+#SettingsWindow .SettingRow:hover .SettingLabel,
+#SettingsWindow .SettingRow:hover .SettingSubLabel,
+#SettingsWindow .SettingRow:hover .SettingControlRoot,
+#SettingsWindow .SettingRow:hover .SettingButtonGroup,
+#SettingsWindow .SettingRow:hover .MultiCheckboxBtn,
+#SettingsWindow .SettingRow:hover .MultiToggleBtn,
+#SettingsWindow .SettingRow:hover .SegmentBtn
+{
+	transform: none;
+}
+
+#SettingsWindow .MultiCheckboxBtn .TickBox,
+#SettingsWindow .MultiCheckboxBtn:hover .TickBox
+{
+	pre-transform-scale2d: 1;
+	transition-property: border, background-color, box-shadow, brightness;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
 /* Final rail/footer icon normalization:
    keep Audio/Discord/Save/Version in the same icon family and stop older
    special-case passes from leaking through. */
@@ -16923,17 +17006,27 @@
 {
 	width: 13px;
 	height: 13px;
-	wash-color: #9aa097;
+	wash-color: #8f9993;
 	opacity: 1.0;
 	brightness: 1.0;
+	img-shadow: none;
 }
 
-.SettingsTabRailGroup .TabItem_Audio:hover .TabIcon_Audio,
-.SettingsTabRailGroup .TabItem_Audio.Active .TabIcon_Audio
+.SettingsTabRailGroup .TabItem_Audio:hover .TabIcon_Audio
 {
-	wash-color: #d5f7e4;
+	wash-color: #9ff0c0;
 	opacity: 1.0;
-	brightness: 1.0;
+	brightness: 1.45;
+	img-shadow: none;
+}
+
+.SettingsTabRailGroup .TabItem_Audio.Active .TabIcon_Audio,
+.SettingsTabRailGroup .TabItem_Audio.Active:hover .TabIcon_Audio
+{
+	wash-color: #9af0bd;
+	opacity: 1.0;
+	brightness: 1.36;
+	img-shadow: 0px 0px 5px rgba(126, 237, 170, 0.18);
 }
 
 .FooterDiscordRailBtn .FooterDiscordLogoTexture,
