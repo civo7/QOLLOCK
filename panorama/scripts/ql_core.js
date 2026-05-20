@@ -59,6 +59,7 @@
         minimapFlipClassCache: { panel: null, values: {} },
         minimapMinimalistOpacityApplied: false,
         minimapRuntimeSig: "",
+        minimapCastRangeScaleApplied: false,
         minimapCrateOverlayBuildSig: "",
         compassEnabled: false,
         compassShowSpeed: true,
@@ -695,6 +696,7 @@
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
     const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
+    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
     const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
     const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
@@ -4071,6 +4073,24 @@ const BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
 const BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", min: 0, max: 1, step: 1 }
 ];
+const BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS = [
+    { key: "TOP_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
+    { key: "BOTTOM_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
+    { key: "SHOP_SCALE", min: 0.5, max: 1.5, step: 0.05 }
+];
+const BUILD_CATEGORY_ZOOM_REM_TUNNELS_SCHEMA_FIELDS = [
+    { key: "ENABLE_ALT_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "ALT_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "ENABLE_TAB_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "TAB_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+const BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS = [
+    { key: "ENABLE_DAMAGE_IMPACT", min: 0, max: 1, step: 1 },
+    { key: "DAMAGE_IMPACT_SCALE", min: 0.5, max: 2.0, step: 0.05 },
+    { key: "DAMAGE_IMPACT_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "DAMAGE_IMPACT_X_OFFSET", min: -1000, max: 1000, step: 5 },
+    { key: "DAMAGE_IMPACT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
+];
 const BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -4124,6 +4144,16 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0 = AppendUniquePayloadSchemaFields(
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0,
     BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1,
+    AppendUniquePayloadSchemaFields(
+        AppendUniquePayloadSchemaFields(
+            BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS,
+            BUILD_CATEGORY_ZOOM_REM_TUNNELS_SCHEMA_FIELDS
+        ),
+        BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS
+    )
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
@@ -4234,6 +4264,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.5.1": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1
+    },
+    "2.5.2": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -4863,15 +4897,28 @@ function GetUIRoot() {
         try { panel.style.transform = ""; } catch (e0) {}
     }
 
+    function ResolveFgHeroImagePixelSize(scale) {
+        var sizeScale = Number(scale);
+        if (!isFinite(sizeScale) || sizeScale <= 0) sizeScale = 1.0;
+        return Math.max(36, Math.min(144, Math.round(72 * sizeScale)));
+    }
+
     function ApplyFgPlayerHealthbarRuntimeStyleToPanel(panel, runtimeState, includeOffsets, includeScaleOpacity) {
         if (!panel || !panel.style || !runtimeState) return;
 
         var applyOffsets = (includeOffsets !== false);
         if (applyOffsets) {
-            if (runtimeState.finalOffsetX !== 0 || runtimeState.finalOffsetY !== 0) {
+            var fgOffsetX = runtimeState.finalOffsetX;
+            var fgOffsetY = runtimeState.finalOffsetY;
+            if (runtimeState.scaleActive) {
+                var fgSizeDelta = ResolveFgHeroImagePixelSize(runtimeState.finalScale) - 72;
+                fgOffsetX += -(fgSizeDelta * 2);
+                fgOffsetY += -fgSizeDelta;
+            }
+            if (fgOffsetX !== 0 || fgOffsetY !== 0) {
                 panel.style.transform =
-                    "translateX(" + String(runtimeState.finalOffsetX) + "px) " +
-                    "translateY(" + String(runtimeState.finalOffsetY) + "px)";
+                    "translateX(" + String(fgOffsetX) + "px) " +
+                    "translateY(" + String(fgOffsetY) + "px)";
             } else {
                 try { panel.style.transform = ""; } catch (e0) {}
             }
@@ -4879,7 +4926,7 @@ function GetUIRoot() {
 
         if (includeScaleOpacity === false) return;
 
-        panel.style.preTransformScale2d = runtimeState.scaleText;
+        panel.style.preTransformScale2d = "1.00, 1.00";
         panel.style.opacity = runtimeState.opacityText;
     }
 
@@ -6102,6 +6149,18 @@ function GetUIRoot() {
         State.fgHeroImageSwapCandidatePanel = null;
     }
 
+    function ApplyFgHeroImageFixedSize(panel, scale) {
+        if (!IsPanelValid(panel) || !panel.style) return;
+        var size = ResolveFgHeroImagePixelSize(scale);
+        var sizeText = String(size) + "px";
+        SetStyleSafe(panel, "width", sizeText);
+        SetStyleSafe(panel, "height", sizeText);
+        SetStyleSafe(panel, "maxWidth", sizeText);
+        SetStyleSafe(panel, "maxHeight", sizeText);
+        SetStyleSafe(panel, "overflow", "clip");
+        SetStyleSafe(panel, "uiScale", "100%");
+    }
+
     function FindLiveGoldLevelAmount(root) {
         if (!root || !root.FindChildTraverse) return null;
         var goldContainer = IsPanelValid(State.cachedPanels.goldAndApContainer) ? State.cachedPanels.goldAndApContainer : null;
@@ -6338,9 +6397,11 @@ function GetUIRoot() {
 
             if (IsPanelValid(heroImage)) {
                 SetStyleSafe(heroImage, "visibility", "visible");
+                ApplyFgHeroImageFixedSize(heroImage, runtimeState.finalScale);
                 ResetPlayerHealthbarScaleOpacityRuntime(heroImage);
             }
             if (IsPanelValid(fgAnchor)) {
+                ApplyFgHeroImageFixedSize(fgAnchor, runtimeState.finalScale);
                 ApplyFgPlayerHealthbarRuntimeStyleToPanel(fgAnchor, runtimeState, true, false);
             }
             var fgRuntimeTargetsChanged =
@@ -6348,9 +6409,11 @@ function GetUIRoot() {
                 State.fgHeroRuntimeHeroPanel !== heroImage;
             if (State.fgHeroImageRuntimeStyleSig !== fgRuntimeStyleSig || fgRuntimeTargetsChanged) {
                 if (IsPanelValid(levelAmount)) {
+                    ApplyFgHeroImageFixedSize(levelAmount, runtimeState.finalScale);
                     ApplyFgPlayerHealthbarRuntimeStyleToPanel(levelAmount, runtimeState, true, true);
                 }
                 if (IsPanelValid(heroImage)) {
+                    ApplyFgHeroImageFixedSize(heroImage, runtimeState.finalScale);
                     ApplyFgPlayerHealthbarRuntimeStyleToPanel(heroImage, runtimeState, false, false);
                 }
                 State.fgHeroImageRuntimeStyleSig = fgRuntimeStyleSig;
@@ -9078,15 +9141,24 @@ function GetUIRoot() {
         if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
     }
 
-    function UpdateMinimapTunnelOverlay(root, cfg) {
+    function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
+        var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1);
+        var opacityValue = cfg && cfg.MINIMAP_REM_TUNNELS_OPACITY;
+        if (mode === "ALT") {
+            enabled = !!(cfg && Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1);
+            opacityValue = cfg && cfg.ALT_ZOOM_REM_TUNNELS_OPACITY;
+        } else if (mode === "TAB") {
+            enabled = !!(cfg && Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1);
+            opacityValue = cfg && cfg.TAB_ZOOM_REM_TUNNELS_OPACITY;
+        }
         if (!enabled) {
             HideMinimapTunnelOverlay(root);
             return;
         }
         var overlay = EnsureMinimapTunnelOverlay(root);
         if (!overlay) return;
-        var opacity = Number(cfg.MINIMAP_REM_TUNNELS_OPACITY);
+        var opacity = Number(opacityValue);
         if (!isFinite(opacity)) opacity = 0.75;
         if (opacity < 0) opacity = 0;
         if (opacity > 1) opacity = 1;
@@ -10548,11 +10620,41 @@ function GetUIRoot() {
         return n;
     }
 
+    function NormalizeHudScaleNumber(value, fallback) {
+        var n = Number(value);
+        if (!isFinite(n)) n = Number(fallback);
+        if (!isFinite(n)) n = 1.0;
+        if (n < 0.5) n = 0.5;
+        if (n > 1.5) n = 1.5;
+        return n;
+    }
+
+    function NormalizeDamageImpactScaleNumber(value, fallback) {
+        var n = Number(value);
+        if (!isFinite(n)) n = Number(fallback);
+        if (!isFinite(n)) n = 1.0;
+        if (n < 0.5) n = 0.5;
+        if (n > 2.0) n = 2.0;
+        return n;
+    }
+
+    function HasNonDefaultDamageImpactRuntimeConfig(cfg) {
+        if (!cfg) return false;
+        return (
+            Number(cfg.ENABLE_DAMAGE_IMPACT) !== 1 ||
+            NormalizeDamageImpactScaleNumber(cfg.DAMAGE_IMPACT_SCALE, 1.0) !== 1.0 ||
+            NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0) !== 1.0 ||
+            NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) !== 0 ||
+            NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) !== 0
+        );
+    }
+
     function HasNonDefaultTopBarRuntimeConfig(cfg) {
         if (!cfg) return false;
         return (
             Number(cfg.HUD_TOP_BAR_ENABLED) !== 1 ||
             NormalizeOpacityNumber(cfg.TOP_BAR_OPACITY, 1.0) !== 1.0 ||
+            NormalizeHudScaleNumber(cfg.TOP_BAR_SCALE, 1.0) !== 1.0 ||
             NormalizeHudOffsetNumber(cfg.TOP_BAR_X_OFFSET, 0) !== 0 ||
             NormalizeHudOffsetNumber(cfg.TOP_BAR_Y_OFFSET, 0) !== 0
         );
@@ -10619,6 +10721,7 @@ function GetUIRoot() {
         return (
             Number(cfg.HUD_BOTTOM_BAR_ENABLED) !== 1 ||
             NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0) !== 1.0 ||
+            NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0) !== 1.0 ||
             NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) !== 0 ||
             NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0
         );
@@ -19188,6 +19291,31 @@ function GetUIRoot() {
         }
     }
 
+    function UpdateDamageImpactRuntime(root, cfg) {
+        var active = HasNonDefaultDamageImpactRuntimeConfig(cfg);
+        var enabled = Number(cfg && cfg.ENABLE_DAMAGE_IMPACT) === 1;
+        var panel = IsPanelValid(State.cachedPanels.damageImpactPanel) ? State.cachedPanels.damageImpactPanel : null;
+        if (!panel && root && root.FindChildTraverse) {
+            panel = root.FindChildTraverse("damage_impact");
+            State.cachedPanels.damageImpactPanel = panel || null;
+        }
+        if (!panel) return;
+
+        var offsetX = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
+        var offsetY = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) : 0;
+        var opacityText = active ? NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0).toFixed(2) : "1.00";
+        var scaleText = active ? NormalizeDamageImpactScaleNumber(cfg.DAMAGE_IMPACT_SCALE, 1.0).toFixed(2) : "1.00";
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0");
+        if (State.damageImpactRuntimeStyleSig === styleSig) return;
+
+        panel.style.x = String(offsetX) + "px";
+        panel.style.y = String(-offsetY) + "px";
+        panel.style.opacity = opacityText;
+        panel.style.preTransformScale2d = scaleText + ", " + scaleText;
+        panel.style.visibility = enabled ? "visible" : "collapse";
+        State.damageImpactRuntimeStyleSig = styleSig;
+    }
+
     function UpdateTopBarRuntime(root, cfg) {
         var active = HasNonDefaultTopBarRuntimeConfig(cfg);
         var enabled = Number(cfg && cfg.HUD_TOP_BAR_ENABLED) === 1;
@@ -19202,12 +19330,14 @@ function GetUIRoot() {
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_X_OFFSET, 0) : 0;
         var offsetY = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_Y_OFFSET, 0) : 0;
         var opacityText = active ? NormalizeOpacityNumber(cfg.TOP_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
+        var scaleText = active ? NormalizeHudScaleNumber(cfg.TOP_BAR_SCALE, 1.0).toFixed(2) : "1.00";
         var shouldShow = enabled && hudVisible;
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
         if (State.topBarRuntimeStyleSig === styleSig) return;
 
         topBar.style.x = String(offsetX) + "px";
         topBar.style.y = String(-offsetY) + "px";
+        topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
         topBar.style.visibility = shouldShow ? "visible" : "collapse";
         SetPanelOpacitySafe(topBar, opacityText, 1.0);
         State.topBarRuntimeStyleSig = styleSig;
@@ -19226,11 +19356,13 @@ function GetUIRoot() {
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) : 0;
         var offsetY = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) : 0;
         var opacityText = active ? NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0");
+        var scaleText = active ? NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0).toFixed(2) : "1.00";
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0");
         if (State.bottomBarRuntimeStyleSig === styleSig) return;
 
         hudSignature.style.x = String(offsetX) + "px";
         hudSignature.style.y = String(-offsetY) + "px";
+        hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
         hudSignature.style.visibility = enabled ? "visible" : "collapse";
         SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         State.bottomBarRuntimeStyleSig = styleSig;
@@ -19299,6 +19431,7 @@ function GetUIRoot() {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
         var shopOffsetYRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0);
         var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
+        var shopScaleText = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0).toFixed(2);
         var shopEnabled = Number(cfg && cfg.HUD_SHOP_ENABLED) === 1;
         var simplifyShopStats = Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1;
         var shopRecentPurchases = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
@@ -19311,7 +19444,8 @@ function GetUIRoot() {
             !shopEnabled ||
             shopOffsetXRaw !== 0 ||
             shopOffsetYRaw !== 0 ||
-            shopOpacityText !== "1.00";
+            shopOpacityText !== "1.00" ||
+            shopScaleText !== "1.00";
 
         var heroShop = IsPanelValid(State.cachedPanels.heroShop) ? State.cachedPanels.heroShop : null;
         if (heroShop && needsHeroShopFeatures) {
@@ -19343,7 +19477,7 @@ function GetUIRoot() {
                     var marginRightText = String(-shopOffsetXRaw) + "px";
                     var marginTopText = String(-shopOffsetYRaw) + "px";
                     var marginBottomText = String(shopOffsetYRaw) + "px";
-                    var styleSig = marginLeftText + "|" + marginRightText + "|" + marginTopText + "|" + marginBottomText + "|" + shopOpacityText + "|" + (shopEnabled ? "1" : "0");
+                    var styleSig = marginLeftText + "|" + marginRightText + "|" + marginTopText + "|" + marginBottomText + "|" + shopOpacityText + "|" + shopScaleText + "|" + (shopEnabled ? "1" : "0");
                     if (State.heroShopMainPanelStyleSig !== styleSig) {
                         heroShopMainPanel.style.marginLeft = marginLeftText;
                         heroShopMainPanel.style.marginRight = marginRightText;
@@ -19351,6 +19485,7 @@ function GetUIRoot() {
                         heroShopMainPanel.style.marginBottom = marginBottomText;
                         heroShopMainPanel.style.x = "0px";
                         heroShopMainPanel.style.y = "0px";
+                        heroShopMainPanel.style.preTransformScale2d = shopScaleText + ", " + shopScaleText;
                         heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
                         SetPanelOpacitySafe(heroShopMainPanel, shopOpacityText, 1.0);
                         State.heroShopMainPanelStyleSig = styleSig;
@@ -19373,7 +19508,7 @@ function GetUIRoot() {
                 State.cachedPanels.heroShopMainPanel = resetMainPanel || null;
             }
             if (resetMainPanel) {
-                var resetSig = "0px|0px|0px|0px|1.00|1";
+                var resetSig = "0px|0px|0px|0px|1.00|1.00|1";
                 if (State.heroShopMainPanelStyleSig !== resetSig) {
                     resetMainPanel.style.marginLeft = "0px";
                     resetMainPanel.style.marginRight = "0px";
@@ -19381,6 +19516,7 @@ function GetUIRoot() {
                     resetMainPanel.style.marginBottom = "0px";
                     resetMainPanel.style.x = "0px";
                     resetMainPanel.style.y = "0px";
+                    resetMainPanel.style.preTransformScale2d = "1.00, 1.00";
                     resetMainPanel.style.visibility = "visible";
                     SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
                 }
@@ -19518,8 +19654,16 @@ function GetUIRoot() {
         if (raw !== State.lastRawConfig || sig !== State.minimapRuntimeSig || State.accountPresetTestActive || State.lastZoomState === null) return true;
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
+        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) !== MINIMAP_CAST_RANGE_BASE_SIZE || State.minimapCastRangeScaleApplied) return true;
         if (Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
-        if (Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 && !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)) return true;
+        if (
+            (
+                Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ||
+                Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ||
+                Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1
+            ) &&
+            !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)
+        ) return true;
         if (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1) return true;
         return false;
     }
@@ -19548,8 +19692,47 @@ function GetUIRoot() {
             Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 ? "1" : "0",
             Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ? "1" : "0",
             String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
+            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
+            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
             ResolveMinimapCrateOverlayMapKey()
         ].join("|");
+    }
+
+    function UpdateMinimapCastRangeScale(root, targetSize) {
+        var size = Number(targetSize);
+        if (!isFinite(size) || size <= 0) size = MINIMAP_CAST_RANGE_BASE_SIZE;
+        var scale = MINIMAP_CAST_RANGE_BASE_SIZE / size;
+        if (!isFinite(scale) || scale <= 0) scale = 1.0;
+        if (scale < 0.20) scale = 0.20;
+        if (scale > 2.00) scale = 2.00;
+        var scaleText = scale.toFixed(3) + ", " + scale.toFixed(3);
+        var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
+        if (!hudMinimapPanel && root && root.FindChildTraverse) {
+            hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+            State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
+        }
+        var rangePanels = [];
+        if (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse) {
+            var mapButtons = hudMinimapPanel.FindChildrenWithClassTraverse("map_button") || [];
+            for (var i = 0; i < mapButtons.length; i++) {
+                var castRange = mapButtons[i] && mapButtons[i].FindChildTraverse ? mapButtons[i].FindChildTraverse("CastRange") : null;
+                if (castRange) rangePanels.push(castRange);
+            }
+        }
+        if (rangePanels.length <= 0 && root && root.FindChildTraverse) {
+            var fallbackCastRange = root.FindChildTraverse("CastRange");
+            if (fallbackCastRange) rangePanels.push(fallbackCastRange);
+        }
+        for (var j = 0; j < rangePanels.length; j++) {
+            var panel = rangePanels[j];
+            if (!panel || !panel.style) continue;
+            if (panel.style.preTransformScale2d !== scaleText) {
+                panel.style.preTransformScale2d = scaleText;
+            }
+        }
+        State.minimapCastRangeScaleApplied = rangePanels.length > 0 && Math.abs(scale - 1.0) > 0.001;
     }
 
     function UpdateMinimapRuntime(root, cfg, raw) {
@@ -19560,27 +19743,31 @@ function GetUIRoot() {
         var isTab = IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(master, "gScoreboardOpen");
         var zoomAlt = (isAlt && cfg.ENABLE_ALT_ZOOM === 1);
         var zoomTab = (isTab && cfg.ENABLE_TAB_ZOOM === 1);
+        var activeZoomModeForTunnels = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
         UpdateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
         var currentZoomKey = (isAlt ? "A" : "") + (isTab ? "T" : "");
         var runtimeSig = BuildMinimapRuntimeSignature(cfg);
-        if (raw !== State.lastRawConfig || runtimeSig !== State.minimapRuntimeSig || currentZoomKey !== State.lastZoomState || State.accountPresetTestActive) {
-            var shouldZoom = zoomAlt || zoomTab;
-            var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
+        var shouldZoom = zoomAlt || zoomTab;
+        var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
 
-            function getZoomValue(newKey, legacyKey, fallbackVal) {
-                var val = cfg[newKey];
-                if (val === undefined || val === null || !isFinite(Number(val))) {
-                    val = cfg[legacyKey];
-                }
-                if (val === undefined || val === null || !isFinite(Number(val))) {
-                    val = fallbackVal;
-                }
-                return Number(val);
+        function getZoomValue(newKey, legacyKey, fallbackVal) {
+            var val = cfg[newKey];
+            if (val === undefined || val === null || !isFinite(Number(val))) {
+                val = cfg[legacyKey];
             }
+            if (val === undefined || val === null || !isFinite(Number(val))) {
+                val = fallbackVal;
+            }
+            return Number(val);
+        }
 
-            var zoomTargetSize = (activeZoomMode === "TAB")
-                ? getZoomValue("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE)
-                : getZoomValue("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
+        var zoomTargetSize = (activeZoomMode === "TAB")
+            ? getZoomValue("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE)
+            : getZoomValue("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
+        var activeTargetSize = shouldZoom ? zoomTargetSize : cfg.MINIMAP_SMALL_SIZE;
+        UpdateMinimapCastRangeScale(root, activeTargetSize);
+
+        if (raw !== State.lastRawConfig || runtimeSig !== State.minimapRuntimeSig || currentZoomKey !== State.lastZoomState || State.accountPresetTestActive) {
             var zoomOffsetX = (activeZoomMode === "TAB")
                 ? getZoomValue("ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET", 0)
                 : getZoomValue("ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET", 0);
@@ -19589,7 +19776,7 @@ function GetUIRoot() {
                 : getZoomValue("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET", 0);
 
             minimapPanels.forEach(function(p) {
-                var targetSize = shouldZoom ? zoomTargetSize : cfg.MINIMAP_SMALL_SIZE;
+                var targetSize = activeTargetSize;
                 p.style.width = targetSize + "px";
                 p.style.height = targetSize + "px";
                 if (p.id === "minimap_persp") {
@@ -19614,7 +19801,9 @@ function GetUIRoot() {
                 if (!isFinite(op)) op = 1.0;
                 if (op < 0) op = 0;
                 if (op > 1) op = 1;
-                SetPanelOpacitySafe(p, op, 1.0);
+                if (p.id !== "hud_minimap") {
+                    SetPanelOpacitySafe(p, op, 1.0);
+                }
             });
 
             var mapRenderPanel = IsPanelValid(State.cachedPanels.minimapMapRender) ? State.cachedPanels.minimapMapRender : null;
@@ -19660,7 +19849,7 @@ function GetUIRoot() {
             State.lastZoomState = currentZoomKey;
             State.minimapRuntimeSig = runtimeSig;
         }
-        UpdateMinimapTunnelOverlay(root, cfg);
+        UpdateMinimapTunnelOverlay(root, cfg, activeZoomModeForTunnels);
         UpdateMinimapCrateOverlay(root, cfg);
     }
 
@@ -22844,6 +23033,30 @@ function GetUIRoot() {
         );
     }
 
+    function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
+        if (!root || !root.FindChildTraverse) return;
+        var panels = [];
+        function pushPanel(panel) {
+            if (!IsPanelValid(panel)) return;
+            for (var i = 0; i < panels.length; i++) {
+                if (panels[i] === panel) return;
+            }
+            panels.push(panel);
+        }
+
+        pushPanel(State.cachedPanels.healthContainer);
+        pushPanel(State.cachedPanels.gameplayHud);
+        pushPanel(root.FindChildTraverse("health_and_abilities_container"));
+        pushPanel(root.FindChildTraverse("HealthBarContent"));
+        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
+        pushPanel(root.FindChildTraverse("hud_health_bars"));
+
+        for (var p = 0; p < panels.length; p++) {
+            SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
+            SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
+        }
+    }
+
     function EnsureCombatStatusOverlay(root) {
         var overlay = IsPanelValid(State.cachedPanels.combatStatusOverlay) ? State.cachedPanels.combatStatusOverlay : null;
         if (overlay) return overlay;
@@ -25941,7 +26154,7 @@ function GetUIRoot() {
         }
         var panels = [];
         if (root && root.FindChildTraverse) {
-            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer"];
+            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", "hud_minimap"];
             for (var i = 0; i < ids.length; i++) {
                 var panel = root.FindChildTraverse(ids[i]);
                 if (panel) panels.push(panel);
@@ -26440,7 +26653,10 @@ function GetUIRoot() {
             }
             combatIndicatorActive = combatIndicatorSignal || combatIndicatorRecoveryActive;
         }
+        var combatIndicatorEnabled = Number(cfg.ENABLE_COMBAT_INDICATOR) === 1;
+        SetPanelClassCached(root, State.rootClassCache, "combat_indicator_enabled", combatIndicatorEnabled);
         SetPanelClassCached(root, State.rootClassCache, "combat_indicator_active", combatIndicatorActive);
+        SyncCombatIndicatorHealthbarClasses(root, combatIndicatorActive, combatIndicatorEnabled);
         LogCombatIndicatorDebugState(root, cfg, nowMsLoop, combatIndicatorSignal, combatIndicatorRecoveryActive, combatIndicatorActive);
 
         var quickbuyPanel = IsPanelValid(State.cachedPanels.quickbuy) ? State.cachedPanels.quickbuy : null;
@@ -26757,6 +26973,12 @@ function GetUIRoot() {
         return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
     }
 
+    function NeedsDamageImpactRuntimeWork(cfg) {
+        return HasNonDefaultDamageImpactRuntimeConfig(cfg) ||
+            !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
+            IsPanelValid(State.cachedPanels.damageImpactPanel);
+    }
+
     function NeedsHeroShopRuntimeWork(cfg) {
         if (!cfg) return false;
         var shopOffsetX = Number(cfg.SHOP_OFFSET_X);
@@ -26764,6 +26986,7 @@ function GetUIRoot() {
         if (!isFinite(shopOffsetX)) shopOffsetX = 0;
         if (!isFinite(shopOffsetY)) shopOffsetY = 0;
         var shopOpacity = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0);
+        var shopScale = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0);
         return (
             Number(cfg.HUD_SHOP_ENABLED) !== 1 ||
             (Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1) ||
@@ -26773,6 +26996,7 @@ function GetUIRoot() {
             Math.round(shopOffsetX) !== 0 ||
             Math.round(shopOffsetY) !== 0 ||
             shopOpacity !== 1.0 ||
+            shopScale !== 1.0 ||
             !!(State.heroShopMainPanelStyleSig && String(State.heroShopMainPanelStyleSig).length > 0) ||
             IsPanelValid(State.cachedPanels.heroShop)
         );
@@ -26910,6 +27134,9 @@ function GetUIRoot() {
         var itemsOpacity = NormalizeOpacityNumber(cfg && cfg.ITEMS_OPACITY, 1.0);
         var soulsOpacity = NormalizeOpacityNumber(cfg && cfg.SOULS_OPACITY, 1.0);
         var shopOpacity = NormalizeOpacityNumber(cfg && cfg.SHOP_OPACITY, 1.0);
+        var topBarScale = NormalizeHudScaleNumber(cfg && cfg.TOP_BAR_SCALE, 1.0);
+        var bottomBarScale = NormalizeHudScaleNumber(cfg && cfg.BOTTOM_BAR_SCALE, 1.0);
+        var shopScale = NormalizeHudScaleNumber(cfg && cfg.SHOP_SCALE, 1.0);
 
         return {
             redDiamondEnabled: Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1,
@@ -26942,17 +27169,20 @@ function GetUIRoot() {
                 Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 ||
                 Math.round(shopOffsetX) !== 0 ||
                 Math.round(shopOffsetY) !== 0 ||
-                shopOpacity !== 1.0
+                shopOpacity !== 1.0 ||
+                shopScale !== 1.0
             ),
             topBarRuntimeActive: (
                 Number(cfg && cfg.HUD_TOP_BAR_ENABLED) !== 1 ||
                 topBarOpacity !== 1.0 ||
+                topBarScale !== 1.0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.TOP_BAR_X_OFFSET, 0) !== 0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.TOP_BAR_Y_OFFSET, 0) !== 0
             ),
             bottomBarRuntimeActive: (
                 Number(cfg && cfg.HUD_BOTTOM_BAR_ENABLED) !== 1 ||
                 bottomBarOpacity !== 1.0 ||
+                bottomBarScale !== 1.0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.BOTTOM_BAR_X_OFFSET, 0) !== 0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0
             ),
@@ -26972,6 +27202,7 @@ function GetUIRoot() {
                 Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1 ||
                 IsUnitTargetStyleCustomized(cfg)
             ),
+            damageImpactRuntimeActive: HasNonDefaultDamageImpactRuntimeConfig(cfg),
             damageNumbersActive: ResolveDamageNumbersRuntimeSig(cfg) !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG,
             minimapRuntimeActive: (
                 Number(cfg && cfg.ENABLE_ALT_ZOOM) === 1 ||
@@ -27088,13 +27319,20 @@ function GetUIRoot() {
             cfg.MINIMAP_ROTATE_WITH_PLAYER,
             cfg.MINIMAP_FLIP,
             cfg.ENABLE_RELOAD_COOLDOWN,
+            cfg.ENABLE_DAMAGE_IMPACT,
+            cfg.DAMAGE_IMPACT_SCALE,
+            cfg.DAMAGE_IMPACT_OPACITY,
+            cfg.DAMAGE_IMPACT_X_OFFSET,
+            cfg.DAMAGE_IMPACT_Y_OFFSET,
             cfg.ENABLE_ULT_COOLDOWNS,
             cfg.HUD_TOP_BAR_ENABLED,
             cfg.TOP_BAR_OPACITY,
+            cfg.TOP_BAR_SCALE,
             cfg.TOP_BAR_X_OFFSET,
             cfg.TOP_BAR_Y_OFFSET,
             cfg.HUD_BOTTOM_BAR_ENABLED,
             cfg.BOTTOM_BAR_OPACITY,
+            cfg.BOTTOM_BAR_SCALE,
             cfg.BOTTOM_BAR_X_OFFSET,
             cfg.BOTTOM_BAR_Y_OFFSET,
             cfg.HUD_ITEMS_ENABLED,
@@ -27108,7 +27346,8 @@ function GetUIRoot() {
             cfg.HUD_SHOP_ENABLED,
             cfg.SHOP_OFFSET_X,
             cfg.SHOP_OFFSET_Y,
-            cfg.SHOP_OPACITY
+            cfg.SHOP_OPACITY,
+            cfg.SHOP_SCALE
         ].join("|");
     }
 
@@ -27157,6 +27396,7 @@ function GetUIRoot() {
                 itemsRuntimeActive: featureState.itemsRuntimeActive,
                 soulsRuntimeActive: featureState.soulsRuntimeActive,
                 targetShapesActive: featureState.targetShapesActive,
+                damageImpactRuntimeActive: featureState.damageImpactRuntimeActive,
                 damageNumbersActive: featureState.damageNumbersActive,
                 minimapRuntimeActive: featureState.minimapRuntimeActive
             };
@@ -27203,6 +27443,7 @@ function GetUIRoot() {
             State.nextTargetShapeRefreshMs ||
             (State.targetShapesCache && State.targetShapesCache.length > 0)
         );
+        gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg);
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;
@@ -27753,6 +27994,12 @@ function GetUIRoot() {
             nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
             ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
             PerfEnd("loop.target_shapes", perfSection);
+        }
+
+        if (gates.damageImpactRuntime) {
+            perfSection = PerfStart();
+            UpdateDamageImpactRuntime(root, cfg);
+            PerfEnd("loop.damage_impact_runtime", perfSection);
         }
 
         if (gates.damageNumbers) {

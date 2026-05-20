@@ -911,7 +911,6 @@
 					</Panel>
 					<Panel class="nav_menu_item_container">
 						<ToggleButton class="nav_menu_item CitadelSettingsCheckbox half_width" id="HTPP_modifier_citadel_stunned" text="Stun" onactivate="ToggleModdifier(`modifier_citadel_stunned`);" />
-						<ToggleButton class="nav_menu_item CitadelSettingsCheckbox half_width" id="HTPP_upgrade_rupture/modifier_rupture" text="Decay" onactivate="ToggleModdifier(`upgrade_rupture/modifier_rupture`);" />
 					</Panel>
 					<Panel class="nav_menu_item_container">
 						<ToggleButton class="nav_menu_item CitadelSettingsCheckbox half_width" id="HTPP_modifier_citadel_knockdown" text="Knockdown" onactivate="ToggleModdifier(`modifier_citadel_knockdown`);" />

@@ -1,6 +1,7 @@
 "use strict";
 
 (function() {
+    var LEGACY_COOLDOWNS_DEBUG = false;
     var lastDebugSignature = null;
     var lastEnabledState = null;
     var cachedSteadyPollSec = 0;
@@ -19,6 +20,7 @@
     }
 
     function DebugLegacyCooldowns(panel, enabled) {
+        if (!LEGACY_COOLDOWNS_DEBUG) return;
         try {
             var panelId = panel && panel.id ? panel.id : "<no-id>";
             var panelType = panel && panel.paneltype ? panel.paneltype : "<no-type>";
