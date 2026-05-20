@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -510,6 +510,20 @@ function main() {
     const minimapElevationMarkerKeys = [
         "ENABLE_MINIMAP_ELEVATION_MARKERS"
     ];
+    const palettePickerKeys = [
+        "ITEMS_WASH_COLOR",
+        "PLAYER_HEALTHBAR_ACCENT_COLOR",
+        "BOTTOM_BAR_WASH_COLOR",
+        "KEYBOARD_OVERLAY_WASH_COLOR",
+        "STAMINA_CHARGE_COLOR",
+        "AMMO_TEXT_COLOR"
+    ];
+    const staminaChargeKeys = [
+        "STAMINA_CHARGE_ANGLE"
+    ];
+    const cleanDamageIndicatorKeys = [
+        "ENABLE_CLEAN_DAMAGE_INDICATORS"
+    ];
     const hudBarAndShopScaleKeys = [
         "TOP_BAR_SCALE",
         "BOTTOM_BAR_SCALE",
@@ -527,6 +541,9 @@ function main() {
         "DAMAGE_IMPACT_OPACITY",
         "DAMAGE_IMPACT_X_OFFSET",
         "DAMAGE_IMPACT_Y_OFFSET"
+    ];
+    const settingsThemeKeys = [
+        "SETTINGS_THEME"
     ];
     const combatIndicatorKeys = [
         "ENABLE_COMBAT_INDICATOR"
@@ -642,7 +659,7 @@ function main() {
         const settingsSchemaKeys = new Set((settingsRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
         const coreSchemaKeys = new Set((coreRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
         if (semver === "2.3.5" || semver === "2.3.6" || semver === "2.3.7") {
-            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
             }
@@ -676,6 +693,14 @@ function main() {
                 if (settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core 2.4.0 should omit ${key}`);
             }
+            for (const key of settingsThemeKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.4.0 should omit ${key}`);
+            }
+            for (const key of cleanDamageIndicatorKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.4.0 should omit ${key}`);
+            }
         }
         if (semver === "2.5.0") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
@@ -698,6 +723,14 @@ function main() {
                 if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.0 should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core 2.5.0 should omit ${key}`);
             }
+            for (const key of settingsThemeKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.0 should omit ${key}`);
+            }
+            for (const key of cleanDamageIndicatorKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.0 should omit ${key}`);
+            }
         }
         if (semver === "2.5.1") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
@@ -716,11 +749,47 @@ function main() {
                 if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.1 should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core 2.5.1 should omit ${key}`);
             }
+            for (const key of settingsThemeKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.1 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.1 should omit ${key}`);
+            }
+            for (const key of cleanDamageIndicatorKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.1 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.1 should omit ${key}`);
+            }
         }
         if (semver === "2.5.2") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.2 missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core 2.5.2 missing ${key}`);
+            }
+            for (const key of settingsThemeKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.2 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.2 should omit ${key}`);
+            }
+            for (const key of cleanDamageIndicatorKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.2 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.2 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.3") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.3 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.3 missing ${key}`);
+            }
+            for (const key of palettePickerKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.3 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.3 should omit ${key}`);
+            }
+            for (const key of cleanDamageIndicatorKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.3 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.3 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.4") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.4 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.4 missing ${key}`);
             }
         }
 

@@ -72,6 +72,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_PASSIVE_COOLDOWN: "Hanturaya",
     OPEN_OLD_ITEM_FILTERS_DOWNLOAD: "Hanturaya",
     ENABLE_CUMULATIVE_DMG: "wouwei",
+    ENABLE_CLEAN_DAMAGE_INDICATORS: "Lustie",
     ENABLE_HIDE_TROOPER_DAMAGE: "ninjabladejr",
     ENABLE_DAMAGE_FOUNTAIN: "ArkanoidVFX",
     ENABLE_AMMO_STATUS: "mikoboy",
@@ -148,8 +149,9 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_TOPBAR_ALLY_HP_WARNING": "Colored ally top-bar health warnings when at significant thresholds.",
     "ENABLE_COMPASS_SPEED": "Speed number tracker.",
     "ENABLE_CUMULATIVE_DMG": "The large cumulative damage number.",
+    "ENABLE_CLEAN_DAMAGE_INDICATORS": "Modify damage numbers for a cleaner style and animation to be more out of the way",
     "ENABLE_DAMAGE_FOUNTAIN": "Ragnarok Online damage visuals with improved fancy styling.",
-    "ENABLE_DAMAGE_IMPACT": "These are the indicators that popup when you get a kill or CC an opponent, etc",
+    "ENABLE_DAMAGE_IMPACT": "The popups that appear when getting a kill or CCing an enemy or healing an ally",
     "ENABLE_FORCE_TESTING_TOOLS": "Forcibly shows testing tools at all times.",
     "ENABLE_FULL_KEYBOARD_LAYOUT": "Shows all of your keybinds.",
     "ENABLE_HERO_SCENE_PANEL": "Shows your character in the shop menu.",
@@ -204,6 +206,12 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "PLAYER_HEALTHBAR_OPACITY": "Adjust opacity of the player healthbar.",
     "PLAYER_HEALTHBAR_X_OFFSET": "Adjust horizontal position of the player healthbar.",
     "PLAYER_HEALTHBAR_Y_OFFSET": "Adjust vertical position of the player healthbar.",
+    "PLAYER_HEALTHBAR_ACCENT_COLOR": "Choose a preset accent color for the player healthbar frame.",
+    "BOTTOM_BAR_WASH_COLOR": "Choose a preset color wash for the bottom ability bar.",
+    "KEYBOARD_OVERLAY_WASH_COLOR": "Choose a preset color wash for the keyboard overlay.",
+    "STAMINA_CHARGE_COLOR": "Choose a preset border color for stamina charge indicators.",
+    "STAMINA_CHARGE_ANGLE": "Rotate the stamina charge indicator.",
+    "AMMO_TEXT_COLOR": "Choose a preset text color for the ammo display.",
     "CHAT_SCALE": "Adjust size of the in-game chat.",
     "CHAT_X_OFFSET": "Adjust horizontal position of the in-game chat.",
     "CHAT_Y_OFFSET": "Adjust vertical position of the in-game chat.",
@@ -216,6 +224,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "MINIMAP_ROTATE_WITH_PLAYER": "Makes the minimap rotate with player view, this is just for fun.",
     "OPEN_OLD_ITEM_FILTERS_DOWNLOAD": "Only download the filter file of the filter you want, nothing else.",
     "PREVIEWS_ENABLED": "Realtime Changes",
+    "SETTINGS_THEME": "Changes the visual theme used by the settings menu, modals, loader, and save menus.",
     "RUNTIME_MINIMAP_CLICK_RADIUS": "The click hitbox of your pings or clicks, this can help make pings more accurate.",
     "RUNTIME_MINIMAP_HERO_ICON_SIZE": "The size of other players on the minimap.",
     "RUNTIME_MINIMAP_ICON_SHRINK": "How much icons will shrink when overlapping with others.",
@@ -243,6 +252,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Config / Meta Settings|Preview": "Preview realtime changes to settings when modifying them.",
     "Config / Meta Settings|Language": "The displayed language of the settings menu.",
     "Config / Meta Settings|Default Hero": "The hero you automatically switch to on launch or after saving..",
+    "Config / Meta Settings|Theme": "Retheme the settings menu, modals, loader, and save menus with a shared aesthetic.",
     "Console / General|Hitmarkers": "Toggle the hitmarkers when attacking enemies.",
     "Console / Minimap|Click Radius": "The click hitbox of your pings or clicks, this can help make pings more accurate.",
     "Console / Minimap|Hero Icon Size": "The size of other players on the minimap.",
@@ -430,6 +440,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_COMPASS: "medium",
     ENABLE_COMPASS_SPEED: "medium",
     ENABLE_CUMULATIVE_DMG: "low",
+    ENABLE_CLEAN_DAMAGE_INDICATORS: "low",
     ENABLE_DAMAGE_FOUNTAIN: "low",
     ENABLE_TOPBAR_ENEMY_HP_WARNING: "medium",
     ENABLE_TOPBAR_ENEMY_HP_WARNING_25: "medium",
@@ -515,6 +526,12 @@ const SETTING_PERF_IMPACT_TIERS = {
     PLAYER_HEALTHBAR_OPACITY: "low",
     PLAYER_HEALTHBAR_X_OFFSET: "low",
     PLAYER_HEALTHBAR_Y_OFFSET: "low",
+    PLAYER_HEALTHBAR_ACCENT_COLOR: "low",
+    BOTTOM_BAR_WASH_COLOR: "low",
+    KEYBOARD_OVERLAY_WASH_COLOR: "low",
+    STAMINA_CHARGE_COLOR: "low",
+    STAMINA_CHARGE_ANGLE: "low",
+    AMMO_TEXT_COLOR: "low",
     CHAT_SCALE: "low",
     CHAT_X_OFFSET: "low",
     CHAT_Y_OFFSET: "low",
@@ -530,6 +547,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     KEYBOARD_OVERLAY_X_OFFSET: "medium",
     KEYBOARD_OVERLAY_Y_OFFSET: "medium",
     LANGUAGE: "none",
+    SETTINGS_THEME: "none",
     MINIMAL_MINIMAP: "low",
     MINIMAL_MINIMAP_OPACITY: "low",
     MINIMAP_BASE_OPACITY: "low",
@@ -556,6 +574,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ITEMS_OPACITY: "low",
     ITEMS_X_OFFSET: "low",
     ITEMS_Y_OFFSET: "low",
+    ITEMS_WASH_COLOR: "low",
     PREVIEWS_ENABLED: "none",
     RELOAD_COOLDOWN_OPACITY: "medium",
     RELOAD_COOLDOWN_SIZE: "medium",
@@ -776,6 +795,12 @@ const PRESETS = (typeof QOL_PRESETS === "object" && QOL_PRESETS)
     : {};
 
 const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
+const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
+const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
+const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
+const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
+const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
 const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
 const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
 const BUILD_SAVE_UI_TEMP_DISABLED = false;
@@ -797,7 +822,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.5.2";
+    : "2.5.4";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -826,6 +851,35 @@ var gMinimapSizePreviewLabel = null;
 var gMinimapSizePreviewHideToken = 0;
 var gMinimapPreviewBaseRight = 30;
 var gMinimapPreviewBaseBottom = 30;
+
+const QOL_COLOR_PALETTE_OPTIONS = [
+    { label: "Default", value: 0, hex: "" },
+    { label: "White", value: 1, hex: "#f7f4e8" },
+    { label: "Silver", value: 2, hex: "#bfc7cf" },
+    { label: "Charcoal", value: 3, hex: "#33363f" },
+    { label: "Red", value: 4, hex: "#ff3b47" },
+    { label: "Coral", value: 5, hex: "#ff6f61" },
+    { label: "Orange", value: 6, hex: "#ff8a2a" },
+    { label: "Amber", value: 7, hex: "#ffb52e" },
+    { label: "Yellow", value: 8, hex: "#ffe45c" },
+    { label: "Lime", value: 9, hex: "#a8f04f" },
+    { label: "Poison", value: 24, hex: "#8cff4f" },
+    { label: "Green", value: 10, hex: "#45d66b" },
+    { label: "Mint", value: 11, hex: "#63f0b5" },
+    { label: "Teal", value: 12, hex: "#24c6a8" },
+    { label: "Cyan", value: 13, hex: "#44e3ff" },
+    { label: "Sky", value: 14, hex: "#64bfff" },
+    { label: "Blue", value: 15, hex: "#3f78ff" },
+    { label: "Indigo", value: 16, hex: "#6157ff" },
+    { label: "Void", value: 25, hex: "#7c4dff" },
+    { label: "Violet", value: 17, hex: "#9b5cff" },
+    { label: "Purple", value: 18, hex: "#c15cff" },
+    { label: "Magenta", value: 19, hex: "#ff4de3" },
+    { label: "Pink", value: 20, hex: "#ff78bd" },
+    { label: "Rose", value: 21, hex: "#ff5d89" },
+    { label: "Brown", value: 22, hex: "#9a6743" },
+    { label: "Gold", value: 23, hex: "#d9a441" }
+];
 var gZoomMinimapPreviewPanel = null;
 var gZoomMinimapPreviewCircle = null;
 var gZoomMinimapPreviewLabel = null;
@@ -942,6 +996,38 @@ const SETTINGS_LANGUAGE_FRENCH = 3;
 const SETTINGS_LANGUAGE_PORTUGUESE = 4;
 const SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE = 5;
 const SETTINGS_LANGUAGE_SPANISH = 6;
+const SETTINGS_THEME_DEFAULT = 0;
+const SETTINGS_THEME_CREAM = 1;
+const SETTINGS_THEME_KITTEN = 2;
+const SETTINGS_THEME_EMO = 3;
+const SETTINGS_THEME_OCEAN = 4;
+const SETTINGS_THEME_PSYCHO = 5;
+const SETTINGS_THEME_CLASS_NAMES = [
+    "SettingsThemeDefault",
+    "SettingsThemeCream",
+    "SettingsThemeKitten",
+    "SettingsThemeEmo",
+    "SettingsThemeOcean",
+    "SettingsThemePsycho"
+];
+const SETTINGS_THEME_ROOT_CLASS_NAMES = [
+    "QOLThemeDefault",
+    "QOLThemeCream",
+    "QOLThemeKitten",
+    "QOLThemeEmo",
+    "QOLThemeOcean",
+    "QOLThemePsycho"
+];
+const SETTINGS_THEME_OPTIONS = [
+    { label: "Default", value: SETTINGS_THEME_DEFAULT },
+    { label: "Cream", value: SETTINGS_THEME_CREAM },
+    { label: "Kitten", value: SETTINGS_THEME_KITTEN },
+    { label: "Emo", value: SETTINGS_THEME_EMO },
+    { label: "Ocean", value: SETTINGS_THEME_OCEAN },
+    { label: "Psycho", value: SETTINGS_THEME_PSYCHO }
+];
+const SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC = "s2r://panorama/images/qollock/mog_site_logo2.vtex";
+const SETTINGS_HEADER_MOG_LOGO_THEME_SRC = "s2r://panorama/images/qollock/mog_site_logo2_white.vtex";
 const SETTINGS_RU_TEXT = {
     "Config": "\u041a\u043e\u043d\u0444\u0438\u0433",
     "Presets": "\u041f\u0440\u0435\u0441\u0435\u0442\u044b",
@@ -4039,6 +4125,59 @@ function GetSettingsLanguageKey() {
     return "en";
 }
 
+function GetSettingsTheme() {
+    var raw = Math.round(Number(MOD_CONFIG && MOD_CONFIG.SETTINGS_THEME));
+    if (raw === SETTINGS_THEME_CREAM) return SETTINGS_THEME_CREAM;
+    if (raw === SETTINGS_THEME_KITTEN) return SETTINGS_THEME_KITTEN;
+    if (raw === SETTINGS_THEME_EMO) return SETTINGS_THEME_EMO;
+    if (raw === SETTINGS_THEME_OCEAN) return SETTINGS_THEME_OCEAN;
+    if (raw === SETTINGS_THEME_PSYCHO) return SETTINGS_THEME_PSYCHO;
+    return SETTINGS_THEME_DEFAULT;
+}
+
+function GetSettingsThemeKey() {
+    var theme = GetSettingsTheme();
+    if (theme === SETTINGS_THEME_CREAM) return "cream";
+    if (theme === SETTINGS_THEME_KITTEN) return "kitten";
+    if (theme === SETTINGS_THEME_EMO) return "emo";
+    if (theme === SETTINGS_THEME_OCEAN) return "ocean";
+    if (theme === SETTINGS_THEME_PSYCHO) return "psycho";
+    return "default";
+}
+
+function ApplySettingsHeaderLogoTheme(theme) {
+    var root = FindRootPanel();
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    var logo = null;
+    if (context && context.FindChildTraverse) logo = context.FindChildTraverse("SettingsHeaderMogLogo");
+    if (!logo && root && root.FindChildTraverse) logo = root.FindChildTraverse("SettingsHeaderMogLogo");
+    if (!logo || !logo.SetImage) return;
+    var src = theme === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC;
+    try { logo.SetImage(src); } catch (eLogoTheme) {}
+}
+
+function ApplySettingsThemeClasses(settingsWindow) {
+    var root = FindRootPanel();
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    var theme = GetSettingsTheme();
+    var panels = [];
+    if (!settingsWindow && context && context.FindChildTraverse) {
+        settingsWindow = context.FindChildTraverse("SettingsWindow");
+    }
+    if (settingsWindow) panels.push(settingsWindow);
+    if (context && context !== settingsWindow) panels.push(context);
+    if (root && root !== settingsWindow) panels.push(root);
+    for (var p = 0; p < panels.length; p++) {
+        var panel = panels[p];
+        if (!panel || !panel.SetHasClass) continue;
+        for (var i = 0; i < SETTINGS_THEME_CLASS_NAMES.length; i++) {
+            panel.SetHasClass(SETTINGS_THEME_CLASS_NAMES[i], i === theme);
+            panel.SetHasClass(SETTINGS_THEME_ROOT_CLASS_NAMES[i], i === theme);
+        }
+    }
+    ApplySettingsHeaderLogoTheme(theme);
+}
+
 function NormalizeLatinSettingsText(text) {
     var raw = String(text || "");
     return raw
@@ -6836,8 +6975,25 @@ const DAMAGE_IMPACT_SCHEMA_FIELDS = [
     { key: "DAMAGE_IMPACT_X_OFFSET", min: -1000, max: 1000, step: 5 },
     { key: "DAMAGE_IMPACT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
 ];
+const SETTINGS_THEME_SCHEMA_FIELDS = [
+    { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
+];
+const PALETTE_PICKER_SCHEMA_FIELDS = [
+    { key: "ITEMS_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 25, step: 1 },
+    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 25, step: 1 },
+    { key: "AMMO_TEXT_COLOR", min: 0, max: 25, step: 1 }
+];
 const COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
+];
+const STAMINA_CHARGE_SCHEMA_FIELDS = [
+    { key: "STAMINA_CHARGE_ANGLE", min: 0, max: 360, step: 1 }
+];
+const CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS = [
+    { key: "ENABLE_CLEAN_DAMAGE_INDICATORS", min: 0, max: 1, step: 1 }
 ];
 const SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
     { key: "ENABLE_SIMPLIFY_SHOP_STATS", min: 0, max: 1, step: 1 }
@@ -6898,6 +7054,20 @@ const COMPACT_SCHEMA_2_5_2 = AppendUniqueSchemaFields(
             ZOOM_REM_TUNNELS_SCHEMA_FIELDS
         ),
         DAMAGE_IMPACT_SCHEMA_FIELDS
+    )
+);
+const COMPACT_SCHEMA_2_5_3 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_5_2,
+    SETTINGS_THEME_SCHEMA_FIELDS
+);
+const COMPACT_SCHEMA_2_5_4 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_5_3,
+    AppendUniqueSchemaFields(
+        AppendUniqueSchemaFields(
+            PALETTE_PICKER_SCHEMA_FIELDS,
+            STAMINA_CHARGE_SCHEMA_FIELDS
+        ),
+        CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
     )
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
@@ -7013,6 +7183,14 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.2": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_2
+    },
+    "2.5.3": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_3
+    },
+    "2.5.4": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_4
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -8004,6 +8182,38 @@ function SetRuntimePresetName(presetName) {
     }
 }
 
+function PublishPaletteColorBridge(configId, value) {
+    var attrName = "";
+    if (configId === "PLAYER_HEALTHBAR_ACCENT_COLOR") {
+        attrName = PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR;
+    } else if (configId === "BOTTOM_BAR_WASH_COLOR") {
+        attrName = BOTTOM_BAR_WASH_COLOR_ATTR;
+    } else if (configId === "KEYBOARD_OVERLAY_WASH_COLOR") {
+        attrName = KEYBOARD_OVERLAY_WASH_COLOR_ATTR;
+    } else if (configId === "STAMINA_CHARGE_COLOR") {
+        attrName = STAMINA_CHARGE_COLOR_ATTR;
+    } else if (configId === "AMMO_TEXT_COLOR") {
+        attrName = AMMO_TEXT_COLOR_ATTR;
+    }
+    if (!attrName) return "";
+    var bridgeValue = String(Math.max(0, Math.min(25, Math.round(Number(value) || 0))));
+    var panel = $.GetContextPanel();
+    var root = FindRootPanel();
+    var hud = null;
+    try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
+    try { if (panel && panel.SetAttributeString) panel.SetAttributeString(attrName, bridgeValue); } catch (ePanel) {}
+    try { if (root && root.SetAttributeString) root.SetAttributeString(attrName, bridgeValue); } catch (eRoot) {}
+    try { if (hud && hud.SetAttributeString) hud.SetAttributeString(attrName, bridgeValue); } catch (eHudSet) {}
+    if (configId === "PLAYER_HEALTHBAR_ACCENT_COLOR") {
+        try {
+            if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                $.persistentStorage.setItem(PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY, bridgeValue);
+            }
+        } catch (ePersist) {}
+    }
+    return bridgeValue;
+}
+
 function SaveAndSync() {
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
@@ -8047,7 +8257,13 @@ function SaveAndSync() {
         try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
+    PublishPaletteColorBridge("PLAYER_HEALTHBAR_ACCENT_COLOR", MOD_CONFIG.PLAYER_HEALTHBAR_ACCENT_COLOR);
+    PublishPaletteColorBridge("BOTTOM_BAR_WASH_COLOR", MOD_CONFIG.BOTTOM_BAR_WASH_COLOR);
+    PublishPaletteColorBridge("KEYBOARD_OVERLAY_WASH_COLOR", MOD_CONFIG.KEYBOARD_OVERLAY_WASH_COLOR);
+    PublishPaletteColorBridge("STAMINA_CHARGE_COLOR", MOD_CONFIG.STAMINA_CHARGE_COLOR);
+    PublishPaletteColorBridge("AMMO_TEXT_COLOR", MOD_CONFIG.AMMO_TEXT_COLOR);
     UpdateOnDeathArcadeBridgePollerState();
+    ApplySettingsThemeClasses(panel && panel.FindChildTraverse ? panel.FindChildTraverse("SettingsWindow") : null);
     QueueActivePresetHighlightRefresh(0.05);
     RefreshEnumSections();
 }
@@ -8063,7 +8279,8 @@ function GetSettingsListPanel() {
 
 function BuildSettingsListRenderSignature() {
     var langKey = GetSettingsLanguageKey();
-    return String(currentTab || "") + "|" + langKey;
+    var themeKey = GetSettingsThemeKey();
+    return String(currentTab || "") + "|" + langKey + "|" + themeKey;
 }
 
 function IsPanelValidSafe(panel) {
@@ -8858,11 +9075,12 @@ function SyncTabActiveStates(tabBar) {
     if (!tabBar || !tabBar.IsValid || !tabBar.IsValid()) return;
     var settingsWindow = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (settingsWindow && settingsWindow.SetHasClass) {
-    settingsWindow.SetHasClass("SettingsLangRU", IsRussianSettingsLanguage());
-    settingsWindow.SetHasClass("SettingsLangFR", IsFrenchSettingsLanguage());
-    settingsWindow.SetHasClass("SettingsLangPT", IsPortugueseSettingsLanguage());
-    settingsWindow.SetHasClass("SettingsLangPTBR", IsBrazilianPortugueseSettingsLanguage());
-    settingsWindow.SetHasClass("SettingsLangES", IsSpanishSettingsLanguage());
+        settingsWindow.SetHasClass("SettingsLangRU", IsRussianSettingsLanguage());
+        settingsWindow.SetHasClass("SettingsLangFR", IsFrenchSettingsLanguage());
+        settingsWindow.SetHasClass("SettingsLangPT", IsPortugueseSettingsLanguage());
+        settingsWindow.SetHasClass("SettingsLangPTBR", IsBrazilianPortugueseSettingsLanguage());
+        settingsWindow.SetHasClass("SettingsLangES", IsSpanishSettingsLanguage());
+        ApplySettingsThemeClasses(settingsWindow);
     }
     var tabListHost = tabBar.FindChildTraverse("SettingsTabRailTabs");
     if (tabListHost) {
@@ -9183,6 +9401,7 @@ function RenderConfigTabContent(list) {
         CreateRow(list, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
             { label: "Swap" }
         ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
+        CreateRow(list, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
 
         CreateSeparator(list);
         CreateSectionTitle(list, "Backup & Restore");
@@ -9214,6 +9433,7 @@ function RenderConfigTabContent(list) {
     CreateRow(cardGeneral, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
         { label: "Swap" }
     ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
+    CreateRow(cardGeneral, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
 
     var dividerAfterGeneral = $.CreatePanel("Panel", list, "ConfigDividerAfterGeneral");
     dividerAfterGeneral.AddClass("ConfigTabDivider");
@@ -15435,11 +15655,13 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
     var row = $.CreatePanel("Panel", parent, "");
     if (gSearchResultRenderMode) row.AddClass("SearchResultRow");
     row.AddClass("SettingRow");
+    if (configId) row.AddClass("SettingRow_" + String(configId).replace(/[^A-Za-z0-9_]/g, "_"));
     var isRuntimeSliderRow = (type === "runtime_slider");
     var isRuntimeButtonGroupRow = (type === "runtime_buttongroup");
-    if (type === "slider" || isRuntimeSliderRow) row.AddClass("RowTypeSlider");
+    if (type === "slider" || type === "angle_slider" || isRuntimeSliderRow) row.AddClass("RowTypeSlider");
     else if (type === "multitoggle") row.AddClass("RowTypeMultiToggle");
     else if (type === "buttongroup") row.AddClass("RowTypeButtonGroup");
+    else if (type === "palette") row.AddClass("RowTypePalette");
     else if (type === "runtime_buttongroup") row.AddClass("RowTypeButtonGroup");
     else if (type === "dropdown") row.AddClass("RowTypeDropDown");
     else if (type === "actionbutton") row.AddClass("RowTypeAction");
@@ -15538,7 +15760,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             hideCustomRowTooltip();
         });
     }
-    if (type === "slider") {
+    if (type === "slider" || type === "angle_slider") {
         var sliderValueGroup = $.CreatePanel("Panel", row, "");
         sliderValueGroup.AddClass("SliderValueGroup");
         sliderValueGroup.AddClass("SettingControlRoot");
@@ -15546,6 +15768,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         sliderContainer.AddClass("SliderContainer");
         var slider = $.CreatePanel("Slider", sliderContainer, "", { direction: "horizontal" });
         slider.AddClass("HorizontalSlider");
+        var isAngleSlider = (type === "angle_slider");
         var isFloat = (max <= 5.0 && (configId.indexOf("OPACITY") !== -1 || configId.indexOf("SCALE") !== -1));
         var isOpacitySlider = (isFloat && configId.indexOf("OPACITY") !== -1);
         var isSecondsSlider = (configId === "BRIDGE_BUFF_START" || configId === "MINIMAP_REMINDER_INTERVAL");
@@ -15558,6 +15781,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             if (isFloat) return numeric.toFixed(2);
             if (isSecondsSlider) return String(Math.round(numeric)) + "s";
+            if (isAngleSlider) return String(Math.round(numeric)) + "°";
             return String(Math.round(numeric));
         };
         var parseSliderInputValue = function(text) {
@@ -16001,6 +16225,9 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         if (configId === "LANGUAGE") {
             group.AddClass("LanguageSwitchGroup");
         }
+        if (configId === "SETTINGS_THEME") {
+            group.AddClass("ThemeSwitchGroup");
+        }
         if (configId === "GAME_DEFAULT_DIFFICULTY") {
             group.AddClass("ArcadeDifficultyDefaultGroup");
         }
@@ -16011,6 +16238,16 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             btn.AddClass("SegmentBtn");
             if (configId === "LANGUAGE") {
                 btn.AddClass("LanguageSwitchBtn");
+            }
+            if (configId === "SETTINGS_THEME") {
+                btn.AddClass("ThemeSwitchBtn");
+                btn.AddClass("QOLThemeSwatch");
+                btn.AddClass("ThemeSwitchBtn_" + String(opt.label || "").replace(/[^A-Za-z0-9_]/g, ""));
+                var themeSwatchIndex = Math.round(Number(opt.value));
+                if (!isFinite(themeSwatchIndex)) themeSwatchIndex = 0;
+                if (themeSwatchIndex < 0) themeSwatchIndex = 0;
+                if (themeSwatchIndex >= SETTINGS_THEME_ROOT_CLASS_NAMES.length) themeSwatchIndex = SETTINGS_THEME_ROOT_CLASS_NAMES.length - 1;
+                btn.AddClass(SETTINGS_THEME_ROOT_CLASS_NAMES[themeSwatchIndex]);
             }
             if (configId === "GAME_DEFAULT_DIFFICULTY") {
                 btn.AddClass("ArcadeDifficultyDefaultBtn");
@@ -16039,6 +16276,9 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     if (settingsList && settingsList.IsValid && settingsList.IsValid()) {
                         RequestSettingsListRefresh(0, false);
                     }
+                } else if (configId === "SETTINGS_THEME") {
+                    ApplySettingsThemeClasses(null);
+                    RequestSettingsListRefresh(0, false);
                 }
             });
         });
@@ -16048,6 +16288,83 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 var buttonRefreshFn = buttonGroupRefreshFns[br];
                 if (typeof buttonRefreshFn !== "function") continue;
                 try { buttonRefreshFn(); } catch (eBtn) {}
+            }
+            refreshRowChangedState();
+            return true;
+        };
+    } else if (type === "palette" && Array.isArray(options)) {
+        row.AddClass("PalettePickerRow");
+        var paletteGroup = $.CreatePanel("Panel", row, "");
+        paletteGroup.AddClass("SettingControlRoot");
+        paletteGroup.AddClass("PalettePickerGroup");
+        var paletteButtons = [];
+        var paletteRefreshFns = [];
+        var sanitizePaletteValue = function(value) {
+            var numeric = Math.round(Number(value));
+            if (!isFinite(numeric)) numeric = 0;
+            if (numeric < 0) numeric = 0;
+            if (numeric > 25) numeric = 25;
+            return numeric;
+        };
+        var buildPaletteTooltip = function(opt) {
+            var name = LocalizeSettingsText((opt && opt.label) ? opt.label : "Default", true);
+            if (!opt || !opt.hex) return name + " - " + LocalizeSettingsText("No color wash", true);
+            return name + " - " + String(opt.hex);
+        };
+        options.forEach(function(opt) {
+            if (!opt) return;
+            var value = sanitizePaletteValue(opt.value);
+            var swatch = $.CreatePanel("Button", paletteGroup, "");
+            swatch.AddClass("PalettePickerSwatch");
+            if (value === 0) swatch.AddClass("PalettePickerSwatchDefault");
+            var colorChip = $.CreatePanel("Panel", swatch, "");
+            colorChip.AddClass("PalettePickerSwatchChip");
+            if (opt.hex) {
+                try { colorChip.style.backgroundColor = String(opt.hex); } catch (eColor) {}
+                try { colorChip.style.border = "1px solid rgba(255, 255, 255, 0.28)"; } catch (eBorder) {}
+            } else {
+                colorChip.AddClass("PalettePickerSwatchChipDefault");
+            }
+            var activeDot = $.CreatePanel("Panel", swatch, "");
+            activeDot.AddClass("PalettePickerSwatchActiveDot");
+            var updateSwatch = function() {
+                var active = sanitizePaletteValue(MOD_CONFIG[configId]) === value;
+                swatch.SetHasClass("Active", active);
+            };
+            updateSwatch();
+            paletteRefreshFns.push(updateSwatch);
+            paletteButtons.push(swatch);
+            swatch.SetPanelEvent("onmouseover", function() {
+                hideCustomRowTooltip();
+                HideSettingsTextTooltip();
+                CancelSettingsRowFloatingTooltipHide();
+                ShowSettingsRowFloatingTooltip(
+                    swatch,
+                    "",
+                    buildPaletteTooltip(opt),
+                    PERF_IMPACT_TIER_NONE,
+                    ""
+                );
+            });
+            swatch.SetPanelEvent("onmouseout", function() {
+                HideSettingsRowFloatingTooltipDeferred("palette_swatch_mouseout");
+            });
+            swatch.SetPanelEvent("onactivate", function() {
+                MOD_CONFIG[configId] = value;
+                PublishPaletteColorBridge(configId, value);
+                for (var pi = 0; pi < paletteRefreshFns.length; pi++) {
+                    try { paletteRefreshFns[pi](); } catch (eRefresh) {}
+                }
+                SaveAndSync();
+                refreshRowChangedState();
+                ShowConfigPreviewForConfigId(configId);
+            });
+        });
+        syncRowVisualState = function() {
+            if (!row || !row.IsValid || !row.IsValid()) return false;
+            MOD_CONFIG[configId] = sanitizePaletteValue(MOD_CONFIG[configId]);
+            for (var pr = 0; pr < paletteRefreshFns.length; pr++) {
+                try { paletteRefreshFns[pr](); } catch (ePaletteRefresh) {}
             }
             refreshRowChangedState();
             return true;
@@ -17673,17 +17990,22 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "slider", -50, 50, 1);
         });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "", function(sectionParent) {
+        CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {
             CreateRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "slider", 0.5, 2.0, 0.05, null);
             CreateRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "slider", 0, 1.0, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "DAMAGE_IMPACT_X_OFFSET", "slider", -1000, 1000, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "DAMAGE_IMPACT_Y_OFFSET", "slider", -1000, 1000, 5, null);
         });
         CreateSeparator(list);
+        CreateSectionTitle(list, "Stamina");
+        CreateRow(list, "Rotate", "STAMINA_CHARGE_ANGLE", "angle_slider", 0, 360, 1, null, "Rotate the stamina charge indicator.");
+        CreateRow(list, "Color", "STAMINA_CHARGE_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset border color for stamina charge indicators.");
+        CreateSeparator(list);
         CreateSectionTitle(list, "Damage Numbers");
         CreateRow(list, "Big Numbers", "ENABLE_CUMULATIVE_DMG", "toggle", null, null, null, null);
         CreateRow(list, "Small Numbers", "ENABLE_HIDE_SMALL_NUMBERS", "toggle", null, null, null, [{ invert: true }]);
         CreateRow(list, "Trooper Damage", "ENABLE_HIDE_TROOPER_DAMAGE", "toggle", null, null, null, [{ invert: true }]);
+        CreateRow(list, "Clean Indicators", "ENABLE_CLEAN_DAMAGE_INDICATORS", "toggle", null, null, null, null, "Modify damage numbers for a cleaner style and animation to be more out of the way");
         CreateRow(list, "Damage Fountain", "ENABLE_DAMAGE_FOUNTAIN", "toggle", null, null, null, null, "Fountain-style damage number animation.");
         CreateRow(list, "Size", "HUD_INDICATOR_SIZE", "slider", 10, 60, 1, null, "Default 18");
         CreateRow(list, "Opacity", "DAMAGE_NUMBER_OPACITY", "slider", 0, 1.0, 0.05, null);
@@ -17696,6 +18018,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Total Size", "AMMO_TOTAL_SCALE", "slider", 100, 300, 1, null);
         CreateRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "slider", -200, 200, 5, null);
         CreateRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "slider", -200, 200, 5, null);
+        CreateRow(list, "Color", "AMMO_TEXT_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset text color for the ammo display.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Reload Cooldown", "ENABLE_RELOAD_COOLDOWN", "Estimated Active Reload Timer", function(sectionParent) {
             CreateRow(sectionParent, "Size", "RELOAD_COOLDOWN_SIZE", "slider", 16, 60, 1, null);
@@ -17744,6 +18067,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Scale", "BOTTOM_BAR_SCALE", "slider", 0.5, 1.5, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the bottom ability bar.");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Items", "HUD_ITEMS_ENABLED", "", function(sectionParent) {
@@ -17751,6 +18075,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Opacity", "ITEMS_OPACITY", "slider", 0, 1, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "ITEMS_X_OFFSET", "slider", -1500, 1500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "ITEMS_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Color", "ITEMS_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the item bar.");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Souls", "HUD_SOULS_ENABLED", "", function(sectionParent) {
@@ -17794,6 +18119,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "slider", 0, 1.0, 0.05, null, "");
         CreateRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "slider", -1000, 1000, 5, null, "");
         CreateRow(list, "Vertical Offset", "PLAYER_HEALTHBAR_Y_OFFSET", "slider", -1000, 1000, 5, null, "");
+        CreateRow(list, "Accent Color", "PLAYER_HEALTHBAR_ACCENT_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset accent color for the player healthbar frame.");
     } else if (currentTab === "UI") {
         CreateSectionTitle(list, "UI Controls");
         CreateRow(list, "16:10 Support", "SUPPORT_16_10", "toggle", null, null, null, null, "Hud Shift");
@@ -17846,6 +18172,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "slider", 70, 150, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "slider", -1500, 1500, 5);
             CreateRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "slider", -400, 1000, 5);
+            CreateRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the keyboard overlay.");
         });
         CreateSeparator(list);
         CreateSectionTitle(list, "Compass & Speed", "ENABLE_COMPASS");
@@ -18466,7 +18793,8 @@ function RenderCurrentTabContent(list) {
             { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" },
             { label: "gfkm", role: "Contributor", url: "https://gamebanana.com/members/5349748" },
             { label: "Aminsx", role: "Contributor", url: "https://gamebanana.com/members/4798159" },
-            { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" }
+            { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" },
+            { label: "Lustie", role: "Contributor", url: "https://gamebanana.com/mods/655927" }
         ];
         var supportThanksTranslatorEntries = [
             { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex" },
@@ -19295,14 +19623,14 @@ $.BuildUI = function() {
         var headerLogo = header.FindChildTraverse("SettingsHeaderMogLogo");
         if (!headerLogo) {
             headerLogo = $.CreatePanel("Image", header, "SettingsHeaderMogLogo", {
-                src: "s2r://panorama/images/qollock/mog_site_logo2.vtex",
+                src: GetSettingsTheme() === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC,
                 defaultsrc: "",
                 scaling: "contain"
             });
         }
         headerLogo.hittest = false;
         headerLogo.hittestchildren = false;
-        try { headerLogo.SetImage("s2r://panorama/images/qollock/mog_site_logo2.vtex"); } catch (eHeaderLogo) {}
+        try { headerLogo.SetImage(GetSettingsTheme() === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC); } catch (eHeaderLogo) {}
         if (headerTitle) {
             headerTitle.text = "LOCK";
             headerTitle.AddClass("SettingsHeaderTitleWordmark");
