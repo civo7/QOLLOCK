@@ -116,6 +116,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
     ENABLE_MINIMAP_CRATE_OVERLAY: "gfkm",
     ENABLE_MINIMAP_REM_TUNNELS: "oGeorge",
+    ENABLE_ALT_ZOOM_REM_TUNNELS: "oGeorge",
+    ENABLE_TAB_ZOOM_REM_TUNNELS: "oGeorge",
     ENABLE_MINIMAP_ELEVATION_MARKERS: "Lightbringer",
     ENABLE_ENHANCED_QUICKBUY: "Aminsx",
     ENABLE_URN_COLORS: "Civo"
@@ -147,6 +149,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_COMPASS_SPEED": "Speed number tracker.",
     "ENABLE_CUMULATIVE_DMG": "The large cumulative damage number.",
     "ENABLE_DAMAGE_FOUNTAIN": "Ragnarok Online damage visuals with improved fancy styling.",
+    "ENABLE_DAMAGE_IMPACT": "These are the indicators that popup when you get a kill or CC an opponent, etc",
     "ENABLE_FORCE_TESTING_TOOLS": "Forcibly shows testing tools at all times.",
     "ENABLE_FULL_KEYBOARD_LAYOUT": "Shows all of your keybinds.",
     "ENABLE_HERO_SCENE_PANEL": "Shows your character in the shop menu.",
@@ -169,6 +172,10 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_MINIMAP_CRATE_OVERLAY": "Shows Midtown crate markers in the minimap.",
     "ENABLE_MINIMAP_REM_TUNNELS": "Show an overlay of the underground tunnels.",
     "MINIMAP_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay.",
+    "ENABLE_ALT_ZOOM_REM_TUNNELS": "Show the underground tunnel overlay while Alt Zoom is active.",
+    "ALT_ZOOM_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay while Alt Zoom is active.",
+    "ENABLE_TAB_ZOOM_REM_TUNNELS": "Show the underground tunnel overlay while Tab Zoom is active.",
+    "TAB_ZOOM_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay while Tab Zoom is active.",
     "ENABLE_MINIMAP_ELEVATION_MARKERS": "Shows relative elevation difference between you and players.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
     "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
@@ -391,10 +398,15 @@ const SETTING_PERF_IMPACT_TIERS = {
     COMPASS_X_OFFSET: "medium",
     COMPASS_Y_OFFSET: "medium",
     DAMAGE_NUMBER_OPACITY: "low",
+    DAMAGE_IMPACT_OPACITY: "low",
+    DAMAGE_IMPACT_SCALE: "low",
+    DAMAGE_IMPACT_X_OFFSET: "low",
+    DAMAGE_IMPACT_Y_OFFSET: "low",
     DAMAGE_REPORT_X_OFFSET: "low",
     DAMAGE_REPORT_Y_OFFSET: "low",
     DEFAULT_HERO: "none",
     DISABLE_DAMAGE_REPORT: "low",
+    ENABLE_DAMAGE_IMPACT: "low",
     DISABLE_PLAYER_NAME_BLUR: "none",
     DISABLE_QUICK_BUY: "none",
     DISABLE_SHOP_BLUE: "none",
@@ -457,6 +469,10 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_MINIMAP_CRATE_OVERLAY: "low",
     ENABLE_MINIMAP_REM_TUNNELS: "low",
     MINIMAP_REM_TUNNELS_OPACITY: "low",
+    ENABLE_ALT_ZOOM_REM_TUNNELS: "low",
+    ALT_ZOOM_REM_TUNNELS_OPACITY: "low",
+    ENABLE_TAB_ZOOM_REM_TUNNELS: "low",
+    TAB_ZOOM_REM_TUNNELS_OPACITY: "low",
     ENABLE_MINIMAP_ELEVATION_MARKERS: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
@@ -560,6 +576,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     SHOP_OPACITY: "low",
     SHOP_OFFSET_X: "low",
     SHOP_OFFSET_Y: "low",
+    SHOP_SCALE: "low",
     SOULS_OPACITY: "low",
     SOULS_X_OFFSET: "low",
     SOULS_Y_OFFSET: "low",
@@ -568,9 +585,11 @@ const SETTING_PERF_IMPACT_TIERS = {
     TAB_ZOOM_DRAW_OVER_UI: "low",
     TAB_ZOOM_OPACITY: "low",
     TOP_BAR_OPACITY: "low",
+    TOP_BAR_SCALE: "low",
     TOP_BAR_X_OFFSET: "low",
     TOP_BAR_Y_OFFSET: "low",
     BOTTOM_BAR_OPACITY: "low",
+    BOTTOM_BAR_SCALE: "low",
     BOTTOM_BAR_X_OFFSET: "low",
     BOTTOM_BAR_Y_OFFSET: "low",
     UNIT_TARGET_OPACITY: "medium",
@@ -778,7 +797,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.5.1";
+    : "2.5.2";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -5384,7 +5403,8 @@ function IsDamageReportPreviewConfig(configId) {
 function IsShopPreviewConfig(configId) {
     return configId === "SHOP_OFFSET_X" ||
         configId === "SHOP_OFFSET_Y" ||
-        configId === "SHOP_OPACITY";
+        configId === "SHOP_OPACITY" ||
+        configId === "SHOP_SCALE";
 }
 
 function IsUnsecuredPlusPreviewConfig(configId) {
@@ -6109,6 +6129,10 @@ function ShowShopPreview() {
     if (!isFinite(opacity)) opacity = 1.0;
     if (opacity < 0) opacity = 0;
     if (opacity > 1) opacity = 1;
+    var scale = Number(MOD_CONFIG.SHOP_SCALE);
+    if (!isFinite(scale)) scale = 1.0;
+    if (scale < 0.5) scale = 0.5;
+    if (scale > 1.5) scale = 1.5;
 
     var context = $.GetContextPanel();
     var fallbackX = 240;
@@ -6135,6 +6159,7 @@ function ShowShopPreview() {
     var targetY = baseY - offsetY;
     SetPreviewPanelPosition(panel, targetX, targetY);
     SetPanelOpacitySafe(panel, opacity, 1.0);
+    panel.style.preTransformScale2d = scale.toFixed(2) + ", " + scale.toFixed(2);
     gShopPreviewLabel.text = "SHOP";
     panel.AddClass("Visible");
     ScheduleHideShopPreview(1.2);
@@ -6793,6 +6818,24 @@ const MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
 const MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", min: 0, max: 1, step: 1 }
 ];
+const HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS = [
+    { key: "TOP_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
+    { key: "BOTTOM_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
+    { key: "SHOP_SCALE", min: 0.5, max: 1.5, step: 0.05 }
+];
+const ZOOM_REM_TUNNELS_SCHEMA_FIELDS = [
+    { key: "ENABLE_ALT_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "ALT_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "ENABLE_TAB_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "TAB_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+const DAMAGE_IMPACT_SCHEMA_FIELDS = [
+    { key: "ENABLE_DAMAGE_IMPACT", min: 0, max: 1, step: 1 },
+    { key: "DAMAGE_IMPACT_SCALE", min: 0.5, max: 2.0, step: 0.05 },
+    { key: "DAMAGE_IMPACT_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "DAMAGE_IMPACT_X_OFFSET", min: -1000, max: 1000, step: 5 },
+    { key: "DAMAGE_IMPACT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
+];
 const COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -6846,6 +6889,16 @@ const COMPACT_SCHEMA_2_5_0 = AppendUniqueSchemaFields(
 const COMPACT_SCHEMA_2_5_1 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_5_0,
     MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS
+);
+const COMPACT_SCHEMA_2_5_2 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_5_1,
+    AppendUniqueSchemaFields(
+        AppendUniqueSchemaFields(
+            HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS,
+            ZOOM_REM_TUNNELS_SCHEMA_FIELDS
+        ),
+        DAMAGE_IMPACT_SCHEMA_FIELDS
+    )
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
@@ -6956,6 +7009,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.1": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_1
+    },
+    "2.5.2": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_2
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -17616,6 +17673,13 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "slider", -50, 50, 1);
         });
         CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "", function(sectionParent) {
+            CreateRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "slider", 0.5, 2.0, 0.05, null);
+            CreateRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "slider", 0, 1.0, 0.05, null);
+            CreateRow(sectionParent, "Horizontal Offset", "DAMAGE_IMPACT_X_OFFSET", "slider", -1000, 1000, 5, null);
+            CreateRow(sectionParent, "Vertical Offset", "DAMAGE_IMPACT_Y_OFFSET", "slider", -1000, 1000, 5, null);
+        });
+        CreateSeparator(list);
         CreateSectionTitle(list, "Damage Numbers");
         CreateRow(list, "Big Numbers", "ENABLE_CUMULATIVE_DMG", "toggle", null, null, null, null);
         CreateRow(list, "Small Numbers", "ENABLE_HIDE_SMALL_NUMBERS", "toggle", null, null, null, [{ invert: true }]);
@@ -17664,6 +17728,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
             CreateRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
             CreateRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Scale", "TOP_BAR_SCALE", "slider", 0.5, 1.5, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "TOP_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "TOP_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
         });
@@ -17676,6 +17741,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
             CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Scale", "BOTTOM_BAR_SCALE", "slider", 0.5, 1.5, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
         });
@@ -17713,6 +17779,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
+            CreateRow(sectionParent, "Scale", "SHOP_SCALE", "slider", 0.5, 1.5, 0.05, null);
         });
     } else if (currentTab === "Healthbar") {
         gEnumSectionSyncCallbacks = [];
@@ -17827,6 +17894,8 @@ function RenderCurrentTabContent(list) {
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Alt Zoom", "ENABLE_ALT_ZOOM", "Ability Menu Open", function(sectionParent) {
             CreateRow(sectionParent, "Draw Over UI", "ALT_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Rem Tunnels", "ENABLE_ALT_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Alt Zoom is active.");
+            CreateRow(sectionParent, "Rem Tunnels Opacity", "ALT_ZOOM_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
             CreateRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_ALT", "slider", 400, 1200, 10);
             CreateRow(sectionParent, "Opacity", "ALT_ZOOM_OPACITY", "slider", 0, 1.0, 0.05);
             CreateRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_ALT", "slider", -1500, 1500, 5);
@@ -17835,6 +17904,8 @@ function RenderCurrentTabContent(list) {
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Tab Zoom", "ENABLE_TAB_ZOOM", "Scoreboard Open", function(sectionParent) {
             CreateRow(sectionParent, "Draw Over UI", "TAB_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Rem Tunnels", "ENABLE_TAB_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Tab Zoom is active.");
+            CreateRow(sectionParent, "Rem Tunnels Opacity", "TAB_ZOOM_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
             CreateRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_TAB", "slider", 400, 1200, 10);
             CreateRow(sectionParent, "Opacity", "TAB_ZOOM_OPACITY", "slider", 0, 1.0, 0.05);
             CreateRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_TAB", "slider", -1500, 1500, 5);

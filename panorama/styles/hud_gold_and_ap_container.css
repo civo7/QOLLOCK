@@ -145,6 +145,9 @@
 	ignore-parent-flow: true;
 	horizontal-align: center;
 	vertical-align: center;
+	width: 72px;
+	height: 72px;
+	overflow: clip;
 	x: -220px;
 	y: -12px;
 	margin-top: 0px;
@@ -161,7 +164,29 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #gold_and_ap_container #HeroImage
 {
 	margin-left: 0px;
-	ui-scale: 125%;
+	width: 72px;
+	height: 72px;
+	max-width: 72px;
+	max-height: 72px;
+	overflow: clip;
+	ui-scale: 100%;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #FgHeroImageAnchor
+{
+	width: 72px;
+	height: 72px;
+	overflow: clip;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #FgHeroImageAnchor #HeroImage
+{
+	width: 72px;
+	height: 72px;
+	max-width: 72px;
+	max-height: 72px;
+	overflow: clip;
+	ui-scale: 100%;
 }
 
 .fg_healthbar_active.qol_fg_icon_health_mid #gold_and_ap_container #LevelAmount

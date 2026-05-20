@@ -94,6 +94,7 @@ var quickbuyChatCache={
 	input:null,
 	targetLabel:null
 };
+var quickbuyLastShopOpenState=false;
 
 function ParseQuickbuySoulsCost(costText){
 	if(!costText)return 0;
@@ -324,6 +325,73 @@ function CollectQuickbuyItemPanels(panel,quickbuyItemPanels){
 	if(!panel)return;
 	if(panel.BHasClass&&panel.BHasClass('QuickbuyItem'))quickbuyItemPanels.push(panel);
 	for(var childIndex=0;childIndex<panel.GetChildCount();childIndex++)CollectQuickbuyItemPanels(panel.GetChild(childIndex),quickbuyItemPanels);
+}
+
+function ForEachQuickbuyPanel(panel,callback){
+	if(!panel||!callback)return;
+	callback(panel);
+	for(var childIndex=0;childIndex<panel.GetChildCount();childIndex++)ForEachQuickbuyPanel(panel.GetChild(childIndex),callback);
+}
+
+function ClearQuickbuyDragState(contextPanel){
+	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel||$.GetContextPanel());
+	if(!quickbuyHostPanel)return;
+
+	var dragClassNames=[
+		'DraggingOutside',
+		'IsBeingDragged',
+		'IsDragSource',
+		'IsDragTarget',
+		'Dragging'
+	];
+	ForEachQuickbuyPanel(quickbuyHostPanel,function(panel){
+		if(!panel||!panel.SetHasClass)return;
+		for(var classIndex=0;classIndex<dragClassNames.length;classIndex++)panel.SetHasClass(dragClassNames[classIndex],false);
+	});
+
+	try{$.DispatchEvent('DropInputFocus',quickbuyHostPanel);}catch(e0){}
+	try{$.DispatchEvent('CitadelUIHideTextTooltip');}catch(e1){}
+	try{CitadelUIHideTextTooltip();}catch(e2){}
+}
+
+function ScheduleQuickbuyDragCleanup(contextPanel){
+	$.Schedule(0.0,function(){ClearQuickbuyDragState(contextPanel);});
+	$.Schedule(0.03,function(){ClearQuickbuyDragState(contextPanel);});
+}
+
+function BindQuickbuyDragCleanupHandlers(entryPanel){
+	if(!entryPanel||entryPanel._qolQuickbuyDragCleanupBound)return;
+	entryPanel._qolQuickbuyDragCleanupBound=true;
+
+	$.RegisterEventHandler('DragEnd',entryPanel,function(){
+		ScheduleQuickbuyDragCleanup(entryPanel);
+		return false;
+	});
+	$.RegisterEventHandler('DragDrop',entryPanel,function(){
+		ScheduleQuickbuyDragCleanup(entryPanel);
+		return false;
+	});
+
+	var reorderButton=entryPanel.FindChildTraverse?entryPanel.FindChildTraverse('ReorderButton'):null;
+	if(reorderButton&&!reorderButton._qolQuickbuyDragCleanupBound){
+		reorderButton._qolQuickbuyDragCleanupBound=true;
+		$.RegisterEventHandler('DragEnd',reorderButton,function(){
+			ScheduleQuickbuyDragCleanup(reorderButton);
+			return false;
+		});
+		reorderButton.SetPanelEvent('onmouseup',function(){ScheduleQuickbuyDragCleanup(reorderButton);});
+	}
+}
+
+function UpdateQuickbuyInputCleanupState(contextPanel,quickbuyQueueEntries,quickbuySellQueueEntries){
+	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel);
+	var shopOpen=!!(quickbuyHostPanel&&quickbuyHostPanel.BHasClass&&quickbuyHostPanel.BHasClass('gShopOpen'));
+
+	for(var queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++)BindQuickbuyDragCleanupHandlers(quickbuyQueueEntries[queueIndex].itemPanel);
+	for(var sellIndex=0;sellIndex<quickbuySellQueueEntries.length;sellIndex++)BindQuickbuyDragCleanupHandlers(quickbuySellQueueEntries[sellIndex].itemPanel);
+
+	if(quickbuyLastShopOpenState&&!shopOpen)ClearQuickbuyDragState(contextPanel);
+	quickbuyLastShopOpenState=shopOpen;
 }
 
 function CollectQuickbuyQueueEntries(quickbuyQueuePanel){
@@ -646,6 +714,7 @@ function UpdateQuickbuyQueueCostPanels(){
 	var currentSoulsAmount=GetCurrentSoulsAmount();
 	var quickbuyQueueEntries=CollectQuickbuyQueueEntries(quickbuyQueuePanel);
 	var quickbuySellQueueEntries=CollectQuickbuySellQueueEntries(quickbuySellQueuePanel);
+	UpdateQuickbuyInputCleanupState(contextPanel,quickbuyQueueEntries,quickbuySellQueueEntries);
 	var adjustedQuickbuyTotalSoulsCost=BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,quickbuySellQueueEntries);
 
 	quickbuyTotalCostLabel.text=String(adjustedQuickbuyTotalSoulsCost);
