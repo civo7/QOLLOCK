@@ -446,6 +446,7 @@ function UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNoti
 			var canNotify=clickToNotifyActive&&queueEntry.remainingSoulsCost>0;
 			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',canNotify);
 			if(clickToNotifyActive)StyleQuickbuyMoneyLabel(queueRemainingSoulsLabel,canNotify?'#d64259':'#66ffd9');
+			queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
 			var queueRemainingSoulsDivider=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsDivider');
 			if(queueRemainingSoulsDivider)StyleQuickbuyMoneyLabel(queueRemainingSoulsDivider,'#d8d0c088');
 			var modCostLabel=queueEntry.itemPanel.FindChildTraverse('ModCost');
@@ -454,17 +455,19 @@ function UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNoti
 				StyleQuickbuyMoneyLabel(modCostLabel,canNotify?'#d64259':'#66ffd9');
 				if(goldIcon)SetQuickbuyPanelStyleIfChanged(goldIcon,'washColor',canNotify?'#d64259':'#66ffd9');
 			}
+			var notifyButton=queueEntry.itemPanel.FindChildTraverse('NotifyButton');
+			if(notifyButton)notifyButton.SetHasClass('CanClickToNotify',canNotify);
 			if(canNotify){
 				var chatMessage='Need ' + FormatQuickbuySoulsAmount(queueEntry.remainingSoulsCost) + ' more for ' + (queueEntry.itemName||'item');
-				if(queueRemainingSoulsLabel._qolClickToNotifyMessage!==chatMessage){
-					queueRemainingSoulsLabel._qolClickToNotifyMessage=chatMessage;
-					queueRemainingSoulsLabel.SetPanelEvent('onactivate',(function(message){
+				if(notifyButton&&notifyButton._qolClickToNotifyMessage!==chatMessage){
+					notifyButton._qolClickToNotifyMessage=chatMessage;
+					notifyButton.SetPanelEvent('onactivate',(function(message){
 						return function(){SendQuickbuyNeededSoulsChatMessage(message);};
 					})(chatMessage));
 				}
-			}else if(queueRemainingSoulsLabel._qolClickToNotifyMessage){
-				queueRemainingSoulsLabel._qolClickToNotifyMessage='';
-				queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
+			}else if(notifyButton&&notifyButton._qolClickToNotifyMessage){
+				notifyButton._qolClickToNotifyMessage='';
+				notifyButton.SetPanelEvent('onactivate',function(){});
 			}
 		}
 	}
@@ -607,6 +610,12 @@ function ResetQuickbuyQueuePanels(contextPanel){
 			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',false);
 			queueRemainingSoulsLabel._qolClickToNotifyMessage='';
 			queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
+		}
+		var notifyButton=queueEntry.itemPanel.FindChildTraverse('NotifyButton');
+		if(notifyButton){
+			notifyButton.SetHasClass('CanClickToNotify',false);
+			notifyButton._qolClickToNotifyMessage='';
+			notifyButton.SetPanelEvent('onactivate',function(){});
 		}
 	}
 }

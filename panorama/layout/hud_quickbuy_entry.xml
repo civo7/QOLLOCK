@@ -16,7 +16,7 @@
 					<Image id="goldIcon" class="goldIcon" />
 					<Label id="ModCost" text="#Citadel_Hud_Quickbuy_ModCost" />
 					<Label class="QueueRemainingSoulsDivider" text=" / " />
-					<Label id="QueueRemainingSoulsLabel" text="0" hittest="true" />
+					<Label id="QueueRemainingSoulsLabel" text="0" hittest="false" />
 					<Label id="ExceedItemSlotLabel" text="#Citadel_Hud_Quickbuy_Exceeds_Slots" />
 					<Label id="SellItemSlotLabel" text="#Citadel_Hud_Quickbuy_Sell_Slot" />
 				</Panel>
@@ -24,6 +24,7 @@
 		</Panel>
 		<Panel id="ControlIcons">
 			<Panel id="ReorderButton" onmouseover="CitadelUIShowTextTooltip( #Citadel_Hud_Quickbuy_Reorder_Tooltip, &apos;&apos;, &apos;&apos; );" onmouseout="CitadelUIHideTextTooltip()" />
+			<Panel id="NotifyButton" onmouseover="CitadelUIShowTextTooltip( &apos;Notify team&apos;, &apos;&apos;, &apos;&apos; );" onmouseout="CitadelUIHideTextTooltip()" />
 			<Panel id="DeleteButton" onmouseover="CitadelUIShowTextTooltip( #Citadel_Hud_Quickbuy_Delete_Tooltip, &apos;&apos;, &apos;&apos; );" onmouseout="CitadelUIHideTextTooltip()" />
 		</Panel>
 	</CitadelHudQuickbuyEntry>

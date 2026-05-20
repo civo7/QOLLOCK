@@ -116,6 +116,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
     ENABLE_MINIMAP_CRATE_OVERLAY: "gfkm",
     ENABLE_MINIMAP_REM_TUNNELS: "oGeorge",
+    ENABLE_MINIMAP_ELEVATION_MARKERS: "Lightbringer",
     ENABLE_ENHANCED_QUICKBUY: "Aminsx",
     ENABLE_URN_COLORS: "Civo"
 };
@@ -168,6 +169,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_MINIMAP_CRATE_OVERLAY": "Shows Midtown crate markers in the minimap.",
     "ENABLE_MINIMAP_REM_TUNNELS": "Show an overlay of the underground tunnels.",
     "MINIMAP_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay.",
+    "ENABLE_MINIMAP_ELEVATION_MARKERS": "Shows relative elevation difference between you and players.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
     "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "ENABLE_MISSING_HERO": "Greys out heros in the top bar when missing on the map.",
@@ -272,6 +274,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Bottom Bar|Cosmetic Ability": "The cosmetic ability on your default 5 key, like posters and snowballs.",
     "HUD / Bottom Bar|Failed Hint": "The popup signifying you are too low on stamina to cast another movement input.",
     "HUD / Bottom Bar|Minimalist Abilities": "Cleans up visuals of abilities significantly to reduce clutter.",
+    "HUD / Bottom Bar|Clean Stacks": "Move ability stacks to bottom-center of ability icon.",
     "HUD / Bottom Bar|Minimalist Item Bar": "Cleans up visuals of the item bar significantly to reduce clutter.",
     "HUD / HUD Controls|16:10 Support": "Shifts the HUD for better visual support for 16:10 resolutions.",
     "HUD / HUD Controls|21:9 Stream Fix": "Slight adjustments to the HUD for better streaming output.",
@@ -342,7 +345,6 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Overlay / Compass|Vertical Stretch": "Stretch the compass vertically.",
     "Overlay / Keyboard|Full Keys": "Shows all of your keybinds.",
     "Overlay|Compass": "See your view angle and speed.",
-    "Overlay|Enable Clean Stacks": "Improve Ability Stacks",
     "Overlay|Keyboard": "Real time key input visual.",
     "Overlay|Ult Cooldowns": "View the cooldown time of player ultimates.",
     "Overlay|Unsecured Plus": "Customize unsecured souls visuals.",
@@ -366,7 +368,6 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Minimap|Alt Zoom": "View an enhanced minimap on opening ability menu.",
     "Minimap|Tab Zoom": "View an enhanced minimap on opening scoreboard menu.",
     "Overlay|Compass & Speed": "See your view angle and speed.",
-    "Overlay|Enable Clean Stacks": "Improve Ability Stacks",
     "Overlay|Keyboard": "Real time key input visual.",
     "Overlay|Ult Cooldowns": "View the cooldown time of player ultimates.",
     "Overlay|Unsecured Plus": "Customize unsecured souls visuals.",
@@ -456,6 +457,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_MINIMAP_CRATE_OVERLAY: "low",
     ENABLE_MINIMAP_REM_TUNNELS: "low",
     MINIMAP_REM_TUNNELS_OPACITY: "low",
+    ENABLE_MINIMAP_ELEVATION_MARKERS: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
     ENABLE_MIN_SOULS: "medium",
@@ -776,7 +778,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.5.0";
+    : "2.5.1";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -1198,7 +1200,7 @@ const SETTINGS_RU_TEXT = {
     "click here": "\u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u0441\u044e\u0434\u0430",
     "Click Radius": "\u0420\u0430\u0434\u0438\u0443\u0441 \u043a\u043b\u0438\u043a\u0430",
     "Current Size": "\u0420\u0430\u0437\u043c\u0435\u0440 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e",
-    "Enable Clean Stacks": "\u0427\u0438\u0441\u0442\u044b\u0435 \u0441\u0442\u0430\u043a\u0438",
+    "Clean Stacks": "\u0427\u0438\u0441\u0442\u044b\u0435 \u0441\u0442\u0430\u043a\u0438",
     "Hero Icon Size": "\u0420\u0430\u0437\u043c\u0435\u0440 \u0438\u043a\u043e\u043d\u043e\u043a \u0433\u0435\u0440\u043e\u0435\u0432",
     "Icon Shrink": "\u0421\u0436\u0430\u0442\u0438\u0435 \u0438\u043a\u043e\u043d\u043e\u043a",
     "Improved Hint": "\u0423\u043b\u0443\u0447\u0448\u0435\u043d\u043d\u0430\u044f \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430",
@@ -1706,7 +1708,7 @@ const SETTINGS_ZH_TEXT = {
     "click here": "\u70b9\u51fb\u8fd9\u91cc",
     "Click Radius": "\u5355\u51fb\u534a\u5f84",
     "Current Size": "\u5f53\u524d\u5c3a\u5bf8",
-    "Enable Clean Stacks": "\u542f\u7528\u6574\u6d01\u5c42\u6570\u663e\u793a",
+    "Clean Stacks": "\u542f\u7528\u6574\u6d01\u5c42\u6570\u663e\u793a",
     "Hero Icon Size": "\u82f1\u96c4\u56fe\u6807\u5927\u5c0f",
     "Icon Shrink": "\u56fe\u6807\u7f29\u5c0f",
     "Improved Hint": "\u6539\u8fdb\u7684\u63d0\u793a",
@@ -2212,7 +2214,7 @@ const SETTINGS_FR_TEXT = {
     "click here": "Clique ici",
     "Click Radius": "Zone de clic",
     "Current Size": "Taille actuelle",
-    "Enable Clean Stacks": "Activer des stacks plus clean",
+    "Clean Stacks": "Activer des stacks plus clean",
     "Hero Icon Size": "Taille de l'ic\u00f4ne des h\u00e9ros",
     "Icon Shrink": "R\u00e9tr\u00e9cicement des ic\u00f4nes",
     "Improved Hint": "Indice am\u00e9lior\u00e9",
@@ -2721,7 +2723,7 @@ const SETTINGS_PT_TEXT = {
     "click here": "Clique aqui",
     "Click Radius": "Clique em Raio",
     "Current Size": "Tamanho atual",
-    "Enable Clean Stacks": "Habilitar pilhas limpas",
+    "Clean Stacks": "Habilitar pilhas limpas",
     "Hero Icon Size": "Tamanho do \u00edcone do her\u00f3i",
     "Icon Shrink": "Encolher \u00edcone",
     "Improved Hint": "Dica melhorada",
@@ -3229,7 +3231,7 @@ const SETTINGS_PT_BR_TEXT = {
     "click here": "Clique aqui",
     "Click Radius": "Raio do click",
     "Current Size": "Tamanho atual",
-    "Enable Clean Stacks": "Habilitar pilhas limpas",
+    "Clean Stacks": "Habilitar pilhas limpas",
     "Hero Icon Size": "Tamanho do \u00edcone do her\u00f3i",
     "Icon Shrink": "Encolher \u00edcone",
     "Improved Hint": "Dica melhorada",
@@ -3739,7 +3741,7 @@ const SETTINGS_ES_TEXT = {
     "click here": "haga clic aqu\u00ed",
     "Click Radius": "Haga clic en Radio",
     "Current Size": "Tama\u00f1o actual",
-    "Enable Clean Stacks": "Habilitar pilas limpias",
+    "Clean Stacks": "Habilitar pilas limpias",
     "Hero Icon Size": "Tama\u00f1o del icono del h\u00e9roe",
     "Icon Shrink": "Icono Reducir",
     "Improved Hint": "Pista mejorada",
@@ -6788,6 +6790,9 @@ const MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_REM_TUNNELS", min: 0, max: 1, step: 1 },
     { key: "MINIMAP_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+const MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", min: 0, max: 1, step: 1 }
+];
 const COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -6837,6 +6842,10 @@ const COMPACT_SCHEMA_2_5_0 = AppendUniqueSchemaFields(
         SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS,
         MINIMAP_REM_TUNNELS_SCHEMA_FIELDS
     )
+);
+const COMPACT_SCHEMA_2_5_1 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_5_0,
+    MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
@@ -6943,6 +6952,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.0": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_0
+    },
+    "2.5.1": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_1
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -17227,7 +17240,7 @@ function GetSettingsTabIconSource(tabName) {
         case "UI": return "s2r://panorama/images/icons/icon_reorder.vsvg";
         case "Overlay": return "s2r://panorama/images/icons/icon_graph.vsvg";
         case "Minimap": return "s2r://panorama/images/icons/icon_report.vsvg";
-        case "Audio": return "s2r://panorama/images/icons/icon_sound_on.vsvg";
+        case "Audio": return "s2r://panorama/images/qollock/audio_nav_icon.vsvg";
         default: return "";
     }
 }
@@ -17661,6 +17674,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
             // Hidden from UI by request; remains configurable via defaults/presets/import.
             CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
             CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
@@ -17738,7 +17752,6 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
-        CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);
@@ -17778,11 +17791,18 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "slider", -2000, 2000, 5);
         CreateRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
     } else if (currentTab === "Minimap") {
-        CreateSectionTitle(list, "Minimap");
+        CreateSectionTitle(list, "Base");
         CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
         CreateRow(list, "Minimalist Opacity", "MINIMAL_MINIMAP_OPACITY", "slider", 0, 1.0, 0.05);
         CreateRow(list, "Flip", "MINIMAP_FLIP", "toggle", null, null, null, null, "Rotates the static minimap 180 degrees.");
         CreateRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
+        CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
+        CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
+        CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
+        CreateRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "slider", -100, 1000, 5);
+        CreateSeparator(list);
+        CreateSectionTitle(list, "Addons");
+        CreateRow(list, "Elevation Markers", "ENABLE_MINIMAP_ELEVATION_MARKERS", "toggle", null, null, null, null, "Shows relative elevation difference between you and players.");
         CreateInlineSecondaryCheckboxToggleRow(
             list,
             "Bridge Buff Timer",
@@ -17804,10 +17824,6 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Crate Overlay", "ENABLE_MINIMAP_CRATE_OVERLAY", "toggle", null, null, null, null, "Midtown-only crate markers on the minimap.");
         CreateRow(list, "Rem Tunnels", "ENABLE_MINIMAP_REM_TUNNELS", "toggle", null, null, null, null, "Show an overlay of the underground tunnels.");
         CreateRow(list, "Rem Tunnels Opacity", "MINIMAP_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
-        CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
-        CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
-        CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
-        CreateRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "slider", -100, 1000, 5);
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Alt Zoom", "ENABLE_ALT_ZOOM", "Ability Menu Open", function(sectionParent) {
             CreateRow(sectionParent, "Draw Over UI", "ALT_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
