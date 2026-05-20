@@ -242,6 +242,41 @@
 	visibility: visible;
 }
 
+#CitadelHudQuickbuy.enhanced_quickbuy_active .HudQuickbuyElement
+{
+	margin-left: 430px;
+}
+
+#CitadelHudQuickbuy.enhanced_quickbuy_active #HudMini,.enhanced_quickbuy_active #CitadelHudQuickbuy #HudMini,#CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded,.enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded
+{
+	margin-left: 430px !important;
+}
+
+#CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded
+{
+	margin-bottom: 96px;
+}
+
+#CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyUpcomingPreviewContainer,.enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 510px !important;
+}
+
+.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active .HudQuickbuyElement
+{
+	margin-left: 480px;
+}
+
+.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active #HudMini,.hud_shift_active .enhanced_quickbuy_active #CitadelHudQuickbuy #HudMini,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded,.hud_shift_active .enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded
+{
+	margin-left: 480px !important;
+}
+
+.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyUpcomingPreviewContainer,.hud_shift_active .enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 560px !important;
+}
+
 .gShopOpen #QuickbuyUpcomingPreviewContainer
 {
 	visibility: collapse;
@@ -1124,23 +1159,8 @@ VerticalScrollBar
 	margin-top: 10px;
 }
 
-.hud_shift_active .ItemsReady #HudMini
+.hud_shift_active .ItemsReady #HudMini,.hud_shift_active #HudMini
 {
 	margin-left: 480px;
-}
-
-.hud_shift_active #HudMini
-{
-	margin-left: 480px;
-}
-
-.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded
-{
-	margin-left: 480px;
-}
-
-.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyUpcomingPreviewContainer
-{
-	margin-left: 560px;
 }
 
