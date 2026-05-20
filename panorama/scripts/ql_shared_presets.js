@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.5.0";
+var QOL_SCHEMA_SEMVER = "2.5.1";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -808,6 +808,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_MINIMAP_CRATE_OVERLAY: 0,
         ENABLE_MINIMAP_REM_TUNNELS: 0,
         MINIMAP_REM_TUNNELS_OPACITY: 0.75,
+        ENABLE_MINIMAP_ELEVATION_MARKERS: 0,
         ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0,
         MINIMAP_X_OFFSET: 0,
         MINIMAP_Y_OFFSET: 0,

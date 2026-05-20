@@ -336,11 +336,59 @@
 	visibility: visible;
 }
 
+#NotifyButton
+{
+	margin-left: 0px;
+	width: 30px;
+	height: 30px;
+	vertical-align: center;
+	horizontal-align: right;
+	visibility: collapse;
+	background-size: auto 52%;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url("s2r://panorama/images/icons/icon_send.vsvg");
+	wash-color: #101515;
+	opacity: 0.55;
+}
+
+.ToastPanel #NotifyButton
+{
+	visibility: collapse;
+}
+
+.IsBeingDragged #NotifyButton
+{
+	visibility: collapse;
+}
+
+#NotifyButton:hover
+{
+	brightness: 1.15;
+	wash-color: #66ffd9;
+	opacity: 0.75;
+	pre-transform-scale2d: 1.1;
+	transition-property: brightness,pre-transform-scale2d,opacity,wash-color;
+	transition-duration: 0.1s;
+}
+
+.shop_click_to_notify_active .HasRemainingSoulsNeeded #NotifyButton.CanClickToNotify,
+#CitadelHudQuickbuy.shop_click_to_notify_active .HasRemainingSoulsNeeded #NotifyButton.CanClickToNotify
+{
+	visibility: visible;
+}
+
 #ControlIcons
 {
 	flow-children: right;
 	horizontal-align: right;
 	vertical-align: middle;
+}
+
+.shop_click_to_notify_active #ControlIcons,
+#CitadelHudQuickbuy.shop_click_to_notify_active #ControlIcons
+{
+	width: 90px;
 }
 
 .QuickbuyLabel,.QuickbuyLabelQueueSize

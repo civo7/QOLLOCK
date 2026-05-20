@@ -31,6 +31,45 @@
 	border-radius: 9999px;
 }
 
+.qol_minimap_elevation_markers_active .map_button.player.enemy.arrowUp,
+.qol_minimap_elevation_markers_active .map_button.player.enemy.arrowDown,
+.qol_minimap_elevation_markers_active .map_button.player.friend.arrowUp,
+.qol_minimap_elevation_markers_active .map_button.player.friend.arrowDown,
+.qol_minimap_elevation_markers_active .map_button.player.arrowUp,
+.qol_minimap_elevation_markers_active .map_button.player.arrowDown
+{
+	visibility: visible;
+}
+
+.qol_minimap_elevation_markers_active .map_button.player #ArrowImage
+{
+	background-image: url("s2r://panorama/images/minimap/player_arrow_friend_psd.vtex");
+	background-size: 100% 100%;
+	width: 150%;
+	height: 100%;
+	z-index: 100;
+	brightness: 2.5;
+}
+
+.qol_minimap_elevation_markers_active .map_button.player.arrowUp #ArrowImage
+{
+	wash-color: orange;
+	transform: rotateZ(-90deg);
+	visibility: visible;
+}
+
+.qol_minimap_elevation_markers_active .map_button.player.arrowDown #ArrowImage
+{
+	wash-color: limegreen;
+	transform: rotateZ(90deg);
+	visibility: visible;
+}
+
+.qol_minimap_elevation_markers_active .map_button.player.localplayer #ArrowImage
+{
+	opacity: 0;
+}
+
 .gScoreboardOpen .map_button.player
 {
 	transform: scaleX(1) scaleY(1) !important;
