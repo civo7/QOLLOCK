@@ -87,6 +87,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_UNSPENT_SOULS: "BreadRollius",
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
+    ENABLE_SHOP_CLICK_TO_NOTIFY: "Hanturaya",
+    ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya",
     SUPPORT_16_10: "Karma",
     SUPPORT_4_3: "Gyzeh",
     ENABLE_COMBAT_INDICATOR: "Goblin Man Sam",
@@ -113,6 +115,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MINIMAP_BUFF_TIMER: "BreadRollius",
     ENABLE_MINIMAP_REJUV_TIMER: "BreadRollius",
     ENABLE_MINIMAP_CRATE_OVERLAY: "gfkm",
+    ENABLE_MINIMAP_REM_TUNNELS: "oGeorge",
     ENABLE_ENHANCED_QUICKBUY: "Aminsx",
     ENABLE_URN_COLORS: "Civo"
 };
@@ -126,6 +129,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "DISABLE_PLAYER_NAME_BLUR": "The world blur behind player names in the top bar.",
     "DISABLE_QUICK_BUY": "The item buying auto queue system in the shop menu.",
     "ENABLE_ENHANCED_QUICKBUY": "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
+    "ENABLE_SHOP_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a purchase.",
+    "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
     "DISABLE_SHOP_BLUE": "The world background blur effect behind the shop menu.",
     "ENABLE_AMMO_STATUS": "Visual indicator of your current ammo.",
     "ENABLE_BUFF_HUD": "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.",
@@ -161,6 +166,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE": "Moves the Bridge Buff timer onto the bridge with two smaller centered copies.",
     "ENABLE_MINIMAP_REJUV_TIMER": "Shows a visual indicator in the minimap of when Mid Boss will spawn.",
     "ENABLE_MINIMAP_CRATE_OVERLAY": "Shows Midtown crate markers in the minimap.",
+    "ENABLE_MINIMAP_REM_TUNNELS": "Show an overlay of the underground tunnels.",
+    "MINIMAP_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
     "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "ENABLE_MISSING_HERO": "Greys out heros in the top bar when missing on the map.",
@@ -447,6 +454,8 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_MINIMAP_BUFF_TIMER: "low",
     ENABLE_MINIMAP_REJUV_TIMER: "low",
     ENABLE_MINIMAP_CRATE_OVERLAY: "low",
+    ENABLE_MINIMAP_REM_TUNNELS: "low",
+    MINIMAP_REM_TUNNELS_OPACITY: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
     ENABLE_MIN_SOULS: "medium",
@@ -463,6 +472,8 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_REJUV_HUD: "low",
     ENABLE_RELOAD_COOLDOWN: "medium",
     ENABLE_SHOP_STATS: "low",
+    ENABLE_SHOP_CLICK_TO_NOTIFY: "low",
+    ENABLE_SHOP_RECENT_PURCHASES: "low",
     ENABLE_SIMPLIFY_SHOP_STATS: "low",
     ENABLE_SIMPLIFY_ABILITY_ICONS: "none",
     ENABLE_SIMPLIFY_COMPASS: "medium",
@@ -765,7 +776,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.4.0";
+    : "2.5.0";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -897,19 +908,11 @@ var gSettingsListSearchModeActive = false;
 var gSettingsTransitionWatchToken = 0;
 var gSettingsTransitionWatchRunning = false;
 var gSettingsOpenedInHideout = false;
-var gSettingsEscapeOpenedByKeybind = false;
-var gSettingsEscapeOpenRequestToken = 0;
-var gSettingsEscapeOpenRequestPending = false;
-var gSettingsKeybindDebounceUntilMs = 0;
 var gSettingsTransitionCloseCooldownUntilMs = 0;
 const SETTINGS_LIST_REFRESH_DEBOUNCE_SEC = 0.06;
 const SETTINGS_TRANSITION_WATCH_INTERVAL_SEC = 0.25;
 const SETTINGS_TRANSITION_CLOSE_COOLDOWN_MS = 1000;
 const SETTINGS_TRANSITION_SIGNAL_RECHECK_SEC = [0.0, 0.2, 0.6];
-const SETTINGS_KEYBIND_DEBOUNCE_MS = 250;
-const SETTINGS_ESCAPE_OPEN_POLL_DELAY_SEC = 0.03;
-const SETTINGS_ESCAPE_OPEN_POLL_MAX_ATTEMPTS = 12;
-const SETTINGS_ESCAPE_OPEN_SETTLE_DELAY_SEC = 0.06;
 
 const SETTINGS_LANGUAGE_ENGLISH = 0;
 const SETTINGS_LANGUAGE_RUSSIAN = 1;
@@ -4106,13 +4109,6 @@ function SettingsRuntimeLog(msg) {
     $.Msg("[QOLLock][SettingsRuntime] " + String(msg || ""));
 }
 
-const SETTINGS_HOTKEY_DEBUG = false;
-const SETTINGS_HOTKEY_ENABLED = false;
-function SettingsHotkeyDebugLog(msg) {
-    if (!SETTINGS_HOTKEY_DEBUG) return;
-    $.Msg("[QOLLock][SettingsHotkeyDbg] " + String(msg || ""));
-}
-
 const MINESWEEPER_ROWS = 9;
 const MINESWEEPER_COLS = 9;
 const MINESWEEPER_MINES = 10;
@@ -5291,6 +5287,29 @@ function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
     if (utils && typeof utils.NormalizeTopbarAllyHpWarningConfig === "function") {
         utils.NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig);
     }
+}
+
+function CompareSchemaSemver(a, b) {
+    var aa = String(a || "").split(".");
+    var bb = String(b || "").split(".");
+    for (var i = 0; i < 3; i++) {
+        var av = Math.max(0, Math.round(Number(aa[i]) || 0));
+        var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
+        if (av < bv) return -1;
+        if (av > bv) return 1;
+    }
+    return 0;
+}
+
+function NormalizeCompassSpeedSchemaMigration(configTarget, sourceConfig, schemaVersion) {
+    if (!configTarget || !sourceConfig) return;
+    if (CompareSchemaSemver(schemaVersion || LATEST_COMPACT_SEMVER, "2.5.0") >= 0) return;
+    if (!sourceConfig.hasOwnProperty("ENABLE_COMPASS_SPEED")) return;
+    if (Number(sourceConfig.ENABLE_COMPASS_SPEED) !== 1) return;
+    if (Number(sourceConfig.ENABLE_COMPASS) === 1) return;
+
+    // Before 2.5.0, speed was only reachable through Compass itself.
+    configTarget.ENABLE_COMPASS_SPEED = 0;
 }
 
 function IsZipBoostPreviewConfig(configId) {
@@ -6765,6 +6784,10 @@ const HUD_SECTION_AND_PANEL_SCHEMA_FIELDS = [
 const MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_CRATE_OVERLAY", min: 0, max: 1, step: 1 }
 ];
+const MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMAP_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "MINIMAP_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
+];
 const COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -6773,6 +6796,10 @@ const SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
 ];
 const ENHANCED_QUICKBUY_SCHEMA_FIELDS = [
     { key: "ENABLE_ENHANCED_QUICKBUY", min: 0, max: 1, step: 1 }
+];
+const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_3_4,
@@ -6802,6 +6829,13 @@ const COMPACT_SCHEMA_2_4_0 = AppendUniqueSchemaFields(
     AppendUniqueSchemaFields(
         SHOP_STATS_MINIMALIST_SCHEMA_FIELDS,
         ENHANCED_QUICKBUY_SCHEMA_FIELDS
+    )
+);
+const COMPACT_SCHEMA_2_5_0 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_2_4_0,
+    AppendUniqueSchemaFields(
+        SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS,
+        MINIMAP_REM_TUNNELS_SCHEMA_FIELDS
     )
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
@@ -6905,6 +6939,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.4.0": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_4_0
+    },
+    "2.5.0": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_0
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -7127,6 +7165,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeCompassSpeedSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
     SetRuntimePresetName("");
@@ -7553,10 +7592,12 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
     var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "560px";
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("MetroModalContainer");
     modalContainer.AddClass("BuildSaveConfirmModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     closeBtn.AddClass("BuildSaveConfirmCloseBtn");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
@@ -7587,6 +7628,7 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
     btnRow.style.marginTop = "14px";
 
     var confirmBtn = $.CreatePanel("Button", btnRow, "BuildSaveConfirmButton");
+    confirmBtn.AddClass("QOLUnifiedModalPrimary");
     confirmBtn.AddClass("ModalBtnApply");
     confirmBtn.AddClass("MetroModalBtn");
     confirmBtn.AddClass("BuildSaveConfirmActionBtn");
@@ -7604,7 +7646,7 @@ function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
     confirmBtn.SetPanelEvent("onactivate", function() {
         CloseModal(overlay);
         if (saveDisabled) {
-            $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
+            $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7");
             return;
         }
         ActivateBuildSaveFromUi(saveBtn, saveLbl);
@@ -8481,9 +8523,11 @@ function OpenBuildSaveHideoutOnlyModal() {
     var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "250px";
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("MetroModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
     closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
@@ -8501,6 +8545,7 @@ function OpenBuildSaveHideoutOnlyModal() {
     var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
     btnRow.AddClass("MetroModalBtnRow");
     var closeModalBtn = $.CreatePanel("Button", btnRow, "");
+    closeModalBtn.AddClass("QOLUnifiedModalPrimary");
     closeModalBtn.AddClass("ModalBtnApply");
     closeModalBtn.AddClass("MetroModalBtn");
     var closeModalLbl = $.CreatePanel("Label", closeModalBtn, "");
@@ -8522,9 +8567,11 @@ function OpenSavingSettingsModal() {
     var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "560px";
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("MetroModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
     closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
@@ -8581,6 +8628,7 @@ function OpenSavingSettingsModal() {
     var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
     btnRow.AddClass("MetroModalBtnRow");
     var closeModalBtn = $.CreatePanel("Button", btnRow, "");
+    closeModalBtn.AddClass("QOLUnifiedModalPrimary");
     closeModalBtn.AddClass("ModalBtnApply");
     closeModalBtn.AddClass("MetroModalBtn");
     var closeModalLbl = $.CreatePanel("Label", closeModalBtn, "");
@@ -8601,9 +8649,11 @@ function OpenOptimizeFilterDownloadModal() {
     var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "560px";
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("OptimizeFilterModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
     closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
@@ -8655,6 +8705,7 @@ function OpenOptimizeFilterDownloadModal() {
     btnRow.AddClass("OptimizeFilterModalBtnRow");
 
     var downloadBtn = $.CreatePanel("Button", btnRow, "");
+    downloadBtn.AddClass("QOLUnifiedModalPrimary");
     downloadBtn.AddClass("ModalBtnApply");
     downloadBtn.AddClass("OptimizeFilterModalDownloadBtn");
 
@@ -8680,10 +8731,12 @@ function OpenSupportCommissionModal() {
     var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
     modalContainer.style.width = "620px";
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("OptimizeFilterModalContainer");
     modalContainer.AddClass("SupportCommissionModalContainer");
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
     closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
@@ -8721,12 +8774,13 @@ function OpenSupportCommissionModal() {
     contactText.text = LocalizeSettingsText("Depending on complexity and work involved, contact me on Discord", true);
 
     var contactDiscordBtn = $.CreatePanel("Button", contactRow, "SupportCommissionModalDiscordBtn");
+    contactDiscordBtn.AddClass("QOLUnifiedModalPrimary");
     contactDiscordBtn.AddClass("HeaderDiscordLinkButton");
     contactDiscordBtn.AddClass("SupportTabDiscordIconBtn");
     contactDiscordBtn.AddClass("SupportTabDiscordInlineIconBtn");
     EnsureDiscordTextureLogo(contactDiscordBtn, "SupportCommissionModalDiscordLogoTexture", "HeaderDiscordLogoTexture");
     contactDiscordBtn.SetPanelEvent("onactivate", function() {
-        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
+        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7");
     });
 }
 
@@ -9091,6 +9145,10 @@ function RenderConfigTabContent(list) {
         { label: "Swap" }
     ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
 
+    var dividerAfterGeneral = $.CreatePanel("Panel", list, "ConfigDividerAfterGeneral");
+    dividerAfterGeneral.AddClass("ConfigTabDivider");
+    dividerAfterGeneral.AddClass("RowSeparator");
+
     var cardExport = $.CreatePanel("Panel", list, "ConfigCardExport");
     cardExport.AddClass("ConfigTabCard");
 
@@ -9127,6 +9185,10 @@ function RenderConfigTabContent(list) {
             });
         }
     });
+
+    var dividerAfterExport = $.CreatePanel("Panel", list, "ConfigDividerAfterExport");
+    dividerAfterExport.AddClass("ConfigTabDivider");
+    dividerAfterExport.AddClass("RowSeparator");
 
     var cardImport = $.CreatePanel("Panel", list, "ConfigCardImport");
     cardImport.AddClass("ConfigTabCard");
@@ -9296,6 +9358,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeAllyColorWarningConfig(candidateConfig, parsed);
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
+    NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
     return { candidateConfig: candidateConfig, diagnostics: diagnostics };
 }
@@ -9545,6 +9608,7 @@ function OpenConfigDiffPreviewModal(options) {
     });
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ConfigDiffModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.AddClass("MetroModalContainer");
     modalContainer.AddClass("ConfigDiffModalContainer");
     modalContainer.SetPanelEvent("onactivate", function() {});
@@ -9563,6 +9627,7 @@ function OpenConfigDiffPreviewModal(options) {
     titleSpacer.AddClass("ConfigDiffTitleSpacer");
 
     var closeBtn = $.CreatePanel("Button", titleRow, "ConfigDiffCloseBtn");
+    closeBtn.AddClass("QOLUnifiedModalClose");
     closeBtn.AddClass("ConfigDiffCloseBtn");
     var closeIcon = $.CreatePanel("Label", closeBtn, "");
     closeIcon.text = "X";
@@ -9649,6 +9714,7 @@ function OpenConfigDiffPreviewModal(options) {
     btnSpacer.AddClass("ConfigDiffBtnSpacer");
 
     var cancelBtn = $.CreatePanel("Button", btnRow, "");
+    cancelBtn.AddClass("QOLUnifiedModalSecondary");
     cancelBtn.AddClass("ModalBtnClose");
     cancelBtn.AddClass("ConfigDiffCancelBtn");
     var cancelLbl = $.CreatePanel("Label", cancelBtn, "");
@@ -9656,6 +9722,7 @@ function OpenConfigDiffPreviewModal(options) {
     cancelBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
 
     var applyBtn = $.CreatePanel("Button", btnRow, "");
+    applyBtn.AddClass("QOLUnifiedModalPrimary");
     applyBtn.AddClass("ModalBtnApply");
     applyBtn.AddClass("ConfigDiffApplyBtn");
     var applyLbl = $.CreatePanel("Label", applyBtn, "");
@@ -13701,7 +13768,9 @@ function BuildCommunityPresetEntries() {
         label: "T1FF4NNY",
         presetExport: "[QOL-2-3-2]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WVkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkE5g"
     });
-    for (var i = entries.length; i < 60; i++) {
+    entries.push({ label: "Joey", preset: "Joey" });
+    entries.push({ label: "Zyartic", preset: "Zyartic" });
+    for (var i = entries.length; i < 66; i++) {
         entries.push({ label: "Available", available: false });
     }
     return entries;
@@ -17127,6 +17196,7 @@ function GetSettingsTabOrder() {
 function GetSettingsTabDisplayName(tabName) {
     var raw = String(tabName || "");
     if (raw === "Config") return "Settings";
+    if (raw === "MOG") return "MOGLOCK";
     return raw;
 }
 
@@ -17494,7 +17564,7 @@ function RenderCurrentTabContent(list) {
         CreateSeparator(list);
             CreatePresetGrid(list, playerPresetsTitle, playerPresetEntries, 5, "great");
         CreateSeparator(list);
-        var communitySection = CreatePresetGrid(list, communityPresetsTitle, customEntries, 6, "custom");
+        CreatePresetGrid(list, communityPresetsTitle, customEntries, 6, "custom");
 
         var communityHintRow = $.CreatePanel("Panel", list, "CommunityPresetHintRow");
         communityHintRow.AddClass("CommunityPresetHintRow");
@@ -17510,15 +17580,6 @@ function RenderCurrentTabContent(list) {
         communityHintLink.SetPanelEvent("onactivate", function() {
             OpenSupportCommissionModal();
         });
-        if (
-            communitySection &&
-            communitySection.grid &&
-            communitySection.grid.IsValid &&
-            communitySection.grid.IsValid()
-        ) {
-            list.MoveChildBefore(communityHintRow, communitySection.grid);
-        }
-
         RefreshActivePresetHighlight();
     } else if (currentTab === "Crosshair") {
         CreateAnimatedInlineToggleSection(list, "Item Cooldowns", "ENABLE_PASSIVE_COOLDOWN", "Tracked cooldowns near crosshair", function(sectionParent) {
@@ -17598,7 +17659,6 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Failed Hint", "ENABLE_HIDE_FAILED_HINT", "toggle", null, null, null, [{ invert: true }], "Low Stamina Popup");
             CreateRow(sectionParent, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
             CreateRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
-            CreateRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
             // Hidden from UI by request; remains configurable via defaults/presets/import.
             CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
@@ -17634,6 +17694,8 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Click to Notify", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
@@ -17676,6 +17738,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
+        CreateRow(list, "Enable Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);
@@ -17716,7 +17779,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
     } else if (currentTab === "Minimap") {
         CreateSectionTitle(list, "Minimap");
-        CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null);
+        CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
         CreateRow(list, "Minimalist Opacity", "MINIMAL_MINIMAP_OPACITY", "slider", 0, 1.0, 0.05);
         CreateRow(list, "Flip", "MINIMAP_FLIP", "toggle", null, null, null, null, "Rotates the static minimap 180 degrees.");
         CreateRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
@@ -17739,6 +17802,8 @@ function RenderCurrentTabContent(list) {
             "Moves the Mid Boss timer onto the bridge area of the minimap."
         );
         CreateRow(list, "Crate Overlay", "ENABLE_MINIMAP_CRATE_OVERLAY", "toggle", null, null, null, null, "Midtown-only crate markers on the minimap.");
+        CreateRow(list, "Rem Tunnels", "ENABLE_MINIMAP_REM_TUNNELS", "toggle", null, null, null, null, "Show an overlay of the underground tunnels.");
+        CreateRow(list, "Rem Tunnels Opacity", "MINIMAP_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
         CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
         CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
         CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
@@ -18217,7 +18282,7 @@ function RenderCurrentTabContent(list) {
                 hint: "Help, feedback, and community",
                 iconSrc: "s2r://panorama/images/qollock/discord_logo.vtex",
                 iconClass: "SupportCtaBtnIconDiscord",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S"); }
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
             },
             {
                 id: "SupportCtaCommissionBtn",
@@ -18291,7 +18356,7 @@ function RenderCurrentTabContent(list) {
         supportThanksRule.AddClass("SupportThanksRule");
 
         var supportThanksCreatorEntries = [
-            { label: "Civo", role: "Creator" }
+            { label: "Civo", role: "Creator", url: "https://ko-fi.com/civocivocivo" }
         ];
         var supportThanksContributorEntries = [
             { label: "Bonclide", role: "Contributor", url: "https://gamebanana.com/members/2408486" },
@@ -18312,8 +18377,9 @@ function RenderCurrentTabContent(list) {
             { label: "Karma", role: "Contributor" },
             { label: "Somarotsaway", role: "Contributor", url: "https://gamebanana.com/members/3961199" },
             { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" },
-            { label: "gfkm", role: "Contributor" },
-            { label: "Aminsx", role: "Contributor" }
+            { label: "gfkm", role: "Contributor", url: "https://gamebanana.com/members/5349748" },
+            { label: "Aminsx", role: "Contributor", url: "https://gamebanana.com/members/4798159" },
+            { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" }
         ];
         var supportThanksTranslatorEntries = [
             { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex" },
@@ -18324,13 +18390,21 @@ function RenderCurrentTabContent(list) {
         ];
         var supportCreatorGroup = CreateSupportThanksGroup(supportThanksBlock, "Created By", supportThanksCreatorEntries, 1, "SupportThanksGroupCreator");
         if (supportCreatorGroup) {
-            var creatorFooter = $.CreatePanel("Label", supportCreatorGroup, "");
-            creatorFooter.AddClass("SupportYoshiFooterText");
-            creatorFooter.AddClass("SupportCreatorFooterText");
-            creatorFooter.text = "yoshii pls hire me";
+            var creatorPlaque = supportCreatorGroup.FindChildrenWithClassTraverse
+                ? ((supportCreatorGroup.FindChildrenWithClassTraverse("SupportThanksPlaqueRole_Creator") || [])[0] || null)
+                : null;
+            var creatorPlaqueContent = creatorPlaque && creatorPlaque.FindChildrenWithClassTraverse
+                ? ((creatorPlaque.FindChildrenWithClassTraverse("SupportThanksPlaqueContent") || [])[0] || null)
+                : null;
+            if (creatorPlaqueContent) {
+                var creatorFooter = $.CreatePanel("Label", creatorPlaqueContent, "");
+                creatorFooter.AddClass("SupportYoshiFooterText");
+                creatorFooter.AddClass("SupportCreatorFooterText");
+                creatorFooter.text = "yoshii pls hire me";
+            }
         }
-        CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 5, "SupportThanksGroupContributor");
-        CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 5, "SupportThanksGroupTranslator");
+        CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 6, "SupportThanksGroupContributor");
+        CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 6, "SupportThanksGroupTranslator");
     }
 }
 
@@ -18943,7 +19017,7 @@ $.BuildUI = function() {
     }
     discordFooterLabel.text = "DISCORD";
     discordFooterBtn.SetPanelEvent("onactivate", function() {
-        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/YkRgwfPt9S");
+        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7");
     });
     EnsureDiscordTextureLogo(discordFooterBtn, "FooterDiscordLogoTexture", "FooterDiscordLogoTexture");
     var discordFooterIcon = discordFooterBtn.FindChildTraverse("FooterDiscordLogoTexture");
@@ -19277,295 +19351,8 @@ $.ToggleSettingsWindow = function() {
     }
 };
 
-function IsChatOpenForSettingsBind() {
-    try {
-        var chat = $("#Chat");
-        if (chat && chat.BHasClass && chat.BHasClass("ChatExpanded")) return true;
-    } catch (eChatOpen) {}
-    return false;
-}
-
-function IsSettingsPanelVisibleMaybe(panel) {
-    if (!panel || (panel.IsValid && !panel.IsValid())) return false;
-    try {
-        if (panel.visible === false) return false;
-    } catch (e0) {}
-    var vis = "";
-    try {
-        if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
-            vis = String(panel.style.visibility || "").toLowerCase();
-        }
-    } catch (e1) {
-        vis = "";
-    }
-    if (vis === "collapse" || vis === "none" || vis === "hidden") return false;
-    return true;
-}
-
-function BuildSettingsEscapeTargets() {
-    var root = $.GetContextPanel();
-    var targets = [];
-    function pushUnique(panel) {
-        if (!panel || (panel.IsValid && !panel.IsValid())) return;
-        for (var i = 0; i < targets.length; i++) {
-            if (targets[i] === panel) return;
-        }
-        targets.push(panel);
-    }
-
-    var escapeMenu = GetSettingsEscapeMenuPanel();
-    var cursor = null;
-    try {
-        cursor = escapeMenu && escapeMenu.GetParent ? escapeMenu.GetParent() : null;
-    } catch (eEscapeParent) {
-        cursor = null;
-    }
-
-    var guard = 0;
-    while (cursor && guard < 64) {
-        pushUnique(cursor);
-        try {
-            cursor = cursor.GetParent ? cursor.GetParent() : null;
-        } catch (eGetParent) {
-            cursor = null;
-        }
-        guard++;
-    }
-
-    if (targets.length === 0) {
-        cursor = root;
-        guard = 0;
-        while (cursor && guard < 64) {
-            try {
-                if (!(cursor.id && cursor.id === "EscapeMenu")) pushUnique(cursor);
-            } catch (eFallbackId) {
-                pushUnique(cursor);
-            }
-            try {
-                cursor = cursor.GetParent ? cursor.GetParent() : null;
-            } catch (eFallbackParent) {
-                cursor = null;
-            }
-            guard++;
-        }
-    }
-    return targets;
-}
-
-function IsSettingsEscapeMenuOpen() {
-    var targets = BuildSettingsEscapeTargets();
-    for (var i = 0; i < targets.length; i++) {
-        var panel = targets[i];
-        try {
-            if (panel && panel.BHasClass && panel.BHasClass("ShowEscapeMenu")) return true;
-        } catch (eHasClass) {}
-    }
-    return false;
-}
-
-function SetSettingsEscapeMenuOpenFallback(shouldOpen) {
-    var targets = BuildSettingsEscapeTargets();
-    for (var i = 0; i < targets.length; i++) {
-        var panel = targets[i];
-        if (!panel) continue;
-        try {
-            if (shouldOpen && panel.AddClass) panel.AddClass("ShowEscapeMenu");
-            if (!shouldOpen && panel.RemoveClass) panel.RemoveClass("ShowEscapeMenu");
-        } catch (eToggleClass) {}
-        try {
-            if (shouldOpen && panel.AddClass) panel.AddClass("QOLHotkeyEscapeOpen");
-            if (!shouldOpen && panel.RemoveClass) panel.RemoveClass("QOLHotkeyEscapeOpen");
-        } catch (eRootToggleClass) {}
-    }
-    var escapeMenu = GetSettingsEscapeMenuPanel();
-    if (escapeMenu) {
-        try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("ShowEscapeMenu"); } catch (eEscapeMenuClass) {}
-        try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("QOLHotkeyEscapeOpen"); } catch (eEscapeMenuHotkeyClass) {}
-        try {
-            if (shouldOpen && escapeMenu.AddClass) escapeMenu.AddClass("QOLHotkeyEscapeShellVisible");
-            if (!shouldOpen && escapeMenu.RemoveClass) escapeMenu.RemoveClass("QOLHotkeyEscapeShellVisible");
-        } catch (eEscapeMenuShellClass) {}
-    }
-}
-
-function DescribeSettingsEscapeTargetsForDebug() {
-    var targets = BuildSettingsEscapeTargets();
-    var parts = [];
-    for (var i = 0; i < targets.length; i++) {
-        var panel = targets[i];
-        if (!panel) continue;
-        var id = "";
-        var cls = "";
-        try { id = panel.id ? String(panel.id) : ""; } catch (eId) { id = ""; }
-        try { cls = panel.GetAttributeString ? String(panel.GetAttributeString("class", "")) : ""; } catch (eCls) { cls = ""; }
-        parts.push((id || panel.paneltype || "Panel") + "[" + cls + "]");
-    }
-    return parts.join(" > ");
-}
-
-function FindSettingsPanelFromRoot(root, id) {
-    if (!root || !id || !root.FindChildTraverse) return null;
-    try { return root.FindChildTraverse(id); } catch (e0) {}
-    return null;
-}
-
-function GetSettingsEscapeMenuPanel() {
-    var root = $.GetContextPanel();
-    var cursor = root;
-    var guard = 0;
-    while (cursor && guard < 64) {
-        try {
-            if (cursor.id === "EscapeMenu") return cursor;
-        } catch (eIdCheck) {}
-        try {
-            cursor = cursor.GetParent ? cursor.GetParent() : null;
-        } catch (eParent) {
-            cursor = null;
-        }
-        guard++;
-    }
-    if (!root || !root.FindChildTraverse) return null;
-    try { return root.FindChildTraverse("EscapeMenu"); } catch (e0) {}
-    return null;
-}
-
-function NormalizeSettingsEscapeMenuVisualState() {
-    var escapeMenu = GetSettingsEscapeMenuPanel();
-    if (!escapeMenu) return;
-    try { if (escapeMenu.RemoveClass) escapeMenu.RemoveClass("SettingsOpen"); } catch (e0) {}
-    try { if (escapeMenu.SetHasClass) escapeMenu.SetHasClass("SettingsOpen", false); } catch (e1) {}
-}
-
-function RequestSettingsEscapeMenuOpenNative() {
-    var commands = [
-        "game_action GameControls OpenMainMenu",
-        "game_action GameControls OpenMainMenu, Game Menu, , ",
-        "game_action MenuControls OpenMainMenu",
-        "game_action MenuControls OpenMainMenu, Game Menu, , ",
-        "game_action SpectatorControls OpenMainMenu",
-        "game_action SpectatorControls OpenMainMenu, Game Menu, , ",
-        "game_action ReplayControls OpenMainMenu",
-        "game_action ReplayControls OpenMainMenu, Game Menu, , "
-    ];
-    var didAny = false;
-    for (var i = 0; i < commands.length; i++) {
-        try {
-            var ok = RunConsoleCommandBestEffort(commands[i]);
-            SettingsHotkeyDebugLog("open_try idx=" + i + " ok=" + (ok ? "1" : "0") + " cmd=" + commands[i]);
-            if (ok) didAny = true;
-        } catch (eOpenCmd) {}
-    }
-    SettingsHotkeyDebugLog("open_dispatch didAny=" + (didAny ? "1" : "0"));
-    return didAny;
-}
-
-function CompleteSettingsWindowOpenFromKeybind(requestToken, openedEscapeForKeybind) {
-    if (requestToken !== gSettingsEscapeOpenRequestToken) return;
-    gSettingsEscapeOpenRequestPending = false;
-    gSettingsEscapeOpenedByKeybind = true;
-    var openDelay = openedEscapeForKeybind ? SETTINGS_ESCAPE_OPEN_SETTLE_DELAY_SEC : 0.0;
-    SettingsHotkeyDebugLog("complete_open token=" + requestToken + " delay=" + openDelay + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
-    $.Schedule(openDelay, function() {
-        if (requestToken !== gSettingsEscapeOpenRequestToken) return;
-        SettingsHotkeyDebugLog("complete_open_fire token=" + requestToken + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
-        NormalizeSettingsEscapeMenuVisualState();
-        $.ToggleSettingsWindow();
-        $.Schedule(0.0, NormalizeSettingsEscapeMenuVisualState);
-        $.Schedule(0.05, NormalizeSettingsEscapeMenuVisualState);
-    });
-}
-
-function PollSettingsEscapeMenuAndOpenSettings(requestToken, attemptsRemaining) {
-    if (requestToken !== gSettingsEscapeOpenRequestToken) return;
-    var escapeOpen = IsSettingsEscapeMenuOpen();
-    SettingsHotkeyDebugLog("poll token=" + requestToken + " attemptsRemaining=" + attemptsRemaining + " escapeOpen=" + (escapeOpen ? "1" : "0"));
-    if (escapeOpen) {
-        CompleteSettingsWindowOpenFromKeybind(requestToken, true);
-        return;
-    }
-    if (attemptsRemaining <= 0) {
-        SettingsHotkeyDebugLog("poll_timeout token=" + requestToken + " usingFallback=1");
-        SetSettingsEscapeMenuOpenFallback(true);
-        var fallbackOpen = IsSettingsEscapeMenuOpen();
-        SettingsHotkeyDebugLog("fallback_result token=" + requestToken + " escapeOpen=" + (fallbackOpen ? "1" : "0"));
-        if (fallbackOpen) {
-            CompleteSettingsWindowOpenFromKeybind(requestToken, true);
-            return;
-        }
-        gSettingsEscapeOpenRequestPending = false;
-        gSettingsEscapeOpenedByKeybind = false;
-        return;
-    }
-    $.Schedule(SETTINGS_ESCAPE_OPEN_POLL_DELAY_SEC, function() {
-        PollSettingsEscapeMenuAndOpenSettings(requestToken, attemptsRemaining - 1);
-    });
-}
-
-function QueueSettingsWindowOpenFromKeybind() {
-    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
-    var requestToken = gSettingsEscapeOpenRequestToken;
-    gSettingsEscapeOpenRequestPending = true;
-    gSettingsOpenGuardUntilMs = GetNowMs() + 500;
-    var hadEscapeOpen = IsSettingsEscapeMenuOpen();
-    SettingsHotkeyDebugLog("queue_open token=" + requestToken + " hadEscapeOpen=" + (hadEscapeOpen ? "1" : "0") + " guardUntil=" + gSettingsOpenGuardUntilMs);
-    SettingsHotkeyDebugLog("targets=" + DescribeSettingsEscapeTargetsForDebug());
-    SettingsHotkeyDebugLog("queue_open forceFallbackOpen=1");
-    SetSettingsEscapeMenuOpenFallback(true);
-    NormalizeSettingsEscapeMenuVisualState();
-    var fallbackOpen = IsSettingsEscapeMenuOpen();
-    SettingsHotkeyDebugLog("queue_open fallbackOpen=" + (fallbackOpen ? "1" : "0"));
-    if (fallbackOpen) {
-        CompleteSettingsWindowOpenFromKeybind(requestToken, true);
-        return;
-    }
-    RequestSettingsEscapeMenuOpenNative();
-    $.Schedule(0.0, function() {
-        PollSettingsEscapeMenuAndOpenSettings(requestToken, SETTINGS_ESCAPE_OPEN_POLL_MAX_ATTEMPTS);
-    });
-}
-
-function ToggleSettingsWindowFromKeybind() {
-    if (IsChatOpenForSettingsBind()) {
-        SettingsHotkeyDebugLog("key_ignored reason=chat");
-        return;
-    }
-    var nowKeybindMs = GetNowMs();
-    if (nowKeybindMs < gSettingsKeybindDebounceUntilMs) {
-        SettingsHotkeyDebugLog("key_ignored reason=debounce");
-        return;
-    }
-    gSettingsKeybindDebounceUntilMs = nowKeybindMs + SETTINGS_KEYBIND_DEBOUNCE_MS;
-    if (gSettingsEscapeOpenRequestPending) {
-        SettingsHotkeyDebugLog("key_ignored reason=open_pending");
-        return;
-    }
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    var isVisible = !!(win && win.BHasClass && win.BHasClass("Visible"));
-    SettingsHotkeyDebugLog("key_toggle visible=" + (isVisible ? "1" : "0") + " escapeOwned=" + (gSettingsEscapeOpenedByKeybind ? "1" : "0") + " escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
-    if (isVisible) {
-        SetSettingsEscapeMenuOpenFallback(false);
-        NormalizeSettingsEscapeMenuVisualState();
-        gSettingsEscapeOpenedByKeybind = false;
-        SettingsHotkeyDebugLog("close_both dispatchResume=1");
-        $.ForceCloseModSettings();
-        $.Schedule(0.0, function() { SetSettingsEscapeMenuOpenFallback(false); });
-        $.Schedule(0.05, function() { SetSettingsEscapeMenuOpenFallback(false); });
-        return;
-    }
-    QueueSettingsWindowOpenFromKeybind();
-}
-
-if (SETTINGS_HOTKEY_ENABLED) {
-    try {
-        $.RegisterKeyBind($.GetContextPanel(), "key_m", ToggleSettingsWindowFromKeybind);
-    } catch (eSettingsKeybind) {}
-}
-
 $.ForceCloseModSettings = function() {
-    if (GetNowMs() < gSettingsOpenGuardUntilMs) {
-        SettingsHotkeyDebugLog("force_close_suppressed guard=1");
-        return;
-    }
+    if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (win) {
         win.RemoveClass("Visible");
@@ -19584,23 +19371,11 @@ $.ForceCloseModSettings = function() {
     CloseTrainTrackingModalIfOpen();
     CloseWhackRemModalIfOpen();
     CloseBlackjackModalIfOpen();
-    gSettingsEscapeOpenRequestPending = false;
-    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
-    if (gSettingsEscapeOpenedByKeybind) {
-        SetSettingsEscapeMenuOpenFallback(false);
-        gSettingsEscapeOpenedByKeybind = false;
-    }
-    SettingsHotkeyDebugLog("force_close dispatchResume=1");
     $.DispatchEvent("CitadelResumePlaying", $.GetContextPanel());
-    $.Schedule(0.0, function() { SetSettingsEscapeMenuOpenFallback(false); });
-    $.Schedule(0.05, function() { SetSettingsEscapeMenuOpenFallback(false); });
 };
 
 $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
-    if (GetNowMs() < gSettingsOpenGuardUntilMs) {
-        SettingsHotkeyDebugLog("resume_event_suppressed guard=1");
-        return;
-    }
+    if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (win) {
         win.RemoveClass("Visible");
@@ -19619,13 +19394,11 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
     CloseTrainTrackingModalIfOpen();
     CloseWhackRemModalIfOpen();
     CloseBlackjackModalIfOpen();
-    gSettingsEscapeOpenRequestPending = false;
-    gSettingsEscapeOpenRequestToken = (gSettingsEscapeOpenRequestToken + 1) % 1000000000;
-    SetSettingsEscapeMenuOpenFallback(false);
-    gSettingsEscapeOpenedByKeybind = false;
-    SettingsHotkeyDebugLog("resume_event closeSettings=1 escapeOpen=" + (IsSettingsEscapeMenuOpen() ? "1" : "0"));
 });
 
+$.RegisterForUnhandledEvent("OnGameStateChanged", function() {
+    HandleSettingsGameTransitionSignal("OnGameStateChanged");
+});
 $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
 });

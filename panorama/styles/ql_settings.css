@@ -194,109 +194,6 @@
 	visibility: visible;
 }
 
-.ShowEscapeMenu #EscapeMenu.SettingsOpen
-{
-	opacity: 1;
-	transition-duration: 0.2s;
-}
-
-.QOLHotkeyEscapeOpen .HudCore
-{
-	opacity: 0.0;
-}
-
-.QOLHotkeyEscapeOpen .HudTakeovers
-{
-	opacity: 0.0;
-}
-
-.QOLHotkeyEscapeOpen #EscapeMenu
-{
-	opacity: 1.0;
-}
-
-.QOLHotkeyEscapeOpen #EscapeMenu.SettingsOpen
-{
-	opacity: 1.0;
-	transition-duration: 0.2s;
-}
-
-.QOLHotkeyEscapeOpen #EscapeBackground
-{
-	animation-duration: 0.12s;
-	animation-timing-function: ease-in-out;
-}
-
-.QOLHotkeyEscapeOpen #LeftStripe
-{
-	opacity: 1.0;
-	transform: none;
-}
-
-.QOLHotkeyEscapeOpen #changehero
-{
-	opacity: 1.0;
-}
-
-.QOLHotkeyEscapeOpen #SocialContainer
-{
-	opacity: 1.0;
-}
-
-.QOLHotkeyEscapeOpen #RightSide .FriendsOrPlayersContents
-{
-	opacity: 1.0;
-}
-
-.QOLHotkeyEscapeOpen #CitadelPartyContainer
-{
-	opacity: 1.0;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible
-{
-	opacity: 1.0;
-	background-color: #000c;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible.SettingsOpen
-{
-	opacity: 1.0;
-	transition-duration: 0.2s;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #EscapeBackground
-{
-	animation-duration: 0.12s;
-	animation-timing-function: ease-in-out;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #LeftStripe
-{
-	opacity: 1.0;
-	transform: none;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #changehero
-{
-	opacity: 1.0;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #SocialContainer
-{
-	opacity: 1.0;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #RightSide .FriendsOrPlayersContents
-{
-	opacity: 1.0;
-}
-
-#EscapeMenu.QOLHotkeyEscapeShellVisible #CitadelPartyContainer
-{
-	opacity: 1.0;
-}
-
 @keyframes 'PulseDiscordPurpleText'
 {
 	0%
@@ -11545,14 +11442,20 @@
 #SettingsWindow .ConfigTabCard
 {
 	width: 100%;
-	margin-bottom: 14px;
-	padding: 12px 14px 12px 14px;
-	border-radius: 5px;
+	margin-bottom: 10px;
+	padding: 8px 6px 8px 6px;
+	border-radius: 0px;
 	border: 0px solid transparent;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 24, 26, 0.94) ), to( rgba(14, 16, 18, 0.90) ) );
+	background-color: none;
 	box-shadow: none;
 	flow-children: down;
 	overflow: noclip;
+}
+
+#SettingsWindow .ConfigTabDivider
+{
+	width: 100%;
+	margin: 2px 0px 14px 0px;
 }
 
 #SettingsWindow #ConfigCardGeneral
@@ -16493,6 +16396,120 @@
 	color: #edf4f7;
 }
 
+/* Featured creator plaque. Keep this after the global plaque reset. */
+#SupportTabThanksBlock .SupportThanksGroupCreator
+{
+	width: 100%;
+	horizontal-align: center;
+	margin-bottom: 8px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRowInner
+{
+	width: 100%;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator
+{
+	width: 176px;
+	min-width: 176px;
+	max-width: 176px;
+	height: 42px;
+	min-height: 42px;
+	max-height: 42px;
+	padding-left: 18px;
+	padding-right: 18px;
+	horizontal-align: center;
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 64, 43, 0.96) ), color-stop( 0.48, rgba(15, 28, 22, 0.96) ), to( rgba(47, 34, 15, 0.94) ) );
+	border: 1px solid rgba(166, 246, 184, 0.22);
+	border-brush: gradient( linear, 0% 0%, 100% 0%, from( rgba(106, 231, 154, 0.12) ), color-stop( 0.5, rgba(240, 211, 122, 0.38) ), to( rgba(106, 231, 154, 0.12) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 12px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator:hover
+{
+	brightness: 1.08;
+	border: 1px solid rgba(240, 211, 122, 0.30);
+	box-shadow: fill rgba(240, 211, 122, 0.13) 0px 0px 16px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator .SupportThanksPlaqueContent
+{
+	width: fit-children;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueLabel_Creator
+{
+	font-size: 16px;
+	letter-spacing: 1.35px;
+	font-weight: semi-bold;
+	color: #f7fff4;
+	text-transform: uppercase;
+	text-shadow: 0px 0px 8px rgba(152, 255, 181, 0.20);
+}
+
+/* Six-up Support credits need narrower plaques than the older five-up layout. */
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt
+{
+	width: 100px;
+	min-width: 100px;
+	max-width: 100px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	padding-left: 4px;
+	padding-right: 4px;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt
+{
+	width: 106px;
+	min-width: 106px;
+	max-width: 106px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	padding-left: 4px;
+	padding-right: 4px;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueContent,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueContent
+{
+	width: fit-children;
+	max-width: 100%;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque Label,
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt Label,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt Label
+{
+	font-size: 11px;
+	letter-spacing: 0.1px;
+	width: fit-children;
+	max-width: 100%;
+	text-overflow: shrink;
+	white-space: nowrap;
+	overflow: noclip;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueIcon_Translator
+{
+	width: 12px;
+	height: 12px;
+	margin-right: 3px;
+}
+
 #SettingsWindow .PresetGridBtn,
 #SettingsWindow .PresetGridBtnBase,
 #SettingsWindow .PresetGridBtnGreat,
@@ -16940,6 +16957,70 @@
 	brightness: 1.0;
 }
 
+/* Settings navbar: active/hover states should read through the icon and text,
+   not boxed backgrounds. Keep this scoped to the primary rail tabs. */
+.SettingsTabRailGroup .TabItem,
+.SettingsTabRailGroup .TabItem:hover,
+.SettingsTabRailGroup .TabItem.Active,
+.SettingsTabRailGroup .TabItem.Active:hover
+{
+	background-color: none;
+	border: 0px solid transparent;
+	border-left: 0px solid transparent;
+	box-shadow: none;
+	brightness: 1.0;
+}
+
+.SettingsTabRailGroup .TabItem:hover
+{
+	transform: translateX(1px);
+}
+
+.SettingsTabRailGroup .TabItem Label
+{
+	color: #a9b1aa;
+	text-shadow: none;
+	transition-property: color, text-shadow, brightness;
+	transition-duration: 0.14s;
+}
+
+.SettingsTabRailGroup .TabItem .TabIcon
+{
+	wash-color: #8f9993;
+	brightness: 1.0;
+	transition-property: wash-color, brightness, opacity, transform;
+	transition-duration: 0.14s;
+}
+
+.SettingsTabRailGroup .TabItem:hover Label
+{
+	color: #d9f5e5;
+	text-shadow: 0px 0px 8px rgba(126, 237, 170, 0.22);
+}
+
+.SettingsTabRailGroup .TabItem:hover .TabIcon
+{
+	wash-color: #9ff0c0;
+	brightness: 1.45;
+	opacity: 1.0;
+}
+
+.SettingsTabRailGroup .TabItem.Active Label,
+.SettingsTabRailGroup .TabItem.Active:hover Label
+{
+	color: #9af0bd;
+	text-shadow: 0px 0px 6px rgba(126, 237, 170, 0.20);
+}
+
+.SettingsTabRailGroup .TabItem.Active .TabIcon,
+.SettingsTabRailGroup .TabItem.Active:hover .TabIcon
+{
+	wash-color: #9af0bd;
+	brightness: 1.36;
+	opacity: 1.0;
+	img-shadow: 0px 0px 5px rgba(126, 237, 170, 0.18);
+}
+
 .FooterVersionIcon
 {
 	width: 10px;
@@ -16951,4 +17032,708 @@
 .FooterDiscordRailBtn Label
 {
 	margin-left: -5px;
+}
+
+/* Absolute final creator-plaque correction after all generic preset/button passes. */
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueGrid,
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRow,
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRowInner
+{
+	width: 100%;
+	flow-children: none;
+	horizontal-align: center;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator
+{
+	width: 176px;
+	min-width: 176px;
+	max-width: 176px;
+	height: 34px;
+	min-height: 34px;
+	max-height: 34px;
+	horizontal-align: center;
+	vertical-align: center;
+	padding: 0px 18px;
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(28, 70, 46, 0.98) ), color-stop( 0.50, rgba(16, 30, 23, 0.98) ), to( rgba(58, 41, 17, 0.96) ) );
+	border: 1px solid rgba(240, 211, 122, 0.34);
+	box-shadow: fill rgba(106, 231, 154, 0.11) 0px 0px 13px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator .SupportThanksPlaqueContent
+{
+	width: fit-children;
+	height: 100%;
+	horizontal-align: center;
+	vertical-align: center;
+	flow-children: down;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueLabel_Creator,
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueLabel_Creator
+{
+	width: fit-children;
+	max-width: 160px;
+	horizontal-align: center;
+	vertical-align: center;
+	text-align: center;
+	font-size: 14px;
+	letter-spacing: 1.1px;
+	font-weight: semi-bold;
+	color: #f7fff4;
+	text-shadow: 0px 0px 8px rgba(152, 255, 181, 0.28);
+	text-transform: uppercase;
+	opacity: 1;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupCreator .SupportCreatorFooterText,
+#SupportTabThanksBlock .SupportThanksGroupCreator .SupportCreatorFooterText
+{
+	width: fit-children;
+	max-width: 160px;
+	horizontal-align: center;
+	text-align: center;
+	margin-top: -1px;
+	margin-bottom: 0px;
+	font-size: 9px;
+	letter-spacing: 0.45px;
+	line-height: 10px;
+	color: #8d9a91;
+	text-transform: lowercase;
+	text-shadow: none;
+	opacity: 0.92;
+}
+
+/* Final support-plaque polish: creator-adjacent style, calmer treatment. */
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 43, 38, 0.94) ), color-stop( 0.58, rgba(19, 24, 23, 0.92) ), to( rgba(20, 27, 25, 0.90) ) );
+	border: 1px solid rgba(166, 246, 184, 0.10);
+	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 3px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(30, 39, 43, 0.94) ), color-stop( 0.58, rgba(19, 23, 25, 0.92) ), to( rgba(26, 23, 18, 0.90) ) );
+	border: 1px solid rgba(240, 211, 122, 0.10);
+	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 3px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque:hover,
+#SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.06;
+	border: 1px solid rgba(166, 246, 184, 0.18);
+	box-shadow: fill rgba(106, 231, 154, 0.055) 0px 0px 9px 0px;
+}
+
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque:hover,
+#SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.06;
+	border: 1px solid rgba(240, 211, 122, 0.17);
+	box-shadow: fill rgba(240, 211, 122, 0.045) 0px 0px 9px 0px;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt Label
+{
+	font-size: 11px;
+	letter-spacing: 0.42px;
+	font-weight: semi-bold;
+	color: #edf4ef;
+	text-shadow: 0px 0px 5px rgba(152, 255, 181, 0.08);
+	text-transform: uppercase;
+	opacity: 1;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt Label
+{
+	color: #f1efe6;
+	text-shadow: 0px 0px 5px rgba(240, 211, 122, 0.07);
+}
+
+/* Final preset-grid overhaul: plaque-adjacent tiles with stronger hover/active pop. */
+#SettingsWindow .PresetGridBtn,
+#SettingsWindow .PresetGridBtnBase,
+#SettingsWindow .PresetGridBtnGreat,
+#SettingsWindow .PresetGridBtnCustom,
+#SettingsWindow .PresetGridBtnCustomActive
+{
+	height: 27px;
+	min-height: 27px;
+	max-height: 27px;
+	padding: 0px 8px 0px 8px;
+	border-radius: 4px;
+	border: 1px solid rgba(166, 246, 184, 0.10);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 43, 38, 0.95) ), color-stop( 0.54, rgba(17, 22, 21, 0.94) ), to( rgba(11, 15, 14, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.28) 0px 1px 4px 0px, inset rgba(166, 246, 184, 0.18) 0px 1px 0px 0px;
+	transition-property: brightness, background-color, border, box-shadow, transform, opacity;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .PresetGridBtn Label,
+#SettingsWindow .PresetGridBtnBase Label,
+#SettingsWindow .PresetGridBtnGreat Label,
+#SettingsWindow .PresetGridBtnCustom Label,
+#SettingsWindow .PresetGridBtnCustomActive Label
+{
+	font-size: 11px;
+	font-weight: semi-bold;
+	letter-spacing: 0.56px;
+	text-transform: uppercase;
+	color: #e9f2ed;
+	text-shadow: 0px 0px 5px rgba(152, 255, 181, 0.08);
+	opacity: 0.96;
+}
+
+#SettingsWindow .PresetGridBtnGreat
+{
+	border: 1px solid rgba(240, 211, 122, 0.12);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(45, 39, 25, 0.95) ), color-stop( 0.56, rgba(23, 22, 18, 0.94) ), to( rgba(13, 14, 12, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.28) 0px 1px 4px 0px, inset rgba(240, 211, 122, 0.18) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtnGreat Label
+{
+	color: #f3eee2;
+	text-shadow: 0px 0px 5px rgba(240, 211, 122, 0.08);
+}
+
+#SettingsWindow .PresetGridBtnCustom,
+#SettingsWindow .PresetGridBtnCustomActive
+{
+	border: 1px solid rgba(129, 218, 255, 0.11);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(29, 41, 46, 0.95) ), color-stop( 0.56, rgba(18, 23, 25, 0.94) ), to( rgba(11, 14, 16, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.28) 0px 1px 4px 0px, inset rgba(129, 218, 255, 0.16) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtnCustom Label,
+#SettingsWindow .PresetGridBtnCustomActive Label
+{
+	color: #e7f2f6;
+	text-shadow: 0px 0px 5px rgba(129, 218, 255, 0.07);
+}
+
+#SettingsWindow .PresetGridBtn:hover,
+#SettingsWindow .PresetGridBtnBase:hover,
+#SettingsWindow .PresetGridBtnCustom:hover,
+#SettingsWindow .PresetGridBtnCustomActive:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border: 1px solid rgba(166, 246, 184, 0.24);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 57, 49, 0.98) ), color-stop( 0.55, rgba(22, 29, 27, 0.96) ), to( rgba(13, 19, 17, 0.98) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.09) 0px 0px 12px 0px, inset rgba(166, 246, 184, 0.34) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtnGreat:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border: 1px solid rgba(240, 211, 122, 0.25);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(55, 47, 30, 0.98) ), color-stop( 0.55, rgba(30, 27, 20, 0.96) ), to( rgba(17, 16, 12, 0.98) ) );
+	box-shadow: fill rgba(240, 211, 122, 0.075) 0px 0px 12px 0px, inset rgba(240, 211, 122, 0.34) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtn:hover Label,
+#SettingsWindow .PresetGridBtnBase:hover Label,
+#SettingsWindow .PresetGridBtnGreat:hover Label,
+#SettingsWindow .PresetGridBtnCustom:hover Label,
+#SettingsWindow .PresetGridBtnCustomActive:hover Label
+{
+	color: #ffffff;
+	text-shadow: 0px 0px 8px rgba(166, 246, 184, 0.18);
+	opacity: 1;
+}
+
+#SettingsWindow .PresetGridBtnGreat:hover Label
+{
+	text-shadow: 0px 0px 8px rgba(240, 211, 122, 0.18);
+}
+
+#SettingsWindow .PresetGridBtnCustom:hover Label,
+#SettingsWindow .PresetGridBtnCustomActive:hover Label
+{
+	text-shadow: 0px 0px 8px rgba(129, 218, 255, 0.16);
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive
+{
+	brightness: 1.08;
+	border: 1px solid rgba(126, 240, 173, 0.38);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 74, 50, 0.99) ), color-stop( 0.50, rgba(18, 35, 27, 0.98) ), to( rgba(13, 21, 17, 0.99) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.16) 0px 0px 14px 0px, inset rgba(166, 246, 184, 0.52) 0px 1px 0px 0px, inset rgba(126, 240, 173, 0.42) 0px -1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive:hover
+{
+	brightness: 1.14;
+	transform: translateY(-1px);
+	border: 1px solid rgba(166, 246, 184, 0.48);
+	box-shadow: fill rgba(106, 231, 154, 0.22) 0px 0px 17px 0px, inset rgba(166, 246, 184, 0.62) 0px 1px 0px 0px, inset rgba(126, 240, 173, 0.48) 0px -1px 0px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive Label,
+#SettingsWindow .PresetGridBtn.PresetActive:hover Label
+{
+	color: #f7fff4;
+	text-shadow: 0px 0px 8px rgba(152, 255, 181, 0.30);
+	opacity: 1;
+}
+
+#SettingsWindow .PresetGridBtn:active,
+#SettingsWindow .PresetGridBtnBase:active,
+#SettingsWindow .PresetGridBtnGreat:active,
+#SettingsWindow .PresetGridBtnCustom:active,
+#SettingsWindow .PresetGridBtnCustomActive:active
+{
+	transform: translateY(0px);
+	brightness: 1.04;
+}
+
+#SettingsWindow .PresetGridBtnUnavailable
+{
+	height: 27px;
+	min-height: 27px;
+	max-height: 27px;
+	padding: 0px 8px 0px 8px;
+	border-radius: 4px;
+	opacity: 0.44;
+	brightness: 0.92;
+	border: 1px solid rgba(255, 252, 244, 0.035);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(25, 28, 29, 0.86) ), color-stop( 0.56, rgba(17, 18, 19, 0.84) ), to( rgba(12, 13, 14, 0.86) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 3px 0px;
+}
+
+#SettingsWindow .PresetGridBtnUnavailable Label
+{
+	font-size: 11px;
+	font-weight: semi-bold;
+	letter-spacing: 0.56px;
+	text-transform: uppercase;
+	color: rgba(210, 218, 221, 0.58);
+	text-shadow: none;
+}
+
+#SettingsWindow .PresetGridBtnUnavailable:hover
+{
+	opacity: 0.70;
+	brightness: 1.0;
+	transform: translateY(0px);
+	border: 1px solid rgba(210, 218, 221, 0.10);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(29, 32, 33, 0.90) ), color-stop( 0.56, rgba(19, 21, 22, 0.88) ), to( rgba(13, 15, 16, 0.90) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 4px 0px;
+}
+
+/* Final navbar footer overhaul: Discord/Save as compact action plaques,
+   Version as a quiet status chip. */
+#SettingsWindow #SettingsTabRailFooter
+{
+	padding: 8px 2px 7px 2px;
+	overflow: noclip;
+}
+
+#SettingsWindow .SettingsTabRailFooterRule
+{
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	margin: 0px 2px 8px 2px;
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(126, 237, 170, 0.0) ), color-stop( 0.50, rgba(126, 237, 170, 0.16) ), to( rgba(126, 237, 170, 0.0) ) );
+	opacity: 1.0;
+}
+
+#SettingsWindow .FooterDiscordRailBtn,
+#SettingsWindow .FooterSaveBuildTab
+{
+	width: 100%;
+	height: 31px;
+	min-height: 31px;
+	max-height: 31px;
+	margin: 0px 0px 5px 0px;
+	padding: 0px 8px 0px 8px;
+	horizontal-align: center;
+	border-radius: 4px;
+	border: 1px solid rgba(166, 246, 184, 0.10);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 43, 38, 0.94) ), color-stop( 0.58, rgba(18, 23, 22, 0.92) ), to( rgba(12, 15, 14, 0.94) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 4px 0px, inset rgba(166, 246, 184, 0.14) 0px 1px 0px 0px;
+	brightness: 1.0;
+	overflow: noclip;
+	transition-property: brightness, background-color, border, box-shadow, transform;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .FooterDiscordRailBtn
+{
+	border: 1px solid rgba(88, 101, 242, 0.22);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(42, 43, 75, 0.96) ), color-stop( 0.58, rgba(24, 25, 42, 0.94) ), to( rgba(14, 15, 25, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 4px 0px, inset rgba(142, 150, 255, 0.18) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border: 1px solid rgba(142, 150, 255, 0.38);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(58, 60, 108, 0.98) ), color-stop( 0.58, rgba(32, 34, 62, 0.96) ), to( rgba(18, 20, 36, 0.98) ) );
+	box-shadow: fill rgba(88, 101, 242, 0.16) 0px 0px 13px 0px, inset rgba(178, 184, 255, 0.34) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .FooterSaveBuildTab:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border: 1px solid rgba(166, 246, 184, 0.28);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 58, 48, 0.97) ), color-stop( 0.58, rgba(22, 31, 27, 0.95) ), to( rgba(13, 19, 16, 0.97) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.10) 0px 0px 12px 0px, inset rgba(166, 246, 184, 0.32) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:active,
+#SettingsWindow .FooterSaveBuildTab:active
+{
+	transform: translateY(0px);
+	brightness: 1.04;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label,
+#SettingsWindow .FooterSaveBuildTab Label
+{
+	width: fill-parent-flow(1.0);
+	margin-left: 0px;
+	vertical-align: center;
+	color: #e8f2ee;
+	font-size: 11px;
+	font-weight: semi-bold;
+	letter-spacing: 0.78px;
+	text-transform: uppercase;
+	text-shadow: 0px 0px 5px rgba(152, 255, 181, 0.08);
+	opacity: 0.98;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label
+{
+	color: #eceeff;
+	text-shadow: 0px 0px 5px rgba(142, 150, 255, 0.12);
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover Label,
+#SettingsWindow .FooterSaveBuildTab:hover Label
+{
+	color: #ffffff;
+	opacity: 1.0;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover Label
+{
+	text-shadow: 0px 0px 8px rgba(142, 150, 255, 0.32);
+}
+
+#SettingsWindow .FooterSaveBuildTab:hover Label
+{
+	text-shadow: 0px 0px 8px rgba(166, 246, 184, 0.22);
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture,
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	width: 14px;
+	height: 14px;
+	min-width: 14px;
+	min-height: 14px;
+	margin-left: 0px;
+	margin-right: 8px;
+	vertical-align: center;
+	horizontal-align: left;
+	opacity: 1.0;
+	brightness: 1.0;
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture
+{
+	wash-color: #b6bcff;
+	brightness: 1.22;
+}
+
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #9ff0c0;
+	brightness: 1.18;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover .FooterDiscordLogoTexture
+{
+	wash-color: #ffffff;
+	brightness: 1.58;
+}
+
+#SettingsWindow .FooterSaveBuildTab:hover .FooterSaveBuildIcon
+{
+	wash-color: #c5ffd8;
+	brightness: 1.55;
+}
+
+#SettingsWindow .FooterVersionLabel
+{
+	width: 100%;
+	height: 28px;
+	min-height: 28px;
+	max-height: 28px;
+	margin: 1px 0px 0px 0px;
+	padding: 0px 8px;
+	border: 1px solid rgba(255, 252, 244, 0.055);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(30, 34, 36, 0.74) ), color-stop( 0.58, rgba(18, 20, 22, 0.68) ), to( rgba(12, 14, 15, 0.74) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px, inset rgba(210, 218, 221, 0.08) 0px 1px 0px 0px;
+	brightness: 1.0;
+	opacity: 0.94;
+	flow-children: right;
+}
+
+#SettingsWindow .FooterVersionIcon
+{
+	width: 12px;
+	height: 12px;
+	margin-left: 0px;
+	margin-right: 7px;
+	vertical-align: center;
+	wash-color: #a7b5ad;
+	opacity: 0.92;
+	brightness: 1.08;
+}
+
+#SettingsWindow .FooterVersionLabelText
+{
+	width: fill-parent-flow(1.0);
+	vertical-align: center;
+	text-align: left;
+	margin-top: 0px;
+	color: #b3c0b9;
+	font-size: 10px;
+	font-weight: semi-bold;
+	letter-spacing: 0.50px;
+	text-transform: uppercase;
+	text-shadow: none;
+}
+
+/* Unified modal/save/loader skin.
+   JS applies these classes to tied modals so this block becomes the single
+   downstream styling source for save, loader/help, import diff, support, and
+   download dialogs. */
+.QOLUnifiedModalSurface
+{
+	padding: 20px 22px 20px 22px;
+	border-radius: 5px;
+	border: 1px solid rgba(210, 224, 216, 0.075);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px;
+}
+
+.ModalOverlay,
+.ModalOverlay.Show
+{
+	background-color: rgba(3, 5, 6, 0.82);
+}
+
+.QOLUnifiedModalSurface .ModalTitle,
+.QOLUnifiedModalSurface .ConfigDiffTitle,
+.QOLUnifiedModalSurface .ModalInstructions,
+.QOLUnifiedModalSurface .OptimizeFilterModalLine,
+.QOLUnifiedModalSurface .ConfigDiffSummary,
+.QOLUnifiedModalSurface .ConfigDiffDetails,
+.QOLUnifiedModalSurface .ConfigDiffSummaryFooter,
+.QOLUnifiedModalSurface .SupportCommissionModalContactText
+{
+	font-family: oracle;
+	text-shadow: none;
+}
+
+.QOLUnifiedModalSurface .ModalTitle,
+.QOLUnifiedModalSurface .ConfigDiffTitle
+{
+	font-size: 18px;
+	font-weight: semi-bold;
+	letter-spacing: 1.0px;
+	color: #f2faf5;
+	text-shadow: 0px 0px 7px rgba(152, 255, 181, 0.10);
+}
+
+.QOLUnifiedModalSurface .ModalInstructions,
+.QOLUnifiedModalSurface .OptimizeFilterModalLine,
+.QOLUnifiedModalSurface .ConfigDiffSummary,
+.QOLUnifiedModalSurface .ConfigDiffDetails,
+.QOLUnifiedModalSurface .ConfigDiffSummaryFooter,
+.QOLUnifiedModalSurface .SupportCommissionModalContactText
+{
+	font-size: 13px;
+	line-height: 19px;
+	letter-spacing: 0.15px;
+	color: #bac6c0;
+}
+
+.QOLUnifiedModalSurface .OptimizeFilterModalWarnAccent
+{
+	color: #9af0bd;
+	text-shadow: 0px 0px 6px rgba(126, 237, 170, 0.12);
+}
+
+.QOLUnifiedModalSurface .OptimizeFilterModalWarnText
+{
+	color: #dde6e1;
+}
+
+.QOLUnifiedModalClose,
+.QOLUnifiedModalSurface #CloseBtn,
+.QOLUnifiedModalSurface #ConfigDiffCloseBtn
+{
+	align: right top;
+	width: 32px;
+	height: 32px;
+	margin-top: 0px;
+	margin-right: 0px;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	background-color: transparent;
+	box-shadow: none;
+	transition-property: transform;
+	transition-duration: 0.12s;
+}
+
+.QOLUnifiedModalClose:hover,
+.QOLUnifiedModalSurface #CloseBtn:hover,
+.QOLUnifiedModalSurface #ConfigDiffCloseBtn:hover
+{
+	border: 0px solid transparent;
+	background-color: transparent;
+	box-shadow: none;
+}
+
+.QOLUnifiedModalClose Label,
+.QOLUnifiedModalSurface #CloseBtn Label,
+.QOLUnifiedModalSurface #ConfigDiffCloseBtn Label
+{
+	align: center center;
+	text-align: center;
+	color: #5e5953;
+	font-size: 22px;
+	font-weight: normal;
+	text-shadow: none;
+	transition-property: color, text-shadow;
+	transition-duration: 0.4s;
+}
+
+.QOLUnifiedModalClose:hover Label,
+.QOLUnifiedModalSurface #CloseBtn:hover Label,
+.QOLUnifiedModalSurface #ConfigDiffCloseBtn:hover Label
+{
+	color: #ff4d4d;
+	text-shadow: 0 0 8px rgba(255, 77, 77, 0.8), 0 0 12px rgba(255, 77, 77, 0.4);
+}
+
+.QOLUnifiedModalClose:active,
+.QOLUnifiedModalSurface #CloseBtn:active,
+.QOLUnifiedModalSurface #ConfigDiffCloseBtn:active
+{
+	transform: translateY(1px);
+}
+
+.QOLUnifiedModalPrimary,
+.QOLUnifiedModalSecondary
+{
+	border-radius: 4px;
+	transition-property: brightness, background-color, border, box-shadow, transform;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-out;
+}
+
+.QOLUnifiedModalPrimary
+{
+	border: 1px solid rgba(166, 246, 184, 0.16);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 43, 38, 0.94) ), color-stop( 0.58, rgba(18, 23, 22, 0.92) ), to( rgba(12, 15, 14, 0.94) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(166, 246, 184, 0.16) 0px 1px 0px 0px;
+}
+
+.QOLUnifiedModalPrimary:hover
+{
+	brightness: 1.08;
+	transform: translateY(-1px);
+	border: 1px solid rgba(166, 246, 184, 0.28);
+	box-shadow: fill rgba(106, 231, 154, 0.11) 0px 0px 12px 0px, inset rgba(166, 246, 184, 0.30) 0px 1px 0px 0px;
+}
+
+.QOLUnifiedModalPrimary:active,
+.QOLUnifiedModalSecondary:active
+{
+	transform: translateY(0px);
+	brightness: 1.02;
+}
+
+.QOLUnifiedModalSecondary
+{
+	border: 1px solid rgba(210, 224, 216, 0.085);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 4px 0px;
+}
+
+.QOLUnifiedModalSecondary:hover
+{
+	brightness: 1.06;
+	border: 1px solid rgba(210, 224, 216, 0.15);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 42, 44, 0.94) ), to( rgba(18, 20, 21, 0.90) ) );
+	box-shadow: fill rgba(210, 224, 216, 0.035) 0px 0px 10px 0px;
+}
+
+.QOLUnifiedModalPrimary Label,
+.QOLUnifiedModalSecondary Label,
+.QOLUnifiedModalPrimary .BuildSaveConfirmActionLabel
+{
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: semi-bold;
+	letter-spacing: 0.85px;
+	text-transform: uppercase;
+	color: #eef6f0;
+	text-shadow: none;
+}
+
+#SupportCommissionModalDiscordBtn.QOLUnifiedModalPrimary
+{
+	border: 1px solid rgba(88, 101, 242, 0.28);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(42, 43, 75, 0.96) ), color-stop( 0.58, rgba(24, 25, 42, 0.94) ), to( rgba(14, 15, 25, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(142, 150, 255, 0.20) 0px 1px 0px 0px;
+}
+
+#SupportCommissionModalDiscordBtn.QOLUnifiedModalPrimary:hover
+{
+	border: 1px solid rgba(142, 150, 255, 0.42);
+	box-shadow: fill rgba(88, 101, 242, 0.16) 0px 0px 13px 0px, inset rgba(178, 184, 255, 0.34) 0px 1px 0px 0px;
+}
+
+.QOLUnifiedModalSurface .BuildSaveConfirmWarning
+{
+	color: #ff9d9d;
+	text-shadow: 0px 0px 6px rgba(255, 126, 126, 0.12);
+}
+
+.QOLUnifiedModalSurface .BuildSaveConfirmActionIcon
+{
+	wash-color: #c5ffd8;
+	brightness: 1.18;
+}
+
+.QOLUnifiedModalSurface .ConfigDiffCellTitle,
+.QOLUnifiedModalSurface .ConfigDiffCellBefore,
+.QOLUnifiedModalSurface .ConfigDiffCellAfter,
+.QOLUnifiedModalSurface .ConfigDiffCellArrow
+{
+	border-color: rgba(210, 224, 216, 0.055);
+	color: #bdc9c3;
+	text-shadow: none;
 }

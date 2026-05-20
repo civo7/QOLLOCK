@@ -425,3 +425,39 @@ CitadelHudHeroShop.simplify_shop_stats_active .hero_stats .GreenUpArrow,CitadelH
 	visibility: collapse;
 }
 
+.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesPanel,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel
+{
+	visibility: visible;
+	margin-left: 18%;
+	margin-bottom: 26.2%;
+}
+
+.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesContainer,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesContainer
+{
+	margin-right: 2%;
+}
+
+.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchases,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchases
+{
+	font-weight: bold;
+	text-transform: uppercase;
+	margin-bottom: 5px;
+	font-size: 16px;
+	opacity: 0.6;
+}
+
+.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesPanel:hover #RecentPurchases,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel:hover #RecentPurchases
+{
+	opacity: 0.9;
+}
+
+.shop_recent_purchases_active CitadelHudHeroShop .recentPurchase Label,
+CitadelHudHeroShop.shop_recent_purchases_active .recentPurchase Label
+{
+	font-size: 14px;
+}
+

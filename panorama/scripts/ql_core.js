@@ -1364,16 +1364,16 @@ function ExpressShotLog(msg) {
         var prompt = (isPrompt === true);
         if (detailLabel.SetHasClass) detailLabel.SetHasClass("is-shop-prompt", prompt);
         if (prompt) {
-            detailLabel.style.fontSize = "20px";
-            detailLabel.style.lineHeight = "26px";
-            detailLabel.style.fontWeight = "bold";
-            detailLabel.style.color = "#de6666";
-            detailLabel.style.textShadow = "0px 0px 6px rgba(222, 102, 102, 0.24)";
+            detailLabel.style.fontSize = "14px";
+            detailLabel.style.lineHeight = "20px";
+            detailLabel.style.fontWeight = "semi-bold";
+            detailLabel.style.color = "#ff9d9d";
+            detailLabel.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.13)";
         } else {
-            detailLabel.style.fontSize = "18px";
-            detailLabel.style.lineHeight = "24px";
+            detailLabel.style.fontSize = "13px";
+            detailLabel.style.lineHeight = "19px";
             detailLabel.style.fontWeight = "normal";
-            detailLabel.style.color = "#CDE5DB";
+            detailLabel.style.color = "#bac6c0";
             detailLabel.style.textShadow = "none";
         }
     }
@@ -1383,40 +1383,42 @@ function ExpressShotLog(msg) {
         card.style.horizontalAlign = "center";
         card.style.verticalAlign = "top";
         card.style.flowChildren = "down";
-        card.style.marginTop = "28px";
-        card.style.width = "1120px";
-        card.style.maxWidth = "94%";
+        card.style.marginTop = "30px";
+        card.style.width = "1040px";
+        card.style.maxWidth = "92%";
         card.style.paddingTop = "18px";
         card.style.paddingRight = "20px";
         card.style.paddingBottom = "18px";
         card.style.paddingLeft = "20px";
-        card.style.backgroundColor = "gradient( linear, 0% 0%, 0% 100%, from( rgba(36, 36, 36, 0.94) ), to( rgba(23, 23, 23, 0.94) ) )";
-        card.style.border = "0px solid transparent";
-        card.style.borderRadius = "8px";
-        card.style.boxShadow = "rgba(0, 0, 0, 0.72) 0px 8px 28px 0px";
+        card.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) )";
+        card.style.border = "1px solid rgba(210, 224, 216, 0.075)";
+        card.style.borderRadius = "5px";
+        card.style.boxShadow = "fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px";
     }
 
     function ApplyLoaderWarningTheme(warning) {
         if (!warning || !warning.style) return;
         warning.style.horizontalAlign = "center";
-        warning.style.marginBottom = "8px";
-        warning.style.fontSize = "18px";
-        warning.style.fontWeight = "bold";
-        warning.style.letterSpacing = "0.6px";
-        warning.style.color = "#de6666";
-        warning.style.textShadow = "0px 0px 6px rgba(222, 102, 102, 0.24)";
+        warning.style.fontFamily = "oracle";
+        warning.style.marginBottom = "10px";
+        warning.style.fontSize = "14px";
+        warning.style.fontWeight = "semi-bold";
+        warning.style.letterSpacing = "1.0px";
+        warning.style.color = "#ff9d9d";
+        warning.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.14)";
         warning.style.textTransform = "uppercase";
     }
 
     function ApplyLoaderTitleTheme(title) {
         if (!title || !title.style) return;
         title.style.horizontalAlign = "center";
-        title.style.fontSize = "42px";
-        title.style.fontWeight = "bold";
-        title.style.letterSpacing = "1.4px";
-        title.style.color = "#FFFFFF";
-        title.style.textShadow = "0px 0px 7px rgba(255, 255, 255, 0.12)";
-        title.style.marginBottom = "10px";
+        title.style.fontFamily = "oracle";
+        title.style.fontSize = "28px";
+        title.style.fontWeight = "semi-bold";
+        title.style.letterSpacing = "1.8px";
+        title.style.color = "#f2faf5";
+        title.style.textShadow = "0px 0px 9px rgba(152, 255, 181, 0.12)";
+        title.style.marginBottom = "12px";
         title.style.textTransform = "uppercase";
     }
 
@@ -1424,9 +1426,51 @@ function ExpressShotLog(msg) {
         if (!detailLabel || !detailLabel.style) return;
         detailLabel.style.width = "100%";
         detailLabel.style.marginTop = "12px";
-        detailLabel.style.fontSize = "18px";
-        detailLabel.style.lineHeight = "24px";
-        detailLabel.style.color = "#CDE5DB";
+        detailLabel.style.fontFamily = "oracle";
+        detailLabel.style.fontSize = "13px";
+        detailLabel.style.lineHeight = "19px";
+        detailLabel.style.letterSpacing = "0.18px";
+        detailLabel.style.color = "#bac6c0";
+        detailLabel.style.textShadow = "none";
+    }
+
+    function ApplyLoaderStepsWrapTheme(stepsWrap) {
+        if (!stepsWrap || !stepsWrap.style) return;
+        stepsWrap.style.width = "100%";
+        stepsWrap.style.flowChildren = "down";
+        stepsWrap.style.padding = "8px 10px 8px 10px";
+        stepsWrap.style.border = "1px solid rgba(210, 224, 216, 0.045)";
+        stepsWrap.style.borderRadius = "4px";
+        stepsWrap.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.42) ), to( rgba(12, 14, 15, 0.30) ) )";
+        stepsWrap.style.boxShadow = "inset rgba(0, 0, 0, 0.26) 0px 1px 5px 0px";
+    }
+
+    function ApplyLoaderStepRowTheme(row) {
+        if (!row || !row.style) return;
+        row.style.flowChildren = "right";
+        row.style.width = "100%";
+        row.style.minHeight = "30px";
+        row.style.marginTop = "1px";
+        row.style.padding = "2px 4px 2px 4px";
+        row.style.borderRadius = "3px";
+    }
+
+    function ApplyLoaderStepIconTheme(icon) {
+        if (!icon || !icon.style) return;
+        icon.style.width = "19px";
+        icon.style.height = "19px";
+        icon.style.marginRight = "9px";
+        icon.style.verticalAlign = "center";
+    }
+
+    function ApplyLoaderStepLabelTheme(label) {
+        if (!label || !label.style) return;
+        label.style.verticalAlign = "center";
+        label.style.fontFamily = "oracle";
+        label.style.fontSize = "14px";
+        label.style.lineHeight = "19px";
+        label.style.letterSpacing = "0.55px";
+        label.style.textShadow = "none";
     }
 
     function DecorateLoaderDetailWithSpinner(detailText, nowMs, isSessionActive, isSessionCompleted) {
@@ -3353,6 +3397,29 @@ function ExpressShotLog(msg) {
         }
     }
 
+    function CompareSchemaSemver(a, b) {
+        var aa = String(a || "").split(".");
+        var bb = String(b || "").split(".");
+        for (var i = 0; i < 3; i++) {
+            var av = Math.max(0, Math.round(Number(aa[i]) || 0));
+            var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
+            if (av < bv) return -1;
+            if (av > bv) return 1;
+        }
+        return 0;
+    }
+
+    function NormalizeCompassSpeedSchemaMigration(configTarget, sourceConfig, schemaVersion) {
+        if (!configTarget || !sourceConfig) return;
+        if (CompareSchemaSemver(schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER, "2.5.0") >= 0) return;
+        if (!sourceConfig.hasOwnProperty("ENABLE_COMPASS_SPEED")) return;
+        if (Number(sourceConfig.ENABLE_COMPASS_SPEED) !== 1) return;
+        if (Number(sourceConfig.ENABLE_COMPASS) === 1) return;
+
+        // Before 2.5.0, speed was only reachable through Compass itself.
+        configTarget.ENABLE_COMPASS_SPEED = 0;
+    }
+
     function NormalizeItemCooldownModeConfig(configTarget, sourceConfig) {
         var utils = GetSharedSchemaUtils();
         if (utils && typeof utils.NormalizeItemCooldownModeConfig === "function") {
@@ -3997,6 +4064,10 @@ const BUILD_CATEGORY_HUD_SECTION_AND_PANEL_SCHEMA_FIELDS = [
 const BUILD_CATEGORY_MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMAP_CRATE_OVERLAY", min: 0, max: 1, step: 1 }
 ];
+const BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMAP_REM_TUNNELS", min: 0, max: 1, step: 1 },
+    { key: "MINIMAP_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
+];
 const BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
 ];
@@ -4005,6 +4076,10 @@ const BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
 ];
 const BUILD_CATEGORY_ENHANCED_QUICKBUY_SCHEMA_FIELDS = [
     { key: "ENABLE_ENHANCED_QUICKBUY", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4,
@@ -4034,6 +4109,13 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0 = AppendUniquePayloadSchemaFields(
     AppendUniquePayloadSchemaFields(
         BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS,
         BUILD_CATEGORY_ENHANCED_QUICKBUY_SCHEMA_FIELDS
+    )
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0,
+    AppendUniquePayloadSchemaFields(
+        BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS,
+        BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS
     )
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
@@ -4137,6 +4219,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.4.0": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0
+    },
+    "2.5.0": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -8826,6 +8912,32 @@ function GetUIRoot() {
         };
     }
 
+    function EnsureMinimapTunnelOverlay(root) {
+        var anchor = EnsureMinimapOverlayAnchor(root);
+        if (!anchor) return null;
+        var overlay = IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot) ? State.cachedPanels.minimapTunnelOverlayRoot : null;
+        if (!overlay) {
+            overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("tunnel_overlay") || null) : null;
+            if (!overlay) {
+                overlay = $.CreatePanel("Panel", anchor, "tunnel_overlay", {
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+            }
+        } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
+            overlay.SetParent(anchor);
+        }
+        if (!overlay) return null;
+        overlay.hittest = false;
+        overlay.hittestchildren = false;
+        overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png.vtex")';
+        overlay.style.backgroundSize = "100% 100%";
+        overlay.style.backgroundRepeat = "no-repeat";
+        overlay.style.backgroundPosition = "center";
+        State.cachedPanels.minimapTunnelOverlayRoot = overlay;
+        return overlay;
+    }
+
     function ClearMinimapCrateOverlayMarkers(markers) {
         if (markers && markers.RemoveAndDeleteChildren) {
             markers.RemoveAndDeleteChildren();
@@ -8941,6 +9053,35 @@ function GetUIRoot() {
             overlay.style.visibility = "collapse";
         }
         MinimapCrateOverlayDebugLogThrottled("hide|" + (overlay ? "1" : "0"), "overlay=" + (overlay ? "1" : "0") + " visibility=collapse", PerfNowMs());
+    }
+
+    function HideMinimapTunnelOverlay(root) {
+        var overlay = IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot) ? State.cachedPanels.minimapTunnelOverlayRoot : null;
+        if (!overlay && root && root.FindChildTraverse) {
+            overlay = root.FindChildTraverse("tunnel_overlay");
+            if (overlay) State.cachedPanels.minimapTunnelOverlayRoot = overlay;
+        }
+        if (!overlay) return;
+        if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
+        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
+    }
+
+    function UpdateMinimapTunnelOverlay(root, cfg) {
+        var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1);
+        if (!enabled) {
+            HideMinimapTunnelOverlay(root);
+            return;
+        }
+        var overlay = EnsureMinimapTunnelOverlay(root);
+        if (!overlay) return;
+        var opacity = Number(cfg.MINIMAP_REM_TUNNELS_OPACITY);
+        if (!isFinite(opacity)) opacity = 0.75;
+        if (opacity < 0) opacity = 0;
+        if (opacity > 1) opacity = 1;
+        if (overlay.AddClass) overlay.AddClass("tunnel_locked_on");
+        overlay.style.opacity = opacity.toFixed(2);
+        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
     }
 
     function UpdateMinimapCrateOverlay(root, cfg) {
@@ -11513,20 +11654,20 @@ function GetUIRoot() {
         var iconWash = "#8d9698";
         var iconOpacity = "0.75";
         if (st === "active") {
-            labelColor = "#66cc99";
-            iconWash = "#66cc99";
+            labelColor = "#9af0bd";
+            iconWash = "#9af0bd";
             iconOpacity = "1.0";
         } else if (st === "done") {
-            labelColor = "#cde5db";
-            iconWash = "#66cc99";
+            labelColor = "#d7e6de";
+            iconWash = "#7beaab";
             iconOpacity = "1.0";
         } else if (st === "skipped") {
             labelColor = "#6f777a";
             iconWash = "#6f777a";
             iconOpacity = "0.45";
         } else if (st === "error") {
-            labelColor = "#ff6f6f";
-            iconWash = "#ff6f6f";
+            labelColor = "#ff8a8a";
+            iconWash = "#ff8a8a";
             iconOpacity = "1.0";
         }
         if (entry.label && entry.label.style) {
@@ -11556,9 +11697,7 @@ function GetUIRoot() {
             row.hittest = false;
             row.hittestchildren = false;
             if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            row.style.flowChildren = "right";
-            row.style.width = "100%";
-            row.style.marginTop = "2px";
+            ApplyLoaderStepRowTheme(row);
 
             var iconId = rowId + SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
             if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
@@ -11567,10 +11706,7 @@ function GetUIRoot() {
                 icon.hittest = false;
                 icon.hittestchildren = false;
                 if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                icon.style.width = "24px";
-                icon.style.height = "24px";
-                icon.style.marginRight = "10px";
-                icon.style.verticalAlign = "center";
+                ApplyLoaderStepIconTheme(icon);
             }
 
             var labelId = rowId + SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
@@ -11580,9 +11716,7 @@ function GetUIRoot() {
                 label.hittest = false;
                 label.hittestchildren = false;
                 if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                label.style.verticalAlign = "center";
-                label.style.fontSize = "24px";
-                label.style.lineHeight = "30px";
+                ApplyLoaderStepLabelTheme(label);
             }
             var reuseRow = !!(existing && row && existing.row === row);
             var reuseIcon = !!(existing && icon && existing.icon === icon);
@@ -11661,6 +11795,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483647";
+        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -11736,8 +11871,7 @@ function GetUIRoot() {
             stepsWrap.hittest = false;
             stepsWrap.hittestchildren = false;
             if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            stepsWrap.style.width = "100%";
-            stepsWrap.style.flowChildren = "down";
+            ApplyLoaderStepsWrapTheme(stepsWrap);
             EnsureSettingsLoaderStepRows(stepsWrap);
         }
 
@@ -11795,10 +11929,13 @@ function GetUIRoot() {
             if (skipBacker.AddClass) skipBacker.AddClass("QOLSettingsLoaderSkipBacker");
             skipBacker.style.horizontalAlign = "left";
             skipBacker.style.verticalAlign = "top";
-            skipBacker.style.width = "228px";
-            skipBacker.style.minWidth = "228px";
-            skipBacker.style.height = "56px";
-            skipBacker.style.borderRadius = "8px";
+            skipBacker.style.width = "214px";
+            skipBacker.style.minWidth = "214px";
+            skipBacker.style.height = "42px";
+            skipBacker.style.borderRadius = "4px";
+            skipBacker.style.border = "1px solid rgba(210, 224, 216, 0.085)";
+            skipBacker.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) )";
+            skipBacker.style.boxShadow = "fill rgba(0, 0, 0, 0.24) 0px 2px 7px 0px";
             skipBacker.style.x = "0px";
             skipBacker.style.y = "0px";
         }
@@ -11828,16 +11965,16 @@ function GetUIRoot() {
                 skipButton.style.verticalAlign = "top";
                 skipButton.style.marginLeft = "0px";
                 skipButton.style.marginTop = "0px";
-                skipButton.style.width = "228px";
-                skipButton.style.minWidth = "228px";
-                skipButton.style.height = "56px";
+                skipButton.style.width = "214px";
+                skipButton.style.minWidth = "214px";
+                skipButton.style.height = "42px";
                 skipButton.style.paddingLeft = "14px";
                 skipButton.style.paddingRight = "14px";
-                skipButton.style.borderRadius = "8px";
-                skipButton.style.border = "1px solid rgba(222, 102, 102, 0.45)";
-                skipButton.style.backgroundColor = "gradient( linear, 0% 0%, 0% 100%, from( rgba(36, 36, 36, 0.94) ), to( rgba(23, 23, 23, 0.94) ) )";
+                skipButton.style.borderRadius = "4px";
+                skipButton.style.border = "1px solid rgba(255, 126, 126, 0.18)";
+                skipButton.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 27, 28, 0.90) ), to( rgba(18, 14, 15, 0.86) ) )";
                 skipButton.style.backgroundImage = "none";
-                skipButton.style.boxShadow = "rgba(0, 0, 0, 0.72) 0px 8px 24px 0px";
+                skipButton.style.boxShadow = "fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(255, 126, 126, 0.10) 0px 1px 0px 0px";
                 if (!skipLabel) skipLabel = $.CreatePanel("Label", skipButton, SETTINGS_LOADER_SKIP_LABEL_ID);
                 if (skipLabel) {
                     if (skipLabel.AddClass) skipLabel.AddClass("QOLSettingsLoaderSkipButtonLabel");
@@ -11846,10 +11983,13 @@ function GetUIRoot() {
                     skipLabel.style.horizontalAlign = "center";
                     skipLabel.style.verticalAlign = "center";
                     skipLabel.style.textAlign = "center";
-                    skipLabel.style.fontSize = "22px";
-                    skipLabel.style.fontWeight = "bold";
-                    skipLabel.style.color = "#de6666";
-                    skipLabel.style.textShadow = "0px 0px 6px rgba(222, 102, 102, 0.24)";
+                    skipLabel.style.fontFamily = "oracle";
+                    skipLabel.style.fontSize = "12px";
+                    skipLabel.style.fontWeight = "semi-bold";
+                    skipLabel.style.letterSpacing = "0.85px";
+                    skipLabel.style.color = "#ffb3b3";
+                    skipLabel.style.textShadow = "none";
+                    skipLabel.style.textTransform = "uppercase";
                 }
                 skipButton.SetPanelEvent("onactivate", function() {
                     var clickRoot = GetUIRoot();
@@ -12214,9 +12354,7 @@ function GetUIRoot() {
             row.hittest = false;
             row.hittestchildren = false;
             if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            row.style.flowChildren = "right";
-            row.style.width = "100%";
-            row.style.marginTop = "2px";
+            ApplyLoaderStepRowTheme(row);
 
             var iconId = rowId + SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
             if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
@@ -12225,10 +12363,7 @@ function GetUIRoot() {
                 icon.hittest = false;
                 icon.hittestchildren = false;
                 if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                icon.style.width = "24px";
-                icon.style.height = "24px";
-                icon.style.marginRight = "10px";
-                icon.style.verticalAlign = "center";
+                ApplyLoaderStepIconTheme(icon);
             }
 
             var labelId = rowId + SAVE_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
@@ -12238,9 +12373,7 @@ function GetUIRoot() {
                 label.hittest = false;
                 label.hittestchildren = false;
                 if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                label.style.verticalAlign = "center";
-                label.style.fontSize = "24px";
-                label.style.lineHeight = "30px";
+                ApplyLoaderStepLabelTheme(label);
             }
             var reuseRow = !!(existing && row && existing.row === row);
             var reuseIcon = !!(existing && icon && existing.icon === icon);
@@ -12319,6 +12452,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483646";
+        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -12376,8 +12510,7 @@ function GetUIRoot() {
             stepsWrap.hittest = false;
             stepsWrap.hittestchildren = false;
             if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            stepsWrap.style.width = "100%";
-            stepsWrap.style.flowChildren = "down";
+            ApplyLoaderStepsWrapTheme(stepsWrap);
             EnsureSaveSettingsLoaderStepRows(stepsWrap);
         }
 
@@ -12400,11 +12533,12 @@ function GetUIRoot() {
             if (stallHint.AddClass) stallHint.AddClass("QOLSaveSettingsLoaderStallHint");
             stallHint.style.width = "100%";
             stallHint.style.marginTop = "8px";
-            stallHint.style.fontSize = "18px";
-            stallHint.style.lineHeight = "22px";
+            stallHint.style.fontFamily = "oracle";
+            stallHint.style.fontSize = "13px";
+            stallHint.style.lineHeight = "18px";
             stallHint.style.textAlign = "left";
-            stallHint.style.color = "#de6666";
-            stallHint.style.textShadow = "0px 0px 6px rgba(222, 102, 102, 0.24)";
+            stallHint.style.color = "#ff9d9d";
+            stallHint.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.12)";
             if (stallHint.text !== SAVE_SETTINGS_LOADER_STALL_HINT_TEXT) stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
         }
 
@@ -12707,9 +12841,7 @@ function GetUIRoot() {
             row.hittest = false;
             row.hittestchildren = false;
             if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            row.style.flowChildren = "right";
-            row.style.width = "100%";
-            row.style.marginTop = "2px";
+            ApplyLoaderStepRowTheme(row);
 
             var iconId = rowId + CLEAR_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
             if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
@@ -12718,10 +12850,7 @@ function GetUIRoot() {
                 icon.hittest = false;
                 icon.hittestchildren = false;
                 if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                icon.style.width = "24px";
-                icon.style.height = "24px";
-                icon.style.marginRight = "10px";
-                icon.style.verticalAlign = "center";
+                ApplyLoaderStepIconTheme(icon);
             }
 
             var labelId = rowId + CLEAR_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
@@ -12731,9 +12860,7 @@ function GetUIRoot() {
                 label.hittest = false;
                 label.hittestchildren = false;
                 if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                label.style.verticalAlign = "center";
-                label.style.fontSize = "24px";
-                label.style.lineHeight = "30px";
+                ApplyLoaderStepLabelTheme(label);
             }
             var reuseRow = !!(existing && row && existing.row === row);
             var reuseIcon = !!(existing && icon && existing.icon === icon);
@@ -12805,6 +12932,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483645";
+        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -12860,8 +12988,7 @@ function GetUIRoot() {
             stepsWrap.hittest = false;
             stepsWrap.hittestchildren = false;
             if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            stepsWrap.style.width = "100%";
-            stepsWrap.style.flowChildren = "down";
+            ApplyLoaderStepsWrapTheme(stepsWrap);
             EnsureClearSettingsLoaderStepRows(stepsWrap);
         }
 
@@ -14855,7 +14982,7 @@ function GetUIRoot() {
         try {
             var compactBinary = BuildPayloadFromBase64Url(compactCandidate);
             var parsed = DeserializeBuildPayloadCompact(compactBinary, schemaSemver);
-            return { ok: true, payload: payloadToken, parsed: parsed };
+            return { ok: true, payload: payloadToken, parsed: parsed, schemaVersion: schemaSemver };
         } catch (err) {
             var msg = (err && err.message) ? String(err.message) : String(err || "parse_error");
             return { ok: false, payload: payloadToken, error: msg };
@@ -15395,6 +15522,7 @@ function GetUIRoot() {
         NormalizeAllyColorWarningConfig(appliedObj, parsedResult.parsed);
         NormalizeTopbarEnemyHpWarningConfig(appliedObj, parsedResult.parsed);
         NormalizeTopbarAllyHpWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
 
         var appliedRaw = JSON.stringify(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
@@ -19104,8 +19232,10 @@ function GetUIRoot() {
         var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
         var shopEnabled = Number(cfg && cfg.HUD_SHOP_ENABLED) === 1;
         var simplifyShopStats = Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1;
+        var shopRecentPurchases = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
         var needsHeroShopFeatures =
             simplifyShopStats ||
+            shopRecentPurchases ||
             cfg.ENABLE_SIMPLIFY_SHOP === 1 ||
             cfg.ENABLE_SIMPLIFY_ITEMS === 1 ||
             cfg.DISABLE_SHOP_BLUE === 1 ||
@@ -19132,6 +19262,7 @@ function GetUIRoot() {
                 SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
                 SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
                 SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", cfg.DISABLE_SHOP_BLUE === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", shopRecentPurchases);
 
                 var heroShopMainPanel = IsPanelValid(State.cachedPanels.heroShopMainPanel) ? State.cachedPanels.heroShopMainPanel : null;
                 if (!heroShopMainPanel) {
@@ -19165,6 +19296,7 @@ function GetUIRoot() {
             SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", false);
             SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", false);
             SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", false);
 
             var resetMainPanel = IsPanelValid(State.cachedPanels.heroShopMainPanel) ? State.cachedPanels.heroShopMainPanel : null;
             if (!resetMainPanel) {
@@ -19318,6 +19450,7 @@ function GetUIRoot() {
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
         if (Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
+        if (Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 && !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)) return true;
         if (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1) return true;
         return false;
     }
@@ -19344,6 +19477,8 @@ function GetUIRoot() {
             Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
             Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
             Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 ? "1" : "0",
+            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ? "1" : "0",
+            String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
             ResolveMinimapCrateOverlayMapKey()
         ].join("|");
     }
@@ -19426,16 +19561,37 @@ function GetUIRoot() {
                     if (minimalistOpacity < 0) minimalistOpacity = 0;
                     if (minimalistOpacity > 1) minimalistOpacity = 1;
                     SetPanelOpacitySafe(mapRenderPanel, minimalistOpacity, 1.0);
+                    mapRenderPanel.style.brightness = "1.0";
+                    mapRenderPanel.style.washColor = "none";
+                    var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
+                    if (!hudMinimapPanel && root && root.FindChildTraverse) {
+                        hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+                        State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
+                    }
+                    if (hudMinimapPanel) {
+                        if (hudMinimapPanel.AddClass) hudMinimapPanel.AddClass("minimalist_minimap_active");
+                        hudMinimapPanel.style.backgroundColor = "rgba(0, 0, 0, 0)";
+                    }
                     State.minimapMinimalistOpacityApplied = true;
                 } else if (State.minimapMinimalistOpacityApplied) {
                     // Reset once after leaving minimalist mode, then stop touching map_render opacity.
                     SetPanelOpacitySafe(mapRenderPanel, 1.0, 1.0);
+                    mapRenderPanel.style.brightness = "1.0";
+                    mapRenderPanel.style.washColor = "none";
+                    var resetHudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
+                    if (resetHudMinimapPanel) {
+                        if (resetHudMinimapPanel.RemoveClass) {
+                            resetHudMinimapPanel.RemoveClass("minimalist_minimap_active");
+                        }
+                        resetHudMinimapPanel.style.backgroundColor = "rgba(0, 0, 0, 0)";
+                    }
                     State.minimapMinimalistOpacityApplied = false;
                 }
             }
             State.lastZoomState = currentZoomKey;
             State.minimapRuntimeSig = runtimeSig;
         }
+        UpdateMinimapTunnelOverlay(root, cfg);
         UpdateMinimapCrateOverlay(root, cfg);
     }
 
@@ -26090,6 +26246,8 @@ function GetUIRoot() {
             cfg.DISABLE_DAMAGE_REPORT,
             cfg.DISABLE_QUICK_BUY,
             cfg.ENABLE_ENHANCED_QUICKBUY,
+            cfg.ENABLE_SHOP_CLICK_TO_NOTIFY,
+            cfg.ENABLE_SHOP_RECENT_PURCHASES,
             cfg.ENABLE_HUD_SHIFT,
             cfg.SUPPORT_16_10,
             cfg.SUPPORT_4_3,
@@ -26187,11 +26345,15 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
             var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+            var shopClickToNotifyEnabled = Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+            var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", shopClickToNotifyEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
             State.coreRootStaticSig = staticSig;
         }
 
@@ -26222,6 +26384,12 @@ function GetUIRoot() {
                 State.quickbuyClassCache,
                 "enhanced_quickbuy_active",
                 Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1
+            );
+            SetPanelClassCached(
+                quickbuyPanel,
+                State.quickbuyClassCache,
+                "shop_click_to_notify_active",
+                Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1
             );
         } else {
             State.quickbuyClassCache = null;
@@ -26701,6 +26869,7 @@ function GetUIRoot() {
                 Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP) === 1 ||
                 Number(cfg && cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
                 Number(cfg && cfg.DISABLE_SHOP_BLUE) === 1 ||
+                Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 ||
                 Math.round(shopOffsetX) !== 0 ||
                 Math.round(shopOffsetY) !== 0 ||
                 shopOpacity !== 1.0

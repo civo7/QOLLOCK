@@ -145,19 +145,23 @@
 .QuickbuyItem .CostPanel .QueueRemainingSoulsDivider
 {
 	visibility: collapse;
-	color: offWhite&50;
+	color: #d8d0c088;
+	wash-color: #d8d0c088;
 	font-weight: bold;
-	font-size: 14px;
+	font-size: 16px;
 	margin-left: 2px;
+	vertical-align: center;
 }
 
 .QuickbuyItem .CostPanel #QueueRemainingSoulsLabel
 {
 	visibility: collapse;
-	color: shardColor;
+	color: #66ffd9;
+	wash-color: #66ffd9;
 	font-weight: bold;
-	font-size: 14px;
+	font-size: 16px;
 	margin-left: 1px;
+	vertical-align: center;
 }
 
 .QuickbuyItem .CostPanel .goldIcon
@@ -430,6 +434,32 @@
 .HasRemainingSoulsNeeded .CostPanel .QueueRemainingSoulsDivider,.HasRemainingSoulsNeeded .CostPanel #QueueRemainingSoulsLabel
 {
 	visibility: visible;
+}
+
+.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel #QueueRemainingSoulsLabel,
+#CitadelHudQuickbuy.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel #QueueRemainingSoulsLabel
+{
+	brightness: 1.15;
+	color: #d64259;
+	wash-color: #d64259;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel #QueueRemainingSoulsLabel:hover,
+#CitadelHudQuickbuy.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel #QueueRemainingSoulsLabel:hover
+{
+	brightness: 1.8;
+}
+
+.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel .QueueRemainingSoulsDivider,
+#CitadelHudQuickbuy.shop_click_to_notify_active .HasRemainingSoulsNeeded .CostPanel .QueueRemainingSoulsDivider
+{
+	color: #d8d0c088;
+	wash-color: #d8d0c088;
+	font-size: 16px;
+	font-weight: bold;
+	vertical-align: center;
 }
 
 .support_4_3_active #QuickbuyQueue .QuickbuyItem,.support_4_3_active #QuickbuySellQueue .QuickbuyItem
