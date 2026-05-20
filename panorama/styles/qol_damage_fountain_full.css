@@ -921,6 +921,7 @@
 	font-size: 30px;
 	flow-children: right;
 	opacity: 1;
+	overflow: noclip;
 }
 
 .damage_fountain_active .Window
@@ -930,6 +931,7 @@
 	font-size: 30px;
 	flow-children: right;
 	opacity: 1;
+	overflow: noclip;
 }
 
 .damage_fountain_active .HudIndicatorText
@@ -944,6 +946,7 @@
 	text-align: center;
 	font-family: sansMono;
 	font-family: oracle;
+	overflow: noclip;
 }
 
 .damage_fountain_active .HudIndicatorContainer
@@ -954,6 +957,7 @@
 	text-align: right;
 	z-index: -1;
 	transform: translateX(180px);
+	overflow: noclip;
 }
 
 .damage_fountain_active .HudIndicatorIcon
@@ -5370,6 +5374,32 @@
 	background-repeat: no-repeat;
 	background-position: center;
 	animation-fill-mode: forwards;
+	overflow: noclip;
+}
+
+/* Larger damage-number sizes can outgrow the generated fountain label boxes.
+ * Keep the decorative pure/headshot art, but let the label and its parents draw
+ * outside the stock 300px event window instead of clipping. */
+.damage_fountain_active .WindowRoot.damage_type_pure,
+.damage_fountain_active .WindowRoot.pure_damage_new,
+.damage_fountain_active .Window.damage_type_pure,
+.damage_fountain_active .Window.pure_damage_new,
+.damage_fountain_active #HudEventIndicatorsPanel,
+.damage_fountain_active CitadelHudEventIndicatorsPanel,
+.damage_fountain_active .damage_type_pure .HudIndicatorContainer,
+.damage_fountain_active .pure_damage_new .HudIndicatorContainer,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorContainer
+{
+	overflow: noclip;
+}
+
+.damage_fountain_active .damage_type_pure .HudIndicatorText,
+.damage_fountain_active .pure_damage_new .HudIndicatorText,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 54px;
+	overflow: noclip;
 }
 
 .damage_fountain_active .distance_far.bullet_damage_new.crit .HudIndicatorText
@@ -6734,5 +6764,87 @@
 {
 	animation-name: fountain_melee, fade_single;
 	animation-fill-mode: forwards;
+}
+
+/* Final safety override after the generated fountain bucket rules. */
+.damage_fountain_active .WindowRoot.damage_type_pure,
+.damage_fountain_active .WindowRoot.pure_damage_new,
+.damage_fountain_active .Window.damage_type_pure,
+.damage_fountain_active .Window.pure_damage_new,
+.damage_fountain_active #HudEventIndicatorsPanel,
+.damage_fountain_active CitadelHudEventIndicatorsPanel,
+.damage_fountain_active .damage_type_pure .HudIndicatorContainer,
+.damage_fountain_active .pure_damage_new .HudIndicatorContainer,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorContainer
+{
+	overflow: noclip;
+}
+
+.damage_fountain_active .WindowRoot.damage_type_pure,
+.damage_fountain_active .WindowRoot.pure_damage_new,
+.damage_fountain_active .Window.damage_type_pure,
+.damage_fountain_active .Window.pure_damage_new
+{
+	width: 620px;
+	height: 420px;
+}
+
+.damage_fountain_active .damage_type_pure .HudIndicatorContainer,
+.damage_fountain_active .pure_damage_new .HudIndicatorContainer,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorContainer
+{
+	width: fit-children;
+	height: fit-children;
+	min-width: 260px;
+	min-height: 96px;
+}
+
+.damage_fountain_active .distance_near.damage_type_pure .HudIndicatorText,
+.damage_fountain_active .distance_near.pure_damage_new .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 54px;
+}
+
+.damage_fountain_active .distance_normal.damage_type_pure .HudIndicatorText,
+.damage_fountain_active .distance_normal.pure_damage_new .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 52px;
+}
+
+.damage_fountain_active .distance_far.damage_type_pure .HudIndicatorText,
+.damage_fountain_active .distance_far.pure_damage_new .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 46px;
+}
+
+.damage_fountain_active .distance_very_far.damage_type_pure .HudIndicatorText,
+.damage_fountain_active .distance_very_far.pure_damage_new .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 40px;
+}
+
+.damage_fountain_active .distance_extremely_far.damage_type_pure .HudIndicatorText,
+.damage_fountain_active .distance_extremely_far.pure_damage_new .HudIndicatorText
+{
+	height: fit-children;
+	min-height: 34px;
+}
+
+.damage_fountain_active .damage_type_pure .HudIndicatorText,
+.damage_fountain_active .pure_damage_new .HudIndicatorText,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
+{
+	width: fit-children;
+	min-width: 220px;
+	max-width: 620px;
+	height: fit-children;
+	white-space: nowrap;
+	text-overflow: clip;
+	padding-right: 70px;
+	overflow: noclip;
 }
 

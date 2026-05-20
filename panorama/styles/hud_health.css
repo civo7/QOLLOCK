@@ -330,8 +330,10 @@
 }
 
 .combat_indicator_active .regen_image,
-.inCombat .regen_image,
-.in_combat .regen_image
+.combat_indicator_enabled.inCombat .regen_image,
+.combat_indicator_enabled .inCombat .regen_image,
+.combat_indicator_enabled.in_combat .regen_image,
+.combat_indicator_enabled .in_combat .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -352,10 +354,14 @@
 
 .combat_indicator_active.colored_healthbar_active .regen_image,
 .combat_indicator_active .colored_healthbar_active .regen_image,
-.inCombat.colored_healthbar_active .regen_image,
-.inCombat .colored_healthbar_active .regen_image,
-.in_combat.colored_healthbar_active .regen_image,
-.in_combat .colored_healthbar_active .regen_image
+.combat_indicator_enabled.inCombat.colored_healthbar_active .regen_image,
+.combat_indicator_enabled.inCombat .colored_healthbar_active .regen_image,
+.combat_indicator_enabled .inCombat.colored_healthbar_active .regen_image,
+.combat_indicator_enabled .inCombat .colored_healthbar_active .regen_image,
+.combat_indicator_enabled.in_combat.colored_healthbar_active .regen_image,
+.combat_indicator_enabled.in_combat .colored_healthbar_active .regen_image,
+.combat_indicator_enabled .in_combat.colored_healthbar_active .regen_image,
+.combat_indicator_enabled .in_combat .colored_healthbar_active .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -385,8 +391,10 @@
 }
 
 .combat_indicator_active .regen_value,
-.inCombat .regen_value,
-.in_combat .regen_value
+.combat_indicator_enabled.inCombat .regen_value,
+.combat_indicator_enabled .inCombat .regen_value,
+.combat_indicator_enabled.in_combat .regen_value,
+.combat_indicator_enabled .in_combat .regen_value
 {
 	color: #fa6969;
 	transition-duration: 0.1s;
@@ -394,10 +402,14 @@
 
 .combat_indicator_active.colored_healthbar_active .regen_value,
 .combat_indicator_active .colored_healthbar_active .regen_value,
-.inCombat.colored_healthbar_active .regen_value,
-.inCombat .colored_healthbar_active .regen_value,
-.in_combat.colored_healthbar_active .regen_value,
-.in_combat .colored_healthbar_active .regen_value
+.combat_indicator_enabled.inCombat.colored_healthbar_active .regen_value,
+.combat_indicator_enabled.inCombat .colored_healthbar_active .regen_value,
+.combat_indicator_enabled .inCombat.colored_healthbar_active .regen_value,
+.combat_indicator_enabled .inCombat .colored_healthbar_active .regen_value,
+.combat_indicator_enabled.in_combat.colored_healthbar_active .regen_value,
+.combat_indicator_enabled.in_combat .colored_healthbar_active .regen_value,
+.combat_indicator_enabled .in_combat.colored_healthbar_active .regen_value,
+.combat_indicator_enabled .in_combat .colored_healthbar_active .regen_value
 {
 	color: #fa6969;
 	transition-duration: 0.1s;
@@ -756,10 +768,10 @@
 
 .combat_indicator_active.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
 .combat_indicator_active .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
-.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
-.inCombat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
-.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
-.in_combat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image
+.combat_indicator_enabled.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.combat_indicator_enabled .inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.combat_indicator_enabled.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image,
+.combat_indicator_enabled .in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -768,10 +780,10 @@
 
 .combat_indicator_active.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
 .combat_indicator_active .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
-.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
-.inCombat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
-.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
-.in_combat .fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value
+.combat_indicator_enabled.inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.combat_indicator_enabled .inCombat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.combat_indicator_enabled.in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value,
+.combat_indicator_enabled .in_combat.fg_healthbar_active:not(.minimalist_healthbar_active) .regen_value
 {
 	color: #fa6969;
 	transition-duration: 0.1s;
@@ -1101,10 +1113,10 @@
 
 .combat_indicator_active.minimalist_healthbar_active .regen_image,
 .combat_indicator_active .minimalist_healthbar_active .regen_image,
-.inCombat.minimalist_healthbar_active .regen_image,
-.inCombat .minimalist_healthbar_active .regen_image,
-.in_combat.minimalist_healthbar_active .regen_image,
-.in_combat .minimalist_healthbar_active .regen_image
+.combat_indicator_enabled.inCombat.minimalist_healthbar_active .regen_image,
+.combat_indicator_enabled .inCombat.minimalist_healthbar_active .regen_image,
+.combat_indicator_enabled.in_combat.minimalist_healthbar_active .regen_image,
+.combat_indicator_enabled .in_combat.minimalist_healthbar_active .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -1113,10 +1125,10 @@
 
 .combat_indicator_active.minimalist_healthbar_active .regen_value,
 .combat_indicator_active .minimalist_healthbar_active .regen_value,
-.inCombat.minimalist_healthbar_active .regen_value,
-.inCombat .minimalist_healthbar_active .regen_value,
-.in_combat.minimalist_healthbar_active .regen_value,
-.in_combat .minimalist_healthbar_active .regen_value
+.combat_indicator_enabled.inCombat.minimalist_healthbar_active .regen_value,
+.combat_indicator_enabled .inCombat.minimalist_healthbar_active .regen_value,
+.combat_indicator_enabled.in_combat.minimalist_healthbar_active .regen_value,
+.combat_indicator_enabled .in_combat.minimalist_healthbar_active .regen_value
 {
 	color: #fa6969;
 	text-shadow: 0px 0px 0px 2.0 rgba(15, 10, 10, 0.85);
@@ -1243,10 +1255,10 @@
 
 .combat_indicator_active.budhud_healthbar_active .regen_image,
 .combat_indicator_active .budhud_healthbar_active .regen_image,
-.inCombat.budhud_healthbar_active .regen_image,
-.inCombat .budhud_healthbar_active .regen_image,
-.in_combat.budhud_healthbar_active .regen_image,
-.in_combat .budhud_healthbar_active .regen_image
+.combat_indicator_enabled.inCombat.budhud_healthbar_active .regen_image,
+.combat_indicator_enabled .inCombat.budhud_healthbar_active .regen_image,
+.combat_indicator_enabled.in_combat.budhud_healthbar_active .regen_image,
+.combat_indicator_enabled .in_combat.budhud_healthbar_active .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -1255,10 +1267,10 @@
 
 .combat_indicator_active.budhud_healthbar_active .regen_value,
 .combat_indicator_active .budhud_healthbar_active .regen_value,
-.inCombat.budhud_healthbar_active .regen_value,
-.inCombat .budhud_healthbar_active .regen_value,
-.in_combat.budhud_healthbar_active .regen_value,
-.in_combat .budhud_healthbar_active .regen_value
+.combat_indicator_enabled.inCombat.budhud_healthbar_active .regen_value,
+.combat_indicator_enabled .inCombat.budhud_healthbar_active .regen_value,
+.combat_indicator_enabled.in_combat.budhud_healthbar_active .regen_value,
+.combat_indicator_enabled .in_combat.budhud_healthbar_active .regen_value
 {
 	color: #fa6969;
 	text-shadow: 0px 0px 0px 2.0 rgba(20, 8, 8, 0.85);
@@ -1689,10 +1701,10 @@
 
 .combat_indicator_active.klutz_healthbar_active .regen_image,
 .combat_indicator_active .klutz_healthbar_active .regen_image,
-.inCombat.klutz_healthbar_active .regen_image,
-.inCombat .klutz_healthbar_active .regen_image,
-.in_combat.klutz_healthbar_active .regen_image,
-.in_combat .klutz_healthbar_active .regen_image
+.combat_indicator_enabled.inCombat.klutz_healthbar_active .regen_image,
+.combat_indicator_enabled .inCombat.klutz_healthbar_active .regen_image,
+.combat_indicator_enabled.in_combat.klutz_healthbar_active .regen_image,
+.combat_indicator_enabled .in_combat.klutz_healthbar_active .regen_image
 {
 	wash-color: #fa6969;
 	opacity: 1;
@@ -1722,10 +1734,10 @@
 
 .combat_indicator_active.klutz_healthbar_active .regen_value,
 .combat_indicator_active .klutz_healthbar_active .regen_value,
-.inCombat.klutz_healthbar_active .regen_value,
-.inCombat .klutz_healthbar_active .regen_value,
-.in_combat.klutz_healthbar_active .regen_value,
-.in_combat .klutz_healthbar_active .regen_value
+.combat_indicator_enabled.inCombat.klutz_healthbar_active .regen_value,
+.combat_indicator_enabled .inCombat.klutz_healthbar_active .regen_value,
+.combat_indicator_enabled.in_combat.klutz_healthbar_active .regen_value,
+.combat_indicator_enabled .in_combat.klutz_healthbar_active .regen_value
 {
 	color: #fa6969;
 	transition-duration: 0.1s;
