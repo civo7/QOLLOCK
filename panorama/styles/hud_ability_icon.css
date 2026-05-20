@@ -11,7 +11,7 @@
 	width: 15px;
 }
 
-/* Post-game scoreboard — commented out per design
+/* 
 .clean_stacks_active CitadelPostGameScoreboardNew #AbilitiesContainer .ability_container
 {
 	height: 120px;
@@ -26,37 +26,37 @@
 }
 */
 
-.clean_stacks_active #BonusContainer
+.clean_stacks_active #hud_signature #BonusContainer
 {
 	margin-top: 85px;
 }
 
-.clean_stacks_active #slot_signature_2 #BonusContainer,.clean_stacks_active #slot_signature_3 #BonusContainer
+.clean_stacks_active #hud_signature #slot_signature_2 #BonusContainer,.clean_stacks_active #hud_signature #slot_signature_3 #BonusContainer
 {
 	margin-top: 65px;
 }
 
-.clean_stacks_active .bonusBG
+.clean_stacks_active #hud_signature .bonusBG
 {
 	border: 2px solid rgba(200, 200, 200, 0);
 }
 
-.clean_stacks_active .bonusCounter
+.clean_stacks_active #hud_signature .bonusCounter
 {
 	color: white;
 	text-shadow: 0px 0px 0px 5 offBlack;
 	text-overflow: noclip;
 }
 
-.clean_stacks_active .hasBonusCounter #BonusContainer
+.clean_stacks_active #hud_signature .hasBonusCounter #BonusContainer
 {
 	opacity: 1;
 	transform: translatey(105px);
 }
 
-.clean_stacks_active .gScoreboardOpen #BonusContainer,.clean_stacks_active .gShopOpen #BonusContainer
+.clean_stacks_active .gScoreboardOpen #hud_signature #BonusContainer,.clean_stacks_active .gShopOpen #hud_signature #BonusContainer
 {
-	visibility: visible;
+	visibility: collapse;
 }
 
 @keyframes 'QOLFlashBonusCounterCleanStacks'
