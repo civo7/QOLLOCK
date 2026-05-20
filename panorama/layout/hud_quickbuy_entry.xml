@@ -6,17 +6,17 @@
 	<CitadelHudQuickbuyEntry class="QuickbuyItem">
 		<Panel id="ItemContentPanel" hittest="false">
 			<CitadelModIcon id="ModIcon" />
-			<Panel class="NamePanel" hittest="false" hittestchildren="false">
+			<Panel class="NamePanel" hittest="false" hittestchildren="true">
 				<Panel class="QuickbuyStatus LeftRightFlow">
 					<Label id="QuickbuyLabel" class="QuickbuyLabel" text="#Citadel_Hud_Quickbuy" />
 					<Label class="QuickbuyLabelQueueSize" text="#Citadel_Hud_Quickbuy_QueueSize" />
 				</Panel>
 				<Label id="ModName" text="#Citadel_Hud_Quickbuy_ModName" />
 				<Panel class="CostPanel">
-					<Image class="goldIcon" />
+					<Image id="goldIcon" class="goldIcon" />
 					<Label id="ModCost" text="#Citadel_Hud_Quickbuy_ModCost" />
 					<Label class="QueueRemainingSoulsDivider" text=" / " />
-					<Label id="QueueRemainingSoulsLabel" text="0" />
+					<Label id="QueueRemainingSoulsLabel" text="0" hittest="true" />
 					<Label id="ExceedItemSlotLabel" text="#Citadel_Hud_Quickbuy_Exceeds_Slots" />
 					<Label id="SellItemSlotLabel" text="#Citadel_Hud_Quickbuy_Sell_Slot" />
 				</Panel>

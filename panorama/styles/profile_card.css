@@ -8,6 +8,36 @@
 	background-color: black;
 }
 
+#QOLStatlockerProfileCardLink
+{
+	width: 100%;
+	flow-children: right;
+	background-color: none;
+	border: 0px solid transparent;
+	padding: 0px;
+}
+
+#QOLStatlockerProfileCardLink:hover .AccountID
+{
+	color: #4fc3f7;
+	text-decoration: underline;
+}
+
+#QOLStatlockerProfileCardIcon
+{
+	width: 16px;
+	height: 16px;
+	margin-left: 4px;
+	vertical-align: center;
+	opacity: 0.85;
+}
+
+#QOLStatlockerProfileCardLink:hover #QOLStatlockerProfileCardIcon
+{
+	opacity: 1;
+	brightness: 1.4;
+}
+
 #BottomRow
 {
 	flow-children: right;

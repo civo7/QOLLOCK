@@ -86,6 +86,14 @@ var QUICKBUY_RAW_RECIPE_COMPONENTS={
 	'Weighted Shots':['Slowing Bullets']
 };
 var QUICKBUY_RECIPE_COMPONENTS={};
+var QUICKBUY_CHAT_SUBMIT_COOLDOWN_MS=1000;
+var QUICKBUY_CHAT_RETRY_DELAYS=[0,0.008,0.012,0.016,0.032];
+var quickbuyLastChatSubmitMs=0;
+var quickbuyChatCache={
+	panel:null,
+	input:null,
+	targetLabel:null
+};
 
 function ParseQuickbuySoulsCost(costText){
 	if(!costText)return 0;
@@ -155,6 +163,161 @@ function IsEnhancedQuickbuyActive(contextPanel){
 	}
 
 	return false;
+}
+
+function IsClickToNotifyActive(contextPanel){
+	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel);
+	if(quickbuyHostPanel&&quickbuyHostPanel.BHasClass&&quickbuyHostPanel.BHasClass('shop_click_to_notify_active'))return true;
+
+	var scanPanel=contextPanel;
+	while(scanPanel){
+		if(scanPanel.BHasClass&&scanPanel.BHasClass('shop_click_to_notify_active'))return true;
+		if(!scanPanel.GetParent)break;
+		scanPanel=scanPanel.GetParent();
+	}
+
+	return false;
+}
+
+function IsQuickbuyCostFeatureActive(contextPanel){
+	return IsEnhancedQuickbuyActive(contextPanel)||IsClickToNotifyActive(contextPanel);
+}
+
+function FormatQuickbuySoulsAmount(value){
+	var n=Math.max(0,Math.floor(Number(value)||0));
+	return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+function FindQuickbuyRootPanel(startPanel){
+	var panel=startPanel;
+	while(panel&&panel.GetParent&&panel.GetParent())panel=panel.GetParent();
+	return panel||startPanel||null;
+}
+
+function GetQuickbuyChatPanel(){
+	if(quickbuyChatCache.panel&&quickbuyChatCache.panel.IsValid&&quickbuyChatCache.panel.IsValid())return quickbuyChatCache.panel;
+	var root=FindQuickbuyRootPanel($.GetContextPanel());
+	if(!root||!root.FindChildTraverse)return null;
+	var chatPanel=root.FindChildTraverse('Chat');
+	if(chatPanel&&chatPanel.IsValid&&chatPanel.IsValid()){
+		quickbuyChatCache.panel=chatPanel;
+		return chatPanel;
+	}
+	return null;
+}
+
+function GetQuickbuyChatInput(){
+	if(quickbuyChatCache.input&&quickbuyChatCache.input.IsValid&&quickbuyChatCache.input.IsValid())return quickbuyChatCache.input;
+	var chatPanel=GetQuickbuyChatPanel();
+	var chatInput=null;
+	if(chatPanel&&chatPanel.FindChildTraverse){
+		var chatControls=chatPanel.FindChildTraverse('ChatControls');
+		chatInput=(chatControls&&chatControls.FindChildTraverse)?chatControls.FindChildTraverse('ChatInput'):null;
+		if(!chatInput)chatInput=chatPanel.FindChildTraverse('ChatInput');
+	}
+	if(!chatInput){
+		var root=FindQuickbuyRootPanel($.GetContextPanel());
+		if(root&&root.FindChildTraverse)chatInput=root.FindChildTraverse('ChatInput');
+	}
+	if(chatInput&&chatInput.IsValid&&chatInput.IsValid()){
+		quickbuyChatCache.input=chatInput;
+		return chatInput;
+	}
+	return null;
+}
+
+function GetQuickbuyChatTargetLabel(){
+	if(quickbuyChatCache.targetLabel&&quickbuyChatCache.targetLabel.IsValid&&quickbuyChatCache.targetLabel.IsValid())return quickbuyChatCache.targetLabel;
+	var chatPanel=GetQuickbuyChatPanel();
+	if(!chatPanel||!chatPanel.FindChildTraverse)return null;
+	var chatControls=chatPanel.FindChildTraverse('ChatControls');
+	var targetLabel=(chatControls&&chatControls.FindChildTraverse)?chatControls.FindChildTraverse('ChatTargetLabel'):null;
+	if(!targetLabel)targetLabel=chatPanel.FindChildTraverse('ChatTargetLabel');
+	if(targetLabel&&targetLabel.IsValid&&targetLabel.IsValid()){
+		quickbuyChatCache.targetLabel=targetLabel;
+		return targetLabel;
+	}
+	return null;
+}
+
+function IsQuickbuyTeamChatReady(chatInput,targetLabel){
+	if(!chatInput||!targetLabel)return false;
+	if(chatInput.IsValid&&!chatInput.IsValid())return false;
+	if(targetLabel.IsValid&&!targetLabel.IsValid())return false;
+	var labelText=String(targetLabel.text||'').replace(/^\s+|\s+$/g,'');
+	if(!labelText||labelText==='#citadel_chat_placeholder')return false;
+	if(labelText==='To (ALL):'||labelText.indexOf('(ALL)')!==-1)return false;
+	return true;
+}
+
+function CloseQuickbuyChatUi(chatInput){
+	var chatPanel=GetQuickbuyChatPanel();
+	try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e0){}
+	try{$.DispatchEvent('DropInputFocus',chatInput);}catch(e1){}
+	if(chatPanel){
+		try{$.DispatchEvent('CitadelChatInputBlur',chatPanel);}catch(e2){}
+		try{$.DispatchEvent('DropInputFocus',chatPanel);}catch(e3){}
+	}
+	$.Schedule(0,function(){
+		try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e4){}
+	});
+}
+
+function SubmitQuickbuyTeamChat(chatInput,message){
+	try{
+		chatInput.text=message;
+		$.DispatchEvent('CitadelChatInputSubmitted',chatInput);
+		chatInput.text='';
+		return true;
+	}catch(e0){
+		return false;
+	}
+}
+
+function TrySubmitQuickbuyTeamChat(message,delayIndex,targetRetryCount){
+	var chatInput=GetQuickbuyChatInput();
+	var targetLabel=GetQuickbuyChatTargetLabel();
+	if(IsQuickbuyTeamChatReady(chatInput,targetLabel)){
+		if(targetRetryCount<1&&delayIndex<QUICKBUY_CHAT_RETRY_DELAYS.length-1){
+			$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[delayIndex+1],function(){TrySubmitQuickbuyTeamChat(message,delayIndex+1,targetRetryCount+1);});
+			return;
+		}
+		if(!SubmitQuickbuyTeamChat(chatInput,message)){
+			try{$.DispatchEvent('SetInputFocus',chatInput);}catch(e0){}
+			SubmitQuickbuyTeamChat(chatInput,message);
+		}
+		CloseQuickbuyChatUi(chatInput);
+		return;
+	}
+	if(delayIndex>=QUICKBUY_CHAT_RETRY_DELAYS.length-1)return;
+	$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[delayIndex+1],function(){TrySubmitQuickbuyTeamChat(message,delayIndex+1,0);});
+}
+
+function SendQuickbuyNeededSoulsChatMessage(message){
+	var now=Date.now?Date.now():(new Date()).getTime();
+	if(now-quickbuyLastChatSubmitMs<QUICKBUY_CHAT_SUBMIT_COOLDOWN_MS)return;
+	quickbuyLastChatSubmitMs=now;
+	var cleanMessage=String(message||'').replace(/["\r\n;]/g,' ').replace(/^\s+|\s+$/g,'');
+	if(!cleanMessage)return;
+	try{$.DispatchEvent('CitadelConCommand','say_chat_team');}catch(e0){}
+	$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[0],function(){TrySubmitQuickbuyTeamChat(cleanMessage,0,0);});
+}
+
+function SetQuickbuyPanelStyleIfChanged(panel,styleName,styleValue){
+	if(!panel||!panel.style||!styleName)return;
+	var cacheName='_qolQuickbuyStyle_' + styleName;
+	if(panel[cacheName]===styleValue)return;
+	panel.style[styleName]=styleValue;
+	panel[cacheName]=styleValue;
+}
+
+function StyleQuickbuyMoneyLabel(panel,color){
+	if(!panel)return;
+	SetQuickbuyPanelStyleIfChanged(panel,'color',color);
+	SetQuickbuyPanelStyleIfChanged(panel,'washColor',color);
+	SetQuickbuyPanelStyleIfChanged(panel,'fontSize','16px');
+	SetQuickbuyPanelStyleIfChanged(panel,'fontWeight','bold');
+	SetQuickbuyPanelStyleIfChanged(panel,'verticalAlign','center');
 }
 
 function CollectQuickbuyItemPanels(panel,quickbuyItemPanels){
@@ -271,14 +434,39 @@ function BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,
 	return adjustedQuickbuyTotalSoulsCost<0?0:adjustedQuickbuyTotalSoulsCost;
 }
 
-function UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries){
+function UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNotifyActive){
 	for(var queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
 		var queueEntry=quickbuyQueueEntries[queueIndex];
 		if(!queueEntry.itemPanel)continue;
 		queueEntry.itemPanel.SetHasClass('HasRemainingSoulsNeeded',queueEntry.remainingSoulsCost>0);
 
 		var queueRemainingSoulsLabel=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsLabel');
-		if(queueRemainingSoulsLabel)queueRemainingSoulsLabel.text=String(queueEntry.remainingSoulsCost);
+		if(queueRemainingSoulsLabel){
+			queueRemainingSoulsLabel.text=String(queueEntry.remainingSoulsCost);
+			var canNotify=clickToNotifyActive&&queueEntry.remainingSoulsCost>0;
+			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',canNotify);
+			if(clickToNotifyActive)StyleQuickbuyMoneyLabel(queueRemainingSoulsLabel,canNotify?'#d64259':'#66ffd9');
+			var queueRemainingSoulsDivider=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsDivider');
+			if(queueRemainingSoulsDivider)StyleQuickbuyMoneyLabel(queueRemainingSoulsDivider,'#d8d0c088');
+			var modCostLabel=queueEntry.itemPanel.FindChildTraverse('ModCost');
+			var goldIcon=queueEntry.itemPanel.FindChildTraverse('goldIcon')||queueEntry.itemPanel.FindChildTraverse('ModCostIcon');
+			if(clickToNotifyActive){
+				StyleQuickbuyMoneyLabel(modCostLabel,canNotify?'#d64259':'#66ffd9');
+				if(goldIcon)SetQuickbuyPanelStyleIfChanged(goldIcon,'washColor',canNotify?'#d64259':'#66ffd9');
+			}
+			if(canNotify){
+				var chatMessage='Need ' + FormatQuickbuySoulsAmount(queueEntry.remainingSoulsCost) + ' more for ' + (queueEntry.itemName||'item');
+				if(queueRemainingSoulsLabel._qolClickToNotifyMessage!==chatMessage){
+					queueRemainingSoulsLabel._qolClickToNotifyMessage=chatMessage;
+					queueRemainingSoulsLabel.SetPanelEvent('onactivate',(function(message){
+						return function(){SendQuickbuyNeededSoulsChatMessage(message);};
+					})(chatMessage));
+				}
+			}else if(queueRemainingSoulsLabel._qolClickToNotifyMessage){
+				queueRemainingSoulsLabel._qolClickToNotifyMessage='';
+				queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
+			}
+		}
 	}
 }
 
@@ -414,7 +602,12 @@ function ResetQuickbuyQueuePanels(contextPanel){
 		if(!queueEntry.itemPanel)continue;
 		queueEntry.itemPanel.SetHasClass('HasRemainingSoulsNeeded',false);
 		var queueRemainingSoulsLabel=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsLabel');
-		if(queueRemainingSoulsLabel)queueRemainingSoulsLabel.text='0';
+		if(queueRemainingSoulsLabel){
+			queueRemainingSoulsLabel.text='0';
+			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',false);
+			queueRemainingSoulsLabel._qolClickToNotifyMessage='';
+			queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
+		}
 	}
 }
 
@@ -425,11 +618,12 @@ function UpdateQuickbuyQueueCostPanels(){
 		return;
 	}
 
-	if(!IsEnhancedQuickbuyActive(contextPanel)){
+	if(!IsQuickbuyCostFeatureActive(contextPanel)){
 		ResetQuickbuyQueuePanels(contextPanel);
 		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
 		return;
 	}
+	var clickToNotifyActive=IsClickToNotifyActive(contextPanel);
 
 	var quickbuyTotalCostLabel=contextPanel.FindChildTraverse('QuickbuyShopTotalCostLabel');
 	var quickbuyNextSoulsNeededLabel=contextPanel.FindChildTraverse('QuickbuyNextSoulsNeededLabel');
@@ -446,7 +640,7 @@ function UpdateQuickbuyQueueCostPanels(){
 	var adjustedQuickbuyTotalSoulsCost=BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,quickbuySellQueueEntries);
 
 	quickbuyTotalCostLabel.text=String(adjustedQuickbuyTotalSoulsCost);
-	UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries);
+	UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNotifyActive);
 	UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries);
 
 	if(quickbuyNextSoulsNeededLabel)quickbuyNextSoulsNeededLabel.text=String(GetQuickbuyNextRemainingSouls(quickbuyQueueEntries));

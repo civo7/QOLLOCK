@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -503,6 +503,10 @@ function main() {
     const minimapCrateOverlayKeys = [
         "ENABLE_MINIMAP_CRATE_OVERLAY"
     ];
+    const minimapRemTunnelsKeys = [
+        "ENABLE_MINIMAP_REM_TUNNELS",
+        "MINIMAP_REM_TUNNELS_OPACITY"
+    ];
     const combatIndicatorKeys = [
         "ENABLE_COMBAT_INDICATOR"
     ];
@@ -511,6 +515,10 @@ function main() {
     ];
     const enhancedQuickbuyKeys = [
         "ENABLE_ENHANCED_QUICKBUY"
+    ];
+    const shopPurchaseFeatureKeys = [
+        "ENABLE_SHOP_CLICK_TO_NOTIFY",
+        "ENABLE_SHOP_RECENT_PURCHASES"
     ];
     const releaseCompatSemvers = ["2.3.2", "2.3.5"];
     for (const semver of releaseCompatSemvers) {
@@ -562,6 +570,36 @@ function main() {
         fail(`2.3.5 release fixture decode drift: ${current235Diff[0]}`);
     }
 
+    const release235CompassSpeedFixtureConfig = Object.assign({}, mirrorDefaultConfig, {
+        ENABLE_COMPASS: 0,
+        ENABLE_COMPASS_SPEED: 1
+    });
+    const release235CompassSpeedEncoded = mirrorSettingsExports.serialize(release235CompassSpeedFixtureConfig, "2.3.5");
+    const current235CompassSpeedDecoded = settingsExports.deserialize(release235CompassSpeedEncoded, "2.3.5");
+    const current235CompassSpeedCandidate = settingsExports.buildCandidateConfig(
+        current235CompassSpeedDecoded,
+        "2.3.5",
+        defaultConfig
+    ).candidateConfig;
+    if (Number(current235CompassSpeedCandidate.ENABLE_COMPASS_SPEED) !== 0) {
+        fail("2.3.5 compass speed import should not enable standalone speed when compass is off");
+    }
+
+    const current250CompassSpeedConfig = Object.assign({}, defaultConfig, {
+        ENABLE_COMPASS: 0,
+        ENABLE_COMPASS_SPEED: 1
+    });
+    const current250CompassSpeedEncoded = settingsExports.serialize(current250CompassSpeedConfig, "2.5.0");
+    const current250CompassSpeedDecoded = settingsExports.deserialize(current250CompassSpeedEncoded, "2.5.0");
+    const current250CompassSpeedCandidate = settingsExports.buildCandidateConfig(
+        current250CompassSpeedDecoded,
+        "2.5.0",
+        defaultConfig
+    ).candidateConfig;
+    if (Number(current250CompassSpeedCandidate.ENABLE_COMPASS_SPEED) !== 1) {
+        fail("2.5.0 compass speed import should preserve standalone speed");
+    }
+
     const regressionConfig = Object.assign({}, defaultConfig, {
         LANGUAGE: 2,
         ENABLE_CHAT: 0,
@@ -583,7 +621,7 @@ function main() {
         const settingsSchemaKeys = new Set((settingsRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
         const coreSchemaKeys = new Set((coreRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
         if (semver === "2.3.5" || semver === "2.3.6" || semver === "2.3.7") {
-            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys)) {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
             }
@@ -592,6 +630,20 @@ function main() {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core 2.4.0 missing ${key}`);
+            }
+            for (const key of shopPurchaseFeatureKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.4.0 should omit ${key}`);
+            }
+            for (const key of minimapRemTunnelsKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.4.0 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.4.0 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.0") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.0 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.0 missing ${key}`);
             }
         }
 
