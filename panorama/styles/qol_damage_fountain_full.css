@@ -6790,8 +6790,7 @@
 }
 
 .damage_fountain_active .damage_type_pure .HudIndicatorContainer,
-.damage_fountain_active .pure_damage_new .HudIndicatorContainer,
-.damage_fountain_active .bullet_damage_new.crit .HudIndicatorContainer
+.damage_fountain_active .pure_damage_new .HudIndicatorContainer
 {
 	width: fit-children;
 	height: fit-children;
@@ -6835,8 +6834,7 @@
 }
 
 .damage_fountain_active .damage_type_pure .HudIndicatorText,
-.damage_fountain_active .pure_damage_new .HudIndicatorText,
-.damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
+.damage_fountain_active .pure_damage_new .HudIndicatorText
 {
 	width: fit-children;
 	min-width: 220px;
@@ -6846,5 +6844,37 @@
 	text-overflow: clip;
 	padding-right: 70px;
 	overflow: noclip;
+}
+
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorContainer
+{
+	width: fit-children;
+	height: fit-children;
+	min-width: 0px;
+	min-height: 0px;
+}
+
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: none;
+	height: fit-children;
+	min-height: 54px;
+	padding-right: 0px;
+	padding-left: 0px;
+	white-space: nowrap;
+	text-overflow: clip;
+	text-align: center;
+	background-position: center;
+	overflow: noclip;
+}
+
+.damage_fountain_active .crit .HudIndicatorText,
+.damage_fountain_active .bullet_damage_new.crit .HudIndicatorText,
+.damage_fountain_active .crit.damage_type_gun .HudIndicatorText,
+.damage_fountain_active .batched.crit.damage_type_gun .HudIndicatorText
+{
+	transform: translateX(-3px);
 }
 

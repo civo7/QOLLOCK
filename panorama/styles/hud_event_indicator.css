@@ -2,6 +2,58 @@
 
 @import url("s2r://panorama/styles/base/hud_event_indicator.vcss_c");
 @import url("s2r://panorama/styles/qol_damage_fountain_full.vcss_c");
+@keyframes 'qol_clean_damage_fade'
+{
+	0%
+	{
+		opacity: 1;
+	}
+	
+	72%
+	{
+		opacity: 1;
+	}
+	
+	100%
+	{
+		opacity: 0;
+	}
+	
+}
+
+@keyframes 'qol_clean_damage_fountain'
+{
+	0%
+	{
+		transform: translateX(0px) translateY(0px);
+	}
+	
+	100%
+	{
+		transform: translateX(0px) translateY(-50px);
+	}
+	
+}
+
+@keyframes 'qol_clean_damage_fountain_emphasized'
+{
+	0%
+	{
+		transform: translateX(0px) translateY(0px);
+	}
+	
+	30%
+	{
+		transform: translateX(0px) translateY(-50px);
+	}
+	
+	100%
+	{
+		transform: translateX(0px) translateY(-100px);
+	}
+	
+}
+
 @keyframes 'rise_and_fade_custom_disabled'
 {
 	0%
@@ -81,3 +133,58 @@
 	animation-name: none !important;
 }
 
+.clean_damage_indicators_active .cumulative .HudIndicatorContainer,
+.clean_damage_indicators_active .cumulative.emphasize .HudIndicatorContainer
+{
+	animation-name: qol_clean_damage_fade;
+	animation-fill-mode: forwards;
+}
+
+.clean_damage_indicators_active .cumulative .HudIndicatorContainer
+{
+	animation-duration: 0.5s;
+}
+
+.clean_damage_indicators_active .cumulative.emphasize .HudIndicatorContainer
+{
+	animation-duration: 1.25s;
+}
+
+.clean_damage_indicators_active .cumulative .HudIndicatorText,
+.clean_damage_indicators_active .cumulative.emphasize .HudIndicatorText
+{
+	animation-name: none;
+	animation-duration: 0s;
+}
+
+.clean_damage_indicators_active.damage_fountain_active .fountain1 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain2 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain3 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain4 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain5 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain1,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain2,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain3,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain4,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain5
+{
+	animation-name: qol_clean_damage_fountain, fade_single;
+	animation-duration: 0.8s, 0.8s;
+	animation-fill-mode: forwards;
+}
+
+.clean_damage_indicators_active.damage_fountain_active .fountain_emphasised1 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain_emphasised2 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain_emphasised3 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain_emphasised4 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .fountain_emphasised5 .HudIndicatorContainer,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain_emphasised1,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain_emphasised2,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain_emphasised3,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain_emphasised4,
+.clean_damage_indicators_active.damage_fountain_active .HudIndicatorContainer.fountain_emphasised5
+{
+	animation-name: qol_clean_damage_fountain_emphasized, fade_single;
+	animation-duration: 1.6s, 1.6s;
+	animation-fill-mode: forwards;
+}

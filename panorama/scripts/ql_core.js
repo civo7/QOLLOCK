@@ -61,6 +61,8 @@
         minimapRuntimeSig: "",
         minimapCastRangeScaleApplied: false,
         minimapCrateOverlayBuildSig: "",
+        quickbuyRuntimeStyleSig: "",
+        quickbuyRuntimeHostOffsetApplied: false,
         compassEnabled: false,
         compassShowSpeed: true,
         compassLastDegreeText: "",
@@ -223,7 +225,14 @@
         heroShopMainPanelStyleSig: "",
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
+        bottomBarCurrencyColorStyleSig: "",
+        bottomBarCurrencyDebugLastSig: "",
+        bottomBarCurrencyDebugNextMs: 0,
         itemsRuntimeStyleSig: "",
+        staminaChargeAngleStyleSig: "",
+        staminaChargeColorStyleSig: "",
+        staminaChargeColorPanelCache: [],
+        staminaChargeColorPanelCacheNextMs: 0,
         soulsRuntimeStyleSig: "",
         urnTrackerDisplayMode: "",
         urnTrackerLastClass: "",
@@ -523,6 +532,9 @@
         oldItemCooldownStylePanel: null,
         oldItemCooldownRuntimeWasActive: false,
         coloredHealthbarBridgeValue: "",
+        playerHealthbarAccentColorSig: "",
+        playerHealthbarAccentColorPanels: [],
+        playerHealthbarAccentColorToken: 0,
         minimalistHealthbarOffsetSig: "",
         minimalistHealthbarOffsetApplied: false,
         minimalistHealthbarOffsetPanel: null,
@@ -649,6 +661,12 @@
     };
 
     const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
+    const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
+    const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
+    const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
+    const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
+    const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
@@ -671,7 +689,7 @@
     const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
-    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0";
+    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
     const COMPASS_TICK_STEP_DEG = 22.5;
     const COMPASS_TICK_SPACING_PX = 12.5;
     const COMPASS_TICK_COUNT = 17;
@@ -718,6 +736,8 @@
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
     const COMBAT_INDICATOR_DEBUG = false;
     const COMBAT_INDICATOR_DEBUG_THROTTLE_MS = 700;
+    const BOTTOM_BAR_CURRENCY_DEBUG = false;
+    const BOTTOM_BAR_CURRENCY_DEBUG_THROTTLE_MS = 700;
     const ULT_CD_DEBUG_ENABLED = false;
     const ENEMY_ULT_OLD_PANEL_SCAN_MS = 1200;
     const ENEMY_UNIT_STATUS_OLD_PANEL_SCAN_MS = Math.min(ENEMY_COLORED_HEALTH_PANEL_SCAN_MS, ENEMY_ULT_OLD_PANEL_SCAN_MS);
@@ -1298,6 +1318,21 @@ function ExpressShotLog(msg) {
         CombatIndicatorDebugLog(msg);
     }
 
+    function BottomBarCurrencyDebugLog(msg) {
+        if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
+        $.Msg("[QOLLock][BottomBarCurrencyDbg] " + msg);
+    }
+
+    function BottomBarCurrencyDebugLogThrottled(sig, msg, nowMs) {
+        if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var sameSig = sig && sig === State.bottomBarCurrencyDebugLastSig;
+        if (sameSig && now < (State.bottomBarCurrencyDebugNextMs || 0)) return;
+        State.bottomBarCurrencyDebugLastSig = sig || "";
+        State.bottomBarCurrencyDebugNextMs = now + BOTTOM_BAR_CURRENCY_DEBUG_THROTTLE_MS;
+        BottomBarCurrencyDebugLog(msg);
+    }
+
     function EnemyUltOldDebugLog(msg) {
         if (!ENEMY_ULT_OLD_DEBUG) return;
         $.Msg("[QOLLock][EnemyUltOldDbg] " + msg);
@@ -1361,27 +1396,115 @@ function ExpressShotLog(msg) {
         return false;
     }
 
+    function ResolveSettingsThemeId(cfg) {
+        var raw = Math.round(Number(cfg && cfg.SETTINGS_THEME));
+        if (raw === 1 || raw === 2 || raw === 3 || raw === 4 || raw === 5) return raw;
+        return 0;
+    }
+
+    function GetSettingsUiThemePalette() {
+        var theme = ResolveSettingsThemeId(State.lastConfig || DEFAULT_CONFIG);
+        if (theme === 1) {
+            return {
+                overlay: "rgba(246, 229, 194, 0.76)",
+                card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 245, 220, 0.990) ), color-stop( 0.58, rgba(236, 214, 175, 0.980) ), to( rgba(211, 181, 132, 0.985) ) )",
+                cardBorder: "1px solid rgba(122, 88, 45, 0.20)",
+                cardShadow: "fill rgba(94, 65, 31, 0.26) 0px 18px 42px 0px, inset rgba(255, 255, 244, 0.42) 0px 1px 0px 0px",
+                title: "#4e331b",
+                accent: "#a3692c",
+                body: "#62482d",
+                warn: "#b64d3f",
+                panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 250, 235, 0.55) ), to( rgba(224, 195, 145, 0.38) ) )"
+            };
+        }
+        if (theme === 2) {
+            return {
+                overlay: "rgba(58, 18, 45, 0.66)",
+                card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 241, 250, 0.995) ), color-stop( 0.58, rgba(250, 197, 228, 0.985) ), to( rgba(238, 173, 209, 0.985) ) )",
+                cardBorder: "1px solid rgba(174, 42, 126, 0.22)",
+                cardShadow: "fill rgba(118, 45, 92, 0.28) 0px 18px 42px 0px, inset rgba(255, 255, 255, 0.54) 0px 1px 0px 0px",
+                title: "#3f1636",
+                accent: "#b81c79",
+                body: "#3f1636",
+                warn: "#8f2430",
+                panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 250, 253, 0.58) ), to( rgba(231, 146, 199, 0.42) ) )"
+            };
+        }
+        if (theme === 3) {
+            return {
+                overlay: "rgba(2, 2, 3, 0.82)",
+                card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(18, 18, 20, 0.990) ), color-stop( 0.58, rgba(8, 8, 10, 0.980) ), to( rgba(3, 3, 5, 0.990) ) )",
+                cardBorder: "1px solid rgba(255, 47, 67, 0.20)",
+                cardShadow: "fill rgba(0, 0, 0, 0.68) 0px 18px 42px 0px, inset rgba(255, 47, 67, 0.08) 0px 1px 0px 0px",
+                title: "#f6f2f3",
+                accent: "#ff3045",
+                body: "#c7b9bd",
+                warn: "#ff3045",
+                panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(44, 15, 18, 0.42) ), to( rgba(13, 13, 15, 0.36) ) )"
+            };
+        }
+        if (theme === 4) {
+            return {
+                overlay: "rgba(7, 33, 50, 0.68)",
+                card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 62, 82, 0.985) ), color-stop( 0.58, rgba(14, 39, 56, 0.975) ), to( rgba(8, 22, 36, 0.985) ) )",
+                cardBorder: "1px solid rgba(108, 214, 255, 0.18)",
+                cardShadow: "fill rgba(0, 18, 31, 0.52) 0px 18px 42px 0px, inset rgba(151, 226, 255, 0.10) 0px 1px 0px 0px",
+                title: "#effcff",
+                accent: "#72d7ff",
+                body: "#caedf5",
+                warn: "#ffb6a8",
+                panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(52, 117, 145, 0.40) ), to( rgba(8, 31, 47, 0.34) ) )"
+            };
+        }
+        if (theme === 5) {
+            return {
+                overlay: "rgba(233, 236, 232, 0.72)",
+                card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(250, 252, 247, 0.995) ), color-stop( 0.58, rgba(225, 229, 220, 0.985) ), to( rgba(201, 208, 197, 0.985) ) )",
+                cardBorder: "1px solid rgba(45, 52, 49, 0.18)",
+                cardShadow: "fill rgba(64, 70, 66, 0.24) 0px 18px 42px 0px, inset rgba(255, 255, 255, 0.65) 0px 1px 0px 0px",
+                title: "#17201c",
+                accent: "#00a26a",
+                body: "#2c3834",
+                warn: "#c63d35",
+                panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 255, 255, 0.58) ), to( rgba(204, 216, 207, 0.42) ) )"
+            };
+        }
+        return {
+            overlay: "rgba(3, 5, 6, 0.64)",
+            card: "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) )",
+            cardBorder: "1px solid rgba(210, 224, 216, 0.075)",
+            cardShadow: "fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px",
+            title: "#f2faf5",
+            accent: "#9af0bd",
+            body: "#bac6c0",
+            warn: "#ff9d9d",
+            panel: "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.42) ), to( rgba(12, 14, 15, 0.30) ) )"
+        };
+    }
+
     function ApplyLoaderDetailPromptStyle(detailLabel, isPrompt) {
         if (!detailLabel) return;
         var prompt = (isPrompt === true);
+        var theme = GetSettingsUiThemePalette();
         if (detailLabel.SetHasClass) detailLabel.SetHasClass("is-shop-prompt", prompt);
         if (prompt) {
             detailLabel.style.fontSize = "14px";
             detailLabel.style.lineHeight = "20px";
             detailLabel.style.fontWeight = "semi-bold";
-            detailLabel.style.color = "#ff9d9d";
+            detailLabel.style.color = theme.warn;
             detailLabel.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.13)";
         } else {
             detailLabel.style.fontSize = "13px";
             detailLabel.style.lineHeight = "19px";
             detailLabel.style.fontWeight = "normal";
-            detailLabel.style.color = "#bac6c0";
+            detailLabel.style.color = theme.body;
             detailLabel.style.textShadow = "none";
         }
     }
 
     function ApplyLoaderCardTheme(card) {
         if (!card || !card.style) return;
+        var theme = GetSettingsUiThemePalette();
         card.style.horizontalAlign = "center";
         card.style.verticalAlign = "top";
         card.style.flowChildren = "down";
@@ -1392,33 +1515,35 @@ function ExpressShotLog(msg) {
         card.style.paddingRight = "20px";
         card.style.paddingBottom = "18px";
         card.style.paddingLeft = "20px";
-        card.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) )";
-        card.style.border = "1px solid rgba(210, 224, 216, 0.075)";
+        card.style.backgroundColor = theme.card;
+        card.style.border = theme.cardBorder;
         card.style.borderRadius = "5px";
-        card.style.boxShadow = "fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px";
+        card.style.boxShadow = theme.cardShadow;
     }
 
     function ApplyLoaderWarningTheme(warning) {
         if (!warning || !warning.style) return;
+        var theme = GetSettingsUiThemePalette();
         warning.style.horizontalAlign = "center";
         warning.style.fontFamily = "oracle";
         warning.style.marginBottom = "10px";
         warning.style.fontSize = "14px";
         warning.style.fontWeight = "semi-bold";
         warning.style.letterSpacing = "1.0px";
-        warning.style.color = "#ff9d9d";
+        warning.style.color = theme.warn;
         warning.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.14)";
         warning.style.textTransform = "uppercase";
     }
 
     function ApplyLoaderTitleTheme(title) {
         if (!title || !title.style) return;
+        var theme = GetSettingsUiThemePalette();
         title.style.horizontalAlign = "center";
         title.style.fontFamily = "oracle";
         title.style.fontSize = "28px";
         title.style.fontWeight = "semi-bold";
         title.style.letterSpacing = "1.8px";
-        title.style.color = "#f2faf5";
+        title.style.color = theme.title;
         title.style.textShadow = "0px 0px 9px rgba(152, 255, 181, 0.12)";
         title.style.marginBottom = "12px";
         title.style.textTransform = "uppercase";
@@ -1426,24 +1551,26 @@ function ExpressShotLog(msg) {
 
     function ApplyLoaderDetailTheme(detailLabel) {
         if (!detailLabel || !detailLabel.style) return;
+        var theme = GetSettingsUiThemePalette();
         detailLabel.style.width = "100%";
         detailLabel.style.marginTop = "12px";
         detailLabel.style.fontFamily = "oracle";
         detailLabel.style.fontSize = "13px";
         detailLabel.style.lineHeight = "19px";
         detailLabel.style.letterSpacing = "0.18px";
-        detailLabel.style.color = "#bac6c0";
+        detailLabel.style.color = theme.body;
         detailLabel.style.textShadow = "none";
     }
 
     function ApplyLoaderStepsWrapTheme(stepsWrap) {
         if (!stepsWrap || !stepsWrap.style) return;
+        var theme = GetSettingsUiThemePalette();
         stepsWrap.style.width = "100%";
         stepsWrap.style.flowChildren = "down";
         stepsWrap.style.padding = "8px 10px 8px 10px";
-        stepsWrap.style.border = "1px solid rgba(210, 224, 216, 0.045)";
+        stepsWrap.style.border = theme.cardBorder;
         stepsWrap.style.borderRadius = "4px";
-        stepsWrap.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.42) ), to( rgba(12, 14, 15, 0.30) ) )";
+        stepsWrap.style.backgroundColor = theme.panel;
         stepsWrap.style.boxShadow = "inset rgba(0, 0, 0, 0.26) 0px 1px 5px 0px";
     }
 
@@ -4091,8 +4218,25 @@ const BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS = [
     { key: "DAMAGE_IMPACT_X_OFFSET", min: -1000, max: 1000, step: 5 },
     { key: "DAMAGE_IMPACT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
 ];
+const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS = [
+    { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
+];
+const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS = [
+    { key: "ITEMS_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 25, step: 1 },
+    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 25, step: 1 },
+    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 25, step: 1 },
+    { key: "AMMO_TEXT_COLOR", min: 0, max: 25, step: 1 }
+];
 const BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS = [
     { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_STAMINA_CHARGE_SCHEMA_FIELDS = [
+    { key: "STAMINA_CHARGE_ANGLE", min: 0, max: 360, step: 1 }
+];
+const BUILD_CATEGORY_CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS = [
+    { key: "ENABLE_CLEAN_DAMAGE_INDICATORS", min: 0, max: 1, step: 1 }
 ];
 const BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
     { key: "ENABLE_SIMPLIFY_SHOP_STATS", min: 0, max: 1, step: 1 }
@@ -4153,6 +4297,20 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2 = AppendUniquePayloadSchemaFields(
             BUILD_CATEGORY_ZOOM_REM_TUNNELS_SCHEMA_FIELDS
         ),
         BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS
+    )
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2,
+    BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3,
+    AppendUniquePayloadSchemaFields(
+        AppendUniquePayloadSchemaFields(
+            BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS,
+            BUILD_CATEGORY_STAMINA_CHARGE_SCHEMA_FIELDS
+        ),
+        BUILD_CATEGORY_CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
     )
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
@@ -4268,6 +4426,14 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.5.2": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2
+    },
+    "2.5.3": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3
+    },
+    "2.5.4": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -4542,6 +4708,11 @@ function GetUIRoot() {
             try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) {}
             try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) {}
         }
+        try {
+            if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                $.persistentStorage.setItem("qol_settings_raw_v1", nextRaw);
+            }
+        } catch (ePersistWrite) {}
 
         return {
             raw: nextRaw,
@@ -4633,6 +4804,94 @@ function GetUIRoot() {
         try {
             panel.style[prop] = value;
         } catch (e) {}
+    }
+
+    const QOL_WASH_COLOR_PALETTE = [
+        "",
+        "#f7f4e8",
+        "#bfc7cf",
+        "#33363f",
+        "#ff3b47",
+        "#ff6f61",
+        "#ff8a2a",
+        "#ffb52e",
+        "#ffe45c",
+        "#a8f04f",
+        "#45d66b",
+        "#63f0b5",
+        "#24c6a8",
+        "#44e3ff",
+        "#64bfff",
+        "#3f78ff",
+        "#6157ff",
+        "#9b5cff",
+        "#c15cff",
+        "#ff4de3",
+        "#ff78bd",
+        "#ff5d89",
+        "#9a6743",
+        "#d9a441",
+        "#8cff4f",
+        "#7c4dff"
+    ];
+
+    function NormalizePaletteColorIndex(value) {
+        var numeric = Math.round(Number(value));
+        if (!isFinite(numeric)) numeric = 0;
+        if (numeric < 0) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        return numeric;
+    }
+
+    function ResolveWashColorFromPalette(value) {
+        var index = NormalizePaletteColorIndex(value);
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        return color ? String(color) : "";
+    }
+
+    function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName, persistentStorageKey) {
+        var fromConfig = NormalizePaletteColorIndex(cfg && cfg[key]);
+        var root = GetUIRoot();
+        try {
+            if (root && root.GetAttributeString) {
+                var rootAttr = String(root.GetAttributeString(attrName, "") || "");
+                if (rootAttr !== "") return NormalizePaletteColorIndex(rootAttr);
+            }
+        } catch (eAttrRoot) {}
+        try {
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+            if (hud && hud.GetAttributeString) {
+                var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
+                if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
+            }
+        } catch (eAttrHud) {}
+        try {
+            if (persistentStorageKey && $ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                var raw = String($.persistentStorage.getItem(persistentStorageKey) || "");
+                if (raw !== "") return NormalizePaletteColorIndex(raw);
+            }
+        } catch (e0) {}
+        return fromConfig;
+    }
+
+    function ReadPlayerHealthbarAccentColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR", PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR, PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY);
+    }
+
+    function ReadBottomBarWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR", BOTTOM_BAR_WASH_COLOR_ATTR, "");
+    }
+
+    function ReadKeyboardOverlayWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR", KEYBOARD_OVERLAY_WASH_COLOR_ATTR, "");
+    }
+
+    function ReadStaminaChargeColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "STAMINA_CHARGE_COLOR", STAMINA_CHARGE_COLOR_ATTR, "");
+    }
+
+    function ReadAmmoTextColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR", AMMO_TEXT_COLOR_ATTR, "");
     }
 
     function ResolvePassiveCooldownMode(cfg) {
@@ -5042,6 +5301,104 @@ function GetUIRoot() {
         ResetPlayerHealthbarScaleOpacityRuntime(panel);
     }
 
+    function ResetPlayerHealthbarAccentColorRuntime() {
+        State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
+        var panels = State.playerHealthbarAccentColorPanels || [];
+        for (var i = 0; i < panels.length; i++) {
+            if (IsPanelValid(panels[i])) {
+                SetStyleSafe(panels[i], "washColor", "");
+            }
+        }
+        State.playerHealthbarAccentColorPanels = [];
+        State.playerHealthbarAccentColorSig = "";
+    }
+
+    function PushAccentColorTarget(list, panel) {
+        if (!IsPanelValid(panel)) return;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] === panel) return;
+        }
+        list.push(panel);
+    }
+
+    function FindPlayerHealthbarAccentColorPanels(root, healthContainer) {
+        var targets = [];
+        if (healthContainer && healthContainer.FindChildTraverse) {
+            PushAccentColorTarget(targets, healthContainer.FindChildTraverse("health_bar_frame"));
+        }
+        if (healthContainer && healthContainer.FindChildrenWithClassTraverse) {
+            var backers = healthContainer.FindChildrenWithClassTraverse("healthBacker") || [];
+            for (var i = 0; i < backers.length; i++) {
+                PushAccentColorTarget(targets, backers[i]);
+            }
+        }
+        if (targets.length === 0 && root && root.FindChildTraverse) {
+            PushAccentColorTarget(targets, root.FindChildTraverse("health_bar_frame"));
+        }
+        if (targets.length <= 1 && root && root.FindChildrenWithClassTraverse) {
+            var rootBackers = root.FindChildrenWithClassTraverse("healthBacker") || [];
+            for (var j = 0; j < rootBackers.length; j++) {
+                PushAccentColorTarget(targets, rootBackers[j]);
+            }
+        }
+        return targets;
+    }
+
+    function ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer) {
+        var panels = FindPlayerHealthbarAccentColorPanels(root, healthContainer);
+        var colorIndex = ReadPlayerHealthbarAccentColorIndex(cfg);
+        var color = ResolveWashColorFromPalette(colorIndex);
+        var idParts = [];
+        for (var i = 0; i < panels.length; i++) {
+            idParts.push(String(panels[i].id || "healthBacker"));
+        }
+        var styleSig = idParts.join(",") + "|" + color;
+
+        var oldPanels = State.playerHealthbarAccentColorPanels || [];
+        for (var oldIndex = 0; oldIndex < oldPanels.length; oldIndex++) {
+            var stillTargeted = false;
+            for (var newIndex = 0; newIndex < panels.length; newIndex++) {
+                if (oldPanels[oldIndex] === panels[newIndex]) {
+                    stillTargeted = true;
+                    break;
+                }
+            }
+            if (!stillTargeted && IsPanelValid(oldPanels[oldIndex])) {
+                SetStyleSafe(oldPanels[oldIndex], "washColor", "");
+            }
+        }
+
+        if (panels.length === 0) {
+            State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
+            State.playerHealthbarAccentColorPanels = [];
+            State.playerHealthbarAccentColorSig = "";
+            return;
+        }
+
+        if (State.playerHealthbarAccentColorSig === styleSig) {
+            return;
+        }
+        State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
+        var applyToken = State.playerHealthbarAccentColorToken;
+        for (var applyIndex = 0; applyIndex < panels.length; applyIndex++) {
+            SetStyleSafe(panels[applyIndex], "washColor", "");
+        }
+        State.playerHealthbarAccentColorPanels = panels;
+        State.playerHealthbarAccentColorSig = styleSig;
+        if (color) {
+            $.Schedule(0.01, function() {
+                if (State.playerHealthbarAccentColorToken !== applyToken || State.playerHealthbarAccentColorSig !== styleSig) {
+                    return;
+                }
+                for (var delayedIndex = 0; delayedIndex < panels.length; delayedIndex++) {
+                    if (IsPanelValid(panels[delayedIndex])) {
+                        SetStyleSafe(panels[delayedIndex], "washColor", color);
+                    }
+                }
+            });
+        }
+    }
+
     function ReadPanelOpacityMaybe(panel) {
         if (!panel || !IsPanelValid(panel) || !panel.style) return NaN;
         var raw = "";
@@ -5181,7 +5538,8 @@ function GetUIRoot() {
             playerOffsetX !== 0 ||
             playerOffsetY !== 0 ||
             playerScale !== 100 ||
-            Math.abs(playerOpacity - 1.0) > 0.0001
+            Math.abs(playerOpacity - 1.0) > 0.0001 ||
+            ReadPlayerHealthbarAccentColorIndex(cfg) !== 0
         );
     }
 
@@ -5199,6 +5557,7 @@ function GetUIRoot() {
 
         if (!healthContainer) {
             ResetMinimalistHealthbarOffsetRuntimeAll(root, healthContainer, previousPanel);
+            ResetPlayerHealthbarAccentColorRuntime();
             State.minimalistHealthbarOffsetSig = "";
             State.minimalistHealthbarOffsetApplied = false;
             State.minimalistHealthbarOffsetPanel = null;
@@ -5219,6 +5578,7 @@ function GetUIRoot() {
         }
 
         ApplyPlayerHealthbarRuntimeStyleToPanel(healthContainer, runtimeState, true);
+        ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
         State.playerHealthbarScaleOpacityRuntimeApplied = runtimeState.scaleOpacityActive;
 
         State.minimalistHealthbarOffsetSig = styleSig;
@@ -6464,6 +6824,7 @@ function GetUIRoot() {
         var shouldRunMinimalistRuntime =
             minimalistHealthbarEnabled ||
             HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
+            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
             State.minimalistHealthbarOffsetApplied ||
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) return true;
@@ -6476,6 +6837,7 @@ function GetUIRoot() {
         var shouldRunMinimalistRuntime =
             minimalistHealthbarEnabled ||
             HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
+            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
             State.minimalistHealthbarOffsetApplied ||
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) {
@@ -10723,8 +11085,28 @@ function GetUIRoot() {
             NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0) !== 1.0 ||
             NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0) !== 1.0 ||
             NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) !== 0 ||
-            NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0
+            NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0 ||
+            ReadBottomBarWashColorIndex(cfg) !== 0
         );
+    }
+
+    function HasNonDefaultStaminaChargeColorConfig(cfg) {
+        if (!cfg) return false;
+        return ReadStaminaChargeColorIndex(cfg) !== 0;
+    }
+
+    function NormalizeStaminaChargeAngle(value) {
+        var angle = Math.round(Number(value));
+        if (!isFinite(angle)) angle = 45;
+        if (angle < 0) angle = 0;
+        if (angle > 360) angle = 360;
+        return angle;
+    }
+
+    function HasNonDefaultStaminaChargeRuntimeConfig(cfg) {
+        if (!cfg) return false;
+        return NormalizeStaminaChargeAngle(cfg.STAMINA_CHARGE_ANGLE) !== 45 ||
+            HasNonDefaultStaminaChargeColorConfig(cfg);
     }
 
     function HasNonDefaultItemsRuntimeConfig(cfg) {
@@ -10733,7 +11115,8 @@ function GetUIRoot() {
             Number(cfg.HUD_ITEMS_ENABLED) !== 1 ||
             NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0) !== 1.0 ||
             NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) !== 0 ||
-            NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) !== 0
+            NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) !== 0 ||
+            NormalizePaletteColorIndex(cfg.ITEMS_WASH_COLOR) !== 0
         );
     }
 
@@ -11819,25 +12202,26 @@ function GetUIRoot() {
 
     function ApplySettingsLoaderStepStateFallback(entry, status) {
         if (!entry) return;
+        var theme = GetSettingsUiThemePalette();
         var st = status ? String(status) : "pending";
         var labelColor = "#8d9698";
         var iconWash = "#8d9698";
         var iconOpacity = "0.75";
         if (st === "active") {
-            labelColor = "#9af0bd";
-            iconWash = "#9af0bd";
+            labelColor = theme.accent;
+            iconWash = theme.accent;
             iconOpacity = "1.0";
         } else if (st === "done") {
-            labelColor = "#d7e6de";
-            iconWash = "#7beaab";
+            labelColor = theme.title;
+            iconWash = theme.accent;
             iconOpacity = "1.0";
         } else if (st === "skipped") {
             labelColor = "#6f777a";
             iconWash = "#6f777a";
             iconOpacity = "0.45";
         } else if (st === "error") {
-            labelColor = "#ff8a8a";
-            iconWash = "#ff8a8a";
+            labelColor = theme.warn;
+            iconWash = theme.warn;
             iconOpacity = "1.0";
         }
         if (entry.label && entry.label.style) {
@@ -11965,7 +12349,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483647";
-        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
+        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -12622,7 +13006,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483646";
-        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
+        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -12707,7 +13091,7 @@ function GetUIRoot() {
             stallHint.style.fontSize = "13px";
             stallHint.style.lineHeight = "18px";
             stallHint.style.textAlign = "left";
-            stallHint.style.color = "#ff9d9d";
+            stallHint.style.color = GetSettingsUiThemePalette().warn;
             stallHint.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.12)";
             if (stallHint.text !== SAVE_SETTINGS_LOADER_STALL_HINT_TEXT) stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
         }
@@ -13102,7 +13486,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = "2147483645";
-        overlay.style.backgroundColor = "rgba(3, 5, 6, 0.64)";
+        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -19247,7 +19631,8 @@ function GetUIRoot() {
             if (ammoOffsetY < -200) ammoOffsetY = -200;
             if (ammoOffsetY > 200) ammoOffsetY = 200;
 
-            var ammoSig = String(ammoCurrentScale) + "|" + String(ammoTotalScale) + "|" + String(ammoOffsetX) + "|" + String(ammoOffsetY);
+            var ammoTextColor = ResolveWashColorFromPalette(ReadAmmoTextColorIndex(cfg));
+            var ammoSig = String(ammoCurrentScale) + "|" + String(ammoTotalScale) + "|" + String(ammoOffsetX) + "|" + String(ammoOffsetY) + "|" + (ammoTextColor || "");
             if (State.ammoPanelStyleSig !== ammoSig) {
                 var ammoCurrentScaleFactor = ammoCurrentScale / 100.0;
                 var scaledCurrentFontPx = Math.round(16 * ammoCurrentScaleFactor);
@@ -19269,6 +19654,7 @@ function GetUIRoot() {
                     if (!ammoValueLabel) continue;
                     ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
                     ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
+                    SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
                 }
                 var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
                 for (var am = 0; am < ammoMaxLabels.length; am++) {
@@ -19277,6 +19663,13 @@ function GetUIRoot() {
                     ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
                     ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
                     ammoMaxLabel.style.marginLeft = String(scaledMaxMarginLeftPx) + "px";
+                    SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
+                }
+                var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
+                for (var ai = 0; ai < ammoInfiniteLabels.length; ai++) {
+                    var ammoInfiniteLabel = ammoInfiniteLabels[ai];
+                    if (!ammoInfiniteLabel) continue;
+                    SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
                 }
 
                 ammoPanel.style.preTransformScale2d = "1.00, 1.00";
@@ -19351,21 +19744,178 @@ function GetUIRoot() {
             hudSignature = root.FindChildTraverse("hud_signature");
             State.cachedPanels.bottomBarPanel = hudSignature || null;
         }
+
+        var washColor = active ? ResolveWashColorFromPalette(ReadBottomBarWashColorIndex(cfg)) : "";
+        ApplyBottomBarCurrencyColor(root, washColor);
         if (!hudSignature) return;
 
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) : 0;
         var offsetY = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) : 0;
         var opacityText = active ? NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
         var scaleText = active ? NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0");
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + washColor + "|" + (enabled ? "1" : "0");
         if (State.bottomBarRuntimeStyleSig === styleSig) return;
 
         hudSignature.style.x = String(offsetX) + "px";
         hudSignature.style.y = String(-offsetY) + "px";
         hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
         hudSignature.style.visibility = enabled ? "visible" : "collapse";
+        SetStyleSafe(hudSignature, "washColor", washColor || "");
         SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         State.bottomBarRuntimeStyleSig = styleSig;
+    }
+
+    function ApplyBottomBarCurrencyColor(root, washColor) {
+        var color = washColor || "";
+        var searchRoot = GetGameplayHudPanel(root) || root;
+        var apContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("APContainer") : null;
+        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("gold_and_ap_container") : null;
+        var contextPanel = null;
+        try { contextPanel = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eContext) { contextPanel = null; }
+        var uiRoot = GetUIRoot();
+        var containers = [];
+        if (IsPanelValid(contextPanel)) containers.push(contextPanel);
+        if (IsPanelValid(uiRoot)) containers.push(uiRoot);
+        if (IsPanelValid(searchRoot)) containers.push(searchRoot);
+        if (IsPanelValid(apContainer)) containers.push(apContainer);
+        if (IsPanelValid(goldApContainer)) containers.push(goldApContainer);
+
+        var icons = [];
+        var amounts = [];
+        var infiniteIcons = [];
+        for (var c = 0; c < containers.length; c++) {
+            var container = containers[c];
+            if (!IsPanelValid(container)) continue;
+            if (container.FindChildrenWithClassTraverse) {
+                icons = icons.concat(container.FindChildrenWithClassTraverse("APCurrencyIcon") || []);
+                amounts = amounts.concat(container.FindChildrenWithClassTraverse("APCurrencyAmount") || []);
+            }
+            if (container.FindChildTraverse) {
+                var infiniteIcon = container.FindChildTraverse("hudAPInfinite");
+                if (IsPanelValid(infiniteIcon)) infiniteIcons.push(infiniteIcon);
+            }
+        }
+
+        for (var i = 0; i < icons.length; i++) {
+            if (IsPanelValid(icons[i])) SetStyleSafe(icons[i], "washColor", color);
+        }
+
+        for (var k = 0; k < infiniteIcons.length; k++) {
+            if (IsPanelValid(infiniteIcons[k])) SetStyleSafe(infiniteIcons[k], "washColor", color);
+        }
+
+        for (var j = 0; j < amounts.length; j++) {
+            if (IsPanelValid(amounts[j])) SetStyleSafe(amounts[j], "color", color);
+        }
+
+        if (BOTTOM_BAR_CURRENCY_DEBUG) {
+            var sampleIcon = icons.length > 0 ? icons[0] : null;
+            var sampleAmount = amounts.length > 0 ? amounts[0] : null;
+            var sampleInfinite = infiniteIcons.length > 0 ? infiniteIcons[0] : null;
+            var sampleIconWash = "-";
+            var sampleAmountColor = "-";
+            var sampleInfiniteWash = "-";
+            try { sampleIconWash = sampleIcon && sampleIcon.style ? String(sampleIcon.style.washColor || "-") : "-"; } catch (e0) {}
+            try { sampleAmountColor = sampleAmount && sampleAmount.style ? String(sampleAmount.style.color || "-") : "-"; } catch (e1) {}
+            try { sampleInfiniteWash = sampleInfinite && sampleInfinite.style ? String(sampleInfinite.style.washColor || "-") : "-"; } catch (e2) {}
+            var debugSig = [
+                color || "default",
+                IsPanelValid(apContainer) ? 1 : 0,
+                IsPanelValid(goldApContainer) ? 1 : 0,
+                icons.length,
+                amounts.length,
+                infiniteIcons.length,
+                sampleIconWash,
+                sampleAmountColor,
+                sampleInfiniteWash
+            ].join("|");
+            BottomBarCurrencyDebugLogThrottled(
+                debugSig,
+                "raw=" + String(State.lastConfig && State.lastConfig.BOTTOM_BAR_WASH_COLOR) +
+                    " color=" + (color || "<default>") +
+                    " context=" + (IsPanelValid(contextPanel) ? String(contextPanel.id || contextPanel.paneltype || "panel") : "0") +
+                    " searchRoot=" + (IsPanelValid(searchRoot) ? String(searchRoot.id || searchRoot.paneltype || "panel") : "0") +
+                    " apContainer=" + (IsPanelValid(apContainer) ? "1" : "0") +
+                    " goldApContainer=" + (IsPanelValid(goldApContainer) ? "1" : "0") +
+                    " containers=" + String(containers.length) +
+                    " icons=" + String(icons.length) +
+                    " amounts=" + String(amounts.length) +
+                    " infinite=" + String(infiniteIcons.length) +
+                    " sampleIconWash=" + sampleIconWash +
+                    " sampleAmountColor=" + sampleAmountColor +
+                    " sampleInfiniteWash=" + sampleInfiniteWash,
+                Date.now ? Date.now() : (new Date()).getTime()
+            );
+        }
+
+        State.bottomBarCurrencyColorStyleSig = color;
+    }
+
+    function GetStaminaChargeColorPanels(root, nowMs) {
+        var cached = State.staminaChargeColorPanelCache || [];
+        if (IsPanelListValid(cached) && nowMs < (State.staminaChargeColorPanelCacheNextMs || 0)) {
+            return cached;
+        }
+
+        var panels = [];
+        var searchRoot = null;
+        if (root && root.FindChildTraverse) {
+            searchRoot = root.FindChildTraverse("charges_container") || root;
+        } else {
+            searchRoot = root;
+        }
+
+        if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
+            var finishedCharges = searchRoot.FindChildrenWithClassTraverse("charge_fg") || [];
+            for (var i = 0; i < finishedCharges.length; i++) {
+                var fg = finishedCharges[i];
+                if (IsPanelValid(fg) && fg.BHasClass && fg.BHasClass("finished")) panels.push(fg);
+            }
+
+            var drainedCharges = searchRoot.FindChildrenWithClassTraverse("charge_drained") || [];
+            for (var j = 0; j < drainedCharges.length; j++) {
+                var drained = drainedCharges[j];
+                if (IsPanelValid(drained)) panels.push(drained);
+            }
+        }
+
+        State.staminaChargeColorPanelCache = panels;
+        State.staminaChargeColorPanelCacheNextMs = nowMs + 500;
+        return panels;
+    }
+
+    function GetStaminaChargesContainer(root) {
+        var chargesContainer = IsPanelValid(State.cachedPanels.staminaChargesContainer) ? State.cachedPanels.staminaChargesContainer : null;
+        if (!chargesContainer && root && root.FindChildTraverse) {
+            chargesContainer = root.FindChildTraverse("charges_container");
+            State.cachedPanels.staminaChargesContainer = chargesContainer || null;
+        }
+        return chargesContainer;
+    }
+
+    function UpdateStaminaChargeColorRuntime(root, cfg, nowMs) {
+        var color = ResolveWashColorFromPalette(ReadStaminaChargeColorIndex(cfg));
+        var angle = NormalizeStaminaChargeAngle(cfg && cfg.STAMINA_CHARGE_ANGLE);
+        var angleSig = String(angle);
+        var chargesContainer = GetStaminaChargesContainer(root);
+        if (chargesContainer && State.staminaChargeAngleStyleSig !== angleSig) {
+            SetStyleSafe(chargesContainer, "transform", "rotateZ(" + String(angle) + "deg)");
+            State.staminaChargeAngleStyleSig = angleSig;
+        } else if (!chargesContainer) {
+            State.staminaChargeAngleStyleSig = "";
+        }
+
+        var styleSig = color || "";
+        var panels = GetStaminaChargeColorPanels(root, nowMs || 0);
+        if (State.staminaChargeColorStyleSig === styleSig && IsPanelListValid(panels)) return;
+
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i];
+            if (!IsPanelValid(panel)) continue;
+            SetStyleSafe(panel, "borderColor", color || "");
+        }
+
+        State.staminaChargeColorStyleSig = styleSig;
     }
 
     function UpdateItemsRuntime(root, cfg) {
@@ -19394,12 +19944,14 @@ function GetUIRoot() {
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) : 0;
         var offsetY = active ? NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) : 0;
         var opacityText = active ? NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0");
+        var washColor = active ? ResolveWashColorFromPalette(cfg.ITEMS_WASH_COLOR) : "";
+        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + washColor + "|" + (enabled ? "1" : "0");
         if (State.itemsRuntimeStyleSig === styleSig) return;
 
         modsContainer.style.x = String(offsetX) + "px";
         modsContainer.style.y = String(-offsetY) + "px";
         modsContainer.style.visibility = enabled ? "visible" : "collapse";
+        SetStyleSafe(modsContainer, "washColor", washColor || "none");
         SetPanelOpacitySafe(modsContainer, opacityText, 1.0);
         State.itemsRuntimeStyleSig = styleSig;
     }
@@ -19537,7 +20089,8 @@ function GetUIRoot() {
         var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
         if (!isFinite(indicatorSize)) indicatorSize = 18;
         var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
-        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0");
+        var cleanIndicators = (cfg && Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
     }
 
     function NeedsDamageNumbersRuntimeWork(cfg, raw) {
@@ -19561,7 +20114,8 @@ function GetUIRoot() {
         var hideSmallNumbers = (cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
         var hideModesSig = (hideSmallNumbers ? "1" : "0");
         var hideModesChanged = (hideModesSig !== State.lastIndicatorHideModesSig);
-        var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0");
+        var cleanIndicators = (Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
         var indicatorDefaultsSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
         var indicatorIsDefault = (indicatorConfigSig === indicatorDefaultsSig);
         var indicatorRefreshIntervalMs = hideSmallNumbers ? HUD_INDICATOR_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_REFRESH_MS_IDLE;
@@ -20012,6 +20566,7 @@ function GetUIRoot() {
         }
         State.cachedPanels.keyboardOverlayRoot = null;
         State.cachedPanels.keyboardOverlayBox = null;
+        State.keyboardOverlayWashSig = "";
         State.allBindingsBoxes = [];
         ResetKeyboardOverlayCaches();
     }
@@ -20029,6 +20584,14 @@ function GetUIRoot() {
                 validBoxes = keyboardBox ? [keyboardBox] : [];
             }
             State.allBindingsBoxes = validBoxes;
+
+            var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
+            var keyboardWashColor = ResolveWashColorFromPalette(ReadKeyboardOverlayWashColorIndex(cfg));
+            var keyboardWashSig = keyboardWashColor || "";
+            if (overlayRoot && State.keyboardOverlayWashSig !== keyboardWashSig) {
+                SetStyleSafe(overlayRoot, "washColor", keyboardWashColor || "");
+                State.keyboardOverlayWashSig = keyboardWashSig;
+            }
 
             for (var vb = 0; vb < validBoxes.length; vb++) {
                 var allBindingsBox = validBoxes[vb];
@@ -26543,6 +27106,7 @@ function GetUIRoot() {
             cfg.ENABLE_NICKNAMES,
             cfg.DISABLE_PLAYER_NAME_BLUR,
             cfg.ENABLE_CUMULATIVE_DMG,
+            cfg.ENABLE_CLEAN_DAMAGE_INDICATORS,
             cfg.ENABLE_DAMAGE_FOUNTAIN,
             cfg.ENABLE_HIDE_SMALL_NUMBERS,
             cfg.ENABLE_HIDE_TROOPER_DAMAGE,
@@ -26624,6 +27188,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "nicknames_active", Number(cfg.ENABLE_NICKNAMES) === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", Number(cfg.DISABLE_PLAYER_NAME_BLUR) === 1);
             SetPanelClassCached(root, State.rootClassCache, "cumulative_dmg_disabled", cfg.ENABLE_CUMULATIVE_DMG === 0);
+            SetPanelClassCached(root, State.rootClassCache, "clean_damage_indicators_active", Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
             SetPanelClassCached(root, State.rootClassCache, "damage_fountain_active", cfg.ENABLE_DAMAGE_FOUNTAIN === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
@@ -26665,20 +27230,39 @@ function GetUIRoot() {
             State.cachedPanels.quickbuy = quickbuyPanel || null;
         }
         if (quickbuyPanel) {
+            var quickbuyFeatureActive = enhancedQuickbuyEnabled || shopClickToNotifyEnabled;
+            var quickbuyOffsetX = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0) : 0;
+            var quickbuyOffsetY = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0) : 0;
+            var quickbuyStyleSig = String(quickbuyOffsetX) + "|" + String(quickbuyOffsetY) + "|" + (quickbuyFeatureActive ? "1" : "0") + "|" + (enhancedQuickbuyEnabled ? "1" : "0");
+
             SetPanelClassCached(
                 quickbuyPanel,
                 State.quickbuyClassCache,
                 "enhanced_quickbuy_active",
-                Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1
+                enhancedQuickbuyEnabled
             );
             SetPanelClassCached(
                 quickbuyPanel,
                 State.quickbuyClassCache,
                 "shop_click_to_notify_active",
-                Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1
+                shopClickToNotifyEnabled
             );
+            if (State.quickbuyRuntimeStyleSig !== quickbuyStyleSig) {
+                if (quickbuyOffsetX !== 0 || quickbuyOffsetY !== 0) {
+                    quickbuyPanel.style.x = String(quickbuyOffsetX) + "px";
+                    quickbuyPanel.style.y = String(-quickbuyOffsetY) + "px";
+                    State.quickbuyRuntimeHostOffsetApplied = true;
+                } else if (State.quickbuyRuntimeHostOffsetApplied) {
+                    quickbuyPanel.style.x = "";
+                    quickbuyPanel.style.y = "";
+                    State.quickbuyRuntimeHostOffsetApplied = false;
+                }
+                State.quickbuyRuntimeStyleSig = quickbuyStyleSig;
+            }
         } else {
             State.quickbuyClassCache = null;
+            State.quickbuyRuntimeStyleSig = "";
+            State.quickbuyRuntimeHostOffsetApplied = false;
         }
 
         if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
@@ -26970,6 +27554,7 @@ function GetUIRoot() {
         if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
         if (Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
+        if (ReadAmmoTextColorIndex(cfg) !== 0) return true;
         return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
     }
 
@@ -27012,6 +27597,14 @@ function GetUIRoot() {
         return HasNonDefaultBottomBarRuntimeConfig(cfg) ||
             !!(State.bottomBarRuntimeStyleSig && String(State.bottomBarRuntimeStyleSig).length > 0) ||
             IsPanelValid(State.cachedPanels.bottomBarPanel);
+    }
+
+    function NeedsStaminaChargeColorRuntimeWork(cfg) {
+        return HasNonDefaultStaminaChargeRuntimeConfig(cfg) ||
+            !!(State.staminaChargeAngleStyleSig && String(State.staminaChargeAngleStyleSig).length > 0) ||
+            !!(State.staminaChargeColorStyleSig && String(State.staminaChargeColorStyleSig).length > 0) ||
+            IsPanelValid(State.cachedPanels.staminaChargesContainer) ||
+            !!(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0);
     }
 
     function NeedsItemsRuntimeWork(cfg) {
@@ -27111,6 +27704,7 @@ function GetUIRoot() {
         if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) return true;
         if (NeedsDamageReportOffsetWork(cfg)) return true;
         if (NeedsUrnTrackerRuntimeWork(cfg)) return true;
+        if (NeedsStaminaChargeColorRuntimeWork(cfg)) return true;
         return false;
     }
 
@@ -27158,7 +27752,8 @@ function GetUIRoot() {
                 Number(cfg && cfg.AMMO_CURRENT_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_TOTAL_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_PANEL_X_OFFSET) !== 0 ||
-                Number(cfg && cfg.AMMO_PANEL_Y_OFFSET) !== 0
+                Number(cfg && cfg.AMMO_PANEL_Y_OFFSET) !== 0 ||
+                ReadAmmoTextColorIndex(cfg) !== 0
             ),
             heroShopActive: (
                 Number(cfg && cfg.HUD_SHOP_ENABLED) !== 1 ||
@@ -27184,13 +27779,15 @@ function GetUIRoot() {
                 bottomBarOpacity !== 1.0 ||
                 bottomBarScale !== 1.0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.BOTTOM_BAR_X_OFFSET, 0) !== 0 ||
-                NormalizeHudOffsetNumber(cfg && cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0
+                NormalizeHudOffsetNumber(cfg && cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0 ||
+                ReadBottomBarWashColorIndex(cfg) !== 0
             ),
             itemsRuntimeActive: (
                 Number(cfg && cfg.HUD_ITEMS_ENABLED) !== 1 ||
                 itemsOpacity !== 1.0 ||
                 NormalizeHudOffsetNumber(cfg && cfg.ITEMS_X_OFFSET, 0) !== 0 ||
-                NormalizeHudOffsetNumber(cfg && cfg.ITEMS_Y_OFFSET, 0) !== 0
+                NormalizeHudOffsetNumber(cfg && cfg.ITEMS_Y_OFFSET, 0) !== 0 ||
+                NormalizePaletteColorIndex(cfg && cfg.ITEMS_WASH_COLOR) !== 0
             ),
             soulsRuntimeActive: (
                 Number(cfg && cfg.HUD_SOULS_ENABLED) !== 1 ||
@@ -27203,6 +27800,7 @@ function GetUIRoot() {
                 IsUnitTargetStyleCustomized(cfg)
             ),
             damageImpactRuntimeActive: HasNonDefaultDamageImpactRuntimeConfig(cfg),
+            staminaChargeColorRuntimeActive: NeedsStaminaChargeColorRuntimeWork(cfg),
             damageNumbersActive: ResolveDamageNumbersRuntimeSig(cfg) !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG,
             minimapRuntimeActive: (
                 Number(cfg && cfg.ENABLE_ALT_ZOOM) === 1 ||
@@ -27216,6 +27814,7 @@ function GetUIRoot() {
             healthbarRuntimeActive: (
                 minimalistHealthbarEnabled ||
                 HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
+                !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
                 Number(healthbarType) === 4 ||
                 Number(healthbarType) === 5
             ),
@@ -27252,6 +27851,7 @@ function GetUIRoot() {
         if (
             featureState.healthbarRuntimeActive ||
             State.minimalistHealthbarOffsetApplied ||
+            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
             State.playerHealthbarScaleOpacityRuntimeApplied ||
             State.budhudWasEnabled ||
             State.mcWasEnabled
@@ -27279,6 +27879,7 @@ function GetUIRoot() {
             State.urnTrackerDisplayMode === "active" ||
             (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
         ) return true;
+        if (featureState.staminaChargeColorRuntimeActive) return true;
         return false;
     }
 
@@ -27305,6 +27906,7 @@ function GetUIRoot() {
             cfg.ON_DEATH_GAME_ZERGGY_MANIA,
             cfg.ON_DEATH_GAME_WHACK_A_REM,
             cfg.ENABLE_KEYBOARD_OVERLAY,
+            cfg.KEYBOARD_OVERLAY_WASH_COLOR,
             cfg.ENABLE_ZIP_BOOST,
             cfg.ENABLE_UNSECURED_SOUL_TIMER,
             cfg.ENABLE_STAT_BONUSES,
@@ -27313,6 +27915,10 @@ function GetUIRoot() {
             cfg.ENABLE_OLD_ITEM_COOLDOWNS,
             cfg.ENABLE_IMAGES_IN_CHAT,
             cfg.HEALTHBAR_TYPE,
+            cfg.PLAYER_HEALTHBAR_ACCENT_COLOR,
+            cfg.STAMINA_CHARGE_ANGLE,
+            cfg.STAMINA_CHARGE_COLOR,
+            cfg.AMMO_TEXT_COLOR,
             cfg.ENABLE_RED_DIAMOND,
             cfg.ENABLE_COMPASS,
             cfg.ENABLE_COMPASS_SPEED,
@@ -27335,10 +27941,12 @@ function GetUIRoot() {
             cfg.BOTTOM_BAR_SCALE,
             cfg.BOTTOM_BAR_X_OFFSET,
             cfg.BOTTOM_BAR_Y_OFFSET,
+            cfg.BOTTOM_BAR_WASH_COLOR,
             cfg.HUD_ITEMS_ENABLED,
             cfg.ITEMS_OPACITY,
             cfg.ITEMS_X_OFFSET,
             cfg.ITEMS_Y_OFFSET,
+            cfg.ITEMS_WASH_COLOR,
             cfg.HUD_SOULS_ENABLED,
             cfg.SOULS_OPACITY,
             cfg.SOULS_X_OFFSET,
@@ -27397,6 +28005,7 @@ function GetUIRoot() {
                 soulsRuntimeActive: featureState.soulsRuntimeActive,
                 targetShapesActive: featureState.targetShapesActive,
                 damageImpactRuntimeActive: featureState.damageImpactRuntimeActive,
+                staminaChargeColorRuntimeActive: featureState.staminaChargeColorRuntimeActive,
                 damageNumbersActive: featureState.damageNumbersActive,
                 minimapRuntimeActive: featureState.minimapRuntimeActive
             };
@@ -27444,10 +28053,12 @@ function GetUIRoot() {
             (State.targetShapesCache && State.targetShapesCache.length > 0)
         );
         gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg);
+        gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg);
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;
         gates.minimapRuntime = NeedsMinimapRuntimeWork(cfg, raw);
+        gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
         gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.panelCache = false;
         return gates;
@@ -27877,6 +28488,25 @@ function GetUIRoot() {
             redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
             State.coreRootGateSig = gates.sig;
             PerfEnd("loop.root_classes", perfSection);
+        } else if (root && gates.healthbarRuntimeHelpers) {
+            perfSection = PerfStart();
+            UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
+            PerfEnd("loop.healthbar_helpers", perfSection);
+        }
+        var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
+        var loopAccentNeedsRefresh = (
+            loopAccentColor !== "" ||
+            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0)
+        );
+        if (root && loopAccentNeedsRefresh && String(State.playerHealthbarAccentColorSig || "").indexOf("|" + loopAccentColor) === -1) {
+            perfSection = PerfStart();
+            var accentHealthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
+            if (!accentHealthContainer && root.FindChildTraverse) {
+                accentHealthContainer = root.FindChildTraverse("health_and_abilities_container");
+                State.cachedPanels.healthContainer = accentHealthContainer || null;
+            }
+            ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
+            PerfEnd("loop.healthbar_accent_color", perfSection);
         }
 
         if (gates.laneWithParty) {
@@ -28000,6 +28630,12 @@ function GetUIRoot() {
             perfSection = PerfStart();
             UpdateDamageImpactRuntime(root, cfg);
             PerfEnd("loop.damage_impact_runtime", perfSection);
+        }
+
+        if (gates.staminaChargeColorRuntime) {
+            perfSection = PerfStart();
+            UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
+            PerfEnd("loop.stamina_charge_color", perfSection);
         }
 
         if (gates.damageNumbers) {
