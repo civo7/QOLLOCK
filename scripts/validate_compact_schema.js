@@ -574,7 +574,15 @@ function main() {
     ];
     const recentPurchasesQuickKeys = [
         "RECENT_PURCHASES_QUICK_MAX",
-        "RECENT_PURCHASES_QUICK_DISPLAY_SEC"
+        "RECENT_PURCHASES_QUICK_DISPLAY_SEC",
+        "RECENT_PURCHASES_QUICK_X_OFFSET",
+        "RECENT_PURCHASES_QUICK_Y_OFFSET",
+        "RECENT_PURCHASES_QUICK_REJUV",
+        "RECENT_PURCHASES_QUICK_SCOREBOARD",
+        "RECENT_PURCHASES_QUICK_SCALE",
+        "RECENT_PURCHASES_PANEL_X_OFFSET",
+        "RECENT_PURCHASES_PANEL_Y_OFFSET",
+        "RECENT_PURCHASES_PANEL_SCALE"
     ];
     const releaseCompatSemvers = ["2.3.2", "2.3.5"];
     for (const semver of releaseCompatSemvers) {

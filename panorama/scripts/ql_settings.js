@@ -7020,8 +7020,16 @@ const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
-    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1, max: 5,  step: 1 },
-    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3, max: 15, step: 1 }
+    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1,    max: 5,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3,    max: 15,  step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_X_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_QUICK_Y_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_QUICK_REJUV",       min: 0,    max: 1,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_SCOREBOARD",  min: 0,    max: 1,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_SCALE",       min: 0.5,  max: 1.5, step: 0.05 },
+    { key: "RECENT_PURCHASES_PANEL_X_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_PANEL_Y_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_PANEL_SCALE",       min: 0.5,  max: 2.0, step: 0.05 }
 ];
 const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_3_4,
@@ -16908,15 +16916,23 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
-            CreateSectionTitle(sectionParent, "Recent Purchases");
-            CreateRow(sectionParent, "Recent Purchases Shop Panel", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
-            CreateRow(sectionParent, "Notification Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
             CreateRow(sectionParent, "Scale", "SHOP_SCALE", "slider", 0.5, 1.5, 0.05, null);
+            CreateSectionTitle(sectionParent, "Recent Purchases");
+            CreateRow(sectionParent, "Recent Purchases Shop Panel", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Panel Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "slider", -1000, 1000, 5, null);
+            CreateRow(sectionParent, "Panel Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Panel Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
+            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
+            CreateRow(sectionParent, "Notification Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
+            CreateRow(sectionParent, "Notification Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Notification Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateRow(sectionParent, "Notification Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
+            CreateRow(sectionParent, "Notif. Rejuv. Reposition", "RECENT_PURCHASES_QUICK_REJUV", "toggle", null, null, null, null, "Moves notifications down when Rejuvenator is active.");
+            CreateRow(sectionParent, "Notif. Scoreboard Reposition", "RECENT_PURCHASES_QUICK_SCOREBOARD", "toggle", null, null, null, null, "Adjusts notifications when scoreboard is open (pressing TAB).");
         });
     } else if (currentTab === "Healthbar") {
         gEnumSectionSyncCallbacks = [];

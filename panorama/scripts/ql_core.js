@@ -8038,8 +8038,16 @@ const BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
-    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1, max: 5,  step: 1 },
-    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3, max: 15, step: 1 }
+    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1,    max: 5,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3,    max: 15,  step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_X_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_QUICK_Y_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_QUICK_REJUV",       min: 0,    max: 1,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_SCOREBOARD",  min: 0,    max: 1,   step: 1    },
+    { key: "RECENT_PURCHASES_QUICK_SCALE",       min: 0.5,  max: 1.5, step: 0.05 },
+    { key: "RECENT_PURCHASES_PANEL_X_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_PANEL_Y_OFFSET",    min: -500, max: 500, step: 5    },
+    { key: "RECENT_PURCHASES_PANEL_SCALE",       min: 0.5,  max: 2.0, step: 0.05 }
 ];
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4,
@@ -24095,9 +24103,10 @@ function GetUIRoot() {
         }
     }
 
-    function SyncRejuvClassRP() {
+    function SyncRejuvClassRP(rejuvEnabled) {
         var quickPanel = State.cachedPanels.quickPurchasesPanel;
         if (!IsPanelValid(quickPanel)) return;
+        quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
         if (!IsPanelValid(State.cachedPanels.cachedRejuvTimer)) {
             State.cachedPanels.cachedRejuvTimer = $.GetContextPanel().GetParent() ?
                 $.GetContextPanel().GetParent().FindChildTraverse("RejuvenatorTimer") : null;
@@ -24137,7 +24146,15 @@ function GetUIRoot() {
             State.cachedPanels.recentPurchasesPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
         }
         var rpPanel = State.cachedPanels.recentPurchasesPanel;
-        if (rpPanel) rpPanel.style.visibility = shopEnabled ? "visible" : "collapse";
+        if (rpPanel) {
+            rpPanel.style.visibility = shopEnabled ? "visible" : "collapse";
+            var panelOffsetX = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
+            var panelOffsetY = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
+            var panelScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_PANEL_SCALE, 1.0).toFixed(2);
+            rpPanel.style.x = String(panelOffsetX) + "px";
+            rpPanel.style.y = String(-panelOffsetY) + "px";
+            rpPanel.style.preTransformScale2d = panelScaleText + ", " + panelScaleText;
+        }
 
         if (!shopEnabled && !notifyEnabled) return;
 
@@ -24165,7 +24182,19 @@ function GetUIRoot() {
 
         if (notifyEnabled) {
             UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec);
-            SyncRejuvClassRP();
+            var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
+            var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
+            var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
+            var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
+            var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
+            SyncRejuvClassRP(rejuvEnabled);
+            var quickPanel = State.cachedPanels.quickPurchasesPanel;
+            if (IsPanelValid(quickPanel)) {
+                quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
+                quickPanel.style.x = String(quickOffsetX) + "px";
+                quickPanel.style.y = String(-quickOffsetY) + "px";
+                quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+            }
         }
     }
 
