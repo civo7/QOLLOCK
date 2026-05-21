@@ -431,6 +431,20 @@ CitadelHudHeroShop.simplify_shop_stats_active .hero_stats .GreenUpArrow,CitadelH
 
 /* ── Recent Purchases runtime styles ── */
 
+.shop_recent_purchases_active #NavPanel,
+CitadelHudHeroShop.shop_recent_purchases_active #NavPanel
+{
+	width: 100%;
+}
+
+.shop_recent_purchases_active #HeroScenePanel,
+CitadelHudHeroShop.shop_recent_purchases_active #HeroScenePanel
+{
+	width: 650px;
+    horizontal-align: left;
+}
+
+
 .shop_recent_purchases_active #RecentPurchasesPanel,
 CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel
 {

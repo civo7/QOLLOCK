@@ -994,7 +994,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 @define backerSpiritT3: #8C87B6;
 @define backerSpiritT4: #504949;
 
-.shop_click_to_notify_active #QuickPurchasesPanel
+#QuickPurchasesPanel
 {
 	horizontal-align: center;
 	flow-children: up;
@@ -1005,12 +1005,12 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	z-index: 99;
 }
 
-.shop_click_to_notify_active #QuickPurchasesPanel.has_rejuv
+#QuickPurchasesPanel.has_rejuv.rp_quick_rejuv_active
 {
 	margin-top: 133px;
 }
 
-.shop_click_to_notify_active .gScoreboardOpen #QuickPurchasesPanel
+.gScoreboardOpen #QuickPurchasesPanel.rp_quick_scoreboard_active
 {
 	ui-scale: 85%;
 	margin-top: 175px;
