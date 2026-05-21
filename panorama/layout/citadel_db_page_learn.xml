@@ -31,7 +31,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="HeroSandbox" class="playOptionContainer hasTasks" onactivate="CitadelStartSandboxTutorial()">
+			<Panel id="HeroSandbox" class="playOptionContainer hasTasks" onactivate="CitadelStartHeroTesting(false)">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
 					<Panel class="buttonImage" />
@@ -53,7 +53,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="LaneTraining" class="playOptionContainer hasTasks" onactivate="CitadelStartGuidedBotMatch()">
+			<Panel id="LaneTraining" class="playOptionContainer hasTasks" onactivate="CitadelStartTutorial()">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
 					<Panel class="buttonImage" />
@@ -62,9 +62,9 @@
 				<Panel class="playOptionBottom">
 					<Panel class="bottomOptionContainer">
 						<Panel class="BotsTitle">
-							<Label class="playLabel" text="#menu_play_lane_training" />
-							<Label class="playTime" text="#menu_play_lane_training_time_est" />
-							<Label class="playDesc" text="#menu_play_lane_training_desc" />
+							<Label class="playLabel" text="#Basics_Tutorial_Title" />
+							<Label class="playTime" text="#menu_play_sandbox_time_est" />
+							<Label class="playDesc" text="#Basics_Tutorial_Desc" />
 						</Panel>
 					</Panel>
 				</Panel>
