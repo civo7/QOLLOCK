@@ -148,7 +148,25 @@
 
 .simplify_ability_icons_active .ability_ring
 {
-	opacity: 0;
+	opacity: 1;
+    opacity-mask: url("s2r://panorama/images/hud/core/ability_frame_passive_0_psd.vtex") -1.0;
+    opacity-mask-threshold: 1% 0%;
+    wash-color: #ffffff;
+}
+
+.simplify_ability_icons_active .cooling_down .ability_ring,.simplify_ability_icons_active .ability_not_ready .ability_ring
+{
+    opacity: 1;
+}
+
+.simplify_ability_icons_active #SubAbility
+{
+    background-image: none;
+}
+
+.simplify_ability_icons_active .cooling_down .ability_bg,.simplify_ability_icons_active .cooling_down #SubAbility,.simplify_ability_icons_active .ability_not_ready .ability_bg,.simplify_ability_icons_active .ability_not_ready #SubAbility
+{
+    opacity: 1;
 }
 
 .simplify_ability_icons_active CitadelHudTopBarPlayer #PlayerAbilitiesContainer .ability_bg
