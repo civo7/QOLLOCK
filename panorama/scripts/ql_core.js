@@ -59,6 +59,7 @@
         minimapFlipClassCache: { panel: null, values: {} },
         minimapMinimalistOpacityApplied: false,
         minimapRuntimeSig: "",
+        minimapIconColorStyleSig: "",
         minimapCastRangeScaleApplied: false,
         minimapCrateOverlayBuildSig: "",
         quickbuyRuntimeStyleSig: "",
@@ -658,10 +659,7 @@
         mcLastHealingStartSlots: -1,
         mcLastBarrierFullHearts: -1,
         mcLastBarrierHasHalf: null,
-        mcLastBarrierLastSlotIsHalf: null,
-        rageNextScanMs: 0,
-        rageHealthRegenPanelCache: null,
-        rageHealthRegenClassCache: { panel: null, values: {} }
+        mcLastBarrierLastSlotIsHalf: null
     };
 
     var INTERNAL_CONFIG = {
@@ -682,6 +680,7 @@
     const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
     const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
     const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
+    const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
@@ -4967,7 +4966,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const MC_JIGGLE_CHANCE = 0.5;
     const MC_HEALING_WAVE_STEP_S = 0.05;
     const MC_HEALING_WAVE_PAUSE_S = 0.5;
-    const RAGE_SCAN_INTERVAL_MS = 250;
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -8004,6 +8002,15 @@ const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS = [
     { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
 ];
 const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS = [
+    { key: "ITEMS_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 29, step: 1 },
+    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 29, step: 1 },
+    { key: "AMMO_TEXT_COLOR", min: 0, max: 29, step: 1 },
+    { key: "MINIMAP_ICON_COLOR", min: 0, max: 29, step: 1 }
+];
+const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS_2_5_4 = [
     { key: "ITEMS_WASH_COLOR", min: 0, max: 25, step: 1 },
     { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 25, step: 1 },
     { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 25, step: 1 },
@@ -8093,15 +8100,22 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3,
     AppendUniquePayloadSchemaFields(
         AppendUniquePayloadSchemaFields(
-            BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS,
+            BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS_2_5_4,
             BUILD_CATEGORY_STAMINA_CHARGE_SCHEMA_FIELDS
         ),
         BUILD_CATEGORY_CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
     )
 );
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4;
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5 = AppendUniquePayloadSchemaFields(
+    ClonePayloadSchemaWithFieldOverrides(
+        BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4,
+        BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS
+    ),
+    BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5;
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5,
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6,
     BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
@@ -8229,6 +8243,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.5.5": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5
+    },
+    "2.5.6": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6
     },
     "2.5.7": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
@@ -8631,7 +8649,11 @@ function GetUIRoot() {
         "#9a6743",
         "#d9a441",
         "#8cff4f",
-        "#7c4dff"
+        "#7c4dff",
+        "#b8142f",
+        "#b9f4ff",
+        "#d7b2ff",
+        "#05070a"
     ];
 
     function NormalizePaletteColorIndex(value) {
@@ -8691,6 +8713,10 @@ function GetUIRoot() {
 
     function ReadAmmoTextColorIndex(cfg) {
         return ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR", AMMO_TEXT_COLOR_ATTR, "");
+    }
+
+    function ReadMinimapIconColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR", MINIMAP_ICON_COLOR_ATTR, "");
     }
 
     function ResolvePassiveCooldownMode(cfg) {
@@ -9596,10 +9622,6 @@ function GetUIRoot() {
         State.mcLastBarrierFullHearts = -1;
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
-        if (IsPanelValid(State.rageHealthRegenPanelCache)) State.rageHealthRegenPanelCache.SetHasClass("has_rage", false);
-        State.rageHealthRegenPanelCache = null;
-        State.rageHealthRegenClassCache = { panel: null, values: {} };
-        State.rageNextScanMs = 0;
         State.mcWasEnabled = false;
     }
 
@@ -10210,20 +10232,6 @@ function GetUIRoot() {
         return { hasBarrier: hasBarrier, bulletBarrierCurrent: bulletBarrierCurrent, bulletBarrierMax: bulletBarrierMax };
     }
 
-    function UpdateRageResourceClass(root, nowMs) {
-        if (nowMs < (State.rageNextScanMs || 0)) return;
-        State.rageNextScanMs = nowMs + RAGE_SCAN_INTERVAL_MS;
-
-        if (!IsPanelValid(State.rageHealthRegenPanelCache)) {
-            State.rageHealthRegenPanelCache = root && root.FindChildTraverse ? (root.FindChildTraverse("HealthRegenAndTotal") || null) : null;
-        }
-        if (!IsPanelValid(State.rageHealthRegenPanelCache)) return;
-
-        var ragePanel = FindFirstPanelByClass(root, "rage");
-        var rageActive = IsPanelValid(ragePanel) && (!ragePanel.BHasClass || ragePanel.BHasClass("resource_container"));
-        SetPanelClassCached(State.rageHealthRegenPanelCache, State.rageHealthRegenClassCache, "has_rage", rageActive);
-    }
-
     function UpdateMinecraftHealthbar(root, cfg, nowMs, enabled) {
         if (!enabled) {
             if (State.mcWasEnabled) McResetRuntime();
@@ -10236,7 +10244,6 @@ function GetUIRoot() {
         if (!hudRoot) { State.mcNextUpdateMs = nowMsNum + 400; return; }
 
         State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
-        UpdateRageResourceClass(root, nowMsNum);
 
         if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) State.cachedPanels.mcHudHealthBars = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null;
         if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) State.cachedPanels.mcTotemContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null;
@@ -14800,6 +14807,10 @@ function GetUIRoot() {
         return n;
     }
 
+    function FormatHudPx(value, fallback) {
+        return String(NormalizeHudOffsetNumber(value, fallback)) + "px";
+    }
+
     function NormalizeHudScaleNumber(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
@@ -15923,6 +15934,11 @@ function GetUIRoot() {
         if (code !== "failed") {
             QueueCloseHeroShopForLoaderSuccess();
         }
+        if (SETTINGS_LOADER_HOLD_MS <= 0) {
+            $.Schedule(0.03, function() {
+                ResetSettingsLoaderSession(true);
+            });
+        }
     }
 
     function SkipSettingsLoaderSession(root, nowMs) {
@@ -16365,6 +16381,10 @@ function GetUIRoot() {
                 }
                 skipButton.SetPanelEvent("onactivate", function() {
                     var clickRoot = GetUIRoot();
+                    if (State.settingsLoaderSessionCompleted && !State.settingsLoaderSessionActive) {
+                        ResetSettingsLoaderSession(true);
+                        return;
+                    }
                     SkipSettingsLoaderSession(clickRoot, Date.now ? Date.now() : (new Date()).getTime());
                 });
             }
@@ -16399,6 +16419,9 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch (e0) {}
             }
+            if (State.settingsLoaderSessionCompleted) {
+                ResetSettingsLoaderSession(true);
+            }
             return;
         }
 
@@ -16418,7 +16441,7 @@ function GetUIRoot() {
             skipBacker.style.visibility = "collapse";
         }
         if (skipButton) {
-            var skipEnabled = !!State.settingsLoaderSessionActive;
+            var skipEnabled = !!(State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted);
             var skipVisible = shouldShow && !State.settingsLoaderSkipRequested;
             try { skipButton.enabled = skipEnabled; } catch (eSkipEnabled) {}
             skipButton.style.visibility = skipVisible ? "visible" : "collapse";
@@ -24417,8 +24440,35 @@ function GetUIRoot() {
             String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
             Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
             String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
+            String(ReadMinimapIconColorIndex(cfg)),
             ResolveMinimapCrateOverlayMapKey()
         ].join("|");
+    }
+
+    function UpdateMinimapIconColor(root, cfg) {
+        var color = ResolveWashColorFromPalette(ReadMinimapIconColorIndex(cfg));
+        var canvas = IsPanelValid(State.cachedPanels.minimapCanvas) ? State.cachedPanels.minimapCanvas : null;
+        if (!canvas && root && root.FindChildTraverse) {
+            var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
+            if (!hudMinimapPanel) {
+                hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+                State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
+            }
+            canvas = hudMinimapPanel && hudMinimapPanel.FindChildTraverse
+                ? hudMinimapPanel.FindChildTraverse("canvas")
+                : null;
+            if (!canvas) canvas = root.FindChildTraverse("canvas");
+            State.cachedPanels.minimapCanvas = canvas || null;
+        }
+        if (!canvas) {
+            State.minimapIconColorStyleSig = "";
+            return;
+        }
+
+        var styleSig = color || "default";
+        if (State.minimapIconColorStyleSig === styleSig) return;
+        SetStyleSafe(canvas, "washColor", color || "");
+        State.minimapIconColorStyleSig = styleSig;
     }
 
     function UpdateMinimapCastRangeScale(root, targetSize) {
@@ -24487,6 +24537,7 @@ function GetUIRoot() {
             : getZoomValue("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
         var activeTargetSize = shouldZoom ? zoomTargetSize : cfg.MINIMAP_SMALL_SIZE;
         UpdateMinimapCastRangeScale(root, activeTargetSize);
+        UpdateMinimapIconColor(root, cfg);
 
         if (raw !== State.lastRawConfig || runtimeSig !== State.minimapRuntimeSig || currentZoomKey !== State.lastZoomState || State.accountPresetTestActive) {
             var zoomOffsetX = (activeZoomMode === "TAB")
@@ -24643,8 +24694,8 @@ function GetUIRoot() {
         allBindingsBox.style.uiScale = "100%";
         allBindingsBox.style.marginLeft = kbBaseMarginLeft + "px";
         allBindingsBox.style.marginBottom = kbBaseMarginBottom + "px";
-        allBindingsBox.style.x = kbOffsetX + "px";
-        allBindingsBox.style.y = (-kbOffsetY) + "px";
+        allBindingsBox.style.x = FormatHudPx(kbOffsetX, 0);
+        allBindingsBox.style.y = FormatHudPx(-kbOffsetY, 0);
         allBindingsBox.style.width = "fit-children";
 
         var keyPanels = GetKeyboardCachedPanels(cache, allBindingsBox, "keyPanels", "Key");
@@ -31418,8 +31469,8 @@ function GetUIRoot() {
             );
             if (State.quickbuyRuntimeStyleSig !== quickbuyStyleSig) {
                 if (quickbuyOffsetX !== 0 || quickbuyOffsetY !== 0) {
-                    quickbuyPanel.style.x = String(quickbuyOffsetX) + "px";
-                    quickbuyPanel.style.y = String(-quickbuyOffsetY) + "px";
+                    quickbuyPanel.style.x = FormatHudPx(quickbuyOffsetX, 0);
+                    quickbuyPanel.style.y = FormatHudPx(-quickbuyOffsetY, 0);
                     State.quickbuyRuntimeHostOffsetApplied = true;
                 } else if (State.quickbuyRuntimeHostOffsetApplied) {
                     quickbuyPanel.style.x = "0px";
@@ -32667,7 +32718,9 @@ function GetUIRoot() {
             loopAccentColor !== "" ||
             !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0)
         );
-        if (root && loopAccentNeedsRefresh && String(State.playerHealthbarAccentColorSig || "").indexOf("|" + loopAccentColor) === -1) {
+        var loopAccentSigParts = String(State.playerHealthbarAccentColorSig || "").split("|");
+        var loopCurrentAccentColor = loopAccentSigParts.length > 1 ? loopAccentSigParts[loopAccentSigParts.length - 1] : "";
+        if (root && loopAccentNeedsRefresh && loopCurrentAccentColor !== loopAccentColor) {
             perfSection = PerfStart();
             var accentHealthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!accentHealthContainer && root.FindChildTraverse) {

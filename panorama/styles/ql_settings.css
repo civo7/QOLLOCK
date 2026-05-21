@@ -3779,8 +3779,7 @@
 #ExportModalContainer,
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
-.OptimizeFilterModalContainer,
-.SupportCommissionModalContainer
+.OptimizeFilterModalContainer
 {
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
 	border: 0px solid transparent;
@@ -3791,8 +3790,7 @@
 .ModalOverlay.Show #ExportModalContainer,
 .ModalOverlay.Show #ConfigDiffModalContainer,
 .ModalOverlay.Show .ArcadeModalContainer,
-.ModalOverlay.Show .OptimizeFilterModalContainer,
-.ModalOverlay.Show .SupportCommissionModalContainer
+.ModalOverlay.Show .OptimizeFilterModalContainer
 {
 	opacity: 1;
 	transform: scale3d(1, 1, 1);
@@ -3837,30 +3835,6 @@
 }
 
 #ArcadeMinesweeperModalContainer
-{
-	align: center center;
-	width: 560px;
-	height: fit-children;
-	background-color: gradient( radial, 50% 50%, 0% 0%, 72% 72%, from( #2c2a28 ), to( #181716 ) );
-	border: 1px solid rgba(255, 255, 255, 0.05);
-	box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 40px 0px;
-	padding: 24px;
-	flow-children: down;
-	border-radius: 8px;
-	opacity: 0;
-	transform: scale3d(0.9, 0.9, 1);
-	transition-property: opacity, transform;
-	transition-duration: 0.30s;
-	transition-timing-function: ease-in-out;
-}
-
-.ModalOverlay.Show #Arcade2048ModalContainer
-{
-	opacity: 1;
-	transform: scale3d(1, 1, 1);
-}
-
-#Arcade2048ModalContainer
 {
 	align: center center;
 	width: 560px;
@@ -3974,30 +3948,6 @@
 	transition-timing-function: ease-in-out;
 }
 
-.ModalOverlay.Show #ArcadeBilliardsModalContainer
-{
-	opacity: 1;
-	transform: scale3d(1, 1, 1);
-}
-
-#ArcadeBilliardsModalContainer
-{
-	align: center center;
-	width: 620px;
-	height: fit-children;
-	background-color: gradient( radial, 50% 50%, 0% 0%, 72% 72%, from( #2c2a28 ), to( #181716 ) );
-	border: 1px solid rgba(255, 255, 255, 0.05);
-	box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 40px 0px;
-	padding: 24px;
-	flow-children: down;
-	border-radius: 8px;
-	opacity: 0;
-	transform: scale3d(0.9, 0.9, 1);
-	transition-property: opacity, transform;
-	transition-duration: 0.30s;
-	transition-timing-function: ease-in-out;
-}
-
 .ModalOverlay.Show #ArcadeBlackjackModalContainer
 {
 	opacity: 1;
@@ -4028,7 +3978,7 @@
 	transform: scale3d(1, 1, 1);
 }
 
-#ArcadeMinesweeperModalContainer,#Arcade2048ModalContainer,#ArcadeFlappyModalContainer,#ArcadeAimTrainerModalContainer,#ArcadeTrainTrackingModalContainer,#ArcadeWhackRemModalContainer,#ArcadeBilliardsModalContainer,#ArcadeBlackjackModalContainer
+#ArcadeMinesweeperModalContainer,#ArcadeFlappyModalContainer,#ArcadeAimTrainerModalContainer,#ArcadeTrainTrackingModalContainer,#ArcadeWhackRemModalContainer,#ArcadeBlackjackModalContainer
 {
 	width: 720px;
 	height: 720px;
@@ -4328,114 +4278,6 @@
 	text-shadow: none;
 }
 
-.Arcade2048Title
-{
-	horizontal-align: center;
-	text-align: center;
-	margin-bottom: 8px;
-}
-
-.Arcade2048HudRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-	margin-bottom: 6px;
-}
-
-.Arcade2048Stat
-{
-	color: #cfc9bc;
-	font-size: 14px;
-	font-weight: bold;
-	text-shadow: 0px 0px 4px rgba(102, 204, 153, 0.2);
-}
-
-.Arcade2048ActionRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-	margin-bottom: 6px;
-}
-
-.Arcade2048ActionBtn
-{
-	min-width: 110px;
-}
-
-.Arcade2048Controls
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: down;
-	margin-bottom: 10px;
-}
-
-.Arcade2048ControlsRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-}
-
-.Arcade2048ControlsUpRow
-{
-	margin-bottom: 4px;
-}
-
-.Arcade2048MoveBtn
-{
-	min-width: 86px;
-	margin-left: 4px;
-	margin-right: 4px;
-}
-
-.Arcade2048StatusLabel
-{
-	width: 100%;
-	color: #9ea8ab;
-	font-size: 13px;
-	margin-bottom: 8px;
-	text-align: center;
-}
-
-.Arcade2048Board
-{
-	horizontal-align: center;
-	flow-children: down;
-	padding: 8px;
-	border-radius: 8px;
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 23, 24, 0.76) ), to( rgba(13, 15, 16, 0.66) ) );
-}
-
-.Arcade2048Row
-{
-	flow-children: right;
-}
-
-.Arcade2048Cell
-{
-	width: 72px;
-	height: 72px;
-	margin: 3px;
-	border-radius: 5px;
-	border: 1px solid rgba(255, 255, 255, 0.09);
-	background-color: #2a2f33cc;
-}
-
-.Arcade2048CellLabel
-{
-	width: 100%;
-	text-align: center;
-	vertical-align: center;
-	horizontal-align: center;
-	color: #d8e4de;
-	font-size: 24px;
-	font-weight: bold;
-	text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.6);
-}
 
 .ArcadeFlappyTitle
 {
@@ -4962,319 +4804,6 @@
 	color: #d4dcdf;
 }
 
-.ArcadeBilliardsTitle
-{
-	horizontal-align: center;
-	text-align: center;
-	margin-bottom: 8px;
-}
-
-.ArcadeBilliardsHudRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-	margin-bottom: 8px;
-	padding: 6px 10px;
-	border-radius: 6px;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(23, 23, 23, 0.92) ), to( rgba(17, 17, 17, 0.92) ) );
-	border: 1px solid #1c1e2090;
-}
-
-.ArcadeBilliardsStat
-{
-	color: #d4dcdf;
-	font-size: 13px;
-	font-weight: bold;
-	margin-left: 8px;
-	margin-right: 8px;
-	text-shadow: none;
-}
-
-.ArcadeBilliardsStatGreen
-{
-	color: #66cc99;
-}
-
-.ArcadeBilliardsStatRed
-{
-	color: #e06a6a;
-}
-
-.ArcadeBilliardsStatBlue
-{
-	color: #7ca6ff;
-}
-
-.ArcadeBilliardsActionRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-	margin-bottom: 8px;
-	overflow: noclip;
-}
-
-.ArcadeBilliardsControlBtn
-{
-	height: 28px;
-	min-height: 28px;
-	max-height: 28px;
-	border-radius: 6px;
-}
-
-#ArcadeBilliardsNewRackBtn
-{
-	margin-right: 10px;
-	min-width: 96px;
-}
-
-.ArcadeBilliardsActionHint
-{
-	vertical-align: center;
-	color: #9c968c;
-	font-size: 12px;
-	font-weight: bold;
-	text-shadow: none;
-}
-
-.ArcadeBilliardsPowerRow
-{
-	width: fit-children;
-	horizontal-align: center;
-	flow-children: right;
-	margin-bottom: 8px;
-}
-
-.ArcadeBilliardsPowerTitle
-{
-	vertical-align: center;
-	color: #9c968c;
-	font-size: 12px;
-	font-weight: bold;
-	margin-right: 6px;
-	text-transform: uppercase;
-	letter-spacing: 0.6px;
-}
-
-.ArcadeBilliardsPowerGroup
-{
-	flow-children: right;
-	padding: 2px;
-	border-radius: 6px;
-	border: 1px solid #1c1e2090;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
-	margin-right: 8px;
-}
-
-.ArcadeBilliardsPowerBtn
-{
-	margin-left: 2px;
-	min-width: 72px;
-	height: 24px;
-	border-radius: 4px;
-	border: 0px solid transparent;
-	background-color: #1f1d1b;
-	box-shadow: none;
-}
-
-.ArcadeBilliardsPowerBtn:first-child
-{
-	margin-left: 0px;
-}
-
-.ArcadeBilliardsPowerBtn:hover
-{
-	brightness: 1.06;
-	background-color: #262320;
-}
-
-.ArcadeBilliardsPowerBtn.Active
-{
-	border: 1px solid rgba(102, 204, 153, 0.82);
-	background-color: gradient( radial, 50% 50%, 0% 0%, 80% 80%, from( #66cc99 ), to( #337755 ) );
-	box-shadow: fill rgba(102, 204, 153, 0.28) 0px 0px 10px 0px;
-}
-
-.ArcadeBilliardsPowerBtn Label
-{
-	color: #9c968c;
-	text-shadow: none;
-	font-size: 12px;
-}
-
-.ArcadeBilliardsPowerBtn.Active Label
-{
-	color: #ffffff;
-}
-
-.ArcadeBilliardsAimLabel
-{
-	vertical-align: center;
-	color: #7ca6ff;
-	font-size: 13px;
-	font-weight: bold;
-	text-shadow: none;
-}
-
-.ArcadeBilliardsArea
-{
-	width: 680px;
-	height: 500px;
-	horizontal-align: center;
-	border-radius: 8px;
-	border: 1px solid #1c1e2090;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
-}
-
-.ArcadeBilliardsTable
-{
-	width: 640px;
-	height: 380px;
-	horizontal-align: center;
-	vertical-align: center;
-	border-radius: 16px;
-	border: 4px solid rgba(70, 41, 25, 0.95);
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #205f49 ), to( #174636 ) );
-	overflow: clip clip;
-	cursor: hand;
-}
-
-.ArcadeBilliardsPocketsLayer,.ArcadeBilliardsGuideLayer,.ArcadeBilliardsBallsLayer
-{
-	width: 100%;
-	height: 100%;
-}
-
-.ArcadeBilliardsAimLine
-{
-	ignore-parent-flow: true;
-	horizontal-align: left;
-	vertical-align: top;
-	height: 2px;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(124, 166, 255, 0.95) ), to( rgba(124, 166, 255, 0.20) ) );
-	transform-origin: 0% 50%;
-	box-shadow: fill rgba(124, 166, 255, 0.35) 0px 0px 3px 0px;
-}
-
-.ArcadeBilliardsAimDot
-{
-	ignore-parent-flow: true;
-	horizontal-align: left;
-	vertical-align: top;
-	width: 6px;
-	height: 6px;
-	border-radius: 999px;
-	border: 1px solid rgba(124, 166, 255, 0.82);
-	background-color: rgba(124, 166, 255, 0.55);
-	box-shadow: fill rgba(124, 166, 255, 0.32) 0px 0px 3px 0px;
-}
-
-.ArcadeBilliardsAimDot.End
-{
-	width: 8px;
-	height: 8px;
-	background-color: rgba(124, 166, 255, 0.8);
-	border: 1px solid rgba(198, 222, 255, 0.95);
-	box-shadow: fill rgba(124, 166, 255, 0.45) 0px 0px 4px 0px;
-}
-
-.ArcadeBilliardsAimGhost
-{
-	ignore-parent-flow: true;
-	horizontal-align: left;
-	vertical-align: top;
-	width: 12px;
-	height: 12px;
-	border-radius: 999px;
-	border: 1px solid rgba(124, 166, 255, 0.95);
-	background-color: rgba(124, 166, 255, 0.24);
-	box-shadow: fill rgba(124, 166, 255, 0.34) 0px 0px 4px 0px;
-}
-
-.ArcadeBilliardsPocket
-{
-	ignore-parent-flow: true;
-	width: 44px;
-	height: 44px;
-	border-radius: 999px;
-	border: 1px solid rgba(40, 20, 10, 0.75);
-	background-color: #060606f2;
-	box-shadow: inset rgba(0, 0, 0, 0.7) 0px 2px 6px 0px;
-}
-
-.ArcadeBilliardsBall
-{
-	ignore-parent-flow: true;
-	width: 22px;
-	height: 22px;
-	border-radius: 999px;
-	border: 1px solid rgba(0, 0, 0, 0.55);
-	box-shadow: fill rgba(0, 0, 0, 0.35) 0px 1px 3px 0px;
-}
-
-.ArcadeBilliardsBall.CueBall
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #ffffff ), to( #d8dde0 ) );
-}
-
-.ArcadeBilliardsBall.ObjBall
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #f0f0f0 ), to( #a0a0a0 ) );
-}
-
-.ArcadeBilliardsBall.Tone1
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #ffe37a ), to( #b49332 ) );
-}
-
-.ArcadeBilliardsBall.Tone2
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #7dc5ff ), to( #2e6ca8 ) );
-}
-
-.ArcadeBilliardsBall.Tone3
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #ff8f8f ), to( #a34646 ) );
-}
-
-.ArcadeBilliardsBall.Tone4
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #9ef7c0 ), to( #3e8f6d ) );
-}
-
-.ArcadeBilliardsBall.Tone5
-{
-	background-color: gradient( radial, 42% 30%, 0% 0%, 80% 80%, from( #d8b2ff ), to( #6e4b9e ) );
-}
-
-.ArcadeBilliardsBallLabel
-{
-	width: 100%;
-	text-align: center;
-	horizontal-align: center;
-	vertical-align: center;
-	font-size: 10px;
-	color: #091014;
-	font-weight: bold;
-	text-shadow: none;
-}
-
-.ArcadeBilliardsStatusLabel
-{
-	width: fit-children;
-	max-width: 90%;
-	horizontal-align: center;
-	margin-top: 10px;
-	padding: 4px 10px;
-	border-radius: 5px;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(23, 23, 23, 0.94) ), to( rgba(17, 17, 17, 0.94) ) );
-	border: 1px solid #1c1e2090;
-	color: #cde5db;
-	font-size: 12px;
-	text-align: center;
-	text-shadow: 0px 0px 4px rgba(102, 204, 153, 0.2);
-}
 
 .ArcadeBlackjackTitle
 {
@@ -9555,36 +9084,6 @@
 	font-weight: normal;
 }
 
-.SupportCommissionModalContainer
-{
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
-	border: 0px solid transparent;
-	border-radius: 8px;
-	box-shadow: rgba(0, 0, 0, 0.76) 0px 0px 40px 0px;
-	padding: 20px 20px 20px 20px;
-}
-
-.SupportCommissionModalContainer .ModalTitle
-{
-	font-size: 21px;
-	letter-spacing: 2.5px;
-	margin-bottom: 10px;
-	text-shadow: 0px 0px 6px rgba(255, 255, 255, 0.18);
-}
-
-.SupportCommissionModalContainer .OptimizeFilterModalLine
-{
-	color: #a39c8e;
-	line-height: 18px;
-	margin-bottom: 7px;
-}
-
-.SupportCommissionModalContainer #CloseBtn
-{
-	margin-top: -4px;
-	margin-right: -4px;
-}
-
 #BuildSaveConfirmButton
 {
 	width: 96px;
@@ -9637,71 +9136,6 @@
 #BuildSaveConfirmButton:active
 {
 	transform: translateY(1px);
-}
-
-.SupportCommissionModalContactRow
-{
-	width: 100%;
-	flow-children: right;
-	min-height: 25px;
-	margin-top: 2px;
-	margin-bottom: 7px;
-	vertical-align: center;
-}
-
-.SupportCommissionModalContactText
-{
-	width: fill-parent-flow(1.0);
-	vertical-align: center;
-	margin-bottom: 0px;
-	line-height: 18px;
-}
-
-#SupportCommissionModalContactRow .SupportTabDiscordInlineIconBtn
-{
-	margin-left: 8px;
-	vertical-align: center;
-}
-
-#SupportCommissionModalDiscordBtn
-{
-	width: 26px;
-	height: 26px;
-	min-width: 26px;
-	max-width: 26px;
-	min-height: 26px;
-	max-height: 26px;
-	border-radius: 6px;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5FE6A2 ), to( #A3FFB7 ) );
-	border: 1px solid #66cc99;
-	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 2px 0px;
-	brightness: 1.15;
-	animation-name: PulseActiveGreen;
-	animation-duration: 3.0s;
-	animation-timing-function: ease-in-out;
-	animation-iteration-count: infinite;
-}
-
-#SupportCommissionModalDiscordBtn .HeaderDiscordLogoTexture
-{
-	width: 16px;
-	height: 16px;
-	horizontal-align: center;
-	vertical-align: center;
-	wash-color: #0f1512;
-}
-
-#SupportCommissionModalDiscordBtn:hover
-{
-	brightness: 1.14;
-	border: 1px solid #66cc99;
-	box-shadow: fill rgba(102, 204, 153, 0.26) 0px 0px 10px 0px;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 30, 27, 0.98) ), to( rgba(15, 18, 16, 0.98) ) );
-}
-
-#SupportCommissionModalDiscordBtn:hover .HeaderDiscordLogoTexture
-{
-	wash-color: #ffffff;
 }
 
 #SupportTabCoffeeBtn,#SupportTabCoffeBtn
@@ -9876,7 +9310,6 @@
 .ArcadeFlappyControlBtn,
 .ArcadeAimTrainerControlBtn,
 .ArcadeWhackRemControlBtn,
-.ArcadeBilliardsControlBtn,
 .ArcadeBlackjackControlBtn,
 .ArcadeTrainTrackingControlBtn,
 .ArcadeMinesweeperDifficultyBtn,
@@ -9897,7 +9330,6 @@
 .ArcadeFlappyControlBtn Label,
 .ArcadeAimTrainerControlBtn Label,
 .ArcadeWhackRemControlBtn Label,
-.ArcadeBilliardsControlBtn Label,
 .ArcadeBlackjackControlBtn Label,
 .ArcadeTrainTrackingControlBtn Label,
 .ArcadeMinesweeperDifficultyBtn Label,
@@ -9917,7 +9349,6 @@
 .ArcadeFlappyControlBtn:hover,
 .ArcadeAimTrainerControlBtn:hover,
 .ArcadeWhackRemControlBtn:hover,
-.ArcadeBilliardsControlBtn:hover,
 .ArcadeBlackjackControlBtn:hover,
 .ArcadeTrainTrackingControlBtn:hover,
 .ArcadeMinesweeperDifficultyBtn:hover,
@@ -9936,7 +9367,6 @@
 .ArcadeFlappyControlBtn:hover Label,
 .ArcadeAimTrainerControlBtn:hover Label,
 .ArcadeWhackRemControlBtn:hover Label,
-.ArcadeBilliardsControlBtn:hover Label,
 .ArcadeBlackjackControlBtn:hover Label,
 .ArcadeTrainTrackingControlBtn:hover Label,
 .ArcadeMinesweeperDifficultyBtn:hover Label,
@@ -9952,7 +9382,6 @@
 .ArcadeFlappyControlBtn:active,
 .ArcadeAimTrainerControlBtn:active,
 .ArcadeWhackRemControlBtn:active,
-.ArcadeBilliardsControlBtn:active,
 .ArcadeBlackjackControlBtn:active,
 .ArcadeTrainTrackingControlBtn:active,
 .ArcadeMinesweeperDifficultyBtn:active,
@@ -9966,7 +9395,6 @@
 #ArcadeMinesweeperNewGameBtn,
 #ArcadeAimTrainerNewRunBtn,
 #ArcadeWhackRemNewRunBtn,
-#ArcadeBilliardsNewRackBtn,
 #ArcadeBlackjackNewHandBtn,
 #ArcadeBlackjackHitBtn,
 #ArcadeTrainTrackingNewRunBtn
@@ -9993,7 +9421,6 @@
 #ArcadeMinesweeperNewGameBtn Label,
 #ArcadeAimTrainerNewRunBtn Label,
 #ArcadeWhackRemNewRunBtn Label,
-#ArcadeBilliardsNewRackBtn Label,
 #ArcadeBlackjackNewHandBtn Label,
 #ArcadeBlackjackHitBtn Label,
 #ArcadeTrainTrackingNewRunBtn Label
@@ -10009,7 +9436,6 @@
 #ArcadeMinesweeperNewGameBtn:hover,
 #ArcadeAimTrainerNewRunBtn:hover,
 #ArcadeWhackRemNewRunBtn:hover,
-#ArcadeBilliardsNewRackBtn:hover,
 #ArcadeBlackjackNewHandBtn:hover,
 #ArcadeBlackjackHitBtn:hover,
 #ArcadeTrainTrackingNewRunBtn:hover
@@ -10023,7 +9449,6 @@
 #ArcadeMinesweeperNewGameBtn:hover Label,
 #ArcadeAimTrainerNewRunBtn:hover Label,
 #ArcadeWhackRemNewRunBtn:hover Label,
-#ArcadeBilliardsNewRackBtn:hover Label,
 #ArcadeBlackjackNewHandBtn:hover Label,
 #ArcadeBlackjackHitBtn:hover Label,
 #ArcadeTrainTrackingNewRunBtn:hover Label
@@ -10035,7 +9460,6 @@
 #ArcadeMinesweeperNewGameBtn:active,
 #ArcadeAimTrainerNewRunBtn:active,
 #ArcadeWhackRemNewRunBtn:active,
-#ArcadeBilliardsNewRackBtn:active,
 #ArcadeBlackjackNewHandBtn:active,
 #ArcadeBlackjackHitBtn:active,
 #ArcadeTrainTrackingNewRunBtn:active
@@ -10045,8 +9469,7 @@
 
 .ArcadeMinesweeperDifficultyBtn.Active,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn.Active,
-.ArcadeTrainTrackingDifficultyBtn.Active,
-.ArcadeBilliardsPowerBtn.Active
+.ArcadeTrainTrackingDifficultyBtn.Active
 {
 	border: 1px solid #66cc99;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5FE6A2 ), to( #A3FFB7 ) );
@@ -10060,44 +9483,10 @@
 
 .ArcadeMinesweeperDifficultyBtn.Active Label,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn.Active Label,
-.ArcadeTrainTrackingDifficultyBtn.Active Label,
-.ArcadeBilliardsPowerBtn.Active Label
+.ArcadeTrainTrackingDifficultyBtn.Active Label
 {
 	color: #0f1512;
 	text-shadow: none;
-}
-
-.ArcadeBilliardsPowerBtn
-{
-	background-color: #1f1d1b;
-	border: 0px solid transparent;
-	box-shadow: none;
-	transition-property: background-color, border, transform, brightness, box-shadow;
-	transition-duration: 0.18s;
-	transition-timing-function: ease-in-out;
-}
-
-.ArcadeBilliardsPowerBtn:hover
-{
-	brightness: 1.05;
-	background-color: #262320;
-	border: 0px solid transparent;
-	box-shadow: none;
-}
-
-.ArcadeBilliardsPowerBtn Label
-{
-	color: #9c968c;
-	font-size: 12px;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.7px;
-	text-shadow: none;
-}
-
-.ArcadeBilliardsPowerBtn:hover Label
-{
-	color: #bcb6a6;
 }
 
 .ArcadeMinesweeperDifficultyGroup,
@@ -10113,8 +9502,7 @@
 
 .ArcadeMinesweeperDifficultyBtn,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn,
-.ArcadeTrainTrackingDifficultyBtn,
-.ArcadeBilliardsPowerBtn
+.ArcadeTrainTrackingDifficultyBtn
 {
 	padding: 2px 8px;
 	border-radius: 4px;
@@ -10128,16 +9516,14 @@
 
 .ArcadeMinesweeperDifficultyBtn:first-child,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn:first-child,
-.ArcadeTrainTrackingDifficultyBtn:first-child,
-.ArcadeBilliardsPowerBtn:first-child
+.ArcadeTrainTrackingDifficultyBtn:first-child
 {
 	margin-left: 0px;
 }
 
 .ArcadeMinesweeperDifficultyBtn.Active:hover,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn.Active:hover,
-.ArcadeTrainTrackingDifficultyBtn.Active:hover,
-.ArcadeBilliardsPowerBtn.Active:hover
+.ArcadeTrainTrackingDifficultyBtn.Active:hover
 {
 	brightness: 1.12;
 	border: 1px solid #66cc99;
@@ -10147,8 +9533,7 @@
 
 .ArcadeMinesweeperDifficultyBtn.Active:hover Label,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn.Active:hover Label,
-.ArcadeTrainTrackingDifficultyBtn.Active:hover Label,
-.ArcadeBilliardsPowerBtn.Active:hover Label
+.ArcadeTrainTrackingDifficultyBtn.Active:hover Label
 {
 	color: #ffffff;
 	text-shadow: 0px 0px 10px rgba(102, 204, 153, 0.55);
@@ -10239,12 +9624,24 @@
 	margin-top: 0px;
 }
 
+#SettingsWindow #MogTabSiteLinkLabel
+{
+	color: #6be8a2;
+	font-family: oracle;
+	font-size: 17px;
+	font-weight: normal;
+	letter-spacing: 0.3px;
+	text-transform: none;
+	text-shadow: 0px 0px 6px rgba(107, 232, 162, 0.16);
+}
+
 #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopPrefix
 {
 	color: #95a0a4;
 }
 
-#ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #6be8a2;
 	text-shadow: 0px 0px 8px rgba(107, 232, 162, 0.24);
@@ -10790,8 +10187,7 @@
 #SettingsWindow .MultiToggleBtn.Active,
 #SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active,
 #SettingsWindow .SettingActionBtn.SuccessState,
-#BuildSaveConfirmButton,
-#SupportCommissionModalDiscordBtn
+#BuildSaveConfirmButton
 {
 	border: 1px solid rgba(106, 231, 154, 0.10);
 	border-left: 1px solid rgba(106, 231, 154, 0.10);
@@ -11062,14 +10458,14 @@
 	animation-name: none;
 }
 
-#SettingsWindow .MogTabSiteLinkLabel,
+#SettingsWindow .MogTabSiteLinkLabel:not(#MogTabSiteLinkLabel),
 .CommunityPresetHintLink Label
 {
 	color: #c1f6d7;
 	text-shadow: none;
 }
 
-#SettingsWindow .MogTabSiteLink:hover .MogTabSiteLinkLabel,
+#SettingsWindow .MogTabSiteLink:hover .MogTabSiteLinkLabel:not(#MogTabSiteLinkLabel),
 .CommunityPresetHintLink:hover Label
 {
 	color: #eef4f6;
@@ -11089,8 +10485,7 @@
 #ExportModalContainer,
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
-.OptimizeFilterModalContainer,
-.SupportCommissionModalContainer
+.OptimizeFilterModalContainer
 {
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 31, 38, 0.92) ), to( rgba(9, 12, 15, 0.88) ) );
 	border: 1px solid rgba(255, 252, 244, 0.04);
@@ -11498,7 +10893,7 @@
 
 #SettingsWindow .ConfigTabCard .ConfigTextEntry
 {
-	width: fill-parent-flow(1.0);
+	width: 100%;
 	height: 118px;
 	min-height: 118px;
 	max-height: 118px;
@@ -11529,7 +10924,7 @@
 #SettingsWindow #ConfigCardExport #ConfigExportBtnRow,
 #SettingsWindow #ConfigCardImport .ConfigBtnRow
 {
-	width: fill-parent-flow(1.0);
+	width: 100%;
 	min-width: 0px;
 	max-width: 100%;
 	horizontal-align: stretch;
@@ -11904,8 +11299,7 @@
 #ExportModalContainer,
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
-.OptimizeFilterModalContainer,
-.SupportCommissionModalContainer
+.OptimizeFilterModalContainer
 {
 	border: 0px solid transparent;
 	box-shadow: rgba(0, 0, 0, 0.52) 0px 20px 44px 0px;
@@ -11913,8 +11307,8 @@
 
 /* --- pass3: modal overlay — marginally lighter so glass reads --- */
 
-.ModalOverlay,
-.ModalOverlay.Show
+.QOLModalOverlay,
+.QOLModalOverlay.Show
 {
 	background-color: rgba(2, 4, 5, 0.78);
 }
@@ -12147,12 +11541,12 @@
 /* --- pass3: arcade modal containers — no hairline border --- */
 
 #ArcadeMinesweeperModalContainer,
-#Arcade2048ModalContainer,
+
 #ArcadeFlappyModalContainer,
 #ArcadeAimTrainerModalContainer,
 #ArcadeTrainTrackingModalContainer,
 #ArcadeWhackRemModalContainer,
-#ArcadeBilliardsModalContainer,
+
 #ArcadeBlackjackModalContainer
 {
 	border: 0px solid transparent;
@@ -12163,8 +11557,6 @@
 .ArcadeMinesweeperDifficultyGroup,
 .ArcadeAimTrainerDifficultyGroup,
 .ArcadeTrainTrackingDifficultyGroup,
-.ArcadeBilliardsPowerGroup,
-.Arcade2048Board,
 .ArcadeMinesweeperBoard
 {
 	border: 0px solid transparent;
@@ -12173,7 +11565,6 @@
 /* --- pass3: arcade HUD rows — borderless --- */
 
 .ArcadeFlappyHudRow,
-.ArcadeBilliardsHudRow,
 .ArcadeBlackjackHudRow
 {
 	border: 0px solid transparent;
@@ -12182,7 +11573,6 @@
 /* --- pass3: arcade status labels — borderless floating text chips --- */
 
 .ArcadeAimTrainerStatusLabel,
-.ArcadeBilliardsStatusLabel,
 .ArcadeBlackjackStatusLabel,
 .ArcadeWhackRemStatusLabel,
 .ArcadeTrainTrackingStatusLabel,
@@ -12313,8 +11703,8 @@
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(23, 24, 25, 0.78) ), to( rgba(12, 12, 13, 0.62) ) );
 }
 
-.ModalOverlay,
-.ModalOverlay.Show
+.QOLModalOverlay,
+.QOLModalOverlay.Show
 {
 	background-color: rgba(3, 3, 3, 0.80);
 }
@@ -12770,14 +12160,12 @@
 #ArcadeMinesweeperNewGameBtn,
 #ArcadeAimTrainerNewRunBtn,
 #ArcadeWhackRemNewRunBtn,
-#ArcadeBilliardsNewRackBtn,
 #ArcadeBlackjackNewHandBtn,
 #ArcadeBlackjackHitBtn,
 #ArcadeTrainTrackingNewRunBtn,
 .ArcadeMinesweeperDifficultyBtn.Active,
 .ArcadeAimTrainerDifficultyGroup .ArcadeAimTrainerDifficultyBtn.Active,
-.ArcadeTrainTrackingDifficultyBtn.Active,
-.ArcadeBilliardsPowerBtn.Active
+.ArcadeTrainTrackingDifficultyBtn.Active
 {
 	animation-name: none;
 }
@@ -13609,8 +12997,7 @@
 #ExportModalContainer,
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
-.OptimizeFilterModalContainer,
-.SupportCommissionModalContainer
+.OptimizeFilterModalContainer
 {
 	border: 1px solid rgba(220, 225, 220, 0.05);
 	border-radius: 4px;
@@ -14338,8 +13725,7 @@
 #ExportModalContainer,
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
-.OptimizeFilterModalContainer,
-.SupportCommissionModalContainer
+.OptimizeFilterModalContainer
 {
 	transition-duration:        0.18s;
 	transition-timing-function: ease-out;
@@ -15809,7 +15195,6 @@
 	opacity: 1.0;
 }
 
-#SupportCommissionModalDiscordBtn .HeaderDiscordLogoTexture,
 .SupportTabDiscordInlineIconBtn .HeaderDiscordLogoTexture
 {
 	width: 24px;
@@ -15988,8 +15373,8 @@
 }
 
 /* Modal sweep: bring all ql_settings popups back into the same glass family. */
-.ModalOverlay,
-.ModalOverlay.Show
+.QOLModalOverlay,
+.QOLModalOverlay.Show
 {
 	background-color: rgba(4, 7, 8, 0.80);
 }
@@ -15998,7 +15383,6 @@
 #ConfigDiffModalContainer,
 .ArcadeModalContainer,
 .OptimizeFilterModalContainer,
-.SupportCommissionModalContainer,
 .MetroModalContainer
 {
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(19, 24, 26, 0.98) ), to( rgba(10, 13, 15, 0.96) ) );
@@ -16010,8 +15394,7 @@
 .ModalTitle,
 .ConfigDiffTitle,
 .ArcadeModalContainer .ModalTitle,
-.OptimizeFilterModalContainer .ModalTitle,
-.SupportCommissionModalContainer .ModalTitle
+.OptimizeFilterModalContainer .ModalTitle
 {
 	font-family: oracle;
 	font-size: 17px;
@@ -16025,8 +15408,7 @@
 .OptimizeFilterModalLine,
 .ConfigDiffSummary,
 .ConfigDiffDetails,
-.ConfigDiffSummaryFooter,
-.SupportCommissionModalContactText
+.ConfigDiffSummaryFooter
 {
 	font-family: oracle;
 	font-size: 13px;
@@ -16050,7 +15432,6 @@
 #ExportModalContainer #CloseBtn,
 #ConfigDiffModalContainer #ConfigDiffCloseBtn,
 .OptimizeFilterModalContainer #CloseBtn,
-.SupportCommissionModalContainer #CloseBtn,
 .ArcadeModalContainer #CloseBtn
 {
 	border: 0px solid transparent;
@@ -16062,7 +15443,6 @@
 #ExportModalContainer #CloseBtn:hover,
 #ConfigDiffModalContainer #ConfigDiffCloseBtn:hover,
 .OptimizeFilterModalContainer #CloseBtn:hover,
-.SupportCommissionModalContainer #CloseBtn:hover,
 .ArcadeModalContainer #CloseBtn:hover
 {
 	background-color: rgba(106, 231, 154, 0.08);
@@ -16074,8 +15454,7 @@
 .OptimizeFilterModalDownloadBtn,
 #ConfigDiffModalContainer .ConfigDiffApplyBtn,
 #ConfigDiffModalContainer .ConfigDiffCancelBtn,
-#BuildSaveConfirmButton,
-#SupportCommissionModalDiscordBtn
+#BuildSaveConfirmButton
 {
 	border-radius: 4px;
 	font-family: oracle;
@@ -17629,8 +17008,8 @@
 	box-shadow: fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px;
 }
 
-.ModalOverlay,
-.ModalOverlay.Show
+.QOLModalOverlay,
+.QOLModalOverlay.Show
 {
 	background-color: rgba(3, 5, 6, 0.82);
 }
@@ -17641,8 +17020,7 @@
 .QOLUnifiedModalSurface .OptimizeFilterModalLine,
 .QOLUnifiedModalSurface .ConfigDiffSummary,
 .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLUnifiedModalSurface .ConfigDiffSummaryFooter,
-.QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLUnifiedModalSurface .ConfigDiffSummaryFooter
 {
 	font-family: oracle;
 	text-shadow: none;
@@ -17662,8 +17040,7 @@
 .QOLUnifiedModalSurface .OptimizeFilterModalLine,
 .QOLUnifiedModalSurface .ConfigDiffSummary,
 .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLUnifiedModalSurface .ConfigDiffSummaryFooter,
-.QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLUnifiedModalSurface .ConfigDiffSummaryFooter
 {
 	font-size: 13px;
 	line-height: 19px;
@@ -17794,19 +17171,6 @@
 	text-transform: uppercase;
 	color: #eef6f0;
 	text-shadow: none;
-}
-
-#SupportCommissionModalDiscordBtn.QOLUnifiedModalPrimary
-{
-	border: 1px solid rgba(88, 101, 242, 0.28);
-	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(42, 43, 75, 0.96) ), color-stop( 0.58, rgba(24, 25, 42, 0.94) ), to( rgba(14, 15, 25, 0.96) ) );
-	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(142, 150, 255, 0.20) 0px 1px 0px 0px;
-}
-
-#SupportCommissionModalDiscordBtn.QOLUnifiedModalPrimary:hover
-{
-	border: 1px solid rgba(142, 150, 255, 0.42);
-	box-shadow: fill rgba(88, 101, 242, 0.16) 0px 0px 13px 0px, inset rgba(178, 184, 255, 0.34) 0px 1px 0px 0px;
 }
 
 .QOLUnifiedModalSurface .BuildSaveConfirmWarning
@@ -18362,40 +17726,35 @@
 
 .QOLThemeCream .QOLUnifiedModalSurface .ModalInstructions,
 .QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffSummary,
-.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLThemeCream .QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffDetails
 {
 	color: #55381e;
 }
 
 .QOLThemeKitten .QOLUnifiedModalSurface .ModalInstructions,
 .QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffSummary,
-.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLThemeKitten .QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffDetails
 {
 	color: #4a1d3d;
 }
 
 .QOLThemeEmo .QOLUnifiedModalSurface .ModalInstructions,
 .QOLThemeEmo .QOLUnifiedModalSurface .ConfigDiffSummary,
-.QOLThemeEmo .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLThemeEmo .QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLThemeEmo .QOLUnifiedModalSurface .ConfigDiffDetails
 {
 	color: #eee8ea;
 }
 
 .QOLThemeOcean .QOLUnifiedModalSurface .ModalInstructions,
 .QOLThemeOcean .QOLUnifiedModalSurface .ConfigDiffSummary,
-.QOLThemeOcean .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLThemeOcean .QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLThemeOcean .QOLUnifiedModalSurface .ConfigDiffDetails
 {
 	color: #e7f9ff;
 }
 
 .QOLThemePsycho .QOLUnifiedModalSurface .ModalInstructions,
 .QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffSummary,
-.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffDetails,
-.QOLThemePsycho .QOLUnifiedModalSurface .SupportCommissionModalContactText
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffDetails
 {
 	color: #1d2924;
 }
@@ -19401,7 +18760,9 @@
 
 #SettingsWindow.SettingsThemeCream #SettingsTitleAccent,
 #SettingsWindow.SettingsThemeCream #ModVersionLabelTopDomain,
-#SettingsWindow.SettingsThemeCream #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#SettingsWindow.SettingsThemeCream #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow.SettingsThemeCream #MogTabSiteLinkLabel,
+#SettingsWindow.SettingsThemeCream #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #9d642c;
 	text-shadow: 0px 0px 7px rgba(157, 100, 44, 0.22);
@@ -19409,7 +18770,9 @@
 
 #SettingsWindow.SettingsThemeKitten #SettingsTitleAccent,
 #SettingsWindow.SettingsThemeKitten #ModVersionLabelTopDomain,
-#SettingsWindow.SettingsThemeKitten #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#SettingsWindow.SettingsThemeKitten #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow.SettingsThemeKitten #MogTabSiteLinkLabel,
+#SettingsWindow.SettingsThemeKitten #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #ff9ad6;
 	text-shadow: 0px 0px 8px rgba(255, 154, 214, 0.30);
@@ -19417,7 +18780,9 @@
 
 #SettingsWindow.SettingsThemeEmo #SettingsTitleAccent,
 #SettingsWindow.SettingsThemeEmo #ModVersionLabelTopDomain,
-#SettingsWindow.SettingsThemeEmo #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#SettingsWindow.SettingsThemeEmo #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow.SettingsThemeEmo #MogTabSiteLinkLabel,
+#SettingsWindow.SettingsThemeEmo #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #ff3045;
 	text-shadow: 0px 0px 8px rgba(255, 47, 67, 0.30);
@@ -19425,7 +18790,9 @@
 
 #SettingsWindow.SettingsThemeOcean #SettingsTitleAccent,
 #SettingsWindow.SettingsThemeOcean #ModVersionLabelTopDomain,
-#SettingsWindow.SettingsThemeOcean #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#SettingsWindow.SettingsThemeOcean #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow.SettingsThemeOcean #MogTabSiteLinkLabel,
+#SettingsWindow.SettingsThemeOcean #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #72d7ff;
 	text-shadow: 0px 0px 8px rgba(114, 215, 255, 0.28);
@@ -19433,7 +18800,9 @@
 
 #SettingsWindow.SettingsThemePsycho #SettingsTitleAccent,
 #SettingsWindow.SettingsThemePsycho #ModVersionLabelTopDomain,
-#SettingsWindow.SettingsThemePsycho #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain
+#SettingsWindow.SettingsThemePsycho #ModVersionLabelTop.HeaderMoglockLinkButton:hover #ModVersionLabelTopDomain,
+#SettingsWindow.SettingsThemePsycho #MogTabSiteLinkLabel,
+#SettingsWindow.SettingsThemePsycho #MogTabSiteLink:hover #MogTabSiteLinkLabel
 {
 	color: #008a5a;
 	text-shadow: 0px 0px 5px rgba(0, 138, 90, 0.16);
@@ -19908,28 +19277,48 @@
 
 #SettingsWindow .SettingRow.RowTypePalette
 {
-	min-height: 62px;
+	min-height: 88px;
 }
 
 #SettingsWindow .PalettePickerGroup
 {
-	width: 390px;
-	flow-children: right-wrap;
+	width: 292px;
+	min-width: 292px;
+	max-width: 292px;
+	flow-children: down;
 	padding: 1px 0px 0px 0px;
 	vertical-align: center;
+	overflow: noclip;
+}
+
+#SettingsWindow .PalettePickerSwatchRow
+{
+	width: 292px;
+	min-width: 292px;
+	max-width: 292px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	flow-children: right;
+	margin-bottom: 3px;
+	overflow: noclip;
 }
 
 #SettingsWindow .PalettePickerSwatch
 {
-	width: 24px;
-	height: 24px;
-	margin-right: 5px;
-	margin-bottom: 5px;
-	padding: 2px;
-	border-radius: 6px;
-	border: 1px solid rgba(210, 224, 216, 0.12);
-	background-color: rgba(8, 12, 13, 0.52);
-	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 4px 0px;
+	width: 25px;
+	min-width: 25px;
+	max-width: 25px;
+	height: 25px;
+	min-height: 25px;
+	max-height: 25px;
+	margin-right: 4px;
+	margin-bottom: 0px;
+	padding: 1px;
+	border-radius: 4px;
+	border: 1px solid rgba(210, 224, 216, 0.075);
+	background-color: rgba(8, 12, 13, 0.36);
+	box-shadow: fill rgba(0, 0, 0, 0.14) 0px 1px 2px 0px;
 	transition-property: brightness, border, box-shadow, transform;
 	transition-duration: 0.12s;
 	transition-timing-function: ease-out;
@@ -19937,23 +19326,24 @@
 
 #SettingsWindow .PalettePickerSwatch:hover
 {
-	brightness: 1.18;
-	border-color: rgba(210, 224, 216, 0.28);
-	box-shadow: fill rgba(210, 224, 216, 0.08) 0px 0px 8px 0px;
-	transform: translateY(-1px);
+	brightness: 1.10;
+	border-color: rgba(210, 224, 216, 0.18);
+	box-shadow: fill rgba(210, 224, 216, 0.035) 0px 0px 5px 0px;
+	transform: none;
 }
 
 #SettingsWindow .PalettePickerSwatch.Active
 {
-	border-color: rgba(154, 240, 189, 0.72);
-	box-shadow: fill rgba(106, 231, 154, 0.20) 0px 0px 10px 0px, inset rgba(255, 255, 255, 0.22) 0px 0px 0px 1px;
+	border-color: rgba(154, 240, 189, 0.46);
+	background-color: rgba(106, 231, 154, 0.045);
+	box-shadow: fill rgba(106, 231, 154, 0.055) 0px 0px 5px 0px, inset rgba(255, 255, 255, 0.18) 0px 0px 0px 1px;
 }
 
 #SettingsWindow .PalettePickerSwatchChip
 {
 	width: 100%;
 	height: 100%;
-	border-radius: 4px;
+	border-radius: 3px;
 }
 
 #SettingsWindow .PalettePickerSwatchChipDefault
@@ -19964,16 +19354,16 @@
 
 #SettingsWindow .PalettePickerSwatchActiveDot
 {
-	width: 5px;
-	height: 5px;
-	border-radius: 50%;
+	width: 4px;
+	height: 4px;
+	border-radius: 2px;
 	horizontal-align: right;
 	vertical-align: bottom;
-	margin-right: -1px;
-	margin-bottom: -1px;
+	margin-right: 0px;
+	margin-bottom: 0px;
 	background-color: #9af0bd;
 	opacity: 0.0;
-	box-shadow: fill rgba(106, 231, 154, 0.35) 0px 0px 5px 0px;
+	box-shadow: none;
 }
 
 #SettingsWindow .PalettePickerSwatch.Active .PalettePickerSwatchActiveDot
@@ -19983,30 +19373,3252 @@
 
 #SettingsWindow.SettingsThemeCream .PalettePickerSwatch.Active
 {
-	border-color: rgba(157, 100, 44, 0.74);
-	box-shadow: fill rgba(157, 100, 44, 0.18) 0px 0px 9px 0px, inset rgba(255, 245, 218, 0.32) 0px 0px 0px 1px;
+	border-color: rgba(157, 100, 44, 0.46);
+	box-shadow: fill rgba(157, 100, 44, 0.055) 0px 0px 5px 0px, inset rgba(255, 245, 218, 0.24) 0px 0px 0px 1px;
 }
 
 #SettingsWindow.SettingsThemeKitten .PalettePickerSwatch.Active
 {
-	border-color: rgba(184, 28, 121, 0.74);
-	box-shadow: fill rgba(255, 113, 197, 0.20) 0px 0px 10px 0px, inset rgba(255, 238, 249, 0.35) 0px 0px 0px 1px;
+	border-color: rgba(184, 28, 121, 0.48);
+	box-shadow: fill rgba(255, 113, 197, 0.055) 0px 0px 5px 0px, inset rgba(255, 238, 249, 0.26) 0px 0px 0px 1px;
 }
 
 #SettingsWindow.SettingsThemeEmo .PalettePickerSwatch.Active
 {
-	border-color: rgba(255, 47, 67, 0.76);
-	box-shadow: fill rgba(255, 47, 67, 0.20) 0px 0px 10px 0px, inset rgba(255, 92, 110, 0.24) 0px 0px 0px 1px;
+	border-color: rgba(255, 47, 67, 0.50);
+	box-shadow: fill rgba(255, 47, 67, 0.055) 0px 0px 5px 0px, inset rgba(255, 92, 110, 0.20) 0px 0px 0px 1px;
 }
 
 #SettingsWindow.SettingsThemeOcean .PalettePickerSwatch.Active
 {
-	border-color: rgba(114, 215, 255, 0.76);
-	box-shadow: fill rgba(114, 215, 255, 0.20) 0px 0px 10px 0px, inset rgba(184, 239, 255, 0.24) 0px 0px 0px 1px;
+	border-color: rgba(114, 215, 255, 0.50);
+	box-shadow: fill rgba(114, 215, 255, 0.055) 0px 0px 5px 0px, inset rgba(184, 239, 255, 0.20) 0px 0px 0px 1px;
 }
 
 #SettingsWindow.SettingsThemePsycho .PalettePickerSwatch.Active
 {
-	border-color: rgba(0, 138, 90, 0.56);
-	box-shadow: fill rgba(0, 138, 90, 0.14) 0px 0px 8px 0px, inset rgba(255, 255, 255, 0.44) 0px 0px 0px 1px;
+	border-color: rgba(0, 138, 90, 0.42);
+	box-shadow: fill rgba(0, 138, 90, 0.045) 0px 0px 5px 0px, inset rgba(255, 255, 255, 0.30) 0px 0px 0px 1px;
+}
+
+/* Control field cohesion:
+   dropdowns, segmented groups, and filter buttons now use the same recessed
+   field language as slider value text boxes. */
+#SettingsWindow .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow .SettingButtonGroup,
+#SettingsWindow .SettingButtonGroup.RuntimeOnOffGroup,
+#SettingsWindow .SettingButtonGroup.MultiToggleGroup,
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow .SettingButtonGroup.LanguageSwitchGroup
+{
+	border: 1px solid rgba(210, 218, 214, 0.05);
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 26, 25, 0.96) ), to( rgba(13, 16, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.01) 0px 1px 0px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow .SettingButtonGroup:hover,
+#SettingsWindow .SettingButtonGroup.RuntimeOnOffGroup:hover,
+#SettingsWindow .SettingButtonGroup.MultiToggleGroup:hover,
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow .SettingButtonGroup.LanguageSwitchGroup:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.14);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 30, 28, 0.98) ), to( rgba(14, 18, 16, 0.95) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.05) 0px 0px 0px 1px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SegmentBtn,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn,
+#SettingsWindow .MultiToggleBtn,
+#SettingsWindow .MultiCheckboxBtn
+{
+	border: 1px solid rgba(210, 218, 214, 0.045);
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 23, 23, 0.72) ), to( rgba(11, 13, 13, 0.58) ) );
+	box-shadow: none;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SegmentBtn:hover,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn:hover,
+#SettingsWindow .MultiToggleBtn:hover,
+#SettingsWindow .MultiCheckboxBtn:hover
+{
+	border: 1px solid rgba(210, 218, 214, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 31, 30, 0.86) ), to( rgba(14, 17, 16, 0.72) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.025) 0px 1px 0px 0px;
+	brightness: 1.03;
+}
+
+#SettingsWindow .SegmentBtn.Active,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active,
+#SettingsWindow .MultiToggleBtn.Active,
+#SettingsWindow .MultiCheckboxBtn.selected,
+#SettingsWindow .MultiCheckboxBtn.IsSelected
+{
+	border: 1px solid rgba(106, 231, 154, 0.22);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 31, 29, 0.92) ), to( rgba(14, 18, 16, 0.86) ) );
+	box-shadow: inset rgba(106, 231, 154, 0.08) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.14) 0px 1px 3px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SegmentBtn.Active:hover,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active:hover,
+#SettingsWindow .MultiToggleBtn.Active:hover,
+#SettingsWindow .MultiCheckboxBtn.selected:hover,
+#SettingsWindow .MultiCheckboxBtn.IsSelected:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(29, 36, 34, 0.96) ), to( rgba(15, 20, 18, 0.90) ) );
+	box-shadow: inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow.SettingsThemeCream .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow.SettingsThemeCream .SettingButtonGroup,
+#SettingsWindow.SettingsThemeCream .SegmentBtn,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 252, 239, 0.84) ), to( rgba(224, 190, 139, 0.58) ) );
+	border-color: rgba(88, 57, 27, 0.20);
+	box-shadow: fill rgba(88, 57, 27, 0.08) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow.SettingsThemeKitten .SettingButtonGroup,
+#SettingsWindow.SettingsThemeKitten .SegmentBtn,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 250, 253, 0.84) ), to( rgba(232, 143, 199, 0.56) ) );
+	border-color: rgba(174, 42, 126, 0.20);
+	box-shadow: fill rgba(174, 42, 126, 0.08) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow.SettingsThemeEmo .SettingButtonGroup,
+#SettingsWindow.SettingsThemeEmo .SegmentBtn,
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeEmo .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(27, 25, 27, 0.92) ), to( rgba(8, 8, 10, 0.88) ) );
+	border-color: rgba(255, 47, 67, 0.20);
+	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow.SettingsThemeOcean .SettingButtonGroup,
+#SettingsWindow.SettingsThemeOcean .SegmentBtn,
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeOcean .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(19, 64, 89, 0.90) ), to( rgba(5, 22, 36, 0.86) ) );
+	border-color: rgba(126, 220, 255, 0.20);
+	box-shadow: fill rgba(0, 18, 31, 0.18) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow.SettingsThemePsycho .SettingButtonGroup,
+#SettingsWindow.SettingsThemePsycho .SegmentBtn,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 255, 255, 0.86) ), to( rgba(205, 220, 211, 0.58) ) );
+	border-color: rgba(31, 48, 40, 0.20);
+	box-shadow: fill rgba(31, 48, 40, 0.06) 0px 1px 6px 0px;
+}
+
+/* Button cohesion pass:
+   all non-slider/non-switch button families share the same recessed button
+   shell, with purpose preserved through labels/icons and active states. */
+#SettingsWindow .SettingActionBtn,
+#SettingsWindow .ArcadePlayActionBtn,
+#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .VoiceDropdownTestBtn,
+#SettingsWindow .SectionTitleActionBtn,
+#SettingsWindow .ConfigSectionIconBtn,
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .ConfigPresetBtn,
+#SettingsWindow .ConfigApplyBtn,
+#SettingsWindow .ConfigCopyBtn,
+#SettingsWindow #ConfigSaveBuildBtn,
+#SettingsWindow #ConfigAirheartBtn,
+#SettingsWindow #ConfigClearBuildBtn,
+#SettingsWindow .PresetGridBtn,
+#SettingsWindow .CommunityPresetHintLink,
+#SettingsWindow .SupportCtaBtn,
+#SettingsWindow .FooterDiscordLinkTab,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .TabActionBtn,
+#SettingsWindow .ExportTabAction,
+#SettingsWindow .ImportTabAction,
+#SettingsWindow .GenerateSettingsBtn,
+#SettingsWindow .ImportSettingsBtnStyle,
+#SettingsWindow .OptimizeFilterModalDownloadBtn,
+#SettingsWindow .ModalBtnApply,
+#SettingsWindow .ModalBtnClose,
+#SettingsWindow .ModalBtnCloseSingle,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn,
+#SettingsWindow .ArcadeMinesweeperActionBtn,
+#SettingsWindow .ArcadeMinesweeperControlBtn,
+#SettingsWindow .ArcadeMinesweeperDifficultyBtn,
+#SettingsWindow .ArcadeFlappyControlBtn,
+#SettingsWindow .ArcadeAimTrainerDifficultyBtn,
+#SettingsWindow .ArcadeAimTrainerControlBtn,
+#SettingsWindow .ArcadeWhackRemControlBtn,
+#SettingsWindow .ArcadeBlackjackControlBtn,
+#SettingsWindow .ArcadeTrainTrackingControlBtn,
+#SettingsWindow .ArcadeTrainTrackingDifficultyBtn
+{
+	border: 1px solid rgba(210, 218, 214, 0.055);
+	border-radius: 3px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 26, 25, 0.96) ), to( rgba(13, 16, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.012) 0px 1px 0px 0px;
+	brightness: 1.0;
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .SettingActionBtn:hover,
+#SettingsWindow .ArcadePlayActionBtn:hover,
+#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .VoiceDropdownTestBtn:hover,
+#SettingsWindow .SectionTitleActionBtn:hover,
+#SettingsWindow .ConfigSectionIconBtn:hover,
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .ConfigPresetBtn:hover,
+#SettingsWindow .ConfigApplyBtn:hover,
+#SettingsWindow .ConfigCopyBtn:hover,
+#SettingsWindow #ConfigSaveBuildBtn:hover,
+#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigClearBuildBtn:hover,
+#SettingsWindow .PresetGridBtn:hover,
+#SettingsWindow .CommunityPresetHintLink:hover,
+#SettingsWindow .SupportCtaBtn:hover,
+#SettingsWindow .FooterDiscordLinkTab:hover,
+#SettingsWindow .FooterSaveBuildTab:hover,
+#SettingsWindow .TabActionBtn:hover,
+#SettingsWindow .ExportTabAction:hover,
+#SettingsWindow .ImportTabAction:hover,
+#SettingsWindow .GenerateSettingsBtn:hover,
+#SettingsWindow .ImportSettingsBtnStyle:hover,
+#SettingsWindow .OptimizeFilterModalDownloadBtn:hover,
+#SettingsWindow .ModalBtnApply:hover,
+#SettingsWindow .ModalBtnClose:hover,
+#SettingsWindow .ModalBtnCloseSingle:hover,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn:hover,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn:hover,
+#SettingsWindow .ArcadeMinesweeperActionBtn:hover,
+#SettingsWindow .ArcadeMinesweeperControlBtn:hover,
+#SettingsWindow .ArcadeMinesweeperDifficultyBtn:hover,
+#SettingsWindow .ArcadeFlappyControlBtn:hover,
+#SettingsWindow .ArcadeAimTrainerDifficultyBtn:hover,
+#SettingsWindow .ArcadeAimTrainerControlBtn:hover,
+#SettingsWindow .ArcadeWhackRemControlBtn:hover,
+#SettingsWindow .ArcadeBlackjackControlBtn:hover,
+#SettingsWindow .ArcadeTrainTrackingControlBtn:hover,
+#SettingsWindow .ArcadeTrainTrackingDifficultyBtn:hover
+{
+	border: 1px solid rgba(106, 231, 154, 0.14);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 30, 28, 0.98) ), to( rgba(14, 18, 16, 0.95) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.05) 0px 0px 0px 1px;
+	brightness: 1.03;
+	transform: translateY(-1px);
+}
+
+#SettingsWindow .SettingActionBtn:active,
+#SettingsWindow .ArcadePlayActionBtn:active,
+#SettingsWindow .TestAirheartActionBtn:active,
+#SettingsWindow .ConfigPresetBtn:active,
+#SettingsWindow .ConfigApplyBtn:active,
+#SettingsWindow .ConfigCopyBtn:active,
+#SettingsWindow .PresetGridBtn:active,
+#SettingsWindow .SupportCtaBtn:active,
+#SettingsWindow .FooterDiscordLinkTab:active,
+#SettingsWindow .FooterSaveBuildTab:active,
+#SettingsWindow .ModalBtnApply:active,
+#SettingsWindow .ModalBtnClose:active,
+#SettingsWindow .ModalBtnCloseSingle:active
+{
+	brightness: 0.96;
+	transform: translateY(0px);
+}
+
+#SettingsWindow .SettingActionBtn.SuccessState,
+#SettingsWindow .ConfigPresetBtnGreen,
+#SettingsWindow .ConfigCopyBtn.SuccessState,
+#SettingsWindow .ConfigApplyBtn.SuccessState,
+#SettingsWindow #ConfigAirheartBtn.SuccessState,
+#SettingsWindow .PresetGridBtn.SuccessState,
+#SettingsWindow .PresetGridBtn.PresetApplySuccess,
+#SettingsWindow .ModalBtnApply.SuccessState,
+#SettingsWindow .ArcadeMinesweeperDifficultyBtn.Active,
+#SettingsWindow .ArcadeAimTrainerDifficultyBtn.Active,
+#SettingsWindow .ArcadeTrainTrackingDifficultyBtn.Active
+{
+	border: 1px solid rgba(106, 231, 154, 0.24);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 31, 29, 0.94) ), to( rgba(14, 18, 16, 0.88) ) );
+	box-shadow: inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.14) 0px 1px 4px 0px;
+	brightness: 1.0;
+}
+
+#SettingsWindow .ConfigPresetBtnDanger,
+#SettingsWindow #ConfigClearBuildBtn,
+#SettingsWindow .ConfigCopyBtn.FailureState,
+#SettingsWindow .ConfigApplyBtn.FailureState,
+#SettingsWindow .ModalBtnApply.FailureState
+{
+	border: 1px solid rgba(255, 108, 108, 0.20);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(39, 25, 25, 0.94) ), to( rgba(18, 12, 12, 0.88) ) );
+	box-shadow: inset rgba(255, 108, 108, 0.07) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .SettingActionBtn Label,
+#SettingsWindow .SettingActionBtn .SettingActionBtnLabel,
+#SettingsWindow .ArcadePlayActionBtn .SettingActionBtnLabel,
+#SettingsWindow .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow .VoiceDropdownTestBtn .SectionTitleActionLabel,
+#SettingsWindow .SectionTitleActionBtn .SectionTitleActionLabel,
+#SettingsWindow .ConfigPresetBtn Label,
+#SettingsWindow .ConfigApplyBtn Label,
+#SettingsWindow .ConfigCopyBtn Label,
+#SettingsWindow .PresetGridBtn Label,
+#SettingsWindow .CommunityPresetHintLink Label,
+#SettingsWindow .SupportCtaBtnTitle,
+#SettingsWindow .SupportCtaBtnHint,
+#SettingsWindow .FooterDiscordLinkTab Label,
+#SettingsWindow .FooterSaveBuildTab Label,
+#SettingsWindow .TabActionBtn Label,
+#SettingsWindow .ModalBtnApply Label,
+#SettingsWindow .ModalBtnClose Label,
+#SettingsWindow .ModalBtnCloseSingle Label,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn Label,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn Label
+{
+	font-family: oracle;
+	text-shadow: none;
+}
+
+#SettingsWindow.SettingsThemeCream .SettingActionBtn,
+#SettingsWindow.SettingsThemeCream .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeCream .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeCream .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeCream .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeCream .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeCream .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeCream .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn,
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeCream .SupportCtaBtn,
+#SettingsWindow.SettingsThemeCream .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeCream .ModalBtnApply,
+#SettingsWindow.SettingsThemeCream .ModalBtnClose,
+#SettingsWindow.SettingsThemeCream .ModalBtnCloseSingle
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 252, 239, 0.84) ), to( rgba(224, 190, 139, 0.58) ) );
+	border-color: rgba(88, 57, 27, 0.20);
+	box-shadow: fill rgba(88, 57, 27, 0.08) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn,
+#SettingsWindow.SettingsThemeKitten .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeKitten .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeKitten .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeKitten .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn,
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeKitten .SupportCtaBtn,
+#SettingsWindow.SettingsThemeKitten .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeKitten .ModalBtnApply,
+#SettingsWindow.SettingsThemeKitten .ModalBtnClose,
+#SettingsWindow.SettingsThemeKitten .ModalBtnCloseSingle
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 250, 253, 0.84) ), to( rgba(232, 143, 199, 0.56) ) );
+	border-color: rgba(174, 42, 126, 0.20);
+	box-shadow: fill rgba(174, 42, 126, 0.08) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo .SettingActionBtn,
+#SettingsWindow.SettingsThemeEmo .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeEmo .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeEmo .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeEmo .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeEmo .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeEmo .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeEmo .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeEmo .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeEmo .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeEmo .PresetGridBtn,
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeEmo .SupportCtaBtn,
+#SettingsWindow.SettingsThemeEmo .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeEmo .ModalBtnApply,
+#SettingsWindow.SettingsThemeEmo .ModalBtnClose,
+#SettingsWindow.SettingsThemeEmo .ModalBtnCloseSingle
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(27, 25, 27, 0.92) ), to( rgba(8, 8, 10, 0.88) ) );
+	border-color: rgba(255, 47, 67, 0.20);
+	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean .SettingActionBtn,
+#SettingsWindow.SettingsThemeOcean .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeOcean .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeOcean .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeOcean .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeOcean .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeOcean .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeOcean .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeOcean .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeOcean .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeOcean .PresetGridBtn,
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeOcean .SupportCtaBtn,
+#SettingsWindow.SettingsThemeOcean .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeOcean .ModalBtnApply,
+#SettingsWindow.SettingsThemeOcean .ModalBtnClose,
+#SettingsWindow.SettingsThemeOcean .ModalBtnCloseSingle
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(19, 64, 89, 0.90) ), to( rgba(5, 22, 36, 0.86) ) );
+	border-color: rgba(126, 220, 255, 0.20);
+	box-shadow: fill rgba(0, 18, 31, 0.18) 0px 1px 6px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn,
+#SettingsWindow.SettingsThemePsycho .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemePsycho .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemePsycho .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemePsycho .SettingRowResetBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigPresetBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigApplyBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigCopyBtn,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn,
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemePsycho .SupportCtaBtn,
+#SettingsWindow.SettingsThemePsycho .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemePsycho .ModalBtnApply,
+#SettingsWindow.SettingsThemePsycho .ModalBtnClose,
+#SettingsWindow.SettingsThemePsycho .ModalBtnCloseSingle
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 255, 255, 0.86) ), to( rgba(205, 220, 211, 0.58) ) );
+	border-color: rgba(31, 48, 40, 0.20);
+	box-shadow: fill rgba(31, 48, 40, 0.06) 0px 1px 6px 0px;
+}
+
+/* Claude-assisted button polish:
+   final pass for hierarchy, theme hover color, and double-painted grouped
+   controls. Sliders and switch toggles remain untouched. */
+#SettingsWindow .SettingsDropDown.QOLSettingsDropDown,
+#SettingsWindow .SettingButtonGroup,
+#SettingsWindow .SegmentBtn,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn,
+#SettingsWindow .MultiToggleBtn,
+#SettingsWindow .MultiCheckboxBtn
+{
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .SettingButtonGroup
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(23, 28, 27, 0.94) ), to( rgba(12, 15, 14, 0.90) ) );
+	border-color: rgba(210, 218, 214, 0.08);
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.025) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .SegmentBtn,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn,
+#SettingsWindow .MultiToggleBtn,
+#SettingsWindow .MultiCheckboxBtn
+{
+	background-color: rgba(5, 8, 8, 0.22);
+	border-color: rgba(210, 218, 214, 0.035);
+	box-shadow: none;
+}
+
+#SettingsWindow .SegmentBtn:hover,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn:hover,
+#SettingsWindow .MultiToggleBtn:hover,
+#SettingsWindow .MultiCheckboxBtn:hover
+{
+	background-color: rgba(255, 255, 255, 0.045);
+	border-color: rgba(210, 218, 214, 0.11);
+	box-shadow: inset rgba(255, 255, 255, 0.04) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .SegmentBtn.Active,
+#SettingsWindow .ArcadeDifficultyDefaultGroup .SegmentBtn.Active,
+#SettingsWindow .MultiToggleBtn.Active,
+#SettingsWindow .MultiCheckboxBtn.selected,
+#SettingsWindow .MultiCheckboxBtn.IsSelected
+{
+	border-color: rgba(106, 231, 154, 0.38);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(33, 42, 38, 0.96) ), to( rgba(15, 21, 18, 0.92) ) );
+	box-shadow: inset rgba(106, 231, 154, 0.14) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.06) 0px 0px 8px 0px;
+}
+
+#SettingsWindow .SettingActionBtn,
+#SettingsWindow .ArcadePlayActionBtn,
+#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .VoiceDropdownTestBtn,
+#SettingsWindow .SectionTitleActionBtn,
+#SettingsWindow .ConfigSectionIconBtn,
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .ConfigPresetBtn,
+#SettingsWindow .ConfigApplyBtn,
+#SettingsWindow .ConfigCopyBtn,
+#SettingsWindow #ConfigSaveBuildBtn,
+#SettingsWindow #ConfigAirheartBtn,
+#SettingsWindow #ConfigClearBuildBtn,
+#SettingsWindow .PresetGridBtn,
+#SettingsWindow .CommunityPresetHintLink,
+#SettingsWindow .SupportCtaBtn,
+#SettingsWindow .FooterDiscordLinkTab,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .TabActionBtn,
+#SettingsWindow .ExportTabAction,
+#SettingsWindow .ImportTabAction,
+#SettingsWindow .GenerateSettingsBtn,
+#SettingsWindow .ImportSettingsBtnStyle,
+#SettingsWindow .OptimizeFilterModalDownloadBtn,
+#SettingsWindow .ModalBtnApply,
+#SettingsWindow .ModalBtnClose,
+#SettingsWindow .ModalBtnCloseSingle,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn
+{
+	border-color: rgba(210, 218, 214, 0.10);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 37, 35, 0.98) ), to( rgba(13, 16, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.04) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .ConfigApplyBtn,
+#SettingsWindow #ConfigSaveBuildBtn,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .SupportCtaBtn,
+#SettingsWindow .ModalBtnApply,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn
+{
+	border-color: rgba(106, 231, 154, 0.22);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(33, 45, 39, 0.98) ), to( rgba(15, 21, 18, 0.94) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.055) 0px 0px 10px 0px, inset rgba(255, 255, 255, 0.05) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .SectionTitleActionBtn,
+#SettingsWindow .ConfigSectionIconBtn,
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .ModalBtnClose,
+#SettingsWindow .ModalBtnCloseSingle,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn
+{
+	border-color: rgba(210, 218, 214, 0.07);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(24, 29, 28, 0.88) ), to( rgba(11, 14, 13, 0.82) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.12) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.025) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .SettingActionBtn:hover,
+#SettingsWindow .ArcadePlayActionBtn:hover,
+#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .VoiceDropdownTestBtn:hover,
+#SettingsWindow .SectionTitleActionBtn:hover,
+#SettingsWindow .ConfigSectionIconBtn:hover,
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .ConfigPresetBtn:hover,
+#SettingsWindow .ConfigApplyBtn:hover,
+#SettingsWindow .ConfigCopyBtn:hover,
+#SettingsWindow #ConfigSaveBuildBtn:hover,
+#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigClearBuildBtn:hover,
+#SettingsWindow .PresetGridBtn:hover,
+#SettingsWindow .CommunityPresetHintLink:hover,
+#SettingsWindow .SupportCtaBtn:hover,
+#SettingsWindow .FooterDiscordLinkTab:hover,
+#SettingsWindow .FooterSaveBuildTab:hover,
+#SettingsWindow .TabActionBtn:hover,
+#SettingsWindow .ExportTabAction:hover,
+#SettingsWindow .ImportTabAction:hover,
+#SettingsWindow .GenerateSettingsBtn:hover,
+#SettingsWindow .ImportSettingsBtnStyle:hover,
+#SettingsWindow .OptimizeFilterModalDownloadBtn:hover,
+#SettingsWindow .ModalBtnApply:hover,
+#SettingsWindow .ModalBtnClose:hover,
+#SettingsWindow .ModalBtnCloseSingle:hover,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn:hover,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn:hover
+{
+	border-color: rgba(106, 231, 154, 0.24);
+	box-shadow: fill rgba(106, 231, 154, 0.075) 0px 0px 10px 0px, inset rgba(106, 231, 154, 0.07) 0px 0px 0px 1px;
+}
+
+#SettingsWindow .SectionTitleActionBtn:active,
+#SettingsWindow .ConfigSectionIconBtn:active,
+#SettingsWindow .SettingRowResetBtn:active,
+#SettingsWindow .VoiceDropdownTestBtn:active,
+#SettingsWindow .TabActionBtn:active,
+#SettingsWindow .ExportTabAction:active,
+#SettingsWindow .ImportTabAction:active,
+#SettingsWindow .GenerateSettingsBtn:active,
+#SettingsWindow .ImportSettingsBtnStyle:active,
+#SettingsWindow .OptimizeFilterModalDownloadBtn:active,
+#SettingsWindow #ConfigSaveBuildBtn:active,
+#SettingsWindow #ConfigAirheartBtn:active,
+#SettingsWindow #ConfigClearBuildBtn:active,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn:active,
+#SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn:active,
+#SettingsWindow .ArcadeMinesweeperActionBtn:active,
+#SettingsWindow .ArcadeMinesweeperControlBtn:active,
+#SettingsWindow .ArcadeMinesweeperDifficultyBtn:active,
+#SettingsWindow .ArcadeFlappyControlBtn:active,
+#SettingsWindow .ArcadeAimTrainerDifficultyBtn:active,
+#SettingsWindow .ArcadeAimTrainerControlBtn:active,
+#SettingsWindow .ArcadeWhackRemControlBtn:active,
+#SettingsWindow .ArcadeBlackjackControlBtn:active,
+#SettingsWindow .ArcadeTrainTrackingControlBtn:active,
+#SettingsWindow .ArcadeTrainTrackingDifficultyBtn:active
+{
+	brightness: 0.96;
+	transform: translateY(0px);
+}
+
+#SettingsWindow .ConfigPresetBtnDanger:hover,
+#SettingsWindow #ConfigClearBuildBtn:hover,
+#SettingsWindow .ConfigCopyBtn.FailureState:hover,
+#SettingsWindow .ConfigApplyBtn.FailureState:hover,
+#SettingsWindow .ModalBtnApply.FailureState:hover
+{
+	border-color: rgba(255, 108, 108, 0.34);
+	box-shadow: fill rgba(255, 108, 108, 0.09) 0px 0px 10px 0px, inset rgba(255, 108, 108, 0.10) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeCream .SettingButtonGroup,
+#SettingsWindow.SettingsThemeCream .SegmentBtn,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn,
+#SettingsWindow.SettingsThemeCream .SettingActionBtn,
+#SettingsWindow.SettingsThemeCream .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeCream .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeCream .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeCream .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeCream .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeCream .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeCream .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn,
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeCream .SupportCtaBtn,
+#SettingsWindow.SettingsThemeCream .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeCream .ModalBtnApply,
+#SettingsWindow.SettingsThemeCream .ModalBtnClose,
+#SettingsWindow.SettingsThemeCream .ModalBtnCloseSingle
+{
+	color: #3c2713;
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingButtonGroup,
+#SettingsWindow.SettingsThemeKitten .SegmentBtn,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn,
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn,
+#SettingsWindow.SettingsThemeKitten .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeKitten .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemeKitten .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemeKitten .SettingRowResetBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigPresetBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigApplyBtn,
+#SettingsWindow.SettingsThemeKitten .ConfigCopyBtn,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn,
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeKitten .SupportCtaBtn,
+#SettingsWindow.SettingsThemeKitten .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeKitten .ModalBtnApply,
+#SettingsWindow.SettingsThemeKitten .ModalBtnClose,
+#SettingsWindow.SettingsThemeKitten .ModalBtnCloseSingle
+{
+	color: #3f1636;
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingButtonGroup,
+#SettingsWindow.SettingsThemePsycho .SegmentBtn,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn,
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn,
+#SettingsWindow.SettingsThemePsycho .ArcadePlayActionBtn,
+#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemePsycho .VoiceDropdownTestBtn,
+#SettingsWindow.SettingsThemePsycho .SectionTitleActionBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn,
+#SettingsWindow.SettingsThemePsycho .SettingRowResetBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigPresetBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigApplyBtn,
+#SettingsWindow.SettingsThemePsycho .ConfigCopyBtn,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn,
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemePsycho .SupportCtaBtn,
+#SettingsWindow.SettingsThemePsycho .FooterDiscordLinkTab,
+#SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemePsycho .ModalBtnApply,
+#SettingsWindow.SettingsThemePsycho .ModalBtnClose,
+#SettingsWindow.SettingsThemePsycho .ModalBtnCloseSingle
+{
+	color: #18241e;
+}
+
+#SettingsWindow.SettingsThemeCream .SettingActionBtn Label,
+#SettingsWindow.SettingsThemeCream .SettingActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeCream .SegmentBtn Label,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn Label,
+#SettingsWindow.SettingsThemeCream .ModalBtnApply Label,
+#SettingsWindow.SettingsThemeCream .ModalBtnClose Label,
+#SettingsWindow.SettingsThemeCream .ModalBtnCloseSingle Label
+{
+	color: #3c2713;
+	text-shadow: none;
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn Label,
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeKitten .SegmentBtn Label,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn Label,
+#SettingsWindow.SettingsThemeKitten .ModalBtnApply Label,
+#SettingsWindow.SettingsThemeKitten .ModalBtnClose Label,
+#SettingsWindow.SettingsThemeKitten .ModalBtnCloseSingle Label
+{
+	color: #3f1636;
+	text-shadow: none;
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn Label,
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemePsycho .SegmentBtn Label,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn .MultiToggleLabel,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn Label,
+#SettingsWindow.SettingsThemePsycho .ModalBtnApply Label,
+#SettingsWindow.SettingsThemePsycho .ModalBtnClose Label,
+#SettingsWindow.SettingsThemePsycho .ModalBtnCloseSingle Label
+{
+	color: #18241e;
+	text-shadow: none;
+}
+
+#SettingsWindow.SettingsThemeCream .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeCream .SegmentBtn:hover,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn:hover,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn:hover,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn:hover,
+#SettingsWindow.SettingsThemeCream .ModalBtnApply:hover
+{
+	border-color: rgba(157, 100, 44, 0.34);
+	box-shadow: fill rgba(157, 100, 44, 0.13) 0px 0px 10px 0px, inset rgba(157, 100, 44, 0.09) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeKitten .SegmentBtn:hover,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn:hover,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn:hover,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn:hover,
+#SettingsWindow.SettingsThemeKitten .ModalBtnApply:hover
+{
+	border-color: rgba(184, 28, 121, 0.34);
+	box-shadow: fill rgba(255, 113, 197, 0.14) 0px 0px 10px 0px, inset rgba(184, 28, 121, 0.10) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeEmo .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeEmo .SegmentBtn:hover,
+#SettingsWindow.SettingsThemeEmo .MultiToggleBtn:hover,
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn:hover,
+#SettingsWindow.SettingsThemeEmo .PresetGridBtn:hover,
+#SettingsWindow.SettingsThemeEmo .ModalBtnApply:hover
+{
+	border-color: rgba(255, 47, 67, 0.34);
+	box-shadow: fill rgba(255, 47, 67, 0.12) 0px 0px 10px 0px, inset rgba(255, 47, 67, 0.10) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeOcean .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeOcean .SegmentBtn:hover,
+#SettingsWindow.SettingsThemeOcean .MultiToggleBtn:hover,
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn:hover,
+#SettingsWindow.SettingsThemeOcean .PresetGridBtn:hover,
+#SettingsWindow.SettingsThemeOcean .ModalBtnApply:hover
+{
+	border-color: rgba(114, 215, 255, 0.34);
+	box-shadow: fill rgba(114, 215, 255, 0.12) 0px 0px 10px 0px, inset rgba(114, 215, 255, 0.10) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemePsycho .SegmentBtn:hover,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn:hover,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn:hover,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn:hover,
+#SettingsWindow.SettingsThemePsycho .ModalBtnApply:hover
+{
+	border-color: rgba(0, 138, 90, 0.26);
+	box-shadow: fill rgba(0, 138, 90, 0.10) 0px 0px 8px 0px, inset rgba(0, 138, 90, 0.08) 0px 0px 0px 1px;
+}
+
+/* Inline secondary checkboxes sit beside a switch and must stay compact.
+   They intentionally opt out of the full-width MultiCheckbox filter style. */
+#SettingsWindow .InlineSecondaryCheckboxWrap
+{
+	width: fit-children;
+	min-width: 0px;
+}
+
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn:hover,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected:hover,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected:hover
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 140px;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	padding: 1px 7px 1px 5px;
+	margin-right: 0px;
+	background-color: rgba(5, 8, 8, 0.18);
+	border: 1px solid rgba(210, 218, 214, 0.045);
+	box-shadow: none;
+	transform: none;
+}
+
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn:hover
+{
+	border-color: rgba(210, 218, 214, 0.12);
+	background-color: rgba(255, 255, 255, 0.04);
+	brightness: 1.03;
+}
+
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected
+{
+	border-color: rgba(106, 231, 154, 0.30);
+	background-color: rgba(106, 231, 154, 0.06);
+	box-shadow: inset rgba(106, 231, 154, 0.08) 0px 0px 0px 1px;
+}
+
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn Label
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 96px;
+	text-overflow: shrink;
+	white-space: nowrap;
+}
+
+#SettingsWindow .InlineSecondaryCheckboxBtn.MultiCheckboxBtn .TickBox
+{
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+/* Console and MOG notes mirror the Support intro: section-title hierarchy,
+   quiet body copy, and no extra card chrome fighting the settings rows. */
+#SettingsWindow .ConsoleTabNoteWrap
+{
+	width: 100%;
+	margin: 6px 0px 12px 0px;
+	padding: 6px 0px 2px 0px;
+	background-color: none;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	box-shadow: none;
+	flow-children: down;
+}
+
+#SettingsWindow .ConsoleTabNoteTitle,
+#SettingsWindow .MogTabNoteTitle
+{
+	text-align: left;
+	horizontal-align: left;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	text-transform: uppercase;
+	color: #eef4f6;
+	text-shadow: none;
+	margin-top: 0px;
+	margin-bottom: 7px;
+}
+
+#SettingsWindow .ConsoleTabNoteList,
+#SettingsWindow .MogTabNoteList
+{
+	width: 100%;
+	margin-top: 2px;
+	margin-bottom: 0px;
+}
+
+#SettingsWindow .ConsoleTabNoteBullet,
+#SettingsWindow .MogTabNoteBullet
+{
+	min-height: 20px;
+	margin-bottom: 4px;
+	vertical-align: center;
+}
+
+#SettingsWindow .ConsoleTabNoteMarker,
+#SettingsWindow .MogTabNoteMarker
+{
+	width: 5px;
+	min-width: 5px;
+	max-width: 5px;
+	height: 5px;
+	min-height: 5px;
+	max-height: 5px;
+	background-color: rgba(106, 231, 154, 0.55);
+	margin-top: 0px;
+	margin-right: 11px;
+	vertical-align: center;
+}
+
+#SettingsWindow .ConsoleTabNoteText
+{
+	text-align: left;
+	horizontal-align: left;
+	font-size: 14px;
+	font-weight: normal;
+	letter-spacing: 0.25px;
+	line-height: 20px;
+	color: #c6cfd3;
+	white-space: normal;
+	text-overflow: noclip;
+	text-shadow: none;
+}
+
+#SettingsWindow .MogTabNoteWrap
+{
+	padding: 6px 0px 2px 0px;
+	flow-children: down;
+}
+
+#SettingsWindow .MogTabNoteText
+{
+	width: fill-parent-flow(1.0);
+	margin-top: 0px;
+	margin-bottom: 0px;
+	color: #c6cfd3;
+	font-size: 14px;
+	font-weight: normal;
+	letter-spacing: 0.25px;
+	line-height: 20px;
+	text-align: left;
+	horizontal-align: left;
+	white-space: normal;
+	text-overflow: noclip;
+	text-shadow: none;
+}
+
+#SettingsWindow .MogTabSiteLineContent
+{
+	width: fill-parent-flow(1.0);
+	flow-children: right;
+	vertical-align: top;
+}
+
+#SettingsWindow .MogTabSiteLinkPrefix
+{
+	width: fit-children;
+	margin-right: 5px;
+	font-size: 14px;
+	font-weight: normal;
+	letter-spacing: 0.25px;
+	line-height: 20px;
+	color: #c6cfd3;
+	text-shadow: none;
+}
+
+#SettingsWindow .MogTabSiteLink
+{
+	horizontal-align: left;
+	margin-top: 0px;
+	vertical-align: top;
+}
+
+#SettingsWindow #MogTabSiteLinkLabel
+{
+	font-family: oracle;
+	font-size: 15px;
+	font-weight: normal;
+	letter-spacing: 0.25px;
+	line-height: 20px;
+	margin-top: -1px;
+	text-transform: none;
+	color: #6be8a2;
+	text-shadow: 0px 0px 6px rgba(107, 232, 162, 0.16);
+}
+
+/* Navbar footer final pass: one restrained rail system for Discord, Save,
+   and Version. Accents live in the icon/label instead of loud badge chrome. */
+#SettingsWindow #SettingsTabRailFooter
+{
+	padding: 8px 2px 7px 2px;
+	overflow: noclip;
+}
+
+#SettingsWindow .SettingsTabRailFooterRule
+{
+	height: 1px;
+	min-height: 1px;
+	max-height: 1px;
+	margin: 0px 4px 8px 4px;
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(210, 218, 214, 0.0) ), color-stop( 0.50, rgba(210, 218, 214, 0.08) ), to( rgba(210, 218, 214, 0.0) ) );
+}
+
+#SettingsWindow .FooterDiscordRailBtn,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .FooterVersionLabel
+{
+	width: 100%;
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	margin: 0px 0px 5px 0px;
+	padding: 0px 8px;
+	border-radius: 3px;
+	border: 1px solid rgba(210, 218, 214, 0.060);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(21, 25, 24, 0.88) ), to( rgba(11, 14, 13, 0.82) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px, fill rgba(0, 0, 0, 0.12) 0px 1px 2px 0px;
+	brightness: 1.0;
+	opacity: 1.0;
+	flow-children: right;
+	overflow: noclip;
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover,
+#SettingsWindow .FooterSaveBuildTab:hover
+{
+	transform: translateY(-1px);
+	brightness: 1.035;
+	border: 1px solid rgba(210, 218, 214, 0.115);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 30, 28, 0.92) ), to( rgba(13, 17, 16, 0.88) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.030) 0px 1px 0px 0px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:active,
+#SettingsWindow .FooterSaveBuildTab:active
+{
+	transform: translateY(0px);
+	brightness: 0.98;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label,
+#SettingsWindow .FooterSaveBuildTab Label,
+#SettingsWindow .FooterVersionLabelText
+{
+	width: fill-parent-flow(1.0);
+	vertical-align: center;
+	margin-left: 0px;
+	color: rgba(220, 229, 225, 0.82);
+	font-size: 10px;
+	font-weight: semi-bold;
+	letter-spacing: 0.72px;
+	text-transform: uppercase;
+	text-align: left;
+	text-shadow: none;
+	opacity: 1.0;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover Label,
+#SettingsWindow .FooterSaveBuildTab:hover Label
+{
+	color: #eef5f1;
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture,
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon,
+#SettingsWindow .FooterVersionIcon
+{
+	width: 14px;
+	height: 14px;
+	min-width: 14px;
+	min-height: 14px;
+	margin-left: 0px;
+	margin-right: 8px;
+	vertical-align: center;
+	horizontal-align: left;
+	opacity: 0.92;
+	brightness: 1.0;
+	img-shadow: none;
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture
+{
+	wash-color: #858cff;
+	opacity: 0.96;
+}
+
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #8bdcae;
+}
+
+#SettingsWindow .FooterVersionIcon
+{
+	wash-color: rgba(179, 192, 185, 0.78);
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover .FooterDiscordLogoTexture
+{
+	wash-color: #a9afff;
+	brightness: 1.08;
+}
+
+#SettingsWindow .FooterSaveBuildTab:hover .FooterSaveBuildIcon
+{
+	wash-color: #a8efc2;
+	brightness: 1.08;
+}
+
+#SettingsWindow .FooterVersionLabel
+{
+	margin-bottom: 0px;
+	opacity: 0.82;
+}
+
+#SettingsWindow .FooterVersionLabelText
+{
+	color: rgba(179, 192, 185, 0.72);
+	letter-spacing: 0.54px;
+}
+
+#SettingsWindow.SettingsThemeCream .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeCream .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 248, 229, 0.74) ), to( rgba(224, 190, 139, 0.46) ) );
+	border-color: rgba(88, 57, 27, 0.16);
+	box-shadow: fill rgba(88, 57, 27, 0.055) 0px 1px 4px 0px, inset rgba(255, 255, 255, 0.30) 0px 1px 0px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeKitten .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 244, 251, 0.76) ), to( rgba(232, 143, 199, 0.46) ) );
+	border-color: rgba(184, 28, 121, 0.16);
+	box-shadow: fill rgba(184, 28, 121, 0.055) 0px 1px 4px 0px, inset rgba(255, 255, 255, 0.28) 0px 1px 0px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeEmo .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(27, 25, 27, 0.92) ), to( rgba(8, 8, 10, 0.86) ) );
+	border-color: rgba(255, 47, 67, 0.15);
+}
+
+#SettingsWindow.SettingsThemeOcean .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeOcean .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(19, 64, 89, 0.76) ), to( rgba(5, 22, 36, 0.72) ) );
+	border-color: rgba(126, 220, 255, 0.16);
+}
+
+#SettingsWindow.SettingsThemePsycho .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemePsycho .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 255, 255, 0.78) ), to( rgba(205, 220, 211, 0.48) ) );
+	border-color: rgba(31, 48, 40, 0.14);
+	box-shadow: fill rgba(31, 48, 40, 0.045) 0px 1px 4px 0px, inset rgba(255, 255, 255, 0.35) 0px 1px 0px 0px;
+}
+
+#SettingsWindow.SettingsThemeCream .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab Label,
+#SettingsWindow.SettingsThemeCream .FooterVersionLabelText,
+#SettingsWindow.SettingsThemePsycho .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab Label,
+#SettingsWindow.SettingsThemePsycho .FooterVersionLabelText
+{
+	color: rgba(22, 32, 25, 0.78);
+}
+
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #9d642c;
+}
+
+#SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #d43692;
+}
+
+#SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #ff4658;
+}
+
+#SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #72d7ff;
+}
+
+#SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab .FooterSaveBuildIcon
+{
+	wash-color: #008a5a;
+}
+
+/* Footer dock refinement: keep it cohesive, but give the utility actions a
+   little authored character with accent rails and crisp centered content. */
+#SettingsWindow #SettingsTabRailFooter
+{
+	padding: 9px 2px 7px 2px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .FooterVersionLabel
+{
+	height: 31px;
+	min-height: 31px;
+	max-height: 31px;
+	margin-bottom: 5px;
+	padding: 0px 9px 0px 9px;
+	border-radius: 4px;
+	border: 1px solid rgba(210, 218, 214, 0.070);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(25, 30, 29, 0.92) ), color-stop( 0.42, rgba(14, 18, 17, 0.88) ), to( rgba(8, 11, 10, 0.92) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.030) 0px 1px 0px 0px, inset rgba(106, 231, 154, 0.030) 3px 0px 0px 0px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+	flow-children: right;
+}
+
+#SettingsWindow .FooterDiscordRailBtn
+{
+	border-color: rgba(133, 140, 255, 0.14);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(30, 32, 48, 0.94) ), color-stop( 0.45, rgba(15, 18, 27, 0.88) ), to( rgba(8, 11, 17, 0.92) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.030) 0px 1px 0px 0px, inset rgba(133, 140, 255, 0.24) 3px 0px 0px 0px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .FooterSaveBuildTab
+{
+	border-color: rgba(139, 220, 174, 0.13);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(25, 36, 31, 0.94) ), color-stop( 0.45, rgba(13, 20, 17, 0.88) ), to( rgba(8, 12, 10, 0.92) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.030) 0px 1px 0px 0px, inset rgba(139, 220, 174, 0.22) 3px 0px 0px 0px, fill rgba(0, 0, 0, 0.16) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .FooterVersionLabel
+{
+	border-color: rgba(179, 192, 185, 0.080);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 27, 28, 0.78) ), color-stop( 0.45, rgba(13, 16, 17, 0.72) ), to( rgba(8, 10, 11, 0.76) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.026) 0px 1px 0px 0px, inset rgba(179, 192, 185, 0.13) 3px 0px 0px 0px, fill rgba(0, 0, 0, 0.11) 0px 1px 3px 0px;
+	opacity: 0.88;
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover,
+#SettingsWindow .FooterSaveBuildTab:hover
+{
+	brightness: 1.05;
+	border-color: rgba(210, 218, 214, 0.135);
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(30, 36, 34, 0.96) ), color-stop( 0.42, rgba(16, 21, 19, 0.92) ), to( rgba(9, 13, 12, 0.96) ) );
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover
+{
+	border-color: rgba(133, 140, 255, 0.26);
+	box-shadow: inset rgba(255, 255, 255, 0.040) 0px 1px 0px 0px, inset rgba(133, 140, 255, 0.42) 3px 0px 0px 0px, fill rgba(88, 101, 242, 0.08) 0px 0px 10px 0px;
+}
+
+#SettingsWindow .FooterSaveBuildTab:hover
+{
+	border-color: rgba(139, 220, 174, 0.24);
+	box-shadow: inset rgba(255, 255, 255, 0.040) 0px 1px 0px 0px, inset rgba(139, 220, 174, 0.42) 3px 0px 0px 0px, fill rgba(106, 231, 154, 0.07) 0px 0px 10px 0px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture,
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon,
+#SettingsWindow .FooterVersionIcon
+{
+	width: 15px;
+	height: 15px;
+	min-width: 15px;
+	min-height: 15px;
+	margin-left: 2px;
+	margin-right: 9px;
+	vertical-align: center;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label,
+#SettingsWindow .FooterSaveBuildTab Label,
+#SettingsWindow .FooterVersionLabelText
+{
+	height: 14px;
+	min-height: 14px;
+	max-height: 14px;
+	vertical-align: center;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	font-size: 10.5px;
+	font-weight: semi-bold;
+	letter-spacing: 0.68px;
+	line-height: 14px;
+	color: rgba(226, 234, 231, 0.86);
+	text-align: left;
+	text-transform: uppercase;
+	text-shadow: none;
+}
+
+#SettingsWindow .FooterVersionLabelText
+{
+	color: rgba(200, 211, 206, 0.76);
+	font-size: 11px;
+	letter-spacing: 0.58px;
+	text-overflow: shrink;
+	white-space: nowrap;
+}
+
+#SettingsWindow .FooterVersionIcon
+{
+	opacity: 0.82;
+	brightness: 1.0;
+}
+
+#SettingsWindow.SettingsThemeCream .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeCream .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 250, 236, 0.82) ), color-stop( 0.42, rgba(231, 200, 151, 0.58) ), to( rgba(198, 151, 88, 0.44) ) );
+}
+
+#SettingsWindow.SettingsThemeKitten .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeKitten .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(255, 247, 252, 0.84) ), color-stop( 0.42, rgba(239, 161, 211, 0.56) ), to( rgba(184, 67, 144, 0.40) ) );
+}
+
+#SettingsWindow.SettingsThemeOcean .FooterDiscordRailBtn,
+#SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab,
+#SettingsWindow.SettingsThemeOcean .FooterVersionLabel
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(25, 77, 104, 0.86) ), color-stop( 0.42, rgba(9, 36, 55, 0.82) ), to( rgba(4, 17, 28, 0.86) ) );
+}
+
+#SettingsWindow.SettingsThemeCream .FooterVersionLabelText,
+#SettingsWindow.SettingsThemePsycho .FooterVersionLabelText
+{
+	color: rgba(22, 32, 25, 0.68);
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label
+{
+	color: rgba(225, 228, 255, 0.90);
+}
+
+#SettingsWindow .FooterSaveBuildTab Label
+{
+	color: rgba(220, 241, 229, 0.90);
+}
+
+/* Version label must not inherit old micro status text rules or shrink.
+   It is a footer dock label now, same visual scale as Discord / Save. */
+#SettingsWindow #FooterVersionLabel #FooterVersionLabelText.FooterVersionLabelText
+{
+	width: fill-parent-flow(1.0);
+	height: 14px;
+	min-height: 14px;
+	max-height: 14px;
+	vertical-align: center;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	font-size: 12px;
+	font-weight: semi-bold;
+	letter-spacing: 0.58px;
+	line-height: 14px;
+	text-align: left;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	text-overflow: noclip;
+	color: rgba(220, 229, 225, 0.84);
+}
+
+#SettingsWindow.SettingsThemeCream #FooterVersionLabel #FooterVersionLabelText.FooterVersionLabelText,
+#SettingsWindow.SettingsThemePsycho #FooterVersionLabel #FooterVersionLabelText.FooterVersionLabelText
+{
+	color: rgba(22, 32, 25, 0.76);
+}
+
+/* Filter checkbox groups should not show a tray behind the options.
+   The visible affordance belongs to each checkbox button. */
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow.SettingsThemeCream .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow.SettingsThemeCream .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow.SettingsThemeKitten .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow.SettingsThemeKitten .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow.SettingsThemeEmo .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow.SettingsThemeEmo .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow.SettingsThemeOcean .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow.SettingsThemeOcean .SettingButtonGroup.MultiCheckboxGroup:hover,
+#SettingsWindow.SettingsThemePsycho .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow.SettingsThemePsycho .SettingButtonGroup.MultiCheckboxGroup:hover
+{
+	padding: 0px;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	background-color: none;
+	box-shadow: none;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn
+{
+	width: fit-children;
+	min-width: 48px;
+	max-width: 180px;
+	margin-right: 6px;
+	padding-left: 7px;
+	padding-right: 9px;
+}
+
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn Label
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 132px;
+	text-overflow: shrink;
+}
+
+#SettingsWindow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn .TickBox
+{
+	margin-left: 0px;
+	margin-right: 6px;
+}
+
+/* Footer utility text should read like nav titles, not micro status text. */
+#SettingsWindow .FooterDiscordRailBtn,
+#SettingsWindow .FooterSaveBuildTab,
+#SettingsWindow .FooterVersionLabel
+{
+	height: 38px;
+	min-height: 38px;
+	max-height: 38px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label,
+#SettingsWindow .FooterSaveBuildTab Label,
+#SettingsWindow #FooterVersionLabel #FooterVersionLabelText.FooterVersionLabelText
+{
+	height: 18px;
+	min-height: 18px;
+	max-height: 18px;
+	vertical-align: center;
+	margin-top: 1px;
+	margin-bottom: 0px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	line-height: 18px;
+	text-align: left;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	text-overflow: noclip;
+	overflow: noclip;
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label
+{
+	color: rgba(225, 228, 255, 0.92);
+}
+
+#SettingsWindow .FooterSaveBuildTab Label
+{
+	color: rgba(220, 241, 229, 0.92);
+}
+
+#SettingsWindow #FooterVersionLabel #FooterVersionLabelText.FooterVersionLabelText
+{
+	color: rgba(220, 229, 225, 0.84);
+	font-size: 12px;
+	letter-spacing: 0.62px;
+}
+
+#SettingsWindow .FooterDiscordRailBtn .FooterDiscordLogoTexture,
+#SettingsWindow .FooterSaveBuildTab .FooterSaveBuildIcon,
+#SettingsWindow .FooterVersionIcon
+{
+	width: 16px;
+	height: 16px;
+	min-width: 16px;
+	min-height: 16px;
+	margin-right: 8px;
+}
+
+/* Announcer voice preview is an icon affordance, not a button plaque. */
+#SettingsWindow .VoiceDropdownTestBtn,
+#SettingsWindow .VoiceDropdownTestBtn:hover,
+#SettingsWindow .VoiceDropdownTestBtn:active,
+#SettingsWindow .VoiceDropdownTestBtn.SuccessState
+{
+	width: 30px;
+	min-width: 30px;
+	max-width: 30px;
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	padding: 0px;
+	margin-left: 6px;
+	margin-right: 0px;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	background-color: none;
+	box-shadow: none;
+	flow-children: none;
+	transform: none;
+	brightness: 1.0;
+}
+
+#SettingsWindow .VoiceDropdownTestBtn .SectionTitleActionLabel
+{
+	visibility: collapse;
+	width: 0px;
+	height: 0px;
+	margin: 0px;
+	padding: 0px;
+}
+
+#SettingsWindow .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	min-height: 18px;
+	margin: 0px;
+	align: center center;
+	wash-color: rgba(180, 197, 188, 0.82);
+	brightness: 1.08;
+	img-shadow: 0px 0px 5px rgba(106, 231, 154, 0.10);
+}
+
+#SettingsWindow .VoiceDropdownTestBtn:hover .SectionTitleActionIcon
+{
+	wash-color: #9af0bd;
+	brightness: 1.22;
+	img-shadow: 0px 0px 8px rgba(106, 231, 154, 0.24);
+}
+
+#SettingsWindow .VoiceDropdownTestBtn:active .SectionTitleActionIcon,
+#SettingsWindow .VoiceDropdownTestBtn.SuccessState .SectionTitleActionIcon
+{
+	wash-color: #c9ffd9;
+	brightness: 1.28;
+	img-shadow: 0px 0px 9px rgba(106, 231, 154, 0.30);
+}
+
+#SettingsWindow.SettingsThemeCream .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	wash-color: rgba(108, 78, 38, 0.80);
+}
+
+#SettingsWindow.SettingsThemeKitten .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	wash-color: rgba(184, 28, 121, 0.82);
+}
+
+#SettingsWindow.SettingsThemeEmo .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	wash-color: rgba(255, 74, 92, 0.84);
+}
+
+#SettingsWindow.SettingsThemeOcean .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	wash-color: rgba(114, 215, 255, 0.84);
+}
+
+#SettingsWindow.SettingsThemePsycho .VoiceDropdownTestBtn .SectionTitleActionIcon
+{
+	wash-color: rgba(0, 138, 90, 0.82);
+}
+
+/* Item cooldown advanced filter: keep the wrapped checkbox options in two
+   clean rows without the old negative row-offset hacks clipping together. */
+#SettingsWindow .SettingRow.MultiToggleRow.ItemCooldownFilterRow
+{
+	height: 84px;
+	min-height: 84px;
+	max-height: 84px;
+	overflow: noclip;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiToggleGroup,
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup,
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup:hover
+{
+	width: 282px;
+	min-width: 282px;
+	max-width: 282px;
+	height: fit-children;
+	min-height: 64px;
+	max-height: none;
+	padding: 0px;
+	flow-children: down;
+	overflow: noclip;
+	background-color: rgba(0, 0, 0, 0.0);
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .ItemCooldownFilterLine
+{
+	width: 282px;
+	min-width: 282px;
+	max-width: 282px;
+	height: 29px;
+	min-height: 29px;
+	max-height: 29px;
+	flow-children: right;
+	margin-bottom: 6px;
+	overflow: noclip;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .ItemCooldownFilterLine:last-child
+{
+	margin-bottom: 0px;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .MultiToggleBtn,
+#SettingsWindow .ItemCooldownFilterRow .MultiCheckboxBtn,
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn
+{
+	width: 137px;
+	min-width: 137px;
+	max-width: 137px;
+	height: 28px;
+	min-height: 28px;
+	max-height: 28px;
+	margin-top: 0px;
+	margin-right: 8px;
+	margin-bottom: 0px;
+	padding-left: 5px;
+	padding-right: 5px;
+	overflow: noclip;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .ItemCooldownTopRowBtn,
+#SettingsWindow .ItemCooldownFilterRow .ItemCooldownBottomRowBtn
+{
+	margin-top: 0px;
+	padding-top: 0px;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn Label
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: 108px;
+	height: 18px;
+	line-height: 18px;
+	font-size: 12px;
+	font-weight: normal;
+	letter-spacing: 0.24px;
+	text-overflow: noclip;
+	white-space: nowrap;
+	vertical-align: center;
+}
+
+#SettingsWindow .ItemCooldownFilterRow .SettingButtonGroup.MultiCheckboxGroup .MultiCheckboxBtn .TickBox
+{
+	width: 13px;
+	height: 13px;
+	margin-right: 5px;
+}
+
+/* Row reset-to-default controls should read as a bare icon affordance,
+   not another boxed button competing with the setting control. */
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .SettingRowResetBtn:active,
+#SettingsWindow .SettingRowResetBtn.SuccessState,
+#SettingsWindow .SettingRowResetBtn.HasChanges
+{
+	width: 22px;
+	min-width: 22px;
+	max-width: 22px;
+	height: 22px;
+	min-height: 22px;
+	max-height: 22px;
+	padding: 0px;
+	margin-right: 5px;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	background-color: rgba(0, 0, 0, 0.0);
+	box-shadow: none;
+	transform: none;
+	brightness: 1.0;
+}
+
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .SettingRowResetBtn:active,
+#SettingsWindow .SettingRowResetBtn.SuccessState,
+#SettingsWindow .SettingRowResetBtn.HasChanges,
+#SettingsWindow.SettingsThemeCream .SettingRowResetBtn:hover,
+#SettingsWindow.SettingsThemeKitten .SettingRowResetBtn:hover,
+#SettingsWindow.SettingsThemeEmo .SettingRowResetBtn:hover,
+#SettingsWindow.SettingsThemeOcean .SettingRowResetBtn:hover,
+#SettingsWindow.SettingsThemePsycho .SettingRowResetBtn:hover
+{
+	background-color: rgba(0, 0, 0, 0.0);
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .SettingRowResetBtn Label
+{
+	visibility: collapse;
+	width: 0px;
+	height: 0px;
+	margin: 0px;
+	padding: 0px;
+}
+
+#SettingsWindow .SettingRowResetBtn .SettingRowResetIcon
+{
+	width: 15px;
+	height: 15px;
+	min-width: 15px;
+	min-height: 15px;
+	align: center center;
+	margin: 0px;
+	wash-color: rgba(178, 193, 185, 0.74);
+	brightness: 1.02;
+	img-shadow: 0px 0px 4px rgba(106, 231, 154, 0.06);
+}
+
+#SettingsWindow .SettingRowResetBtn:hover .SettingRowResetIcon
+{
+	wash-color: #9af0bd;
+	brightness: 1.22;
+	img-shadow: 0px 0px 8px rgba(106, 231, 154, 0.22);
+}
+
+#SettingsWindow .SettingRowResetBtn:active .SettingRowResetIcon,
+#SettingsWindow .SettingRowResetBtn.SuccessState .SettingRowResetIcon
+{
+	wash-color: #d6ffe4;
+	brightness: 1.28;
+	img-shadow: 0px 0px 9px rgba(106, 231, 154, 0.28);
+}
+
+#SettingsWindow.SettingsThemeCream .SettingRowResetBtn .SettingRowResetIcon
+{
+	wash-color: rgba(112, 81, 42, 0.78);
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingRowResetBtn .SettingRowResetIcon
+{
+	wash-color: rgba(194, 35, 132, 0.80);
+}
+
+#SettingsWindow.SettingsThemeEmo .SettingRowResetBtn .SettingRowResetIcon
+{
+	wash-color: rgba(255, 82, 101, 0.82);
+}
+
+#SettingsWindow.SettingsThemeOcean .SettingRowResetBtn .SettingRowResetIcon
+{
+	wash-color: rgba(124, 217, 255, 0.82);
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingRowResetBtn .SettingRowResetIcon
+{
+	wash-color: rgba(0, 138, 90, 0.80);
+}
+
+/* First category-title checkbox: compact enough to live beside the title
+   controls, but still using the normal checkbox language. */
+#SettingsWindow .SectionTitleCheckboxToggle,
+#SettingsWindow .SectionTitleCheckboxToggle:hover,
+#SettingsWindow .SectionTitleCheckboxToggle.selected,
+#SettingsWindow .SectionTitleCheckboxToggle.IsSelected,
+#SettingsWindow .SectionTitleCheckboxToggle.selected:hover,
+#SettingsWindow .SectionTitleCheckboxToggle.IsSelected:hover
+{
+	width: fit-children;
+	min-width: 82px;
+	max-width: 100px;
+	height: 22px;
+	min-height: 22px;
+	max-height: 22px;
+	margin-left: 8px;
+	margin-right: 4px;
+	margin-bottom: 0px;
+	padding-left: 6px;
+	padding-right: 7px;
+	border-radius: 4px;
+	border: 1px solid rgba(255, 252, 244, 0.055);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(255, 255, 255, 0.028) ), to( rgba(255, 255, 255, 0.012) ) );
+	box-shadow: none;
+	flow-children: right;
+	vertical-align: center;
+	transition-property: brightness, background-color, border, box-shadow;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-in-out;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.Disabled,
+#SettingsWindow .SectionTitleCheckboxToggle.Disabled:hover
+{
+	opacity: 0.42;
+	brightness: 0.82;
+	border: 1px solid rgba(255, 252, 244, 0.035);
+	background-color: rgba(255, 255, 255, 0.012);
+	box-shadow: none;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.Disabled .TickBox
+{
+	brightness: 0.72;
+	box-shadow: none;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.Disabled .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle.Disabled Label
+{
+	color: rgba(154, 164, 160, 0.62);
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle:hover
+{
+	brightness: 1.08;
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	background-color: rgba(255, 255, 255, 0.045);
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.selected,
+#SettingsWindow .SectionTitleCheckboxToggle.IsSelected
+{
+	border: 1px solid rgba(106, 231, 154, 0.26);
+	background-color: rgba(106, 231, 154, 0.065);
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle .TickBox
+{
+	width: 12px;
+	height: 12px;
+	min-width: 12px;
+	min-height: 12px;
+	margin-left: 0px;
+	margin-right: 5px;
+	vertical-align: center;
+	border-radius: 2px;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle Label
+{
+	width: fit-children;
+	max-width: 68px;
+	height: 14px;
+	line-height: 14px;
+	margin-left: 0px;
+	vertical-align: center;
+	font-size: 10px;
+	font-weight: semi-bold;
+	letter-spacing: 0.45px;
+	text-transform: uppercase;
+	text-overflow: shrink;
+	color: rgba(200, 210, 206, 0.86);
+	text-shadow: none;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle:hover .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle:hover Label
+{
+	color: #ffffff;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.selected .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle.IsSelected .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle.selected Label,
+#SettingsWindow .SectionTitleCheckboxToggle.IsSelected Label
+{
+	color: #d8e5df;
+}
+
+/* Title-level secondary checkboxes should visually match row-level secondary
+   checkboxes like Minimap > Addons > Mid Boss Timer > On Mid. */
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn:hover,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected:hover,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected:hover
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 140px;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	margin-left: 8px;
+	margin-right: 4px;
+	margin-bottom: 0px;
+	padding: 1px 7px 1px 5px;
+	border-radius: 4px;
+	background-color: rgba(5, 8, 8, 0.18);
+	border: 1px solid rgba(210, 218, 214, 0.045);
+	box-shadow: none;
+	transform: none;
+	flow-children: right;
+	vertical-align: center;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn:hover
+{
+	border-color: rgba(210, 218, 214, 0.12);
+	background-color: rgba(255, 255, 255, 0.04);
+	brightness: 1.03;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected
+{
+	border-color: rgba(106, 231, 154, 0.30);
+	background-color: rgba(106, 231, 154, 0.06);
+	box-shadow: inset rgba(106, 231, 154, 0.08) 0px 0px 0px 1px;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn .SectionTitleCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn .MultiCheckboxLabel,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn Label
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 96px;
+	height: fit-children;
+	line-height: 14px;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.32px;
+	text-transform: none;
+	text-overflow: shrink;
+	white-space: nowrap;
+	color: rgba(200, 210, 206, 0.86);
+	text-shadow: none;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn .TickBox
+{
+	width: 13px;
+	height: 13px;
+	min-width: 13px;
+	min-height: 13px;
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.Disabled,
+#SettingsWindow .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.Disabled:hover
+{
+	opacity: 0.42;
+	brightness: 0.82;
+	border-color: rgba(210, 218, 214, 0.035);
+	background-color: rgba(5, 8, 8, 0.10);
+	box-shadow: none;
+}
+
+/* Announcer > Buff Filter: make only the 1st/2nd/3rd option chips match
+   the Type filter rhythm, while leaving the sound test buttons untouched. */
+#SettingsWindow .AnnouncerBuffFilterRow .SettingButtonGroup.MultiToggleGroup,
+#SettingsWindow .AnnouncerBuffFilterRow .SettingButtonGroup.MultiCheckboxGroup
+{
+	width: 314px;
+	min-width: 314px;
+	max-width: 314px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	padding: 1px;
+	flow-children: right;
+	overflow: noclip;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterOptionWrap
+{
+	width: 94px;
+	min-width: 94px;
+	max-width: 94px;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	flow-children: right;
+	margin-right: 2px;
+	overflow: noclip;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterOptionWrap:last-child
+{
+	margin-right: 0px;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected:hover
+{
+	width: 74px;
+	min-width: 74px;
+	max-width: 74px;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	margin: 0px;
+	padding: 1px 5px;
+	border-radius: 4px;
+	border: 0px solid transparent;
+	background-color: rgba(0, 0, 0, 0.0);
+	box-shadow: none;
+	flow-children: right;
+	brightness: 1.0;
+	transform: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover
+{
+	brightness: 1.06;
+	background-color: rgba(255, 255, 255, 0.035);
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected
+{
+	background-color: rgba(106, 231, 154, 0.055);
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn .TickBox
+{
+	width: 13px;
+	height: 13px;
+	min-width: 13px;
+	min-height: 13px;
+	margin-left: 0px;
+	margin-right: 5px;
+	border-radius: 2px;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn Label
+{
+	width: fit-children;
+	min-width: 0px;
+	max-width: 38px;
+	height: 14px;
+	line-height: 14px;
+	vertical-align: center;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.35px;
+	color: rgba(200, 210, 206, 0.86);
+	text-shadow: none;
+	text-overflow: shrink;
+	white-space: nowrap;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover Label
+{
+	color: #ffffff;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected Label,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected Label
+{
+	color: #d8e5df;
+}
+
+/* Correction: Buff Filter option buttons should inherit the same treatment as
+   Announcer Type choices. The sound test buttons remain independently styled. */
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterOptionWrap
+{
+	width: 103px;
+	min-width: 103px;
+	max-width: 103px;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	flow-children: right;
+	margin-right: 2px;
+	overflow: noclip;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected:hover
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: none;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	padding: 1px 6px;
+	margin: 0px;
+	border: 0px solid transparent;
+	border-radius: 4px;
+	background-color: none;
+	box-shadow: none;
+	brightness: 1.0;
+	transform: none;
+	flow-children: right;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover
+{
+	brightness: 1.08;
+	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected:hover
+{
+	background-color: none;
+	border: 0px solid transparent;
+	box-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn .TickBox
+{
+	width: 16px;
+	height: 16px;
+	min-width: 16px;
+	min-height: 16px;
+	margin-left: 2px;
+	margin-right: 6px;
+	border-radius: 3px;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn Label
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: none;
+	height: fit-children;
+	line-height: 14px;
+	vertical-align: center;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.35px;
+	color: #9c968c;
+	text-shadow: none;
+	text-overflow: shrink;
+	white-space: nowrap;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover Label
+{
+	color: #ffffff;
+	text-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected Label,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected Label
+{
+	color: #eef4f0;
+	text-shadow: none;
+}
+
+/* Buff filter test buttons now live inside the option button after the label,
+   so the full control can return to the same footprint as Announcer Type. */
+#SettingsWindow .AnnouncerBuffFilterRow .SettingButtonGroup.MultiToggleGroup,
+#SettingsWindow .AnnouncerBuffFilterRow .SettingButtonGroup.MultiCheckboxGroup
+{
+	width: 286px;
+	min-width: 286px;
+	max-width: 286px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	padding: 1px;
+	flow-children: right;
+	overflow: noclip;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterOptionWrap
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: none;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	flow-children: right;
+	margin-right: 2px;
+	overflow: noclip;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.selected:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn.IsSelected:hover
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: none;
+	height: 24px;
+	min-height: 24px;
+	max-height: 24px;
+	padding: 1px 4px 1px 6px;
+	margin: 0px;
+	border: 0px solid transparent;
+	border-radius: 4px;
+	background-color: none;
+	box-shadow: none;
+	brightness: 1.0;
+	transform: none;
+	flow-children: right;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn .MultiCheckboxLabel,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterMainBtn Label
+{
+	width: fill-parent-flow(1.0);
+	min-width: 0px;
+	max-width: none;
+	height: fit-children;
+	line-height: 14px;
+	vertical-align: center;
+	font-size: 11px;
+	font-weight: normal;
+	letter-spacing: 0.35px;
+	color: #9c968c;
+	text-shadow: none;
+	text-overflow: shrink;
+	white-space: nowrap;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:active,
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn.SuccessState
+{
+	width: 16px;
+	min-width: 16px;
+	max-width: 16px;
+	height: 16px;
+	min-height: 16px;
+	max-height: 16px;
+	margin-left: 4px;
+	margin-right: 0px;
+	padding: 0px;
+	border: 0px solid transparent;
+	border-radius: 0px;
+	background-color: none;
+	box-shadow: none;
+	flow-children: none;
+	vertical-align: center;
+	brightness: 1.0;
+	transform: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover
+{
+	brightness: 1.18;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestIcon
+{
+	width: 11px;
+	height: 11px;
+	margin: 0px;
+	align: center center;
+	wash-color: rgba(178, 193, 185, 0.82);
+	img-shadow: none;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover .AnnouncerBuffFilterTestIcon
+{
+	wash-color: #9af0bd;
+}
+
+#SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn.SuccessState .AnnouncerBuffFilterTestIcon
+{
+	wash-color: #d6ffe4;
+}
+
+/* Help / Contact / Support CTA hierarchy:
+   only the Support tile should carry the standout glow. */
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn,
+#SettingsWindow #SupportCtaGrid #SupportCtaCommissionBtn,
+#SettingsWindow #SupportCtaGrid #SupportCtaChangeLogBtn
+{
+	border-color: rgba(210, 218, 214, 0.055);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 26, 25, 0.96) ), to( rgba(13, 16, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.14) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.012) 0px 1px 0px 0px;
+}
+
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn:hover,
+#SettingsWindow #SupportCtaGrid #SupportCtaCommissionBtn:hover,
+#SettingsWindow #SupportCtaGrid #SupportCtaChangeLogBtn:hover
+{
+	border-color: rgba(210, 218, 214, 0.095);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 29, 28, 0.98) ), to( rgba(15, 18, 17, 0.94) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+	brightness: 1.025;
+}
+
+#SettingsWindow #SupportCtaGrid #SupportCtaSupportBtn
+{
+	border-color: rgba(106, 231, 154, 0.30);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 43, 34, 0.98) ), to( rgba(11, 19, 14, 0.94) ) );
+	box-shadow: inset rgba(190, 255, 217, 0.045) 0px 1px 0px 0px, inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.14) 0px 0px 12px 0px;
+}
+
+#SettingsWindow #SupportCtaGrid #SupportCtaSupportBtn:hover
+{
+	border-color: rgba(129, 255, 179, 0.46);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 56, 43, 1.0) ), to( rgba(13, 24, 17, 0.98) ) );
+	box-shadow: inset rgba(225, 255, 237, 0.06) 0px 1px 0px 0px, inset rgba(129, 255, 179, 0.16) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.28) 0px 0px 16px 0px;
+	brightness: 1.06;
+}
+
+/* Support credit plaques: newer settings-card language with a little plaque pop. */
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt
+{
+	height: 28px;
+	min-height: 28px;
+	max-height: 28px;
+	padding: 0px 6px;
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 36, 35, 0.96) ), color-stop( 0.48, rgba(19, 23, 22, 0.93) ), to( rgba(12, 15, 14, 0.91) ) );
+	border: 1px solid rgba(210, 218, 214, 0.065);
+	box-shadow: inset rgba(255, 255, 255, 0.025) 0px 1px 0px 0px, inset rgba(106, 231, 154, 0.018) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.18) 0px 1px 3px 0px;
+	brightness: 1.0;
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt
+{
+	border-color: rgba(106, 231, 154, 0.12);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(32, 47, 40, 0.96) ), color-stop( 0.55, rgba(18, 25, 22, 0.93) ), to( rgba(13, 18, 16, 0.91) ) );
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt
+{
+	border-color: rgba(240, 211, 122, 0.13);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(39, 40, 33, 0.96) ), color-stop( 0.55, rgba(22, 24, 22, 0.93) ), to( rgba(22, 18, 13, 0.91) ) );
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque:hover,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.055;
+	transform: translateY(-1px);
+	border-color: rgba(129, 255, 179, 0.26);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(38, 58, 47, 0.98) ), color-stop( 0.56, rgba(22, 32, 27, 0.95) ), to( rgba(13, 20, 16, 0.93) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.035) 0px 1px 0px 0px, inset rgba(129, 255, 179, 0.055) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.10) 0px 0px 10px 0px;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque:hover,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt:hover
+{
+	brightness: 1.055;
+	transform: translateY(-1px);
+	border-color: rgba(240, 211, 122, 0.25);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(47, 45, 35, 0.98) ), color-stop( 0.56, rgba(27, 28, 23, 0.95) ), to( rgba(28, 21, 13, 0.93) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.035) 0px 1px 0px 0px, inset rgba(240, 211, 122, 0.052) 0px 0px 0px 1px, fill rgba(240, 211, 122, 0.085) 0px 0px 10px 0px;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt Label
+{
+	font-size: 11px;
+	letter-spacing: 0.48px;
+	font-weight: semi-bold;
+	text-transform: uppercase;
+	text-overflow: shrink;
+	white-space: nowrap;
+	text-shadow: none;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupContributor .SupportThanksPlaqueAlt Label
+{
+	color: rgba(225, 242, 232, 0.96);
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaque Label,
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupTranslator .SupportThanksPlaqueAlt Label
+{
+	color: rgba(242, 235, 212, 0.96);
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksPlaqueIcon_Translator
+{
+	width: 13px;
+	height: 13px;
+	margin-right: 5px;
+	vertical-align: center;
+	img-shadow: 0px 0px 5px rgba(240, 211, 122, 0.10);
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator
+{
+	border-radius: 5px;
+	box-shadow: inset rgba(255, 255, 255, 0.045) 0px 1px 0px 0px, inset rgba(240, 211, 122, 0.10) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.13) 0px 0px 14px 0px;
+}
+
+#SettingsWindow #SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator:hover
+{
+	transform: translateY(-1px);
+	box-shadow: inset rgba(255, 255, 255, 0.055) 0px 1px 0px 0px, inset rgba(240, 211, 122, 0.16) 0px 0px 0px 1px, fill rgba(240, 211, 122, 0.16) 0px 0px 17px 0px;
+}
+
+/* Presets tab: commission request should read as a real CTA button. */
+#SettingsWindow .CommunityPresetHintLink,
+#SettingsWindow .CommunityPresetHintLink:hover,
+#SettingsWindow .CommunityPresetHintLink:active,
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink:hover,
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink:hover,
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink:hover,
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink:hover,
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink,
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink:hover
+{
+	width: fit-children;
+	min-width: 104px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	margin: 8px 0px 2px 0px;
+	padding: 0px 12px;
+	border: 1px solid rgba(106, 231, 154, 0.22);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 45, 37, 0.98) ), color-stop( 0.55, rgba(17, 27, 22, 0.96) ), to( rgba(10, 15, 13, 0.98) ) );
+	box-shadow: inset rgba(219, 255, 232, 0.055) 0px 1px 0px 0px, inset rgba(106, 231, 154, 0.12) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.11) 0px 0px 12px 0px;
+	transform: none;
+	brightness: 1.0;
+	transition-property: brightness, background-color, border, box-shadow, transform;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-in-out;
+}
+
+#SettingsWindow .CommunityPresetHintLink Label,
+#SettingsWindow .CommunityPresetHintLink:hover Label
+{
+	font-family: oracle;
+	font-size: 10px;
+	font-weight: semi-bold;
+	letter-spacing: 0.75px;
+	text-transform: uppercase;
+	color: #dff7e9;
+	text-decoration: none;
+	text-shadow: none;
+	horizontal-align: center;
+	vertical-align: center;
+	text-align: center;
+}
+
+#SettingsWindow .CommunityPresetHintLink:hover
+{
+	brightness: 1.08;
+	transform: translateY(-1px);
+	border-color: rgba(139, 255, 184, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(39, 62, 48, 1.0) ), color-stop( 0.55, rgba(21, 36, 28, 0.98) ), to( rgba(11, 18, 15, 0.98) ) );
+	box-shadow: inset rgba(235, 255, 242, 0.075) 0px 1px 0px 0px, inset rgba(139, 255, 184, 0.18) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.22) 0px 0px 16px 0px;
+}
+
+#SettingsWindow .CommunityPresetHintLink:hover Label
+{
+	color: #ffffff;
+	text-shadow: 0px 0px 7px rgba(154, 240, 189, 0.24);
+}
+
+#SettingsWindow .CommunityPresetHintLink:active
+{
+	transform: translateY(1px);
+	brightness: 0.98;
+}
+
+/* Preset buttons: richer jewel-chip treatment while preserving current layout size. */
+#SettingsWindow .PresetGridBtn,
+#SettingsWindow .PresetGridBtnBase,
+#SettingsWindow .PresetGridBtnGreat,
+#SettingsWindow .PresetGridBtnCustom,
+#SettingsWindow .PresetGridBtnCustomActive
+{
+	border-radius: 4px;
+	border: 1px solid rgba(139, 255, 185, 0.16);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(38, 59, 48, 0.98) ), color-stop( 0.46, rgba(20, 29, 25, 0.97) ), to( rgba(8, 12, 11, 0.98) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.045) 0px 1px 0px 0px, inset rgba(106, 231, 154, 0.045) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.26) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .PresetGridBtn Label,
+#SettingsWindow .PresetGridBtnBase Label,
+#SettingsWindow .PresetGridBtnGreat Label,
+#SettingsWindow .PresetGridBtnCustom Label,
+#SettingsWindow .PresetGridBtnCustomActive Label
+{
+	color: rgba(235, 248, 240, 0.98);
+	text-shadow: 0px 0px 6px rgba(106, 231, 154, 0.12);
+}
+
+#SettingsWindow .PresetGridBtnGreat
+{
+	border-color: rgba(255, 218, 128, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(66, 52, 26, 0.98) ), color-stop( 0.48, rgba(32, 27, 18, 0.97) ), to( rgba(12, 11, 8, 0.98) ) );
+	box-shadow: inset rgba(255, 244, 204, 0.045) 0px 1px 0px 0px, inset rgba(255, 218, 128, 0.052) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.26) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .PresetGridBtnGreat Label
+{
+	color: rgba(255, 246, 222, 0.98);
+	text-shadow: 0px 0px 6px rgba(255, 218, 128, 0.13);
+}
+
+#SettingsWindow .PresetGridBtnCustom,
+#SettingsWindow .PresetGridBtnCustomActive
+{
+	border-color: rgba(112, 219, 255, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(33, 56, 67, 0.98) ), color-stop( 0.48, rgba(19, 31, 37, 0.97) ), to( rgba(8, 12, 15, 0.98) ) );
+	box-shadow: inset rgba(230, 248, 255, 0.042) 0px 1px 0px 0px, inset rgba(112, 219, 255, 0.048) 0px 0px 0px 1px, fill rgba(0, 0, 0, 0.26) 0px 1px 4px 0px;
+}
+
+#SettingsWindow .PresetGridBtnCustom Label,
+#SettingsWindow .PresetGridBtnCustomActive Label
+{
+	color: rgba(231, 248, 255, 0.98);
+	text-shadow: 0px 0px 6px rgba(112, 219, 255, 0.12);
+}
+
+#SettingsWindow .PresetGridBtn:hover,
+#SettingsWindow .PresetGridBtnBase:hover,
+#SettingsWindow .PresetGridBtnCustom:hover,
+#SettingsWindow .PresetGridBtnCustomActive:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border-color: rgba(151, 255, 193, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(48, 77, 61, 1.0) ), color-stop( 0.48, rgba(24, 39, 32, 0.99) ), to( rgba(10, 17, 14, 1.0) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.06) 0px 1px 0px 0px, inset rgba(151, 255, 193, 0.09) 0px 0px 0px 1px, fill rgba(106, 231, 154, 0.15) 0px 0px 13px 0px;
+}
+
+#SettingsWindow .PresetGridBtnGreat:hover
+{
+	brightness: 1.10;
+	transform: translateY(-1px);
+	border-color: rgba(255, 226, 142, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(78, 62, 31, 1.0) ), color-stop( 0.48, rgba(39, 33, 21, 0.99) ), to( rgba(17, 15, 10, 1.0) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.058) 0px 1px 0px 0px, inset rgba(255, 226, 142, 0.09) 0px 0px 0px 1px, fill rgba(240, 211, 122, 0.13) 0px 0px 13px 0px;
+}
+
+#SettingsWindow .PresetGridBtnCustom:hover,
+#SettingsWindow .PresetGridBtnCustomActive:hover
+{
+	border-color: rgba(130, 226, 255, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(43, 75, 90, 1.0) ), color-stop( 0.48, rgba(23, 40, 49, 0.99) ), to( rgba(10, 16, 20, 1.0) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.058) 0px 1px 0px 0px, inset rgba(130, 226, 255, 0.085) 0px 0px 0px 1px, fill rgba(112, 219, 255, 0.13) 0px 0px 13px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetActive,
+#SettingsWindow .PresetGridBtn.PresetActive:hover
+{
+	border-color: rgba(181, 255, 209, 0.50);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(42, 93, 61, 1.0) ), color-stop( 0.50, rgba(19, 49, 32, 0.99) ), to( rgba(9, 20, 14, 1.0) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.065) 0px 1px 0px 0px, inset rgba(181, 255, 209, 0.16) 0px 0px 0px 1px, inset rgba(126, 240, 173, 0.42) 0px -1px 0px 0px, fill rgba(106, 231, 154, 0.24) 0px 0px 17px 0px;
+}
+
+/* Navbar save is immediate now; hover warning lives in the row-style popup. */
+#SettingsWindow .QOLCustomRowTooltip.FooterSaveWarningTooltip
+{
+	border-color: rgba(255, 105, 105, 0.24);
+	box-shadow: inset rgba(255, 105, 105, 0.06) 0px 0px 0px 1px, fill rgba(255, 70, 70, 0.08) 0px 0px 12px 0px;
+}
+
+#SettingsWindow .QOLCustomRowTooltip.FooterSaveWarningTooltip .QOLCustomRowTooltipText
+{
+	color: #ff7676;
+	font-weight: bold;
+	letter-spacing: 0.45px;
+	text-transform: uppercase;
+	text-shadow: 0px 0px 7px rgba(255, 80, 80, 0.20);
+}
+
+/* Arcade game rows: keep Play compact and polished without hover clipping. */
+#SettingsWindow .ArcadePlayActionGroup
+{
+	overflow: noclip;
+}
+
+#SettingsWindow .ArcadePlayActionBtn,
+#SettingsWindow .ArcadePlayActionBtn:hover,
+#SettingsWindow .ArcadePlayActionBtn:active
+{
+	width: 64px;
+	min-width: 64px;
+	max-width: 64px;
+	height: 26px;
+	min-height: 26px;
+	max-height: 26px;
+	margin-right: 7px;
+	padding: 0px 9px;
+	border-radius: 4px;
+	transform: none;
+}
+
+#SettingsWindow .ArcadePlayActionBtn
+{
+	border: 1px solid rgba(106, 231, 154, 0.18);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 31, 29, 0.96) ), to( rgba(13, 17, 15, 0.92) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.14) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+}
+
+#SettingsWindow .ArcadePlayActionBtn:hover
+{
+	brightness: 1.05;
+	border-color: rgba(106, 231, 154, 0.28);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(30, 39, 34, 0.98) ), to( rgba(15, 21, 18, 0.96) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.15) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.11) 0px 0px 0px 1px;
+}
+
+#SettingsWindow .ArcadePlayActionBtn:active
+{
+	brightness: 0.98;
+}
+
+#SettingsWindow .ArcadePlayActionBtn .SettingActionBtnLabel,
+#SettingsWindow .ArcadePlayActionBtn:hover .SettingActionBtnLabel
+{
+	font-size: 11px;
+	font-weight: semi-bold;
+	letter-spacing: 0.55px;
+	text-shadow: none;
+}
+
+/* Modal arcade polish: intentionally small and scoped to the safe unified modal skin. */
+.ArcadeModalContainer.QOLUnifiedModalSurface .ModalTitle
+{
+	font-family: oracle;
+	font-size: 18px;
+	font-weight: semi-bold;
+	letter-spacing: 1.0px;
+	color: #f2faf5;
+	text-shadow: 0px 0px 7px rgba(152, 255, 181, 0.10);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn
+{
+	border: 1px solid rgba(210, 218, 214, 0.08);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 36, 35, 0.96) ), to( rgba(12, 15, 14, 0.91) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+	transition-property: brightness, border, background-color;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn:hover
+{
+	brightness: 1.05;
+	border-color: rgba(106, 231, 154, 0.22);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(36, 48, 41, 0.98) ), to( rgba(14, 20, 17, 0.95) ) );
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn Label
+{
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: semi-bold;
+	letter-spacing: 0.65px;
+	color: #dbe6e0;
+	text-shadow: none;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn.Active,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn.Active,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn.Active
+{
+	border-color: rgba(106, 231, 154, 0.30);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 50, 41, 0.98) ), to( rgba(13, 22, 17, 0.95) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.08) 0px 0px 10px 0px, inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyHudRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerHudRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemHudRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingHudRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHudRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperFooterRow,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyGroup,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyGroup,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyGroup
+{
+	border: 1px solid rgba(210, 218, 214, 0.045);
+	border-radius: 4px;
+	background-color: rgba(5, 8, 8, 0.20);
+	box-shadow: none;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStat,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStat,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStat,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStat,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStat,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStat
+{
+	font-family: oracle;
+	color: #bac6c0;
+	text-shadow: none;
+}
+
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ModalTitle,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStat,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStat,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStat,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStat,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStat,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStat
+{
+	color: #4a2f16;
+	text-shadow: none;
+}
+
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ModalTitle,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStat,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStat,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStat,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStat,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStat,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStat
+{
+	color: #46153a;
+	text-shadow: none;
+}
+
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ModalTitle,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperStat,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyStat,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerStat,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemStat,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingStat,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStat
+{
+	color: #17231d;
+	text-shadow: none;
+}
+
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn
+{
+	border-color: rgba(116, 78, 38, 0.16);
+	background-color: rgba(255, 246, 224, 0.34);
+}
+
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn
+{
+	border-color: rgba(184, 28, 121, 0.16);
+	background-color: rgba(255, 242, 251, 0.30);
+}
+
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperActionBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperDifficultyBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerDifficultyBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingControlBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingDifficultyBtn
+{
+	border-color: rgba(31, 48, 40, 0.14);
+	background-color: rgba(255, 255, 255, 0.34);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperBoard,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyGameArea,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerArea,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemArea,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingArea,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackArea
+{
+	border: 1px solid rgba(210, 218, 214, 0.055);
+	border-radius: 6px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(12, 17, 17, 0.82) ), to( rgba(7, 10, 11, 0.76) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow
+{
+	border: 1px solid rgba(210, 218, 214, 0.055);
+	background-color: rgba(18, 23, 24, 0.78);
+	box-shadow: none;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow.ResultWin,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel.ResultWin
+{
+	color: #9bf2bd;
+	border-color: rgba(106, 231, 154, 0.22);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow.ResultLoss,
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel.ResultLoss
+{
+	color: #ff8f8f;
+	border-color: rgba(255, 108, 108, 0.22);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackStatusLabel.ResultPush
+{
+	color: #ffd98a;
+	border-color: rgba(255, 217, 138, 0.20);
+}
+
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperBoard,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyGameArea,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerArea,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemArea,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingArea,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackArea,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow
+{
+	border-color: rgba(116, 78, 38, 0.14);
+	background-color: rgba(255, 246, 224, 0.32);
+}
+
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperBoard,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyGameArea,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerArea,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemArea,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingArea,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackArea,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow
+{
+	border-color: rgba(184, 28, 121, 0.14);
+	background-color: rgba(255, 242, 251, 0.28);
+}
+
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeMinesweeperBoard,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeFlappyGameArea,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeAimTrainerArea,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeWhackRemArea,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeTrainTrackingArea,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackArea,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface .ArcadeBlackjackHandRow
+{
+	border-color: rgba(31, 48, 40, 0.12);
+	background-color: rgba(255, 255, 255, 0.34);
+}
+
+.QOLUnifiedModalSurface .ConfigDiffCell
+{
+	border: 1px solid rgba(210, 218, 214, 0.055);
+	border-radius: 4px;
+	background-color: rgba(18, 23, 24, 0.76);
+	box-shadow: none;
+}
+
+.QOLUnifiedModalSurface .ConfigDiffCell:hover
+{
+	border-color: rgba(106, 231, 154, 0.18);
+	background-color: rgba(24, 31, 29, 0.84);
+}
+
+.QOLUnifiedModalSurface .ConfigDiffCellTitle,
+.QOLUnifiedModalSurface .ConfigDiffCellBefore,
+.QOLUnifiedModalSurface .ConfigDiffCellAfter,
+.QOLUnifiedModalSurface .ConfigDiffCellArrow,
+.QOLUnifiedModalSurface .ConfigDiffEmpty
+{
+	font-family: oracle;
+	text-shadow: none;
+}
+
+.QOLUnifiedModalSurface .ConfigDiffApplyBtn,
+.QOLUnifiedModalSurface .ConfigDiffCancelBtn
+{
+	border: 1px solid rgba(210, 218, 214, 0.08);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 36, 35, 0.96) ), to( rgba(12, 15, 14, 0.91) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+	animation-name: none;
+	transition-property: brightness, border, background-color;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+.QOLUnifiedModalSurface .ConfigDiffApplyBtn
+{
+	border-color: rgba(106, 231, 154, 0.24);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(34, 50, 41, 0.98) ), to( rgba(13, 22, 17, 0.95) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.08) 0px 0px 10px 0px, inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px;
+}
+
+.QOLUnifiedModalSurface .ConfigDiffApplyBtn:hover,
+.QOLUnifiedModalSurface .ConfigDiffCancelBtn:hover
+{
+	brightness: 1.05;
+	border-color: rgba(106, 231, 154, 0.22);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(36, 48, 41, 0.98) ), to( rgba(14, 20, 17, 0.95) ) );
+}
+
+.QOLUnifiedModalSurface .ConfigDiffApplyBtn Label,
+.QOLUnifiedModalSurface .ConfigDiffCancelBtn Label
+{
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: semi-bold;
+	letter-spacing: 0.65px;
+	color: #dbe6e0;
+	text-shadow: none;
+}
+
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffCell,
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffApplyBtn,
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffCancelBtn
+{
+	border-color: rgba(116, 78, 38, 0.14);
+	background-color: rgba(255, 246, 224, 0.34);
+}
+
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffCell,
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffApplyBtn,
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffCancelBtn
+{
+	border-color: rgba(184, 28, 121, 0.14);
+	background-color: rgba(255, 242, 251, 0.30);
+}
+
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffCell,
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffApplyBtn,
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffCancelBtn
+{
+	border-color: rgba(31, 48, 40, 0.12);
+	background-color: rgba(255, 255, 255, 0.34);
+}
+
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffApplyBtn Label,
+.QOLThemeCream .QOLUnifiedModalSurface .ConfigDiffCancelBtn Label
+{
+	color: #4a2f16;
+}
+
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffApplyBtn Label,
+.QOLThemeKitten .QOLUnifiedModalSurface .ConfigDiffCancelBtn Label
+{
+	color: #46153a;
+}
+
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffApplyBtn Label,
+.QOLThemePsycho .QOLUnifiedModalSurface .ConfigDiffCancelBtn Label
+{
+	color: #17231d;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn
+{
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	min-width: 108px;
+	padding: 0px 14px;
+	border: 1px solid rgba(106, 231, 154, 0.26);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(35, 52, 43, 0.98) ), to( rgba(14, 23, 18, 0.94) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.08) 0px 0px 10px 0px, inset rgba(106, 231, 154, 0.10) 0px 0px 0px 1px;
+	brightness: 1.0;
+	animation-name: none;
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn
+{
+	min-width: 222px;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn
+{
+	height: 30px;
+	min-height: 30px;
+	max-height: 30px;
+	min-width: 108px;
+	padding: 0px 14px;
+	margin-right: 0px;
+	border: 1px solid rgba(210, 218, 214, 0.10);
+	border-radius: 4px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 36, 35, 0.96) ), to( rgba(12, 15, 14, 0.91) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.16) 0px 1px 3px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
+	animation-name: none;
+	transition-property: brightness, border, background-color, box-shadow, transform;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn:hover,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn:hover
+{
+	brightness: 1.06;
+	border-color: rgba(106, 231, 154, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(43, 66, 52, 0.99) ), to( rgba(17, 29, 22, 0.96) ) );
+	box-shadow: fill rgba(106, 231, 154, 0.14) 0px 0px 13px 0px, inset rgba(151, 255, 193, 0.11) 0px 0px 0px 1px;
+	transform: translateY(-1px);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn:active,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn:active
+{
+	brightness: 0.98;
+	transform: translateY(0px);
+}
+
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn Label,
+.ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn Label
+{
+	font-family: oracle;
+	font-size: 12px;
+	font-weight: semi-bold;
+	letter-spacing: 0.70px;
+	text-transform: uppercase;
+	text-align: center;
+	horizontal-align: center;
+	color: #e8f7ef;
+	text-shadow: none;
+}
+
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn
+{
+	border-color: rgba(157, 100, 44, 0.24);
+	background-color: rgba(255, 246, 224, 0.38);
+	box-shadow: fill rgba(157, 100, 44, 0.08) 0px 0px 9px 0px, inset rgba(157, 100, 44, 0.10) 0px 0px 0px 1px;
+}
+
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn
+{
+	border-color: rgba(184, 28, 121, 0.24);
+	background-color: rgba(255, 242, 251, 0.34);
+	box-shadow: fill rgba(255, 113, 197, 0.09) 0px 0px 9px 0px, inset rgba(184, 28, 121, 0.10) 0px 0px 0px 1px;
+}
+
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn
+{
+	border-color: rgba(0, 138, 90, 0.20);
+	background-color: rgba(255, 255, 255, 0.38);
+	box-shadow: fill rgba(0, 138, 90, 0.07) 0px 0px 8px 0px, inset rgba(0, 138, 90, 0.08) 0px 0px 0px 1px;
+}
+
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn Label,
+.QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn Label
+{
+	color: #4a2f16;
+}
+
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn Label,
+.QOLThemeKitten .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn Label
+{
+	color: #46153a;
+}
+
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeAimTrainerNewRunBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeWhackRemNewRunBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeTrainTrackingNewRunBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackNewHandBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackHitBtn Label,
+.QOLThemePsycho .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeBlackjackStandBtn Label
+{
+	color: #17231d;
 }
