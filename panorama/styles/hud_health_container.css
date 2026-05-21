@@ -980,7 +980,7 @@
 	transform: rotateZ(0deg);
 	width: fit-children;
 	height: fit-children;
-	margin-left: 222px;
+	margin-left: 228px;
 	margin-bottom: 90px;
 	margin-top: 0px;
 	margin-right: 0px;
@@ -1304,6 +1304,12 @@
 	margin-bottom: 2px;
 	width: 90px;
 	vertical-align: bottom;
+}
+
+.minecraft_healthbar_active #HealthRegenAndTotal.has_rage .recentDamageCounters,
+.minecraft_healthbar_active #HealthRegenAndTotal.has_rage #RecentHealContainer
+{
+	margin-bottom: 20px;
 }
 
 .minecraft_healthbar_active .recentDamageCounters

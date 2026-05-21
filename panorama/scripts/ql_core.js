@@ -646,7 +646,10 @@
         mcLastHealingStartSlots: -1,
         mcLastBarrierFullHearts: -1,
         mcLastBarrierHasHalf: null,
-        mcLastBarrierLastSlotIsHalf: null
+        mcLastBarrierLastSlotIsHalf: null,
+        rageNextScanMs: 0,
+        rageHealthRegenPanelCache: null,
+        rageHealthRegenClassCache: { panel: null, values: {} }
     };
 
     var INTERNAL_CONFIG = {
@@ -1187,6 +1190,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const MC_JIGGLE_CHANCE = 0.5;
     const MC_HEALING_WAVE_STEP_S = 0.05;
     const MC_HEALING_WAVE_PAUSE_S = 0.5;
+    const RAGE_SCAN_INTERVAL_MS = 250;
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -5797,6 +5801,10 @@ function GetUIRoot() {
         State.mcLastBarrierFullHearts = -1;
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
+        if (IsPanelValid(State.rageHealthRegenPanelCache)) State.rageHealthRegenPanelCache.SetHasClass("has_rage", false);
+        State.rageHealthRegenPanelCache = null;
+        State.rageHealthRegenClassCache = { panel: null, values: {} };
+        State.rageNextScanMs = 0;
         State.mcWasEnabled = false;
     }
 
@@ -6407,6 +6415,20 @@ function GetUIRoot() {
         return { hasBarrier: hasBarrier, bulletBarrierCurrent: bulletBarrierCurrent, bulletBarrierMax: bulletBarrierMax };
     }
 
+    function UpdateRageResourceClass(root, nowMs) {
+        if (nowMs < (State.rageNextScanMs || 0)) return;
+        State.rageNextScanMs = nowMs + RAGE_SCAN_INTERVAL_MS;
+
+        if (!IsPanelValid(State.rageHealthRegenPanelCache)) {
+            State.rageHealthRegenPanelCache = root && root.FindChildTraverse ? (root.FindChildTraverse("HealthRegenAndTotal") || null) : null;
+        }
+        if (!IsPanelValid(State.rageHealthRegenPanelCache)) return;
+
+        var ragePanel = FindFirstPanelByClass(root, "rage");
+        var rageActive = IsPanelValid(ragePanel) && (!ragePanel.BHasClass || ragePanel.BHasClass("resource_container"));
+        SetPanelClassCached(State.rageHealthRegenPanelCache, State.rageHealthRegenClassCache, "has_rage", rageActive);
+    }
+
     function UpdateMinecraftHealthbar(root, cfg, nowMs, enabled) {
         if (!enabled) {
             if (State.mcWasEnabled) McResetRuntime();
@@ -6419,6 +6441,7 @@ function GetUIRoot() {
         if (!hudRoot) { State.mcNextUpdateMs = nowMsNum + 400; return; }
 
         State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
+        UpdateRageResourceClass(root, nowMsNum);
 
         if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) State.cachedPanels.mcHudHealthBars = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null;
         if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) State.cachedPanels.mcTotemContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null;
