@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.7"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -557,6 +557,10 @@ function main() {
     const shopPurchaseFeatureKeys = [
         "ENABLE_SHOP_CLICK_TO_NOTIFY",
         "ENABLE_SHOP_RECENT_PURCHASES"
+    ];
+    const recentPurchasesQuickKeys = [
+        "RECENT_PURCHASES_QUICK_MAX",
+        "RECENT_PURCHASES_QUICK_DISPLAY_SEC"
     ];
     const releaseCompatSemvers = ["2.3.2", "2.3.5"];
     for (const semver of releaseCompatSemvers) {
@@ -790,6 +794,18 @@ function main() {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.4 missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core 2.5.4 missing ${key}`);
+            }
+        }
+        if (semver === "2.5.5") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.5 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.5 missing ${key}`);
+            }
+        }
+        if (semver === "2.5.7") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.7 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.7 missing ${key}`);
             }
         }
 

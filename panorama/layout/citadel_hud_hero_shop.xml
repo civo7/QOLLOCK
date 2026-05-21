@@ -13,6 +13,7 @@
 				<Panel class="mod_icon" />
 				<Label class="recentModPurchaseName" text="{s:recent_mod_name}" />
 				<Label class="recentModTierCost" text="{s:recent_tier_purchased}" />
+				<Label class="recentModPurchaserHero" text="{s:recent_hero_name}" />
 			</Panel>
 		</snippet>
 	</snippets>
