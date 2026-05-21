@@ -89,7 +89,9 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
     ENABLE_SHOP_CLICK_TO_NOTIFY: "Hanturaya",
-    ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya",
+    ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya, bytenode",
+    RECENT_PURCHASES_QUICK_MAX: "bytenode",
+    RECENT_PURCHASES_QUICK_DISPLAY_SEC: "bytenode",
     SUPPORT_16_10: "Karma",
     SUPPORT_4_3: "Gyzeh",
     ENABLE_COMBAT_INDICATOR: "Goblin Man Sam",
@@ -318,6 +320,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Shop|Hero": "Shows your character in the shop menu.",
     "HUD / Shop|Minimalist": "Cleans up visuals of the shop menu significantly to reduce clutter.",
     "HUD / Shop|Quick Buy": "The item buying auto queue system in the shop menu.",
+    "HUD / Shop|Recent Purchases": "Tools for tracking and sharing recent item purchases.",
     "HUD / Shop|Stats": "Shows all of your player stats within the shop menu.",
     "HUD / Top Bar|Bridge Buff Timer": "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.",
     "HUD / Top Bar|Mid Boss Timer": "Shows a visual indicator in the top bar of when Mid Boss will spawn.",
@@ -7005,6 +7008,10 @@ const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
+const RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
+    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1, max: 5,  step: 1 },
+    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3, max: 15, step: 1 }
+];
 const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_3_4,
     [
@@ -7070,6 +7077,8 @@ const COMPACT_SCHEMA_2_5_4 = AppendUniqueSchemaFields(
         CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
     )
 );
+const COMPACT_SCHEMA_2_5_5 = COMPACT_SCHEMA_2_5_4;
+const COMPACT_SCHEMA_2_5_7 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_5, RECENT_PURCHASES_QUICK_SCHEMA_FIELDS);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -7191,6 +7200,14 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.4": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_4
+    },
+    "2.5.5": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_5
+    },
+    "2.5.7": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_7
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -18099,8 +18116,11 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Click to Notify", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
+            CreateSectionTitle(sectionParent, "Recent Purchases");
+            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Recent Purchases Shop Panel", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
+            CreateRow(sectionParent, "Notification Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);

@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "2.5.4";
+var QOL_SCHEMA_SEMVER = "2.5.7";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -902,6 +902,8 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_ENHANCED_QUICKBUY: 0,
         ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
+        RECENT_PURCHASES_QUICK_MAX: 3,
+        RECENT_PURCHASES_QUICK_DISPLAY_SEC: 10,
         ENABLE_HUD_SHIFT: 0,
         ENABLE_LANE_WITH_PARTY: 0,
         SUPPORT_16_10: 0,

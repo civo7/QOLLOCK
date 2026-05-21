@@ -1,6 +1,10 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/citadel_hud_hero_shop.vcss_c");
+CitadelHudHeroShop #RecentPurchasesPanel
+{
+	visibility: collapse;
+}
 CitadelHudHeroShop.disable_shop_blue_active
 {
 	world-blur: none !important;
@@ -425,39 +429,172 @@ CitadelHudHeroShop.simplify_shop_stats_active .hero_stats .GreenUpArrow,CitadelH
 	visibility: collapse;
 }
 
-.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesPanel,
+/* ── Recent Purchases runtime styles ── */
+
+.shop_recent_purchases_active #RecentPurchasesPanel,
 CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel
 {
-	visibility: visible;
-	margin-left: 18%;
-	margin-bottom: 26.2%;
+	opacity: 1;
+	margin-left: 110px;
+	ui-scale: 130%;
+	opacity-brush: gradient(linear, 0% 100%, 0% 100%, from(#ffffff), to(#ffffff00));
+	margin-top: 450px;
+	margin-bottom: 0px;
+	vertical-align: top;
 }
 
-.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesContainer,
-CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesContainer
-{
-	margin-right: 2%;
-}
-
-.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchases,
+.shop_recent_purchases_active #RecentPurchases,
 CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchases
 {
-	font-weight: bold;
-	text-transform: uppercase;
-	margin-bottom: 5px;
-	font-size: 16px;
-	opacity: 0.6;
+	font-family: block;
 }
 
-.shop_recent_purchases_active CitadelHudHeroShop #RecentPurchasesPanel:hover #RecentPurchases,
-CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel:hover #RecentPurchases
+.shop_recent_purchases_active #RecentPurchasesContainer,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesContainer
 {
-	opacity: 0.9;
+	height: 160px;
 }
 
-.shop_recent_purchases_active CitadelHudHeroShop .recentPurchase Label,
-CitadelHudHeroShop.shop_recent_purchases_active .recentPurchase Label
+.shop_recent_purchases_active #RecentPurchaseHeroImage,
+CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchaseHeroImage
 {
-	font-size: 14px;
+	margin-right: 5px;
+}
+
+.shop_recent_purchases_active .recentPurchase,
+CitadelHudHeroShop.shop_recent_purchases_active .recentPurchase
+{
+	opacity: 1;
+}
+
+.shop_recent_purchases_active .recentModPurchaserHero,
+CitadelHudHeroShop.shop_recent_purchases_active .recentModPurchaserHero
+{
+	visibility: collapse;
+}
+
+.shop_recent_purchases_active .recentPurchase .mod_icon,
+CitadelHudHeroShop.shop_recent_purchases_active .recentPurchase .mod_icon
+{
+	background-image: none;
+	margin: 0px 5px 0px 0px;
+	border-radius: 2px;
+}
+
+.shop_recent_purchases_active .isWeaponPurchase .mod_icon,
+CitadelHudHeroShop.shop_recent_purchases_active .isWeaponPurchase .mod_icon
+{
+	wash-color: none;
+	border: 1px solid courageBrightColor;
+}
+
+.shop_recent_purchases_active .isArmorPurchase .mod_icon,
+CitadelHudHeroShop.shop_recent_purchases_active .isArmorPurchase .mod_icon
+{
+	wash-color: none;
+	border: 1px solid fortitudeBrightColor;
+}
+
+.shop_recent_purchases_active .isTechPurchase .mod_icon,
+CitadelHudHeroShop.shop_recent_purchases_active .isTechPurchase .mod_icon
+{
+	wash-color: none;
+	border: 1px solid spiritBrightColor;
+}
+
+.shop_recent_purchases_active Label.recentTimePurchased,
+CitadelHudHeroShop.shop_recent_purchases_active Label.recentTimePurchased
+{
+	margin-top: 1px;
+	font-family: oracle;
+	margin-right: 2px;
+}
+
+.shop_recent_purchases_active Label.recentModTierCost,
+CitadelHudHeroShop.shop_recent_purchases_active Label.recentModTierCost
+{
+	font-family: oracle;
+	margin-bottom: 1.5px;
+	margin-left: -2px;
+}
+
+.shop_recent_purchases_active .recentModPurchaseName,
+CitadelHudHeroShop.shop_recent_purchases_active .recentModPurchaseName
+{
+	font-family: oracle;
+	max-width: 180px;
+	max-height: 20px;
+	text-overflow: shrink;
+}
+
+.shop_recent_purchases_active .isWeaponPurchase .recentModPurchaseName,
+.shop_recent_purchases_active .isWeaponPurchase .recentModTierCost,
+CitadelHudHeroShop.shop_recent_purchases_active .isWeaponPurchase .recentModPurchaseName,
+CitadelHudHeroShop.shop_recent_purchases_active .isWeaponPurchase .recentModTierCost
+{
+	wash-color: courageBrightColor;
+}
+
+.shop_recent_purchases_active .isArmorPurchase .recentModPurchaseName,
+.shop_recent_purchases_active .isArmorPurchase .recentModTierCost,
+CitadelHudHeroShop.shop_recent_purchases_active .isArmorPurchase .recentModPurchaseName,
+CitadelHudHeroShop.shop_recent_purchases_active .isArmorPurchase .recentModTierCost
+{
+	wash-color: fortitudeBrightColor;
+}
+
+.shop_recent_purchases_active .isTechPurchase .recentModPurchaseName,
+.shop_recent_purchases_active .isTechPurchase .recentModTierCost,
+CitadelHudHeroShop.shop_recent_purchases_active .isTechPurchase .recentModPurchaseName,
+CitadelHudHeroShop.shop_recent_purchases_active .isTechPurchase .recentModTierCost
+{
+	wash-color: spiritBrightColor;
+}
+
+.shop_recent_purchases_active .isTier4Purchase .recentModPurchaseName,
+.shop_recent_purchases_active .isTier4Purchase .recentModTierCost,
+CitadelHudHeroShop.shop_recent_purchases_active .isTier4Purchase .recentModPurchaseName,
+CitadelHudHeroShop.shop_recent_purchases_active .isTier4Purchase .recentModTierCost
+{
+	text-shadow: 0px 0px 0px 4.0 #151515;
+}
+
+.shop_recent_purchases_active .filterHidden,
+CitadelHudHeroShop.shop_recent_purchases_active .filterHidden
+{
+	visibility: collapse;
+}
+
+.shop_recent_purchases_active .filterButtonHidden,
+CitadelHudHeroShop.shop_recent_purchases_active .filterButtonHidden
+{
+	visibility: collapse;
+}
+
+.shop_recent_purchases_active #PurchaseFiltersContainer,
+CitadelHudHeroShop.shop_recent_purchases_active #PurchaseFiltersContainer
+{
+	flow-children: down;
+	margin-top: 3px;
+}
+
+.shop_recent_purchases_active .PurchaseFilterGroup,
+CitadelHudHeroShop.shop_recent_purchases_active .PurchaseFilterGroup
+{
+	flow-children: right;
+}
+
+.shop_recent_purchases_active .PurchaseFilterToggle,
+CitadelHudHeroShop.shop_recent_purchases_active .PurchaseFilterToggle
+{
+	ui-scale: 80%;
+	margin-right: 4px;
+}
+
+.shop_recent_purchases_active .PurchaseFilterToggle Label,
+CitadelHudHeroShop.shop_recent_purchases_active .PurchaseFilterToggle Label
+{
+	font-family: oracle;
+	margin-left: 4px;
 }
 
