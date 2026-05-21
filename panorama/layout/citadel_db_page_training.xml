@@ -37,7 +37,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="HeroTesting" class="playOptionContainer" onactivate="CitadelShowPrimaryTabPage( TopBarHeroes )">
+			<Panel id="HeroTesting" class="playOptionContainer" onactivate="CitadelShowHeroDetailsPage( 1 )">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
 					<Panel class="buttonImage" />
