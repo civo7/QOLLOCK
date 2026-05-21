@@ -179,6 +179,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_TAB_ZOOM_REM_TUNNELS": "Show the underground tunnel overlay while Tab Zoom is active.",
     "TAB_ZOOM_REM_TUNNELS_OPACITY": "Opacity of the underground tunnel overlay while Tab Zoom is active.",
     "ENABLE_MINIMAP_ELEVATION_MARKERS": "Shows relative elevation difference between you and players.",
+    "MINIMAP_ICON_COLOR": "Choose a preset color wash for minimap icons.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
     "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "ENABLE_MISSING_HERO": "Greys out heros in the top bar when missing on the map.",
@@ -485,6 +486,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_TAB_ZOOM_REM_TUNNELS: "low",
     TAB_ZOOM_REM_TUNNELS_OPACITY: "low",
     ENABLE_MINIMAP_ELEVATION_MARKERS: "low",
+    MINIMAP_ICON_COLOR: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
     ENABLE_MIN_SOULS: "medium",
@@ -801,9 +803,9 @@ const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
 const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
 const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
 const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
+const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
 const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
 const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
-const BUILD_SAVE_UI_TEMP_DISABLED = false;
 const BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
 const BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
 const BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
@@ -822,7 +824,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.5.4";
+    : "2.5.6";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -857,6 +859,8 @@ const QOL_COLOR_PALETTE_OPTIONS = [
     { label: "White", value: 1, hex: "#f7f4e8" },
     { label: "Silver", value: 2, hex: "#bfc7cf" },
     { label: "Charcoal", value: 3, hex: "#33363f" },
+    { label: "Brown", value: 22, hex: "#9a6743" },
+    { label: "Gold", value: 23, hex: "#d9a441" },
     { label: "Red", value: 4, hex: "#ff3b47" },
     { label: "Coral", value: 5, hex: "#ff6f61" },
     { label: "Orange", value: 6, hex: "#ff8a2a" },
@@ -877,8 +881,10 @@ const QOL_COLOR_PALETTE_OPTIONS = [
     { label: "Magenta", value: 19, hex: "#ff4de3" },
     { label: "Pink", value: 20, hex: "#ff78bd" },
     { label: "Rose", value: 21, hex: "#ff5d89" },
-    { label: "Brown", value: 22, hex: "#9a6743" },
-    { label: "Gold", value: 23, hex: "#d9a441" }
+    { label: "Crimson", value: 26, hex: "#b8142f" },
+    { label: "Ice", value: 27, hex: "#b9f4ff" },
+    { label: "Lavender", value: 28, hex: "#d7b2ff" },
+    { label: "Black", value: 29, hex: "#05070a" }
 ];
 var gZoomMinimapPreviewPanel = null;
 var gZoomMinimapPreviewCircle = null;
@@ -947,7 +953,6 @@ var gRuntimeButtonGroupRefreshers = {};
 var gRuntimeSliderResetters = {};
 var gMinesweeperState = null;
 var gMinesweeperTimerToken = 0;
-var g2048State = null;
 var gFlappyState = null;
 var gFlappyLoopToken = 0;
 var gAimTrainerState = null;
@@ -957,8 +962,6 @@ var gTrainTrackingLoopToken = 0;
 var gWhackRemState = null;
 var gWhackRemLoopToken = 0;
 var gArcadeSoundLastIndexByKey = {};
-var gBilliardsState = null;
-var gBilliardsLoopToken = 0;
 var gBlackjackState = null;
 var gOnDeathArcadeBridgePollToken = 0;
 var gOnDeathArcadeBridgePollRunning = false;
@@ -4280,7 +4283,6 @@ const MINESWEEPER_DIFFICULTIES = [
     { id: "MEDIUM", label: "Medium", rows: 10, cols: 10, mines: 18 },
     { id: "HARD", label: "Hard", rows: 10, cols: 12, mines: 28 }
 ];
-const ARCADE_2048_SIZE = 4;
 const FLAPPY_BIRD_IMAGE_SRC = "s2r://panorama/images/qollock/vampirebat_sm_psd.vtex";
 const AIM_TRAINER_DURATION_SEC = 45;
 const TRAIN_TRACKING_DURATION_SEC = 45;
@@ -6979,6 +6981,15 @@ const SETTINGS_THEME_SCHEMA_FIELDS = [
     { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
 ];
 const PALETTE_PICKER_SCHEMA_FIELDS = [
+    { key: "ITEMS_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 29, step: 1 },
+    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 29, step: 1 },
+    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 29, step: 1 },
+    { key: "AMMO_TEXT_COLOR", min: 0, max: 29, step: 1 },
+    { key: "MINIMAP_ICON_COLOR", min: 0, max: 29, step: 1 }
+];
+const PALETTE_PICKER_SCHEMA_FIELDS_2_5_4 = [
     { key: "ITEMS_WASH_COLOR", min: 0, max: 25, step: 1 },
     { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 25, step: 1 },
     { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 25, step: 1 },
@@ -7064,12 +7075,20 @@ const COMPACT_SCHEMA_2_5_4 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_5_3,
     AppendUniqueSchemaFields(
         AppendUniqueSchemaFields(
-            PALETTE_PICKER_SCHEMA_FIELDS,
+            PALETTE_PICKER_SCHEMA_FIELDS_2_5_4,
             STAMINA_CHARGE_SCHEMA_FIELDS
         ),
         CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
     )
 );
+const COMPACT_SCHEMA_2_5_5 = AppendUniqueSchemaFields(
+    CloneSchemaWithFieldOverrides(
+        COMPACT_SCHEMA_2_5_4,
+        PALETTE_PICKER_SCHEMA_FIELDS
+    ),
+    PALETTE_PICKER_SCHEMA_FIELDS
+);
+const COMPACT_SCHEMA_2_5_6 = COMPACT_SCHEMA_2_5_5;
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -7191,6 +7210,14 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.4": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_4
+    },
+    "2.5.5": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_5
+    },
+    "2.5.6": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_6
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -7811,96 +7838,6 @@ function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     WatchBuildSaveStatus(saveBtn, saveLbl, token, cfgSave);
 }
 
-function OpenBuildSaveConfirmModal(saveBtn, saveLbl) {
-    var rootPanel = $.GetContextPanel();
-    if (!rootPanel || !rootPanel.IsValid || !rootPanel.IsValid()) return;
-
-    var existing = rootPanel.FindChildTraverse("BuildSaveConfirmModalOverlay");
-    if (existing) existing.DeleteAsync(0);
-
-    var saveDisabled = BUILD_SAVE_UI_TEMP_DISABLED;
-    var isRu = IsRussianSettingsLanguage();
-    var isCn = IsChineseSettingsLanguage();
-    var titleText = saveDisabled
-        ? "Save Settings"
-        : (isRu ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A" : (isCn ? "\u4FDD\u5B58\u8BBE\u7F6E" : "Save Settings"));
-    var line1 = saveDisabled
-        ? "Saving settings is currently disabled on main branch due to some bugs"
-        : "This swaps your character and saves your settings in a build.";
-    var line2 = saveDisabled
-        ? "Currently it is in Early Access pending rework"
-        : "DO NOT SAVE IN A LIVE MATCH OR IN QUEUE!";
-    var confirmText = saveDisabled ? "Discord" : LocalizeSettingsText("SAVE", true);
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "BuildSaveConfirmModalOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-    $.Schedule(0.01, function() { overlay.AddClass("Show"); });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-    modalContainer.style.width = "560px";
-    modalContainer.AddClass("QOLUnifiedModalSurface");
-    modalContainer.AddClass("MetroModalContainer");
-    modalContainer.AddClass("BuildSaveConfirmModalContainer");
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    closeBtn.AddClass("QOLUnifiedModalClose");
-    closeBtn.AddClass("BuildSaveConfirmCloseBtn");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-
-    var header = $.CreatePanel("Label", modalContainer, "");
-    header.AddClass("ModalTitle");
-    header.AddClass("MetroModalCenteredText");
-    header.text = titleText;
-
-    var body1 = $.CreatePanel("Label", modalContainer, "");
-    body1.AddClass("ModalInstructions");
-    body1.AddClass("MetroModalCenteredText");
-    body1.text = line1;
-
-    var body2 = $.CreatePanel("Label", modalContainer, "");
-    body2.AddClass("ModalInstructions");
-    body2.AddClass("MetroModalCenteredText");
-    body2.AddClass("BuildSaveConfirmWarning");
-    body2.style.color = saveDisabled ? "#c9d3ff" : "#ff8787";
-    body2.style.fontWeight = saveDisabled ? "normal" : "bold";
-    body2.style.marginTop = "8px";
-    body2.text = line2;
-
-    var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
-    btnRow.AddClass("MetroModalBtnRow");
-    btnRow.AddClass("BuildSaveConfirmBtnRow");
-    btnRow.style.marginTop = "14px";
-
-    var confirmBtn = $.CreatePanel("Button", btnRow, "BuildSaveConfirmButton");
-    confirmBtn.AddClass("QOLUnifiedModalPrimary");
-    confirmBtn.AddClass("ModalBtnApply");
-    confirmBtn.AddClass("MetroModalBtn");
-    confirmBtn.AddClass("BuildSaveConfirmActionBtn");
-    var confirmContent = $.CreatePanel("Panel", confirmBtn, "");
-    confirmContent.AddClass("BuildSaveConfirmActionContent");
-    var confirmIcon = $.CreatePanel("Image", confirmContent, "", {
-        src: "s2r://panorama/images/icons/icon_download.vsvg",
-        defaultsrc: "",
-        scaling: "contain"
-    });
-    confirmIcon.AddClass("BuildSaveConfirmActionIcon");
-    var confirmLbl = $.CreatePanel("Label", confirmContent, "");
-    confirmLbl.AddClass("BuildSaveConfirmActionLabel");
-    confirmLbl.text = confirmText;
-    confirmBtn.SetPanelEvent("onactivate", function() {
-        CloseModal(overlay);
-        if (saveDisabled) {
-            $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7");
-            return;
-        }
-        ActivateBuildSaveFromUi(saveBtn, saveLbl);
-    });
-}
-
 function QueueBuildClearRequest() {
     var token = String(Date.now ? Date.now() : (new Date()).getTime()) + "_" + String(Math.floor(Math.random() * 1000000));
     var panel = $.GetContextPanel();
@@ -8194,9 +8131,11 @@ function PublishPaletteColorBridge(configId, value) {
         attrName = STAMINA_CHARGE_COLOR_ATTR;
     } else if (configId === "AMMO_TEXT_COLOR") {
         attrName = AMMO_TEXT_COLOR_ATTR;
+    } else if (configId === "MINIMAP_ICON_COLOR") {
+        attrName = MINIMAP_ICON_COLOR_ATTR;
     }
     if (!attrName) return "";
-    var bridgeValue = String(Math.max(0, Math.min(25, Math.round(Number(value) || 0))));
+    var bridgeValue = String(Math.max(0, Math.min(29, Math.round(Number(value) || 0))));
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;
@@ -8212,6 +8151,15 @@ function PublishPaletteColorBridge(configId, value) {
         } catch (ePersist) {}
     }
     return bridgeValue;
+}
+
+function PublishPaletteColorBridges() {
+    PublishPaletteColorBridge("PLAYER_HEALTHBAR_ACCENT_COLOR", MOD_CONFIG.PLAYER_HEALTHBAR_ACCENT_COLOR);
+    PublishPaletteColorBridge("BOTTOM_BAR_WASH_COLOR", MOD_CONFIG.BOTTOM_BAR_WASH_COLOR);
+    PublishPaletteColorBridge("KEYBOARD_OVERLAY_WASH_COLOR", MOD_CONFIG.KEYBOARD_OVERLAY_WASH_COLOR);
+    PublishPaletteColorBridge("STAMINA_CHARGE_COLOR", MOD_CONFIG.STAMINA_CHARGE_COLOR);
+    PublishPaletteColorBridge("AMMO_TEXT_COLOR", MOD_CONFIG.AMMO_TEXT_COLOR);
+    PublishPaletteColorBridge("MINIMAP_ICON_COLOR", MOD_CONFIG.MINIMAP_ICON_COLOR);
 }
 
 function SaveAndSync() {
@@ -8231,6 +8179,7 @@ function SaveAndSync() {
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
     var data = JSON.stringify(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
+        PublishPaletteColorBridges();
         return;
     }
     gLastSavedConfigRaw = data;
@@ -8257,11 +8206,7 @@ function SaveAndSync() {
         try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
-    PublishPaletteColorBridge("PLAYER_HEALTHBAR_ACCENT_COLOR", MOD_CONFIG.PLAYER_HEALTHBAR_ACCENT_COLOR);
-    PublishPaletteColorBridge("BOTTOM_BAR_WASH_COLOR", MOD_CONFIG.BOTTOM_BAR_WASH_COLOR);
-    PublishPaletteColorBridge("KEYBOARD_OVERLAY_WASH_COLOR", MOD_CONFIG.KEYBOARD_OVERLAY_WASH_COLOR);
-    PublishPaletteColorBridge("STAMINA_CHARGE_COLOR", MOD_CONFIG.STAMINA_CHARGE_COLOR);
-    PublishPaletteColorBridge("AMMO_TEXT_COLOR", MOD_CONFIG.AMMO_TEXT_COLOR);
+    PublishPaletteColorBridges();
     UpdateOnDeathArcadeBridgePollerState();
     ApplySettingsThemeClasses(panel && panel.FindChildTraverse ? panel.FindChildTraverse("SettingsWindow") : null);
     QueueActivePresetHighlightRefresh(0.05);
@@ -8736,6 +8681,12 @@ function SetConfigFeedbackMessage(message, tone, holdMs) {
     });
 }
 
+function PrepareSettingsModalOpen() {
+    try {
+        ApplySettingsThemeClasses(null);
+    } catch (eModalTheme) {}
+}
+
 function CloseModal(overlay) {
     if (!overlay || !overlay.IsValid()) return;
     var overlayId = "";
@@ -8780,11 +8731,6 @@ function CloseSettingsSideModalsIfOpen() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel || !rootPanel.IsValid || !rootPanel.IsValid()) return;
     var overlayIds = [
-        "BuildSaveConfirmModalOverlay",
-        "BuildSaveHideoutOnlyModalOverlay",
-        "SavingSettingsModalOverlay",
-        "OptimizeFilterDownloadModalOverlay",
-        "SupportCommissionModalOverlay",
         "ConfigDiffPreviewModalOverlay"
     ];
     for (var i = 0; i < overlayIds.length; i++) {
@@ -8795,280 +8741,6 @@ function CloseSettingsSideModalsIfOpen() {
             CloseModal(existing);
         }
     }
-}
-
-function OpenBuildSaveHideoutOnlyModal() {
-    var rootPanel = $.GetContextPanel();
-    var existing = rootPanel.FindChildTraverse("BuildSaveHideoutOnlyModalOverlay");
-    if (existing) existing.DeleteAsync(0);
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "BuildSaveHideoutOnlyModalOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-    $.Schedule(0.01, function() { overlay.AddClass("Show"); });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-    modalContainer.style.width = "250px";
-    modalContainer.AddClass("QOLUnifiedModalSurface");
-    modalContainer.AddClass("MetroModalContainer");
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    closeBtn.AddClass("QOLUnifiedModalClose");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-
-    var header = $.CreatePanel("Label", modalContainer, "");
-    header.AddClass("ModalTitle");
-    header.AddClass("MetroModalCenteredText");
-    header.text = "Warning";
-
-    var message = $.CreatePanel("Label", modalContainer, "");
-    message.AddClass("ModalInstructions");
-    message.AddClass("MetroModalCenteredText");
-    message.text = "THIS FEATURE IS ONLY FOR HIDEOUT";
-
-    var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
-    btnRow.AddClass("MetroModalBtnRow");
-    var closeModalBtn = $.CreatePanel("Button", btnRow, "");
-    closeModalBtn.AddClass("QOLUnifiedModalPrimary");
-    closeModalBtn.AddClass("ModalBtnApply");
-    closeModalBtn.AddClass("MetroModalBtn");
-    var closeModalLbl = $.CreatePanel("Label", closeModalBtn, "");
-    closeModalLbl.text = "OK";
-    closeModalBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-}
-
-function OpenSavingSettingsModal() {
-    var isRu = IsRussianSettingsLanguage();
-    var rootPanel = $.GetContextPanel();
-    var existing = rootPanel.FindChildTraverse("SavingSettingsModalOverlay");
-    if (existing) existing.DeleteAsync(0);
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "SavingSettingsModalOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-    $.Schedule(0.01, function() { overlay.AddClass("Show"); });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-    modalContainer.style.width = "560px";
-    modalContainer.AddClass("QOLUnifiedModalSurface");
-    modalContainer.AddClass("MetroModalContainer");
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    closeBtn.AddClass("QOLUnifiedModalClose");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-
-    var header = $.CreatePanel("Label", modalContainer, "");
-    header.AddClass("ModalTitle");
-    header.AddClass("MetroModalCenteredText");
-    header.text = isRu ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A" : "Saving Settings";
-
-    var intro = $.CreatePanel("Label", modalContainer, "");
-    intro.AddClass("ModalInstructions");
-    intro.text = isRu
-        ? "\u0418\u0437-\u0437\u0430 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0439 \u0438\u0433\u0440\u044B \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438 \u043E\u0447\u0435\u043D\u044C \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u044B.\n\u0412\u043E\u0442 \u043A\u0430\u043A \u044D\u0442\u043E \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442."
-        : "Due to game limitations we are very restricted.\nHere is how it works.";
-
-    var saveHeader = $.CreatePanel("Label", modalContainer, "");
-    saveHeader.AddClass("ModalInstructions");
-    saveHeader.text = isRu ? "\u041A\u043D\u043E\u043F\u043A\u0430 Save:" : "Save Button:";
-    saveHeader.style.color = "#66cc99";
-    saveHeader.style.fontWeight = "bold";
-
-    var saveBody = $.CreatePanel("Label", modalContainer, "");
-    saveBody.AddClass("ModalInstructions");
-    saveBody.text = isRu
-        ? "1. \u0412\u0430\u0448\u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u044E\u0442\u0441\u044F \u0432 \u0432\u0438\u0434\u0435 \u0441\u0442\u0440\u043E\u043A\u0438.\n" +
-          "2. \u041F\u0440\u0438 \u043D\u0430\u0436\u0430\u0442\u0438\u0438 Save \u0432\u0430\u0441 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u043D\u0430 \u043D\u0435\u0432\u044B\u043F\u0443\u0449\u0435\u043D\u043D\u043E\u0433\u043E \u0433\u0435\u0440\u043E\u044F.\n" +
-          "3. \u0411\u0438\u043B\u0434 \u044D\u0442\u043E\u0433\u043E \u0433\u0435\u0440\u043E\u044F \u0438\u0437\u043C\u0435\u043D\u044F\u0435\u0442\u0441\u044F \u0434\u043B\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0434\u0430\u043D\u043D\u044B\u0445.\n" +
-          "4. \u0417\u0430\u0442\u0435\u043C \u0432\u0430\u0441 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u043E\u0431\u0440\u0430\u0442\u043D\u043E."
-        : "1. Your settings are saved as a string.\n" +
-          "2. Clicking Save button switches you to an unreleased hero.\n" +
-          "3. The Hero's build is modified to save your data.\n" +
-          "4. You are switched back.";
-
-    var loadHeader = $.CreatePanel("Label", modalContainer, "");
-    loadHeader.AddClass("ModalInstructions");
-    loadHeader.text = isRu ? "\u041F\u0440\u0438 \u0437\u0430\u043F\u0443\u0441\u043A\u0435 \u0438\u0433\u0440\u044B:" : "On Game Load:";
-    loadHeader.style.color = "#66cc99";
-    loadHeader.style.fontWeight = "bold";
-
-    var loadBody = $.CreatePanel("Label", modalContainer, "");
-    loadBody.AddClass("ModalInstructions");
-    loadBody.text = isRu
-        ? "1. \u0412\u0430\u0441 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u043D\u0430 \u043D\u0435\u0432\u044B\u043F\u0443\u0449\u0435\u043D\u043D\u043E\u0433\u043E \u0433\u0435\u0440\u043E\u044F.\n" +
-          "2. \u0414\u0430\u043D\u043D\u044B\u0435 \u0447\u0438\u0442\u0430\u044E\u0442\u0441\u044F \u0438\u0437 \u0431\u0438\u043B\u0434\u0430; \u0435\u0441\u043B\u0438 \u043F\u0443\u0441\u0442\u043E, \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u0442\u0441\u044F \u043A\u043E\u043D\u0444\u0438\u0433 \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E.\n" +
-          "3. \u0412\u0430\u0448\u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043F\u0440\u0438\u043C\u0435\u043D\u044F\u044E\u0442\u0441\u044F.\n" +
-          "4. \u0412\u0430\u0441 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u043E\u0431\u0440\u0430\u0442\u043D\u043E.\n\n" +
-          "\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043D\u0435 \u0441\u043F\u0430\u043C\u044C\u0442\u0435 Save \u0438 \u0434\u0430\u0439\u0442\u0435 \u0438\u0433\u0440\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A."
-        : "1. You are switched to the unreleased hero.\n" +
-          "2. Your data is read from your build, if blank default config.\n" +
-          "3. Your settings are applied.\n" +
-          "4. You are switched back.\n\n" +
-          "Please be patient on clicking save and game load to not create issues!";
-
-    var btnRow = $.CreatePanel("Panel", modalContainer, "ModalBtnRow");
-    btnRow.AddClass("MetroModalBtnRow");
-    var closeModalBtn = $.CreatePanel("Button", btnRow, "");
-    closeModalBtn.AddClass("QOLUnifiedModalPrimary");
-    closeModalBtn.AddClass("ModalBtnApply");
-    closeModalBtn.AddClass("MetroModalBtn");
-    var closeModalLbl = $.CreatePanel("Label", closeModalBtn, "");
-    closeModalLbl.text = "OK";
-    closeModalBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-}
-
-function OpenOptimizeFilterDownloadModal() {
-    var rootPanel = $.GetContextPanel();
-    var existing = rootPanel.FindChildTraverse("OptimizeFilterDownloadModalOverlay");
-    if (existing) existing.DeleteAsync(0);
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "OptimizeFilterDownloadModalOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-    $.Schedule(0.01, function() { overlay.AddClass("Show"); });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-    modalContainer.style.width = "560px";
-    modalContainer.AddClass("QOLUnifiedModalSurface");
-    modalContainer.AddClass("OptimizeFilterModalContainer");
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    closeBtn.AddClass("QOLUnifiedModalClose");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-
-    var title = $.CreatePanel("Label", modalContainer, "");
-    title.AddClass("ModalTitle");
-    title.text = LocalizeSettingsText("Optimized Item Cooldown Filter", true);
-
-    var line1 = $.CreatePanel("Label", modalContainer, "");
-    line1.AddClass("ModalInstructions");
-    line1.AddClass("OptimizeFilterModalLine");
-    line1.text = LocalizeSettingsText("To filter this setting you need a separate file.", true);
-
-    var line2 = $.CreatePanel("Label", modalContainer, "");
-    line2.AddClass("ModalInstructions");
-    line2.AddClass("OptimizeFilterModalLine");
-    line2.text = LocalizeSettingsText("Use the link below to download it.", true);
-
-    var warnRow = $.CreatePanel("Panel", modalContainer, "");
-    warnRow.AddClass("OptimizeFilterModalWarnRow");
-
-    var warnOnly = $.CreatePanel("Label", warnRow, "");
-    warnOnly.AddClass("OptimizeFilterModalWarnAccent");
-    warnOnly.text = LocalizeSettingsText("ONLY", true);
-
-    var warnDownload = $.CreatePanel("Label", warnRow, "");
-    warnDownload.AddClass("OptimizeFilterModalWarnText");
-    warnDownload.text = LocalizeSettingsText("download", true);
-
-    var warnOne = $.CreatePanel("Label", warnRow, "");
-    warnOne.AddClass("OptimizeFilterModalWarnAccent");
-    warnOne.text = LocalizeSettingsText("ONE", true);
-
-    var warnSuffix = $.CreatePanel("Label", warnRow, "");
-    warnSuffix.AddClass("OptimizeFilterModalWarnText");
-    warnSuffix.text = LocalizeSettingsText("filter file.", true);
-
-    var line3 = $.CreatePanel("Label", modalContainer, "");
-    line3.AddClass("ModalInstructions");
-    line3.AddClass("OptimizeFilterModalLine");
-    line3.text = LocalizeSettingsText("Use one click installer button.", true);
-
-    var line4 = $.CreatePanel("Label", modalContainer, "");
-    line4.AddClass("ModalInstructions");
-    line4.AddClass("OptimizeFilterModalLine");
-    line4.text = LocalizeSettingsText("These can break on updates, make sure to update.", true);
-
-    var btnRow = $.CreatePanel("Panel", modalContainer, "");
-    btnRow.AddClass("OptimizeFilterModalBtnRow");
-
-    var downloadBtn = $.CreatePanel("Button", btnRow, "");
-    downloadBtn.AddClass("QOLUnifiedModalPrimary");
-    downloadBtn.AddClass("ModalBtnApply");
-    downloadBtn.AddClass("OptimizeFilterModalDownloadBtn");
-
-    var downloadLbl = $.CreatePanel("Label", downloadBtn, "");
-    downloadLbl.text = LocalizeSettingsText("Download", true);
-
-    downloadBtn.SetPanelEvent("onactivate", function() {
-        $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/601444");
-        CloseModal(overlay);
-    });
-}
-
-function OpenSupportCommissionModal() {
-    var rootPanel = $.GetContextPanel();
-    var existing = rootPanel.FindChildTraverse("SupportCommissionModalOverlay");
-    if (existing) existing.DeleteAsync(0);
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "SupportCommissionModalOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-    $.Schedule(0.01, function() { overlay.AddClass("Show"); });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ExportModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-    modalContainer.style.width = "620px";
-    modalContainer.AddClass("QOLUnifiedModalSurface");
-    modalContainer.AddClass("OptimizeFilterModalContainer");
-    modalContainer.AddClass("SupportCommissionModalContainer");
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    closeBtn.AddClass("QOLUnifiedModalClose");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
-
-    var title = $.CreatePanel("Label", modalContainer, "");
-    title.AddClass("ModalTitle");
-    title.text = LocalizeSettingsText("Commission Information", true);
-
-    function StripSupportTerminalPeriod(textValue) {
-        if (textValue === undefined || textValue === null) return "";
-        var v = String(textValue);
-        return v.endsWith(".") ? v.slice(0, -1) : v;
-    }
-
-    function AddCommissionLine(text, isHtml) {
-        var line = $.CreatePanel("Label", modalContainer, "", isHtml ? { html: "true" } : {});
-        line.AddClass("ModalInstructions");
-        line.AddClass("OptimizeFilterModalLine");
-        line.text = StripSupportTerminalPeriod(LocalizeSettingsText(text, true));
-        return line;
-    }
-
-    AddCommissionLine("This is a way for me to give something back to the supporters.", false);
-    AddCommissionLine("All commissioned additions are released publicly and available to everyone.", false);
-    AddCommissionLine('The mod is <font color="#66cc99">fully functional</font> and <font color="#66cc99">free</font> for all users.', true);
-    AddCommissionLine('Custom Preset Commission: <font color="#66cc99">$25</font>', true);
-    AddCommissionLine('New Feature Commission: <font color="#66cc99">$10</font> to <font color="#66cc99">$100</font>', true);
-
-    var contactRow = $.CreatePanel("Panel", modalContainer, "SupportCommissionModalContactRow");
-    contactRow.AddClass("SupportCommissionModalContactRow");
-    var contactText = $.CreatePanel("Label", contactRow, "");
-    contactText.AddClass("ModalInstructions");
-    contactText.AddClass("OptimizeFilterModalLine");
-    contactText.AddClass("SupportCommissionModalContactText");
-    contactText.text = LocalizeSettingsText("Depending on complexity and work involved, contact me on Discord", true);
-
-    var contactDiscordBtn = $.CreatePanel("Button", contactRow, "SupportCommissionModalDiscordBtn");
-    contactDiscordBtn.AddClass("QOLUnifiedModalPrimary");
-    contactDiscordBtn.AddClass("HeaderDiscordLinkButton");
-    contactDiscordBtn.AddClass("SupportTabDiscordIconBtn");
-    contactDiscordBtn.AddClass("SupportTabDiscordInlineIconBtn");
-    EnsureDiscordTextureLogo(contactDiscordBtn, "SupportCommissionModalDiscordLogoTexture", "HeaderDiscordLogoTexture");
-    contactDiscordBtn.SetPanelEvent("onactivate", function() {
-        $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7");
-    });
 }
 
 function SyncTabActiveStates(tabBar) {
@@ -9882,11 +9554,14 @@ function OpenConfigDiffPreviewModal(options) {
     var cancelText = String(opts.cancelText || "Cancel");
 
     var rootPanel = $.GetContextPanel();
+    if (!rootPanel) return;
+    PrepareSettingsModalOpen();
     var existing = rootPanel.FindChildTraverse("ConfigDiffPreviewModalOverlay");
     if (existing) existing.DeleteAsync(0);
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ConfigDiffPreviewModalOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() { CloseModal(overlay); });
     $.Schedule(0.01, function() {
         if (overlay && overlay.IsValid && overlay.IsValid()) {
@@ -10547,10 +10222,12 @@ function OpenMinesweeperModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseMinesweeperModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeMinesweeperOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() {
         CloseMinesweeperModal(overlay);
     });
@@ -10560,6 +10237,7 @@ function OpenMinesweeperModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeMinesweeperModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -10653,345 +10331,6 @@ function OpenMinesweeperModal() {
     });
 
     ApplyMinesweeperDifficulty(state, ResolveArcadeDefaultDifficultyId(), true);
-}
-
-function Create2048EmptyBoard() {
-    var board = [];
-    for (var r = 0; r < ARCADE_2048_SIZE; r++) {
-        var row = [];
-        for (var c = 0; c < ARCADE_2048_SIZE; c++) {
-            row.push(0);
-        }
-        board.push(row);
-    }
-    return board;
-}
-
-function Get2048TileColors(value) {
-    if (value <= 0) return { bg: "#2a2f33cc", fg: "#d8e4de33" };
-    if (value === 2) return { bg: "#3a4347", fg: "#d8e4de" };
-    if (value === 4) return { bg: "#455056", fg: "#eef6f2" };
-    if (value === 8) return { bg: "#4a664f", fg: "#ffffff" };
-    if (value === 16) return { bg: "#4f7350", fg: "#ffffff" };
-    if (value === 32) return { bg: "#6c6a44", fg: "#ffffff" };
-    if (value === 64) return { bg: "#7e613a", fg: "#ffffff" };
-    if (value === 128) return { bg: "#7e4f3a", fg: "#ffffff" };
-    if (value === 256) return { bg: "#7a3f55", fg: "#ffffff" };
-    if (value === 512) return { bg: "#63407a", fg: "#ffffff" };
-    if (value === 1024) return { bg: "#49507f", fg: "#ffffff" };
-    if (value === 2048) return { bg: "#3e7d66", fg: "#ffffff" };
-    return { bg: "#2f8f7a", fg: "#ffffff" };
-}
-
-function Update2048Status(state, text) {
-    if (!state || !state.isValid || !state.isValid()) return;
-    if (state.statusLabel && state.statusLabel.IsValid && state.statusLabel.IsValid()) {
-        var hasText = !!(text && text.length > 0);
-        state.statusLabel.text = hasText ? text : "";
-        state.statusLabel.style.visibility = hasText ? "visible" : "collapse";
-    }
-}
-
-function Update2048Hud(state) {
-    if (!state || !state.isValid || !state.isValid()) return;
-    if (state.scoreLabel && state.scoreLabel.IsValid && state.scoreLabel.IsValid()) {
-        state.scoreLabel.text = "Score: " + state.score;
-    }
-}
-
-function Render2048Board(state) {
-    if (!state || !state.isValid || !state.isValid()) return;
-    for (var r = 0; r < ARCADE_2048_SIZE; r++) {
-        for (var c = 0; c < ARCADE_2048_SIZE; c++) {
-            var value = state.board[r][c];
-            var cell = state.cells[r][c];
-            if (!cell || !cell.panel || !cell.label) continue;
-            var colors = Get2048TileColors(value);
-            cell.panel.style.backgroundColor = colors.bg;
-            cell.label.style.color = colors.fg;
-            cell.label.text = value > 0 ? String(value) : "";
-        }
-    }
-}
-
-function Spawn2048Tile(state) {
-    var empty = [];
-    for (var r = 0; r < ARCADE_2048_SIZE; r++) {
-        for (var c = 0; c < ARCADE_2048_SIZE; c++) {
-            if (state.board[r][c] === 0) empty.push({ r: r, c: c });
-        }
-    }
-    if (empty.length <= 0) return false;
-    var pick = empty[Math.floor(Math.random() * empty.length)];
-    state.board[pick.r][pick.c] = (Math.random() < 0.9) ? 2 : 4;
-    return true;
-}
-
-function Slide2048Line(line) {
-    var compact = [];
-    for (var i = 0; i < line.length; i++) {
-        if (line[i] > 0) compact.push(line[i]);
-    }
-
-    var merged = [];
-    var gain = 0;
-    var idx = 0;
-    while (idx < compact.length) {
-        if (idx + 1 < compact.length && compact[idx] === compact[idx + 1]) {
-            var doubled = compact[idx] * 2;
-            merged.push(doubled);
-            gain += doubled;
-            idx += 2;
-        } else {
-            merged.push(compact[idx]);
-            idx += 1;
-        }
-    }
-
-    while (merged.length < line.length) {
-        merged.push(0);
-    }
-
-    var moved = false;
-    for (var j = 0; j < line.length; j++) {
-        if (line[j] !== merged[j]) {
-            moved = true;
-            break;
-        }
-    }
-
-    return { line: merged, gain: gain, moved: moved };
-}
-
-function Apply2048Move(state, direction) {
-    var movedAny = false;
-    var gainTotal = 0;
-    var size = ARCADE_2048_SIZE;
-    var newBoard = Create2048EmptyBoard();
-
-    for (var i = 0; i < size; i++) {
-        var line = [];
-        for (var j = 0; j < size; j++) {
-            if (direction === "left") line.push(state.board[i][j]);
-            else if (direction === "right") line.push(state.board[i][size - 1 - j]);
-            else if (direction === "up") line.push(state.board[j][i]);
-            else line.push(state.board[size - 1 - j][i]);
-        }
-
-        var slid = Slide2048Line(line);
-        gainTotal += slid.gain;
-        if (slid.moved) movedAny = true;
-
-        for (var k = 0; k < size; k++) {
-            var value = slid.line[k];
-            if (direction === "left") newBoard[i][k] = value;
-            else if (direction === "right") newBoard[i][size - 1 - k] = value;
-            else if (direction === "up") newBoard[k][i] = value;
-            else newBoard[size - 1 - k][i] = value;
-        }
-    }
-
-    if (!movedAny) return false;
-    state.board = newBoard;
-    state.score += gainTotal;
-    return true;
-}
-
-function Has2048Moves(state) {
-    var size = ARCADE_2048_SIZE;
-    for (var r = 0; r < size; r++) {
-        for (var c = 0; c < size; c++) {
-            var v = state.board[r][c];
-            if (v === 0) return true;
-            if (c + 1 < size && state.board[r][c + 1] === v) return true;
-            if (r + 1 < size && state.board[r + 1][c] === v) return true;
-        }
-    }
-    return false;
-}
-
-function Reset2048Game(state) {
-    if (!state || !state.active) return;
-    state.board = Create2048EmptyBoard();
-    state.score = 0;
-    state.gameOver = false;
-    state.won = false;
-    Spawn2048Tile(state);
-    Spawn2048Tile(state);
-    Update2048Hud(state);
-    Update2048Status(state, "");
-    Render2048Board(state);
-}
-
-function Handle2048Move(state, direction) {
-    if (!state || !state.active || state.gameOver) return;
-    var moved = Apply2048Move(state, direction);
-    if (!moved) return;
-
-    Spawn2048Tile(state);
-    Render2048Board(state);
-    Update2048Hud(state);
-
-    if (!state.won) {
-        for (var r = 0; r < ARCADE_2048_SIZE; r++) {
-            for (var c = 0; c < ARCADE_2048_SIZE; c++) {
-                if (state.board[r][c] >= 2048) {
-                    state.won = true;
-                    Update2048Status(state, "2048 reached! Keep going.");
-                    break;
-                }
-            }
-            if (state.won) break;
-        }
-    }
-
-    if (!Has2048Moves(state)) {
-        state.gameOver = true;
-        Update2048Status(state, "Game over. Press New Game.");
-    }
-}
-
-function Close2048Modal(overlay) {
-    if (g2048State) {
-        g2048State.active = false;
-        g2048State = null;
-    }
-    if (overlay && overlay.IsValid && overlay.IsValid()) {
-        CloseModal(overlay);
-    }
-}
-
-function Close2048ModalIfOpen() {
-    var root = $.GetContextPanel();
-    if (!root) return;
-    var overlay = root.FindChildTraverse("Arcade2048Overlay");
-    if (overlay && overlay.IsValid && overlay.IsValid()) {
-        Close2048Modal(overlay);
-    }
-}
-
-function Open2048Modal() {
-    var rootPanel = $.GetContextPanel();
-    if (!rootPanel) return;
-
-    Close2048ModalIfOpen();
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "Arcade2048Overlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() {
-        Close2048Modal(overlay);
-    });
-    $.Schedule(0.01, function() {
-        if (overlay && overlay.IsValid && overlay.IsValid()) overlay.AddClass("Show");
-    });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "Arcade2048ModalContainer");
-    modalContainer.AddClass("ArcadeModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() {
-        Close2048Modal(overlay);
-    });
-
-    var header = $.CreatePanel("Label", modalContainer, "");
-    header.AddClass("ModalTitle");
-    header.AddClass("Arcade2048Title");
-    header.text = "2048";
-
-    var hudRow = $.CreatePanel("Panel", modalContainer, "Arcade2048HudRow");
-    hudRow.AddClass("Arcade2048HudRow");
-    var scoreLabel = $.CreatePanel("Label", hudRow, "Arcade2048ScoreLabel");
-    scoreLabel.AddClass("Arcade2048Stat");
-
-    var actionRow = $.CreatePanel("Panel", modalContainer, "Arcade2048ActionRow");
-    actionRow.AddClass("Arcade2048ActionRow");
-
-    var newGameBtn = $.CreatePanel("Button", actionRow, "Arcade2048NewGameBtn");
-    newGameBtn.AddClass("ArcadeMinesweeperActionBtn");
-    newGameBtn.AddClass("Arcade2048ActionBtn");
-    var newGameLbl = $.CreatePanel("Label", newGameBtn, "");
-    newGameLbl.text = "New Game";
-
-    var controls = $.CreatePanel("Panel", modalContainer, "Arcade2048Controls");
-    controls.AddClass("Arcade2048Controls");
-
-    var upRow = $.CreatePanel("Panel", controls, "Arcade2048ControlsUpRow");
-    upRow.AddClass("Arcade2048ControlsRow");
-    upRow.AddClass("Arcade2048ControlsUpRow");
-
-    var upBtn = $.CreatePanel("Button", upRow, "Arcade2048MoveUp");
-    upBtn.AddClass("ArcadeMinesweeperActionBtn");
-    upBtn.AddClass("Arcade2048MoveBtn");
-    var upLbl = $.CreatePanel("Label", upBtn, "");
-    upLbl.text = "Up";
-
-    var dpadRow = $.CreatePanel("Panel", controls, "Arcade2048ControlsDPadRow");
-    dpadRow.AddClass("Arcade2048ControlsRow");
-    dpadRow.AddClass("Arcade2048ControlsDPadRow");
-
-    var leftBtn = $.CreatePanel("Button", dpadRow, "Arcade2048MoveLeft");
-    leftBtn.AddClass("ArcadeMinesweeperActionBtn");
-    leftBtn.AddClass("Arcade2048MoveBtn");
-    var leftLbl = $.CreatePanel("Label", leftBtn, "");
-    leftLbl.text = "Left";
-
-    var downBtn = $.CreatePanel("Button", dpadRow, "Arcade2048MoveDown");
-    downBtn.AddClass("ArcadeMinesweeperActionBtn");
-    downBtn.AddClass("Arcade2048MoveBtn");
-    var downLbl = $.CreatePanel("Label", downBtn, "");
-    downLbl.text = "Down";
-
-    var rightBtn = $.CreatePanel("Button", dpadRow, "Arcade2048MoveRight");
-    rightBtn.AddClass("ArcadeMinesweeperActionBtn");
-    rightBtn.AddClass("Arcade2048MoveBtn");
-    var rightLbl = $.CreatePanel("Label", rightBtn, "");
-    rightLbl.text = "Right";
-
-    var statusLabel = $.CreatePanel("Label", modalContainer, "Arcade2048StatusLabel");
-    statusLabel.AddClass("Arcade2048StatusLabel");
-    statusLabel.style.visibility = "collapse";
-
-    var boardPanel = $.CreatePanel("Panel", modalContainer, "Arcade2048Board");
-    boardPanel.AddClass("Arcade2048Board");
-
-    var cells = [];
-    for (var r = 0; r < ARCADE_2048_SIZE; r++) {
-        var rowPanel = $.CreatePanel("Panel", boardPanel, "Arcade2048Row_" + r);
-        rowPanel.AddClass("Arcade2048Row");
-        var rowCells = [];
-        for (var c = 0; c < ARCADE_2048_SIZE; c++) {
-            var cellPanel = $.CreatePanel("Panel", rowPanel, "Arcade2048Cell_" + r + "_" + c);
-            cellPanel.AddClass("Arcade2048Cell");
-            var cellLabel = $.CreatePanel("Label", cellPanel, "");
-            cellLabel.AddClass("Arcade2048CellLabel");
-            rowCells.push({ panel: cellPanel, label: cellLabel });
-        }
-        cells.push(rowCells);
-    }
-
-    var state = {
-        isValid: function() { return overlay && overlay.IsValid && overlay.IsValid(); },
-        active: true,
-        board: Create2048EmptyBoard(),
-        cells: cells,
-        score: 0,
-        gameOver: false,
-        won: false,
-        scoreLabel: scoreLabel,
-        statusLabel: statusLabel
-    };
-    g2048State = state;
-
-    upBtn.SetPanelEvent("onactivate", function() { Handle2048Move(state, "up"); });
-    leftBtn.SetPanelEvent("onactivate", function() { Handle2048Move(state, "left"); });
-    downBtn.SetPanelEvent("onactivate", function() { Handle2048Move(state, "down"); });
-    rightBtn.SetPanelEvent("onactivate", function() { Handle2048Move(state, "right"); });
-    newGameBtn.SetPanelEvent("onactivate", function() { Reset2048Game(state); });
-
-    Reset2048Game(state);
 }
 
 function StopFlappyLoop() {
@@ -11226,10 +10565,12 @@ function OpenFlappyModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseFlappyModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeFlappyOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() {
         CloseFlappyModal(overlay);
     });
@@ -11239,6 +10580,7 @@ function OpenFlappyModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeFlappyModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -11537,10 +10879,12 @@ function OpenAimTrainerModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseAimTrainerModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeAimTrainerOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() {
         CloseAimTrainerModal(overlay);
     });
@@ -11550,6 +10894,7 @@ function OpenAimTrainerModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeAimTrainerModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -11945,10 +11290,12 @@ function OpenTrainTrackingModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseTrainTrackingModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeTrainTrackingOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() {
         CloseTrainTrackingModal(overlay);
     });
@@ -11958,6 +11305,7 @@ function OpenTrainTrackingModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeTrainTrackingModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -12504,10 +11852,12 @@ function OpenWhackRemModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseWhackRemModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeWhackRemOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     overlay.SetPanelEvent("onactivate", function() {
         CloseWhackRemModal(overlay);
     });
@@ -12517,6 +11867,7 @@ function OpenWhackRemModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeWhackRemModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -12668,667 +12019,6 @@ function OpenWhackRemModal() {
     });
 
     ApplyWhackRemDifficulty(state, ResolveArcadeDefaultDifficultyId(), true);
-}
-
-function StopBilliardsLoop() {
-    gBilliardsLoopToken++;
-}
-
-function SetBilliardsStatus(state, text) {
-    if (!state || !state.statusLabel || !state.statusLabel.IsValid || !state.statusLabel.IsValid()) return;
-    var message = (typeof text === "string") ? text : "";
-    if (message.length > 0) {
-        state.statusLabel.text = message;
-        state.statusLabel.style.visibility = "visible";
-    } else {
-        state.statusLabel.text = "";
-        state.statusLabel.style.visibility = "collapse";
-    }
-}
-
-function HideBilliardsAimPreview(state) {
-    if (!state) return;
-    if (state.aimLine && state.aimLine.IsValid && state.aimLine.IsValid()) state.aimLine.style.visibility = "collapse";
-    if (state.aimGhost && state.aimGhost.IsValid && state.aimGhost.IsValid()) state.aimGhost.style.visibility = "collapse";
-    if (Array.isArray(state.aimDots)) {
-        for (var i = 0; i < state.aimDots.length; i++) {
-            var dot = state.aimDots[i];
-            if (dot && dot.IsValid && dot.IsValid()) dot.style.visibility = "collapse";
-        }
-    }
-}
-
-function TryGetBilliardsCursorInTable(state) {
-    if (!state || !state.tablePanel || !state.tablePanel.IsValid || !state.tablePanel.IsValid()) return null;
-    var cursor = null;
-    try {
-        if (typeof GameUI !== "undefined" && GameUI && typeof GameUI.GetCursorPosition === "function") {
-            cursor = GameUI.GetCursorPosition();
-        }
-    } catch (eCursor) {
-        cursor = null;
-    }
-    if (!cursor || cursor.length < 2) return null;
-    var tx = Number(state.tablePanel.actualxoffset);
-    var ty = Number(state.tablePanel.actualyoffset);
-    if (!isFinite(tx) || !isFinite(ty) || Math.abs(tx) > 1000000000 || Math.abs(ty) > 1000000000) return null;
-    var lx = Number(cursor[0]) - tx;
-    var ly = Number(cursor[1]) - ty;
-    if (!isFinite(lx) || !isFinite(ly)) return null;
-    return { x: lx, y: ly };
-}
-
-function SetBilliardsAimPreview(state, cueX, cueY, dirX, dirY, pullDist, tableWidth, tableHeight) {
-    if (!state || !state.aimGhost) return;
-    if (!isFinite(dirX) || !isFinite(dirY)) {
-        HideBilliardsAimPreview(state);
-        return;
-    }
-
-    var maxLen = 240;
-    var t = maxLen;
-    if (Math.abs(dirX) > 0.0001) {
-        if (dirX > 0) t = Math.min(t, (tableWidth - cueX - BILLIARDS_BALL_RADIUS) / dirX);
-        else t = Math.min(t, (BILLIARDS_BALL_RADIUS - cueX) / dirX);
-    }
-    if (Math.abs(dirY) > 0.0001) {
-        if (dirY > 0) t = Math.min(t, (tableHeight - cueY - BILLIARDS_BALL_RADIUS) / dirY);
-        else t = Math.min(t, (BILLIARDS_BALL_RADIUS - cueY) / dirY);
-    }
-    if (!isFinite(t)) t = 80;
-    var len = Math.max(28, Math.min(maxLen, t));
-    if (state.aimLine && state.aimLine.IsValid && state.aimLine.IsValid()) {
-        state.aimLine.style.visibility = "collapse";
-    }
-
-    var dotCount = Array.isArray(state.aimDots) ? state.aimDots.length : 0;
-    if (dotCount > 0) {
-        var step = len / (dotCount + 1);
-        for (var iDot = 0; iDot < dotCount; iDot++) {
-            var dotPanel = state.aimDots[iDot];
-            if (!dotPanel || !dotPanel.IsValid || !dotPanel.IsValid()) continue;
-            var d = step * (iDot + 1);
-            var px = cueX + (dirX * d);
-            var py = cueY + (dirY * d);
-            dotPanel.style.visibility = "visible";
-            dotPanel.style.x = Math.floor(px - 3) + "px";
-            dotPanel.style.y = Math.floor(py - 3) + "px";
-            dotPanel.style.opacity = String(Math.max(0.2, 1.0 - (iDot * 0.08)));
-        }
-    }
-
-    var ghostDist = Math.max(8, Math.min(52, pullDist * 0.42));
-    var ghostX = cueX - (dirX * ghostDist);
-    var ghostY = cueY - (dirY * ghostDist);
-    state.aimGhost.style.visibility = "visible";
-    state.aimGhost.style.x = Math.floor(ghostX - 6) + "px";
-    state.aimGhost.style.y = Math.floor(ghostY - 6) + "px";
-}
-
-function UpdateBilliardsHud(state) {
-    if (!state || !state.isValid || !state.isValid()) return;
-    var remaining = 0;
-    for (var i = 0; i < state.balls.length; i++) {
-        var ball = state.balls[i];
-        if (!ball || ball.isCue || ball.active !== true) continue;
-        remaining++;
-    }
-    if (state.scoreLabel && state.scoreLabel.IsValid && state.scoreLabel.IsValid()) {
-        state.scoreLabel.text = "Pocketed: " + String(state.score) + "/10";
-    }
-    if (state.shotsLabel && state.shotsLabel.IsValid && state.shotsLabel.IsValid()) {
-        state.shotsLabel.text = "Shots: " + String(state.shots);
-    }
-    if (state.scratchLabel && state.scratchLabel.IsValid && state.scratchLabel.IsValid()) {
-        state.scratchLabel.text = "Scratches: " + String(state.scratches);
-    }
-    if (state.remainingLabel && state.remainingLabel.IsValid && state.remainingLabel.IsValid()) {
-        state.remainingLabel.text = "Remaining: " + String(remaining);
-    }
-    if (state.aimLabel && state.aimLabel.IsValid && state.aimLabel.IsValid()) {
-        state.aimLabel.text = "Aim: " + String(Math.round(state.aimDeg)) + "\u00B0";
-    }
-    if (state.pullLabel && state.pullLabel.IsValid && state.pullLabel.IsValid()) {
-        var pct = Math.max(0, Math.min(100, Math.round(Number(state.dragPowerPct) || 0)));
-        state.pullLabel.text = "Power: " + String(pct) + "%";
-    }
-}
-
-function CreateBilliardsBall(state, id, x, y, isCue, toneIndex) {
-    var panel = $.CreatePanel("Panel", state.ballsLayer, "ArcadeBilliardsBall_" + String(id));
-    panel.AddClass("ArcadeBilliardsBall");
-    panel.AddClass(isCue ? "CueBall" : "ObjBall");
-    if (!isCue) {
-        panel.AddClass("Tone" + String(1 + ((toneIndex - 1) % 5)));
-    }
-    var label = $.CreatePanel("Label", panel, "");
-    label.AddClass("ArcadeBilliardsBallLabel");
-    label.text = isCue ? "C" : String(id);
-    return {
-        id: id,
-        isCue: isCue === true,
-        x: x,
-        y: y,
-        vx: 0,
-        vy: 0,
-        r: BILLIARDS_BALL_RADIUS,
-        active: true,
-        panel: panel
-    };
-}
-
-function AreBilliardsBallsSettled(state) {
-    if (!state) return true;
-    for (var i = 0; i < state.balls.length; i++) {
-        var ball = state.balls[i];
-        if (!ball || ball.active !== true) continue;
-        if (Math.abs(ball.vx) > BILLIARDS_MIN_SPEED || Math.abs(ball.vy) > BILLIARDS_MIN_SPEED) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function GetBilliardsCueBall(state) {
-    if (!state) return null;
-    for (var i = 0; i < state.balls.length; i++) {
-        if (state.balls[i] && state.balls[i].isCue) return state.balls[i];
-    }
-    return null;
-}
-
-function CreateBilliardsRack(state) {
-    if (!state || !state.ballsLayer || !state.ballsLayer.IsValid || !state.ballsLayer.IsValid()) return;
-
-    for (var i = state.balls.length - 1; i >= 0; i--) {
-        var oldBall = state.balls[i];
-        if (oldBall && oldBall.panel && oldBall.panel.IsValid && oldBall.panel.IsValid()) {
-            oldBall.panel.DeleteAsync(0);
-        }
-    }
-    state.balls = [];
-
-    var centerY = Math.floor(state.tableHeight * 0.5);
-    var cueX = 160;
-    state.balls.push(CreateBilliardsBall(state, 0, cueX, centerY, true, 0));
-
-    var rackStartX = 460;
-    var spacing = (BILLIARDS_BALL_RADIUS * 2) + 1;
-    var id = 1;
-    for (var row = 0; row < 4; row++) {
-        for (var col = 0; col <= row; col++) {
-            var px = rackStartX + Math.floor(row * (spacing * 0.88));
-            var py = centerY + Math.floor((col - (row * 0.5)) * spacing);
-            state.balls.push(CreateBilliardsBall(state, id, px, py, false, id));
-            id++;
-        }
-    }
-}
-
-function RenderBilliards(state) {
-    if (!state || !state.isValid || !state.isValid()) return;
-    for (var i = 0; i < state.balls.length; i++) {
-        var ball = state.balls[i];
-        if (!ball || !ball.panel || !ball.panel.IsValid || !ball.panel.IsValid()) continue;
-        if (ball.active !== true) {
-            ball.panel.style.visibility = "collapse";
-            continue;
-        }
-        ball.panel.style.visibility = "visible";
-        ball.panel.style.x = Math.floor(ball.x - ball.r) + "px";
-        ball.panel.style.y = Math.floor(ball.y - ball.r) + "px";
-    }
-}
-
-function ResolveBilliardsBallCollision(a, b) {
-    if (!a || !b || a.active !== true || b.active !== true) return;
-    var dx = b.x - a.x;
-    var dy = b.y - a.y;
-    var distSq = (dx * dx) + (dy * dy);
-    var minDist = a.r + b.r;
-    if (distSq <= 0 || distSq >= (minDist * minDist)) return;
-
-    var dist = Math.sqrt(distSq);
-    if (dist < 0.0001) dist = 0.0001;
-    var nx = dx / dist;
-    var ny = dy / dist;
-    var overlap = minDist - dist;
-    if (overlap > 0) {
-        a.x -= nx * overlap * 0.5;
-        a.y -= ny * overlap * 0.5;
-        b.x += nx * overlap * 0.5;
-        b.y += ny * overlap * 0.5;
-    }
-
-    var rvx = b.vx - a.vx;
-    var rvy = b.vy - a.vy;
-    var velAlongNormal = (rvx * nx) + (rvy * ny);
-    if (velAlongNormal >= 0) return;
-
-    var restitution = 0.90;
-    var impulse = -((1 + restitution) * velAlongNormal) / 2;
-    var impulseX = impulse * nx;
-    var impulseY = impulse * ny;
-    a.vx -= impulseX;
-    a.vy -= impulseY;
-    b.vx += impulseX;
-    b.vy += impulseY;
-}
-
-function RespawnBilliardsCueIfNeeded(state) {
-    if (!state || state.pendingCueRespawn !== true) return;
-    if (!AreBilliardsBallsSettled(state)) return;
-
-    var cue = GetBilliardsCueBall(state);
-    if (!cue) return;
-
-    cue.active = true;
-    cue.vx = 0;
-    cue.vy = 0;
-    cue.x = 160;
-    cue.y = Math.floor(state.tableHeight * 0.5);
-
-    for (var pass = 0; pass < 16; pass++) {
-        var overlaps = false;
-        for (var i = 0; i < state.balls.length; i++) {
-            var other = state.balls[i];
-            if (!other || other === cue || other.active !== true) continue;
-            var dx = other.x - cue.x;
-            var dy = other.y - cue.y;
-            var minDist = cue.r + other.r + 1;
-            if ((dx * dx) + (dy * dy) < (minDist * minDist)) {
-                overlaps = true;
-                cue.x -= 14;
-                break;
-            }
-        }
-        if (!overlaps) break;
-    }
-
-    state.pendingCueRespawn = false;
-    SetBilliardsStatus(state, "Scratch. Cue ball returned.");
-}
-
-function StepBilliards(state, token) {
-    if (!state || !state.active || !state.isValid || !state.isValid()) return;
-    if (token !== gBilliardsLoopToken) return;
-    if (state.gameOver) return;
-
-    var width = state.tableWidth;
-    var height = state.tableHeight;
-    var pocketRadiusSq = state.pocketRadius * state.pocketRadius;
-
-    for (var i = 0; i < state.balls.length; i++) {
-        var ball = state.balls[i];
-        if (!ball || ball.active !== true) continue;
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-        ball.vx *= BILLIARDS_FRICTION;
-        ball.vy *= BILLIARDS_FRICTION;
-        if (Math.abs(ball.vx) < BILLIARDS_MIN_SPEED) ball.vx = 0;
-        if (Math.abs(ball.vy) < BILLIARDS_MIN_SPEED) ball.vy = 0;
-
-        if ((ball.x - ball.r) < 0) {
-            ball.x = ball.r;
-            ball.vx = Math.abs(ball.vx) * BILLIARDS_BOUNCE;
-        } else if ((ball.x + ball.r) > width) {
-            ball.x = width - ball.r;
-            ball.vx = -Math.abs(ball.vx) * BILLIARDS_BOUNCE;
-        }
-
-        if ((ball.y - ball.r) < 0) {
-            ball.y = ball.r;
-            ball.vy = Math.abs(ball.vy) * BILLIARDS_BOUNCE;
-        } else if ((ball.y + ball.r) > height) {
-            ball.y = height - ball.r;
-            ball.vy = -Math.abs(ball.vy) * BILLIARDS_BOUNCE;
-        }
-    }
-
-    for (var a = 0; a < state.balls.length; a++) {
-        var ba = state.balls[a];
-        if (!ba || ba.active !== true) continue;
-        for (var b = a + 1; b < state.balls.length; b++) {
-            var bb = state.balls[b];
-            if (!bb || bb.active !== true) continue;
-            ResolveBilliardsBallCollision(ba, bb);
-        }
-    }
-
-    for (var j = 0; j < state.balls.length; j++) {
-        var target = state.balls[j];
-        if (!target || target.active !== true) continue;
-        for (var p = 0; p < state.pocketPoints.length; p++) {
-            var pocket = state.pocketPoints[p];
-            var pdx = target.x - pocket.x;
-            var pdy = target.y - pocket.y;
-            if ((pdx * pdx) + (pdy * pdy) > pocketRadiusSq) continue;
-
-            target.active = false;
-            target.vx = 0;
-            target.vy = 0;
-            if (target.isCue) {
-                state.scratches++;
-                state.pendingCueRespawn = true;
-            } else {
-                state.score++;
-            }
-            break;
-        }
-    }
-
-    RespawnBilliardsCueIfNeeded(state);
-
-    var remaining = 0;
-    for (var k = 0; k < state.balls.length; k++) {
-        var rem = state.balls[k];
-        if (rem && rem.isCue !== true && rem.active === true) remaining++;
-    }
-    if (remaining <= 0) {
-        state.gameOver = true;
-        SetBilliardsStatus(state, "Rack cleared. Press New Rack.");
-    }
-
-    if (state.dragging) {
-        var cueDrag = GetBilliardsCueBall(state);
-        if (cueDrag && cueDrag.active === true) {
-            var cursor = TryGetBilliardsCursorInTable(state);
-            if (cursor) {
-                var dx = cueDrag.x - cursor.x;
-                var dy = cueDrag.y - cursor.y;
-                var dist = Math.sqrt((dx * dx) + (dy * dy));
-                if (isFinite(dist) && dist > 1) {
-                    var dirX = dx / dist;
-                    var dirY = dy / dist;
-                    var pull = Math.max(0, Math.min(150, dist));
-                    state.dragPowerPct = (pull / 150) * 100;
-                    state.aimDeg = Math.atan2(dirY, dirX) * 180.0 / Math.PI;
-                    state.pendingShotVx = dirX * (1.8 + ((pull / 150) * 8.8));
-                    state.pendingShotVy = dirY * (1.8 + ((pull / 150) * 8.8));
-                    SetBilliardsAimPreview(state, cueDrag.x, cueDrag.y, dirX, dirY, pull, width, height);
-                } else {
-                    state.dragPowerPct = 0;
-                    state.pendingShotVx = 0;
-                    state.pendingShotVy = 0;
-                    HideBilliardsAimPreview(state);
-                }
-            }
-        }
-    }
-
-    UpdateBilliardsHud(state);
-    RenderBilliards(state);
-    if (state.gameOver) return;
-
-    $.Schedule(0.033, function() {
-        StepBilliards(state, token);
-    });
-}
-
-function ShootBilliardsVector(state, shotVx, shotVy) {
-    if (!state || !state.active) return;
-    if (state.gameOver) {
-        SetBilliardsStatus(state, "Press New Rack to play again.");
-        return;
-    }
-    if (!AreBilliardsBallsSettled(state)) {
-        SetBilliardsStatus(state, "Wait for balls to settle.");
-        return;
-    }
-
-    var cue = GetBilliardsCueBall(state);
-    if (!cue || cue.active !== true) {
-        SetBilliardsStatus(state, "Cue ball not ready.");
-        return;
-    }
-
-    cue.vx += Number(shotVx) || 0;
-    cue.vy += Number(shotVy) || 0;
-    state.shots++;
-    state.dragPowerPct = 0;
-    state.pendingShotVx = 0;
-    state.pendingShotVy = 0;
-    HideBilliardsAimPreview(state);
-    SetBilliardsStatus(state, "");
-    UpdateBilliardsHud(state);
-}
-
-function BeginBilliardsDrag(state) {
-    if (!state || !state.active || state.gameOver) return;
-    if (!AreBilliardsBallsSettled(state)) return;
-    var cue = GetBilliardsCueBall(state);
-    if (!cue || cue.active !== true) return;
-    var cursor = TryGetBilliardsCursorInTable(state);
-    if (!cursor) return;
-    var dx = cursor.x - cue.x;
-    var dy = cursor.y - cue.y;
-    var distSq = (dx * dx) + (dy * dy);
-    if (distSq > ((cue.r + 14) * (cue.r + 14))) return;
-    state.dragging = true;
-    state.dragPowerPct = 0;
-    state.pendingShotVx = 0;
-    state.pendingShotVy = 0;
-    SetBilliardsStatus(state, "");
-}
-
-function CancelBilliardsDrag(state) {
-    if (!state) return;
-    state.dragging = false;
-    state.dragPowerPct = 0;
-    state.pendingShotVx = 0;
-    state.pendingShotVy = 0;
-    HideBilliardsAimPreview(state);
-    UpdateBilliardsHud(state);
-}
-
-function EndBilliardsDrag(state) {
-    if (!state || !state.dragging) return;
-    state.dragging = false;
-    var vx = Number(state.pendingShotVx) || 0;
-    var vy = Number(state.pendingShotVy) || 0;
-    var speed = Math.sqrt((vx * vx) + (vy * vy));
-    if (!isFinite(speed) || speed < 0.35) {
-        CancelBilliardsDrag(state);
-        return;
-    }
-    ShootBilliardsVector(state, vx, vy);
-}
-
-function ResetBilliardsGame(state) {
-    if (!state || !state.active) return;
-    state.gameOver = false;
-    state.score = 0;
-    state.shots = 0;
-    state.scratches = 0;
-    state.aimDeg = 0;
-    state.dragging = false;
-    state.dragPowerPct = 0;
-    state.pendingShotVx = 0;
-    state.pendingShotVy = 0;
-    state.pendingCueRespawn = false;
-    HideBilliardsAimPreview(state);
-    CreateBilliardsRack(state);
-    UpdateBilliardsHud(state);
-    SetBilliardsStatus(state, "");
-    RenderBilliards(state);
-
-    StopBilliardsLoop();
-    var token = gBilliardsLoopToken;
-    StepBilliards(state, token);
-}
-
-function CloseBilliardsModal(overlay) {
-    StopBilliardsLoop();
-    if (gBilliardsState) {
-        CancelBilliardsDrag(gBilliardsState);
-        gBilliardsState.active = false;
-        gBilliardsState = null;
-    }
-    if (overlay && overlay.IsValid && overlay.IsValid()) {
-        CloseModal(overlay);
-    }
-}
-
-function CloseBilliardsModalIfOpen() {
-    var root = $.GetContextPanel();
-    if (!root) return;
-    var overlay = root.FindChildTraverse("ArcadeBilliardsOverlay");
-    if (overlay && overlay.IsValid && overlay.IsValid()) {
-        CloseBilliardsModal(overlay);
-    } else {
-        StopBilliardsLoop();
-    }
-}
-
-function OpenBilliardsModal() {
-    var rootPanel = $.GetContextPanel();
-    if (!rootPanel) return;
-
-    CloseBilliardsModalIfOpen();
-
-    var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeBilliardsOverlay");
-    overlay.AddClass("ModalOverlay");
-    overlay.SetPanelEvent("onactivate", function() {
-        CloseBilliardsModal(overlay);
-    });
-    $.Schedule(0.01, function() {
-        if (overlay && overlay.IsValid && overlay.IsValid()) overlay.AddClass("Show");
-    });
-
-    var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeBilliardsModalContainer");
-    modalContainer.AddClass("ArcadeModalContainer");
-    modalContainer.SetPanelEvent("onactivate", function() {});
-
-    var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
-    var closeIcon = $.CreatePanel("Label", closeBtn, "");
-    closeIcon.text = "X";
-    closeBtn.SetPanelEvent("onactivate", function() {
-        CloseBilliardsModal(overlay);
-    });
-
-    var header = $.CreatePanel("Label", modalContainer, "");
-    header.AddClass("ModalTitle");
-    header.AddClass("ArcadeBilliardsTitle");
-    header.text = "Billiards";
-
-    var hudRow = $.CreatePanel("Panel", modalContainer, "ArcadeBilliardsHudRow");
-    hudRow.AddClass("ArcadeBilliardsHudRow");
-    var scoreLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsScore");
-    scoreLabel.AddClass("ArcadeBilliardsStat");
-    scoreLabel.AddClass("ArcadeBilliardsStatGreen");
-    var shotsLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsShots");
-    shotsLabel.AddClass("ArcadeBilliardsStat");
-    var scratchLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsScratches");
-    scratchLabel.AddClass("ArcadeBilliardsStat");
-    scratchLabel.AddClass("ArcadeBilliardsStatRed");
-    var remainingLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsRemaining");
-    remainingLabel.AddClass("ArcadeBilliardsStat");
-    var aimLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsAim");
-    aimLabel.AddClass("ArcadeBilliardsStat");
-    aimLabel.AddClass("ArcadeBilliardsStatBlue");
-    var pullLabel = $.CreatePanel("Label", hudRow, "ArcadeBilliardsPull");
-    pullLabel.AddClass("ArcadeBilliardsStat");
-    pullLabel.AddClass("ArcadeBilliardsStatBlue");
-
-    var actionRow = $.CreatePanel("Panel", modalContainer, "ArcadeBilliardsActionRow");
-    actionRow.AddClass("ArcadeBilliardsActionRow");
-
-    var newRackBtn = $.CreatePanel("Button", actionRow, "ArcadeBilliardsNewRackBtn");
-    newRackBtn.AddClass("ArcadeMinesweeperActionBtn");
-    newRackBtn.AddClass("ArcadeBilliardsControlBtn");
-    var newRackLbl = $.CreatePanel("Label", newRackBtn, "");
-    newRackLbl.text = "New Rack";
-
-    var actionHint = $.CreatePanel("Label", actionRow, "ArcadeBilliardsActionHint");
-    actionHint.AddClass("ArcadeBilliardsActionHint");
-    actionHint.text = "Drag from cue ball, pull back, release to shoot.";
-
-    var area = $.CreatePanel("Panel", modalContainer, "ArcadeBilliardsArea");
-    area.AddClass("ArcadeBilliardsArea");
-    var table = $.CreatePanel("Panel", area, "ArcadeBilliardsTable");
-    table.AddClass("ArcadeBilliardsTable");
-
-    var pocketsLayer = $.CreatePanel("Panel", table, "ArcadeBilliardsPocketsLayer");
-    pocketsLayer.AddClass("ArcadeBilliardsPocketsLayer");
-    var guideLayer = $.CreatePanel("Panel", table, "ArcadeBilliardsGuideLayer");
-    guideLayer.AddClass("ArcadeBilliardsGuideLayer");
-    var ballsLayer = $.CreatePanel("Panel", table, "ArcadeBilliardsBallsLayer");
-    ballsLayer.AddClass("ArcadeBilliardsBallsLayer");
-    var aimLine = $.CreatePanel("Panel", guideLayer, "ArcadeBilliardsAimLine");
-    aimLine.AddClass("ArcadeBilliardsAimLine");
-    aimLine.style.visibility = "collapse";
-    var aimDots = [];
-    for (var ai = 0; ai < 10; ai++) {
-        var dotPanel = $.CreatePanel("Panel", guideLayer, "ArcadeBilliardsAimDot_" + String(ai));
-        dotPanel.AddClass("ArcadeBilliardsAimDot");
-        if (ai === 9) dotPanel.AddClass("End");
-        dotPanel.style.visibility = "collapse";
-        aimDots.push(dotPanel);
-    }
-    var aimGhost = $.CreatePanel("Panel", guideLayer, "ArcadeBilliardsAimGhost");
-    aimGhost.AddClass("ArcadeBilliardsAimGhost");
-    aimGhost.style.visibility = "collapse";
-
-    var pocketPoints = [
-        { x: 0, y: 0 },
-        { x: BILLIARDS_TABLE_WIDTH * 0.5, y: 0 },
-        { x: BILLIARDS_TABLE_WIDTH, y: 0 },
-        { x: 0, y: BILLIARDS_TABLE_HEIGHT },
-        { x: BILLIARDS_TABLE_WIDTH * 0.5, y: BILLIARDS_TABLE_HEIGHT },
-        { x: BILLIARDS_TABLE_WIDTH, y: BILLIARDS_TABLE_HEIGHT }
-    ];
-    for (var pi = 0; pi < pocketPoints.length; pi++) {
-        var pk = $.CreatePanel("Panel", pocketsLayer, "ArcadeBilliardsPocket_" + String(pi));
-        pk.AddClass("ArcadeBilliardsPocket");
-        pk.style.x = Math.floor(pocketPoints[pi].x - BILLIARDS_POCKET_RADIUS) + "px";
-        pk.style.y = Math.floor(pocketPoints[pi].y - BILLIARDS_POCKET_RADIUS) + "px";
-    }
-
-    var statusLabel = $.CreatePanel("Label", modalContainer, "ArcadeBilliardsStatusLabel");
-    statusLabel.AddClass("ArcadeBilliardsStatusLabel");
-    statusLabel.style.visibility = "collapse";
-
-    var state = {
-        isValid: function() { return overlay && overlay.IsValid && overlay.IsValid(); },
-        active: true,
-        gameOver: false,
-        tableWidth: BILLIARDS_TABLE_WIDTH,
-        tableHeight: BILLIARDS_TABLE_HEIGHT,
-        pocketRadius: BILLIARDS_POCKET_RADIUS,
-        pocketPoints: pocketPoints,
-        balls: [],
-        score: 0,
-        shots: 0,
-        scratches: 0,
-        aimDeg: 0,
-        dragPowerPct: 0,
-        pendingShotVx: 0,
-        pendingShotVy: 0,
-        dragging: false,
-        pendingCueRespawn: false,
-        tablePanel: table,
-        guideLayer: guideLayer,
-        ballsLayer: ballsLayer,
-        scoreLabel: scoreLabel,
-        shotsLabel: shotsLabel,
-        scratchLabel: scratchLabel,
-        remainingLabel: remainingLabel,
-        aimLabel: aimLabel,
-        pullLabel: pullLabel,
-        statusLabel: statusLabel,
-        aimLine: aimLine,
-        aimGhost: aimGhost,
-        aimDots: aimDots
-    };
-    gBilliardsState = state;
-
-    newRackBtn.SetPanelEvent("onactivate", function() { ResetBilliardsGame(state); });
-    table.SetPanelEvent("onmousedown", function() { BeginBilliardsDrag(state); });
-    table.SetPanelEvent("onmouseup", function() { EndBilliardsDrag(state); });
-    table.SetPanelEvent("onmouseout", function() { EndBilliardsDrag(state); });
-    area.SetPanelEvent("onmouseup", function() { EndBilliardsDrag(state); });
-
-    ResetBilliardsGame(state);
 }
 
 const BLACKJACK_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -13653,10 +12343,12 @@ function OpenBlackjackModal() {
     var rootPanel = $.GetContextPanel();
     if (!rootPanel) return;
 
+    PrepareSettingsModalOpen();
     CloseBlackjackModalIfOpen();
 
     var overlay = $.CreatePanel("Panel", rootPanel, "ArcadeBlackjackOverlay");
     overlay.AddClass("ModalOverlay");
+    overlay.AddClass("QOLModalOverlay");
     // Do not close on generic overlay activate; button/input clicks can bubble and
     // race panel deletion against in-flight blackjack handlers.
     overlay.SetPanelEvent("onactivate", function() {});
@@ -13666,6 +12358,7 @@ function OpenBlackjackModal() {
 
     var modalContainer = $.CreatePanel("Panel", overlay, "ArcadeBlackjackModalContainer");
     modalContainer.AddClass("ArcadeModalContainer");
+    modalContainer.AddClass("QOLUnifiedModalSurface");
     modalContainer.SetPanelEvent("onactivate", function() {});
 
     var closeBtn = $.CreatePanel("Button", modalContainer, "CloseBtn");
@@ -13782,25 +12475,21 @@ function IsAnyArcadeModalOpen() {
     if (!root) return false;
     return !!(
         root.FindChildTraverse("ArcadeMinesweeperOverlay") ||
-        root.FindChildTraverse("Arcade2048Overlay") ||
         root.FindChildTraverse("ArcadeFlappyOverlay") ||
         root.FindChildTraverse("ArcadeAimTrainerOverlay") ||
         root.FindChildTraverse("ArcadeTrainTrackingOverlay") ||
         root.FindChildTraverse("ArcadeWhackRemOverlay") ||
-        root.FindChildTraverse("ArcadeBlackjackOverlay") ||
-        root.FindChildTraverse("ArcadeBilliardsOverlay")
+        root.FindChildTraverse("ArcadeBlackjackOverlay")
     );
 }
 
 function CloseAllArcadeModalsIfOpen() {
     CloseMinesweeperModalIfOpen();
-    Close2048ModalIfOpen();
     CloseFlappyModalIfOpen();
     CloseAimTrainerModalIfOpen();
     CloseTrainTrackingModalIfOpen();
     CloseWhackRemModalIfOpen();
     CloseBlackjackModalIfOpen();
-    CloseBilliardsModalIfOpen();
 }
 
 function OpenRandomArcadeModal() {
@@ -14002,7 +12691,8 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "iKaritzu", preset: "iKaritzu" });
     entries.push({ label: "Scuffed", preset: "Scuffed" });
     entries.push({ label: "Gyzeh", preset: "Gyzeh" });
-    entries.push({ label: "Haste", preset: "Haste" });
+    entries.push({ label: "Bread", preset: "Bread" });
+    entries.push({ label: "bonclide", preset: "bonclide" });
     entries.push({ label: "billyyy", preset: "billyyy" });
     entries.push({ label: "Zer0", preset: "Zer0" });
     entries.push({ label: "Pops", preset: "Pops" });
@@ -14060,7 +12750,7 @@ function BuildCommunityPresetEntries() {
     });
     entries.push({ label: "Joey", preset: "Joey" });
     entries.push({ label: "Zyartic", preset: "Zyartic" });
-    for (var i = entries.length; i < 66; i++) {
+    for (var i = entries.length; i < 72; i++) {
         entries.push({ label: "Available", available: false });
     }
     return entries;
@@ -14140,6 +12830,77 @@ function CreateSectionInlineIconButton(titleLabel, buttonId, iconSrc, tooltipTex
         icon.SetPanelEvent("onmouseout", hideTooltip);
     }
     return button;
+}
+
+function CreateSectionTitleCheckboxToggle(titleHead, label, configId, toggleOptions) {
+    if (!titleHead || !titleHead.IsValid || !titleHead.IsValid() || !configId) return null;
+    var localizedLabel = LocalizeSettingsText(label || "");
+    var invertToggle = !!(toggleOptions && toggleOptions.invert === true);
+    var refreshListOnChange = !!(toggleOptions && toggleOptions.refreshListOnChange === true);
+    var description = (toggleOptions && toggleOptions.description) ? String(toggleOptions.description) : "";
+    var isAvailableFn = (toggleOptions && typeof toggleOptions.isAvailableFn === "function") ? toggleOptions.isAvailableFn : null;
+    var getIsActive = function() {
+        var rawActive = (MOD_CONFIG[configId] === 1);
+        return invertToggle ? !rawActive : rawActive;
+    };
+    var getIsAvailable = function() {
+        if (!isAvailableFn) return true;
+        try { return isAvailableFn() === true; } catch (eAvail) { return true; }
+    };
+    var btn = $.CreatePanel("ToggleButton", titleHead, String(configId).replace(/[^A-Za-z0-9_]/g, "_") + "SectionTitleCheckbox");
+    btn.AddClass("SectionTitleCheckboxToggle");
+    btn.AddClass("InlineSecondaryCheckboxBtn");
+    btn.AddClass("MultiCheckboxBtn");
+    btn.AddClass("CitadelSettingsCheckbox");
+    var lbl = $.CreatePanel("Label", btn, "");
+    lbl.AddClass("SectionTitleCheckboxLabel");
+    lbl.AddClass("MultiCheckboxLabel");
+    lbl.text = localizedLabel;
+    var update = function() {
+        var isActive = getIsActive();
+        var isAvailable = getIsAvailable();
+        try { btn.SetSelected(isActive); } catch (eSel) {}
+        btn.SetHasClass("selected", isActive);
+        btn.SetHasClass("IsSelected", isActive);
+        btn.SetHasClass("Active", isActive);
+        btn.SetHasClass("Disabled", !isAvailable);
+        btn.hittest = isAvailable;
+        btn.hittestchildren = isAvailable;
+    };
+    update();
+    btn.SetPanelEvent("onmouseover", function() {
+        HideSettingsTextTooltip();
+        CancelSettingsRowFloatingTooltipHide();
+        ShowSettingsRowFloatingTooltip(
+            btn,
+            "",
+            LocalizeSettingsText(description || label || configId, true),
+            PERF_IMPACT_TIER_NONE,
+            ""
+        );
+    });
+    btn.SetPanelEvent("onmouseout", function() {
+        HideSettingsRowFloatingTooltipDeferred("section_title_checkbox_mouseout");
+    });
+    btn.SetPanelEvent("onactivate", function() {
+        if (!getIsAvailable()) {
+            update();
+            return;
+        }
+        var nextActive = !getIsActive();
+        MOD_CONFIG[configId] = invertToggle ? (nextActive ? 0 : 1) : (nextActive ? 1 : 0);
+        update();
+        SaveAndSync();
+        if (refreshListOnChange) RequestSettingsListRefresh(0, true);
+        ShowConfigPreviewForConfigId(configId);
+    });
+    RegisterSettingsListRowSync(function() {
+        if (!btn || !btn.IsValid || !btn.IsValid()) return false;
+        update();
+        return true;
+    });
+    btn.qolRefreshTitleCheckbox = update;
+    return btn;
 }
 
 var SETTINGS_TOOLTIP_THEME_CLASS = "QOLSettingsTooltipThemeActive";
@@ -14625,6 +13386,7 @@ function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTie
     panel.SetHasClass("NoVoiceMeta", !useVoiceMetaMode);
     panel.SetHasClass("NoVoiceMetaAuthor", voiceMetaAuthor.length <= 0);
     panel.SetHasClass("NoVoiceMetaActor", voiceMetaActor.length <= 0);
+    panel.SetHasClass("FooterSaveWarningTooltip", !!(options && options.footerSaveWarning));
     ApplySettingsRowFloatingTooltipTier(tierKey);
 
     var wasVisible = !!(panel.BHasClass && panel.BHasClass("Visible"));
@@ -14955,7 +13717,7 @@ function BindSectionPerfTooltip(titleRow, titleName, fallbackDescription, tabNam
     });
 }
 
-function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enableDescription, buildRowsFn, enableToggleOptions) {
+function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enableDescription, buildRowsFn, enableToggleOptions, sectionOptions) {
     var localizedTitle = LocalizeSettingsText(title || "");
     gCurrentSettingsSectionTitle = String(title || "");
     var invertEnableToggle = !!(enableToggleOptions && enableToggleOptions.invert === true);
@@ -14992,6 +13754,10 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
         var keys = [];
         var seen = {};
         CollectResetKeysFromPanel(body, keys, seen);
+        if (sectionOptions && sectionOptions.titleCheckbox && sectionOptions.titleCheckbox.configId && !seen[sectionOptions.titleCheckbox.configId]) {
+            keys.push(sectionOptions.titleCheckbox.configId);
+            seen[sectionOptions.titleCheckbox.configId] = true;
+        }
         return keys;
     }, null, titleHead);
 
@@ -15002,6 +13768,17 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     var toggleHandle = $.CreatePanel("Panel", toggleSwitchButton, "handle");
     toggleHandle.AddClass("SectionInlineToggleHandle");
 
+    var titleCheckboxBtn = null;
+    if (sectionOptions && sectionOptions.titleCheckbox) {
+        sectionOptions.titleCheckbox.isAvailableFn = getSectionEnabled;
+        titleCheckboxBtn = CreateSectionTitleCheckboxToggle(
+            titleRow,
+            sectionOptions.titleCheckbox.label,
+            sectionOptions.titleCheckbox.configId,
+            sectionOptions.titleCheckbox
+        );
+    }
+
     var animToken = 0;
     var applyBodyState = function(enabled, animate) {
         animToken++;
@@ -15009,6 +13786,9 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
         toggleBtn.SetHasClass("Active", enabled);
         toggleBtn.SetHasClass("ToggleOn", enabled);
         toggleBtn.SetHasClass("ToggleOff", !enabled);
+        if (titleCheckboxBtn && titleCheckboxBtn.qolRefreshTitleCheckbox) {
+            titleCheckboxBtn.qolRefreshTitleCheckbox();
+        }
 
         if (!animate) {
             body.SetHasClass("ShowPrep", false);
@@ -16031,6 +14811,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             multiGroup.AddClass("AnnouncerBuffFilterGroup");
         }
         var multiRefreshFns = [];
+        var itemCooldownOptionLine = null;
         options.forEach(function(opt, optIndex) {
             if (!opt || !opt.key) return;
             var key = opt.key;
@@ -16042,6 +14823,13 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 optionWrap = $.CreatePanel("Panel", multiGroup, "");
                 optionWrap.AddClass("AnnouncerBuffFilterOptionWrap");
                 buttonParent = optionWrap;
+            }
+            if (isItemCooldownFilterRow) {
+                if (optIndex % 2 === 0 || !itemCooldownOptionLine) {
+                    itemCooldownOptionLine = $.CreatePanel("Panel", multiGroup, "");
+                    itemCooldownOptionLine.AddClass("ItemCooldownFilterLine");
+                }
+                buttonParent = itemCooldownOptionLine;
             }
 
             var multiBtn = useCheckboxStyle
@@ -16068,6 +14856,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var multiBtnLbl = $.CreatePanel("Label", multiBtn, "");
             multiBtnLbl.AddClass(useCheckboxStyle ? "MultiCheckboxLabel" : "MultiToggleLabel");
             multiBtnLbl.text = LocalizeSettingsText(opt.label || key);
+            var suppressNextOptionToggle = false;
 
             var updateMultiBtn = function() {
                 var isActive = (MOD_CONFIG[key] === 1);
@@ -16082,6 +14871,10 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             multiRefreshFns.push(updateMultiBtn);
 
             multiBtn.SetPanelEvent("onactivate", function() {
+                if (suppressNextOptionToggle) {
+                    suppressNextOptionToggle = false;
+                    return;
+                }
                 MOD_CONFIG[key] = (MOD_CONFIG[key] === 1 ? 0 : 1);
                 updateMultiBtn();
                 SaveAndSync();
@@ -16098,7 +14891,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     }
                 }
 
-                var testBtn = $.CreatePanel("Button", optionWrap, "");
+                var testBtn = $.CreatePanel("Button", multiBtn, "");
                 testBtn.AddClass("SectionTitleActionBtn");
                 testBtn.AddClass("AnnouncerBuffFilterTestBtn");
                 var testIcon = $.CreatePanel("Image", testBtn, "", {
@@ -16125,6 +14918,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     HideSettingsRowFloatingTooltipDeferred("announcer_buff_filter_test_mouseout");
                 });
                 testBtn.SetPanelEvent("onactivate", function() {
+                    suppressNextOptionToggle = true;
                     PlayAnnouncerBridgeVariantPreviewSound(soundVariant);
                     testBtn.AddClass("SuccessState");
                     $.Schedule(0.28, function() {
@@ -16133,11 +14927,6 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                         }
                     });
                 });
-                try {
-                    if (optionWrap && optionWrap.MoveChildBefore) {
-                        optionWrap.MoveChildBefore(testBtn, multiBtn);
-                    }
-                } catch (eReorder) {}
             }
         });
         syncRowVisualState = function() {
@@ -16303,7 +15092,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var numeric = Math.round(Number(value));
             if (!isFinite(numeric)) numeric = 0;
             if (numeric < 0) numeric = 0;
-            if (numeric > 25) numeric = 25;
+            if (numeric > 29) numeric = 29;
             return numeric;
         };
         var buildPaletteTooltip = function(opt) {
@@ -16311,10 +15100,15 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             if (!opt || !opt.hex) return name + " - " + LocalizeSettingsText("No color wash", true);
             return name + " - " + String(opt.hex);
         };
-        options.forEach(function(opt) {
+        var paletteRowPanel = null;
+        options.forEach(function(opt, optIndex) {
             if (!opt) return;
+            if (!paletteRowPanel || (optIndex % 10) === 0) {
+                paletteRowPanel = $.CreatePanel("Panel", paletteGroup, "");
+                paletteRowPanel.AddClass("PalettePickerSwatchRow");
+            }
             var value = sanitizePaletteValue(opt.value);
-            var swatch = $.CreatePanel("Button", paletteGroup, "");
+            var swatch = $.CreatePanel("Button", paletteRowPanel, "");
             swatch.AddClass("PalettePickerSwatch");
             if (value === 0) swatch.AddClass("PalettePickerSwatchDefault");
             var colorChip = $.CreatePanel("Panel", swatch, "");
@@ -16804,13 +15598,13 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     });
                 }
             } else if (configId === "OPEN_OLD_ITEM_FILTERS_DOWNLOAD") {
-                OpenOptimizeFilterDownloadModal();
+                $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/601444");
                 handled = true;
             } else if (configId && configId.indexOf("SEARCH_PRESET:") === 0) {
                 var presetName = configId.slice("SEARCH_PRESET:".length);
                 handled = ApplyPresetByName(presetName);
-            } else if (configId === "SEARCH_ACTION:OPEN_COMMISSION_MODAL") {
-                OpenSupportCommissionModal();
+            } else if (configId === "OPEN_COMMISSIONS") {
+                $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions");
                 handled = true;
             } else if (configId && configId.indexOf("SEARCH_TAB:") === 0) {
                 var targetTab = configId.slice("SEARCH_TAB:".length);
@@ -17884,8 +16678,7 @@ function RenderCurrentTabContent(list) {
         var basePresetsTitle = isRuSettings ? "\u0411\u0430\u0437\u043E\u0432\u044B\u0435 \u043F\u0440\u0435\u0441\u0435\u0442\u044B" : "Base Presets";
         var playerPresetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B \u0438\u0433\u0440\u043E\u043A\u043E\u0432" : "Player Presets";
         var communityPresetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B \u0441\u043E\u043E\u0431\u0449\u0435\u0441\u0442\u0432\u0430" : "Community Presets";
-        var requestLeadText = isRuSettings ? "\u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u0437\u0430\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u0441\u0432\u043E\u0439 \u043F\u0440\u0435\u0441\u0435\u0442" : "You can request a community preset";
-        var requestLinkText = isRuSettings ? "(\u041D\u0410\u0416\u041C\u0418\u0422\u0415 \u0421\u042E\u0414\u0410)" : "click here.";
+        var requestPresetText = "Request One";
 
         var basePresetEntries = [
             { label: "Default", preset: "Default" },
@@ -17901,15 +16694,12 @@ function RenderCurrentTabContent(list) {
             { label: "Hoot", preset: "Hoot" },
             { label: "Basil", preset: "Basil" },
             { label: "NKD", preset: "NKD" },
-            { label: "Ranger", preset: "Ranger" },
             { label: "BSQTT", preset: "BSQTT" },
             { label: "Panini", preset: "Panini" },
             { label: "SunnyD", preset: "SunnyD" },
             { label: "Piggy", preset: "Piggy" },
-            { label: "bonclide", preset: "bonclide" },
             { label: "Obikym", preset: "Obikym" },
             { label: "Poshy", preset: "Poshy" },
-            { label: "Bread", preset: "Bread" },
             { label: "Saintmxsm", preset: "Saintmxsm" }
         ];
         var customEntries = BuildCommunityPresetEntries();
@@ -17940,8 +16730,8 @@ function RenderCurrentTabContent(list) {
             addPresetSearchRows(playerPresetsTitle, playerPresetEntries, "Player preset");
             CreateSeparator(list);
             addPresetSearchRows(communityPresetsTitle, customEntries, "Community preset");
-            CreateRow(list, "click here", "SEARCH_ACTION:OPEN_COMMISSION_MODAL", "actionbutton", null, null, null, [
-                { label: "Support" }
+            CreateRow(list, requestPresetText, "OPEN_COMMISSIONS", "actionbutton", null, null, null, [
+                { label: "Open" }
             ], "Request a community preset");
             return;
         }
@@ -17949,7 +16739,7 @@ function RenderCurrentTabContent(list) {
         ResetPresetButtonRegistry();
         CreatePresetGrid(list, basePresetsTitle, basePresetEntries, 7, "base");
         CreateSeparator(list);
-            CreatePresetGrid(list, playerPresetsTitle, playerPresetEntries, 5, "great");
+            CreatePresetGrid(list, playerPresetsTitle, playerPresetEntries, 6, "great");
         CreateSeparator(list);
         CreatePresetGrid(list, communityPresetsTitle, customEntries, 6, "custom");
 
@@ -17957,21 +16747,20 @@ function RenderCurrentTabContent(list) {
         communityHintRow.AddClass("CommunityPresetHintRow");
         var communityHintInner = $.CreatePanel("Panel", communityHintRow, "CommunityPresetHintInner");
         communityHintInner.AddClass("CommunityPresetHintInner");
-        var communityHintLead = $.CreatePanel("Label", communityHintInner, "CommunityPresetHintLead");
-        communityHintLead.AddClass("CommunityPresetHintText");
-        communityHintLead.text = requestLeadText;
         var communityHintLink = $.CreatePanel("Button", communityHintInner, "CommunityPresetHintLink");
         communityHintLink.AddClass("CommunityPresetHintLink");
         var communityHintLinkLabel = $.CreatePanel("Label", communityHintLink, "CommunityPresetHintLinkLabel");
-        communityHintLinkLabel.text = requestLinkText;
+        communityHintLinkLabel.text = requestPresetText;
         communityHintLink.SetPanelEvent("onactivate", function() {
-            OpenSupportCommissionModal();
+            $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions");
         });
         RefreshActivePresetHighlight();
     } else if (currentTab === "Crosshair") {
         CreateAnimatedInlineToggleSection(list, "Item Cooldowns", "ENABLE_PASSIVE_COOLDOWN", "Tracked cooldowns near crosshair", function(sectionParent) {
             var advancedModeEnabled = IsAdvancedItemCooldownModeEnabled();
-            CreateRow(sectionParent, "Advanced Mode", "ENABLE_OLD_ITEM_COOLDOWNS", "toggle", null, null, null, [{ invert: true }], "Switch to the advanced item cooldown mode with in-menu filters.");
+            if (gSearchCollectMode) {
+                CreateRow(sectionParent, "Advanced", "ENABLE_OLD_ITEM_COOLDOWNS", "toggle", null, null, null, [{ invert: true }], "Switch to the advanced item cooldown mode with in-menu filters.");
+            }
             if (advancedModeEnabled) {
                 CreateRow(sectionParent, "Advanced Filter", null, "multitoggle", null, null, null, [
                     { key: "ITEM_FILTER_DEF_PASSIVE", label: "Defensive Passive" },
@@ -17988,6 +16777,14 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Opacity", "PASSIVE_COOLDOWN_OPACITY", "slider", 0, 1.0, 0.05, null);
             CreateRow(sectionParent, "Horizontal Offset", "PASSIVE_COOLDOWN_X", "slider", -50, 50, 1);
             CreateRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "slider", -50, 50, 1);
+        }, null, {
+            titleCheckbox: {
+                label: "Advanced",
+                configId: "ENABLE_OLD_ITEM_COOLDOWNS",
+                invert: true,
+                refreshListOnChange: true,
+                description: "Switch to the advanced item cooldown mode with in-menu filters."
+            }
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {
@@ -18192,6 +16989,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
         CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
         CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
+        CreateRow(list, "Icons", "MINIMAP_ICON_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for minimap icons.");
         CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
         CreateRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "slider", -100, 1000, 5);
         CreateSeparator(list);
@@ -18400,9 +17198,31 @@ function RenderCurrentTabContent(list) {
 
         var consoleNoteWrap = $.CreatePanel("Panel", list, "ConsoleTabNoteWrap");
         consoleNoteWrap.AddClass("ConsoleTabNoteWrap");
-        var consoleNoteText = $.CreatePanel("Label", consoleNoteWrap, "ConsoleTabNoteText");
-        consoleNoteText.AddClass("ConsoleTabNoteText");
-        consoleNoteText.text = "These are easy access to common console commands and are not included in QOL settings.\nUse autoexec or other methods to load these automatically.";
+        consoleNoteWrap.AddClass("SupportHeroCard");
+        var consoleNoteTitle = $.CreatePanel("Label", consoleNoteWrap, "ConsoleTabNoteTitle");
+        consoleNoteTitle.AddClass("SupportTabSectionTitle");
+        consoleNoteTitle.AddClass("ConsoleTabNoteTitle");
+        consoleNoteTitle.text = "Console Notes";
+        var consoleNoteList = $.CreatePanel("Panel", consoleNoteWrap, "ConsoleTabNoteList");
+        consoleNoteList.AddClass("SupportHeroBulletList");
+        consoleNoteList.AddClass("ConsoleTabNoteList");
+        var consoleNoteLines = [
+            "These are easy access to common console commands and are not included in QOL settings.",
+            "Use autoexec or other methods to load these automatically."
+        ];
+        for (var consoleNoteIdx = 0; consoleNoteIdx < consoleNoteLines.length; consoleNoteIdx++) {
+            var consoleNoteRow = $.CreatePanel("Panel", consoleNoteList, "");
+            consoleNoteRow.AddClass("SupportHeroBullet");
+            consoleNoteRow.AddClass("ConsoleTabNoteBullet");
+            var consoleNoteMarker = $.CreatePanel("Panel", consoleNoteRow, "");
+            consoleNoteMarker.AddClass("SupportHeroBulletMarker");
+            consoleNoteMarker.AddClass("ConsoleTabNoteMarker");
+            var consoleNoteLabel = $.CreatePanel("Label", consoleNoteRow, "");
+            consoleNoteLabel.AddClass("SupportTabText");
+            consoleNoteLabel.AddClass("SupportHeroBulletLabel");
+            consoleNoteLabel.AddClass("ConsoleTabNoteText");
+            consoleNoteLabel.text = consoleNoteLines[consoleNoteIdx];
+        }
 
         CreateRuntimeSectionTitle(list, "General");
         CreateRow(list, "Hitmarkers", "HITMARKERS_RUNTIME", "runtime_buttongroup", null, null, null, HITMARKERS_RUNTIME_OPTIONS);
@@ -18600,11 +17420,40 @@ function RenderCurrentTabContent(list) {
         var mogNoteWrap = $.CreatePanel("Panel", list, "MogTabNoteWrap");
         mogNoteWrap.AddClass("ConsoleTabNoteWrap");
         mogNoteWrap.AddClass("MogTabNoteWrap");
-        var mogNoteText = $.CreatePanel("Label", mogNoteWrap, "MogTabNoteText");
-        mogNoteText.AddClass("ConsoleTabNoteText");
+        mogNoteWrap.AddClass("SupportHeroCard");
+        var mogNoteTitle = $.CreatePanel("Label", mogNoteWrap, "MogTabNoteTitle");
+        mogNoteTitle.AddClass("SupportTabSectionTitle");
+        mogNoteTitle.AddClass("MogTabNoteTitle");
+        mogNoteTitle.text = "MOGLOCK";
+        var mogNoteList = $.CreatePanel("Panel", mogNoteWrap, "MogTabNoteList");
+        mogNoteList.AddClass("SupportHeroBulletList");
+        mogNoteList.AddClass("MogTabNoteList");
+        var mogInfoRow = $.CreatePanel("Panel", mogNoteList, "");
+        mogInfoRow.AddClass("SupportHeroBullet");
+        mogInfoRow.AddClass("MogTabNoteBullet");
+        var mogInfoMarker = $.CreatePanel("Panel", mogInfoRow, "");
+        mogInfoMarker.AddClass("SupportHeroBulletMarker");
+        mogInfoMarker.AddClass("MogTabNoteMarker");
+        var mogNoteText = $.CreatePanel("Label", mogInfoRow, "MogTabNoteText");
+        mogNoteText.AddClass("SupportTabText");
+        mogNoteText.AddClass("SupportHeroBulletLabel");
         mogNoteText.AddClass("MogTabNoteText");
         mogNoteText.text = "MOG is Deadlock's first custom gamemode community server network.";
-        var mogLinkBtn = $.CreatePanel("Button", mogNoteWrap, "MogTabSiteLink");
+        var mogLinkRow = $.CreatePanel("Panel", mogNoteList, "");
+        mogLinkRow.AddClass("SupportHeroBullet");
+        mogLinkRow.AddClass("MogTabNoteBullet");
+        mogLinkRow.AddClass("MogTabSiteLine");
+        var mogLinkMarker = $.CreatePanel("Panel", mogLinkRow, "");
+        mogLinkMarker.AddClass("SupportHeroBulletMarker");
+        mogLinkMarker.AddClass("MogTabNoteMarker");
+        var mogLinkContent = $.CreatePanel("Panel", mogLinkRow, "MogTabSiteLineContent");
+        mogLinkContent.AddClass("MogTabSiteLineContent");
+        var mogLinkPrefix = $.CreatePanel("Label", mogLinkContent, "MogTabSiteLinkPrefix");
+        mogLinkPrefix.AddClass("SupportTabText");
+        mogLinkPrefix.AddClass("SupportHeroBulletLabel");
+        mogLinkPrefix.AddClass("MogTabSiteLinkPrefix");
+        mogLinkPrefix.text = "Check out our site to join";
+        var mogLinkBtn = $.CreatePanel("Button", mogLinkContent, "MogTabSiteLink");
         mogLinkBtn.AddClass("MogTabSiteLink");
         var mogLinkLbl = $.CreatePanel("Label", mogLinkBtn, "MogTabSiteLinkLabel");
         mogLinkLbl.AddClass("MogTabSiteLinkLabel");
@@ -18703,7 +17552,7 @@ function RenderCurrentTabContent(list) {
                 title: "Commission",
                 hint: "Request a custom feature or preset",
                 iconSrc: "s2r://panorama/images/icons/icon_feedback.vsvg",
-                onactivate: function() { OpenSupportCommissionModal(); }
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions"); }
             },
             {
                 id: "SupportCtaChangeLogBtn",
@@ -19462,9 +18311,27 @@ $.BuildUI = function() {
         if (saveFooterBtn.MoveChildBefore) {
             try { saveFooterBtn.MoveChildBefore(saveFooterIcon, saveFooterLabel); } catch (eMoveSaveIcon) {}
         }
-        saveFooterLabel.text = LocalizeSettingsText("SAVE", true);
+        var footerSaveDefaultText = LocalizeSettingsText("SAVE", true);
+        saveFooterLabel.text = footerSaveDefaultText;
+        saveFooterBtn.SetPanelEvent("onmouseover", function() {
+            if (!saveFooterBtn || !saveFooterBtn.IsValid || !saveFooterBtn.IsValid()) return;
+            HideSettingsTextTooltip();
+            CancelSettingsRowFloatingTooltipHide();
+            ShowSettingsRowFloatingTooltip(
+                saveFooterBtn,
+                "",
+                "DO NOT USE THIS IN QUEUE OR MATCH",
+                PERF_IMPACT_TIER_NONE,
+                "",
+                { footerSaveWarning: true }
+            );
+        });
+        saveFooterBtn.SetPanelEvent("onmouseout", function() {
+            HideSettingsRowFloatingTooltipDeferred("footer_save_mouseout");
+        });
         saveFooterBtn.SetPanelEvent("onactivate", function() {
-            OpenBuildSaveConfirmModal(saveFooterBtn, saveFooterLabel);
+            HideSettingsRowFloatingTooltip();
+            ActivateBuildSaveFromUi(saveFooterBtn, saveFooterLabel);
         });
         if (tabFooter.MoveChildBefore) {
             try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch (eMoveDiscordFooter) {}
@@ -19486,9 +18353,9 @@ $.BuildUI = function() {
     footerVersionIcon.AddClass("TabIcon");
     footerVersionIcon.AddClass("FooterVersionIcon");
     var footerVersionText = $.CreatePanel("Label", footerVersionLabel, "FooterVersionLabelText");
-    footerVersionText.AddClass("VersionLabelStyle");
+    footerVersionText.AddClass("TabLabel");
     footerVersionText.AddClass("FooterVersionLabelText");
-    footerVersionText.text = "Version " + MOD_DISPLAY_VERSION;
+    footerVersionText.text = MOD_DISPLAY_VERSION;
     footerVersionLabel.hittest = false;
     footerVersionLabel.hittestchildren = false;
 
@@ -19756,7 +18623,6 @@ $.ToggleSettingsWindow = function() {
             HideMinimapSizePreview();
             CloseSettingsSideModalsIfOpen();
             CloseMinesweeperModalIfOpen();
-            Close2048ModalIfOpen();
             CloseFlappyModalIfOpen();
             CloseAimTrainerModalIfOpen();
             CloseTrainTrackingModalIfOpen();
@@ -19780,7 +18646,6 @@ $.ForceCloseModSettings = function() {
     HideMinimapSizePreview();
     CloseSettingsSideModalsIfOpen();
     CloseMinesweeperModalIfOpen();
-    Close2048ModalIfOpen();
     CloseFlappyModalIfOpen();
     CloseAimTrainerModalIfOpen();
     CloseTrainTrackingModalIfOpen();
@@ -19803,7 +18668,6 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
     HideMinimapSizePreview();
     CloseSettingsSideModalsIfOpen();
     CloseMinesweeperModalIfOpen();
-    Close2048ModalIfOpen();
     CloseFlappyModalIfOpen();
     CloseAimTrainerModalIfOpen();
     CloseTrainTrackingModalIfOpen();
