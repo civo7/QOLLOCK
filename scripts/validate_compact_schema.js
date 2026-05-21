@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -510,7 +510,7 @@ function main() {
     const minimapElevationMarkerKeys = [
         "ENABLE_MINIMAP_ELEVATION_MARKERS"
     ];
-    const palettePickerKeys = [
+    const palettePickerKeys254 = [
         "ITEMS_WASH_COLOR",
         "PLAYER_HEALTHBAR_ACCENT_COLOR",
         "BOTTOM_BAR_WASH_COLOR",
@@ -518,6 +518,20 @@ function main() {
         "STAMINA_CHARGE_COLOR",
         "AMMO_TEXT_COLOR"
     ];
+    const palettePickerKeys = palettePickerKeys254.concat([
+        "MINIMAP_ICON_COLOR"
+    ]);
+    const getSchemaField = (schema, key) => schema.find(field => field && field.key === key);
+    const assertPaletteMax = (settingsSchema, coreSchema, expectedMax, semver) => {
+        for (const key of palettePickerKeys) {
+            const settingsField = getSchemaField(settingsSchema, key);
+            const coreField = getSchemaField(coreSchema, key);
+            if (!settingsField) fail(`Settings ${semver} missing ${key}`);
+            if (!coreField) fail(`Core ${semver} missing ${key}`);
+            if (settingsField.max !== expectedMax) fail(`Settings ${semver} ${key} max expected ${expectedMax}, got ${settingsField.max}`);
+            if (coreField.max !== expectedMax) fail(`Core ${semver} ${key} max expected ${expectedMax}, got ${coreField.max}`);
+        }
+    };
     const staminaChargeKeys = [
         "STAMINA_CHARGE_ANGLE"
     ];
@@ -658,6 +672,8 @@ function main() {
 
         const settingsSchemaKeys = new Set((settingsRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
         const coreSchemaKeys = new Set((coreRegistry[semver].schema || []).map((field) => String(field && field.key || "")));
+        const settingsSchema = settingsRegistry[semver].schema || [];
+        const coreSchema = coreRegistry[semver].schema || [];
         if (semver === "2.3.5" || semver === "2.3.6" || semver === "2.3.7") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
@@ -787,10 +803,27 @@ function main() {
             }
         }
         if (semver === "2.5.4") {
-            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys254, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.4 missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core 2.5.4 missing ${key}`);
             }
+            if (settingsSchemaKeys.has("MINIMAP_ICON_COLOR")) fail("Settings 2.5.4 should omit MINIMAP_ICON_COLOR");
+            if (coreSchemaKeys.has("MINIMAP_ICON_COLOR")) fail("Core 2.5.4 should omit MINIMAP_ICON_COLOR");
+            for (const key of palettePickerKeys254) {
+                const settingsField = getSchemaField(settingsSchema, key);
+                const coreField = getSchemaField(coreSchema, key);
+                if (!settingsField) fail(`Settings 2.5.4 missing ${key}`);
+                if (!coreField) fail(`Core 2.5.4 missing ${key}`);
+                if (settingsField.max !== 25) fail(`Settings 2.5.4 ${key} max expected 25, got ${settingsField.max}`);
+                if (coreField.max !== 25) fail(`Core 2.5.4 ${key} max expected 25, got ${coreField.max}`);
+            }
+        }
+        if (semver === "2.5.5" || semver === "2.5.6") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
+            }
+            assertPaletteMax(settingsSchema, coreSchema, 29, semver);
         }
 
         const expectedSchema = settingsRegistry[semver].schema;
