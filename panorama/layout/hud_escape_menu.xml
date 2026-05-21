@@ -59,13 +59,13 @@
 					</Button>
 				</Panel>
 				<Button id="newgame" class="nav_menu_item primary" onactivate="CitadelShowPlayPage()">
-					<Label text="PLAY" class="menuButtonLabel" />
+					<Label text="#menu_play" class="menuButtonLabel" />
 				</Button>
 				<Button id="watchgame" class="nav_menu_item primary" onactivate="CitadelShowWatchPage( true )">
-					<Label text="WATCH" class="menuButtonLabel" />
+					<Label text="#menu_watch" class="menuButtonLabel" />
 				</Button>
 				<Button id="guides" class="nav_menu_item primary" onactivate="CitadelShowTrainingPage()">
-					<Label text="RESOURCES" class="menuButtonLabel" />
+					<Label text="#menu_resources" class="menuButtonLabel" />
 				</Button>
 				<Button id="changehero" class="nav_menu_item primary" onactivate="CitadelEscapeMenuChangeHero()">
 					<Label text="#menu_changehero" class="menuButtonLabel" />

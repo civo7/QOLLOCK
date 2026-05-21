@@ -5,6 +5,7 @@
 #ContextualMenu
 {
 	margin-top: 120px;
+	width: 700px;
 }
 
 .center_esc_active #LeftStripe
@@ -46,16 +47,19 @@
 #newgame .menuButtonLabel
 {
 	margin-bottom: 490px;
+	text-transform: uppercase;
 }
 
 #watchgame .menuButtonLabel
 {
 	margin-bottom: 420px;
+	text-transform: uppercase;
 }
 
 #guides .menuButtonLabel
 {
 	margin-bottom: 350px;
+	text-transform: uppercase;
 }
 
 #newgame Label.menuButtonLabel,#watchgame Label.menuButtonLabel,#guides Label.menuButtonLabel
