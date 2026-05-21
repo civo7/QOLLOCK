@@ -14563,7 +14563,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         var isAngleSlider = (type === "angle_slider");
         var isFloat = (max <= 5.0 && (configId.indexOf("OPACITY") !== -1 || configId.indexOf("SCALE") !== -1));
         var isOpacitySlider = (isFloat && configId.indexOf("OPACITY") !== -1);
-        var isSecondsSlider = (configId === "BRIDGE_BUFF_START" || configId === "MINIMAP_REMINDER_INTERVAL");
+        var isSecondsSlider = (configId === "BRIDGE_BUFF_START" || configId === "MINIMAP_REMINDER_INTERVAL" || configId === "RECENT_PURCHASES_QUICK_DISPLAY_SEC");
         var formatSliderInputValue = function(value) {
             if (value === undefined || value === null || !isFinite(Number(value))) value = 0;
             var numeric = Number(value);
@@ -16909,8 +16909,8 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
             CreateSectionTitle(sectionParent, "Recent Purchases");
-            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Recent Purchases Shop Panel", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
             CreateRow(sectionParent, "Notification Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
