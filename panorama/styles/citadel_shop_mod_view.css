@@ -8,7 +8,7 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopMod
 	max-height: 80px;
 }
 
-CitadelHudHeroShop.simplify_shop_active .shopModsBuild .paperTexture, CitadelHudHeroShop.simplify_shop_active .shopModsBuild .paperWear
+CitadelHudHeroShop.simplify_shop_active .paperTexture, CitadelHudHeroShop.simplify_shop_active .paperWear
 {
 	background-size: 100% 156.25%;
 }
