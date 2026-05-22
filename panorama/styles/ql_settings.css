@@ -10835,14 +10835,14 @@
 {
 	width: 100%;
 	flow-children: down;
-	padding: 8px 0px 14px 0px;
+	padding: 4px 0px 0px 0px;
 }
 
 #SettingsWindow .ConfigTabCard
 {
 	width: 100%;
-	margin-bottom: 10px;
-	padding: 8px 6px 8px 6px;
+	margin-bottom: 4px;
+	padding: 5px 6px 5px 6px;
 	border-radius: 0px;
 	border: 0px solid transparent;
 	background-color: none;
@@ -10854,7 +10854,7 @@
 #SettingsWindow .ConfigTabDivider
 {
 	width: 100%;
-	margin: 2px 0px 14px 0px;
+	margin: 0px 0px 7px 0px;
 }
 
 #SettingsWindow #ConfigCardGeneral
@@ -10875,7 +10875,7 @@
 #SettingsWindow #ConfigCardExport,
 #SettingsWindow #ConfigCardImport
 {
-	padding-bottom: 14px;
+	padding-bottom: 6px;
 }
 
 #SettingsWindow .ConfigTabCard .SectionTitleRow
@@ -10897,13 +10897,14 @@
 
 #SettingsWindow .ConfigTabCard .ConfigTextEntry
 {
-	width: 100%;
-	height: 118px;
-	min-height: 118px;
-	max-height: 118px;
-	margin-top: 3px;
-	margin-bottom: 9px;
-	padding: 10px 12px;
+	width: 96%;
+	height: 96px;
+	min-height: 96px;
+	max-height: 96px;
+	horizontal-align: center;
+	margin-top: 2px;
+	margin-bottom: 5px;
+	padding: 7px 10px;
 	border: 1px solid rgba(255, 252, 244, 0.07);
 	border-radius: 3px;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(12, 14, 16, 0.92) ), to( rgba(8, 10, 12, 0.92) ) );
@@ -10918,9 +10919,9 @@
 #SettingsWindow #ConfigFeedbackLabel
 {
 	width: 100%;
-	min-height: 18px;
+	min-height: 16px;
 	margin-top: 0px;
-	margin-bottom: 2px;
+	margin-bottom: 0px;
 	text-overflow: noclip;
 }
 
@@ -18454,7 +18455,7 @@
 {
 	wash-color: #9d642c;
 	brightness: 1.30;
-	img-shadow: 0px 0px 6px rgba(157, 100, 44, 0.20);
+	img-shadow: none;
 }
 
 #SettingsWindow.SettingsThemeKitten .SettingsTabRailGroup .TabItem:hover .TabIcon,
@@ -18464,7 +18465,7 @@
 {
 	wash-color: #ff9ad6;
 	brightness: 1.28;
-	img-shadow: 0px 0px 7px rgba(255, 154, 214, 0.26);
+	img-shadow: none;
 }
 
 #SettingsWindow.SettingsThemeEmo .SettingsTabRailGroup .TabItem:hover .TabIcon,
@@ -18474,7 +18475,7 @@
 {
 	wash-color: #ff3045;
 	brightness: 1.28;
-	img-shadow: 0px 0px 7px rgba(255, 47, 67, 0.26);
+	img-shadow: none;
 }
 
 #SettingsWindow.SettingsThemeOcean .SettingsTabRailGroup .TabItem:hover .TabIcon,
@@ -18484,7 +18485,7 @@
 {
 	wash-color: #72d7ff;
 	brightness: 1.28;
-	img-shadow: 0px 0px 7px rgba(114, 215, 255, 0.24);
+	img-shadow: none;
 }
 
 #SettingsWindow.SettingsThemePsycho .SettingsTabRailGroup .TabItem:hover .TabIcon,
@@ -18494,7 +18495,7 @@
 {
 	wash-color: #008a5a;
 	brightness: 1.22;
-	img-shadow: 0px 0px 5px rgba(0, 138, 90, 0.16);
+	img-shadow: none;
 }
 
 #SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
@@ -23248,8 +23249,10 @@
 	height: 30px;
 	min-height: 30px;
 	max-height: 30px;
+	margin-right: 8px;
 	padding-top: 0px;
 	padding-bottom: 0px;
+	padding-left: 16px;
 	vertical-align: center;
 }
 
@@ -23757,4 +23760,834 @@
 #SettingsWindow #SupportTabThanksBlock .SupportThanksGroupCreator .SupportThanksPlaqueRole_Creator:hover .SupportCreatorFooterText
 {
 	color: rgba(205, 255, 224, 0.94);
+}
+
+/* Final non-default theme accent cohesion.
+   This catches remaining generic green accent roles from older polish passes
+   without changing the Default theme's QOL green identity. */
+#SettingsWindow.SettingsThemeCream .GroupHeader,
+#SettingsWindow.SettingsThemeCream .SectionTitle Label,
+#SettingsWindow.SettingsThemeCream .SectionTitleInlineLabel,
+#SettingsWindow.SettingsThemeCream .MainSectionTitle,
+#SettingsWindow.SettingsThemeCream .SupportTabSectionTitle
+{
+	color: #9d642c;
+	text-shadow: 0px 0px 7px rgba(157, 100, 44, 0.18);
+}
+
+#SettingsWindow.SettingsThemeKitten .GroupHeader,
+#SettingsWindow.SettingsThemeKitten .SectionTitle Label,
+#SettingsWindow.SettingsThemeKitten .SectionTitleInlineLabel,
+#SettingsWindow.SettingsThemeKitten .MainSectionTitle,
+#SettingsWindow.SettingsThemeKitten .SupportTabSectionTitle
+{
+	color: #b43882;
+	text-shadow: 0px 0px 8px rgba(255, 154, 214, 0.24);
+}
+
+#SettingsWindow.SettingsThemeEmo .GroupHeader,
+#SettingsWindow.SettingsThemeEmo .SectionTitle Label,
+#SettingsWindow.SettingsThemeEmo .SectionTitleInlineLabel,
+#SettingsWindow.SettingsThemeEmo .MainSectionTitle,
+#SettingsWindow.SettingsThemeEmo .SupportTabSectionTitle
+{
+	color: #ff3045;
+	text-shadow: 0px 0px 8px rgba(255, 47, 67, 0.24);
+}
+
+#SettingsWindow.SettingsThemeOcean .GroupHeader,
+#SettingsWindow.SettingsThemeOcean .SectionTitle Label,
+#SettingsWindow.SettingsThemeOcean .SectionTitleInlineLabel,
+#SettingsWindow.SettingsThemeOcean .MainSectionTitle,
+#SettingsWindow.SettingsThemeOcean .SupportTabSectionTitle
+{
+	color: #72d7ff;
+	text-shadow: 0px 0px 8px rgba(114, 215, 255, 0.22);
+}
+
+#SettingsWindow.SettingsThemePsycho .GroupHeader,
+#SettingsWindow.SettingsThemePsycho .SectionTitle Label,
+#SettingsWindow.SettingsThemePsycho .SectionTitleInlineLabel,
+#SettingsWindow.SettingsThemePsycho .MainSectionTitle,
+#SettingsWindow.SettingsThemePsycho .SupportTabSectionTitle
+{
+	color: #008a5a;
+	text-shadow: 0px 0px 5px rgba(0, 138, 90, 0.14);
+}
+
+#SettingsWindow.SettingsThemeCream .RowSeparator,
+#SettingsWindow.SettingsThemeCream .SettingsTabRailGroupRule,
+#SettingsWindow.SettingsThemeCream .SettingsTabRailFooterRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(157, 100, 44, 0.0) ), color-stop( 0.5, rgba(157, 100, 44, 0.30) ), color-stop( 1.0, rgba(157, 100, 44, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeKitten .RowSeparator,
+#SettingsWindow.SettingsThemeKitten .SettingsTabRailGroupRule,
+#SettingsWindow.SettingsThemeKitten .SettingsTabRailFooterRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(255, 154, 214, 0.0) ), color-stop( 0.5, rgba(255, 154, 214, 0.30) ), color-stop( 1.0, rgba(255, 154, 214, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeEmo .RowSeparator,
+#SettingsWindow.SettingsThemeEmo .SettingsTabRailGroupRule,
+#SettingsWindow.SettingsThemeEmo .SettingsTabRailFooterRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(255, 47, 67, 0.0) ), color-stop( 0.5, rgba(255, 47, 67, 0.30) ), color-stop( 1.0, rgba(255, 47, 67, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeOcean .RowSeparator,
+#SettingsWindow.SettingsThemeOcean .SettingsTabRailGroupRule,
+#SettingsWindow.SettingsThemeOcean .SettingsTabRailFooterRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(114, 215, 255, 0.0) ), color-stop( 0.5, rgba(114, 215, 255, 0.30) ), color-stop( 1.0, rgba(114, 215, 255, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemePsycho .RowSeparator,
+#SettingsWindow.SettingsThemePsycho .SettingsTabRailGroupRule,
+#SettingsWindow.SettingsThemePsycho .SettingsTabRailFooterRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(0, 138, 90, 0.0) ), color-stop( 0.5, rgba(0, 138, 90, 0.22) ), color-stop( 1.0, rgba(0, 138, 90, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeCream Slider.HorizontalSlider #SliderTrackProgress,
+#SettingsWindow.SettingsThemeCream SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(255, 246, 222, 0.88) ), color-stop( 0.60, #f0c073 ), to( #9d642c ) );
+}
+
+#SettingsWindow.SettingsThemeKitten Slider.HorizontalSlider #SliderTrackProgress,
+#SettingsWindow.SettingsThemeKitten SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(255, 236, 249, 0.88) ), color-stop( 0.60, #ff9ad6 ), to( #b43882 ) );
+}
+
+#SettingsWindow.SettingsThemeEmo Slider.HorizontalSlider #SliderTrackProgress,
+#SettingsWindow.SettingsThemeEmo SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(255, 159, 171, 0.80) ), color-stop( 0.60, #ff3045 ), to( #7d101b ) );
+}
+
+#SettingsWindow.SettingsThemeOcean Slider.HorizontalSlider #SliderTrackProgress,
+#SettingsWindow.SettingsThemeOcean SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(218, 247, 255, 0.84) ), color-stop( 0.60, #72d7ff ), to( #17658f ) );
+}
+
+#SettingsWindow.SettingsThemePsycho Slider.HorizontalSlider #SliderTrackProgress,
+#SettingsWindow.SettingsThemePsycho SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(246, 255, 249, 0.90) ), color-stop( 0.60, #79b995 ), to( #008a5a ) );
+}
+
+#SettingsWindow.SettingsThemeCream #SettingsSearchInput:focus,
+#SettingsWindow.SettingsThemeCream .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow.SettingsThemeCream .ValueInput:focus,
+#SettingsWindow.SettingsThemeCream .ConfigTextEntry:focus,
+#SettingsWindow.SettingsThemeCream .SettingButtonGroup:hover,
+#SettingsWindow.SettingsThemeCream .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeCream .SectionTitleActionBtn:hover,
+#SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(157, 100, 44, 0.36);
+	box-shadow: fill rgba(157, 100, 44, 0.10) 0px 0px 10px 0px, inset rgba(157, 100, 44, 0.06) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeKitten #SettingsSearchInput:focus,
+#SettingsWindow.SettingsThemeKitten .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow.SettingsThemeKitten .ValueInput:focus,
+#SettingsWindow.SettingsThemeKitten .ConfigTextEntry:focus,
+#SettingsWindow.SettingsThemeKitten .SettingButtonGroup:hover,
+#SettingsWindow.SettingsThemeKitten .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeKitten .SectionTitleActionBtn:hover,
+#SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(255, 154, 214, 0.38);
+	box-shadow: fill rgba(255, 116, 199, 0.11) 0px 0px 10px 0px, inset rgba(255, 154, 214, 0.07) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeEmo #SettingsSearchInput:focus,
+#SettingsWindow.SettingsThemeEmo .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow.SettingsThemeEmo .ValueInput:focus,
+#SettingsWindow.SettingsThemeEmo .ConfigTextEntry:focus,
+#SettingsWindow.SettingsThemeEmo .SettingButtonGroup:hover,
+#SettingsWindow.SettingsThemeEmo .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeEmo .SectionTitleActionBtn:hover,
+#SettingsWindow.SettingsThemeEmo .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(255, 47, 67, 0.40);
+	box-shadow: fill rgba(255, 47, 67, 0.12) 0px 0px 10px 0px, inset rgba(255, 47, 67, 0.07) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeOcean #SettingsSearchInput:focus,
+#SettingsWindow.SettingsThemeOcean .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow.SettingsThemeOcean .ValueInput:focus,
+#SettingsWindow.SettingsThemeOcean .ConfigTextEntry:focus,
+#SettingsWindow.SettingsThemeOcean .SettingButtonGroup:hover,
+#SettingsWindow.SettingsThemeOcean .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemeOcean .SectionTitleActionBtn:hover,
+#SettingsWindow.SettingsThemeOcean .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(114, 215, 255, 0.38);
+	box-shadow: fill rgba(83, 202, 255, 0.11) 0px 0px 10px 0px, inset rgba(114, 215, 255, 0.07) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemePsycho #SettingsSearchInput:focus,
+#SettingsWindow.SettingsThemePsycho .SettingsDropDown.QOLSettingsDropDown:hover,
+#SettingsWindow.SettingsThemePsycho .ValueInput:focus,
+#SettingsWindow.SettingsThemePsycho .ConfigTextEntry:focus,
+#SettingsWindow.SettingsThemePsycho .SettingButtonGroup:hover,
+#SettingsWindow.SettingsThemePsycho .SettingActionBtn:hover,
+#SettingsWindow.SettingsThemePsycho .SectionTitleActionBtn:hover,
+#SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(0, 138, 90, 0.28);
+	box-shadow: fill rgba(0, 138, 90, 0.08) 0px 0px 9px 0px, inset rgba(0, 138, 90, 0.05) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn.IsSelected,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn.Active,
+#SettingsWindow.SettingsThemeCream .MultiToggleBtn.selected,
+#SettingsWindow.SettingsThemeCream .RuntimeOnOffBtn.Active,
+#SettingsWindow.SettingsThemeCream .SegmentBtn.Active
+{
+	border-color: rgba(157, 100, 44, 0.42);
+	background-color: rgba(157, 100, 44, 0.10);
+	box-shadow: inset rgba(157, 100, 44, 0.12) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn.IsSelected,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn.Active,
+#SettingsWindow.SettingsThemeKitten .MultiToggleBtn.selected,
+#SettingsWindow.SettingsThemeKitten .RuntimeOnOffBtn.Active,
+#SettingsWindow.SettingsThemeKitten .SegmentBtn.Active
+{
+	border-color: rgba(255, 154, 214, 0.44);
+	background-color: rgba(255, 154, 214, 0.10);
+	box-shadow: inset rgba(255, 154, 214, 0.13) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn.IsSelected,
+#SettingsWindow.SettingsThemeEmo .MultiToggleBtn.Active,
+#SettingsWindow.SettingsThemeEmo .MultiToggleBtn.selected,
+#SettingsWindow.SettingsThemeEmo .RuntimeOnOffBtn.Active,
+#SettingsWindow.SettingsThemeEmo .SegmentBtn.Active
+{
+	border-color: rgba(255, 47, 67, 0.44);
+	background-color: rgba(255, 47, 67, 0.10);
+	box-shadow: inset rgba(255, 47, 67, 0.13) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn.IsSelected,
+#SettingsWindow.SettingsThemeOcean .MultiToggleBtn.Active,
+#SettingsWindow.SettingsThemeOcean .MultiToggleBtn.selected,
+#SettingsWindow.SettingsThemeOcean .RuntimeOnOffBtn.Active,
+#SettingsWindow.SettingsThemeOcean .SegmentBtn.Active
+{
+	border-color: rgba(114, 215, 255, 0.44);
+	background-color: rgba(114, 215, 255, 0.10);
+	box-shadow: inset rgba(114, 215, 255, 0.13) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn.IsSelected,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn.Active,
+#SettingsWindow.SettingsThemePsycho .MultiToggleBtn.selected,
+#SettingsWindow.SettingsThemePsycho .RuntimeOnOffBtn.Active,
+#SettingsWindow.SettingsThemePsycho .SegmentBtn.Active
+{
+	border-color: rgba(0, 138, 90, 0.32);
+	background-color: rgba(0, 138, 90, 0.07);
+	box-shadow: inset rgba(0, 138, 90, 0.09) 0px 0px 0px 1px;
+}
+
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemeCream .MultiCheckboxBtn.IsSelected .TickBox,
+#SettingsWindow.SettingsThemeCream .SectionTitleCheckboxToggle.selected .TickBox,
+#SettingsWindow.SettingsThemeCream .SectionTitleCheckboxToggle.IsSelected .TickBox
+{
+	background-color: #9d642c;
+	border-color: rgba(157, 100, 44, 0.70);
+}
+
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemeKitten .MultiCheckboxBtn.IsSelected .TickBox,
+#SettingsWindow.SettingsThemeKitten .SectionTitleCheckboxToggle.selected .TickBox,
+#SettingsWindow.SettingsThemeKitten .SectionTitleCheckboxToggle.IsSelected .TickBox
+{
+	background-color: #ff9ad6;
+	border-color: rgba(255, 154, 214, 0.72);
+}
+
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemeEmo .MultiCheckboxBtn.IsSelected .TickBox,
+#SettingsWindow.SettingsThemeEmo .SectionTitleCheckboxToggle.selected .TickBox,
+#SettingsWindow.SettingsThemeEmo .SectionTitleCheckboxToggle.IsSelected .TickBox
+{
+	background-color: #ff3045;
+	border-color: rgba(255, 47, 67, 0.72);
+}
+
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemeOcean .MultiCheckboxBtn.IsSelected .TickBox,
+#SettingsWindow.SettingsThemeOcean .SectionTitleCheckboxToggle.selected .TickBox,
+#SettingsWindow.SettingsThemeOcean .SectionTitleCheckboxToggle.IsSelected .TickBox
+{
+	background-color: #72d7ff;
+	border-color: rgba(114, 215, 255, 0.72);
+}
+
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemePsycho .MultiCheckboxBtn.IsSelected .TickBox,
+#SettingsWindow.SettingsThemePsycho .SectionTitleCheckboxToggle.selected .TickBox,
+#SettingsWindow.SettingsThemePsycho .SectionTitleCheckboxToggle.IsSelected .TickBox
+{
+	background-color: #008a5a;
+	border-color: rgba(0, 138, 90, 0.58);
+}
+
+/* Image-panel shadows render as rectangular halos around navbar icons. Keep
+   active state pop on text/wash-color instead of glowing the icon bounds. */
+#SettingsWindow .SettingsTabRailGroup .TabItem .TabIcon,
+#SettingsWindow .SettingsTabRailGroup .TabItem:hover .TabIcon,
+#SettingsWindow .SettingsTabRailGroup .TabItem.Active .TabIcon,
+#SettingsWindow .SettingsTabRailGroup .TabItem.Active:hover .TabIcon 
+{ 
+	img-shadow: none; 
+}
+
+/* Theme leak cleanup: keep preset request CTA + note bullets on-theme. */
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink
+{
+	border-color: rgba(157, 100, 44, 0.34);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(80, 58, 35, 0.98) ), color-stop( 0.56, rgba(44, 32, 22, 0.97) ), to( rgba(22, 17, 13, 0.98) ) );
+	box-shadow: inset rgba(255, 246, 222, 0.070) 0px 1px 0px 0px, inset rgba(157, 100, 44, 0.16) 0px 0px 0px 1px, fill rgba(157, 100, 44, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink
+{
+	border-color: rgba(255, 154, 214, 0.36);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(86, 38, 70, 0.98) ), color-stop( 0.56, rgba(46, 24, 41, 0.97) ), to( rgba(24, 14, 23, 0.98) ) );
+	box-shadow: inset rgba(255, 236, 249, 0.075) 0px 1px 0px 0px, inset rgba(255, 154, 214, 0.15) 0px 0px 0px 1px, fill rgba(255, 116, 199, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink
+{
+	border-color: rgba(255, 47, 67, 0.36);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(71, 24, 30, 0.98) ), color-stop( 0.56, rgba(32, 15, 18, 0.98) ), to( rgba(12, 10, 11, 0.99) ) );
+	box-shadow: inset rgba(255, 159, 171, 0.060) 0px 1px 0px 0px, inset rgba(255, 47, 67, 0.15) 0px 0px 0px 1px, fill rgba(255, 47, 67, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink
+{
+	border-color: rgba(114, 215, 255, 0.36);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(26, 68, 88, 0.98) ), color-stop( 0.56, rgba(17, 39, 54, 0.98) ), to( rgba(10, 18, 26, 0.99) ) );
+	box-shadow: inset rgba(218, 247, 255, 0.065) 0px 1px 0px 0px, inset rgba(114, 215, 255, 0.15) 0px 0px 0px 1px, fill rgba(83, 202, 255, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink
+{
+	border-color: rgba(0, 138, 90, 0.28);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(216, 237, 224, 0.98) ), color-stop( 0.56, rgba(188, 216, 200, 0.98) ), to( rgba(164, 196, 179, 0.99) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.18) 0px 1px 0px 0px, inset rgba(0, 138, 90, 0.12) 0px 0px 0px 1px, fill rgba(0, 138, 90, 0.08) 0px 0px 10px 0px;
+}
+
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink:hover
+{
+	border-color: rgba(188, 127, 61, 0.50);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(94, 70, 43, 1.0) ), color-stop( 0.56, rgba(54, 40, 27, 0.99) ), to( rgba(25, 19, 14, 0.99) ) );
+	box-shadow: inset rgba(255, 246, 222, 0.10) 0px 1px 0px 0px, inset rgba(188, 127, 61, 0.22) 0px 0px 0px 1px, fill rgba(157, 100, 44, 0.18) 0px 0px 15px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink:hover
+{
+	border-color: rgba(255, 176, 225, 0.52);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(102, 45, 83, 1.0) ), color-stop( 0.56, rgba(57, 29, 50, 0.99) ), to( rgba(29, 16, 27, 0.99) ) );
+	box-shadow: inset rgba(255, 236, 249, 0.105) 0px 1px 0px 0px, inset rgba(255, 154, 214, 0.22) 0px 0px 0px 1px, fill rgba(255, 116, 199, 0.18) 0px 0px 15px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink:hover
+{
+	border-color: rgba(255, 81, 98, 0.52);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(86, 28, 35, 1.0) ), color-stop( 0.56, rgba(42, 18, 22, 0.99) ), to( rgba(15, 10, 12, 0.99) ) );
+	box-shadow: inset rgba(255, 159, 171, 0.085) 0px 1px 0px 0px, inset rgba(255, 47, 67, 0.22) 0px 0px 0px 1px, fill rgba(255, 47, 67, 0.18) 0px 0px 15px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink:hover
+{
+	border-color: rgba(150, 227, 255, 0.52);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(31, 81, 105, 1.0) ), color-stop( 0.56, rgba(20, 49, 67, 0.99) ), to( rgba(11, 22, 31, 0.99) ) );
+	box-shadow: inset rgba(218, 247, 255, 0.095) 0px 1px 0px 0px, inset rgba(114, 215, 255, 0.22) 0px 0px 0px 1px, fill rgba(83, 202, 255, 0.18) 0px 0px 15px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink:hover
+{
+	border-color: rgba(0, 138, 90, 0.42);
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(230, 247, 237, 1.0) ), color-stop( 0.56, rgba(197, 226, 210, 0.99) ), to( rgba(169, 204, 185, 0.99) ) );
+	box-shadow: inset rgba(255, 255, 255, 0.22) 0px 1px 0px 0px, inset rgba(0, 138, 90, 0.18) 0px 0px 0px 1px, fill rgba(0, 138, 90, 0.12) 0px 0px 13px 0px;
+}
+
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintIcon { wash-color: #f0c073; }
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintIcon { wash-color: #ff9ad6; }
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintIcon { wash-color: #ff3045; }
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintIcon { wash-color: #72d7ff; }
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintIcon { wash-color: #008a5a; }
+
+#SettingsWindow.SettingsThemeCream .CommunityPresetHintLink Label { color: #ffe8bd; }
+#SettingsWindow.SettingsThemeKitten .CommunityPresetHintLink Label { color: #ffe5f5; }
+#SettingsWindow.SettingsThemeEmo .CommunityPresetHintLink Label { color: #ffd3d8; }
+#SettingsWindow.SettingsThemeOcean .CommunityPresetHintLink Label { color: #d9f7ff; }
+#SettingsWindow.SettingsThemePsycho .CommunityPresetHintLink Label { color: #073d2d; }
+
+#SettingsWindow.SettingsThemeCream .SupportHeroBulletMarker,
+#SettingsWindow.SettingsThemeCream .ConsoleTabNoteMarker,
+#SettingsWindow.SettingsThemeCream .MogTabNoteMarker
+{
+	background-color: rgba(157, 100, 44, 0.58);
+	border-color: rgba(255, 246, 222, 0.20);
+}
+
+#SettingsWindow.SettingsThemeKitten .SupportHeroBulletMarker,
+#SettingsWindow.SettingsThemeKitten .ConsoleTabNoteMarker,
+#SettingsWindow.SettingsThemeKitten .MogTabNoteMarker
+{
+	background-color: rgba(255, 154, 214, 0.62);
+	border-color: rgba(255, 236, 249, 0.20);
+}
+
+#SettingsWindow.SettingsThemeEmo .SupportHeroBulletMarker,
+#SettingsWindow.SettingsThemeEmo .ConsoleTabNoteMarker,
+#SettingsWindow.SettingsThemeEmo .MogTabNoteMarker
+{
+	background-color: rgba(255, 47, 67, 0.64);
+	border-color: rgba(255, 159, 171, 0.18);
+}
+
+#SettingsWindow.SettingsThemeOcean .SupportHeroBulletMarker,
+#SettingsWindow.SettingsThemeOcean .ConsoleTabNoteMarker,
+#SettingsWindow.SettingsThemeOcean .MogTabNoteMarker
+{
+	background-color: rgba(114, 215, 255, 0.64);
+	border-color: rgba(218, 247, 255, 0.20);
+}
+
+#SettingsWindow.SettingsThemePsycho .SupportHeroBulletMarker,
+#SettingsWindow.SettingsThemePsycho .ConsoleTabNoteMarker,
+#SettingsWindow.SettingsThemePsycho .MogTabNoteMarker
+{
+	background-color: rgba(0, 138, 90, 0.50);
+	border-color: rgba(7, 61, 45, 0.18);
+}
+
+/* Theme leak cleanup: section dividers, support CTAs, credits, and hover glows. */
+#SettingsWindow.SettingsThemeCream .PresetGridDividerLine,
+#SettingsWindow.SettingsThemeCream .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(157, 100, 44, 0.0) ), color-stop( 0.5, rgba(157, 100, 44, 0.34) ), color-stop( 1.0, rgba(157, 100, 44, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeKitten .PresetGridDividerLine,
+#SettingsWindow.SettingsThemeKitten .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(255, 154, 214, 0.0) ), color-stop( 0.5, rgba(255, 154, 214, 0.34) ), color-stop( 1.0, rgba(255, 154, 214, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeEmo .PresetGridDividerLine,
+#SettingsWindow.SettingsThemeEmo .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(255, 47, 67, 0.0) ), color-stop( 0.5, rgba(255, 47, 67, 0.34) ), color-stop( 1.0, rgba(255, 47, 67, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeOcean .PresetGridDividerLine,
+#SettingsWindow.SettingsThemeOcean .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(114, 215, 255, 0.0) ), color-stop( 0.5, rgba(114, 215, 255, 0.34) ), color-stop( 1.0, rgba(114, 215, 255, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemePsycho .PresetGridDividerLine,
+#SettingsWindow.SettingsThemePsycho .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, color-stop( 0.0, rgba(0, 138, 90, 0.0) ), color-stop( 0.5, rgba(0, 138, 90, 0.26) ), color-stop( 1.0, rgba(0, 138, 90, 0.0) ) );
+}
+
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid .SupportCtaBtn:hover,
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid .SupportCtaBtnPrimary:hover,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn.PresetActive:hover,
+#SettingsWindow.SettingsThemeCream #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator,
+#SettingsWindow.SettingsThemeCream #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator:hover
+{
+	border-color: rgba(157, 100, 44, 0.34);
+	box-shadow: inset rgba(255, 246, 222, 0.060) 0px 1px 0px 0px, inset rgba(157, 100, 44, 0.13) 0px 0px 0px 1px, fill rgba(157, 100, 44, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid .SupportCtaBtn:hover,
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid .SupportCtaBtnPrimary:hover,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn.PresetActive:hover,
+#SettingsWindow.SettingsThemeKitten #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator,
+#SettingsWindow.SettingsThemeKitten #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator:hover
+{
+	border-color: rgba(255, 154, 214, 0.36);
+	box-shadow: inset rgba(255, 236, 249, 0.065) 0px 1px 0px 0px, inset rgba(255, 154, 214, 0.13) 0px 0px 0px 1px, fill rgba(255, 116, 199, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid .SupportCtaBtn:hover,
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid .SupportCtaBtnPrimary:hover,
+#SettingsWindow.SettingsThemeEmo .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeEmo .PresetGridBtn.PresetActive:hover,
+#SettingsWindow.SettingsThemeEmo #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator,
+#SettingsWindow.SettingsThemeEmo #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator:hover
+{
+	border-color: rgba(255, 47, 67, 0.38);
+	box-shadow: inset rgba(255, 159, 171, 0.055) 0px 1px 0px 0px, inset rgba(255, 47, 67, 0.13) 0px 0px 0px 1px, fill rgba(255, 47, 67, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid .SupportCtaBtn:hover,
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid .SupportCtaBtnPrimary:hover,
+#SettingsWindow.SettingsThemeOcean .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeOcean .PresetGridBtn.PresetActive:hover,
+#SettingsWindow.SettingsThemeOcean #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator,
+#SettingsWindow.SettingsThemeOcean #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator:hover
+{
+	border-color: rgba(114, 215, 255, 0.38);
+	box-shadow: inset rgba(218, 247, 255, 0.060) 0px 1px 0px 0px, inset rgba(114, 215, 255, 0.13) 0px 0px 0px 1px, fill rgba(83, 202, 255, 0.12) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid .SupportCtaBtn:hover,
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid .SupportCtaBtnPrimary:hover,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn.PresetActive:hover,
+#SettingsWindow.SettingsThemePsycho #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator,
+#SettingsWindow.SettingsThemePsycho #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator:hover
+{
+	border-color: rgba(0, 138, 90, 0.30);
+	box-shadow: inset rgba(255, 255, 255, 0.16) 0px 1px 0px 0px, inset rgba(0, 138, 90, 0.10) 0px 0px 0px 1px, fill rgba(0, 138, 90, 0.08) 0px 0px 10px 0px;
+}
+
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeCream .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeCream #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(82, 60, 37, 0.98) ), to( rgba(34, 25, 17, 0.96) ) );
+}
+
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeKitten .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeKitten #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(88, 39, 72, 0.98) ), to( rgba(38, 21, 35, 0.96) ) );
+}
+
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeEmo .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeEmo #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(74, 25, 31, 0.98) ), to( rgba(20, 12, 14, 0.98) ) );
+}
+
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeOcean .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemeOcean #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(28, 70, 90, 0.98) ), to( rgba(12, 25, 34, 0.98) ) );
+}
+
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemePsycho .PresetGridBtn.PresetActive,
+#SettingsWindow.SettingsThemePsycho #SupportTabThanksBlock .SupportThanksPlaqueRole_Creator
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(219, 240, 227, 0.98) ), to( rgba(178, 211, 193, 0.98) ) );
+}
+
+#SettingsWindow.SettingsThemeCream #SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SettingsWindow.SettingsThemeCream .SupportInlineActionBtn:hover,
+#SettingsWindow.SettingsThemeCream .SupportInlineTextLinkBtn:hover,
+#SettingsWindow.SettingsThemeCream .SupportTabActionBtn:hover
+{
+	border-color: rgba(157, 100, 44, 0.28);
+	box-shadow: fill rgba(157, 100, 44, 0.10) 0px 0px 9px 0px;
+}
+
+#SettingsWindow.SettingsThemeKitten #SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SettingsWindow.SettingsThemeKitten .SupportInlineActionBtn:hover,
+#SettingsWindow.SettingsThemeKitten .SupportInlineTextLinkBtn:hover,
+#SettingsWindow.SettingsThemeKitten .SupportTabActionBtn:hover
+{
+	border-color: rgba(255, 154, 214, 0.30);
+	box-shadow: fill rgba(255, 116, 199, 0.10) 0px 0px 9px 0px;
+}
+
+#SettingsWindow.SettingsThemeEmo #SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SettingsWindow.SettingsThemeEmo .SupportInlineActionBtn:hover,
+#SettingsWindow.SettingsThemeEmo .SupportInlineTextLinkBtn:hover,
+#SettingsWindow.SettingsThemeEmo .SupportTabActionBtn:hover
+{
+	border-color: rgba(255, 47, 67, 0.32);
+	box-shadow: fill rgba(255, 47, 67, 0.11) 0px 0px 9px 0px;
+}
+
+#SettingsWindow.SettingsThemeOcean #SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SettingsWindow.SettingsThemeOcean .SupportInlineActionBtn:hover,
+#SettingsWindow.SettingsThemeOcean .SupportInlineTextLinkBtn:hover,
+#SettingsWindow.SettingsThemeOcean .SupportTabActionBtn:hover
+{
+	border-color: rgba(114, 215, 255, 0.32);
+	box-shadow: fill rgba(83, 202, 255, 0.10) 0px 0px 9px 0px;
+}
+
+#SettingsWindow.SettingsThemePsycho #SupportTabThanksBlock .SupportThanksPlaque:hover,
+#SettingsWindow.SettingsThemePsycho .SupportInlineActionBtn:hover,
+#SettingsWindow.SettingsThemePsycho .SupportInlineTextLinkBtn:hover,
+#SettingsWindow.SettingsThemePsycho .SupportTabActionBtn:hover
+{
+	border-color: rgba(0, 138, 90, 0.24);
+	box-shadow: fill rgba(0, 138, 90, 0.07) 0px 0px 8px 0px;
+}
+
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid .SupportCtaBtnPrimary,
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid .SupportCtaBtnPrimary
+{
+	animation-name: none;
+}
+
+/* Theme leak cleanup: category reset icons and Discord button text. */
+#SettingsWindow.SettingsThemeCream .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeCream .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeCream .SectionResetBtn:active .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeCream .SectionResetBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeCream .SectionResetBtn.HasChanges .SectionTitleActionIcon
+{
+	wash-color: #9d642c;
+	img-shadow: 0px 0px 7px rgba(157, 100, 44, 0.20);
+}
+
+#SettingsWindow.SettingsThemeKitten .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeKitten .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeKitten .SectionResetBtn:active .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeKitten .SectionResetBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeKitten .SectionResetBtn.HasChanges .SectionTitleActionIcon
+{
+	wash-color: #ff71c5;
+	img-shadow: 0px 0px 7px rgba(255, 113, 197, 0.22);
+}
+
+#SettingsWindow.SettingsThemeEmo .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeEmo .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeEmo .SectionResetBtn:active .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeEmo .SectionResetBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeEmo .SectionResetBtn.HasChanges .SectionTitleActionIcon
+{
+	wash-color: #ff3045;
+	img-shadow: 0px 0px 7px rgba(255, 48, 69, 0.22);
+}
+
+#SettingsWindow.SettingsThemeOcean .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeOcean .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeOcean .SectionResetBtn:active .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeOcean .SectionResetBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemeOcean .SectionResetBtn.HasChanges .SectionTitleActionIcon
+{
+	wash-color: #72d7ff;
+	img-shadow: 0px 0px 7px rgba(114, 215, 255, 0.22);
+}
+
+#SettingsWindow.SettingsThemePsycho .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemePsycho .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemePsycho .SectionResetBtn:active .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemePsycho .SectionResetBtn.SuccessState .SectionTitleActionIcon,
+#SettingsWindow.SettingsThemePsycho .SectionResetBtn.HasChanges .SectionTitleActionIcon
+{
+	wash-color: #008a5a;
+	img-shadow: 0px 0px 6px rgba(0, 138, 90, 0.16);
+}
+
+#SettingsWindow .FooterDiscordRailBtn Label,
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow .SupportTabDiscordLinkText
+{
+	color: #a9afff;
+	text-shadow: 0px 0px 7px rgba(88, 101, 242, 0.22);
+}
+
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(169, 175, 255, 0.78);
+}
+
+#SettingsWindow .FooterDiscordRailBtn:hover Label,
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #c8ccff;
+	text-shadow: 0px 0px 8px rgba(88, 101, 242, 0.30);
+}
+
+#SettingsWindow #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(200, 204, 255, 0.88);
+}
+
+#SettingsWindow.SettingsThemeCream .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeCream .SupportTabDiscordLinkText
+{
+	color: #c9823b;
+	text-shadow: 0px 0px 7px rgba(157, 100, 44, 0.22);
+}
+
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(201, 130, 59, 0.78);
+}
+
+#SettingsWindow.SettingsThemeCream .FooterDiscordRailBtn:hover Label,
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeCream .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #e0a35f;
+	text-shadow: 0px 0px 8px rgba(157, 100, 44, 0.30);
+}
+
+#SettingsWindow.SettingsThemeCream #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(224, 163, 95, 0.86);
+}
+
+#SettingsWindow.SettingsThemeKitten .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeKitten .SupportTabDiscordLinkText
+{
+	color: #ff71c5;
+	text-shadow: 0px 0px 7px rgba(255, 113, 197, 0.24);
+}
+
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(255, 113, 197, 0.76);
+}
+
+#SettingsWindow.SettingsThemeKitten .FooterDiscordRailBtn:hover Label,
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeKitten .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #ff9ad6;
+	text-shadow: 0px 0px 8px rgba(255, 113, 197, 0.32);
+}
+
+#SettingsWindow.SettingsThemeKitten #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(255, 154, 214, 0.86);
+}
+
+#SettingsWindow.SettingsThemeEmo .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeEmo .SupportTabDiscordLinkText
+{
+	color: #ff3045;
+	text-shadow: 0px 0px 7px rgba(255, 48, 69, 0.24);
+}
+
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(255, 95, 111, 0.76);
+}
+
+#SettingsWindow.SettingsThemeEmo .FooterDiscordRailBtn:hover Label,
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeEmo .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #ff5f6f;
+	text-shadow: 0px 0px 8px rgba(255, 48, 69, 0.32);
+}
+
+#SettingsWindow.SettingsThemeEmo #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(255, 129, 142, 0.86);
+}
+
+#SettingsWindow.SettingsThemeOcean .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeOcean .SupportTabDiscordLinkText
+{
+	color: #72d7ff;
+	text-shadow: 0px 0px 7px rgba(114, 215, 255, 0.24);
+}
+
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(114, 215, 255, 0.76);
+}
+
+#SettingsWindow.SettingsThemeOcean .FooterDiscordRailBtn:hover Label,
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemeOcean .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #a1e7ff;
+	text-shadow: 0px 0px 8px rgba(114, 215, 255, 0.32);
+}
+
+#SettingsWindow.SettingsThemeOcean #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(161, 231, 255, 0.86);
+}
+
+#SettingsWindow.SettingsThemePsycho .FooterDiscordRailBtn Label,
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemePsycho .SupportTabDiscordLinkText
+{
+	color: #008a5a;
+	text-shadow: 0px 0px 5px rgba(0, 138, 90, 0.14);
+}
+
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid #SupportCtaDiscordBtn .SupportCtaBtnHint
+{
+	color: rgba(0, 108, 72, 0.76);
+}
+
+#SettingsWindow.SettingsThemePsycho .FooterDiscordRailBtn:hover Label,
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnTitle,
+#SettingsWindow.SettingsThemePsycho .SupportTabContactBtn:hover .SupportTabDiscordLinkText
+{
+	color: #14a875;
+	text-shadow: 0px 0px 6px rgba(0, 138, 90, 0.20);
+}
+
+#SettingsWindow.SettingsThemePsycho #SupportCtaGrid #SupportCtaDiscordBtn:hover .SupportCtaBtnHint
+{
+	color: rgba(20, 120, 86, 0.84);
+}
+
+/* Reset buttons inherit the generic button shell; keep them visually icon-only. */
+#SettingsWindow .SectionResetBtn,
+#SettingsWindow .SectionResetBtn:hover,
+#SettingsWindow .SectionTitleRow:hover .SectionResetBtn,
+#SettingsWindow .SettingRowResetBtn,
+#SettingsWindow .SettingRowResetBtn:hover,
+#SettingsWindow .SettingRow.HasChanged:hover .SettingRowResetBtn.Visible,
+#SettingsWindow .SettingRow:hover .SettingRowResetBtn.RuntimeAlwaysVisible
+{
+	border: 0px solid transparent;
+	background-color: rgba(0, 0, 0, 0.0);
+	box-shadow: none;
+}
+
+#SettingsWindow .SectionResetBtn .SectionTitleActionIcon,
+#SettingsWindow .SectionResetBtn:hover .SectionTitleActionIcon,
+#SettingsWindow .SettingRowResetBtn .SettingRowResetIcon,
+#SettingsWindow .SettingRowResetBtn:hover .SettingRowResetIcon
+{
+	img-shadow: none;
 }
