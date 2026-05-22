@@ -62,6 +62,8 @@
         minimapIconColorStyleSig: "",
         minimapCastRangeScaleApplied: false,
         minimapCrateOverlayBuildSig: "",
+        showBuildIdStyleSig: "",
+        showBuildIdLastLabel: null,
         quickbuyRuntimeStyleSig: "",
         quickbuyRuntimeHostOffsetApplied: false,
         compassEnabled: false,
@@ -659,7 +661,11 @@
         mcLastHealingStartSlots: -1,
         mcLastBarrierFullHearts: -1,
         mcLastBarrierHasHalf: null,
-        mcLastBarrierLastSlotIsHalf: null
+        mcLastBarrierLastSlotIsHalf: null,
+        dl4dLastTime: -1,
+        dl4dTriggeredTimes: {},
+        dl4dCaptionToken: 0,
+        dl4dCaptionVisible: false
     };
 
     var INTERNAL_CONFIG = {
@@ -672,6 +678,25 @@
             { time: 480, sound: "BuffReminder.Tier3", tierKey: "ENABLE_ONE_TIME_TIER3" }
         ]
     };
+    var DL4D_REMINDER_EVENTS = [
+        { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
+        { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
+        { time: 345, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
+        { time: 465, key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners", caption: "Sinners and large camps spawning soon.", duration: 1.9 },
+        { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Midboss, Soul Urn, Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
+        { time: 720, key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak", caption: "Lane Guardian's resistance has decreased.", duration: 2.7 },
+        { time: 885, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 1080, key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak", caption: "Walker resistance has decreased.", duration: 2.5 },
+        { time: 1185, key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers", caption: "Bridge buffs spawning soon. Troopers now spawn every 25s.", duration: 4.2 },
+        { time: 1485, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 1785, key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs", caption: "Bridge buffs spawning soon. Gold statue buffs have been increased to max.", duration: 4.2 },
+        { time: 2085, key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp", caption: "Bridge buffs spawning soon. Troopers now spawn every 20s with 50% more HP.", duration: 5.4 },
+        { time: 2385, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 2685, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 2985, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 3285, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+        { time: 3585, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 }
+    ];
 
     const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
     const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
@@ -8049,6 +8074,33 @@ const BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
     { key: "RECENT_PURCHASES_PANEL_Y_OFFSET",    min: -500, max: 500, step: 5    },
     { key: "RECENT_PURCHASES_PANEL_SCALE",       min: 0.5,  max: 2.0, step: 0.05 }
 ];
+const BUILD_CATEGORY_RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
+    { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+const BUILD_CATEGORY_SHOW_BUILD_ID_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_DL4D_REMINDER_SCHEMA_FIELDS = [
+    { key: "ENABLE_DL4D_REMINDERS", min: 0, max: 1, step: 1 },
+    { key: "DL4D_VOLUME", min: 0, max: 100, step: 1 },
+    { key: "ENABLE_DL4D_CAPTIONS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_MEDIUM_CAMPS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_WALKER_WEAK", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS = [
+    { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 }
+];
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4,
     [
@@ -8126,6 +8178,23 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6,
     BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7,
+    BUILD_CATEGORY_SHOW_BUILD_ID_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8,
+    BUILD_CATEGORY_DL4D_REMINDER_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9,
+    BUILD_CATEGORY_QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10,
+    BUILD_CATEGORY_RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11;
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -8259,6 +8328,26 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.5.7": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7
+    },
+    "2.5.8": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8
+    },
+    "2.5.9": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9
+    },
+    "2.5.10": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10
+    },
+    "2.5.11": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11
+    },
+    "2.6.0": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -13389,6 +13478,36 @@ function GetUIRoot() {
         );
     }
 
+    function GetMinimapConfigNumber(cfg, newKey, legacyKey, fallbackVal) {
+        var val = cfg ? cfg[newKey] : undefined;
+        if (val === undefined || val === null || !isFinite(Number(val))) {
+            val = cfg ? cfg[legacyKey] : undefined;
+        }
+        if (val === undefined || val === null || !isFinite(Number(val))) {
+            val = fallbackVal;
+        }
+        return Number(val);
+    }
+
+    function ResolveActiveMinimapObjectiveSize(root, cfg) {
+        var smallSize = Number(cfg && cfg.MINIMAP_SMALL_SIZE);
+        if (!isFinite(smallSize)) smallSize = 400;
+        var minimapPersp = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
+        if (!minimapPersp && root && root.FindChildTraverse) {
+            minimapPersp = root.FindChildTraverse("minimap_persp");
+            State.cachedPanels.minimapPersp = minimapPersp || null;
+        }
+        var isAlt = IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPersp, "gDetailView");
+        var isTab = IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPersp, "gScoreboardOpen");
+        if (isTab && cfg && Number(cfg.ENABLE_TAB_ZOOM) === 1) {
+            return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", smallSize);
+        }
+        if (isAlt && cfg && Number(cfg.ENABLE_ALT_ZOOM) === 1) {
+            return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", smallSize);
+        }
+        return smallSize;
+    }
+
     function UpdateMinimapObjectiveTimers(root, cfg, bridgeText, remainingBridge, rejuvText, remainingRejuv, spawnWaiting) {
         var buffEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1);
         var buffOnBridgeEnabled = !!(buffEnabled && cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1);
@@ -13402,10 +13521,10 @@ function GetUIRoot() {
         if (!panels || !panels.root) return;
         var overlay = panels.root;
         if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-        var minimapSize = Number(cfg.MINIMAP_SMALL_SIZE);
+        var minimapSize = ResolveActiveMinimapObjectiveSize(root, cfg);
         if (!isFinite(minimapSize)) minimapSize = 400;
         if (minimapSize < 200) minimapSize = 200;
-        if (minimapSize > 1000) minimapSize = 1000;
+        if (minimapSize > 1200) minimapSize = 1200;
         var minimapScale = minimapSize / 400.0;
         if (!isFinite(minimapScale)) minimapScale = 1.0;
         if (minimapScale < 0.5) minimapScale = 0.5;
@@ -14080,6 +14199,15 @@ function GetUIRoot() {
         State.rejuvWasDisabled = false;
 
         var state = EnsureRejuvState();
+        var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
+        var minimapPerspForObjectiveSig = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
+        if (!minimapPerspForObjectiveSig && root && root.FindChildTraverse) {
+            minimapPerspForObjectiveSig = root.FindChildTraverse("minimap_persp");
+            State.cachedPanels.minimapPersp = minimapPerspForObjectiveSig || null;
+        }
+        var activeObjectiveZoomSig =
+            (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gDetailView") ? "A" : "") +
+            (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gScoreboardOpen") ? "T" : "");
         var runtimeFeatureSig = [
             rejuvHudEnabled ? "1" : "0",
             buffHudEnabled ? "1" : "0",
@@ -14087,7 +14215,9 @@ function GetUIRoot() {
             minimapBuffEnabled ? "1" : "0",
             cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? "1" : "0",
             cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? "1" : "0",
-            String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : "")
+            String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : ""),
+            String(activeMinimapObjectiveSize),
+            activeObjectiveZoomSig
         ].join("|");
 
         var rLab = GetRejuvPanel(state, root, "rLab", "RejuvTime");
@@ -14211,6 +14341,8 @@ function GetUIRoot() {
             Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ? 1 : 0,
             Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? 1 : 0,
             String(Number(cfg.MINIMAP_SMALL_SIZE) || 0),
+            String(activeMinimapObjectiveSize),
+            activeObjectiveZoomSig,
             bridgeText,
             String(remainingBridge),
             rejuvTextForMinimap,
@@ -14533,6 +14665,112 @@ function GetUIRoot() {
         if (!baseName) return "";
         var voiceVolume = NormalizeVoiceVolumeValue(cfg && cfg.VOICE_VOLUME);
         return baseName + "_V" + String(voiceVolume);
+    }
+
+    function IsDl4dReminderRuntimeActive(cfg) {
+        return !!(cfg && Number(cfg.ENABLE_DL4D_REMINDERS) === 1);
+    }
+
+    function ResolveDl4dReminderEventForVolume(baseEventName, cfg) {
+        var baseName = String(baseEventName || "");
+        if (!baseName) return "";
+        var reminderVolume = NormalizeVoiceVolumeValue(cfg && cfg.DL4D_VOLUME);
+        return baseName + "_V" + String(reminderVolume);
+    }
+
+    function EnsureDl4dCaptionPanel(root) {
+        var panel = IsPanelValid(State.cachedPanels.dl4dCaptionPanel) ? State.cachedPanels.dl4dCaptionPanel : null;
+        if (!panel && root && root.FindChildTraverse) {
+            panel = root.FindChildTraverse("QOLDL4DCaption") || null;
+        }
+        if (!panel && root) {
+            panel = $.CreatePanel("Label", root, "QOLDL4DCaption", {
+                text: "",
+                hittest: "false"
+            });
+        }
+        if (!panel) return null;
+        State.cachedPanels.dl4dCaptionPanel = panel;
+        panel.style.horizontalAlign = "center";
+        panel.style.verticalAlign = "top";
+        panel.style.marginTop = "140px";
+        panel.style.padding = "10px 20px";
+        panel.style.maxWidth = "980px";
+        panel.style.backgroundColor = "#000000cc";
+        panel.style.color = "#ffffff";
+        panel.style.fontSize = "22px";
+        panel.style.fontWeight = "bold";
+        panel.style.textAlign = "center";
+        panel.style.border = "1px solid #ffffff55";
+        panel.style.borderRadius = "6px";
+        panel.style.zIndex = "1000";
+        panel.style.opacity = "0";
+        panel.style.visibility = "collapse";
+        return panel;
+    }
+
+    function HideDl4dCaption() {
+        var panel = IsPanelValid(State.cachedPanels.dl4dCaptionPanel) ? State.cachedPanels.dl4dCaptionPanel : null;
+        if (panel) {
+            panel.text = "";
+            panel.style.opacity = "0";
+            panel.style.visibility = "collapse";
+        }
+        State.dl4dCaptionVisible = false;
+        State.dl4dCaptionToken++;
+    }
+
+    function ShowDl4dCaption(root, cfg, text, durationSec) {
+        if (!cfg || Number(cfg.ENABLE_DL4D_CAPTIONS) !== 1) return;
+        var panel = EnsureDl4dCaptionPanel(root);
+        if (!panel) return;
+        panel.text = String(text || "");
+        panel.style.visibility = "visible";
+        panel.style.opacity = "0.85";
+        State.dl4dCaptionVisible = true;
+        State.dl4dCaptionToken++;
+        var token = State.dl4dCaptionToken;
+        var delay = Number(durationSec);
+        if (!isFinite(delay) || delay <= 0) delay = 3.0;
+        $.Schedule(delay, function() {
+            if (token !== State.dl4dCaptionToken) return;
+            HideDl4dCaption();
+        });
+    }
+
+    function ResetDl4dReminderRuntime() {
+        State.dl4dLastTime = -1;
+        State.dl4dTriggeredTimes = {};
+        HideDl4dCaption();
+    }
+
+    function UpdateDl4dReminderRuntime(root, cfg, currentTime, suppressAudio) {
+        if (!IsDl4dReminderRuntimeActive(cfg) || suppressAudio) {
+            if (State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel)) HideDl4dCaption();
+            if (!IsDl4dReminderRuntimeActive(cfg)) {
+                State.dl4dLastTime = -1;
+                State.dl4dTriggeredTimes = {};
+            }
+            return;
+        }
+        if (!isFinite(currentTime) || currentTime <= 0) return;
+        if (State.dl4dLastTime > 30 && currentTime < State.dl4dLastTime - 30) {
+            State.dl4dTriggeredTimes = {};
+        }
+        for (var i = 0; i < DL4D_REMINDER_EVENTS.length; i++) {
+            var reminder = DL4D_REMINDER_EVENTS[i];
+            if (!reminder || !isFinite(reminder.time)) continue;
+            var fireKey = String(reminder.time);
+            if (State.dl4dTriggeredTimes[fireKey]) continue;
+            if (currentTime >= reminder.time && currentTime < (reminder.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
+                State.dl4dTriggeredTimes[fireKey] = true;
+                if (Number(cfg[reminder.key]) !== 1) continue;
+                ShowDl4dCaption(root, cfg, reminder.caption, reminder.duration);
+                var eventName = ResolveDl4dReminderEventForVolume(reminder.eventBase, cfg);
+                if (eventName) $.DispatchEvent("PlaySoundEffect", eventName);
+            }
+        }
+        State.dl4dLastTime = currentTime;
     }
 
     function LogSoundDispatch(eventName, cfg, voiceSelection) {
@@ -19284,6 +19522,113 @@ function GetUIRoot() {
             }
         }
         return text || "";
+    }
+
+    function CollapseShowBuildIdPanel() {
+        var panel = IsPanelValid(State.cachedPanels.showBuildIdPanel) ? State.cachedPanels.showBuildIdPanel : null;
+        if (!panel) return;
+        SetStyleSafe(panel, "visibility", "collapse");
+        var label = IsPanelValid(State.cachedPanels.showBuildIdLabel) ? State.cachedPanels.showBuildIdLabel : null;
+        if (label) {
+            try { label.text = ""; } catch (e0) {}
+        }
+        State.showBuildIdStyleSig = "";
+        State.showBuildIdLastLabel = null;
+    }
+
+    function ParseSelectedBuildInfoText(rawText) {
+        var raw = String(rawText || "").trim();
+        if (!raw || raw.length <= 0) return null;
+        var parts = raw.split(" - ");
+        var buildId = String(parts[0] || "").replace(/,/g, "").trim();
+        var buildName = String(parts[1] || "").trim();
+        var buildVersion = parseInt(String(parts[2] || "0").replace(/,/g, ""), 10);
+        if (!buildId || buildId === "0") return null;
+        return {
+            id: buildId,
+            name: buildName || "Unknown",
+            visibility: buildVersion > 0 ? "Public" : "Private"
+        };
+    }
+
+    function EnsureShowBuildIdPanel(root) {
+        if (!root || !$.CreatePanel) return null;
+        var lowerLeft = IsPanelValid(State.cachedPanels.lowerLeft) ? State.cachedPanels.lowerLeft : null;
+        if (!lowerLeft) {
+            lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
+            State.cachedPanels.lowerLeft = lowerLeft || null;
+        }
+        if (!lowerLeft) return null;
+
+        var panel = IsPanelValid(State.cachedPanels.showBuildIdPanel) ? State.cachedPanels.showBuildIdPanel : null;
+        if (!panel) {
+            panel = lowerLeft.FindChildTraverse ? lowerLeft.FindChildTraverse("selected_build_info") : null;
+        }
+        if (!panel) {
+            try {
+                panel = $.CreatePanel("Panel", lowerLeft, "selected_build_info", { hittest: "false", hittestchildren: "false" });
+            } catch (e0) {
+                panel = null;
+            }
+        }
+        if (!panel) return null;
+        State.cachedPanels.showBuildIdPanel = panel;
+
+        var label = IsPanelValid(State.cachedPanels.showBuildIdLabel) ? State.cachedPanels.showBuildIdLabel : null;
+        if (!label) {
+            label = panel.FindChildTraverse ? panel.FindChildTraverse("build_info") : null;
+        }
+        if (!label) {
+            try {
+                label = $.CreatePanel("Label", panel, "build_info", { hittest: "false" });
+            } catch (e1) {
+                label = null;
+            }
+        }
+        State.cachedPanels.showBuildIdLabel = label || null;
+        return label ? { panel: panel, label: label } : null;
+    }
+
+    function UpdateShowBuildIdRuntime(root, cfg) {
+        if (!root || Number(cfg && cfg.ENABLE_SHOW_BUILD_ID) !== 1) {
+            CollapseShowBuildIdPanel();
+            return;
+        }
+        var source = IsPanelValid(State.cachedPanels.selectedBuildInfoTitle) ? State.cachedPanels.selectedBuildInfoTitle : null;
+        if (!source) {
+            source = root.FindChildTraverse ? root.FindChildTraverse("SelectedBuildInfoTitle") : null;
+            State.cachedPanels.selectedBuildInfoTitle = source || null;
+        }
+        var parsed = ParseSelectedBuildInfoText(ReadPanelTextMaybe(source));
+        if (!parsed) {
+            CollapseShowBuildIdPanel();
+            return;
+        }
+        var target = EnsureShowBuildIdPanel(root);
+        if (!target) return;
+
+        var showTitle = Number(cfg && cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
+        var displayText = parsed.visibility + " Build: " + parsed.id + (showTitle ? " - " + parsed.name : "");
+        var sig = displayText + "|" + (showTitle ? "1" : "0");
+        var forceApply = State.showBuildIdLastLabel !== target.label;
+        SetStyleSafe(target.panel, "visibility", "visible");
+        if (State.showBuildIdStyleSig === sig && !forceApply) return;
+
+        SetStyleSafe(target.panel, "marginLeft", "26px");
+        SetStyleSafe(target.panel, "verticalAlign", "bottom");
+        SetStyleSafe(target.panel, "height", "24px");
+        SetStyleSafe(target.panel, "flowChildren", "right");
+        SetStyleSafe(target.panel, "zIndex", "5");
+        try { target.label.text = displayText; } catch (e2) {}
+        try { target.label.html = true; } catch (e3) {}
+        SetStyleSafe(target.label, "whiteSpace", "nowrap");
+        SetStyleSafe(target.label, "fontSize", "16px");
+        SetStyleSafe(target.label, "fontWeight", "bold");
+        SetStyleSafe(target.label, "fontFamily", "oracle, blocky, sans-serif");
+        SetStyleSafe(target.label, "color", "offWhite");
+        SetStyleSafe(target.label, "textShadow", "0px 1px 3px 3.0 #000000cc");
+        State.showBuildIdStyleSig = sig;
+        State.showBuildIdLastLabel = target.label;
     }
 
     function ExtractBuildCategoryPayloadToken(rawText) {
@@ -24150,9 +24495,11 @@ function GetUIRoot() {
             rpPanel.style.visibility = shopEnabled ? "visible" : "collapse";
             var panelOffsetX = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
             var panelOffsetY = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
+            var panelOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_PANEL_OPACITY, 1.0).toFixed(2);
             var panelScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_PANEL_SCALE, 1.0).toFixed(2);
             rpPanel.style.x = String(panelOffsetX) + "px";
             rpPanel.style.y = String(-panelOffsetY) + "px";
+            SetPanelOpacitySafe(rpPanel, panelOpacityText, 1.0);
             rpPanel.style.preTransformScale2d = panelScaleText + ", " + panelScaleText;
         }
 
@@ -24186,6 +24533,7 @@ function GetUIRoot() {
             var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
             var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
             var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
+            var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
             var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
             SyncRejuvClassRP(rejuvEnabled);
             var quickPanel = State.cachedPanels.quickPurchasesPanel;
@@ -24193,6 +24541,7 @@ function GetUIRoot() {
                 quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
                 quickPanel.style.x = String(quickOffsetX) + "px";
                 quickPanel.style.y = String(-quickOffsetY) + "px";
+                SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
                 quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
             }
         }
@@ -31338,10 +31687,13 @@ function GetUIRoot() {
             cfg.DISABLE_DAMAGE_REPORT,
             cfg.DISABLE_QUICK_BUY,
             cfg.ENABLE_ENHANCED_QUICKBUY,
+            cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY,
             cfg.ENABLE_SHOP_CLICK_TO_NOTIFY,
             cfg.ENABLE_SHOP_RECENT_PURCHASES,
             cfg.RECENT_PURCHASES_QUICK_MAX,
             cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC,
+            cfg.RECENT_PURCHASES_QUICK_OPACITY,
+            cfg.RECENT_PURCHASES_PANEL_OPACITY,
             cfg.ENABLE_HUD_SHIFT,
             cfg.SUPPORT_16_10,
             cfg.SUPPORT_4_3,
@@ -31442,14 +31794,14 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
             var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-            var shopClickToNotifyEnabled = Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+            var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
             var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
-            SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", shopClickToNotifyEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
             State.coreRootStaticSig = staticSig;
         }
@@ -31479,7 +31831,7 @@ function GetUIRoot() {
             State.cachedPanels.quickbuy = quickbuyPanel || null;
         }
         if (quickbuyPanel) {
-            var quickbuyFeatureActive = enhancedQuickbuyEnabled || shopClickToNotifyEnabled;
+            var quickbuyFeatureActive = enhancedQuickbuyEnabled || quickbuyClickToNotifyEnabled;
             var quickbuyOffsetX = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0) : 0;
             var quickbuyOffsetY = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0) : 0;
             var quickbuyStyleSig = String(quickbuyOffsetX) + "|" + String(quickbuyOffsetY) + "|" + (quickbuyFeatureActive ? "1" : "0") + "|" + (enhancedQuickbuyEnabled ? "1" : "0");
@@ -31494,7 +31846,7 @@ function GetUIRoot() {
                 quickbuyPanel,
                 State.quickbuyClassCache,
                 "shop_click_to_notify_active",
-                shopClickToNotifyEnabled
+                quickbuyClickToNotifyEnabled
             );
             if (State.quickbuyRuntimeStyleSig !== quickbuyStyleSig) {
                 if (quickbuyOffsetX !== 0 || quickbuyOffsetY !== 0) {
@@ -31595,6 +31947,7 @@ function GetUIRoot() {
         if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) {
             UpdateChatRuntime(root, cfg);
         }
+        UpdateShowBuildIdRuntime(root, cfg);
         if (NeedsDamageReportOffsetWork(cfg)) {
             UpdateDamageReportOffsets(root, cfg);
         }
@@ -31621,7 +31974,8 @@ function GetUIRoot() {
         var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
         var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
         var reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
-        var needsReminderRuntime = reminderTypesEnabled && !hideoutConnected;
+        var dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
+        var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
 
         if (!needsPassiveRuntime && !needsReminderRuntime) return;
 
@@ -31694,6 +32048,9 @@ function GetUIRoot() {
         State.oldItemCooldownRuntimeWasActive = basicModeActive;
 
         if (!needsReminderRuntime) return;
+        if (hideoutConnected || !dl4dReminderEnabled) {
+            UpdateDl4dReminderRuntime(root, cfg, 0, true);
+        }
 
         var clock = EnsureGameTimePanelCache(root);
         if (!(clock && clock.text && clock.text.indexOf(":") > -1)) return;
@@ -31708,9 +32065,12 @@ function GetUIRoot() {
 
         var suppressReminderAudio = IsStreetBrawlModeActive(root);
         if (suppressReminderAudio) {
+            UpdateDl4dReminderRuntime(root, cfg, currentTime, true);
             State.lastTime = currentTime;
             return;
         }
+
+        UpdateDl4dReminderRuntime(root, cfg, currentTime, false);
 
         var voiceSelection = GetAnnouncerVoiceToken(cfg.VOICE_TYPE);
         var suffix = "_" + voiceSelection;
@@ -31905,7 +32265,8 @@ function GetUIRoot() {
     function NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected) {
         var basicModeActive = IsPassiveCooldownBasicMode(ResolvePassiveCooldownMode(cfg));
         var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
-        var needsReminderRuntime = IsAnyAnnouncerReminderTypeEnabled(cfg) && !hideoutConnected;
+        var needsDl4dCleanup = State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
+        var needsReminderRuntime = ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) || needsDl4dCleanup;
         return needsPassiveRuntime || needsReminderRuntime;
     }
 
@@ -31986,7 +32347,9 @@ function GetUIRoot() {
             keyboardRuntimeActive: Number(cfg && cfg.ENABLE_KEYBOARD_OVERLAY) === 1,
             legacyAudioPassiveActive: (
                 IsPassiveCooldownBasicMode(passiveCooldownMode) ||
-                (IsAnyAnnouncerReminderTypeEnabled(cfg) && !hideoutConnected)
+                ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) ||
+                State.dl4dCaptionVisible ||
+                IsPanelValid(State.cachedPanels.dl4dCaptionPanel)
             ),
             betterUnsecuredHudActive: Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1,
             combatIndicatorActive: Number(cfg && cfg.ENABLE_COMBAT_INDICATOR) === 1,
@@ -32204,7 +32567,21 @@ function GetUIRoot() {
             cfg.SHOP_OFFSET_X,
             cfg.SHOP_OFFSET_Y,
             cfg.SHOP_OPACITY,
-            cfg.SHOP_SCALE
+            cfg.SHOP_SCALE,
+            cfg.ENABLE_DL4D_REMINDERS,
+            cfg.DL4D_VOLUME,
+            cfg.ENABLE_DL4D_CAPTIONS,
+            cfg.ENABLE_DL4D_SMALL_CAMPS_BOXES,
+            cfg.ENABLE_DL4D_RUNE_MELEE_TROOPERS,
+            cfg.ENABLE_DL4D_MEDIUM_CAMPS,
+            cfg.ENABLE_DL4D_BIG_CAMPS_SINNERS,
+            cfg.ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE,
+            cfg.ENABLE_DL4D_LANE_GUARDIAN_WEAK,
+            cfg.ENABLE_DL4D_RUNE,
+            cfg.ENABLE_DL4D_WALKER_WEAK,
+            cfg.ENABLE_DL4D_RUNE_FAST_TROOPERS,
+            cfg.ENABLE_DL4D_RUNE_GOLD_BUFFS,
+            cfg.ENABLE_DL4D_RUNE_TROOPERS20_HP
         ].join("|");
     }
 
@@ -32275,7 +32652,7 @@ function GetUIRoot() {
         gates.statBonuses = (gates.statBonusesActive || State.statBonusesDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatusDisplayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
-        gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive;
+        gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
         gates.imagesInChat = gates.imagesInChatActive;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
