@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -583,6 +583,33 @@ function main() {
         "RECENT_PURCHASES_PANEL_X_OFFSET",
         "RECENT_PURCHASES_PANEL_Y_OFFSET",
         "RECENT_PURCHASES_PANEL_SCALE"
+    ];
+    const showBuildIdKeys = [
+        "ENABLE_SHOW_BUILD_ID",
+        "ENABLE_SHOW_BUILD_ID_TITLE"
+    ];
+    const dl4dReminderKeys = [
+        "ENABLE_DL4D_REMINDERS",
+        "DL4D_VOLUME",
+        "ENABLE_DL4D_CAPTIONS",
+        "ENABLE_DL4D_SMALL_CAMPS_BOXES",
+        "ENABLE_DL4D_RUNE_MELEE_TROOPERS",
+        "ENABLE_DL4D_MEDIUM_CAMPS",
+        "ENABLE_DL4D_BIG_CAMPS_SINNERS",
+        "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE",
+        "ENABLE_DL4D_LANE_GUARDIAN_WEAK",
+        "ENABLE_DL4D_RUNE",
+        "ENABLE_DL4D_WALKER_WEAK",
+        "ENABLE_DL4D_RUNE_FAST_TROOPERS",
+        "ENABLE_DL4D_RUNE_GOLD_BUFFS",
+        "ENABLE_DL4D_RUNE_TROOPERS20_HP"
+    ];
+    const quickbuyClickToNotifyKeys = [
+        "ENABLE_QUICKBUY_CLICK_TO_NOTIFY"
+    ];
+    const recentPurchaseOpacityKeys = [
+        "RECENT_PURCHASES_QUICK_OPACITY",
+        "RECENT_PURCHASES_PANEL_OPACITY"
     ];
     const releaseCompatSemvers = ["2.3.2", "2.3.5"];
     for (const semver of releaseCompatSemvers) {
@@ -841,6 +868,46 @@ function main() {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.7 missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core 2.5.7 missing ${key}`);
+            }
+            for (const key of showBuildIdKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.7 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.7 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.8") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.8 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.8 missing ${key}`);
+            }
+            for (const key of dl4dReminderKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.8 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.8 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.9") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.9 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.9 missing ${key}`);
+            }
+            for (const key of quickbuyClickToNotifyKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.9 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.9 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.10") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings 2.5.10 missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core 2.5.10 missing ${key}`);
+            }
+            for (const key of recentPurchaseOpacityKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings 2.5.10 should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core 2.5.10 should omit ${key}`);
+            }
+        }
+        if (semver === "2.5.11" || semver === "2.6.0") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
             }
         }
 
