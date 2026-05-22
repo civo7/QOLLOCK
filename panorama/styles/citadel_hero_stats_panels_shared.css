@@ -49,7 +49,7 @@
 .simplify_shop_stats_active .displayStatsContainer .statAttributeContainer,
 CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer
 {
-	width: 31.8%;
+	width: 33%;
 	height: 60px;
 	margin: 1px;
 	padding: 2px;
@@ -64,7 +64,7 @@ CitadelHudHeroShop.simplify_shop_stats_active .statAttributeContainer CitadelMod
 	margin-right: 0px;
 	height: 100% !important;
 	width: 100% !important;
-	flow-children: down !important;
+	flow-children: down;
 	horizontal-align: center;
 	vertical-align: center;
 	padding: 0px;
@@ -147,3 +147,7 @@ CitadelHudHeroShop.simplify_shop_stats_active #BaseLabel
 	text-align: center;
 }
 
+.simplify_shop_stats_active #WeaponOtherStatsDisplay 
+{
+    visibility: collapse;
+}
