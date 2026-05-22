@@ -1,0 +1,7 @@
+@import url("s2r://panorama/styles/base/citadel_modified_attribute_label.vcss_c");
+
+.simplify_shop_stats_active .LabelsContainer
+{
+	ui-scale: 150%;
+	margin-top: 2px;
+}
