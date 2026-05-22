@@ -120,5 +120,11 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<Panel id="IdolCashInMeter">
+			<Panel id="IdolCashInMeter_Timer" />
+			<Panel id="Idol_Center">
+				<Panel class="idol_icon" />
+			</Panel>
+		</Panel>
 	</CitadelHudTopBar>
 </root>

@@ -598,6 +598,7 @@ CitadelHudModifiers_Entry
 	color: offWhite;
 	horizontal-align: center;
 	margin-bottom: 5px;
+	visibility: collapse;
 }
 
 #ExtraInfo .UrnWarning
