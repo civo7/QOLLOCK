@@ -115,9 +115,12 @@
 
 .improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .KeyboardKeyGlyphContainer,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .MouseGlyphBackground,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .MouseButtonGlyphContainer
 {
-	background-color: #00000000 !important;
+	background-color: #d8ebe2cc !important;
 	background-image: none !important;
 	wash-color: #ffffff00 !important;
+    border-radius: 4px 4px 130px 130px / 4px 4px 100px 100px;
+    padding: 0px 0px -20px 0px;
+    width: 55px;
 }
 
 .improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .KeyboardButtonGlyph,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .MouseButtonGlyph,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .InlineGlyph,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container CitadelKeyboardGlyph.light .KeyboardButtonGlyph
