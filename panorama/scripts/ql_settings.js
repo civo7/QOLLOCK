@@ -891,7 +891,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.6.0";
+    : "2.6.1";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -1090,10 +1090,10 @@ const SETTINGS_THEME_ROOT_CLASS_NAMES = [
 ];
 const SETTINGS_THEME_OPTIONS = [
     { label: "Default", value: SETTINGS_THEME_DEFAULT },
-    { label: "Cream", value: SETTINGS_THEME_CREAM },
-    { label: "Kitten", value: SETTINGS_THEME_KITTEN },
     { label: "Emo", value: SETTINGS_THEME_EMO },
     { label: "Ocean", value: SETTINGS_THEME_OCEAN },
+    { label: "Kitten", value: SETTINGS_THEME_KITTEN },
+    { label: "Cream", value: SETTINGS_THEME_CREAM },
     { label: "Psycho", value: SETTINGS_THEME_PSYCHO }
 ];
 const SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC = "s2r://panorama/images/qollock/mog_site_logo2.vtex";
@@ -7201,6 +7201,7 @@ const COMPACT_SCHEMA_2_5_9 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_8, DL4D
 const COMPACT_SCHEMA_2_5_10 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_9, QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS);
 const COMPACT_SCHEMA_2_5_11 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_10, RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS);
 const COMPACT_SCHEMA_2_6_0 = COMPACT_SCHEMA_2_5_11;
+const COMPACT_SCHEMA_2_6_1 = COMPACT_SCHEMA_2_6_0;
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -7354,6 +7355,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.6.0": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_6_0
+    },
+    "2.6.1": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_6_1
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -15261,15 +15266,22 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var btnLbl = $.CreatePanel("Label", btn, "");
             btnLbl.text = LocalizeSettingsText(opt.label);
             groupButtons.push(btn);
+            var optionConfigValue = index;
+            if (configId === "SETTINGS_THEME") {
+                optionConfigValue = Math.round(Number(opt.value));
+                if (!isFinite(optionConfigValue)) optionConfigValue = SETTINGS_THEME_DEFAULT;
+                if (optionConfigValue < SETTINGS_THEME_DEFAULT) optionConfigValue = SETTINGS_THEME_DEFAULT;
+                if (optionConfigValue > SETTINGS_THEME_PSYCHO) optionConfigValue = SETTINGS_THEME_PSYCHO;
+            }
             var updateBtn = function() {
-                btn.SetHasClass("Active", MOD_CONFIG[configId] === index);
+                btn.SetHasClass("Active", MOD_CONFIG[configId] === optionConfigValue);
             };
             updateBtn();
             buttonGroupRefreshFns.push(updateBtn);
             btn.SetPanelEvent("onactivate", function() {
-                MOD_CONFIG[configId] = index;
-                for (var i = 0; i < groupButtons.length; i++) {
-                    groupButtons[i].SetHasClass("Active", i === index);
+                MOD_CONFIG[configId] = optionConfigValue;
+                for (var i = 0; i < buttonGroupRefreshFns.length; i++) {
+                    try { buttonGroupRefreshFns[i](); } catch (eGroupRefresh) {}
                 }
                 SaveAndSync();
                 refreshRowChangedState();
