@@ -1124,6 +1124,9 @@
 	width: fit-children;
 	height: fit-children;
 	z-index: 9999;
+	transition-property: width, height, margin, margin-left, margin-top, margin-bottom, pre-transform-scale2d;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
 }
 
 #minimap_overlay_root
@@ -1188,6 +1191,9 @@
 	padding: 0px 8px;
 	background-color: rgba(18, 18, 18, 0.3);
 	border-radius: 5px;
+	transition-property: width, height, margin, margin-left, margin-top, margin-bottom, padding, border-radius;
+	transition-duration: 0.12s;
+	transition-timing-function: ease-out;
 }
 
 #QOLMinimapBuffIcon,#QOLMinimapRejuvIcon

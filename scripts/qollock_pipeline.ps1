@@ -476,6 +476,7 @@ function Get-CompileOutputPath {
         ".js" { $compiledName = "$name.vjs_c" }
         ".css" { $compiledName = "$name.vcss_c" }
         ".xml" { $compiledName = "$name.vxml_c" }
+        ".vsvg" { $compiledName = "$name.vsvg_c" }
         ".vsndevts" { $compiledName = "$name.vsndevts_c" }
         ".wav" { $compiledName = "$name.vsnd_c" }
         default { return $null }
@@ -552,7 +553,7 @@ try {
     }
 
     Write-Host "[Pipeline] Step 3/8: Compile changed files one by one..."
-    $compileExtensions = @(".xml", ".css", ".js", ".vsndevts", ".wav")
+    $compileExtensions = @(".xml", ".css", ".js", ".vsvg", ".vsndevts", ".wav")
     $totalCopied = 0
     $totalSkippedNew = 0
     $totalCompiledOutputs = 0

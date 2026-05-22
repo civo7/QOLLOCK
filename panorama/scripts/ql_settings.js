@@ -88,10 +88,29 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_UNSPENT_SOULS: "BreadRollius",
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
+    ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "Hanturaya",
     ENABLE_SHOP_CLICK_TO_NOTIFY: "Hanturaya",
     ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya, bytenode",
     RECENT_PURCHASES_QUICK_MAX: "bytenode",
     RECENT_PURCHASES_QUICK_DISPLAY_SEC: "bytenode",
+    RECENT_PURCHASES_QUICK_OPACITY: "bytenode",
+    RECENT_PURCHASES_PANEL_OPACITY: "bytenode",
+    ENABLE_SHOW_BUILD_ID: "0xluc4s",
+    ENABLE_SHOW_BUILD_ID_TITLE: "0xluc4s",
+    ENABLE_DL4D_REMINDERS: "oGeorge",
+    DL4D_VOLUME: "oGeorge",
+    ENABLE_DL4D_CAPTIONS: "oGeorge",
+    ENABLE_DL4D_SMALL_CAMPS_BOXES: "oGeorge",
+    ENABLE_DL4D_RUNE_MELEE_TROOPERS: "oGeorge",
+    ENABLE_DL4D_MEDIUM_CAMPS: "oGeorge",
+    ENABLE_DL4D_BIG_CAMPS_SINNERS: "oGeorge",
+    ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE: "oGeorge",
+    ENABLE_DL4D_LANE_GUARDIAN_WEAK: "oGeorge",
+    ENABLE_DL4D_RUNE: "oGeorge",
+    ENABLE_DL4D_WALKER_WEAK: "oGeorge",
+    ENABLE_DL4D_RUNE_FAST_TROOPERS: "oGeorge",
+    ENABLE_DL4D_RUNE_GOLD_BUFFS: "oGeorge",
+    ENABLE_DL4D_RUNE_TROOPERS20_HP: "oGeorge",
     SUPPORT_16_10: "Karma",
     SUPPORT_4_3: "Gyzeh",
     ENABLE_COMBAT_INDICATOR: "Goblin Man Sam",
@@ -135,8 +154,25 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "DISABLE_PLAYER_NAME_BLUR": "The world blur behind player names in the top bar.",
     "DISABLE_QUICK_BUY": "The item buying auto queue system in the shop menu.",
     "ENABLE_ENHANCED_QUICKBUY": "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
-    "ENABLE_SHOP_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a purchase.",
+    "ENABLE_QUICKBUY_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a quickbuy purchase.",
+    "ENABLE_SHOP_CLICK_TO_NOTIFY": "Shows item buy notifications from recent purchases.",
     "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
+    "ENABLE_SHOW_BUILD_ID": "Shows your build information always for content creators",
+    "ENABLE_SHOW_BUILD_ID_TITLE": "Append the selected build title after the build ID.",
+    "ENABLE_DL4D_REMINDERS": "Timed audio reminders from Deadlock For Dummies.",
+    "DL4D_VOLUME": "Volume for Deadlock For Dummies reminder audio.",
+    "ENABLE_DL4D_CAPTIONS": "Show a short caption when Deadlock For Dummies reminders play.",
+    "ENABLE_DL4D_SMALL_CAMPS_BOXES": "Remind when small camps, boxes, and statues are spawning.",
+    "ENABLE_DL4D_RUNE_MELEE_TROOPERS": "Remind when bridge buffs and melee troopers are spawning.",
+    "ENABLE_DL4D_MEDIUM_CAMPS": "Remind when medium camps are spawning.",
+    "ENABLE_DL4D_BIG_CAMPS_SINNERS": "Remind when big camps and Sinner's Sacrifice are spawning.",
+    "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE": "Remind when midboss, urn, bridge buffs, and gold statue upgrades are spawning.",
+    "ENABLE_DL4D_LANE_GUARDIAN_WEAK": "Remind when lane guardian resistance is reduced.",
+    "ENABLE_DL4D_RUNE": "Remind when bridge buffs are spawning.",
+    "ENABLE_DL4D_WALKER_WEAK": "Remind when walker resistance is reduced.",
+    "ENABLE_DL4D_RUNE_FAST_TROOPERS": "Remind when bridge buffs spawn and troopers speed up.",
+    "ENABLE_DL4D_RUNE_GOLD_BUFFS": "Remind when bridge buffs spawn and gold statue buffs are maxed.",
+    "ENABLE_DL4D_RUNE_TROOPERS20_HP": "Remind when bridge buffs spawn and troopers improve again.",
     "DISABLE_SHOP_BLUE": "The world background blur effect behind the shop menu.",
     "ENABLE_AMMO_STATUS": "Visual indicator of your current ammo.",
     "ENABLE_BUFF_HUD": "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.",
@@ -315,13 +351,16 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "UI / UI Controls|Hide Testing Tools": "Forcibly hides testing tools at all times.",
     "UI / UI Controls|Lane with Party": "Automatically selects Lane Preference: With Party for matchmaking.",
     "UI / UI Controls|Show Testing Tools": "Forcibly shows testing tools at all times.",
+    "UI / UI Controls|Show Build ID": "Shows your build information always for content creators",
+    "UI / UI Controls / Show Build ID|Show Title": "Append the selected build title after the build ID.",
     "HUD|Chat": "Adjust the in-game chat position and scale.",
     "UI|Chat": "Adjust the in-game chat position and scale.",
     "HUD / Shop|Blur": "The world background blur effect behind the shop menu.",
     "HUD / Shop|Hero": "Shows your character in the shop menu.",
     "HUD / Shop|Minimalist": "Cleans up visuals of the shop menu significantly to reduce clutter.",
     "HUD / Shop|Quick Buy": "The item buying auto queue system in the shop menu.",
-    "HUD / Shop|Recent Purchases": "Tools for tracking and sharing recent item purchases.",
+    "HUD / Shop|Recent Purchases": "Tools for tracking recent item purchases.",
+    "HUD / Shop|Item Buy Notifications": "Tools for showing and sharing item purchase notifications.",
     "HUD / Shop|Stats": "Shows all of your player stats within the shop menu.",
     "HUD / Top Bar|Bridge Buff Timer": "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.",
     "HUD / Top Bar|Mid Boss Timer": "Shows a visual indicator in the top bar of when Mid Boss will spawn.",
@@ -352,7 +391,9 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Minimap / Minimap / Bridge Buff Timer|On Bridge": "Moves the Bridge Buff timer onto the bridge with two smaller centered copies.",
     "Minimap / Minimap|Flip": "Rotates the static minimap 180 degrees.",
     "Minimap / Minimap|Mid Boss Timer": "Shows a visual indicator in the minimap of when Mid Boss will spawn.",
-    "Minimap / Minimap / Mid Boss Timer|On Mid": "Moves the Mid Boss timer onto the bridge area of the minimap.",
+    "Minimap / Minimap / Mid Boss Timer|On Mid Boss": "Moves the Mid Boss timer onto the bridge area of the minimap.",
+    "Minimap / Addons / Mid Boss Timer|On Mid Boss": "Moves the Mid Boss timer onto the bridge area of the minimap.",
+    "Minimap / Addons / Bridge Buff Timer|On Bridge": "Moves the Bridge Buff timer onto the bridge with two smaller centered copies.",
     "Minimap / Minimap|Minimalist": "Cleans up visuals of the minimap significantly to reduce clutter.",
     "Minimap / Minimap|Minimalist Opacity": "Opacity of the background of Minimalist Minimap.",
     "Minimap / Minimap|Spinny Mode": "Makes the minimap rotate with player view, this is just for fun.",
@@ -506,8 +547,27 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_REJUV_HUD: "low",
     ENABLE_RELOAD_COOLDOWN: "medium",
     ENABLE_SHOP_STATS: "low",
+    ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "low",
     ENABLE_SHOP_CLICK_TO_NOTIFY: "low",
     ENABLE_SHOP_RECENT_PURCHASES: "low",
+    RECENT_PURCHASES_QUICK_OPACITY: "low",
+    RECENT_PURCHASES_PANEL_OPACITY: "low",
+    ENABLE_SHOW_BUILD_ID: "low",
+    ENABLE_SHOW_BUILD_ID_TITLE: "low",
+    ENABLE_DL4D_REMINDERS: "low",
+    DL4D_VOLUME: "none",
+    ENABLE_DL4D_CAPTIONS: "low",
+    ENABLE_DL4D_SMALL_CAMPS_BOXES: "low",
+    ENABLE_DL4D_RUNE_MELEE_TROOPERS: "low",
+    ENABLE_DL4D_MEDIUM_CAMPS: "low",
+    ENABLE_DL4D_BIG_CAMPS_SINNERS: "low",
+    ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE: "low",
+    ENABLE_DL4D_LANE_GUARDIAN_WEAK: "low",
+    ENABLE_DL4D_RUNE: "low",
+    ENABLE_DL4D_WALKER_WEAK: "low",
+    ENABLE_DL4D_RUNE_FAST_TROOPERS: "low",
+    ENABLE_DL4D_RUNE_GOLD_BUFFS: "low",
+    ENABLE_DL4D_RUNE_TROOPERS20_HP: "low",
     ENABLE_SIMPLIFY_SHOP_STATS: "low",
     ENABLE_SIMPLIFY_ABILITY_ICONS: "none",
     ENABLE_SIMPLIFY_COMPASS: "medium",
@@ -668,6 +728,10 @@ const BRIDGE_BUFF_FILTER_OPTIONS = [
     { label: "2nd", key: "ENABLE_BUFF_SOUND_2" },
     { label: "3rd", key: "ENABLE_BUFF_SOUND_3" }
 ];
+const RECENT_PURCHASE_REPOSITION_OPTIONS = [
+    { label: "Rejuvenator", key: "RECENT_PURCHASES_QUICK_REJUV" },
+    { label: "Scoreboard", key: "RECENT_PURCHASES_QUICK_SCOREBOARD" }
+];
 const DEFAULT_HERO_OPTIONS = [
     "hero_inferno",
     "hero_gigawatt",
@@ -827,7 +891,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.5.6";
+    : "2.6.0";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -7031,6 +7095,33 @@ const RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
     { key: "RECENT_PURCHASES_PANEL_Y_OFFSET",    min: -500, max: 500, step: 5    },
     { key: "RECENT_PURCHASES_PANEL_SCALE",       min: 0.5,  max: 2.0, step: 0.05 }
 ];
+const RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
+    { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+const SHOW_BUILD_ID_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
+];
+const DL4D_REMINDER_SCHEMA_FIELDS = [
+    { key: "ENABLE_DL4D_REMINDERS", min: 0, max: 1, step: 1 },
+    { key: "DL4D_VOLUME", min: 0, max: 100, step: 1 },
+    { key: "ENABLE_DL4D_CAPTIONS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_MEDIUM_CAMPS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_WALKER_WEAK", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", min: 0, max: 1, step: 1 }
+];
+const QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS = [
+    { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 }
+];
 const COMPACT_SCHEMA_2_3_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_2_3_4,
     [
@@ -7105,6 +7196,11 @@ const COMPACT_SCHEMA_2_5_5 = AppendUniqueSchemaFields(
 );
 const COMPACT_SCHEMA_2_5_6 = COMPACT_SCHEMA_2_5_5;
 const COMPACT_SCHEMA_2_5_7 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_6, RECENT_PURCHASES_QUICK_SCHEMA_FIELDS);
+const COMPACT_SCHEMA_2_5_8 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_7, SHOW_BUILD_ID_SCHEMA_FIELDS);
+const COMPACT_SCHEMA_2_5_9 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_8, DL4D_REMINDER_SCHEMA_FIELDS);
+const COMPACT_SCHEMA_2_5_10 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_9, QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS);
+const COMPACT_SCHEMA_2_5_11 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_10, RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS);
+const COMPACT_SCHEMA_2_6_0 = COMPACT_SCHEMA_2_5_11;
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -7238,6 +7334,26 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.5.7": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_5_7
+    },
+    "2.5.8": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_8
+    },
+    "2.5.9": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_9
+    },
+    "2.5.10": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_10
+    },
+    "2.5.11": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_5_11
+    },
+    "2.6.0": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_2_6_0
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -12713,7 +12829,13 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Gyzeh", preset: "Gyzeh" });
     entries.push({ label: "Bread", preset: "Bread" });
     entries.push({ label: "bonclide", preset: "bonclide" });
-    entries.push({ label: "billyyy", preset: "billyyy" });
+    entries.push({ label: "Basil", preset: "Basil" });
+    entries.push({ label: "Poshy", preset: "Poshy" });
+    entries.push({ label: "BSQTT", preset: "BSQTT" });
+    entries.push({ label: "Piggy", preset: "Piggy" });
+    entries.push({ label: "Goober", preset: "Goober" });
+    entries.push({ label: "Vegas", preset: "Vegas" });
+    entries.push({ label: "Saintmxsm", preset: "Saintmxsm" });
     entries.push({ label: "Zer0", preset: "Zer0" });
     entries.push({ label: "Pops", preset: "Pops" });
     entries.push({ label: "Wouwei", preset: "Wouwei" });
@@ -12770,7 +12892,8 @@ function BuildCommunityPresetEntries() {
     });
     entries.push({ label: "Joey", preset: "Joey" });
     entries.push({ label: "Zyartic", preset: "Zyartic" });
-    for (var i = entries.length; i < 72; i++) {
+    entries.push({ label: "billyyy", preset: "billyyy" });
+    for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
     return entries;
@@ -13983,6 +14106,75 @@ function PlayAnnouncerBridgeVariantPreviewSound(variantIndex) {
     $.DispatchEvent("PlaySoundEffect", eventName);
 }
 
+const DL4D_REMINDER_OPTIONS = [
+    { label: "Small Camps + Boxes", key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes" },
+    { label: "Rune + Melee Troopers", key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers" },
+    { label: "Medium Camps", key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps" },
+    { label: "Big Camps + Sinners", key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners" },
+    { label: "Midboss + Urn + Gold Rune", key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune" },
+    { label: "Lane Guardian Weak", key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak" },
+    { label: "Rune", key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune" },
+    { label: "Walker Weak", key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak" },
+    { label: "Rune + Fast Troopers", key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers" },
+    { label: "Rune + Gold Buffs", key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs" },
+    { label: "Rune + Troopers 20s HP", key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp" }
+];
+
+function ResolveDl4dReminderEventForVolume(eventBase) {
+    var baseName = String(eventBase || "");
+    if (!baseName) return "";
+    return baseName + "_V" + String(NormalizeVoiceVolumeValue(MOD_CONFIG.DL4D_VOLUME));
+}
+
+function PlayDl4dReminderPreviewSound(eventBase) {
+    var eventName = ResolveDl4dReminderEventForVolume(eventBase);
+    if (!eventName) return;
+    $.DispatchEvent("PlaySoundEffect", eventName);
+}
+
+function CreateDl4dReminderRow(parent, reminder) {
+    if (!reminder || !reminder.key) return null;
+    var row = CreateRow(parent, reminder.label, reminder.key, "toggle", null, null, null, null);
+    if (!row || !row.IsValid || !row.IsValid()) return row;
+    row.AddClass("DL4DReminderRow");
+
+    var testBtn = $.CreatePanel("Button", row, "");
+    testBtn.AddClass("SectionTitleActionBtn");
+    testBtn.AddClass("DL4DReminderTestBtn");
+    var testIcon = $.CreatePanel("Image", testBtn, "", {
+        src: "s2r://panorama/images/icons/icon_sound_on.vsvg",
+        defaultsrc: "",
+        scaling: "contain"
+    });
+    testIcon.AddClass("SectionTitleActionIcon");
+    testIcon.AddClass("DL4DReminderTestIcon");
+
+    testBtn.SetPanelEvent("onmouseover", function() {
+        HideSettingsTextTooltip();
+        CancelSettingsRowFloatingTooltipHide();
+        ShowSettingsRowFloatingTooltip(
+            testBtn,
+            "",
+            LocalizeSettingsText("Play Sound", true) + " " + LocalizeSettingsText(reminder.label || "", true),
+            PERF_IMPACT_TIER_NONE,
+            ""
+        );
+    });
+    testBtn.SetPanelEvent("onmouseout", function() {
+        HideSettingsRowFloatingTooltipDeferred("dl4d_reminder_test_mouseout");
+    });
+    testBtn.SetPanelEvent("onactivate", function() {
+        PlayDl4dReminderPreviewSound(reminder.eventBase);
+        testBtn.AddClass("SuccessState");
+        $.Schedule(0.28, function() {
+            if (testBtn && testBtn.IsValid && testBtn.IsValid()) {
+                testBtn.RemoveClass("SuccessState");
+            }
+        });
+    });
+    return row;
+}
+
 function RunConsoleCommand(commandText) {
     if (!commandText || commandText.length === 0) return false;
     try {
@@ -14390,6 +14582,10 @@ function IsAllyColorWarningThresholdOptions(options) {
 
 function IsBridgeBuffFilterOptions(options) {
     return OptionsMatchExpectedKeys(options, BRIDGE_BUFF_FILTER_OPTIONS);
+}
+
+function IsRecentPurchaseRepositionOptions(options) {
+    return OptionsMatchExpectedKeys(options, RECENT_PURCHASE_REPOSITION_OPTIONS);
 }
 
 function BindRowChangedState(row, labelContainer, configKeys, resetBtn) {
@@ -14802,11 +14998,12 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             isItemCooldownFilterRow = (itemFilterKeyCount === 4);
         }
-        var useCheckboxStyle = IsNeutralCampTypeFilterOptions(options) || isColorWarningFilterRow || isItemCooldownFilterRow || isBridgeBuffFilterRow;
+        var isRecentPurchaseRepositionRow = IsRecentPurchaseRepositionOptions(options);
+        var useCheckboxStyle = IsNeutralCampTypeFilterOptions(options) || isColorWarningFilterRow || isItemCooldownFilterRow || isBridgeBuffFilterRow || isRecentPurchaseRepositionRow;
         if (useCheckboxStyle) {
             row.AddClass("MultiCheckboxRow");
         }
-        if (isColorWarningFilterRow) {
+        if (isColorWarningFilterRow || isRecentPurchaseRepositionRow) {
             // Reuse the same one-line horizontal layout as Announcer Type.
             row.AddClass("AnnouncerTypeFilterRow");
         }
@@ -16221,9 +16418,10 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
             var entry = entries[index + c];
             var btn = $.CreatePanel("Button", rowInner, "");
             btn.AddClass("PresetGridBtn");
-            if (variant === "base") btn.AddClass("PresetGridBtnBase");
-            else if (variant === "great") btn.AddClass("PresetGridBtnGreat");
-            else if (variant === "custom") {
+            var entryVariant = (entry && entry.variant) ? String(entry.variant) : String(variant || "");
+            if (entryVariant === "base") btn.AddClass("PresetGridBtnBase");
+            else if (entryVariant === "great") btn.AddClass("PresetGridBtnGreat");
+            else if (entryVariant === "custom") {
                 btn.AddClass("PresetGridBtnCustom");
                 if (entry.available !== false) {
                     btn.AddClass("PresetGridBtnCustomActive");
@@ -16306,7 +16504,23 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
             }
         }
 
+        var shouldAddDivider = false;
+        for (var d = 0; d < rowCount; d++) {
+            var dividerEntry = entries[index + d];
+            if (dividerEntry && dividerEntry.dividerAfter === true) {
+                shouldAddDivider = true;
+                break;
+            }
+        }
+
         index += rowCount;
+
+        if (shouldAddDivider && index < entries.length) {
+            var dividerRow = $.CreatePanel("Panel", grid, "");
+            dividerRow.AddClass("PresetGridDividerRow");
+            var dividerLine = $.CreatePanel("Panel", dividerRow, "");
+            dividerLine.AddClass("PresetGridDividerLine");
+        }
     }
     return {
         titleLabel: titleLabel,
@@ -16695,34 +16909,20 @@ function RenderCurrentTabContent(list) {
     }
     if (currentTab === "Presets") {
         var isRuSettings = IsRussianSettingsLanguage();
-        var basePresetsTitle = isRuSettings ? "\u0411\u0430\u0437\u043E\u0432\u044B\u0435 \u043F\u0440\u0435\u0441\u0435\u0442\u044B" : "Base Presets";
         var playerPresetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B \u0438\u0433\u0440\u043E\u043A\u043E\u0432" : "Player Presets";
-        var communityPresetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B \u0441\u043E\u043E\u0431\u0449\u0435\u0441\u0442\u0432\u0430" : "Community Presets";
-        var requestPresetText = "Request One";
+        var presetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B" : "Presets";
+        var requestPresetText = "Request a Community Preset";
 
         var basePresetEntries = [
-            { label: "Default", preset: "Default" },
-            { label: "16:10", preset: "16:10" },
-            { label: "4:3", preset: "4:3" },
-            { label: "Clean", preset: "Clean" },
-            { label: "Enhanced", preset: "Enhanced" },
-            { label: "Maximum", preset: "Maximum" }
+            { label: "Default", preset: "Default", variant: "base" },
+            { label: "16:10", preset: "16:10", variant: "base" },
+            { label: "4:3", preset: "4:3", variant: "base" },
+            { label: "Clean", preset: "Clean", variant: "base" },
+            { label: "Enhanced", preset: "Enhanced", variant: "base" },
+            { label: "Maximum", preset: "Maximum", variant: "base", dividerAfter: true }
         ];
-        var playerPresetEntries = [
-            { label: "Vegas", preset: "Vegas" },
-            { label: "Goober", preset: "Goober" },
-            { label: "Hoot", preset: "Hoot" },
-            { label: "Basil", preset: "Basil" },
-            { label: "NKD", preset: "NKD" },
-            { label: "BSQTT", preset: "BSQTT" },
-            { label: "Panini", preset: "Panini" },
-            { label: "SunnyD", preset: "SunnyD" },
-            { label: "Piggy", preset: "Piggy" },
-            { label: "Obikym", preset: "Obikym" },
-            { label: "Poshy", preset: "Poshy" },
-            { label: "Saintmxsm", preset: "Saintmxsm" }
-        ];
-        var customEntries = BuildCommunityPresetEntries();
+        var playerPresetEntries = [];
+        var customEntries = basePresetEntries.concat(BuildCommunityPresetEntries());
 
         if (gSearchCollectMode && gSearchCollectState) {
             var addPresetSearchRows = function(sectionTitle, entries, sectionSubInfo) {
@@ -16745,11 +16945,11 @@ function RenderCurrentTabContent(list) {
                 }
             };
 
-            addPresetSearchRows(basePresetsTitle, basePresetEntries, "Base preset");
-            CreateSeparator(list);
-            addPresetSearchRows(playerPresetsTitle, playerPresetEntries, "Player preset");
-            CreateSeparator(list);
-            addPresetSearchRows(communityPresetsTitle, customEntries, "Community preset");
+            if (playerPresetEntries.length > 0) {
+                CreateSeparator(list);
+                addPresetSearchRows(playerPresetsTitle, playerPresetEntries, "Player preset");
+            }
+            addPresetSearchRows(presetsTitle, customEntries, "Preset");
             CreateRow(list, requestPresetText, "OPEN_COMMISSIONS", "actionbutton", null, null, null, [
                 { label: "Open" }
             ], "Request a community preset");
@@ -16757,11 +16957,11 @@ function RenderCurrentTabContent(list) {
         }
 
         ResetPresetButtonRegistry();
-        CreatePresetGrid(list, basePresetsTitle, basePresetEntries, 7, "base");
-        CreateSeparator(list);
+        if (playerPresetEntries.length > 0) {
+            CreateSeparator(list);
             CreatePresetGrid(list, playerPresetsTitle, playerPresetEntries, 6, "great");
-        CreateSeparator(list);
-        CreatePresetGrid(list, communityPresetsTitle, customEntries, 6, "custom");
+        }
+        CreatePresetGrid(list, presetsTitle, customEntries, 6, "custom");
 
         var communityHintRow = $.CreatePanel("Panel", list, "CommunityPresetHintRow");
         communityHintRow.AddClass("CommunityPresetHintRow");
@@ -16769,6 +16969,10 @@ function RenderCurrentTabContent(list) {
         communityHintInner.AddClass("CommunityPresetHintInner");
         var communityHintLink = $.CreatePanel("Button", communityHintInner, "CommunityPresetHintLink");
         communityHintLink.AddClass("CommunityPresetHintLink");
+        var communityHintIcon = $.CreatePanel("Image", communityHintLink, "CommunityPresetHintIcon", {
+            src: "s2r://panorama/images/icons/icon_feedback.vsvg"
+        });
+        communityHintIcon.AddClass("CommunityPresetHintIcon");
         var communityHintLinkLabel = $.CreatePanel("Label", communityHintLink, "CommunityPresetHintLinkLabel");
         communityHintLinkLabel.text = requestPresetText;
         communityHintLink.SetPanelEvent("onactivate", function() {
@@ -16916,23 +17120,28 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
             CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
             CreateRow(sectionParent, "Scale", "SHOP_SCALE", "slider", 0.5, 1.5, 0.05, null);
-            CreateSectionTitle(sectionParent, "Recent Purchases");
-            CreateRow(sectionParent, "Recent Purchases Shop Panel", "ENABLE_SHOP_RECENT_PURCHASES", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Panel Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "slider", -1000, 1000, 5, null);
-            CreateRow(sectionParent, "Panel Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "slider", -500, 500, 5, null);
-            CreateRow(sectionParent, "Panel Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
-            CreateRow(sectionParent, "Recent Purchase Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
-            CreateRow(sectionParent, "Notification Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
-            CreateRow(sectionParent, "Notification Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
-            CreateRow(sectionParent, "Notification Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
-            CreateRow(sectionParent, "Notification Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
-            CreateRow(sectionParent, "Notif. Rejuv. Reposition", "RECENT_PURCHASES_QUICK_REJUV", "toggle", null, null, null, null, "Moves notifications down when Rejuvenator is active.");
-            CreateRow(sectionParent, "Notif. Scoreboard Reposition", "RECENT_PURCHASES_QUICK_SCOREBOARD", "toggle", null, null, null, null, "Adjusts notifications when scoreboard is open (pressing TAB).");
+            CreateSeparator(sectionParent);
+            CreateAnimatedInlineToggleSection(sectionParent, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "See the recent purchases made in the game.", function(recentPurchasesParent) {
+                CreateRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "slider", -1000, 1000, 5, null);
+                CreateRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "slider", -500, 500, 5, null);
+                CreateRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "slider", 0, 1, 0.05, null);
+                CreateRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
+            });
+            CreateSeparator(sectionParent);
+            CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
+                CreateRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
+                CreateRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
+                CreateRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
+                CreateRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
+                CreateRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
+                CreateRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "slider", 0, 1, 0.05, null);
+                CreateRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
+            });
         });
     } else if (currentTab === "Healthbar") {
         gEnumSectionSyncCallbacks = [];
@@ -16960,6 +17169,10 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Show Testing Tools", "ENABLE_FORCE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Shown");
         CreateRow(list, "Hide Testing Tools", "ENABLE_HIDE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Hidden");
         CreateRow(list, "Behavior Summary", "ENABLE_HIDE_BEHAVIOR_SUMMARY", "toggle", null, null, null, [{ invert: true }], "Metro Button");
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "Shows your build information always for content creators", function(sectionParent) {
+            CreateRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
+        });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", function(sectionParent) {
             CreateRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "slider", -1500, 1500, 5, null, "");
@@ -17039,7 +17252,7 @@ function RenderCurrentTabContent(list) {
             list,
             "Mid Boss Timer",
             "ENABLE_MINIMAP_REJUV_TIMER",
-            "On Mid",
+            "On Mid Boss",
             "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS",
             "",
             "Moves the Mid Boss timer onto the bridge area of the minimap."
@@ -17083,6 +17296,14 @@ function RenderCurrentTabContent(list) {
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Minimap Reminder", "ENABLE_MINIMAP_REMINDER", "Ding to Check Minimap", function(sectionParent) {
             CreateRow(sectionParent, "Timer", "MINIMAP_REMINDER_INTERVAL", "slider", 5, 60, 1, null, "In Seconds");
+        });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Deadlock For Dummies", "ENABLE_DL4D_REMINDERS", "Timed audio reminders from Deadlock For Dummies.", function(sectionParent) {
+            CreateRow(sectionParent, "Volume", "DL4D_VOLUME", "slider", 0, 100, 1);
+            CreateRow(sectionParent, "Captions", "ENABLE_DL4D_CAPTIONS", "toggle", null, null, null, null);
+            for (var dl4dIndex = 0; dl4dIndex < DL4D_REMINDER_OPTIONS.length; dl4dIndex++) {
+                CreateDl4dReminderRow(sectionParent, DL4D_REMINDER_OPTIONS[dl4dIndex]);
+            }
         });
     } else if (currentTab === "Console") {
         if (gSearchCollectMode && gSearchCollectState) {
@@ -17674,7 +17895,8 @@ function RenderCurrentTabContent(list) {
             { label: "gfkm", role: "Contributor", url: "https://gamebanana.com/members/5349748" },
             { label: "Aminsx", role: "Contributor", url: "https://gamebanana.com/members/4798159" },
             { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" },
-            { label: "Lustie", role: "Contributor", url: "https://gamebanana.com/mods/655927" }
+            { label: "Lustie", role: "Contributor", url: "https://gamebanana.com/mods/655927" },
+            { label: "0xluc4s", role: "Contributor" }
         ];
         var supportThanksTranslatorEntries = [
             { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex" },
