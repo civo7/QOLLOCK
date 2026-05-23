@@ -881,6 +881,9 @@ const BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
 const BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
 const BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
 const BUILD_CLEAR_TOKEN_ATTR = "QOL_BUILD_CLEAR_TOKEN";
+const SETTINGS_SAVE_LOADER_ENABLED = true;
+const SETTINGS_SAVE_HOVER_WARNING = "DO NOT USE THIS IN QUEUE OR MATCH";
+const SETTINGS_SAVE_DISABLED_WARNING = "CURRENTLY IN EARLY ACCESS ON DISCORD DISABLED DUE TO BUGS";
 const ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
 const ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
 const ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
@@ -891,7 +894,7 @@ const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 30;
 const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
-    : "2.6.1";
+    : "3.0.1";
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -7202,6 +7205,7 @@ const COMPACT_SCHEMA_2_5_10 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_9, QUI
 const COMPACT_SCHEMA_2_5_11 = AppendUniqueSchemaFields(COMPACT_SCHEMA_2_5_10, RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS);
 const COMPACT_SCHEMA_2_6_0 = COMPACT_SCHEMA_2_5_11;
 const COMPACT_SCHEMA_2_6_1 = COMPACT_SCHEMA_2_6_0;
+const COMPACT_SCHEMA_3_0_0 = COMPACT_SCHEMA_2_6_1;
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -7359,6 +7363,14 @@ const COMPACT_SCHEMA_REGISTRY = {
     "2.6.1": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_2_6_1
+    },
+    "3.0.0": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_0
+    },
+    "3.0.1": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_0
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -7952,6 +7964,19 @@ function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     var cfgSave = LocalizeSettingsText("SAVE", true);
     var cfgQueued = LocalizeSettingsText("QUEUED", true);
     var cfgFailed = LocalizeSettingsText("FAILED", true);
+
+    if (!SETTINGS_SAVE_LOADER_ENABLED) {
+        saveBtn.RemoveClass("SuccessState");
+        saveBtn.AddClass("FailureState");
+        saveLbl.text = cfgFailed;
+        SetLocalizedConfigFeedbackMessage(SETTINGS_SAVE_DISABLED_WARNING, "error", 2600);
+        $.Schedule(0.6, function() {
+            if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
+            saveBtn.RemoveClass("FailureState");
+            saveLbl.text = cfgSave;
+        });
+        return;
+    }
 
     if (typeof onBeforeQueue === "function") {
         try { onBeforeQueue(); } catch (e0) {}
@@ -12833,7 +12858,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Scuffed", preset: "Scuffed" });
     entries.push({ label: "Gyzeh", preset: "Gyzeh" });
     entries.push({ label: "Bread", preset: "Bread" });
-    entries.push({ label: "bonclide", preset: "bonclide" });
+    entries.push({ label: "bonclide", preset: "bonclide", presetExport: "[QOL-2-5-6]:AjIySxojZMhMbkrVkqkhZCADh4clKBT8f16FkZZK6mRkZI5YQjZiCZmHoKBQxgAggwyAjCAcWVoygiajy8HjgSWWZCkhIg8ycWsDBSAZZMhQC0njeZQDA2aEL5mBAxVLZI8lMzL4H0tkiiUyIVAIed6kkLkBAAAA0AIAeQ" });
     entries.push({ label: "Basil", preset: "Basil" });
     entries.push({ label: "Poshy", preset: "Poshy" });
     entries.push({ label: "BSQTT", preset: "BSQTT" });
@@ -12862,8 +12887,8 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Deethirty", preset: "Deethirty" });
     entries.push({ label: "Jerboa", preset: "Jerboa" });
     entries.push({ label: "RiChew", preset: "RiChew" });
-    entries.push({ label: "Soramikali", preset: "Soramikali" });
-    entries.push({ label: "Jaundice", preset: "Jaundice" });
+    entries.push({ label: "Soramikali", preset: "Soramikali", presetExport: "[QOL-2-6-1]:AigUSxQjZMhMbs9zk70HZCADh4clKBT4Q0MGkIKi4WRkZIxYQjZiCRlkAKBQwBgggwygjCAcWVoyAicDy8HjgSWWYImlAQ0yXQ8aAAAZZMiUkSGToeQDA0aGJZksVSlLZJQlMjL6KUtklCUy5lVKeV5FkSEbgAC01gLQkW2tyMgUyP-fUmQ" });
+    entries.push({ label: "Jaundice", preset: "Jaundice", presetExport: "[QOL-2-6-1]:AjM0SxQjZMhMTk_VkqknZCADh4clKBSgRkEGsJWi4GRkZIxYQjZiCRl2AKBQxhgigwyAjCAcWVoyAicDt8HjgSWWiCkoKg8ycWAPACAZZMhAkEUTYeQDA0aGJZkgdyhLZJQlMjL6KUtklCWy_FFKeV5FkSEb5xxwngXXkZGtUFMUKf-PUlw" });
     entries.push({ label: "Xavier", preset: "Xavier" });
     entries.push({ label: "Spookyy", preset: "Spookyy" });
     entries.push({ label: "Wirdly", preset: "Wirdly" });
@@ -12881,23 +12906,26 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Torque", preset: "Torque" });
     entries.push({ label: "iMicro", preset: "iMicro" });
     entries.push({ label: "TW1G", preset: "TW1G" });
-    entries.push({ label: "Veradox", preset: "Veradox" });
+    entries.push({ label: "Veradox", preset: "Veradox", presetExport: "[QOL-2-6-1]:AkoNSxQjZMhMcG8lk6knZCADN0AkKB_4R0MGEJKi5GVkZIxYQgZhCZl2AKBQwhghgwygjCAcWVoyAiejy8HjgSWWYIklEg8yZw8fACAZZMhskCGTWuQDA0aGJZks_ylLZJQlMjL6KUtklCUyT1RKeV5FkSEDAAAA0CLQkZGtyMgUyf-fUkU" });
     entries.push({ label: "Antetheosis", preset: "Antetheosis" });
-    entries.push({ label: "k49", preset: "k49" });
-    entries.push({ label: "ninjablade", preset: "ninjabladeJr" });
-    entries.push({ label: "FlintSnow", preset: "FlintSnow" });
+    entries.push({ label: "k49", preset: "k49", presetExport: "[QOL-2-6-1]:Ajs0SxQjZMhMck8lk6kBZCADh4clKBT4Q0MGEIKi4WRkZI5YQvZgCRlkAaBQxhgggwygjCAcWVoyAicDy8HjgSWWZIklLQ8yZw4fAAAZZMiUkCGToeQDA0aGJZkMMylLZJQlMjL6KUtklCWy41VKeV7lkCErHxxU3gLXkZGtyMgUyO-PUhE" });
+    entries.push({ label: "ninjablade", preset: "ninjabladeJr", presetExport: "[QOL-2-5-2]:AkY0SxQjZMhM7mwvk8kHZCADh4clKBTgW94F0ERx4GRk5o5YQjZiCZmdoqxkTB8igwyApWVVWZKxBCcjysfjgSWWYIkl0hwyZw8fxSIZZMiQkSGToS4BA0aGJZkMdylLZJQlsiT6KUtklCUy4lEKeF5FkSEDpA" });
+    entries.push({ label: "FlintSnow", preset: "FlintSnow", presetExport: "[QOL-3-0-0]:Aig0SxQjZMhODk8lk6khZCADl4clKBT4Q0MGEIKi6WRkZI5YQjZiCZl2AKBQwBghgwyAjCAcWVoyAicDy8HjwRJLYImlAA8yZwAfAIAMMmSmkCGToYCDAUKGJZkA_ylLZJQlMjL6KUtklCUy7lVKeV5FkSEbAAAA0ALQkZGtyMhUyP-fUgI" });
     entries.push({ label: "Steqdyy", preset: "Steqdyy" });
     entries.push({ label: "Synapses_", preset: "Synapses_" });
     entries.push({ label: "Gerglee", preset: "Gerglee" });
     entries.push({ label: "Dappa", preset: "Dappa" });
-    entries.push({ label: "Seyer", preset: "Seyer" });
+    entries.push({ label: "Seyer", preset: "Seyer", presetExport: "[QOL-2-6-1]:AjU0SxQjZMhMDk8lk6kpZCADh4clKBT4T0MGkEGhYGRkZI5YQjZiCRl2AKBQwBgggwyAjCAcWFoyAicDycHjgSWWYIklLg8yZwEYAAAZZMiQkCGToYADA0aGJZmMAChLZJQlMjL6KUtklCUy4FFKeV5FkSEbAAAA0ALQkZGtyMgUyf-PUsY" });
     entries.push({
         label: "T1FF4NNY",
-        presetExport: "[QOL-2-3-2]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WVkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkE5g"
+        presetExport: "[QOL-2-5-4]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WRkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkEAChLZJQlMjL6KUtklCUy7lFKeV5FkSEbAAAE0ALe"
     });
     entries.push({ label: "Joey", preset: "Joey" });
     entries.push({ label: "Zyartic", preset: "Zyartic" });
     entries.push({ label: "billyyy", preset: "billyyy" });
+    entries.push({ label: "mituu", preset: "mituu", presetExport: "[QOL-2-3-2]:AlIUSxQjZMhMbm8lk6khZCADh4clKBTgR0MG0IOiYGVkZIxYQjZiCRlkAKBQwBghgwyAjCAcWFoyAicDycHjgSWWYIklEg8yZw8YAAAZZMiQkSGToeQDA0aGJZkMkA" });
+    entries.push({ label: "qlt", preset: "qlt", presetExport: "[QOL-2-3-2]:AigUSxQjZMhMDm8lk6khZCADtyejRBQATkMGEIKiKGVkZIxYQjZiCZlkAqBQwBgggwyAjCAcWFoyAicDy8HjgSWWYImlJQ8yZwEAAAAZZMiQkCGToeQDA0aGJZkBgg" });
+    entries.push({ label: "munchkinman", preset: "munchkinman", presetExport: "[QOL-2-6-0]:Aig0SxQjZMhMbmUlk6kxZCADh4clKBT4T-dzEZKi6GRkZIxYQjZiCZl2AKBQwBgggwyAjCAcWVoyAiejF8DjgSWWYImlIA8yZw8fACAZZMiQkCGToeQDA0aGJZks_ylLZJQlMjL6KUtklCUyf1RKeV5FkSEbABEA0ALQkZGtkHsUyP-PUuc" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
@@ -15957,7 +15985,9 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
     return row;
 }
 
-function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, secondaryLabel, secondaryConfigId, description, secondaryDescription) {
+function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, secondaryLabel, secondaryConfigId, description, secondaryDescription, rowOptions) {
+    rowOptions = rowOptions || {};
+    var invertMain = rowOptions && rowOptions.invert === true;
     var localizedLabel = LocalizeSettingsText(label || "");
     var effectiveDescription = GetSettingDescriptionOverride(
         configId,
@@ -16103,7 +16133,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
     secondaryLbl.text = LocalizeSettingsText(secondaryLabel || "");
 
     var update = function() {
-        var mainEnabled = (MOD_CONFIG[configId] === 1);
+        var mainEnabled = invertMain ? (MOD_CONFIG[configId] !== 1) : (MOD_CONFIG[configId] === 1);
         var secondaryEnabled = (MOD_CONFIG[secondaryConfigId] === 1);
         setSwitchState(mainEnabled);
         checkboxWrap.SetHasClass("Disabled", !mainEnabled);
@@ -16120,7 +16150,8 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
         ShowConfigPreviewForConfigId(configId);
     });
     secondaryBtn.SetPanelEvent("onactivate", function() {
-        if (MOD_CONFIG[configId] !== 1) return;
+        var mainEnabled = invertMain ? (MOD_CONFIG[configId] !== 1) : (MOD_CONFIG[configId] === 1);
+        if (!mainEnabled) return;
         MOD_CONFIG[secondaryConfigId] = (MOD_CONFIG[secondaryConfigId] === 1) ? 0 : 1;
         update();
         SaveAndSync();
@@ -17130,8 +17161,16 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Hero", "ENABLE_HERO_SCENE_PANEL", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
-            CreateRow(sectionParent, "Quick Buy", "DISABLE_QUICK_BUY", "toggle", null, null, null, [{ invert: true }]);
-            CreateRow(sectionParent, "Enhanced Quickbuy", "ENABLE_ENHANCED_QUICKBUY", "toggle", null, null, null, null);
+            CreateInlineSecondaryCheckboxToggleRow(
+                sectionParent,
+                "Quick Buy",
+                "DISABLE_QUICK_BUY",
+                "Enhanced",
+                "ENABLE_ENHANCED_QUICKBUY",
+                null,
+                "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
+                { invert: true }
+            );
             CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
             CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
@@ -18585,7 +18624,7 @@ $.BuildUI = function() {
             ShowSettingsRowFloatingTooltip(
                 saveFooterBtn,
                 "",
-                "DO NOT USE THIS IN QUEUE OR MATCH",
+                SETTINGS_SAVE_LOADER_ENABLED ? SETTINGS_SAVE_HOVER_WARNING : SETTINGS_SAVE_DISABLED_WARNING,
                 PERF_IMPACT_TIER_NONE,
                 "",
                 { footerSaveWarning: true }

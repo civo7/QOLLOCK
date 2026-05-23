@@ -674,14 +674,14 @@
         ALERT_WINDOW: 2,
         ONE_TIME_ALERTS: [
             { time: 120, sound: "BuffReminder.Tier1", tierKey: "ENABLE_ONE_TIME_TIER1" },
-            { time: 360, sound: "BuffReminder.Tier2", tierKey: "ENABLE_ONE_TIME_TIER2" },
+            { time: 300, sound: "BuffReminder.Tier2", tierKey: "ENABLE_ONE_TIME_TIER2" },
             { time: 480, sound: "BuffReminder.Tier3", tierKey: "ENABLE_ONE_TIME_TIER3" }
         ]
     };
     var DL4D_REMINDER_EVENTS = [
         { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
         { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
-        { time: 345, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
+        { time: 290, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
         { time: 465, key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners", caption: "Sinners and large camps spawning soon.", duration: 1.9 },
         { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Midboss, Soul Urn, Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
         { time: 720, key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak", caption: "Lane Guardian's resistance has decreased.", duration: 2.7 },
@@ -8206,6 +8206,7 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11 = AppendUniquePayloadSchemaFields(
 );
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11;
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0;
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1;
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -8363,6 +8364,14 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.6.1": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1
+    },
+    "3.0.0": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0
+    },
+    "3.0.1": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -8735,6 +8744,27 @@ function GetUIRoot() {
         } catch (e) {}
     }
 
+    function ClearStyleSafe(panel, prop) {
+        if (!panel || !panel.style || !prop) return;
+        try {
+            delete panel.style[prop];
+        } catch (e0) {}
+        try {
+            panel.style[prop] = null;
+        } catch (e1) {}
+        try {
+            panel.style[prop] = "";
+        } catch (e2) {}
+    }
+
+    function SetWashColorSafe(panel, color) {
+        if (color) {
+            SetStyleSafe(panel, "washColor", String(color));
+        } else {
+            ClearStyleSafe(panel, "washColor");
+        }
+    }
+
     const QOL_WASH_COLOR_PALETTE = [
         "",
         "#f7f4e8",
@@ -8891,11 +8921,11 @@ function GetUIRoot() {
         var progressLeft = IsPanelValid(State.cachedPanels.coloredHealthbarProgressLeft) ? State.cachedPanels.coloredHealthbarProgressLeft : null;
         var currentHealth = IsPanelValid(State.cachedPanels.coloredHealthbarCurrentHealth) ? State.cachedPanels.coloredHealthbarCurrentHealth : null;
 
-        if (healthBar) SetStyleSafe(healthBar, "washColor", "white");
-        if (progressLeft) SetStyleSafe(progressLeft, "washColor", "white");
+        if (healthBar) SetWashColorSafe(healthBar, "white");
+        if (progressLeft) SetWashColorSafe(progressLeft, "white");
         if (currentHealth) {
             SetStyleSafe(currentHealth, "color", "white");
-            SetStyleSafe(currentHealth, "washColor", "white");
+            SetWashColorSafe(currentHealth, "white");
         }
 
         State.coloredHealthbarLastColor = "";
@@ -9062,11 +9092,11 @@ function GetUIRoot() {
 
         var pct = (pH / cH) * 100;
         var color = ResolveColoredHealthbarColor(pct, cfg);
-        if (panels.healthBar) SetStyleSafe(panels.healthBar, "washColor", color);
-        if (panels.progressLeft) SetStyleSafe(panels.progressLeft, "washColor", color);
+        if (panels.healthBar) SetWashColorSafe(panels.healthBar, color);
+        if (panels.progressLeft) SetWashColorSafe(panels.progressLeft, color);
         if (panels.currentHealth) {
             SetStyleSafe(panels.currentHealth, "color", color);
-            SetStyleSafe(panels.currentHealth, "washColor", color);
+            SetWashColorSafe(panels.currentHealth, color);
         }
         State.coloredHealthbarLastColor = color;
         } catch (e) {
@@ -9243,7 +9273,7 @@ function GetUIRoot() {
         var panels = State.playerHealthbarAccentColorPanels || [];
         for (var i = 0; i < panels.length; i++) {
             if (IsPanelValid(panels[i])) {
-                SetStyleSafe(panels[i], "washColor", "");
+                SetWashColorSafe(panels[i], "");
             }
         }
         State.playerHealthbarAccentColorPanels = [];
@@ -9301,7 +9331,7 @@ function GetUIRoot() {
                 }
             }
             if (!stillTargeted && IsPanelValid(oldPanels[oldIndex])) {
-                SetStyleSafe(oldPanels[oldIndex], "washColor", "");
+                SetWashColorSafe(oldPanels[oldIndex], "");
             }
         }
 
@@ -9318,7 +9348,7 @@ function GetUIRoot() {
         State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
         var applyToken = State.playerHealthbarAccentColorToken;
         for (var applyIndex = 0; applyIndex < panels.length; applyIndex++) {
-            SetStyleSafe(panels[applyIndex], "washColor", "");
+            SetWashColorSafe(panels[applyIndex], "");
         }
         State.playerHealthbarAccentColorPanels = panels;
         State.playerHealthbarAccentColorSig = styleSig;
@@ -9329,7 +9359,7 @@ function GetUIRoot() {
                 }
                 for (var delayedIndex = 0; delayedIndex < panels.length; delayedIndex++) {
                     if (IsPanelValid(panels[delayedIndex])) {
-                        SetStyleSafe(panels[delayedIndex], "washColor", color);
+                        SetWashColorSafe(panels[delayedIndex], color);
                     }
                 }
             });
@@ -10287,6 +10317,10 @@ function GetUIRoot() {
             if (IsPanelValid(State.cachedPanels.mcSoulsFill)) {
                 var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
                 var heightValue = parseFloat(heightStr) || 0;
+                if (heightValue <= 0) {
+                    var actualHeight = Number(State.cachedPanels.mcSoulsFill.actuallayoutheight);
+                    if (isFinite(actualHeight) && actualHeight > 0) heightValue = actualHeight;
+                }
                 var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
                 if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
                 if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) State.cachedPanels.mcXpBarFill = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null;
@@ -23969,7 +24003,7 @@ function GetUIRoot() {
         hudSignature.style.y = String(-offsetY) + "px";
         hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
         hudSignature.style.visibility = enabled ? "visible" : "collapse";
-        SetStyleSafe(hudSignature, "washColor", washColor || "");
+        SetWashColorSafe(hudSignature, washColor);
         SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         State.bottomBarRuntimeStyleSig = styleSig;
     }
@@ -24006,11 +24040,11 @@ function GetUIRoot() {
         }
 
         for (var i = 0; i < icons.length; i++) {
-            if (IsPanelValid(icons[i])) SetStyleSafe(icons[i], "washColor", color);
+            if (IsPanelValid(icons[i])) SetWashColorSafe(icons[i], color);
         }
 
         for (var k = 0; k < infiniteIcons.length; k++) {
-            if (IsPanelValid(infiniteIcons[k])) SetStyleSafe(infiniteIcons[k], "washColor", color);
+            if (IsPanelValid(infiniteIcons[k])) SetWashColorSafe(infiniteIcons[k], color);
         }
 
         for (var j = 0; j < amounts.length; j++) {
@@ -24160,8 +24194,25 @@ function GetUIRoot() {
         modsContainer.style.x = String(offsetX) + "px";
         modsContainer.style.y = String(-offsetY) + "px";
         modsContainer.style.visibility = enabled ? "visible" : "collapse";
-        SetStyleSafe(modsContainer, "washColor", washColor || "none");
-        SetPanelOpacitySafe(modsContainer, opacityText, 1.0);
+        SetWashColorSafe(modsContainer, washColor);
+        // Opacity on structural item wrappers creates clipped composition layers.
+        // Keep layout wrappers default and fade only leaf visuals.
+        ClearStyleSafe(modsContainer, "opacity");
+        var barGraphContainer = modsContainer.FindChildTraverse ? modsContainer.FindChildTraverse("BarGraphContainer") : null;
+        if (IsPanelValid(barGraphContainer)) {
+            if (opacityText === "1.00") ClearStyleSafe(barGraphContainer, "opacity");
+            else SetPanelOpacitySafe(barGraphContainer, opacityText, 1.0);
+        }
+        var modSections = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("ModSection") || []) : [];
+        for (var sectionIndex = 0; sectionIndex < modSections.length; sectionIndex++) {
+            if (IsPanelValid(modSections[sectionIndex])) ClearStyleSafe(modSections[sectionIndex], "opacity");
+        }
+        var modIconContainers = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("mod_icon_single_container") || []) : [];
+        for (var iconIndex = 0; iconIndex < modIconContainers.length; iconIndex++) {
+            if (!IsPanelValid(modIconContainers[iconIndex])) continue;
+            if (opacityText === "1.00") ClearStyleSafe(modIconContainers[iconIndex], "opacity");
+            else SetPanelOpacitySafe(modIconContainers[iconIndex], opacityText, 1.0);
+        }
         State.itemsRuntimeStyleSig = styleSig;
     }
 
@@ -24860,7 +24911,7 @@ function GetUIRoot() {
 
         var styleSig = color || "default";
         if (State.minimapIconColorStyleSig === styleSig) return;
-        SetStyleSafe(canvas, "washColor", color || "");
+        SetWashColorSafe(canvas, color);
         State.minimapIconColorStyleSig = styleSig;
     }
 
@@ -25200,7 +25251,7 @@ function GetUIRoot() {
             var keyboardWashColor = ResolveWashColorFromPalette(ReadKeyboardOverlayWashColorIndex(cfg));
             var keyboardWashSig = keyboardWashColor || "";
             if (overlayRoot && State.keyboardOverlayWashSig !== keyboardWashSig) {
-                SetStyleSafe(overlayRoot, "washColor", keyboardWashColor || "");
+                SetWashColorSafe(overlayRoot, keyboardWashColor);
                 State.keyboardOverlayWashSig = keyboardWashSig;
             }
 
@@ -27505,7 +27556,7 @@ function GetUIRoot() {
             if (!entry) continue;
             var teamColor = ToRgbString(ResolveEnemyColoredHealthTeamColor(entry));
             if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetStyleSafe(entry.healthBar, "washColor", "");
+                SetWashColorSafe(entry.healthBar, "");
                 SetStyleSafe(entry.healthBar, "backgroundColor", teamColor);
             }
             entry.lastColor = teamColor;
@@ -27717,7 +27768,7 @@ function GetUIRoot() {
             if (String(entry.lastColor || "") === nextColor) continue;
 
             if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetStyleSafe(entry.healthBar, "washColor", "");
+                SetWashColorSafe(entry.healthBar, "");
                 SetStyleSafe(entry.healthBar, "backgroundColor", nextColor);
             }
             entry.lastColor = nextColor;
@@ -27761,7 +27812,7 @@ function GetUIRoot() {
             if (!entry) continue;
             var teamColor = ToRgbString(ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
             if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetStyleSafe(entry.healthBar, "washColor", "");
+                SetWashColorSafe(entry.healthBar, "");
                 SetStyleSafe(entry.healthBar, "backgroundColor", teamColor);
             }
             entry.lastColor = teamColor;
@@ -27885,7 +27936,7 @@ function GetUIRoot() {
             if (String(entry.lastColor || "") === nextColor) continue;
 
             if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetStyleSafe(entry.healthBar, "washColor", "");
+                SetWashColorSafe(entry.healthBar, "");
                 SetStyleSafe(entry.healthBar, "backgroundColor", nextColor);
             }
             entry.lastColor = nextColor;
@@ -31699,6 +31750,7 @@ function GetUIRoot() {
             cfg.ENABLE_KEYBOARD_OVERLAY,
             cfg.ENABLE_FULL_KEYBOARD_LAYOUT,
             cfg.MINIMAL_MINIMAP,
+            cfg.ENABLE_MINIMAP_ELEVATION_MARKERS,
             cfg.DISABLE_DAMAGE_REPORT,
             cfg.DISABLE_QUICK_BUY,
             cfg.ENABLE_ENHANCED_QUICKBUY,
