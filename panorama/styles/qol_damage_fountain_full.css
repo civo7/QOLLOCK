@@ -6857,12 +6857,12 @@
 .damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
 {
 	width: fit-children;
-	min-width: 0px;
+	min-width: 58px;
 	max-width: none;
 	height: fit-children;
 	min-height: 54px;
-	padding-right: 0px;
-	padding-left: 0px;
+	padding-right: 4px;
+	padding-left: 12px;
 	white-space: nowrap;
 	text-overflow: clip;
 	text-align: center;
@@ -6875,6 +6875,6 @@
 .damage_fountain_active .crit.damage_type_gun .HudIndicatorText,
 .damage_fountain_active .batched.crit.damage_type_gun .HudIndicatorText
 {
-	transform: translateX(-3px);
+	transform: translateX(8px);
 }
 
