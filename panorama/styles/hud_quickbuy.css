@@ -1125,6 +1125,11 @@ VerticalScrollBar
 	visibility: visible;
 }
 
+.enhanced_quickbuy_active .gShopOpen #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded,.enhanced_quickbuy_active .gShopOpen #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,#CitadelHudQuickbuy.enhanced_quickbuy_active.gShopOpen #QuickbuyNextSoulsNeeded,#CitadelHudQuickbuy.enhanced_quickbuy_active.gShopOpen #QuickbuyUpcomingPreviewContainer
+{
+	visibility: collapse;
+}
+
 .enhanced_quickbuy_active .gShopOpen #CitadelHudQuickbuy:not(.Empty) #QuickbuyShopTotalSummary,#CitadelHudQuickbuy.enhanced_quickbuy_active.gShopOpen:not(.Empty) #QuickbuyShopTotalSummary
 {
 	visibility: visible;
@@ -1133,6 +1138,16 @@ VerticalScrollBar
 #CitadelHudQuickbuy:not(.enhanced_quickbuy_active) #HudMini
 {
 	opacity: 0.2;
+}
+
+.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy .HudQuickbuyElement,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) .HudQuickbuyElement,.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyNextSoulsNeeded
+{
+	margin-left: 370px !important;
+}
+
+.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 450px !important;
 }
 
 .support_4_3_active #QuickbuyShopSummary
@@ -1162,5 +1177,25 @@ VerticalScrollBar
 .hud_shift_active .ItemsReady #HudMini,.hud_shift_active #HudMini
 {
 	margin-left: 480px;
+}
+
+.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy .HudQuickbuyElement,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) .HudQuickbuyElement
+{
+	margin-left: 370px !important;
+}
+
+.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #HudMini,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #HudMini,.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #HudMini,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #HudMini
+{
+	margin-left: 370px !important;
+}
+
+.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy .HudQuickbuyElement,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) .HudQuickbuyElement,.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #HudMini,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #HudMini,.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyNextSoulsNeeded
+{
+	margin-left: 420px !important;
+}
+
+.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 500px !important;
 }
 

@@ -477,6 +477,7 @@ function Get-CompileOutputPath {
         ".css" { $compiledName = "$name.vcss_c" }
         ".xml" { $compiledName = "$name.vxml_c" }
         ".vsvg" { $compiledName = "$name.vsvg_c" }
+        ".vtex" { $compiledName = "$name.vtex_c" }
         ".vsndevts" { $compiledName = "$name.vsndevts_c" }
         ".wav" { $compiledName = "$name.vsnd_c" }
         default { return $null }
@@ -553,7 +554,7 @@ try {
     }
 
     Write-Host "[Pipeline] Step 3/8: Compile changed files one by one..."
-    $compileExtensions = @(".xml", ".css", ".js", ".vsvg", ".vsndevts", ".wav")
+    $compileExtensions = @(".xml", ".css", ".js", ".vsvg", ".vtex", ".vsndevts", ".wav")
     $totalCopied = 0
     $totalSkippedNew = 0
     $totalCompiledOutputs = 0
@@ -575,6 +576,13 @@ try {
         $ext = [System.IO.Path]::GetExtension($dst).ToLowerInvariant()
         if ($compileExtensions -notcontains $ext) {
             throw "Non-compilable file passed to pipeline: $relative"
+        }
+
+        if ($ext -eq ".vtex") {
+            $sourcePng = [System.IO.Path]::ChangeExtension($src, ".png")
+            if (Test-Path -LiteralPath $sourcePng -PathType Leaf) {
+                Copy-Item -LiteralPath $sourcePng -Destination ([System.IO.Path]::ChangeExtension($dst, ".png")) -Force
+            }
         }
 
         $relativeNormalized = $relative.Replace("/", "\")
