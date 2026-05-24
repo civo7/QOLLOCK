@@ -1,6 +1,11 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_minimap.vcss_c");
+#hud_minimap,.useZoomedMinimap #hud_minimap
+{
+	transition-property: transform, ui-scale, opacity, pre-transform-scale2d;
+}
+
 .minimalist_minimap_active #map_render
 {
 	opacity: .9;

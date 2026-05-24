@@ -683,7 +683,7 @@
         { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
         { time: 290, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
         { time: 465, key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners", caption: "Sinners and large camps spawning soon.", duration: 1.9 },
-        { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Midboss, Soul Urn, Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
+        { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Soul Urn and Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
         { time: 720, key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak", caption: "Lane Guardian's resistance has decreased.", duration: 2.7 },
         { time: 885, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
         { time: 1080, key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak", caption: "Walker resistance has decreased.", duration: 2.5 },
@@ -754,6 +754,7 @@
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
     const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
     const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
+    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
     const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
     const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
@@ -927,7 +928,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const REJUV_ROTATE_ANIM_MS = 800;
     const REJUV_HIDE_POPIN_MS = 500;
     const REJUV_SEQ = [
-        { name: "initial", dur: 600, num: "1" },
+        { name: "initial", dur: 0, num: "1" },
         { name: "firstCd", dur: 420, num: "2" },
         { name: "secondCd", dur: 360, num: "3" },
         { name: "thirdCd", dur: 300, num: "3" }
@@ -13591,7 +13592,7 @@ function GetUIRoot() {
         var buffRed = buffEnabled && bridgeRemain < 10 && (bridgeRemain % 2) === 1;
         var buffYellow = buffEnabled && !buffRed && bridgeRemain < 20 && (bridgeRemain % 2) === 1;
         var rejuvWarnEligible = rejuvEnabled && !spawnWaiting;
-        var rejuvRed = rejuvWarnEligible && rejuvRemain < 10 && (rejuvRemain % 2) === 1;
+        var rejuvRed = rejuvEnabled && (spawnWaiting || (rejuvWarnEligible && rejuvRemain < 10 && (rejuvRemain % 2) === 1));
         var rejuvYellow = rejuvWarnEligible && !rejuvRed && rejuvRemain < 20 && (rejuvRemain % 2) === 1;
         var buffIcon = IsPanelValid(State.cachedPanels.minimapObjectiveBuffIcon) ? State.cachedPanels.minimapObjectiveBuffIcon : null;
         var buffBridgeLeftIcon = IsPanelValid(State.cachedPanels.minimapObjectiveBuffBridgeLeftIcon) ? State.cachedPanels.minimapObjectiveBuffBridgeLeftIcon : null;
@@ -13984,12 +13985,16 @@ function GetUIRoot() {
         var rImgHUD = GetRejuvPanel(state, root, "rImgHUD", "RejuvImgHUD");
         if (rImg) rImg.AddClass("white");
         if (rImgHUD) rImgHUD.AddClass("white");
+        ApplyRedYellowPanelClasses(GetRejuvPanel(state, root, "rejuvHUD", "RejuvHUD"), true, false);
         state.spawnWaiting = true;
         state.lastScanFound = false;
     }
 
     function RejuvCalcPhaseAt(t) {
         var tt = Math.max(0, Math.floor(Number(t) || 0));
+        if (Number(REJUV_SEQ[0].dur) <= 0) {
+            return { idx: 0, phaseStart: tt, counter: 0, spawnWaiting: true };
+        }
         if (tt <= 2) {
             return { idx: 0, phaseStart: 0, counter: REJUV_SEQ[0].dur };
         }
@@ -14014,6 +14019,11 @@ function GetUIRoot() {
         state.counter = computed.counter;
         state.phaseStart = computed.phaseStart;
         state.spawnWaiting = false;
+        if (computed.spawnWaiting || state.counter <= 0) {
+            RejuvShowSpawn(state, root);
+            return;
+        }
+        ApplyRedYellowPanelClasses(GetRejuvPanel(state, root, "rejuvHUD", "RejuvHUD"), false, false);
         RejuvSetLabels(state, root, FormatClockMmSs(state.counter), REJUV_SEQ[state.idx].num);
         RejuvSetPhaseImage(state, root, REJUV_SEQ[state.idx].name, nowMs);
     }
@@ -14024,6 +14034,7 @@ function GetUIRoot() {
         state.counter = REJUV_SEQ[idx].dur;
         state.phaseStart = nowSec;
         state.spawnWaiting = false;
+        ApplyRedYellowPanelClasses(GetRejuvPanel(state, root, "rejuvHUD", "RejuvHUD"), false, false);
         RejuvSetLabels(state, root, FormatClockMmSs(state.counter), REJUV_SEQ[idx].num);
         RejuvSetPhaseImage(state, root, REJUV_SEQ[idx].name, nowMs);
     }
@@ -14210,8 +14221,12 @@ function GetUIRoot() {
         state.cacheFriendly = null;
         state.cacheEnemy = null;
         state.cacheMidBossButton = null;
-        RejuvSetLabels(state, root, FormatClockMmSs(REJUV_SEQ[0].dur), REJUV_SEQ[0].num);
-        RejuvResetImage(state, root);
+        if (Number(REJUV_SEQ[0].dur) <= 0) {
+            RejuvShowSpawn(state, root);
+        } else {
+            RejuvSetLabels(state, root, FormatClockMmSs(REJUV_SEQ[0].dur), REJUV_SEQ[0].num);
+            RejuvResetImage(state, root);
+        }
         RejuvEndBuff(state, root, nowMs, true);
     }
 
@@ -24840,9 +24855,10 @@ function GetUIRoot() {
         if (!cfg) return false;
         var sig = BuildMinimapRuntimeSignature(cfg);
         if (raw !== State.lastRawConfig || sig !== State.minimapRuntimeSig || State.accountPresetTestActive || State.lastZoomState === null) return true;
+        if (State.minimapRuntimeSig && !IsPanelListValid(State.cachedPanels.minimap)) return true;
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
-        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) !== MINIMAP_CAST_RANGE_BASE_SIZE || State.minimapCastRangeScaleApplied) return true;
+        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && State.minimapCastRangeScaleApplied) return true;
         if (Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
         if (
             (
@@ -24980,6 +24996,11 @@ function GetUIRoot() {
             ? getZoomValue("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE)
             : getZoomValue("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
         var activeTargetSize = shouldZoom ? zoomTargetSize : cfg.MINIMAP_SMALL_SIZE;
+        activeTargetSize = Number(activeTargetSize);
+        if (!isFinite(activeTargetSize) || activeTargetSize <= 0) activeTargetSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
+        if (activeTargetSize < 50) activeTargetSize = 50;
+        if (activeTargetSize > 1400) activeTargetSize = 1400;
+        var minimapSizeText = Math.round(activeTargetSize) + "px";
         UpdateMinimapCastRangeScale(root, activeTargetSize);
         UpdateMinimapIconColor(root, cfg);
 
@@ -24992,10 +25013,15 @@ function GetUIRoot() {
                 : getZoomValue("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET", 0);
 
             minimapPanels.forEach(function(p) {
-                var targetSize = activeTargetSize;
-                p.style.width = targetSize + "px";
-                p.style.height = targetSize + "px";
+                if (p.style.width !== minimapSizeText) p.style.width = minimapSizeText;
+                if (p.style.height !== minimapSizeText) p.style.height = minimapSizeText;
                 if (p.id === "minimap_persp") {
+                    if (p.style.preTransformScale2d !== "1.00, 1.00") {
+                        p.style.preTransformScale2d = "1.00, 1.00";
+                    }
+                    try {
+                        p.style.transformOrigin = shouldZoom ? "50% 50%" : "100% 100%";
+                    } catch (eOrigin) {}
                     p.style.align = shouldZoom ? "center center" : "right bottom";
                     if (shouldZoom) {
                         p.style.margin = (-zoomOffsetY) + "px 0px 0px " + zoomOffsetX + "px";

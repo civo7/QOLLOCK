@@ -1019,7 +1019,7 @@
 
 #minimap_persp,#minimap_container,#minimap_frame
 {
-	transition-property: width, height, opacity;
+	transition-property: opacity, margin, pre-transform-scale2d;
 	transition-duration: 0.1s;
 }
 
@@ -1098,6 +1098,13 @@
 	width: fit-children;
 	height: fit-children;
 	transform: none;
+	transform-origin: 100% 100%;
+	transition-property: opacity, margin, pre-transform-scale2d;
+}
+
+#minimap_persp.gDetailView,#minimap_persp.gScoreboardOpen
+{
+	transform-origin: 50% 50%;
 }
 
 #minimap_container
@@ -1221,12 +1228,12 @@
 
 .QOLMinimapTimer.yellow
 {
-	background-color: rgba(18, 18, 18, 0.3);
+	background-color: #FFFF0030;
 }
 
 .QOLMinimapTimer.red
 {
-	background-color: rgba(18, 18, 18, 0.3);
+	background-color: #FF000030;
 }
 
 .minimap_buff_timer_disabled #QOLMinimapBuffTimer
