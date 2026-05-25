@@ -951,7 +951,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS = 1500;
     const ACCOUNT_PRESET_TEST_ENABLED = false;
     const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
-    const BUILD_LOADER_TEMP_DISABLED = true;
+    const BUILD_LOADER_TEMP_DISABLED = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
@@ -1012,7 +1012,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.35;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC = 0.30;
     const BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 1.5;
-    const SETTINGS_LOADER_ENABLED = false;
+    const SETTINGS_LOADER_ENABLED = true;
     const SETTINGS_LOADER_DEBUG = false;
     const SETTINGS_LOADER_DEBUG_THROTTLE_MS = 350;
     const SETTINGS_LOADER_TRACE = false;
@@ -14088,7 +14088,10 @@ function GetUIRoot() {
         state.rejuvBuffHideAtMs = nowMs + REJUV_HIDE_POPIN_MS;
     }
 
-    function RejuvStartBuff(state, root, nowSec) {
+    function RejuvStartBuff(state, root, nowSec, preserveExisting) {
+        if (preserveExisting && state.buffStartTime > 0 && state.buffCounter > 0) {
+            return;
+        }
         state.buffStartTime = nowSec;
         state.buffCounter = REJUV_DURATION_SEC;
         var rejuvBuff = GetRejuvPanel(state, root, "rejuvBuff", "RejuvBuff");
@@ -14480,7 +14483,7 @@ function GetUIRoot() {
                 RejuvStartPhaseManual(state, root, targetIdxFallback, nowSec, nowMs);
             }
             if (chargeIncreased) {
-                RejuvStartBuff(state, root, nowSec);
+                RejuvStartBuff(state, root, nowSec, true);
             }
             state.lastScanFound = found;
             state.lastRejuvChargeCount = chargeCount;
