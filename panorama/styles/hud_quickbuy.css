@@ -247,6 +247,11 @@
 	margin-left: 430px;
 }
 
+#CitadelHudQuickbuy.enhanced_quickbuy_active .HudQuickbuy
+{
+	margin-left: 80px;
+}
+
 #CitadelHudQuickbuy.enhanced_quickbuy_active #HudMini,.enhanced_quickbuy_active #CitadelHudQuickbuy #HudMini,#CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded,.enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded
 {
 	margin-left: 430px !important;
@@ -1197,5 +1202,25 @@ VerticalScrollBar
 .hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyUpcomingPreviewContainer
 {
 	margin-left: 500px !important;
+}
+
+.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy .HudQuickbuyElement,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) .HudQuickbuyElement,.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #HudMini,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #HudMini,.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyNextSoulsNeeded
+{
+	margin-left: 450px !important;
+}
+
+.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,#CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 530px !important;
+}
+
+.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy .HudQuickbuyElement,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) .HudQuickbuyElement,.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #HudMini,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #HudMini,.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyNextSoulsNeeded
+{
+	margin-left: 500px !important;
+}
+
+.hud_shift_active.enhanced_quickbuy_active:not(.gShopOpen) #CitadelHudQuickbuy #QuickbuyUpcomingPreviewContainer,.hud_shift_active #CitadelHudQuickbuy.enhanced_quickbuy_active:not(.gShopOpen) #QuickbuyUpcomingPreviewContainer
+{
+	margin-left: 580px !important;
 }
 

@@ -951,7 +951,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS = 1500;
     const ACCOUNT_PRESET_TEST_ENABLED = false;
     const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
-const BUILD_LOADER_TEMP_DISABLED = false;
+    const BUILD_LOADER_TEMP_DISABLED = true;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
@@ -1012,7 +1012,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.35;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC = 0.30;
     const BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 1.5;
-    const SETTINGS_LOADER_ENABLED = true;
+    const SETTINGS_LOADER_ENABLED = false;
     const SETTINGS_LOADER_DEBUG = false;
     const SETTINGS_LOADER_DEBUG_THROTTLE_MS = 350;
     const SETTINGS_LOADER_TRACE = false;
@@ -7365,6 +7365,19 @@ function ExpressShotLog(msg) {
         configTarget.ENABLE_COMPASS_SPEED = 0;
     }
 
+    function NormalizeLanguageSchemaMigration(configTarget, sourceConfig, schemaVersion) {
+        if (!configTarget || !sourceConfig) return;
+        if (CompareSchemaSemver(schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER, "3.0.2") >= 0) return;
+        if (!sourceConfig.hasOwnProperty("LANGUAGE")) return;
+        var legacyLanguage = Math.round(Number(sourceConfig.LANGUAGE));
+        if (!isFinite(legacyLanguage)) return;
+        if (legacyLanguage === 2) configTarget.LANGUAGE = 6;
+        else if (legacyLanguage === 3) configTarget.LANGUAGE = 7;
+        else if (legacyLanguage === 4) configTarget.LANGUAGE = 8;
+        else if (legacyLanguage === 5) configTarget.LANGUAGE = 9;
+        else if (legacyLanguage === 6) configTarget.LANGUAGE = 10;
+    }
+
     function NormalizeItemCooldownModeConfig(configTarget, sourceConfig) {
         var utils = GetSharedSchemaUtils();
         if (utils && typeof utils.NormalizeItemCooldownModeConfig === "function") {
@@ -8069,6 +8082,9 @@ const BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
 const BUILD_CATEGORY_ENHANCED_QUICKBUY_SCHEMA_FIELDS = [
     { key: "ENABLE_ENHANCED_QUICKBUY", min: 0, max: 1, step: 1 }
 ];
+const BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
+    { key: "ENHANCED_QUICKBUY_COUNT", min: 1, max: 5, step: 1 }
+];
 const BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
@@ -8208,6 +8224,14 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11 = AppendUniquePayloadSchemaFields(
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11;
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0;
 const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1;
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2 = ClonePayloadSchemaWithFieldOverrides(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0,
+    [{ key: "LANGUAGE", min: 0, max: 10, step: 1 }]
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2,
+    BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -8373,6 +8397,14 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.0.1": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0
+    },
+    "3.0.2": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2
+    },
+    "3.0.3": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -15130,6 +15162,14 @@ function GetUIRoot() {
         return n;
     }
 
+    function NormalizeEnhancedQuickbuyCount(value) {
+        var n = Math.round(Number(value));
+        if (!isFinite(n)) n = 3;
+        if (n < 1) n = 1;
+        if (n > 5) n = 5;
+        return n;
+    }
+
     function NormalizeDamageImpactScaleNumber(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
@@ -20335,6 +20375,7 @@ function GetUIRoot() {
         NormalizeTopbarEnemyHpWarningConfig(appliedObj, parsedResult.parsed);
         NormalizeTopbarAllyHpWarningConfig(appliedObj, parsedResult.parsed);
         NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+        NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
 
         var appliedRaw = JSON.stringify(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
@@ -24543,6 +24584,46 @@ function GetUIRoot() {
         else quickPanel.RemoveClass("has_rejuv");
     }
 
+    function GetTopBarOverlayBottomRP(panel, fallbackBottom) {
+        if (!IsPanelValid(panel) || !IsPanelVisibleMaybe(panel)) return 0;
+        var bottom = 0;
+        try {
+            var y = Number(panel.actualyoffset);
+            var h = Number(panel.actuallayoutheight);
+            if (isFinite(y) && isFinite(h) && h > 0) bottom = y + h;
+        } catch (eRecentPurchaseOverlayLayout) {}
+        if (bottom > 0) return bottom;
+        return Number(fallbackBottom) || 0;
+    }
+
+    function ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled) {
+        var isScoreboardOpen = false;
+        try { isScoreboardOpen = scoreboardEnabled && IsHudClassActive(root, "gScoreboardOpen"); } catch (eRecentPurchaseScoreboard) {}
+
+        var marginTop = 90;
+        if (isScoreboardOpen) marginTop = 175;
+        else {
+            var quickPanel = State.cachedPanels.quickPurchasesPanel;
+            var hasRejuv = IsPanelValid(quickPanel) && quickPanel.BHasClass && quickPanel.BHasClass("has_rejuv");
+            if (rejuvEnabled && hasRejuv) marginTop = 153;
+        }
+
+        var occupiedBottom = 0;
+        if (Number(cfg && cfg.ENABLE_OBJ_MAP) === 1) {
+            var objectiveMap = root && root.FindChildTraverse ? root.FindChildTraverse("ObjectivesMap") : null;
+            occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(objectiveMap, 112));
+        }
+        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) {
+            var urnTracker = root && root.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
+            occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(urnTracker, 96));
+        }
+
+        if (occupiedBottom > 0) {
+            marginTop = Math.max(marginTop, Math.round(occupiedBottom + 12));
+        }
+        return marginTop;
+    }
+
     function ClearContainerRP(root) {
         var container = IsPanelValid(State.cachedPanels.recentPurchasesContainer)
             ? State.cachedPanels.recentPurchasesContainer
@@ -24620,6 +24701,7 @@ function GetUIRoot() {
             var quickPanel = State.cachedPanels.quickPurchasesPanel;
             if (IsPanelValid(quickPanel)) {
                 quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
+                quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
                 quickPanel.style.x = String(quickOffsetX) + "px";
                 quickPanel.style.y = String(-quickOffsetY) + "px";
                 SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
@@ -31780,6 +31862,7 @@ function GetUIRoot() {
             cfg.DISABLE_DAMAGE_REPORT,
             cfg.DISABLE_QUICK_BUY,
             cfg.ENABLE_ENHANCED_QUICKBUY,
+            cfg.ENHANCED_QUICKBUY_COUNT,
             cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY,
             cfg.ENABLE_SHOP_CLICK_TO_NOTIFY,
             cfg.ENABLE_SHOP_RECENT_PURCHASES,
@@ -31815,6 +31898,9 @@ function GetUIRoot() {
 
         var legacyCooldownsEnabled = Number(cfg.ENABLE_LEGACY_COOLDOWNS) === 1;
         SyncLegacyCooldownsUiFlag(legacyCooldownsEnabled);
+        var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
 
         if (shouldApplyStaticClasses) {
             SetPanelClassCached(root, State.rootClassCache, "hide_ammo_custom", cfg.ENABLE_AMMO_STATUS === 0);
@@ -31886,9 +31972,6 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "damage_fountain_active", cfg.ENABLE_DAMAGE_FOUNTAIN === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
-            var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-            var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-            var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
@@ -31925,6 +32008,7 @@ function GetUIRoot() {
         }
         if (quickbuyPanel) {
             var quickbuyFeatureActive = enhancedQuickbuyEnabled || quickbuyClickToNotifyEnabled;
+            var enhancedQuickbuyCount = enhancedQuickbuyEnabled ? NormalizeEnhancedQuickbuyCount(cfg.ENHANCED_QUICKBUY_COUNT) : 3;
             var quickbuyOffsetX = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0) : 0;
             var quickbuyOffsetY = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0) : 0;
             var quickbuyStyleSig = String(quickbuyOffsetX) + "|" + String(quickbuyOffsetY) + "|" + (quickbuyFeatureActive ? "1" : "0") + "|" + (enhancedQuickbuyEnabled ? "1" : "0");
@@ -31941,6 +32025,10 @@ function GetUIRoot() {
                 "shop_click_to_notify_active",
                 quickbuyClickToNotifyEnabled
             );
+            try {
+                quickbuyPanel.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
+                root.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
+            } catch (_quickbuyCountAttrErr) {}
             if (State.quickbuyRuntimeStyleSig !== quickbuyStyleSig) {
                 if (quickbuyOffsetX !== 0 || quickbuyOffsetY !== 0) {
                     quickbuyPanel.style.x = FormatHudPx(quickbuyOffsetX, 0);
