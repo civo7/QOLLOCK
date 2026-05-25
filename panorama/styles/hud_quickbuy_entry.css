@@ -199,7 +199,7 @@
 	background-color: offWhite&10;
 }
 
-#QuickbuyPreview2Entry,#QuickbuyPreview3Entry
+#QuickbuyPreview2Entry,#QuickbuyPreview3Entry,#QuickbuyPreview4Entry,#QuickbuyPreview5Entry
 {
 	width: 100%;
 	height: 100%;
@@ -213,7 +213,7 @@
 	vertical-align: center;
 }
 
-#QuickbuyPreview2Entry #ItemContentPanel,#QuickbuyPreview3Entry #ItemContentPanel
+#QuickbuyPreview2Entry #ItemContentPanel,#QuickbuyPreview3Entry #ItemContentPanel,#QuickbuyPreview4Entry #ItemContentPanel,#QuickbuyPreview5Entry #ItemContentPanel
 {
 	flow-children: none;
 	horizontal-align: center;
@@ -225,7 +225,7 @@
 	height: 100%;
 }
 
-#QuickbuyPreview2Entry .QuickbuyItem,#QuickbuyPreview3Entry .QuickbuyItem
+#QuickbuyPreview2Entry .QuickbuyItem,#QuickbuyPreview3Entry .QuickbuyItem,#QuickbuyPreview4Entry .QuickbuyItem,#QuickbuyPreview5Entry .QuickbuyItem
 {
 	height: 100%;
 	width: 100%;
@@ -239,7 +239,7 @@
 	visibility: collapse;
 }
 
-#QuickbuyPreview2Entry .NamePanel,#QuickbuyPreview2Entry #ControlIcons,#QuickbuyPreview3Entry .NamePanel,#QuickbuyPreview3Entry #ControlIcons
+#QuickbuyPreview2Entry .NamePanel,#QuickbuyPreview2Entry #ControlIcons,#QuickbuyPreview3Entry .NamePanel,#QuickbuyPreview3Entry #ControlIcons,#QuickbuyPreview4Entry .NamePanel,#QuickbuyPreview4Entry #ControlIcons,#QuickbuyPreview5Entry .NamePanel,#QuickbuyPreview5Entry #ControlIcons
 {
 	visibility: collapse;
 }
@@ -252,7 +252,7 @@
 	tooltip-position: top;
 }
 
-#QuickbuyPreview2Entry #ModIcon,#QuickbuyPreview3Entry #ModIcon
+#QuickbuyPreview2Entry #ModIcon,#QuickbuyPreview3Entry #ModIcon,#QuickbuyPreview4Entry #ModIcon,#QuickbuyPreview5Entry #ModIcon
 {
 	ui-scale: 120%;
 	horizontal-align: center;
@@ -266,7 +266,7 @@
 	tooltip-position: left;
 }
 
-#QuickbuyPreview2Entry CitadelModIcon,#QuickbuyPreview3Entry CitadelModIcon
+#QuickbuyPreview2Entry CitadelModIcon,#QuickbuyPreview3Entry CitadelModIcon,#QuickbuyPreview4Entry CitadelModIcon,#QuickbuyPreview5Entry CitadelModIcon
 {
 	tooltip-position: left;
 }

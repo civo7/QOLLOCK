@@ -12,6 +12,18 @@ var quickbuyUpcomingPreviewSlots=[
 		entryPanelId:'QuickbuyPreview3Entry',
 		soulsLabelId:'QuickbuyUpcomingPreview3SoulsNeededLabel',
 		queueIndex:2
+	},
+	{
+		rootId:'QuickbuyUpcomingPreview4',
+		entryPanelId:'QuickbuyPreview4Entry',
+		soulsLabelId:'QuickbuyUpcomingPreview4SoulsNeededLabel',
+		queueIndex:3
+	},
+	{
+		rootId:'QuickbuyUpcomingPreview5',
+		entryPanelId:'QuickbuyPreview5Entry',
+		soulsLabelId:'QuickbuyUpcomingPreview5SoulsNeededLabel',
+		queueIndex:4
 	}
 ];
 var QUICKBUY_ITEM_NAME_ALIASES={
@@ -614,8 +626,34 @@ function SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,itemName){
 	}
 }
 
+function GetEnhancedQuickbuyCount(contextPanel){
+	var rawCount=3;
+	var panel=contextPanel;
+	for(var depth=0;depth<6;depth++){
+		try{
+			if(panel&&panel.GetAttributeInt){
+				rawCount=panel.GetAttributeInt('qol_enhanced_quickbuy_count',-1);
+				if(rawCount>=1)break;
+			}
+		}catch(_countAttrErr){}
+		try{
+			panel=(panel&&panel.GetParent)?panel.GetParent():null;
+		}catch(_countParentErr){
+			panel=null;
+		}
+		if(!panel)break;
+	}
+	if(rawCount<1)rawCount=3;
+	var count=Math.round(Number(rawCount));
+	if(!isFinite(count))count=3;
+	if(count<1)count=1;
+	if(count>5)count=5;
+	return count;
+}
+
 function UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries){
 	var contextPanel=$.GetContextPanel();
+	var maxUpcomingPreviewSlots=Math.max(0,GetEnhancedQuickbuyCount(contextPanel)-1);
 	for(var previewSlotIndex=0;previewSlotIndex<quickbuyUpcomingPreviewSlots.length;previewSlotIndex++){
 		var previewSlot=quickbuyUpcomingPreviewSlots[previewSlotIndex];
 		var previewRoot=contextPanel.FindChildTraverse(previewSlot.rootId);
@@ -629,6 +667,7 @@ function UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries){
 		if(previewSoulsLabel)previewSoulsLabel.text='0';
 		SyncQuickbuyPreviewModIcon(previewModIcon,null,'');
 
+		if(previewSlotIndex>=maxUpcomingPreviewSlots)continue;
 		if(previewSlot.queueIndex>=quickbuyQueueEntries.length)continue;
 
 		var previewQueueEntry=quickbuyQueueEntries[previewSlot.queueIndex];
