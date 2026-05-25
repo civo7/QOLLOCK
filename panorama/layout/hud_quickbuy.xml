@@ -53,6 +53,24 @@
 					<CitadelHudQuickbuyEntry id="QuickbuyPreview3Entry" hittest="false" />
 				</Panel>
 			</Panel>
+			<Panel id="QuickbuyUpcomingPreview4" class="QuickbuyUpcomingPreviewSlot" hittest="false">
+				<Panel class="QuickbuyUpcomingPreviewSoulsNeeded" hittest="false">
+					<Image class="goldIcon QuickbuyUpcomingPreviewSoulsNeededIcon" hittest="false" />
+					<Label id="QuickbuyUpcomingPreview4SoulsNeededLabel" text="0" hittest="false" />
+				</Panel>
+				<Panel class="QuickbuyUpcomingMini" hittest="false">
+					<CitadelHudQuickbuyEntry id="QuickbuyPreview4Entry" hittest="false" />
+				</Panel>
+			</Panel>
+			<Panel id="QuickbuyUpcomingPreview5" class="QuickbuyUpcomingPreviewSlot" hittest="false">
+				<Panel class="QuickbuyUpcomingPreviewSoulsNeeded" hittest="false">
+					<Image class="goldIcon QuickbuyUpcomingPreviewSoulsNeededIcon" hittest="false" />
+					<Label id="QuickbuyUpcomingPreview5SoulsNeededLabel" text="0" hittest="false" />
+				</Panel>
+				<Panel class="QuickbuyUpcomingMini" hittest="false">
+					<CitadelHudQuickbuyEntry id="QuickbuyPreview5Entry" hittest="false" />
+				</Panel>
+			</Panel>
 		</Panel>
 		<Panel id="KeyboardHints" hittest="false" hittestchildren="false">
 			<Label class="hudHint itemName" text="{s:quickbuy_item_name}" />
