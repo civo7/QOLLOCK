@@ -1,6 +1,44 @@
 (function() {
+    // Verify ql_utils.js loaded before us — log warning if missing
+    // (non-fatal: schema validator sandbox runs ql_core.js in isolation)
+    var QOL_UTILS_LOADED = typeof QOL_UTILS !== "undefined";
+    if (!QOL_UTILS_LOADED) {
+        $.Msg("[QOLLock] WARNING: ql_utils.js not loaded before ql_core.js!");
+    }
+
+    // Backward-compat aliases for utilities extracted to ql_utils.js
+    // Fall back to inline stubs when QOL_UTILS isn't loaded (schema validator sandbox)
+    var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var GetCachedPanel = QOL_UTILS_LOADED ? QOL_UTILS.GetCachedPanel : function(k) { return State.cachedPanels[k]; };
+    var SetCachedPanel = QOL_UTILS_LOADED ? QOL_UTILS.SetCachedPanel : function(k, p) { State.cachedPanels[k] = p; };
+    var ClearPanelCache = QOL_UTILS_LOADED ? QOL_UTILS.ClearPanelCache : function() {};
+    var SweepStalePanelCache = QOL_UTILS_LOADED ? QOL_UTILS.SweepStalePanelCache : function() { return 0; };
+    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
+    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
+    var FindFirstPanelByClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function() { return null; };
+    var FindAncestorWithClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindAncestorWithClass : function() { return null; };
+    var HasClassInHierarchy_utils = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function() { return false; };
+    var LogUtilsError = QOL_UTILS_LOADED ? QOL_UTILS.LogError : function() {};
+    var PerfNowMs_utils = QOL_UTILS_LOADED ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    var ScheduleStaggered_utils = QOL_UTILS_LOADED ? QOL_UTILS.ScheduleStaggered : function(d, f) { $.Schedule(d, f); };
+    var ValidateConfigHealth_utils = QOL_UTILS_LOADED ? QOL_UTILS.ValidateConfigHealth : function() { return []; };
+    var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
+    var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
+    var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
+    var QOL_ERROR = QOL_UTILS_LOADED ? QOL_UTILS.ErrorLog : function(cat, msg) { $.Msg("[QOLLock][ERROR][" + cat + "] " + msg); };
+
     var SOUND_DEBUG = false;
-    var State = { 
+
+    // Console-accessible debug toggle — type "ToggleQollockDebug()" in Panorama console
+    function ToggleQollockDebug() {
+        if (!QOL_UTILS_LOADED) { $.Msg("[QOLLock] ql_utils.js not loaded — debug toggle unavailable"); return; }
+        var next = !QOL_UTILS.IsDebugEnabled();
+        QOL_UTILS.SetDebugEnabled(next);
+        $.Msg("[QOLLock] debug logging " + (next ? "ENABLED" : "DISABLED"));
+    }
+    if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
+
+    var State = {
         lastTime: -1, 
         lastIntervalAlert: 0,
         lastMinimapAlert: 0,
@@ -6877,7 +6915,7 @@ function ExpressShotLog(msg) {
         if (err && err.message) msg = String(err.message);
         else if (err !== undefined && err !== null) msg = String(err);
         var stack = (err && err.stack) ? ("\n" + String(err.stack)) : "";
-        $.Msg("[QOLLock][" + loopName + "] runtime error: " + msg + stack);
+        QOL_ERROR(loopName, msg + stack);
     }
 
     function RuntimeSchedulerGetStore() {
@@ -6972,7 +7010,7 @@ function ExpressShotLog(msg) {
         var detailed = !!(enabled && Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1);
         if (!enabled) {
             if (State.perfEnabled) {
-                $.Msg("[QOLLock][Perf] disabled");
+                QOL_INFO("Perf", "disabled");
             }
             State.perfEnabled = false;
             State.perfDetailed = false;
@@ -6988,12 +7026,12 @@ function ExpressShotLog(msg) {
             State.perfEnabled = true;
             State.perfDetailed = detailed;
             ResetPerfWindow(nowMs);
-            $.Msg("[QOLLock][Perf] enabled (detail=" + (detailed ? "on" : "off") + ")");
+            QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
             return;
         }
         if (State.perfDetailed !== detailed) {
             State.perfDetailed = detailed;
-            $.Msg("[QOLLock][Perf] detail " + (detailed ? "enabled" : "disabled"));
+            QOL_INFO("Perf", "detail " + (detailed ? "enabled" : "disabled"));
         }
     }
 
@@ -8752,11 +8790,7 @@ function GetUIRoot() {
         return null;
     }
 
-    function IsPanelValid(panel) {
-        if (!panel) return false;
-        if (!panel.IsValid) return true;
-        return panel.IsValid();
-    }
+    // IsPanelValid is now provided by QOL_UTILS (ql_utils.js) — alias at top of file
 
     function ToRgbString(rgb) {
         return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
@@ -11144,7 +11178,7 @@ function GetUIRoot() {
     }
 
     function TriggerItemMirrorReadyFlash(overlayPanel, debugKey) {
-        if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+        if (!IsPanelValid(overlayPanel)) return;
         var key = debugKey ? String(debugKey) : "unknown";
         try {
             if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
@@ -11152,13 +11186,13 @@ function GetUIRoot() {
         } catch (e0) {}
         ItemMirrorFlashLog(key + " overlay flash trigger");
         $.Schedule(0.01, function() {
-            if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+            if (!IsPanelValid(overlayPanel)) return;
             try {
                 if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", true);
                 ItemMirrorFlashLog(key + " overlay class=ready_flash ON");
             } catch (e1) {}
             $.Schedule((ITEM_MIRROR_READY_OVERLAY_FLASH_MS + 40) / 1000.0, function() {
-                if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+                if (!IsPanelValid(overlayPanel)) return;
                 try {
                     if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
                     ItemMirrorFlashLog(key + " overlay class=ready_flash OFF");
@@ -25298,7 +25332,7 @@ function GetUIRoot() {
 
     function EnsureKeyboardOverlay(root) {
         var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
-        if (!overlayRoot || (overlayRoot.IsValid && !overlayRoot.IsValid())) {
+        if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
             if (!overlayRoot) {
                 var parent = GetGameplayHudPanel(root);
@@ -25313,7 +25347,7 @@ function GetUIRoot() {
         if (!overlayRoot) return null;
 
         var allBindingsBox = State.cachedPanels.keyboardOverlayBox;
-        if (!allBindingsBox || (allBindingsBox.IsValid && !allBindingsBox.IsValid())) {
+        if (!IsPanelValid(allBindingsBox)) {
             allBindingsBox = overlayRoot.FindChildTraverse("AllBindingsBox");
             if (!allBindingsBox) {
                 allBindingsBox = $.CreatePanel("Panel", overlayRoot, "AllBindingsBox", {
@@ -25331,10 +25365,10 @@ function GetUIRoot() {
 
     function RemoveKeyboardOverlay(root) {
         var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
-        if (!overlayRoot || (overlayRoot.IsValid && !overlayRoot.IsValid())) {
+        if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
         }
-        if (overlayRoot && (!overlayRoot.IsValid || overlayRoot.IsValid())) {
+        if (IsPanelValid(overlayRoot)) {
             overlayRoot.DeleteAsync(0);
         }
         State.cachedPanels.keyboardOverlayRoot = null;
@@ -25350,7 +25384,7 @@ function GetUIRoot() {
             var validBoxes = [];
             for (var bi = 0; bi < allBindingsBoxes.length; bi++) {
                 var candidate = allBindingsBoxes[bi];
-                if (candidate && candidate.IsValid && candidate.IsValid()) validBoxes.push(candidate);
+                if (IsPanelValid(candidate)) validBoxes.push(candidate);
             }
             if (validBoxes.length === 0) {
                 var keyboardBox = EnsureKeyboardOverlay(root);
@@ -25515,7 +25549,7 @@ function GetUIRoot() {
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.betterUnsecuredOverlay = null;
@@ -25695,7 +25729,7 @@ function GetUIRoot() {
 
     function EnsureUnsecuredSoulsOverlay(root) {
         var overlay = State.cachedPanels.unsecuredSoulsOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -25731,10 +25765,10 @@ function GetUIRoot() {
 
     function RemoveUnsecuredSoulsOverlay(root) {
         var overlay = State.cachedPanels.unsecuredSoulsOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.unsecuredSoulsOverlay = null;
@@ -25937,7 +25971,7 @@ function GetUIRoot() {
 
     function EnsureZipBoostOverlay(root) {
         var overlay = State.cachedPanels.zipBoostOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -25965,10 +25999,10 @@ function GetUIRoot() {
 
     function RemoveZipBoostOverlay(root) {
         var overlay = State.cachedPanels.zipBoostOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLZipBoostOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.zipBoostOverlay = null;
@@ -26059,7 +26093,7 @@ function GetUIRoot() {
         }
 
         var source = State.cachedPanels.zipBoostSource;
-        if (!source || (source.IsValid && !source.IsValid())) {
+        if (!IsPanelValid(source)) {
             source = null;
             if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
                 source = FindZipBoostSource(root);
@@ -26211,7 +26245,7 @@ function GetUIRoot() {
 
     function ResolveStatBonusesSource(root, cacheKey, candidateIds, nowMs) {
         var source = State.cachedPanels[cacheKey];
-        if (source && (!source.IsValid || source.IsValid())) {
+        if (IsPanelValid(source)) {
             return source;
         }
 
@@ -26619,7 +26653,7 @@ function GetUIRoot() {
 
     function EnsureStatBonusesOverlay(root) {
         var overlay = State.cachedPanels.statBonusesOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -26666,10 +26700,10 @@ function GetUIRoot() {
 
     function RemoveStatBonusesOverlay(root) {
         var overlay = State.cachedPanels.statBonusesOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLStatBonusesOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.statBonusesOverlay = null;
@@ -28422,7 +28456,7 @@ function GetUIRoot() {
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLCombatStatusOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.combatStatusOverlay = null;
@@ -30210,7 +30244,7 @@ function GetUIRoot() {
         State.itemMirrorDisplayMode = "active";
         var sources = State.itemMirrorSources || [];
         var abilitiesContainer = State.cachedPanels.abilitiesContainer;
-        if (!abilitiesContainer || (abilitiesContainer.IsValid && !abilitiesContainer.IsValid())) {
+        if (!IsPanelValid(abilitiesContainer)) {
             abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
             State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
         }
@@ -30351,7 +30385,7 @@ function GetUIRoot() {
 
     function EnsureCompassOverlay(root) {
         var compassRoot = State.cachedPanels.compassRoot;
-        if (!compassRoot || (compassRoot.IsValid && !compassRoot.IsValid())) {
+        if (!IsPanelValid(compassRoot)) {
             compassRoot = root.FindChildTraverse("QOLCompassRoot");
             if (!compassRoot) {
                 var parent = GetGameplayHudPanel(root);
@@ -30363,7 +30397,7 @@ function GetUIRoot() {
         if (!compassRoot) return null;
 
         var compassBox = State.cachedPanels.compassBox;
-        if (!compassBox || (compassBox.IsValid && !compassBox.IsValid())) {
+        if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             if (!compassBox) {
                 compassBox = $.CreatePanel("Panel", compassRoot, "QOLCompassBox");
@@ -30372,7 +30406,7 @@ function GetUIRoot() {
         }
 
         var ticksContainer = State.cachedPanels.compassTicksContainer;
-        if (!ticksContainer || (ticksContainer.IsValid && !ticksContainer.IsValid())) {
+        if (!IsPanelValid(ticksContainer)) {
             ticksContainer = compassBox ? compassBox.FindChildTraverse("QOLCompassTicks") : null;
             if (!ticksContainer && compassBox) {
                 ticksContainer = $.CreatePanel("Panel", compassBox, "QOLCompassTicks");
@@ -30381,7 +30415,7 @@ function GetUIRoot() {
         }
 
         var needle = State.cachedPanels.compassNeedle;
-        if (!needle || (needle.IsValid && !needle.IsValid())) {
+        if (!IsPanelValid(needle)) {
             needle = compassBox ? compassBox.FindChildTraverse("QOLCompassNeedle") : null;
             if (!needle && compassBox) {
                 needle = $.CreatePanel("Panel", compassBox, "QOLCompassNeedle");
@@ -30390,7 +30424,7 @@ function GetUIRoot() {
         }
 
         var fadeLeft = State.cachedPanels.compassFadeLeft;
-        if (!fadeLeft || (fadeLeft.IsValid && !fadeLeft.IsValid())) {
+        if (!IsPanelValid(fadeLeft)) {
             fadeLeft = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeLeft") : null;
             if (!fadeLeft && compassBox) {
                 fadeLeft = $.CreatePanel("Panel", compassBox, "QOLCompassFadeLeft");
@@ -30399,7 +30433,7 @@ function GetUIRoot() {
         }
 
         var fadeRight = State.cachedPanels.compassFadeRight;
-        if (!fadeRight || (fadeRight.IsValid && !fadeRight.IsValid())) {
+        if (!IsPanelValid(fadeRight)) {
             fadeRight = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeRight") : null;
             if (!fadeRight && compassBox) {
                 fadeRight = $.CreatePanel("Panel", compassBox, "QOLCompassFadeRight");
@@ -30408,7 +30442,7 @@ function GetUIRoot() {
         }
 
         var readout = State.cachedPanels.compassReadout;
-        if (!readout || (readout.IsValid && !readout.IsValid())) {
+        if (!IsPanelValid(readout)) {
             readout = compassRoot.FindChildTraverse("QOLCompassReadout");
             if (!readout) {
                 readout = $.CreatePanel("Panel", compassRoot, "QOLCompassReadout");
@@ -30417,7 +30451,7 @@ function GetUIRoot() {
         }
 
         var degree = State.cachedPanels.compassDegree;
-        if (!degree || (degree.IsValid && !degree.IsValid())) {
+        if (!IsPanelValid(degree)) {
             degree = compassRoot.FindChildTraverse("QOLCompassDegree");
             if (!degree && readout) {
                 degree = $.CreatePanel("Label", readout, "QOLCompassDegree");
@@ -30426,7 +30460,7 @@ function GetUIRoot() {
         }
 
         var speed = State.cachedPanels.compassSpeed;
-        if (!speed || (speed.IsValid && !speed.IsValid())) {
+        if (!IsPanelValid(speed)) {
             speed = compassRoot.FindChildTraverse("QOLCompassSpeed");
             if (!speed && readout) {
                 speed = $.CreatePanel("Label", readout, "QOLCompassSpeed");
@@ -30438,7 +30472,7 @@ function GetUIRoot() {
         var rebuildTicks = (!ticks || ticks.length !== COMPASS_TICK_COUNT);
         if (!rebuildTicks) {
             for (var t = 0; t < ticks.length; t++) {
-                if (!ticks[t] || (ticks[t].IsValid && !ticks[t].IsValid())) {
+                if (!IsPanelValid(ticks[t])) {
                     rebuildTicks = true;
                     break;
                 }
@@ -30612,7 +30646,7 @@ function GetUIRoot() {
             return State.minimapHeadingSnapshotMainImage;
         }
         var cached = State.cachedPanels.minimapLocalMainImage;
-        if (cached && (!cached.IsValid || cached.IsValid())) {
+        if (IsPanelValid(cached)) {
             var parent = cached.GetParent ? cached.GetParent() : null;
             if (PanelHasAllClasses(parent, ["active", "player", "client_cone_fov", "enemy"]) ||
                 hasClassInHierarchy(cached, "localplayer")) {
@@ -30658,7 +30692,7 @@ function GetUIRoot() {
             return State.minimapHeadingSnapshotPlayerPanel;
         }
         var cached = State.cachedPanels.minimapLocalPlayerPanel;
-        if (cached && (!cached.IsValid || cached.IsValid())) {
+        if (IsPanelValid(cached)) {
             if (PanelHasAllClasses(cached, ["active", "player", "client_cone_fov", "enemy"]) ||
                 (cached.BHasClass && cached.BHasClass("player") && hasClassInHierarchy(cached, "localplayer"))) {
                 return cached;
@@ -31083,11 +31117,11 @@ function GetUIRoot() {
     function UpdateCompassOverlay(root, nowMsHint) {
         if (!IsCustomHudContextActive(root)) {
             var existing = State.cachedPanels.compassRoot;
-            if ((!existing || (existing.IsValid && !existing.IsValid())) && root && root.FindChildTraverse) {
+            if (!IsPanelValid(existing) && root && root.FindChildTraverse) {
                 existing = root.FindChildTraverse("QOLCompassRoot");
                 State.cachedPanels.compassRoot = existing || null;
             }
-            if (existing && (!existing.IsValid || existing.IsValid())) {
+            if (IsPanelValid(existing)) {
                 if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
             }
             ResetCompassRuntimeState();
@@ -31146,7 +31180,7 @@ function GetUIRoot() {
         var uniformScale = (scale / 100).toFixed(3);
         var scaleText = uniformScale + ", " + uniformScale;
         var compassBox = State.cachedPanels.compassBox;
-        if (!compassBox || (compassBox.IsValid && !compassBox.IsValid())) {
+        if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             State.cachedPanels.compassBox = compassBox || null;
         }
@@ -31190,12 +31224,12 @@ function GetUIRoot() {
         }
 
         var degreeLabel = State.cachedPanels.compassDegree;
-        if (!degreeLabel || (degreeLabel.IsValid && !degreeLabel.IsValid())) {
+        if (!IsPanelValid(degreeLabel)) {
             degreeLabel = compassRoot.FindChildTraverse("QOLCompassDegree");
             State.cachedPanels.compassDegree = degreeLabel || null;
         }
         var speedLabel = State.cachedPanels.compassSpeed;
-        if (!speedLabel || (speedLabel.IsValid && !speedLabel.IsValid())) {
+        if (!IsPanelValid(speedLabel)) {
             speedLabel = compassRoot.FindChildTraverse("QOLCompassSpeed");
             State.cachedPanels.compassSpeed = speedLabel || null;
         }
