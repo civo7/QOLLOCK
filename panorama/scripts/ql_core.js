@@ -9,10 +9,31 @@
     // Backward-compat aliases for utilities extracted to ql_utils.js
     // Fall back to inline stubs when QOL_UTILS isn't loaded (schema validator sandbox)
     var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
-    var GetCachedPanel = QOL_UTILS_LOADED ? QOL_UTILS.GetCachedPanel : function(k) { return State.cachedPanels[k]; };
-    var SetCachedPanel = QOL_UTILS_LOADED ? QOL_UTILS.SetCachedPanel : function(k, p) { State.cachedPanels[k] = p; };
-    var ClearPanelCache = QOL_UTILS_LOADED ? QOL_UTILS.ClearPanelCache : function() {};
-    var SweepStalePanelCache = QOL_UTILS_LOADED ? QOL_UTILS.SweepStalePanelCache : function() { return 0; };
+    // Safe cached-panel accessors — always use State.cachedPanels with IsPanelValid guards
+    // (QOL_UTILS has its own panel cache, but ql_core.js uses State.cachedPanels exclusively)
+    var GetCachedPanel = function(k) {
+        var p = State.cachedPanels[k];
+        if (IsPanelValid(p)) return p;
+        State.cachedPanels[k] = null;
+        return null;
+    };
+    var SetCachedPanel = function(k, p) {
+        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
+    };
+    var ClearPanelCache = function() {
+        State.cachedPanels = {};
+    };
+    var SweepStalePanelCache = function() {
+        var swept = 0;
+        var cache = State.cachedPanels;
+        for (var k in cache) {
+            if (cache.hasOwnProperty(k) && cache[k] && !IsPanelValid(cache[k])) {
+                cache[k] = null;
+                swept++;
+            }
+        }
+        return swept;
+    };
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
     var FindFirstPanelByClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function() { return null; };
@@ -27452,12 +27473,13 @@ function GetUIRoot() {
             ? entry.cachedTopBarPlayerPanel
             : GetTopBarPlayerPanel(root, index, PerfNowMs(), false);
         if (!playerPanel || !IsPanelValid(playerPanel)) return null;
-        var statusPanel = (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel))
-            ? entry.cachedTopBarStatusPanel
-            : (function() {
-                var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
-                return rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
-            })();
+        var statusPanel = null;
+        if (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel)) {
+            statusPanel = entry.cachedTopBarStatusPanel;
+        } else {
+            var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
+            statusPanel = rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
+        }
         if (!statusPanel || !IsPanelValid(statusPanel)) return null;
         var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked"))
             || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateUnlocked"));
@@ -33609,14 +33631,7 @@ function GetUIRoot() {
         var nowSec = Math.floor(nowMsLoop / 1000);
         if (nowSec !== (State.lastCacheSweepSec || 0)) {
             State.lastCacheSweepSec = nowSec;
-            var swept = 0;
-            var cache = State.cachedPanels;
-            for (var cacheKey in cache) {
-                if (cache.hasOwnProperty(cacheKey) && cache[cacheKey] && !IsPanelValid(cache[cacheKey])) {
-                    cache[cacheKey] = null;
-                    swept++;
-                }
-            }
+            var swept = SweepStalePanelCache();
             if (swept > 0 && State.perfEnabled) {
                 QOL_DEBUG("cache", "swept " + swept + " stale panel refs");
             }
