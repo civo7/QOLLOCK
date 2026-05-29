@@ -6918,6 +6918,53 @@ function ExpressShotLog(msg) {
         QOL_ERROR(loopName, msg + stack);
     }
 
+    // ---- Feature Error Isolation (Fix 6) ----
+
+    var FEATURE_ERROR_STREAK_MAX = 10;
+
+    function ResetFeatureErrorStreak(featureName) {
+        if (!State.featureErrorStreaks) State.featureErrorStreaks = {};
+        State.featureErrorStreaks[featureName] = 0;
+    }
+
+    function IncrementFeatureErrorStreak(featureName) {
+        if (!State.featureErrorStreaks) State.featureErrorStreaks = {};
+        var streak = (Number(State.featureErrorStreaks[featureName]) || 0) + 1;
+        State.featureErrorStreaks[featureName] = streak;
+        return streak;
+    }
+
+    function IsFeatureAutoDisabled(featureName) {
+        if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
+        return !!State.featureAutoDisabled[featureName];
+    }
+
+    function AutoDisableFeature(featureName) {
+        if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
+        State.featureAutoDisabled[featureName] = true;
+        QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors");
+    }
+
+    /**
+     * Execute a feature tick function with its own error isolation.
+     * If the feature throws, the error is logged with the feature name.
+     * After 10 consecutive errors, the feature is auto-disabled for the session.
+     */
+    function ExecuteFeature(featureName, fn) {
+        if (IsFeatureAutoDisabled(featureName)) return;
+        try {
+            fn();
+            // Successful execution resets the error streak
+            ResetFeatureErrorStreak(featureName);
+        } catch (featureErr) {
+            LogLoopException(featureName, featureErr, "featureErr_" + featureName, PerfNowMs());
+            var streak = IncrementFeatureErrorStreak(featureName);
+            if (streak >= FEATURE_ERROR_STREAK_MAX) {
+                AutoDisableFeature(featureName);
+            }
+        }
+    }
+
     function RuntimeSchedulerGetStore() {
         var store = State.runtimeTaskNextMs;
         if (!store || typeof store !== "object") {
@@ -8728,6 +8775,40 @@ function GetUIRoot() {
             revision: nextRevision,
             count: hud && hud.SetAttributeString ? 2 : 1
         };
+    }
+
+    // ---- Config Corruption Recovery (Fix 7) ----
+
+    function SafeParseConfig(raw) {
+        if (!raw || raw === "") return null;
+        try {
+            return MergeConfig(JSON.parse(raw));
+        } catch (parseErr) {
+            QOL_ERROR("config", "JSON parse or merge failed: " + String(parseErr.message || parseErr));
+            // Save corrupt config for debugging
+            try {
+                var backupKey = "qol_settings_corrupt_" + PerfNowMs();
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem(backupKey, String(raw || "").substring(0, 5000));
+                    QOL_INFO("config", "corrupt config saved to: " + backupKey);
+                }
+            } catch (eBackup) {
+                QOL_ERROR("config", "FAILED to save corrupt config backup");
+            }
+            // Clear corrupt config so this doesn't repeat every tick
+            State.lastRawConfig = "";
+            try {
+                var root = GetUIRoot();
+                if (root && root.SetAttributeString) {
+                    root.SetAttributeString(STORAGE_KEY, "");
+                }
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem("qol_settings_raw_v1", "");
+                }
+            } catch (eClear) {}
+            QOL_WARN("config", "corrupt config cleared, using defaults");
+            return null;
+        }
     }
 
     function FindFirstPanelByClass(root, className) {
@@ -31486,9 +31567,7 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                if (raw !== "") {
-                    try { cfg = MergeConfig(JSON.parse(raw)); } catch (e0) {}
-                }
+                cfg = SafeParseConfig(raw);
                 if (!cfg) cfg = BuildDefaultConfig();
             }
             cfg = ApplyForcedFeatureDisables(cfg);
@@ -31547,12 +31626,25 @@ function GetUIRoot() {
     }
 
     function EnsureCoreLoopPanelCaches(root) {
-        EnsureMinimapPanelCache(root);
-        EnsurePassiveHudPanelCache(root);
-        EnsureGameTimePanelCache(root);
-        EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
-        EnsureAbilitiesContainerPanelCache(root);
-        EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+        // Lazy-init: only refresh caches for active features (Fix 8)
+        // Each Ensure* function is a no-op if the cache is still valid
+        if (State.lastResolvedGates) {
+            var gates = State.lastResolvedGates;
+            if (gates.minimapRuntime) EnsureMinimapPanelCache(root);
+            if (gates.legacyAudioPassive) EnsurePassiveHudPanelCache(root);
+            if (gates.rejuvTimers) EnsureGameTimePanelCache(root);
+            EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
+            if (gates.itemsRuntime || gates.statBonuses) EnsureAbilitiesContainerPanelCache(root);
+            EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+        } else {
+            // No gates resolved yet — refresh all
+            EnsureMinimapPanelCache(root);
+            EnsurePassiveHudPanelCache(root);
+            EnsureGameTimePanelCache(root);
+            EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
+            EnsureAbilitiesContainerPanelCache(root);
+            EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+        }
     }
 
     function SetGameplayMouseCursorRootClass(root, active) {
@@ -33246,9 +33338,7 @@ function GetUIRoot() {
         if (raw === State.lastRawConfig && State.lastConfig) {
             cfg = State.lastConfig;
         } else {
-            if (raw !== "") {
-                try { cfg = MergeConfig(JSON.parse(raw)); } catch(e) {}
-            }
+            cfg = SafeParseConfig(raw);
             if (!cfg) {
                 cfg = BuildDefaultConfig();
             }
@@ -33281,61 +33371,98 @@ function GetUIRoot() {
         State.lastConfig = cfg;
         var hideoutConnected = root ? isConnectedToHideout(root) : false;
         var hasConfigSource = !!(raw && raw.length > 0);
+
+        // Sweep stale cached panels once per second (Fix 1)
+        var nowSec = Math.floor(nowMsLoop / 1000);
+        if (nowSec !== (State.lastCacheSweepSec || 0)) {
+            State.lastCacheSweepSec = nowSec;
+            var swept = 0;
+            var cache = State.cachedPanels;
+            for (var cacheKey in cache) {
+                if (cache.hasOwnProperty(cacheKey) && cache[cacheKey] && !IsPanelValid(cache[cacheKey])) {
+                    cache[cacheKey] = null;
+                    swept++;
+                }
+            }
+            if (swept > 0 && State.perfEnabled) {
+                QOL_DEBUG("cache", "swept " + swept + " stale panel refs");
+            }
+        }
+
         var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
+        State.lastResolvedGates = gates;
         var redDiamondEnabled = gates.redDiamondEnabled;
 
         if (gates.rejuvTimers) {
-            perfSection = PerfStart();
-            UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
-            PerfEnd("loop.rejuv_timers", perfSection);
+            ExecuteFeature("rejuvTimers", function() {
+                perfSection = PerfStart();
+                UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
+                PerfEnd("loop.rejuv_timers", perfSection);
+            });
         }
 
         if (gates.spm) {
-            perfSection = PerfStart();
-            UpdateSoulsPerMinute(root, nowMsLoop, cfg);
-            PerfEnd("loop.souls_per_min", perfSection);
+            ExecuteFeature("spm", function() {
+                perfSection = PerfStart();
+                UpdateSoulsPerMinute(root, nowMsLoop, cfg);
+                PerfEnd("loop.souls_per_min", perfSection);
+            });
         }
 
         if (gates.unspent) {
-            perfSection = PerfStart();
-            UpdateUnspentSouls(root, nowMsLoop, cfg);
-            PerfEnd("loop.unspent", perfSection);
+            ExecuteFeature("unspent", function() {
+                perfSection = PerfStart();
+                UpdateUnspentSouls(root, nowMsLoop, cfg);
+                PerfEnd("loop.unspent", perfSection);
+            });
         }
 
         if (gates.nicknames) {
-            perfSection = PerfStart();
-            UpdateTopBarNicknames(root, nowMsLoop, cfg);
-            PerfEnd("loop.topbar_nicknames", perfSection);
+            ExecuteFeature("nicknames", function() {
+                perfSection = PerfStart();
+                UpdateTopBarNicknames(root, nowMsLoop, cfg);
+                PerfEnd("loop.topbar_nicknames", perfSection);
+            });
         }
 
         if (gates.statlocker) {
-            perfSection = PerfStart();
-            UpdateStatlockerButtons(root, nowMsLoop, cfg);
-            PerfEnd("loop.statlocker", perfSection);
+            ExecuteFeature("statlocker", function() {
+                perfSection = PerfStart();
+                UpdateStatlockerButtons(root, nowMsLoop, cfg);
+                PerfEnd("loop.statlocker", perfSection);
+            });
         }
 
         if (gates.panelCache) {
-            perfSection = PerfStart();
-            EnsureCoreLoopPanelCaches(root);
-            PerfEnd("loop.panel_cache", perfSection);
+            ExecuteFeature("panelCache", function() {
+                perfSection = PerfStart();
+                EnsureCoreLoopPanelCaches(root);
+                PerfEnd("loop.panel_cache", perfSection);
+            });
         }
 
         if (gates.onDeathArcade) {
-            perfSection = PerfStart();
-            UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
-            State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
-            PerfEnd("loop.on_death_arcade", perfSection);
+            ExecuteFeature("onDeathArcade", function() {
+                perfSection = PerfStart();
+                UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
+                State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
+                PerfEnd("loop.on_death_arcade", perfSection);
+            });
         }
 
         if (root && gates.coreRoot) {
-            perfSection = PerfStart();
-            redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
-            State.coreRootGateSig = gates.sig;
-            PerfEnd("loop.root_classes", perfSection);
+            ExecuteFeature("coreRoot", function() {
+                perfSection = PerfStart();
+                redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
+                State.coreRootGateSig = gates.sig;
+                PerfEnd("loop.root_classes", perfSection);
+            });
         } else if (root && gates.healthbarRuntimeHelpers) {
-            perfSection = PerfStart();
-            UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
-            PerfEnd("loop.healthbar_helpers", perfSection);
+            ExecuteFeature("healthbarRuntimeHelpers", function() {
+                perfSection = PerfStart();
+                UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
+                PerfEnd("loop.healthbar_helpers", perfSection);
+            });
         }
         var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
         var loopAccentNeedsRefresh = (
@@ -33356,157 +33483,207 @@ function GetUIRoot() {
         }
 
         if (gates.laneWithParty) {
-            perfSection = PerfStart();
-            UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
-            PerfEnd("loop.lane_with_party", perfSection);
+            ExecuteFeature("laneWithParty", function() {
+                perfSection = PerfStart();
+                UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
+                PerfEnd("loop.lane_with_party", perfSection);
+            });
         }
 
         if (gates.gameplayMouseCursor) {
-            perfSection = PerfStart();
-            UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
-            PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+            ExecuteFeature("gameplayMouseCursor", function() {
+                perfSection = PerfStart();
+                UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
+                PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+            });
         }
 
         if (gates.betterUnsecuredHud) {
-            perfSection = PerfStart();
-            UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
-            PerfEnd("loop.unsecured_souls_hud", perfSection);
+            ExecuteFeature("betterUnsecuredHud", function() {
+                perfSection = PerfStart();
+                UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
+                PerfEnd("loop.unsecured_souls_hud", perfSection);
+            });
         }
 
         if (gates.colorWarning) {
-            perfSection = PerfStart();
-            UpdateColoredHealthbarRuntime(root, cfg);
-            PerfEnd("loop.colored_healthbar", perfSection);
+            ExecuteFeature("colorWarning", function() {
+                perfSection = PerfStart();
+                UpdateColoredHealthbarRuntime(root, cfg);
+                PerfEnd("loop.colored_healthbar", perfSection);
+            });
         }
 
         if (gates.enemyColorWarning) {
-            perfSection = PerfStart();
-            UpdateEnemyColoredHealthRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.enemy_colored_healthbar", perfSection);
+            ExecuteFeature("enemyColorWarning", function() {
+                perfSection = PerfStart();
+                UpdateEnemyColoredHealthRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.enemy_colored_healthbar", perfSection);
+            });
         }
 
         if (gates.allyColorWarning) {
-            perfSection = PerfStart();
-            UpdateAllyColoredHealthRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.ally_colored_healthbar", perfSection);
+            ExecuteFeature("allyColorWarning", function() {
+                perfSection = PerfStart();
+                UpdateAllyColoredHealthRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.ally_colored_healthbar", perfSection);
+            });
         }
 
         if (gates.ammo) {
-            perfSection = PerfStart();
-            UpdateAmmoPanelRuntime(root, cfg);
-            PerfEnd("loop.ammo_panel", perfSection);
+            ExecuteFeature("ammo", function() {
+                perfSection = PerfStart();
+                UpdateAmmoPanelRuntime(root, cfg);
+                PerfEnd("loop.ammo_panel", perfSection);
+            });
         }
 
         if (gates.topBarRuntime) {
-            perfSection = PerfStart();
-            UpdateTopBarRuntime(root, cfg);
-            PerfEnd("loop.top_bar_runtime", perfSection);
+            ExecuteFeature("topBarRuntime", function() {
+                perfSection = PerfStart();
+                UpdateTopBarRuntime(root, cfg);
+                PerfEnd("loop.top_bar_runtime", perfSection);
+            });
         }
 
         if (gates.bottomBarRuntime) {
-            perfSection = PerfStart();
-            UpdateBottomBarRuntime(root, cfg);
-            PerfEnd("loop.bottom_bar_runtime", perfSection);
+            ExecuteFeature("bottomBarRuntime", function() {
+                perfSection = PerfStart();
+                UpdateBottomBarRuntime(root, cfg);
+                PerfEnd("loop.bottom_bar_runtime", perfSection);
+            });
         }
 
         if (gates.itemsRuntime) {
-            perfSection = PerfStart();
-            UpdateItemsRuntime(root, cfg);
-            PerfEnd("loop.items_runtime", perfSection);
+            ExecuteFeature("itemsRuntime", function() {
+                perfSection = PerfStart();
+                UpdateItemsRuntime(root, cfg);
+                PerfEnd("loop.items_runtime", perfSection);
+            });
         }
 
         if (gates.soulsRuntime) {
-            perfSection = PerfStart();
-            UpdateSoulsRuntime(root, cfg);
-            PerfEnd("loop.souls_runtime", perfSection);
+            ExecuteFeature("soulsRuntime", function() {
+                perfSection = PerfStart();
+                UpdateSoulsRuntime(root, cfg);
+                PerfEnd("loop.souls_runtime", perfSection);
+            });
         }
 
         if (gates.heroShop) {
-            perfSection = PerfStart();
-            var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
-            UpdateHeroShopRuntime(root, cfg, nowMsClass);
-            PerfEnd("loop.hero_shop", perfSection);
+            ExecuteFeature("heroShop", function() {
+                perfSection = PerfStart();
+                var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
+                UpdateHeroShopRuntime(root, cfg, nowMsClass);
+                PerfEnd("loop.hero_shop", perfSection);
+            });
         }
         UpdateRecentPurchases(root, cfg);
 
         if (gates.keyboardRuntime) {
-            perfSection = PerfStart();
-            UpdateKeyboardOverlayRuntime(root, cfg);
-            PerfEnd("loop.keyboard_overlay", perfSection);
+            ExecuteFeature("keyboardRuntime", function() {
+                perfSection = PerfStart();
+                UpdateKeyboardOverlayRuntime(root, cfg);
+                PerfEnd("loop.keyboard_overlay", perfSection);
+            });
         }
 
         if (gates.zipBoost) {
-            perfSection = PerfStart();
-            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.zip_boost", perfSection);
+            ExecuteFeature("zipBoost", function() {
+                perfSection = PerfStart();
+                UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.zip_boost", perfSection);
+            });
         }
 
         if (gates.unsecuredSouls) {
-            perfSection = PerfStart();
-            UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.unsecured_souls_overlay", perfSection);
+            ExecuteFeature("unsecuredSouls", function() {
+                perfSection = PerfStart();
+                UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.unsecured_souls_overlay", perfSection);
+            });
         }
 
         if (gates.statBonuses) {
-            perfSection = PerfStart();
-            UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.stat_bonuses", perfSection);
+            ExecuteFeature("statBonuses", function() {
+                perfSection = PerfStart();
+                UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.stat_bonuses", perfSection);
+            });
         }
 
         if (gates.combatStatus) {
-            perfSection = PerfStart();
-            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.combat_status", perfSection);
+            ExecuteFeature("combatStatus", function() {
+                perfSection = PerfStart();
+                UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.combat_status", perfSection);
+            });
         }
 
         if (gates.signatureFlash) {
-            perfSection = PerfStart();
-            UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.signature_flash", perfSection);
+            ExecuteFeature("signatureFlash", function() {
+                perfSection = PerfStart();
+                UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.signature_flash", perfSection);
+            });
         }
 
         if (gates.targetShapes) {
-            perfSection = PerfStart();
-            var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-            nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
-            PerfEnd("loop.target_shapes", perfSection);
+            ExecuteFeature("targetShapes", function() {
+                perfSection = PerfStart();
+                var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
+                nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
+                ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
+                PerfEnd("loop.target_shapes", perfSection);
+            });
         }
 
         if (gates.damageImpactRuntime) {
-            perfSection = PerfStart();
-            UpdateDamageImpactRuntime(root, cfg);
-            PerfEnd("loop.damage_impact_runtime", perfSection);
+            ExecuteFeature("damageImpactRuntime", function() {
+                perfSection = PerfStart();
+                UpdateDamageImpactRuntime(root, cfg);
+                PerfEnd("loop.damage_impact_runtime", perfSection);
+            });
         }
 
         if (gates.staminaChargeColorRuntime) {
-            perfSection = PerfStart();
-            UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.stamina_charge_color", perfSection);
+            ExecuteFeature("staminaChargeColorRuntime", function() {
+                perfSection = PerfStart();
+                UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.stamina_charge_color", perfSection);
+            });
         }
 
         if (gates.damageNumbers) {
-            perfSection = PerfStart();
-            UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
-            PerfEnd("loop.damage_numbers", perfSection);
+            ExecuteFeature("damageNumbers", function() {
+                perfSection = PerfStart();
+                UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
+                PerfEnd("loop.damage_numbers", perfSection);
+            });
         }
 
         if (gates.minimapRuntime) {
-            perfSection = PerfStart();
-            UpdateMinimapRuntime(root, cfg, raw);
-            PerfEnd("loop.minimap", perfSection);
+            ExecuteFeature("minimapRuntime", function() {
+                perfSection = PerfStart();
+                UpdateMinimapRuntime(root, cfg, raw);
+                PerfEnd("loop.minimap", perfSection);
+            });
         }
 
         if (gates.legacyAudioPassive) {
-            perfSection = PerfStart();
-            UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
-            PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+            ExecuteFeature("legacyAudioPassive", function() {
+                perfSection = PerfStart();
+                UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
+                PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+            });
         }
 
         if (gates.imagesInChat) {
-            perfSection = PerfStart();
-            UpdateImagesInChat(root, cfg);
-            PerfEnd("loop.images_in_chat", perfSection);
+            ExecuteFeature("imagesInChat", function() {
+                perfSection = PerfStart();
+                UpdateImagesInChat(root, cfg);
+                PerfEnd("loop.images_in_chat", perfSection);
+            });
         }
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
@@ -33540,10 +33717,14 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                if (raw !== "") {
-                    try { cfg = MergeConfig(JSON.parse(raw)); } catch (e0) {}
-                }
+                cfg = SafeParseConfig(raw);
                 if (!cfg) cfg = BuildDefaultConfig();
+            }
+
+            // Lazy-init: skip if neither target shapes nor red diamond is enabled (Fix 8)
+            if (Number(cfg.ENABLE_TARGET_SHAPES) !== 1 && Number(cfg.ENABLE_RED_DIAMOND) !== 1) {
+                State.unitTargetBootstrapDone = true;
+                return;
             }
 
             var style = ResolveUnitTargetStyleTexts(cfg);
