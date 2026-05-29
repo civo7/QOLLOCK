@@ -789,6 +789,20 @@
     const COMPASS_INTERVAL_DEEP_IDLE_SEC = 0.85;
 
     // ==========================================================================
+    // MAIN LOOP — IDLE DEGRADATION (Fix 9)
+    // ==========================================================================
+    // Multiplier applied to LOOP_INTERVAL_SEC at each idle level.
+    // active:    0.2s (5Hz)   — in match, HUD visible, normal FPS
+    // idle:      0.5s (2Hz)   — HUD hidden or low FPS (below ~20fps)
+    // deep_idle: 1.5s (0.67Hz) — not in match (menus)
+    // background: 3.0s (0.33Hz) — not in match for extended period
+    const LOOP_IDLE_MULTIPLIER = 2.5;        // idle interval = base * 2.5  (0.5s)
+    const LOOP_DEEP_IDLE_MULTIPLIER = 7.5;   // deep idle = base * 7.5      (1.5s)
+    const LOOP_BACKGROUND_MULTIPLIER = 15;   // background = base * 15      (3.0s)
+    const IDLE_DETECTION_CACHE_MS = 2000;     // cache idle state for 2s to avoid per-tick overhead
+    const LOW_FPS_THRESHOLD_MS = 50;          // frame time >50ms (~<20fps) triggers low-FPS degradation
+
+    // ==========================================================================
     // BOOTSTRAP & CACHE TIMING
     // ==========================================================================
     const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;  // retry interval for target shape panel discovery
@@ -14668,6 +14682,74 @@ function GetUIRoot() {
 
     function IsCustomHudContextActive(root) {
         return true;
+    }
+
+    // ---- Adaptive Polling Degradation (Fix 9) ----
+
+    /**
+     * Detect the global idle state of the game.
+     * Results are cached for IDLE_DETECTION_CACHE_MS to avoid per-tick overhead.
+     * Returns { level: "active"|"idle"|"deep_idle"|"background", isInMatch, isHudVisible, lowFps }
+     */
+    function DetectGlobalIdleState(root) {
+        var nowMs = PerfNowMs();
+        if (State.lastIdleCheckMs && (nowMs - State.lastIdleCheckMs) < IDLE_DETECTION_CACHE_MS) {
+            return State.lastIdleState || { level: "active", isInMatch: true, isHudVisible: true, lowFps: false };
+        }
+        State.lastIdleCheckMs = nowMs;
+
+        var state = {
+            isInMatch: false,
+            isHudVisible: true,
+            lowFps: false,
+            level: "active"
+        };
+
+        // Check if in a match: hero panel exists
+        if (root) {
+            var heroPanel = root.FindChildTraverse ? root.FindChildTraverse("HeroPanel") : null;
+            state.isInMatch = IsPanelValid(heroPanel);
+        }
+
+        // Check if HUD is hidden (spectator, replay)
+        if (root && root.BHasClass) {
+            state.isHudVisible = !root.BHasClass("HudHidden");
+        }
+
+        // Check for low FPS (requires perf tracking to be enabled)
+        if (State.perfEnabled && State.perfLastFrameTimeMs) {
+            state.lowFps = State.perfLastFrameTimeMs > LOW_FPS_THRESHOLD_MS;
+        }
+
+        // Determine degradation level
+        if (!state.isInMatch) {
+            state.level = "deep_idle";
+        } else if (!state.isHudVisible || state.lowFps) {
+            state.level = "idle";
+        } else {
+            state.level = "active";
+        }
+
+        State.lastIdleState = state;
+        return state;
+    }
+
+    /**
+     * Compute the dynamic loop interval based on idle state.
+     * Returns the interval in seconds.
+     */
+    function GetDynamicLoopInterval(baseIntervalSec, idleState) {
+        switch (idleState.level) {
+            case "background":
+                return Math.max(baseIntervalSec * LOOP_BACKGROUND_MULTIPLIER, 3.0);
+            case "deep_idle":
+                return Math.max(baseIntervalSec * LOOP_DEEP_IDLE_MULTIPLIER, 1.5);
+            case "idle":
+                return Math.max(baseIntervalSec * LOOP_IDLE_MULTIPLIER, 0.5);
+            case "active":
+            default:
+                return baseIntervalSec;
+        }
     }
 
     function ApplyForcedFeatureDisables(cfg) {
@@ -33748,6 +33830,25 @@ function GetUIRoot() {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
             FlushPerfIfNeeded(false);
         }
+
+        // ---- Adaptive Polling Degradation (Fix 9) ----
+        // Track frame time for low-FPS detection
+        if (State.perfLastLoopStartMs > 0) {
+            State.perfLastFrameTimeMs = perfLoopStartMs - State.perfLastLoopStartMs;
+        }
+
+        // Compute dynamic interval based on game idle state
+        var idleState = DetectGlobalIdleState(root);
+        var dynamicInterval = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, idleState);
+        if (idleState.level !== State.lastIdleLevel) {
+            if (State.lastIdleLevel !== undefined) {
+                QOL_INFO("loop", "idle level: " + State.lastIdleLevel + " -> " + idleState.level +
+                         " (interval: " + dynamicInterval.toFixed(2) + "s)");
+            }
+            State.lastIdleLevel = idleState.level;
+        }
+        nextDelaySec = dynamicInterval;
+
         } catch (err) {
             LogLoopException("loop", err, "loopErrorNextLogMs", PerfNowMs());
         } finally {
