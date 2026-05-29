@@ -211,6 +211,7 @@
         enemyUnitStatusOldPanelScanStats: null,
         ultCdSlotCache: null,
         ultCdSlotNextRecheckMs: null,
+        ultCdSlotFullRescanAtMs: 0,
         enemyUltOldPanelCache: [],
         enemyUltOldPanelCacheNextMs: 0,
         enemyUltOldNextUpdateMs: 0,
@@ -1004,6 +1005,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
+    const ULT_CD_FULL_RESCAN_MS = 30000;     // periodic full cache flush to self-heal stale lookups
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
@@ -12307,6 +12309,17 @@ function GetUIRoot() {
         var now = Number(nowMs);
         if (!isFinite(now) || now <= 0) now = PerfNowMs();
         var lastScanMs = Number(State.topbarPlayerPanelLastScanMs[index]) || 0;
+        // Fix 11: detect time-source mismatch between Date.now() (epoch ms,
+        // ~1.7e12) and PerfNowMs() (game-relative, ~0–1e7).  When the two
+        // sources are mixed in the same cache the "recently scanned" check
+        // produces a huge negative delta that is always < REFRESH_MS, causing
+        // a permanent freeze where the cached null is never re-scanned.
+        // We treat the cache as stale whenever the absolute delta exceeds
+        // 24 h — a value no sane game-relative or epoch timestamp can
+        // legitimately span within a single session.
+        if (lastScanMs > 0 && (now < lastScanMs) && (lastScanMs - now) > 86400000) {
+            lastScanMs = 0;
+        }
         var recentlyScanned = lastScanMs > 0 && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS;
         if (cached && (!forceRefresh || recentlyScanned)) return cached;
         if (!forceRefresh && recentlyScanned) return cached;
@@ -12326,6 +12339,56 @@ function GetUIRoot() {
     var ULT_CD_DEBUG_THROTTLE_MS = 1000;
     var ultCdDebugLastLogMs = 0;
 
+    // -------------------------------------------------------------------------
+    // Ultimate Cooldown Overlay — panel lookup helpers
+    // -------------------------------------------------------------------------
+    // We traverse through known intermediate IDs with FindChild (non-recursive)
+    // and verify that the returned panels actually descend from the expected
+    // player panel via a parent-walk.  This defends against any cross-player
+    // contamination if FindChildTraverse resolves a duplicate ID to a different
+    // player's subtree.
+    //
+    // Player panel DOM path:
+    //   CitadelHudTopBarPlayer
+    //     PlayerDetailsContainer
+    //       StatusRow
+    //         UltimateStatus
+    //           UltimateStatusBG
+    //             UltimateCooldownTextHidden  (Label — game-managed binding)
+    //         UltimateCooldownTextShown       (Label — we write this)
+
+    function FindUltCooldownElements(playerPanel) {
+        var statusRow = playerPanel && playerPanel.FindChildTraverse
+            ? playerPanel.FindChildTraverse("StatusRow")
+            : null;
+        if (!statusRow || !IsPanelValid(statusRow)) return null;
+
+        // UltimateCooldownTextShown is a direct child of StatusRow
+        var elShown = statusRow.FindChild
+            ? statusRow.FindChild("UltimateCooldownTextShown")
+            : null;
+
+        // UltimateCooldownTextHidden is nested: StatusRow > UltimateStatus > UltimateStatusBG > label
+        var ultimateStatus = statusRow.FindChild
+            ? statusRow.FindChild("UltimateStatus")
+            : null;
+        var elHidden = null;
+        if (ultimateStatus && IsPanelValid(ultimateStatus) && ultimateStatus.FindChild) {
+            var bg = ultimateStatus.FindChild("UltimateStatusBG");
+            if (bg && IsPanelValid(bg) && bg.FindChild) {
+                elHidden = bg.FindChild("UltimateCooldownTextHidden");
+            }
+        }
+
+        if (!elShown || !IsPanelValid(elShown) || !elHidden || !IsPanelValid(elHidden)) return null;
+
+        // Verify both elements actually descend from the player panel we were
+        // given (belt-and-suspenders against any ancestor mismatch).
+        if (!IsDescendantOf(elShown, playerPanel) || !IsDescendantOf(elHidden, playerPanel)) return null;
+
+        return { elHidden: elHidden, elShown: elShown };
+    }
+
     function UpdateUltimateCooldownOverlay(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
         var fnStart = PerfNowMs();
@@ -12335,6 +12398,11 @@ function GetUIRoot() {
         var recheckMs = State.ultCdSlotNextRecheckMs;
         var nowMs = PerfNowMs();
         var debugParts = [];
+        // Periodic full reset every 30 s so transient misses eventually self-heal
+        if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
+            for (var ri = 0; ri < 12; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
+            State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
+        }
         for (var i = 0; i < 12; i++) {
             var slotStart = PerfNowMs();
             var slot = slots[i];
@@ -12349,15 +12417,14 @@ function GetUIRoot() {
                     if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noPlayer(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
                     continue;
                 }
-                var elHidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
-                var elShown  = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
-                if (!elHidden || !elShown) {
+                var els = FindUltCooldownElements(playerPanel);
+                if (!els) {
                     slots[i] = false;
                     recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
                     if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noEl(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
                     continue;
                 }
-                slot = { elHidden: elHidden, elShown: elShown };
+                slot = els;
                 slots[i] = slot;
             }
             var cd = String(Number(slot.elHidden.text) + 1);
@@ -31767,49 +31834,60 @@ function GetUIRoot() {
                 itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
                 var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
                 var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
-                var perfSection = 0;
 
                 if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateCompassOverlay(root, nowMsCompassLoop);
-                    PerfEnd("compass.overlay", perfSection);
+                    ExecuteFeature("compass.overlay", function() {
+                        var perfSection = PerfStart();
+                        UpdateCompassOverlay(root, nowMsCompassLoop);
+                        PerfEnd("compass.overlay", perfSection);
+                    });
                 }
 
                 if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
-                    PerfEnd("compass.minimap_rotate", perfSection);
+                    ExecuteFeature("compass.minimap_rotate", function() {
+                        var perfSection = PerfStart();
+                        UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
+                        PerfEnd("compass.minimap_rotate", perfSection);
+                    });
                 }
 
                 if (itemMirrorRuntimeActive) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateItemMirrorProbe(root, cfg);
-                    PerfEnd("compass.item_mirror", perfSection);
+                    ExecuteFeature("compass.item_mirror", function() {
+                        var perfSection = PerfStart();
+                        UpdateItemMirrorProbe(root, cfg);
+                        PerfEnd("compass.item_mirror", perfSection);
+                    });
                 }
 
                 if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateReloadCooldownOverlay(root, cfg);
-                    PerfEnd("compass.reload_cd", perfSection);
+                    ExecuteFeature("compass.reload_cd", function() {
+                        var perfSection = PerfStart();
+                        UpdateReloadCooldownOverlay(root, cfg);
+                        PerfEnd("compass.reload_cd", perfSection);
+                    });
                 }
 
                 if (ultCooldownEnabled) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateUltimateCooldownOverlay(root, cfg);
-                    PerfEnd("compass.ult_cd", perfSection);
+                    ExecuteFeature("compass.ult_cd", function() {
+                        var perfSection = PerfStart();
+                        UpdateUltimateCooldownOverlay(root, cfg);
+                        PerfEnd("compass.ult_cd", perfSection);
+                    });
                 }
 
                 if (unitTargetFastMode) {
                     hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                    ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
-                    PerfEnd("compass.target_shapes_fast", perfSection);
+                    ExecuteFeature("compass.target_shapes_fast", function() {
+                        var perfSection = PerfStart();
+                        var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
+                        ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
+                        PerfEnd("compass.target_shapes_fast", perfSection);
+                    });
                 }
             }
             var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
@@ -31835,6 +31913,12 @@ function GetUIRoot() {
                 nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
             } else {
                 nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
+            }
+
+            // Apply game-state-aware degradation on top of feature-based interval (Fix 9 extended)
+            var compassIdleState = DetectGlobalIdleState(root);
+            if (compassIdleState.level !== "active") {
+                nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, compassIdleState));
             }
         } catch (err) {
             LogLoopException("compassLoop", err, "compassErrorNextLogMs", PerfNowMs());
@@ -31866,12 +31950,21 @@ function GetUIRoot() {
         var nextDelaySec = BUILD_REQUEST_LOOP_IDLE_SEC;
         try {
             var root = GetUIRoot();
-            if (!root || !root.GetAttributeString) return;
+            if (!root || !root.GetAttributeString) {
+                // No root available — game is likely in a transitional state. Use deep idle.
+                nextDelaySec = BUILD_REQUEST_LOOP_DEEP_IDLE_SEC;
+                return;
+            }
 
             var queueActive = IsBuildRequestQueueActive(root);
             var runtimeActive = IsBuildRequestRuntimeActive();
             if (!queueActive && !runtimeActive) {
                 nextDelaySec = BUILD_REQUEST_LOOP_DEEP_IDLE_SEC;
+                // Apply game-state-aware degradation on top (Fix 9 extended)
+                var buildIdleState = DetectGlobalIdleState(root);
+                if (buildIdleState.level !== "active") {
+                    nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, buildIdleState));
+                }
                 return;
             }
 
@@ -31885,8 +31978,16 @@ function GetUIRoot() {
             }
             cfg = ApplyForcedFeatureDisables(cfg);
             var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-            ProcessBuildRequestOrchestration(root, nowMsLoop, cfg);
+            ExecuteFeature("buildRequest.orchestration", function() {
+                ProcessBuildRequestOrchestration(root, nowMsLoop, cfg);
+            });
             nextDelaySec = IsBuildRequestQueueActive(root) ? BUILD_REQUEST_LOOP_ACTIVE_SEC : BUILD_REQUEST_LOOP_IDLE_SEC;
+
+            // Apply game-state-aware degradation on top of feature-based interval (Fix 9 extended)
+            var buildIdleState = DetectGlobalIdleState(root);
+            if (buildIdleState.level !== "active") {
+                nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, buildIdleState));
+            }
         } catch (err) {
             LogLoopException("buildRequestLoop", err, "buildRequestErrorNextLogMs", PerfNowMs());
         } finally {
