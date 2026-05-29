@@ -716,6 +716,10 @@
             { time: 480, sound: "BuffReminder.Tier3", tierKey: "ENABLE_ONE_TIME_TIER3" }
         ]
     };
+    // ==========================================================================
+    // STORAGE & ATTRIBUTE KEYS
+    // ==========================================================================
+
     var DL4D_REMINDER_EVENTS = [
         { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
         { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
@@ -750,54 +754,102 @@
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
-    const CORE_SCHEDULER_V2_ENABLED = true; // rollback switch
-    const CORE_SCHEDULER_PHASE_COUNT = 5;
-    const CORE_SCHEDULER_STAGGER_CLEANUP = true;
-    const CORE_START_DELAY_LOOP_SEC = 0.90;
-    const CORE_START_DELAY_COMPASS_SEC = 1.03;
-    const CORE_START_DELAY_BUILD_SEC = 1.17;
+    // ==========================================================================
+    // SCHEDULER
+    // ==========================================================================
+    const CORE_SCHEDULER_V2_ENABLED = true; // rollback switch: set false to revert to v1 scheduler
+    const CORE_SCHEDULER_PHASE_COUNT = 5; // stagger work across this many phases per tick
+    const CORE_SCHEDULER_STAGGER_CLEANUP = true; // spread cleanup work across phases
+
+    // ==========================================================================
+    // LOOP STARTUP TIMING
+    // ==========================================================================
+    // Delays allow the game's own HUD panels to initialize before QOLLOCK queries them.
+    // Too low: panels not found, bootstrap retries waste CPU.
+    // Too high: user sees default HUD before QOLLOCK activates.
+    const CORE_START_DELAY_LOOP_SEC = 0.90;   // main feature loop
+    const CORE_START_DELAY_COMPASS_SEC = 1.03; // compass/minimap loop
+    const CORE_START_DELAY_BUILD_SEC = 1.17;   // build category payload loop
+
+    // ==========================================================================
+    // LOOP INTERVALS (seconds)
+    // ==========================================================================
+    // 200ms (5Hz) — balance between responsiveness and CPU usage.
+    // At 60fps (~16.7ms/frame), the main loop fires every ~12 frames.
     const LOOP_INTERVAL_SEC = 0.2;
+
+    // 50ms (20Hz) — smooth compass rotation, matches typical monitor refresh.
+    // Every 3rd frame at 60fps. Below 33ms gives no visible improvement.
     const COMPASS_INTERVAL_SEC = 0.05;
-    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.16;
-    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;
-    const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;
+
+    // Build request loop intervals at three degradation levels
+    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.16;       // player is in shop/build UI
+    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;          // in match but not in shop
+    const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;     // outside match (menus)
+
+    // Compass idle degradation — uses idle interval when not in custom HUD context
     const COMPASS_INTERVAL_IDLE_SEC = 0.50;
     const COMPASS_INTERVAL_DEEP_IDLE_SEC = 0.85;
-    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;
-    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;
-    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
+
+    // ==========================================================================
+    // BOOTSTRAP & CACHE TIMING
+    // ==========================================================================
+    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;  // retry interval for target shape panel discovery
+    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;     // give up after this many attempts
+    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;     // slow refresh when HUD is idle
     const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
-    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
+    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0"; // default damage number config signature
+
+    // ==========================================================================
+    // COMPASS — GEOMETRY
+    // ==========================================================================
+    // 360° / 22.5° = 16 base ticks + 1 overlap for seamless wrapping at 360°
     const COMPASS_TICK_STEP_DEG = 22.5;
-    const COMPASS_TICK_SPACING_PX = 12.5;
-    const COMPASS_TICK_COUNT = 17;
-    const COMPASS_SPEED_SCALE = 2.12;
-    const COMPASS_SPEED_OFFSET = 2.0;
-    const COMPASS_SPEED_DEADBAND = 2.0;
-    const COMPASS_SPEED_MAX_STEP = 12.0;
-    const COMPASS_SPEED_QUANT = 2;
-    const COMPASS_SPEED_ZERO_FLOOR = 10.0;
-    const COMPASS_SPEED_SAMPLE_MS = 50;
-    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
-    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
-    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
-    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;
-    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;
-    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;
-    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0;
-    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;
-    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;
-    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;
-    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
-    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
-    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
-    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
-    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
-    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;
+    const COMPASS_TICK_SPACING_PX = 12.5;  // horizontal px between tick marks (controls ring diameter)
+    const COMPASS_TICK_COUNT = 17;          // total ticks including wrap-overlap
+
+    // ==========================================================================
+    // COMPASS — SPEED DISPLAY
+    // ==========================================================================
+    // display = raw_speed * SCALE + OFFSET, clamped to MAX_STEP, quantized by QUANT.
+    // Empirically tuned so a hero at normal speed shows ~5-7 on the readout.
+    const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
+    const COMPASS_SPEED_OFFSET = 2.0;       // offset added after scaling
+    const COMPASS_SPEED_DEADBAND = 2.0;     // minimum display value below which readout shows zero
+    const COMPASS_SPEED_MAX_STEP = 12.0;    // max change per update (smooths display)
+    const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
+    const COMPASS_SPEED_ZERO_FLOOR = 10.0;  // raw speed below this floors display to zero
+    const COMPASS_SPEED_SAMPLE_MS = 50;     // speed sample window in milliseconds
+
+    // ==========================================================================
+    // MINIMAP — ROTATION SMOOTHING
+    // ==========================================================================
+    // North-offset rotation uses an exponential moving average ("tau" = time constant).
+    // Two tau values: fast for large heading deltas, slow for small corrections.
+    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;      // north = +90° in Source 2 coordinate system
+    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;     // ignore rotation below this when stationary
+    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;   // tighter deadzone when moving
+    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;          // smoothing time-constant for large heading changes
+    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;          // smoothing time-constant for small heading changes
+    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;        // heading delta threshold to switch to fast tau
+    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0; // cap on rotation speed
+    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;         // hold heading for this long before switching to slow tau
+    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;           // look-ahead time for velocity-based heading prediction
+    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;        // cap on predicted heading delta
+    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;       // EMA alpha for velocity filtering (0-1, higher = faster response)
+
+    // ==========================================================================
+    // MINIMAP — LAYOUT & SCANNING
+    // ==========================================================================
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;      // scan interval for local player position
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;  // faster scan after certain events
+    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // re-assert Z-order interval
+    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // base cast range circle size on minimap
+    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // base minimap size in pixels at default zoom
+    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // sanity cap on layout offset (prevents runaway values)
+    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // feature-gate constant for custom mouse cursor
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
     const GAMEPLAY_MOUSE_CURSOR_HALF_PX = Math.floor(GAMEPLAY_MOUSE_CURSOR_SIZE_PX * 0.5);
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
@@ -18282,12 +18334,11 @@ function GetUIRoot() {
     function QueueCloseHeroShopForLoaderSuccess() {
         var delays = [0.00, 0.20, 0.55];
         for (var i = 0; i < delays.length; i++) {
-            (function(delaySec) {
-                $.Schedule(delaySec, function() {
-                    var closeRoot = GetUIRoot();
-                    TryCloseHeroShopForLoader(closeRoot);
-                });
-            })(delays[i]);
+            var delaySec = delays[i];
+            $.Schedule(delaySec, function() {
+                var closeRoot = GetUIRoot();
+                TryCloseHeroShopForLoader(closeRoot);
+            });
         }
     }
 
@@ -24691,9 +24742,8 @@ function GetUIRoot() {
             toggle.checked = filter.active;
             var label = $.CreatePanel("Label", toggle, "");
             label.text = filter.label;
-            (function(f) {
-                $.RegisterEventHandler("Activated", toggle, function() { f.active = !f.active; });
-            })(filter);
+            var capturedFilter = filter;
+            $.RegisterEventHandler("Activated", toggle, function() { capturedFilter.active = !capturedFilter.active; });
         }
 
         var existingLabel = panel.FindChild("RecentPurchases");
@@ -24810,9 +24860,9 @@ function GetUIRoot() {
             var icon = $.CreatePanel("Panel", itemInfo, "");
             icon.AddClass("mod_icon");
             icon.AddClass("brawl_hide");
-            (function(p, url) {
-                $.Schedule(0, function() { if (IsPanelValid(p)) { p.style.backgroundImage = url; p.style.backgroundSize = "100% 100%"; } });
-            })(icon, iconUrl);
+            var capturedIcon = icon;
+            var capturedIconUrl = iconUrl;
+            $.Schedule(0, function() { if (IsPanelValid(capturedIcon)) { capturedIcon.style.backgroundImage = capturedIconUrl; capturedIcon.style.backgroundSize = "100% 100%"; } });
         }
 
         var nameLabel = $.CreatePanel("Label", itemInfo, "");

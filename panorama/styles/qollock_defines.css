@@ -1,0 +1,39 @@
+/* ==========================================================================
+   QOLLOCK Design Tokens — single source of truth for color/size/animation values
+   Include this first in any QOLLOCK CSS file: @include "qollock_defines.css";
+   ========================================================================== */
+
+/* ---- Health Bar Colors ---- */
+@define QOL_HEALTHBAR_ALLY: #33CC33;
+@define QOL_HEALTHBAR_ENEMY: #CC3333;
+@define QOL_HEALTHBAR_SHIELD: #3399FF;
+@define QOL_HEALTHBAR_BULWARK: #FF9933;
+@define QOL_HEALTHBAR_LOW: #FF3333;
+@define QOL_HEALTHBAR_MID: #FFAA33;
+@define QOL_HEALTHBAR_CRITICAL: #FF0000;
+
+/* ---- Minimap Colors ---- */
+@define QOL_MINIMAP_ALLY_ICON: #33FF33;
+@define QOL_MINIMAP_ENEMY_ICON: #FF3333;
+@define QOL_MINIMAP_NEUTRAL_ICON: #FFFF33;
+@define QOL_MINIMAP_BACKGROUND: #000000DD;
+
+/* ---- Compass Colors ---- */
+@define QOL_COMPASS_NEEDLE: #FF4444;
+@define QOL_COMPASS_TICK: #FFFFFFCC;
+@define QOL_COMPASS_TEXT: #FFFFFF;
+
+/* ---- Shop & UI Accent ---- */
+@define QOL_ACCENT_PRIMARY: #FFCC00;
+@define QOL_ACCENT_DANGER: #FF3333;
+@define QOL_ACCENT_SUCCESS: #33FF33;
+
+/* ---- Animation Timing ---- */
+@define QOL_TRANSITION_FAST: 0.1s;
+@define QOL_TRANSITION_NORMAL: 0.2s;
+@define QOL_TRANSITION_SLOW: 0.5s;
+
+/* ---- Layout Constants ---- */
+@define QOL_TOPBAR_HEIGHT: 32px;
+@define QOL_COMPASS_SIZE: 200px;
+@define QOL_MINIMAP_SIZE: 400px;
