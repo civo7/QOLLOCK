@@ -158,6 +158,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENHANCED_QUICKBUY_COUNT": "Controls how many enhanced quickbuy preview items are shown.",
     "ENABLE_QUICKBUY_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a quickbuy purchase.",
     "ENABLE_SHOP_ITEM_NOTIFICATIONS": "Shows item buy notifications from recent purchases.",
+    "ENABLE_HERO_PURCHASE_POPUPS": "Show purchase notifications under each hero's portrait instead of in the center.",
     "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
     "ENABLE_SHOW_BUILD_ID": "Shows your build information always for content creators",
     "ENABLE_SHOW_BUILD_ID_TITLE": "Append the selected build title after the build ID.",
@@ -552,6 +553,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_SHOP_STATS: "low",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "low",
     ENABLE_SHOP_ITEM_NOTIFICATIONS: "low",
+    ENABLE_HERO_PURCHASE_POPUPS: "low",
     ENABLE_SHOP_RECENT_PURCHASES: "low",
     RECENT_PURCHASES_QUICK_OPACITY: "low",
     RECENT_PURCHASES_PANEL_OPACITY: "low",
@@ -22123,6 +22125,9 @@ function RenderCurrentTabContent(list) {
                 CreateRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
                 CreateRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "slider", 0, 1, 0.05, null);
                 CreateRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
+                CreateSeparator(notificationsParent);
+                CreateRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null,
+                    "Show purchase notifications under each hero's portrait instead of in the center.");
             });
         });
     } else if (currentTab === "Healthbar") {
