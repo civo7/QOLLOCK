@@ -11930,6 +11930,9 @@ const RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
     { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
     { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+const HERO_PURCHASE_POPUPS_SCHEMA_FIELDS = [
+    { key: "ENABLE_HERO_PURCHASE_POPUPS", min: 0, max: 1, step: 1 }
+];
 const SHOW_BUILD_ID_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
@@ -12051,6 +12054,10 @@ const COMPACT_SCHEMA_3_0_5 = CloneSchemaWithFieldOverrides(
     SETTINGS_THEME_SCHEMA_FIELDS_3_0_5
 );
 const COMPACT_SCHEMA_3_1_0 = COMPACT_SCHEMA_3_0_5;
+const COMPACT_SCHEMA_3_1_1 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_1_0,
+    HERO_PURCHASE_POPUPS_SCHEMA_FIELDS
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -12236,6 +12243,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.1.0": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_1_0
+    },
+    "3.1.1": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_1_1
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
