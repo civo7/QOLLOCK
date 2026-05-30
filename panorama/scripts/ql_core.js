@@ -9753,9 +9753,9 @@ function GetUIRoot() {
     }
 
     function UpdateMinimalistHealthbarOffsets(root, cfg, enabled) {
-        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
-        var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null);
-        if (healthContainer !== State.cachedPanels.healthContainer) {
+        var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
+        if (!healthContainer) {
+            healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
             State.cachedPanels.healthContainer = healthContainer || null;
         }
 
@@ -11624,7 +11624,11 @@ function GetUIRoot() {
                 if (["hero_testing_hideout", "hideout", "dl_hideout"].indexOf(mapName) !== -1) return true;
             }
         } catch (e) {}
-        var hud = root.FindChildTraverse("Hud");
+        var hud = GetCachedPanel("cachedHudPanel");
+        if (!hud && root && root.FindChildTraverse) {
+            hud = root.FindChildTraverse("Hud");
+            SetCachedPanel("cachedHudPanel", hud);
+        }
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
         return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout");
     }
@@ -24920,8 +24924,10 @@ function GetUIRoot() {
         if (!IsPanelValid(quickPanel)) return;
         quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
         if (!IsPanelValid(State.cachedPanels.cachedRejuvTimer)) {
-            State.cachedPanels.cachedRejuvTimer = $.GetContextPanel().GetParent() ?
-                $.GetContextPanel().GetParent().FindChildTraverse("RejuvenatorTimer") : null;
+            var _ctxPanel = $.GetContextPanel();
+            var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
+            State.cachedPanels.cachedRejuvTimer = _ctxParent ?
+                _ctxParent.FindChildTraverse("RejuvenatorTimer") : null;
         }
         var timer = State.cachedPanels.cachedRejuvTimer;
         if (!timer) return;
