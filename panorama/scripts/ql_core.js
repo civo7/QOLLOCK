@@ -7108,8 +7108,12 @@ function ExpressShotLog(msg) {
         return Date.now ? Date.now() : (new Date()).getTime();
     }
 
+    // Module-level cache of State.perfEnabled — avoids repeated property lookups
+    // across 70+ PerfStart/PerfEnd calls per tick when perf tracking is off.
+    var _perfTrackingActive = false;
+
     function PerfRecord(name, elapsedMs) {
-        if (!State.perfEnabled) return;
+        if (!_perfTrackingActive) return;
         if (!name) return;
         var ms = Number(elapsedMs);
         if (!isFinite(ms) || ms < 0) return;
@@ -7127,12 +7131,12 @@ function ExpressShotLog(msg) {
     }
 
     function PerfStart() {
-        if (!State.perfEnabled) return 0;
+        if (!_perfTrackingActive) return 0;
         return PerfNowMs();
     }
 
     function PerfEnd(name, startMs) {
-        if (!State.perfEnabled || !startMs) return;
+        if (!_perfTrackingActive || !startMs) return;
         PerfRecord(name, PerfNowMs() - startMs);
     }
 
@@ -7147,6 +7151,7 @@ function ExpressShotLog(msg) {
     function UpdatePerfEnabledFromConfig(cfg) {
         var enabled = !!(cfg && Number(cfg.ENABLE_PERF_DEBUG) === 1);
         var detailed = !!(enabled && Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1);
+        _perfTrackingActive = enabled;
         if (!enabled) {
             if (State.perfEnabled) {
                 QOL_INFO("Perf", "disabled");
@@ -7175,7 +7180,7 @@ function ExpressShotLog(msg) {
     }
 
     function FlushPerfIfNeeded(force) {
-        if (!State.perfEnabled) return;
+        if (!_perfTrackingActive) return;
         var nowMs = PerfNowMs();
         if (!force && nowMs < (State.perfNextFlushMs || 0)) return;
 
