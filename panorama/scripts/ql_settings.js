@@ -89,7 +89,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "Hanturaya",
-    ENABLE_SHOP_CLICK_TO_NOTIFY: "Hanturaya",
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: "Hanturaya",
     ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya, bytenode",
     RECENT_PURCHASES_QUICK_MAX: "bytenode",
     RECENT_PURCHASES_QUICK_DISPLAY_SEC: "bytenode",
@@ -157,7 +157,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_ENHANCED_QUICKBUY": "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
     "ENHANCED_QUICKBUY_COUNT": "Controls how many enhanced quickbuy preview items are shown.",
     "ENABLE_QUICKBUY_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a quickbuy purchase.",
-    "ENABLE_SHOP_CLICK_TO_NOTIFY": "Shows item buy notifications from recent purchases.",
+    "ENABLE_SHOP_ITEM_NOTIFICATIONS": "Shows item buy notifications from recent purchases.",
     "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
     "ENABLE_SHOW_BUILD_ID": "Shows your build information always for content creators",
     "ENABLE_SHOW_BUILD_ID_TITLE": "Append the selected build title after the build ID.",
@@ -551,7 +551,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_RELOAD_COOLDOWN: "medium",
     ENABLE_SHOP_STATS: "low",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "low",
-    ENABLE_SHOP_CLICK_TO_NOTIFY: "low",
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: "low",
     ENABLE_SHOP_RECENT_PURCHASES: "low",
     RECENT_PURCHASES_QUICK_OPACITY: "low",
     RECENT_PURCHASES_PANEL_OPACITY: "low",
@@ -11911,7 +11911,7 @@ const ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
     { key: "ENHANCED_QUICKBUY_COUNT", min: 1, max: 5, step: 1 }
 ];
 const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
@@ -22104,7 +22104,7 @@ function RenderCurrentTabContent(list) {
                 CreateRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
             });
             CreateSeparator(sectionParent);
-            CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
+            CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
                 CreateRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
                 CreateRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
                 CreateRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");

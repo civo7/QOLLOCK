@@ -7413,6 +7413,7 @@ function ExpressShotLog(msg) {
         NormalizeAllyColorWarningConfig(merged, config);
         NormalizeTopbarEnemyHpWarningConfig(merged, config);
         NormalizeTopbarAllyHpWarningConfig(merged, config);
+        NormalizeShopItemNotificationsConfig(merged, config);
         return merged;
     }
 
@@ -7521,6 +7522,13 @@ function ExpressShotLog(msg) {
         var utils = GetSharedSchemaUtils();
         if (utils && typeof utils.NormalizeTopbarAllyHpWarningConfig === "function") {
             utils.NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig);
+        }
+    }
+
+    function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
+            utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
         }
     }
 
@@ -8271,7 +8279,7 @@ const BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
     { key: "ENHANCED_QUICKBUY_COUNT", min: 1, max: 5, step: 1 }
 ];
 const BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
@@ -25200,7 +25208,7 @@ function GetUIRoot() {
 
     function UpdateRecentPurchases(root, cfg) {
         var shopEnabled   = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
-        var notifyEnabled = Number(cfg && cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1;
+        var notifyEnabled = Number(cfg && cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1;
 
         // Early-return when both features are disabled — hide panel once on transition.
         if (!shopEnabled && !notifyEnabled) {
@@ -32590,7 +32598,7 @@ function GetUIRoot() {
             cfg.ENABLE_ENHANCED_QUICKBUY,
             cfg.ENHANCED_QUICKBUY_COUNT,
             cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY,
-            cfg.ENABLE_SHOP_CLICK_TO_NOTIFY,
+            cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS,
             cfg.ENABLE_SHOP_RECENT_PURCHASES,
             cfg.RECENT_PURCHASES_QUICK_MAX,
             cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC,
@@ -34219,7 +34227,7 @@ function GetUIRoot() {
                 PerfEnd("loop.hero_shop", perfSection);
             });
         }
-        if (Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 || Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 || State.recentPurchasesWasEnabled) {
+        if (Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 || Number(cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1 || State.recentPurchasesWasEnabled) {
             UpdateRecentPurchases(root, cfg);
         }
 

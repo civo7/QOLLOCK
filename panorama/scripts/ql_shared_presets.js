@@ -603,6 +603,20 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeVoiceTypeConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget || {};
+        var hasOwn = Object.prototype.hasOwnProperty;
+        // Migrate old key name to new (ENABLE_SHOP_CLICK_TO_NOTIFY → ENABLE_SHOP_ITEM_NOTIFICATIONS)
+        if (hasOwn.call(source, "ENABLE_SHOP_CLICK_TO_NOTIFY")) {
+            configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS = source.ENABLE_SHOP_CLICK_TO_NOTIFY;
+        }
+        // Remove stale key so it doesn't get serialized back into storage
+        delete configTarget.ENABLE_SHOP_CLICK_TO_NOTIFY;
+    };
+}
+
 if (typeof QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue !== "function") {
     QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue = function(rawValue) {
         var asInt = Math.round(Number(rawValue));
@@ -917,7 +931,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_ENHANCED_QUICKBUY: 0,
         ENHANCED_QUICKBUY_COUNT: 3,
         ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
         RECENT_PURCHASES_QUICK_MAX: 3,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 10,
@@ -1609,7 +1623,7 @@ var QOL_PRESETS = {
         ENABLE_OLD_ITEM_COOLDOWNS: 0,
         VOICE_TYPE: 0,
         DISABLE_QUICK_BUY: 1,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 5,
         RECENT_PURCHASES_QUICK_Y_OFFSET: -20,
@@ -2013,7 +2027,7 @@ var QOL_PRESETS = {
         ENABLE_ENHANCED_QUICKBUY: 0,
         ENHANCED_QUICKBUY_COUNT: 3,
         ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
         RECENT_PURCHASES_QUICK_MAX: 3,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 10,
@@ -2655,7 +2669,7 @@ var QOL_PRESETS = {
         ITEM_FILTER_OFF_ACTIVE: 1,
         VOICE_TYPE: 6,
         ENABLE_ENHANCED_QUICKBUY: 1,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         ENABLE_UNSPENT_SOULS: 1,
         UNSECURED_SOULS_HUD_X_OFFSET: 1000,
