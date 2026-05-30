@@ -33375,7 +33375,7 @@ function GetUIRoot() {
         gates.compassMinimapRotate = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
             Number(cfg.MINIMAP_FLIP) === 1 ||
             (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
-        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(featureState.passiveCooldownMode) ||
+        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode) ||
             State.itemMirrorProbeWasEnabled ||
             State.itemMirrorDisplayMode === "active";
         gates.compassReloadCd = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
