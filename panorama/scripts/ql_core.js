@@ -24987,6 +24987,23 @@ function GetUIRoot() {
         var shopEnabled   = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
         var notifyEnabled = Number(cfg && cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1;
 
+        // Early-return when both features are disabled — hide panel once on transition.
+        if (!shopEnabled && !notifyEnabled) {
+            if (State.recentPurchasesWasEnabled) {
+                var _rpPanel = State.cachedPanels.recentPurchasesPanel;
+                if (!IsPanelValid(_rpPanel)) {
+                    _rpPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
+                    State.cachedPanels.recentPurchasesPanel = _rpPanel;
+                }
+                if (_rpPanel) {
+                    _rpPanel.style.visibility = "collapse";
+                }
+                State.recentPurchasesWasEnabled = false;
+            }
+            return;
+        }
+        State.recentPurchasesWasEnabled = true;
+
         if (!IsPanelValid(State.cachedPanels.recentPurchasesPanel)) {
             State.cachedPanels.recentPurchasesPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
         }
@@ -25002,8 +25019,6 @@ function GetUIRoot() {
             SetPanelOpacitySafe(rpPanel, panelOpacityText, 1.0);
             rpPanel.style.preTransformScale2d = panelScaleText + ", " + panelScaleText;
         }
-
-        if (!shopEnabled && !notifyEnabled) return;
 
         var quickMax = Math.round(Number(cfg && cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
         var quickDisplaySec = Math.round(Number(cfg && cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC) || RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT);
@@ -33851,7 +33866,9 @@ function GetUIRoot() {
                 PerfEnd("loop.hero_shop", perfSection);
             });
         }
-        UpdateRecentPurchases(root, cfg);
+        if (Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 || Number(cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1 || State.recentPurchasesWasEnabled) {
+            UpdateRecentPurchases(root, cfg);
+        }
 
         if (gates.keyboardRuntime) {
             ExecuteFeature("keyboardRuntime", function() {
