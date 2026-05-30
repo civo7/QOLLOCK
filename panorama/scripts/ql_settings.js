@@ -11355,7 +11355,7 @@ const ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
     { key: "ENHANCED_QUICKBUY_COUNT", min: 1, max: 5, step: 1 }
 ];
 const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
 ];
 const RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
