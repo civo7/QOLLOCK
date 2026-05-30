@@ -33819,7 +33819,7 @@ function GetUIRoot() {
         }
         var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
         var corePhase = NextCoreSchedulerPhase();
-        ProcessPendingHeroRestore(nowMsLoop);
+        if (State.heroRestorePendingTarget) ProcessPendingHeroRestore(nowMsLoop);
         var perfSection = 0;
 
         if (ShouldRunBuildCategoryPayloadOverride(root, nowMsLoop)) {
