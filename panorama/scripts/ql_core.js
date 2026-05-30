@@ -294,6 +294,12 @@
         recentPurchaseQuickSeenKeys: {},
         recentPurchaseQuickInitialized: false,
         recentPurchaseQuickActiveEntries: [],
+        recentPurchaseReduxQuickPanelsByHero: {},
+        recentPurchaseReduxActiveEntriesByHero: {},
+        recentPurchaseReduxLastEntryTime: {},
+        recentPurchaseReduxHeroPanelCache: {},
+        recentPurchaseReduxOverlapPending: false,
+        recentPurchaseReduxHeroMapState: 0,
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
@@ -25206,6 +25212,301 @@ function GetUIRoot() {
         }
         State.recentPurchaseQuickSeenKeys = {};
         State.recentPurchaseQuickInitialized = false;
+        ResetReduxHeroMap();
+    }
+
+    // ── Hero Purchase Popups (redux per-hero panel system) ──────────────────────
+
+    var HERO_MAP_IDLE = 0;
+    var HERO_MAP_BUILDING = 1;
+    var HERO_MAP_BUILT = 2;
+    var QUICK_ROW_UI_SCALE = 0.7;
+    var QUICK_OVERLAP_GAP = 0;
+
+    function BuildHeroNameMapRedux(root) {
+        if (State.recentPurchaseReduxHeroMapState === HERO_MAP_BUILDING) return;
+        State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILDING;
+        var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
+        if (!labels || labels.length === 0) {
+            State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
+            return;
+        }
+        var pending = labels.length;
+        function onDone() {
+            pending--;
+            if (pending === 0) {
+                State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILT;
+            }
+        }
+        for (var i = 0; i < labels.length; i++) {
+            (function(label) {
+                var playerPanel = label.GetParent();
+                var badge = null;
+                while (playerPanel && IsPanelValid(playerPanel)) {
+                    badge = playerPanel.FindChildTraverse("HeroBadge");
+                    if (badge) break;
+                    playerPanel = playerPanel.GetParent();
+                }
+                if (!badge || !playerPanel) { onDone(); return; }
+                var heroId = badge.heroid;
+                if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
+                playerPanel.SetDialogVariableInt("hero_id", heroId);
+                (function(pp, hid) {
+                    $.Schedule(0.3, function() {
+                        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILDING) return;
+                        if (IsPanelValid(label)) {
+                            var name = label.text.trim().toUpperCase();
+                            if (name) {
+                                State.recentPurchaseReduxHeroPanelCache[name] = pp;
+                            }
+                        }
+                        onDone();
+                    });
+                })(playerPanel, heroId);
+            })(labels[i]);
+        }
+    }
+
+    function IsHeroMapStaleRedux() {
+        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) return false;
+        for (var hero in State.recentPurchaseReduxHeroPanelCache) {
+            var pp = State.recentPurchaseReduxHeroPanelCache[hero];
+            if (!pp || !IsPanelValid(pp)) return true;
+        }
+        return false;
+    }
+
+    function GetOrCreateQuickPanelRedux(heroNameUpper) {
+        if (State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper] &&
+            IsPanelValid(State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper])) {
+            return State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper];
+        }
+        var playerPanel = State.recentPurchaseReduxHeroPanelCache[heroNameUpper];
+        if (!playerPanel || !IsPanelValid(playerPanel)) {
+            if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILDING) {
+                State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
+            }
+            return null;
+        }
+        var panel = $.CreatePanel("Panel", playerPanel, "");
+        panel.AddClass("QuickPurchasesPanel");
+        State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper] = panel;
+        return panel;
+    }
+
+    function GetPanelLeftInTopBarRedux(panel) {
+        var topBar = null;
+        try {
+            var root = $.GetContextPanel();
+            while (root && root.GetParent && root.GetParent() !== null) root = root.GetParent();
+            if (root) topBar = root.FindChildTraverse("TopBar");
+        } catch(e) {}
+        var x = 0;
+        var current = panel;
+        while (current && IsPanelValid(current) && current !== topBar) {
+            x += current.actualxoffset;
+            current = current.GetParent();
+        }
+        return x;
+    }
+
+    function ScheduleResolveOverlapsRedux(delay) {
+        if (State.recentPurchaseReduxOverlapPending) return;
+        State.recentPurchaseReduxOverlapPending = true;
+        $.Schedule(delay || 0, function() {
+            try {
+                ResolveOverlapsRedux();
+            } finally {
+                State.recentPurchaseReduxOverlapPending = false;
+            }
+        });
+    }
+
+    function ResolveOverlapsRedux() {
+        var active = [];
+        for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
+            var p = State.recentPurchaseReduxQuickPanelsByHero[hero];
+            if (!p || !IsPanelValid(p)) continue;
+            var entries = State.recentPurchaseReduxActiveEntriesByHero[hero];
+            if (!entries || entries.length === 0) continue;
+            active.push({ hero: hero, panel: p });
+        }
+
+        for (var i = 0; i < active.length; i++) {
+            var margin = 125;
+            var pp = active[i].panel.GetParent();
+            if (pp && IsPanelValid(pp) && pp.BHasClass("UltimateUnlocked")) margin = 150;
+            active[i].panel.style.marginTop = margin + "px";
+            active[i].baseMargin = margin;
+        }
+
+        if (active.length < 2) return;
+
+        for (var i = 0; i < active.length; i++) {
+            active[i].leftX = GetPanelLeftInTopBarRedux(active[i].panel);
+            active[i].width = active[i].panel.actuallayoutwidth;
+        }
+
+        // Sort newest first
+        for (var si = 0; si < active.length - 1; si++) {
+            for (var sj = si + 1; sj < active.length; sj++) {
+                var ti = State.recentPurchaseReduxLastEntryTime[active[si].hero] || 0;
+                var tj = State.recentPurchaseReduxLastEntryTime[active[sj].hero] || 0;
+                if (tj > ti) { var tmp = active[si]; active[si] = active[sj]; active[sj] = tmp; }
+            }
+        }
+
+        var margins = [];
+        for (var i = 0; i < active.length; i++) margins[i] = active[i].baseMargin;
+
+        for (var i = 1; i < active.length; i++) {
+            var aLeft = active[i].leftX;
+            var aRight = aLeft + active[i].width;
+            if (active[i].width <= 0) continue;
+            for (var j = 0; j < i; j++) {
+                if (active[j].width <= 0) continue;
+                var bLeft = active[j].leftX;
+                var bRight = bLeft + active[j].width;
+                if (aLeft < bRight && aRight > bLeft) {
+                    var needed = margins[j] + active[j].panel.contentheight * QUICK_ROW_UI_SCALE + QUICK_OVERLAP_GAP;
+                    if (needed > margins[i]) margins[i] = needed;
+                }
+            }
+        }
+
+        for (var i = 0; i < active.length; i++) {
+            active[i].panel.style.marginTop = margins[i] + "px";
+        }
+    }
+
+    function QuickRemoveEntryRedux(entry, heroNameUpper) {
+        var arr = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
+        if (arr) {
+            var filtered = [];
+            for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
+            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = filtered;
+        }
+        if (!IsPanelValid(entry)) return;
+        entry.AddClass("quickFading");
+        $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
+            if (IsPanelValid(entry)) entry.DeleteAsync(0);
+            ScheduleResolveOverlapsRedux(0);
+        });
+    }
+
+    function QuickEvictEntryRedux(entry, heroNameUpper) {
+        var arr = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
+        if (arr) {
+            var filtered = [];
+            for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
+            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = filtered;
+        }
+        if (IsPanelValid(entry)) entry.DeleteAsync(0);
+        ScheduleResolveOverlapsRedux(0);
+    }
+
+    function AddQuickEntryRedux(sourcePurchase, nameText, quickMax, quickDisplaySec) {
+        var heroNameUpper = GetRecentPurchaseHeroName(sourcePurchase).toUpperCase();
+        var quickPanel = GetOrCreateQuickPanelRedux(heroNameUpper);
+        if (!quickPanel) return;
+
+        if (!State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper]) {
+            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = [];
+        }
+        var entries = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
+        State.recentPurchaseReduxLastEntryTime[heroNameUpper] = $.FrameTime();
+
+        while (entries.length >= quickMax) {
+            QuickEvictEntryRedux(entries[0], heroNameUpper);
+        }
+
+        var entry = $.CreatePanel("Panel", quickPanel, "");
+        entry.AddClass("quickPurchase");
+
+        for (var i = 0; i < RECENT_PURCHASE_QUICK_CLASSES.length; i++) {
+            if (sourcePurchase.BHasClass(RECENT_PURCHASE_QUICK_CLASSES[i])) {
+                entry.AddClass(RECENT_PURCHASE_QUICK_CLASSES[i]);
+            }
+        }
+
+        var itemInfo = $.CreatePanel("Panel", entry, "");
+        itemInfo.AddClass("quickItemInfo");
+
+        var iconUrl = (typeof MOD_ICONS !== "undefined") ? MOD_ICONS[nameText] : null;
+        if (iconUrl) {
+            var icon = $.CreatePanel("Panel", itemInfo, "");
+            icon.AddClass("mod_icon");
+            (function(p, url) {
+                $.Schedule(0, function() {
+                    if (IsPanelValid(p)) {
+                        p.style.backgroundImage = url;
+                        p.style.backgroundSize = "100% 100%";
+                    }
+                });
+            })(icon, iconUrl);
+        }
+
+        var nameLabel = $.CreatePanel("Label", itemInfo, "");
+        nameLabel.AddClass("quickPurchaseName");
+        nameLabel.text = nameText;
+
+        entries.push(entry);
+
+        ScheduleResolveOverlapsRedux(0.05);
+
+        (function(e, h) {
+            $.Schedule(quickDisplaySec, function() {
+                if (IsPanelValid(e)) QuickRemoveEntryRedux(e, h);
+            });
+        })(entry, heroNameUpper);
+    }
+
+    function ResetReduxHeroMap() {
+        for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
+            var panel = State.recentPurchaseReduxQuickPanelsByHero[hero];
+            if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
+        }
+        State.recentPurchaseReduxHeroPanelCache = {};
+        State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
+        State.recentPurchaseReduxQuickPanelsByHero = {};
+        State.recentPurchaseReduxActiveEntriesByHero = {};
+        State.recentPurchaseReduxLastEntryTime = {};
+    }
+
+    function UpdateQuickPurchasesRedux(root, container, quickMax, quickDisplaySec) {
+        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) {
+            if (IsHeroMapStaleRedux()) ResetReduxHeroMap();
+            BuildHeroNameMapRedux(root);
+            return;
+        }
+        if (!container || !IsPanelValid(container)) return;
+
+        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+
+        if (!State.recentPurchaseQuickInitialized) {
+            for (var i = 0; i < purchases.length; i++) {
+                var n = GetRecentPurchaseName(purchases[i]);
+                var t = GetRecentPurchaseTime(purchases[i]);
+                if (n && t) State.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
+            }
+            State.recentPurchaseQuickInitialized = true;
+            return;
+        }
+
+        for (var i = 0; i < purchases.length; i++) {
+            var purchase = purchases[i];
+            if (!purchase || !IsPanelValid(purchase)) continue;
+            var name = GetRecentPurchaseName(purchase);
+            var time = GetRecentPurchaseTime(purchase);
+            if (!name || !time) continue;
+            var key = name + "|" + time;
+            if (!State.recentPurchaseQuickSeenKeys[key]) {
+                State.recentPurchaseQuickSeenKeys[key] = true;
+                if (!purchase.BHasClass("filterHidden")) {
+                    AddQuickEntryRedux(purchase, name, quickMax, quickDisplaySec);
+                }
+            }
+        }
     }
 
     function HandleHideoutRP(root) {
@@ -25277,22 +25578,35 @@ function GetUIRoot() {
         }
 
         if (notifyEnabled) {
-            UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec);
-            var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
-            var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
-            var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
-            var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
-            var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
-            var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
-            SyncRejuvClassRP(rejuvEnabled);
-            var quickPanel = State.cachedPanels.quickPurchasesPanel;
-            if (IsPanelValid(quickPanel)) {
-                quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
-                quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
-                quickPanel.style.x = String(quickOffsetX) + "px";
-                quickPanel.style.y = String(-quickOffsetY) + "px";
-                SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+            var heroPopupsEnabled = Number(cfg && cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
+
+            if (heroPopupsEnabled) {
+                // Per-hero popup panels on player cards
+                UpdateQuickPurchasesRedux(root, container, quickMax, quickDisplaySec);
+                // Hide the centralized panel since we're using per-hero panels
+                var quickPanel = State.cachedPanels.quickPurchasesPanel;
+                if (IsPanelValid(quickPanel)) {
+                    quickPanel.style.visibility = "collapse";
+                }
+            } else {
+                // Default: centralized popup panel
+                UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec);
+                var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
+                var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
+                var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
+                var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
+                var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
+                var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
+                SyncRejuvClassRP(rejuvEnabled);
+                var quickPanel = State.cachedPanels.quickPurchasesPanel;
+                if (IsPanelValid(quickPanel)) {
+                    quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
+                    quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
+                    quickPanel.style.x = String(quickOffsetX) + "px";
+                    quickPanel.style.y = String(-quickOffsetY) + "px";
+                    SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
+                    quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+                }
             }
         }
     }
@@ -32610,6 +32924,7 @@ function GetUIRoot() {
             cfg.ENHANCED_QUICKBUY_COUNT,
             cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY,
             cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS,
+            cfg.ENABLE_HERO_PURCHASE_POPUPS,
             cfg.ENABLE_SHOP_RECENT_PURCHASES,
             cfg.RECENT_PURCHASES_QUICK_MAX,
             cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC,
@@ -32646,6 +32961,7 @@ function GetUIRoot() {
         var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
         var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
         var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
+        var shopRecentPurchasesRedux = Number(cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
 
         if (shouldApplyStaticClasses) {
             SetPanelClassCached(root, State.rootClassCache, "hide_ammo_custom", cfg.ENABLE_AMMO_STATUS === 0);
@@ -32724,6 +33040,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_redux", shopRecentPurchasesRedux);
             State.coreRootStaticSig = staticSig;
         }
 
