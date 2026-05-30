@@ -33252,6 +33252,19 @@ function GetUIRoot() {
         gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
         gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.panelCache = false;
+
+        // Hard-gate optimization: track whether any runtime feature needs execution.
+        // When every gate is false, loop() and compassLoop() can skip gate computation
+        // and degrade immediately to deep-idle intervals.
+        var _anyGateActive = false;
+        for (var _gk in gates) {
+            if (_gk !== "sig" && _gk !== "featureState" && gates[_gk] === true) {
+                _anyGateActive = true;
+                break;
+            }
+        }
+        State.allFeaturesDisabled = !_anyGateActive;
+
         return gates;
     }
 
@@ -33626,6 +33639,18 @@ function GetUIRoot() {
         State.lastConfig = cfg;
         var hideoutConnected = root ? isConnectedToHideout(root) : false;
         var hasConfigSource = !!(raw && raw.length > 0);
+
+        // Hard-gate: when all features are disabled and no pending work exists,
+        // skip gate computation and feature execution entirely.
+        // This saves ~0.05-0.1ms per tick in the common "nothing to do" case.
+        if (State.allFeaturesDisabled && raw === State.lastRawConfig &&
+            !State.heroRestorePendingTarget &&
+            !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
+            !State.saveSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionActive) {
+            State.lastRawConfig = raw;
+            nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
+            return;
+        }
 
         // Sweep stale cached panels once per second (Fix 1)
         var nowSec = Math.floor(nowMsLoop / 1000);
