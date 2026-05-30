@@ -12671,9 +12671,12 @@ function GetUIRoot() {
             if (!displayLabel) return;
             if (displayLabel.text !== String(text || "")) displayLabel.text = String(text || "");
             if (displayLabel.style) {
-                displayLabel.style.visibility = showLabel ? "visible" : "collapse";
-                displayLabel.style.zIndex = showLabel ? "1000" : "0";
-                displayLabel.style.opacity = showLabel ? "1" : "0";
+                var newVis = showLabel ? "visible" : "collapse";
+                if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
+                var newZ = showLabel ? "1000" : "0";
+                if (displayLabel.style.zIndex !== newZ) displayLabel.style.zIndex = newZ;
+                var newOp = showLabel ? "1" : "0";
+                if (displayLabel.style.opacity !== newOp) displayLabel.style.opacity = newOp;
             }
         }
 
