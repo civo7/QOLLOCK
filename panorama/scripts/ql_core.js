@@ -34161,9 +34161,13 @@ function GetUIRoot() {
         if (State.accountPresetTestActive) {
             State.accountPresetTestActive = false;
         }
-        if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
-        if (ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
-        if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+        if (State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted ||
+            State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
+            State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
+            if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
+            if (ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
+            if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+        }
         State.lastRawConfig = raw;
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
