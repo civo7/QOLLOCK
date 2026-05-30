@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.0.3";
+var QOL_SCHEMA_SEMVER = "3.0.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -945,6 +945,7 @@ var QOL_DEFAULT_CONFIG = {
         RECENT_PURCHASES_PANEL_Y_OFFSET: 0,
         RECENT_PURCHASES_PANEL_OPACITY: 1,
         RECENT_PURCHASES_PANEL_SCALE: 1,
+        ENABLE_HERO_PURCHASE_POPUPS: 0,
         ENABLE_SHOW_BUILD_ID: 0,
         ENABLE_SHOW_BUILD_ID_TITLE: 0,
         ENABLE_HUD_SHIFT: 0,
