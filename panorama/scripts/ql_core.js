@@ -15769,7 +15769,9 @@ function GetUIRoot() {
 
     function GetUnitTargetDefaultStyleTexts() {
         if (UnitTargetDefaultStyleTexts) return UnitTargetDefaultStyleTexts;
-        UnitTargetDefaultStyleTexts = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
+        var result = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
+        // Clone to avoid aliasing when ResolveUnitTargetStyleTexts reuses internal scratch objects.
+        UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText };
         return UnitTargetDefaultStyleTexts;
     }
 
@@ -30901,6 +30903,8 @@ function GetUIRoot() {
         return null;
     }
 
+    var _posResultScratch = { x: 0, y: 0 };
+
     function ParsePositionXYPercent(positionText) {
         if (!positionText || positionText.length === 0) return null;
         var match = _RE_POSITION_XY.exec(positionText);
@@ -30908,7 +30912,9 @@ function GetUIRoot() {
         var x = parseFloat(match[1]);
         var y = parseFloat(match[2]);
         if (!isFinite(x) || !isFinite(y)) return null;
-        return { x: x, y: y };
+        _posResultScratch.x = x;
+        _posResultScratch.y = y;
+        return _posResultScratch;
     }
 
     function NormalizeDegrees360(rawDeg) {
@@ -31519,15 +31525,9 @@ function GetUIRoot() {
         if (boxHeight < 25) boxHeight = 25;
         var boxWidthText = boxWidth + "px";
         var boxHeightText = boxHeight + "px";
-        var layoutSig = [
-            marginTopText,
-            marginLeftText,
-            scaleText,
-            boxWidthText,
-            boxHeightText,
-            showCompass ? "1" : "0",
-            showSpeed ? "1" : "0"
-        ].join("|");
+        var layoutSig = marginTopText + "|" + marginLeftText + "|" + scaleText + "|" +
+            boxWidthText + "|" + boxHeightText + "|" + (showCompass ? "1" : "0") + "|" +
+            (showSpeed ? "1" : "0");
         if (layoutSig !== State.compassLayoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
@@ -33882,7 +33882,11 @@ function GetUIRoot() {
             loopAccentColor !== "" ||
             !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0)
         );
-        var loopAccentSigParts = String(State.playerHealthbarAccentColorSig || "").split("|");
+        if (State.playerHealthbarAccentColorSig !== State._cachedAccentSigSource) {
+            State._cachedAccentSigSource = State.playerHealthbarAccentColorSig;
+            State._cachedAccentSigParts = String(State.playerHealthbarAccentColorSig || "").split("|");
+        }
+        var loopAccentSigParts = State._cachedAccentSigParts;
         var loopCurrentAccentColor = loopAccentSigParts.length > 1 ? loopAccentSigParts[loopAccentSigParts.length - 1] : "";
         if (root && loopAccentNeedsRefresh && loopCurrentAccentColor !== loopAccentColor) {
             perfSection = PerfStart();
