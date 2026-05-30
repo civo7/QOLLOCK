@@ -612,8 +612,8 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig !== "function")
         if (hasOwn.call(source, "ENABLE_SHOP_CLICK_TO_NOTIFY")) {
             configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS = source.ENABLE_SHOP_CLICK_TO_NOTIFY;
         }
-        // Remove stale key so it doesn't get serialized back into storage
-        delete configTarget.ENABLE_SHOP_CLICK_TO_NOTIFY;
+        // Keep old key in sync for compact-schema backward compatibility
+        configTarget.ENABLE_SHOP_CLICK_TO_NOTIFY = configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS;
     };
 }
 
@@ -932,6 +932,7 @@ var QOL_DEFAULT_CONFIG = {
         ENHANCED_QUICKBUY_COUNT: 3,
         ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0,
         ENABLE_SHOP_ITEM_NOTIFICATIONS: 0,
+        ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
         RECENT_PURCHASES_QUICK_MAX: 3,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 10,
