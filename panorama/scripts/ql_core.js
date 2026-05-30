@@ -24256,6 +24256,19 @@ function GetUIRoot() {
     }
 
     function UpdateAmmoPanelRuntime(root, cfg) {
+        // Bail early when all ammo features are disabled and no cached panel to clean up.
+        // The loop-level gate includes sticky-state checks; this guard prevents
+        // FindChildTraverse when the config is truly at default.
+        if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&
+            Number(cfg.ENABLE_HIDE_MAGAZINE) !== 1 &&
+            Number(cfg.ENABLE_HIDE_AMMO_ALL) !== 1 &&
+            Number(cfg.AMMO_PANEL_SCALE) === 100 &&
+            Number(cfg.AMMO_CURRENT_SCALE) === 100 &&
+            Number(cfg.AMMO_TOTAL_SCALE) === 100 &&
+            Number(cfg.AMMO_PANEL_X_OFFSET) === 0 &&
+            Number(cfg.AMMO_PANEL_Y_OFFSET) === 0 &&
+            !IsPanelValid(State.cachedPanels.ammoPanel)) return;
+
         var ammoPanel = IsPanelValid(State.cachedPanels.ammoPanel) ? State.cachedPanels.ammoPanel : null;
         if (!ammoPanel) {
             ammoPanel = root.FindChildTraverse("ammo_panel");
@@ -24546,6 +24559,11 @@ function GetUIRoot() {
     }
 
     function UpdateStaminaChargeColorRuntime(root, cfg, nowMs) {
+        // Bail early when stamina charge config is at default and no cached panels exist.
+        if (!HasNonDefaultStaminaChargeRuntimeConfig(cfg) &&
+            !IsPanelValid(State.cachedPanels.staminaChargesContainer) &&
+            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
+
         var color = ResolveWashColorFromPalette(ReadStaminaChargeColorIndex(cfg));
         var angle = NormalizeStaminaChargeAngle(cfg && cfg.STAMINA_CHARGE_ANGLE);
         var angleSig = String(angle);
@@ -25204,6 +25222,11 @@ function GetUIRoot() {
     }
 
     function UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop) {
+        // Bail early when indicator config is at default and no cached panel work to clean up.
+        if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
+            !IsPanelListValid(State.indicatorPanelsCache) &&
+            !State.accountPresetTestActive) return;
+
         var indicatorOpacity = (cfg.DAMAGE_NUMBER_OPACITY === undefined || cfg.DAMAGE_NUMBER_OPACITY === null) ? 1.0 : parseFloat(cfg.DAMAGE_NUMBER_OPACITY);
         if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
         if (indicatorOpacity < 0) indicatorOpacity = 0;
@@ -25418,6 +25441,17 @@ function GetUIRoot() {
     }
 
     function UpdateMinimapRuntime(root, cfg, raw) {
+        // Bail early when all minimap features are disabled and no cached panels to clean up.
+        // EnsureMinimapPanelCache does 5 FindChildTraverse calls; skip it when nothing is active.
+        if (Number(cfg.ENABLE_ALT_ZOOM) !== 1 &&
+            Number(cfg.ENABLE_TAB_ZOOM) !== 1 &&
+            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) !== 1 &&
+            !State.minimapDrawOverUiActive &&
+            !IsPanelListValid(State.cachedPanels.minimap)) return;
+
         var minimapPanels = EnsureMinimapPanelCache(root);
         if (!minimapPanels || minimapPanels.length <= 0) return;
         var master = minimapPanels[0];
