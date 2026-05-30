@@ -12237,18 +12237,18 @@ function GetUIRoot() {
     function UpdateUltimateCooldownOverlay(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
         var fnStart = PerfNowMs();
-        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(12);
-        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(12);
+        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(ULT_CD_MAX_PLAYERS);
+        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(ULT_CD_MAX_PLAYERS);
         var slots = State.ultCdSlotCache;
         var recheckMs = State.ultCdSlotNextRecheckMs;
         var nowMs = PerfNowMs();
         var debugParts = [];
         // Periodic full reset every 30 s so transient misses eventually self-heal
         if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
-            for (var ri = 0; ri < 12; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
+            for (var ri = 0; ri < ULT_CD_MAX_PLAYERS; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
             State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
         }
-        for (var i = 0; i < 12; i++) {
+        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
             var slotStart = PerfNowMs();
             var slot = slots[i];
             var didTraverse = false;
@@ -30821,31 +30821,38 @@ function GetUIRoot() {
         return compassRoot;
     }
 
+    // Module-level regex constants to avoid recompilation every compass tick (50ms).
+    var _RE_ROTATE3D = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    var _RE_ROTATE2D = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    var _RE_ROTATE_LEGACY = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i;
+    var _RE_DEG_GENERIC = /([+\-]?\d+(?:\.\d+)?)\s*deg/i;
+    var _RE_POSITION_XY = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i;
+
     function ParseRotateTransformDegrees(transformText) {
         if (!transformText || transformText.length === 0) return null;
         var text = String(transformText);
 
-        var rotate3dMatch = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i.exec(text);
+        var rotate3dMatch = _RE_ROTATE3D.exec(text);
         if (rotate3dMatch && rotate3dMatch.length >= 5) {
             var angle3d = parseFloat(rotate3dMatch[4]);
             if (isFinite(angle3d)) return angle3d;
         }
 
-        var rotate2dMatch = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i.exec(text);
+        var rotate2dMatch = _RE_ROTATE2D.exec(text);
         if (rotate2dMatch && rotate2dMatch.length >= 2) {
             var angle2d = parseFloat(rotate2dMatch[1]);
             if (isFinite(angle2d)) return angle2d;
         }
 
         // Legacy format seen in some Panorama style strings.
-        var legacyMatch = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i.exec(text);
+        var legacyMatch = _RE_ROTATE_LEGACY.exec(text);
         if (legacyMatch && legacyMatch.length >= 2) {
             var legacyVal = parseFloat(legacyMatch[1]);
             if (isFinite(legacyVal)) return legacyVal;
         }
 
         // Last-resort: any degrees token in transform text.
-        var genericDegMatch = /([+\-]?\d+(?:\.\d+)?)\s*deg/i.exec(text);
+        var genericDegMatch = _RE_DEG_GENERIC.exec(text);
         if (genericDegMatch && genericDegMatch.length >= 2) {
             var genericVal = parseFloat(genericDegMatch[1]);
             if (isFinite(genericVal)) return genericVal;
@@ -30856,7 +30863,7 @@ function GetUIRoot() {
 
     function ParsePlainRotateDegrees(rotateText) {
         if (!rotateText || rotateText.length === 0) return null;
-        var match = /([+\-]?\d+(?:\.\d+)?)\s*deg/i.exec(String(rotateText));
+        var match = _RE_DEG_GENERIC.exec(String(rotateText));
         if (!match || match.length < 2) return null;
         var val = parseFloat(match[1]);
         return isFinite(val) ? val : null;
@@ -30896,7 +30903,7 @@ function GetUIRoot() {
 
     function ParsePositionXYPercent(positionText) {
         if (!positionText || positionText.length === 0) return null;
-        var match = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i.exec(positionText);
+        var match = _RE_POSITION_XY.exec(positionText);
         if (!match || match.length < 3) return null;
         var x = parseFloat(match[1]);
         var y = parseFloat(match[2]);
@@ -33778,7 +33785,8 @@ function GetUIRoot() {
         if (State.allFeaturesDisabled && raw === State.lastRawConfig &&
             !State.heroRestorePendingTarget &&
             !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
-            !State.saveSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionActive) {
+            !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted &&
+            !State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) {
             State.lastRawConfig = raw;
             nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
             return;
