@@ -14843,9 +14843,9 @@ function GetUIRoot() {
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
         if (FORCE_DISABLE_STAT_BONUSES) cfg.ENABLE_STAT_BONUSES = 0;
-        cfg.ENABLE_ENEMY_V2_ENHANCED = 0;
-        cfg.ENABLE_ENEMY_V2_ULT_INDICATOR = 0;
-        cfg.ENABLE_ENEMY_V2_LEVEL = 0;
+        // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
+        // force-disabled here. Removed because no runtime gate or feature
+        // execution path reads these values — they were dead writes.
         return cfg;
     }
 
