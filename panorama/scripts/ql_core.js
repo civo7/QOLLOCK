@@ -31849,10 +31849,22 @@ function GetUIRoot() {
         try {
             var root = GetUIRoot();
             var cfg = State.lastConfig || BuildDefaultConfig();
+
+            // Use precomputed gates from main loop (5Hz) to avoid redundant
+            // Number() config checks and sticky-state evaluations at 20Hz.
+            var gates = State.lastResolvedGates;
+
+            // Hard-gate: when no features are active anywhere, skip entirely.
+            if (gates && State.allFeaturesDisabled) {
+                nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
+                var _cidle = DetectGlobalIdleState(root);
+                if (_cidle.level !== "active") {
+                    nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, _cidle));
+                }
+                return;
+            }
+
             cfg = ApplyForcedFeatureDisables(cfg);
-            var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
-            var unitTargetCustomized = IsUnitTargetStyleCustomized(cfg);
-            var unitTargetFastMode = unitTargetCustomized || redDiamondEnabled;
             if (State.perfEnabled || Number(cfg.ENABLE_PERF_DEBUG) === 1) {
                 UpdatePerfEnabledFromConfig(cfg);
             }
@@ -31863,86 +31875,165 @@ function GetUIRoot() {
                 }
                 State.perfLastCompassStartMs = perfLoopStartMs;
             }
-            var itemMirrorEnabled = false;
-            var itemMirrorRuntimeActive = false;
             var hasCompassRuntimeWork = false;
             if (root) {
                 var nowMsCompassLoop = Date.now ? Date.now() : (new Date()).getTime();
-                var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
-                var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
-                var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
-                var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
-                itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
-                itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
-                var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
-                var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
 
-                if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.overlay", function() {
-                        var perfSection = PerfStart();
-                        UpdateCompassOverlay(root, nowMsCompassLoop);
-                        PerfEnd("compass.overlay", perfSection);
-                    });
-                }
+                if (gates) {
+                    // Fast path — read precomputed gates from main loop
+                    if (gates.compassOverlay) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.overlay", function() {
+                            var perfSection = PerfStart();
+                            UpdateCompassOverlay(root, nowMsCompassLoop);
+                            PerfEnd("compass.overlay", perfSection);
+                        });
+                    }
 
-                if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.minimap_rotate", function() {
-                        var perfSection = PerfStart();
-                        UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
-                        PerfEnd("compass.minimap_rotate", perfSection);
-                    });
-                }
+                    if (gates.compassMinimapRotate) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.minimap_rotate", function() {
+                            var perfSection = PerfStart();
+                            UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
+                            PerfEnd("compass.minimap_rotate", perfSection);
+                        });
+                    }
 
-                if (itemMirrorRuntimeActive) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.item_mirror", function() {
-                        var perfSection = PerfStart();
-                        UpdateItemMirrorProbe(root, cfg);
-                        PerfEnd("compass.item_mirror", perfSection);
-                    });
-                }
+                    if (gates.compassItemMirror) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.item_mirror", function() {
+                            var perfSection = PerfStart();
+                            UpdateItemMirrorProbe(root, cfg);
+                            PerfEnd("compass.item_mirror", perfSection);
+                        });
+                    }
 
-                if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.reload_cd", function() {
-                        var perfSection = PerfStart();
-                        UpdateReloadCooldownOverlay(root, cfg);
-                        PerfEnd("compass.reload_cd", perfSection);
-                    });
-                }
+                    if (gates.compassReloadCd) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.reload_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateReloadCooldownOverlay(root, cfg);
+                            PerfEnd("compass.reload_cd", perfSection);
+                        });
+                    }
 
-                if (ultCooldownEnabled) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.ult_cd", function() {
-                        var perfSection = PerfStart();
-                        UpdateUltimateCooldownOverlay(root, cfg);
-                        PerfEnd("compass.ult_cd", perfSection);
-                    });
-                }
+                    if (gates.compassUltCd) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.ult_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateUltimateCooldownOverlay(root, cfg);
+                            PerfEnd("compass.ult_cd", perfSection);
+                        });
+                    }
 
-                if (unitTargetFastMode) {
-                    hasCompassRuntimeWork = true;
-                    ExecuteFeature("compass.target_shapes_fast", function() {
-                        var perfSection = PerfStart();
-                        var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                        ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
-                        PerfEnd("compass.target_shapes_fast", perfSection);
-                    });
+                    if (gates.compassTargetShapesFast) {
+                        hasCompassRuntimeWork = true;
+                        var _rdEnabled = gates.redDiamondEnabled || false;
+                        ExecuteFeature("compass.target_shapes_fast", function() {
+                            var perfSection = PerfStart();
+                            var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, _rdEnabled);
+                            PerfEnd("compass.target_shapes_fast", perfSection);
+                        });
+                    }
+                } else {
+                    // Fallback — first tick(s) before main loop has populated gates
+                    var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
+                    var unitTargetCustomized = IsUnitTargetStyleCustomized(cfg);
+                    var unitTargetFastMode = unitTargetCustomized || redDiamondEnabled;
+                    var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
+                    var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
+                    var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
+                    var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
+                    var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
+                    var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
+                    var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
+                    var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
+
+                    if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.overlay", function() {
+                            var perfSection = PerfStart();
+                            UpdateCompassOverlay(root, nowMsCompassLoop);
+                            PerfEnd("compass.overlay", perfSection);
+                        });
+                    }
+
+                    if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.minimap_rotate", function() {
+                            var perfSection = PerfStart();
+                            UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
+                            PerfEnd("compass.minimap_rotate", perfSection);
+                        });
+                    }
+
+                    if (itemMirrorRuntimeActive) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.item_mirror", function() {
+                            var perfSection = PerfStart();
+                            UpdateItemMirrorProbe(root, cfg);
+                            PerfEnd("compass.item_mirror", perfSection);
+                        });
+                    }
+
+                    if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.reload_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateReloadCooldownOverlay(root, cfg);
+                            PerfEnd("compass.reload_cd", perfSection);
+                        });
+                    }
+
+                    if (ultCooldownEnabled) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.ult_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateUltimateCooldownOverlay(root, cfg);
+                            PerfEnd("compass.ult_cd", perfSection);
+                        });
+                    }
+
+                    if (unitTargetFastMode) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.target_shapes_fast", function() {
+                            var perfSection = PerfStart();
+                            var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
+                            PerfEnd("compass.target_shapes_fast", perfSection);
+                        });
+                    }
                 }
             }
             var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
-            var itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
-            var useFastInterval = (cfg && (
-            Number(cfg.ENABLE_COMPASS) === 1 ||
-            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
-            Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-            itemMirrorFastActive ||
-            Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
-            Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
-            unitTargetFastMode
-        ));
+            var useFastInterval;
+            var itemMirrorRuntimeActive;
+            var itemMirrorFastActive = false;
+            if (gates) {
+                itemMirrorRuntimeActive = gates.compassItemMirror;
+                itemMirrorFastActive = gates.compassItemMirror && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
+                useFastInterval = (
+                    gates.compassOverlay ||
+                    gates.compassMinimapRotate ||
+                    itemMirrorFastActive ||
+                    gates.compassReloadCd ||
+                    gates.compassUltCd ||
+                    gates.compassTargetShapesFast
+                );
+            } else {
+                itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
+                itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
+                useFastInterval = (cfg && (
+                    Number(cfg.ENABLE_COMPASS) === 1 ||
+                    Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
+                    Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
+                    itemMirrorFastActive ||
+                    Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
+                    Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
+                    (Number(cfg.ENABLE_RED_DIAMOND) === 1 || IsUnitTargetStyleCustomized(cfg))
+                ));
+            }
             if (State.perfEnabled) {
                 PerfRecord("compass.total", PerfNowMs() - perfLoopStartMs);
                 FlushPerfIfNeeded(false);
@@ -33453,6 +33544,27 @@ function GetUIRoot() {
         gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
         gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.panelCache = false;
+
+        // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
+        // compassLoop (20Hz) can read from State.lastResolvedGates instead of
+        // recomputing 11+ Number() config checks and sticky-state evaluations.
+        gates.compassOverlay = Number(cfg.ENABLE_COMPASS) === 1 ||
+            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
+            IsPanelValid(State.cachedPanels.compassRoot) ||
+            State.compassEnabled ||
+            State.compassShowSpeed;
+        gates.compassMinimapRotate = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
+            Number(cfg.MINIMAP_FLIP) === 1 ||
+            (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
+        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(featureState.passiveCooldownMode) ||
+            State.itemMirrorProbeWasEnabled ||
+            State.itemMirrorDisplayMode === "active";
+        gates.compassReloadCd = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
+            State.reloadCdLastDeg !== null ||
+            State.reloadCooldownStyleSig !== "" ||
+            IsPanelValid(State.cachedPanels.reloadCooldownLabel);
+        gates.compassUltCd = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
+        gates.compassTargetShapesFast = gates.targetShapesActive;
 
         // Hard-gate optimization: track whether any runtime feature needs execution.
         // When every gate is false, loop() and compassLoop() can skip gate computation
