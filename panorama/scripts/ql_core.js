@@ -25332,7 +25332,11 @@ function GetUIRoot() {
             var margin = 125;
             var pp = active[i].panel.GetParent();
             if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
-                margin = State.heroPopup.ultCooldownsEnabled ? 175 : 150;
+                if (State.heroPopup.ultCooldownsEnabled && !pp.BHasClass("UltimateCooldownReady")) {
+                    margin = 172; // ult on cooldown — cooldown text pushes popup down
+                } else {
+                    margin = 152; // ult ready (or cooldowns disabled) — less space needed
+                }
             }
             active[i].baseMargin = margin;
         }
