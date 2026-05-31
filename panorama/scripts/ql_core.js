@@ -19231,6 +19231,25 @@ function GetUIRoot() {
     function ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowUiFallback) {
         var allowFallback = (allowUiFallback !== false);
         var traceNow = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        // Fast path: if Airheart was already confirmed, skip all scanning.
+        if (State.buildCategoryPayloadAirheartHeaderConfirmed) {
+            return {
+                confirmed: true,
+                source: "cached_confirmation",
+                detail: "Airheart already confirmed this session"
+            };
+        }
+        // Fast path: try GameInterfaceAPI before any UI panel scanning.
+        var settingSignal = TryReadBuildSaveStorageHeroFromSettings();
+        if (settingSignal.hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
+            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
+            State.buildCategoryPayloadAirheartHeaderConfirmedMs = traceNow;
+            return {
+                confirmed: true,
+                source: settingSignal.source,
+                detail: "Airheart confirmed via GameInterfaceAPI settings"
+            };
+        }
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = NormalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
