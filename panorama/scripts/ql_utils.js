@@ -400,6 +400,17 @@
     }
     exports.IsDebugEnabled = IsDebugEnabled;
 
+    /**
+     * Parse a revision number from an arbitrary value.
+     * Returns Math.floor(n) for finite non-negative numbers, 0 otherwise.
+     */
+    function ParseRevisionNumber(v) {
+        var n = Number(v);
+        if (!isFinite(n) || n < 0) return 0;
+        return Math.floor(n);
+    }
+    exports.ParseRevisionNumber = ParseRevisionNumber;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it

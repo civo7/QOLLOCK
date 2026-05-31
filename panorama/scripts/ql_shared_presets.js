@@ -410,6 +410,20 @@ if (typeof QOL_SCHEMA_UTILS.WriteConfigStorageRaw !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.CompareSchemaSemver !== "function") {
+    QOL_SCHEMA_UTILS.CompareSchemaSemver = function(a, b) {
+        var aa = String(a || "").split(".");
+        var bb = String(b || "").split(".");
+        for (var i = 0; i < 3; i++) {
+            var av = Math.max(0, Math.round(Number(aa[i]) || 0));
+            var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
+            if (av < bv) return -1;
+            if (av > bv) return 1;
+        }
+        return 0;
+    };
+}
+
 if (typeof QOL_SCHEMA_UTILS.NormalizeNeutralCampTierConfig !== "function") {
     QOL_SCHEMA_UTILS.NormalizeNeutralCampTierConfig = function(configTarget, sourceConfig) {
         if (!configTarget) return;
