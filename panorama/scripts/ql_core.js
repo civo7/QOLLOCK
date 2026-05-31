@@ -34,6 +34,14 @@
         }
         return swept;
     };
+    var ResolveCachedPanel = function(root, cacheKey, traverseId) {
+        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+        if (!panel && root && root.FindChildTraverse) {
+            panel = root.FindChildTraverse(traverseId);
+            State.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    };
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
     var FindFirstPanelByClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function() { return null; };
