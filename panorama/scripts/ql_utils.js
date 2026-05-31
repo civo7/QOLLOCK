@@ -429,8 +429,8 @@
      * the top of hot functions to count invocations. Every 60 seconds, the
      * top 10 callers are logged to $.Msg.
      *
-     * Off by default — call SetProfilerEnabled(true) or set the qol_debug
-     * convars to enable. Toggle via: QOL_UTILS.SetProfilerEnabled(true)
+     * Off by default — call SetProfilerEnabled(true) to enable.
+     * Toggle via: QOL_UTILS.SetProfilerEnabled(true)
      */
     var _profilerEnabled = false;
     var _profilerHits = {};
@@ -474,12 +474,126 @@
         var limit = Math.min(_PROFILER_TOP_N, entries.length);
         for (var i = 0; i < limit; i++) {
             $.Msg("[QOLLock][PROFILE] " + (i + 1) + ". " + entries[i].name +
-                " — " + entries[i].count + " calls");
+                " — " + entries[i].count + " calls (" +
+                Math.round(entries[i].count / (_PROFILER_DUMP_INTERVAL_MS / 1000)) + "/s)");
         }
-        // Reset counters each cycle so we get per-minute snapshots
         _profilerHits = {};
     }
     exports.DumpProfile = DumpProfile;
+
+    // =====================================================================
+    // FPS / FRAME-TIMING DIAGNOSTICS
+    // =====================================================================
+
+    /**
+     * Frame budget tracker. Call TimeFeature('featureName', startMs) at the
+     * end of a feature block to record how long it took. Every 60s, the
+     * slowest features are dumped with their average and max durations.
+     *
+     * Also tracks overall loop tick duration — warns when ticks exceed
+     * 50ms (would cause visible stutter at 60fps) or 100ms (severe).
+     */
+    var _timingEnabled = false;
+    var _timingBuckets = {};
+    var _timingLastDumpMs = 0;
+    var _TIMING_DUMP_INTERVAL_MS = 60000;
+    var _TIMING_TOP_N = 15;
+    var _timingFrameCount = 0;
+    var _timingFrameTotalMs = 0;
+    var _timingFrameMaxMs = 0;
+    var _timingFrameOver50ms = 0;
+    var _timingFrameOver100ms = 0;
+
+    function TimeFeature(name, startMs) {
+        if (!_timingEnabled) return;
+        var elapsed = PerfNowMs() - startMs;
+        var bucket = _timingBuckets[name];
+        if (!bucket) {
+            bucket = { totalMs: 0, maxMs: 0, count: 0 };
+            _timingBuckets[name] = bucket;
+        }
+        bucket.totalMs += elapsed;
+        bucket.count++;
+        if (elapsed > bucket.maxMs) bucket.maxMs = elapsed;
+    }
+    exports.TimeFeature = TimeFeature;
+
+    function RecordFrameTime(elapsedMs) {
+        if (!_timingEnabled) return;
+        _timingFrameCount++;
+        _timingFrameTotalMs += elapsedMs;
+        if (elapsedMs > _timingFrameMaxMs) _timingFrameMaxMs = elapsedMs;
+        if (elapsedMs > 50) _timingFrameOver50ms++;
+        if (elapsedMs > 100) _timingFrameOver100ms++;
+    }
+    exports.RecordFrameTime = RecordFrameTime;
+
+    function SetTimingEnabled(enabled) {
+        _timingEnabled = !!enabled;
+        if (!enabled) {
+            _timingBuckets = {};
+            _timingFrameCount = 0;
+            _timingFrameTotalMs = 0;
+            _timingFrameMaxMs = 0;
+            _timingFrameOver50ms = 0;
+            _timingFrameOver100ms = 0;
+        }
+    }
+    exports.SetTimingEnabled = SetTimingEnabled;
+
+    function DumpTiming() {
+        if (!_timingEnabled) return;
+        var now = PerfNowMs();
+        if (now - _timingLastDumpMs < _TIMING_DUMP_INTERVAL_MS) return;
+        _timingLastDumpMs = now;
+
+        // Frame budget summary
+        if (_timingFrameCount > 0) {
+            var avgMs = Math.round(_timingFrameTotalMs / _timingFrameCount * 100) / 100;
+            $.Msg("[QOLLock][TIMING] === Frame budget (last " +
+                Math.round(_TIMING_DUMP_INTERVAL_MS / 1000) + "s) ===");
+            $.Msg("[QOLLock][TIMING] Ticks: " + _timingFrameCount +
+                " | avg: " + avgMs + "ms | max: " + Math.round(_timingFrameMaxMs * 100) / 100 + "ms" +
+                " | >50ms: " + _timingFrameOver50ms + " | >100ms: " + _timingFrameOver100ms);
+            if (_timingFrameOver50ms > 0) {
+                $.Msg("[QOLLock][TIMING] WARNING: " + _timingFrameOver50ms +
+                    " ticks exceeded 50ms — visible stutter at 60fps");
+            }
+        }
+
+        // Feature breakdown
+        var entries = [];
+        for (var k in _timingBuckets) {
+            if (_timingBuckets.hasOwnProperty(k)) {
+                var b = _timingBuckets[k];
+                entries.push({
+                    name: k,
+                    avgMs: Math.round(b.totalMs / b.count * 100) / 100,
+                    maxMs: Math.round(b.maxMs * 100) / 100,
+                    count: b.count,
+                    totalMs: Math.round(b.totalMs * 100) / 100
+                });
+            }
+        }
+        entries.sort(function(a, b) { return b.totalMs - a.totalMs; });
+
+        $.Msg("[QOLLock][TIMING] === Top " + _TIMING_TOP_N + " features by total time ===");
+        var limit = Math.min(_TIMING_TOP_N, entries.length);
+        for (var i = 0; i < limit; i++) {
+            var e = entries[i];
+            $.Msg("[QOLLock][TIMING] " + (i + 1) + ". " + e.name +
+                " — " + e.totalMs + "ms total, avg " + e.avgMs + "ms, max " + e.maxMs + "ms (" + e.count + " calls)");
+        }
+
+        // Reset
+        _timingBuckets = {};
+        _timingFrameCount = 0;
+        _timingFrameTotalMs = 0;
+        _timingFrameMaxMs = 0;
+        _timingFrameOver50ms = 0;
+        _timingFrameOver100ms = 0;
+    }
+    exports.DumpTiming = DumpTiming;
 
     // ---- Export ----
 
