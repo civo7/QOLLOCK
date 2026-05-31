@@ -178,23 +178,25 @@
         signatureCooldownFlashUntilById: {},
         signatureCooldownFlashPressById: {},
         signatureCooldownFlashWasEnabled: false,
-        statBonusesDisplayMode: "",
-        statBonusesLastLayoutSig: "",
-        statBonusesLastClassSig: "",
-        statBonusesLastTitleText: "",
-        statBonusesLastFireRateText: "",
-        statBonusesLastAbilityCooldownText: "",
-        statBonusesLastSpiritPowerText: "",
-        statBonusesLastClipSizeText: "",
-        statBonusesLastWeaponDamageText: "",
-        statBonusesLastMaxHealthText: "",
-        statBonusesNextSourceSearchMs: 0,
-        statBonusesNextSourceSearchByKey: {},
-        statBonusesNextIdolCountSearchMs: 0,
-        statBonusesNextTooltipScanMs: 0,
-        statBonusesGoldenValues: {},
-        statBonusesDebugLastSig: "",
-        statBonusesDebugNextMs: 0,
+        statBonuses: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitleText: "",
+            lastFireRateText: "",
+            lastAbilityCooldownText: "",
+            lastSpiritPowerText: "",
+            lastClipSizeText: "",
+            lastWeaponDamageText: "",
+            lastMaxHealthText: "",
+            nextSourceSearchMs: 0,
+            nextSourceSearchByKey: {},
+            nextIdolCountSearchMs: 0,
+            nextTooltipScanMs: 0,
+            goldenValues: {},
+            debugLastSig: "",
+            debugNextMs: 0
+        },
         combatStatusDisplayMode: "",
         combatStatusLastLayoutSig: "",
         combatStatusLastClassSig: "",
@@ -5187,10 +5189,10 @@ function ExpressShotLog(msg) {
     function StatBonusesDebugLogThrottled(sig, msg, nowMs) {
         if (!STAT_BONUSES_DEBUG) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.statBonusesDebugLastSig;
-        if (sameSig && now < (State.statBonusesDebugNextMs || 0)) return;
-        State.statBonusesDebugLastSig = sig || "";
-        State.statBonusesDebugNextMs = now + STAT_BONUSES_DEBUG_MIN_INTERVAL_MS;
+        var sameSig = sig && sig === State.statBonuses.debugLastSig;
+        if (sameSig && now < (State.statBonuses.debugNextMs || 0)) return;
+        State.statBonuses.debugLastSig = sig || "";
+        State.statBonuses.debugNextMs = now + STAT_BONUSES_DEBUG_MIN_INTERVAL_MS;
         StatBonusesDebugLog(msg);
     }
 
@@ -26965,14 +26967,14 @@ function GetUIRoot() {
             return source;
         }
 
-        var nextByKey = State.statBonusesNextSourceSearchByKey || {};
+        var nextByKey = State.statBonuses.nextSourceSearchByKey || {};
         var nextSearchMs = Number(nextByKey[cacheKey] || 0);
         if (nowMs < nextSearchMs) {
             return null;
         }
         source = FindStatBonusesSourceByIds(root, candidateIds);
         nextByKey[cacheKey] = source ? 0 : (nowMs + STAT_BONUSES_SOURCE_SEARCH_MS);
-        State.statBonusesNextSourceSearchByKey = nextByKey;
+        State.statBonuses.nextSourceSearchByKey = nextByKey;
         State.cachedPanels[cacheKey] = source || null;
         return source;
     }
@@ -27258,7 +27260,7 @@ function GetUIRoot() {
     }
 
     function HarvestGoldenStatuesTooltipValue(root, nowMs, sourceByKey) {
-        if (nowMs < (State.statBonusesNextTooltipScanMs || 0)) return;
+        if (nowMs < (State.statBonuses.nextTooltipScanMs || 0)) return;
 
         var breakdown = ResolveStatBonusesTooltipBreakdownPanel(root);
 
@@ -27273,7 +27275,7 @@ function GetUIRoot() {
                     ", subRows=" + subRowCount + ")",
                 nowMs
             );
-            State.statBonusesNextTooltipScanMs = nextScan;
+            State.statBonuses.nextTooltipScanMs = nextScan;
             return;
         }
 
@@ -27299,7 +27301,7 @@ function GetUIRoot() {
                 statKey = ResolveStatKeyFromTotalToken(tooltipTotal, sourceByKey);
             }
             if (statKey) {
-                State.statBonusesGoldenValues[statKey] = goldenToken;
+                State.statBonuses.goldenValues[statKey] = goldenToken;
                 StatBonusesDebugLogThrottled(
                     "mapped|" + statKey + "|" + goldenToken + "|" + statContainerId + "|" + tooltipTotal + "|" + rowsSnapshot,
                     "mapped golden=" + goldenToken +
@@ -27329,7 +27331,7 @@ function GetUIRoot() {
             );
         }
 
-        State.statBonusesNextTooltipScanMs = nextScan;
+        State.statBonuses.nextTooltipScanMs = nextScan;
     }
 
     function ResolveGoldenStatBonusesValue(statKey, sourcePanel) {
@@ -27341,16 +27343,16 @@ function GetUIRoot() {
             }
         }
         if (fromSource) {
-            State.statBonusesGoldenValues[statKey] = fromSource;
+            State.statBonuses.goldenValues[statKey] = fromSource;
             return fromSource;
         }
 
-        var cached = State.statBonusesGoldenValues[statKey];
+        var cached = State.statBonuses.goldenValues[statKey];
         if (cached && cached.length > 0) return cached;
 
         var derived = DeriveGoldenStatuesValueFromSource(sourcePanel);
         if (derived && derived.length > 0) {
-            State.statBonusesGoldenValues[statKey] = derived;
+            State.statBonuses.goldenValues[statKey] = derived;
             return derived;
         }
         return "--";
@@ -27438,40 +27440,42 @@ function GetUIRoot() {
         State.cachedPanels.statBonusesMaxHealthSource = null;
         State.cachedPanels.statBonusesIdolCountSource = null;
         State.cachedPanels.statBonusesTooltipBreakdown = null;
-        State.statBonusesDisplayMode = "";
-        State.statBonusesLastLayoutSig = "";
-        State.statBonusesLastClassSig = "";
-        State.statBonusesLastTitleText = "";
-        State.statBonusesLastFireRateText = "";
-        State.statBonusesLastAbilityCooldownText = "";
-        State.statBonusesLastSpiritPowerText = "";
-        State.statBonusesLastClipSizeText = "";
-        State.statBonusesLastWeaponDamageText = "";
-        State.statBonusesLastMaxHealthText = "";
-        State.statBonusesNextSourceSearchMs = 0;
-        State.statBonusesNextSourceSearchByKey = {};
-        State.statBonusesNextIdolCountSearchMs = 0;
-        State.statBonusesNextTooltipScanMs = 0;
-        State.statBonusesGoldenValues = {};
-        State.statBonusesDebugLastSig = "";
-        State.statBonusesDebugNextMs = 0;
+        State.statBonuses = {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitleText: "",
+            lastFireRateText: "",
+            lastAbilityCooldownText: "",
+            lastSpiritPowerText: "",
+            lastClipSizeText: "",
+            lastWeaponDamageText: "",
+            lastMaxHealthText: "",
+            nextSourceSearchMs: 0,
+            nextSourceSearchByKey: {},
+            nextIdolCountSearchMs: 0,
+            nextTooltipScanMs: 0,
+            goldenValues: {},
+            debugLastSig: "",
+            debugNextMs: 0
+        };
     }
 
     function UpdateStatBonusesOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (State.statBonusesDisplayMode !== "context_off") {
+            if (State.statBonuses.displayMode !== "context_off") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonusesDisplayMode = "context_off";
+                State.statBonuses.displayMode = "context_off";
             }
             return;
         }
 
         var enabled = cfg.ENABLE_STAT_BONUSES === 1;
         if (!enabled) {
-            if (State.statBonusesDisplayMode !== "disabled") {
+            if (State.statBonuses.displayMode !== "disabled") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonusesDisplayMode = "disabled";
+                State.statBonuses.displayMode = "disabled";
             }
             return;
         }
@@ -27481,7 +27485,7 @@ function GetUIRoot() {
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (State.statBonusesDisplayMode !== "hideout") {
+            if (State.statBonuses.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 var fireRateHideout = State.cachedPanels.statBonusesFireRate;
                 var abilityHideout = State.cachedPanels.statBonusesAbilityCooldown;
@@ -27495,16 +27499,16 @@ function GetUIRoot() {
                 if (clipHideout) clipHideout.SetHasClass("is_zero", false);
                 if (weaponHideout) weaponHideout.SetHasClass("is_zero", false);
                 if (healthHideout) healthHideout.SetHasClass("is_zero", false);
-                State.statBonusesLastClassSig = "";
+                State.statBonuses.lastClassSig = "";
             }
-            State.statBonusesDisplayMode = "hideout";
+            State.statBonuses.displayMode = "hideout";
             return;
         }
 
-        if (State.statBonusesDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.statBonuses.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.statBonusesDisplayMode = "active";
+        State.statBonuses.displayMode = "active";
 
         var statOffsetX = Number(cfg.STAT_BONUSES_X_OFFSET);
         var statOffsetY = Number(cfg.STAT_BONUSES_Y_OFFSET);
@@ -27526,11 +27530,11 @@ function GetUIRoot() {
             String(statOffsetY),
             String(statScale)
         ].join("|");
-        if (layoutSig !== State.statBonusesLastLayoutSig) {
+        if (layoutSig !== State.statBonuses.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + statOffsetX) + "px";
             overlay.style.marginBottom = (70 + statOffsetY) + "px";
             overlay.style.preTransformScale2d = (statScale / 100).toFixed(2);
-            State.statBonusesLastLayoutSig = layoutSig;
+            State.statBonuses.lastLayoutSig = layoutSig;
         }
 
         var sourceFireRate = ResolveStatBonusesSource(root, "statBonusesFireRateSource", STAT_BONUSES_FIRE_RATE_IDS, nowMs);
@@ -27582,12 +27586,12 @@ function GetUIRoot() {
                     (sourceWeaponDamage ? (ExtractStatDisplayText(sourceWeaponDamage) || "-") : "-") + "," +
                     (sourceMaxHealth ? (ExtractStatDisplayText(sourceMaxHealth) || "-") : "-") + ")";
                 var cacheSig = "cache(" +
-                    "fr=" + (State.statBonusesGoldenValues.fireRate || "-") + "," +
-                    "cd=" + (State.statBonusesGoldenValues.abilityCooldown || "-") + "," +
-                    "sp=" + (State.statBonusesGoldenValues.spiritPower || "-") + "," +
-                    "cl=" + (State.statBonusesGoldenValues.clipSize || "-") + "," +
-                    "wd=" + (State.statBonusesGoldenValues.weaponDamage || "-") + "," +
-                    "hp=" + (State.statBonusesGoldenValues.maxHealth || "-") + ")";
+                    "fr=" + (State.statBonuses.goldenValues.fireRate || "-") + "," +
+                    "cd=" + (State.statBonuses.goldenValues.abilityCooldown || "-") + "," +
+                    "sp=" + (State.statBonuses.goldenValues.spiritPower || "-") + "," +
+                    "cl=" + (State.statBonuses.goldenValues.clipSize || "-") + "," +
+                    "wd=" + (State.statBonuses.goldenValues.weaponDamage || "-") + "," +
+                    "hp=" + (State.statBonuses.goldenValues.maxHealth || "-") + ")";
                 var unresolvedKey = unresolved.join(",");
                 var unresolvedSig = "overlay_unresolved|" + unresolvedKey + "|" + srcSig + "|" + totalsSig + "|" + cacheSig;
                 StatBonusesDebugLogThrottled(
@@ -27647,9 +27651,9 @@ function GetUIRoot() {
 
         var titleText = "Stat Bonuses (Golden Statues)";
         var titleLabel = State.cachedPanels.statBonusesTitle;
-        if (titleLabel && titleText !== State.statBonusesLastTitleText) {
+        if (titleLabel && titleText !== State.statBonuses.lastTitleText) {
             titleLabel.text = titleText;
-            State.statBonusesLastTitleText = titleText;
+            State.statBonuses.lastTitleText = titleText;
         }
 
         var fireRateText = "Fire Rate: " + fireRateValue;
@@ -27665,7 +27669,7 @@ function GetUIRoot() {
             "|" + (clipSizeZero ? "1" : "0") +
             "|" + (weaponDamageZero ? "1" : "0") +
             "|" + (maxHealthZero ? "1" : "0");
-        if (classSig !== State.statBonusesLastClassSig) {
+        if (classSig !== State.statBonuses.lastClassSig) {
             var fireRateLabelForClass = State.cachedPanels.statBonusesFireRate;
             var abilityLabelForClass = State.cachedPanels.statBonusesAbilityCooldown;
             var spiritLabelForClass = State.cachedPanels.statBonusesSpiritPower;
@@ -27678,38 +27682,38 @@ function GetUIRoot() {
             if (clipLabelForClass) clipLabelForClass.SetHasClass("is_zero", clipSizeZero);
             if (weaponLabelForClass) weaponLabelForClass.SetHasClass("is_zero", weaponDamageZero);
             if (healthLabelForClass) healthLabelForClass.SetHasClass("is_zero", maxHealthZero);
-            State.statBonusesLastClassSig = classSig;
+            State.statBonuses.lastClassSig = classSig;
         }
 
         var fireRateLabel = State.cachedPanels.statBonusesFireRate;
-        if (fireRateLabel && fireRateText !== State.statBonusesLastFireRateText) {
+        if (fireRateLabel && fireRateText !== State.statBonuses.lastFireRateText) {
             fireRateLabel.text = fireRateText;
-            State.statBonusesLastFireRateText = fireRateText;
+            State.statBonuses.lastFireRateText = fireRateText;
         }
         var abilityCooldownLabel = State.cachedPanels.statBonusesAbilityCooldown;
-        if (abilityCooldownLabel && abilityCooldownText !== State.statBonusesLastAbilityCooldownText) {
+        if (abilityCooldownLabel && abilityCooldownText !== State.statBonuses.lastAbilityCooldownText) {
             abilityCooldownLabel.text = abilityCooldownText;
-            State.statBonusesLastAbilityCooldownText = abilityCooldownText;
+            State.statBonuses.lastAbilityCooldownText = abilityCooldownText;
         }
         var spiritPowerLabel = State.cachedPanels.statBonusesSpiritPower;
-        if (spiritPowerLabel && spiritPowerText !== State.statBonusesLastSpiritPowerText) {
+        if (spiritPowerLabel && spiritPowerText !== State.statBonuses.lastSpiritPowerText) {
             spiritPowerLabel.text = spiritPowerText;
-            State.statBonusesLastSpiritPowerText = spiritPowerText;
+            State.statBonuses.lastSpiritPowerText = spiritPowerText;
         }
         var clipSizeLabel = State.cachedPanels.statBonusesClipSize;
-        if (clipSizeLabel && clipSizeText !== State.statBonusesLastClipSizeText) {
+        if (clipSizeLabel && clipSizeText !== State.statBonuses.lastClipSizeText) {
             clipSizeLabel.text = clipSizeText;
-            State.statBonusesLastClipSizeText = clipSizeText;
+            State.statBonuses.lastClipSizeText = clipSizeText;
         }
         var weaponDamageLabel = State.cachedPanels.statBonusesWeaponDamage;
-        if (weaponDamageLabel && weaponDamageText !== State.statBonusesLastWeaponDamageText) {
+        if (weaponDamageLabel && weaponDamageText !== State.statBonuses.lastWeaponDamageText) {
             weaponDamageLabel.text = weaponDamageText;
-            State.statBonusesLastWeaponDamageText = weaponDamageText;
+            State.statBonuses.lastWeaponDamageText = weaponDamageText;
         }
         var maxHealthLabel = State.cachedPanels.statBonusesMaxHealth;
-        if (maxHealthLabel && maxHealthText !== State.statBonusesLastMaxHealthText) {
+        if (maxHealthLabel && maxHealthText !== State.statBonuses.lastMaxHealthText) {
             maxHealthLabel.text = maxHealthText;
-            State.statBonusesLastMaxHealthText = maxHealthText;
+            State.statBonuses.lastMaxHealthText = maxHealthText;
         }
     }
 
@@ -33726,7 +33730,7 @@ function GetUIRoot() {
         gates.keyboardRuntime = gates.keyboardRuntimeActive || IsPanelValid(State.cachedPanels.keyboardOverlayRoot) || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
         gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSoulsDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
-        gates.statBonuses = (gates.statBonusesActive || State.statBonusesDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
+        gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatusDisplayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
