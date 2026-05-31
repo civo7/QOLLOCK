@@ -268,5 +268,13 @@
         $.Schedule(ACTIVE_INTERVAL_SEC, Update);
     }
 
+    // Event-driven update: fire on profile page navigation instead of
+    // polling at 2.8Hz. Confirmed valid in dispatch_events.txt lines 377/386
+    // and live runtime testing.
+    if (typeof $ !== "undefined" && typeof $.RegisterForUnhandledEvent === "function") {
+        try { $.RegisterForUnhandledEvent("CitadelProfileCardUpdated", function() { Update(); }); } catch (e) {}
+        try { $.RegisterForUnhandledEvent("CitadelShowProfilePage", function() { Update(); }); } catch (e) {}
+    }
+
     Update();
 })();
