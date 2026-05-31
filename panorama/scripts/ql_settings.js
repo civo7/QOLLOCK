@@ -11500,6 +11500,15 @@ const COMPACT_SCHEMA_3_0_4 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_0_3,
     HERO_PURCHASE_POPUPS_SCHEMA_FIELDS
 );
+// Fix: ENABLE_SHOP_ITEM_NOTIFICATIONS was missing from the compact schema.
+// The legacy key ENABLE_SHOP_CLICK_TO_NOTIFY was included but not the canonical key.
+const SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 }
+];
+const COMPACT_SCHEMA_3_0_5 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_4,
+    SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -11677,6 +11686,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.0.4": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_0_4
+    },
+    "3.0.5": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_5
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
