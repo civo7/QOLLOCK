@@ -8137,7 +8137,19 @@ function ClonePayloadSchemaWithoutFields(baseSchema, fieldKeys) {
     return out;
 }
 
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_V60;
+const BUILD_CATEGORY_COMPACT_SCHEMA_V61 = BUILD_CATEGORY_COMPACT_SCHEMA_V60.concat([
+    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
+    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
+]);
+
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_V61;
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1 = BuildPayloadSchemaWithLanguageMax(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0, 2);
 for (var iPayloadSchemaExtra = 0; iPayloadSchemaExtra < BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS.length; iPayloadSchemaExtra++) {
     BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1.push(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS[iPayloadSchemaExtra]);
