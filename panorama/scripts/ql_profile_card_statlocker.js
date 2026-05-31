@@ -106,7 +106,6 @@
         if (!accountId) return;
         var url = "https://statlocker.gg/profile/" + accountId;
         try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e0) {}
-        try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (e1) {}
     }
 
     function UpdateLabel() {

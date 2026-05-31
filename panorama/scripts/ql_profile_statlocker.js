@@ -220,7 +220,6 @@
                 var url = "https://statlocker.gg/profile/" + currentAccountId;
                 DebugLog("click: resolved account=" + currentAccountId + " source=" + ((resolved && resolved.source) ? resolved.source : "cached") + " url=" + url);
                 try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e3) { DebugLog("click: ExternalBrowserGoToURL failed"); }
-                try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (e4) {}
             });
         } catch (e2) {}
     }

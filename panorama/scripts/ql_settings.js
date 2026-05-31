@@ -14159,32 +14159,14 @@ function TryPasteTextFromClipboard(textEntryPanel) {
     var pasted = false;
     var attempts = [
         function() {
-            $.DispatchEvent("TextEntryPasteFromClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("TextEntryPasteClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("TextEntryPaste", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("UI_TextEntry_PasteClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteFromClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteToTextEntry", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteClipboard", textEntryPanel);
-        },
-        function() {
             if (textEntryPanel.Paste) {
                 textEntryPanel.Paste();
                 return;
             }
             throw new Error("Paste method unavailable");
+        },
+        function() {
+            $.DispatchEvent("TextEntryInsertFromClipboard", textEntryPanel);
         },
         function() {
             $.DispatchEvent("PasteFromClipboard");
@@ -19199,13 +19181,9 @@ function RunConsoleCommand(commandText) {
         }
     } catch (e0) {}
     try {
-        $.DispatchEvent("ConsoleCommand", commandText);
+        $.DispatchEvent("CitadelConCommand", commandText);
         return true;
     } catch (e1) {}
-    try {
-        $.DispatchEvent("GameUIRunCommand", commandText);
-        return true;
-    } catch (e2) {}
     return false;
 }
 
@@ -21611,7 +21589,6 @@ function CreateSupportThanksPlaques(parent, entries, columns) {
                 try { plaque.SetPanelEvent("onactivate", (function (url) {
                     return function () {
                         try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (eSupportPlaqueClick0) {}
-                        try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (eSupportPlaqueClick1) {}
                     };
                 })(entryData.url)); } catch (eSupportPlaqueClick) {}
             }
@@ -23848,7 +23825,6 @@ $.BuildUI = function() {
         headerVer.style.zIndex = "7";
         try { headerVer.SetPanelEvent("onactivate", function () {
             try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick1) {}
-            try { $.DispatchEvent("SteamOverlayOpenURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick2) {}
         }); } catch (eHeaderMoglockClick) {}
         var headerVerPrefix = $.CreatePanel("Label", headerVer, "ModVersionLabelTopPrefix");
     headerVerPrefix.text = LocalizeSettingsText("by", true);
