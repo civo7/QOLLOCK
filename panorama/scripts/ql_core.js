@@ -255,34 +255,36 @@
         enemyV2BridgeEventLevel: null,
         enemyV2BridgeEventLastMs: 0,
         enemyV2AttrBridgeLastSig: "",
-        itemMirrorProbeLastScanMs: 0,
-        itemMirrorProbeLastSignature: "",
-        itemMirrorProbeWasEnabled: false,
-        itemMirrorDisplayMode: "",
-        itemMirrorLastLayoutSig: "",
-        itemMirrorLastRowOpacityPanel: null,
-        itemMirrorLastRowOpacityText: "",
-        itemMirrorFastModeUntilMs: 0,
-        itemMirrorDebugLastMs: 0,
-        itemMirrorDebugLastSig: "",
-        itemMirrorWasOnCooldown: false,
-        itemMirrorReadyAnimUntilMs: 0,
-        itemMirrorCdLastDeg: null,
-        itemMirrorCdLastMs: 0,
-        itemMirrorCdSlopeEma: null,
-        itemMirrorCdDisplayLock: null,
-        itemMirrorLastSrc: "",
-        itemMirrorLastClip: "",
-        itemMirrorClassCache: {},
-        itemMirrorVisualOpacityText: "1.00",
-        itemMirrorSources: [],
-        itemMirrorNextSourceId: 1,
-        itemMirrorNextAcquireOrder: 1,
-        itemMirrorSlotStates: {},
-        itemMirrorRuntimePanelIds: [],
-        itemMirrorNextRuntimePanelId: 1,
-        itemMirrorExceptionGroupAssignments: {},
-        itemMirrorLastShopOpen: false,
+        itemMirror: {
+            probeLastScanMs: 0,
+            probeLastSignature: "",
+            probeWasEnabled: false,
+            displayMode: "",
+            lastLayoutSig: "",
+            lastRowOpacityPanel: null,
+            lastRowOpacityText: "",
+            fastModeUntilMs: 0,
+            debugLastMs: 0,
+            debugLastSig: "",
+            wasOnCooldown: false,
+            readyAnimUntilMs: 0,
+            cdLastDeg: null,
+            cdLastMs: 0,
+            cdSlopeEma: null,
+            cdDisplayLock: null,
+            lastSrc: "",
+            lastClip: "",
+            classCache: {},
+            visualOpacityText: "1.00",
+            sources: [],
+            nextSourceId: 1,
+            nextAcquireOrder: 1,
+            slotStates: {},
+            runtimePanelIds: [],
+            nextRuntimePanelId: 1,
+            exceptionGroupAssignments: {},
+            lastShopOpen: false
+        },
         customHudSuppressed: false,
         keyboardBoxCaches: [],
         heroShopNextSearchMs: 0,
@@ -5161,10 +5163,10 @@ function ItemMirrorCooldownDebugLog(msg) {
 function ItemMirrorCooldownDebugLogThrottled(sig, msg, nowMs) {
     if (!ITEM_MIRROR_COOLDOWN_DEBUG) return;
     var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-    var sameSig = sig && sig === State.itemMirrorDebugLastSig;
-    if (sameSig && now < (State.itemMirrorDebugLastMs || 0)) return;
-    State.itemMirrorDebugLastSig = sig || "";
-    State.itemMirrorDebugLastMs = now + ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS;
+    var sameSig = sig && sig === State.itemMirror.debugLastSig;
+    if (sameSig && now < (State.itemMirror.debugLastMs || 0)) return;
+    State.itemMirror.debugLastSig = sig || "";
+    State.itemMirror.debugLastMs = now + ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS;
     ItemMirrorCooldownDebugLog(msg);
 }
 
@@ -11303,7 +11305,7 @@ function GetUIRoot() {
 
     function SyncPanelClasses(source, target, cacheKey, seedClasses) {
         if (!source || !target) return;
-        var prior = State.itemMirrorClassCache[cacheKey] || [];
+        var prior = State.itemMirror.classCache[cacheKey] || [];
         var map = {};
         function addToken(token) {
             if (!token || token.length === 0) return;
@@ -11321,7 +11323,7 @@ function GetUIRoot() {
             var cls = tokens[t];
             target.SetHasClass(cls, source.BHasClass && source.BHasClass(cls));
         }
-        State.itemMirrorClassCache[cacheKey] = tokens;
+        State.itemMirror.classCache[cacheKey] = tokens;
     }
 
     function GetInlineStyleProperty(panel, propName) {
@@ -29840,33 +29842,39 @@ function GetUIRoot() {
         State.cachedPanels.itemMirrorSourceItemClass = null;
         State.cachedPanels.itemMirrorRow = null;
         State.cachedPanels.itemMirrorSlots = [];
-        State.itemMirrorLastSrc = "";
-        State.itemMirrorLastClip = "";
-        State.itemMirrorWasOnCooldown = false;
-        State.itemMirrorReadyAnimUntilMs = 0;
-        State.itemMirrorCdLastDeg = null;
-        State.itemMirrorCdLastMs = 0;
-        State.itemMirrorCdSlopeEma = null;
-        State.itemMirrorCdDisplayLock = null;
-        State.itemMirrorClassCache = {};
-        State.itemMirrorSources = [];
-        State.itemMirrorNextSourceId = 1;
-        State.itemMirrorNextAcquireOrder = 1;
-        State.itemMirrorSlotStates = {};
-        State.itemMirrorRuntimePanelIds = [];
-        State.itemMirrorNextRuntimePanelId = 1;
-        State.itemMirrorExceptionGroupAssignments = {};
-        State.itemMirrorLastShopOpen = false;
-        State.itemMirrorProbeLastScanMs = 0;
-        State.itemMirrorProbeLastSignature = "";
-        State.itemMirrorProbeWasEnabled = false;
-        State.itemMirrorDisplayMode = "";
+        State.itemMirror = {
+            probeLastScanMs: 0,
+            probeLastSignature: "",
+            probeWasEnabled: false,
+            displayMode: "",
+            lastLayoutSig: "",
+            lastRowOpacityPanel: null,
+            lastRowOpacityText: "",
+            fastModeUntilMs: State.itemMirror.fastModeUntilMs,
+            debugLastMs: State.itemMirror.debugLastMs,
+            debugLastSig: State.itemMirror.debugLastSig,
+            wasOnCooldown: false,
+            readyAnimUntilMs: 0,
+            cdLastDeg: null,
+            cdLastMs: 0,
+            cdSlopeEma: null,
+            cdDisplayLock: null,
+            lastSrc: "",
+            lastClip: "",
+            classCache: {},
+            visualOpacityText: State.itemMirror.visualOpacityText,
+            sources: [],
+            nextSourceId: 1,
+            nextAcquireOrder: 1,
+            slotStates: {},
+            runtimePanelIds: [],
+            nextRuntimePanelId: 1,
+            exceptionGroupAssignments: {},
+            lastShopOpen: false
+        };
         RuntimeTaskReset("item_mirror_render");
         RuntimeTaskReset("item_mirror_scan");
-        State.itemMirrorLastLayoutSig = "";
-        State.itemMirrorLastRowOpacityPanel = null;
-        State.itemMirrorLastRowOpacityText = "";
-        State.itemMirrorFastModeUntilMs = 0;
+        State.itemMirror.fastModeUntilMs = 0;
     }
 
     function UpdateItemMirrorProbe(root, cfg) {
@@ -30097,15 +30105,15 @@ function GetUIRoot() {
 
     function GetStableRuntimePanelId(panel) {
         if (!panel) return 0;
-        var pool = State.itemMirrorRuntimePanelIds || [];
+        var pool = State.itemMirror.runtimePanelIds || [];
         for (var i = 0; i < pool.length; i++) {
             var rec = pool[i];
             if (rec && rec.panel === panel) return Number(rec.id) || 0;
         }
-        var nextId = Number(State.itemMirrorNextRuntimePanelId) || 1;
+        var nextId = Number(State.itemMirror.nextRuntimePanelId) || 1;
         pool.push({ panel: panel, id: nextId });
-        State.itemMirrorRuntimePanelIds = pool;
-        State.itemMirrorNextRuntimePanelId = nextId + 1;
+        State.itemMirror.runtimePanelIds = pool;
+        State.itemMirror.nextRuntimePanelId = nextId + 1;
         return nextId;
     }
 
@@ -30129,7 +30137,7 @@ function GetUIRoot() {
         }
 
         var groupNames = Object.keys(grouped);
-        var assignments = State.itemMirrorExceptionGroupAssignments || {};
+        var assignments = State.itemMirror.exceptionGroupAssignments || {};
 
         for (var gn = 0; gn < groupNames.length; gn++) {
             var group = groupNames[gn];
@@ -30257,7 +30265,7 @@ function GetUIRoot() {
             }
         }
 
-        State.itemMirrorExceptionGroupAssignments = assignments;
+        State.itemMirror.exceptionGroupAssignments = assignments;
         return out;
     }
 
@@ -30378,7 +30386,7 @@ function GetUIRoot() {
     }
 
     function ReconcileItemMirrorSourcesMulti(scannedMatches) {
-        var previous = State.itemMirrorSources || [];
+        var previous = State.itemMirror.sources || [];
         var usedPrev = {};
         var next = [];
         var semanticBuckets = {};
@@ -30467,10 +30475,10 @@ function GetUIRoot() {
                 }
             }
 
-            var key = existing && existing.key ? existing.key : ("item_src_" + String(State.itemMirrorNextSourceId++));
+            var key = existing && existing.key ? existing.key : ("item_src_" + String(State.itemMirror.nextSourceId++));
             var acquisitionOrder = (existing && isFinite(Number(existing.acquisitionOrder)))
                 ? Number(existing.acquisitionOrder)
-                : Number(State.itemMirrorNextAcquireOrder++);
+                : Number(State.itemMirror.nextAcquireOrder++);
             next.push({
                 key: key,
                 acquisitionOrder: acquisitionOrder,
@@ -30501,7 +30509,7 @@ function GetUIRoot() {
             return 0;
         });
 
-        State.itemMirrorSources = next;
+        State.itemMirror.sources = next;
         return next;
     }
 
@@ -30554,7 +30562,7 @@ function GetUIRoot() {
         var mirrorImage = slotObj.image;
         if (!mirrorSlot || !sourceIcon || !mirrorIcon) return;
 
-        var slotState = State.itemMirrorSlotStates[source.key];
+        var slotState = State.itemMirror.slotStates[source.key];
         if (!slotState) {
             slotState = {
                 lastSrc: "",
@@ -30577,7 +30585,7 @@ function GetUIRoot() {
                 lastCooldownEndMs: 0,
                 rapidRetriggerSuppressUntilMs: 0
             };
-            State.itemMirrorSlotStates[source.key] = slotState;
+            State.itemMirror.slotStates[source.key] = slotState;
         }
         var wasOnCooldownBefore = !!slotState.wasOnCooldown;
 
@@ -30917,61 +30925,61 @@ function GetUIRoot() {
             slotState.nextCooldownTextProbeMs = 0;
             slotState.lastProbeCooldownText = "";
         } else {
-            State.itemMirrorFastModeUntilMs = nowMs + 500;
+            State.itemMirror.fastModeUntilMs = nowMs + 500;
         }
     }
 
     function UpdateItemMirrorProbeMulti(root, cfg) {
         if (!IsCustomHudContextActive(root)) {
-            if (State.itemMirrorDisplayMode !== "context_off") {
+            if (State.itemMirror.displayMode !== "context_off") {
                 ResetPassiveCooldownCustomRuntimeState(root);
                 RemoveItemMirrorOverlay(root);
-                State.itemMirrorDisplayMode = "context_off";
+                State.itemMirror.displayMode = "context_off";
             }
             return;
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var enabled = IsPassiveCooldownAdvancedMode(passiveCooldownMode);
         if (!enabled) {
-            if (State.itemMirrorDisplayMode === "disabled" && !State.itemMirrorProbeWasEnabled) {
+            if (State.itemMirror.displayMode === "disabled" && !State.itemMirror.probeWasEnabled) {
                 return;
             }
-            if (ITEM_MIRROR_PROBE_DEBUG && State.itemMirrorProbeWasEnabled && State.itemMirrorDisplayMode !== "disabled") {
+            if (ITEM_MIRROR_PROBE_DEBUG && State.itemMirror.probeWasEnabled && State.itemMirror.displayMode !== "disabled") {
                 $.Msg("[QOLLock][ItemProbe] disabled");
             }
-            State.itemMirrorProbeWasEnabled = false;
-            State.itemMirrorProbeLastScanMs = 0;
-            State.itemMirrorProbeLastSignature = "";
+            State.itemMirror.probeWasEnabled = false;
+            State.itemMirror.probeLastScanMs = 0;
+            State.itemMirror.probeLastSignature = "";
             RuntimeTaskReset("item_mirror_render");
             RuntimeTaskReset("item_mirror_scan");
-            State.itemMirrorFastModeUntilMs = 0;
+            State.itemMirror.fastModeUntilMs = 0;
             ResetPassiveCooldownCustomRuntimeState(root);
-            if (State.itemMirrorDisplayMode !== "disabled") {
+            if (State.itemMirror.displayMode !== "disabled") {
                 RemoveItemMirrorOverlay(root);
-                State.itemMirrorDisplayMode = "disabled";
+                State.itemMirror.displayMode = "disabled";
             }
             return;
         }
 
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var renderIntervalMs = (nowMs < (State.itemMirrorFastModeUntilMs || 0))
+        var renderIntervalMs = (nowMs < (State.itemMirror.fastModeUntilMs || 0))
             ? ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE
             : ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE;
         if (!RuntimeTaskConsume("item_mirror_render", nowMs, renderIntervalMs)) {
             return;
         }
 
-        State.itemMirrorProbeWasEnabled = true;
-        State.itemMirrorDisplayMode = "active";
-        var sources = State.itemMirrorSources || [];
+        State.itemMirror.probeWasEnabled = true;
+        State.itemMirror.displayMode = "active";
+        var sources = State.itemMirror.sources || [];
         var abilitiesContainer = State.cachedPanels.abilitiesContainer;
         if (!IsPanelValid(abilitiesContainer)) {
             abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
             State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
         }
         var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
-        var shopJustClosed = !!State.itemMirrorLastShopOpen && !passiveInShop;
-        State.itemMirrorLastShopOpen = !!passiveInShop;
+        var shopJustClosed = !!State.itemMirror.lastShopOpen && !passiveInShop;
+        State.itemMirror.lastShopOpen = !!passiveInShop;
 
         if (passiveInShop) {
             EnsureItemMirrorOverlayMulti(root);
@@ -30992,15 +31000,15 @@ function GetUIRoot() {
 
         if (shopJustClosed) {
             sourcesValid = false;
-            State.itemMirrorProbeLastSignature = "";
+            State.itemMirror.probeLastSignature = "";
             RuntimeTaskSetDelay("item_mirror_scan", nowMs, ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP);
         }
 
         if (!sourcesValid || sources.length === 0 || RuntimeTaskIsDue("item_mirror_scan", nowMs)) {
-            State.itemMirrorProbeLastScanMs = nowMs;
+            State.itemMirror.probeLastScanMs = nowMs;
             var scan = BuildItemMirrorSourcesMulti(root, cfg);
             var signature = "modsContainers=" + scan.modsContainersCount + ";scan=" + scan.scannedCount + ";found=" + scan.matches.length + ";" + (scan.structureSummary || []).join(";");
-            var signatureChanged = (signature !== State.itemMirrorProbeLastSignature);
+            var signatureChanged = (signature !== State.itemMirror.probeLastSignature);
             var nextScanDelayMs = ITEM_MIRROR_PROBE_SCAN_MS;
             if (scan.matches.length > 0 && !signatureChanged && sourcesValid && sources.length > 0) {
                 nextScanDelayMs = ITEM_MIRROR_PROBE_SCAN_MS_STABLE;
@@ -31008,7 +31016,7 @@ function GetUIRoot() {
             RuntimeTaskSetDelay("item_mirror_scan", nowMs, nextScanDelayMs);
 
             if (signatureChanged) {
-                State.itemMirrorProbeLastSignature = signature;
+                State.itemMirror.probeLastSignature = signature;
                 if (ITEM_MIRROR_PROBE_DEBUG) {
                     if (scan.modsContainersCount === 0) {
                         $.Msg("[QOLLock][ItemProbe] ModsContainer not found");
@@ -31048,19 +31056,19 @@ function GetUIRoot() {
             String(offsetY),
             rowOpacity.toFixed(2)
         ].join("|");
-        if (layoutSig !== State.itemMirrorLastLayoutSig) {
+        if (layoutSig !== State.itemMirror.lastLayoutSig) {
             mirrorOverlay.style.preTransformScale2d = pScale.toFixed(3) + ", " + pScale.toFixed(3);
             mirrorOverlay.style.marginLeft = offsetX + "%";
             mirrorOverlay.style.marginTop = (-offsetY) + "%";
-            State.itemMirrorLastLayoutSig = layoutSig;
+            State.itemMirror.lastLayoutSig = layoutSig;
         }
         var mirrorRow = State.cachedPanels.itemMirrorRow;
         var rowOpacityText = rowOpacity.toFixed(2);
-        State.itemMirrorVisualOpacityText = rowOpacityText;
-        if (mirrorRow && (State.itemMirrorLastRowOpacityPanel !== mirrorRow || State.itemMirrorLastRowOpacityText !== rowOpacityText)) {
+        State.itemMirror.visualOpacityText = rowOpacityText;
+        if (mirrorRow && (State.itemMirror.lastRowOpacityPanel !== mirrorRow || State.itemMirror.lastRowOpacityText !== rowOpacityText)) {
             SetPanelOpacitySafe(mirrorRow, rowOpacityText, 1.0);
-            State.itemMirrorLastRowOpacityPanel = mirrorRow;
-            State.itemMirrorLastRowOpacityText = rowOpacityText;
+            State.itemMirror.lastRowOpacityPanel = mirrorRow;
+            State.itemMirror.lastRowOpacityText = rowOpacityText;
         }
 
         if (!sources || sources.length === 0) {
@@ -31073,7 +31081,7 @@ function GetUIRoot() {
                     emptySlots[es].icon.style.visibility = "collapse";
                 }
             }
-            State.itemMirrorSlotStates = {};
+            State.itemMirror.slotStates = {};
             return;
         }
 
@@ -31097,10 +31105,10 @@ function GetUIRoot() {
             if (slots[hi].cooldownText && slots[hi].cooldownText.style.visibility !== "collapse") slots[hi].cooldownText.style.visibility = "collapse";
         }
 
-        var stateKeys = Object.keys(State.itemMirrorSlotStates || {});
+        var stateKeys = Object.keys(State.itemMirror.slotStates || {});
         for (var sk = 0; sk < stateKeys.length; sk++) {
             var key = stateKeys[sk];
-            if (!activeKeys[key]) delete State.itemMirrorSlotStates[key];
+            if (!activeKeys[key]) delete State.itemMirror.slotStates[key];
         }
     }
 
@@ -32169,7 +32177,7 @@ function GetUIRoot() {
                     var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
                     var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
                     var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
-                    var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
+                    var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
                     var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
                     var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
 
@@ -32235,7 +32243,7 @@ function GetUIRoot() {
             var itemMirrorFastActive = false;
             if (gates) {
                 itemMirrorRuntimeActive = gates.compassItemMirror;
-                itemMirrorFastActive = gates.compassItemMirror && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
+                itemMirrorFastActive = gates.compassItemMirror && (nowMsCompass < (State.itemMirror.fastModeUntilMs || 0));
                 useFastInterval = (
                     gates.compassOverlay ||
                     gates.compassMinimapRotate ||
@@ -32245,8 +32253,8 @@ function GetUIRoot() {
                     gates.compassTargetShapesFast
                 );
             } else {
-                itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
-                itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
+                itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
+                itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirror.fastModeUntilMs || 0));
                 useFastInterval = (cfg && (
                     Number(cfg.ENABLE_COMPASS) === 1 ||
                     Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
@@ -33783,8 +33791,8 @@ function GetUIRoot() {
             Number(cfg.MINIMAP_FLIP) === 1 ||
             (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode) ||
-            State.itemMirrorProbeWasEnabled ||
-            State.itemMirrorDisplayMode === "active";
+            State.itemMirror.probeWasEnabled ||
+            State.itemMirror.displayMode === "active";
         gates.compassReloadCd = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
             State.reloadCdLastDeg !== null ||
             State.reloadCooldownStyleSig !== "" ||
