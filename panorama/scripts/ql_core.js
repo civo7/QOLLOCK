@@ -25222,7 +25222,6 @@ function GetUIRoot() {
     var HERO_MAP_BUILDING = 1;
     var HERO_MAP_BUILT = 2;
     var QUICK_ROW_UI_SCALE = 0.7;
-    var QUICK_OVERLAP_GAP = 0;
 
     function BuildHeroNameMapRedux(root) {
         if (State.recentPurchaseReduxHeroMapState === HERO_MAP_BUILDING) return;
@@ -25297,12 +25296,14 @@ function GetUIRoot() {
     }
 
     function GetPanelLeftInTopBarRedux(panel) {
-        var topBar = null;
-        try {
-            var root = $.GetContextPanel();
-            while (root && root.GetParent && root.GetParent() !== null) root = root.GetParent();
-            if (root) topBar = root.FindChildTraverse("TopBar");
-        } catch(e) {}
+        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
+        if (!topBar) {
+            try {
+                var root = $.GetContextPanel();
+                while (root && root.GetParent && root.GetParent() !== null) root = root.GetParent();
+                if (root) topBar = root.FindChildTraverse("TopBar");
+            } catch(e) {}
+        }
         var x = 0;
         var current = panel;
         while (current && IsPanelValid(current) && current !== topBar) {
@@ -25339,11 +25340,14 @@ function GetUIRoot() {
             var margin = 125;
             var pp = active[i].panel.GetParent();
             if (pp && IsPanelValid(pp) && pp.BHasClass("UltimateUnlocked")) margin = 150;
-            active[i].panel.style.marginTop = margin + "px";
             active[i].baseMargin = margin;
         }
 
-        if (active.length < 2) return;
+        if (active.length < 2) {
+            // Single panel: apply base margin directly
+            active[0].panel.style.marginTop = active[0].baseMargin + "px";
+            return;
+        }
 
         for (var i = 0; i < active.length; i++) {
             active[i].leftX = GetPanelLeftInTopBarRedux(active[i].panel);
@@ -25351,13 +25355,11 @@ function GetUIRoot() {
         }
 
         // Sort newest first
-        for (var si = 0; si < active.length - 1; si++) {
-            for (var sj = si + 1; sj < active.length; sj++) {
-                var ti = State.recentPurchaseReduxLastEntryTime[active[si].hero] || 0;
-                var tj = State.recentPurchaseReduxLastEntryTime[active[sj].hero] || 0;
-                if (tj > ti) { var tmp = active[si]; active[si] = active[sj]; active[sj] = tmp; }
-            }
-        }
+        active.sort(function(a, b) {
+            var ta = State.recentPurchaseReduxLastEntryTime[a.hero] || 0;
+            var tb = State.recentPurchaseReduxLastEntryTime[b.hero] || 0;
+            return tb - ta;
+        });
 
         var margins = [];
         for (var i = 0; i < active.length; i++) margins[i] = active[i].baseMargin;
@@ -25371,7 +25373,7 @@ function GetUIRoot() {
                 var bLeft = active[j].leftX;
                 var bRight = bLeft + active[j].width;
                 if (aLeft < bRight && aRight > bLeft) {
-                    var needed = margins[j] + active[j].panel.contentheight * QUICK_ROW_UI_SCALE + QUICK_OVERLAP_GAP;
+                    var needed = margins[j] + active[j].panel.contentheight * QUICK_ROW_UI_SCALE;
                     if (needed > margins[i]) margins[i] = needed;
                 }
             }
@@ -25457,11 +25459,9 @@ function GetUIRoot() {
 
         ScheduleResolveOverlapsRedux(0.05);
 
-        (function(e, h) {
-            $.Schedule(quickDisplaySec, function() {
-                if (IsPanelValid(e)) QuickRemoveEntryRedux(e, h);
-            });
-        })(entry, heroNameUpper);
+        $.Schedule(quickDisplaySec, function() {
+            if (IsPanelValid(entry)) QuickRemoveEntryRedux(entry, heroNameUpper);
+        });
     }
 
     function ResetReduxHeroMap() {
