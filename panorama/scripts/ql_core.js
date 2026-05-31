@@ -24899,9 +24899,9 @@ function GetUIRoot() {
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
 
-    function UpdateModIconsRP(container) {
+    function UpdateModIconsRP(container, purchases) {
         if (!container || !IsPanelValid(container)) return;
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var icons = purchase.FindChildrenWithClassTraverse("mod_icon");
@@ -25007,7 +25007,7 @@ function GetUIRoot() {
         }
     }
 
-    function ApplyFiltersRP(container, ctx) {
+    function ApplyFiltersRP(container, ctx, purchases) {
         if (!container || !IsPanelValid(container)) return;
         var sig = GetFilterSigRP(ctx, container);
         var firstChild = container.GetChildCount() > 0 ? container.GetChild(0) : null;
@@ -25015,7 +25015,7 @@ function GetUIRoot() {
         State.recentPurchaseLastFilterSig = sig;
         State.recentPurchaseLastFirstChild = firstChild;
 
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var hidden = false;
@@ -25119,11 +25119,11 @@ function GetUIRoot() {
         return qp;
     }
 
-    function UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec) {
+    function UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases) {
         var quickPanel = GetOrCreateQuickPanelRP(root);
         if (!quickPanel || !container || !IsPanelValid(container)) return;
 
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
 
         if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
@@ -25483,7 +25483,7 @@ function GetUIRoot() {
         };
     }
 
-    function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec) {
+    function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases) {
         if (IsHeroPlayerCardMapStale()) ResetHeroPopupState();
         if (State.heroPopup.mapState !== HERO_MAP_BUILT) {
             BuildHeroPlayerCardMap(root);
@@ -25491,7 +25491,7 @@ function GetUIRoot() {
         }
         if (!container || !IsPanelValid(container)) return;
 
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
 
         if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
@@ -25579,12 +25579,17 @@ function GetUIRoot() {
         HandleHideoutRP(root);
         CapContainerRP(container);
 
+        var purchases = null;
+        if (shopEnabled || notifyEnabled) {
+            purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        }
+
         if (shopEnabled) {
-            UpdateModIconsRP(container);
+            UpdateModIconsRP(container, purchases);
             var ctx = BuildContextRP(container);
             CreateFilterCheckboxesRP(root);
             UpdateFilterVisibilityRP(root, ctx);
-            ApplyFiltersRP(container, ctx);
+            ApplyFiltersRP(container, ctx, purchases);
         }
 
         if (notifyEnabled) {
@@ -25592,7 +25597,7 @@ function GetUIRoot() {
 
             if (heroPopupsEnabled) {
                 // Per-hero popup panels on player cards
-                UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec);
+                UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
                 // Hide the centralized panel since we're using per-hero panels
                 var quickPanel = State.cachedPanels.quickPurchasesPanel;
                 if (IsPanelValid(quickPanel)) {
@@ -25600,7 +25605,7 @@ function GetUIRoot() {
                 }
             } else {
                 // Default: centralized popup panel
-                UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec);
+                UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases);
                 var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
                 var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
                 var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
