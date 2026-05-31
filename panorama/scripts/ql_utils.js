@@ -424,6 +424,63 @@
     }
     exports.PushUnique = PushUnique;
 
+    /**
+     * Lightweight function call profiler. Call ProfileHit("functionName") at
+     * the top of hot functions to count invocations. Every 60 seconds, the
+     * top 10 callers are logged to $.Msg.
+     *
+     * Off by default — call SetProfilerEnabled(true) or set the qol_debug
+     * convars to enable. Toggle via: QOL_UTILS.SetProfilerEnabled(true)
+     */
+    var _profilerEnabled = false;
+    var _profilerHits = {};
+    var _profilerLastDumpMs = 0;
+    var _PROFILER_DUMP_INTERVAL_MS = 60000;
+    var _PROFILER_TOP_N = 10;
+
+    function ProfileHit(name) {
+        if (!_profilerEnabled) return;
+        _profilerHits[name] = (Number(_profilerHits[name]) || 0) + 1;
+    }
+    exports.ProfileHit = ProfileHit;
+
+    function SetProfilerEnabled(enabled) {
+        _profilerEnabled = !!enabled;
+        if (!enabled) _profilerHits = {};
+    }
+    exports.SetProfilerEnabled = SetProfilerEnabled;
+
+    function IsProfilerEnabled() {
+        return _profilerEnabled;
+    }
+    exports.IsProfilerEnabled = IsProfilerEnabled;
+
+    function DumpProfile() {
+        if (!_profilerEnabled) return;
+        var now = PerfNowMs();
+        if (now - _profilerLastDumpMs < _PROFILER_DUMP_INTERVAL_MS) return;
+        _profilerLastDumpMs = now;
+
+        var entries = [];
+        for (var k in _profilerHits) {
+            if (_profilerHits.hasOwnProperty(k)) {
+                entries.push({ name: k, count: _profilerHits[k] });
+            }
+        }
+        entries.sort(function(a, b) { return b.count - a.count; });
+
+        $.Msg("[QOLLock][PROFILE] === Top " + _PROFILER_TOP_N + " called functions (last " +
+            Math.round(_PROFILER_DUMP_INTERVAL_MS / 1000) + "s) ===");
+        var limit = Math.min(_PROFILER_TOP_N, entries.length);
+        for (var i = 0; i < limit; i++) {
+            $.Msg("[QOLLock][PROFILE] " + (i + 1) + ". " + entries[i].name +
+                " — " + entries[i].count + " calls");
+        }
+        // Reset counters each cycle so we get per-minute snapshots
+        _profilerHits = {};
+    }
+    exports.DumpProfile = DumpProfile;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it
