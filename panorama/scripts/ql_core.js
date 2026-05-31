@@ -32438,11 +32438,11 @@ function GetUIRoot() {
                     var rotateEnabled = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER");
                     var minimapFlipEnabled = IsCfgEnabled(cfg, "MINIMAP_FLIP");
                     var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
-                    var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
+                    var itemMirrorRuntimeActive = itemMirrorEnabled;
                     var reloadEnabled = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
                     var ultCooldownEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
 
-                    if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compass.enabled || State.compass.showSpeed) {
+                    if (compassEnabled || compassSpeedEnabled) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.overlay", function() {
                             var perfSection = PerfStart();
@@ -32451,7 +32451,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
+                    if (rotateEnabled || minimapFlipEnabled) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.minimap_rotate", function() {
                             var perfSection = PerfStart();
@@ -32469,7 +32469,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
+                    if (reloadEnabled) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.reload_cd", function() {
                             var perfSection = PerfStart();
@@ -34040,20 +34040,11 @@ function GetUIRoot() {
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
         gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
-            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED") ||
-            IsPanelValid(State.cachedPanels.compassRoot) ||
-            State.compass.enabled ||
-            State.compass.showSpeed;
+            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
-            IsCfgEnabled(cfg, "MINIMAP_FLIP") ||
-            (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
-        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode) ||
-            State.itemMirror.probeWasEnabled ||
-            State.itemMirror.displayMode === "active";
-        gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
-            State.reloadCdLastDeg !== null ||
-            State.reloadCooldownStyleSig !== "" ||
-            IsPanelValid(State.cachedPanels.reloadCooldownLabel);
+            IsCfgEnabled(cfg, "MINIMAP_FLIP");
+        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
+        gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
         gates.compassUltCd = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
         gates.compassTargetShapesFast = gates.targetShapesActive;
 
