@@ -2035,7 +2035,8 @@ CitadelItemDraftPanel .modIconContainer
 	border-color: courageBrightColor;
 }
 
-CitadelItemDraftPanel .brawl_hide
+CitadelItemDraftPanel .brawl_hide,
+.gamemode_streetbrawl .brawl_hide
 {
 	visibility: collapse;
 }

@@ -1021,7 +1021,9 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	margin-top: 175px;
 }
 
-.gamemode_streetbrawl #QuickPurchasesPanel /* DO NOT MODIFY, HIDES POPUPS IN STREET BRAWL */
+.gamemode_streetbrawl #QuickPurchasesPanel, /* centralized popup panel */
+.gamemode_streetbrawl .QuickPurchasesPanel, /* per-hero popup panels */
+.gamemode_streetbrawl .brawl_hide /* individual item entries */
 {
 	visibility: collapse;
 }

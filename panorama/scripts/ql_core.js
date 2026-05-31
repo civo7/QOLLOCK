@@ -25335,11 +25335,13 @@ function GetUIRoot() {
 
         var itemInfo = $.CreatePanel("Panel", entry, "");
         itemInfo.AddClass("quickItemInfo");
+        itemInfo.AddClass("brawl_hide");
 
         var iconUrl = (typeof MOD_ICONS !== "undefined") ? MOD_ICONS[nameText] : null;
         if (iconUrl) {
             var icon = $.CreatePanel("Panel", itemInfo, "");
             icon.AddClass("mod_icon");
+            icon.AddClass("brawl_hide");
             (function(p, url) {
                 $.Schedule(0, function() {
                     if (IsPanelValid(p)) {
@@ -25352,6 +25354,7 @@ function GetUIRoot() {
 
         var nameLabel = $.CreatePanel("Label", itemInfo, "");
         nameLabel.AddClass("quickPurchaseName");
+        nameLabel.AddClass("brawl_hide");
         nameLabel.text = nameText;
 
         State.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
