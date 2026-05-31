@@ -12538,11 +12538,12 @@ function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
     // Fallback: if panel attrs are empty (e.g. after game restart), recover from
     // persistentStorage which IS disk-backed and survives restarts.
+    var usedPersistentStorage = false;
     if (!raw || raw.length === 0) {
         try {
             if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
                 var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
-                if (psRaw && psRaw.length > 0) raw = psRaw;
+                if (psRaw && psRaw.length > 0) { raw = psRaw; usedPersistentStorage = true; }
             }
         } catch (ePs) { /* ignore */ }
     }
@@ -12564,7 +12565,7 @@ function SyncConfigFromStorage() {
     MOD_CONFIG = nextConfig;
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
     // [DEBUG] Trace config load source and item-notification values
-    $.Msg("[QOL-DEBUG] SyncConfigFromStorage: source=" + (raw && raw.length > 0 ? "stored" : "defaults") +
+    $.Msg("[QOL-DEBUG] SyncConfigFromStorage: source=" + (raw && raw.length > 0 ? (usedPersistentStorage ? "persistStore" : "panelAttr") : "defaults") +
         " itemNotifs=" + MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS +
         " clickToNotify=" + MOD_CONFIG.ENABLE_SHOP_CLICK_TO_NOTIFY +
         " quickbuyClickToNotify=" + MOD_CONFIG.ENABLE_QUICKBUY_CLICK_TO_NOTIFY);
@@ -12579,8 +12580,13 @@ function PersistStatlockerProfileState(rawConfig, configObj) {
     try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) {}
     try {
         var raw = String(rawConfig || "");
-        if (!raw || raw.length <= 0) raw = WrapConfigForStorage(configObj || {});
+        var fromFallback = false;
+        if (!raw || raw.length <= 0) { raw = WrapConfigForStorage(configObj || {}); fromFallback = true; }
         $.persistentStorage.setItem("qol_settings_raw_v1", raw);
+        // [DEBUG] Log what's being written to persistentStorage
+        $.Msg("[QOL-DEBUG] PersistStatlocker: fromFallback=" + fromFallback +
+            " itemNotifs=" + (configObj && configObj.ENABLE_SHOP_ITEM_NOTIFICATIONS) +
+            " rawLen=" + raw.length);
     } catch (e1) {}
 }
 
@@ -12672,6 +12678,9 @@ var gLastDebugItemNotifs = -1;
 
 function MarkConfigDirty() {
     var token = ++gSaveDebounceToken;
+    // [DEBUG] Trace what triggers debounced saves
+    $.Msg("[QOL-DEBUG] MarkConfigDirty: token=" + token +
+        " itemNotifs=" + MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS);
     $.Schedule(SAVE_DEBOUNCE_SEC, function() {
         if (gSaveDebounceToken === token) {
             gSaveDebounceToken = 0;
@@ -12695,12 +12704,13 @@ function SaveAndSync() {
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     var data = WrapConfigForStorage(MOD_CONFIG);
-    // [DEBUG] Trace what's being saved
+    // [DEBUG] Trace what's being saved, with a stack hint for the first fire
     if (MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS !== gLastDebugItemNotifs) {
         gLastDebugItemNotifs = MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS;
         $.Msg("[QOL-DEBUG] SaveAndSync: itemNotifs=" + MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS +
             " clickToNotify=" + MOD_CONFIG.ENABLE_SHOP_CLICK_TO_NOTIFY +
-            " changed=" + (data !== gLastSavedConfigRaw));
+            " changed=" + (data !== gLastSavedConfigRaw) +
+            " debounceToken=" + gSaveDebounceToken);
     }
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
