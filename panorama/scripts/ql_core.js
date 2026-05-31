@@ -1111,6 +1111,17 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
     const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
     const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
+    // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
+    const PANEL_ID_HUD = "Hud";
+    const PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
+    const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+    const PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";
+    const PANEL_ID_TOP_BAR = "TopBar";
+    const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
+    const PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    const PANEL_ID_MINIMAP = "hud_minimap";
+    const PANEL_ID_SIGNATURE = "hud_signature";
+    const PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     const ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS = 1500;
     const ACCOUNT_PRESET_TEST_ENABLED = false;
     const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
@@ -5107,6 +5118,12 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     };
 
     const RECENT_PURCHASE_MAX_ITEMS  = 50;
+    // Repeated CSS class names
+    const CLASS_RECENT_PURCHASE = "recentPurchase";
+    const CLASS_IS_ZERO_VALUE = "isZeroValue";
+    const CLASS_OUT_OF_COMBAT = "out_of_combat";
+    const CLASS_IN_COMBAT = "inCombat";
+    const CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     const RECENT_PURCHASE_QUICK_MAX_DEFAULT         = 3;
     const RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 10.0;
     const RECENT_PURCHASE_QUICK_FADE_SEC            = 0.4;
