@@ -9087,6 +9087,7 @@ function GetUIRoot() {
         var p = $.GetContextPanel();
         var uiRootGuard = 0;
         while (p && p.GetParent && p.GetParent() && uiRootGuard < 64) { p = p.GetParent(); uiRootGuard++; }
+        if (uiRootGuard >= 64) QOL_WARN("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
         State.cachedPanels.uiRoot = p || null;
         return p || null;
     }
@@ -12434,6 +12435,7 @@ function GetUIRoot() {
             p = p.GetParent();
             teamGuard++;
         }
+        if (teamGuard >= 64) QOL_WARN("topbar", "DetectTopBarPlayerTeam: parent-chain walk hit guard limit");
         return null;
     }
 
@@ -19049,6 +19051,7 @@ function GetUIRoot() {
                 top = top.GetParent();
                 sigRootGuard++;
             }
+            if (sigRootGuard >= 64) QOL_WARN("buildPayload", "storage signature root walk hit guard limit");
             AddStorageSignatureScanRoot(roots, top);
         } catch (e0) {}
 
@@ -25355,6 +25358,7 @@ function GetUIRoot() {
                     playerPanel = playerPanel.GetParent();
                     badgeWalkGuard++;
                 }
+                if (badgeWalkGuard >= 64) QOL_WARN("heroPopup", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
                 if (!badge || !playerPanel) { onDone(); return; }
                 var heroId = badge.heroid;
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
@@ -25411,6 +25415,7 @@ function GetUIRoot() {
                     root = root.GetParent();
                     rootGuard++;
                 }
+                if (rootGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: root walk hit guard limit");
                 if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             } catch(e) {}
         }
@@ -25422,6 +25427,7 @@ function GetUIRoot() {
             current = current.GetParent();
             walkGuard++;
         }
+        if (walkGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
         return x;
     }
 
