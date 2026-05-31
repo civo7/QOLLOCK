@@ -165,17 +165,27 @@
         imagesInChatBottomFullScanNextMs: 0,
         imagesInChatTopMessageCache: [],
         imagesInChatBottomMessageCache: [],
-        unsecuredSoulsDisplayMode: "",
-        unsecuredSoulsLastLayoutSig: "",
-        unsecuredSoulsLastClassSig: "",
-        unsecuredSoulsLastTitle: "",
-        unsecuredSoulsLastStatus: "",
-        unsecuredSoulsLastSouls: -1,
-        unsecuredSoulsLastSampleMs: 0,
-        unsecuredSoulsRateEma: 0,
-        unsecuredSoulsRateLastUpdateMs: 0,
-        unsecuredSoulsEtaEndMs: 0,
-        unsecuredSoulsNextSourceSearchMs: 0,
+        unsecuredSouls: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitle: "",
+            lastStatus: "",
+            lastSouls: -1,
+            lastSampleMs: 0,
+            rateEma: 0,
+            rateLastUpdateMs: 0,
+            etaEndMs: 0,
+            nextSourceSearchMs: 0,
+            hudStyleSig: "",
+            hudBaseX: null,
+            hudBaseY: null,
+            hudLabel: null,
+            hudMirrorLabel: null,
+            hudMirrorIcon: null,
+            hudMirrorText: null,
+            hudNextSearchMs: 0
+        },
         signatureCooldownFlashSlots: null,
         signatureCooldownFlashNextScanMs: 0,
         signatureCooldownFlashUntilById: {},
@@ -384,14 +394,6 @@
         unspentWasDisabled: false,
         topbarSoulSnapshot: null,
         topbarSoulSnapshotUntilMs: 0,
-        unsecuredSoulsHudStyleSig: "",
-        unsecuredSoulsHudBaseX: null,
-        unsecuredSoulsHudBaseY: null,
-        unsecuredSoulsHudLabel: null,
-        unsecuredSoulsHudMirrorLabel: null,
-        unsecuredSoulsHudMirrorIcon: null,
-        unsecuredSoulsHudMirrorText: null,
-        unsecuredSoulsHudNextSearchMs: 0,
         rejuvState: null,
         rejuvWasDisabled: false,
         minimapObjectiveBuffClassCache: { panel: null, values: {} },
@@ -26428,23 +26430,23 @@ function GetUIRoot() {
             }
             State.cachedPanels.betterUnsecuredOverlay = overlay || null;
         }
-        var mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
-        var mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!mirrorLabel && overlay && overlay.FindChildTraverse) {
             mirrorLabel = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
             if (mirrorLabel && mirrorLabel.AddClass && !mirrorLabel.BHasClass("death_penalty_gold")) {
                 mirrorLabel.AddClass("death_penalty_gold");
             }
-            State.unsecuredSoulsHudMirrorLabel = mirrorLabel || null;
+            State.unsecuredSouls.hudMirrorLabel = mirrorLabel || null;
         }
         if (!mirrorIcon && overlay && overlay.FindChildTraverse) {
             mirrorIcon = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorIcon");
-            State.unsecuredSoulsHudMirrorIcon = mirrorIcon || null;
+            State.unsecuredSouls.hudMirrorIcon = mirrorIcon || null;
         }
         if (!mirrorText && overlay && overlay.FindChildTraverse) {
             mirrorText = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorText");
-            State.unsecuredSoulsHudMirrorText = mirrorText || null;
+            State.unsecuredSouls.hudMirrorText = mirrorText || null;
         }
         return overlay;
     }
@@ -26458,9 +26460,9 @@ function GetUIRoot() {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.betterUnsecuredOverlay = null;
-        State.unsecuredSoulsHudMirrorLabel = null;
-        State.unsecuredSoulsHudMirrorIcon = null;
-        State.unsecuredSoulsHudMirrorText = null;
+        State.unsecuredSouls.hudMirrorLabel = null;
+        State.unsecuredSouls.hudMirrorIcon = null;
+        State.unsecuredSouls.hudMirrorText = null;
     }
 
     function ReadSafePanelLayoutOffset(rawValue) {
@@ -26492,61 +26494,61 @@ function GetUIRoot() {
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
         var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
         var panel = IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer) ? State.cachedPanels.unsecuredSoulsHudContainer : null;
-        var label = IsPanelValid(State.unsecuredSoulsHudLabel) ? State.unsecuredSoulsHudLabel : null;
-        var mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
-        var mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+        var label = IsPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!enabled) {
             RemoveBetterUnsecuredOverlay(root);
-            State.unsecuredSoulsHudLabel = null;
-            State.unsecuredSoulsHudMirrorLabel = null;
-            State.unsecuredSoulsHudMirrorIcon = null;
-            State.unsecuredSoulsHudMirrorText = null;
-            State.unsecuredSoulsHudBaseX = null;
-            State.unsecuredSoulsHudBaseY = null;
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudLabel = null;
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudBaseX = null;
+            State.unsecuredSouls.hudBaseY = null;
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!panel) {
-            if (nowMs >= (State.unsecuredSoulsHudNextSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.hudNextSearchMs || 0)) {
                 panel = FindUnsecuredSoulsHudContainer(root);
                 State.cachedPanels.unsecuredSoulsHudContainer = panel || null;
-                State.unsecuredSoulsHudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
+                State.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
             }
         }
         if (!panel) {
-            State.unsecuredSoulsHudMirrorLabel = null;
-            State.unsecuredSoulsHudMirrorIcon = null;
-            State.unsecuredSoulsHudMirrorText = null;
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudStyleSig = "";
             RemoveBetterUnsecuredOverlay(root);
             return;
         }
         if (!label) {
             label = FindUnsecuredSoulsHudLabel(root, panel);
-            State.unsecuredSoulsHudLabel = label || null;
+            State.unsecuredSouls.hudLabel = label || null;
         }
         var overlay = EnsureBetterUnsecuredOverlay(root);
         if (!overlay) {
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel) {
-            mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
+            mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
         }
         if (!mirrorIcon) {
-            mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
+            mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
         }
         if (!mirrorText) {
-            mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+            mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         }
         if (!label) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel || !mirrorIcon || !mirrorText) {
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
 
@@ -26582,9 +26584,9 @@ function GetUIRoot() {
         if (!isFinite(sourceValue)) sourceValue = 0;
         if (sourceValue <= 0) {
             var zeroSig = "hidden_zero|" + sourceText;
-            if (State.unsecuredSoulsHudStyleSig !== zeroSig) {
+            if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
                 if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-                State.unsecuredSoulsHudStyleSig = zeroSig;
+                State.unsecuredSouls.hudStyleSig = zeroSig;
             }
             return;
         }
@@ -26595,11 +26597,11 @@ function GetUIRoot() {
         if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
             baseX = Math.round(sourcePos.x);
             baseY = Math.round(sourcePos.y);
-            State.unsecuredSoulsHudBaseX = baseX;
-            State.unsecuredSoulsHudBaseY = baseY;
+            State.unsecuredSouls.hudBaseX = baseX;
+            State.unsecuredSouls.hudBaseY = baseY;
         } else {
-            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSoulsHudBaseX);
-            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSoulsHudBaseY);
+            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
+            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
             baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
             baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
         }
@@ -26610,11 +26612,11 @@ function GetUIRoot() {
         var targetY = baseY + reflectedYOffset;
         if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            State.unsecuredSoulsHudStyleSig = "hidden_invalid_pos";
+            State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
             return;
         }
         var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-        if (sig === State.unsecuredSoulsHudStyleSig) return;
+        if (sig === State.unsecuredSouls.hudStyleSig) return;
 
         if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         overlay.style.x = targetX + "px";
@@ -26629,7 +26631,7 @@ function GetUIRoot() {
         mirrorLabel.style.fontSize = fontPx + "px";
         mirrorLabel.style.x = "0px";
         mirrorLabel.style.y = "0px";
-        State.unsecuredSoulsHudStyleSig = sig;
+        State.unsecuredSouls.hudStyleSig = sig;
     }
 
     function EnsureUnsecuredSoulsOverlay(root) {
@@ -26661,11 +26663,11 @@ function GetUIRoot() {
     }
 
     function ResetUnsecuredSoulsTracking() {
-        State.unsecuredSoulsLastSouls = -1;
-        State.unsecuredSoulsLastSampleMs = 0;
-        State.unsecuredSoulsRateEma = 0;
-        State.unsecuredSoulsRateLastUpdateMs = 0;
-        State.unsecuredSoulsEtaEndMs = 0;
+        State.unsecuredSouls.lastSouls = -1;
+        State.unsecuredSouls.lastSampleMs = 0;
+        State.unsecuredSouls.rateEma = 0;
+        State.unsecuredSouls.rateLastUpdateMs = 0;
+        State.unsecuredSouls.etaEndMs = 0;
     }
 
     function RemoveUnsecuredSoulsOverlay(root) {
@@ -26680,30 +26682,30 @@ function GetUIRoot() {
         State.cachedPanels.unsecuredSoulsLabel = null;
         State.cachedPanels.unsecuredSoulsState = null;
         State.cachedPanels.unsecuredSoulsSource = null;
-        State.unsecuredSoulsDisplayMode = "";
-        State.unsecuredSoulsLastLayoutSig = "";
-        State.unsecuredSoulsLastClassSig = "";
-        State.unsecuredSoulsLastTitle = "";
-        State.unsecuredSoulsLastStatus = "";
-        State.unsecuredSoulsNextSourceSearchMs = 0;
+        State.unsecuredSouls.displayMode = "";
+        State.unsecuredSouls.lastLayoutSig = "";
+        State.unsecuredSouls.lastClassSig = "";
+        State.unsecuredSouls.lastTitle = "";
+        State.unsecuredSouls.lastStatus = "";
+        State.unsecuredSouls.nextSourceSearchMs = 0;
         ResetUnsecuredSoulsTracking();
     }
 
     function UpdateUnsecuredSoulsOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (State.unsecuredSoulsDisplayMode !== "context_off") {
+            if (State.unsecuredSouls.displayMode !== "context_off") {
                 RemoveUnsecuredSoulsOverlay(root);
-                State.unsecuredSoulsDisplayMode = "context_off";
+                State.unsecuredSouls.displayMode = "context_off";
             }
             return;
         }
 
         var enabled = Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1;
         if (!enabled) {
-            if (State.unsecuredSoulsDisplayMode !== "disabled") {
+            if (State.unsecuredSouls.displayMode !== "disabled") {
                 RemoveUnsecuredSoulsOverlay(root);
-                State.unsecuredSoulsDisplayMode = "disabled";
+                State.unsecuredSouls.displayMode = "disabled";
             }
             return;
         }
@@ -26713,7 +26715,7 @@ function GetUIRoot() {
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (State.unsecuredSoulsDisplayMode !== "hideout") {
+            if (State.unsecuredSouls.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 overlay.SetHasClass("danger_1", false);
                 overlay.SetHasClass("danger_2", false);
@@ -26722,17 +26724,17 @@ function GetUIRoot() {
                 overlay.SetHasClass("has_souls", false);
                 overlay.SetHasClass("is_safe", true);
                 overlay.SetHasClass("is_syncing", false);
-                State.unsecuredSoulsLastClassSig = "";
+                State.unsecuredSouls.lastClassSig = "";
             }
-            State.unsecuredSoulsDisplayMode = "hideout";
+            State.unsecuredSouls.displayMode = "hideout";
             ResetUnsecuredSoulsTracking();
             return;
         }
 
-        if (State.unsecuredSoulsDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.unsecuredSoulsDisplayMode = "active";
+        State.unsecuredSouls.displayMode = "active";
 
         var timerOffsetX = Number(cfg.UNSECURED_SOUL_TIMER_X_OFFSET);
         var timerOffsetY = Number(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET);
@@ -26761,18 +26763,18 @@ function GetUIRoot() {
             stateLabel.style.fontSize = timerFontSize;
         }
         var layoutSig = [String(timerOffsetX), String(timerOffsetY), String(timerScale)].join("|");
-        if (layoutSig !== State.unsecuredSoulsLastLayoutSig) {
+        if (layoutSig !== State.unsecuredSouls.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + timerOffsetX) + "px";
             overlay.style.marginBottom = (110 + timerOffsetY) + "px";
-            State.unsecuredSoulsLastLayoutSig = layoutSig;
+            State.unsecuredSouls.lastLayoutSig = layoutSig;
         }
 
         var source = State.cachedPanels.unsecuredSoulsSource;
         if (!IsPanelValid(source)) {
             source = null;
-            if (nowMs >= (State.unsecuredSoulsNextSourceSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.nextSourceSearchMs || 0)) {
                 source = FindUnsecuredSoulsSource(root);
-                State.unsecuredSoulsNextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
+                State.unsecuredSouls.nextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
                 State.cachedPanels.unsecuredSoulsSource = source || null;
             }
         }
@@ -26782,27 +26784,27 @@ function GetUIRoot() {
         var souls = isUnresolved ? 0 : ParseUnsecuredSoulsValue(rawText);
 
         if (!isUnresolved) {
-            if (State.unsecuredSoulsLastSouls >= 0 && State.unsecuredSoulsLastSampleMs > 0) {
-                var dtSec = (nowMs - State.unsecuredSoulsLastSampleMs) / 1000.0;
-                var delta = State.unsecuredSoulsLastSouls - souls;
+            if (State.unsecuredSouls.lastSouls >= 0 && State.unsecuredSouls.lastSampleMs > 0) {
+                var dtSec = (nowMs - State.unsecuredSouls.lastSampleMs) / 1000.0;
+                var delta = State.unsecuredSouls.lastSouls - souls;
                 if (dtSec >= (UNSECURED_SOULS_MIN_SAMPLE_MS / 1000.0) && delta > 0) {
                     var instRate = delta / dtSec;
                     if (isFinite(instRate) && instRate > UNSECURED_SOULS_RATE_MIN) {
-                        if (!isFinite(State.unsecuredSoulsRateEma) || State.unsecuredSoulsRateEma <= 0) {
-                            State.unsecuredSoulsRateEma = instRate;
+                        if (!isFinite(State.unsecuredSouls.rateEma) || State.unsecuredSouls.rateEma <= 0) {
+                            State.unsecuredSouls.rateEma = instRate;
                         } else {
-                            State.unsecuredSoulsRateEma = State.unsecuredSoulsRateEma + ((instRate - State.unsecuredSoulsRateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
+                            State.unsecuredSouls.rateEma = State.unsecuredSouls.rateEma + ((instRate - State.unsecuredSouls.rateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
                         }
-                        State.unsecuredSoulsRateLastUpdateMs = nowMs;
+                        State.unsecuredSouls.rateLastUpdateMs = nowMs;
                     }
                 } else if (delta < 0) {
                     // Soul gains are not a valid decay-rate signal; reset to fallback mode until we observe new spend.
-                    State.unsecuredSoulsRateEma = 0;
-                    State.unsecuredSoulsRateLastUpdateMs = 0;
+                    State.unsecuredSouls.rateEma = 0;
+                    State.unsecuredSouls.rateLastUpdateMs = 0;
                 }
             }
-            State.unsecuredSoulsLastSouls = souls;
-            State.unsecuredSoulsLastSampleMs = nowMs;
+            State.unsecuredSouls.lastSouls = souls;
+            State.unsecuredSouls.lastSampleMs = nowMs;
         }
 
         var etaSec = 0;
@@ -26811,10 +26813,10 @@ function GetUIRoot() {
             var gameMin = GetGameSecondsForUrn(root) / 60.0;
             fallbackEtaSec = EstimateUnsecuredSoulsEtaFallbackSec(souls, gameMin);
 
-            var rateAgeMs = nowMs - (State.unsecuredSoulsRateLastUpdateMs || 0);
-            var rateFresh = (State.unsecuredSoulsRateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
-            if (rateFresh && isFinite(State.unsecuredSoulsRateEma) && State.unsecuredSoulsRateEma > UNSECURED_SOULS_RATE_MIN) {
-                etaSec = souls / State.unsecuredSoulsRateEma;
+            var rateAgeMs = nowMs - (State.unsecuredSouls.rateLastUpdateMs || 0);
+            var rateFresh = (State.unsecuredSouls.rateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
+            if (rateFresh && isFinite(State.unsecuredSouls.rateEma) && State.unsecuredSouls.rateEma > UNSECURED_SOULS_RATE_MIN) {
+                etaSec = souls / State.unsecuredSouls.rateEma;
             }
             if (!isFinite(etaSec) || etaSec <= 0) {
                 etaSec = fallbackEtaSec;
@@ -26825,17 +26827,17 @@ function GetUIRoot() {
                 etaSec = UNSECURED_SOULS_ETA_MAX_SEC;
             }
             if (isFinite(etaSec) && etaSec > 0) {
-                State.unsecuredSoulsEtaEndMs = nowMs + Math.round(etaSec * 1000);
+                State.unsecuredSouls.etaEndMs = nowMs + Math.round(etaSec * 1000);
             }
         } else if (souls <= 0) {
-            State.unsecuredSoulsEtaEndMs = 0;
-            State.unsecuredSoulsRateEma = 0;
-            State.unsecuredSoulsRateLastUpdateMs = 0;
+            State.unsecuredSouls.etaEndMs = 0;
+            State.unsecuredSouls.rateEma = 0;
+            State.unsecuredSouls.rateLastUpdateMs = 0;
         }
 
         var etaRemainingSec = 0;
-        if (State.unsecuredSoulsEtaEndMs > nowMs) {
-            etaRemainingSec = (State.unsecuredSoulsEtaEndMs - nowMs) / 1000.0;
+        if (State.unsecuredSouls.etaEndMs > nowMs) {
+            etaRemainingSec = (State.unsecuredSouls.etaEndMs - nowMs) / 1000.0;
         }
 
         var statusText = "--";
@@ -26856,7 +26858,7 @@ function GetUIRoot() {
             souls > 0 ? "1" : "0",
             isUnresolved ? "1" : "0"
         ].join("|");
-        if (classSig !== State.unsecuredSoulsLastClassSig) {
+        if (classSig !== State.unsecuredSouls.lastClassSig) {
             overlay.SetHasClass("danger_1", dangerLevel === 1);
             overlay.SetHasClass("danger_2", dangerLevel === 2);
             overlay.SetHasClass("danger_3", dangerLevel === 3);
@@ -26864,13 +26866,13 @@ function GetUIRoot() {
             overlay.SetHasClass("has_souls", souls > 0);
             overlay.SetHasClass("is_safe", souls <= 0 && !isUnresolved);
             overlay.SetHasClass("is_syncing", isUnresolved);
-            State.unsecuredSoulsLastClassSig = classSig;
+            State.unsecuredSouls.lastClassSig = classSig;
         }
 
-        State.unsecuredSoulsLastTitle = "";
-        if (stateLabel && statusText !== State.unsecuredSoulsLastStatus) {
+        State.unsecuredSouls.lastTitle = "";
+        if (stateLabel && statusText !== State.unsecuredSouls.lastStatus) {
             stateLabel.text = statusText;
-            State.unsecuredSoulsLastStatus = statusText;
+            State.unsecuredSouls.lastStatus = statusText;
         }
     }
 
@@ -33505,7 +33507,7 @@ function GetUIRoot() {
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
         if (Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1) return true;
         return !!(
-            State.unsecuredSoulsHudStyleSig ||
+            State.unsecuredSouls.hudStyleSig ||
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
             IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
         );
@@ -33922,7 +33924,7 @@ function GetUIRoot() {
         gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
         gates.keyboardRuntime = gates.keyboardRuntimeActive || IsPanelValid(State.cachedPanels.keyboardOverlayRoot) || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
-        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSoulsDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
+        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
@@ -33930,7 +33932,7 @@ function GetUIRoot() {
         gates.imagesInChat = gates.imagesInChatActive;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
-            State.unsecuredSoulsHudStyleSig ||
+            State.unsecuredSouls.hudStyleSig ||
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
             IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
         );
