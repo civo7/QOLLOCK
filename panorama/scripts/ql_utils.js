@@ -161,6 +161,178 @@
     }
     exports.ValidateConfigHealth = ValidateConfigHealth;
 
+    // ---- Number Normalization ----
+
+    /**
+     * Clamp a value to [0, 1] with a configurable fallback.
+     */
+    function NormalizeOpacityNumber(value, fallback) {
+        var n = Number(value);
+        if (!isFinite(n)) n = Number(fallback);
+        if (!isFinite(n)) n = 1.0;
+        if (n < 0) n = 0;
+        if (n > 1) n = 1;
+        return n;
+    }
+    exports.NormalizeOpacityNumber = NormalizeOpacityNumber;
+
+    /**
+     * Round a pixel-offset value to an integer with safe fallback.
+     */
+    function NormalizeHudOffsetNumber(value, fallback) {
+        var n = Math.round(Number(value));
+        if (!isFinite(n)) n = Math.round(Number(fallback) || 0);
+        if (!isFinite(n)) n = 0;
+        return n;
+    }
+    exports.NormalizeHudOffsetNumber = NormalizeHudOffsetNumber;
+
+    /**
+     * Format a HUD offset as a CSS pixel string.
+     */
+    function FormatHudPx(value, fallback) {
+        return String(NormalizeHudOffsetNumber(value, fallback)) + "px";
+    }
+    exports.FormatHudPx = FormatHudPx;
+
+    /**
+     * Clamp a scale value to [0.5, 1.5] with a configurable fallback.
+     */
+    function NormalizeHudScaleNumber(value, fallback) {
+        var n = Number(value);
+        if (!isFinite(n)) n = Number(fallback);
+        if (!isFinite(n)) n = 1.0;
+        if (n < 0.5) n = 0.5;
+        if (n > 1.5) n = 1.5;
+        return n;
+    }
+    exports.NormalizeHudScaleNumber = NormalizeHudScaleNumber;
+
+    // ---- Angle Math ----
+
+    /**
+     * Normalize an angle to [0, 360).
+     */
+    function NormalizeDegrees360(rawDeg) {
+        var out = rawDeg % 360;
+        if (out < 0) out += 360;
+        if (out >= 360) out -= 360;
+        return out;
+    }
+    exports.NormalizeDegrees360 = NormalizeDegrees360;
+
+    /**
+     * Normalize an angle to [-180, 180).
+     */
+    function NormalizeDegrees180(rawDeg) {
+        var out = NormalizeDegrees360(rawDeg);
+        if (out > 180) out -= 360;
+        return out;
+    }
+    exports.NormalizeDegrees180 = NormalizeDegrees180;
+
+    /**
+     * Shortest signed delta between two angles in degrees.
+     */
+    function ShortestDegreesDelta(fromDeg, toDeg) {
+        var from = NormalizeDegrees180(fromDeg);
+        var to = NormalizeDegrees180(toDeg);
+        var delta = to - from;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        return delta;
+    }
+    exports.ShortestDegreesDelta = ShortestDegreesDelta;
+
+    // ---- Panel Safety Wrappers ----
+
+    /**
+     * Set a CSS style property on a panel with null guards and try/catch.
+     */
+    function SetStyleSafe(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return;
+        try {
+            panel.style[prop] = value;
+        } catch (e) {}
+    }
+    exports.SetStyleSafe = SetStyleSafe;
+
+    /**
+     * Clear a CSS style property on a panel (tries delete, null, then "").
+     */
+    function ClearStyleSafe(panel, prop) {
+        if (!panel || !panel.style || !prop) return;
+        try { delete panel.style[prop]; } catch (e0) {}
+        try { panel.style[prop] = null; } catch (e1) {}
+        try { panel.style[prop] = ""; } catch (e2) {}
+    }
+    exports.ClearStyleSafe = ClearStyleSafe;
+
+    /**
+     * Safely set panel opacity with bounds clamping and fallback.
+     * Returns the opacity text that was applied.
+     */
+    function SetPanelOpacitySafe(panel, value, fallback) {
+        if (!panel || !panel.style) return "";
+        var text = NormalizeOpacityNumber(value, fallback).toFixed(2);
+        try {
+            if (panel.style.opacity !== text) panel.style.opacity = text;
+        } catch (e0) {
+            try { panel.style.opacity = "1.00"; } catch (e1) {}
+        }
+        return text;
+    }
+    exports.SetPanelOpacitySafe = SetPanelOpacitySafe;
+
+    /**
+     * Returns true if every panel in the list is valid.
+     */
+    function IsPanelListValid(list) {
+        if (!list || list.length === 0) return false;
+        for (var i = 0; i < list.length; i++) {
+            if (!IsPanelValid(list[i])) return false;
+        }
+        return true;
+    }
+    exports.IsPanelListValid = IsPanelListValid;
+
+    /**
+     * Safely read a panel layout offset, rejecting FLT_MAX and non-finite values.
+     */
+    function ReadSafePanelLayoutOffset(rawValue) {
+        var n = Number(rawValue);
+        if (!isFinite(n)) return null;
+        if (Math.abs(n) > 100000) return null;
+        return n;
+    }
+    exports.ReadSafePanelLayoutOffset = ReadSafePanelLayoutOffset;
+
+    /**
+     * Safely check if a panel has a CSS class, with null guard.
+     */
+    function PanelHasClass(panel, className) {
+        return !!(panel && panel.BHasClass && panel.BHasClass(className));
+    }
+    exports.PanelHasClass = PanelHasClass;
+
+    /**
+     * Return an array if the value is one, or an empty array.
+     */
+    function SafeArray(val) {
+        return Array.isArray(val) ? val : [];
+    }
+    exports.SafeArray = SafeArray;
+
+    /**
+     * Safely set panel visibility with null guard and no-op on same value.
+     */
+    function SetPanelVisibility(panel, visible) {
+        if (!panel || !panel.style) return;
+        var value = visible ? "visible" : "collapse";
+        if (panel.style.visibility !== value) panel.style.visibility = value;
+    }
+    exports.SetPanelVisibility = SetPanelVisibility;
+
     // ---- Logging (Fix 16) ----
 
     var DEBUG_ENABLED = false;

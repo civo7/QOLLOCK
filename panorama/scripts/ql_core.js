@@ -44,9 +44,6 @@
     };
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
-    var FindFirstPanelByClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function() { return null; };
-    var FindAncestorWithClass_utils = QOL_UTILS_LOADED ? QOL_UTILS.FindAncestorWithClass : function() { return null; };
-    var HasClassInHierarchy_utils = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function() { return false; };
     var LogUtilsError = QOL_UTILS_LOADED ? QOL_UTILS.LogError : function() {};
     var PerfNowMs_utils = QOL_UTILS_LOADED ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
     var ValidateConfigHealth_utils = QOL_UTILS_LOADED ? QOL_UTILS.ValidateConfigHealth : function() { return []; };
@@ -9239,23 +9236,23 @@ function GetUIRoot() {
         }
     }
 
-    function FindFirstPanelByClass(root, className) {
+    var FindFirstPanelByClass = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function(root, className) {
         if (!root || !root.FindChildrenWithClassTraverse || !className) return null;
         var panels = root.FindChildrenWithClassTraverse(className) || [];
         for (var i = 0; i < panels.length; i++) {
             if (IsPanelValid(panels[i])) return panels[i];
         }
         return null;
-    }
+    };
 
-    function hasClassInHierarchy(panel, className) {
+    var hasClassInHierarchy = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function(panel, className) {
         var current = panel;
         while (current) {
             if (current.BHasClass(className)) return true;
             current = current.GetParent();
         }
         return false;
-    }
+    };
 
     function IsHudClassActive(root, className) {
         if (!className) return false;
@@ -9270,14 +9267,14 @@ function GetUIRoot() {
         return false;
     }
 
-    function FindAncestorWithClass(panel, className) {
+    var FindAncestorWithClass = QOL_UTILS_LOADED ? QOL_UTILS.FindAncestorWithClass : function(panel, className) {
         var current = panel;
         while (current) {
             if (current.BHasClass && current.BHasClass(className)) return current;
             current = current.GetParent ? current.GetParent() : null;
         }
         return null;
-    }
+    };
 
     function FindItemOwnerFromContainer(iconContainer) {
         var current = iconContainer;
@@ -9305,25 +9302,17 @@ function GetUIRoot() {
         ];
     }
 
-    function SetStyleSafe(panel, prop, value) {
+    var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
         if (!panel || !panel.style || !prop) return;
-        try {
-            panel.style[prop] = value;
-        } catch (e) {}
-    }
+        try { panel.style[prop] = value; } catch (e) {}
+    };
 
-    function ClearStyleSafe(panel, prop) {
+    var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
         if (!panel || !panel.style || !prop) return;
-        try {
-            delete panel.style[prop];
-        } catch (e0) {}
-        try {
-            panel.style[prop] = null;
-        } catch (e1) {}
-        try {
-            panel.style[prop] = "";
-        } catch (e2) {}
-    }
+        try { delete panel.style[prop]; } catch (e0) {}
+        try { panel.style[prop] = null; } catch (e1) {}
+        try { panel.style[prop] = ""; } catch (e2) {}
+    };
 
     function SetWashColorSafe(panel, color) {
         if (color) {
@@ -15758,23 +15747,25 @@ function GetUIRoot() {
     }
 
     function IsPanelListValid(list) {
-        if (!list || list.length === 0) return false;
-        for (var i = 0; i < list.length; i++) {
-            if (!IsPanelValid(list[i])) return false;
-        }
-        return true;
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
     }
 
-    function NormalizeOpacityNumber(value, fallback) {
+    var NormalizeOpacityNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeOpacityNumber : function(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
         if (!isFinite(n)) n = 1.0;
         if (n < 0) n = 0;
         if (n > 1) n = 1;
         return n;
-    }
+    };
 
-    function SetPanelOpacitySafe(panel, value, fallback) {
+    var SetPanelOpacitySafe = QOL_UTILS_LOADED ? QOL_UTILS.SetPanelOpacitySafe : function(panel, value, fallback) {
         if (!panel || !panel.style) return "";
         var text = NormalizeOpacityNumber(value, fallback).toFixed(2);
         try {
@@ -15783,27 +15774,27 @@ function GetUIRoot() {
             try { panel.style.opacity = "1.00"; } catch (e1) {}
         }
         return text;
-    }
+    };
 
-    function NormalizeHudOffsetNumber(value, fallback) {
+    var NormalizeHudOffsetNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeHudOffsetNumber : function(value, fallback) {
         var n = Math.round(Number(value));
         if (!isFinite(n)) n = Math.round(Number(fallback) || 0);
         if (!isFinite(n)) n = 0;
         return n;
-    }
+    };
 
-    function FormatHudPx(value, fallback) {
+    var FormatHudPx = QOL_UTILS_LOADED ? QOL_UTILS.FormatHudPx : function(value, fallback) {
         return String(NormalizeHudOffsetNumber(value, fallback)) + "px";
-    }
+    };
 
-    function NormalizeHudScaleNumber(value, fallback) {
+    var NormalizeHudScaleNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeHudScaleNumber : function(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
         if (!isFinite(n)) n = 1.0;
         if (n < 0.5) n = 0.5;
         if (n > 1.5) n = 1.5;
         return n;
-    }
+    };
 
     function NormalizeEnhancedQuickbuyCount(value) {
         var n = Math.round(Number(value));
@@ -26564,12 +26555,12 @@ function GetUIRoot() {
         State.unsecuredSouls.hudMirrorText = null;
     }
 
-    function ReadSafePanelLayoutOffset(rawValue) {
+    var ReadSafePanelLayoutOffset = QOL_UTILS_LOADED ? QOL_UTILS.ReadSafePanelLayoutOffset : function(rawValue) {
         var n = Number(rawValue);
         if (!isFinite(n)) return null;
         if (Math.abs(n) > PANEL_LAYOUT_OFFSET_ABS_MAX) return null;
         return n;
-    }
+    };
 
     function GetPanelPositionRelativeToAncestor(panel, ancestor) {
         if (!panel || !ancestor) return null;
@@ -31602,27 +31593,27 @@ function GetUIRoot() {
         return _posResultScratch;
     }
 
-    function NormalizeDegrees360(rawDeg) {
+    var NormalizeDegrees360 = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeDegrees360 : function(rawDeg) {
         var out = rawDeg % 360;
         if (out < 0) out += 360;
         if (out >= 360) out -= 360;
         return out;
-    }
+    };
 
-    function NormalizeDegrees180(rawDeg) {
+    var NormalizeDegrees180 = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeDegrees180 : function(rawDeg) {
         var out = NormalizeDegrees360(rawDeg);
         if (out > 180) out -= 360;
         return out;
-    }
+    };
 
-    function ShortestDegreesDelta(fromDeg, toDeg) {
+    var ShortestDegreesDelta = QOL_UTILS_LOADED ? QOL_UTILS.ShortestDegreesDelta : function(fromDeg, toDeg) {
         var from = NormalizeDegrees180(fromDeg);
         var to = NormalizeDegrees180(toDeg);
         var delta = to - from;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
         return delta;
-    }
+    };
 
     function CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) {
         var now = Number(nowMs) || 0;
