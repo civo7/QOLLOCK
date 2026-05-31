@@ -431,7 +431,7 @@
      *
      * Off by default — QOL_UTILS.SetProfilerEnabled(true)
      */
-    var _profilerEnabled = false;
+    var _profilerEnabled = true;
     var _profilerHits = {};       // { name: [{timeMs, count}] } — ring of 10s buckets
     var _profilerLastDumpMs = 0;
     var _PROFILER_WINDOW_MS = 60000;
@@ -491,7 +491,7 @@
      *
      * Off by default — QOL_UTILS.SetTimingEnabled(true)
      */
-    var _timingEnabled = false;
+    var _timingEnabled = true;
     var _timingSamples = {};      // { name: [{elapsedMs, timeMs}] }
     var _timingFrameSamples = []; // [{elapsedMs, timeMs}]
     var _timingLastDumpMs = 0;
