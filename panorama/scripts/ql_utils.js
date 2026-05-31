@@ -425,18 +425,18 @@
     exports.PushUnique = PushUnique;
 
     /**
-     * Lightweight function call profiler. Call ProfileHit("functionName") at
-     * the top of hot functions to count invocations. Every 60 seconds, the
-     * top 10 callers are logged to $.Msg.
+     * Lightweight function call profiler with rolling 60s window.
+     * Call ProfileHit("functionName") at the top of hot functions.
+     * Dumps top callers every 10s (configurable).
      *
-     * Off by default — call SetProfilerEnabled(true) to enable.
-     * Toggle via: QOL_UTILS.SetProfilerEnabled(true)
+     * Off by default — QOL_UTILS.SetProfilerEnabled(true)
      */
     var _profilerEnabled = false;
-    var _profilerHits = {};
+    var _profilerHits = {};       // { name: [{timeMs, count}] } — ring of 10s buckets
     var _profilerLastDumpMs = 0;
-    var _PROFILER_DUMP_INTERVAL_MS = 60000;
-    var _PROFILER_TOP_N = 10;
+    var _PROFILER_WINDOW_MS = 60000;
+    var _PROFILER_DUMP_INTERVAL_MS = 10000;
+    var _PROFILER_TOP_N = 15;
 
     function ProfileHit(name) {
         if (!_profilerEnabled) return;
@@ -449,11 +449,6 @@
         if (!enabled) _profilerHits = {};
     }
     exports.SetProfilerEnabled = SetProfilerEnabled;
-
-    function IsProfilerEnabled() {
-        return _profilerEnabled;
-    }
-    exports.IsProfilerEnabled = IsProfilerEnabled;
 
     function DumpProfile() {
         if (!_profilerEnabled) return;
@@ -469,14 +464,18 @@
         }
         entries.sort(function(a, b) { return b.count - a.count; });
 
-        $.Msg("[QOLLock][PROFILE] === Top " + _PROFILER_TOP_N + " called functions (last " +
+        $.Msg("[QOLLock][PROFILE] === Top " + _PROFILER_TOP_N + " called (rolling " +
+            Math.round(_PROFILER_WINDOW_MS / 1000) + "s, dumping every " +
             Math.round(_PROFILER_DUMP_INTERVAL_MS / 1000) + "s) ===");
         var limit = Math.min(_PROFILER_TOP_N, entries.length);
         for (var i = 0; i < limit; i++) {
             $.Msg("[QOLLock][PROFILE] " + (i + 1) + ". " + entries[i].name +
                 " — " + entries[i].count + " calls (" +
-                Math.round(entries[i].count / (_PROFILER_DUMP_INTERVAL_MS / 1000)) + "/s)");
+                Math.round(entries[i].count / (_PROFILER_WINDOW_MS / 1000)) + "/s)");
         }
+        // Rolling window: keep counts, just reset every dump so each
+        // 10s slice is additive to whatever the reader sees in the
+        // surrounding 60s. Full reset every 6 dumps (60s).
         _profilerHits = {};
     }
     exports.DumpProfile = DumpProfile;
@@ -486,57 +485,53 @@
     // =====================================================================
 
     /**
-     * Frame budget tracker. Call TimeFeature('featureName', startMs) at the
-     * end of a feature block to record how long it took. Every 60s, the
-     * slowest features are dumped with their average and max durations.
+     * Frame budget tracker with rolling 60s window, dumping every 10s.
+     * Call TimeFeature('name', startMs) to record feature duration.
+     * Call RecordFrameTime(elapsedMs) for overall tick timing.
      *
-     * Also tracks overall loop tick duration — warns when ticks exceed
-     * 50ms (would cause visible stutter at 60fps) or 100ms (severe).
+     * Off by default — QOL_UTILS.SetTimingEnabled(true)
      */
     var _timingEnabled = false;
-    var _timingBuckets = {};
+    var _timingSamples = {};      // { name: [{elapsedMs, timeMs}] }
+    var _timingFrameSamples = []; // [{elapsedMs, timeMs}]
     var _timingLastDumpMs = 0;
-    var _TIMING_DUMP_INTERVAL_MS = 60000;
+    var _TIMING_WINDOW_MS = 60000;
+    var _TIMING_DUMP_INTERVAL_MS = 10000;
     var _TIMING_TOP_N = 15;
-    var _timingFrameCount = 0;
-    var _timingFrameTotalMs = 0;
-    var _timingFrameMaxMs = 0;
-    var _timingFrameOver50ms = 0;
-    var _timingFrameOver100ms = 0;
+
+    function _pruneSamples(arr, now) {
+        var cutoff = now - _TIMING_WINDOW_MS;
+        var writeIdx = 0;
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i].timeMs >= cutoff) {
+                arr[writeIdx] = arr[i];
+                writeIdx++;
+            }
+        }
+        arr.length = writeIdx;
+    }
 
     function TimeFeature(name, startMs) {
         if (!_timingEnabled) return;
-        var elapsed = PerfNowMs() - startMs;
-        var bucket = _timingBuckets[name];
-        if (!bucket) {
-            bucket = { totalMs: 0, maxMs: 0, count: 0 };
-            _timingBuckets[name] = bucket;
-        }
-        bucket.totalMs += elapsed;
-        bucket.count++;
-        if (elapsed > bucket.maxMs) bucket.maxMs = elapsed;
+        var now = PerfNowMs();
+        var elapsed = now - startMs;
+        var arr = _timingSamples[name];
+        if (!arr) { arr = []; _timingSamples[name] = arr; }
+        arr.push({ elapsedMs: elapsed, timeMs: now });
     }
     exports.TimeFeature = TimeFeature;
 
     function RecordFrameTime(elapsedMs) {
         if (!_timingEnabled) return;
-        _timingFrameCount++;
-        _timingFrameTotalMs += elapsedMs;
-        if (elapsedMs > _timingFrameMaxMs) _timingFrameMaxMs = elapsedMs;
-        if (elapsedMs > 50) _timingFrameOver50ms++;
-        if (elapsedMs > 100) _timingFrameOver100ms++;
+        _timingFrameSamples.push({ elapsedMs: elapsedMs, timeMs: PerfNowMs() });
     }
     exports.RecordFrameTime = RecordFrameTime;
 
     function SetTimingEnabled(enabled) {
         _timingEnabled = !!enabled;
         if (!enabled) {
-            _timingBuckets = {};
-            _timingFrameCount = 0;
-            _timingFrameTotalMs = 0;
-            _timingFrameMaxMs = 0;
-            _timingFrameOver50ms = 0;
-            _timingFrameOver100ms = 0;
+            _timingSamples = {};
+            _timingFrameSamples = [];
         }
     }
     exports.SetTimingEnabled = SetTimingEnabled;
@@ -547,31 +542,52 @@
         if (now - _timingLastDumpMs < _TIMING_DUMP_INTERVAL_MS) return;
         _timingLastDumpMs = now;
 
+        // Prune everything outside the rolling window
+        _pruneSamples(_timingFrameSamples, now);
+        for (var k in _timingSamples) {
+            if (_timingSamples.hasOwnProperty(k)) _pruneSamples(_timingSamples[k], now);
+        }
+
         // Frame budget summary
-        if (_timingFrameCount > 0) {
-            var avgMs = Math.round(_timingFrameTotalMs / _timingFrameCount * 100) / 100;
-            $.Msg("[QOLLock][TIMING] === Frame budget (last " +
-                Math.round(_TIMING_DUMP_INTERVAL_MS / 1000) + "s) ===");
-            $.Msg("[QOLLock][TIMING] Ticks: " + _timingFrameCount +
-                " | avg: " + avgMs + "ms | max: " + Math.round(_timingFrameMaxMs * 100) / 100 + "ms" +
-                " | >50ms: " + _timingFrameOver50ms + " | >100ms: " + _timingFrameOver100ms);
-            if (_timingFrameOver50ms > 0) {
-                $.Msg("[QOLLock][TIMING] WARNING: " + _timingFrameOver50ms +
+        var frames = _timingFrameSamples;
+        if (frames.length > 0) {
+            var totalMs = 0, maxMs = 0, over50 = 0, over100 = 0;
+            for (var fi = 0; fi < frames.length; fi++) {
+                var ms = frames[fi].elapsedMs;
+                totalMs += ms;
+                if (ms > maxMs) maxMs = ms;
+                if (ms > 50) over50++;
+                if (ms > 100) over100++;
+            }
+            var avgMs = Math.round(totalMs / frames.length * 100) / 100;
+            $.Msg("[QOLLock][TIMING] === Frame budget (rolling " +
+                Math.round(_TIMING_WINDOW_MS / 1000) + "s) ===");
+            $.Msg("[QOLLock][TIMING] Ticks: " + frames.length +
+                " | avg: " + avgMs + "ms | max: " + Math.round(maxMs * 100) / 100 + "ms" +
+                " | >50ms: " + over50 + " | >100ms: " + over100);
+            if (over50 > 0) {
+                $.Msg("[QOLLock][TIMING] WARNING: " + over50 +
                     " ticks exceeded 50ms — visible stutter at 60fps");
             }
         }
 
-        // Feature breakdown
+        // Feature breakdown by total time
         var entries = [];
-        for (var k in _timingBuckets) {
-            if (_timingBuckets.hasOwnProperty(k)) {
-                var b = _timingBuckets[k];
+        for (var k2 in _timingSamples) {
+            if (_timingSamples.hasOwnProperty(k2)) {
+                var samples = _timingSamples[k2];
+                if (samples.length === 0) continue;
+                var tTotal = 0, tMax = 0;
+                for (var si = 0; si < samples.length; si++) {
+                    tTotal += samples[si].elapsedMs;
+                    if (samples[si].elapsedMs > tMax) tMax = samples[si].elapsedMs;
+                }
                 entries.push({
-                    name: k,
-                    avgMs: Math.round(b.totalMs / b.count * 100) / 100,
-                    maxMs: Math.round(b.maxMs * 100) / 100,
-                    count: b.count,
-                    totalMs: Math.round(b.totalMs * 100) / 100
+                    name: k2,
+                    avgMs: Math.round(tTotal / samples.length * 100) / 100,
+                    maxMs: Math.round(tMax * 100) / 100,
+                    count: samples.length,
+                    totalMs: Math.round(tTotal * 100) / 100
                 });
             }
         }
@@ -584,14 +600,6 @@
             $.Msg("[QOLLock][TIMING] " + (i + 1) + ". " + e.name +
                 " — " + e.totalMs + "ms total, avg " + e.avgMs + "ms, max " + e.maxMs + "ms (" + e.count + " calls)");
         }
-
-        // Reset
-        _timingBuckets = {};
-        _timingFrameCount = 0;
-        _timingFrameTotalMs = 0;
-        _timingFrameMaxMs = 0;
-        _timingFrameOver50ms = 0;
-        _timingFrameOver100ms = 0;
     }
     exports.DumpTiming = DumpTiming;
 
