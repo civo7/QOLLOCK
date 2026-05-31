@@ -5626,7 +5626,7 @@ function ExpressShotLog(msg) {
 
         var selectedBuild = null;
         try {
-            selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         } catch (e1) {
             selectedBuild = null;
         }
@@ -6301,12 +6301,12 @@ function ExpressShotLog(msg) {
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -6597,9 +6597,9 @@ function ExpressShotLog(msg) {
         }
 
         if (root && root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
-            PushRootUnique(root.FindChildTraverse("hud_signature"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
         }
         PushRootUnique(root);
@@ -6685,13 +6685,13 @@ function ExpressShotLog(msg) {
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("hud_signature"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -6775,12 +6775,12 @@ function ExpressShotLog(msg) {
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -8897,7 +8897,7 @@ function GetUIRoot() {
         try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
 
         var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e1) { hud = null; }
+        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
         if (!hud || !hud.GetAttributeString) return rootRaw;
 
         var hudRaw = "";
@@ -8926,7 +8926,7 @@ function GetUIRoot() {
 
         var nextRaw = String(rawText || "");
         var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
+        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
         var parseRev = function(v) {
             var n = Number(v);
             if (!isFinite(n) || n < 0) return 0;
@@ -9015,14 +9015,14 @@ function GetUIRoot() {
 
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
         if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
 
         var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
         if (!abilities && root && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse("AbilitiesContainer");
+            abilities = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
             State.cachedPanels.abilitiesContainer = abilities || null;
         }
         if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
@@ -9150,7 +9150,7 @@ function GetUIRoot() {
             }
         } catch (eAttrRoot) {}
         try {
-            var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
             if (hud && hud.GetAttributeString) {
                 var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
                 if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
@@ -9279,7 +9279,7 @@ function GetUIRoot() {
     }
 
     function ResolveColoredHealthbarPanels(root) {
-        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
+        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
         var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null);
         if (healthContainer !== State.cachedPanels.healthContainer) {
             State.cachedPanels.healthContainer = healthContainer || null;
@@ -9499,11 +9499,11 @@ function GetUIRoot() {
         pushUnique(State.cachedPanels.healthContainer);
 
         if (root && root.FindChildTraverse) {
-            pushUnique(root.FindChildTraverse("health_and_abilities_container"));
+            pushUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         }
         var uiRoot = GetUIRoot();
         if (uiRoot && uiRoot.FindChildTraverse) {
-            pushUnique(uiRoot.FindChildTraverse("health_and_abilities_container"));
+            pushUnique(uiRoot.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         }
 
         for (var p = 0; p < seen.length; p++) {
@@ -9755,7 +9755,7 @@ function GetUIRoot() {
 
         var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
         if (!hud && root.FindChildTraverse) {
-            hud = root.FindChildTraverse("Hud");
+            hud = root.FindChildTraverse(PANEL_ID_HUD);
             State.cachedPanels.hudPanel = hud || null;
         }
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
@@ -9766,7 +9766,7 @@ function GetUIRoot() {
 
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
 
@@ -9778,13 +9778,13 @@ function GetUIRoot() {
 
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar");
+            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             State.cachedPanels.topBarPanel = topBar || null;
         }
 
         var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
         if (!abilities && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse("AbilitiesContainer");
+            abilities = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
             State.cachedPanels.abilitiesContainer = abilities || null;
         }
 
@@ -9841,7 +9841,7 @@ function GetUIRoot() {
     function UpdateMinimalistHealthbarOffsets(root, cfg, enabled) {
         var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
         if (!healthContainer) {
-            healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
+            healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
             State.cachedPanels.healthContainer = healthContainer || null;
         }
 
@@ -10633,7 +10633,7 @@ function GetUIRoot() {
     function McParseSoulsAndLevel(root) {
         try {
             if (!IsPanelValid(State.cachedPanels.mcGoldApContainer)) {
-                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse("gold_and_ap_container") || null) : null;
+                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) || null) : null;
                 if (!panel) {
                     if (!State.mcLoggedGoldApMiss) { $.Msg("[QOLLock][MC] gold_and_ap_container not found"); State.mcLoggedGoldApMiss = true; }
                     return;
@@ -10824,7 +10824,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return null;
         var goldContainer = IsPanelValid(State.cachedPanels.goldAndApContainer) ? State.cachedPanels.goldAndApContainer : null;
         if (!goldContainer) {
-            goldContainer = root.FindChildTraverse("gold_and_ap_container");
+            goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
             State.cachedPanels.goldAndApContainer = goldContainer || null;
         }
         if (!IsPanelValid(goldContainer) || !goldContainer.FindChildTraverse) return null;
@@ -11001,13 +11001,13 @@ function GetUIRoot() {
 
         var goldContainer = IsPanelValid(State.cachedPanels.goldAndApContainer) ? State.cachedPanels.goldAndApContainer : null;
         if (!goldContainer) {
-            goldContainer = root.FindChildTraverse("gold_and_ap_container");
+            goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
             State.cachedPanels.goldAndApContainer = goldContainer || null;
         }
 
         var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
         if (!healthContainer) {
-            healthContainer = root.FindChildTraverse("health_and_abilities_container");
+            healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
             State.cachedPanels.healthContainer = healthContainer || null;
         }
         var hudVisibleForRuntime = IsHudVisibleForPlayerHealthbarRuntime(root, healthContainer);
@@ -11329,7 +11329,7 @@ function GetUIRoot() {
     function IsStreetBrawlModeActive(root) {
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             if (!gameplayHud) {
                 gameplayHud = $.GetContextPanel ? $.GetContextPanel() : null;
             }
@@ -11714,7 +11714,7 @@ function GetUIRoot() {
         } catch (e) {}
         var hud = GetCachedPanel("cachedHudPanel");
         if (!hud && root && root.FindChildTraverse) {
-            hud = root.FindChildTraverse("Hud");
+            hud = root.FindChildTraverse(PANEL_ID_HUD);
             SetCachedPanel("cachedHudPanel", hud);
         }
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
@@ -11723,10 +11723,10 @@ function GetUIRoot() {
 
     function IsStartupLoaderInActiveMatchContext(root) {
         if (!root) return false;
-        var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+        var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
         var hideout = isConnectedToHideout(root);
@@ -11827,7 +11827,7 @@ function GetUIRoot() {
 
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar") || null;
+            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
             State.cachedPanels.topBarPanel = topBar;
         }
         if (!topBar) return;
@@ -11881,7 +11881,7 @@ function GetUIRoot() {
         panel = root ? root.FindChildTraverse("UrnTracker") : null;
         if (!panel) {
             var parent = null;
-            var topBar = root ? root.FindChildTraverse("TopBar") : null;
+            var topBar = root ? root.FindChildTraverse(PANEL_ID_TOP_BAR) : null;
             if (topBar) {
                 parent = FindFirstPanelByClass(topBar, "TeamNetworth");
             }
@@ -14544,7 +14544,7 @@ function GetUIRoot() {
             (nowMs - state.lastChargesLookupMs) > 1000;
         if (needLookup) {
             state.lastChargesLookupMs = nowMs;
-            state.cacheTopBar = root.FindChildTraverse("TopBar") || root.FindChildTraverse("CitadelHudTopBar");
+            state.cacheTopBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || root.FindChildTraverse("CitadelHudTopBar");
             state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
             state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
             state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
@@ -14865,7 +14865,7 @@ function GetUIRoot() {
 
     function GetGameplayHudPanel(root) {
         if (!root || !root.FindChildTraverse) return root || null;
-        return root.FindChildTraverse("gameplay_hud") || root;
+        return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
     }
 
     function IsCustomHudContextActive(root) {
@@ -15097,7 +15097,7 @@ function GetUIRoot() {
         var candidatePanels = [root];
         try {
             if (root.FindChildTraverse) {
-                var hud = root.FindChildTraverse("Hud");
+                var hud = root.FindChildTraverse(PANEL_ID_HUD);
                 var escape = root.FindChildTraverse("EscapeMenu");
                 if (hud) candidatePanels.push(hud);
                 if (escape) candidatePanels.push(escape);
@@ -15669,7 +15669,7 @@ function GetUIRoot() {
 
         var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
         if (!hud && root.FindChildTraverse) {
-            hud = root.FindChildTraverse("Hud");
+            hud = root.FindChildTraverse(PANEL_ID_HUD);
             State.cachedPanels.hudPanel = hud || null;
         }
 
@@ -15681,7 +15681,7 @@ function GetUIRoot() {
 
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
 
@@ -16226,7 +16226,7 @@ function GetUIRoot() {
         if (root && root.GetAttributeString) {
             var rootVal = root.GetAttributeString(USER_EDIT_REV_ATTR, "");
             var rootRev = (rootVal && rootVal.length > 0) ? parseRev(rootVal) : 0;
-            try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
+            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
             var hudRev = 0;
             if (hud && hud.GetAttributeString) {
                 try {
@@ -16344,7 +16344,7 @@ function GetUIRoot() {
         if (State.accountPresetUiMarker === next) return;
         State.accountPresetUiMarker = next;
         var hud = null;
-        try { hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
+        try { hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
         if (hud && hud.SetAttributeString) {
             try { hud.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e1) {}
         }
@@ -18330,7 +18330,7 @@ function GetUIRoot() {
                 }
             } catch (e0c) {}
             if (!preClosed) {
-                var preShopPanel = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroShop") : null;
+                var preShopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var preLeftCommandPanel = preShopPanel && preShopPanel.FindChildTraverse ? preShopPanel.FindChildTraverse("LeftCommandPanel") : null;
                 if (ActivatePanelSafe(preLeftCommandPanel)) preClosed = true;
             }
@@ -18375,7 +18375,7 @@ function GetUIRoot() {
                 }
             } catch (e2) {}
             if (!closed) {
-                var shopPanel = closeRoot.FindChildTraverse ? closeRoot.FindChildTraverse("CitadelHudHeroShop") : null;
+                var shopPanel = closeRoot.FindChildTraverse ? closeRoot.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
                 if (ActivatePanelSafe(leftCommandPanel)) {
                     closed = true;
@@ -18411,7 +18411,7 @@ function GetUIRoot() {
             }
         } catch (e0) {}
         if (!closed) {
-            var shopPanel = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroShop") : null;
+            var shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
             var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
             if (ActivatePanelSafe(leftCommandPanel)) closed = true;
         }
@@ -18590,7 +18590,7 @@ function GetUIRoot() {
                 detail = firstBuildSelect.ok
                     ? "Build browser already open; selected first build."
                     : "Build browser already open; waiting for build entries.";
-                var selectedBuildBootstrap = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                var selectedBuildBootstrap = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                 var selectedHeaderCountBootstrap = CountBuildCategoryHeaders(selectedBuildBootstrap);
                 var firstReason = String(firstBuildSelect && firstBuildSelect.reason ? firstBuildSelect.reason : "");
                 if (!firstBuildSelect.ok && firstReason.indexOf("entry_count:0") === 0 && selectedHeaderCountBootstrap <= 0) {
@@ -18732,7 +18732,7 @@ function GetUIRoot() {
             };
         }
 
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild) {
             State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
             return { state: "wait", detail: "Waiting for shop build panel.", waitMs: BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS };
@@ -18849,10 +18849,10 @@ function GetUIRoot() {
         for (var i = 0; i < roots.length; i++) {
             var scanRoot = roots[i];
             if (!scanRoot || !IsPanelValid(scanRoot)) continue;
-            if (ReadPanelIdTextMaybe(scanRoot) === "hud_signature") return scanRoot;
+            if (ReadPanelIdTextMaybe(scanRoot) === PANEL_ID_SIGNATURE) return scanRoot;
             if (!scanRoot.FindChildTraverse) continue;
             try {
-                var hud = scanRoot.FindChildTraverse("hud_signature");
+                var hud = scanRoot.FindChildTraverse(PANEL_ID_SIGNATURE);
                 if (hud && IsPanelValid(hud)) return hud;
             } catch (e1) {}
         }
@@ -18995,7 +18995,7 @@ function GetUIRoot() {
 
     function TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root) {
         if (!root || !root.FindChildTraverse) return { hero: "", source: "shopFavoritesHeaderMissing" };
-        var shopPanel = root.FindChildTraverse("CitadelHudHeroShop");
+        var shopPanel = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
         if (!shopPanel || !shopPanel.FindChildrenWithClassTraverse) {
             return { hero: "", source: "shopFavoritesHeaderMissing" };
         }
@@ -19841,7 +19841,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return false;
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
         if (!selectedBuild) {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         }
         if (!selectedBuild) return false;
@@ -19862,7 +19862,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return false;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
-        if (!selectedBuild) selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        if (!selectedBuild) selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
         State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         var initCreateLookup = FindCreateBuildButtonStrict(root);
@@ -19903,7 +19903,7 @@ function GetUIRoot() {
 
         if (stage === "create") {
             // Re-check before creating: if any category exists, reuse it.
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
             if (!IsStorageBuildListEmpty(root)) {
@@ -19974,7 +19974,7 @@ function GetUIRoot() {
         }
 
         if (stage === "create_verify") {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
 
@@ -20011,7 +20011,7 @@ function GetUIRoot() {
         }
 
         if (stage === "save") {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
 
@@ -20036,7 +20036,7 @@ function GetUIRoot() {
             return false;
         }
 
-        selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
         State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         if (selectedBuild && CountBuildCategoryHeaders(selectedBuild) > 0) {
@@ -20189,7 +20189,7 @@ function GetUIRoot() {
         if (!root) return "";
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
         if (!selectedBuild) {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         }
         if (!selectedBuild) return "";
@@ -20564,7 +20564,7 @@ function GetUIRoot() {
         if (forceImmediateScan) {
             var probeStartedMs = Number(State.buildCategoryPayloadHeroProbeStartedMs) || nowMs;
             if ((nowMs - probeStartedMs) > BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS) {
-                var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                 var timeoutHeaderCount = CountBuildCategoryHeaders(timeoutSelectedBuild);
                 var timeoutScanAdvances = Number(State.buildCategoryPayloadMissingScanAdvances) || 0;
                 var timeoutEntryCount = CollectStorageBuildEntryPanels(root, true).length;
@@ -20605,7 +20605,7 @@ function GetUIRoot() {
                 // Launch path remains read-only: reveal source UI only, never create/save/modify builds.
                 if (!EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs)) {
                     var sourceBootstrapRetries = Number(State.buildCategoryPayloadSourceBootstrapRetries) || 0;
-                    var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                    var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                     var selectedHeaderCountForSource = CountBuildCategoryHeaders(selectedBuildForSource);
                     var sourceEntriesVisible = CollectStorageBuildEntryPanels(root, false).length;
                     var sourceEntriesTotal = CollectStorageBuildEntryPanels(root, true).length;
@@ -20960,7 +20960,7 @@ function GetUIRoot() {
     function BuildSaveDebugSnapshot(root) {
         if (!BUILD_SAVE_DEBUG) return "";
         if (!root) return "root=-";
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var entry = GetBuildSaveCategoryNameEntry(root);
         var hudBuilds = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroBuilds") : null;
         var descEntry = hudBuilds && hudBuilds.FindChildTraverse ? hudBuilds.FindChildTraverse("CategoryDescriptionTextEntry") : null;
@@ -21090,7 +21090,7 @@ function GetUIRoot() {
         var activated = false;
         var host = selectedBuild;
         if (!host && root && root.FindChildTraverse) {
-            host = root.FindChildTraverse("ShopModsSelectedBuild");
+            host = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         }
         var header = host && host.FindChildTraverse ? host.FindChildTraverse("BuildCategoryHeader") : null;
         if (header && ActivatePanelSafe(header)) activated = true;
@@ -21190,7 +21190,7 @@ function GetUIRoot() {
         pushUnique(State.cachedPanels.shopModsSelectedBuild);
         if (root && root.FindChildTraverse) {
             pushUnique(root.FindChildTraverse("CitadelHudHeroBuilds"));
-            pushUnique(root.FindChildTraverse("ShopModsSelectedBuild"));
+            pushUnique(root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD));
         }
 
         var walk = root;
@@ -21892,7 +21892,7 @@ function GetUIRoot() {
 
         // Require build-browser context before any delete action so we don't delete from
         // the loaded build view. Open BrowseBuilds first, then proceed.
-        var selectedBuildPanel = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuildPanel = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var browseEntryVisibleCount = CollectStorageBuildEntryPanels(root, false).length;
         var browseEntryCount = CollectStorageBuildEntryPanels(root, true).length;
         var heroBuildItemsVisible = CountHeroBuildListItems(root, false);
@@ -22199,7 +22199,7 @@ function GetUIRoot() {
     function TryReadSelectedBuildTitleText(root, selectedBuild) {
         var host = selectedBuild;
         if (!host && root && root.FindChildTraverse) {
-            host = root.FindChildTraverse("ShopModsSelectedBuild");
+            host = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         }
         if (!host || !host.FindChildrenWithClassTraverse) return "";
         var labels = host.FindChildrenWithClassTraverse("SelectedBuildName") || [];
@@ -22270,7 +22270,7 @@ function GetUIRoot() {
 
     function TryReselectBuildSaveTargetByTitle(root, targetTitleText) {
         if (!root || !root.FindChildTraverse) return { ok: false, reason: "no_root" };
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild || !IsPanelValid(selectedBuild) || !selectedBuild.FindChildrenWithClassTraverse) {
             return { ok: false, reason: "no_selected_build" };
         }
@@ -22540,7 +22540,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) {
             return { ok: false, reason: "no_root" };
         }
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         var includeHidden = (includeHiddenEntries === true);
         var entries = CollectStorageBuildEntryPanels(root, includeHidden);
         if ((!entries || entries.length < 2) && !includeHidden) {
@@ -22608,7 +22608,7 @@ function GetUIRoot() {
 
     function IsStorageBuildListEmpty(root) {
         if (!root || !root.FindChildTraverse) return false;
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
                 if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
@@ -22656,7 +22656,7 @@ function GetUIRoot() {
             }
         }
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var roots = CollectBuildUiSearchRoots(root);
         var classNames = [
             "FavoriteBuildEntryContainer",
@@ -22750,7 +22750,7 @@ function GetUIRoot() {
         if (!root) return false;
         if (IsStorageBuildListEmpty(root)) return true;
 
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
                 if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
@@ -22926,7 +22926,7 @@ function GetUIRoot() {
                 }
                 panelRoots.push(panel);
             }
-            addPanel(root.FindChildTraverse("ShopModsSelectedBuild"));
+            addPanel(root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD));
             addPanel(root.FindChildTraverse("CitadelHudHeroBuilds"));
             addPanel(root.FindChildTraverse("HeroBuildSelector"));
             for (var pr = 0; pr < panelRoots.length; pr++) {
@@ -22962,7 +22962,7 @@ function GetUIRoot() {
 
     function HasBuildSaveStorageUiReady(root) {
         if (!root || !root.FindChildTraverse) return false;
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild || !selectedBuild.FindChildTraverse) return false;
         var saveBtn = selectedBuild.FindChildTraverse("SaveBuildButton");
         var editBtn = selectedBuild.FindChildTraverse("EditHeroBuildButton");
@@ -23457,7 +23457,7 @@ function GetUIRoot() {
         var expectedToken = ExtractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var seen = [];
         function checkToken(token) {
             if (!token || token.length === 0) return false;
@@ -23567,7 +23567,7 @@ function GetUIRoot() {
 
         if (State.buildClearStage === "await_user_shop_open") {
             var shopOpen = IsHudClassActive(root, "gShopOpen");
-            var selectedBuildGate = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var selectedBuildGate = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             var gateReady = !!(shopOpen && selectedBuildGate);
             if (gateReady) {
                 State.buildClearUserShopGateSatisfied = true;
@@ -23672,7 +23672,7 @@ function GetUIRoot() {
                 return;
             }
 
-            var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             if (!selectedBuild) {
                 State.buildClearRetries += 1;
                 State.buildClearNextActionMs = nowMs + BUILD_CLEAR_ACTION_DELAY_MS;
@@ -23810,7 +23810,7 @@ function GetUIRoot() {
         var reuseGateReady = false;
         if (reuseLoaderAirheart) {
             var reuseShopOpen = IsHudClassActive(root, "gShopOpen");
-            var reuseSelectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var reuseSelectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             reuseGateReady = !!(reuseShopOpen && reuseSelectedBuild);
         }
         State.buildClearActiveToken = requestToken;
@@ -23982,7 +23982,7 @@ function GetUIRoot() {
             return;
         }
 
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         if (!selectedBuild) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
@@ -24467,7 +24467,7 @@ function GetUIRoot() {
         var enabled = IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar && root && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar");
+            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             State.cachedPanels.topBarPanel = topBar || null;
         }
         if (!topBar) return;
@@ -24494,7 +24494,7 @@ function GetUIRoot() {
         var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = IsPanelValid(State.cachedPanels.bottomBarPanel) ? State.cachedPanels.bottomBarPanel : null;
         if (!hudSignature && root && root.FindChildTraverse) {
-            hudSignature = root.FindChildTraverse("hud_signature");
+            hudSignature = root.FindChildTraverse(PANEL_ID_SIGNATURE);
             State.cachedPanels.bottomBarPanel = hudSignature || null;
         }
 
@@ -24522,7 +24522,7 @@ function GetUIRoot() {
         var color = washColor || "";
         var searchRoot = GetGameplayHudPanel(root) || root;
         var apContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("APContainer") : null;
-        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("gold_and_ap_container") : null;
+        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         var contextPanel = null;
         try { contextPanel = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eContext) { contextPanel = null; }
         var uiRoot = GetUIRoot();
@@ -24737,7 +24737,7 @@ function GetUIRoot() {
         var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = IsPanelValid(State.cachedPanels.soulsContainer) ? State.cachedPanels.soulsContainer : null;
         if (!soulsPanel && root && root.FindChildTraverse) {
-            soulsPanel = root.FindChildTraverse("gold_and_ap_container");
+            soulsPanel = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
             State.cachedPanels.soulsContainer = soulsPanel || null;
         }
         if (!soulsPanel) return;
@@ -24781,7 +24781,7 @@ function GetUIRoot() {
 
     function UpdateModIconsRP(container, purchases) {
         if (!container || !IsPanelValid(container)) return;
-        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var icons = purchase.FindChildrenWithClassTraverse("mod_icon");
@@ -24895,7 +24895,7 @@ function GetUIRoot() {
         State.recentPurchaseLastFilterSig = sig;
         State.recentPurchaseLastFirstChild = firstChild;
 
-        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var hidden = false;
@@ -24990,7 +24990,7 @@ function GetUIRoot() {
     function GetOrCreateQuickPanelRP(root) {
         if (IsPanelValid(State.cachedPanels.quickPurchasesPanel)) return State.cachedPanels.quickPurchasesPanel;
         if (!IsPanelValid(State.cachedPanels.quickPurchasesHostPanel)) {
-            State.cachedPanels.quickPurchasesHostPanel = root.FindChildTraverse("TopBar") || null;
+            State.cachedPanels.quickPurchasesHostPanel = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
         }
         var topBar = State.cachedPanels.quickPurchasesHostPanel;
         if (!topBar) return null;
@@ -25003,7 +25003,7 @@ function GetUIRoot() {
         var quickPanel = GetOrCreateQuickPanelRP(root);
         if (!quickPanel || !container || !IsPanelValid(container)) return;
 
-        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
         if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
@@ -25183,7 +25183,7 @@ function GetUIRoot() {
             try {
                 var root = $.GetContextPanel();
                 while (root && root.GetParent && root.GetParent() !== null) root = root.GetParent();
-                if (root) topBar = root.FindChildTraverse("TopBar");
+                if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             } catch(e) {}
         }
         var x = 0;
@@ -25221,7 +25221,7 @@ function GetUIRoot() {
         for (var i = 0; i < active.length; i++) {
             var margin = 125;
             var pp = active[i].panel.GetParent();
-            if (pp && IsPanelValid(pp) && pp.BHasClass("UltimateUnlocked")) margin = 150;
+            if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) margin = 150;
             active[i].baseMargin = margin;
         }
 
@@ -25371,7 +25371,7 @@ function GetUIRoot() {
         }
         if (!container || !IsPanelValid(container)) return;
 
-        if (!purchases) purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
         if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
@@ -25461,7 +25461,7 @@ function GetUIRoot() {
 
         var purchases = null;
         if (shopEnabled || notifyEnabled) {
-            purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+            purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         }
 
         if (shopEnabled) {
@@ -25535,7 +25535,7 @@ function GetUIRoot() {
             } catch (eVis) {}
         }
         if (needsHeroShopFeatures && !heroShop && nowMsClass >= (State.heroShopNextSearchMs || 0)) {
-            heroShop = root.FindChildTraverse("CitadelHudHeroShop");
+            heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
             State.cachedPanels.heroShop = heroShop || null;
             State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
         }
@@ -25795,7 +25795,7 @@ function GetUIRoot() {
         if (!canvas && root && root.FindChildTraverse) {
             var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
             if (!hudMinimapPanel) {
-                hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+                hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
                 State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
             }
             canvas = hudMinimapPanel && hudMinimapPanel.FindChildTraverse
@@ -25825,7 +25825,7 @@ function GetUIRoot() {
         var scaleText = scale.toFixed(3) + ", " + scale.toFixed(3);
         var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
         if (!hudMinimapPanel && root && root.FindChildTraverse) {
-            hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+            hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
             State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
         }
         var rangePanels = [];
@@ -25938,7 +25938,7 @@ function GetUIRoot() {
                 if (!isFinite(op)) op = 1.0;
                 if (op < 0) op = 0;
                 if (op > 1) op = 1;
-                if (p.id !== "hud_minimap") {
+                if (p.id !== PANEL_ID_MINIMAP) {
                     SetPanelOpacitySafe(p, op, 1.0);
                 }
             });
@@ -25960,7 +25960,7 @@ function GetUIRoot() {
                     mapRenderPanel.style.washColor = "none";
                     var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
                     if (!hudMinimapPanel && root && root.FindChildTraverse) {
-                        hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+                        hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
                         State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
                     }
                     if (hudMinimapPanel) {
@@ -26192,7 +26192,7 @@ function GetUIRoot() {
     function FindUnsecuredSoulsSource(root) {
         if (!root) return null;
 
-        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
+        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         if (goldContainer && goldContainer.FindChildTraverse) {
             var fromGoldById = goldContainer.FindChildTraverse("hudDealthGoldLabel");
             if (IsPanelValid(fromGoldById)) return fromGoldById;
@@ -26220,7 +26220,7 @@ function GetUIRoot() {
 
     function FindUnsecuredSoulsHudContainer(root) {
         if (!root) return null;
-        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
+        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         if (goldContainer && goldContainer.FindChildrenWithClassTraverse) {
             var goldContainers = goldContainer.FindChildrenWithClassTraverse("hudDeathGoldContainer") || [];
             for (var i = 0; i < goldContainers.length; i++) {
@@ -27700,12 +27700,12 @@ function GetUIRoot() {
             }
         }
 
-        var fireRateZero = IsStatBonusTokenZero(fireRateValue) || !!(sourceFireRate && sourceFireRate.BHasClass && sourceFireRate.BHasClass("isZeroValue"));
-        var abilityCooldownZero = IsStatBonusTokenZero(abilityCooldownValue) || !!(sourceAbilityCooldown && sourceAbilityCooldown.BHasClass && sourceAbilityCooldown.BHasClass("isZeroValue"));
-        var spiritPowerZero = IsStatBonusTokenZero(spiritPowerValue) || !!(sourceSpiritPower && sourceSpiritPower.BHasClass && sourceSpiritPower.BHasClass("isZeroValue"));
-        var clipSizeZero = IsStatBonusTokenZero(clipSizeValue) || !!(sourceClipSize && sourceClipSize.BHasClass && sourceClipSize.BHasClass("isZeroValue"));
-        var weaponDamageZero = IsStatBonusTokenZero(weaponDamageValue) || !!(sourceWeaponDamage && sourceWeaponDamage.BHasClass && sourceWeaponDamage.BHasClass("isZeroValue"));
-        var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass("isZeroValue"));
+        var fireRateZero = IsStatBonusTokenZero(fireRateValue) || !!(sourceFireRate && sourceFireRate.BHasClass && sourceFireRate.BHasClass(CLASS_IS_ZERO_VALUE));
+        var abilityCooldownZero = IsStatBonusTokenZero(abilityCooldownValue) || !!(sourceAbilityCooldown && sourceAbilityCooldown.BHasClass && sourceAbilityCooldown.BHasClass(CLASS_IS_ZERO_VALUE));
+        var spiritPowerZero = IsStatBonusTokenZero(spiritPowerValue) || !!(sourceSpiritPower && sourceSpiritPower.BHasClass && sourceSpiritPower.BHasClass(CLASS_IS_ZERO_VALUE));
+        var clipSizeZero = IsStatBonusTokenZero(clipSizeValue) || !!(sourceClipSize && sourceClipSize.BHasClass && sourceClipSize.BHasClass(CLASS_IS_ZERO_VALUE));
+        var weaponDamageZero = IsStatBonusTokenZero(weaponDamageValue) || !!(sourceWeaponDamage && sourceWeaponDamage.BHasClass && sourceWeaponDamage.BHasClass(CLASS_IS_ZERO_VALUE));
+        var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass(CLASS_IS_ZERO_VALUE));
 
         var titleText = "Stat Bonuses (Golden Statues)";
         var titleLabel = State.cachedPanels.statBonusesTitle;
@@ -27958,8 +27958,8 @@ function GetUIRoot() {
             statusPanel = rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
         }
         if (!statusPanel || !IsPanelValid(statusPanel)) return null;
-        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked"))
-            || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateUnlocked"));
+        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED))
+            || !!(playerPanel.BHasClass && playerPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED));
         var ready = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady"))
             || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateCooldownReady"));
         return !!(unlocked && ready);
@@ -28872,7 +28872,7 @@ function GetUIRoot() {
 
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
 
@@ -28962,7 +28962,7 @@ function GetUIRoot() {
             var alertParent = alertPanel;
             for (var ai = 0; ai < 12 && alertParent; ai++) {
                 try {
-                    if (alertParent.BHasClass && alertParent.BHasClass("inCombat")) {
+                    if (alertParent.BHasClass && alertParent.BHasClass(CLASS_IN_COMBAT)) {
                         ResetCombatStatusProbeBackoff();
                         return true;
                     }
@@ -28977,7 +28977,7 @@ function GetUIRoot() {
 
         var shop = IsPanelValid(State.cachedPanels.combatStatusShopPanel) ? State.cachedPanels.combatStatusShopPanel : null;
         if (!shop && nowMs >= (State.combatStatus.nextShopProbeMs || 0)) {
-            var scannedShop = FindCombatPanelById(root, uiRoot, "CitadelHudHeroShop");
+            var scannedShop = FindCombatPanelById(root, uiRoot, PANEL_ID_HERO_SHOP);
             if (scannedShop || !shop) shop = scannedShop || null;
             State.cachedPanels.combatStatusShopPanel = shop || null;
             State.combatStatus.nextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
@@ -28989,7 +28989,7 @@ function GetUIRoot() {
         }
         if (shop && shop.BHasClass) {
             try {
-                if (shop.BHasClass("inCombat")) {
+                if (shop.BHasClass(CLASS_IN_COMBAT)) {
                     ResetCombatStatusProbeBackoff();
                     return true;
                 }
@@ -28997,7 +28997,7 @@ function GetUIRoot() {
         }
 
         try {
-            if (IsHudClassActive(root, "inCombat")) {
+            if (IsHudClassActive(root, CLASS_IN_COMBAT)) {
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
@@ -29042,8 +29042,8 @@ function GetUIRoot() {
         if (damageMeter) {
             var dmOut = false;
             var dmIn = false;
-            try { dmOut = hasClassInHierarchy(damageMeter, "out_of_combat"); } catch (eDm0) { dmOut = false; }
-            try { dmIn = hasClassInHierarchy(damageMeter, "inCombat") || hasClassInHierarchy(damageMeter, "in_combat"); } catch (eDm1) { dmIn = false; }
+            try { dmOut = hasClassInHierarchy(damageMeter, CLASS_OUT_OF_COMBAT); } catch (eDm0) { dmOut = false; }
+            try { dmIn = hasClassInHierarchy(damageMeter, CLASS_IN_COMBAT) || hasClassInHierarchy(damageMeter, "in_combat"); } catch (eDm1) { dmIn = false; }
             if (dmIn) {
                 ResetCombatStatusProbeBackoff();
                 return true;
@@ -29065,13 +29065,13 @@ function GetUIRoot() {
             if (ri > 0 && checkRoot === rootsToCheck[0]) continue;
             if (!checkRoot || !checkRoot.BHasClass) continue;
             try {
-                if (checkRoot.BHasClass("in_combat") || checkRoot.BHasClass("inCombat")) {
+                if (checkRoot.BHasClass("in_combat") || checkRoot.BHasClass(CLASS_IN_COMBAT)) {
                     ResetCombatStatusProbeBackoff();
                     return true;
                 }
             } catch (eRootClass0) {}
             try {
-                if (checkRoot.BHasClass("out_of_combat")) foundOutOfCombat = true;
+                if (checkRoot.BHasClass(CLASS_OUT_OF_COMBAT)) foundOutOfCombat = true;
             } catch (eRootClass1) {}
         }
         if (foundOutOfCombat) {
@@ -29081,15 +29081,15 @@ function GetUIRoot() {
 
         if (State.combatStatus.sawOutOfCombatClass) {
             try {
-                var rootOut = root && root.BHasClass ? root.BHasClass("out_of_combat") : false;
-                var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass("out_of_combat") : false;
+                var rootOut = root && root.BHasClass ? root.BHasClass(CLASS_OUT_OF_COMBAT) : false;
+                var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass(CLASS_OUT_OF_COMBAT) : false;
                 var rootClassSignal = !(rootOut || uiRootOut);
                 if (rootClassSignal) ResetCombatStatusProbeBackoff();
                 return rootClassSignal;
             } catch (eRootClass2) {}
         } else if (root && root.BHasClass) {
             try {
-                State.combatStatus.sawOutOfCombatClass = !!root.BHasClass("out_of_combat");
+                State.combatStatus.sawOutOfCombatClass = !!root.BHasClass(CLASS_OUT_OF_COMBAT);
             } catch (eRootClass3) {}
         }
 
@@ -29111,12 +29111,12 @@ function GetUIRoot() {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var rawEnabled = Number(cfg && cfg.ENABLE_COMBAT_INDICATOR);
         var enabled = rawEnabled === 1;
-        var rootInCombat = !!(root && root.BHasClass && root.BHasClass("inCombat"));
+        var rootInCombat = !!(root && root.BHasClass && root.BHasClass(CLASS_IN_COMBAT));
         var rootInCombatAlt = !!(root && root.BHasClass && root.BHasClass("in_combat"));
-        var rootOutCombat = !!(root && root.BHasClass && root.BHasClass("out_of_combat"));
+        var rootOutCombat = !!(root && root.BHasClass && root.BHasClass(CLASS_OUT_OF_COMBAT));
         var hudInCombat = false;
         var hudInCombatAlt = false;
-        try { hudInCombat = IsHudClassActive(root, "inCombat"); } catch (e0) { hudInCombat = false; }
+        try { hudInCombat = IsHudClassActive(root, CLASS_IN_COMBAT); } catch (e0) { hudInCombat = false; }
         try { hudInCombatAlt = IsHudClassActive(root, "in_combat"); } catch (e1) { hudInCombatAlt = false; }
         var regenImages = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("regen_image") || []) : [];
         var regenValues = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("regen_value") || []) : [];
@@ -29132,7 +29132,7 @@ function GetUIRoot() {
             hasClassInHierarchy(sampleImage, "klutz_healthbar_active") ? "klutz" : ""
         ].filter(function(v) { return !!v; }).join(",") : "";
         var sampleCombatFlags = sampleImage ? [
-            hasClassInHierarchy(sampleImage, "inCombat") ? "inCombat" : "",
+            hasClassInHierarchy(sampleImage, CLASS_IN_COMBAT) ? CLASS_IN_COMBAT : "",
             hasClassInHierarchy(sampleImage, "in_combat") ? "in_combat" : "",
             hasClassInHierarchy(sampleImage, "combat_indicator_active") ? "combat_indicator_active" : ""
         ].filter(function(v) { return !!v; }).join(",") : "";
@@ -29193,7 +29193,7 @@ function GetUIRoot() {
 
         pushPanel(State.cachedPanels.healthContainer);
         pushPanel(State.cachedPanels.gameplayHud);
-        pushPanel(root.FindChildTraverse("health_and_abilities_container"));
+        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         pushPanel(root.FindChildTraverse("HealthBarContent"));
         pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
         pushPanel(root.FindChildTraverse("hud_health_bars"));
@@ -29377,7 +29377,7 @@ function GetUIRoot() {
         if (!needsRescan) return slots;
 
         var refreshed = [];
-        var hudSignature = root && root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
+        var hudSignature = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SIGNATURE) : null;
         if (IsPanelValid(hudSignature) && hudSignature.FindChildTraverse) {
             for (var s = 1; s <= 4; s++) {
                 var slotId = "slot_signature_" + String(s);
@@ -31030,7 +31030,7 @@ function GetUIRoot() {
         var sources = State.itemMirror.sources || [];
         var abilitiesContainer = State.cachedPanels.abilitiesContainer;
         if (!IsPanelValid(abilitiesContainer)) {
-            abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
+            abilitiesContainer = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
             State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
         }
         var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
@@ -31546,7 +31546,7 @@ function GetUIRoot() {
 
         var target = null;
         if (root && root.FindChildTraverse) {
-            target = root.FindChildTraverse("hud_minimap");
+            target = root.FindChildTraverse(PANEL_ID_MINIMAP);
             if (!target) target = root.FindChildTraverse("minimap_container");
             if (!target) target = root.FindChildTraverse("minimap_persp");
             if (!target) target = root.FindChildTraverse("map_render");
@@ -31564,10 +31564,10 @@ function GetUIRoot() {
         var target = null;
         var rotateTarget = FindMinimapRotateTarget(root);
         if (IsPanelValid(rotateTarget)) {
-            if (rotateTarget.id === "hud_minimap") {
+            if (rotateTarget.id === PANEL_ID_MINIMAP) {
                 target = rotateTarget;
             } else if (rotateTarget.FindChildTraverse) {
-                target = rotateTarget.FindChildTraverse("hud_minimap");
+                target = rotateTarget.FindChildTraverse(PANEL_ID_MINIMAP);
             }
         }
 
@@ -31730,7 +31730,7 @@ function GetUIRoot() {
             return cached;
         }
 
-        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
+        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null;
         var hudCore = gameplayHud && gameplayHud.GetParent ? gameplayHud.GetParent() : null;
         var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
         var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
@@ -32437,7 +32437,7 @@ function GetUIRoot() {
         }
         var panels = [];
         if (root && root.FindChildTraverse) {
-            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", "hud_minimap"];
+            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
             for (var i = 0; i < ids.length; i++) {
                 var panel = root.FindChildTraverse(ids[i]);
                 if (panel) panels.push(panel);
@@ -32456,7 +32456,7 @@ function GetUIRoot() {
     }
 
     function EnsureAbilitiesContainerPanelCache(root) {
-        return EnsureCachedPanelByIds(root, "abilitiesContainer", ["AbilitiesContainer"]);
+        return EnsureCachedPanelByIds(root, "abilitiesContainer", [PANEL_ID_ABILITIES_CONTAINER]);
     }
 
     function EnsureCoreLoopPanelCaches(root) {
@@ -32467,17 +32467,17 @@ function GetUIRoot() {
             if (gates.minimapRuntime) EnsureMinimapPanelCache(root);
             if (gates.legacyAudioPassive) EnsurePassiveHudPanelCache(root);
             if (gates.rejuvTimers) EnsureGameTimePanelCache(root);
-            EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
+            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
             if (gates.itemsRuntime || gates.statBonuses) EnsureAbilitiesContainerPanelCache(root);
-            EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
         } else {
             // No gates resolved yet — refresh all
             EnsureMinimapPanelCache(root);
             EnsurePassiveHudPanelCache(root);
             EnsureGameTimePanelCache(root);
-            EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
+            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
             EnsureAbilitiesContainerPanelCache(root);
-            EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
         }
     }
 
@@ -32637,7 +32637,7 @@ function GetUIRoot() {
         try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch (e1) {}
         try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch (e2) {}
         var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e3) { hud = null; }
+        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e3) { hud = null; }
         if (hud && hud.SetAttributeString) {
             try { hud.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch (e4) {}
             try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch (e5) {}
@@ -32662,7 +32662,7 @@ function GetUIRoot() {
             pushUnique(escapeMenu);
             if (escapeMenu && escapeMenu.GetParent) pushUnique(escapeMenu.GetParent());
             var hud = null;
-            try { hud = root.FindChildTraverse("Hud"); } catch (e1) { hud = null; }
+            try { hud = root.FindChildTraverse(PANEL_ID_HUD); } catch (e1) { hud = null; }
             pushUnique(hud);
         }
         return targets;
@@ -33038,7 +33038,7 @@ function GetUIRoot() {
         if (needsHealthContainerWork) {
             var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!healthContainer) {
-                healthContainer = root.FindChildTraverse("health_and_abilities_container");
+                healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 State.cachedPanels.healthContainer = healthContainer || null;
             }
             LogHealthbarVisibilityDebug(root, healthContainer, cfg);
@@ -33063,7 +33063,7 @@ function GetUIRoot() {
         var abilitiesContainerForClass = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
         if (shouldApplyStaticClasses || abilitiesContainerForClass) {
             if (!abilitiesContainerForClass) {
-                abilitiesContainerForClass = root.FindChildTraverse("AbilitiesContainer");
+                abilitiesContainerForClass = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
                 State.cachedPanels.abilitiesContainer = abilitiesContainerForClass || null;
             }
         }
@@ -34356,7 +34356,7 @@ function GetUIRoot() {
             perfSection = PerfStart();
             var accentHealthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!accentHealthContainer && root.FindChildTraverse) {
-                accentHealthContainer = root.FindChildTraverse("health_and_abilities_container");
+                accentHealthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 State.cachedPanels.healthContainer = accentHealthContainer || null;
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
