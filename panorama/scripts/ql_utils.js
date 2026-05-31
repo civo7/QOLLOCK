@@ -297,5 +297,9 @@
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it
-    window.QOL_UTILS = exports;
+    if (typeof window !== "undefined") {
+        window.QOL_UTILS = exports;
+    } else if (typeof globalThis !== "undefined") {
+        globalThis.QOL_UTILS = exports;
+    }
 })();
