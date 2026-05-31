@@ -63,18 +63,19 @@ CitadelHudTopBarPlayer,
 	ignore-parent-flow: true;
 }
 
-.ShowRankTopBarModeAlways .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
-.ShowRankTopBarModeScoreboardOnly.wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
-.ShowRankTopBarModeScoreboardOnly.gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
-.ShowRankTopBarModeScoreboardOnly .wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
-.ShowRankTopBarModeScoreboardOnly .gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
+.ShowRankAverageModeAlways .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankAverageModeScoreboardOnly.wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankAverageModeScoreboardOnly.gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankAverageModeScoreboardOnly .wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankAverageModeScoreboardOnly .gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
 {
 	visibility: visible;
 	opacity: 1;
 }
 
 .ShowRankTopBarModeDisabled .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
-.ShowRankTopBarModeDisabled .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
+.ShowRankTopBarModeDisabled .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankAverageModeHidden .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
 {
 	visibility: collapse;
 	opacity: 0;

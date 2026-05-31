@@ -188,7 +188,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_COLORED_HEALTHBAR": "Colored healthbar warnings when at significant thresholds.",
     "ENABLE_TOPBAR_ENEMY_HP_WARNING": "Colored enemy top-bar health warnings when at significant thresholds.",
     "ENABLE_TOPBAR_ALLY_HP_WARNING": "Colored ally top-bar health warnings when at significant thresholds.",
-    "SHOW_RANK_TOP_BAR_MODE": "Controls when ShowRank rank badges and team average ranks appear on the top bar.",
+    "SHOW_RANK_TOP_BAR_MODE": "Controls when ShowRank rank badges appear on the top bar.",
+    "SHOW_RANK_AVERAGE_MODE": "Controls when ShowRank average strength appears above the top bar.",
     "ENABLE_COMPASS_SPEED": "Speed number tracker.",
     "ENABLE_CUMULATIVE_DMG": "The large cumulative damage number.",
     "ENABLE_CLEAN_DAMAGE_INDICATORS": "Modify damage numbers for a cleaner style and animation to be more out of the way",
@@ -373,7 +374,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Top Bar|Objective Damage": "Shows the individual player's objective damage in the top bar.",
     "HUD / Top Bar|Objective Map": "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base.",
     "HUD / Top Bar|Top Bar Background": "The world blur and backing strip behind player names in the top bar.",
-    "HUD / Top Bar|Show Rank": "Controls when ShowRank badges and average ranks appear on the top bar.",
+    "HUD / Top Bar|Show Rank": "Controls when ShowRank rank badges appear on the top bar.",
+    "HUD / Top Bar|Average Strength": "Controls when ShowRank team average strength appears above the top bar.",
     "HUD / Top Bar|Enemy HP Warning": "Colored enemy top-bar health warnings when at significant thresholds.",
     "HUD / Top Bar|Ally HP Warning": "Colored ally top-bar health warnings when at significant thresholds.",
     "HUD / Top Bar|Souls Per Minute": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
@@ -586,6 +588,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     HUD_SOULS_ENABLED: "low",
     HUD_TOP_BAR_ENABLED: "low",
     SHOW_RANK_TOP_BAR_MODE: "low",
+    SHOW_RANK_AVERAGE_MODE: "low",
     ENABLE_TAB_ZOOM: "low",
     ENABLE_ULT_COOLDOWNS: "none",
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
@@ -729,6 +732,11 @@ const SHOW_RANK_TOP_BAR_MODE_OPTIONS = [
     { label: "Always", value: 0 },
     { label: "Scoreboard", value: 1 },
     { label: "Disabled", value: 2 }
+];
+const SHOW_RANK_AVERAGE_MODE_OPTIONS = [
+    { label: "Always", value: 0 },
+    { label: "Scoreboard", value: 1 },
+    { label: "Hidden", value: 2 }
 ];
 const NEUTRAL_CAMP_TIER_OPTIONS = [
     { label: "Tier 1", key: "ENABLE_ONE_TIME_TIER1" },
@@ -886,6 +894,7 @@ const PRESETS = (typeof QOL_PRESETS === "object" && QOL_PRESETS)
 
 const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
 const SHOW_RANK_TOP_BAR_MODE_STORAGE_KEY = "qol_show_rank_top_bar_mode";
+const SHOW_RANK_AVERAGE_MODE_STORAGE_KEY = "qol_show_rank_average_mode";
 const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
 const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
 const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
@@ -11363,6 +11372,9 @@ const ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
 const SHOW_RANK_TOP_BAR_MODE_SCHEMA_FIELDS = [
     { key: "SHOW_RANK_TOP_BAR_MODE", min: 0, max: 2, step: 1 }
 ];
+const SHOW_RANK_AVERAGE_MODE_SCHEMA_FIELDS = [
+    { key: "SHOW_RANK_AVERAGE_MODE", min: 0, max: 2, step: 1 }
+];
 const SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
@@ -11531,6 +11543,10 @@ const COMPACT_SCHEMA_3_0_6 = AppendUniqueSchemaFields(
 const COMPACT_SCHEMA_3_0_7 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_0_6,
     SHOW_RANK_TOP_BAR_MODE_SCHEMA_FIELDS
+);
+const COMPACT_SCHEMA_3_0_8 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_7,
+    SHOW_RANK_AVERAGE_MODE_SCHEMA_FIELDS
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
@@ -11721,6 +11737,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.0.7": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_0_7
+    },
+    "3.0.8": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_8
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -12620,7 +12640,7 @@ function PersistStatlockerProfileState(rawConfig, configObj) {
     } catch (e1) {}
 }
 
-function NormalizeShowRankTopBarMode(value) {
+function NormalizeShowRankDisplayMode(value) {
     var mode = Math.round(Number(value));
     if (!isFinite(mode)) return 1;
     if (mode < 0) return 0;
@@ -12635,16 +12655,28 @@ function SetShowRankTopBarModeClasses(panel, mode) {
     try { panel.SetHasClass("ShowRankTopBarModeDisabled", mode === 2); } catch (e2) {}
 }
 
+function SetShowRankAverageModeClasses(panel, mode) {
+    if (!panel || !panel.SetHasClass) return;
+    try { panel.SetHasClass("ShowRankAverageModeAlways", mode === 0); } catch (e0) {}
+    try { panel.SetHasClass("ShowRankAverageModeScoreboardOnly", mode === 1); } catch (e1) {}
+    try { panel.SetHasClass("ShowRankAverageModeHidden", mode === 2); } catch (e2) {}
+}
+
 function PublishShowRankTopBarModeBridge(configObj) {
-    var mode = NormalizeShowRankTopBarMode(configObj && configObj.SHOW_RANK_TOP_BAR_MODE);
+    var mode = NormalizeShowRankDisplayMode(configObj && configObj.SHOW_RANK_TOP_BAR_MODE);
+    var averageMode = NormalizeShowRankDisplayMode(configObj && configObj.SHOW_RANK_AVERAGE_MODE);
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
     try { $.persistentStorage.setItem(SHOW_RANK_TOP_BAR_MODE_STORAGE_KEY, String(mode)); } catch (ePersist) {}
+    try { $.persistentStorage.setItem(SHOW_RANK_AVERAGE_MODE_STORAGE_KEY, String(averageMode)); } catch (eAveragePersist) {}
     SetShowRankTopBarModeClasses(panel, mode);
     SetShowRankTopBarModeClasses(root, mode);
     SetShowRankTopBarModeClasses(hud, mode);
+    SetShowRankAverageModeClasses(panel, averageMode);
+    SetShowRankAverageModeClasses(root, averageMode);
+    SetShowRankAverageModeClasses(hud, averageMode);
 }
 
 function GetRuntimePresetName() {
@@ -21493,7 +21525,8 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
-            CreateRow(sectionParent, "Show Rank", "SHOW_RANK_TOP_BAR_MODE", "buttongroup", null, null, null, SHOW_RANK_TOP_BAR_MODE_OPTIONS, "ShowRank top-bar badges and team average ranks.");
+            CreateRow(sectionParent, "Show Rank", "SHOW_RANK_TOP_BAR_MODE", "buttongroup", null, null, null, SHOW_RANK_TOP_BAR_MODE_OPTIONS, "ShowRank top-bar rank badges.");
+            CreateRow(sectionParent, "Average Strength", "SHOW_RANK_AVERAGE_MODE", "buttongroup", null, null, null, SHOW_RANK_AVERAGE_MODE_OPTIONS, "ShowRank team average strength above the top bar.");
             CreateRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
             CreateRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
             CreateRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "slider", 0, 1, 0.05, null);

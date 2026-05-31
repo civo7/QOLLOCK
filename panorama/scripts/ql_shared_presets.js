@@ -1,12 +1,12 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.0.7";
+var QOL_SCHEMA_SEMVER = "3.0.8";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Storage envelope helpers (Fix: schema-versioned config storage) ----
 // Wraps a config object for storage with schema version tag.
-// Produces: {"schema":"3.0.7","data":{...}}
+// Produces: {"schema":"3.0.8","data":{...}}
 if (typeof WrapConfigForStorage !== "function") {
     var WrapConfigForStorage = function(config) {
         return JSON.stringify({ schema: QOL_SCHEMA_SEMVER, data: config });
@@ -1033,6 +1033,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_NICKNAMES: 0,
         HUD_TOP_BAR_ENABLED: 1,
         SHOW_RANK_TOP_BAR_MODE: 1,
+        SHOW_RANK_AVERAGE_MODE: 1,
         DISABLE_PLAYER_NAME_BLUR: 0,
         TOP_BAR_OPACITY: 1.0,
         TOP_BAR_SCALE: 1.0,

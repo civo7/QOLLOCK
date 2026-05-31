@@ -3,7 +3,7 @@
 
   var BRIDGE_KEY = "__ShowRankWebMediaBridgeClean";
   var SHARED_KEY = "__ShowRankCleanShared";
-  var BRIDGE_VERSION = 118;
+  var BRIDGE_VERSION = 119;
   var CACHE_VERSION = String(BRIDGE_VERSION);
   var RANK_API_URL_PREFIX = "https://api.deadlock-api.com/v1/players/";
   var RANK_IMAGE_URL_SUFFIX = "/rank-predict/image?format=webp";
@@ -14,13 +14,18 @@
   var QOL_SETTINGS_RAW_STORAGE_KEY = "qol_settings_raw_v1";
   var QOL_SETTINGS_ATTR_KEY = "Deadlock_Mod_Settings_v1";
   var SHOW_RANK_TOP_BAR_MODE_STORAGE_KEY = "qol_show_rank_top_bar_mode";
+  var SHOW_RANK_AVERAGE_MODE_STORAGE_KEY = "qol_show_rank_average_mode";
   var SHOW_RANK_TOP_BAR_MODE_KEY = "SHOW_RANK_TOP_BAR_MODE";
+  var SHOW_RANK_AVERAGE_MODE_KEY = "SHOW_RANK_AVERAGE_MODE";
   var SHOW_RANK_TOP_BAR_MODE_ALWAYS = 0;
   var SHOW_RANK_TOP_BAR_MODE_SCOREBOARD = 1;
   var SHOW_RANK_TOP_BAR_MODE_DISABLED = 2;
   var SHOW_RANK_TOP_BAR_MODE_ALWAYS_CLASS = "ShowRankTopBarModeAlways";
   var SHOW_RANK_TOP_BAR_MODE_SCOREBOARD_CLASS = "ShowRankTopBarModeScoreboardOnly";
   var SHOW_RANK_TOP_BAR_MODE_DISABLED_CLASS = "ShowRankTopBarModeDisabled";
+  var SHOW_RANK_AVERAGE_MODE_ALWAYS_CLASS = "ShowRankAverageModeAlways";
+  var SHOW_RANK_AVERAGE_MODE_SCOREBOARD_CLASS = "ShowRankAverageModeScoreboardOnly";
+  var SHOW_RANK_AVERAGE_MODE_HIDDEN_CLASS = "ShowRankAverageModeHidden";
   var STEAM64_BASE = "76561197960265728";
   var STEAMID3_PATTERN = /^\[U:1:(\d+)\]$/i;
   var MIN_ACCOUNT_ID = 100000;
@@ -120,6 +125,8 @@
     topBarCandidateCacheDirty: true,
     showRankTopBarModeRaw: "",
     showRankTopBarMode: SHOW_RANK_TOP_BAR_MODE_SCOREBOARD,
+    showRankAverageModeRaw: "",
+    showRankAverageMode: SHOW_RANK_TOP_BAR_MODE_SCOREBOARD,
     sharedStoreTargets: null,
     sharedStoreTargetsVersion: ""
   };
@@ -504,7 +511,7 @@
     return HasClass(scoreboard, SCOREBOARD_OPEN_CLASS);
   }
 
-  function NormalizeShowRankTopBarMode(value) {
+  function NormalizeShowRankDisplayMode(value) {
     var mode = Math.round(Number(value));
     if (!isFinite(mode)) return SHOW_RANK_TOP_BAR_MODE_SCOREBOARD;
     if (mode < SHOW_RANK_TOP_BAR_MODE_ALWAYS) return SHOW_RANK_TOP_BAR_MODE_ALWAYS;
@@ -533,31 +540,47 @@
     return ReadPersistentStorageString(QOL_SETTINGS_RAW_STORAGE_KEY);
   }
 
-  function ReadShowRankTopBarMode(root) {
+  function ResolveQolSettingsConfigObject(raw) {
+    var parsed;
+    var data;
+    if (!raw) return null;
+    try {
+      parsed = JSON.parse(raw) || {};
+    } catch (e0) {
+      return null;
+    }
+    data = parsed && parsed.data && typeof parsed.data === "object" ? parsed.data : parsed;
+    if (data && typeof data === "object") return data;
+    return null;
+  }
+
+  function ReadShowRankDisplayMode(root, configKey, storageKey, cacheRawKey, cacheModeKey) {
     var raw;
     var direct;
-    var parsed;
+    var config;
     var mode = SHOW_RANK_TOP_BAR_MODE_SCOREBOARD;
     raw = ReadQolSettingsRaw(root);
-    if (raw && raw === state.showRankTopBarModeRaw && state.showRankTopBarMode !== undefined && state.showRankTopBarMode !== null) {
-      return NormalizeShowRankTopBarMode(state.showRankTopBarMode);
+    if (raw && raw === state[cacheRawKey] && state[cacheModeKey] !== undefined && state[cacheModeKey] !== null) {
+      return NormalizeShowRankDisplayMode(state[cacheModeKey]);
     }
-    if (raw) {
-      try {
-        parsed = JSON.parse(raw) || {};
-        if (parsed && parsed.hasOwnProperty(SHOW_RANK_TOP_BAR_MODE_KEY)) {
-          mode = NormalizeShowRankTopBarMode(parsed[SHOW_RANK_TOP_BAR_MODE_KEY]);
-        }
-      } catch (e0) {
-        mode = SHOW_RANK_TOP_BAR_MODE_SCOREBOARD;
-      }
+    config = ResolveQolSettingsConfigObject(raw);
+    if (config && config.hasOwnProperty(configKey)) {
+      mode = NormalizeShowRankDisplayMode(config[configKey]);
     } else {
-      direct = ReadPersistentStorageString(SHOW_RANK_TOP_BAR_MODE_STORAGE_KEY);
-      if (direct !== "") mode = NormalizeShowRankTopBarMode(direct);
+      direct = ReadPersistentStorageString(storageKey);
+      if (direct !== "") mode = NormalizeShowRankDisplayMode(direct);
     }
-    state.showRankTopBarModeRaw = raw || "";
-    state.showRankTopBarMode = mode;
+    state[cacheRawKey] = raw || "";
+    state[cacheModeKey] = mode;
     return mode;
+  }
+
+  function ReadShowRankTopBarMode(root) {
+    return ReadShowRankDisplayMode(root, SHOW_RANK_TOP_BAR_MODE_KEY, SHOW_RANK_TOP_BAR_MODE_STORAGE_KEY, "showRankTopBarModeRaw", "showRankTopBarMode");
+  }
+
+  function ReadShowRankAverageMode(root) {
+    return ReadShowRankDisplayMode(root, SHOW_RANK_AVERAGE_MODE_KEY, SHOW_RANK_AVERAGE_MODE_STORAGE_KEY, "showRankAverageModeRaw", "showRankAverageMode");
   }
 
   function ApplyShowRankTopBarModeClasses(root) {
@@ -577,6 +600,27 @@
       RemoveClass(docRoot, SHOW_RANK_TOP_BAR_MODE_ALWAYS_CLASS);
       AddClass(docRoot, SHOW_RANK_TOP_BAR_MODE_SCOREBOARD_CLASS);
       RemoveClass(docRoot, SHOW_RANK_TOP_BAR_MODE_DISABLED_CLASS);
+    }
+    return mode;
+  }
+
+  function ApplyShowRankAverageModeClasses(root) {
+    var docRoot = GetDocumentRoot(root);
+    var mode;
+    if (!IsPanelValid(docRoot)) return SHOW_RANK_TOP_BAR_MODE_SCOREBOARD;
+    mode = ReadShowRankAverageMode(docRoot);
+    if (mode === SHOW_RANK_TOP_BAR_MODE_ALWAYS) {
+      AddClass(docRoot, SHOW_RANK_AVERAGE_MODE_ALWAYS_CLASS);
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_SCOREBOARD_CLASS);
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_HIDDEN_CLASS);
+    } else if (mode === SHOW_RANK_TOP_BAR_MODE_DISABLED) {
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_ALWAYS_CLASS);
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_SCOREBOARD_CLASS);
+      AddClass(docRoot, SHOW_RANK_AVERAGE_MODE_HIDDEN_CLASS);
+    } else {
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_ALWAYS_CLASS);
+      AddClass(docRoot, SHOW_RANK_AVERAGE_MODE_SCOREBOARD_CLASS);
+      RemoveClass(docRoot, SHOW_RANK_AVERAGE_MODE_HIDDEN_CLASS);
     }
     return mode;
   }
@@ -1799,6 +1843,7 @@
       return null;
     }
     ApplyShowRankTopBarModeClasses(docRoot);
+    ApplyShowRankAverageModeClasses(docRoot);
     AddClass(root, TOPBAR_PLAYER_CLASS);
     AddClass(image, TOPBAR_IMAGE_CLASS);
     try { image.__showRankTopBarRoot = root; } catch (e0) {}
@@ -2280,6 +2325,7 @@
   function UpdateTeamAverageRanks(root, source, candidates) {
     var docRoot = GetDocumentRoot(root);
     var displayMode;
+    var averageMode;
     var i;
     var missingTeam = 0;
     var friendly;
@@ -2288,7 +2334,8 @@
     var state;
     if (!IsPanelValid(docRoot)) return false;
     displayMode = ApplyShowRankTopBarModeClasses(docRoot);
-    if (displayMode === SHOW_RANK_TOP_BAR_MODE_DISABLED) {
+    averageMode = ApplyShowRankAverageModeClasses(docRoot);
+    if (displayMode === SHOW_RANK_TOP_BAR_MODE_DISABLED || averageMode === SHOW_RANK_TOP_BAR_MODE_DISABLED) {
       HideAllTeamAverageImages(docRoot);
       return false;
     }
@@ -2695,6 +2742,7 @@
       return false;
     }
     ApplyShowRankTopBarModeClasses(candidate.root || candidate.image);
+    ApplyShowRankAverageModeClasses(candidate.root || candidate.image);
     stored = ReadTopBarAccount(candidate);
     if (stored && stored !== account) {
       if (methodName.indexOf("manual_token") === 0) {
@@ -5056,6 +5104,7 @@
     var rankState;
     if (!GuardShowRankAction("topbar_root_loaded", panel, source || "topbar_root_onload")) return false;
     ApplyShowRankTopBarModeClasses(docRoot);
+    ApplyShowRankAverageModeClasses(docRoot);
     candidates = FindTopBarCandidates(docRoot);
     rankState = CountTopBarRankState(docRoot, candidates);
     AddClass(docRoot, "ShowRankTopBarNeedsEscapePrompt");
