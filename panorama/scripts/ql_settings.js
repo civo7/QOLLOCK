@@ -13095,6 +13095,24 @@ function ReadConfigRawFromStorage() {
     return chosenRaw;
 }
 
+// NormalizeConfig — single canonical normalization / migration chain.
+// Called from both SyncConfigFromStorage (on load) and SaveAndSync (on save).
+// When config === parsed (the save path), migration checks on hasOwn are safe no-ops.
+function NormalizeConfig(config, parsed) {
+    MigrateSplitZoomKeys(config, parsed);
+    NormalizeNeutralCampFlags(config, parsed);
+    NormalizeItemCooldownModeConfig(config, parsed);
+    NormalizeAmmoScaleConfig(config, parsed);
+    NormalizeVoiceTypeConfig(config);
+    NormalizeHealthbarTypeConfig(config, parsed);
+    NormalizeColorWarningConfig(config, parsed);
+    NormalizeEnemyColorWarningConfig(config, parsed);
+    NormalizeAllyColorWarningConfig(config, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(config, parsed);
+    NormalizeTopbarAllyHpWarningConfig(config, parsed);
+    NormalizeShopItemNotificationsConfig(config, parsed);
+}
+
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
     var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
@@ -13102,28 +13120,18 @@ function SyncConfigFromStorage() {
         : {};
     if (raw && raw.length > 0) {
         try {
-            var parsed = JSON.parse(raw) || {};
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            var parsed = (unwrapped && unwrapped.config) ? unwrapped.config : {};
             for (var key in parsed) {
                 if (nextConfig.hasOwnProperty(key)) {
                     nextConfig[key] = parsed[key];
                 }
             }
-            MigrateSplitZoomKeys(nextConfig, parsed);
-            NormalizeNeutralCampFlags(nextConfig, parsed);
-            NormalizeItemCooldownModeConfig(nextConfig, parsed);
-            NormalizeAmmoScaleConfig(nextConfig, parsed);
-            NormalizeVoiceTypeConfig(nextConfig);
-            NormalizeHealthbarTypeConfig(nextConfig, parsed);
-            NormalizeColorWarningConfig(nextConfig, parsed);
-            NormalizeEnemyColorWarningConfig(nextConfig, parsed);
-            NormalizeAllyColorWarningConfig(nextConfig, parsed);
-            NormalizeTopbarEnemyHpWarningConfig(nextConfig, parsed);
-            NormalizeTopbarAllyHpWarningConfig(nextConfig, parsed);
-            NormalizeShopItemNotificationsConfig(nextConfig, parsed);
+            NormalizeConfig(nextConfig, parsed);
         } catch (e) {}
     }
     MOD_CONFIG = nextConfig;
-    gLastSavedConfigRaw = JSON.stringify(MOD_CONFIG);
+    gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
     PersistStatlockerProfileState(raw, nextConfig);
     UpdateOnDeathArcadeBridgePollerState();
 }
@@ -13133,7 +13141,7 @@ function PersistStatlockerProfileState(rawConfig, configObj) {
     try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) {}
     try {
         var raw = String(rawConfig || "");
-        if (!raw || raw.length <= 0) raw = JSON.stringify(configObj || {});
+        if (!raw || raw.length <= 0) raw = WrapConfigForStorage(configObj || {});
         $.persistentStorage.setItem("qol_settings_raw_v1", raw);
     } catch (e1) {}
 }
@@ -13218,35 +13226,41 @@ function PublishPaletteColorBridges() {
     PublishPaletteColorBridge("MINIMAP_ICON_COLOR", MOD_CONFIG.MINIMAP_ICON_COLOR);
 }
 
+// Debounced save: prevents rapid-fire saves during slider drags etc.
+// Uses a token-counter pattern so only the last scheduled flush actually fires.
+var gSaveDebounceToken = 0;
+var SAVE_DEBOUNCE_SEC = 0.3;
+
+function MarkConfigDirty() {
+    var token = ++gSaveDebounceToken;
+    $.Schedule(SAVE_DEBOUNCE_SEC, function() {
+        if (gSaveDebounceToken === token) {
+            gSaveDebounceToken = 0;
+            SaveAndSync();
+        }
+    });
+}
+
+// Flushes any pending debounced save immediately (e.g. before import/reset).
+function FlushPendingSave() {
+    if (gSaveDebounceToken > 0) {
+        gSaveDebounceToken = 0;
+        SaveAndSync();
+    }
+}
+
 function SaveAndSync() {
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    NormalizeNeutralCampFlags(MOD_CONFIG, MOD_CONFIG);
-    NormalizeItemCooldownModeConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeAmmoScaleConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeVoiceTypeConfig(MOD_CONFIG);
-    NormalizeHealthbarTypeConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeEnemyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeAllyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeShopItemNotificationsConfig(MOD_CONFIG, MOD_CONFIG);
-    var data = JSON.stringify(MOD_CONFIG);
+    NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
+    var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
         return;
     }
     gLastSavedConfigRaw = data;
-    panel.SetAttributeString(STORAGE_KEY, data);
-    if (root && root.SetAttributeString) {
-        root.SetAttributeString(STORAGE_KEY, data);
-    }
-    if (hud && hud.SetAttributeString) {
-        try { hud.SetAttributeString(STORAGE_KEY, data); } catch (eHudStorage) {}
-    }
     var parseRev = function(v) {
         var n = Number(v);
         if (!isFinite(n) || n < 0) return 0;
@@ -13257,9 +13271,18 @@ function SaveAndSync() {
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var nextRev = Math.max(gUserEditRevision, panelRev, rootRev, hudRev) + 1;
     gUserEditRevision = nextRev;
-    if (panel && panel.SetAttributeString) panel.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
-    if (root && root.SetAttributeString) root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    // Write data + revision as a paired update per panel so an interrupted
+    // save never orphans new data with an old revision number.
+    if (panel && panel.SetAttributeString) {
+        panel.SetAttributeString(STORAGE_KEY, data);
+        panel.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    }
+    if (root && root.SetAttributeString) {
+        root.SetAttributeString(STORAGE_KEY, data);
+        root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    }
     if (hud && hud.SetAttributeString) {
+        try { hud.SetAttributeString(STORAGE_KEY, data); } catch (eHudStorage) {}
         try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
@@ -19761,7 +19784,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 if (val !== MOD_CONFIG[configId]) {
                     input.text = formatSliderInputValue(val);
                     MOD_CONFIG[configId] = val;
-                    SaveAndSync();
+                    MarkConfigDirty();
                     refreshRowChangedState();
                 }
             } else {
@@ -19769,7 +19792,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 if (val !== MOD_CONFIG[configId]) {
                     input.text = formatSliderInputValue(val);
                     MOD_CONFIG[configId] = val;
-                    SaveAndSync();
+                    MarkConfigDirty();
                     refreshRowChangedState();
                 }
             }
@@ -19793,7 +19816,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             input.RemoveClass("ValueSavedFlash");
             input.AddClass("ValueSavedFlash");
-            SaveAndSync();
+            MarkConfigDirty();
             refreshRowChangedState();
             ShowConfigPreviewForConfigId(configId);
         });
