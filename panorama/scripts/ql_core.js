@@ -65,6 +65,8 @@
     if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
 
     var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
+    var ProfileHit = QOL_UTILS_LOADED ? QOL_UTILS.ProfileHit : function() {};
+    var DumpProfile = QOL_UTILS_LOADED ? QOL_UTILS.DumpProfile : function() {};
 
     var State = {
         lastTime: -1, 
@@ -25024,11 +25026,22 @@ function GetUIRoot() {
             var key = name + "|" + time;
             if (!State.recentPurchaseQuickSeenKeys[key]) {
                 State.recentPurchaseQuickSeenKeys[key] = true;
+                CapRecentPurchaseSeenKeys();
                 if (!purchases[i].BHasClass("filterHidden")) {
                     AddQuickEntryRP(purchases[i], quickPanel, name, quickMax, quickDisplaySec);
                 }
             }
         }
+    }
+
+    function CapRecentPurchaseSeenKeys() {
+        var obj = State.recentPurchaseQuickSeenKeys;
+        var count = 0;
+        for (var k in obj) { if (obj.hasOwnProperty(k)) count++; }
+        if (count <= 300) return;
+        // Exceeded cap — reset the dedup log. Worst case: a purchase
+        // flashes twice, which is far better than unbounded memory growth.
+        State.recentPurchaseQuickSeenKeys = {};
     }
 
     function SyncRejuvClassRP(rejuvEnabled) {
@@ -25416,6 +25429,7 @@ function GetUIRoot() {
             var key = name + "|" + time;
             if (!State.recentPurchaseQuickSeenKeys[key]) {
                 State.recentPurchaseQuickSeenKeys[key] = true;
+                CapRecentPurchaseSeenKeys();
                 if (!purchase.BHasClass("filterHidden")) {
                     AddHeroPurchaseEntry(purchase, name, quickMax, quickDisplaySec);
                 }
@@ -30167,13 +30181,21 @@ function GetUIRoot() {
     function GetStableRuntimePanelId(panel) {
         if (!panel) return 0;
         var pool = State.itemMirror.runtimePanelIds || [];
+        // Prune dead panel references on each lookup to prevent unbounded
+        // growth across shop open/close cycles during a long match.
+        var cleaned = [];
+        var found = 0;
         for (var i = 0; i < pool.length; i++) {
             var rec = pool[i];
-            if (rec && rec.panel === panel) return Number(rec.id) || 0;
+            if (!rec || !IsPanelValid(rec.panel)) continue;
+            cleaned.push(rec);
+            if (rec.panel === panel) found = Number(rec.id) || 0;
         }
+        State.itemMirror.runtimePanelIds = cleaned;
+        if (found) return found;
         var nextId = Number(State.itemMirror.nextRuntimePanelId) || 1;
-        pool.push({ panel: panel, id: nextId });
-        State.itemMirror.runtimePanelIds = pool;
+        cleaned.push({ panel: panel, id: nextId });
+        State.itemMirror.runtimePanelIds = cleaned;
         State.itemMirror.nextRuntimePanelId = nextId + 1;
         return nextId;
     }
@@ -34202,6 +34224,7 @@ function GetUIRoot() {
     function loop() {
         var nextDelaySec = LOOP_INTERVAL_SEC;
         try {
+        ProfileHit("loop");
         var perfLoopStartMs = PerfNowMs();
         var perfConfigStartMs = perfLoopStartMs;
         var root = GetUIRoot();
@@ -34609,6 +34632,7 @@ function GetUIRoot() {
         } catch (err) {
             LogLoopException("loop", err, "loopErrorNextLogMs", PerfNowMs());
         } finally {
+            DumpProfile();
             $.Schedule(nextDelaySec, loop);
         }
     }
