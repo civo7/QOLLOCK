@@ -332,7 +332,8 @@
             playerCardCache: {},
             overlapPending: false,
             mapState: 0,
-            buildGen: 0
+            buildGen: 0,
+            ultCooldownsEnabled: false
         },
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
@@ -25149,10 +25150,13 @@ function GetUIRoot() {
         for (var i = 0; i < active.length; i++) {
             var margin = 125;
             var pp = active[i].panel.GetParent();
-            if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) margin = 150;
+            if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
+                margin = State.heroPopup.ultCooldownsEnabled ? 175 : 150;
+            }
             active[i].baseMargin = margin;
         }
 
+        if (active.length === 0) return;
         if (active.length < 2) {
             // Single panel: apply base margin directly
             active[0].panel.style.marginTop = active[0].baseMargin + "px";
@@ -25280,6 +25284,7 @@ function GetUIRoot() {
             var panel = State.heroPopup.panelsByHero[hero];
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
+        var ultSetting = State.heroPopup.ultCooldownsEnabled;
         State.heroPopup = {
             panelsByHero: {},
             activeEntriesByHero: {},
@@ -25287,7 +25292,8 @@ function GetUIRoot() {
             playerCardCache: {},
             overlapPending: false,
             mapState: HERO_MAP_IDLE,
-            buildGen: 0
+            buildGen: 0,
+            ultCooldownsEnabled: ultSetting
         };
     }
 
@@ -25405,6 +25411,7 @@ function GetUIRoot() {
 
             if (heroPopupsEnabled) {
                 // Per-hero popup panels on player cards
+                State.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
                 UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
                 // Hide the centralized panel since we're using per-hero panels
                 var quickPanel = State.cachedPanels.quickPurchasesPanel;
