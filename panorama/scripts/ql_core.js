@@ -25307,7 +25307,7 @@ function GetUIRoot() {
         var x = 0;
         var current = panel;
         while (current && IsPanelValid(current) && current !== topBar) {
-            x += current.actualxoffset;
+            x += ReadSafePanelLayoutOffset(current.actualxoffset) || 0;
             current = current.GetParent();
         }
         return x;
@@ -25351,7 +25351,7 @@ function GetUIRoot() {
 
         for (var i = 0; i < active.length; i++) {
             active[i].leftX = GetPanelLeftInTopBar(active[i].panel);
-            active[i].width = active[i].panel.actuallayoutwidth;
+            active[i].width = Number(active[i].panel.actuallayoutwidth) || 0;
         }
 
         // Sort newest first
@@ -25373,7 +25373,7 @@ function GetUIRoot() {
                 var bLeft = active[j].leftX;
                 var bRight = bLeft + active[j].width;
                 if (aLeft < bRight && aRight > bLeft) {
-                    var needed = margins[j] + active[j].panel.contentheight * QUICK_ROW_UI_SCALE;
+                    var needed = margins[j] + (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE;
                     if (needed > margins[i]) margins[i] = needed;
                 }
             }
