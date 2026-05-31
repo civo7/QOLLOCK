@@ -24551,12 +24551,13 @@ function GetUIRoot() {
         }
 
         var panels = [];
-        var searchRoot = null;
-        if (root && root.FindChildTraverse) {
+        var searchRoot = IsPanelValid(State.cachedPanels.staminaChargesContainer)
+            ? State.cachedPanels.staminaChargesContainer
+            : null;
+        if (!searchRoot && root && root.FindChildTraverse) {
             searchRoot = root.FindChildTraverse("charges_container") || root;
-        } else {
-            searchRoot = root;
         }
+        if (!searchRoot) searchRoot = root;
 
         if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
             var finishedCharges = searchRoot.FindChildrenWithClassTraverse("charge_fg") || [];
@@ -24988,8 +24989,8 @@ function GetUIRoot() {
         if (!IsPanelValid(panel) || !IsPanelVisibleMaybe(panel)) return 0;
         var bottom = 0;
         try {
-            var y = Number(panel.actualyoffset);
-            var h = Number(panel.actuallayoutheight);
+            var y = Number(panel.actualyoffset) || 0;
+            var h = Number(panel.actuallayoutheight) || 0;
             if (isFinite(y) && isFinite(h) && h > 0) bottom = y + h;
         } catch (eRecentPurchaseOverlayLayout) {}
         if (bottom > 0) return bottom;
@@ -28595,7 +28596,6 @@ function GetUIRoot() {
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var fillSize = Number(entry.healthBar.actuallayoutheight);
             var pct = ResolveTopBarHealthPct(entry);
             if (!isFinite(pct)) continue;
 
@@ -28777,7 +28777,6 @@ function GetUIRoot() {
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var fillSize = Number(entry.healthBar.actuallayoutheight);
             var pct = ResolveTopBarHealthPct(entry);
             if (!isFinite(pct)) continue;
 
@@ -33860,8 +33859,8 @@ function GetUIRoot() {
                 try { img.DeleteAsync(0); } catch (eOffTopB) {}
                 return;
             }
-            var w = img.actuallayoutwidth * 10.0;
-            var h = img.actuallayoutheight * 10.0;
+            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
+            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
@@ -33899,8 +33898,8 @@ function GetUIRoot() {
                 try { img.DeleteAsync(0); } catch (eOffBottomA) {}
                 return;
             }
-            var w = img.actuallayoutwidth * 10.0;
-            var h = img.actuallayoutheight * 10.0;
+            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
+            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
