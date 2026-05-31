@@ -32346,14 +32346,25 @@ function GetUIRoot() {
             // Number() config checks and sticky-state evaluations at 20Hz.
             var gates = State.lastResolvedGates;
 
-            // Hard-gate: when no features are active anywhere, skip entirely.
-            if (gates && State.allFeaturesDisabled) {
-                nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
-                var _cidle = DetectGlobalIdleState(root);
-                if (_cidle.level !== "active") {
-                    nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, _cidle));
+            // Hard-gate: skip when no compass-specific features are active.
+            // Don't use State.allFeaturesDisabled — that's global. The compass
+            // should idle when its own features are off, regardless of what
+            // else is running.
+            if (gates) {
+                var compassHasWork = gates.compassOverlay ||
+                    gates.compassMinimapRotate ||
+                    gates.compassItemMirror ||
+                    gates.compassReloadCd ||
+                    gates.compassUltCd ||
+                    gates.compassTargetShapesFast;
+                if (!compassHasWork) {
+                    nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
+                    var _cidle = DetectGlobalIdleState(root);
+                    if (_cidle.level !== "active") {
+                        nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, _cidle));
+                    }
+                    return;
                 }
-                return;
             }
 
             cfg = ApplyForcedFeatureDisables(cfg);
