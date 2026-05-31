@@ -608,8 +608,9 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig !== "function")
         if (!configTarget) return;
         var source = sourceConfig || configTarget || {};
         var hasOwn = Object.prototype.hasOwnProperty;
-        // Migrate old key name to new (ENABLE_SHOP_CLICK_TO_NOTIFY → ENABLE_SHOP_ITEM_NOTIFICATIONS)
-        if (hasOwn.call(source, "ENABLE_SHOP_CLICK_TO_NOTIFY")) {
+        // One-time migration: old key → new key, only when new key is absent
+        if (hasOwn.call(source, "ENABLE_SHOP_CLICK_TO_NOTIFY") &&
+            !hasOwn.call(source, "ENABLE_SHOP_ITEM_NOTIFICATIONS")) {
             configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS = source.ENABLE_SHOP_CLICK_TO_NOTIFY;
         }
         // Keep old key in sync for compact-schema backward compatibility

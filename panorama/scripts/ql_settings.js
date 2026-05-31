@@ -9777,6 +9777,13 @@ function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
     }
 }
 
+function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
+        utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
+    }
+}
+
 function CompareSchemaSemver(a, b) {
     var aa = String(a || "").split(".");
     var bb = String(b || "").split(".");
@@ -11823,6 +11830,7 @@ function ApplyParsedConfig(parsed) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, LATEST_COMPACT_SEMVER);
 }
 
@@ -11893,6 +11901,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
     NormalizeCompassSpeedSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
@@ -12531,6 +12540,7 @@ function SyncConfigFromStorage() {
             NormalizeAllyColorWarningConfig(nextConfig, parsed);
             NormalizeTopbarEnemyHpWarningConfig(nextConfig, parsed);
             NormalizeTopbarAllyHpWarningConfig(nextConfig, parsed);
+            NormalizeShopItemNotificationsConfig(nextConfig, parsed);
         } catch (e) {}
     }
     MOD_CONFIG = nextConfig;
@@ -12644,6 +12654,7 @@ function SaveAndSync() {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, MOD_CONFIG);
     var data = JSON.stringify(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
@@ -13771,6 +13782,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeAllyColorWarningConfig(candidateConfig, parsed);
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
+    NormalizeShopItemNotificationsConfig(candidateConfig, parsed);
     NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
@@ -13984,6 +13996,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeAllyColorWarningConfig(candidate, presetData);
     NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
     NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
+    NormalizeShopItemNotificationsConfig(candidate, presetData);
 
     PreserveUiOnlySettings(candidate);
 
@@ -20491,6 +20504,7 @@ function ApplyPresetConfig(presetData) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, presetData);
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
@@ -20566,6 +20580,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeAllyColorWarningConfig(resolved, presetData);
         NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
         NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
+        NormalizeShopItemNotificationsConfig(resolved, presetData);
     } else {
         NormalizeNeutralCampFlags(resolved, resolved);
         NormalizeItemCooldownModeConfig(resolved, resolved);
@@ -20577,6 +20592,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeAllyColorWarningConfig(resolved, resolved);
         NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
         NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
+        NormalizeShopItemNotificationsConfig(resolved, resolved);
     }
     return resolved;
 }
