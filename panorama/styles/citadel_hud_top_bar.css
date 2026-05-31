@@ -994,15 +994,20 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 @define backerSpiritT3: #8C87B6;
 @define backerSpiritT4: #504949;
 
-#QuickPurchasesPanel
+#QuickPurchasesPanel,
+.QuickPurchasesPanel
 {
 	horizontal-align: center;
 	flow-children: up;
 	ignore-parent-flow: true;
 	width: fit-children;
 	height: fit-children;
-	margin-top: 90px;
 	z-index: 99;
+}
+
+#QuickPurchasesPanel
+{
+	margin-top: 90px;
 }
 
 #QuickPurchasesPanel.has_rejuv.rp_quick_rejuv_active
@@ -1165,4 +1170,253 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 {
 	0%   { opacity: 1.0; }
 	100% { opacity: 0.0; }
+}
+
+/* --- Hero Purchase Popups (redux mode) --- */
+
+.HeroNameHidden
+{
+	visibility: collapse;
+}
+
+/* Per-hero panel overrides — gated behind shop_recent_purchases_redux */
+
+.shop_recent_purchases_redux .quickPurchase
+{
+	ui-scale: 70%;
+	overflow: noclip;
+}
+
+.shop_recent_purchases_redux .quickItemInfo
+{
+	ui-scale: 150%;
+	overflow: noclip;
+}
+
+/* T4 parent fade disable — child handles its own glow animation */
+.shop_recent_purchases_redux .isTier4Purchase.quickPurchase:not(.quickFading)
+{
+	animation-name: none;
+}
+
+/* T4 glow animation assignments */
+.shop_recent_purchases_redux .isTier4Purchase.isWeaponPurchase .quickItemInfo
+{
+	animation-name: quickT4WeaponGlow;
+	animation-duration: 2.0s;
+	animation-timing-function: ease;
+	animation-iteration-count: 1;
+}
+
+.shop_recent_purchases_redux .isTier4Purchase.isArmorPurchase .quickItemInfo
+{
+	animation-name: quickT4ArmorGlow;
+	animation-duration: 2.0s;
+	animation-timing-function: ease;
+	animation-iteration-count: 1;
+}
+
+.shop_recent_purchases_redux .isTier4Purchase.isTechPurchase .quickItemInfo
+{
+	animation-name: quickT4TechGlow;
+	animation-duration: 2.0s;
+	animation-timing-function: ease;
+	animation-iteration-count: 1;
+}
+
+/* T4 glow keyframes */
+
+@keyframes 'quickT4WeaponGlow'
+{
+	0%
+	{
+		opacity: 0.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	6%
+	{
+		opacity: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	17%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: courageBrightColor&50;
+	}
+
+	33%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	50%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: courageBrightColor&50;
+	}
+
+	67%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	83%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: courageBrightColor&50;
+	}
+
+	100%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+}
+
+@keyframes 'quickT4ArmorGlow'
+{
+	0%
+	{
+		opacity: 0.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	6%
+	{
+		opacity: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	17%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: fortitudeBrightColor&50;
+	}
+
+	33%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	50%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: fortitudeBrightColor&50;
+	}
+
+	67%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	83%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: fortitudeBrightColor&50;
+	}
+
+	100%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+}
+
+@keyframes 'quickT4TechGlow'
+{
+	0%
+	{
+		opacity: 0.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	6%
+	{
+		opacity: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	17%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: spiritBrightColor&50;
+	}
+
+	33%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	50%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: spiritBrightColor&50;
+	}
+
+	67%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
+
+	83%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.08;
+		brightness: 1.4;
+		wash-color: spiritBrightColor&50;
+	}
+
+	100%
+	{
+		opacity: 1.0;
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+		wash-color: #ffffff00;
+	}
 }

@@ -1,6 +1,72 @@
 (function() {
+    // Verify ql_utils.js loaded before us — log warning if missing
+    // (non-fatal: schema validator sandbox runs ql_core.js in isolation)
+    var QOL_UTILS_LOADED = typeof QOL_UTILS !== "undefined";
+    if (!QOL_UTILS_LOADED) {
+        $.Msg("[QOLLock] WARNING: ql_utils.js not loaded before ql_core.js!");
+    }
+
+    // Backward-compat aliases for utilities extracted to ql_utils.js
+    // Fall back to inline stubs when QOL_UTILS isn't loaded (schema validator sandbox)
+    var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var PushUnique = QOL_UTILS_LOADED ? QOL_UTILS.PushUnique : function(arr, panel) { if (!arr || !panel) return; for (var _i = 0; _i < arr.length; _i++) { if (arr[_i] === panel) return; } arr.push(panel); };
+    // Safe cached-panel accessors — always use State.cachedPanels with IsPanelValid guards
+    // (QOL_UTILS has its own panel cache, but ql_core.js uses State.cachedPanels exclusively)
+    var GetCachedPanel = function(k) {
+        var p = State.cachedPanels[k];
+        if (IsPanelValid(p)) return p;
+        State.cachedPanels[k] = null;
+        return null;
+    };
+    var SetCachedPanel = function(k, p) {
+        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
+    };
+    var ClearPanelCache = function() {
+        State.cachedPanels = {};
+    };
+    var SweepStalePanelCache = function() {
+        var swept = 0;
+        var cache = State.cachedPanels;
+        for (var k in cache) {
+            if (cache.hasOwnProperty(k) && cache[k] && !IsPanelValid(cache[k])) {
+                cache[k] = null;
+                swept++;
+            }
+        }
+        return swept;
+    };
+    var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
+        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+        if (!panel && parent && parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(traverseId);
+            State.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    };
+    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
+    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
+    var LogUtilsError = QOL_UTILS_LOADED ? QOL_UTILS.LogError : function() {};
+    var PerfNowMs_utils = QOL_UTILS_LOADED ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    var ValidateConfigHealth_utils = QOL_UTILS_LOADED ? QOL_UTILS.ValidateConfigHealth : function() { return []; };
+    var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
+    var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
+    var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
+    var QOL_ERROR = QOL_UTILS_LOADED ? QOL_UTILS.ErrorLog : function(cat, msg) { $.Msg("[QOLLock][ERROR][" + cat + "] " + msg); };
+
     var SOUND_DEBUG = false;
-    var State = { 
+
+    // Console-accessible debug toggle — type "ToggleQollockDebug()" in Panorama console
+    function ToggleQollockDebug() {
+        if (!QOL_UTILS_LOADED) { $.Msg("[QOLLock] ql_utils.js not loaded — debug toggle unavailable"); return; }
+        var next = !QOL_UTILS.IsDebugEnabled();
+        QOL_UTILS.SetDebugEnabled(next);
+        $.Msg("[QOLLock] debug logging " + (next ? "ENABLED" : "DISABLED"));
+    }
+    if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
+
+    var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
+
+    var State = {
         lastTime: -1, 
         lastIntervalAlert: 0,
         lastMinimapAlert: 0,
@@ -66,24 +132,27 @@
         showBuildIdLastLabel: null,
         quickbuyRuntimeStyleSig: "",
         quickbuyRuntimeHostOffsetApplied: false,
-        compassEnabled: false,
-        compassShowSpeed: true,
-        compassLastDegreeText: "",
-        compassLayoutSig: "",
-        compassNextSpeedSampleMs: 0,
-        compassLastSpeedValueText: "--",
-        compassScale: 100,
-        compassStretchX: 100,
-        compassStretchY: 100,
-        compassOffsetX: 0,
-        compassOffsetY: 120,
-        compassLastPosX: null,
-        compassLastPosY: null,
-        compassLastPosTimeMs: 0,
-        compassSpeedSmoothed: null,
-        compassSpeedDisplay: null,
-        compassTickClassSigs: [],
-        compassTickXTexts: [],
+        compass: {
+            enabled: false,
+            showSpeed: true,
+            lastDegreeText: "",
+            layoutSig: "",
+            nextSpeedSampleMs: 0,
+            lastSpeedValueText: "--",
+            scale: 100,
+            stretchX: 100,
+            stretchY: 100,
+            offsetX: 0,
+            offsetY: 120,
+            lastPosX: null,
+            lastPosY: null,
+            lastPosTimeMs: 0,
+            speedSmoothed: null,
+            speedDisplay: null,
+            tickClassSigs: [],
+            tickXTexts: [],
+            errorNextLogMs: 0
+        },
         lastConfig: null,
         zipBoostLastState: null,
         zipBoostReadyFlashUntilMs: 0,
@@ -103,57 +172,71 @@
         imagesInChatBottomFullScanNextMs: 0,
         imagesInChatTopMessageCache: [],
         imagesInChatBottomMessageCache: [],
-        unsecuredSoulsDisplayMode: "",
-        unsecuredSoulsLastLayoutSig: "",
-        unsecuredSoulsLastClassSig: "",
-        unsecuredSoulsLastTitle: "",
-        unsecuredSoulsLastStatus: "",
-        unsecuredSoulsLastSouls: -1,
-        unsecuredSoulsLastSampleMs: 0,
-        unsecuredSoulsRateEma: 0,
-        unsecuredSoulsRateLastUpdateMs: 0,
-        unsecuredSoulsEtaEndMs: 0,
-        unsecuredSoulsNextSourceSearchMs: 0,
+        unsecuredSouls: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitle: "",
+            lastStatus: "",
+            lastSouls: -1,
+            lastSampleMs: 0,
+            rateEma: 0,
+            rateLastUpdateMs: 0,
+            etaEndMs: 0,
+            nextSourceSearchMs: 0,
+            hudStyleSig: "",
+            hudBaseX: null,
+            hudBaseY: null,
+            hudLabel: null,
+            hudMirrorLabel: null,
+            hudMirrorIcon: null,
+            hudMirrorText: null,
+            hudNextSearchMs: 0
+        },
         signatureCooldownFlashSlots: null,
         signatureCooldownFlashNextScanMs: 0,
         signatureCooldownFlashUntilById: {},
         signatureCooldownFlashPressById: {},
         signatureCooldownFlashWasEnabled: false,
-        statBonusesDisplayMode: "",
-        statBonusesLastLayoutSig: "",
-        statBonusesLastClassSig: "",
-        statBonusesLastTitleText: "",
-        statBonusesLastFireRateText: "",
-        statBonusesLastAbilityCooldownText: "",
-        statBonusesLastSpiritPowerText: "",
-        statBonusesLastClipSizeText: "",
-        statBonusesLastWeaponDamageText: "",
-        statBonusesLastMaxHealthText: "",
-        statBonusesNextSourceSearchMs: 0,
-        statBonusesNextSourceSearchByKey: {},
-        statBonusesNextIdolCountSearchMs: 0,
-        statBonusesNextTooltipScanMs: 0,
-        statBonusesGoldenValues: {},
-        statBonusesDebugLastSig: "",
-        statBonusesDebugNextMs: 0,
-        combatStatusDisplayMode: "",
-        combatStatusLastLayoutSig: "",
-        combatStatusLastClassSig: "",
-        combatStatusLastStateText: "",
-        combatStatusLastTimerText: "",
-        combatStatusLastCombatMs: 0,
-        combatStatusCombatStartMs: 0,
-        combatStatusSignalActive: false,
-        combatStatusNextShopProbeMs: 0,
-        combatStatusNextAlertProbeMs: 0,
-        combatStatusNextDamageProbeMs: 0,
-        combatStatusNextHealthProbeMs: 0,
-        combatStatusShopProbeMisses: 0,
-        combatStatusAlertProbeMisses: 0,
-        combatStatusDamageProbeMisses: 0,
-        combatStatusHealthProbeMisses: 0,
-        combatStatusLastHealthValue: -1,
-        combatStatusSawOutOfCombatClass: false,
+        statBonuses: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitleText: "",
+            lastFireRateText: "",
+            lastAbilityCooldownText: "",
+            lastSpiritPowerText: "",
+            lastClipSizeText: "",
+            lastWeaponDamageText: "",
+            lastMaxHealthText: "",
+            nextSourceSearchMs: 0,
+            nextSourceSearchByKey: {},
+            nextIdolCountSearchMs: 0,
+            nextTooltipScanMs: 0,
+            goldenValues: {},
+            debugLastSig: "",
+            debugNextMs: 0
+        },
+        combatStatus: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastStateText: "",
+            lastTimerText: "",
+            lastCombatMs: 0,
+            combatStartMs: 0,
+            signalActive: false,
+            nextShopProbeMs: 0,
+            nextAlertProbeMs: 0,
+            nextDamageProbeMs: 0,
+            nextHealthProbeMs: 0,
+            shopProbeMisses: 0,
+            alertProbeMisses: 0,
+            damageProbeMisses: 0,
+            healthProbeMisses: 0,
+            lastHealthValue: -1,
+            sawOutOfCombatClass: false
+        },
         enemyColoredHealthPanelCache: [],
         enemyColoredHealthPanelCacheNextMs: 0,
         enemyColoredHealthNextUpdateMs: 0,
@@ -173,6 +256,7 @@
         enemyUnitStatusOldPanelScanStats: null,
         ultCdSlotCache: null,
         ultCdSlotNextRecheckMs: null,
+        ultCdSlotFullRescanAtMs: 0,
         enemyUltOldPanelCache: [],
         enemyUltOldPanelCacheNextMs: 0,
         enemyUltOldNextUpdateMs: 0,
@@ -191,34 +275,36 @@
         enemyV2BridgeEventLevel: null,
         enemyV2BridgeEventLastMs: 0,
         enemyV2AttrBridgeLastSig: "",
-        itemMirrorProbeLastScanMs: 0,
-        itemMirrorProbeLastSignature: "",
-        itemMirrorProbeWasEnabled: false,
-        itemMirrorDisplayMode: "",
-        itemMirrorLastLayoutSig: "",
-        itemMirrorLastRowOpacityPanel: null,
-        itemMirrorLastRowOpacityText: "",
-        itemMirrorFastModeUntilMs: 0,
-        itemMirrorDebugLastMs: 0,
-        itemMirrorDebugLastSig: "",
-        itemMirrorWasOnCooldown: false,
-        itemMirrorReadyAnimUntilMs: 0,
-        itemMirrorCdLastDeg: null,
-        itemMirrorCdLastMs: 0,
-        itemMirrorCdSlopeEma: null,
-        itemMirrorCdDisplayLock: null,
-        itemMirrorLastSrc: "",
-        itemMirrorLastClip: "",
-        itemMirrorClassCache: {},
-        itemMirrorVisualOpacityText: "1.00",
-        itemMirrorSources: [],
-        itemMirrorNextSourceId: 1,
-        itemMirrorNextAcquireOrder: 1,
-        itemMirrorSlotStates: {},
-        itemMirrorRuntimePanelIds: [],
-        itemMirrorNextRuntimePanelId: 1,
-        itemMirrorExceptionGroupAssignments: {},
-        itemMirrorLastShopOpen: false,
+        itemMirror: {
+            probeLastScanMs: 0,
+            probeLastSignature: "",
+            probeWasEnabled: false,
+            displayMode: "",
+            lastLayoutSig: "",
+            lastRowOpacityPanel: null,
+            lastRowOpacityText: "",
+            fastModeUntilMs: 0,
+            debugLastMs: 0,
+            debugLastSig: "",
+            wasOnCooldown: false,
+            readyAnimUntilMs: 0,
+            cdLastDeg: null,
+            cdLastMs: 0,
+            cdSlopeEma: null,
+            cdDisplayLock: null,
+            lastSrc: "",
+            lastClip: "",
+            classCache: {},
+            visualOpacityText: "1.00",
+            sources: [],
+            nextSourceId: 1,
+            nextAcquireOrder: 1,
+            slotStates: {},
+            runtimePanelIds: [],
+            nextRuntimePanelId: 1,
+            exceptionGroupAssignments: {},
+            lastShopOpen: false
+        },
         customHudSuppressed: false,
         keyboardBoxCaches: [],
         heroShopNextSearchMs: 0,
@@ -234,6 +320,16 @@
         recentPurchaseQuickSeenKeys: {},
         recentPurchaseQuickInitialized: false,
         recentPurchaseQuickActiveEntries: [],
+        heroPopup: {
+            panelsByHero: {},
+            activeEntriesByHero: {},
+            lastEntryTime: {},
+            playerCardCache: {},
+            overlapPending: false,
+            mapState: 0,
+            buildGen: 0,
+            ultCooldownsEnabled: false
+        },
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
@@ -254,25 +350,27 @@
         urnTrackerNextSampleMs: 0,
         urnTrackerNextPanelSearchMs: 0,
         urnTrackerCachedState: null,
-        spmNextSampleMs: 0,
-        spmPanelCacheNextMs: 0,
-        spmPlayerHistory: null,
-        spmPlayerPanels: null,
-        spmPlayerDisplayLabels: null,
-        spmPlayerTeamByIndex: null,
-        spmPlayerHiddenGoldLabels: null,
-        spmPlayerSoulsLabels: null,
-        spmCachedFriendlyScore: null,
-        spmCachedEnemyScore: null,
-        spmCachedFriendlyLabel: null,
-        spmCachedEnemyLabel: null,
-        spmTeamHistory: null,
-        spmLastClockSec: null,
-        spmWarmupActive: true,
-        spmWasDisabled: false,
-        spmNeedsFullPlayerCache: true,
-        spmPlayerRefreshCursor: 0,
-        spmPlayerRefreshRemaining: 0,
+        spm: {
+            nextSampleMs: 0,
+            panelCacheNextMs: 0,
+            playerHistory: null,
+            playerPanels: null,
+            playerDisplayLabels: null,
+            playerTeamByIndex: null,
+            playerHiddenGoldLabels: null,
+            playerSoulsLabels: null,
+            cachedFriendlyScore: null,
+            cachedEnemyScore: null,
+            cachedFriendlyLabel: null,
+            cachedEnemyLabel: null,
+            teamHistory: null,
+            lastClockSec: null,
+            warmupActive: true,
+            wasDisabled: false,
+            needsFullPlayerCache: true,
+            playerRefreshCursor: 0,
+            playerRefreshRemaining: 0
+        },
         topbarPlayerPanelRoot: null,
         topbarPlayerPanels: null,
         topbarPlayerPanelLastScanMs: null,
@@ -306,14 +404,6 @@
         unspentWasDisabled: false,
         topbarSoulSnapshot: null,
         topbarSoulSnapshotUntilMs: 0,
-        unsecuredSoulsHudStyleSig: "",
-        unsecuredSoulsHudBaseX: null,
-        unsecuredSoulsHudBaseY: null,
-        unsecuredSoulsHudLabel: null,
-        unsecuredSoulsHudMirrorLabel: null,
-        unsecuredSoulsHudMirrorIcon: null,
-        unsecuredSoulsHudMirrorText: null,
-        unsecuredSoulsHudNextSearchMs: 0,
         rejuvState: null,
         rejuvWasDisabled: false,
         minimapObjectiveBuffClassCache: { panel: null, values: {} },
@@ -615,7 +705,6 @@
         healthbarVisDebugLastSig: "",
         healthbarVisDebugNextMs: 0,
         loopErrorNextLogMs: 0,
-        compassErrorNextLogMs: 0,
         // ── Minecraft healthbar ────────────────────────────────────────────────
         mcWasEnabled: false,
         mcNextUpdateMs: 0,
@@ -678,6 +767,10 @@
             { time: 480, sound: "BuffReminder.Tier3", tierKey: "ENABLE_ONE_TIME_TIER3" }
         ]
     };
+    // ==========================================================================
+    // STORAGE & ATTRIBUTE KEYS
+    // ==========================================================================
+
     var DL4D_REMINDER_EVENTS = [
         { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
         { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
@@ -709,54 +802,122 @@
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
-    const CORE_SCHEDULER_V2_ENABLED = true; // rollback switch
-    const CORE_SCHEDULER_PHASE_COUNT = 5;
-    const CORE_SCHEDULER_STAGGER_CLEANUP = true;
-    const CORE_START_DELAY_LOOP_SEC = 0.90;
-    const CORE_START_DELAY_COMPASS_SEC = 1.03;
-    const CORE_START_DELAY_BUILD_SEC = 1.17;
+    // ==========================================================================
+    // SCHEDULER
+    // ==========================================================================
+    const CORE_SCHEDULER_V2_ENABLED = true; // rollback switch: set false to revert to v1 scheduler
+    const CORE_SCHEDULER_PHASE_COUNT = 5; // stagger work across this many phases per tick
+    const CORE_SCHEDULER_STAGGER_CLEANUP = true; // spread cleanup work across phases
+
+    // ==========================================================================
+    // LOOP STARTUP TIMING
+    // ==========================================================================
+    // Delays allow the game's own HUD panels to initialize before QOLLOCK queries them.
+    // Too low: panels not found, bootstrap retries waste CPU.
+    // Too high: user sees default HUD before QOLLOCK activates.
+    const CORE_START_DELAY_LOOP_SEC = 0.90;   // main feature loop
+    const CORE_START_DELAY_COMPASS_SEC = 1.03; // compass/minimap loop
+    const CORE_START_DELAY_BUILD_SEC = 0.70;   // build category payload loop (reduced from 1.17)
+    // Phase slot assignments (which feature runs in which corePhase % 5)
+    const CORE_PHASE_REJUV_NICKNAMES = 0;
+    const CORE_PHASE_SPM_STATLOCKER  = 1;
+    const CORE_PHASE_UNSPENT_LANE    = 2;
+    const CORE_PHASE_UNSECURED       = 3;
+    const CORE_PHASE_STAT_BONUSES    = 4;
+
+    // ==========================================================================
+    // LOOP INTERVALS (seconds)
+    // ==========================================================================
+    // 200ms (5Hz) — balance between responsiveness and CPU usage.
+    // At 60fps (~16.7ms/frame), the main loop fires every ~12 frames.
     const LOOP_INTERVAL_SEC = 0.2;
+
+    // 50ms (20Hz) — smooth compass rotation, matches typical monitor refresh.
+    // Every 3rd frame at 60fps. Below 33ms gives no visible improvement.
     const COMPASS_INTERVAL_SEC = 0.05;
-    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.16;
-    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;
-    const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;
+
+    // Build request loop intervals at three degradation levels
+    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.16;       // player is in shop/build UI
+    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;          // in match but not in shop
+    const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;     // outside match (menus)
+
+    // Compass idle degradation — uses idle interval when not in custom HUD context
     const COMPASS_INTERVAL_IDLE_SEC = 0.50;
     const COMPASS_INTERVAL_DEEP_IDLE_SEC = 0.85;
-    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;
-    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;
-    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
+
+    // ==========================================================================
+    // MAIN LOOP — IDLE DEGRADATION (Fix 9)
+    // ==========================================================================
+    // Multiplier applied to LOOP_INTERVAL_SEC at each idle level.
+    // active:    0.2s (5Hz)   — in match, HUD visible, normal FPS
+    // idle:      0.5s (2Hz)   — HUD hidden or low FPS (below ~20fps)
+    // deep_idle: 1.5s (0.67Hz) — not in match (menus)
+    // background: 3.0s (0.33Hz) — not in match for extended period
+    const LOOP_IDLE_MULTIPLIER = 2.5;        // idle interval = base * 2.5  (0.5s)
+    const LOOP_DEEP_IDLE_MULTIPLIER = 7.5;   // deep idle = base * 7.5      (1.5s)
+    const LOOP_BACKGROUND_MULTIPLIER = 15;   // background = base * 15      (3.0s)
+    const IDLE_DETECTION_CACHE_MS = 2000;     // cache idle state for 2s to avoid per-tick overhead
+    const LOW_FPS_THRESHOLD_MS = 50;          // frame time >50ms (~<20fps) triggers low-FPS degradation
+
+    // ==========================================================================
+    // BOOTSTRAP & CACHE TIMING
+    // ==========================================================================
+    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;  // retry interval for target shape panel discovery
+    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;     // give up after this many attempts
+    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;     // slow refresh when HUD is idle
     const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
-    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
+    const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0"; // default damage number config signature
+
+    // ==========================================================================
+    // COMPASS — GEOMETRY
+    // ==========================================================================
+    // 360° / 22.5° = 16 base ticks + 1 overlap for seamless wrapping at 360°
     const COMPASS_TICK_STEP_DEG = 22.5;
-    const COMPASS_TICK_SPACING_PX = 12.5;
-    const COMPASS_TICK_COUNT = 17;
-    const COMPASS_SPEED_SCALE = 2.12;
-    const COMPASS_SPEED_OFFSET = 2.0;
-    const COMPASS_SPEED_DEADBAND = 2.0;
-    const COMPASS_SPEED_MAX_STEP = 12.0;
-    const COMPASS_SPEED_QUANT = 2;
-    const COMPASS_SPEED_ZERO_FLOOR = 10.0;
-    const COMPASS_SPEED_SAMPLE_MS = 50;
-    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
-    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
-    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
-    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;
-    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;
-    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;
-    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0;
-    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;
-    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;
-    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;
-    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
-    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
-    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
-    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
-    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
-    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;
+    const COMPASS_TICK_SPACING_PX = 12.5;  // horizontal px between tick marks (controls ring diameter)
+    const COMPASS_TICK_COUNT = 17;          // total ticks including wrap-overlap
+
+    // ==========================================================================
+    // COMPASS — SPEED DISPLAY
+    // ==========================================================================
+    // display = raw_speed * SCALE + OFFSET, clamped to MAX_STEP, quantized by QUANT.
+    // Empirically tuned so a hero at normal speed shows ~5-7 on the readout.
+    const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
+    const COMPASS_SPEED_OFFSET = 2.0;       // offset added after scaling
+    const COMPASS_SPEED_DEADBAND = 2.0;     // minimum display value below which readout shows zero
+    const COMPASS_SPEED_MAX_STEP = 12.0;    // max change per update (smooths display)
+    const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
+    const COMPASS_SPEED_ZERO_FLOOR = 10.0;  // raw speed below this floors display to zero
+    const COMPASS_SPEED_SAMPLE_MS = 50;     // speed sample window in milliseconds
+
+    // ==========================================================================
+    // MINIMAP — ROTATION SMOOTHING
+    // ==========================================================================
+    // North-offset rotation uses an exponential moving average ("tau" = time constant).
+    // Two tau values: fast for large heading deltas, slow for small corrections.
+    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;      // north = +90° in Source 2 coordinate system
+    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;     // ignore rotation below this when stationary
+    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;   // tighter deadzone when moving
+    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;          // smoothing time-constant for large heading changes
+    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;          // smoothing time-constant for small heading changes
+    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;        // heading delta threshold to switch to fast tau
+    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0; // cap on rotation speed
+    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;         // hold heading for this long before switching to slow tau
+    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;           // look-ahead time for velocity-based heading prediction
+    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;        // cap on predicted heading delta
+    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;       // EMA alpha for velocity filtering (0-1, higher = faster response)
+
+    // ==========================================================================
+    // MINIMAP — LAYOUT & SCANNING
+    // ==========================================================================
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;      // scan interval for local player position
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;  // faster scan after certain events
+    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // re-assert Z-order interval
+    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // base cast range circle size on minimap
+    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // base minimap size in pixels at default zoom
+    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // sanity cap on layout offset (prevents runaway values)
+    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // feature-gate constant for custom mouse cursor
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
     const GAMEPLAY_MOUSE_CURSOR_HALF_PX = Math.floor(GAMEPLAY_MOUSE_CURSOR_SIZE_PX * 0.5);
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
@@ -858,6 +1019,13 @@
     const COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
     const COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
     const COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
+    // Healthbar type enum (matches ql_settings.js healthbar type dropdown order)
+    const HEALTHBAR_TYPE_DEFAULT    = 0;
+    const HEALTHBAR_TYPE_MINIMALIST = 1;
+    const HEALTHBAR_TYPE_FG         = 2;
+    const HEALTHBAR_TYPE_KLUTZ      = 3;
+    const HEALTHBAR_TYPE_BUDHUD     = 4;
+    const HEALTHBAR_TYPE_MINECRAFT  = 5;
     const COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
     const ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR = [255, 86, 86];
     const ALLY_TOPBAR_HEALTH_DEFAULT_COLOR = COLORED_HEALTHBAR_COLOR_WHITE;
@@ -897,6 +1065,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
+    const ULT_CD_FULL_RESCAN_MS = 30000;     // periodic full cache flush to self-heal stale lookups
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
@@ -948,6 +1117,17 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
     const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
     const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
+    // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
+    const PANEL_ID_HUD = "Hud";
+    const PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
+    const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+    const PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";
+    const PANEL_ID_TOP_BAR = "TopBar";
+    const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
+    const PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    const PANEL_ID_MINIMAP = "hud_minimap";
+    const PANEL_ID_SIGNATURE = "hud_signature";
+    const PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     const ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS = 1500;
     const ACCOUNT_PRESET_TEST_ENABLED = false;
     const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
@@ -955,9 +1135,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 2500;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 150;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 12000;
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 800;  // reduced from 2500
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;    // reduced from 150
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 8000;  // reduced from 12000
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES = 2;
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 1200;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
@@ -969,7 +1149,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 5000;
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES = 3;
     const BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 16;
-    const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 900;
+    const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 500;  // reduced from 900
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS = 260;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS = 360;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_MAX_RETRIES = 45;
@@ -1115,20 +1295,20 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
-    const BUILD_SAVE_ACTION_DELAY_MS = 120;
-    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 80;
-    const BUILD_SAVE_VERIFY_DELAY_MS = 800;
-    const BUILD_SAVE_TIMEOUT_MS = 22000;
+    const BUILD_SAVE_ACTION_DELAY_MS = 60;    // reduced from 120
+    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 40;   // reduced from 80
+    const BUILD_SAVE_VERIFY_DELAY_MS = 400;   // reduced from 800
+    const BUILD_SAVE_TIMEOUT_MS = 15000;  // reduced from 22000
     const BUILD_SAVE_MAX_RETRIES = 9;
     const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
     const BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
     const BUILD_SAVE_HERO_SWITCH_DELAY_MS = 450;
-    const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 2000;
-    const BUILD_SAVE_RETURN_DELAY_SEC = 1.5;
-    const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 2.0;
+    const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 1000;   // reduced from 2000
+    const BUILD_SAVE_RETURN_DELAY_SEC = 0.8;    // reduced from 1.5
+    const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 1.0;    // reduced from 2.0
     const BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
-    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 180;
-    const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 10000;
+    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 100;   // reduced from 180
+    const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 6000;   // reduced from 10000
     const BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 1200;
     const BUILD_SAVE_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
@@ -1200,7 +1380,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const HERO_RESTORE_RETRY_DELAY_MS = 350;
     const HERO_RESTORE_MAX_WAIT_MS = 3200;
     const HERO_RESTORE_MAX_RETRIES = 1;
-    const HERO_RESTORE_BLIND_SUCCESS_MS = 1300;
+    const HERO_RESTORE_BLIND_SUCCESS_MS = 800;   // reduced from 1300
     const LANE_PREF_SELECTOR_ID = "LanePreferenceSelector";
     const LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
     const LANE_PREF_APPLY_INTERVAL_MS = 650;
@@ -4944,6 +5124,12 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     };
 
     const RECENT_PURCHASE_MAX_ITEMS  = 50;
+    // Repeated CSS class names
+    const CLASS_RECENT_PURCHASE = "recentPurchase";
+    const CLASS_IS_ZERO_VALUE = "isZeroValue";
+    const CLASS_OUT_OF_COMBAT = "out_of_combat";
+    const CLASS_IN_COMBAT = "inCombat";
+    const CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     const RECENT_PURCHASE_QUICK_MAX_DEFAULT         = 3;
     const RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 10.0;
     const RECENT_PURCHASE_QUICK_FADE_SEC            = 0.4;
@@ -5021,10 +5207,10 @@ function ItemMirrorCooldownDebugLog(msg) {
 function ItemMirrorCooldownDebugLogThrottled(sig, msg, nowMs) {
     if (!ITEM_MIRROR_COOLDOWN_DEBUG) return;
     var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-    var sameSig = sig && sig === State.itemMirrorDebugLastSig;
-    if (sameSig && now < (State.itemMirrorDebugLastMs || 0)) return;
-    State.itemMirrorDebugLastSig = sig || "";
-    State.itemMirrorDebugLastMs = now + ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS;
+    var sameSig = sig && sig === State.itemMirror.debugLastSig;
+    if (sameSig && now < (State.itemMirror.debugLastMs || 0)) return;
+    State.itemMirror.debugLastSig = sig || "";
+    State.itemMirror.debugLastMs = now + ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS;
     ItemMirrorCooldownDebugLog(msg);
 }
 
@@ -5051,10 +5237,10 @@ function ExpressShotLog(msg) {
     function StatBonusesDebugLogThrottled(sig, msg, nowMs) {
         if (!STAT_BONUSES_DEBUG) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.statBonusesDebugLastSig;
-        if (sameSig && now < (State.statBonusesDebugNextMs || 0)) return;
-        State.statBonusesDebugLastSig = sig || "";
-        State.statBonusesDebugNextMs = now + STAT_BONUSES_DEBUG_MIN_INTERVAL_MS;
+        var sameSig = sig && sig === State.statBonuses.debugLastSig;
+        if (sameSig && now < (State.statBonuses.debugNextMs || 0)) return;
+        State.statBonuses.debugLastSig = sig || "";
+        State.statBonuses.debugNextMs = now + STAT_BONUSES_DEBUG_MIN_INTERVAL_MS;
         StatBonusesDebugLog(msg);
     }
 
@@ -5436,7 +5622,7 @@ function ExpressShotLog(msg) {
 
         var selectedBuild = null;
         try {
-            selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         } catch (e1) {
             selectedBuild = null;
         }
@@ -5780,8 +5966,8 @@ function ExpressShotLog(msg) {
     function TryParseStorageConfigRaw(rawText) {
         if (!rawText || rawText.length === 0) return {};
         try {
-            var parsed = JSON.parse(String(rawText));
-            return (parsed && typeof parsed === "object") ? parsed : {};
+            var unwrapped = UnwrapConfigFromStorage(String(rawText));
+            return (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
         } catch (e0) {
             return {};
         }
@@ -5802,8 +5988,9 @@ function ExpressShotLog(msg) {
         var raw = String(rawText || "");
         if (!raw || raw.length === 0) return "";
         try {
-            var parsed = JSON.parse(raw);
-            var comparable = BuildComparableStorageConfigObject(parsed && typeof parsed === "object" ? parsed : {});
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            var parsed = (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
+            var comparable = BuildComparableStorageConfigObject(parsed);
             return JSON.stringify(comparable);
         } catch (e0) {
             return raw;
@@ -5843,7 +6030,7 @@ function ExpressShotLog(msg) {
 
         obj[HERO_PERSISTED_KEY] = hero;
         var nextRaw = "";
-        try { nextRaw = JSON.stringify(obj); } catch (e1) { nextRaw = ""; }
+        try { nextRaw = WrapConfigForStorage(obj); } catch (e1) { nextRaw = ""; }
         if (!nextRaw || nextRaw.length === 0) return false;
 
         var writeResult = WriteStorageConfigRawToUi(root, nextRaw);
@@ -6103,20 +6290,16 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -6399,17 +6582,13 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var ri = 0; ri < roots.length; ri++) {
-                if (roots[ri] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root && root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
-            PushRootUnique(root.FindChildTraverse("hud_signature"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
         }
         PushRootUnique(root);
@@ -6487,21 +6666,17 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("hud_signature"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -6577,20 +6752,16 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse("health_and_abilities_container"));
-            PushRootUnique(root.FindChildTraverse("AbilitiesContainer"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
             PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
             PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse("Hud"));
-            PushRootUnique(root.FindChildTraverse("gameplay_hud"));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
+            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
         }
         PushRootUnique(root);
 
@@ -6877,7 +7048,54 @@ function ExpressShotLog(msg) {
         if (err && err.message) msg = String(err.message);
         else if (err !== undefined && err !== null) msg = String(err);
         var stack = (err && err.stack) ? ("\n" + String(err.stack)) : "";
-        $.Msg("[QOLLock][" + loopName + "] runtime error: " + msg + stack);
+        QOL_ERROR(loopName, msg + stack);
+    }
+
+    // ---- Feature Error Isolation (Fix 6) ----
+
+    var FEATURE_ERROR_STREAK_MAX = 10;
+
+    function ResetFeatureErrorStreak(featureName) {
+        if (!State.featureErrorStreaks) State.featureErrorStreaks = {};
+        State.featureErrorStreaks[featureName] = 0;
+    }
+
+    function IncrementFeatureErrorStreak(featureName) {
+        if (!State.featureErrorStreaks) State.featureErrorStreaks = {};
+        var streak = (Number(State.featureErrorStreaks[featureName]) || 0) + 1;
+        State.featureErrorStreaks[featureName] = streak;
+        return streak;
+    }
+
+    function IsFeatureAutoDisabled(featureName) {
+        if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
+        return !!State.featureAutoDisabled[featureName];
+    }
+
+    function AutoDisableFeature(featureName) {
+        if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
+        State.featureAutoDisabled[featureName] = true;
+        QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors");
+    }
+
+    /**
+     * Execute a feature tick function with its own error isolation.
+     * If the feature throws, the error is logged with the feature name.
+     * After 10 consecutive errors, the feature is auto-disabled for the session.
+     */
+    function ExecuteFeature(featureName, fn) {
+        if (IsFeatureAutoDisabled(featureName)) return;
+        try {
+            fn();
+            // Successful execution resets the error streak
+            ResetFeatureErrorStreak(featureName);
+        } catch (featureErr) {
+            LogLoopException(featureName, featureErr, "featureErr_" + featureName, PerfNowMs());
+            var streak = IncrementFeatureErrorStreak(featureName);
+            if (streak >= FEATURE_ERROR_STREAK_MAX) {
+                AutoDisableFeature(featureName);
+            }
+        }
     }
 
     function RuntimeSchedulerGetStore() {
@@ -6931,8 +7149,12 @@ function ExpressShotLog(msg) {
         return Date.now ? Date.now() : (new Date()).getTime();
     }
 
+    // Module-level cache of State.perfEnabled — avoids repeated property lookups
+    // across 70+ PerfStart/PerfEnd calls per tick when perf tracking is off.
+    var _perfTrackingActive = false;
+
     function PerfRecord(name, elapsedMs) {
-        if (!State.perfEnabled) return;
+        if (!_perfTrackingActive) return;
         if (!name) return;
         var ms = Number(elapsedMs);
         if (!isFinite(ms) || ms < 0) return;
@@ -6950,12 +7172,12 @@ function ExpressShotLog(msg) {
     }
 
     function PerfStart() {
-        if (!State.perfEnabled) return 0;
+        if (!_perfTrackingActive) return 0;
         return PerfNowMs();
     }
 
     function PerfEnd(name, startMs) {
-        if (!State.perfEnabled || !startMs) return;
+        if (!_perfTrackingActive || !startMs) return;
         PerfRecord(name, PerfNowMs() - startMs);
     }
 
@@ -6968,11 +7190,12 @@ function ExpressShotLog(msg) {
     }
 
     function UpdatePerfEnabledFromConfig(cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_PERF_DEBUG) === 1);
-        var detailed = !!(enabled && Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG"));
+        var detailed = !!(enabled && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG_DETAIL"));
+        _perfTrackingActive = enabled;
         if (!enabled) {
             if (State.perfEnabled) {
-                $.Msg("[QOLLock][Perf] disabled");
+                QOL_INFO("Perf", "disabled");
             }
             State.perfEnabled = false;
             State.perfDetailed = false;
@@ -6988,17 +7211,17 @@ function ExpressShotLog(msg) {
             State.perfEnabled = true;
             State.perfDetailed = detailed;
             ResetPerfWindow(nowMs);
-            $.Msg("[QOLLock][Perf] enabled (detail=" + (detailed ? "on" : "off") + ")");
+            QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
             return;
         }
         if (State.perfDetailed !== detailed) {
             State.perfDetailed = detailed;
-            $.Msg("[QOLLock][Perf] detail " + (detailed ? "enabled" : "disabled"));
+            QOL_INFO("Perf", "detail " + (detailed ? "enabled" : "disabled"));
         }
     }
 
     function FlushPerfIfNeeded(force) {
-        if (!State.perfEnabled) return;
+        if (!_perfTrackingActive) return;
         var nowMs = PerfNowMs();
         if (!force && nowMs < (State.perfNextFlushMs || 0)) return;
 
@@ -7221,6 +7444,7 @@ function ExpressShotLog(msg) {
         for (var key in merged) {
             if (config.hasOwnProperty(key)) merged[key] = config[key];
         }
+        MigrateSplitZoomKeys(merged, config);
         NormalizeNeutralCampTierConfig(merged, config);
         NormalizeItemCooldownModeConfig(merged, config);
         NormalizeAmmoScaleConfig(merged, config);
@@ -7231,6 +7455,7 @@ function ExpressShotLog(msg) {
         NormalizeAllyColorWarningConfig(merged, config);
         NormalizeTopbarEnemyHpWarningConfig(merged, config);
         NormalizeTopbarAllyHpWarningConfig(merged, config);
+        NormalizeShopItemNotificationsConfig(merged, config);
         return merged;
     }
 
@@ -7238,6 +7463,13 @@ function ExpressShotLog(msg) {
         var utils = GetSharedSchemaUtils();
         if (utils && typeof utils.NormalizeAmmoScaleConfig === "function") {
             utils.NormalizeAmmoScaleConfig(configTarget, sourceConfig);
+        }
+    }
+
+    function MigrateSplitZoomKeys(configTarget, sourceConfig) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
+            utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
         }
     }
 
@@ -7342,7 +7574,18 @@ function ExpressShotLog(msg) {
         }
     }
 
+    function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
+            utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
+        }
+    }
+
     function CompareSchemaSemver(a, b) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.CompareSchemaSemver === "function") {
+            return utils.CompareSchemaSemver(a, b);
+        }
         var aa = String(a || "").split(".");
         var bb = String(b || "").split(".");
         for (var i = 0; i < 3; i++) {
@@ -8108,6 +8351,9 @@ const BUILD_CATEGORY_RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
     { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
     { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+const BUILD_CATEGORY_HERO_PURCHASE_POPUPS_SCHEMA_FIELDS = [
+    { key: "ENABLE_HERO_PURCHASE_POPUPS", min: 0, max: 1, step: 1 }
+];
 const BUILD_CATEGORY_SHOW_BUILD_ID_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
@@ -8237,6 +8483,33 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3 = AppendUniquePayloadSchemaFields(
 );
 const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3,
+    BUILD_CATEGORY_HERO_PURCHASE_POPUPS_SCHEMA_FIELDS
+);
+// Fix: ENABLE_SHOP_ITEM_NOTIFICATIONS was missing from the compact schema
+const BUILD_CATEGORY_SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4,
+    BUILD_CATEGORY_SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
+    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
+    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5,
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_7 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6,
     BUILD_CATEGORY_SHOW_RANK_TOP_BAR_MODE_SCHEMA_FIELDS
 );
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
@@ -8416,6 +8689,18 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.0.4": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4
+    },
+    "3.0.5": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6
+    },
+    "3.0.7": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_7
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -8621,7 +8906,9 @@ function GetUIRoot() {
             return cached;
         }
         var p = $.GetContextPanel();
-        while (p && p.GetParent && p.GetParent()) { p = p.GetParent(); }
+        var uiRootGuard = 0;
+        while (p && p.GetParent && p.GetParent() && uiRootGuard < 64) { p = p.GetParent(); uiRootGuard++; }
+        if (uiRootGuard >= 64) QOL_WARN("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
         State.cachedPanels.uiRoot = p || null;
         return p || null;
     }
@@ -8638,33 +8925,55 @@ function GetUIRoot() {
         return fallback;
     }
 
+    // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
+    // panel attributes, picking the version with the highest user-edit revision number.
+    // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
     function ReadStorageConfigRawFromUi(root) {
-        if (!root || !root.GetAttributeString) return "";
+        var result = "";
+        if (root && root.GetAttributeString) {
+            var rootRaw = "";
+            try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
 
-        var rootRaw = "";
-        try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
-
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e1) { hud = null; }
-        if (!hud || !hud.GetAttributeString) return rootRaw;
-
-        var hudRaw = "";
-        try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
-        if (!hudRaw) return rootRaw;
-        if (!rootRaw) return hudRaw;
-
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
-        var rootRev = 0;
-        var hudRev = 0;
-        try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
-        try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
-        return (hudRev >= rootRev) ? hudRaw : rootRaw;
+            var hud = null;
+            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
+            if (!hud || !hud.GetAttributeString) {
+                result = rootRaw;
+            } else {
+                var hudRaw = "";
+                try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
+                if (!hudRaw) {
+                    result = rootRaw;
+                } else if (!rootRaw) {
+                    result = hudRaw;
+                } else {
+                    var parseRev = function(v) {
+                        var n = Number(v);
+                        if (!isFinite(n) || n < 0) return 0;
+                        return Math.floor(n);
+                    };
+                    var rootRev = 0;
+                    var hudRev = 0;
+                    try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
+                    try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
+                    result = (hudRev >= rootRev) ? hudRaw : rootRaw;
+                }
+            }
+        }
+        // Fallback: if panel attrs are empty (e.g. after game restart), recover from
+        // persistentStorage which IS disk-backed and survives restarts.
+        if (!result || result.length === 0) {
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                    var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                    if (psRaw && psRaw.length > 0) result = psRaw;
+                }
+            } catch (ePs) { /* ignore */ }
+        }
+        return result;
     }
 
+    // WriteStorageConfigRawToUi — persists config to both root and Hud panel attributes,
+    // increments the user-edit revision, and mirrors to persistentStorage as backup.
     function WriteStorageConfigRawToUi(root, rawText) {
         if (!root || !root.SetAttributeString) {
             return { raw: String(rawText || ""), revision: 0, count: 0 };
@@ -8672,29 +8981,27 @@ function GetUIRoot() {
 
         var nextRaw = String(rawText || "");
         var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
+        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
+        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
         var rootRev = 0;
         var hudRev = 0;
         try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { rootRev = 0; }
         try { hudRev = hud && hud.GetAttributeString ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0; } catch (e2) { hudRev = 0; }
         var nextRevision = Math.max(rootRev, hudRev) + 1;
 
-        try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) {}
-        try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) {}
+        // Write data + revision as a paired update per panel so an interrupted
+        // save never orphans new data with an old revision number.
+        try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) { QOL_ERROR("persist", "root.SetAttributeString(STORAGE_KEY) failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) { QOL_ERROR("persist", "root.SetAttributeString(USER_EDIT_REV) failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
         if (hud && hud.SetAttributeString) {
-            try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) {}
-            try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) {}
+            try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) { QOL_ERROR("persist", "hud.SetAttributeString(STORAGE_KEY) failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
+            try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
         try {
             if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                 $.persistentStorage.setItem("qol_settings_raw_v1", nextRaw);
             }
-        } catch (ePersistWrite) {}
+        } catch (ePersistWrite) { QOL_ERROR("persist", "persistentStorage.setItem failed: " + (ePersistWrite && ePersistWrite.message ? ePersistWrite.message : String(ePersistWrite || ""))); }
 
         return {
             raw: nextRaw,
@@ -8703,53 +9010,94 @@ function GetUIRoot() {
         };
     }
 
-    function FindFirstPanelByClass(root, className) {
+    // ---- Config Corruption Recovery (Fix 7) ----
+
+    function SafeParseConfig(raw) {
+        if (!raw || raw === "") return null;
+        try {
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            if (!unwrapped || !unwrapped.config) return null;
+            return MergeConfig(unwrapped.config);
+        } catch (parseErr) {
+            QOL_ERROR("config", "JSON parse or merge failed: " + String(parseErr.message || parseErr));
+            // Save corrupt config for debugging
+            var backupKey = "";
+            try {
+                backupKey = "qol_settings_corrupt_" + PerfNowMs();
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem(backupKey, String(raw || "").substring(0, 5000));
+                    QOL_INFO("config", "corrupt config saved to: " + backupKey);
+                }
+            } catch (eBackup) {
+                QOL_ERROR("config", "FAILED to save corrupt config backup");
+            }
+            // User-visible notification: flag for settings UI + prominent console message
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem("qol_config_corruption_detected", String(PerfNowMs()));
+                    $.persistentStorage.setItem("qol_last_corruption_key", backupKey);
+                }
+            } catch (eCorruptFlag) {}
+            $.Msg("\n====================================================================\n");
+            $.Msg("[QOLLOCK] WARNING: Your settings were corrupted and have been reset to defaults.\n");
+            $.Msg("[QOLLOCK] A backup of the corrupt data has been saved for recovery.\n");
+            $.Msg("[QOLLOCK] Open Qollock Settings to check for recovery options.\n");
+            $.Msg("====================================================================\n");
+            // Clear corrupt config so this doesn't repeat every tick
+            State.lastRawConfig = "";
+            try {
+                var root = GetUIRoot();
+                if (root && root.SetAttributeString) {
+                    root.SetAttributeString(STORAGE_KEY, "");
+                }
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem("qol_settings_raw_v1", "");
+                }
+            } catch (eClear) {}
+            QOL_WARN("config", "corrupt config cleared, using defaults");
+            return null;
+        }
+    }
+
+    var FindFirstPanelByClass = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function(root, className) {
         if (!root || !root.FindChildrenWithClassTraverse || !className) return null;
         var panels = root.FindChildrenWithClassTraverse(className) || [];
         for (var i = 0; i < panels.length; i++) {
             if (IsPanelValid(panels[i])) return panels[i];
         }
         return null;
-    }
+    };
 
-    function hasClassInHierarchy(panel, className) {
+    var hasClassInHierarchy = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function(panel, className) {
         var current = panel;
         while (current) {
             if (current.BHasClass(className)) return true;
             current = current.GetParent();
         }
         return false;
-    }
+    };
 
     function IsHudClassActive(root, className) {
         if (!className) return false;
         if (root && root.BHasClass && root.BHasClass(className)) return true;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
         if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
 
-        var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
-        if (!abilities && root && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse("AbilitiesContainer");
-            State.cachedPanels.abilitiesContainer = abilities || null;
-        }
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
         if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
 
         return false;
     }
 
-    function FindAncestorWithClass(panel, className) {
+    var FindAncestorWithClass = QOL_UTILS_LOADED ? QOL_UTILS.FindAncestorWithClass : function(panel, className) {
         var current = panel;
         while (current) {
             if (current.BHasClass && current.BHasClass(className)) return current;
             current = current.GetParent ? current.GetParent() : null;
         }
         return null;
-    }
+    };
 
     function FindItemOwnerFromContainer(iconContainer) {
         var current = iconContainer;
@@ -8763,11 +9111,7 @@ function GetUIRoot() {
         return null;
     }
 
-    function IsPanelValid(panel) {
-        if (!panel) return false;
-        if (!panel.IsValid) return true;
-        return panel.IsValid();
-    }
+    // IsPanelValid is now provided by QOL_UTILS (ql_utils.js) — alias at top of file
 
     function ToRgbString(rgb) {
         return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
@@ -8781,25 +9125,17 @@ function GetUIRoot() {
         ];
     }
 
-    function SetStyleSafe(panel, prop, value) {
+    var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
         if (!panel || !panel.style || !prop) return;
-        try {
-            panel.style[prop] = value;
-        } catch (e) {}
-    }
+        try { panel.style[prop] = value; } catch (e) {}
+    };
 
-    function ClearStyleSafe(panel, prop) {
+    var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
         if (!panel || !panel.style || !prop) return;
-        try {
-            delete panel.style[prop];
-        } catch (e0) {}
-        try {
-            panel.style[prop] = null;
-        } catch (e1) {}
-        try {
-            panel.style[prop] = "";
-        } catch (e2) {}
-    }
+        try { delete panel.style[prop]; } catch (e0) {}
+        try { panel.style[prop] = null; } catch (e1) {}
+        try { panel.style[prop] = ""; } catch (e2) {}
+    };
 
     function SetWashColorSafe(panel, color) {
         if (color) {
@@ -8866,7 +9202,7 @@ function GetUIRoot() {
             }
         } catch (eAttrRoot) {}
         try {
-            var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
             if (hud && hud.GetAttributeString) {
                 var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
                 if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
@@ -8906,7 +9242,7 @@ function GetUIRoot() {
     }
 
     function ResolvePassiveCooldownMode(cfg) {
-        var masterEnabled = Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1;
+        var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
         if (!masterEnabled) return "default";
         var advancedModeEnabled = Number(cfg && cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1 || ITEM_COOLDOWN_DUAL_MODE_TEST;
         return advancedModeEnabled ? "advanced" : "basic";
@@ -8995,7 +9331,7 @@ function GetUIRoot() {
     }
 
     function ResolveColoredHealthbarPanels(root) {
-        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
+        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
         var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null);
         if (healthContainer !== State.cachedPanels.healthContainer) {
             State.cachedPanels.healthContainer = healthContainer || null;
@@ -9063,15 +9399,15 @@ function GetUIRoot() {
 
     function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_COLOR_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_COLOR_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_COLOR_WARNING_75) === 1;
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
     }
 
     function ResolveColoredHealthbarColor(pct, cfg) {
-        var use25 = Number(cfg && cfg.ENABLE_COLOR_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_COLOR_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_COLOR_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             State.coloredHealthbarPulseVal += (State.coloredHealthbarPulseDir * COLORED_HEALTHBAR_PULSE_STEP);
@@ -9204,10 +9540,7 @@ function GetUIRoot() {
         var seen = [];
         function pushUnique(panel) {
             if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < seen.length; i++) {
-                if (seen[i] === panel) return;
-            }
-            seen.push(panel);
+            PushUnique(seen, panel);
         }
 
         pushUnique(currentPanel);
@@ -9215,11 +9548,11 @@ function GetUIRoot() {
         pushUnique(State.cachedPanels.healthContainer);
 
         if (root && root.FindChildTraverse) {
-            pushUnique(root.FindChildTraverse("health_and_abilities_container"));
+            pushUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         }
         var uiRoot = GetUIRoot();
         if (uiRoot && uiRoot.FindChildTraverse) {
-            pushUnique(uiRoot.FindChildTraverse("health_and_abilities_container"));
+            pushUnique(uiRoot.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         }
 
         for (var p = 0; p < seen.length; p++) {
@@ -9469,46 +9802,18 @@ function GetUIRoot() {
             "HudTakeoverEnabled"
         ];
 
-        var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
-        if (!hud && root.FindChildTraverse) {
-            hud = root.FindChildTraverse("Hud");
-            State.cachedPanels.hudPanel = hud || null;
-        }
+        var hud = ResolveCachedPanel(root, "hudPanel", PANEL_ID_HUD);
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
-
-        var gameplayHudAlive = IsPanelValid(State.cachedPanels.gameplayHudAlive) ? State.cachedPanels.gameplayHudAlive : null;
-        if (!gameplayHudAlive && root.FindChildTraverse) {
-            gameplayHudAlive = root.FindChildTraverse("gameplay_hud_alive");
-            State.cachedPanels.gameplayHudAlive = gameplayHudAlive || null;
-        }
-
-        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
-        if (!topBar && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar");
-            State.cachedPanels.topBarPanel = topBar || null;
-        }
-
-        var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
-        if (!abilities && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse("AbilitiesContainer");
-            State.cachedPanels.abilitiesContainer = abilities || null;
-        }
-
-        var statsAndMods = IsPanelValid(State.cachedPanels.statsAndModsContainer) ? State.cachedPanels.statsAndModsContainer : null;
-        if (!statsAndMods && root.FindChildTraverse) {
-            statsAndMods = root.FindChildTraverse("StatsAndModsContainer");
-            State.cachedPanels.statsAndModsContainer = statsAndMods || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
+        var gameplayHudAlive = ResolveCachedPanel(root, "gameplayHudAlive", "gameplay_hud_alive");
+        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR);
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
+        var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer");
 
         if (!IsPanelEffectivelyVisibleMaybe(healthContainer, root)) return false;
         if (statsAndMods && !IsPanelEffectivelyVisibleMaybe(statsAndMods, root)) return false;
@@ -9555,9 +9860,9 @@ function GetUIRoot() {
     }
 
     function UpdateMinimalistHealthbarOffsets(root, cfg, enabled) {
-        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse("health_and_abilities_container") : null;
-        var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null);
-        if (healthContainer !== State.cachedPanels.healthContainer) {
+        var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
+        if (!healthContainer) {
+            healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
             State.cachedPanels.healthContainer = healthContainer || null;
         }
 
@@ -10349,7 +10654,7 @@ function GetUIRoot() {
     function McParseSoulsAndLevel(root) {
         try {
             if (!IsPanelValid(State.cachedPanels.mcGoldApContainer)) {
-                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse("gold_and_ap_container") || null) : null;
+                var panel = root && root.FindChildTraverse ? (root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) || null) : null;
                 if (!panel) {
                     if (!State.mcLoggedGoldApMiss) { $.Msg("[QOLLock][MC] gold_and_ap_container not found"); State.mcLoggedGoldApMiss = true; }
                     return;
@@ -10540,7 +10845,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return null;
         var goldContainer = IsPanelValid(State.cachedPanels.goldAndApContainer) ? State.cachedPanels.goldAndApContainer : null;
         if (!goldContainer) {
-            goldContainer = root.FindChildTraverse("gold_and_ap_container");
+            goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
             State.cachedPanels.goldAndApContainer = goldContainer || null;
         }
         if (!IsPanelValid(goldContainer) || !goldContainer.FindChildTraverse) return null;
@@ -10670,7 +10975,7 @@ function GetUIRoot() {
     function SyncFgHeroImageMotionState(root, cfg) {
         if (!root || !root.FindChildTraverse) return;
         var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
-        var fgEnabled = (healthbarType === 2);
+        var fgEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, false, false);
         var fgRuntimeStyleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText;
@@ -10717,13 +11022,13 @@ function GetUIRoot() {
 
         var goldContainer = IsPanelValid(State.cachedPanels.goldAndApContainer) ? State.cachedPanels.goldAndApContainer : null;
         if (!goldContainer) {
-            goldContainer = root.FindChildTraverse("gold_and_ap_container");
+            goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
             State.cachedPanels.goldAndApContainer = goldContainer || null;
         }
 
         var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
         if (!healthContainer) {
-            healthContainer = root.FindChildTraverse("health_and_abilities_container");
+            healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
             State.cachedPanels.healthContainer = healthContainer || null;
         }
         var hudVisibleForRuntime = IsHudVisibleForPlayerHealthbarRuntime(root, healthContainer);
@@ -10844,7 +11149,7 @@ function GetUIRoot() {
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) return true;
         if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
-        if ((Number(healthbarType) === 5) || State.mcWasEnabled) return true;
+        if ((Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled) return true;
         return false;
     }
 
@@ -10864,9 +11169,9 @@ function GetUIRoot() {
             UpdateBudhudHealthbar(root, cfg, healthbarType, nowMsLoop);
         }
 
-        var shouldRunMinecraftRuntime = (Number(healthbarType) === 5) || State.mcWasEnabled;
+        var shouldRunMinecraftRuntime = (Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled;
         if (shouldRunMinecraftRuntime) {
-            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === 5));
+            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT));
         }
     }
 
@@ -11045,7 +11350,7 @@ function GetUIRoot() {
     function IsStreetBrawlModeActive(root) {
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             if (!gameplayHud) {
                 gameplayHud = $.GetContextPanel ? $.GetContextPanel() : null;
             }
@@ -11073,7 +11378,7 @@ function GetUIRoot() {
 
     function SyncPanelClasses(source, target, cacheKey, seedClasses) {
         if (!source || !target) return;
-        var prior = State.itemMirrorClassCache[cacheKey] || [];
+        var prior = State.itemMirror.classCache[cacheKey] || [];
         var map = {};
         function addToken(token) {
             if (!token || token.length === 0) return;
@@ -11091,7 +11396,7 @@ function GetUIRoot() {
             var cls = tokens[t];
             target.SetHasClass(cls, source.BHasClass && source.BHasClass(cls));
         }
-        State.itemMirrorClassCache[cacheKey] = tokens;
+        State.itemMirror.classCache[cacheKey] = tokens;
     }
 
     function GetInlineStyleProperty(panel, propName) {
@@ -11155,7 +11460,7 @@ function GetUIRoot() {
     }
 
     function TriggerItemMirrorReadyFlash(overlayPanel, debugKey) {
-        if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+        if (!IsPanelValid(overlayPanel)) return;
         var key = debugKey ? String(debugKey) : "unknown";
         try {
             if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
@@ -11163,13 +11468,13 @@ function GetUIRoot() {
         } catch (e0) {}
         ItemMirrorFlashLog(key + " overlay flash trigger");
         $.Schedule(0.01, function() {
-            if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+            if (!IsPanelValid(overlayPanel)) return;
             try {
                 if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", true);
                 ItemMirrorFlashLog(key + " overlay class=ready_flash ON");
             } catch (e1) {}
             $.Schedule((ITEM_MIRROR_READY_OVERLAY_FLASH_MS + 40) / 1000.0, function() {
-                if (!overlayPanel || !overlayPanel.IsValid || !overlayPanel.IsValid()) return;
+                if (!IsPanelValid(overlayPanel)) return;
                 try {
                     if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
                     ItemMirrorFlashLog(key + " overlay class=ready_flash OFF");
@@ -11194,8 +11499,10 @@ function GetUIRoot() {
         State.reloadCdDirection = 0;
     }
 
+    // UpdateReloadCooldownOverlay — reads the active reload progress bar from the HUD,
+    // applies config-driven scale/opacity/offset, and manages EMA-smoothed reload duration display.
     function UpdateReloadCooldownOverlay(root, cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN"));
         var cooldownLabel = IsPanelValid(State.cachedPanels.reloadCooldownLabel) ? State.cachedPanels.reloadCooldownLabel : null;
 
         if (!enabled) {
@@ -11380,7 +11687,7 @@ function GetUIRoot() {
     }
 
     function UpdateReloadCircleExceptionState(root, cfg) {
-        var hideReloadCircleEnabled = !!(cfg && Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1);
+        var hideReloadCircleEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"));
         if (!hideReloadCircleEnabled) {
             SetPanelClassCached(root, State.rootClassCache, "hide_reload_circle_exception_active", false);
             State.cachedPanels.activeReloadProgressBar = null;
@@ -11426,19 +11733,19 @@ function GetUIRoot() {
                 if (["hero_testing_hideout", "hideout", "dl_hideout"].indexOf(mapName) !== -1) return true;
             }
         } catch (e) {}
-        var hud = root.FindChildTraverse("Hud");
+        var hud = GetCachedPanel("cachedHudPanel");
+        if (!hud && root && root.FindChildTraverse) {
+            hud = root.FindChildTraverse(PANEL_ID_HUD);
+            SetCachedPanel("cachedHudPanel", hud);
+        }
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
         return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout");
     }
 
     function IsStartupLoaderInActiveMatchContext(root) {
         if (!root) return false;
-        var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
         var hideout = isConnectedToHideout(root);
 
         var hasPanelClass = function(panel, className) {
@@ -11537,7 +11844,7 @@ function GetUIRoot() {
 
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar") || null;
+            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
             State.cachedPanels.topBarPanel = topBar;
         }
         if (!topBar) return;
@@ -11591,7 +11898,7 @@ function GetUIRoot() {
         panel = root ? root.FindChildTraverse("UrnTracker") : null;
         if (!panel) {
             var parent = null;
-            var topBar = root ? root.FindChildTraverse("TopBar") : null;
+            var topBar = root ? root.FindChildTraverse(PANEL_ID_TOP_BAR) : null;
             if (topBar) {
                 parent = FindFirstPanelByClass(topBar, "TeamNetworth");
             }
@@ -11780,7 +12087,7 @@ function GetUIRoot() {
     }
 
     function NeedsUrnTrackerRuntimeWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) return true;
         return !!(
             State.urnTrackerDisplayMode === "active" ||
             (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
@@ -11788,55 +12095,55 @@ function GetUIRoot() {
     }
 
     function EnsureSpmState() {
-        if (!State.spmPlayerHistory || !State.spmTeamHistory) {
+        if (!State.spm.playerHistory || !State.spm.teamHistory) {
             var histories = [];
             for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-            State.spmPlayerHistory = histories;
-            State.spmTeamHistory = {
+            State.spm.playerHistory = histories;
+            State.spm.teamHistory = {
                 friendly: [],
                 enemy: []
             };
         }
-        if (!State.spmPlayerPanels) {
-            State.spmPlayerPanels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerPanels) {
+            State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerDisplayLabels) {
-            State.spmPlayerDisplayLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerDisplayLabels) {
+            State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerTeamByIndex) {
-            State.spmPlayerTeamByIndex = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerTeamByIndex) {
+            State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerHiddenGoldLabels) {
-            State.spmPlayerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerHiddenGoldLabels) {
+            State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerSoulsLabels) {
-            State.spmPlayerSoulsLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerSoulsLabels) {
+            State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!isFinite(State.spmPlayerRefreshCursor)) {
-            State.spmPlayerRefreshCursor = 0;
+        if (!isFinite(State.spm.playerRefreshCursor)) {
+            State.spm.playerRefreshCursor = 0;
         }
-        if (!isFinite(State.spmPlayerRefreshRemaining)) {
-            State.spmPlayerRefreshRemaining = 0;
+        if (!isFinite(State.spm.playerRefreshRemaining)) {
+            State.spm.playerRefreshRemaining = 0;
         }
-        if (State.spmNeedsFullPlayerCache === undefined || State.spmNeedsFullPlayerCache === null) {
-            State.spmNeedsFullPlayerCache = true;
+        if (State.spm.needsFullPlayerCache === undefined || State.spm.needsFullPlayerCache === null) {
+            State.spm.needsFullPlayerCache = true;
         }
     }
 
     function ResetSpmState() {
         var histories = [];
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-        State.spmPlayerHistory = histories;
-        State.spmTeamHistory = {
+        State.spm.playerHistory = histories;
+        State.spm.teamHistory = {
             friendly: [],
             enemy: []
         };
-        State.spmWarmupActive = true;
-        State.spmNextSampleMs = 0;
-        State.spmPanelCacheNextMs = 0;
-        State.spmPlayerRefreshCursor = 0;
-        State.spmPlayerRefreshRemaining = 0;
-        State.spmNeedsFullPlayerCache = true;
+        State.spm.warmupActive = true;
+        State.spm.nextSampleMs = 0;
+        State.spm.panelCacheNextMs = 0;
+        State.spm.playerRefreshCursor = 0;
+        State.spm.playerRefreshRemaining = 0;
+        State.spm.needsFullPlayerCache = true;
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
     }
@@ -11927,11 +12234,14 @@ function GetUIRoot() {
 
     function DetectTopBarPlayerTeam(playerPanel) {
         var p = playerPanel;
-        while (p && p.GetParent) {
+        var teamGuard = 0;
+        while (p && p.GetParent && teamGuard < 64) {
             if (p.id === "TeamFriendly") return "friendly";
             if (p.id === "TeamEnemy") return "enemy";
             p = p.GetParent();
+            teamGuard++;
         }
+        if (teamGuard >= 64) QOL_WARN("topbar", "DetectTopBarPlayerTeam: parent-chain walk hit guard limit");
         return null;
     }
 
@@ -11956,6 +12266,17 @@ function GetUIRoot() {
         var now = Number(nowMs);
         if (!isFinite(now) || now <= 0) now = PerfNowMs();
         var lastScanMs = Number(State.topbarPlayerPanelLastScanMs[index]) || 0;
+        // Fix 11: detect time-source mismatch between Date.now() (epoch ms,
+        // ~1.7e12) and PerfNowMs() (game-relative, ~0–1e7).  When the two
+        // sources are mixed in the same cache the "recently scanned" check
+        // produces a huge negative delta that is always < REFRESH_MS, causing
+        // a permanent freeze where the cached null is never re-scanned.
+        // We treat the cache as stale whenever the absolute delta exceeds
+        // 24 h — a value no sane game-relative or epoch timestamp can
+        // legitimately span within a single session.
+        if (lastScanMs > 0 && (now < lastScanMs) && (lastScanMs - now) > 86400000) {
+            lastScanMs = 0;
+        }
         var recentlyScanned = lastScanMs > 0 && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS;
         if (cached && (!forceRefresh || recentlyScanned)) return cached;
         if (!forceRefresh && recentlyScanned) return cached;
@@ -11975,16 +12296,71 @@ function GetUIRoot() {
     var ULT_CD_DEBUG_THROTTLE_MS = 1000;
     var ultCdDebugLastLogMs = 0;
 
+    // -------------------------------------------------------------------------
+    // Ultimate Cooldown Overlay — panel lookup helpers
+    // -------------------------------------------------------------------------
+    // We traverse through known intermediate IDs with FindChild (non-recursive)
+    // and verify that the returned panels actually descend from the expected
+    // player panel via a parent-walk.  This defends against any cross-player
+    // contamination if FindChildTraverse resolves a duplicate ID to a different
+    // player's subtree.
+    //
+    // Player panel DOM path:
+    //   CitadelHudTopBarPlayer
+    //     PlayerDetailsContainer
+    //       StatusRow
+    //         UltimateStatus
+    //           UltimateStatusBG
+    //             UltimateCooldownTextHidden  (Label — game-managed binding)
+    //         UltimateCooldownTextShown       (Label — we write this)
+
+    function FindUltCooldownElements(playerPanel) {
+        var statusRow = playerPanel && playerPanel.FindChildTraverse
+            ? playerPanel.FindChildTraverse("StatusRow")
+            : null;
+        if (!statusRow || !IsPanelValid(statusRow)) return null;
+
+        // UltimateCooldownTextShown is a direct child of StatusRow
+        var elShown = statusRow.FindChild
+            ? statusRow.FindChild("UltimateCooldownTextShown")
+            : null;
+
+        // UltimateCooldownTextHidden is nested: StatusRow > UltimateStatus > UltimateStatusBG > label
+        var ultimateStatus = statusRow.FindChild
+            ? statusRow.FindChild("UltimateStatus")
+            : null;
+        var elHidden = null;
+        if (ultimateStatus && IsPanelValid(ultimateStatus) && ultimateStatus.FindChild) {
+            var bg = ultimateStatus.FindChild("UltimateStatusBG");
+            if (bg && IsPanelValid(bg) && bg.FindChild) {
+                elHidden = bg.FindChild("UltimateCooldownTextHidden");
+            }
+        }
+
+        if (!elShown || !IsPanelValid(elShown) || !elHidden || !IsPanelValid(elHidden)) return null;
+
+        // Verify both elements actually descend from the player panel we were
+        // given (belt-and-suspenders against any ancestor mismatch).
+        if (!IsDescendantOf(elShown, playerPanel) || !IsDescendantOf(elHidden, playerPanel)) return null;
+
+        return { elHidden: elHidden, elShown: elShown };
+    }
+
     function UpdateUltimateCooldownOverlay(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
         var fnStart = PerfNowMs();
-        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(12);
-        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(12);
+        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(ULT_CD_MAX_PLAYERS);
+        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(ULT_CD_MAX_PLAYERS);
         var slots = State.ultCdSlotCache;
         var recheckMs = State.ultCdSlotNextRecheckMs;
         var nowMs = PerfNowMs();
         var debugParts = [];
-        for (var i = 0; i < 12; i++) {
+        // Periodic full reset every 30 s so transient misses eventually self-heal
+        if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
+            for (var ri = 0; ri < ULT_CD_MAX_PLAYERS; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
+            State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
+        }
+        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
             var slotStart = PerfNowMs();
             var slot = slots[i];
             var didTraverse = false;
@@ -11998,15 +12374,14 @@ function GetUIRoot() {
                     if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noPlayer(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
                     continue;
                 }
-                var elHidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
-                var elShown  = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
-                if (!elHidden || !elShown) {
+                var els = FindUltCooldownElements(playerPanel);
+                if (!els) {
                     slots[i] = false;
                     recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
                     if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noEl(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
                     continue;
                 }
-                slot = { elHidden: elHidden, elShown: elShown };
+                slot = els;
                 slots[i] = slot;
             }
             var cd = String(Number(slot.elHidden.text) + 1);
@@ -12041,39 +12416,39 @@ function GetUIRoot() {
     function RefreshSpmPlayerSlotCache(root, index) {
         if (!root || index < 0 || index >= SPM_MAX_PLAYERS) return;
         var playerPanel = GetTopBarPlayerPanel(root, index, PerfNowMs(), true);
-        State.spmPlayerPanels[index] = playerPanel || null;
-        State.spmPlayerDisplayLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("PlayerSPMDisplay") || null) : null;
-        State.spmPlayerTeamByIndex[index] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
-        State.spmPlayerHiddenGoldLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
-        State.spmPlayerSoulsLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
+        State.spm.playerPanels[index] = playerPanel || null;
+        State.spm.playerDisplayLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("PlayerSPMDisplay") || null) : null;
+        State.spm.playerTeamByIndex[index] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
+        State.spm.playerHiddenGoldLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
+        State.spm.playerSoulsLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
     }
 
     function RefreshSpmPanelCache(root, nowMs) {
         if (!root) return;
         EnsureSpmState();
         var shouldRefreshScorePanels =
-            !IsPanelValid(State.spmCachedFriendlyScore) ||
-            !IsPanelValid(State.spmCachedEnemyScore) ||
-            !IsPanelValid(State.spmCachedFriendlyLabel) ||
-            !IsPanelValid(State.spmCachedEnemyLabel) ||
-            nowMs >= (State.spmPanelCacheNextMs || 0);
+            !IsPanelValid(State.spm.cachedFriendlyScore) ||
+            !IsPanelValid(State.spm.cachedEnemyScore) ||
+            !IsPanelValid(State.spm.cachedFriendlyLabel) ||
+            !IsPanelValid(State.spm.cachedEnemyLabel) ||
+            nowMs >= (State.spm.panelCacheNextMs || 0);
 
         if (shouldRefreshScorePanels) {
-            State.spmCachedFriendlyScore = root.FindChildTraverse("TeamScoreFriendly") || null;
-            State.spmCachedEnemyScore = root.FindChildTraverse("TeamScoreEnemy") || null;
-            State.spmCachedFriendlyLabel = State.spmCachedFriendlyScore ? (State.spmCachedFriendlyScore.FindChildTraverse("TeamSPMDisplay_friendly") || null) : null;
-            State.spmCachedEnemyLabel = State.spmCachedEnemyScore ? (State.spmCachedEnemyScore.FindChildTraverse("TeamSPMDisplay_enemy") || null) : null;
-            State.spmPanelCacheNextMs = nowMs + SPM_PANEL_CACHE_REFRESH_MS + 137;
+            State.spm.cachedFriendlyScore = root.FindChildTraverse("TeamScoreFriendly") || null;
+            State.spm.cachedEnemyScore = root.FindChildTraverse("TeamScoreEnemy") || null;
+            State.spm.cachedFriendlyLabel = State.spm.cachedFriendlyScore ? (State.spm.cachedFriendlyScore.FindChildTraverse("TeamSPMDisplay_friendly") || null) : null;
+            State.spm.cachedEnemyLabel = State.spm.cachedEnemyScore ? (State.spm.cachedEnemyScore.FindChildTraverse("TeamSPMDisplay_enemy") || null) : null;
+            State.spm.panelCacheNextMs = nowMs + SPM_PANEL_CACHE_REFRESH_MS + 137;
         }
 
-        if (!State.spmPlayerPanels) State.spmPlayerPanels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerDisplayLabels) State.spmPlayerDisplayLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerTeamByIndex) State.spmPlayerTeamByIndex = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerHiddenGoldLabels) State.spmPlayerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerSoulsLabels) State.spmPlayerSoulsLabels = new Array(SPM_MAX_PLAYERS);
-        var remaining = Number(State.spmPlayerRefreshRemaining);
+        if (!State.spm.playerPanels) State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerDisplayLabels) State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerTeamByIndex) State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerHiddenGoldLabels) State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerSoulsLabels) State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
+        var remaining = Number(State.spm.playerRefreshRemaining);
         if (!isFinite(remaining) || remaining < 0) remaining = 0;
-        if (State.spmNeedsFullPlayerCache && remaining <= 0) {
+        if (State.spm.needsFullPlayerCache && remaining <= 0) {
             remaining = SPM_MAX_PLAYERS;
         } else if (shouldRefreshScorePanels && remaining <= 0) {
             remaining = SPM_MAX_PLAYERS;
@@ -12081,7 +12456,7 @@ function GetUIRoot() {
         if (remaining <= 0) return;
 
         var refreshCount = Math.min(SPM_PLAYER_CACHE_REFRESH_BATCH, remaining);
-        var cursor = Number(State.spmPlayerRefreshCursor);
+        var cursor = Number(State.spm.playerRefreshCursor);
         if (!isFinite(cursor) || cursor < 0 || cursor >= SPM_MAX_PLAYERS) cursor = 0;
         if (refreshCount < 1) refreshCount = 1;
         if (refreshCount > SPM_MAX_PLAYERS) refreshCount = SPM_MAX_PLAYERS;
@@ -12090,10 +12465,10 @@ function GetUIRoot() {
             RefreshSpmPlayerSlotCache(root, index);
         }
 
-        State.spmPlayerRefreshCursor = (cursor + refreshCount) % SPM_MAX_PLAYERS;
-        State.spmPlayerRefreshRemaining = remaining - refreshCount;
-        if (State.spmPlayerRefreshRemaining <= 0 && State.spmNeedsFullPlayerCache) {
-            State.spmNeedsFullPlayerCache = false;
+        State.spm.playerRefreshCursor = (cursor + refreshCount) % SPM_MAX_PLAYERS;
+        State.spm.playerRefreshRemaining = remaining - refreshCount;
+        if (State.spm.playerRefreshRemaining <= 0 && State.spm.needsFullPlayerCache) {
+            State.spm.needsFullPlayerCache = false;
         }
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
@@ -12154,7 +12529,7 @@ function GetUIRoot() {
 
     function UpdateTopBarNicknames(root, nowMs, cfg) {
         if (!root) return;
-        var enabled = Number(cfg && cfg.ENABLE_NICKNAMES) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_NICKNAMES");
         if (!enabled && !State.topbarNicknamesWasEnabled) return;
 
         var now = isFinite(Number(nowMs)) ? Number(nowMs) : (Date.now ? Date.now() : (new Date()).getTime());
@@ -12223,9 +12598,12 @@ function GetUIRoot() {
             if (!displayLabel) return;
             if (displayLabel.text !== String(text || "")) displayLabel.text = String(text || "");
             if (displayLabel.style) {
-                displayLabel.style.visibility = showLabel ? "visible" : "collapse";
-                displayLabel.style.zIndex = showLabel ? "1000" : "0";
-                displayLabel.style.opacity = showLabel ? "1" : "0";
+                var newVis = showLabel ? "visible" : "collapse";
+                if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
+                var newZ = showLabel ? "1000" : "0";
+                if (displayLabel.style.zIndex !== newZ) displayLabel.style.zIndex = newZ;
+                var newOp = showLabel ? "1" : "0";
+                if (displayLabel.style.opacity !== newOp) displayLabel.style.opacity = newOp;
             }
         }
 
@@ -12268,7 +12646,7 @@ function GetUIRoot() {
             var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
             var playerPanel = cachedPlayerPanel;
             if (!playerPanel) {
-                playerPanel = IsPanelValid(State.spmPlayerPanels && State.spmPlayerPanels[i]) ? State.spmPlayerPanels[i] : null;
+                playerPanel = IsPanelValid(State.spm.playerPanels && State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             }
             if (!playerPanel) playerPanel = GetTopBarPlayerPanel(root, i, now, false);
             if (cachedPlayerPanel && playerPanel && cachedPlayerPanel !== playerPanel) {
@@ -12600,7 +12978,7 @@ function GetUIRoot() {
 
     function UpdateStatlockerButtons(root, nowMs, cfg) {
         if (!root) return;
-        var enabled = Number(cfg && cfg.ENABLE_STATLOCKER) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
         if (!enabled) {
             if (State.statlockerWasEnabled) {
                 RemoveStatlockerButtons(root);
@@ -12642,10 +13020,10 @@ function GetUIRoot() {
     function ApplyZeroSpmDisplay(root, nowMs) {
         if (!root) return;
         RefreshSpmPanelCache(root, nowMs || 0);
-        var friendlyScore = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
-        var friendlyLabel = IsPanelValid(State.spmCachedFriendlyLabel) ? State.spmCachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spmCachedEnemyLabel) ? State.spmCachedEnemyLabel : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
         SetSpmLabel(friendlyLabel, 0, friendlyScore);
         SetSpmLabel(enemyLabel, 0, enemyScore);
     }
@@ -12653,7 +13031,7 @@ function GetUIRoot() {
     function BuildTopbarSoulSnapshot(root, nowMs) {
         if (!root) return null;
         RefreshSpmPanelCache(root, nowMs || 0);
-        if (!State.spmPlayerPanels || !State.spmPlayerTeamByIndex) return null;
+        if (!State.spm.playerPanels || !State.spm.playerTeamByIndex) return null;
 
         var players = new Array(SPM_MAX_PLAYERS);
         var friendlyTotal = 0;
@@ -12662,28 +13040,28 @@ function GetUIRoot() {
         var enemyPlayers = 0;
 
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var panel = IsPanelValid(State.spmPlayerPanels[i]) ? State.spmPlayerPanels[i] : null;
+            var panel = IsPanelValid(State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             if (!panel) {
                 players[i] = null;
                 continue;
             }
 
-            var hiddenGoldLabel = IsPanelValid(State.spmPlayerHiddenGoldLabels[i]) ? State.spmPlayerHiddenGoldLabels[i] : null;
-            var soulsLabel = IsPanelValid(State.spmPlayerSoulsLabels[i]) ? State.spmPlayerSoulsLabels[i] : null;
+            var hiddenGoldLabel = IsPanelValid(State.spm.playerHiddenGoldLabels[i]) ? State.spm.playerHiddenGoldLabels[i] : null;
+            var soulsLabel = IsPanelValid(State.spm.playerSoulsLabels[i]) ? State.spm.playerSoulsLabels[i] : null;
             if (!hiddenGoldLabel) {
                 hiddenGoldLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("HiddenGoldValue") || null) : null;
-                State.spmPlayerHiddenGoldLabels[i] = hiddenGoldLabel;
+                State.spm.playerHiddenGoldLabels[i] = hiddenGoldLabel;
             }
             if (!soulsLabel) {
                 soulsLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("SoulsValue") || null) : null;
-                State.spmPlayerSoulsLabels[i] = soulsLabel;
+                State.spm.playerSoulsLabels[i] = soulsLabel;
             }
 
             var soulValue = GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel);
-            var team = State.spmPlayerTeamByIndex[i];
+            var team = State.spm.playerTeamByIndex[i];
             if (team !== "friendly" && team !== "enemy") {
                 team = DetectTopBarPlayerTeam(panel);
-                State.spmPlayerTeamByIndex[i] = team;
+                State.spm.playerTeamByIndex[i] = team;
             }
 
             players[i] = {
@@ -12725,22 +13103,22 @@ function GetUIRoot() {
         if (!root) return;
         EnsureSpmState();
 
-        var spmEnabled = !cfg || Number(cfg.ENABLE_MIN_SOULS) === 1;
+        var spmEnabled = !cfg || IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
         if (!spmEnabled) {
-            if (!State.spmWasDisabled) {
+            if (!State.spm.wasDisabled) {
                 ResetSpmState();
                 ApplyZeroSpmDisplay(root, nowMs);
-                State.spmLastClockSec = null;
-                State.spmWasDisabled = true;
+                State.spm.lastClockSec = null;
+                State.spm.wasDisabled = true;
             }
             return;
         }
-        State.spmWasDisabled = false;
+        State.spm.wasDisabled = false;
 
         if (isConnectedToHideout(root)) {
             ResetSpmState();
             ApplyZeroSpmDisplay(root, nowMs);
-            State.spmLastClockSec = null;
+            State.spm.lastClockSec = null;
             return;
         }
 
@@ -12750,20 +13128,20 @@ function GetUIRoot() {
             State.cachedPanels.gameTime = gameTimePanel || null;
         }
         var clockSec = gameTimePanel && gameTimePanel.text ? ParseClockSeconds(gameTimePanel.text) : 0;
-        if (State.spmLastClockSec !== null && clockSec < State.spmLastClockSec) {
+        if (State.spm.lastClockSec !== null && clockSec < State.spm.lastClockSec) {
             ResetSpmState();
         }
-        State.spmLastClockSec = clockSec;
+        State.spm.lastClockSec = clockSec;
 
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        if (nowMs < (State.spmNextSampleMs || 0)) return;
-        State.spmNextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
+        if (nowMs < (State.spm.nextSampleMs || 0)) return;
+        State.spm.nextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
 
         RefreshSpmPanelCache(root, nowMs);
-        var friendlyScore = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
         if (!friendlyScore || !enemyScore) {
             ApplyZeroSpmDisplay(root, nowMs);
             return;
@@ -12783,11 +13161,11 @@ function GetUIRoot() {
             var snapshotPlayer = snapshot.players[i];
             if (!snapshotPlayer) continue;
             var soulValue = snapshotPlayer.soulValue;
-            var history = State.spmPlayerHistory[i];
+            var history = State.spm.playerHistory[i];
             SpmAddSample(history, soulValue);
             var spm = SpmCalculate(history);
 
-            var playerDisplay = IsPanelValid(State.spmPlayerDisplayLabels[i]) ? State.spmPlayerDisplayLabels[i] : null;
+            var playerDisplay = IsPanelValid(State.spm.playerDisplayLabels[i]) ? State.spm.playerDisplayLabels[i] : null;
             if (playerDisplay) {
                 var playerText = SpmFormat(spm) + "/m";
                 if (playerDisplay.text !== playerText) playerDisplay.text = playerText;
@@ -12795,8 +13173,8 @@ function GetUIRoot() {
                 SetPanelClassIfChanged(playerDisplay, "negative", spm < 0);
             }
 
-            var team = snapshotPlayer.team || State.spmPlayerTeamByIndex[i];
-            State.spmPlayerTeamByIndex[i] = team;
+            var team = snapshotPlayer.team || State.spm.playerTeamByIndex[i];
+            State.spm.playerTeamByIndex[i] = team;
             if (team === "friendly") {
                 friendlyTotal += soulValue;
                 friendlyPlayers++;
@@ -12812,22 +13190,22 @@ function GetUIRoot() {
             return;
         }
 
-        SpmAddSample(State.spmTeamHistory.friendly, friendlyTotal);
-        SpmAddSample(State.spmTeamHistory.enemy, enemyTotal);
+        SpmAddSample(State.spm.teamHistory.friendly, friendlyTotal);
+        SpmAddSample(State.spm.teamHistory.enemy, enemyTotal);
 
-        if (State.spmWarmupActive) {
+        if (State.spm.warmupActive) {
             ApplyZeroSpmDisplay(root, nowMs);
-            if (State.spmTeamHistory.friendly.length >= 2 && State.spmTeamHistory.enemy.length >= 2) {
-                State.spmWarmupActive = false;
+            if (State.spm.teamHistory.friendly.length >= 2 && State.spm.teamHistory.enemy.length >= 2) {
+                State.spm.warmupActive = false;
             }
             return;
         }
 
-        var friendlySpm = SpmCalculate(State.spmTeamHistory.friendly);
-        var enemySpm = SpmCalculate(State.spmTeamHistory.enemy);
+        var friendlySpm = SpmCalculate(State.spm.teamHistory.friendly);
+        var enemySpm = SpmCalculate(State.spm.teamHistory.enemy);
 
-        var friendlyLabel = IsPanelValid(State.spmCachedFriendlyLabel) ? State.spmCachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spmCachedEnemyLabel) ? State.spmCachedEnemyLabel : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
 
         SetSpmLabel(friendlyLabel, friendlySpm, friendlyScore);
         SetSpmLabel(enemyLabel, enemySpm, enemyScore);
@@ -12979,7 +13357,7 @@ function GetUIRoot() {
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        var enabled = !cfg || Number(cfg.ENABLE_UNSPENT_SOULS) === 1;
+        var enabled = !cfg || IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS");
         if (!enabled || isConnectedToHideout(root)) {
             if (!State.unspentWasDisabled) {
                 ClearUnspentDisplayValues(root, nowMs);
@@ -13520,13 +13898,13 @@ function GetUIRoot() {
 
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
-        var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
         var opacityValue = cfg && cfg.MINIMAP_REM_TUNNELS_OPACITY;
         if (mode === "ALT") {
-            enabled = !!(cfg && Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1);
+            enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS"));
             opacityValue = cfg && cfg.ALT_ZOOM_REM_TUNNELS_OPACITY;
         } else if (mode === "TAB") {
-            enabled = !!(cfg && Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1);
+            enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS"));
             opacityValue = cfg && cfg.TAB_ZOOM_REM_TUNNELS_OPACITY;
         }
         if (!enabled) {
@@ -13545,7 +13923,7 @@ function GetUIRoot() {
     }
 
     function UpdateMinimapCrateOverlay(root, cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY"));
         var mapKey = ResolveMinimapCrateOverlayMapKey();
         var renderMapKey = mapKey || "dl_midtown";
         MinimapCrateOverlayDebugLogThrottled(
@@ -13585,27 +13963,23 @@ function GetUIRoot() {
     function ResolveActiveMinimapObjectiveSize(root, cfg) {
         var smallSize = Number(cfg && cfg.MINIMAP_SMALL_SIZE);
         if (!isFinite(smallSize)) smallSize = 400;
-        var minimapPersp = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
-        if (!minimapPersp && root && root.FindChildTraverse) {
-            minimapPersp = root.FindChildTraverse("minimap_persp");
-            State.cachedPanels.minimapPersp = minimapPersp || null;
-        }
+        var minimapPersp = ResolveCachedPanel(root, "minimapPersp", "minimap_persp")
         var isAlt = IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPersp, "gDetailView");
         var isTab = IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPersp, "gScoreboardOpen");
-        if (isTab && cfg && Number(cfg.ENABLE_TAB_ZOOM) === 1) {
+        if (isTab && cfg && IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) {
             return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", smallSize);
         }
-        if (isAlt && cfg && Number(cfg.ENABLE_ALT_ZOOM) === 1) {
+        if (isAlt && cfg && IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM")) {
             return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", smallSize);
         }
         return smallSize;
     }
 
     function UpdateMinimapObjectiveTimers(root, cfg, bridgeText, remainingBridge, rejuvText, remainingRejuv, spawnWaiting) {
-        var buffEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1);
-        var buffOnBridgeEnabled = !!(buffEnabled && cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1);
-        var rejuvEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1);
-        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1);
+        var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
+        var buffOnBridgeEnabled = !!(buffEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE"));
+        var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"));
         if (!buffEnabled && !rejuvEnabled) {
             HideMinimapObjectiveTimers(root);
             return;
@@ -14186,7 +14560,7 @@ function GetUIRoot() {
             (nowMs - state.lastChargesLookupMs) > 1000;
         if (needLookup) {
             state.lastChargesLookupMs = nowMs;
-            state.cacheTopBar = root.FindChildTraverse("TopBar") || root.FindChildTraverse("CitadelHudTopBar");
+            state.cacheTopBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || root.FindChildTraverse("CitadelHudTopBar");
             state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
             state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
             state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
@@ -14281,10 +14655,10 @@ function GetUIRoot() {
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        var rejuvHudEnabled = !!(cfg && Number(cfg.ENABLE_REJUV_HUD) === 1);
-        var buffHudEnabled = !!(cfg && Number(cfg.ENABLE_BUFF_HUD) === 1);
-        var minimapRejuvEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1);
-        var minimapBuffEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1);
+        var rejuvHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_REJUV_HUD"));
+        var buffHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_HUD"));
+        var minimapRejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+        var minimapBuffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
         var anyObjectiveTimerEnabled = rejuvHudEnabled || buffHudEnabled || minimapRejuvEnabled || minimapBuffEnabled;
         if (!anyObjectiveTimerEnabled) {
             HideMinimapObjectiveTimers(root);
@@ -14310,11 +14684,7 @@ function GetUIRoot() {
 
         var state = EnsureRejuvState();
         var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
-        var minimapPerspForObjectiveSig = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
-        if (!minimapPerspForObjectiveSig && root && root.FindChildTraverse) {
-            minimapPerspForObjectiveSig = root.FindChildTraverse("minimap_persp");
-            State.cachedPanels.minimapPersp = minimapPerspForObjectiveSig || null;
-        }
+        var minimapPerspForObjectiveSig = ResolveCachedPanel(root, "minimapPersp", "minimap_persp")
         var activeObjectiveZoomSig =
             (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gDetailView") ? "A" : "") +
             (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gScoreboardOpen") ? "T" : "");
@@ -14323,8 +14693,8 @@ function GetUIRoot() {
             buffHudEnabled ? "1" : "0",
             minimapRejuvEnabled ? "1" : "0",
             minimapBuffEnabled ? "1" : "0",
-            cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? "1" : "0",
-            cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? "1" : "0",
+            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? "1" : "0",
+            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? "1" : "0",
             String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : ""),
             String(activeMinimapObjectiveSize),
             activeObjectiveZoomSig
@@ -14446,10 +14816,10 @@ function GetUIRoot() {
         var rejuvTextForMinimap = state.spawnWaiting ? "Spawn" : FormatClockMmSs(state.counter);
         var rejuvRemainForMinimap = state.spawnWaiting ? 0 : state.counter;
         var minimapRenderSig = [
-            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? 1 : 0,
             String(Number(cfg.MINIMAP_SMALL_SIZE) || 0),
             String(activeMinimapObjectiveSize),
             activeObjectiveZoomSig,
@@ -14507,19 +14877,87 @@ function GetUIRoot() {
 
     function GetGameplayHudPanel(root) {
         if (!root || !root.FindChildTraverse) return root || null;
-        return root.FindChildTraverse("gameplay_hud") || root;
+        return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
     }
 
     function IsCustomHudContextActive(root) {
         return true;
     }
 
+    // ---- Adaptive Polling Degradation (Fix 9) ----
+
+    /**
+     * Detect the global idle state of the game.
+     * Results are cached for IDLE_DETECTION_CACHE_MS to avoid per-tick overhead.
+     * Returns { level: "active"|"idle"|"deep_idle"|"background", isInMatch, isHudVisible, lowFps }
+     */
+    function DetectGlobalIdleState(root) {
+        var nowMs = PerfNowMs();
+        if (State.lastIdleCheckMs && (nowMs - State.lastIdleCheckMs) < IDLE_DETECTION_CACHE_MS) {
+            return State.lastIdleState || { level: "active", isInMatch: true, isHudVisible: true, lowFps: false };
+        }
+        State.lastIdleCheckMs = nowMs;
+
+        var state = {
+            isInMatch: false,
+            isHudVisible: true,
+            lowFps: false,
+            level: "active"
+        };
+
+        // Check if in a match: hero panel exists
+        if (root) {
+            var heroPanel = root.FindChildTraverse ? root.FindChildTraverse("HeroPanel") : null;
+            state.isInMatch = IsPanelValid(heroPanel);
+        }
+
+        // Check if HUD is hidden (spectator, replay)
+        if (root && root.BHasClass) {
+            state.isHudVisible = !root.BHasClass("HudHidden");
+        }
+
+        // Check for low FPS (requires perf tracking to be enabled)
+        if (State.perfEnabled && State.perfLastFrameTimeMs) {
+            state.lowFps = State.perfLastFrameTimeMs > LOW_FPS_THRESHOLD_MS;
+        }
+
+        // Determine degradation level
+        if (!state.isInMatch) {
+            state.level = "deep_idle";
+        } else if (!state.isHudVisible || state.lowFps) {
+            state.level = "idle";
+        } else {
+            state.level = "active";
+        }
+
+        State.lastIdleState = state;
+        return state;
+    }
+
+    /**
+     * Compute the dynamic loop interval based on idle state.
+     * Returns the interval in seconds.
+     */
+    function GetDynamicLoopInterval(baseIntervalSec, idleState) {
+        switch (idleState.level) {
+            case "background":
+                return Math.max(baseIntervalSec * LOOP_BACKGROUND_MULTIPLIER, 3.0);
+            case "deep_idle":
+                return Math.max(baseIntervalSec * LOOP_DEEP_IDLE_MULTIPLIER, 1.5);
+            case "idle":
+                return Math.max(baseIntervalSec * LOOP_IDLE_MULTIPLIER, 0.5);
+            case "active":
+            default:
+                return baseIntervalSec;
+        }
+    }
+
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
         if (FORCE_DISABLE_STAT_BONUSES) cfg.ENABLE_STAT_BONUSES = 0;
-        cfg.ENABLE_ENEMY_V2_ENHANCED = 0;
-        cfg.ENABLE_ENEMY_V2_ULT_INDICATOR = 0;
-        cfg.ENABLE_ENEMY_V2_LEVEL = 0;
+        // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
+        // force-disabled here. Removed because no runtime gate or feature
+        // execution path reads these values — they were dead writes.
         return cfg;
     }
 
@@ -14671,7 +15109,7 @@ function GetUIRoot() {
         var candidatePanels = [root];
         try {
             if (root.FindChildTraverse) {
-                var hud = root.FindChildTraverse("Hud");
+                var hud = root.FindChildTraverse(PANEL_ID_HUD);
                 var escape = root.FindChildTraverse("EscapeMenu");
                 if (hud) candidatePanels.push(hud);
                 if (escape) candidatePanels.push(escape);
@@ -14756,9 +15194,9 @@ function GetUIRoot() {
 
     function GetEnabledBridgeVariantList(cfg) {
         var out = [];
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_1) === 1) out.push(1);
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_2) === 1) out.push(2);
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_3) === 1) out.push(3);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_1")) out.push(1);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_2")) out.push(2);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_3")) out.push(3);
         if (out.length <= 0) return [1, 2, 3];
         return out;
     }
@@ -14778,7 +15216,7 @@ function GetUIRoot() {
     }
 
     function IsDl4dReminderRuntimeActive(cfg) {
-        return !!(cfg && Number(cfg.ENABLE_DL4D_REMINDERS) === 1);
+        return !!(cfg && IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS"));
     }
 
     function ResolveDl4dReminderEventForVolume(baseEventName, cfg) {
@@ -15129,23 +15567,25 @@ function GetUIRoot() {
     }
 
     function IsPanelListValid(list) {
-        if (!list || list.length === 0) return false;
-        for (var i = 0; i < list.length; i++) {
-            if (!IsPanelValid(list[i])) return false;
-        }
-        return true;
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
     }
 
-    function NormalizeOpacityNumber(value, fallback) {
+    var NormalizeOpacityNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeOpacityNumber : function(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
         if (!isFinite(n)) n = 1.0;
         if (n < 0) n = 0;
         if (n > 1) n = 1;
         return n;
-    }
+    };
 
-    function SetPanelOpacitySafe(panel, value, fallback) {
+    var SetPanelOpacitySafe = QOL_UTILS_LOADED ? QOL_UTILS.SetPanelOpacitySafe : function(panel, value, fallback) {
         if (!panel || !panel.style) return "";
         var text = NormalizeOpacityNumber(value, fallback).toFixed(2);
         try {
@@ -15154,27 +15594,27 @@ function GetUIRoot() {
             try { panel.style.opacity = "1.00"; } catch (e1) {}
         }
         return text;
-    }
+    };
 
-    function NormalizeHudOffsetNumber(value, fallback) {
+    var NormalizeHudOffsetNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeHudOffsetNumber : function(value, fallback) {
         var n = Math.round(Number(value));
         if (!isFinite(n)) n = Math.round(Number(fallback) || 0);
         if (!isFinite(n)) n = 0;
         return n;
-    }
+    };
 
-    function FormatHudPx(value, fallback) {
+    var FormatHudPx = QOL_UTILS_LOADED ? QOL_UTILS.FormatHudPx : function(value, fallback) {
         return String(NormalizeHudOffsetNumber(value, fallback)) + "px";
-    }
+    };
 
-    function NormalizeHudScaleNumber(value, fallback) {
+    var NormalizeHudScaleNumber = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeHudScaleNumber : function(value, fallback) {
         var n = Number(value);
         if (!isFinite(n)) n = Number(fallback);
         if (!isFinite(n)) n = 1.0;
         if (n < 0.5) n = 0.5;
         if (n > 1.5) n = 1.5;
         return n;
-    }
+    };
 
     function NormalizeEnhancedQuickbuyCount(value) {
         var n = Math.round(Number(value));
@@ -15243,7 +15683,7 @@ function GetUIRoot() {
 
         var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
         if (!hud && root.FindChildTraverse) {
-            hud = root.FindChildTraverse("Hud");
+            hud = root.FindChildTraverse(PANEL_ID_HUD);
             State.cachedPanels.hudPanel = hud || null;
         }
 
@@ -15255,7 +15695,7 @@ function GetUIRoot() {
 
         var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
         if (!gameplayHud && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
+            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
             State.cachedPanels.gameplayHud = gameplayHud || null;
         }
 
@@ -15438,7 +15878,9 @@ function GetUIRoot() {
 
     function GetUnitTargetDefaultStyleTexts() {
         if (UnitTargetDefaultStyleTexts) return UnitTargetDefaultStyleTexts;
-        UnitTargetDefaultStyleTexts = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
+        var result = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
+        // Clone to avoid aliasing when ResolveUnitTargetStyleTexts reuses internal scratch objects.
+        UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText };
         return UnitTargetDefaultStyleTexts;
     }
 
@@ -15789,16 +16231,12 @@ function GetUIRoot() {
     }
 
     function GetUserEditRevision(root) {
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
+        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
         var hud = null;
         if (root && root.GetAttributeString) {
             var rootVal = root.GetAttributeString(USER_EDIT_REV_ATTR, "");
             var rootRev = (rootVal && rootVal.length > 0) ? parseRev(rootVal) : 0;
-            try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
+            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
             var hudRev = 0;
             if (hud && hud.GetAttributeString) {
                 try {
@@ -15916,7 +16354,7 @@ function GetUIRoot() {
         if (State.accountPresetUiMarker === next) return;
         State.accountPresetUiMarker = next;
         var hud = null;
-        try { hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e0) { hud = null; }
+        try { hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
         if (hud && hud.SetAttributeString) {
             try { hud.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e1) {}
         }
@@ -16066,7 +16504,7 @@ function GetUIRoot() {
 
         var rawObj = {};
         if (rawNow && rawNow.length > 0) {
-            try { rawObj = JSON.parse(rawNow) || {}; } catch (e0) { rawObj = {}; }
+            try { var u0 = UnwrapConfigFromStorage(rawNow); rawObj = (u0 && u0.config) ? u0.config : {}; } catch (e0) { rawObj = {}; }
         }
 
         var appliedObj = {};
@@ -16087,7 +16525,7 @@ function GetUIRoot() {
             appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
         }
 
-        var appliedRaw = JSON.stringify(appliedObj);
+        var appliedRaw = WrapConfigForStorage(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
         var appliedRevision = Number(appliedWrite && appliedWrite.revision) || userEditRev;
         State.accountPresetRawOverride = appliedRaw;
@@ -17902,7 +18340,7 @@ function GetUIRoot() {
                 }
             } catch (e0c) {}
             if (!preClosed) {
-                var preShopPanel = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroShop") : null;
+                var preShopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var preLeftCommandPanel = preShopPanel && preShopPanel.FindChildTraverse ? preShopPanel.FindChildTraverse("LeftCommandPanel") : null;
                 if (ActivatePanelSafe(preLeftCommandPanel)) preClosed = true;
             }
@@ -17947,7 +18385,7 @@ function GetUIRoot() {
                 }
             } catch (e2) {}
             if (!closed) {
-                var shopPanel = closeRoot.FindChildTraverse ? closeRoot.FindChildTraverse("CitadelHudHeroShop") : null;
+                var shopPanel = closeRoot.FindChildTraverse ? closeRoot.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
                 if (ActivatePanelSafe(leftCommandPanel)) {
                     closed = true;
@@ -17983,7 +18421,7 @@ function GetUIRoot() {
             }
         } catch (e0) {}
         if (!closed) {
-            var shopPanel = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroShop") : null;
+            var shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
             var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
             if (ActivatePanelSafe(leftCommandPanel)) closed = true;
         }
@@ -17997,12 +18435,11 @@ function GetUIRoot() {
     function QueueCloseHeroShopForLoaderSuccess() {
         var delays = [0.00, 0.20, 0.55];
         for (var i = 0; i < delays.length; i++) {
-            (function(delaySec) {
-                $.Schedule(delaySec, function() {
-                    var closeRoot = GetUIRoot();
-                    TryCloseHeroShopForLoader(closeRoot);
-                });
-            })(delays[i]);
+            var delaySec = delays[i];
+            $.Schedule(delaySec, function() {
+                var closeRoot = GetUIRoot();
+                TryCloseHeroShopForLoader(closeRoot);
+            });
         }
     }
 
@@ -18163,7 +18600,7 @@ function GetUIRoot() {
                 detail = firstBuildSelect.ok
                     ? "Build browser already open; selected first build."
                     : "Build browser already open; waiting for build entries.";
-                var selectedBuildBootstrap = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                var selectedBuildBootstrap = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                 var selectedHeaderCountBootstrap = CountBuildCategoryHeaders(selectedBuildBootstrap);
                 var firstReason = String(firstBuildSelect && firstBuildSelect.reason ? firstBuildSelect.reason : "");
                 if (!firstBuildSelect.ok && firstReason.indexOf("entry_count:0") === 0 && selectedHeaderCountBootstrap <= 0) {
@@ -18305,7 +18742,7 @@ function GetUIRoot() {
             };
         }
 
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild) {
             State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
             return { state: "wait", detail: "Waiting for shop build panel.", waitMs: BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS };
@@ -18413,19 +18850,22 @@ function GetUIRoot() {
             var contextPanel = $.GetContextPanel ? $.GetContextPanel() : null;
             AddStorageSignatureScanRoot(roots, contextPanel);
             var top = contextPanel;
-            while (top && IsPanelValid(top) && top.GetParent && top.GetParent()) {
+            var sigRootGuard = 0;
+            while (top && IsPanelValid(top) && top.GetParent && top.GetParent() && sigRootGuard < 64) {
                 top = top.GetParent();
+                sigRootGuard++;
             }
+            if (sigRootGuard >= 64) QOL_WARN("buildPayload", "storage signature root walk hit guard limit");
             AddStorageSignatureScanRoot(roots, top);
         } catch (e0) {}
 
         for (var i = 0; i < roots.length; i++) {
             var scanRoot = roots[i];
             if (!scanRoot || !IsPanelValid(scanRoot)) continue;
-            if (ReadPanelIdTextMaybe(scanRoot) === "hud_signature") return scanRoot;
+            if (ReadPanelIdTextMaybe(scanRoot) === PANEL_ID_SIGNATURE) return scanRoot;
             if (!scanRoot.FindChildTraverse) continue;
             try {
-                var hud = scanRoot.FindChildTraverse("hud_signature");
+                var hud = scanRoot.FindChildTraverse(PANEL_ID_SIGNATURE);
                 if (hud && IsPanelValid(hud)) return hud;
             } catch (e1) {}
         }
@@ -18568,7 +19008,7 @@ function GetUIRoot() {
 
     function TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root) {
         if (!root || !root.FindChildTraverse) return { hero: "", source: "shopFavoritesHeaderMissing" };
-        var shopPanel = root.FindChildTraverse("CitadelHudHeroShop");
+        var shopPanel = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
         if (!shopPanel || !shopPanel.FindChildrenWithClassTraverse) {
             return { hero: "", source: "shopFavoritesHeaderMissing" };
         }
@@ -18622,6 +19062,25 @@ function GetUIRoot() {
     function ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowUiFallback) {
         var allowFallback = (allowUiFallback !== false);
         var traceNow = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        // Fast path: if Airheart was already confirmed, skip all scanning.
+        if (State.buildCategoryPayloadAirheartHeaderConfirmed) {
+            return {
+                confirmed: true,
+                source: "cached_confirmation",
+                detail: "Airheart already confirmed this session"
+            };
+        }
+        // Fast path: try GameInterfaceAPI before any UI panel scanning.
+        var settingSignal = TryReadBuildSaveStorageHeroFromSettings();
+        if (settingSignal.hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
+            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
+            State.buildCategoryPayloadAirheartHeaderConfirmedMs = traceNow;
+            return {
+                confirmed: true,
+                source: settingSignal.source,
+                detail: "Airheart confirmed via GameInterfaceAPI settings"
+            };
+        }
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = NormalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
@@ -19414,7 +19873,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return false;
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
         if (!selectedBuild) {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         }
         if (!selectedBuild) return false;
@@ -19435,7 +19894,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) return false;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
-        if (!selectedBuild) selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        if (!selectedBuild) selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
         State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         var initCreateLookup = FindCreateBuildButtonStrict(root);
@@ -19476,7 +19935,7 @@ function GetUIRoot() {
 
         if (stage === "create") {
             // Re-check before creating: if any category exists, reuse it.
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
             if (!IsStorageBuildListEmpty(root)) {
@@ -19547,7 +20006,7 @@ function GetUIRoot() {
         }
 
         if (stage === "create_verify") {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
 
@@ -19584,7 +20043,7 @@ function GetUIRoot() {
         }
 
         if (stage === "save") {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
 
@@ -19609,7 +20068,7 @@ function GetUIRoot() {
             return false;
         }
 
-        selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
         State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         if (selectedBuild && CountBuildCategoryHeaders(selectedBuild) > 0) {
@@ -19725,7 +20184,7 @@ function GetUIRoot() {
         var target = EnsureShowBuildIdPanel(root);
         if (!target) return;
 
-        var showTitle = Number(cfg && cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
+        var showTitle = IsCfgEnabled(cfg, "ENABLE_SHOW_BUILD_ID_TITLE");
         var displayText = parsed.visibility + " Build: " + parsed.id + (showTitle ? " - " + parsed.name : "");
         var sig = displayText + "|" + (showTitle ? "1" : "0");
         var forceApply = State.showBuildIdLastLabel !== target.label;
@@ -19762,7 +20221,7 @@ function GetUIRoot() {
         if (!root) return "";
         var selectedBuild = IsPanelValid(State.cachedPanels.shopModsSelectedBuild) ? State.cachedPanels.shopModsSelectedBuild : null;
         if (!selectedBuild) {
-            selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+            selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
         }
         if (!selectedBuild) return "";
@@ -20056,6 +20515,27 @@ function GetUIRoot() {
         var startupConsumedForAccount =
             String(State.buildCategoryPayloadStartupConsumedAccountId || "") === accountId;
         var probeStageActive = !!(State.buildCategoryPayloadHeroProbeStage && State.buildCategoryPayloadHeroProbeStage.length > 0);
+        // Fast path: if persistentStorage already has valid config, skip the startup
+        // Airheart probe entirely. The probe is only needed when no local config
+        // exists (first-ever launch) or when the user explicitly triggers a cloud sync.
+        if (!startupConsumedForAccount && !probeStageActive && !State.settingsLoaderSessionActive && !State.buildCategoryPayloadCorruptRepairActive) {
+            var psCheckRaw = "";
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                    psCheckRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                }
+            } catch (ePsFast) { psCheckRaw = ""; }
+            if (psCheckRaw && psCheckRaw.length > 0) {
+                State.buildCategoryPayloadStartupConsumedAccountId = accountId;
+                State.buildCategoryPayloadStartupConsumedResult = "persistent_storage_fast_path";
+                State.buildCategoryPayloadDormant = true;
+                State.buildCategoryPayloadDormantReason = "persistent_storage_fast_path";
+                SettingsLoaderDebugLog(
+                    "payload_override fast_path persistentStorage found; skipping Airheart probe account=" + accountId
+                );
+                return cfg;
+            }
+        }
         if (
             startupConsumedForAccount &&
             !State.settingsLoaderSessionActive &&
@@ -20137,7 +20617,7 @@ function GetUIRoot() {
         if (forceImmediateScan) {
             var probeStartedMs = Number(State.buildCategoryPayloadHeroProbeStartedMs) || nowMs;
             if ((nowMs - probeStartedMs) > BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS) {
-                var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                 var timeoutHeaderCount = CountBuildCategoryHeaders(timeoutSelectedBuild);
                 var timeoutScanAdvances = Number(State.buildCategoryPayloadMissingScanAdvances) || 0;
                 var timeoutEntryCount = CollectStorageBuildEntryPanels(root, true).length;
@@ -20178,7 +20658,7 @@ function GetUIRoot() {
                 // Launch path remains read-only: reveal source UI only, never create/save/modify builds.
                 if (!EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs)) {
                     var sourceBootstrapRetries = Number(State.buildCategoryPayloadSourceBootstrapRetries) || 0;
-                    var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+                    var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                     var selectedHeaderCountForSource = CountBuildCategoryHeaders(selectedBuildForSource);
                     var sourceEntriesVisible = CollectStorageBuildEntryPanels(root, false).length;
                     var sourceEntriesTotal = CollectStorageBuildEntryPanels(root, true).length;
@@ -20357,7 +20837,7 @@ function GetUIRoot() {
         var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
         var rawObj = {};
         if (rawNow && rawNow.length > 0) {
-            try { rawObj = JSON.parse(rawNow) || {}; } catch (e4) { rawObj = {}; }
+            try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
         }
 
         var defaults = BuildDefaultConfig();
@@ -20391,7 +20871,7 @@ function GetUIRoot() {
         NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
         NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
 
-        var appliedRaw = JSON.stringify(appliedObj);
+        var appliedRaw = WrapConfigForStorage(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
         var appliedRevision = Number(appliedWrite && appliedWrite.revision) || 0;
         SetStartupCorruptRepairPending(root, false);
@@ -20533,7 +21013,7 @@ function GetUIRoot() {
     function BuildSaveDebugSnapshot(root) {
         if (!BUILD_SAVE_DEBUG) return "";
         if (!root) return "root=-";
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var entry = GetBuildSaveCategoryNameEntry(root);
         var hudBuilds = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroBuilds") : null;
         var descEntry = hudBuilds && hudBuilds.FindChildTraverse ? hudBuilds.FindChildTraverse("CategoryDescriptionTextEntry") : null;
@@ -20663,7 +21143,7 @@ function GetUIRoot() {
         var activated = false;
         var host = selectedBuild;
         if (!host && root && root.FindChildTraverse) {
-            host = root.FindChildTraverse("ShopModsSelectedBuild");
+            host = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         }
         var header = host && host.FindChildTraverse ? host.FindChildTraverse("BuildCategoryHeader") : null;
         if (header && ActivatePanelSafe(header)) activated = true;
@@ -20751,10 +21231,7 @@ function GetUIRoot() {
         var roots = [];
         function pushUnique(panel) {
             if (!panel || !IsPanelValid(panel)) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         pushUnique(root);
@@ -20763,7 +21240,7 @@ function GetUIRoot() {
         pushUnique(State.cachedPanels.shopModsSelectedBuild);
         if (root && root.FindChildTraverse) {
             pushUnique(root.FindChildTraverse("CitadelHudHeroBuilds"));
-            pushUnique(root.FindChildTraverse("ShopModsSelectedBuild"));
+            pushUnique(root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD));
         }
 
         var walk = root;
@@ -21465,7 +21942,7 @@ function GetUIRoot() {
 
         // Require build-browser context before any delete action so we don't delete from
         // the loaded build view. Open BrowseBuilds first, then proceed.
-        var selectedBuildPanel = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuildPanel = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var browseEntryVisibleCount = CollectStorageBuildEntryPanels(root, false).length;
         var browseEntryCount = CollectStorageBuildEntryPanels(root, true).length;
         var heroBuildItemsVisible = CountHeroBuildListItems(root, false);
@@ -21772,7 +22249,7 @@ function GetUIRoot() {
     function TryReadSelectedBuildTitleText(root, selectedBuild) {
         var host = selectedBuild;
         if (!host && root && root.FindChildTraverse) {
-            host = root.FindChildTraverse("ShopModsSelectedBuild");
+            host = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         }
         if (!host || !host.FindChildrenWithClassTraverse) return "";
         var labels = host.FindChildrenWithClassTraverse("SelectedBuildName") || [];
@@ -21843,7 +22320,7 @@ function GetUIRoot() {
 
     function TryReselectBuildSaveTargetByTitle(root, targetTitleText) {
         if (!root || !root.FindChildTraverse) return { ok: false, reason: "no_root" };
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild || !IsPanelValid(selectedBuild) || !selectedBuild.FindChildrenWithClassTraverse) {
             return { ok: false, reason: "no_selected_build" };
         }
@@ -21996,7 +22473,7 @@ function GetUIRoot() {
     }
 
     function UpdateLanePreferenceWithParty(root, cfg, nowMs) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_LANE_WITH_PARTY) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"));
         if (!enabled) {
             State.laneWithPartyNextApplyMs = 0;
             State.laneWithPartyLastState = "disabled";
@@ -22055,7 +22532,6 @@ function GetUIRoot() {
             if (selector.SetSelected) {
                 try { selector.SetSelected(optionId); setAttempted = true; } catch (e3) {}
             }
-            try { $.DispatchEvent("oninputsubmit", selector); } catch (e4) {}
             try { $.DispatchEvent("Activated", selector); } catch (e5) {}
         } else {
             State.cachedPanels.lanePreferenceWithPartyOption = null;
@@ -22113,7 +22589,7 @@ function GetUIRoot() {
         if (!root || !root.FindChildTraverse) {
             return { ok: false, reason: "no_root" };
         }
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         var includeHidden = (includeHiddenEntries === true);
         var entries = CollectStorageBuildEntryPanels(root, includeHidden);
         if ((!entries || entries.length < 2) && !includeHidden) {
@@ -22181,7 +22657,7 @@ function GetUIRoot() {
 
     function IsStorageBuildListEmpty(root) {
         if (!root || !root.FindChildTraverse) return false;
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
                 if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
@@ -22215,10 +22691,7 @@ function GetUIRoot() {
         function pushUnique(panel) {
             if (!panel || !IsPanelValid(panel)) return;
             if (!allowHidden && !IsPanelVisibleMaybe(panel)) return;
-            for (var i = 0; i < entries.length; i++) {
-                if (entries[i] === panel) return;
-            }
-            entries.push(panel);
+            PushUnique(entries, panel);
         }
         function addByClass(host, className) {
             if (!host || !className || !host.FindChildrenWithClassTraverse) return;
@@ -22229,7 +22702,7 @@ function GetUIRoot() {
             }
         }
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var roots = CollectBuildUiSearchRoots(root);
         var classNames = [
             "FavoriteBuildEntryContainer",
@@ -22323,7 +22796,7 @@ function GetUIRoot() {
         if (!root) return false;
         if (IsStorageBuildListEmpty(root)) return true;
 
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
                 if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
@@ -22499,7 +22972,7 @@ function GetUIRoot() {
                 }
                 panelRoots.push(panel);
             }
-            addPanel(root.FindChildTraverse("ShopModsSelectedBuild"));
+            addPanel(root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD));
             addPanel(root.FindChildTraverse("CitadelHudHeroBuilds"));
             addPanel(root.FindChildTraverse("HeroBuildSelector"));
             for (var pr = 0; pr < panelRoots.length; pr++) {
@@ -22535,7 +23008,7 @@ function GetUIRoot() {
 
     function HasBuildSaveStorageUiReady(root) {
         if (!root || !root.FindChildTraverse) return false;
-        var selectedBuild = root.FindChildTraverse("ShopModsSelectedBuild");
+        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!selectedBuild || !selectedBuild.FindChildTraverse) return false;
         var saveBtn = selectedBuild.FindChildTraverse("SaveBuildButton");
         var editBtn = selectedBuild.FindChildTraverse("EditHeroBuildButton");
@@ -22892,12 +23365,8 @@ function GetUIRoot() {
         if (!panel) return false;
         var activated = false;
         var attempts = [
-            function() { $.DispatchEvent("MouseActivate", panel, "mouse"); },
-            function() { $.DispatchEvent("MouseActivate", panel); },
-            function() { $.DispatchEvent("Activated", panel, "mouse"); },
-            function() { $.DispatchEvent("Activated", panel); },
-            function() { $.DispatchEvent("onactivate", panel); },
-            function() { $.DispatchEvent("onmouseactivate", panel); }
+            function() { $.DispatchEvent("Activated", "mouse"); },
+            function() { $.DispatchEvent("Activated", "keyboard"); }
         ];
         for (var i = 0; i < attempts.length; i++) {
             try {
@@ -22976,11 +23445,9 @@ function GetUIRoot() {
                 if (!setViaMethod) {
                     entry.text = payloadText;
                     didSet = true;
-                    try { $.DispatchEvent("ontextentrychange", entry); } catch (e1) {}
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e2) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e1) {}
                 } else {
-                    try { $.DispatchEvent("ontextentrychange", entry); } catch (e3) {}
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e4) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e3) {}
                 }
             } catch (e5) {}
             if (typeof entry.Submit === "function") {
@@ -22989,9 +23456,7 @@ function GetUIRoot() {
                     didSet = true;
                 } catch (e6m) {}
             }
-            try { $.DispatchEvent("oninputsubmit", entry); } catch (e7) {}
-            try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e8) {}
-            try { $.DispatchEvent("Submit", entry); } catch (e9) {}
+            try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e7) {}
             DefocusBuildSaveCategoryEntry(root, null);
             var after = ReadPanelTextMaybe(entry);
             BuildSaveDebugLog("write name entry before=" + (before || "-") + " after=" + (after || "-"));
@@ -23009,11 +23474,8 @@ function GetUIRoot() {
                 entry.text = payloadText;
             } catch (e1) {}
         }
-        try { $.DispatchEvent("ontextentrychange", entry); didCommit = true; } catch (e2) {}
-        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch (e3) {}
-        try { $.DispatchEvent("oninputsubmit", entry); didCommit = true; } catch (e4) {}
-        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch (e5) {}
-        try { $.DispatchEvent("Submit", entry); didCommit = true; } catch (e6) {}
+        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch (e2) {}
+        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch (e3) {}
 
         // Simulate clicking away from the text field before pressing Save.
         var header = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("BuildCategoryHeader") : null;
@@ -23030,7 +23492,7 @@ function GetUIRoot() {
         var expectedToken = ExtractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         var seen = [];
         function checkToken(token) {
             if (!token || token.length === 0) return false;
@@ -23140,7 +23602,7 @@ function GetUIRoot() {
 
         if (State.buildClearStage === "await_user_shop_open") {
             var shopOpen = IsHudClassActive(root, "gShopOpen");
-            var selectedBuildGate = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var selectedBuildGate = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             var gateReady = !!(shopOpen && selectedBuildGate);
             if (gateReady) {
                 State.buildClearUserShopGateSatisfied = true;
@@ -23245,7 +23707,7 @@ function GetUIRoot() {
                 return;
             }
 
-            var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             if (!selectedBuild) {
                 State.buildClearRetries += 1;
                 State.buildClearNextActionMs = nowMs + BUILD_CLEAR_ACTION_DELAY_MS;
@@ -23383,7 +23845,7 @@ function GetUIRoot() {
         var reuseGateReady = false;
         if (reuseLoaderAirheart) {
             var reuseShopOpen = IsHudClassActive(root, "gShopOpen");
-            var reuseSelectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+            var reuseSelectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             reuseGateReady = !!(reuseShopOpen && reuseSelectedBuild);
         }
         State.buildClearActiveToken = requestToken;
@@ -23555,7 +24017,7 @@ function GetUIRoot() {
             return;
         }
 
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse("ShopModsSelectedBuild") : null;
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         if (!selectedBuild) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
@@ -23917,6 +24379,19 @@ function GetUIRoot() {
     }
 
     function UpdateAmmoPanelRuntime(root, cfg) {
+        // Bail early when all ammo features are disabled and no cached panel to clean up.
+        // The loop-level gate includes sticky-state checks; this guard prevents
+        // FindChildTraverse when the config is truly at default.
+        if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&
+            Number(cfg.ENABLE_HIDE_MAGAZINE) !== 1 &&
+            Number(cfg.ENABLE_HIDE_AMMO_ALL) !== 1 &&
+            Number(cfg.AMMO_PANEL_SCALE) === 100 &&
+            Number(cfg.AMMO_CURRENT_SCALE) === 100 &&
+            Number(cfg.AMMO_TOTAL_SCALE) === 100 &&
+            Number(cfg.AMMO_PANEL_X_OFFSET) === 0 &&
+            Number(cfg.AMMO_PANEL_Y_OFFSET) === 0 &&
+            !IsPanelValid(State.cachedPanels.ammoPanel)) return;
+
         var ammoPanel = IsPanelValid(State.cachedPanels.ammoPanel) ? State.cachedPanels.ammoPanel : null;
         if (!ammoPanel) {
             ammoPanel = root.FindChildTraverse("ammo_panel");
@@ -23999,12 +24474,8 @@ function GetUIRoot() {
 
     function UpdateDamageImpactRuntime(root, cfg) {
         var active = HasNonDefaultDamageImpactRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.ENABLE_DAMAGE_IMPACT) === 1;
-        var panel = IsPanelValid(State.cachedPanels.damageImpactPanel) ? State.cachedPanels.damageImpactPanel : null;
-        if (!panel && root && root.FindChildTraverse) {
-            panel = root.FindChildTraverse("damage_impact");
-            State.cachedPanels.damageImpactPanel = panel || null;
-        }
+        var enabled = IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
+        var panel = ResolveCachedPanel(root, "damageImpactPanel", "damage_impact")
         if (!panel) return;
 
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
@@ -24024,12 +24495,8 @@ function GetUIRoot() {
 
     function UpdateTopBarRuntime(root, cfg) {
         var active = HasNonDefaultTopBarRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_TOP_BAR_ENABLED) === 1;
-        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
-        if (!topBar && root && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse("TopBar");
-            State.cachedPanels.topBarPanel = topBar || null;
-        }
+        var enabled = IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
+        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR)
         if (!topBar) return;
 
         var hudVisible = IsHudVisibleForTopBarRuntime(root, topBar);
@@ -24051,12 +24518,8 @@ function GetUIRoot() {
 
     function UpdateBottomBarRuntime(root, cfg) {
         var active = HasNonDefaultBottomBarRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
-        var hudSignature = IsPanelValid(State.cachedPanels.bottomBarPanel) ? State.cachedPanels.bottomBarPanel : null;
-        if (!hudSignature && root && root.FindChildTraverse) {
-            hudSignature = root.FindChildTraverse("hud_signature");
-            State.cachedPanels.bottomBarPanel = hudSignature || null;
-        }
+        var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
+        var hudSignature = ResolveCachedPanel(root, "bottomBarPanel", PANEL_ID_SIGNATURE)
 
         var washColor = active ? ResolveWashColorFromPalette(ReadBottomBarWashColorIndex(cfg)) : "";
         ApplyBottomBarCurrencyColor(root, washColor);
@@ -24082,7 +24545,7 @@ function GetUIRoot() {
         var color = washColor || "";
         var searchRoot = GetGameplayHudPanel(root) || root;
         var apContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("APContainer") : null;
-        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("gold_and_ap_container") : null;
+        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         var contextPanel = null;
         try { contextPanel = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eContext) { contextPanel = null; }
         var uiRoot = GetUIRoot();
@@ -24171,12 +24634,13 @@ function GetUIRoot() {
         }
 
         var panels = [];
-        var searchRoot = null;
-        if (root && root.FindChildTraverse) {
+        var searchRoot = IsPanelValid(State.cachedPanels.staminaChargesContainer)
+            ? State.cachedPanels.staminaChargesContainer
+            : null;
+        if (!searchRoot && root && root.FindChildTraverse) {
             searchRoot = root.FindChildTraverse("charges_container") || root;
-        } else {
-            searchRoot = root;
         }
+        if (!searchRoot) searchRoot = root;
 
         if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
             var finishedCharges = searchRoot.FindChildrenWithClassTraverse("charge_fg") || [];
@@ -24198,15 +24662,16 @@ function GetUIRoot() {
     }
 
     function GetStaminaChargesContainer(root) {
-        var chargesContainer = IsPanelValid(State.cachedPanels.staminaChargesContainer) ? State.cachedPanels.staminaChargesContainer : null;
-        if (!chargesContainer && root && root.FindChildTraverse) {
-            chargesContainer = root.FindChildTraverse("charges_container");
-            State.cachedPanels.staminaChargesContainer = chargesContainer || null;
-        }
+        var chargesContainer = ResolveCachedPanel(root, "staminaChargesContainer", "charges_container")
         return chargesContainer;
     }
 
     function UpdateStaminaChargeColorRuntime(root, cfg, nowMs) {
+        // Bail early when stamina charge config is at default and no cached panels exist.
+        if (!HasNonDefaultStaminaChargeRuntimeConfig(cfg) &&
+            !IsPanelValid(State.cachedPanels.staminaChargesContainer) &&
+            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
+
         var color = ResolveWashColorFromPalette(ReadStaminaChargeColorIndex(cfg));
         var angle = NormalizeStaminaChargeAngle(cfg && cfg.STAMINA_CHARGE_ANGLE);
         var angleSig = String(angle);
@@ -24233,14 +24698,10 @@ function GetUIRoot() {
 
     function UpdateItemsRuntime(root, cfg) {
         var active = HasNonDefaultItemsRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_ITEMS_ENABLED) === 1;
+        var enabled = IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = IsPanelValid(State.cachedPanels.itemsModsContainer) ? State.cachedPanels.itemsModsContainer : null;
         if (!modsContainer) {
-            var statsAndMods = IsPanelValid(State.cachedPanels.statsAndModsContainer) ? State.cachedPanels.statsAndModsContainer : null;
-            if (!statsAndMods && root && root.FindChildTraverse) {
-                statsAndMods = root.FindChildTraverse("StatsAndModsContainer");
-                State.cachedPanels.statsAndModsContainer = statsAndMods || null;
-            }
+            var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer")
             if (statsAndMods && statsAndMods.FindChildrenWithClassTraverse) {
                 var modsContainers = statsAndMods.FindChildrenWithClassTraverse("ModsContainer") || [];
                 for (var iMods = 0; iMods < modsContainers.length; iMods++) {
@@ -24288,12 +24749,8 @@ function GetUIRoot() {
 
     function UpdateSoulsRuntime(root, cfg) {
         var active = HasNonDefaultSoulsRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_SOULS_ENABLED) === 1;
-        var soulsPanel = IsPanelValid(State.cachedPanels.soulsContainer) ? State.cachedPanels.soulsContainer : null;
-        if (!soulsPanel && root && root.FindChildTraverse) {
-            soulsPanel = root.FindChildTraverse("gold_and_ap_container");
-            State.cachedPanels.soulsContainer = soulsPanel || null;
-        }
+        var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
+        var soulsPanel = ResolveCachedPanel(root, "soulsContainer", PANEL_ID_GOLD_AP_CONTAINER)
         if (!soulsPanel) return;
 
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) : 0;
@@ -24333,9 +24790,9 @@ function GetUIRoot() {
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
 
-    function UpdateModIconsRP(container) {
+    function UpdateModIconsRP(container, purchases) {
         if (!container || !IsPanelValid(container)) return;
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var icons = purchase.FindChildrenWithClassTraverse("mod_icon");
@@ -24406,9 +24863,8 @@ function GetUIRoot() {
             toggle.checked = filter.active;
             var label = $.CreatePanel("Label", toggle, "");
             label.text = filter.label;
-            (function(f) {
-                $.RegisterEventHandler("Activated", toggle, function() { f.active = !f.active; });
-            })(filter);
+            var capturedFilter = filter;
+            $.RegisterEventHandler("Activated", toggle, function() { capturedFilter.active = !capturedFilter.active; });
         }
 
         var existingLabel = panel.FindChild("RecentPurchases");
@@ -24442,7 +24898,7 @@ function GetUIRoot() {
         }
     }
 
-    function ApplyFiltersRP(container, ctx) {
+    function ApplyFiltersRP(container, ctx, purchases) {
         if (!container || !IsPanelValid(container)) return;
         var sig = GetFilterSigRP(ctx, container);
         var firstChild = container.GetChildCount() > 0 ? container.GetChild(0) : null;
@@ -24450,7 +24906,7 @@ function GetUIRoot() {
         State.recentPurchaseLastFilterSig = sig;
         State.recentPurchaseLastFirstChild = firstChild;
 
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         for (var i = 0; i < purchases.length; i++) {
             var purchase = purchases[i];
             var hidden = false;
@@ -24525,9 +24981,9 @@ function GetUIRoot() {
             var icon = $.CreatePanel("Panel", itemInfo, "");
             icon.AddClass("mod_icon");
             icon.AddClass("brawl_hide");
-            (function(p, url) {
-                $.Schedule(0, function() { if (IsPanelValid(p)) { p.style.backgroundImage = url; p.style.backgroundSize = "100% 100%"; } });
-            })(icon, iconUrl);
+            var capturedIcon = icon;
+            var capturedIconUrl = iconUrl;
+            $.Schedule(0, function() { if (IsPanelValid(capturedIcon)) { capturedIcon.style.backgroundImage = capturedIconUrl; capturedIcon.style.backgroundSize = "100% 100%"; } });
         }
 
         var nameLabel = $.CreatePanel("Label", itemInfo, "");
@@ -24545,7 +25001,7 @@ function GetUIRoot() {
     function GetOrCreateQuickPanelRP(root) {
         if (IsPanelValid(State.cachedPanels.quickPurchasesPanel)) return State.cachedPanels.quickPurchasesPanel;
         if (!IsPanelValid(State.cachedPanels.quickPurchasesHostPanel)) {
-            State.cachedPanels.quickPurchasesHostPanel = root.FindChildTraverse("TopBar") || null;
+            State.cachedPanels.quickPurchasesHostPanel = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
         }
         var topBar = State.cachedPanels.quickPurchasesHostPanel;
         if (!topBar) return null;
@@ -24554,11 +25010,11 @@ function GetUIRoot() {
         return qp;
     }
 
-    function UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec) {
+    function UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases) {
         var quickPanel = GetOrCreateQuickPanelRP(root);
         if (!quickPanel || !container || !IsPanelValid(container)) return;
 
-        var purchases = container.FindChildrenWithClassTraverse("recentPurchase");
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
         if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
@@ -24589,8 +25045,10 @@ function GetUIRoot() {
         if (!IsPanelValid(quickPanel)) return;
         quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
         if (!IsPanelValid(State.cachedPanels.cachedRejuvTimer)) {
-            State.cachedPanels.cachedRejuvTimer = $.GetContextPanel().GetParent() ?
-                $.GetContextPanel().GetParent().FindChildTraverse("RejuvenatorTimer") : null;
+            var _ctxPanel = $.GetContextPanel();
+            var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
+            State.cachedPanels.cachedRejuvTimer = _ctxParent ?
+                _ctxParent.FindChildTraverse("RejuvenatorTimer") : null;
         }
         var timer = State.cachedPanels.cachedRejuvTimer;
         if (!timer) return;
@@ -24602,8 +25060,8 @@ function GetUIRoot() {
         if (!IsPanelValid(panel) || !IsPanelVisibleMaybe(panel)) return 0;
         var bottom = 0;
         try {
-            var y = Number(panel.actualyoffset);
-            var h = Number(panel.actuallayoutheight);
+            var y = Number(panel.actualyoffset) || 0;
+            var h = Number(panel.actuallayoutheight) || 0;
             if (isFinite(y) && isFinite(h) && h > 0) bottom = y + h;
         } catch (eRecentPurchaseOverlayLayout) {}
         if (bottom > 0) return bottom;
@@ -24623,11 +25081,11 @@ function GetUIRoot() {
         }
 
         var occupiedBottom = 0;
-        if (Number(cfg && cfg.ENABLE_OBJ_MAP) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_OBJ_MAP")) {
             var objectiveMap = root && root.FindChildTraverse ? root.FindChildTraverse("ObjectivesMap") : null;
             occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(objectiveMap, 112));
         }
-        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) {
             var urnTracker = root && root.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
             occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(urnTracker, 96));
         }
@@ -24648,6 +25106,327 @@ function GetUIRoot() {
         }
         State.recentPurchaseQuickSeenKeys = {};
         State.recentPurchaseQuickInitialized = false;
+        ResetHeroPopupState();
+    }
+
+    // ── Hero Purchase Popups (per-hero panel system) ──────────────────────
+
+    var HERO_MAP_IDLE = 0;
+    var HERO_MAP_BUILDING = 1;
+    var HERO_MAP_BUILT = 2;
+    var QUICK_ROW_UI_SCALE = 0.7;
+
+    function BuildHeroPlayerCardMap(root) {
+        if (State.heroPopup.mapState === HERO_MAP_BUILDING) return;
+        State.heroPopup.mapState = HERO_MAP_BUILDING;
+        State.heroPopup.buildGen++;
+        var myGen = State.heroPopup.buildGen;
+        var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
+        if (!labels || labels.length === 0) {
+            State.heroPopup.mapState = HERO_MAP_IDLE;
+            return;
+        }
+        var pending = labels.length;
+        function onDone() {
+            pending--;
+            if (pending === 0 && State.heroPopup.buildGen === myGen) {
+                State.heroPopup.mapState = HERO_MAP_BUILT;
+            }
+        }
+        for (var i = 0; i < labels.length; i++) {
+            (function(label) {
+                var playerPanel = label.GetParent();
+                var badge = null;
+                var badgeWalkGuard = 0;
+                while (playerPanel && IsPanelValid(playerPanel) && badgeWalkGuard < 64) {
+                    badge = playerPanel.FindChildTraverse("HeroBadge");
+                    if (badge) break;
+                    playerPanel = playerPanel.GetParent();
+                    badgeWalkGuard++;
+                }
+                if (badgeWalkGuard >= 64) QOL_WARN("heroPopup", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
+                if (!badge || !playerPanel) { onDone(); return; }
+                var heroId = badge.heroid;
+                if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
+                playerPanel.SetDialogVariableInt("hero_id", heroId);
+                $.Schedule(0.3, function() {
+                    if (State.heroPopup.buildGen !== myGen) return;
+                    if (IsPanelValid(label)) {
+                        var name = label.text.trim().toUpperCase();
+                        if (name) {
+                            State.heroPopup.playerCardCache[name] = playerPanel;
+                        }
+                    }
+                    onDone();
+                });
+            })(labels[i]);
+        }
+    }
+
+    function IsHeroPlayerCardMapStale() {
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) return false;
+        for (var hero in State.heroPopup.playerCardCache) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.playerCardCache, hero)) continue;
+            var pp = State.heroPopup.playerCardCache[hero];
+            if (!pp || !IsPanelValid(pp)) return true;
+        }
+        return false;
+    }
+
+    function GetOrCreateHeroPopupPanel(heroNameUpper) {
+        if (State.heroPopup.panelsByHero[heroNameUpper] &&
+            IsPanelValid(State.heroPopup.panelsByHero[heroNameUpper])) {
+            return State.heroPopup.panelsByHero[heroNameUpper];
+        }
+        var playerPanel = State.heroPopup.playerCardCache[heroNameUpper];
+        if (!playerPanel || !IsPanelValid(playerPanel)) {
+            if (State.heroPopup.mapState !== HERO_MAP_BUILDING) {
+                State.heroPopup.mapState = HERO_MAP_IDLE;
+            }
+            return null;
+        }
+        var panel = $.CreatePanel("Panel", playerPanel, "");
+        panel.AddClass("QuickPurchasesPanel");
+        State.heroPopup.panelsByHero[heroNameUpper] = panel;
+        return panel;
+    }
+
+    function GetPanelLeftInTopBar(panel) {
+        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
+        if (!topBar) {
+            try {
+                var root = $.GetContextPanel();
+                var rootGuard = 0;
+                while (root && root.GetParent && root.GetParent() !== null && rootGuard < 64) {
+                    root = root.GetParent();
+                    rootGuard++;
+                }
+                if (rootGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: root walk hit guard limit");
+                if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
+            } catch(e) {}
+        }
+        var x = 0;
+        var current = panel;
+        var walkGuard = 0;
+        while (current && IsPanelValid(current) && current !== topBar && walkGuard < 64) {
+            x += ReadSafePanelLayoutOffset(current.actualxoffset) || 0;
+            current = current.GetParent();
+            walkGuard++;
+        }
+        if (walkGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
+        return x;
+    }
+
+    function ScheduleResolveHeroPopupOverlaps(delay) {
+        if (State.heroPopup.overlapPending) return;
+        State.heroPopup.overlapPending = true;
+        $.Schedule(delay || 0, function() {
+            try {
+                ResolveHeroPopupOverlaps();
+            } finally {
+                State.heroPopup.overlapPending = false;
+            }
+        });
+    }
+
+    function ResolveHeroPopupOverlaps() {
+        var active = [];
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var p = State.heroPopup.panelsByHero[hero];
+            if (!p || !IsPanelValid(p)) continue;
+            var entries = State.heroPopup.activeEntriesByHero[hero];
+            if (!entries || entries.length === 0) continue;
+            active.push({ hero: hero, panel: p });
+        }
+
+        for (var i = 0; i < active.length; i++) {
+            var margin = 125;
+            var pp = active[i].panel.GetParent();
+            if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
+                if (State.heroPopup.ultCooldownsEnabled && !pp.BHasClass("UltimateCooldownReady")) {
+                    margin = 172; // ult on cooldown — cooldown text pushes popup down
+                } else {
+                    margin = 152; // ult ready (or cooldowns disabled) — less space needed
+                }
+            }
+            active[i].baseMargin = margin;
+        }
+
+        if (active.length === 0) return;
+        if (active.length < 2) {
+            // Single panel: apply base margin directly
+            active[0].panel.style.marginTop = active[0].baseMargin + "px";
+            return;
+        }
+
+        for (var i = 0; i < active.length; i++) {
+            active[i].leftX = GetPanelLeftInTopBar(active[i].panel);
+            active[i].width = Math.max(1, Number(active[i].panel.actuallayoutwidth) || 0);
+        }
+
+        // Sort newest first
+        active.sort(function(a, b) {
+            var ta = State.heroPopup.lastEntryTime[a.hero] || 0;
+            var tb = State.heroPopup.lastEntryTime[b.hero] || 0;
+            return tb - ta;
+        });
+
+        var margins = [];
+        for (var i = 0; i < active.length; i++) margins[i] = active[i].baseMargin;
+
+        for (var i = 1; i < active.length; i++) {
+            var aLeft = active[i].leftX;
+            var aRight = aLeft + active[i].width;
+            if (active[i].width <= 0) continue;
+            for (var j = 0; j < i; j++) {
+                if (active[j].width <= 0) continue;
+                var bLeft = active[j].leftX;
+                var bRight = bLeft + active[j].width;
+                if (aLeft < bRight && aRight > bLeft) {
+                    var needed = margins[j] + (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE;
+                    if (needed > margins[i]) margins[i] = needed;
+                }
+            }
+        }
+
+        for (var i = 0; i < active.length; i++) {
+            active[i].panel.style.marginTop = margins[i] + "px";
+        }
+    }
+
+    function RemoveHeroPurchaseEntry(entry, heroNameUpper) {
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
+        if (arr) {
+            var filtered = [];
+            for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
+        }
+        if (!IsPanelValid(entry)) return;
+        entry.AddClass("quickFading");
+        $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
+            if (IsPanelValid(entry)) entry.DeleteAsync(0);
+            ScheduleResolveHeroPopupOverlaps(0);
+        });
+    }
+
+    function EvictHeroPurchaseEntry(entry, heroNameUpper) {
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
+        if (arr) {
+            var filtered = [];
+            for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
+        }
+        if (IsPanelValid(entry)) entry.DeleteAsync(0);
+        ScheduleResolveHeroPopupOverlaps(0);
+    }
+
+    function AddHeroPurchaseEntry(sourcePurchase, nameText, quickMax, quickDisplaySec) {
+        var heroNameUpper = GetRecentPurchaseHeroName(sourcePurchase).toUpperCase();
+        var quickPanel = GetOrCreateHeroPopupPanel(heroNameUpper);
+        if (!quickPanel) return;
+
+        if (!State.heroPopup.activeEntriesByHero[heroNameUpper]) {
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = [];
+        }
+        State.heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
+
+        while (State.heroPopup.activeEntriesByHero[heroNameUpper].length >= quickMax) {
+            EvictHeroPurchaseEntry(State.heroPopup.activeEntriesByHero[heroNameUpper][0], heroNameUpper);
+        }
+
+        var entry = $.CreatePanel("Panel", quickPanel, "");
+        entry.AddClass("quickPurchase");
+
+        for (var i = 0; i < RECENT_PURCHASE_QUICK_CLASSES.length; i++) {
+            if (sourcePurchase.BHasClass(RECENT_PURCHASE_QUICK_CLASSES[i])) {
+                entry.AddClass(RECENT_PURCHASE_QUICK_CLASSES[i]);
+            }
+        }
+
+        var itemInfo = $.CreatePanel("Panel", entry, "");
+        itemInfo.AddClass("quickItemInfo");
+
+        var iconUrl = (typeof MOD_ICONS !== "undefined") ? MOD_ICONS[nameText] : null;
+        if (iconUrl) {
+            var icon = $.CreatePanel("Panel", itemInfo, "");
+            icon.AddClass("mod_icon");
+            (function(p, url) {
+                $.Schedule(0, function() {
+                    if (IsPanelValid(p)) {
+                        p.style.backgroundImage = url;
+                        p.style.backgroundSize = "100% 100%";
+                    }
+                });
+            })(icon, iconUrl);
+        }
+
+        var nameLabel = $.CreatePanel("Label", itemInfo, "");
+        nameLabel.AddClass("quickPurchaseName");
+        nameLabel.text = nameText;
+
+        State.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
+
+        ScheduleResolveHeroPopupOverlaps(0.1);
+
+        $.Schedule(quickDisplaySec, function() {
+            if (IsPanelValid(entry)) RemoveHeroPurchaseEntry(entry, heroNameUpper);
+        });
+    }
+
+    function ResetHeroPopupState() {
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var panel = State.heroPopup.panelsByHero[hero];
+            if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
+        }
+        var ultSetting = State.heroPopup.ultCooldownsEnabled;
+        State.heroPopup = {
+            panelsByHero: {},
+            activeEntriesByHero: {},
+            lastEntryTime: {},
+            playerCardCache: {},
+            overlapPending: false,
+            mapState: HERO_MAP_IDLE,
+            buildGen: 0,
+            ultCooldownsEnabled: ultSetting
+        };
+    }
+
+    function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases) {
+        if (IsHeroPlayerCardMapStale()) ResetHeroPopupState();
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) {
+            BuildHeroPlayerCardMap(root);
+            return;
+        }
+        if (!container || !IsPanelValid(container)) return;
+
+        if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
+
+        if (!State.recentPurchaseQuickInitialized) {
+            for (var i = 0; i < purchases.length; i++) {
+                var n = GetRecentPurchaseName(purchases[i]);
+                var t = GetRecentPurchaseTime(purchases[i]);
+                if (n && t) State.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
+            }
+            State.recentPurchaseQuickInitialized = true;
+            return;
+        }
+
+        for (var i = 0; i < purchases.length; i++) {
+            var purchase = purchases[i];
+            if (!purchase || !IsPanelValid(purchase)) continue;
+            var name = GetRecentPurchaseName(purchase);
+            var time = GetRecentPurchaseTime(purchase);
+            if (!name || !time) continue;
+            var key = name + "|" + time;
+            if (!State.recentPurchaseQuickSeenKeys[key]) {
+                State.recentPurchaseQuickSeenKeys[key] = true;
+                if (!purchase.BHasClass("filterHidden")) {
+                    AddHeroPurchaseEntry(purchase, name, quickMax, quickDisplaySec);
+                }
+            }
+        }
     }
 
     function HandleHideoutRP(root) {
@@ -24660,8 +25439,25 @@ function GetUIRoot() {
     }
 
     function UpdateRecentPurchases(root, cfg) {
-        var shopEnabled   = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
-        var notifyEnabled = Number(cfg && cfg.ENABLE_SHOP_CLICK_TO_NOTIFY) === 1;
+        var shopEnabled   = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+        var notifyEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS");
+
+        // Early-return when both features are disabled — hide panel once on transition.
+        if (!shopEnabled && !notifyEnabled) {
+            if (State.recentPurchasesWasEnabled) {
+                var _rpPanel = State.cachedPanels.recentPurchasesPanel;
+                if (!IsPanelValid(_rpPanel)) {
+                    _rpPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
+                    State.cachedPanels.recentPurchasesPanel = _rpPanel;
+                }
+                if (_rpPanel) {
+                    _rpPanel.style.visibility = "collapse";
+                }
+                State.recentPurchasesWasEnabled = false;
+            }
+            return;
+        }
+        State.recentPurchasesWasEnabled = true;
 
         if (!IsPanelValid(State.cachedPanels.recentPurchasesPanel)) {
             State.cachedPanels.recentPurchasesPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
@@ -24679,8 +25475,6 @@ function GetUIRoot() {
             rpPanel.style.preTransformScale2d = panelScaleText + ", " + panelScaleText;
         }
 
-        if (!shopEnabled && !notifyEnabled) return;
-
         var quickMax = Math.round(Number(cfg && cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
         var quickDisplaySec = Math.round(Number(cfg && cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC) || RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT);
         if (quickMax < 1 || quickMax > 5) quickMax = RECENT_PURCHASE_QUICK_MAX_DEFAULT;
@@ -24695,31 +25489,51 @@ function GetUIRoot() {
         HandleHideoutRP(root);
         CapContainerRP(container);
 
+        var purchases = null;
+        if (shopEnabled || notifyEnabled) {
+            purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
+        }
+
         if (shopEnabled) {
-            UpdateModIconsRP(container);
+            UpdateModIconsRP(container, purchases);
             var ctx = BuildContextRP(container);
             CreateFilterCheckboxesRP(root);
             UpdateFilterVisibilityRP(root, ctx);
-            ApplyFiltersRP(container, ctx);
+            ApplyFiltersRP(container, ctx, purchases);
         }
 
         if (notifyEnabled) {
-            UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec);
-            var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
-            var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
-            var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
-            var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
-            var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
-            var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
-            SyncRejuvClassRP(rejuvEnabled);
-            var quickPanel = State.cachedPanels.quickPurchasesPanel;
-            if (IsPanelValid(quickPanel)) {
-                quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
-                quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
-                quickPanel.style.x = String(quickOffsetX) + "px";
-                quickPanel.style.y = String(-quickOffsetY) + "px";
-                SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+            var heroPopupsEnabled = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
+
+            if (heroPopupsEnabled) {
+                // Per-hero popup panels on player cards
+                State.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+                UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
+                // Hide the centralized panel since we're using per-hero panels
+                var quickPanel = State.cachedPanels.quickPurchasesPanel;
+                if (IsPanelValid(quickPanel)) {
+                    quickPanel.style.visibility = "collapse";
+                }
+            } else {
+                // Default: centralized popup panel
+                UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases);
+                var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
+                var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
+                var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
+                var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
+                var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
+                var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
+                SyncRejuvClassRP(rejuvEnabled);
+                quickPanel = State.cachedPanels.quickPurchasesPanel;
+                if (IsPanelValid(quickPanel)) {
+                    quickPanel.style.visibility = "visible";
+                    quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
+                    quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
+                    quickPanel.style.x = String(quickOffsetX) + "px";
+                    quickPanel.style.y = String(-quickOffsetY) + "px";
+                    SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
+                    quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+                }
             }
         }
     }
@@ -24729,9 +25543,9 @@ function GetUIRoot() {
         var shopOffsetYRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0);
         var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
         var shopScaleText = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0).toFixed(2);
-        var shopEnabled = Number(cfg && cfg.HUD_SHOP_ENABLED) === 1;
-        var simplifyShopStats = Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1;
-        var shopRecentPurchases = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
+        var shopEnabled = IsCfgEnabled(cfg, "HUD_SHOP_ENABLED");
+        var simplifyShopStats = IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
+        var shopRecentPurchases = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
         var needsHeroShopFeatures =
             simplifyShopStats ||
             shopRecentPurchases ||
@@ -24752,7 +25566,7 @@ function GetUIRoot() {
             } catch (eVis) {}
         }
         if (needsHeroShopFeatures && !heroShop && nowMsClass >= (State.heroShopNextSearchMs || 0)) {
-            heroShop = root.FindChildTraverse("CitadelHudHeroShop");
+            heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
             State.cachedPanels.heroShop = heroShop || null;
             State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
         }
@@ -24834,7 +25648,7 @@ function GetUIRoot() {
         var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
         if (!isFinite(indicatorSize)) indicatorSize = 18;
         var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
-        var cleanIndicators = (cfg && Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        var cleanIndicators = (cfg && IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
         return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
     }
 
@@ -24849,6 +25663,11 @@ function GetUIRoot() {
     }
 
     function UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop) {
+        // Bail early when indicator config is at default and no cached panel work to clean up.
+        if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
+            !IsPanelListValid(State.indicatorPanelsCache) &&
+            !State.accountPresetTestActive) return;
+
         var indicatorOpacity = (cfg.DAMAGE_NUMBER_OPACITY === undefined || cfg.DAMAGE_NUMBER_OPACITY === null) ? 1.0 : parseFloat(cfg.DAMAGE_NUMBER_OPACITY);
         if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
         if (indicatorOpacity < 0) indicatorOpacity = 0;
@@ -24859,7 +25678,7 @@ function GetUIRoot() {
         var hideSmallNumbers = (cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
         var hideModesSig = (hideSmallNumbers ? "1" : "0");
         var hideModesChanged = (hideModesSig !== State.lastIndicatorHideModesSig);
-        var cleanIndicators = (Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        var cleanIndicators = (IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
         var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
         var indicatorDefaultsSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
         var indicatorIsDefault = (indicatorConfigSig === indicatorDefaultsSig);
@@ -24955,25 +25774,25 @@ function GetUIRoot() {
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
         if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && State.minimapCastRangeScaleApplied) return true;
-        if (Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
         if (
             (
-                Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ||
-                Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ||
-                Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1
+                IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS")
             ) &&
             !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)
         ) return true;
-        if (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") || IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) return true;
         return false;
     }
 
     function BuildMinimapRuntimeSignature(cfg) {
         if (!cfg) return "";
         return [
-            Number(cfg.ENABLE_ALT_ZOOM) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_TAB_ZOOM) === 1 ? "1" : "0",
-            Number(cfg.MINIMAL_MINIMAP) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "MINIMAL_MINIMAP") ? "1" : "0",
             String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
             String(Number(cfg.MINIMAP_BASE_OPACITY) || 1),
             String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
@@ -24987,14 +25806,14 @@ function GetUIRoot() {
             String(Number(cfg.ALT_ZOOM_OPACITY) || 1),
             String(Number(cfg.TAB_ZOOM_OPACITY) || 1),
             String(Number(cfg.MINIMAL_MINIMAP_OPACITY) || 0.9),
-            Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-            Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ALT_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "TAB_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
-            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
-            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
             String(ReadMinimapIconColorIndex(cfg)),
             ResolveMinimapCrateOverlayMapKey()
@@ -25007,7 +25826,7 @@ function GetUIRoot() {
         if (!canvas && root && root.FindChildTraverse) {
             var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
             if (!hudMinimapPanel) {
-                hudMinimapPanel = root.FindChildTraverse("hud_minimap");
+                hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
                 State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
             }
             canvas = hudMinimapPanel && hudMinimapPanel.FindChildTraverse
@@ -25035,11 +25854,7 @@ function GetUIRoot() {
         if (scale < 0.20) scale = 0.20;
         if (scale > 2.00) scale = 2.00;
         var scaleText = scale.toFixed(3) + ", " + scale.toFixed(3);
-        var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
-        if (!hudMinimapPanel && root && root.FindChildTraverse) {
-            hudMinimapPanel = root.FindChildTraverse("hud_minimap");
-            State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
-        }
+        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
         var rangePanels = [];
         if (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse) {
             var mapButtons = hudMinimapPanel.FindChildrenWithClassTraverse("map_button") || [];
@@ -25063,6 +25878,17 @@ function GetUIRoot() {
     }
 
     function UpdateMinimapRuntime(root, cfg, raw) {
+        // Bail early when all minimap features are disabled and no cached panels to clean up.
+        // EnsureMinimapPanelCache does 5 FindChildTraverse calls; skip it when nothing is active.
+        if (Number(cfg.ENABLE_ALT_ZOOM) !== 1 &&
+            Number(cfg.ENABLE_TAB_ZOOM) !== 1 &&
+            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) !== 1 &&
+            Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) !== 1 &&
+            !State.minimapDrawOverUiActive &&
+            !IsPanelListValid(State.cachedPanels.minimap)) return;
+
         var minimapPanels = EnsureMinimapPanelCache(root);
         if (!minimapPanels || minimapPanels.length <= 0) return;
         var master = minimapPanels[0];
@@ -25139,18 +25965,14 @@ function GetUIRoot() {
                 if (!isFinite(op)) op = 1.0;
                 if (op < 0) op = 0;
                 if (op > 1) op = 1;
-                if (p.id !== "hud_minimap") {
+                if (p.id !== PANEL_ID_MINIMAP) {
                     SetPanelOpacitySafe(p, op, 1.0);
                 }
             });
 
-            var mapRenderPanel = IsPanelValid(State.cachedPanels.minimapMapRender) ? State.cachedPanels.minimapMapRender : null;
-            if (!mapRenderPanel && root && root.FindChildTraverse) {
-                mapRenderPanel = root.FindChildTraverse("map_render");
-                State.cachedPanels.minimapMapRender = mapRenderPanel || null;
-            }
+            var mapRenderPanel = ResolveCachedPanel(root, "minimapMapRender", "map_render")
             if (mapRenderPanel) {
-                var minimalistEnabled = (!zoomAlt && !zoomTab && Number(cfg.MINIMAL_MINIMAP) === 1);
+                var minimalistEnabled = (!zoomAlt && !zoomTab && IsCfgEnabled(cfg, "MINIMAL_MINIMAP"));
                 if (minimalistEnabled) {
                     var minimalistOpacity = Number(cfg.MINIMAL_MINIMAP_OPACITY);
                     if (!isFinite(minimalistOpacity)) minimalistOpacity = 0.9;
@@ -25159,11 +25981,7 @@ function GetUIRoot() {
                     SetPanelOpacitySafe(mapRenderPanel, minimalistOpacity, 1.0);
                     mapRenderPanel.style.brightness = "1.0";
                     mapRenderPanel.style.washColor = "none";
-                    var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
-                    if (!hudMinimapPanel && root && root.FindChildTraverse) {
-                        hudMinimapPanel = root.FindChildTraverse("hud_minimap");
-                        State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
-                    }
+                    var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
                     if (hudMinimapPanel) {
                         if (hudMinimapPanel.AddClass) hudMinimapPanel.AddClass("minimalist_minimap_active");
                         hudMinimapPanel.style.backgroundColor = "rgba(0, 0, 0, 0)";
@@ -25309,7 +26127,7 @@ function GetUIRoot() {
 
     function EnsureKeyboardOverlay(root) {
         var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
-        if (!overlayRoot || (overlayRoot.IsValid && !overlayRoot.IsValid())) {
+        if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
             if (!overlayRoot) {
                 var parent = GetGameplayHudPanel(root);
@@ -25324,7 +26142,7 @@ function GetUIRoot() {
         if (!overlayRoot) return null;
 
         var allBindingsBox = State.cachedPanels.keyboardOverlayBox;
-        if (!allBindingsBox || (allBindingsBox.IsValid && !allBindingsBox.IsValid())) {
+        if (!IsPanelValid(allBindingsBox)) {
             allBindingsBox = overlayRoot.FindChildTraverse("AllBindingsBox");
             if (!allBindingsBox) {
                 allBindingsBox = $.CreatePanel("Panel", overlayRoot, "AllBindingsBox", {
@@ -25342,10 +26160,10 @@ function GetUIRoot() {
 
     function RemoveKeyboardOverlay(root) {
         var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
-        if (!overlayRoot || (overlayRoot.IsValid && !overlayRoot.IsValid())) {
+        if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
         }
-        if (overlayRoot && (!overlayRoot.IsValid || overlayRoot.IsValid())) {
+        if (IsPanelValid(overlayRoot)) {
             overlayRoot.DeleteAsync(0);
         }
         State.cachedPanels.keyboardOverlayRoot = null;
@@ -25361,7 +26179,7 @@ function GetUIRoot() {
             var validBoxes = [];
             for (var bi = 0; bi < allBindingsBoxes.length; bi++) {
                 var candidate = allBindingsBoxes[bi];
-                if (candidate && candidate.IsValid && candidate.IsValid()) validBoxes.push(candidate);
+                if (IsPanelValid(candidate)) validBoxes.push(candidate);
             }
             if (validBoxes.length === 0) {
                 var keyboardBox = EnsureKeyboardOverlay(root);
@@ -25393,7 +26211,7 @@ function GetUIRoot() {
     function FindUnsecuredSoulsSource(root) {
         if (!root) return null;
 
-        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
+        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         if (goldContainer && goldContainer.FindChildTraverse) {
             var fromGoldById = goldContainer.FindChildTraverse("hudDealthGoldLabel");
             if (IsPanelValid(fromGoldById)) return fromGoldById;
@@ -25421,7 +26239,7 @@ function GetUIRoot() {
 
     function FindUnsecuredSoulsHudContainer(root) {
         if (!root) return null;
-        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
+        var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         if (goldContainer && goldContainer.FindChildrenWithClassTraverse) {
             var goldContainers = goldContainer.FindChildrenWithClassTraverse("hudDeathGoldContainer") || [];
             for (var i = 0; i < goldContainers.length; i++) {
@@ -25500,23 +26318,23 @@ function GetUIRoot() {
             }
             State.cachedPanels.betterUnsecuredOverlay = overlay || null;
         }
-        var mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
-        var mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!mirrorLabel && overlay && overlay.FindChildTraverse) {
             mirrorLabel = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
             if (mirrorLabel && mirrorLabel.AddClass && !mirrorLabel.BHasClass("death_penalty_gold")) {
                 mirrorLabel.AddClass("death_penalty_gold");
             }
-            State.unsecuredSoulsHudMirrorLabel = mirrorLabel || null;
+            State.unsecuredSouls.hudMirrorLabel = mirrorLabel || null;
         }
         if (!mirrorIcon && overlay && overlay.FindChildTraverse) {
             mirrorIcon = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorIcon");
-            State.unsecuredSoulsHudMirrorIcon = mirrorIcon || null;
+            State.unsecuredSouls.hudMirrorIcon = mirrorIcon || null;
         }
         if (!mirrorText && overlay && overlay.FindChildTraverse) {
             mirrorText = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorText");
-            State.unsecuredSoulsHudMirrorText = mirrorText || null;
+            State.unsecuredSouls.hudMirrorText = mirrorText || null;
         }
         return overlay;
     }
@@ -25526,21 +26344,21 @@ function GetUIRoot() {
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.betterUnsecuredOverlay = null;
-        State.unsecuredSoulsHudMirrorLabel = null;
-        State.unsecuredSoulsHudMirrorIcon = null;
-        State.unsecuredSoulsHudMirrorText = null;
+        State.unsecuredSouls.hudMirrorLabel = null;
+        State.unsecuredSouls.hudMirrorIcon = null;
+        State.unsecuredSouls.hudMirrorText = null;
     }
 
-    function ReadSafePanelLayoutOffset(rawValue) {
+    var ReadSafePanelLayoutOffset = QOL_UTILS_LOADED ? QOL_UTILS.ReadSafePanelLayoutOffset : function(rawValue) {
         var n = Number(rawValue);
         if (!isFinite(n)) return null;
         if (Math.abs(n) > PANEL_LAYOUT_OFFSET_ABS_MAX) return null;
         return n;
-    }
+    };
 
     function GetPanelPositionRelativeToAncestor(panel, ancestor) {
         if (!panel || !ancestor) return null;
@@ -25562,63 +26380,63 @@ function GetUIRoot() {
     }
 
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
-        var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED");
         var panel = IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer) ? State.cachedPanels.unsecuredSoulsHudContainer : null;
-        var label = IsPanelValid(State.unsecuredSoulsHudLabel) ? State.unsecuredSoulsHudLabel : null;
-        var mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
-        var mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+        var label = IsPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!enabled) {
             RemoveBetterUnsecuredOverlay(root);
-            State.unsecuredSoulsHudLabel = null;
-            State.unsecuredSoulsHudMirrorLabel = null;
-            State.unsecuredSoulsHudMirrorIcon = null;
-            State.unsecuredSoulsHudMirrorText = null;
-            State.unsecuredSoulsHudBaseX = null;
-            State.unsecuredSoulsHudBaseY = null;
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudLabel = null;
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudBaseX = null;
+            State.unsecuredSouls.hudBaseY = null;
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!panel) {
-            if (nowMs >= (State.unsecuredSoulsHudNextSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.hudNextSearchMs || 0)) {
                 panel = FindUnsecuredSoulsHudContainer(root);
                 State.cachedPanels.unsecuredSoulsHudContainer = panel || null;
-                State.unsecuredSoulsHudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
+                State.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
             }
         }
         if (!panel) {
-            State.unsecuredSoulsHudMirrorLabel = null;
-            State.unsecuredSoulsHudMirrorIcon = null;
-            State.unsecuredSoulsHudMirrorText = null;
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudStyleSig = "";
             RemoveBetterUnsecuredOverlay(root);
             return;
         }
         if (!label) {
             label = FindUnsecuredSoulsHudLabel(root, panel);
-            State.unsecuredSoulsHudLabel = label || null;
+            State.unsecuredSouls.hudLabel = label || null;
         }
         var overlay = EnsureBetterUnsecuredOverlay(root);
         if (!overlay) {
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel) {
-            mirrorLabel = IsPanelValid(State.unsecuredSoulsHudMirrorLabel) ? State.unsecuredSoulsHudMirrorLabel : null;
+            mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
         }
         if (!mirrorIcon) {
-            mirrorIcon = IsPanelValid(State.unsecuredSoulsHudMirrorIcon) ? State.unsecuredSoulsHudMirrorIcon : null;
+            mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
         }
         if (!mirrorText) {
-            mirrorText = IsPanelValid(State.unsecuredSoulsHudMirrorText) ? State.unsecuredSoulsHudMirrorText : null;
+            mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         }
         if (!label) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel || !mirrorIcon || !mirrorText) {
-            State.unsecuredSoulsHudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
 
@@ -25641,9 +26459,9 @@ function GetUIRoot() {
         if (fontPx < 8) fontPx = 8;
         if (fontPx > 72) fontPx = 72;
 
-        var legacyShowBoth = Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT) === 1;
-        var showIcon = legacyShowBoth || (Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_ICON) === 1);
-        var showText = legacyShowBoth || (Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_TEXT) === 1);
+        var legacyShowBoth = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT");
+        var showIcon = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON"));
+        var showText = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_TEXT"));
 
         var sourceText = (typeof label.text === "string") ? label.text : "";
         var sourceTextLabel = FindUnsecuredSoulsHudTextLabel(root, panel);
@@ -25654,9 +26472,9 @@ function GetUIRoot() {
         if (!isFinite(sourceValue)) sourceValue = 0;
         if (sourceValue <= 0) {
             var zeroSig = "hidden_zero|" + sourceText;
-            if (State.unsecuredSoulsHudStyleSig !== zeroSig) {
+            if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
                 if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-                State.unsecuredSoulsHudStyleSig = zeroSig;
+                State.unsecuredSouls.hudStyleSig = zeroSig;
             }
             return;
         }
@@ -25667,11 +26485,11 @@ function GetUIRoot() {
         if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
             baseX = Math.round(sourcePos.x);
             baseY = Math.round(sourcePos.y);
-            State.unsecuredSoulsHudBaseX = baseX;
-            State.unsecuredSoulsHudBaseY = baseY;
+            State.unsecuredSouls.hudBaseX = baseX;
+            State.unsecuredSouls.hudBaseY = baseY;
         } else {
-            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSoulsHudBaseX);
-            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSoulsHudBaseY);
+            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
+            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
             baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
             baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
         }
@@ -25682,11 +26500,11 @@ function GetUIRoot() {
         var targetY = baseY + reflectedYOffset;
         if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            State.unsecuredSoulsHudStyleSig = "hidden_invalid_pos";
+            State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
             return;
         }
         var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-        if (sig === State.unsecuredSoulsHudStyleSig) return;
+        if (sig === State.unsecuredSouls.hudStyleSig) return;
 
         if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         overlay.style.x = targetX + "px";
@@ -25701,12 +26519,12 @@ function GetUIRoot() {
         mirrorLabel.style.fontSize = fontPx + "px";
         mirrorLabel.style.x = "0px";
         mirrorLabel.style.y = "0px";
-        State.unsecuredSoulsHudStyleSig = sig;
+        State.unsecuredSouls.hudStyleSig = sig;
     }
 
     function EnsureUnsecuredSoulsOverlay(root) {
         var overlay = State.cachedPanels.unsecuredSoulsOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -25733,49 +26551,49 @@ function GetUIRoot() {
     }
 
     function ResetUnsecuredSoulsTracking() {
-        State.unsecuredSoulsLastSouls = -1;
-        State.unsecuredSoulsLastSampleMs = 0;
-        State.unsecuredSoulsRateEma = 0;
-        State.unsecuredSoulsRateLastUpdateMs = 0;
-        State.unsecuredSoulsEtaEndMs = 0;
+        State.unsecuredSouls.lastSouls = -1;
+        State.unsecuredSouls.lastSampleMs = 0;
+        State.unsecuredSouls.rateEma = 0;
+        State.unsecuredSouls.rateLastUpdateMs = 0;
+        State.unsecuredSouls.etaEndMs = 0;
     }
 
     function RemoveUnsecuredSoulsOverlay(root) {
         var overlay = State.cachedPanels.unsecuredSoulsOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.unsecuredSoulsOverlay = null;
         State.cachedPanels.unsecuredSoulsLabel = null;
         State.cachedPanels.unsecuredSoulsState = null;
         State.cachedPanels.unsecuredSoulsSource = null;
-        State.unsecuredSoulsDisplayMode = "";
-        State.unsecuredSoulsLastLayoutSig = "";
-        State.unsecuredSoulsLastClassSig = "";
-        State.unsecuredSoulsLastTitle = "";
-        State.unsecuredSoulsLastStatus = "";
-        State.unsecuredSoulsNextSourceSearchMs = 0;
+        State.unsecuredSouls.displayMode = "";
+        State.unsecuredSouls.lastLayoutSig = "";
+        State.unsecuredSouls.lastClassSig = "";
+        State.unsecuredSouls.lastTitle = "";
+        State.unsecuredSouls.lastStatus = "";
+        State.unsecuredSouls.nextSourceSearchMs = 0;
         ResetUnsecuredSoulsTracking();
     }
 
     function UpdateUnsecuredSoulsOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (State.unsecuredSoulsDisplayMode !== "context_off") {
+            if (State.unsecuredSouls.displayMode !== "context_off") {
                 RemoveUnsecuredSoulsOverlay(root);
-                State.unsecuredSoulsDisplayMode = "context_off";
+                State.unsecuredSouls.displayMode = "context_off";
             }
             return;
         }
 
-        var enabled = Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER");
         if (!enabled) {
-            if (State.unsecuredSoulsDisplayMode !== "disabled") {
+            if (State.unsecuredSouls.displayMode !== "disabled") {
                 RemoveUnsecuredSoulsOverlay(root);
-                State.unsecuredSoulsDisplayMode = "disabled";
+                State.unsecuredSouls.displayMode = "disabled";
             }
             return;
         }
@@ -25785,7 +26603,7 @@ function GetUIRoot() {
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (State.unsecuredSoulsDisplayMode !== "hideout") {
+            if (State.unsecuredSouls.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 overlay.SetHasClass("danger_1", false);
                 overlay.SetHasClass("danger_2", false);
@@ -25794,17 +26612,17 @@ function GetUIRoot() {
                 overlay.SetHasClass("has_souls", false);
                 overlay.SetHasClass("is_safe", true);
                 overlay.SetHasClass("is_syncing", false);
-                State.unsecuredSoulsLastClassSig = "";
+                State.unsecuredSouls.lastClassSig = "";
             }
-            State.unsecuredSoulsDisplayMode = "hideout";
+            State.unsecuredSouls.displayMode = "hideout";
             ResetUnsecuredSoulsTracking();
             return;
         }
 
-        if (State.unsecuredSoulsDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.unsecuredSoulsDisplayMode = "active";
+        State.unsecuredSouls.displayMode = "active";
 
         var timerOffsetX = Number(cfg.UNSECURED_SOUL_TIMER_X_OFFSET);
         var timerOffsetY = Number(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET);
@@ -25833,18 +26651,18 @@ function GetUIRoot() {
             stateLabel.style.fontSize = timerFontSize;
         }
         var layoutSig = [String(timerOffsetX), String(timerOffsetY), String(timerScale)].join("|");
-        if (layoutSig !== State.unsecuredSoulsLastLayoutSig) {
+        if (layoutSig !== State.unsecuredSouls.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + timerOffsetX) + "px";
             overlay.style.marginBottom = (110 + timerOffsetY) + "px";
-            State.unsecuredSoulsLastLayoutSig = layoutSig;
+            State.unsecuredSouls.lastLayoutSig = layoutSig;
         }
 
         var source = State.cachedPanels.unsecuredSoulsSource;
         if (!IsPanelValid(source)) {
             source = null;
-            if (nowMs >= (State.unsecuredSoulsNextSourceSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.nextSourceSearchMs || 0)) {
                 source = FindUnsecuredSoulsSource(root);
-                State.unsecuredSoulsNextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
+                State.unsecuredSouls.nextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
                 State.cachedPanels.unsecuredSoulsSource = source || null;
             }
         }
@@ -25854,27 +26672,27 @@ function GetUIRoot() {
         var souls = isUnresolved ? 0 : ParseUnsecuredSoulsValue(rawText);
 
         if (!isUnresolved) {
-            if (State.unsecuredSoulsLastSouls >= 0 && State.unsecuredSoulsLastSampleMs > 0) {
-                var dtSec = (nowMs - State.unsecuredSoulsLastSampleMs) / 1000.0;
-                var delta = State.unsecuredSoulsLastSouls - souls;
+            if (State.unsecuredSouls.lastSouls >= 0 && State.unsecuredSouls.lastSampleMs > 0) {
+                var dtSec = (nowMs - State.unsecuredSouls.lastSampleMs) / 1000.0;
+                var delta = State.unsecuredSouls.lastSouls - souls;
                 if (dtSec >= (UNSECURED_SOULS_MIN_SAMPLE_MS / 1000.0) && delta > 0) {
                     var instRate = delta / dtSec;
                     if (isFinite(instRate) && instRate > UNSECURED_SOULS_RATE_MIN) {
-                        if (!isFinite(State.unsecuredSoulsRateEma) || State.unsecuredSoulsRateEma <= 0) {
-                            State.unsecuredSoulsRateEma = instRate;
+                        if (!isFinite(State.unsecuredSouls.rateEma) || State.unsecuredSouls.rateEma <= 0) {
+                            State.unsecuredSouls.rateEma = instRate;
                         } else {
-                            State.unsecuredSoulsRateEma = State.unsecuredSoulsRateEma + ((instRate - State.unsecuredSoulsRateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
+                            State.unsecuredSouls.rateEma = State.unsecuredSouls.rateEma + ((instRate - State.unsecuredSouls.rateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
                         }
-                        State.unsecuredSoulsRateLastUpdateMs = nowMs;
+                        State.unsecuredSouls.rateLastUpdateMs = nowMs;
                     }
                 } else if (delta < 0) {
                     // Soul gains are not a valid decay-rate signal; reset to fallback mode until we observe new spend.
-                    State.unsecuredSoulsRateEma = 0;
-                    State.unsecuredSoulsRateLastUpdateMs = 0;
+                    State.unsecuredSouls.rateEma = 0;
+                    State.unsecuredSouls.rateLastUpdateMs = 0;
                 }
             }
-            State.unsecuredSoulsLastSouls = souls;
-            State.unsecuredSoulsLastSampleMs = nowMs;
+            State.unsecuredSouls.lastSouls = souls;
+            State.unsecuredSouls.lastSampleMs = nowMs;
         }
 
         var etaSec = 0;
@@ -25883,10 +26701,10 @@ function GetUIRoot() {
             var gameMin = GetGameSecondsForUrn(root) / 60.0;
             fallbackEtaSec = EstimateUnsecuredSoulsEtaFallbackSec(souls, gameMin);
 
-            var rateAgeMs = nowMs - (State.unsecuredSoulsRateLastUpdateMs || 0);
-            var rateFresh = (State.unsecuredSoulsRateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
-            if (rateFresh && isFinite(State.unsecuredSoulsRateEma) && State.unsecuredSoulsRateEma > UNSECURED_SOULS_RATE_MIN) {
-                etaSec = souls / State.unsecuredSoulsRateEma;
+            var rateAgeMs = nowMs - (State.unsecuredSouls.rateLastUpdateMs || 0);
+            var rateFresh = (State.unsecuredSouls.rateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
+            if (rateFresh && isFinite(State.unsecuredSouls.rateEma) && State.unsecuredSouls.rateEma > UNSECURED_SOULS_RATE_MIN) {
+                etaSec = souls / State.unsecuredSouls.rateEma;
             }
             if (!isFinite(etaSec) || etaSec <= 0) {
                 etaSec = fallbackEtaSec;
@@ -25897,17 +26715,17 @@ function GetUIRoot() {
                 etaSec = UNSECURED_SOULS_ETA_MAX_SEC;
             }
             if (isFinite(etaSec) && etaSec > 0) {
-                State.unsecuredSoulsEtaEndMs = nowMs + Math.round(etaSec * 1000);
+                State.unsecuredSouls.etaEndMs = nowMs + Math.round(etaSec * 1000);
             }
         } else if (souls <= 0) {
-            State.unsecuredSoulsEtaEndMs = 0;
-            State.unsecuredSoulsRateEma = 0;
-            State.unsecuredSoulsRateLastUpdateMs = 0;
+            State.unsecuredSouls.etaEndMs = 0;
+            State.unsecuredSouls.rateEma = 0;
+            State.unsecuredSouls.rateLastUpdateMs = 0;
         }
 
         var etaRemainingSec = 0;
-        if (State.unsecuredSoulsEtaEndMs > nowMs) {
-            etaRemainingSec = (State.unsecuredSoulsEtaEndMs - nowMs) / 1000.0;
+        if (State.unsecuredSouls.etaEndMs > nowMs) {
+            etaRemainingSec = (State.unsecuredSouls.etaEndMs - nowMs) / 1000.0;
         }
 
         var statusText = "--";
@@ -25928,7 +26746,7 @@ function GetUIRoot() {
             souls > 0 ? "1" : "0",
             isUnresolved ? "1" : "0"
         ].join("|");
-        if (classSig !== State.unsecuredSoulsLastClassSig) {
+        if (classSig !== State.unsecuredSouls.lastClassSig) {
             overlay.SetHasClass("danger_1", dangerLevel === 1);
             overlay.SetHasClass("danger_2", dangerLevel === 2);
             overlay.SetHasClass("danger_3", dangerLevel === 3);
@@ -25936,19 +26754,19 @@ function GetUIRoot() {
             overlay.SetHasClass("has_souls", souls > 0);
             overlay.SetHasClass("is_safe", souls <= 0 && !isUnresolved);
             overlay.SetHasClass("is_syncing", isUnresolved);
-            State.unsecuredSoulsLastClassSig = classSig;
+            State.unsecuredSouls.lastClassSig = classSig;
         }
 
-        State.unsecuredSoulsLastTitle = "";
-        if (stateLabel && statusText !== State.unsecuredSoulsLastStatus) {
+        State.unsecuredSouls.lastTitle = "";
+        if (stateLabel && statusText !== State.unsecuredSouls.lastStatus) {
             stateLabel.text = statusText;
-            State.unsecuredSoulsLastStatus = statusText;
+            State.unsecuredSouls.lastStatus = statusText;
         }
     }
 
     function EnsureZipBoostOverlay(root) {
         var overlay = State.cachedPanels.zipBoostOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -25976,10 +26794,10 @@ function GetUIRoot() {
 
     function RemoveZipBoostOverlay(root) {
         var overlay = State.cachedPanels.zipBoostOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLZipBoostOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.zipBoostOverlay = null;
@@ -26070,7 +26888,7 @@ function GetUIRoot() {
         }
 
         var source = State.cachedPanels.zipBoostSource;
-        if (!source || (source.IsValid && !source.IsValid())) {
+        if (!IsPanelValid(source)) {
             source = null;
             if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
                 source = FindZipBoostSource(root);
@@ -26222,18 +27040,18 @@ function GetUIRoot() {
 
     function ResolveStatBonusesSource(root, cacheKey, candidateIds, nowMs) {
         var source = State.cachedPanels[cacheKey];
-        if (source && (!source.IsValid || source.IsValid())) {
+        if (IsPanelValid(source)) {
             return source;
         }
 
-        var nextByKey = State.statBonusesNextSourceSearchByKey || {};
+        var nextByKey = State.statBonuses.nextSourceSearchByKey || {};
         var nextSearchMs = Number(nextByKey[cacheKey] || 0);
         if (nowMs < nextSearchMs) {
             return null;
         }
         source = FindStatBonusesSourceByIds(root, candidateIds);
         nextByKey[cacheKey] = source ? 0 : (nowMs + STAT_BONUSES_SOURCE_SEARCH_MS);
-        State.statBonusesNextSourceSearchByKey = nextByKey;
+        State.statBonuses.nextSourceSearchByKey = nextByKey;
         State.cachedPanels[cacheKey] = source || null;
         return source;
     }
@@ -26519,7 +27337,7 @@ function GetUIRoot() {
     }
 
     function HarvestGoldenStatuesTooltipValue(root, nowMs, sourceByKey) {
-        if (nowMs < (State.statBonusesNextTooltipScanMs || 0)) return;
+        if (nowMs < (State.statBonuses.nextTooltipScanMs || 0)) return;
 
         var breakdown = ResolveStatBonusesTooltipBreakdownPanel(root);
 
@@ -26534,7 +27352,7 @@ function GetUIRoot() {
                     ", subRows=" + subRowCount + ")",
                 nowMs
             );
-            State.statBonusesNextTooltipScanMs = nextScan;
+            State.statBonuses.nextTooltipScanMs = nextScan;
             return;
         }
 
@@ -26560,7 +27378,7 @@ function GetUIRoot() {
                 statKey = ResolveStatKeyFromTotalToken(tooltipTotal, sourceByKey);
             }
             if (statKey) {
-                State.statBonusesGoldenValues[statKey] = goldenToken;
+                State.statBonuses.goldenValues[statKey] = goldenToken;
                 StatBonusesDebugLogThrottled(
                     "mapped|" + statKey + "|" + goldenToken + "|" + statContainerId + "|" + tooltipTotal + "|" + rowsSnapshot,
                     "mapped golden=" + goldenToken +
@@ -26590,7 +27408,7 @@ function GetUIRoot() {
             );
         }
 
-        State.statBonusesNextTooltipScanMs = nextScan;
+        State.statBonuses.nextTooltipScanMs = nextScan;
     }
 
     function ResolveGoldenStatBonusesValue(statKey, sourcePanel) {
@@ -26602,16 +27420,16 @@ function GetUIRoot() {
             }
         }
         if (fromSource) {
-            State.statBonusesGoldenValues[statKey] = fromSource;
+            State.statBonuses.goldenValues[statKey] = fromSource;
             return fromSource;
         }
 
-        var cached = State.statBonusesGoldenValues[statKey];
+        var cached = State.statBonuses.goldenValues[statKey];
         if (cached && cached.length > 0) return cached;
 
         var derived = DeriveGoldenStatuesValueFromSource(sourcePanel);
         if (derived && derived.length > 0) {
-            State.statBonusesGoldenValues[statKey] = derived;
+            State.statBonuses.goldenValues[statKey] = derived;
             return derived;
         }
         return "--";
@@ -26630,7 +27448,7 @@ function GetUIRoot() {
 
     function EnsureStatBonusesOverlay(root) {
         var overlay = State.cachedPanels.statBonusesOverlay;
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             return overlay;
         }
 
@@ -26677,10 +27495,10 @@ function GetUIRoot() {
 
     function RemoveStatBonusesOverlay(root) {
         var overlay = State.cachedPanels.statBonusesOverlay;
-        if (!overlay || (overlay.IsValid && !overlay.IsValid())) {
+        if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLStatBonusesOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.statBonusesOverlay = null;
@@ -26699,40 +27517,42 @@ function GetUIRoot() {
         State.cachedPanels.statBonusesMaxHealthSource = null;
         State.cachedPanels.statBonusesIdolCountSource = null;
         State.cachedPanels.statBonusesTooltipBreakdown = null;
-        State.statBonusesDisplayMode = "";
-        State.statBonusesLastLayoutSig = "";
-        State.statBonusesLastClassSig = "";
-        State.statBonusesLastTitleText = "";
-        State.statBonusesLastFireRateText = "";
-        State.statBonusesLastAbilityCooldownText = "";
-        State.statBonusesLastSpiritPowerText = "";
-        State.statBonusesLastClipSizeText = "";
-        State.statBonusesLastWeaponDamageText = "";
-        State.statBonusesLastMaxHealthText = "";
-        State.statBonusesNextSourceSearchMs = 0;
-        State.statBonusesNextSourceSearchByKey = {};
-        State.statBonusesNextIdolCountSearchMs = 0;
-        State.statBonusesNextTooltipScanMs = 0;
-        State.statBonusesGoldenValues = {};
-        State.statBonusesDebugLastSig = "";
-        State.statBonusesDebugNextMs = 0;
+        State.statBonuses = {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastTitleText: "",
+            lastFireRateText: "",
+            lastAbilityCooldownText: "",
+            lastSpiritPowerText: "",
+            lastClipSizeText: "",
+            lastWeaponDamageText: "",
+            lastMaxHealthText: "",
+            nextSourceSearchMs: 0,
+            nextSourceSearchByKey: {},
+            nextIdolCountSearchMs: 0,
+            nextTooltipScanMs: 0,
+            goldenValues: {},
+            debugLastSig: "",
+            debugNextMs: 0
+        };
     }
 
     function UpdateStatBonusesOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (State.statBonusesDisplayMode !== "context_off") {
+            if (State.statBonuses.displayMode !== "context_off") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonusesDisplayMode = "context_off";
+                State.statBonuses.displayMode = "context_off";
             }
             return;
         }
 
         var enabled = cfg.ENABLE_STAT_BONUSES === 1;
         if (!enabled) {
-            if (State.statBonusesDisplayMode !== "disabled") {
+            if (State.statBonuses.displayMode !== "disabled") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonusesDisplayMode = "disabled";
+                State.statBonuses.displayMode = "disabled";
             }
             return;
         }
@@ -26742,7 +27562,7 @@ function GetUIRoot() {
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (State.statBonusesDisplayMode !== "hideout") {
+            if (State.statBonuses.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 var fireRateHideout = State.cachedPanels.statBonusesFireRate;
                 var abilityHideout = State.cachedPanels.statBonusesAbilityCooldown;
@@ -26756,16 +27576,16 @@ function GetUIRoot() {
                 if (clipHideout) clipHideout.SetHasClass("is_zero", false);
                 if (weaponHideout) weaponHideout.SetHasClass("is_zero", false);
                 if (healthHideout) healthHideout.SetHasClass("is_zero", false);
-                State.statBonusesLastClassSig = "";
+                State.statBonuses.lastClassSig = "";
             }
-            State.statBonusesDisplayMode = "hideout";
+            State.statBonuses.displayMode = "hideout";
             return;
         }
 
-        if (State.statBonusesDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.statBonuses.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.statBonusesDisplayMode = "active";
+        State.statBonuses.displayMode = "active";
 
         var statOffsetX = Number(cfg.STAT_BONUSES_X_OFFSET);
         var statOffsetY = Number(cfg.STAT_BONUSES_Y_OFFSET);
@@ -26787,11 +27607,11 @@ function GetUIRoot() {
             String(statOffsetY),
             String(statScale)
         ].join("|");
-        if (layoutSig !== State.statBonusesLastLayoutSig) {
+        if (layoutSig !== State.statBonuses.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + statOffsetX) + "px";
             overlay.style.marginBottom = (70 + statOffsetY) + "px";
             overlay.style.preTransformScale2d = (statScale / 100).toFixed(2);
-            State.statBonusesLastLayoutSig = layoutSig;
+            State.statBonuses.lastLayoutSig = layoutSig;
         }
 
         var sourceFireRate = ResolveStatBonusesSource(root, "statBonusesFireRateSource", STAT_BONUSES_FIRE_RATE_IDS, nowMs);
@@ -26843,12 +27663,12 @@ function GetUIRoot() {
                     (sourceWeaponDamage ? (ExtractStatDisplayText(sourceWeaponDamage) || "-") : "-") + "," +
                     (sourceMaxHealth ? (ExtractStatDisplayText(sourceMaxHealth) || "-") : "-") + ")";
                 var cacheSig = "cache(" +
-                    "fr=" + (State.statBonusesGoldenValues.fireRate || "-") + "," +
-                    "cd=" + (State.statBonusesGoldenValues.abilityCooldown || "-") + "," +
-                    "sp=" + (State.statBonusesGoldenValues.spiritPower || "-") + "," +
-                    "cl=" + (State.statBonusesGoldenValues.clipSize || "-") + "," +
-                    "wd=" + (State.statBonusesGoldenValues.weaponDamage || "-") + "," +
-                    "hp=" + (State.statBonusesGoldenValues.maxHealth || "-") + ")";
+                    "fr=" + (State.statBonuses.goldenValues.fireRate || "-") + "," +
+                    "cd=" + (State.statBonuses.goldenValues.abilityCooldown || "-") + "," +
+                    "sp=" + (State.statBonuses.goldenValues.spiritPower || "-") + "," +
+                    "cl=" + (State.statBonuses.goldenValues.clipSize || "-") + "," +
+                    "wd=" + (State.statBonuses.goldenValues.weaponDamage || "-") + "," +
+                    "hp=" + (State.statBonuses.goldenValues.maxHealth || "-") + ")";
                 var unresolvedKey = unresolved.join(",");
                 var unresolvedSig = "overlay_unresolved|" + unresolvedKey + "|" + srcSig + "|" + totalsSig + "|" + cacheSig;
                 StatBonusesDebugLogThrottled(
@@ -26899,18 +27719,18 @@ function GetUIRoot() {
             }
         }
 
-        var fireRateZero = IsStatBonusTokenZero(fireRateValue) || !!(sourceFireRate && sourceFireRate.BHasClass && sourceFireRate.BHasClass("isZeroValue"));
-        var abilityCooldownZero = IsStatBonusTokenZero(abilityCooldownValue) || !!(sourceAbilityCooldown && sourceAbilityCooldown.BHasClass && sourceAbilityCooldown.BHasClass("isZeroValue"));
-        var spiritPowerZero = IsStatBonusTokenZero(spiritPowerValue) || !!(sourceSpiritPower && sourceSpiritPower.BHasClass && sourceSpiritPower.BHasClass("isZeroValue"));
-        var clipSizeZero = IsStatBonusTokenZero(clipSizeValue) || !!(sourceClipSize && sourceClipSize.BHasClass && sourceClipSize.BHasClass("isZeroValue"));
-        var weaponDamageZero = IsStatBonusTokenZero(weaponDamageValue) || !!(sourceWeaponDamage && sourceWeaponDamage.BHasClass && sourceWeaponDamage.BHasClass("isZeroValue"));
-        var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass("isZeroValue"));
+        var fireRateZero = IsStatBonusTokenZero(fireRateValue) || !!(sourceFireRate && sourceFireRate.BHasClass && sourceFireRate.BHasClass(CLASS_IS_ZERO_VALUE));
+        var abilityCooldownZero = IsStatBonusTokenZero(abilityCooldownValue) || !!(sourceAbilityCooldown && sourceAbilityCooldown.BHasClass && sourceAbilityCooldown.BHasClass(CLASS_IS_ZERO_VALUE));
+        var spiritPowerZero = IsStatBonusTokenZero(spiritPowerValue) || !!(sourceSpiritPower && sourceSpiritPower.BHasClass && sourceSpiritPower.BHasClass(CLASS_IS_ZERO_VALUE));
+        var clipSizeZero = IsStatBonusTokenZero(clipSizeValue) || !!(sourceClipSize && sourceClipSize.BHasClass && sourceClipSize.BHasClass(CLASS_IS_ZERO_VALUE));
+        var weaponDamageZero = IsStatBonusTokenZero(weaponDamageValue) || !!(sourceWeaponDamage && sourceWeaponDamage.BHasClass && sourceWeaponDamage.BHasClass(CLASS_IS_ZERO_VALUE));
+        var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass(CLASS_IS_ZERO_VALUE));
 
         var titleText = "Stat Bonuses (Golden Statues)";
         var titleLabel = State.cachedPanels.statBonusesTitle;
-        if (titleLabel && titleText !== State.statBonusesLastTitleText) {
+        if (titleLabel && titleText !== State.statBonuses.lastTitleText) {
             titleLabel.text = titleText;
-            State.statBonusesLastTitleText = titleText;
+            State.statBonuses.lastTitleText = titleText;
         }
 
         var fireRateText = "Fire Rate: " + fireRateValue;
@@ -26926,7 +27746,7 @@ function GetUIRoot() {
             "|" + (clipSizeZero ? "1" : "0") +
             "|" + (weaponDamageZero ? "1" : "0") +
             "|" + (maxHealthZero ? "1" : "0");
-        if (classSig !== State.statBonusesLastClassSig) {
+        if (classSig !== State.statBonuses.lastClassSig) {
             var fireRateLabelForClass = State.cachedPanels.statBonusesFireRate;
             var abilityLabelForClass = State.cachedPanels.statBonusesAbilityCooldown;
             var spiritLabelForClass = State.cachedPanels.statBonusesSpiritPower;
@@ -26939,38 +27759,38 @@ function GetUIRoot() {
             if (clipLabelForClass) clipLabelForClass.SetHasClass("is_zero", clipSizeZero);
             if (weaponLabelForClass) weaponLabelForClass.SetHasClass("is_zero", weaponDamageZero);
             if (healthLabelForClass) healthLabelForClass.SetHasClass("is_zero", maxHealthZero);
-            State.statBonusesLastClassSig = classSig;
+            State.statBonuses.lastClassSig = classSig;
         }
 
         var fireRateLabel = State.cachedPanels.statBonusesFireRate;
-        if (fireRateLabel && fireRateText !== State.statBonusesLastFireRateText) {
+        if (fireRateLabel && fireRateText !== State.statBonuses.lastFireRateText) {
             fireRateLabel.text = fireRateText;
-            State.statBonusesLastFireRateText = fireRateText;
+            State.statBonuses.lastFireRateText = fireRateText;
         }
         var abilityCooldownLabel = State.cachedPanels.statBonusesAbilityCooldown;
-        if (abilityCooldownLabel && abilityCooldownText !== State.statBonusesLastAbilityCooldownText) {
+        if (abilityCooldownLabel && abilityCooldownText !== State.statBonuses.lastAbilityCooldownText) {
             abilityCooldownLabel.text = abilityCooldownText;
-            State.statBonusesLastAbilityCooldownText = abilityCooldownText;
+            State.statBonuses.lastAbilityCooldownText = abilityCooldownText;
         }
         var spiritPowerLabel = State.cachedPanels.statBonusesSpiritPower;
-        if (spiritPowerLabel && spiritPowerText !== State.statBonusesLastSpiritPowerText) {
+        if (spiritPowerLabel && spiritPowerText !== State.statBonuses.lastSpiritPowerText) {
             spiritPowerLabel.text = spiritPowerText;
-            State.statBonusesLastSpiritPowerText = spiritPowerText;
+            State.statBonuses.lastSpiritPowerText = spiritPowerText;
         }
         var clipSizeLabel = State.cachedPanels.statBonusesClipSize;
-        if (clipSizeLabel && clipSizeText !== State.statBonusesLastClipSizeText) {
+        if (clipSizeLabel && clipSizeText !== State.statBonuses.lastClipSizeText) {
             clipSizeLabel.text = clipSizeText;
-            State.statBonusesLastClipSizeText = clipSizeText;
+            State.statBonuses.lastClipSizeText = clipSizeText;
         }
         var weaponDamageLabel = State.cachedPanels.statBonusesWeaponDamage;
-        if (weaponDamageLabel && weaponDamageText !== State.statBonusesLastWeaponDamageText) {
+        if (weaponDamageLabel && weaponDamageText !== State.statBonuses.lastWeaponDamageText) {
             weaponDamageLabel.text = weaponDamageText;
-            State.statBonusesLastWeaponDamageText = weaponDamageText;
+            State.statBonuses.lastWeaponDamageText = weaponDamageText;
         }
         var maxHealthLabel = State.cachedPanels.statBonusesMaxHealth;
-        if (maxHealthLabel && maxHealthText !== State.statBonusesLastMaxHealthText) {
+        if (maxHealthLabel && maxHealthText !== State.statBonuses.lastMaxHealthText) {
             maxHealthLabel.text = maxHealthText;
-            State.statBonusesLastMaxHealthText = maxHealthText;
+            State.statBonuses.lastMaxHealthText = maxHealthText;
         }
     }
 
@@ -27149,15 +27969,16 @@ function GetUIRoot() {
             ? entry.cachedTopBarPlayerPanel
             : GetTopBarPlayerPanel(root, index, PerfNowMs(), false);
         if (!playerPanel || !IsPanelValid(playerPanel)) return null;
-        var statusPanel = (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel))
-            ? entry.cachedTopBarStatusPanel
-            : (function() {
-                var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
-                return rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
-            })();
+        var statusPanel = null;
+        if (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel)) {
+            statusPanel = entry.cachedTopBarStatusPanel;
+        } else {
+            var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
+            statusPanel = rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
+        }
         if (!statusPanel || !IsPanelValid(statusPanel)) return null;
-        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateUnlocked"))
-            || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateUnlocked"));
+        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED))
+            || !!(playerPanel.BHasClass && playerPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED));
         var ready = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady"))
             || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateCooldownReady"));
         return !!(unlocked && ready);
@@ -27522,7 +28343,7 @@ function GetUIRoot() {
 
     function UpdateEnemyUltIndicatorOld(root, cfg) {
         if (!root || !cfg) return;
-        var enabled = FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON ? true : (Number(cfg.ENABLE_ENEMY_ULT_INDICATOR) === 1);
+        var enabled = FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON ? true : (IsCfgEnabled(cfg, "ENABLE_ENEMY_ULT_INDICATOR"));
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_active", enabled);
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_off", !enabled);
 
@@ -27595,9 +28416,8 @@ function GetUIRoot() {
 
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1;
+        return IsColorWarningEnabled(cfg) ||
+            IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
     }
 
     function ResolveEnemyColoredHealthTeamColor(entry) {
@@ -27639,9 +28459,9 @@ function GetUIRoot() {
     }
 
     function ResolveEnemyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             return ToRgbString(BlendRgb(
@@ -27804,9 +28624,9 @@ function GetUIRoot() {
         RefreshEnemyColoredHealthPanelCache(root, now);
         var entries = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
         var scanStats = State.enemyColoredHealthLastScanStats || null;
-        var use25dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ? 1 : 0;
-        var use65dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ? 1 : 0;
-        var use75dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1 ? 1 : 0;
+        var use25dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? 1 : 0;
+        var use65dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? 1 : 0;
+        var use75dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? 1 : 0;
         var sampleBar = "-";
         var sampleTeam = "-";
         if (entries.length > 0 && entries[0]) sampleBar = String(entries[0].barId || "-");
@@ -27850,13 +28670,12 @@ function GetUIRoot() {
         }
 
         var pulseAdvanced = false;
-        var use25 = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
         for (var i = 0; i < entries.length; i++) {
             var entry = entries[i];
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var fillSize = Number(entry.healthBar.actuallayoutheight);
             var pct = ResolveTopBarHealthPct(entry);
             if (!isFinite(pct)) continue;
 
@@ -27880,9 +28699,9 @@ function GetUIRoot() {
                 "apply bar=" + String(entry.barId || "-") +
                     " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
                     " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
-                    " use25=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ? "1" : "0") +
-                    " use65=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ? "1" : "0") +
-                    " use75=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1 ? "1" : "0") +
+                    " use25=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? "1" : "0") +
+                    " use65=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? "1" : "0") +
+                    " use75=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? "1" : "0") +
                     " color=" + nextColor,
                 now
             );
@@ -27901,15 +28720,14 @@ function GetUIRoot() {
 
     function IsAllyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_75) === 1;
+        return IsColorWarningEnabled(cfg) ||
+            IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
     }
 
     function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             return ToRgbString(BlendRgb(
@@ -28032,13 +28850,12 @@ function GetUIRoot() {
         }
 
         var pulseAdvanced = false;
-        var use25 = Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
         for (var i = 0; i < entries.length; i++) {
             var entry = entries[i];
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var fillSize = Number(entry.healthBar.actuallayoutheight);
             var pct = ResolveTopBarHealthPct(entry);
             if (!isFinite(pct)) continue;
 
@@ -28070,11 +28887,7 @@ function GetUIRoot() {
     function FindCombatPanelById(root, uiRoot, panelId) {
         if (!panelId) return null;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse("gameplay_hud");
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
 
         var roots = [root, gameplayHud, uiRoot];
         for (var i = 0; i < roots.length; i++) {
@@ -28102,15 +28915,15 @@ function GetUIRoot() {
     }
 
     function ResetCombatStatusProbeBackoff() {
-        State.combatStatusShopProbeMisses = 0;
-        State.combatStatusAlertProbeMisses = 0;
-        State.combatStatusDamageProbeMisses = 0;
-        State.combatStatusHealthProbeMisses = 0;
+        State.combatStatus.shopProbeMisses = 0;
+        State.combatStatus.alertProbeMisses = 0;
+        State.combatStatus.damageProbeMisses = 0;
+        State.combatStatus.healthProbeMisses = 0;
     }
 
     function ReadCombatHealthValue(root, uiRoot, nowMs) {
         var healthLabel = IsPanelValid(State.cachedPanels.combatStatusHealthLabel) ? State.cachedPanels.combatStatusHealthLabel : null;
-        if (!healthLabel && nowMs >= (State.combatStatusNextHealthProbeMs || 0)) {
+        if (!healthLabel && nowMs >= (State.combatStatus.nextHealthProbeMs || 0)) {
             var scanned = FindCombatPanelById(root, uiRoot, "current_health");
             if (!scanned) scanned = FindCombatPanelById(root, uiRoot, "CurrentHealth");
             if (!scanned && root && root.FindChildrenWithClassTraverse) {
@@ -28127,7 +28940,7 @@ function GetUIRoot() {
             }
             if (scanned || !healthLabel) healthLabel = scanned || null;
             State.cachedPanels.combatStatusHealthLabel = healthLabel || null;
-            State.combatStatusNextHealthProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextHealthProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!healthLabel,
                 "combatStatusHealthProbeMisses",
                 COMBAT_STATUS_HEALTH_PROBE_MS,
@@ -28147,11 +28960,11 @@ function GetUIRoot() {
         var uiRoot = root;
 
         var alertPanel = IsPanelValid(State.cachedPanels.combatStatusAlertPanel) ? State.cachedPanels.combatStatusAlertPanel : null;
-        if (!alertPanel && nowMs >= (State.combatStatusNextAlertProbeMs || 0)) {
+        if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
             var scannedAlert = FindCombatPanelById(root, uiRoot, "InCombatAlert");
             if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
             State.cachedPanels.combatStatusAlertPanel = alertPanel || null;
-            State.combatStatusNextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!alertPanel,
                 "combatStatusAlertProbeMisses",
                 COMBAT_STATUS_ALERT_PROBE_MS,
@@ -28162,7 +28975,7 @@ function GetUIRoot() {
             var alertParent = alertPanel;
             for (var ai = 0; ai < 12 && alertParent; ai++) {
                 try {
-                    if (alertParent.BHasClass && alertParent.BHasClass("inCombat")) {
+                    if (alertParent.BHasClass && alertParent.BHasClass(CLASS_IN_COMBAT)) {
                         ResetCombatStatusProbeBackoff();
                         return true;
                     }
@@ -28176,11 +28989,11 @@ function GetUIRoot() {
         }
 
         var shop = IsPanelValid(State.cachedPanels.combatStatusShopPanel) ? State.cachedPanels.combatStatusShopPanel : null;
-        if (!shop && nowMs >= (State.combatStatusNextShopProbeMs || 0)) {
-            var scannedShop = FindCombatPanelById(root, uiRoot, "CitadelHudHeroShop");
+        if (!shop && nowMs >= (State.combatStatus.nextShopProbeMs || 0)) {
+            var scannedShop = FindCombatPanelById(root, uiRoot, PANEL_ID_HERO_SHOP);
             if (scannedShop || !shop) shop = scannedShop || null;
             State.cachedPanels.combatStatusShopPanel = shop || null;
-            State.combatStatusNextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!shop,
                 "combatStatusShopProbeMisses",
                 COMBAT_STATUS_SHOP_PROBE_MS,
@@ -28189,7 +29002,7 @@ function GetUIRoot() {
         }
         if (shop && shop.BHasClass) {
             try {
-                if (shop.BHasClass("inCombat")) {
+                if (shop.BHasClass(CLASS_IN_COMBAT)) {
                     ResetCombatStatusProbeBackoff();
                     return true;
                 }
@@ -28197,7 +29010,7 @@ function GetUIRoot() {
         }
 
         try {
-            if (IsHudClassActive(root, "inCombat")) {
+            if (IsHudClassActive(root, CLASS_IN_COMBAT)) {
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
@@ -28228,11 +29041,11 @@ function GetUIRoot() {
         }
 
         var damageMeter = IsPanelValid(State.cachedPanels.combatStatusDamageMeter) ? State.cachedPanels.combatStatusDamageMeter : null;
-        if (!damageMeter && nowMs >= (State.combatStatusNextDamageProbeMs || 0)) {
+        if (!damageMeter && nowMs >= (State.combatStatus.nextDamageProbeMs || 0)) {
             var scannedDamageMeter = FindCombatPanelById(root, uiRoot, "damage_meter");
             if (scannedDamageMeter || !damageMeter) damageMeter = scannedDamageMeter || null;
             State.cachedPanels.combatStatusDamageMeter = damageMeter || null;
-            State.combatStatusNextDamageProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextDamageProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!damageMeter,
                 "combatStatusDamageProbeMisses",
                 COMBAT_STATUS_SHOP_PROBE_MS,
@@ -28242,17 +29055,17 @@ function GetUIRoot() {
         if (damageMeter) {
             var dmOut = false;
             var dmIn = false;
-            try { dmOut = hasClassInHierarchy(damageMeter, "out_of_combat"); } catch (eDm0) { dmOut = false; }
-            try { dmIn = hasClassInHierarchy(damageMeter, "inCombat") || hasClassInHierarchy(damageMeter, "in_combat"); } catch (eDm1) { dmIn = false; }
+            try { dmOut = hasClassInHierarchy(damageMeter, CLASS_OUT_OF_COMBAT); } catch (eDm0) { dmOut = false; }
+            try { dmIn = hasClassInHierarchy(damageMeter, CLASS_IN_COMBAT) || hasClassInHierarchy(damageMeter, "in_combat"); } catch (eDm1) { dmIn = false; }
             if (dmIn) {
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
             if (dmOut) {
-                State.combatStatusSawOutOfCombatClass = true;
+                State.combatStatus.sawOutOfCombatClass = true;
                 return false;
             }
-            if (State.combatStatusSawOutOfCombatClass) {
+            if (State.combatStatus.sawOutOfCombatClass) {
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
@@ -28265,43 +29078,43 @@ function GetUIRoot() {
             if (ri > 0 && checkRoot === rootsToCheck[0]) continue;
             if (!checkRoot || !checkRoot.BHasClass) continue;
             try {
-                if (checkRoot.BHasClass("in_combat") || checkRoot.BHasClass("inCombat")) {
+                if (checkRoot.BHasClass("in_combat") || checkRoot.BHasClass(CLASS_IN_COMBAT)) {
                     ResetCombatStatusProbeBackoff();
                     return true;
                 }
             } catch (eRootClass0) {}
             try {
-                if (checkRoot.BHasClass("out_of_combat")) foundOutOfCombat = true;
+                if (checkRoot.BHasClass(CLASS_OUT_OF_COMBAT)) foundOutOfCombat = true;
             } catch (eRootClass1) {}
         }
         if (foundOutOfCombat) {
-            State.combatStatusSawOutOfCombatClass = true;
+            State.combatStatus.sawOutOfCombatClass = true;
             return false;
         }
 
-        if (State.combatStatusSawOutOfCombatClass) {
+        if (State.combatStatus.sawOutOfCombatClass) {
             try {
-                var rootOut = root && root.BHasClass ? root.BHasClass("out_of_combat") : false;
-                var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass("out_of_combat") : false;
+                var rootOut = root && root.BHasClass ? root.BHasClass(CLASS_OUT_OF_COMBAT) : false;
+                var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass(CLASS_OUT_OF_COMBAT) : false;
                 var rootClassSignal = !(rootOut || uiRootOut);
                 if (rootClassSignal) ResetCombatStatusProbeBackoff();
                 return rootClassSignal;
             } catch (eRootClass2) {}
         } else if (root && root.BHasClass) {
             try {
-                State.combatStatusSawOutOfCombatClass = !!root.BHasClass("out_of_combat");
+                State.combatStatus.sawOutOfCombatClass = !!root.BHasClass(CLASS_OUT_OF_COMBAT);
             } catch (eRootClass3) {}
         }
 
         var healthValue = ReadCombatHealthValue(root, uiRoot, nowMs);
         if (healthValue !== null) {
-            var previousHealth = Number(State.combatStatusLastHealthValue);
+            var previousHealth = Number(State.combatStatus.lastHealthValue);
             if (isFinite(previousHealth) && previousHealth >= 0 && healthValue < previousHealth) {
-                State.combatStatusLastHealthValue = healthValue;
+                State.combatStatus.lastHealthValue = healthValue;
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
-            State.combatStatusLastHealthValue = healthValue;
+            State.combatStatus.lastHealthValue = healthValue;
         }
 
         return false;
@@ -28311,12 +29124,12 @@ function GetUIRoot() {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var rawEnabled = Number(cfg && cfg.ENABLE_COMBAT_INDICATOR);
         var enabled = rawEnabled === 1;
-        var rootInCombat = !!(root && root.BHasClass && root.BHasClass("inCombat"));
+        var rootInCombat = !!(root && root.BHasClass && root.BHasClass(CLASS_IN_COMBAT));
         var rootInCombatAlt = !!(root && root.BHasClass && root.BHasClass("in_combat"));
-        var rootOutCombat = !!(root && root.BHasClass && root.BHasClass("out_of_combat"));
+        var rootOutCombat = !!(root && root.BHasClass && root.BHasClass(CLASS_OUT_OF_COMBAT));
         var hudInCombat = false;
         var hudInCombatAlt = false;
-        try { hudInCombat = IsHudClassActive(root, "inCombat"); } catch (e0) { hudInCombat = false; }
+        try { hudInCombat = IsHudClassActive(root, CLASS_IN_COMBAT); } catch (e0) { hudInCombat = false; }
         try { hudInCombatAlt = IsHudClassActive(root, "in_combat"); } catch (e1) { hudInCombatAlt = false; }
         var regenImages = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("regen_image") || []) : [];
         var regenValues = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("regen_value") || []) : [];
@@ -28332,7 +29145,7 @@ function GetUIRoot() {
             hasClassInHierarchy(sampleImage, "klutz_healthbar_active") ? "klutz" : ""
         ].filter(function(v) { return !!v; }).join(",") : "";
         var sampleCombatFlags = sampleImage ? [
-            hasClassInHierarchy(sampleImage, "inCombat") ? "inCombat" : "",
+            hasClassInHierarchy(sampleImage, CLASS_IN_COMBAT) ? CLASS_IN_COMBAT : "",
             hasClassInHierarchy(sampleImage, "in_combat") ? "in_combat" : "",
             hasClassInHierarchy(sampleImage, "combat_indicator_active") ? "combat_indicator_active" : ""
         ].filter(function(v) { return !!v; }).join(",") : "";
@@ -28393,7 +29206,7 @@ function GetUIRoot() {
 
         pushPanel(State.cachedPanels.healthContainer);
         pushPanel(State.cachedPanels.gameplayHud);
-        pushPanel(root.FindChildTraverse("health_and_abilities_container"));
+        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         pushPanel(root.FindChildTraverse("HealthBarContent"));
         pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
         pushPanel(root.FindChildTraverse("hud_health_bars"));
@@ -28433,7 +29246,7 @@ function GetUIRoot() {
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLCombatStatusOverlay");
         }
-        if (overlay && (!overlay.IsValid || overlay.IsValid())) {
+        if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.combatStatusOverlay = null;
@@ -28443,48 +29256,48 @@ function GetUIRoot() {
         State.cachedPanels.combatStatusAlertPanel = null;
         State.cachedPanels.combatStatusDamageMeter = null;
         State.cachedPanels.combatStatusHealthLabel = null;
-        State.combatStatusDisplayMode = "";
-        State.combatStatusLastLayoutSig = "";
-        State.combatStatusLastClassSig = "";
-        State.combatStatusLastStateText = "";
-        State.combatStatusLastTimerText = "";
-        State.combatStatusLastCombatMs = 0;
-        State.combatStatusCombatStartMs = 0;
-        State.combatStatusSignalActive = false;
-        State.combatStatusNextShopProbeMs = 0;
-        State.combatStatusNextAlertProbeMs = 0;
-        State.combatStatusNextDamageProbeMs = 0;
-        State.combatStatusNextHealthProbeMs = 0;
+        State.combatStatus.displayMode = "";
+        State.combatStatus.lastLayoutSig = "";
+        State.combatStatus.lastClassSig = "";
+        State.combatStatus.lastStateText = "";
+        State.combatStatus.lastTimerText = "";
+        State.combatStatus.lastCombatMs = 0;
+        State.combatStatus.combatStartMs = 0;
+        State.combatStatus.signalActive = false;
+        State.combatStatus.nextShopProbeMs = 0;
+        State.combatStatus.nextAlertProbeMs = 0;
+        State.combatStatus.nextDamageProbeMs = 0;
+        State.combatStatus.nextHealthProbeMs = 0;
         ResetCombatStatusProbeBackoff();
-        State.combatStatusLastHealthValue = -1;
-        State.combatStatusSawOutOfCombatClass = false;
+        State.combatStatus.lastHealthValue = -1;
+        State.combatStatus.sawOutOfCombatClass = false;
     }
 
     function UpdateCombatStatusOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
         if (!IsCustomHudContextActive(root)) {
-            if (State.combatStatusDisplayMode !== "context_off") {
+            if (State.combatStatus.displayMode !== "context_off") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatusDisplayMode = "context_off";
+                State.combatStatus.displayMode = "context_off";
             }
             return;
         }
 
         if (Number(cfg.ENABLE_COMBAT_STATUS) !== 1) {
-            if (State.combatStatusDisplayMode !== "disabled") {
+            if (State.combatStatus.displayMode !== "disabled") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatusDisplayMode = "disabled";
+                State.combatStatus.displayMode = "disabled";
             }
             return;
         }
 
         var overlay = EnsureCombatStatusOverlay(root);
         if (!overlay) return;
-        if (State.combatStatusDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.combatStatusDisplayMode = "active";
+        State.combatStatus.displayMode = "active";
 
         var scale = Math.round(Number(cfg.COMBAT_STATUS_SCALE));
         var offsetX = Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET));
@@ -28500,41 +29313,41 @@ function GetUIRoot() {
         if (offsetY > 1000) offsetY = 1000;
 
         var layoutSig = String(scale) + "|" + String(offsetX) + "|" + String(offsetY);
-        if (layoutSig !== State.combatStatusLastLayoutSig) {
+        if (layoutSig !== State.combatStatus.lastLayoutSig) {
             overlay.style.preTransformScale2d = (scale / 100).toFixed(2);
             overlay.style.marginLeft = String(offsetX) + "px";
             overlay.style.marginBottom = String(165 + offsetY) + "px";
-            State.combatStatusLastLayoutSig = layoutSig;
+            State.combatStatus.lastLayoutSig = layoutSig;
         }
 
         var combatSignal = IsCombatSignalActive(root, nowMs);
         if (combatSignal) {
-            if (!State.combatStatusSignalActive || State.combatStatusCombatStartMs <= 0) {
-                State.combatStatusCombatStartMs = nowMs;
+            if (!State.combatStatus.signalActive || State.combatStatus.combatStartMs <= 0) {
+                State.combatStatus.combatStartMs = nowMs;
             }
-            State.combatStatusLastCombatMs = nowMs;
+            State.combatStatus.lastCombatMs = nowMs;
         }
-        State.combatStatusSignalActive = combatSignal;
+        State.combatStatus.signalActive = combatSignal;
 
-        var recentCombatMs = nowMs - Number(State.combatStatusLastCombatMs || 0);
-        var recoveryActive = !combatSignal && State.combatStatusLastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
+        var recentCombatMs = nowMs - Number(State.combatStatus.lastCombatMs || 0);
+        var recoveryActive = !combatSignal && State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
         var phase = combatSignal ? "combat" : (recoveryActive ? "recover" : "idle");
         if (phase === "idle") {
-            State.combatStatusCombatStartMs = 0;
+            State.combatStatus.combatStartMs = 0;
         }
 
         var classSig = phase;
-        if (classSig !== State.combatStatusLastClassSig) {
+        if (classSig !== State.combatStatus.lastClassSig) {
             overlay.SetHasClass("phase_combat", combatSignal);
             overlay.SetHasClass("phase_recover", recoveryActive);
             overlay.SetHasClass("phase_idle", !combatSignal && !recoveryActive);
-            State.combatStatusLastClassSig = classSig;
+            State.combatStatus.lastClassSig = classSig;
         }
 
         var stateText = "OUT OF COMBAT";
         var timerText = "--";
         if (combatSignal) {
-            var combatStartMs = Number(State.combatStatusCombatStartMs || nowMs);
+            var combatStartMs = Number(State.combatStatus.combatStartMs || nowMs);
             if (!isFinite(combatStartMs) || combatStartMs <= 0) combatStartMs = nowMs;
             var combatSec = Math.max(0, (nowMs - combatStartMs) / 1000.0);
             stateText = "IN COMBAT";
@@ -28546,14 +29359,14 @@ function GetUIRoot() {
         }
 
         var stateLabel = State.cachedPanels.combatStatusState;
-        if (stateLabel && stateText !== State.combatStatusLastStateText) {
+        if (stateLabel && stateText !== State.combatStatus.lastStateText) {
             stateLabel.text = stateText;
-            State.combatStatusLastStateText = stateText;
+            State.combatStatus.lastStateText = stateText;
         }
         var timerLabel = State.cachedPanels.combatStatusTimer;
-        if (timerLabel && timerText !== State.combatStatusLastTimerText) {
+        if (timerLabel && timerText !== State.combatStatus.lastTimerText) {
             timerLabel.text = timerText;
-            State.combatStatusLastTimerText = timerText;
+            State.combatStatus.lastTimerText = timerText;
         }
     }
 
@@ -28577,7 +29390,7 @@ function GetUIRoot() {
         if (!needsRescan) return slots;
 
         var refreshed = [];
-        var hudSignature = root && root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
+        var hudSignature = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SIGNATURE) : null;
         if (IsPanelValid(hudSignature) && hudSignature.FindChildTraverse) {
             for (var s = 1; s <= 4; s++) {
                 var slotId = "slot_signature_" + String(s);
@@ -28658,7 +29471,7 @@ function GetUIRoot() {
     }
 
     function UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs) {
-        var enabled = Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
         if (!enabled) {
             if (State.signatureCooldownFlashWasEnabled) {
                 ResetSignatureCooldownPressFlashRuntime();
@@ -29096,33 +29909,39 @@ function GetUIRoot() {
         State.cachedPanels.itemMirrorSourceItemClass = null;
         State.cachedPanels.itemMirrorRow = null;
         State.cachedPanels.itemMirrorSlots = [];
-        State.itemMirrorLastSrc = "";
-        State.itemMirrorLastClip = "";
-        State.itemMirrorWasOnCooldown = false;
-        State.itemMirrorReadyAnimUntilMs = 0;
-        State.itemMirrorCdLastDeg = null;
-        State.itemMirrorCdLastMs = 0;
-        State.itemMirrorCdSlopeEma = null;
-        State.itemMirrorCdDisplayLock = null;
-        State.itemMirrorClassCache = {};
-        State.itemMirrorSources = [];
-        State.itemMirrorNextSourceId = 1;
-        State.itemMirrorNextAcquireOrder = 1;
-        State.itemMirrorSlotStates = {};
-        State.itemMirrorRuntimePanelIds = [];
-        State.itemMirrorNextRuntimePanelId = 1;
-        State.itemMirrorExceptionGroupAssignments = {};
-        State.itemMirrorLastShopOpen = false;
-        State.itemMirrorProbeLastScanMs = 0;
-        State.itemMirrorProbeLastSignature = "";
-        State.itemMirrorProbeWasEnabled = false;
-        State.itemMirrorDisplayMode = "";
+        State.itemMirror = {
+            probeLastScanMs: 0,
+            probeLastSignature: "",
+            probeWasEnabled: false,
+            displayMode: "",
+            lastLayoutSig: "",
+            lastRowOpacityPanel: null,
+            lastRowOpacityText: "",
+            fastModeUntilMs: State.itemMirror.fastModeUntilMs,
+            debugLastMs: State.itemMirror.debugLastMs,
+            debugLastSig: State.itemMirror.debugLastSig,
+            wasOnCooldown: false,
+            readyAnimUntilMs: 0,
+            cdLastDeg: null,
+            cdLastMs: 0,
+            cdSlopeEma: null,
+            cdDisplayLock: null,
+            lastSrc: "",
+            lastClip: "",
+            classCache: {},
+            visualOpacityText: State.itemMirror.visualOpacityText,
+            sources: [],
+            nextSourceId: 1,
+            nextAcquireOrder: 1,
+            slotStates: {},
+            runtimePanelIds: [],
+            nextRuntimePanelId: 1,
+            exceptionGroupAssignments: {},
+            lastShopOpen: false
+        };
         RuntimeTaskReset("item_mirror_render");
         RuntimeTaskReset("item_mirror_scan");
-        State.itemMirrorLastLayoutSig = "";
-        State.itemMirrorLastRowOpacityPanel = null;
-        State.itemMirrorLastRowOpacityText = "";
-        State.itemMirrorFastModeUntilMs = 0;
+        State.itemMirror.fastModeUntilMs = 0;
     }
 
     function UpdateItemMirrorProbe(root, cfg) {
@@ -29353,15 +30172,15 @@ function GetUIRoot() {
 
     function GetStableRuntimePanelId(panel) {
         if (!panel) return 0;
-        var pool = State.itemMirrorRuntimePanelIds || [];
+        var pool = State.itemMirror.runtimePanelIds || [];
         for (var i = 0; i < pool.length; i++) {
             var rec = pool[i];
             if (rec && rec.panel === panel) return Number(rec.id) || 0;
         }
-        var nextId = Number(State.itemMirrorNextRuntimePanelId) || 1;
+        var nextId = Number(State.itemMirror.nextRuntimePanelId) || 1;
         pool.push({ panel: panel, id: nextId });
-        State.itemMirrorRuntimePanelIds = pool;
-        State.itemMirrorNextRuntimePanelId = nextId + 1;
+        State.itemMirror.runtimePanelIds = pool;
+        State.itemMirror.nextRuntimePanelId = nextId + 1;
         return nextId;
     }
 
@@ -29385,7 +30204,7 @@ function GetUIRoot() {
         }
 
         var groupNames = Object.keys(grouped);
-        var assignments = State.itemMirrorExceptionGroupAssignments || {};
+        var assignments = State.itemMirror.exceptionGroupAssignments || {};
 
         for (var gn = 0; gn < groupNames.length; gn++) {
             var group = groupNames[gn];
@@ -29513,7 +30332,7 @@ function GetUIRoot() {
             }
         }
 
-        State.itemMirrorExceptionGroupAssignments = assignments;
+        State.itemMirror.exceptionGroupAssignments = assignments;
         return out;
     }
 
@@ -29634,7 +30453,7 @@ function GetUIRoot() {
     }
 
     function ReconcileItemMirrorSourcesMulti(scannedMatches) {
-        var previous = State.itemMirrorSources || [];
+        var previous = State.itemMirror.sources || [];
         var usedPrev = {};
         var next = [];
         var semanticBuckets = {};
@@ -29723,10 +30542,10 @@ function GetUIRoot() {
                 }
             }
 
-            var key = existing && existing.key ? existing.key : ("item_src_" + String(State.itemMirrorNextSourceId++));
+            var key = existing && existing.key ? existing.key : ("item_src_" + String(State.itemMirror.nextSourceId++));
             var acquisitionOrder = (existing && isFinite(Number(existing.acquisitionOrder)))
                 ? Number(existing.acquisitionOrder)
-                : Number(State.itemMirrorNextAcquireOrder++);
+                : Number(State.itemMirror.nextAcquireOrder++);
             next.push({
                 key: key,
                 acquisitionOrder: acquisitionOrder,
@@ -29757,7 +30576,7 @@ function GetUIRoot() {
             return 0;
         });
 
-        State.itemMirrorSources = next;
+        State.itemMirror.sources = next;
         return next;
     }
 
@@ -29794,6 +30613,8 @@ function GetUIRoot() {
         slotState.staticSyncSig = sourceSig;
     }
 
+    // SyncMirrorItemFromSourceMulti — synchronizes item mirror panel state from a source entry:
+    // manages cooldown EMA smoothing, direction tracking, display-lock window, and visual styling.
     function SyncMirrorItemFromSourceMulti(slotObj, source) {
         if (!slotObj || !source || !source.ownerIcon) return;
         var sourceIcon = source.ownerIcon;
@@ -29810,7 +30631,7 @@ function GetUIRoot() {
         var mirrorImage = slotObj.image;
         if (!mirrorSlot || !sourceIcon || !mirrorIcon) return;
 
-        var slotState = State.itemMirrorSlotStates[source.key];
+        var slotState = State.itemMirror.slotStates[source.key];
         if (!slotState) {
             slotState = {
                 lastSrc: "",
@@ -29833,7 +30654,7 @@ function GetUIRoot() {
                 lastCooldownEndMs: 0,
                 rapidRetriggerSuppressUntilMs: 0
             };
-            State.itemMirrorSlotStates[source.key] = slotState;
+            State.itemMirror.slotStates[source.key] = slotState;
         }
         var wasOnCooldownBefore = !!slotState.wasOnCooldown;
 
@@ -30173,61 +30994,61 @@ function GetUIRoot() {
             slotState.nextCooldownTextProbeMs = 0;
             slotState.lastProbeCooldownText = "";
         } else {
-            State.itemMirrorFastModeUntilMs = nowMs + 500;
+            State.itemMirror.fastModeUntilMs = nowMs + 500;
         }
     }
 
     function UpdateItemMirrorProbeMulti(root, cfg) {
         if (!IsCustomHudContextActive(root)) {
-            if (State.itemMirrorDisplayMode !== "context_off") {
+            if (State.itemMirror.displayMode !== "context_off") {
                 ResetPassiveCooldownCustomRuntimeState(root);
                 RemoveItemMirrorOverlay(root);
-                State.itemMirrorDisplayMode = "context_off";
+                State.itemMirror.displayMode = "context_off";
             }
             return;
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var enabled = IsPassiveCooldownAdvancedMode(passiveCooldownMode);
         if (!enabled) {
-            if (State.itemMirrorDisplayMode === "disabled" && !State.itemMirrorProbeWasEnabled) {
+            if (State.itemMirror.displayMode === "disabled" && !State.itemMirror.probeWasEnabled) {
                 return;
             }
-            if (ITEM_MIRROR_PROBE_DEBUG && State.itemMirrorProbeWasEnabled && State.itemMirrorDisplayMode !== "disabled") {
+            if (ITEM_MIRROR_PROBE_DEBUG && State.itemMirror.probeWasEnabled && State.itemMirror.displayMode !== "disabled") {
                 $.Msg("[QOLLock][ItemProbe] disabled");
             }
-            State.itemMirrorProbeWasEnabled = false;
-            State.itemMirrorProbeLastScanMs = 0;
-            State.itemMirrorProbeLastSignature = "";
+            State.itemMirror.probeWasEnabled = false;
+            State.itemMirror.probeLastScanMs = 0;
+            State.itemMirror.probeLastSignature = "";
             RuntimeTaskReset("item_mirror_render");
             RuntimeTaskReset("item_mirror_scan");
-            State.itemMirrorFastModeUntilMs = 0;
+            State.itemMirror.fastModeUntilMs = 0;
             ResetPassiveCooldownCustomRuntimeState(root);
-            if (State.itemMirrorDisplayMode !== "disabled") {
+            if (State.itemMirror.displayMode !== "disabled") {
                 RemoveItemMirrorOverlay(root);
-                State.itemMirrorDisplayMode = "disabled";
+                State.itemMirror.displayMode = "disabled";
             }
             return;
         }
 
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var renderIntervalMs = (nowMs < (State.itemMirrorFastModeUntilMs || 0))
+        var renderIntervalMs = (nowMs < (State.itemMirror.fastModeUntilMs || 0))
             ? ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE
             : ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE;
         if (!RuntimeTaskConsume("item_mirror_render", nowMs, renderIntervalMs)) {
             return;
         }
 
-        State.itemMirrorProbeWasEnabled = true;
-        State.itemMirrorDisplayMode = "active";
-        var sources = State.itemMirrorSources || [];
+        State.itemMirror.probeWasEnabled = true;
+        State.itemMirror.displayMode = "active";
+        var sources = State.itemMirror.sources || [];
         var abilitiesContainer = State.cachedPanels.abilitiesContainer;
-        if (!abilitiesContainer || (abilitiesContainer.IsValid && !abilitiesContainer.IsValid())) {
-            abilitiesContainer = root.FindChildTraverse("AbilitiesContainer");
+        if (!IsPanelValid(abilitiesContainer)) {
+            abilitiesContainer = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
             State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
         }
         var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
-        var shopJustClosed = !!State.itemMirrorLastShopOpen && !passiveInShop;
-        State.itemMirrorLastShopOpen = !!passiveInShop;
+        var shopJustClosed = !!State.itemMirror.lastShopOpen && !passiveInShop;
+        State.itemMirror.lastShopOpen = !!passiveInShop;
 
         if (passiveInShop) {
             EnsureItemMirrorOverlayMulti(root);
@@ -30248,15 +31069,15 @@ function GetUIRoot() {
 
         if (shopJustClosed) {
             sourcesValid = false;
-            State.itemMirrorProbeLastSignature = "";
+            State.itemMirror.probeLastSignature = "";
             RuntimeTaskSetDelay("item_mirror_scan", nowMs, ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP);
         }
 
         if (!sourcesValid || sources.length === 0 || RuntimeTaskIsDue("item_mirror_scan", nowMs)) {
-            State.itemMirrorProbeLastScanMs = nowMs;
+            State.itemMirror.probeLastScanMs = nowMs;
             var scan = BuildItemMirrorSourcesMulti(root, cfg);
             var signature = "modsContainers=" + scan.modsContainersCount + ";scan=" + scan.scannedCount + ";found=" + scan.matches.length + ";" + (scan.structureSummary || []).join(";");
-            var signatureChanged = (signature !== State.itemMirrorProbeLastSignature);
+            var signatureChanged = (signature !== State.itemMirror.probeLastSignature);
             var nextScanDelayMs = ITEM_MIRROR_PROBE_SCAN_MS;
             if (scan.matches.length > 0 && !signatureChanged && sourcesValid && sources.length > 0) {
                 nextScanDelayMs = ITEM_MIRROR_PROBE_SCAN_MS_STABLE;
@@ -30264,7 +31085,7 @@ function GetUIRoot() {
             RuntimeTaskSetDelay("item_mirror_scan", nowMs, nextScanDelayMs);
 
             if (signatureChanged) {
-                State.itemMirrorProbeLastSignature = signature;
+                State.itemMirror.probeLastSignature = signature;
                 if (ITEM_MIRROR_PROBE_DEBUG) {
                     if (scan.modsContainersCount === 0) {
                         $.Msg("[QOLLock][ItemProbe] ModsContainer not found");
@@ -30304,19 +31125,19 @@ function GetUIRoot() {
             String(offsetY),
             rowOpacity.toFixed(2)
         ].join("|");
-        if (layoutSig !== State.itemMirrorLastLayoutSig) {
+        if (layoutSig !== State.itemMirror.lastLayoutSig) {
             mirrorOverlay.style.preTransformScale2d = pScale.toFixed(3) + ", " + pScale.toFixed(3);
             mirrorOverlay.style.marginLeft = offsetX + "%";
             mirrorOverlay.style.marginTop = (-offsetY) + "%";
-            State.itemMirrorLastLayoutSig = layoutSig;
+            State.itemMirror.lastLayoutSig = layoutSig;
         }
         var mirrorRow = State.cachedPanels.itemMirrorRow;
         var rowOpacityText = rowOpacity.toFixed(2);
-        State.itemMirrorVisualOpacityText = rowOpacityText;
-        if (mirrorRow && (State.itemMirrorLastRowOpacityPanel !== mirrorRow || State.itemMirrorLastRowOpacityText !== rowOpacityText)) {
+        State.itemMirror.visualOpacityText = rowOpacityText;
+        if (mirrorRow && (State.itemMirror.lastRowOpacityPanel !== mirrorRow || State.itemMirror.lastRowOpacityText !== rowOpacityText)) {
             SetPanelOpacitySafe(mirrorRow, rowOpacityText, 1.0);
-            State.itemMirrorLastRowOpacityPanel = mirrorRow;
-            State.itemMirrorLastRowOpacityText = rowOpacityText;
+            State.itemMirror.lastRowOpacityPanel = mirrorRow;
+            State.itemMirror.lastRowOpacityText = rowOpacityText;
         }
 
         if (!sources || sources.length === 0) {
@@ -30329,7 +31150,7 @@ function GetUIRoot() {
                     emptySlots[es].icon.style.visibility = "collapse";
                 }
             }
-            State.itemMirrorSlotStates = {};
+            State.itemMirror.slotStates = {};
             return;
         }
 
@@ -30353,16 +31174,16 @@ function GetUIRoot() {
             if (slots[hi].cooldownText && slots[hi].cooldownText.style.visibility !== "collapse") slots[hi].cooldownText.style.visibility = "collapse";
         }
 
-        var stateKeys = Object.keys(State.itemMirrorSlotStates || {});
+        var stateKeys = Object.keys(State.itemMirror.slotStates || {});
         for (var sk = 0; sk < stateKeys.length; sk++) {
             var key = stateKeys[sk];
-            if (!activeKeys[key]) delete State.itemMirrorSlotStates[key];
+            if (!activeKeys[key]) delete State.itemMirror.slotStates[key];
         }
     }
 
     function EnsureCompassOverlay(root) {
         var compassRoot = State.cachedPanels.compassRoot;
-        if (!compassRoot || (compassRoot.IsValid && !compassRoot.IsValid())) {
+        if (!IsPanelValid(compassRoot)) {
             compassRoot = root.FindChildTraverse("QOLCompassRoot");
             if (!compassRoot) {
                 var parent = GetGameplayHudPanel(root);
@@ -30374,7 +31195,7 @@ function GetUIRoot() {
         if (!compassRoot) return null;
 
         var compassBox = State.cachedPanels.compassBox;
-        if (!compassBox || (compassBox.IsValid && !compassBox.IsValid())) {
+        if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             if (!compassBox) {
                 compassBox = $.CreatePanel("Panel", compassRoot, "QOLCompassBox");
@@ -30383,7 +31204,7 @@ function GetUIRoot() {
         }
 
         var ticksContainer = State.cachedPanels.compassTicksContainer;
-        if (!ticksContainer || (ticksContainer.IsValid && !ticksContainer.IsValid())) {
+        if (!IsPanelValid(ticksContainer)) {
             ticksContainer = compassBox ? compassBox.FindChildTraverse("QOLCompassTicks") : null;
             if (!ticksContainer && compassBox) {
                 ticksContainer = $.CreatePanel("Panel", compassBox, "QOLCompassTicks");
@@ -30392,7 +31213,7 @@ function GetUIRoot() {
         }
 
         var needle = State.cachedPanels.compassNeedle;
-        if (!needle || (needle.IsValid && !needle.IsValid())) {
+        if (!IsPanelValid(needle)) {
             needle = compassBox ? compassBox.FindChildTraverse("QOLCompassNeedle") : null;
             if (!needle && compassBox) {
                 needle = $.CreatePanel("Panel", compassBox, "QOLCompassNeedle");
@@ -30401,7 +31222,7 @@ function GetUIRoot() {
         }
 
         var fadeLeft = State.cachedPanels.compassFadeLeft;
-        if (!fadeLeft || (fadeLeft.IsValid && !fadeLeft.IsValid())) {
+        if (!IsPanelValid(fadeLeft)) {
             fadeLeft = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeLeft") : null;
             if (!fadeLeft && compassBox) {
                 fadeLeft = $.CreatePanel("Panel", compassBox, "QOLCompassFadeLeft");
@@ -30410,7 +31231,7 @@ function GetUIRoot() {
         }
 
         var fadeRight = State.cachedPanels.compassFadeRight;
-        if (!fadeRight || (fadeRight.IsValid && !fadeRight.IsValid())) {
+        if (!IsPanelValid(fadeRight)) {
             fadeRight = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeRight") : null;
             if (!fadeRight && compassBox) {
                 fadeRight = $.CreatePanel("Panel", compassBox, "QOLCompassFadeRight");
@@ -30419,7 +31240,7 @@ function GetUIRoot() {
         }
 
         var readout = State.cachedPanels.compassReadout;
-        if (!readout || (readout.IsValid && !readout.IsValid())) {
+        if (!IsPanelValid(readout)) {
             readout = compassRoot.FindChildTraverse("QOLCompassReadout");
             if (!readout) {
                 readout = $.CreatePanel("Panel", compassRoot, "QOLCompassReadout");
@@ -30428,7 +31249,7 @@ function GetUIRoot() {
         }
 
         var degree = State.cachedPanels.compassDegree;
-        if (!degree || (degree.IsValid && !degree.IsValid())) {
+        if (!IsPanelValid(degree)) {
             degree = compassRoot.FindChildTraverse("QOLCompassDegree");
             if (!degree && readout) {
                 degree = $.CreatePanel("Label", readout, "QOLCompassDegree");
@@ -30437,7 +31258,7 @@ function GetUIRoot() {
         }
 
         var speed = State.cachedPanels.compassSpeed;
-        if (!speed || (speed.IsValid && !speed.IsValid())) {
+        if (!IsPanelValid(speed)) {
             speed = compassRoot.FindChildTraverse("QOLCompassSpeed");
             if (!speed && readout) {
                 speed = $.CreatePanel("Label", readout, "QOLCompassSpeed");
@@ -30449,7 +31270,7 @@ function GetUIRoot() {
         var rebuildTicks = (!ticks || ticks.length !== COMPASS_TICK_COUNT);
         if (!rebuildTicks) {
             for (var t = 0; t < ticks.length; t++) {
-                if (!ticks[t] || (ticks[t].IsValid && !ticks[t].IsValid())) {
+                if (!IsPanelValid(ticks[t])) {
                     rebuildTicks = true;
                     break;
                 }
@@ -30469,38 +31290,45 @@ function GetUIRoot() {
                 }
             }
             State.cachedPanels.compassTicks = ticks;
-            State.compassTickClassSigs = [];
-            State.compassTickXTexts = [];
+            State.compass.tickClassSigs = [];
+            State.compass.tickXTexts = [];
         }
 
         return compassRoot;
     }
 
+    // Module-level regex constants to avoid recompilation every compass tick (50ms).
+    var _RE_ROTATE3D = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    var _RE_ROTATE2D = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    var _RE_ROTATE_LEGACY = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i;
+    var _RE_DEG_GENERIC = /([+\-]?\d+(?:\.\d+)?)\s*deg/i;
+    var _RE_POSITION_XY = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i;
+
     function ParseRotateTransformDegrees(transformText) {
         if (!transformText || transformText.length === 0) return null;
         var text = String(transformText);
 
-        var rotate3dMatch = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i.exec(text);
+        var rotate3dMatch = _RE_ROTATE3D.exec(text);
         if (rotate3dMatch && rotate3dMatch.length >= 5) {
             var angle3d = parseFloat(rotate3dMatch[4]);
             if (isFinite(angle3d)) return angle3d;
         }
 
-        var rotate2dMatch = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i.exec(text);
+        var rotate2dMatch = _RE_ROTATE2D.exec(text);
         if (rotate2dMatch && rotate2dMatch.length >= 2) {
             var angle2d = parseFloat(rotate2dMatch[1]);
             if (isFinite(angle2d)) return angle2d;
         }
 
         // Legacy format seen in some Panorama style strings.
-        var legacyMatch = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i.exec(text);
+        var legacyMatch = _RE_ROTATE_LEGACY.exec(text);
         if (legacyMatch && legacyMatch.length >= 2) {
             var legacyVal = parseFloat(legacyMatch[1]);
             if (isFinite(legacyVal)) return legacyVal;
         }
 
         // Last-resort: any degrees token in transform text.
-        var genericDegMatch = /([+\-]?\d+(?:\.\d+)?)\s*deg/i.exec(text);
+        var genericDegMatch = _RE_DEG_GENERIC.exec(text);
         if (genericDegMatch && genericDegMatch.length >= 2) {
             var genericVal = parseFloat(genericDegMatch[1]);
             if (isFinite(genericVal)) return genericVal;
@@ -30511,7 +31339,7 @@ function GetUIRoot() {
 
     function ParsePlainRotateDegrees(rotateText) {
         if (!rotateText || rotateText.length === 0) return null;
-        var match = /([+\-]?\d+(?:\.\d+)?)\s*deg/i.exec(String(rotateText));
+        var match = _RE_DEG_GENERIC.exec(String(rotateText));
         if (!match || match.length < 2) return null;
         var val = parseFloat(match[1]);
         return isFinite(val) ? val : null;
@@ -30549,37 +31377,41 @@ function GetUIRoot() {
         return null;
     }
 
+    var _posResultScratch = { x: 0, y: 0 };
+
     function ParsePositionXYPercent(positionText) {
         if (!positionText || positionText.length === 0) return null;
-        var match = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i.exec(positionText);
+        var match = _RE_POSITION_XY.exec(positionText);
         if (!match || match.length < 3) return null;
         var x = parseFloat(match[1]);
         var y = parseFloat(match[2]);
         if (!isFinite(x) || !isFinite(y)) return null;
-        return { x: x, y: y };
+        _posResultScratch.x = x;
+        _posResultScratch.y = y;
+        return _posResultScratch;
     }
 
-    function NormalizeDegrees360(rawDeg) {
+    var NormalizeDegrees360 = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeDegrees360 : function(rawDeg) {
         var out = rawDeg % 360;
         if (out < 0) out += 360;
         if (out >= 360) out -= 360;
         return out;
-    }
+    };
 
-    function NormalizeDegrees180(rawDeg) {
+    var NormalizeDegrees180 = QOL_UTILS_LOADED ? QOL_UTILS.NormalizeDegrees180 : function(rawDeg) {
         var out = NormalizeDegrees360(rawDeg);
         if (out > 180) out -= 360;
         return out;
-    }
+    };
 
-    function ShortestDegreesDelta(fromDeg, toDeg) {
+    var ShortestDegreesDelta = QOL_UTILS_LOADED ? QOL_UTILS.ShortestDegreesDelta : function(fromDeg, toDeg) {
         var from = NormalizeDegrees180(fromDeg);
         var to = NormalizeDegrees180(toDeg);
         var delta = to - from;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
         return delta;
-    }
+    };
 
     function CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) {
         var now = Number(nowMs) || 0;
@@ -30623,7 +31455,7 @@ function GetUIRoot() {
             return State.minimapHeadingSnapshotMainImage;
         }
         var cached = State.cachedPanels.minimapLocalMainImage;
-        if (cached && (!cached.IsValid || cached.IsValid())) {
+        if (IsPanelValid(cached)) {
             var parent = cached.GetParent ? cached.GetParent() : null;
             if (PanelHasAllClasses(parent, ["active", "player", "client_cone_fov", "enemy"]) ||
                 hasClassInHierarchy(cached, "localplayer")) {
@@ -30669,7 +31501,7 @@ function GetUIRoot() {
             return State.minimapHeadingSnapshotPlayerPanel;
         }
         var cached = State.cachedPanels.minimapLocalPlayerPanel;
-        if (cached && (!cached.IsValid || cached.IsValid())) {
+        if (IsPanelValid(cached)) {
             if (PanelHasAllClasses(cached, ["active", "player", "client_cone_fov", "enemy"]) ||
                 (cached.BHasClass && cached.BHasClass("player") && hasClassInHierarchy(cached, "localplayer"))) {
                 return cached;
@@ -30727,7 +31559,7 @@ function GetUIRoot() {
 
         var target = null;
         if (root && root.FindChildTraverse) {
-            target = root.FindChildTraverse("hud_minimap");
+            target = root.FindChildTraverse(PANEL_ID_MINIMAP);
             if (!target) target = root.FindChildTraverse("minimap_container");
             if (!target) target = root.FindChildTraverse("minimap_persp");
             if (!target) target = root.FindChildTraverse("map_render");
@@ -30745,10 +31577,10 @@ function GetUIRoot() {
         var target = null;
         var rotateTarget = FindMinimapRotateTarget(root);
         if (IsPanelValid(rotateTarget)) {
-            if (rotateTarget.id === "hud_minimap") {
+            if (rotateTarget.id === PANEL_ID_MINIMAP) {
                 target = rotateTarget;
             } else if (rotateTarget.FindChildTraverse) {
-                target = rotateTarget.FindChildTraverse("hud_minimap");
+                target = rotateTarget.FindChildTraverse(PANEL_ID_MINIMAP);
             }
         }
 
@@ -30794,8 +31626,8 @@ function GetUIRoot() {
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
-        var enabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
-        var staticFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
+        var enabled = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER");
+        var staticFlipEnabled = IsCfgEnabled(cfg, "MINIMAP_FLIP");
         var flipClassTarget = FindMinimapFlipClassTarget(root);
         if (!enabled) {
             ApplyStaticMinimapRotation(root, nowMs, staticFlipEnabled ? 180 : 0);
@@ -30911,7 +31743,7 @@ function GetUIRoot() {
             return cached;
         }
 
-        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
+        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null;
         var hudCore = gameplayHud && gameplayHud.GetParent ? gameplayHud.GetParent() : null;
         var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
         var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
@@ -30982,8 +31814,8 @@ function GetUIRoot() {
             return;
         }
 
-        var drawOverUiTab = zoomTabActive && Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1;
-        var drawOverUiAlt = zoomAltActive && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1;
+        var drawOverUiTab = zoomTabActive && IsCfgEnabled(cfg, "TAB_ZOOM_DRAW_OVER_UI");
+        var drawOverUiAlt = zoomAltActive && IsCfgEnabled(cfg, "ALT_ZOOM_DRAW_OVER_UI");
         var drawOverUi = drawOverUiTab || drawOverUiAlt;
         if (drawOverUi) {
             CaptureMinimapOriginalParent(minimapPersp);
@@ -31061,44 +31893,44 @@ function GetUIRoot() {
             var baseTickHeight = isCardinal ? 34 : (isMajor45 ? 24 : 16);
             var tickHeight = Math.max(4, Math.round(baseTickHeight * stretchY));
             var classSig = (isMajor45 ? "1" : "0") + "|" + (isCardinal ? "1" : "0") + "|" + String(tickHeight);
-            if (State.compassTickClassSigs[i] !== classSig) {
+            if (State.compass.tickClassSigs[i] !== classSig) {
                 tick.SetHasClass("Major", isMajor45);
                 tick.SetHasClass("Cardinal", isCardinal);
                 tick.style.height = tickHeight + "px";
-                State.compassTickClassSigs[i] = classSig;
+                State.compass.tickClassSigs[i] = classSig;
             }
 
             var x = (halfWidth - (tickWidth * 0.5)) + ((rel - frac) * spacing);
             var xText = x.toFixed(2) + "px";
-            if (State.compassTickXTexts[i] !== xText) {
+            if (State.compass.tickXTexts[i] !== xText) {
                 tick.style.x = xText;
-                State.compassTickXTexts[i] = xText;
+                State.compass.tickXTexts[i] = xText;
             }
         }
     }
 
     function ResetCompassRuntimeState() {
-        State.compassLastDegreeText = "";
-        State.compassLayoutSig = "";
-        State.compassNextSpeedSampleMs = 0;
-        State.compassLastSpeedValueText = "--";
-        State.compassLastPosX = null;
-        State.compassLastPosY = null;
-        State.compassLastPosTimeMs = 0;
-        State.compassSpeedSmoothed = null;
-        State.compassSpeedDisplay = null;
-        State.compassTickClassSigs = [];
-        State.compassTickXTexts = [];
+        State.compass.lastDegreeText = "";
+        State.compass.layoutSig = "";
+        State.compass.nextSpeedSampleMs = 0;
+        State.compass.lastSpeedValueText = "--";
+        State.compass.lastPosX = null;
+        State.compass.lastPosY = null;
+        State.compass.lastPosTimeMs = 0;
+        State.compass.speedSmoothed = null;
+        State.compass.speedDisplay = null;
+        State.compass.tickClassSigs = [];
+        State.compass.tickXTexts = [];
     }
 
     function UpdateCompassOverlay(root, nowMsHint) {
         if (!IsCustomHudContextActive(root)) {
             var existing = State.cachedPanels.compassRoot;
-            if ((!existing || (existing.IsValid && !existing.IsValid())) && root && root.FindChildTraverse) {
+            if (!IsPanelValid(existing) && root && root.FindChildTraverse) {
                 existing = root.FindChildTraverse("QOLCompassRoot");
                 State.cachedPanels.compassRoot = existing || null;
             }
-            if (existing && (!existing.IsValid || existing.IsValid())) {
+            if (IsPanelValid(existing)) {
                 if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
             }
             ResetCompassRuntimeState();
@@ -31107,8 +31939,8 @@ function GetUIRoot() {
         var compassRoot = EnsureCompassOverlay(root);
         if (!compassRoot) return;
 
-        var showCompass = State.compassEnabled;
-        var showSpeed = State.compassShowSpeed;
+        var showCompass = State.compass.enabled;
+        var showSpeed = State.compass.showSpeed;
 
         if (!showCompass && !showSpeed) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
@@ -31128,23 +31960,23 @@ function GetUIRoot() {
         if (compassBox) {
             compassBox.style.visibility = showCompass ? "visible" : "collapse";
         }
-        var scale = Number(State.compassScale);
+        var scale = Number(State.compass.scale);
         if (!isFinite(scale)) scale = 100;
         if (scale < 50) scale = 50;
         if (scale > 200) scale = 200;
-        var stretchX = Number(State.compassStretchX);
+        var stretchX = Number(State.compass.stretchX);
         if (!isFinite(stretchX)) stretchX = 100;
         if (stretchX < 50) stretchX = 50;
         if (stretchX > 200) stretchX = 200;
-        var stretchY = Number(State.compassStretchY);
+        var stretchY = Number(State.compass.stretchY);
         if (!isFinite(stretchY)) stretchY = 100;
         if (stretchY < 50) stretchY = 50;
         if (stretchY > 200) stretchY = 200;
-        var offsetX = Number(State.compassOffsetX);
+        var offsetX = Number(State.compass.offsetX);
         if (!isFinite(offsetX)) offsetX = 0;
         if (offsetX < -2000) offsetX = -2000;
         if (offsetX > 2000) offsetX = 2000;
-        var offsetY = Number(State.compassOffsetY);
+        var offsetY = Number(State.compass.offsetY);
         if (!isFinite(offsetY)) offsetY = 120;
         if (offsetY < -1000) offsetY = -1000;
         if (offsetY > 300) offsetY = 300;
@@ -31157,7 +31989,7 @@ function GetUIRoot() {
         var uniformScale = (scale / 100).toFixed(3);
         var scaleText = uniformScale + ", " + uniformScale;
         var compassBox = State.cachedPanels.compassBox;
-        if (!compassBox || (compassBox.IsValid && !compassBox.IsValid())) {
+        if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             State.cachedPanels.compassBox = compassBox || null;
         }
@@ -31167,16 +31999,10 @@ function GetUIRoot() {
         if (boxHeight < 25) boxHeight = 25;
         var boxWidthText = boxWidth + "px";
         var boxHeightText = boxHeight + "px";
-        var layoutSig = [
-            marginTopText,
-            marginLeftText,
-            scaleText,
-            boxWidthText,
-            boxHeightText,
-            showCompass ? "1" : "0",
-            showSpeed ? "1" : "0"
-        ].join("|");
-        if (layoutSig !== State.compassLayoutSig) {
+        var layoutSig = marginTopText + "|" + marginLeftText + "|" + scaleText + "|" +
+            boxWidthText + "|" + boxHeightText + "|" + (showCompass ? "1" : "0") + "|" +
+            (showSpeed ? "1" : "0");
+        if (layoutSig !== State.compass.layoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
             if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
@@ -31197,16 +32023,16 @@ function GetUIRoot() {
                 readout.style.flowChildren = "none";
                 readout.style.overflow = "noclip";
             }
-            State.compassLayoutSig = layoutSig;
+            State.compass.layoutSig = layoutSig;
         }
 
         var degreeLabel = State.cachedPanels.compassDegree;
-        if (!degreeLabel || (degreeLabel.IsValid && !degreeLabel.IsValid())) {
+        if (!IsPanelValid(degreeLabel)) {
             degreeLabel = compassRoot.FindChildTraverse("QOLCompassDegree");
             State.cachedPanels.compassDegree = degreeLabel || null;
         }
         var speedLabel = State.cachedPanels.compassSpeed;
-        if (!speedLabel || (speedLabel.IsValid && !speedLabel.IsValid())) {
+        if (!IsPanelValid(speedLabel)) {
             speedLabel = compassRoot.FindChildTraverse("QOLCompassSpeed");
             State.cachedPanels.compassSpeed = speedLabel || null;
         }
@@ -31238,9 +32064,9 @@ function GetUIRoot() {
                 UpdateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
                 if (degreeLabel) {
                     var degreeText = String(Math.round(heading360)) + "\u00B0";
-                    if (degreeText !== State.compassLastDegreeText) {
+                    if (degreeText !== State.compass.lastDegreeText) {
                         degreeLabel.text = degreeText;
-                        State.compassLastDegreeText = degreeText;
+                        State.compass.lastDegreeText = degreeText;
                     }
                 }
             }
@@ -31250,8 +32076,8 @@ function GetUIRoot() {
             return;
         }
 
-        var speedValueText = State.compassLastSpeedValueText || "--";
-        if (nowMs >= (Number(State.compassNextSpeedSampleMs) || 0)) {
+        var speedValueText = State.compass.lastSpeedValueText || "--";
+        if (nowMs >= (Number(State.compass.nextSpeedSampleMs) || 0)) {
             speedValueText = "--";
             var playerPanel = IsPanelValid(State.minimapHeadingSnapshotPlayerPanel) ? State.minimapHeadingSnapshotPlayerPanel : FindLocalMinimapPlayerPanel(root, nowMs);
             if (playerPanel) {
@@ -31264,42 +32090,42 @@ function GetUIRoot() {
                 }
                 var pos = ParsePositionXYPercent(positionText);
                 if (pos) {
-                    if (State.compassLastPosX !== null && State.compassLastPosY !== null && State.compassLastPosTimeMs > 0) {
-                        var dtSec = (nowMs - State.compassLastPosTimeMs) / 1000.0;
+                    if (State.compass.lastPosX !== null && State.compass.lastPosY !== null && State.compass.lastPosTimeMs > 0) {
+                        var dtSec = (nowMs - State.compass.lastPosTimeMs) / 1000.0;
                         if (dtSec > 0.01 && dtSec < 1.0) {
-                            var dx = pos.x - State.compassLastPosX;
-                            var dy = pos.y - State.compassLastPosY;
+                            var dx = pos.x - State.compass.lastPosX;
+                            var dy = pos.y - State.compass.lastPosY;
                             var dist = Math.sqrt((dx * dx) + (dy * dy));
                             var speedInstant = (dist / dtSec) * 100.0;
                             if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                        if (State.compassSpeedSmoothed === null || !isFinite(State.compassSpeedSmoothed)) {
-                            State.compassSpeedSmoothed = speedInstant;
+                        if (State.compass.speedSmoothed === null || !isFinite(State.compass.speedSmoothed)) {
+                            State.compass.speedSmoothed = speedInstant;
                         } else {
-                            var isDecelerating = speedInstant < State.compassSpeedSmoothed;
+                            var isDecelerating = speedInstant < State.compass.speedSmoothed;
                             var tau = isDecelerating ? 0.25 : 0.02; 
                             var alpha = 1.0 - Math.exp(-dtSec / tau);
-                            if (Math.abs(speedInstant - State.compassSpeedSmoothed) < State.compassSpeedSmoothed * 0.10) {
+                            if (Math.abs(speedInstant - State.compass.speedSmoothed) < State.compass.speedSmoothed * 0.10) {
                                 alpha *= 0.2;
                             }
                             if (speedInstant < 0.5) alpha = 1.0;
-                            State.compassSpeedSmoothed = State.compassSpeedSmoothed + (alpha * (speedInstant - State.compassSpeedSmoothed));
+                            State.compass.speedSmoothed = State.compass.speedSmoothed + (alpha * (speedInstant - State.compass.speedSmoothed));
                         }
                     }
                         }
                     }
-                    State.compassLastPosX = pos.x;
-                    State.compassLastPosY = pos.y;
-                    State.compassLastPosTimeMs = nowMs;
+                    State.compass.lastPosX = pos.x;
+                    State.compass.lastPosY = pos.y;
+                    State.compass.lastPosTimeMs = nowMs;
                 }
             }
 
-            if (State.compassSpeedSmoothed !== null && isFinite(State.compassSpeedSmoothed)) {
-                var calibrated = State.compassSpeedSmoothed * COMPASS_SPEED_SCALE;
+            if (State.compass.speedSmoothed !== null && isFinite(State.compass.speedSmoothed)) {
+                var calibrated = State.compass.speedSmoothed * COMPASS_SPEED_SCALE;
                 if (!isFinite(calibrated)) calibrated = 0;
                 if (calibrated < 0) calibrated = 0;
 
-                State.compassSpeedDisplay = calibrated;
-                var quantized = State.compassSpeedDisplay;
+                State.compass.speedDisplay = calibrated;
+                var quantized = State.compass.speedDisplay;
 
                 if (COMPASS_SPEED_QUANT > 1) {
                     quantized = Math.round(quantized / COMPASS_SPEED_QUANT) * COMPASS_SPEED_QUANT;
@@ -31309,8 +32135,8 @@ function GetUIRoot() {
                 if (quantized < 5) quantized = 0;
                 speedValueText = String(quantized);
             }
-            State.compassLastSpeedValueText = speedValueText;
-            State.compassNextSpeedSampleMs = nowMs + COMPASS_SPEED_SAMPLE_MS;
+            State.compass.lastSpeedValueText = speedValueText;
+            State.compass.nextSpeedSampleMs = nowMs + COMPASS_SPEED_SAMPLE_MS;
         }
         if (speedLabel) {
             if (speedLabel.text !== speedValueText) speedLabel.text = speedValueText;
@@ -31323,11 +32149,23 @@ function GetUIRoot() {
         try {
             var root = GetUIRoot();
             var cfg = State.lastConfig || BuildDefaultConfig();
+
+            // Use precomputed gates from main loop (5Hz) to avoid redundant
+            // Number() config checks and sticky-state evaluations at 20Hz.
+            var gates = State.lastResolvedGates;
+
+            // Hard-gate: when no features are active anywhere, skip entirely.
+            if (gates && State.allFeaturesDisabled) {
+                nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
+                var _cidle = DetectGlobalIdleState(root);
+                if (_cidle.level !== "active") {
+                    nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, _cidle));
+                }
+                return;
+            }
+
             cfg = ApplyForcedFeatureDisables(cfg);
-            var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
-            var unitTargetCustomized = IsUnitTargetStyleCustomized(cfg);
-            var unitTargetFastMode = unitTargetCustomized || redDiamondEnabled;
-            if (State.perfEnabled || Number(cfg.ENABLE_PERF_DEBUG) === 1) {
+            if (State.perfEnabled || IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG")) {
                 UpdatePerfEnabledFromConfig(cfg);
             }
             if (State.perfEnabled) {
@@ -31337,75 +32175,165 @@ function GetUIRoot() {
                 }
                 State.perfLastCompassStartMs = perfLoopStartMs;
             }
-            var itemMirrorEnabled = false;
-            var itemMirrorRuntimeActive = false;
             var hasCompassRuntimeWork = false;
             if (root) {
                 var nowMsCompassLoop = Date.now ? Date.now() : (new Date()).getTime();
-                var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
-                var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
-                var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
-                var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
-                itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
-                itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirrorProbeWasEnabled || State.itemMirrorDisplayMode === "active";
-                var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
-                var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
-                var perfSection = 0;
 
-                if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compassEnabled || State.compassShowSpeed) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateCompassOverlay(root, nowMsCompassLoop);
-                    PerfEnd("compass.overlay", perfSection);
-                }
+                if (gates) {
+                    // Fast path — read precomputed gates from main loop
+                    if (gates.compassOverlay) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.overlay", function() {
+                            var perfSection = PerfStart();
+                            UpdateCompassOverlay(root, nowMsCompassLoop);
+                            PerfEnd("compass.overlay", perfSection);
+                        });
+                    }
 
-                if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
-                    PerfEnd("compass.minimap_rotate", perfSection);
-                }
+                    if (gates.compassMinimapRotate) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.minimap_rotate", function() {
+                            var perfSection = PerfStart();
+                            UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
+                            PerfEnd("compass.minimap_rotate", perfSection);
+                        });
+                    }
 
-                if (itemMirrorRuntimeActive) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateItemMirrorProbe(root, cfg);
-                    PerfEnd("compass.item_mirror", perfSection);
-                }
+                    if (gates.compassItemMirror) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.item_mirror", function() {
+                            var perfSection = PerfStart();
+                            UpdateItemMirrorProbe(root, cfg);
+                            PerfEnd("compass.item_mirror", perfSection);
+                        });
+                    }
 
-                if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateReloadCooldownOverlay(root, cfg);
-                    PerfEnd("compass.reload_cd", perfSection);
-                }
+                    if (gates.compassReloadCd) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.reload_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateReloadCooldownOverlay(root, cfg);
+                            PerfEnd("compass.reload_cd", perfSection);
+                        });
+                    }
 
-                if (ultCooldownEnabled) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    UpdateUltimateCooldownOverlay(root, cfg);
-                    PerfEnd("compass.ult_cd", perfSection);
-                }
+                    if (gates.compassUltCd) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.ult_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateUltimateCooldownOverlay(root, cfg);
+                            PerfEnd("compass.ult_cd", perfSection);
+                        });
+                    }
 
-                if (unitTargetFastMode) {
-                    hasCompassRuntimeWork = true;
-                    perfSection = PerfStart();
-                    var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                    ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
-                    PerfEnd("compass.target_shapes_fast", perfSection);
+                    if (gates.compassTargetShapesFast) {
+                        hasCompassRuntimeWork = true;
+                        var _rdEnabled = gates.redDiamondEnabled || false;
+                        ExecuteFeature("compass.target_shapes_fast", function() {
+                            var perfSection = PerfStart();
+                            var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, _rdEnabled);
+                            PerfEnd("compass.target_shapes_fast", perfSection);
+                        });
+                    }
+                } else {
+                    // Fallback — first tick(s) before main loop has populated gates
+                    var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
+                    var unitTargetCustomized = IsUnitTargetStyleCustomized(cfg);
+                    var unitTargetFastMode = unitTargetCustomized || redDiamondEnabled;
+                    var compassEnabled = IsCfgEnabled(cfg, "ENABLE_COMPASS");
+                    var compassSpeedEnabled = IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
+                    var rotateEnabled = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER");
+                    var minimapFlipEnabled = IsCfgEnabled(cfg, "MINIMAP_FLIP");
+                    var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
+                    var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
+                    var reloadEnabled = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
+                    var ultCooldownEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+
+                    if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compass.enabled || State.compass.showSpeed) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.overlay", function() {
+                            var perfSection = PerfStart();
+                            UpdateCompassOverlay(root, nowMsCompassLoop);
+                            PerfEnd("compass.overlay", perfSection);
+                        });
+                    }
+
+                    if (rotateEnabled || minimapFlipEnabled || (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0)) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.minimap_rotate", function() {
+                            var perfSection = PerfStart();
+                            UpdateMinimapRotateWithPlayer(root, cfg, nowMsCompassLoop);
+                            PerfEnd("compass.minimap_rotate", perfSection);
+                        });
+                    }
+
+                    if (itemMirrorRuntimeActive) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.item_mirror", function() {
+                            var perfSection = PerfStart();
+                            UpdateItemMirrorProbe(root, cfg);
+                            PerfEnd("compass.item_mirror", perfSection);
+                        });
+                    }
+
+                    if (reloadEnabled || State.reloadCdLastDeg !== null || State.reloadCooldownStyleSig !== "" || IsPanelValid(State.cachedPanels.reloadCooldownLabel)) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.reload_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateReloadCooldownOverlay(root, cfg);
+                            PerfEnd("compass.reload_cd", perfSection);
+                        });
+                    }
+
+                    if (ultCooldownEnabled) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.ult_cd", function() {
+                            var perfSection = PerfStart();
+                            UpdateUltimateCooldownOverlay(root, cfg);
+                            PerfEnd("compass.ult_cd", perfSection);
+                        });
+                    }
+
+                    if (unitTargetFastMode) {
+                        hasCompassRuntimeWork = true;
+                        ExecuteFeature("compass.target_shapes_fast", function() {
+                            var perfSection = PerfStart();
+                            var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
+                            PerfEnd("compass.target_shapes_fast", perfSection);
+                        });
+                    }
                 }
             }
             var nowMsCompass = Date.now ? Date.now() : (new Date()).getTime();
-            var itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirrorFastModeUntilMs || 0));
-            var useFastInterval = (cfg && (
-            Number(cfg.ENABLE_COMPASS) === 1 ||
-            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
-            Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-            itemMirrorFastActive ||
-            Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
-            Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
-            unitTargetFastMode
-        ));
+            var useFastInterval;
+            var itemMirrorRuntimeActive;
+            var itemMirrorFastActive = false;
+            if (gates) {
+                itemMirrorRuntimeActive = gates.compassItemMirror;
+                itemMirrorFastActive = gates.compassItemMirror && (nowMsCompass < (State.itemMirror.fastModeUntilMs || 0));
+                useFastInterval = (
+                    gates.compassOverlay ||
+                    gates.compassMinimapRotate ||
+                    itemMirrorFastActive ||
+                    gates.compassReloadCd ||
+                    gates.compassUltCd ||
+                    gates.compassTargetShapesFast
+                );
+            } else {
+                itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
+                itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirror.fastModeUntilMs || 0));
+                useFastInterval = (cfg && (
+                    IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+                    IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED") ||
+                    IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
+                    itemMirrorFastActive ||
+                    IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
+                    IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS") ||
+                    (IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") || IsUnitTargetStyleCustomized(cfg))
+                ));
+            }
             if (State.perfEnabled) {
                 PerfRecord("compass.total", PerfNowMs() - perfLoopStartMs);
                 FlushPerfIfNeeded(false);
@@ -31418,6 +32346,12 @@ function GetUIRoot() {
                 nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
             } else {
                 nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
+            }
+
+            // Apply game-state-aware degradation on top of feature-based interval (Fix 9 extended)
+            var compassIdleState = DetectGlobalIdleState(root);
+            if (compassIdleState.level !== "active") {
+                nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, compassIdleState));
             }
         } catch (err) {
             LogLoopException("compassLoop", err, "compassErrorNextLogMs", PerfNowMs());
@@ -31449,12 +32383,21 @@ function GetUIRoot() {
         var nextDelaySec = BUILD_REQUEST_LOOP_IDLE_SEC;
         try {
             var root = GetUIRoot();
-            if (!root || !root.GetAttributeString) return;
+            if (!root || !root.GetAttributeString) {
+                // No root available — game is likely in a transitional state. Use deep idle.
+                nextDelaySec = BUILD_REQUEST_LOOP_DEEP_IDLE_SEC;
+                return;
+            }
 
             var queueActive = IsBuildRequestQueueActive(root);
             var runtimeActive = IsBuildRequestRuntimeActive();
             if (!queueActive && !runtimeActive) {
                 nextDelaySec = BUILD_REQUEST_LOOP_DEEP_IDLE_SEC;
+                // Apply game-state-aware degradation on top (Fix 9 extended)
+                var buildIdleState = DetectGlobalIdleState(root);
+                if (buildIdleState.level !== "active") {
+                    nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, buildIdleState));
+                }
                 return;
             }
 
@@ -31463,15 +32406,21 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                if (raw !== "") {
-                    try { cfg = MergeConfig(JSON.parse(raw)); } catch (e0) {}
-                }
+                cfg = SafeParseConfig(raw);
                 if (!cfg) cfg = BuildDefaultConfig();
             }
             cfg = ApplyForcedFeatureDisables(cfg);
             var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-            ProcessBuildRequestOrchestration(root, nowMsLoop, cfg);
+            ExecuteFeature("buildRequest.orchestration", function() {
+                ProcessBuildRequestOrchestration(root, nowMsLoop, cfg);
+            });
             nextDelaySec = IsBuildRequestQueueActive(root) ? BUILD_REQUEST_LOOP_ACTIVE_SEC : BUILD_REQUEST_LOOP_IDLE_SEC;
+
+            // Apply game-state-aware degradation on top of feature-based interval (Fix 9 extended)
+            var buildIdleState = DetectGlobalIdleState(root);
+            if (buildIdleState.level !== "active") {
+                nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, buildIdleState));
+            }
         } catch (err) {
             LogLoopException("buildRequestLoop", err, "buildRequestErrorNextLogMs", PerfNowMs());
         } finally {
@@ -31501,7 +32450,7 @@ function GetUIRoot() {
         }
         var panels = [];
         if (root && root.FindChildTraverse) {
-            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", "hud_minimap"];
+            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
             for (var i = 0; i < ids.length; i++) {
                 var panel = root.FindChildTraverse(ids[i]);
                 if (panel) panels.push(panel);
@@ -31520,16 +32469,29 @@ function GetUIRoot() {
     }
 
     function EnsureAbilitiesContainerPanelCache(root) {
-        return EnsureCachedPanelByIds(root, "abilitiesContainer", ["AbilitiesContainer"]);
+        return EnsureCachedPanelByIds(root, "abilitiesContainer", [PANEL_ID_ABILITIES_CONTAINER]);
     }
 
     function EnsureCoreLoopPanelCaches(root) {
-        EnsureMinimapPanelCache(root);
-        EnsurePassiveHudPanelCache(root);
-        EnsureGameTimePanelCache(root);
-        EnsureCachedPanelByIds(root, "gameplayHud", ["gameplay_hud"]);
-        EnsureAbilitiesContainerPanelCache(root);
-        EnsureCachedPanelByIds(root, "healthContainer", ["health_and_abilities_container"]);
+        // Lazy-init: only refresh caches for active features (Fix 8)
+        // Each Ensure* function is a no-op if the cache is still valid
+        if (State.lastResolvedGates) {
+            var gates = State.lastResolvedGates;
+            if (gates.minimapRuntime) EnsureMinimapPanelCache(root);
+            if (gates.legacyAudioPassive) EnsurePassiveHudPanelCache(root);
+            if (gates.rejuvTimers) EnsureGameTimePanelCache(root);
+            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
+            if (gates.itemsRuntime || gates.statBonuses) EnsureAbilitiesContainerPanelCache(root);
+            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
+        } else {
+            // No gates resolved yet — refresh all
+            EnsureMinimapPanelCache(root);
+            EnsurePassiveHudPanelCache(root);
+            EnsureGameTimePanelCache(root);
+            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
+            EnsureAbilitiesContainerPanelCache(root);
+            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
+        }
     }
 
     function SetGameplayMouseCursorRootClass(root, active) {
@@ -31670,12 +32632,12 @@ function GetUIRoot() {
     function BuildOnDeathArcadeIdPool(cfg) {
         var pool = [];
         if (Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return pool;
-        if (Number(cfg.ON_DEATH_GAME_MINESWEEPER) === 1) pool.push("minesweeper");
-        if (Number(cfg.ON_DEATH_GAME_BLACKJACK) === 1) pool.push("blackjack");
-        if (Number(cfg.ON_DEATH_GAME_FLAPPY_BAT) === 1) pool.push("flappy_bat");
-        if (Number(cfg.ON_DEATH_GAME_GRAVES_TRAINER) === 1) pool.push("graves_trainer");
-        if (Number(cfg.ON_DEATH_GAME_ZERGGY_MANIA) === 1) pool.push("zerggy_mania");
-        if (Number(cfg.ON_DEATH_GAME_WHACK_A_REM) === 1) pool.push("whack_a_rem");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER")) pool.push("minesweeper");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK")) pool.push("blackjack");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT")) pool.push("flappy_bat");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER")) pool.push("graves_trainer");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA")) pool.push("zerggy_mania");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM")) pool.push("whack_a_rem");
         return pool;
     }
 
@@ -31688,7 +32650,7 @@ function GetUIRoot() {
         try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch (e1) {}
         try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch (e2) {}
         var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; } catch (e3) { hud = null; }
+        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e3) { hud = null; }
         if (hud && hud.SetAttributeString) {
             try { hud.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch (e4) {}
             try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch (e5) {}
@@ -31700,10 +32662,7 @@ function GetUIRoot() {
         var targets = [];
         function pushUnique(panel) {
             if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < targets.length; i++) {
-                if (targets[i] === panel) return;
-            }
-            targets.push(panel);
+            PushUnique(targets, panel);
         }
 
         pushUnique(root);
@@ -31713,7 +32672,7 @@ function GetUIRoot() {
             pushUnique(escapeMenu);
             if (escapeMenu && escapeMenu.GetParent) pushUnique(escapeMenu.GetParent());
             var hud = null;
-            try { hud = root.FindChildTraverse("Hud"); } catch (e1) { hud = null; }
+            try { hud = root.FindChildTraverse(PANEL_ID_HUD); } catch (e1) { hud = null; }
             pushUnique(hud);
         }
         return targets;
@@ -31817,18 +32776,18 @@ function GetUIRoot() {
     }
 
     function ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
-        var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
+        var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
         var hideTestingTools = (cfg.ENABLE_HIDE_TESTING_TOOLS === 1);
         var forceShowTestingTools = (cfg.ENABLE_FORCE_TESTING_TOOLS === 1) && !hideTestingTools;
         var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
-        var klutzHealthbarEnabled = (healthbarType === 3);
-        var budhudHealthbarEnabled = (healthbarType === 4);
-        var minecraftHealthbarEnabled = (healthbarType === 5);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
+        var klutzHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_KLUTZ);
+        var budhudHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_BUDHUD);
+        var minecraftHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINECRAFT);
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
-        var cleanStacksEnabled = Number(cfg.ENABLE_CLEAN_STACKS) === 1;
+        var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
         var compassEnabled = (cfg.ENABLE_COMPASS === 1) || (cfg.ENABLE_COMPASS_SPEED === 1);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
@@ -31878,7 +32837,8 @@ function GetUIRoot() {
             cfg.ENABLE_ENHANCED_QUICKBUY,
             cfg.ENHANCED_QUICKBUY_COUNT,
             cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY,
-            cfg.ENABLE_SHOP_CLICK_TO_NOTIFY,
+            cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS,
+            cfg.ENABLE_HERO_PURCHASE_POPUPS,
             cfg.ENABLE_SHOP_RECENT_PURCHASES,
             cfg.RECENT_PURCHASES_QUICK_MAX,
             cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC,
@@ -31910,11 +32870,12 @@ function GetUIRoot() {
             !State.rootClassCache ||
             State.rootClassCache.panel !== root;
 
-        var legacyCooldownsEnabled = Number(cfg.ENABLE_LEGACY_COOLDOWNS) === 1;
+        var legacyCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_LEGACY_COOLDOWNS");
         SyncLegacyCooldownsUiFlag(legacyCooldownsEnabled);
-        var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-        var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-        var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
+        var enhancedQuickbuyEnabled = IsCfgEnabled(cfg, "ENABLE_ENHANCED_QUICKBUY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var quickbuyClickToNotifyEnabled = IsCfgEnabled(cfg, "ENABLE_QUICKBUY_CLICK_TO_NOTIFY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var shopRecentPurchasesEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+        var shopRecentPurchasesRedux = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
         if (shouldApplyStaticClasses) {
             SetPanelClassCached(root, State.rootClassCache, "hide_ammo_custom", cfg.ENABLE_AMMO_STATUS === 0);
@@ -31927,13 +32888,13 @@ function GetUIRoot() {
                 State.targetShapeStyleSig = "";
                 State.nextTargetShapeRefreshMs = 0;
             }
-            SetPanelClassCached(root, State.rootClassCache, "improved_hint_active", Number(cfg.ENABLE_IMPROVED_HINT) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "improved_hint_active", IsCfgEnabled(cfg, "ENABLE_IMPROVED_HINT"));
             SetPanelClassCached(root, State.rootClassCache, "zip_boost_active", false);
             SetPanelClassCached(root, State.rootClassCache, "zip_boost_overlay_active", cfg.ENABLE_ZIP_BOOST === 1 && !hideoutConnected);
-            SetPanelClassCached(root, State.rootClassCache, "unsecured_souls_overlay_active", Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1 && !hideoutConnected);
+            SetPanelClassCached(root, State.rootClassCache, "unsecured_souls_overlay_active", IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") && !hideoutConnected);
             SetPanelClassCached(root, State.rootClassCache, "stat_bonuses_overlay_active", cfg.ENABLE_STAT_BONUSES === 1 && !hideoutConnected);
             SetPanelClassCached(root, State.rootClassCache, "center_esc_active", cfg.ENABLE_CENTER_ESC === 1);
-            SetPanelClassCached(root, State.rootClassCache, "center_friends_list_active", Number(cfg.ENABLE_CENTER_FRIENDS_LIST) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "center_friends_list_active", IsCfgEnabled(cfg, "ENABLE_CENTER_FRIENDS_LIST"));
             SetPanelClassCached(root, State.rootClassCache, "legacy_cooldowns_active", legacyCooldownsEnabled);
             SetPanelClassCached(root, State.rootClassCache, "force_testing_tools_active", forceShowTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "hide_testing_tools_active", hideTestingTools);
@@ -31948,7 +32909,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "rejuv_hud_disabled", cfg.ENABLE_REJUV_HUD === 0);
             SetPanelClassCached(root, State.rootClassCache, "minimap_buff_timer_disabled", Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "minimap_rejuv_timer_disabled", Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) !== 1);
-            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", Number(cfg.ENABLE_BHOP) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", IsCfgEnabled(cfg, "ENABLE_BHOP"));
             SetPanelClassCached(root, State.rootClassCache, "minimalist_healthbar_active", minimalistHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "fg_healthbar_active", fgHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "klutz_healthbar_active", klutzHealthbarEnabled);
@@ -31957,7 +32918,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
-            SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);
+            SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === HEALTHBAR_TYPE_DEFAULT);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_inactive", false);
             SetPanelClassCached(root, State.rootClassCache, "compass_active", compassEnabled);
@@ -31966,7 +32927,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_active", cfg.ENABLE_KEYBOARD_OVERLAY === 1);
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_full_active", cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_minimap_active", cfg.MINIMAL_MINIMAP === 1);
-            SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", Number(cfg.ENABLE_MINIMAP_ELEVATION_MARKERS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", IsCfgEnabled(cfg, "ENABLE_MINIMAP_ELEVATION_MARKERS"));
             SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
@@ -31979,37 +32940,38 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "obj_map_disabled", cfg.ENABLE_OBJ_MAP === 0);
             SetPanelClassCached(root, State.rootClassCache, "urn_diff_disabled", cfg.ENABLE_URN_DIFF === 0);
             SetPanelClassCached(root, State.rootClassCache, "missing_hero_disabled", cfg.ENABLE_MISSING_HERO === 0);
-            SetPanelClassCached(root, State.rootClassCache, "nicknames_active", Number(cfg.ENABLE_NICKNAMES) === 1);
-            SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", Number(cfg.DISABLE_PLAYER_NAME_BLUR) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "nicknames_active", IsCfgEnabled(cfg, "ENABLE_NICKNAMES"));
+            SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", IsCfgEnabled(cfg, "DISABLE_PLAYER_NAME_BLUR"));
             SetPanelClassCached(root, State.rootClassCache, "cumulative_dmg_disabled", cfg.ENABLE_CUMULATIVE_DMG === 0);
-            SetPanelClassCached(root, State.rootClassCache, "clean_damage_indicators_active", Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "clean_damage_indicators_active", IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
             SetPanelClassCached(root, State.rootClassCache, "damage_fountain_active", cfg.ENABLE_DAMAGE_FOUNTAIN === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
-            SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"));
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_redux", shopRecentPurchasesRedux);
             State.coreRootStaticSig = staticSig;
         }
 
         var combatIndicatorActive = false;
         var combatIndicatorSignal = false;
         var combatIndicatorRecoveryActive = false;
-        if (Number(cfg.ENABLE_COMBAT_INDICATOR) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR")) {
             combatIndicatorSignal = IsCombatSignalActive(root, nowMsLoop) === true;
             if (combatIndicatorSignal) {
-                State.combatStatusLastCombatMs = nowMsLoop;
+                State.combatStatus.lastCombatMs = nowMsLoop;
             } else {
-                var recentCombatMs = nowMsLoop - Number(State.combatStatusLastCombatMs || 0);
-                combatIndicatorRecoveryActive = State.combatStatusLastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
+                var recentCombatMs = nowMsLoop - Number(State.combatStatus.lastCombatMs || 0);
+                combatIndicatorRecoveryActive = State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
             }
             combatIndicatorActive = combatIndicatorSignal || combatIndicatorRecoveryActive;
         }
-        var combatIndicatorEnabled = Number(cfg.ENABLE_COMBAT_INDICATOR) === 1;
+        var combatIndicatorEnabled = IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");
         SetPanelClassCached(root, State.rootClassCache, "combat_indicator_enabled", combatIndicatorEnabled);
         SetPanelClassCached(root, State.rootClassCache, "combat_indicator_active", combatIndicatorActive);
         SyncCombatIndicatorHealthbarClasses(root, combatIndicatorActive, combatIndicatorEnabled);
@@ -32061,7 +33023,7 @@ function GetUIRoot() {
             State.quickbuyRuntimeHostOffsetApplied = false;
         }
 
-        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
         var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
@@ -32086,7 +33048,7 @@ function GetUIRoot() {
         if (needsHealthContainerWork) {
             var healthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!healthContainer) {
-                healthContainer = root.FindChildTraverse("health_and_abilities_container");
+                healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 State.cachedPanels.healthContainer = healthContainer || null;
             }
             LogHealthbarVisibilityDebug(root, healthContainer, cfg);
@@ -32111,7 +33073,7 @@ function GetUIRoot() {
         var abilitiesContainerForClass = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
         if (shouldApplyStaticClasses || abilitiesContainerForClass) {
             if (!abilitiesContainerForClass) {
-                abilitiesContainerForClass = root.FindChildTraverse("AbilitiesContainer");
+                abilitiesContainerForClass = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
                 State.cachedPanels.abilitiesContainer = abilitiesContainerForClass || null;
             }
         }
@@ -32119,13 +33081,13 @@ function GetUIRoot() {
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(abilitiesContainerForClass, State.abilitiesClassCache, "clean_stacks_inactive", false);
         }
-        State.compassEnabled = (cfg.ENABLE_COMPASS === 1);
-        State.compassShowSpeed = (cfg.ENABLE_COMPASS_SPEED === 1);
-        State.compassScale = (cfg.COMPASS_SCALE === undefined || cfg.COMPASS_SCALE === null) ? 100 : cfg.COMPASS_SCALE;
-        State.compassStretchX = (cfg.COMPASS_STRETCH_X === undefined || cfg.COMPASS_STRETCH_X === null) ? 100 : cfg.COMPASS_STRETCH_X;
-        State.compassStretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
-        State.compassOffsetX = (cfg.COMPASS_X_OFFSET === undefined || cfg.COMPASS_X_OFFSET === null) ? 0 : cfg.COMPASS_X_OFFSET;
-        State.compassOffsetY = (cfg.COMPASS_Y_OFFSET === undefined || cfg.COMPASS_Y_OFFSET === null) ? 120 : cfg.COMPASS_Y_OFFSET;
+        State.compass.enabled = (cfg.ENABLE_COMPASS === 1);
+        State.compass.showSpeed = (cfg.ENABLE_COMPASS_SPEED === 1);
+        State.compass.scale = (cfg.COMPASS_SCALE === undefined || cfg.COMPASS_SCALE === null) ? 100 : cfg.COMPASS_SCALE;
+        State.compass.stretchX = (cfg.COMPASS_STRETCH_X === undefined || cfg.COMPASS_STRETCH_X === null) ? 100 : cfg.COMPASS_STRETCH_X;
+        State.compass.stretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
+        State.compass.offsetX = (cfg.COMPASS_X_OFFSET === undefined || cfg.COMPASS_X_OFFSET === null) ? 0 : cfg.COMPASS_X_OFFSET;
+        State.compass.offsetY = (cfg.COMPASS_Y_OFFSET === undefined || cfg.COMPASS_Y_OFFSET === null) ? 120 : cfg.COMPASS_Y_OFFSET;
         if (
             shouldApplyStaticClasses ||
             State.passiveCooldownModeApplied !== passiveCooldownMode ||
@@ -32155,12 +33117,11 @@ function GetUIRoot() {
     function IsAnyAnnouncerReminderTypeEnabled(cfg) {
         if (!cfg) return false;
         return (
-            Number(cfg.ENABLE_MINIMAP_REMINDER) === 1 ||
-            Number(cfg.ENABLE_INTERVAL) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER1) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER2) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER3) === 1
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER") ||
+            IsCfgEnabled(cfg, "ENABLE_INTERVAL") ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
+            IsColorWarningEnabled(cfg) ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         );
     }
 
@@ -32270,7 +33231,7 @@ function GetUIRoot() {
         var voiceSelection = GetAnnouncerVoiceToken(cfg.VOICE_TYPE);
         var suffix = "_" + voiceSelection;
 
-        if (Number(cfg.ENABLE_MINIMAP_REMINDER) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER")) {
             var mInterval = cfg.MINIMAP_REMINDER_INTERVAL || 15;
             var mTarget = Math.floor(currentTime / mInterval) * mInterval;
             if (currentTime >= mTarget && currentTime < (mTarget + INTERNAL_CONFIG.ALERT_WINDOW)) {
@@ -32283,14 +33244,13 @@ function GetUIRoot() {
             }
         }
         if (
-            Number(cfg.ENABLE_ONE_TIME) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER1) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER2) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER3) === 1
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
+            IsColorWarningEnabled(cfg) ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         ) {
             INTERNAL_CONFIG.ONE_TIME_ALERTS.forEach(function(alert) {
                 var tierKey = String(alert && alert.tierKey ? alert.tierKey : "");
-                var tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (Number(cfg.ENABLE_ONE_TIME) === 1);
+                var tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (IsCfgEnabled(cfg, "ENABLE_ONE_TIME"));
                 if (!tierEnabled) return;
                 if (currentTime >= alert.time && currentTime < (alert.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
                     if (!State.triggeredOneTimers[alert.time]) {
@@ -32305,7 +33265,7 @@ function GetUIRoot() {
                 }
             });
         }
-        if (Number(cfg.ENABLE_INTERVAL) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_INTERVAL")) {
             var dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - (cfg.BRIDGE_BUFF_START || 30);
             var targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
             if (currentTime >= targetTime && currentTime < (targetTime + INTERNAL_CONFIG.ALERT_WINDOW)) {
@@ -32350,9 +33310,9 @@ function GetUIRoot() {
 
     function NeedsAmmoRuntimeWork(cfg) {
         if (!cfg) return false;
-        if (Number(cfg.ENABLE_AMMO_STATUS) === 1) return true;
-        if (Number(cfg.ENABLE_HIDE_MAGAZINE) === 1) return true;
-        if (Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
         if (Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
@@ -32378,10 +33338,10 @@ function GetUIRoot() {
         var shopScale = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0);
         return (
             Number(cfg.HUD_SHOP_ENABLED) !== 1 ||
-            (Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1) ||
-            Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 ||
-            Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-            Number(cfg.DISABLE_SHOP_BLUE) === 1 ||
+            (IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS")) ||
+            IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP") ||
+            IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_ITEMS") ||
+            IsCfgEnabled(cfg, "DISABLE_SHOP_BLUE") ||
             Math.round(shopOffsetX) !== 0 ||
             Math.round(shopOffsetY) !== 0 ||
             shopOpacity !== 1.0 ||
@@ -32424,9 +33384,9 @@ function GetUIRoot() {
     }
 
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
         return !!(
-            State.unsecuredSoulsHudStyleSig ||
+            State.unsecuredSouls.hudStyleSig ||
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
             IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
         );
@@ -32452,7 +33412,7 @@ function GetUIRoot() {
     }
 
     function NeedsKeyboardRuntimeWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_KEYBOARD_OVERLAY) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY")) return true;
         if (IsPanelValid(State.cachedPanels.keyboardOverlayRoot)) return true;
         return !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
     }
@@ -32468,12 +33428,12 @@ function GetUIRoot() {
     function IsOnDeathArcadeConfigActive(cfg) {
         if (!cfg || Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
         return (
-            Number(cfg.ON_DEATH_GAME_MINESWEEPER) === 1 ||
-            Number(cfg.ON_DEATH_GAME_BLACKJACK) === 1 ||
-            Number(cfg.ON_DEATH_GAME_FLAPPY_BAT) === 1 ||
-            Number(cfg.ON_DEATH_GAME_GRAVES_TRAINER) === 1 ||
-            Number(cfg.ON_DEATH_GAME_ZERGGY_MANIA) === 1 ||
-            Number(cfg.ON_DEATH_GAME_WHACK_A_REM) === 1
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM")
         );
     }
 
@@ -32494,10 +33454,10 @@ function GetUIRoot() {
     function NeedsCoreRootDynamicRuntimeWork(cfg) {
         if (!cfg) return false;
         var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
-        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
         if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
         if (fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
         if (State.passiveCooldownModeApplied !== passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
@@ -32515,8 +33475,8 @@ function GetUIRoot() {
 
     function BuildRuntimeFeatureConfigState(cfg, hideoutConnected) {
         var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var damageReportOffsetX = Number(cfg && cfg.DAMAGE_REPORT_X_OFFSET);
@@ -32538,23 +33498,23 @@ function GetUIRoot() {
         var shopScale = NormalizeHudScaleNumber(cfg && cfg.SHOP_SCALE, 1.0);
 
         return {
-            redDiamondEnabled: Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1,
-            keyboardRuntimeActive: Number(cfg && cfg.ENABLE_KEYBOARD_OVERLAY) === 1,
+            redDiamondEnabled: IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"),
+            keyboardRuntimeActive: IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY"),
             legacyAudioPassiveActive: (
                 IsPassiveCooldownBasicMode(passiveCooldownMode) ||
                 ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) ||
                 State.dl4dCaptionVisible ||
                 IsPanelValid(State.cachedPanels.dl4dCaptionPanel)
             ),
-            betterUnsecuredHudActive: Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1,
-            combatIndicatorActive: Number(cfg && cfg.ENABLE_COMBAT_INDICATOR) === 1,
+            betterUnsecuredHudActive: IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED"),
+            combatIndicatorActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR"),
             colorWarningActive: colorWarningEnabled,
             enemyColorWarningActive: IsEnemyColorWarningEnabled(cfg),
             allyColorWarningActive: IsAllyColorWarningEnabled(cfg),
             ammoActive: (
-                Number(cfg && cfg.ENABLE_AMMO_STATUS) === 1 ||
-                Number(cfg && cfg.ENABLE_HIDE_MAGAZINE) === 1 ||
-                Number(cfg && cfg.ENABLE_HIDE_AMMO_ALL) === 1 ||
+                IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS") ||
+                IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE") ||
+                IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL") ||
                 Number(cfg && cfg.AMMO_PANEL_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_CURRENT_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_TOTAL_SCALE) !== 100 ||
@@ -32564,11 +33524,11 @@ function GetUIRoot() {
             ),
             heroShopActive: (
                 Number(cfg && cfg.HUD_SHOP_ENABLED) !== 1 ||
-                (Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1) ||
-                Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP) === 1 ||
-                Number(cfg && cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-                Number(cfg && cfg.DISABLE_SHOP_BLUE) === 1 ||
-                Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 ||
+                (IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS")) ||
+                IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP") ||
+                IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_ITEMS") ||
+                IsCfgEnabled(cfg, "DISABLE_SHOP_BLUE") ||
+                IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
                 Math.round(shopOffsetX) !== 0 ||
                 Math.round(shopOffsetY) !== 0 ||
                 shopOpacity !== 1.0 ||
@@ -32603,34 +33563,34 @@ function GetUIRoot() {
                 NormalizeHudOffsetNumber(cfg && cfg.SOULS_Y_OFFSET, 0) !== 0
             ),
             targetShapesActive: (
-                Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1 ||
+                IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") ||
                 IsUnitTargetStyleCustomized(cfg)
             ),
             damageImpactRuntimeActive: HasNonDefaultDamageImpactRuntimeConfig(cfg),
             staminaChargeColorRuntimeActive: NeedsStaminaChargeColorRuntimeWork(cfg),
             damageNumbersActive: ResolveDamageNumbersRuntimeSig(cfg) !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG,
             minimapRuntimeActive: (
-                Number(cfg && cfg.ENABLE_ALT_ZOOM) === 1 ||
-                Number(cfg && cfg.ENABLE_TAB_ZOOM) === 1
+                IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") ||
+                IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")
             ),
             healthbarType: healthbarType,
             minimalistHealthbarEnabled: minimalistHealthbarEnabled,
             fgHealthbarEnabled: fgHealthbarEnabled,
             passiveCooldownMode: passiveCooldownMode,
-            reloadCircleActive: Number(cfg && cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1,
+            reloadCircleActive: IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"),
             healthbarRuntimeActive: (
                 minimalistHealthbarEnabled ||
                 HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
                 !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
                 Number(healthbarType) === 4 ||
-                Number(healthbarType) === 5
+                Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT
             ),
             chatRuntimeActive: HasNonDefaultChatRuntimeConfig(cfg),
             damageReportOffsetActive: (
                 Math.round(damageReportOffsetX) !== 0 ||
                 Math.round(damageReportOffsetY) !== 0
             ),
-            urnTrackerActive: Number(cfg && cfg.ENABLE_URN_DIFF) === 1,
+            urnTrackerActive: IsCfgEnabled(cfg, "ENABLE_URN_DIFF"),
             colorBridgeTarget: colorWarningEnabled ? "1" : "0"
         };
     }
@@ -32794,24 +33754,24 @@ function GetUIRoot() {
                 featureState: featureState,
                 redDiamondEnabled: featureState.redDiamondEnabled,
                 rejuvTimersActive: (
-                    Number(cfg && cfg.ENABLE_REJUV_HUD) === 1 ||
-                    Number(cfg && cfg.ENABLE_BUFF_HUD) === 1 ||
-                    Number(cfg && cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ||
-                    Number(cfg && cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1
+                    IsCfgEnabled(cfg, "ENABLE_REJUV_HUD") ||
+                    IsCfgEnabled(cfg, "ENABLE_BUFF_HUD") ||
+                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") ||
+                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER")
                 ),
-                spmActive: Number(cfg && cfg.ENABLE_MIN_SOULS) === 1,
-                unspentActive: Number(cfg && cfg.ENABLE_UNSPENT_SOULS) === 1,
-                nicknamesActive: Number(cfg && cfg.ENABLE_NICKNAMES) === 1,
-                statlockerActive: Number(cfg && cfg.ENABLE_STATLOCKER) === 1,
-                laneWithPartyActive: Number(cfg && cfg.ENABLE_LANE_WITH_PARTY) === 1,
+                spmActive: IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"),
+                unspentActive: IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"),
+                nicknamesActive: IsCfgEnabled(cfg, "ENABLE_NICKNAMES"),
+                statlockerActive: IsCfgEnabled(cfg, "ENABLE_STATLOCKER"),
+                laneWithPartyActive: IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"),
                 onDeathArcadeActive: IsOnDeathArcadeConfigActive(cfg),
-                zipBoostActive: Number(cfg && cfg.ENABLE_ZIP_BOOST) === 1,
-                unsecuredSoulsActive: Number(cfg && cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1,
-                statBonusesActive: Number(cfg && cfg.ENABLE_STAT_BONUSES) === 1,
-                combatStatusActive: Number(cfg && cfg.ENABLE_COMBAT_STATUS) === 1,
+                zipBoostActive: IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST"),
+                unsecuredSoulsActive: IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER"),
+                statBonusesActive: IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES"),
+                combatStatusActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS"),
                 combatIndicatorActive: featureState.combatIndicatorActive,
-                signatureFlashActive: Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1,
-                imagesInChatActive: Number(cfg && cfg.ENABLE_IMAGES_IN_CHAT) === 1,
+                signatureFlashActive: IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"),
+                imagesInChatActive: IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"),
                 keyboardRuntimeActive: featureState.keyboardRuntimeActive,
                 legacyAudioPassiveActive: featureState.legacyAudioPassiveActive,
                 betterUnsecuredHudActive: featureState.betterUnsecuredHudActive,
@@ -32834,24 +33794,24 @@ function GetUIRoot() {
             State.runtimeGates = gates;
         }
 
-        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 0));
-        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spmWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
-        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
-        gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0));
-        gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
+        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_SPM_STATLOCKER))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
+        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_UNSPENT_LANE))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
+        gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_REJUV_NICKNAMES));
+        gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         gates.onDeathArcade = gates.onDeathArcadeActive || State.onDeathArcadeRuntimeWasActive || State.onDeathArcadeWasDead;
-        gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
+        gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
         gates.keyboardRuntime = gates.keyboardRuntimeActive || IsPanelValid(State.cachedPanels.keyboardOverlayRoot) || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
-        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSoulsDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
-        gates.statBonuses = (gates.statBonusesActive || State.statBonusesDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
-        gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatusDisplayMode !== "";
+        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED));
+        gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
+        gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
         gates.imagesInChat = gates.imagesInChatActive;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
-            State.unsecuredSoulsHudStyleSig ||
+            State.unsecuredSouls.hudStyleSig ||
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
             IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
         );
@@ -32882,6 +33842,40 @@ function GetUIRoot() {
         gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
         gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.panelCache = false;
+
+        // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
+        // compassLoop (20Hz) can read from State.lastResolvedGates instead of
+        // recomputing 11+ Number() config checks and sticky-state evaluations.
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED") ||
+            IsPanelValid(State.cachedPanels.compassRoot) ||
+            State.compass.enabled ||
+            State.compass.showSpeed;
+        gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
+            IsCfgEnabled(cfg, "MINIMAP_FLIP") ||
+            (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
+        gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode) ||
+            State.itemMirror.probeWasEnabled ||
+            State.itemMirror.displayMode === "active";
+        gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
+            State.reloadCdLastDeg !== null ||
+            State.reloadCooldownStyleSig !== "" ||
+            IsPanelValid(State.cachedPanels.reloadCooldownLabel);
+        gates.compassUltCd = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+        gates.compassTargetShapesFast = gates.targetShapesActive;
+
+        // Hard-gate optimization: track whether any runtime feature needs execution.
+        // When every gate is false, loop() and compassLoop() can skip gate computation
+        // and degrade immediately to deep-idle intervals.
+        var _anyGateActive = false;
+        for (var _gk in gates) {
+            if (_gk !== "sig" && _gk !== "featureState" && gates[_gk] === true) {
+                _anyGateActive = true;
+                break;
+            }
+        }
+        State.allFeaturesDisabled = !_anyGateActive;
+
         return gates;
     }
 
@@ -32943,8 +33937,8 @@ function GetUIRoot() {
                 try { img.DeleteAsync(0); } catch (eOffTopB) {}
                 return;
             }
-            var w = img.actuallayoutwidth * 10.0;
-            var h = img.actuallayoutheight * 10.0;
+            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
+            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
@@ -32982,8 +33976,8 @@ function GetUIRoot() {
                 try { img.DeleteAsync(0); } catch (eOffBottomA) {}
                 return;
             }
-            var w = img.actuallayoutwidth * 10.0;
-            var h = img.actuallayoutheight * 10.0;
+            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
+            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
@@ -33223,9 +34217,7 @@ function GetUIRoot() {
         if (raw === State.lastRawConfig && State.lastConfig) {
             cfg = State.lastConfig;
         } else {
-            if (raw !== "") {
-                try { cfg = MergeConfig(JSON.parse(raw)); } catch(e) {}
-            }
+            cfg = SafeParseConfig(raw);
             if (!cfg) {
                 cfg = BuildDefaultConfig();
             }
@@ -33242,7 +34234,7 @@ function GetUIRoot() {
         }
         var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
         var corePhase = NextCoreSchedulerPhase();
-        ProcessPendingHeroRestore(nowMsLoop);
+        if (State.heroRestorePendingTarget) ProcessPendingHeroRestore(nowMsLoop);
         var perfSection = 0;
 
         if (ShouldRunBuildCategoryPayloadOverride(root, nowMsLoop)) {
@@ -33258,74 +34250,121 @@ function GetUIRoot() {
         State.lastConfig = cfg;
         var hideoutConnected = root ? isConnectedToHideout(root) : false;
         var hasConfigSource = !!(raw && raw.length > 0);
+
+        // Hard-gate: when all features are disabled and no pending work exists,
+        // skip gate computation and feature execution entirely.
+        // This saves ~0.05-0.1ms per tick in the common "nothing to do" case.
+        if (State.allFeaturesDisabled && raw === State.lastRawConfig &&
+            !State.heroRestorePendingTarget &&
+            !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
+            !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted &&
+            !State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) {
+            State.lastRawConfig = raw;
+            nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
+            return;
+        }
+
+        // Sweep stale cached panels once per second (Fix 1)
+        var nowSec = Math.floor(nowMsLoop / 1000);
+        if (nowSec !== (State.lastCacheSweepSec || 0)) {
+            State.lastCacheSweepSec = nowSec;
+            var swept = SweepStalePanelCache();
+            if (swept > 0 && State.perfEnabled) {
+                QOL_DEBUG("cache", "swept " + swept + " stale panel refs");
+            }
+        }
+
         var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
+        State.lastResolvedGates = gates;
         var redDiamondEnabled = gates.redDiamondEnabled;
 
         if (gates.rejuvTimers) {
-            perfSection = PerfStart();
-            UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
-            PerfEnd("loop.rejuv_timers", perfSection);
+            ExecuteFeature("rejuvTimers", function() {
+                perfSection = PerfStart();
+                UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
+                PerfEnd("loop.rejuv_timers", perfSection);
+            });
         }
 
         if (gates.spm) {
-            perfSection = PerfStart();
-            UpdateSoulsPerMinute(root, nowMsLoop, cfg);
-            PerfEnd("loop.souls_per_min", perfSection);
+            ExecuteFeature("spm", function() {
+                perfSection = PerfStart();
+                UpdateSoulsPerMinute(root, nowMsLoop, cfg);
+                PerfEnd("loop.souls_per_min", perfSection);
+            });
         }
 
         if (gates.unspent) {
-            perfSection = PerfStart();
-            UpdateUnspentSouls(root, nowMsLoop, cfg);
-            PerfEnd("loop.unspent", perfSection);
+            ExecuteFeature("unspent", function() {
+                perfSection = PerfStart();
+                UpdateUnspentSouls(root, nowMsLoop, cfg);
+                PerfEnd("loop.unspent", perfSection);
+            });
         }
 
         if (gates.nicknames) {
-            perfSection = PerfStart();
-            UpdateTopBarNicknames(root, nowMsLoop, cfg);
-            PerfEnd("loop.topbar_nicknames", perfSection);
+            ExecuteFeature("nicknames", function() {
+                perfSection = PerfStart();
+                UpdateTopBarNicknames(root, nowMsLoop, cfg);
+                PerfEnd("loop.topbar_nicknames", perfSection);
+            });
         }
 
         if (gates.statlocker) {
-            perfSection = PerfStart();
-            UpdateStatlockerButtons(root, nowMsLoop, cfg);
-            PerfEnd("loop.statlocker", perfSection);
+            ExecuteFeature("statlocker", function() {
+                perfSection = PerfStart();
+                UpdateStatlockerButtons(root, nowMsLoop, cfg);
+                PerfEnd("loop.statlocker", perfSection);
+            });
         }
 
         if (gates.panelCache) {
-            perfSection = PerfStart();
-            EnsureCoreLoopPanelCaches(root);
-            PerfEnd("loop.panel_cache", perfSection);
+            ExecuteFeature("panelCache", function() {
+                perfSection = PerfStart();
+                EnsureCoreLoopPanelCaches(root);
+                PerfEnd("loop.panel_cache", perfSection);
+            });
         }
 
         if (gates.onDeathArcade) {
-            perfSection = PerfStart();
-            UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
-            State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
-            PerfEnd("loop.on_death_arcade", perfSection);
+            ExecuteFeature("onDeathArcade", function() {
+                perfSection = PerfStart();
+                UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
+                State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
+                PerfEnd("loop.on_death_arcade", perfSection);
+            });
         }
 
         if (root && gates.coreRoot) {
-            perfSection = PerfStart();
-            redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
-            State.coreRootGateSig = gates.sig;
-            PerfEnd("loop.root_classes", perfSection);
+            ExecuteFeature("coreRoot", function() {
+                perfSection = PerfStart();
+                redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
+                State.coreRootGateSig = gates.sig;
+                PerfEnd("loop.root_classes", perfSection);
+            });
         } else if (root && gates.healthbarRuntimeHelpers) {
-            perfSection = PerfStart();
-            UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
-            PerfEnd("loop.healthbar_helpers", perfSection);
+            ExecuteFeature("healthbarRuntimeHelpers", function() {
+                perfSection = PerfStart();
+                UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
+                PerfEnd("loop.healthbar_helpers", perfSection);
+            });
         }
         var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
         var loopAccentNeedsRefresh = (
             loopAccentColor !== "" ||
             !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0)
         );
-        var loopAccentSigParts = String(State.playerHealthbarAccentColorSig || "").split("|");
+        if (State.playerHealthbarAccentColorSig !== State._cachedAccentSigSource) {
+            State._cachedAccentSigSource = State.playerHealthbarAccentColorSig;
+            State._cachedAccentSigParts = String(State.playerHealthbarAccentColorSig || "").split("|");
+        }
+        var loopAccentSigParts = State._cachedAccentSigParts;
         var loopCurrentAccentColor = loopAccentSigParts.length > 1 ? loopAccentSigParts[loopAccentSigParts.length - 1] : "";
         if (root && loopAccentNeedsRefresh && loopCurrentAccentColor !== loopAccentColor) {
             perfSection = PerfStart();
             var accentHealthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!accentHealthContainer && root.FindChildTraverse) {
-                accentHealthContainer = root.FindChildTraverse("health_and_abilities_container");
+                accentHealthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 State.cachedPanels.healthContainer = accentHealthContainer || null;
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
@@ -33333,171 +34372,246 @@ function GetUIRoot() {
         }
 
         if (gates.laneWithParty) {
-            perfSection = PerfStart();
-            UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
-            PerfEnd("loop.lane_with_party", perfSection);
+            ExecuteFeature("laneWithParty", function() {
+                perfSection = PerfStart();
+                UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
+                PerfEnd("loop.lane_with_party", perfSection);
+            });
         }
 
         if (gates.gameplayMouseCursor) {
-            perfSection = PerfStart();
-            UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
-            PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+            ExecuteFeature("gameplayMouseCursor", function() {
+                perfSection = PerfStart();
+                UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
+                PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+            });
         }
 
         if (gates.betterUnsecuredHud) {
-            perfSection = PerfStart();
-            UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
-            PerfEnd("loop.unsecured_souls_hud", perfSection);
+            ExecuteFeature("betterUnsecuredHud", function() {
+                perfSection = PerfStart();
+                UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
+                PerfEnd("loop.unsecured_souls_hud", perfSection);
+            });
         }
 
         if (gates.colorWarning) {
-            perfSection = PerfStart();
-            UpdateColoredHealthbarRuntime(root, cfg);
-            PerfEnd("loop.colored_healthbar", perfSection);
+            ExecuteFeature("colorWarning", function() {
+                perfSection = PerfStart();
+                UpdateColoredHealthbarRuntime(root, cfg);
+                PerfEnd("loop.colored_healthbar", perfSection);
+            });
         }
 
         if (gates.enemyColorWarning) {
-            perfSection = PerfStart();
-            UpdateEnemyColoredHealthRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.enemy_colored_healthbar", perfSection);
+            ExecuteFeature("enemyColorWarning", function() {
+                perfSection = PerfStart();
+                UpdateEnemyColoredHealthRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.enemy_colored_healthbar", perfSection);
+            });
         }
 
         if (gates.allyColorWarning) {
-            perfSection = PerfStart();
-            UpdateAllyColoredHealthRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.ally_colored_healthbar", perfSection);
+            ExecuteFeature("allyColorWarning", function() {
+                perfSection = PerfStart();
+                UpdateAllyColoredHealthRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.ally_colored_healthbar", perfSection);
+            });
         }
 
         if (gates.ammo) {
-            perfSection = PerfStart();
-            UpdateAmmoPanelRuntime(root, cfg);
-            PerfEnd("loop.ammo_panel", perfSection);
+            ExecuteFeature("ammo", function() {
+                perfSection = PerfStart();
+                UpdateAmmoPanelRuntime(root, cfg);
+                PerfEnd("loop.ammo_panel", perfSection);
+            });
         }
 
         if (gates.topBarRuntime) {
-            perfSection = PerfStart();
-            UpdateTopBarRuntime(root, cfg);
-            PerfEnd("loop.top_bar_runtime", perfSection);
+            ExecuteFeature("topBarRuntime", function() {
+                perfSection = PerfStart();
+                UpdateTopBarRuntime(root, cfg);
+                PerfEnd("loop.top_bar_runtime", perfSection);
+            });
         }
 
         if (gates.bottomBarRuntime) {
-            perfSection = PerfStart();
-            UpdateBottomBarRuntime(root, cfg);
-            PerfEnd("loop.bottom_bar_runtime", perfSection);
+            ExecuteFeature("bottomBarRuntime", function() {
+                perfSection = PerfStart();
+                UpdateBottomBarRuntime(root, cfg);
+                PerfEnd("loop.bottom_bar_runtime", perfSection);
+            });
         }
 
         if (gates.itemsRuntime) {
-            perfSection = PerfStart();
-            UpdateItemsRuntime(root, cfg);
-            PerfEnd("loop.items_runtime", perfSection);
+            ExecuteFeature("itemsRuntime", function() {
+                perfSection = PerfStart();
+                UpdateItemsRuntime(root, cfg);
+                PerfEnd("loop.items_runtime", perfSection);
+            });
         }
 
         if (gates.soulsRuntime) {
-            perfSection = PerfStart();
-            UpdateSoulsRuntime(root, cfg);
-            PerfEnd("loop.souls_runtime", perfSection);
+            ExecuteFeature("soulsRuntime", function() {
+                perfSection = PerfStart();
+                UpdateSoulsRuntime(root, cfg);
+                PerfEnd("loop.souls_runtime", perfSection);
+            });
         }
 
         if (gates.heroShop) {
-            perfSection = PerfStart();
-            var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
-            UpdateHeroShopRuntime(root, cfg, nowMsClass);
-            PerfEnd("loop.hero_shop", perfSection);
+            ExecuteFeature("heroShop", function() {
+                perfSection = PerfStart();
+                var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
+                UpdateHeroShopRuntime(root, cfg, nowMsClass);
+                PerfEnd("loop.hero_shop", perfSection);
+            });
         }
-        UpdateRecentPurchases(root, cfg);
+        if (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") || IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS") || State.recentPurchasesWasEnabled) {
+            UpdateRecentPurchases(root, cfg);
+        }
 
         if (gates.keyboardRuntime) {
-            perfSection = PerfStart();
-            UpdateKeyboardOverlayRuntime(root, cfg);
-            PerfEnd("loop.keyboard_overlay", perfSection);
+            ExecuteFeature("keyboardRuntime", function() {
+                perfSection = PerfStart();
+                UpdateKeyboardOverlayRuntime(root, cfg);
+                PerfEnd("loop.keyboard_overlay", perfSection);
+            });
         }
 
         if (gates.zipBoost) {
-            perfSection = PerfStart();
-            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.zip_boost", perfSection);
+            ExecuteFeature("zipBoost", function() {
+                perfSection = PerfStart();
+                UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.zip_boost", perfSection);
+            });
         }
 
         if (gates.unsecuredSouls) {
-            perfSection = PerfStart();
-            UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.unsecured_souls_overlay", perfSection);
+            ExecuteFeature("unsecuredSouls", function() {
+                perfSection = PerfStart();
+                UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.unsecured_souls_overlay", perfSection);
+            });
         }
 
         if (gates.statBonuses) {
-            perfSection = PerfStart();
-            UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.stat_bonuses", perfSection);
+            ExecuteFeature("statBonuses", function() {
+                perfSection = PerfStart();
+                UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.stat_bonuses", perfSection);
+            });
         }
 
         if (gates.combatStatus) {
-            perfSection = PerfStart();
-            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
-            PerfEnd("loop.combat_status", perfSection);
+            ExecuteFeature("combatStatus", function() {
+                perfSection = PerfStart();
+                UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
+                PerfEnd("loop.combat_status", perfSection);
+            });
         }
 
         if (gates.signatureFlash) {
-            perfSection = PerfStart();
-            UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.signature_flash", perfSection);
+            ExecuteFeature("signatureFlash", function() {
+                perfSection = PerfStart();
+                UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.signature_flash", perfSection);
+            });
         }
 
         if (gates.targetShapes) {
-            perfSection = PerfStart();
-            var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-            nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
-            PerfEnd("loop.target_shapes", perfSection);
+            ExecuteFeature("targetShapes", function() {
+                perfSection = PerfStart();
+                var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
+                nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
+                ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
+                PerfEnd("loop.target_shapes", perfSection);
+            });
         }
 
         if (gates.damageImpactRuntime) {
-            perfSection = PerfStart();
-            UpdateDamageImpactRuntime(root, cfg);
-            PerfEnd("loop.damage_impact_runtime", perfSection);
+            ExecuteFeature("damageImpactRuntime", function() {
+                perfSection = PerfStart();
+                UpdateDamageImpactRuntime(root, cfg);
+                PerfEnd("loop.damage_impact_runtime", perfSection);
+            });
         }
 
         if (gates.staminaChargeColorRuntime) {
-            perfSection = PerfStart();
-            UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
-            PerfEnd("loop.stamina_charge_color", perfSection);
+            ExecuteFeature("staminaChargeColorRuntime", function() {
+                perfSection = PerfStart();
+                UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
+                PerfEnd("loop.stamina_charge_color", perfSection);
+            });
         }
 
         if (gates.damageNumbers) {
-            perfSection = PerfStart();
-            UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
-            PerfEnd("loop.damage_numbers", perfSection);
+            ExecuteFeature("damageNumbers", function() {
+                perfSection = PerfStart();
+                UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
+                PerfEnd("loop.damage_numbers", perfSection);
+            });
         }
 
         if (gates.minimapRuntime) {
-            perfSection = PerfStart();
-            UpdateMinimapRuntime(root, cfg, raw);
-            PerfEnd("loop.minimap", perfSection);
+            ExecuteFeature("minimapRuntime", function() {
+                perfSection = PerfStart();
+                UpdateMinimapRuntime(root, cfg, raw);
+                PerfEnd("loop.minimap", perfSection);
+            });
         }
 
         if (gates.legacyAudioPassive) {
-            perfSection = PerfStart();
-            UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
-            PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+            ExecuteFeature("legacyAudioPassive", function() {
+                perfSection = PerfStart();
+                UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
+                PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+            });
         }
 
         if (gates.imagesInChat) {
-            perfSection = PerfStart();
-            UpdateImagesInChat(root, cfg);
-            PerfEnd("loop.images_in_chat", perfSection);
+            ExecuteFeature("imagesInChat", function() {
+                perfSection = PerfStart();
+                UpdateImagesInChat(root, cfg);
+                PerfEnd("loop.images_in_chat", perfSection);
+            });
         }
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
         if (State.accountPresetTestActive) {
             State.accountPresetTestActive = false;
         }
-        if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
-        if (ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
-        if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+        if (State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted ||
+            State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
+            State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
+            if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
+            if (ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
+            if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+        }
         State.lastRawConfig = raw;
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
             FlushPerfIfNeeded(false);
         }
+
+        // ---- Adaptive Polling Degradation (Fix 9) ----
+        // Track frame time for low-FPS detection
+        if (State.perfLastLoopStartMs > 0) {
+            State.perfLastFrameTimeMs = perfLoopStartMs - State.perfLastLoopStartMs;
+        }
+
+        // Compute dynamic interval based on game idle state
+        var idleState = DetectGlobalIdleState(root);
+        var dynamicInterval = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, idleState);
+        if (idleState.level !== State.lastIdleLevel) {
+            if (State.lastIdleLevel !== undefined) {
+                QOL_INFO("loop", "idle level: " + State.lastIdleLevel + " -> " + idleState.level +
+                         " (interval: " + dynamicInterval.toFixed(2) + "s)");
+            }
+            State.lastIdleLevel = idleState.level;
+        }
+        nextDelaySec = dynamicInterval;
+
         } catch (err) {
             LogLoopException("loop", err, "loopErrorNextLogMs", PerfNowMs());
         } finally {
@@ -33517,15 +34631,19 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                if (raw !== "") {
-                    try { cfg = MergeConfig(JSON.parse(raw)); } catch (e0) {}
-                }
+                cfg = SafeParseConfig(raw);
                 if (!cfg) cfg = BuildDefaultConfig();
+            }
+
+            // Lazy-init: skip if neither target shapes nor red diamond is enabled (Fix 8)
+            if (Number(cfg.ENABLE_TARGET_SHAPES) !== 1 && Number(cfg.ENABLE_RED_DIAMOND) !== 1) {
+                State.unitTargetBootstrapDone = true;
+                return;
             }
 
             var style = ResolveUnitTargetStyleTexts(cfg);
             var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, Number(cfg.ENABLE_RED_DIAMOND) === 1);
+            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"));
 
             var hasTargetShapes = !!(State.targetShapesCache && State.targetShapesCache.length > 0);
             var hasStoredConfig = (raw && raw.length > 0);

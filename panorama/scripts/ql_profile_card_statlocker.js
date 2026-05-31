@@ -106,7 +106,6 @@
         if (!accountId) return;
         var url = "https://statlocker.gg/profile/" + accountId;
         try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e0) {}
-        try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (e1) {}
     }
 
     function UpdateLabel() {
@@ -127,6 +126,14 @@
             label.text = displayId ? ("Friend ID: " + displayId) : "Friend ID:";
         }
         $.Schedule(UPDATE_INTERVAL_SEC, UpdateLabel);
+    }
+
+    // Event-driven update: fire on profile card changes instead of
+    // polling at 2Hz. Confirmed valid in dispatch_events.txt lines 377/386
+    // and live runtime testing.
+    if (typeof $ !== "undefined" && typeof $.RegisterForUnhandledEvent === "function") {
+        try { $.RegisterForUnhandledEvent("CitadelProfileCardUpdated", function() { UpdateLabel(); }); } catch (e) {}
+        try { $.RegisterForUnhandledEvent("CitadelShowProfilePage", function() { UpdateLabel(); }); } catch (e) {}
     }
 
     UpdateLabel();

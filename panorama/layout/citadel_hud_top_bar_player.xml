@@ -133,5 +133,6 @@
 			<Panel id="LaneSwapIcon" />
 		</CitadelHudTopBarLaneSwapContainer>
 		<Panel id="SpectatePlayerButtonPanel" onmouseover="$.GetContextPanel().AddClass(&apos;SpectateHover&apos;)" onmouseout="$.GetContextPanel().RemoveClass(&apos;SpectateHover&apos;)" />
+		<Label class="HeroNameHidden" text="{g:citadel_hero_name:hero_id}" />
 	</CitadelHudTopBarPlayer>
 </root>

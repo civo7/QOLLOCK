@@ -1,8 +1,34 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.0.4";
+var QOL_SCHEMA_SEMVER = "3.0.7";
 var QOL_SCHEMA_WIRE_VERSION = 2;
+
+// ---- Storage envelope helpers (Fix: schema-versioned config storage) ----
+// Wraps a config object for storage with schema version tag.
+// Produces: {"schema":"3.0.7","data":{...}}
+if (typeof WrapConfigForStorage !== "function") {
+    var WrapConfigForStorage = function(config) {
+        return JSON.stringify({ schema: QOL_SCHEMA_SEMVER, data: config });
+    };
+}
+// Unwraps a stored raw string. Handles both the new envelope format
+// and legacy raw-JSON configs. Returns { config, schema, isEnveloped } or null.
+if (typeof UnwrapConfigFromStorage !== "function") {
+    var UnwrapConfigFromStorage = function(raw) {
+        if (!raw || raw === "") return null;
+        try {
+            var parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && typeof parsed.schema === "string" && typeof parsed.data === "object" && parsed.data !== null) {
+                return { config: parsed.data, schema: parsed.schema, isEnveloped: true };
+            }
+            // Legacy format: the whole object IS the config
+            return { config: parsed, schema: null, isEnveloped: false };
+        } catch (e) {
+            return null;
+        }
+    };
+}
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
 
@@ -384,6 +410,20 @@ if (typeof QOL_SCHEMA_UTILS.WriteConfigStorageRaw !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.CompareSchemaSemver !== "function") {
+    QOL_SCHEMA_UTILS.CompareSchemaSemver = function(a, b) {
+        var aa = String(a || "").split(".");
+        var bb = String(b || "").split(".");
+        for (var i = 0; i < 3; i++) {
+            var av = Math.max(0, Math.round(Number(aa[i]) || 0));
+            var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
+            if (av < bv) return -1;
+            if (av > bv) return 1;
+        }
+        return 0;
+    };
+}
+
 if (typeof QOL_SCHEMA_UTILS.NormalizeNeutralCampTierConfig !== "function") {
     QOL_SCHEMA_UTILS.NormalizeNeutralCampTierConfig = function(configTarget, sourceConfig) {
         if (!configTarget) return;
@@ -603,6 +643,21 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeVoiceTypeConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget || {};
+        var hasOwn = Object.prototype.hasOwnProperty;
+        // One-time migration: old key → new key, only when new key is absent
+        if (hasOwn.call(source, "ENABLE_SHOP_CLICK_TO_NOTIFY") &&
+            !hasOwn.call(source, "ENABLE_SHOP_ITEM_NOTIFICATIONS")) {
+            configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS = source.ENABLE_SHOP_CLICK_TO_NOTIFY;
+        }
+        // Keep old key in sync for compact-schema backward compatibility
+        configTarget.ENABLE_SHOP_CLICK_TO_NOTIFY = configTarget.ENABLE_SHOP_ITEM_NOTIFICATIONS;
+    };
+}
+
 if (typeof QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue !== "function") {
     QOL_SCHEMA_UTILS.NormalizeHealthbarTypeValue = function(rawValue) {
         var asInt = Math.round(Number(rawValue));
@@ -794,6 +849,29 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.MigrateSplitZoomKeys !== "function") {
+    QOL_SCHEMA_UTILS.MigrateSplitZoomKeys = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget;
+        var hasOwn = Object.prototype.hasOwnProperty;
+
+        function assignIfMissing(newKey, legacyKey) {
+            var hasNewInSource = source && hasOwn.call(source, newKey);
+            var hasLegacyInTarget = configTarget[legacyKey] !== undefined && configTarget[legacyKey] !== null;
+            if (!hasLegacyInTarget) return;
+            if (hasNewInSource && configTarget[newKey] !== undefined && configTarget[newKey] !== null) return;
+            configTarget[newKey] = configTarget[legacyKey];
+        }
+
+        assignIfMissing("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE");
+        assignIfMissing("ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET");
+        assignIfMissing("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET");
+        assignIfMissing("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE");
+        assignIfMissing("ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET");
+        assignIfMissing("ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET");
+    };
+}
+
 var QOL_DEFAULT_CONFIG = {
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,
@@ -917,6 +995,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_ENHANCED_QUICKBUY: 0,
         ENHANCED_QUICKBUY_COUNT: 3,
         ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 0,
         ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
         RECENT_PURCHASES_QUICK_MAX: 3,
@@ -931,6 +1010,7 @@ var QOL_DEFAULT_CONFIG = {
         RECENT_PURCHASES_PANEL_Y_OFFSET: 0,
         RECENT_PURCHASES_PANEL_OPACITY: 1,
         RECENT_PURCHASES_PANEL_SCALE: 1,
+        ENABLE_HERO_PURCHASE_POPUPS: 0,
         ENABLE_SHOW_BUILD_ID: 0,
         ENABLE_SHOW_BUILD_ID_TITLE: 0,
         ENABLE_HUD_SHIFT: 0,
@@ -1610,7 +1690,7 @@ var QOL_PRESETS = {
         ENABLE_OLD_ITEM_COOLDOWNS: 0,
         VOICE_TYPE: 0,
         DISABLE_QUICK_BUY: 1,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 5,
         RECENT_PURCHASES_QUICK_Y_OFFSET: -20,
@@ -2013,7 +2093,7 @@ var QOL_PRESETS = {
         DISABLE_QUICK_BUY: 0,
         ENABLE_ENHANCED_QUICKBUY: 0,
         ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 0,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 0,
         ENABLE_SHOP_RECENT_PURCHASES: 0,
         RECENT_PURCHASES_QUICK_MAX: 3,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 10,
@@ -2655,7 +2735,7 @@ var QOL_PRESETS = {
         ITEM_FILTER_OFF_ACTIVE: 1,
         VOICE_TYPE: 6,
         ENABLE_ENHANCED_QUICKBUY: 1,
-        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         ENABLE_UNSPENT_SOULS: 1,
         UNSECURED_SOULS_HUD_X_OFFSET: 1000,

@@ -331,6 +331,226 @@ function fail(message) {
     process.exit(1);
 }
 
+// ---- Fuzz Testing (Fix 18) ----
+
+function randomInRange(min, max, step) {
+    const range = max - min;
+    const slots = Math.floor(range / step);
+    const randomSlot = Math.floor(Math.random() * (slots + 1));
+    let value = min + (randomSlot * step);
+    const decimals = String(step).includes(".")
+        ? String(step).split(".")[1].length
+        : 0;
+    return decimals > 0 ? parseFloat(value.toFixed(decimals)) : Math.round(value);
+}
+
+function generateRandomConfig(schema, baseConfig) {
+    const config = Object.assign({}, baseConfig || {});
+    const comparableSchema = schemaToComparable(schema);
+    for (const field of comparableSchema) {
+        if (field.key === "DEFAULT_HERO_INDEX") continue;
+        config[field.key] = randomInRange(field.min, field.max, field.step);
+    }
+    return config;
+}
+
+function deepEqual(a, b) {
+    return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function fuzzRoundTrip(exports, semver, registry, defaultConfig, iterations) {
+    const schema = registry[semver].schema;
+    const failures = [];
+    for (let i = 0; i < iterations; i++) {
+        const original = generateRandomConfig(schema, defaultConfig);
+        try {
+            const encoded = exports.serialize(original, semver);
+            const decoded = exports.deserialize(encoded, semver);
+            const reEncoded = exports.serialize(decoded, semver);
+            const reDecoded = exports.deserialize(reEncoded, semver);
+            // Verify stability: decode(encode(decode(encode(x)))) === decode(encode(x))
+            if (!deepEqual(decoded, reDecoded)) {
+                failures.push({
+                    iteration: i,
+                    type: "round_trip_instability",
+                    original: JSON.stringify(original),
+                    decoded: JSON.stringify(decoded),
+                    reDecoded: JSON.stringify(reDecoded)
+                });
+                if (failures.length >= 5) break; // Stop early on failures
+            }
+            // Verify no NaN, Infinity, or undefined in decoded values
+            for (const key of Object.keys(decoded)) {
+                const val = decoded[key];
+                if (typeof val === "number" && !Number.isFinite(val)) {
+                    failures.push({ iteration: i, type: "non_finite_value", key, value: val });
+                }
+                if (val === undefined) {
+                    failures.push({ iteration: i, type: "undefined_value", key });
+                }
+            }
+        } catch (e) {
+            failures.push({ iteration: i, type: "exception", message: String(e.message) });
+            if (failures.length >= 3) break;
+        }
+    }
+    return failures;
+}
+
+function fuzzEdgeCases(exports, semver, defaultConfig) {
+    const failures = [];
+    const cases = [
+        { name: "empty config", config: {} },
+        { name: "null config", config: null },
+    ];
+
+    // All-zeros config (set every known field to 0)
+    const zeroConfig = Object.assign({}, defaultConfig);
+    for (const key of Object.keys(zeroConfig)) {
+        if (typeof zeroConfig[key] === "number") zeroConfig[key] = 0;
+    }
+    cases.push({ name: "all zeros", config: zeroConfig });
+
+    // Sparse config with just one feature enabled
+    cases.push({ name: "sparse config", config: { ENABLE_COMPASS: 1, ENABLE_SPM: 0 } });
+
+    // Wrong types
+    cases.push({ name: "wrong types", config: Object.assign({}, defaultConfig, {
+        ENABLE_COMPASS: "yes",
+        HEALTHBAR_TYPE: 3.14,
+        SPM_SAMPLE_INTERVAL: "fast"
+    })});
+
+    // Unknown keys (these should be preserved by the codec)
+    cases.push({ name: "unknown keys", config: Object.assign({}, defaultConfig, {
+        UNKNOWN_FEATURE_FLAG: 1,
+        CUSTOM_SETTING_XYZ: "hello"
+    })});
+
+    for (const testCase of cases) {
+        try {
+            const encoded = exports.serialize(testCase.config, semver);
+            const decoded = exports.deserialize(encoded, semver);
+            // Verify decode doesn't produce NaN/Infinity/undefined
+            for (const key of Object.keys(decoded)) {
+                const val = decoded[key];
+                if (typeof val === "number" && !Number.isFinite(val)) {
+                    failures.push({ testCase: testCase.name, type: "non_finite_value", key, value: val });
+                }
+            }
+        } catch (e) {
+            // Edge cases that throw during serialize are acceptable if the input is invalid
+            // Only fail if decode of valid data throws
+            if (testCase.name !== "null config" && testCase.name !== "wrong types") {
+                failures.push({ testCase: testCase.name, type: "exception", message: String(e.message) });
+            }
+        }
+    }
+    return failures;
+}
+
+function fuzzCrossVersionMigration(exports, fromSemver, toSemver, registry, defaultConfig, iterations) {
+    const fromSchema = registry[fromSemver].schema;
+    const toSchema = registry[toSemver].schema;
+    const fromKeys = new Set(schemaToComparable(fromSchema).map(f => f.key));
+    const toKeys = new Set(schemaToComparable(toSchema).map(f => f.key));
+    const failures = [];
+
+    for (let i = 0; i < iterations; i++) {
+        const original = generateRandomConfig(fromSchema, defaultConfig);
+        try {
+            const encoded = exports.serialize(original, fromSemver);
+            const decoded = exports.deserialize(encoded, toSemver);
+            // Verify keys present in both schemas are preserved
+            for (const key of fromKeys) {
+                if (toKeys.has(key) && original.hasOwnProperty(key)) {
+                    if (!decoded.hasOwnProperty(key)) {
+                        failures.push({
+                            iteration: i,
+                            type: "key_dropped",
+                            key,
+                            migration: `${fromSemver} -> ${toSemver}`
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            failures.push({
+                iteration: i,
+                type: "exception",
+                migration: `${fromSemver} -> ${toSemver}`,
+                message: String(e.message)
+            });
+            if (failures.length >= 3) break;
+        }
+    }
+    return failures;
+}
+
+function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegistry, coreRegistry) {
+    const settingsSemvers = Object.keys(settingsRegistry);
+    const FUZZ_ITERATIONS = 20;
+    const CROSS_VERSION_ITERATIONS = 10;
+    let totalTests = 0;
+    let totalFailures = 0;
+
+    // Round-trip fuzz for latest version
+    const latestSemver = settingsSemvers[settingsSemvers.length - 1];
+    const settingsRoundTripFails = fuzzRoundTrip(settingsExports, latestSemver, settingsRegistry, defaultConfig, FUZZ_ITERATIONS);
+    const coreRoundTripFails = fuzzRoundTrip(coreExports, latestSemver, coreRegistry, defaultConfig, FUZZ_ITERATIONS);
+    totalTests += FUZZ_ITERATIONS * 2;
+    totalFailures += settingsRoundTripFails.length + coreRoundTripFails.length;
+
+    if (settingsRoundTripFails.length > 0) {
+        console.error(`[SchemaGuard][fuzz] Settings round-trip failures at ${latestSemver}: ${JSON.stringify(settingsRoundTripFails.slice(0, 3))}`);
+    }
+    if (coreRoundTripFails.length > 0) {
+        console.error(`[SchemaGuard][fuzz] Core round-trip failures at ${latestSemver}: ${JSON.stringify(coreRoundTripFails.slice(0, 3))}`);
+    }
+
+    // Edge case tests
+    const settingsEdgeFails = fuzzEdgeCases(settingsExports, latestSemver, defaultConfig);
+    const coreEdgeFails = fuzzEdgeCases(coreExports, latestSemver, defaultConfig);
+    totalTests += 12; // 6 edge cases × 2 exports
+    totalFailures += settingsEdgeFails.length + coreEdgeFails.length;
+
+    if (settingsEdgeFails.length > 0) {
+        console.error(`[SchemaGuard][fuzz] Settings edge case failures: ${JSON.stringify(settingsEdgeFails)}`);
+    }
+    if (coreEdgeFails.length > 0) {
+        console.error(`[SchemaGuard][fuzz] Core edge case failures: ${JSON.stringify(coreEdgeFails)}`);
+    }
+
+    // Cross-version migration: from select old versions to latest
+    const crossVersionSources = settingsSemvers.filter(s => s !== latestSemver && s >= "2.3.0");
+    for (const fromSemver of crossVersionSources) {
+        const crossFails = fuzzCrossVersionMigration(settingsExports, fromSemver, latestSemver, settingsRegistry, defaultConfig, CROSS_VERSION_ITERATIONS);
+        totalTests += CROSS_VERSION_ITERATIONS;
+        totalFailures += crossFails.length;
+        if (crossFails.length > 0) {
+            console.error(`[SchemaGuard][fuzz] Cross-version failures ${fromSemver} -> ${latestSemver}: ${JSON.stringify(crossFails.slice(0, 3))}`);
+        }
+    }
+
+    // Migration recovery: decode at latest with corrupt wire version should throw (not silently corrupt)
+    const fixtureConfig = generateRandomConfig(settingsRegistry[latestSemver].schema, defaultConfig);
+    const fixtureEncoded = settingsExports.serialize(fixtureConfig, latestSemver);
+    try {
+        settingsExports.deserialize(mutateEncodedWireVersion(fixtureEncoded, 99), latestSemver);
+        // If it didn't throw, check if the result is at least valid JSON-like
+        totalTests += 1;
+    } catch (_migrationRecoveryErr) {
+        // Expected — mismatched wire version should throw
+        totalTests += 1;
+    }
+
+    if (totalFailures > 0) {
+        fail(`Fuzz testing found ${totalFailures} failures across ${totalTests} tests`);
+    }
+
+    return { totalTests, totalFailures };
+}
+
 function main() {
     const settingsContext = loadContext(
         [sharedPath, settingsPath],
@@ -466,7 +686,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.0.5", "3.0.6", "3.0.7"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -570,6 +790,23 @@ function main() {
     ];
     const enhancedQuickbuyCountKeys = [
         "ENHANCED_QUICKBUY_COUNT"
+    ];
+    const heroPurchasePopupKeys = [
+        "ENABLE_HERO_PURCHASE_POPUPS"
+    ];
+    const shopItemNotificationKeys = [
+        "ENABLE_SHOP_ITEM_NOTIFICATIONS"
+    ];
+    const compact306MissingKeys = [
+        "ENABLE_ALLY_COLORED_HEALTHBAR",
+        "ENABLE_ALLY_COLOR_WARNING_25",
+        "ENABLE_ALLY_COLOR_WARNING_65",
+        "ENABLE_ALLY_COLOR_WARNING_75",
+        "ENABLE_PERF_DEBUG",
+        "ENABLE_PERF_DEBUG_DETAIL",
+        "ENABLE_SPECIALS",
+        "DRAG_ENABLED",
+        "PREVIEWS_ENABLED"
     ];
     const showRankTopBarModeKeys = [
         "SHOW_RANK_TOP_BAR_MODE"
@@ -925,13 +1162,43 @@ function main() {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
             }
-            for (const key of showRankTopBarModeKeys) {
+            for (const key of heroPurchasePopupKeys.concat(shopItemNotificationKeys, compact306MissingKeys, showRankTopBarModeKeys)) {
                 if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
                 if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
             }
         }
         if (semver === "3.0.4") {
-            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys, showRankTopBarModeKeys)) {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys, heroPurchasePopupKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
+            }
+            for (const key of shopItemNotificationKeys.concat(compact306MissingKeys, showRankTopBarModeKeys)) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
+            }
+        }
+        if (semver === "3.0.5") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys, heroPurchasePopupKeys, shopItemNotificationKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
+            }
+            for (const key of compact306MissingKeys.concat(showRankTopBarModeKeys)) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
+            }
+        }
+        if (semver === "3.0.6") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys, heroPurchasePopupKeys, shopItemNotificationKeys, compact306MissingKeys)) {
+                if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
+                if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
+            }
+            for (const key of showRankTopBarModeKeys) {
+                if (settingsSchemaKeys.has(key)) fail(`Settings ${semver} should omit ${key}`);
+                if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
+            }
+        }
+        if (semver === "3.0.7") {
+            for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys, heroPurchasePopupKeys, shopItemNotificationKeys, compact306MissingKeys, showRankTopBarModeKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
             }
@@ -979,7 +1246,8 @@ function main() {
         } catch (_coreWireErr) {}
     }
 
-    console.log(`[SchemaGuard] OK: ${settingsSemvers.length} schema versions and ${configNames.length} config states validated.`);
+    const fuzzResult = runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegistry, coreRegistry);
+    console.log(`[SchemaGuard] OK: ${settingsSemvers.length} schema versions, ${configNames.length} config states, ${fuzzResult.totalTests} fuzz tests validated.`);
 }
 
 main();

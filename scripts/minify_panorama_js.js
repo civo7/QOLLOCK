@@ -42,6 +42,7 @@ function newlineNeedsSemicolon(prevTokenType, prevTokenValue, nextType, nextValu
   if (tokenCanEndStatement(prevTokenType, prevTokenValue)) {
     if (nextType === "operator" && /^(?:\(|\[|\+|-|\/)$/.test(nextValue)) return true;
     if (tokenStartsRestrictedStatement(nextType, nextValue)) return true;
+    if (nextType === "word" && /^(?:var|let|const|function|class|if|for|while|switch|try|do)$/.test(nextValue)) return true;
   }
 
   return false;

@@ -89,7 +89,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "Hanturaya",
-    ENABLE_SHOP_CLICK_TO_NOTIFY: "Hanturaya",
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: "Hanturaya",
     ENABLE_SHOP_RECENT_PURCHASES: "Hanturaya, bytenode",
     RECENT_PURCHASES_QUICK_MAX: "bytenode",
     RECENT_PURCHASES_QUICK_DISPLAY_SEC: "bytenode",
@@ -157,7 +157,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_ENHANCED_QUICKBUY": "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
     "ENHANCED_QUICKBUY_COUNT": "Controls how many enhanced quickbuy preview items are shown.",
     "ENABLE_QUICKBUY_CLICK_TO_NOTIFY": "Notify your teammates in chat about how close you are to a quickbuy purchase.",
-    "ENABLE_SHOP_CLICK_TO_NOTIFY": "Shows item buy notifications from recent purchases.",
+    "ENABLE_SHOP_ITEM_NOTIFICATIONS": "Shows item buy notifications from recent purchases.",
+    "ENABLE_HERO_PURCHASE_POPUPS": "Show purchase notifications under each hero's portrait instead of in the center.",
     "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
     "ENABLE_SHOW_BUILD_ID": "Shows your build information always for content creators",
     "ENABLE_SHOW_BUILD_ID_TITLE": "Append the selected build title after the build ID.",
@@ -553,7 +554,8 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_RELOAD_COOLDOWN: "medium",
     ENABLE_SHOP_STATS: "low",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "low",
-    ENABLE_SHOP_CLICK_TO_NOTIFY: "low",
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: "low",
+    ENABLE_HERO_PURCHASE_POPUPS: "low",
     ENABLE_SHOP_RECENT_PURCHASES: "low",
     RECENT_PURCHASES_QUICK_OPACITY: "low",
     RECENT_PURCHASES_PANEL_OPACITY: "low",
@@ -9528,24 +9530,10 @@ function GetZoomConfigKeysForMode(mode) {
 }
 
 function MigrateSplitZoomKeys(configTarget, sourceConfig) {
-    if (!configTarget) return;
-    var source = sourceConfig || configTarget;
-    var hasOwn = Object.prototype.hasOwnProperty;
-
-    function assignIfMissing(newKey, legacyKey) {
-        var hasNewInSource = source && hasOwn.call(source, newKey);
-        var hasLegacyInTarget = configTarget[legacyKey] !== undefined && configTarget[legacyKey] !== null;
-        if (!hasLegacyInTarget) return;
-        if (hasNewInSource && configTarget[newKey] !== undefined && configTarget[newKey] !== null) return;
-        configTarget[newKey] = configTarget[legacyKey];
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
+        utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
     }
-
-    assignIfMissing("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE");
-    assignIfMissing("ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET");
-    assignIfMissing("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET");
-    assignIfMissing("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE");
-    assignIfMissing("ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET");
-    assignIfMissing("ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET");
 }
 
 function NormalizeNeutralCampFlags(configTarget, sourceConfig) {
@@ -9784,7 +9772,18 @@ function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
     }
 }
 
+function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
+        utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
+    }
+}
+
 function CompareSchemaSemver(a, b) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.CompareSchemaSemver === "function") {
+        return utils.CompareSchemaSemver(a, b);
+    }
     var aa = String(a || "").split(".");
     var bb = String(b || "").split(".");
     for (var i = 0; i < 3; i++) {
@@ -11384,6 +11383,9 @@ const RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
     { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
     { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+const HERO_PURCHASE_POPUPS_SCHEMA_FIELDS = [
+    { key: "ENABLE_HERO_PURCHASE_POPUPS", min: 0, max: 1, step: 1 }
+];
 const SHOW_BUILD_ID_SCHEMA_FIELDS = [
     { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
     { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
@@ -11498,6 +11500,36 @@ const COMPACT_SCHEMA_3_0_3 = AppendUniqueSchemaFields(
 );
 const COMPACT_SCHEMA_3_0_4 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_0_3,
+    HERO_PURCHASE_POPUPS_SCHEMA_FIELDS
+);
+// Fix: ENABLE_SHOP_ITEM_NOTIFICATIONS was missing from the compact schema.
+// The legacy key ENABLE_SHOP_CLICK_TO_NOTIFY was included but not the canonical key.
+const SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS = [
+    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 }
+];
+const COMPACT_SCHEMA_3_0_5 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_4,
+    SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
+);
+// 3.0.6: Add ally healthbar, perf debug, specials, drag, and previews keys
+// that were defined in QOL_DEFAULT_CONFIG but missing from compact serialization.
+const COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
+    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
+    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
+];
+const COMPACT_SCHEMA_3_0_6 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_5,
+    COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
+const COMPACT_SCHEMA_3_0_7 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_6,
     SHOW_RANK_TOP_BAR_MODE_SCHEMA_FIELDS
 );
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
@@ -11677,6 +11709,18 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.0.4": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_0_4
+    },
+    "3.0.5": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_6
+    },
+    "3.0.7": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_7
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -11830,6 +11874,7 @@ function ApplyParsedConfig(parsed) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, LATEST_COMPACT_SEMVER);
 }
 
@@ -11900,6 +11945,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
     NormalizeCompassSpeedSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
@@ -12484,11 +12530,7 @@ function ReadConfigRawFromStorage() {
         if (!target || !target.GetAttributeString) return "";
         try { return String(target.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { return ""; }
     };
-    var parseRev = function(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    };
+    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var readRev = function(target) {
         if (!target || !target.GetAttributeString) return 0;
         try { return parseRev(target.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { return 0; }
@@ -12514,34 +12556,55 @@ function ReadConfigRawFromStorage() {
     return chosenRaw;
 }
 
+// NormalizeConfig — single canonical normalization / migration chain.
+// Called from both SyncConfigFromStorage (on load) and SaveAndSync (on save).
+// When config === parsed (the save path), migration checks on hasOwn are safe no-ops.
+function NormalizeConfig(config, parsed) {
+    MigrateSplitZoomKeys(config, parsed);
+    NormalizeNeutralCampFlags(config, parsed);
+    NormalizeItemCooldownModeConfig(config, parsed);
+    NormalizeAmmoScaleConfig(config, parsed);
+    NormalizeVoiceTypeConfig(config);
+    NormalizeHealthbarTypeConfig(config, parsed);
+    NormalizeColorWarningConfig(config, parsed);
+    NormalizeEnemyColorWarningConfig(config, parsed);
+    NormalizeAllyColorWarningConfig(config, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(config, parsed);
+    NormalizeTopbarAllyHpWarningConfig(config, parsed);
+    NormalizeShopItemNotificationsConfig(config, parsed);
+}
+
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
+    // Fallback: if panel attrs are empty (e.g. after game restart), recover from
+    // persistentStorage which IS disk-backed and survives restarts.
+    if (!raw || raw.length === 0) {
+        try {
+            if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                if (psRaw && psRaw.length > 0) raw = psRaw;
+            }
+        } catch (ePs) { /* ignore */ }
+    }
     var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
         ? Object.assign({}, QOL_DEFAULT_CONFIG)
         : {};
     if (raw && raw.length > 0) {
         try {
-            var parsed = JSON.parse(raw) || {};
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            var parsed = (unwrapped && unwrapped.config) ? unwrapped.config : {};
             for (var key in parsed) {
                 if (nextConfig.hasOwnProperty(key)) {
                     nextConfig[key] = parsed[key];
                 }
             }
-            MigrateSplitZoomKeys(nextConfig, parsed);
-            NormalizeNeutralCampFlags(nextConfig, parsed);
-            NormalizeItemCooldownModeConfig(nextConfig, parsed);
-            NormalizeAmmoScaleConfig(nextConfig, parsed);
-            NormalizeVoiceTypeConfig(nextConfig);
-            NormalizeHealthbarTypeConfig(nextConfig, parsed);
-            NormalizeColorWarningConfig(nextConfig, parsed);
-            NormalizeEnemyColorWarningConfig(nextConfig, parsed);
-            NormalizeAllyColorWarningConfig(nextConfig, parsed);
-            NormalizeTopbarEnemyHpWarningConfig(nextConfig, parsed);
-            NormalizeTopbarAllyHpWarningConfig(nextConfig, parsed);
+            NormalizeConfig(nextConfig, parsed);
         } catch (e) {}
     }
     MOD_CONFIG = nextConfig;
-    gLastSavedConfigRaw = JSON.stringify(MOD_CONFIG);
+    gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
+    // Pass the raw string we actually loaded from so the persistentStorage
+    // mirror stays in sync (not empty, which would overwrite with defaults).
     PersistStatlockerProfileState(raw, nextConfig);
     UpdateOnDeathArcadeBridgePollerState();
 }
@@ -12552,7 +12615,7 @@ function PersistStatlockerProfileState(rawConfig, configObj) {
     PublishShowRankTopBarModeBridge(configObj);
     try {
         var raw = String(rawConfig || "");
-        if (!raw || raw.length <= 0) raw = JSON.stringify(configObj || {});
+        if (!raw || raw.length <= 0) raw = WrapConfigForStorage(configObj || {});
         $.persistentStorage.setItem("qol_settings_raw_v1", raw);
     } catch (e1) {}
 }
@@ -12664,47 +12727,60 @@ function PublishPaletteColorBridges() {
     PublishPaletteColorBridge("MINIMAP_ICON_COLOR", MOD_CONFIG.MINIMAP_ICON_COLOR);
 }
 
+// Debounced save: prevents rapid-fire saves during slider drags etc.
+// Uses a token-counter pattern so only the last scheduled flush actually fires.
+var gSaveDebounceToken = 0;
+var SAVE_DEBOUNCE_SEC = 0.3;
+
+function MarkConfigDirty() {
+    var token = ++gSaveDebounceToken;
+    $.Schedule(SAVE_DEBOUNCE_SEC, function() {
+        if (gSaveDebounceToken === token) {
+            gSaveDebounceToken = 0;
+            SaveAndSync();
+        }
+    });
+}
+
+// Flushes any pending debounced save immediately (e.g. before import/reset).
+function FlushPendingSave() {
+    if (gSaveDebounceToken > 0) {
+        gSaveDebounceToken = 0;
+        SaveAndSync();
+    }
+}
+
 function SaveAndSync() {
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    NormalizeNeutralCampFlags(MOD_CONFIG, MOD_CONFIG);
-    NormalizeItemCooldownModeConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeAmmoScaleConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeVoiceTypeConfig(MOD_CONFIG);
-    NormalizeHealthbarTypeConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeEnemyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeAllyColorWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, MOD_CONFIG);
-    var data = JSON.stringify(MOD_CONFIG);
+    NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
+    var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
+        PublishShowRankTopBarModeBridge(MOD_CONFIG);
         return;
     }
     gLastSavedConfigRaw = data;
-    panel.SetAttributeString(STORAGE_KEY, data);
-    if (root && root.SetAttributeString) {
-        root.SetAttributeString(STORAGE_KEY, data);
-    }
-    if (hud && hud.SetAttributeString) {
-        try { hud.SetAttributeString(STORAGE_KEY, data); } catch (eHudStorage) {}
-    }
-    var parseRev = function(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    };
+    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var nextRev = Math.max(gUserEditRevision, panelRev, rootRev, hudRev) + 1;
     gUserEditRevision = nextRev;
-    if (panel && panel.SetAttributeString) panel.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
-    if (root && root.SetAttributeString) root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    // Write data + revision as a paired update per panel so an interrupted
+    // save never orphans new data with an old revision number.
+    if (panel && panel.SetAttributeString) {
+        panel.SetAttributeString(STORAGE_KEY, data);
+        panel.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    }
+    if (root && root.SetAttributeString) {
+        root.SetAttributeString(STORAGE_KEY, data);
+        root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
+    }
     if (hud && hud.SetAttributeString) {
+        try { hud.SetAttributeString(STORAGE_KEY, data); } catch (eHudStorage) {}
         try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
@@ -12731,6 +12807,9 @@ function BuildSettingsListRenderSignature() {
 }
 
 function IsPanelValidSafe(panel) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
+        return QOL_UTILS.IsPanelValid(panel);
+    }
     return !!(panel && panel.IsValid && panel.IsValid());
 }
 
@@ -13478,9 +13557,7 @@ function TryCopyTextToClipboard(text, textEntryPanel) {
     if (!text || text.length === 0) return false;
     var copied = false;
     var attempts = [
-        function() { $.DispatchEvent("CopyStringToClipboard", text); },
-        function() { $.DispatchEvent("CopyToClipboard", text); },
-        function() { $.DispatchEvent("SetClipboardText", text); },
+        function() { $.DispatchEvent("CopyStringToClipboard", text, text); },
         function() {
             if (!textEntryPanel || !textEntryPanel.IsValid || !textEntryPanel.IsValid()) return;
             textEntryPanel.SetFocus();
@@ -13507,27 +13584,6 @@ function TryPasteTextFromClipboard(textEntryPanel) {
     var pasted = false;
     var attempts = [
         function() {
-            $.DispatchEvent("TextEntryPasteFromClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("TextEntryPasteClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("TextEntryPaste", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("UI_TextEntry_PasteClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteFromClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteToTextEntry", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteClipboard", textEntryPanel);
-        },
-        function() {
             if (textEntryPanel.Paste) {
                 textEntryPanel.Paste();
                 return;
@@ -13535,7 +13591,7 @@ function TryPasteTextFromClipboard(textEntryPanel) {
             throw new Error("Paste method unavailable");
         },
         function() {
-            $.DispatchEvent("PasteFromClipboard");
+            $.DispatchEvent("TextEntryInsertFromClipboard", textEntryPanel);
         }
     ];
     for (var i = 0; i < attempts.length; i++) {
@@ -13806,6 +13862,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeAllyColorWarningConfig(candidateConfig, parsed);
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
+    NormalizeShopItemNotificationsConfig(candidateConfig, parsed);
     NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
@@ -14019,6 +14076,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeAllyColorWarningConfig(candidate, presetData);
     NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
     NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
+    NormalizeShopItemNotificationsConfig(candidate, presetData);
 
     PreserveUiOnlySettings(candidate);
 
@@ -18537,19 +18595,9 @@ function CreateDl4dReminderRow(parent, reminder) {
 function RunConsoleCommand(commandText) {
     if (!commandText || commandText.length === 0) return false;
     try {
-        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && GameInterfaceAPI.ConsoleCommand) {
-            GameInterfaceAPI.ConsoleCommand(commandText);
-            return true;
-        }
+        $.DispatchEvent("CitadelConCommand", commandText);
+        return true;
     } catch (e0) {}
-    try {
-        $.DispatchEvent("ConsoleCommand", commandText);
-        return true;
-    } catch (e1) {}
-    try {
-        $.DispatchEvent("GameUIRunCommand", commandText);
-        return true;
-    } catch (e2) {}
     return false;
 }
 
@@ -19165,7 +19213,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 if (val !== MOD_CONFIG[configId]) {
                     input.text = formatSliderInputValue(val);
                     MOD_CONFIG[configId] = val;
-                    SaveAndSync();
+                    MarkConfigDirty();
                     refreshRowChangedState();
                 }
             } else {
@@ -19173,7 +19221,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 if (val !== MOD_CONFIG[configId]) {
                     input.text = formatSliderInputValue(val);
                     MOD_CONFIG[configId] = val;
-                    SaveAndSync();
+                    MarkConfigDirty();
                     refreshRowChangedState();
                 }
             }
@@ -19197,7 +19245,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             input.RemoveClass("ValueSavedFlash");
             input.AddClass("ValueSavedFlash");
-            SaveAndSync();
+            MarkConfigDirty();
             refreshRowChangedState();
             ShowConfigPreviewForConfigId(configId);
         });
@@ -20526,6 +20574,7 @@ function ApplyPresetConfig(presetData) {
     NormalizeAllyColorWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
+    NormalizeShopItemNotificationsConfig(MOD_CONFIG, presetData);
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
@@ -20601,6 +20650,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeAllyColorWarningConfig(resolved, presetData);
         NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
         NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
+        NormalizeShopItemNotificationsConfig(resolved, presetData);
     } else {
         NormalizeNeutralCampFlags(resolved, resolved);
         NormalizeItemCooldownModeConfig(resolved, resolved);
@@ -20612,6 +20662,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeAllyColorWarningConfig(resolved, resolved);
         NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
         NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
+        NormalizeShopItemNotificationsConfig(resolved, resolved);
     }
     return resolved;
 }
@@ -20932,7 +20983,6 @@ function CreateSupportThanksPlaques(parent, entries, columns) {
                 try { plaque.SetPanelEvent("onactivate", (function (url) {
                     return function () {
                         try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (eSupportPlaqueClick0) {}
-                        try { $.DispatchEvent("SteamOverlayOpenURL", url); } catch (eSupportPlaqueClick1) {}
                     };
                 })(entryData.url)); } catch (eSupportPlaqueClick) {}
             }
@@ -21517,8 +21567,10 @@ function RenderCurrentTabContent(list) {
                 CreateRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
             });
             CreateSeparator(sectionParent);
-            CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_CLICK_TO_NOTIFY", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
+            CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
                 CreateRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
+                CreateRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null,
+                    "Show purchase notifications under each hero's portrait instead of in the center.");
                 CreateRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
                 CreateRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
                 CreateRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
@@ -23167,7 +23219,6 @@ $.BuildUI = function() {
         headerVer.style.zIndex = "7";
         try { headerVer.SetPanelEvent("onactivate", function () {
             try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick1) {}
-            try { $.DispatchEvent("SteamOverlayOpenURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick2) {}
         }); } catch (eHeaderMoglockClick) {}
         var headerVerPrefix = $.CreatePanel("Label", headerVer, "ModVersionLabelTopPrefix");
     headerVerPrefix.text = LocalizeSettingsText("by", true);

@@ -12,7 +12,9 @@
 		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
 	</styles>
 	<scripts>
+		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 	</scripts>
