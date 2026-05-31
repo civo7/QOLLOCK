@@ -197,24 +197,26 @@
             debugLastSig: "",
             debugNextMs: 0
         },
-        combatStatusDisplayMode: "",
-        combatStatusLastLayoutSig: "",
-        combatStatusLastClassSig: "",
-        combatStatusLastStateText: "",
-        combatStatusLastTimerText: "",
-        combatStatusLastCombatMs: 0,
-        combatStatusCombatStartMs: 0,
-        combatStatusSignalActive: false,
-        combatStatusNextShopProbeMs: 0,
-        combatStatusNextAlertProbeMs: 0,
-        combatStatusNextDamageProbeMs: 0,
-        combatStatusNextHealthProbeMs: 0,
-        combatStatusShopProbeMisses: 0,
-        combatStatusAlertProbeMisses: 0,
-        combatStatusDamageProbeMisses: 0,
-        combatStatusHealthProbeMisses: 0,
-        combatStatusLastHealthValue: -1,
-        combatStatusSawOutOfCombatClass: false,
+        combatStatus: {
+            displayMode: "",
+            lastLayoutSig: "",
+            lastClassSig: "",
+            lastStateText: "",
+            lastTimerText: "",
+            lastCombatMs: 0,
+            combatStartMs: 0,
+            signalActive: false,
+            nextShopProbeMs: 0,
+            nextAlertProbeMs: 0,
+            nextDamageProbeMs: 0,
+            nextHealthProbeMs: 0,
+            shopProbeMisses: 0,
+            alertProbeMisses: 0,
+            damageProbeMisses: 0,
+            healthProbeMisses: 0,
+            lastHealthValue: -1,
+            sawOutOfCombatClass: false
+        },
         enemyColoredHealthPanelCache: [],
         enemyColoredHealthPanelCacheNextMs: 0,
         enemyColoredHealthNextUpdateMs: 0,
@@ -29025,15 +29027,15 @@ function GetUIRoot() {
     }
 
     function ResetCombatStatusProbeBackoff() {
-        State.combatStatusShopProbeMisses = 0;
-        State.combatStatusAlertProbeMisses = 0;
-        State.combatStatusDamageProbeMisses = 0;
-        State.combatStatusHealthProbeMisses = 0;
+        State.combatStatus.shopProbeMisses = 0;
+        State.combatStatus.alertProbeMisses = 0;
+        State.combatStatus.damageProbeMisses = 0;
+        State.combatStatus.healthProbeMisses = 0;
     }
 
     function ReadCombatHealthValue(root, uiRoot, nowMs) {
         var healthLabel = IsPanelValid(State.cachedPanels.combatStatusHealthLabel) ? State.cachedPanels.combatStatusHealthLabel : null;
-        if (!healthLabel && nowMs >= (State.combatStatusNextHealthProbeMs || 0)) {
+        if (!healthLabel && nowMs >= (State.combatStatus.nextHealthProbeMs || 0)) {
             var scanned = FindCombatPanelById(root, uiRoot, "current_health");
             if (!scanned) scanned = FindCombatPanelById(root, uiRoot, "CurrentHealth");
             if (!scanned && root && root.FindChildrenWithClassTraverse) {
@@ -29050,7 +29052,7 @@ function GetUIRoot() {
             }
             if (scanned || !healthLabel) healthLabel = scanned || null;
             State.cachedPanels.combatStatusHealthLabel = healthLabel || null;
-            State.combatStatusNextHealthProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextHealthProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!healthLabel,
                 "combatStatusHealthProbeMisses",
                 COMBAT_STATUS_HEALTH_PROBE_MS,
@@ -29070,11 +29072,11 @@ function GetUIRoot() {
         var uiRoot = root;
 
         var alertPanel = IsPanelValid(State.cachedPanels.combatStatusAlertPanel) ? State.cachedPanels.combatStatusAlertPanel : null;
-        if (!alertPanel && nowMs >= (State.combatStatusNextAlertProbeMs || 0)) {
+        if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
             var scannedAlert = FindCombatPanelById(root, uiRoot, "InCombatAlert");
             if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
             State.cachedPanels.combatStatusAlertPanel = alertPanel || null;
-            State.combatStatusNextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!alertPanel,
                 "combatStatusAlertProbeMisses",
                 COMBAT_STATUS_ALERT_PROBE_MS,
@@ -29099,11 +29101,11 @@ function GetUIRoot() {
         }
 
         var shop = IsPanelValid(State.cachedPanels.combatStatusShopPanel) ? State.cachedPanels.combatStatusShopPanel : null;
-        if (!shop && nowMs >= (State.combatStatusNextShopProbeMs || 0)) {
+        if (!shop && nowMs >= (State.combatStatus.nextShopProbeMs || 0)) {
             var scannedShop = FindCombatPanelById(root, uiRoot, "CitadelHudHeroShop");
             if (scannedShop || !shop) shop = scannedShop || null;
             State.cachedPanels.combatStatusShopPanel = shop || null;
-            State.combatStatusNextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!shop,
                 "combatStatusShopProbeMisses",
                 COMBAT_STATUS_SHOP_PROBE_MS,
@@ -29151,11 +29153,11 @@ function GetUIRoot() {
         }
 
         var damageMeter = IsPanelValid(State.cachedPanels.combatStatusDamageMeter) ? State.cachedPanels.combatStatusDamageMeter : null;
-        if (!damageMeter && nowMs >= (State.combatStatusNextDamageProbeMs || 0)) {
+        if (!damageMeter && nowMs >= (State.combatStatus.nextDamageProbeMs || 0)) {
             var scannedDamageMeter = FindCombatPanelById(root, uiRoot, "damage_meter");
             if (scannedDamageMeter || !damageMeter) damageMeter = scannedDamageMeter || null;
             State.cachedPanels.combatStatusDamageMeter = damageMeter || null;
-            State.combatStatusNextDamageProbeMs = nowMs + GetCombatStatusProbeDelay(
+            State.combatStatus.nextDamageProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!damageMeter,
                 "combatStatusDamageProbeMisses",
                 COMBAT_STATUS_SHOP_PROBE_MS,
@@ -29172,10 +29174,10 @@ function GetUIRoot() {
                 return true;
             }
             if (dmOut) {
-                State.combatStatusSawOutOfCombatClass = true;
+                State.combatStatus.sawOutOfCombatClass = true;
                 return false;
             }
-            if (State.combatStatusSawOutOfCombatClass) {
+            if (State.combatStatus.sawOutOfCombatClass) {
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
@@ -29198,11 +29200,11 @@ function GetUIRoot() {
             } catch (eRootClass1) {}
         }
         if (foundOutOfCombat) {
-            State.combatStatusSawOutOfCombatClass = true;
+            State.combatStatus.sawOutOfCombatClass = true;
             return false;
         }
 
-        if (State.combatStatusSawOutOfCombatClass) {
+        if (State.combatStatus.sawOutOfCombatClass) {
             try {
                 var rootOut = root && root.BHasClass ? root.BHasClass("out_of_combat") : false;
                 var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass("out_of_combat") : false;
@@ -29212,19 +29214,19 @@ function GetUIRoot() {
             } catch (eRootClass2) {}
         } else if (root && root.BHasClass) {
             try {
-                State.combatStatusSawOutOfCombatClass = !!root.BHasClass("out_of_combat");
+                State.combatStatus.sawOutOfCombatClass = !!root.BHasClass("out_of_combat");
             } catch (eRootClass3) {}
         }
 
         var healthValue = ReadCombatHealthValue(root, uiRoot, nowMs);
         if (healthValue !== null) {
-            var previousHealth = Number(State.combatStatusLastHealthValue);
+            var previousHealth = Number(State.combatStatus.lastHealthValue);
             if (isFinite(previousHealth) && previousHealth >= 0 && healthValue < previousHealth) {
-                State.combatStatusLastHealthValue = healthValue;
+                State.combatStatus.lastHealthValue = healthValue;
                 ResetCombatStatusProbeBackoff();
                 return true;
             }
-            State.combatStatusLastHealthValue = healthValue;
+            State.combatStatus.lastHealthValue = healthValue;
         }
 
         return false;
@@ -29366,48 +29368,48 @@ function GetUIRoot() {
         State.cachedPanels.combatStatusAlertPanel = null;
         State.cachedPanels.combatStatusDamageMeter = null;
         State.cachedPanels.combatStatusHealthLabel = null;
-        State.combatStatusDisplayMode = "";
-        State.combatStatusLastLayoutSig = "";
-        State.combatStatusLastClassSig = "";
-        State.combatStatusLastStateText = "";
-        State.combatStatusLastTimerText = "";
-        State.combatStatusLastCombatMs = 0;
-        State.combatStatusCombatStartMs = 0;
-        State.combatStatusSignalActive = false;
-        State.combatStatusNextShopProbeMs = 0;
-        State.combatStatusNextAlertProbeMs = 0;
-        State.combatStatusNextDamageProbeMs = 0;
-        State.combatStatusNextHealthProbeMs = 0;
+        State.combatStatus.displayMode = "";
+        State.combatStatus.lastLayoutSig = "";
+        State.combatStatus.lastClassSig = "";
+        State.combatStatus.lastStateText = "";
+        State.combatStatus.lastTimerText = "";
+        State.combatStatus.lastCombatMs = 0;
+        State.combatStatus.combatStartMs = 0;
+        State.combatStatus.signalActive = false;
+        State.combatStatus.nextShopProbeMs = 0;
+        State.combatStatus.nextAlertProbeMs = 0;
+        State.combatStatus.nextDamageProbeMs = 0;
+        State.combatStatus.nextHealthProbeMs = 0;
         ResetCombatStatusProbeBackoff();
-        State.combatStatusLastHealthValue = -1;
-        State.combatStatusSawOutOfCombatClass = false;
+        State.combatStatus.lastHealthValue = -1;
+        State.combatStatus.sawOutOfCombatClass = false;
     }
 
     function UpdateCombatStatusOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
         if (!IsCustomHudContextActive(root)) {
-            if (State.combatStatusDisplayMode !== "context_off") {
+            if (State.combatStatus.displayMode !== "context_off") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatusDisplayMode = "context_off";
+                State.combatStatus.displayMode = "context_off";
             }
             return;
         }
 
         if (Number(cfg.ENABLE_COMBAT_STATUS) !== 1) {
-            if (State.combatStatusDisplayMode !== "disabled") {
+            if (State.combatStatus.displayMode !== "disabled") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatusDisplayMode = "disabled";
+                State.combatStatus.displayMode = "disabled";
             }
             return;
         }
 
         var overlay = EnsureCombatStatusOverlay(root);
         if (!overlay) return;
-        if (State.combatStatusDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.combatStatusDisplayMode = "active";
+        State.combatStatus.displayMode = "active";
 
         var scale = Math.round(Number(cfg.COMBAT_STATUS_SCALE));
         var offsetX = Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET));
@@ -29423,41 +29425,41 @@ function GetUIRoot() {
         if (offsetY > 1000) offsetY = 1000;
 
         var layoutSig = String(scale) + "|" + String(offsetX) + "|" + String(offsetY);
-        if (layoutSig !== State.combatStatusLastLayoutSig) {
+        if (layoutSig !== State.combatStatus.lastLayoutSig) {
             overlay.style.preTransformScale2d = (scale / 100).toFixed(2);
             overlay.style.marginLeft = String(offsetX) + "px";
             overlay.style.marginBottom = String(165 + offsetY) + "px";
-            State.combatStatusLastLayoutSig = layoutSig;
+            State.combatStatus.lastLayoutSig = layoutSig;
         }
 
         var combatSignal = IsCombatSignalActive(root, nowMs);
         if (combatSignal) {
-            if (!State.combatStatusSignalActive || State.combatStatusCombatStartMs <= 0) {
-                State.combatStatusCombatStartMs = nowMs;
+            if (!State.combatStatus.signalActive || State.combatStatus.combatStartMs <= 0) {
+                State.combatStatus.combatStartMs = nowMs;
             }
-            State.combatStatusLastCombatMs = nowMs;
+            State.combatStatus.lastCombatMs = nowMs;
         }
-        State.combatStatusSignalActive = combatSignal;
+        State.combatStatus.signalActive = combatSignal;
 
-        var recentCombatMs = nowMs - Number(State.combatStatusLastCombatMs || 0);
-        var recoveryActive = !combatSignal && State.combatStatusLastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
+        var recentCombatMs = nowMs - Number(State.combatStatus.lastCombatMs || 0);
+        var recoveryActive = !combatSignal && State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
         var phase = combatSignal ? "combat" : (recoveryActive ? "recover" : "idle");
         if (phase === "idle") {
-            State.combatStatusCombatStartMs = 0;
+            State.combatStatus.combatStartMs = 0;
         }
 
         var classSig = phase;
-        if (classSig !== State.combatStatusLastClassSig) {
+        if (classSig !== State.combatStatus.lastClassSig) {
             overlay.SetHasClass("phase_combat", combatSignal);
             overlay.SetHasClass("phase_recover", recoveryActive);
             overlay.SetHasClass("phase_idle", !combatSignal && !recoveryActive);
-            State.combatStatusLastClassSig = classSig;
+            State.combatStatus.lastClassSig = classSig;
         }
 
         var stateText = "OUT OF COMBAT";
         var timerText = "--";
         if (combatSignal) {
-            var combatStartMs = Number(State.combatStatusCombatStartMs || nowMs);
+            var combatStartMs = Number(State.combatStatus.combatStartMs || nowMs);
             if (!isFinite(combatStartMs) || combatStartMs <= 0) combatStartMs = nowMs;
             var combatSec = Math.max(0, (nowMs - combatStartMs) / 1000.0);
             stateText = "IN COMBAT";
@@ -29469,14 +29471,14 @@ function GetUIRoot() {
         }
 
         var stateLabel = State.cachedPanels.combatStatusState;
-        if (stateLabel && stateText !== State.combatStatusLastStateText) {
+        if (stateLabel && stateText !== State.combatStatus.lastStateText) {
             stateLabel.text = stateText;
-            State.combatStatusLastStateText = stateText;
+            State.combatStatus.lastStateText = stateText;
         }
         var timerLabel = State.cachedPanels.combatStatusTimer;
-        if (timerLabel && timerText !== State.combatStatusLastTimerText) {
+        if (timerLabel && timerText !== State.combatStatus.lastTimerText) {
             timerLabel.text = timerText;
-            State.combatStatusLastTimerText = timerText;
+            State.combatStatus.lastTimerText = timerText;
         }
     }
 
@@ -33069,10 +33071,10 @@ function GetUIRoot() {
         if (Number(cfg.ENABLE_COMBAT_INDICATOR) === 1) {
             combatIndicatorSignal = IsCombatSignalActive(root, nowMsLoop) === true;
             if (combatIndicatorSignal) {
-                State.combatStatusLastCombatMs = nowMsLoop;
+                State.combatStatus.lastCombatMs = nowMsLoop;
             } else {
-                var recentCombatMs = nowMsLoop - Number(State.combatStatusLastCombatMs || 0);
-                combatIndicatorRecoveryActive = State.combatStatusLastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
+                var recentCombatMs = nowMsLoop - Number(State.combatStatus.lastCombatMs || 0);
+                combatIndicatorRecoveryActive = State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
             }
             combatIndicatorActive = combatIndicatorSignal || combatIndicatorRecoveryActive;
         }
@@ -33912,7 +33914,7 @@ function GetUIRoot() {
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
         gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSoulsDisplayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
-        gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatusDisplayMode !== "";
+        gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
         gates.imagesInChat = gates.imagesInChatActive;
