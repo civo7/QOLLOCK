@@ -9388,8 +9388,8 @@ function GetUIRoot() {
 
     function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
             IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
     }
 
@@ -28412,8 +28412,7 @@ function GetUIRoot() {
 
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+        return IsColorWarningEnabled(cfg) ||
             IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
     }
 
@@ -28717,8 +28716,7 @@ function GetUIRoot() {
 
     function IsAllyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+        return IsColorWarningEnabled(cfg) ||
             IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
     }
 
@@ -33121,8 +33119,7 @@ function GetUIRoot() {
             IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER") ||
             IsCfgEnabled(cfg, "ENABLE_INTERVAL") ||
             IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsColorWarningEnabled(cfg) ||
             IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         );
     }
@@ -33247,8 +33244,7 @@ function GetUIRoot() {
         }
         if (
             IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
-            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsColorWarningEnabled(cfg) ||
             IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         ) {
             INTERNAL_CONFIG.ONE_TIME_ALERTS.forEach(function(alert) {
