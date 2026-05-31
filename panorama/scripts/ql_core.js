@@ -5971,8 +5971,8 @@ function ExpressShotLog(msg) {
     function TryParseStorageConfigRaw(rawText) {
         if (!rawText || rawText.length === 0) return {};
         try {
-            var parsed = JSON.parse(String(rawText));
-            return (parsed && typeof parsed === "object") ? parsed : {};
+            var unwrapped = UnwrapConfigFromStorage(String(rawText));
+            return (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
         } catch (e0) {
             return {};
         }
@@ -5993,8 +5993,9 @@ function ExpressShotLog(msg) {
         var raw = String(rawText || "");
         if (!raw || raw.length === 0) return "";
         try {
-            var parsed = JSON.parse(raw);
-            var comparable = BuildComparableStorageConfigObject(parsed && typeof parsed === "object" ? parsed : {});
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            var parsed = (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
+            var comparable = BuildComparableStorageConfigObject(parsed);
             return JSON.stringify(comparable);
         } catch (e0) {
             return raw;
@@ -6034,7 +6035,7 @@ function ExpressShotLog(msg) {
 
         obj[HERO_PERSISTED_KEY] = hero;
         var nextRaw = "";
-        try { nextRaw = JSON.stringify(obj); } catch (e1) { nextRaw = ""; }
+        try { nextRaw = WrapConfigForStorage(obj); } catch (e1) { nextRaw = ""; }
         if (!nextRaw || nextRaw.length === 0) return false;
 
         var writeResult = WriteStorageConfigRawToUi(root, nextRaw);
@@ -8939,6 +8940,8 @@ function GetUIRoot() {
         try { hudRev = hud && hud.GetAttributeString ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0; } catch (e2) { hudRev = 0; }
         var nextRevision = Math.max(rootRev, hudRev) + 1;
 
+        // Write data + revision as a paired update per panel so an interrupted
+        // save never orphans new data with an old revision number.
         try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) {}
         try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) {}
         if (hud && hud.SetAttributeString) {
@@ -8963,12 +8966,15 @@ function GetUIRoot() {
     function SafeParseConfig(raw) {
         if (!raw || raw === "") return null;
         try {
-            return MergeConfig(JSON.parse(raw));
+            var unwrapped = UnwrapConfigFromStorage(raw);
+            if (!unwrapped || !unwrapped.config) return null;
+            return MergeConfig(unwrapped.config);
         } catch (parseErr) {
             QOL_ERROR("config", "JSON parse or merge failed: " + String(parseErr.message || parseErr));
             // Save corrupt config for debugging
+            var backupKey = "";
             try {
-                var backupKey = "qol_settings_corrupt_" + PerfNowMs();
+                backupKey = "qol_settings_corrupt_" + PerfNowMs();
                 if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                     $.persistentStorage.setItem(backupKey, String(raw || "").substring(0, 5000));
                     QOL_INFO("config", "corrupt config saved to: " + backupKey);
@@ -8976,6 +8982,18 @@ function GetUIRoot() {
             } catch (eBackup) {
                 QOL_ERROR("config", "FAILED to save corrupt config backup");
             }
+            // User-visible notification: flag for settings UI + prominent console message
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
+                    $.persistentStorage.setItem("qol_config_corruption_detected", String(PerfNowMs()));
+                    $.persistentStorage.setItem("qol_last_corruption_key", backupKey);
+                }
+            } catch (eCorruptFlag) {}
+            $.Msg("\n====================================================================\n");
+            $.Msg("[QOLLOCK] WARNING: Your settings were corrupted and have been reset to defaults.\n");
+            $.Msg("[QOLLOCK] A backup of the corrupt data has been saved for recovery.\n");
+            $.Msg("[QOLLOCK] Open Qollock Settings to check for recovery options.\n");
+            $.Msg("====================================================================\n");
             // Clear corrupt config so this doesn't repeat every tick
             State.lastRawConfig = "";
             try {
@@ -16447,7 +16465,7 @@ function GetUIRoot() {
 
         var rawObj = {};
         if (rawNow && rawNow.length > 0) {
-            try { rawObj = JSON.parse(rawNow) || {}; } catch (e0) { rawObj = {}; }
+            try { var u0 = UnwrapConfigFromStorage(rawNow); rawObj = (u0 && u0.config) ? u0.config : {}; } catch (e0) { rawObj = {}; }
         }
 
         var appliedObj = {};
@@ -16468,7 +16486,7 @@ function GetUIRoot() {
             appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
         }
 
-        var appliedRaw = JSON.stringify(appliedObj);
+        var appliedRaw = WrapConfigForStorage(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
         var appliedRevision = Number(appliedWrite && appliedWrite.revision) || userEditRev;
         State.accountPresetRawOverride = appliedRaw;
@@ -20737,7 +20755,7 @@ function GetUIRoot() {
         var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
         var rawObj = {};
         if (rawNow && rawNow.length > 0) {
-            try { rawObj = JSON.parse(rawNow) || {}; } catch (e4) { rawObj = {}; }
+            try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
         }
 
         var defaults = BuildDefaultConfig();
@@ -20771,7 +20789,7 @@ function GetUIRoot() {
         NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
         NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
 
-        var appliedRaw = JSON.stringify(appliedObj);
+        var appliedRaw = WrapConfigForStorage(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
         var appliedRevision = Number(appliedWrite && appliedWrite.revision) || 0;
         SetStartupCorruptRepairPending(root, false);

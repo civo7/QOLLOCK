@@ -4,6 +4,32 @@
 var QOL_SCHEMA_SEMVER = "3.0.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
+// ---- Storage envelope helpers (Fix: schema-versioned config storage) ----
+// Wraps a config object for storage with schema version tag.
+// Produces: {"schema":"3.0.4","data":{...}}
+if (typeof WrapConfigForStorage !== "function") {
+    var WrapConfigForStorage = function(config) {
+        return JSON.stringify({ schema: QOL_SCHEMA_SEMVER, data: config });
+    };
+}
+// Unwraps a stored raw string. Handles both the new envelope format
+// and legacy raw-JSON configs. Returns { config, schema, isEnveloped } or null.
+if (typeof UnwrapConfigFromStorage !== "function") {
+    var UnwrapConfigFromStorage = function(raw) {
+        if (!raw || raw === "") return null;
+        try {
+            var parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && typeof parsed.schema === "string" && typeof parsed.data === "object" && parsed.data !== null) {
+                return { config: parsed.data, schema: parsed.schema, isEnveloped: true };
+            }
+            // Legacy format: the whole object IS the config
+            return { config: parsed, schema: null, isEnveloped: false };
+        } catch (e) {
+            return null;
+        }
+    };
+}
+
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
 
 if (typeof QOL_CODEC.EncodeBase64Raw !== "function") {
