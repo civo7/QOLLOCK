@@ -14139,9 +14139,7 @@ function TryCopyTextToClipboard(text, textEntryPanel) {
     if (!text || text.length === 0) return false;
     var copied = false;
     var attempts = [
-        function() { $.DispatchEvent("CopyStringToClipboard", text); },
-        function() { $.DispatchEvent("CopyToClipboard", text); },
-        function() { $.DispatchEvent("SetClipboardText", text); },
+        function() { $.DispatchEvent("CopyStringToClipboard", text, text); },
         function() {
             if (!textEntryPanel || !textEntryPanel.IsValid || !textEntryPanel.IsValid()) return;
             textEntryPanel.SetFocus();
@@ -14176,9 +14174,6 @@ function TryPasteTextFromClipboard(textEntryPanel) {
         },
         function() {
             $.DispatchEvent("TextEntryInsertFromClipboard", textEntryPanel);
-        },
-        function() {
-            $.DispatchEvent("PasteFromClipboard");
         }
     ];
     for (var i = 0; i < attempts.length; i++) {
@@ -19184,15 +19179,9 @@ function CreateDl4dReminderRow(parent, reminder) {
 function RunConsoleCommand(commandText) {
     if (!commandText || commandText.length === 0) return false;
     try {
-        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && GameInterfaceAPI.ConsoleCommand) {
-            GameInterfaceAPI.ConsoleCommand(commandText);
-            return true;
-        }
-    } catch (e0) {}
-    try {
         $.DispatchEvent("CitadelConCommand", commandText);
         return true;
-    } catch (e1) {}
+    } catch (e0) {}
     return false;
 }
 
