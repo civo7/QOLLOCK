@@ -825,6 +825,12 @@
     const CORE_START_DELAY_LOOP_SEC = 0.90;   // main feature loop
     const CORE_START_DELAY_COMPASS_SEC = 1.03; // compass/minimap loop
     const CORE_START_DELAY_BUILD_SEC = 1.17;   // build category payload loop
+    // Phase slot assignments (which feature runs in which corePhase % 5)
+    const CORE_PHASE_REJUV_NICKNAMES = 0;
+    const CORE_PHASE_SPM_STATLOCKER  = 1;
+    const CORE_PHASE_UNSPENT_LANE    = 2;
+    const CORE_PHASE_UNSECURED       = 3;
+    const CORE_PHASE_STAT_BONUSES    = 4;
 
     // ==========================================================================
     // LOOP INTERVALS (seconds)
@@ -1020,6 +1026,13 @@
     const COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
     const COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
     const COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
+    // Healthbar type enum (matches ql_settings.js healthbar type dropdown order)
+    const HEALTHBAR_TYPE_DEFAULT    = 0;
+    const HEALTHBAR_TYPE_MINIMALIST = 1;
+    const HEALTHBAR_TYPE_FG         = 2;
+    const HEALTHBAR_TYPE_KLUTZ      = 3;
+    const HEALTHBAR_TYPE_BUDHUD     = 4;
+    const HEALTHBAR_TYPE_MINECRAFT  = 5;
     const COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
     const ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR = [255, 86, 86];
     const ALLY_TOPBAR_HEALTH_DEFAULT_COLOR = COLORED_HEALTHBAR_COLOR_WHITE;
@@ -11122,7 +11135,7 @@ function GetUIRoot() {
     function SyncFgHeroImageMotionState(root, cfg) {
         if (!root || !root.FindChildTraverse) return;
         var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
-        var fgEnabled = (healthbarType === 2);
+        var fgEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, false, false);
         var fgRuntimeStyleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText;
@@ -11296,7 +11309,7 @@ function GetUIRoot() {
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) return true;
         if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
-        if ((Number(healthbarType) === 5) || State.mcWasEnabled) return true;
+        if ((Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled) return true;
         return false;
     }
 
@@ -11316,9 +11329,9 @@ function GetUIRoot() {
             UpdateBudhudHealthbar(root, cfg, healthbarType, nowMsLoop);
         }
 
-        var shouldRunMinecraftRuntime = (Number(healthbarType) === 5) || State.mcWasEnabled;
+        var shouldRunMinecraftRuntime = (Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled;
         if (shouldRunMinecraftRuntime) {
-            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === 5));
+            UpdateMinecraftHealthbar(root, cfg, nowMsLoop, (Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT));
         }
     }
 
@@ -32938,11 +32951,11 @@ function GetUIRoot() {
         var hideTestingTools = (cfg.ENABLE_HIDE_TESTING_TOOLS === 1);
         var forceShowTestingTools = (cfg.ENABLE_FORCE_TESTING_TOOLS === 1) && !hideTestingTools;
         var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
-        var klutzHealthbarEnabled = (healthbarType === 3);
-        var budhudHealthbarEnabled = (healthbarType === 4);
-        var minecraftHealthbarEnabled = (healthbarType === 5);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
+        var klutzHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_KLUTZ);
+        var budhudHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_BUDHUD);
+        var minecraftHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINECRAFT);
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
@@ -33076,7 +33089,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
             SetPanelClassCached(root, State.rootClassCache, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
-            SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);
+            SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === HEALTHBAR_TYPE_DEFAULT);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_inactive", false);
             SetPanelClassCached(root, State.rootClassCache, "compass_active", compassEnabled);
@@ -33614,8 +33627,8 @@ function GetUIRoot() {
     function NeedsCoreRootDynamicRuntimeWork(cfg) {
         if (!cfg) return false;
         var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
         if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
@@ -33635,8 +33648,8 @@ function GetUIRoot() {
 
     function BuildRuntimeFeatureConfigState(cfg, hideoutConnected) {
         var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === 1);
-        var fgHealthbarEnabled = (healthbarType === 2);
+        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
+        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var damageReportOffsetX = Number(cfg && cfg.DAMAGE_REPORT_X_OFFSET);
@@ -33743,7 +33756,7 @@ function GetUIRoot() {
                 HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
                 !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
                 Number(healthbarType) === 4 ||
-                Number(healthbarType) === 5
+                Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT
             ),
             chatRuntimeActive: HasNonDefaultChatRuntimeConfig(cfg),
             damageReportOffsetActive: (
@@ -33954,17 +33967,17 @@ function GetUIRoot() {
             State.runtimeGates = gates;
         }
 
-        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 0));
-        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
-        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
-        gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0));
-        gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
+        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_SPM_STATLOCKER))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
+        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_UNSPENT_LANE))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
+        gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_REJUV_NICKNAMES));
+        gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         gates.onDeathArcade = gates.onDeathArcadeActive || State.onDeathArcadeRuntimeWasActive || State.onDeathArcadeWasDead;
-        gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
+        gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
         gates.keyboardRuntime = gates.keyboardRuntimeActive || IsPanelValid(State.cachedPanels.keyboardOverlayRoot) || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
-        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 3));
-        gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 4));
+        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED));
+        gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
