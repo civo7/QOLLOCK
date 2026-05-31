@@ -67,6 +67,9 @@
     var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
     var ProfileHit = QOL_UTILS_LOADED ? QOL_UTILS.ProfileHit : function() {};
     var DumpProfile = QOL_UTILS_LOADED ? QOL_UTILS.DumpProfile : function() {};
+    var TimeFeature = QOL_UTILS_LOADED ? QOL_UTILS.TimeFeature : function() {};
+    var RecordFrameTime = QOL_UTILS_LOADED ? QOL_UTILS.RecordFrameTime : function() {};
+    var DumpTiming = QOL_UTILS_LOADED ? QOL_UTILS.DumpTiming : function() {};
 
     var State = {
         lastTime: -1, 
@@ -32341,6 +32344,7 @@ function GetUIRoot() {
     }
 
     function compassLoop() {
+        ProfileHit("compassLoop");
         var nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
         var perfLoopStartMs = PerfNowMs();
         try {
@@ -32577,6 +32581,7 @@ function GetUIRoot() {
     }
 
     function buildRequestLoop() {
+        ProfileHit("buildRequestLoop");
         var nextDelaySec = BUILD_REQUEST_LOOP_IDLE_SEC;
         try {
             var root = GetUIRoot();
@@ -34814,6 +34819,7 @@ function GetUIRoot() {
             LogLoopException("loop", err, "loopErrorNextLogMs", PerfNowMs());
         } finally {
             DumpProfile();
+            DumpTiming();
             $.Schedule(nextDelaySec, loop);
         }
     }
