@@ -766,16 +766,5 @@ function UpdateQuickbuyQueueCostPanels(){
 }
 
 InitializeQuickbuyRecipeComponents();
-
-// Event-driven update: fire on quickbuy changes instead of polling at 20Hz.
-// The CitadelQuickbuyItemsChanged event fires exactly when the quickbuy queue
-// changes, eliminating ~1200 wasted function calls/minute.
-// Confirmed valid in dispatch_events.txt line 67 and live runtime testing.
-if (typeof $ !== "undefined" && typeof $.RegisterForUnhandledEvent === "function") {
-    try {
-        $.RegisterForUnhandledEvent("CitadelQuickbuyItemsChanged", UpdateQuickbuyQueueCostPanels);
-    } catch (e) {}
-}
-
 $.Schedule(0.0,UpdateQuickbuyQueueCostPanels);
 })();
