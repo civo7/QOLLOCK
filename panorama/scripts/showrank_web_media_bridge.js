@@ -625,6 +625,38 @@
     return mode;
   }
 
+  function IsShowRankTopBarAndAverageDisabled(root) {
+    var docRoot = GetDocumentRoot(root);
+    if (!IsPanelValid(docRoot)) return false;
+    return ReadShowRankTopBarMode(docRoot) === SHOW_RANK_TOP_BAR_MODE_DISABLED
+      && ReadShowRankAverageMode(docRoot) === SHOW_RANK_TOP_BAR_MODE_DISABLED;
+  }
+
+  function CleanupShowRankTopBarDisabledAll(root) {
+    var docRoot = GetDocumentRoot(root);
+    if (!IsPanelValid(docRoot)) return false;
+    HideAllTeamAverageImages(docRoot);
+    SetPanelAttribute(docRoot, "showrank_topbar_ready_check_pending", "");
+    SetPanelAttribute(docRoot, "showrank_topbar_ready_wait_retry_pending_sig", "");
+    SetPanelAttribute(docRoot, "showrank_topbar_ready_wait_retry_last_sig", "");
+    SetPanelAttribute(docRoot, "showrank_topbar_ready_wait_retry_count", "");
+    SetPanelAttribute(docRoot, "showrank_escape_auto_topbar_retry_at", "");
+    UpdateEscapePrompt(docRoot, 0, 0, 0, 0);
+    return true;
+  }
+
+  function ApplyShowRankModesAndCleanupIfDisabledAll(root) {
+    var docRoot = GetDocumentRoot(root);
+    var topBarMode;
+    var averageMode;
+    if (!IsPanelValid(docRoot)) return false;
+    topBarMode = ApplyShowRankTopBarModeClasses(docRoot);
+    averageMode = ApplyShowRankAverageModeClasses(docRoot);
+    if (topBarMode !== SHOW_RANK_TOP_BAR_MODE_DISABLED || averageMode !== SHOW_RANK_TOP_BAR_MODE_DISABLED) return false;
+    CleanupShowRankTopBarDisabledAll(docRoot);
+    return true;
+  }
+
   function IsPanelHiddenSignal(panel) {
     if (!IsPanelValid(panel)) return false;
     try {
@@ -654,7 +686,7 @@
     var scoreboardOpen = IsScoreboardOpen(docRoot);
     var minimapHidden = HasHiddenMinimapSignal(docRoot);
     var rows = roster && roster.rows ? roster.rows.length : FindPlayerListRows(docRoot).length;
-    var topbar = roster && roster.topbar ? roster.topbar.length : FindTopBarCandidates(docRoot).length;
+    var topbar = roster && roster.topbar ? roster.topbar.length : (IsShowRankTopBarAndAverageDisabled(docRoot) ? 0 : FindTopBarCandidates(docRoot).length);
     var matched = roster ? Number(roster.matched || 0) : 0;
     var gameState = ReadGameState();
     var inactiveGameState = gameState >= 0 && gameState < MATCH_ACTIVE_GAME_STATE;
@@ -1842,8 +1874,7 @@
     if (!IsPanelValid(root) || !IsPanelValid(image)) {
       return null;
     }
-    ApplyShowRankTopBarModeClasses(docRoot);
-    ApplyShowRankAverageModeClasses(docRoot);
+    var disabledAll = ApplyShowRankModesAndCleanupIfDisabledAll(docRoot);
     AddClass(root, TOPBAR_PLAYER_CLASS);
     AddClass(image, TOPBAR_IMAGE_CLASS);
     try { image.__showRankTopBarRoot = root; } catch (e0) {}
@@ -1875,6 +1906,10 @@
       steam64: account ? BuildSteam64(account) : "",
       teamSide: teamSide
     };
+    if (disabledAll) {
+      ClearTopBarRankPanelState(candidate);
+      return candidate;
+    }
     candidates = UpsertTopBarCandidateCache(docRoot, FindTopBarCandidates(docRoot), candidate);
     index = candidate.index;
     SetPanelAttribute(root, "showrank_topbar_index", index);
@@ -2013,6 +2048,7 @@
     var uid;
     var teamSide;
     var parent;
+    if (IsShowRankTopBarAndAverageDisabled(docRoot)) return WriteTopBarCandidateCache(docRoot, []);
     if (cached) return cached;
     images = FindChildrenWithClass(docRoot, TOPBAR_IMAGE_CLASS);
     for (i = 0; i < images.length; i += 1) {
@@ -2335,6 +2371,10 @@
     if (!IsPanelValid(docRoot)) return false;
     displayMode = ApplyShowRankTopBarModeClasses(docRoot);
     averageMode = ApplyShowRankAverageModeClasses(docRoot);
+    if (displayMode === SHOW_RANK_TOP_BAR_MODE_DISABLED && averageMode === SHOW_RANK_TOP_BAR_MODE_DISABLED) {
+      CleanupShowRankTopBarDisabledAll(docRoot);
+      return false;
+    }
     if (displayMode === SHOW_RANK_TOP_BAR_MODE_DISABLED || averageMode === SHOW_RANK_TOP_BAR_MODE_DISABLED) {
       HideAllTeamAverageImages(docRoot);
       return false;
@@ -2712,6 +2752,11 @@
     var wasDirty = state.topBarBatchDirty;
     state.topBarBatchDepth = Math.max(0, Number(state.topBarBatchDepth || 0) - 1);
     if (state.topBarBatchDepth > 0) return;
+    if (ApplyShowRankModesAndCleanupIfDisabledAll(docRoot)) {
+      state.topBarBatchRoot = null;
+      state.topBarBatchDirty = false;
+      return;
+    }
     if (wasDirty || resolvedTopbarCount === undefined || resolvedTopbarCount === null) {
       candidates = FindTopBarCandidates(docRoot);
       resolvedTopbarCount = candidates.length;
@@ -2802,6 +2847,7 @@
 
   function ApplyProfileToTopBar(profile) {
     var root = GetDocumentRoot(profile.root);
+    if (IsShowRankTopBarAndAverageDisabled(root)) return false;
     var candidates = FindTopBarCandidates(root);
     var selected = null;
     var method = "";
@@ -3652,7 +3698,7 @@
   function BuildEscapeRoster(root, forceTopBarRefresh) {
     var docRoot = GetDocumentRoot(root);
     var rows = FindPlayerListRows(docRoot);
-    var topbar = FindTopBarCandidates(docRoot, !!forceTopBarRefresh);
+    var topbar = IsShowRankTopBarAndAverageDisabled(docRoot) ? [] : FindTopBarCandidates(docRoot, !!forceTopBarRefresh);
     var matched = 0;
     var ambiguous = 0;
     var missing = 0;
@@ -4408,6 +4454,7 @@
     var lastSig;
     var delay;
     if (!IsPanelValid(docRoot)) return false;
+    if (ApplyShowRankModesAndCleanupIfDisabledAll(docRoot)) return false;
     try {
       if (!$.Schedule) return false;
     } catch (e0) {
@@ -4449,6 +4496,7 @@
     var now;
     var lastReady;
     if (!IsPanelValid(docRoot)) return false;
+    if (ApplyShowRankModesAndCleanupIfDisabledAll(docRoot)) return false;
     roster = BuildEscapeRoster(docRoot);
     if (IsShowRankRuntimeIdleActive(docRoot, roster, sourceName)) return false;
     transition = ReadHudTransitionInfo(docRoot, roster);
@@ -4489,6 +4537,7 @@
     var sourceName = source || "topbar_register";
     var hasSchedule = false;
     if (!IsPanelValid(docRoot)) return false;
+    if (ApplyShowRankModesAndCleanupIfDisabledAll(docRoot)) return false;
     try {
       hasSchedule = !!$.Schedule;
     } catch (e0) {
@@ -5103,8 +5152,7 @@
     var candidates;
     var rankState;
     if (!GuardShowRankAction("topbar_root_loaded", panel, source || "topbar_root_onload")) return false;
-    ApplyShowRankTopBarModeClasses(docRoot);
-    ApplyShowRankAverageModeClasses(docRoot);
+    if (ApplyShowRankModesAndCleanupIfDisabledAll(docRoot)) return true;
     candidates = FindTopBarCandidates(docRoot);
     rankState = CountTopBarRankState(docRoot, candidates);
     AddClass(docRoot, "ShowRankTopBarNeedsEscapePrompt");

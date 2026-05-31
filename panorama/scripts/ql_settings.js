@@ -8417,26 +8417,6 @@ function IsRussianSettingsLanguage() {
     return GetSettingsLanguage() === SETTINGS_LANGUAGE_RUSSIAN;
 }
 
-function IsUkrainianSettingsLanguage() {
-    return GetSettingsLanguage() === SETTINGS_LANGUAGE_UKRAINIAN;
-}
-
-function IsPolishSettingsLanguage() {
-    return GetSettingsLanguage() === SETTINGS_LANGUAGE_POLISH;
-}
-
-function IsBulgarianSettingsLanguage() {
-    return GetSettingsLanguage() === SETTINGS_LANGUAGE_BULGARIAN;
-}
-
-function IsJapaneseSettingsLanguage() {
-    return GetSettingsLanguage() === SETTINGS_LANGUAGE_JAPANESE;
-}
-
-function IsChineseSettingsLanguage() {
-    return GetSettingsLanguage() === SETTINGS_LANGUAGE_CHINESE;
-}
-
 function IsFrenchSettingsLanguage() {
     return GetSettingsLanguage() === SETTINGS_LANGUAGE_FRENCH;
 }

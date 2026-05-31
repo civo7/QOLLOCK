@@ -29959,6 +29959,33 @@ function GetUIRoot() {
         return UpdateItemMirrorProbeMulti(root, cfg);
     }
 
+    function ApplyItemMirrorOverlayBaseStyle(overlay) {
+        var sig = "center|center|down|noclip|0px|150px|100%";
+        if (!IsPanelValid(overlay)) return;
+        if (SafeGetAttribute(overlay, "qol_item_mirror_overlay_style_sig", "") === sig) return;
+        overlay.style.horizontalAlign = "center";
+        overlay.style.verticalAlign = "center";
+        overlay.style.flowChildren = "down";
+        overlay.style.overflow = "noclip";
+        overlay.style.x = "0px";
+        overlay.style.y = "150px";
+        overlay.style.uiScale = "100%";
+        SafeSetAttribute(overlay, "qol_item_mirror_overlay_style_sig", sig);
+    }
+
+    function ApplyItemMirrorRowBaseStyle(row) {
+        var sig = "right|center|center|fit-children|fit-children|noclip";
+        if (!IsPanelValid(row)) return;
+        if (SafeGetAttribute(row, "qol_item_mirror_row_style_sig", "") === sig) return;
+        row.style.flowChildren = "right";
+        row.style.horizontalAlign = "center";
+        row.style.verticalAlign = "center";
+        row.style.width = "fit-children";
+        row.style.height = "fit-children";
+        row.style.overflow = "noclip";
+        SafeSetAttribute(row, "qol_item_mirror_row_style_sig", sig);
+    }
+
     function EnsureItemMirrorOverlayMulti(root) {
         var overlay = State.cachedPanels.itemMirrorOverlay;
         if (!IsPanelValid(overlay)) {
@@ -29975,14 +30002,8 @@ function GetUIRoot() {
         }
         if (!overlay) return null;
 
-        overlay.style.horizontalAlign = "center";
-        overlay.style.verticalAlign = "center";
-        overlay.style.flowChildren = "down";
-        overlay.style.overflow = "noclip";
-        overlay.style.x = "0px";
-        overlay.style.y = "150px";
-        overlay.style.uiScale = "100%";
-        overlay.style.visibility = "collapse";
+        ApplyItemMirrorOverlayBaseStyle(overlay);
+        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
 
         var row = State.cachedPanels.itemMirrorRow;
         if (!IsPanelValid(row)) {
@@ -29996,12 +30017,7 @@ function GetUIRoot() {
             State.cachedPanels.itemMirrorRow = row || null;
         }
         if (!row) return overlay;
-        row.style.flowChildren = "right";
-        row.style.horizontalAlign = "center";
-        row.style.verticalAlign = "center";
-        row.style.width = "fit-children";
-        row.style.height = "fit-children";
-        row.style.overflow = "noclip";
+        ApplyItemMirrorRowBaseStyle(row);
 
         var legacyIcon = overlay.FindChildTraverse("QOLItemMirrorIcon");
         if (IsPanelValid(legacyIcon) && legacyIcon.GetParent && legacyIcon.GetParent() === overlay) {
@@ -33319,20 +33335,6 @@ function GetUIRoot() {
         return (p % 3) === (s % 3);
     }
 
-    function NeedsAmmoRuntimeWork(cfg) {
-        if (!cfg) return false;
-        if (IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
-        if (Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
-        if (Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
-        if (ReadAmmoTextColorIndex(cfg) !== 0) return true;
-        return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
-    }
-
     function NeedsDamageImpactRuntimeWork(cfg) {
         return HasNonDefaultDamageImpactRuntimeConfig(cfg) ||
             !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
@@ -33394,22 +33396,6 @@ function GetUIRoot() {
             IsPanelValid(State.cachedPanels.soulsContainer);
     }
 
-    function NeedsBetterUnsecuredHudLayoutWork(cfg) {
-        if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
-        return !!(
-            State.unsecuredSouls.hudStyleSig ||
-            IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
-            IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
-        );
-    }
-
-    function NeedsColorWarningRuntimeWork(cfg) {
-        return IsColorWarningEnabled(cfg) ||
-            State.coloredHealthbarEnabledPrev === true ||
-            State.coloredHealthbarLastColor !== "" ||
-            IsPanelValid(State.cachedPanels.coloredHealthbarProgressLeft);
-    }
-
     function NeedsEnemyColorWarningRuntimeWork(cfg) {
         return IsEnemyColorWarningEnabled(cfg) ||
             State.enemyColoredHealthEnabledPrev === true ||
@@ -33420,20 +33406,6 @@ function GetUIRoot() {
         return IsAllyColorWarningEnabled(cfg) ||
             State.allyColoredHealthEnabledPrev === true ||
             !!(State.allyColoredHealthPanelCache && State.allyColoredHealthPanelCache.length > 0);
-    }
-
-    function NeedsKeyboardRuntimeWork(cfg) {
-        if (IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY")) return true;
-        if (IsPanelValid(State.cachedPanels.keyboardOverlayRoot)) return true;
-        return !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
-    }
-
-    function NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected) {
-        var basicModeActive = IsPassiveCooldownBasicMode(ResolvePassiveCooldownMode(cfg));
-        var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
-        var needsDl4dCleanup = State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
-        var needsReminderRuntime = ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) || needsDl4dCleanup;
-        return needsPassiveRuntime || needsReminderRuntime;
     }
 
     function IsOnDeathArcadeConfigActive(cfg) {
