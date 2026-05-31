@@ -13680,11 +13680,15 @@
 }
 
 #SettingsWindow .SettingToggleBtn:hover .SwitchButton,
-.SectionInlineToggleBtn:hover .SwitchButton,
+.SectionInlineToggleBtn:hover .SwitchButton
+{
+	border: 0px solid transparent;
+}
+
 #SettingsWindow .SettingToggleBtn.ToggleOn .SwitchButton,
 .SectionInlineToggleBtn.ToggleOn .SwitchButton
 {
-	border: 0px solid transparent;
+	border: 1px solid rgba(120, 219, 161, 0.34);
 }
 
 #SettingsWindow .SettingToggleBtn #handle,
@@ -23153,6 +23157,29 @@
 {
 	wash-color: #146348;
 	img-shadow: 0px 0px 9px 1 rgba(20, 99, 72, 0.22);
+}
+
+/* Light-theme ToggleOff handles: the default dark SVG blends into the dark
+   capsule background. Apply a subtle light wash so the off-state is visible. */
+#SettingsWindow.SettingsThemeCream .SettingToggleBtn.ToggleOff #handle,
+#SettingsWindow.SettingsThemeCream .SectionInlineToggleBtn.ToggleOff #handle
+{
+	wash-color: #b8a088;
+	img-shadow: 0px 0px 6px 1 rgba(160, 130, 100, 0.18);
+}
+
+#SettingsWindow.SettingsThemeKitten .SettingToggleBtn.ToggleOff #handle,
+#SettingsWindow.SettingsThemeKitten .SectionInlineToggleBtn.ToggleOff #handle
+{
+	wash-color: #c8a0b8;
+	img-shadow: 0px 0px 6px 1 rgba(180, 110, 140, 0.18);
+}
+
+#SettingsWindow.SettingsThemePsycho .SettingToggleBtn.ToggleOff #handle,
+#SettingsWindow.SettingsThemePsycho .SectionInlineToggleBtn.ToggleOff #handle
+{
+	wash-color: #7a9980;
+	img-shadow: 0px 0px 6px 1 rgba(80, 130, 90, 0.18);
 }
 
 /* Settings polish repair: late, scoped fixes for controls that have many
