@@ -34397,6 +34397,7 @@ function GetUIRoot() {
         var perfConfigStartMs = perfLoopStartMs;
         var root = GetUIRoot();
         var raw = ReadStorageConfigRawFromUi(root);
+        TimeFeature("loop.config_read", perfLoopStartMs);
 
         var cfg = null;
         if (raw === State.lastRawConfig && State.lastConfig) {
@@ -34459,7 +34460,9 @@ function GetUIRoot() {
             }
         }
 
+        var _tGates = PerfNowMs();
         var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
+        TimeFeature("loop.resolve_gates", _tGates);
         State.lastResolvedGates = gates;
         var redDiamondEnabled = gates.redDiamondEnabled;
 
@@ -34653,7 +34656,9 @@ function GetUIRoot() {
             });
         }
         if (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") || IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS") || State.recentPurchasesWasEnabled) {
-            UpdateRecentPurchases(root, cfg);
+            ExecuteFeature("recentPurchases", function() {
+                UpdateRecentPurchases(root, cfg);
+            });
         }
 
         if (gates.keyboardRuntime) {

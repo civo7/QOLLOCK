@@ -12571,7 +12571,11 @@ function PublishHeroHintFromSettings() {
 
 function StartHeroHintPublisher() {
     function tick() {
-        try { PublishHeroHintFromSettings(); } catch (e0) {}
+        // Only publish hero hints while the settings window is open.
+        // No point running this poll when the player can't see the settings UI.
+        if (IsSettingsWindowVisible()) {
+            try { PublishHeroHintFromSettings(); } catch (e0) {}
+        }
         $.Schedule(HERO_HINT_PUBLISH_INTERVAL_SEC, tick);
     }
     tick();
