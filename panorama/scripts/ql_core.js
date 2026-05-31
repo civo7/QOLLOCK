@@ -59,6 +59,10 @@
     }
     if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
 
+    function IsCfgEnabled(cfg, key) {
+        return Number(cfg && cfg[key]) === 1;
+    }
+
     var State = {
         lastTime: -1, 
         lastIntervalAlert: 0,
@@ -7167,8 +7171,8 @@ function ExpressShotLog(msg) {
     }
 
     function UpdatePerfEnabledFromConfig(cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_PERF_DEBUG) === 1);
-        var detailed = !!(enabled && Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG"));
+        var detailed = !!(enabled && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG_DETAIL"));
         _perfTrackingActive = enabled;
         if (!enabled) {
             if (State.perfEnabled) {
@@ -9144,7 +9148,7 @@ function GetUIRoot() {
     }
 
     function ResolvePassiveCooldownMode(cfg) {
-        var masterEnabled = Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1;
+        var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
         if (!masterEnabled) return "default";
         var advancedModeEnabled = Number(cfg && cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1 || ITEM_COOLDOWN_DUAL_MODE_TEST;
         return advancedModeEnabled ? "advanced" : "basic";
@@ -9301,15 +9305,15 @@ function GetUIRoot() {
 
     function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_COLOR_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_COLOR_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_COLOR_WARNING_75) === 1;
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
     }
 
     function ResolveColoredHealthbarColor(pct, cfg) {
-        var use25 = Number(cfg && cfg.ENABLE_COLOR_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_COLOR_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_COLOR_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             State.coloredHealthbarPulseVal += (State.coloredHealthbarPulseDir * COLORED_HEALTHBAR_PULSE_STEP);
@@ -11433,7 +11437,7 @@ function GetUIRoot() {
     }
 
     function UpdateReloadCooldownOverlay(root, cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN"));
         var cooldownLabel = IsPanelValid(State.cachedPanels.reloadCooldownLabel) ? State.cachedPanels.reloadCooldownLabel : null;
 
         if (!enabled) {
@@ -11618,7 +11622,7 @@ function GetUIRoot() {
     }
 
     function UpdateReloadCircleExceptionState(root, cfg) {
-        var hideReloadCircleEnabled = !!(cfg && Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1);
+        var hideReloadCircleEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"));
         if (!hideReloadCircleEnabled) {
             SetPanelClassCached(root, State.rootClassCache, "hide_reload_circle_exception_active", false);
             State.cachedPanels.activeReloadProgressBar = null;
@@ -12022,7 +12026,7 @@ function GetUIRoot() {
     }
 
     function NeedsUrnTrackerRuntimeWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) return true;
         return !!(
             State.urnTrackerDisplayMode === "active" ||
             (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
@@ -12461,7 +12465,7 @@ function GetUIRoot() {
 
     function UpdateTopBarNicknames(root, nowMs, cfg) {
         if (!root) return;
-        var enabled = Number(cfg && cfg.ENABLE_NICKNAMES) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_NICKNAMES");
         if (!enabled && !State.topbarNicknamesWasEnabled) return;
 
         var now = isFinite(Number(nowMs)) ? Number(nowMs) : (Date.now ? Date.now() : (new Date()).getTime());
@@ -12910,7 +12914,7 @@ function GetUIRoot() {
 
     function UpdateStatlockerButtons(root, nowMs, cfg) {
         if (!root) return;
-        var enabled = Number(cfg && cfg.ENABLE_STATLOCKER) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
         if (!enabled) {
             if (State.statlockerWasEnabled) {
                 RemoveStatlockerButtons(root);
@@ -13035,7 +13039,7 @@ function GetUIRoot() {
         if (!root) return;
         EnsureSpmState();
 
-        var spmEnabled = !cfg || Number(cfg.ENABLE_MIN_SOULS) === 1;
+        var spmEnabled = !cfg || IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
         if (!spmEnabled) {
             if (!State.spm.wasDisabled) {
                 ResetSpmState();
@@ -13289,7 +13293,7 @@ function GetUIRoot() {
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        var enabled = !cfg || Number(cfg.ENABLE_UNSPENT_SOULS) === 1;
+        var enabled = !cfg || IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS");
         if (!enabled || isConnectedToHideout(root)) {
             if (!State.unspentWasDisabled) {
                 ClearUnspentDisplayValues(root, nowMs);
@@ -13830,13 +13834,13 @@ function GetUIRoot() {
 
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
-        var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
         var opacityValue = cfg && cfg.MINIMAP_REM_TUNNELS_OPACITY;
         if (mode === "ALT") {
-            enabled = !!(cfg && Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1);
+            enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS"));
             opacityValue = cfg && cfg.ALT_ZOOM_REM_TUNNELS_OPACITY;
         } else if (mode === "TAB") {
-            enabled = !!(cfg && Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1);
+            enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS"));
             opacityValue = cfg && cfg.TAB_ZOOM_REM_TUNNELS_OPACITY;
         }
         if (!enabled) {
@@ -13855,7 +13859,7 @@ function GetUIRoot() {
     }
 
     function UpdateMinimapCrateOverlay(root, cfg) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY"));
         var mapKey = ResolveMinimapCrateOverlayMapKey();
         var renderMapKey = mapKey || "dl_midtown";
         MinimapCrateOverlayDebugLogThrottled(
@@ -13902,20 +13906,20 @@ function GetUIRoot() {
         }
         var isAlt = IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPersp, "gDetailView");
         var isTab = IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPersp, "gScoreboardOpen");
-        if (isTab && cfg && Number(cfg.ENABLE_TAB_ZOOM) === 1) {
+        if (isTab && cfg && IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) {
             return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", smallSize);
         }
-        if (isAlt && cfg && Number(cfg.ENABLE_ALT_ZOOM) === 1) {
+        if (isAlt && cfg && IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM")) {
             return GetMinimapConfigNumber(cfg, "MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", smallSize);
         }
         return smallSize;
     }
 
     function UpdateMinimapObjectiveTimers(root, cfg, bridgeText, remainingBridge, rejuvText, remainingRejuv, spawnWaiting) {
-        var buffEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1);
-        var buffOnBridgeEnabled = !!(buffEnabled && cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1);
-        var rejuvEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1);
-        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1);
+        var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
+        var buffOnBridgeEnabled = !!(buffEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE"));
+        var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"));
         if (!buffEnabled && !rejuvEnabled) {
             HideMinimapObjectiveTimers(root);
             return;
@@ -14591,10 +14595,10 @@ function GetUIRoot() {
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        var rejuvHudEnabled = !!(cfg && Number(cfg.ENABLE_REJUV_HUD) === 1);
-        var buffHudEnabled = !!(cfg && Number(cfg.ENABLE_BUFF_HUD) === 1);
-        var minimapRejuvEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1);
-        var minimapBuffEnabled = !!(cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1);
+        var rejuvHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_REJUV_HUD"));
+        var buffHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_HUD"));
+        var minimapRejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+        var minimapBuffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
         var anyObjectiveTimerEnabled = rejuvHudEnabled || buffHudEnabled || minimapRejuvEnabled || minimapBuffEnabled;
         if (!anyObjectiveTimerEnabled) {
             HideMinimapObjectiveTimers(root);
@@ -14633,8 +14637,8 @@ function GetUIRoot() {
             buffHudEnabled ? "1" : "0",
             minimapRejuvEnabled ? "1" : "0",
             minimapBuffEnabled ? "1" : "0",
-            cfg && Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? "1" : "0",
-            cfg && Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? "1" : "0",
+            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? "1" : "0",
+            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? "1" : "0",
             String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : ""),
             String(activeMinimapObjectiveSize),
             activeObjectiveZoomSig
@@ -14756,10 +14760,10 @@ function GetUIRoot() {
         var rejuvTextForMinimap = state.spawnWaiting ? "Spawn" : FormatClockMmSs(state.counter);
         var rejuvRemainForMinimap = state.spawnWaiting ? 0 : state.counter;
         var minimapRenderSig = [
-            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ? 1 : 0,
-            Number(cfg.ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS) === 1 ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") ? 1 : 0,
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? 1 : 0,
             String(Number(cfg.MINIMAP_SMALL_SIZE) || 0),
             String(activeMinimapObjectiveSize),
             activeObjectiveZoomSig,
@@ -15134,9 +15138,9 @@ function GetUIRoot() {
 
     function GetEnabledBridgeVariantList(cfg) {
         var out = [];
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_1) === 1) out.push(1);
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_2) === 1) out.push(2);
-        if (cfg && Number(cfg.ENABLE_BUFF_SOUND_3) === 1) out.push(3);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_1")) out.push(1);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_2")) out.push(2);
+        if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_3")) out.push(3);
         if (out.length <= 0) return [1, 2, 3];
         return out;
     }
@@ -15156,7 +15160,7 @@ function GetUIRoot() {
     }
 
     function IsDl4dReminderRuntimeActive(cfg) {
-        return !!(cfg && Number(cfg.ENABLE_DL4D_REMINDERS) === 1);
+        return !!(cfg && IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS"));
     }
 
     function ResolveDl4dReminderEventForVolume(baseEventName, cfg) {
@@ -20104,7 +20108,7 @@ function GetUIRoot() {
         var target = EnsureShowBuildIdPanel(root);
         if (!target) return;
 
-        var showTitle = Number(cfg && cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
+        var showTitle = IsCfgEnabled(cfg, "ENABLE_SHOW_BUILD_ID_TITLE");
         var displayText = parsed.visibility + " Build: " + parsed.id + (showTitle ? " - " + parsed.name : "");
         var sig = displayText + "|" + (showTitle ? "1" : "0");
         var forceApply = State.showBuildIdLastLabel !== target.label;
@@ -22375,7 +22379,7 @@ function GetUIRoot() {
     }
 
     function UpdateLanePreferenceWithParty(root, cfg, nowMs) {
-        var enabled = !!(cfg && Number(cfg.ENABLE_LANE_WITH_PARTY) === 1);
+        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"));
         if (!enabled) {
             State.laneWithPartyNextApplyMs = 0;
             State.laneWithPartyLastState = "disabled";
@@ -24391,7 +24395,7 @@ function GetUIRoot() {
 
     function UpdateDamageImpactRuntime(root, cfg) {
         var active = HasNonDefaultDamageImpactRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.ENABLE_DAMAGE_IMPACT) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
         var panel = IsPanelValid(State.cachedPanels.damageImpactPanel) ? State.cachedPanels.damageImpactPanel : null;
         if (!panel && root && root.FindChildTraverse) {
             panel = root.FindChildTraverse("damage_impact");
@@ -24416,7 +24420,7 @@ function GetUIRoot() {
 
     function UpdateTopBarRuntime(root, cfg) {
         var active = HasNonDefaultTopBarRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_TOP_BAR_ENABLED) === 1;
+        var enabled = IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar && root && root.FindChildTraverse) {
             topBar = root.FindChildTraverse("TopBar");
@@ -24443,7 +24447,7 @@ function GetUIRoot() {
 
     function UpdateBottomBarRuntime(root, cfg) {
         var active = HasNonDefaultBottomBarRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
+        var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = IsPanelValid(State.cachedPanels.bottomBarPanel) ? State.cachedPanels.bottomBarPanel : null;
         if (!hudSignature && root && root.FindChildTraverse) {
             hudSignature = root.FindChildTraverse("hud_signature");
@@ -24631,7 +24635,7 @@ function GetUIRoot() {
 
     function UpdateItemsRuntime(root, cfg) {
         var active = HasNonDefaultItemsRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_ITEMS_ENABLED) === 1;
+        var enabled = IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = IsPanelValid(State.cachedPanels.itemsModsContainer) ? State.cachedPanels.itemsModsContainer : null;
         if (!modsContainer) {
             var statsAndMods = IsPanelValid(State.cachedPanels.statsAndModsContainer) ? State.cachedPanels.statsAndModsContainer : null;
@@ -24686,7 +24690,7 @@ function GetUIRoot() {
 
     function UpdateSoulsRuntime(root, cfg) {
         var active = HasNonDefaultSoulsRuntimeConfig(cfg);
-        var enabled = Number(cfg && cfg.HUD_SOULS_ENABLED) === 1;
+        var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = IsPanelValid(State.cachedPanels.soulsContainer) ? State.cachedPanels.soulsContainer : null;
         if (!soulsPanel && root && root.FindChildTraverse) {
             soulsPanel = root.FindChildTraverse("gold_and_ap_container");
@@ -25022,11 +25026,11 @@ function GetUIRoot() {
         }
 
         var occupiedBottom = 0;
-        if (Number(cfg && cfg.ENABLE_OBJ_MAP) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_OBJ_MAP")) {
             var objectiveMap = root && root.FindChildTraverse ? root.FindChildTraverse("ObjectivesMap") : null;
             occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(objectiveMap, 112));
         }
-        if (Number(cfg && cfg.ENABLE_URN_DIFF) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) {
             var urnTracker = root && root.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
             occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(urnTracker, 96));
         }
@@ -25361,8 +25365,8 @@ function GetUIRoot() {
     }
 
     function UpdateRecentPurchases(root, cfg) {
-        var shopEnabled   = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
-        var notifyEnabled = Number(cfg && cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1;
+        var shopEnabled   = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+        var notifyEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS");
 
         // Early-return when both features are disabled — hide panel once on transition.
         if (!shopEnabled && !notifyEnabled) {
@@ -25425,7 +25429,7 @@ function GetUIRoot() {
         }
 
         if (notifyEnabled) {
-            var heroPopupsEnabled = Number(cfg && cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
+            var heroPopupsEnabled = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
             if (heroPopupsEnabled) {
                 // Per-hero popup panels on player cards
@@ -25464,9 +25468,9 @@ function GetUIRoot() {
         var shopOffsetYRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0);
         var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
         var shopScaleText = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0).toFixed(2);
-        var shopEnabled = Number(cfg && cfg.HUD_SHOP_ENABLED) === 1;
-        var simplifyShopStats = Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1;
-        var shopRecentPurchases = Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
+        var shopEnabled = IsCfgEnabled(cfg, "HUD_SHOP_ENABLED");
+        var simplifyShopStats = IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
+        var shopRecentPurchases = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
         var needsHeroShopFeatures =
             simplifyShopStats ||
             shopRecentPurchases ||
@@ -25569,7 +25573,7 @@ function GetUIRoot() {
         var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
         if (!isFinite(indicatorSize)) indicatorSize = 18;
         var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
-        var cleanIndicators = (cfg && Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        var cleanIndicators = (cfg && IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
         return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
     }
 
@@ -25599,7 +25603,7 @@ function GetUIRoot() {
         var hideSmallNumbers = (cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
         var hideModesSig = (hideSmallNumbers ? "1" : "0");
         var hideModesChanged = (hideModesSig !== State.lastIndicatorHideModesSig);
-        var cleanIndicators = (Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+        var cleanIndicators = (IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
         var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
         var indicatorDefaultsSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
         var indicatorIsDefault = (indicatorConfigSig === indicatorDefaultsSig);
@@ -25695,25 +25699,25 @@ function GetUIRoot() {
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
         if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && State.minimapCastRangeScaleApplied) return true;
-        if (Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
         if (
             (
-                Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ||
-                Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ||
-                Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1
+                IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS")
             ) &&
             !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)
         ) return true;
-        if (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") || IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) return true;
         return false;
     }
 
     function BuildMinimapRuntimeSignature(cfg) {
         if (!cfg) return "";
         return [
-            Number(cfg.ENABLE_ALT_ZOOM) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_TAB_ZOOM) === 1 ? "1" : "0",
-            Number(cfg.MINIMAL_MINIMAP) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "MINIMAL_MINIMAP") ? "1" : "0",
             String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
             String(Number(cfg.MINIMAP_BASE_OPACITY) || 1),
             String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
@@ -25727,14 +25731,14 @@ function GetUIRoot() {
             String(Number(cfg.ALT_ZOOM_OPACITY) || 1),
             String(Number(cfg.TAB_ZOOM_OPACITY) || 1),
             String(Number(cfg.MINIMAL_MINIMAP_OPACITY) || 0.9),
-            Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-            Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 ? "1" : "0",
-            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ALT_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "TAB_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
-            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
-            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS") ? "1" : "0",
             String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
             String(ReadMinimapIconColorIndex(cfg)),
             ResolveMinimapCrateOverlayMapKey()
@@ -25901,7 +25905,7 @@ function GetUIRoot() {
                 State.cachedPanels.minimapMapRender = mapRenderPanel || null;
             }
             if (mapRenderPanel) {
-                var minimalistEnabled = (!zoomAlt && !zoomTab && Number(cfg.MINIMAL_MINIMAP) === 1);
+                var minimalistEnabled = (!zoomAlt && !zoomTab && IsCfgEnabled(cfg, "MINIMAL_MINIMAP"));
                 if (minimalistEnabled) {
                     var minimalistOpacity = Number(cfg.MINIMAL_MINIMAP_OPACITY);
                     if (!isFinite(minimalistOpacity)) minimalistOpacity = 0.9;
@@ -26313,7 +26317,7 @@ function GetUIRoot() {
     }
 
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
-        var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED");
         var panel = IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer) ? State.cachedPanels.unsecuredSoulsHudContainer : null;
         var label = IsPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
         var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
@@ -26392,9 +26396,9 @@ function GetUIRoot() {
         if (fontPx < 8) fontPx = 8;
         if (fontPx > 72) fontPx = 72;
 
-        var legacyShowBoth = Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT) === 1;
-        var showIcon = legacyShowBoth || (Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_ICON) === 1);
-        var showText = legacyShowBoth || (Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_TEXT) === 1);
+        var legacyShowBoth = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT");
+        var showIcon = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON"));
+        var showText = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_TEXT"));
 
         var sourceText = (typeof label.text === "string") ? label.text : "";
         var sourceTextLabel = FindUnsecuredSoulsHudTextLabel(root, panel);
@@ -26522,7 +26526,7 @@ function GetUIRoot() {
             return;
         }
 
-        var enabled = Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER");
         if (!enabled) {
             if (State.unsecuredSouls.displayMode !== "disabled") {
                 RemoveUnsecuredSoulsOverlay(root);
@@ -28276,7 +28280,7 @@ function GetUIRoot() {
 
     function UpdateEnemyUltIndicatorOld(root, cfg) {
         if (!root || !cfg) return;
-        var enabled = FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON ? true : (Number(cfg.ENABLE_ENEMY_ULT_INDICATOR) === 1);
+        var enabled = FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON ? true : (IsCfgEnabled(cfg, "ENABLE_ENEMY_ULT_INDICATOR"));
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_active", enabled);
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_off", !enabled);
 
@@ -28349,9 +28353,9 @@ function GetUIRoot() {
 
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1;
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
     }
 
     function ResolveEnemyColoredHealthTeamColor(entry) {
@@ -28393,9 +28397,9 @@ function GetUIRoot() {
     }
 
     function ResolveEnemyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             return ToRgbString(BlendRgb(
@@ -28558,9 +28562,9 @@ function GetUIRoot() {
         RefreshEnemyColoredHealthPanelCache(root, now);
         var entries = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
         var scanStats = State.enemyColoredHealthLastScanStats || null;
-        var use25dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ? 1 : 0;
-        var use65dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ? 1 : 0;
-        var use75dbg = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1 ? 1 : 0;
+        var use25dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? 1 : 0;
+        var use65dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? 1 : 0;
+        var use75dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? 1 : 0;
         var sampleBar = "-";
         var sampleTeam = "-";
         if (entries.length > 0 && entries[0]) sampleBar = String(entries[0].barId || "-");
@@ -28604,7 +28608,7 @@ function GetUIRoot() {
         }
 
         var pulseAdvanced = false;
-        var use25 = Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
         for (var i = 0; i < entries.length; i++) {
             var entry = entries[i];
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
@@ -28633,9 +28637,9 @@ function GetUIRoot() {
                 "apply bar=" + String(entry.barId || "-") +
                     " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
                     " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
-                    " use25=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_25) === 1 ? "1" : "0") +
-                    " use65=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_65) === 1 ? "1" : "0") +
-                    " use75=" + (Number(cfg.ENABLE_TOPBAR_ENEMY_HP_WARNING_75) === 1 ? "1" : "0") +
+                    " use25=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? "1" : "0") +
+                    " use65=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? "1" : "0") +
+                    " use75=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? "1" : "0") +
                     " color=" + nextColor,
                 now
             );
@@ -28654,15 +28658,15 @@ function GetUIRoot() {
 
     function IsAllyColorWarningEnabled(cfg) {
         if (!cfg) return false;
-        return Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_65) === 1 ||
-            Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_75) === 1;
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
     }
 
     function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1;
-        var use65 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_65) === 1;
-        var use75 = Number(cfg && cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_75) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
+        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_65");
+        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
 
         if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
             return ToRgbString(BlendRgb(
@@ -28785,7 +28789,7 @@ function GetUIRoot() {
         }
 
         var pulseAdvanced = false;
-        var use25 = Number(cfg.ENABLE_TOPBAR_ALLY_HP_WARNING_25) === 1;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
         for (var i = 0; i < entries.length; i++) {
             var entry = entries[i];
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
@@ -29410,7 +29414,7 @@ function GetUIRoot() {
     }
 
     function UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs) {
-        var enabled = Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1;
+        var enabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
         if (!enabled) {
             if (State.signatureCooldownFlashWasEnabled) {
                 ResetSignatureCooldownPressFlashRuntime();
@@ -31563,8 +31567,8 @@ function GetUIRoot() {
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
-        var enabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
-        var staticFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
+        var enabled = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER");
+        var staticFlipEnabled = IsCfgEnabled(cfg, "MINIMAP_FLIP");
         var flipClassTarget = FindMinimapFlipClassTarget(root);
         if (!enabled) {
             ApplyStaticMinimapRotation(root, nowMs, staticFlipEnabled ? 180 : 0);
@@ -31751,8 +31755,8 @@ function GetUIRoot() {
             return;
         }
 
-        var drawOverUiTab = zoomTabActive && Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1;
-        var drawOverUiAlt = zoomAltActive && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1;
+        var drawOverUiTab = zoomTabActive && IsCfgEnabled(cfg, "TAB_ZOOM_DRAW_OVER_UI");
+        var drawOverUiAlt = zoomAltActive && IsCfgEnabled(cfg, "ALT_ZOOM_DRAW_OVER_UI");
         var drawOverUi = drawOverUiTab || drawOverUiAlt;
         if (drawOverUi) {
             CaptureMinimapOriginalParent(minimapPersp);
@@ -32102,7 +32106,7 @@ function GetUIRoot() {
             }
 
             cfg = ApplyForcedFeatureDisables(cfg);
-            if (State.perfEnabled || Number(cfg.ENABLE_PERF_DEBUG) === 1) {
+            if (State.perfEnabled || IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG")) {
                 UpdatePerfEnabledFromConfig(cfg);
             }
             if (State.perfEnabled) {
@@ -32175,17 +32179,17 @@ function GetUIRoot() {
                     }
                 } else {
                     // Fallback — first tick(s) before main loop has populated gates
-                    var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
+                    var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
                     var unitTargetCustomized = IsUnitTargetStyleCustomized(cfg);
                     var unitTargetFastMode = unitTargetCustomized || redDiamondEnabled;
-                    var compassEnabled = Number(cfg.ENABLE_COMPASS) === 1;
-                    var compassSpeedEnabled = Number(cfg.ENABLE_COMPASS_SPEED) === 1;
-                    var rotateEnabled = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1;
-                    var minimapFlipEnabled = Number(cfg.MINIMAP_FLIP) === 1;
+                    var compassEnabled = IsCfgEnabled(cfg, "ENABLE_COMPASS");
+                    var compassSpeedEnabled = IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
+                    var rotateEnabled = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER");
+                    var minimapFlipEnabled = IsCfgEnabled(cfg, "MINIMAP_FLIP");
                     var itemMirrorEnabled = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg));
                     var itemMirrorRuntimeActive = itemMirrorEnabled || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
-                    var reloadEnabled = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1;
-                    var ultCooldownEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
+                    var reloadEnabled = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
+                    var ultCooldownEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
 
                     if (compassEnabled || compassSpeedEnabled || IsPanelValid(State.cachedPanels.compassRoot) || State.compass.enabled || State.compass.showSpeed) {
                         hasCompassRuntimeWork = true;
@@ -32262,13 +32266,13 @@ function GetUIRoot() {
                 itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
                 itemMirrorFastActive = itemMirrorRuntimeActive && (nowMsCompass < (State.itemMirror.fastModeUntilMs || 0));
                 useFastInterval = (cfg && (
-                    Number(cfg.ENABLE_COMPASS) === 1 ||
-                    Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
-                    Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
+                    IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+                    IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED") ||
+                    IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
                     itemMirrorFastActive ||
-                    Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
-                    Number(cfg.ENABLE_ULT_COOLDOWNS) === 1 ||
-                    (Number(cfg.ENABLE_RED_DIAMOND) === 1 || IsUnitTargetStyleCustomized(cfg))
+                    IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
+                    IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS") ||
+                    (IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") || IsUnitTargetStyleCustomized(cfg))
                 ));
             }
             if (State.perfEnabled) {
@@ -32569,12 +32573,12 @@ function GetUIRoot() {
     function BuildOnDeathArcadeIdPool(cfg) {
         var pool = [];
         if (Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return pool;
-        if (Number(cfg.ON_DEATH_GAME_MINESWEEPER) === 1) pool.push("minesweeper");
-        if (Number(cfg.ON_DEATH_GAME_BLACKJACK) === 1) pool.push("blackjack");
-        if (Number(cfg.ON_DEATH_GAME_FLAPPY_BAT) === 1) pool.push("flappy_bat");
-        if (Number(cfg.ON_DEATH_GAME_GRAVES_TRAINER) === 1) pool.push("graves_trainer");
-        if (Number(cfg.ON_DEATH_GAME_ZERGGY_MANIA) === 1) pool.push("zerggy_mania");
-        if (Number(cfg.ON_DEATH_GAME_WHACK_A_REM) === 1) pool.push("whack_a_rem");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER")) pool.push("minesweeper");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK")) pool.push("blackjack");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT")) pool.push("flappy_bat");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER")) pool.push("graves_trainer");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA")) pool.push("zerggy_mania");
+        if (IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM")) pool.push("whack_a_rem");
         return pool;
     }
 
@@ -32716,7 +32720,7 @@ function GetUIRoot() {
     }
 
     function ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
-        var redDiamondEnabled = Number(cfg.ENABLE_RED_DIAMOND) === 1;
+        var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
         var hideTestingTools = (cfg.ENABLE_HIDE_TESTING_TOOLS === 1);
         var forceShowTestingTools = (cfg.ENABLE_FORCE_TESTING_TOOLS === 1) && !hideTestingTools;
         var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
@@ -32727,7 +32731,7 @@ function GetUIRoot() {
         var minecraftHealthbarEnabled = (healthbarType === 5);
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
-        var cleanStacksEnabled = Number(cfg.ENABLE_CLEAN_STACKS) === 1;
+        var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
         var compassEnabled = (cfg.ENABLE_COMPASS === 1) || (cfg.ENABLE_COMPASS_SPEED === 1);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
@@ -32810,12 +32814,12 @@ function GetUIRoot() {
             !State.rootClassCache ||
             State.rootClassCache.panel !== root;
 
-        var legacyCooldownsEnabled = Number(cfg.ENABLE_LEGACY_COOLDOWNS) === 1;
+        var legacyCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_LEGACY_COOLDOWNS");
         SyncLegacyCooldownsUiFlag(legacyCooldownsEnabled);
-        var enhancedQuickbuyEnabled = Number(cfg.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-        var quickbuyClickToNotifyEnabled = Number(cfg.ENABLE_QUICKBUY_CLICK_TO_NOTIFY) === 1 && Number(cfg.DISABLE_QUICK_BUY) !== 1;
-        var shopRecentPurchasesEnabled = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
-        var shopRecentPurchasesRedux = Number(cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
+        var enhancedQuickbuyEnabled = IsCfgEnabled(cfg, "ENABLE_ENHANCED_QUICKBUY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var quickbuyClickToNotifyEnabled = IsCfgEnabled(cfg, "ENABLE_QUICKBUY_CLICK_TO_NOTIFY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var shopRecentPurchasesEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+        var shopRecentPurchasesRedux = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
         if (shouldApplyStaticClasses) {
             SetPanelClassCached(root, State.rootClassCache, "hide_ammo_custom", cfg.ENABLE_AMMO_STATUS === 0);
@@ -32828,13 +32832,13 @@ function GetUIRoot() {
                 State.targetShapeStyleSig = "";
                 State.nextTargetShapeRefreshMs = 0;
             }
-            SetPanelClassCached(root, State.rootClassCache, "improved_hint_active", Number(cfg.ENABLE_IMPROVED_HINT) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "improved_hint_active", IsCfgEnabled(cfg, "ENABLE_IMPROVED_HINT"));
             SetPanelClassCached(root, State.rootClassCache, "zip_boost_active", false);
             SetPanelClassCached(root, State.rootClassCache, "zip_boost_overlay_active", cfg.ENABLE_ZIP_BOOST === 1 && !hideoutConnected);
-            SetPanelClassCached(root, State.rootClassCache, "unsecured_souls_overlay_active", Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1 && !hideoutConnected);
+            SetPanelClassCached(root, State.rootClassCache, "unsecured_souls_overlay_active", IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") && !hideoutConnected);
             SetPanelClassCached(root, State.rootClassCache, "stat_bonuses_overlay_active", cfg.ENABLE_STAT_BONUSES === 1 && !hideoutConnected);
             SetPanelClassCached(root, State.rootClassCache, "center_esc_active", cfg.ENABLE_CENTER_ESC === 1);
-            SetPanelClassCached(root, State.rootClassCache, "center_friends_list_active", Number(cfg.ENABLE_CENTER_FRIENDS_LIST) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "center_friends_list_active", IsCfgEnabled(cfg, "ENABLE_CENTER_FRIENDS_LIST"));
             SetPanelClassCached(root, State.rootClassCache, "legacy_cooldowns_active", legacyCooldownsEnabled);
             SetPanelClassCached(root, State.rootClassCache, "force_testing_tools_active", forceShowTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "hide_testing_tools_active", hideTestingTools);
@@ -32849,7 +32853,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "rejuv_hud_disabled", cfg.ENABLE_REJUV_HUD === 0);
             SetPanelClassCached(root, State.rootClassCache, "minimap_buff_timer_disabled", Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "minimap_rejuv_timer_disabled", Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) !== 1);
-            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", Number(cfg.ENABLE_BHOP) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", IsCfgEnabled(cfg, "ENABLE_BHOP"));
             SetPanelClassCached(root, State.rootClassCache, "minimalist_healthbar_active", minimalistHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "fg_healthbar_active", fgHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "klutz_healthbar_active", klutzHealthbarEnabled);
@@ -32867,7 +32871,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_active", cfg.ENABLE_KEYBOARD_OVERLAY === 1);
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_full_active", cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_minimap_active", cfg.MINIMAL_MINIMAP === 1);
-            SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", Number(cfg.ENABLE_MINIMAP_ELEVATION_MARKERS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", IsCfgEnabled(cfg, "ENABLE_MINIMAP_ELEVATION_MARKERS"));
             SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
@@ -32880,15 +32884,15 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "obj_map_disabled", cfg.ENABLE_OBJ_MAP === 0);
             SetPanelClassCached(root, State.rootClassCache, "urn_diff_disabled", cfg.ENABLE_URN_DIFF === 0);
             SetPanelClassCached(root, State.rootClassCache, "missing_hero_disabled", cfg.ENABLE_MISSING_HERO === 0);
-            SetPanelClassCached(root, State.rootClassCache, "nicknames_active", Number(cfg.ENABLE_NICKNAMES) === 1);
-            SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", Number(cfg.DISABLE_PLAYER_NAME_BLUR) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "nicknames_active", IsCfgEnabled(cfg, "ENABLE_NICKNAMES"));
+            SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", IsCfgEnabled(cfg, "DISABLE_PLAYER_NAME_BLUR"));
             SetPanelClassCached(root, State.rootClassCache, "cumulative_dmg_disabled", cfg.ENABLE_CUMULATIVE_DMG === 0);
-            SetPanelClassCached(root, State.rootClassCache, "clean_damage_indicators_active", Number(cfg.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "clean_damage_indicators_active", IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
             SetPanelClassCached(root, State.rootClassCache, "damage_fountain_active", cfg.ENABLE_DAMAGE_FOUNTAIN === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
-            SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1);
+            SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"));
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
@@ -32901,7 +32905,7 @@ function GetUIRoot() {
         var combatIndicatorActive = false;
         var combatIndicatorSignal = false;
         var combatIndicatorRecoveryActive = false;
-        if (Number(cfg.ENABLE_COMBAT_INDICATOR) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR")) {
             combatIndicatorSignal = IsCombatSignalActive(root, nowMsLoop) === true;
             if (combatIndicatorSignal) {
                 State.combatStatus.lastCombatMs = nowMsLoop;
@@ -32911,7 +32915,7 @@ function GetUIRoot() {
             }
             combatIndicatorActive = combatIndicatorSignal || combatIndicatorRecoveryActive;
         }
-        var combatIndicatorEnabled = Number(cfg.ENABLE_COMBAT_INDICATOR) === 1;
+        var combatIndicatorEnabled = IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");
         SetPanelClassCached(root, State.rootClassCache, "combat_indicator_enabled", combatIndicatorEnabled);
         SetPanelClassCached(root, State.rootClassCache, "combat_indicator_active", combatIndicatorActive);
         SyncCombatIndicatorHealthbarClasses(root, combatIndicatorActive, combatIndicatorEnabled);
@@ -32963,7 +32967,7 @@ function GetUIRoot() {
             State.quickbuyRuntimeHostOffsetApplied = false;
         }
 
-        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
         var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
@@ -33057,12 +33061,12 @@ function GetUIRoot() {
     function IsAnyAnnouncerReminderTypeEnabled(cfg) {
         if (!cfg) return false;
         return (
-            Number(cfg.ENABLE_MINIMAP_REMINDER) === 1 ||
-            Number(cfg.ENABLE_INTERVAL) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER1) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER2) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER3) === 1
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER") ||
+            IsCfgEnabled(cfg, "ENABLE_INTERVAL") ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         );
     }
 
@@ -33172,7 +33176,7 @@ function GetUIRoot() {
         var voiceSelection = GetAnnouncerVoiceToken(cfg.VOICE_TYPE);
         var suffix = "_" + voiceSelection;
 
-        if (Number(cfg.ENABLE_MINIMAP_REMINDER) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER")) {
             var mInterval = cfg.MINIMAP_REMINDER_INTERVAL || 15;
             var mTarget = Math.floor(currentTime / mInterval) * mInterval;
             if (currentTime >= mTarget && currentTime < (mTarget + INTERNAL_CONFIG.ALERT_WINDOW)) {
@@ -33185,14 +33189,14 @@ function GetUIRoot() {
             }
         }
         if (
-            Number(cfg.ENABLE_ONE_TIME) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER1) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER2) === 1 ||
-            Number(cfg.ENABLE_ONE_TIME_TIER3) === 1
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75") ||
+            IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
         ) {
             INTERNAL_CONFIG.ONE_TIME_ALERTS.forEach(function(alert) {
                 var tierKey = String(alert && alert.tierKey ? alert.tierKey : "");
-                var tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (Number(cfg.ENABLE_ONE_TIME) === 1);
+                var tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (IsCfgEnabled(cfg, "ENABLE_ONE_TIME"));
                 if (!tierEnabled) return;
                 if (currentTime >= alert.time && currentTime < (alert.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
                     if (!State.triggeredOneTimers[alert.time]) {
@@ -33207,7 +33211,7 @@ function GetUIRoot() {
                 }
             });
         }
-        if (Number(cfg.ENABLE_INTERVAL) === 1) {
+        if (IsCfgEnabled(cfg, "ENABLE_INTERVAL")) {
             var dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - (cfg.BRIDGE_BUFF_START || 30);
             var targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
             if (currentTime >= targetTime && currentTime < (targetTime + INTERNAL_CONFIG.ALERT_WINDOW)) {
@@ -33252,9 +33256,9 @@ function GetUIRoot() {
 
     function NeedsAmmoRuntimeWork(cfg) {
         if (!cfg) return false;
-        if (Number(cfg.ENABLE_AMMO_STATUS) === 1) return true;
-        if (Number(cfg.ENABLE_HIDE_MAGAZINE) === 1) return true;
-        if (Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
         if (Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
@@ -33280,10 +33284,10 @@ function GetUIRoot() {
         var shopScale = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0);
         return (
             Number(cfg.HUD_SHOP_ENABLED) !== 1 ||
-            (Number(cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1) ||
-            Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 ||
-            Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-            Number(cfg.DISABLE_SHOP_BLUE) === 1 ||
+            (IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS")) ||
+            IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP") ||
+            IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_ITEMS") ||
+            IsCfgEnabled(cfg, "DISABLE_SHOP_BLUE") ||
             Math.round(shopOffsetX) !== 0 ||
             Math.round(shopOffsetY) !== 0 ||
             shopOpacity !== 1.0 ||
@@ -33326,7 +33330,7 @@ function GetUIRoot() {
     }
 
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
         return !!(
             State.unsecuredSouls.hudStyleSig ||
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
@@ -33354,7 +33358,7 @@ function GetUIRoot() {
     }
 
     function NeedsKeyboardRuntimeWork(cfg) {
-        if (Number(cfg && cfg.ENABLE_KEYBOARD_OVERLAY) === 1) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY")) return true;
         if (IsPanelValid(State.cachedPanels.keyboardOverlayRoot)) return true;
         return !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
     }
@@ -33370,12 +33374,12 @@ function GetUIRoot() {
     function IsOnDeathArcadeConfigActive(cfg) {
         if (!cfg || Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
         return (
-            Number(cfg.ON_DEATH_GAME_MINESWEEPER) === 1 ||
-            Number(cfg.ON_DEATH_GAME_BLACKJACK) === 1 ||
-            Number(cfg.ON_DEATH_GAME_FLAPPY_BAT) === 1 ||
-            Number(cfg.ON_DEATH_GAME_GRAVES_TRAINER) === 1 ||
-            Number(cfg.ON_DEATH_GAME_ZERGGY_MANIA) === 1 ||
-            Number(cfg.ON_DEATH_GAME_WHACK_A_REM) === 1
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
+            IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM")
         );
     }
 
@@ -33399,7 +33403,7 @@ function GetUIRoot() {
         var minimalistHealthbarEnabled = (healthbarType === 1);
         var fgHealthbarEnabled = (healthbarType === 2);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
-        if (Number(cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
         if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
         if (fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
         if (State.passiveCooldownModeApplied !== passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
@@ -33440,23 +33444,23 @@ function GetUIRoot() {
         var shopScale = NormalizeHudScaleNumber(cfg && cfg.SHOP_SCALE, 1.0);
 
         return {
-            redDiamondEnabled: Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1,
-            keyboardRuntimeActive: Number(cfg && cfg.ENABLE_KEYBOARD_OVERLAY) === 1,
+            redDiamondEnabled: IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"),
+            keyboardRuntimeActive: IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY"),
             legacyAudioPassiveActive: (
                 IsPassiveCooldownBasicMode(passiveCooldownMode) ||
                 ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) ||
                 State.dl4dCaptionVisible ||
                 IsPanelValid(State.cachedPanels.dl4dCaptionPanel)
             ),
-            betterUnsecuredHudActive: Number(cfg && cfg.ENABLE_BETTER_UNSECURED) === 1,
-            combatIndicatorActive: Number(cfg && cfg.ENABLE_COMBAT_INDICATOR) === 1,
+            betterUnsecuredHudActive: IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED"),
+            combatIndicatorActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR"),
             colorWarningActive: colorWarningEnabled,
             enemyColorWarningActive: IsEnemyColorWarningEnabled(cfg),
             allyColorWarningActive: IsAllyColorWarningEnabled(cfg),
             ammoActive: (
-                Number(cfg && cfg.ENABLE_AMMO_STATUS) === 1 ||
-                Number(cfg && cfg.ENABLE_HIDE_MAGAZINE) === 1 ||
-                Number(cfg && cfg.ENABLE_HIDE_AMMO_ALL) === 1 ||
+                IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS") ||
+                IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE") ||
+                IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL") ||
                 Number(cfg && cfg.AMMO_PANEL_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_CURRENT_SCALE) !== 100 ||
                 Number(cfg && cfg.AMMO_TOTAL_SCALE) !== 100 ||
@@ -33466,11 +33470,11 @@ function GetUIRoot() {
             ),
             heroShopActive: (
                 Number(cfg && cfg.HUD_SHOP_ENABLED) !== 1 ||
-                (Number(cfg && cfg.ENABLE_SHOP_STATS) === 1 && Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP_STATS) === 1) ||
-                Number(cfg && cfg.ENABLE_SIMPLIFY_SHOP) === 1 ||
-                Number(cfg && cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-                Number(cfg && cfg.DISABLE_SHOP_BLUE) === 1 ||
-                Number(cfg && cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 ||
+                (IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS")) ||
+                IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP") ||
+                IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_ITEMS") ||
+                IsCfgEnabled(cfg, "DISABLE_SHOP_BLUE") ||
+                IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
                 Math.round(shopOffsetX) !== 0 ||
                 Math.round(shopOffsetY) !== 0 ||
                 shopOpacity !== 1.0 ||
@@ -33505,21 +33509,21 @@ function GetUIRoot() {
                 NormalizeHudOffsetNumber(cfg && cfg.SOULS_Y_OFFSET, 0) !== 0
             ),
             targetShapesActive: (
-                Number(cfg && cfg.ENABLE_RED_DIAMOND) === 1 ||
+                IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") ||
                 IsUnitTargetStyleCustomized(cfg)
             ),
             damageImpactRuntimeActive: HasNonDefaultDamageImpactRuntimeConfig(cfg),
             staminaChargeColorRuntimeActive: NeedsStaminaChargeColorRuntimeWork(cfg),
             damageNumbersActive: ResolveDamageNumbersRuntimeSig(cfg) !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG,
             minimapRuntimeActive: (
-                Number(cfg && cfg.ENABLE_ALT_ZOOM) === 1 ||
-                Number(cfg && cfg.ENABLE_TAB_ZOOM) === 1
+                IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") ||
+                IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")
             ),
             healthbarType: healthbarType,
             minimalistHealthbarEnabled: minimalistHealthbarEnabled,
             fgHealthbarEnabled: fgHealthbarEnabled,
             passiveCooldownMode: passiveCooldownMode,
-            reloadCircleActive: Number(cfg && cfg.ENABLE_HIDE_RELOAD_CIRCLE) === 1,
+            reloadCircleActive: IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"),
             healthbarRuntimeActive: (
                 minimalistHealthbarEnabled ||
                 HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
@@ -33532,7 +33536,7 @@ function GetUIRoot() {
                 Math.round(damageReportOffsetX) !== 0 ||
                 Math.round(damageReportOffsetY) !== 0
             ),
-            urnTrackerActive: Number(cfg && cfg.ENABLE_URN_DIFF) === 1,
+            urnTrackerActive: IsCfgEnabled(cfg, "ENABLE_URN_DIFF"),
             colorBridgeTarget: colorWarningEnabled ? "1" : "0"
         };
     }
@@ -33696,24 +33700,24 @@ function GetUIRoot() {
                 featureState: featureState,
                 redDiamondEnabled: featureState.redDiamondEnabled,
                 rejuvTimersActive: (
-                    Number(cfg && cfg.ENABLE_REJUV_HUD) === 1 ||
-                    Number(cfg && cfg.ENABLE_BUFF_HUD) === 1 ||
-                    Number(cfg && cfg.ENABLE_MINIMAP_REJUV_TIMER) === 1 ||
-                    Number(cfg && cfg.ENABLE_MINIMAP_BUFF_TIMER) === 1
+                    IsCfgEnabled(cfg, "ENABLE_REJUV_HUD") ||
+                    IsCfgEnabled(cfg, "ENABLE_BUFF_HUD") ||
+                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") ||
+                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER")
                 ),
-                spmActive: Number(cfg && cfg.ENABLE_MIN_SOULS) === 1,
-                unspentActive: Number(cfg && cfg.ENABLE_UNSPENT_SOULS) === 1,
-                nicknamesActive: Number(cfg && cfg.ENABLE_NICKNAMES) === 1,
-                statlockerActive: Number(cfg && cfg.ENABLE_STATLOCKER) === 1,
-                laneWithPartyActive: Number(cfg && cfg.ENABLE_LANE_WITH_PARTY) === 1,
+                spmActive: IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"),
+                unspentActive: IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"),
+                nicknamesActive: IsCfgEnabled(cfg, "ENABLE_NICKNAMES"),
+                statlockerActive: IsCfgEnabled(cfg, "ENABLE_STATLOCKER"),
+                laneWithPartyActive: IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"),
                 onDeathArcadeActive: IsOnDeathArcadeConfigActive(cfg),
-                zipBoostActive: Number(cfg && cfg.ENABLE_ZIP_BOOST) === 1,
-                unsecuredSoulsActive: Number(cfg && cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1,
-                statBonusesActive: Number(cfg && cfg.ENABLE_STAT_BONUSES) === 1,
-                combatStatusActive: Number(cfg && cfg.ENABLE_COMBAT_STATUS) === 1,
+                zipBoostActive: IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST"),
+                unsecuredSoulsActive: IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER"),
+                statBonusesActive: IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES"),
+                combatStatusActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS"),
                 combatIndicatorActive: featureState.combatIndicatorActive,
-                signatureFlashActive: Number(cfg && cfg.ENABLE_PASSIVE_COOLDOWN) === 1,
-                imagesInChatActive: Number(cfg && cfg.ENABLE_IMAGES_IN_CHAT) === 1,
+                signatureFlashActive: IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"),
+                imagesInChatActive: IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"),
                 keyboardRuntimeActive: featureState.keyboardRuntimeActive,
                 legacyAudioPassiveActive: featureState.legacyAudioPassiveActive,
                 betterUnsecuredHudActive: featureState.betterUnsecuredHudActive,
@@ -33788,22 +33792,22 @@ function GetUIRoot() {
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
-        gates.compassOverlay = Number(cfg.ENABLE_COMPASS) === 1 ||
-            Number(cfg.ENABLE_COMPASS_SPEED) === 1 ||
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED") ||
             IsPanelValid(State.cachedPanels.compassRoot) ||
             State.compass.enabled ||
             State.compass.showSpeed;
-        gates.compassMinimapRotate = Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1 ||
-            Number(cfg.MINIMAP_FLIP) === 1 ||
+        gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
+            IsCfgEnabled(cfg, "MINIMAP_FLIP") ||
             (State.minimapRotateLastDeg !== null && State.minimapRotateLastDeg !== 0);
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode) ||
             State.itemMirror.probeWasEnabled ||
             State.itemMirror.displayMode === "active";
-        gates.compassReloadCd = Number(cfg.ENABLE_RELOAD_COOLDOWN) === 1 ||
+        gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
             State.reloadCdLastDeg !== null ||
             State.reloadCooldownStyleSig !== "" ||
             IsPanelValid(State.cachedPanels.reloadCooldownLabel);
-        gates.compassUltCd = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
+        gates.compassUltCd = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
         gates.compassTargetShapesFast = gates.targetShapesActive;
 
         // Hard-gate optimization: track whether any runtime feature needs execution.
@@ -34409,7 +34413,7 @@ function GetUIRoot() {
                 PerfEnd("loop.hero_shop", perfSection);
             });
         }
-        if (Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1 || Number(cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1 || State.recentPurchasesWasEnabled) {
+        if (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") || IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS") || State.recentPurchasesWasEnabled) {
             UpdateRecentPurchases(root, cfg);
         }
 
@@ -34585,7 +34589,7 @@ function GetUIRoot() {
 
             var style = ResolveUnitTargetStyleTexts(cfg);
             var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, Number(cfg.ENABLE_RED_DIAMOND) === 1);
+            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"));
 
             var hasTargetShapes = !!(State.targetShapesCache && State.targetShapesCache.length > 0);
             var hasStoredConfig = (raw && raw.length > 0);
