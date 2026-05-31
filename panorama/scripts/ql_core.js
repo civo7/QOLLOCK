@@ -294,13 +294,15 @@
         recentPurchaseQuickSeenKeys: {},
         recentPurchaseQuickInitialized: false,
         recentPurchaseQuickActiveEntries: [],
-        heroPopupPanelsByHero: {},
-        heroPopupActiveEntriesByHero: {},
-        heroPopupLastEntryTime: {},
-        heroPopupPlayerCardCache: {},
-        heroPopupOverlapPending: false,
-        heroPopupMapState: 0,
-        heroPopupBuildGen: 0,
+        heroPopup: {
+            panelsByHero: {},
+            activeEntriesByHero: {},
+            lastEntryTime: {},
+            playerCardCache: {},
+            overlapPending: false,
+            mapState: 0,
+            buildGen: 0
+        },
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
@@ -25224,20 +25226,20 @@ function GetUIRoot() {
     var QUICK_ROW_UI_SCALE = 0.7;
 
     function BuildHeroPlayerCardMap(root) {
-        if (State.heroPopupMapState === HERO_MAP_BUILDING) return;
-        State.heroPopupMapState = HERO_MAP_BUILDING;
-        State.heroPopupBuildGen++;
-        var myGen = State.heroPopupBuildGen;
+        if (State.heroPopup.mapState === HERO_MAP_BUILDING) return;
+        State.heroPopup.mapState = HERO_MAP_BUILDING;
+        State.heroPopup.buildGen++;
+        var myGen = State.heroPopup.buildGen;
         var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
         if (!labels || labels.length === 0) {
-            State.heroPopupMapState = HERO_MAP_IDLE;
+            State.heroPopup.mapState = HERO_MAP_IDLE;
             return;
         }
         var pending = labels.length;
         function onDone() {
             pending--;
-            if (pending === 0 && State.heroPopupBuildGen === myGen) {
-                State.heroPopupMapState = HERO_MAP_BUILT;
+            if (pending === 0 && State.heroPopup.buildGen === myGen) {
+                State.heroPopup.mapState = HERO_MAP_BUILT;
             }
         }
         for (var i = 0; i < labels.length; i++) {
@@ -25254,11 +25256,11 @@ function GetUIRoot() {
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
                 playerPanel.SetDialogVariableInt("hero_id", heroId);
                 $.Schedule(0.3, function() {
-                    if (State.heroPopupBuildGen !== myGen) return;
+                    if (State.heroPopup.buildGen !== myGen) return;
                     if (IsPanelValid(label)) {
                         var name = label.text.trim().toUpperCase();
                         if (name) {
-                            State.heroPopupPlayerCardCache[name] = playerPanel;
+                            State.heroPopup.playerCardCache[name] = playerPanel;
                         }
                     }
                     onDone();
@@ -25268,30 +25270,30 @@ function GetUIRoot() {
     }
 
     function IsHeroPlayerCardMapStale() {
-        if (State.heroPopupMapState !== HERO_MAP_BUILT) return false;
-        for (var hero in State.heroPopupPlayerCardCache) {
-            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPlayerCardCache, hero)) continue;
-            var pp = State.heroPopupPlayerCardCache[hero];
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) return false;
+        for (var hero in State.heroPopup.playerCardCache) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.playerCardCache, hero)) continue;
+            var pp = State.heroPopup.playerCardCache[hero];
             if (!pp || !IsPanelValid(pp)) return true;
         }
         return false;
     }
 
     function GetOrCreateHeroPopupPanel(heroNameUpper) {
-        if (State.heroPopupPanelsByHero[heroNameUpper] &&
-            IsPanelValid(State.heroPopupPanelsByHero[heroNameUpper])) {
-            return State.heroPopupPanelsByHero[heroNameUpper];
+        if (State.heroPopup.panelsByHero[heroNameUpper] &&
+            IsPanelValid(State.heroPopup.panelsByHero[heroNameUpper])) {
+            return State.heroPopup.panelsByHero[heroNameUpper];
         }
-        var playerPanel = State.heroPopupPlayerCardCache[heroNameUpper];
+        var playerPanel = State.heroPopup.playerCardCache[heroNameUpper];
         if (!playerPanel || !IsPanelValid(playerPanel)) {
-            if (State.heroPopupMapState !== HERO_MAP_BUILDING) {
-                State.heroPopupMapState = HERO_MAP_IDLE;
+            if (State.heroPopup.mapState !== HERO_MAP_BUILDING) {
+                State.heroPopup.mapState = HERO_MAP_IDLE;
             }
             return null;
         }
         var panel = $.CreatePanel("Panel", playerPanel, "");
         panel.AddClass("QuickPurchasesPanel");
-        State.heroPopupPanelsByHero[heroNameUpper] = panel;
+        State.heroPopup.panelsByHero[heroNameUpper] = panel;
         return panel;
     }
 
@@ -25314,24 +25316,24 @@ function GetUIRoot() {
     }
 
     function ScheduleResolveHeroPopupOverlaps(delay) {
-        if (State.heroPopupOverlapPending) return;
-        State.heroPopupOverlapPending = true;
+        if (State.heroPopup.overlapPending) return;
+        State.heroPopup.overlapPending = true;
         $.Schedule(delay || 0, function() {
             try {
                 ResolveHeroPopupOverlaps();
             } finally {
-                State.heroPopupOverlapPending = false;
+                State.heroPopup.overlapPending = false;
             }
         });
     }
 
     function ResolveHeroPopupOverlaps() {
         var active = [];
-        for (var hero in State.heroPopupPanelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPanelsByHero, hero)) continue;
-            var p = State.heroPopupPanelsByHero[hero];
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var p = State.heroPopup.panelsByHero[hero];
             if (!p || !IsPanelValid(p)) continue;
-            var entries = State.heroPopupActiveEntriesByHero[hero];
+            var entries = State.heroPopup.activeEntriesByHero[hero];
             if (!entries || entries.length === 0) continue;
             active.push({ hero: hero, panel: p });
         }
@@ -25356,8 +25358,8 @@ function GetUIRoot() {
 
         // Sort newest first
         active.sort(function(a, b) {
-            var ta = State.heroPopupLastEntryTime[a.hero] || 0;
-            var tb = State.heroPopupLastEntryTime[b.hero] || 0;
+            var ta = State.heroPopup.lastEntryTime[a.hero] || 0;
+            var tb = State.heroPopup.lastEntryTime[b.hero] || 0;
             return tb - ta;
         });
 
@@ -25385,11 +25387,11 @@ function GetUIRoot() {
     }
 
     function RemoveHeroPurchaseEntry(entry, heroNameUpper) {
-        var arr = State.heroPopupActiveEntriesByHero[heroNameUpper];
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            State.heroPopupActiveEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
         }
         if (!IsPanelValid(entry)) return;
         entry.AddClass("quickFading");
@@ -25400,11 +25402,11 @@ function GetUIRoot() {
     }
 
     function EvictHeroPurchaseEntry(entry, heroNameUpper) {
-        var arr = State.heroPopupActiveEntriesByHero[heroNameUpper];
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            State.heroPopupActiveEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
         }
         if (IsPanelValid(entry)) entry.DeleteAsync(0);
         ScheduleResolveHeroPopupOverlaps(0);
@@ -25415,11 +25417,11 @@ function GetUIRoot() {
         var quickPanel = GetOrCreateHeroPopupPanel(heroNameUpper);
         if (!quickPanel) return;
 
-        if (!State.heroPopupActiveEntriesByHero[heroNameUpper]) {
-            State.heroPopupActiveEntriesByHero[heroNameUpper] = [];
+        if (!State.heroPopup.activeEntriesByHero[heroNameUpper]) {
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = [];
         }
-        var entries = State.heroPopupActiveEntriesByHero[heroNameUpper];
-        State.heroPopupLastEntryTime[heroNameUpper] = $.FrameTime();
+        var entries = State.heroPopup.activeEntriesByHero[heroNameUpper];
+        State.heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
 
         while (entries.length >= quickMax) {
             EvictHeroPurchaseEntry(entries[0], heroNameUpper);
@@ -25465,22 +25467,25 @@ function GetUIRoot() {
     }
 
     function ResetHeroPopupState() {
-        for (var hero in State.heroPopupPanelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPanelsByHero, hero)) continue;
-            var panel = State.heroPopupPanelsByHero[hero];
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var panel = State.heroPopup.panelsByHero[hero];
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
-        State.heroPopupPlayerCardCache = {};
-        State.heroPopupMapState = HERO_MAP_IDLE;
-        State.heroPopupPanelsByHero = {};
-        State.heroPopupActiveEntriesByHero = {};
-        State.heroPopupLastEntryTime = {};
-        State.heroPopupOverlapPending = false;
+        State.heroPopup = {
+            panelsByHero: {},
+            activeEntriesByHero: {},
+            lastEntryTime: {},
+            playerCardCache: {},
+            overlapPending: false,
+            mapState: HERO_MAP_IDLE,
+            buildGen: 0
+        };
     }
 
     function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec) {
         if (IsHeroPlayerCardMapStale()) ResetHeroPopupState();
-        if (State.heroPopupMapState !== HERO_MAP_BUILT) {
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) {
             BuildHeroPlayerCardMap(root);
             return;
         }
