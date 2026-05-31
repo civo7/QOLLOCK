@@ -25342,7 +25342,7 @@ function GetUIRoot() {
 
         for (var i = 0; i < active.length; i++) {
             active[i].leftX = GetPanelLeftInTopBar(active[i].panel);
-            active[i].width = Number(active[i].panel.actuallayoutwidth) || 0;
+            active[i].width = Math.max(1, Number(active[i].panel.actuallayoutwidth) || 0);
         }
 
         // Sort newest first
@@ -25448,7 +25448,7 @@ function GetUIRoot() {
 
         entries.push(entry);
 
-        ScheduleResolveHeroPopupOverlaps(0.05);
+        ScheduleResolveHeroPopupOverlaps(0.1);
 
         $.Schedule(quickDisplaySec, function() {
             if (IsPanelValid(entry)) RemoveHeroPurchaseEntry(entry, heroNameUpper);
