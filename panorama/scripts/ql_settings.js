@@ -9771,6 +9771,10 @@ function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
 }
 
 function CompareSchemaSemver(a, b) {
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.CompareSchemaSemver === "function") {
+        return utils.CompareSchemaSemver(a, b);
+    }
     var aa = String(a || "").split(".");
     var bb = String(b || "").split(".");
     for (var i = 0; i < 3; i++) {
@@ -12506,11 +12510,7 @@ function ReadConfigRawFromStorage() {
         if (!target || !target.GetAttributeString) return "";
         try { return String(target.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { return ""; }
     };
-    var parseRev = function(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    };
+    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var readRev = function(target) {
         if (!target || !target.GetAttributeString) return 0;
         try { return parseRev(target.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { return 0; }
@@ -12714,11 +12714,7 @@ function SaveAndSync() {
         return;
     }
     gLastSavedConfigRaw = data;
-    var parseRev = function(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    };
+    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;

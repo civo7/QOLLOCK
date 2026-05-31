@@ -7597,6 +7597,10 @@ function ExpressShotLog(msg) {
     }
 
     function CompareSchemaSemver(a, b) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.CompareSchemaSemver === "function") {
+            return utils.CompareSchemaSemver(a, b);
+        }
         var aa = String(a || "").split(".");
         var bb = String(b || "").split(".");
         for (var i = 0; i < 3; i++) {
@@ -8982,11 +8986,7 @@ function GetUIRoot() {
         var nextRaw = String(rawText || "");
         var hud = null;
         try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
+        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
         var rootRev = 0;
         var hudRev = 0;
         try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { rootRev = 0; }
@@ -16238,11 +16238,7 @@ function GetUIRoot() {
     }
 
     function GetUserEditRevision(root) {
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
+        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
         var hud = null;
         if (root && root.GetAttributeString) {
             var rootVal = root.GetAttributeString(USER_EDIT_REV_ATTR, "");
