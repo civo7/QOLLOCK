@@ -25362,11 +25362,10 @@ function GetUIRoot() {
         if (!State.heroPopup.activeEntriesByHero[heroNameUpper]) {
             State.heroPopup.activeEntriesByHero[heroNameUpper] = [];
         }
-        var entries = State.heroPopup.activeEntriesByHero[heroNameUpper];
         State.heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
 
-        while (entries.length >= quickMax) {
-            EvictHeroPurchaseEntry(entries[0], heroNameUpper);
+        while (State.heroPopup.activeEntriesByHero[heroNameUpper].length >= quickMax) {
+            EvictHeroPurchaseEntry(State.heroPopup.activeEntriesByHero[heroNameUpper][0], heroNameUpper);
         }
 
         var entry = $.CreatePanel("Panel", quickPanel, "");
@@ -25399,7 +25398,7 @@ function GetUIRoot() {
         nameLabel.AddClass("quickPurchaseName");
         nameLabel.text = nameText;
 
-        entries.push(entry);
+        State.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
 
         ScheduleResolveHeroPopupOverlaps(0.1);
 
