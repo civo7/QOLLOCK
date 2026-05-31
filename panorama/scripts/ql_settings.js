@@ -13142,6 +13142,11 @@ function SyncConfigFromStorage() {
     }
     MOD_CONFIG = nextConfig;
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
+    // [DEBUG] Trace config load source and item-notification values
+    $.Msg("[QOL-DEBUG] SyncConfigFromStorage: source=" + (raw && raw.length > 0 ? "stored" : "defaults") +
+        " itemNotifs=" + MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS +
+        " clickToNotify=" + MOD_CONFIG.ENABLE_SHOP_CLICK_TO_NOTIFY +
+        " quickbuyClickToNotify=" + MOD_CONFIG.ENABLE_QUICKBUY_CLICK_TO_NOTIFY);
     // Pass the raw string we actually loaded from so the persistentStorage
     // mirror stays in sync (not empty, which would overwrite with defaults).
     PersistStatlockerProfileState(raw, nextConfig);
@@ -13242,6 +13247,7 @@ function PublishPaletteColorBridges() {
 // Uses a token-counter pattern so only the last scheduled flush actually fires.
 var gSaveDebounceToken = 0;
 var SAVE_DEBOUNCE_SEC = 0.3;
+var gLastDebugItemNotifs = -1;
 
 function MarkConfigDirty() {
     var token = ++gSaveDebounceToken;
@@ -13268,6 +13274,13 @@ function SaveAndSync() {
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     var data = WrapConfigForStorage(MOD_CONFIG);
+    // [DEBUG] Trace what's being saved
+    if (MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS !== gLastDebugItemNotifs) {
+        gLastDebugItemNotifs = MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS;
+        $.Msg("[QOL-DEBUG] SaveAndSync: itemNotifs=" + MOD_CONFIG.ENABLE_SHOP_ITEM_NOTIFICATIONS +
+            " clickToNotify=" + MOD_CONFIG.ENABLE_SHOP_CLICK_TO_NOTIFY +
+            " changed=" + (data !== gLastSavedConfigRaw));
+    }
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
         return;
