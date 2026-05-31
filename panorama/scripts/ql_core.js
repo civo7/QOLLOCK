@@ -851,7 +851,7 @@
 
     // Compass idle degradation — uses idle interval when not in custom HUD context
     const COMPASS_INTERVAL_IDLE_SEC = 0.50;
-    const COMPASS_INTERVAL_DEEP_IDLE_SEC = 0.85;
+    const COMPASS_INTERVAL_DEEP_IDLE_SEC = 1.0;
 
     // ==========================================================================
     // MAIN LOOP — IDLE DEGRADATION (Fix 9)
