@@ -994,15 +994,20 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 @define backerSpiritT3: #8C87B6;
 @define backerSpiritT4: #504949;
 
-#QuickPurchasesPanel
+#QuickPurchasesPanel,
+.QuickPurchasesPanel
 {
 	horizontal-align: center;
 	flow-children: up;
 	ignore-parent-flow: true;
 	width: fit-children;
 	height: fit-children;
-	margin-top: 90px;
 	z-index: 99;
+}
+
+#QuickPurchasesPanel
+{
+	margin-top: 90px;
 }
 
 #QuickPurchasesPanel.has_rejuv.rp_quick_rejuv_active
