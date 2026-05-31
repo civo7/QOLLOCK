@@ -294,13 +294,13 @@
         recentPurchaseQuickSeenKeys: {},
         recentPurchaseQuickInitialized: false,
         recentPurchaseQuickActiveEntries: [],
-        recentPurchaseReduxQuickPanelsByHero: {},
-        recentPurchaseReduxActiveEntriesByHero: {},
-        recentPurchaseReduxLastEntryTime: {},
-        recentPurchaseReduxHeroPanelCache: {},
-        recentPurchaseReduxOverlapPending: false,
-        recentPurchaseReduxHeroMapState: 0,
-        recentPurchaseReduxBuildGen: 0,
+        heroPopupPanelsByHero: {},
+        heroPopupActiveEntriesByHero: {},
+        heroPopupLastEntryTime: {},
+        heroPopupPlayerCardCache: {},
+        heroPopupOverlapPending: false,
+        heroPopupMapState: 0,
+        heroPopupBuildGen: 0,
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
@@ -25032,31 +25032,31 @@ function GetUIRoot() {
         }
         State.recentPurchaseQuickSeenKeys = {};
         State.recentPurchaseQuickInitialized = false;
-        ResetReduxHeroMap();
+        ResetHeroPopupState();
     }
 
-    // ── Hero Purchase Popups (redux per-hero panel system) ──────────────────────
+    // ── Hero Purchase Popups (per-hero panel system) ──────────────────────
 
     var HERO_MAP_IDLE = 0;
     var HERO_MAP_BUILDING = 1;
     var HERO_MAP_BUILT = 2;
     var QUICK_ROW_UI_SCALE = 0.7;
 
-    function BuildHeroNameMapRedux(root) {
-        if (State.recentPurchaseReduxHeroMapState === HERO_MAP_BUILDING) return;
-        State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILDING;
-        State.recentPurchaseReduxBuildGen++;
-        var myGen = State.recentPurchaseReduxBuildGen;
+    function BuildHeroPlayerCardMap(root) {
+        if (State.heroPopupMapState === HERO_MAP_BUILDING) return;
+        State.heroPopupMapState = HERO_MAP_BUILDING;
+        State.heroPopupBuildGen++;
+        var myGen = State.heroPopupBuildGen;
         var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
         if (!labels || labels.length === 0) {
-            State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
+            State.heroPopupMapState = HERO_MAP_IDLE;
             return;
         }
         var pending = labels.length;
         function onDone() {
             pending--;
-            if (pending === 0 && State.recentPurchaseReduxBuildGen === myGen) {
-                State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILT;
+            if (pending === 0 && State.heroPopupBuildGen === myGen) {
+                State.heroPopupMapState = HERO_MAP_BUILT;
             }
         }
         for (var i = 0; i < labels.length; i++) {
@@ -25073,11 +25073,11 @@ function GetUIRoot() {
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
                 playerPanel.SetDialogVariableInt("hero_id", heroId);
                 $.Schedule(0.3, function() {
-                    if (State.recentPurchaseReduxBuildGen !== myGen) return;
+                    if (State.heroPopupBuildGen !== myGen) return;
                     if (IsPanelValid(label)) {
                         var name = label.text.trim().toUpperCase();
                         if (name) {
-                            State.recentPurchaseReduxHeroPanelCache[name] = playerPanel;
+                            State.heroPopupPlayerCardCache[name] = playerPanel;
                         }
                     }
                     onDone();
@@ -25086,35 +25086,35 @@ function GetUIRoot() {
         }
     }
 
-    function IsHeroMapStaleRedux() {
-        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) return false;
-        for (var hero in State.recentPurchaseReduxHeroPanelCache) {
-            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxHeroPanelCache, hero)) continue;
-            var pp = State.recentPurchaseReduxHeroPanelCache[hero];
+    function IsHeroPlayerCardMapStale() {
+        if (State.heroPopupMapState !== HERO_MAP_BUILT) return false;
+        for (var hero in State.heroPopupPlayerCardCache) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPlayerCardCache, hero)) continue;
+            var pp = State.heroPopupPlayerCardCache[hero];
             if (!pp || !IsPanelValid(pp)) return true;
         }
         return false;
     }
 
-    function GetOrCreateQuickPanelRedux(heroNameUpper) {
-        if (State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper] &&
-            IsPanelValid(State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper])) {
-            return State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper];
+    function GetOrCreateHeroPopupPanel(heroNameUpper) {
+        if (State.heroPopupPanelsByHero[heroNameUpper] &&
+            IsPanelValid(State.heroPopupPanelsByHero[heroNameUpper])) {
+            return State.heroPopupPanelsByHero[heroNameUpper];
         }
-        var playerPanel = State.recentPurchaseReduxHeroPanelCache[heroNameUpper];
+        var playerPanel = State.heroPopupPlayerCardCache[heroNameUpper];
         if (!playerPanel || !IsPanelValid(playerPanel)) {
-            if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILDING) {
-                State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
+            if (State.heroPopupMapState !== HERO_MAP_BUILDING) {
+                State.heroPopupMapState = HERO_MAP_IDLE;
             }
             return null;
         }
         var panel = $.CreatePanel("Panel", playerPanel, "");
         panel.AddClass("QuickPurchasesPanel");
-        State.recentPurchaseReduxQuickPanelsByHero[heroNameUpper] = panel;
+        State.heroPopupPanelsByHero[heroNameUpper] = panel;
         return panel;
     }
 
-    function GetPanelLeftInTopBarRedux(panel) {
+    function GetPanelLeftInTopBar(panel) {
         var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
         if (!topBar) {
             try {
@@ -25132,25 +25132,25 @@ function GetUIRoot() {
         return x;
     }
 
-    function ScheduleResolveOverlapsRedux(delay) {
-        if (State.recentPurchaseReduxOverlapPending) return;
-        State.recentPurchaseReduxOverlapPending = true;
+    function ScheduleResolveHeroPopupOverlaps(delay) {
+        if (State.heroPopupOverlapPending) return;
+        State.heroPopupOverlapPending = true;
         $.Schedule(delay || 0, function() {
             try {
-                ResolveOverlapsRedux();
+                ResolveHeroPopupOverlaps();
             } finally {
-                State.recentPurchaseReduxOverlapPending = false;
+                State.heroPopupOverlapPending = false;
             }
         });
     }
 
-    function ResolveOverlapsRedux() {
+    function ResolveHeroPopupOverlaps() {
         var active = [];
-        for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxQuickPanelsByHero, hero)) continue;
-            var p = State.recentPurchaseReduxQuickPanelsByHero[hero];
+        for (var hero in State.heroPopupPanelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPanelsByHero, hero)) continue;
+            var p = State.heroPopupPanelsByHero[hero];
             if (!p || !IsPanelValid(p)) continue;
-            var entries = State.recentPurchaseReduxActiveEntriesByHero[hero];
+            var entries = State.heroPopupActiveEntriesByHero[hero];
             if (!entries || entries.length === 0) continue;
             active.push({ hero: hero, panel: p });
         }
@@ -25169,14 +25169,14 @@ function GetUIRoot() {
         }
 
         for (var i = 0; i < active.length; i++) {
-            active[i].leftX = GetPanelLeftInTopBarRedux(active[i].panel);
+            active[i].leftX = GetPanelLeftInTopBar(active[i].panel);
             active[i].width = active[i].panel.actuallayoutwidth;
         }
 
         // Sort newest first
         active.sort(function(a, b) {
-            var ta = State.recentPurchaseReduxLastEntryTime[a.hero] || 0;
-            var tb = State.recentPurchaseReduxLastEntryTime[b.hero] || 0;
+            var ta = State.heroPopupLastEntryTime[a.hero] || 0;
+            var tb = State.heroPopupLastEntryTime[b.hero] || 0;
             return tb - ta;
         });
 
@@ -25203,45 +25203,45 @@ function GetUIRoot() {
         }
     }
 
-    function QuickRemoveEntryRedux(entry, heroNameUpper) {
-        var arr = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
+    function RemoveHeroPurchaseEntry(entry, heroNameUpper) {
+        var arr = State.heroPopupActiveEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopupActiveEntriesByHero[heroNameUpper] = filtered;
         }
         if (!IsPanelValid(entry)) return;
         entry.AddClass("quickFading");
         $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
             if (IsPanelValid(entry)) entry.DeleteAsync(0);
-            ScheduleResolveOverlapsRedux(0);
+            ScheduleResolveHeroPopupOverlaps(0);
         });
     }
 
-    function QuickEvictEntryRedux(entry, heroNameUpper) {
-        var arr = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
+    function EvictHeroPurchaseEntry(entry, heroNameUpper) {
+        var arr = State.heroPopupActiveEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopupActiveEntriesByHero[heroNameUpper] = filtered;
         }
         if (IsPanelValid(entry)) entry.DeleteAsync(0);
-        ScheduleResolveOverlapsRedux(0);
+        ScheduleResolveHeroPopupOverlaps(0);
     }
 
-    function AddQuickEntryRedux(sourcePurchase, nameText, quickMax, quickDisplaySec) {
+    function AddHeroPurchaseEntry(sourcePurchase, nameText, quickMax, quickDisplaySec) {
         var heroNameUpper = GetRecentPurchaseHeroName(sourcePurchase).toUpperCase();
-        var quickPanel = GetOrCreateQuickPanelRedux(heroNameUpper);
+        var quickPanel = GetOrCreateHeroPopupPanel(heroNameUpper);
         if (!quickPanel) return;
 
-        if (!State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper]) {
-            State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper] = [];
+        if (!State.heroPopupActiveEntriesByHero[heroNameUpper]) {
+            State.heroPopupActiveEntriesByHero[heroNameUpper] = [];
         }
-        var entries = State.recentPurchaseReduxActiveEntriesByHero[heroNameUpper];
-        State.recentPurchaseReduxLastEntryTime[heroNameUpper] = $.FrameTime();
+        var entries = State.heroPopupActiveEntriesByHero[heroNameUpper];
+        State.heroPopupLastEntryTime[heroNameUpper] = $.FrameTime();
 
         while (entries.length >= quickMax) {
-            QuickEvictEntryRedux(entries[0], heroNameUpper);
+            EvictHeroPurchaseEntry(entries[0], heroNameUpper);
         }
 
         var entry = $.CreatePanel("Panel", quickPanel, "");
@@ -25276,31 +25276,31 @@ function GetUIRoot() {
 
         entries.push(entry);
 
-        ScheduleResolveOverlapsRedux(0.05);
+        ScheduleResolveHeroPopupOverlaps(0.05);
 
         $.Schedule(quickDisplaySec, function() {
-            if (IsPanelValid(entry)) QuickRemoveEntryRedux(entry, heroNameUpper);
+            if (IsPanelValid(entry)) RemoveHeroPurchaseEntry(entry, heroNameUpper);
         });
     }
 
-    function ResetReduxHeroMap() {
-        for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxQuickPanelsByHero, hero)) continue;
-            var panel = State.recentPurchaseReduxQuickPanelsByHero[hero];
+    function ResetHeroPopupState() {
+        for (var hero in State.heroPopupPanelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopupPanelsByHero, hero)) continue;
+            var panel = State.heroPopupPanelsByHero[hero];
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
-        State.recentPurchaseReduxHeroPanelCache = {};
-        State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
-        State.recentPurchaseReduxQuickPanelsByHero = {};
-        State.recentPurchaseReduxActiveEntriesByHero = {};
-        State.recentPurchaseReduxLastEntryTime = {};
-        State.recentPurchaseReduxOverlapPending = false;
+        State.heroPopupPlayerCardCache = {};
+        State.heroPopupMapState = HERO_MAP_IDLE;
+        State.heroPopupPanelsByHero = {};
+        State.heroPopupActiveEntriesByHero = {};
+        State.heroPopupLastEntryTime = {};
+        State.heroPopupOverlapPending = false;
     }
 
-    function UpdateQuickPurchasesRedux(root, container, quickMax, quickDisplaySec) {
-        if (IsHeroMapStaleRedux()) ResetReduxHeroMap();
-        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) {
-            BuildHeroNameMapRedux(root);
+    function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec) {
+        if (IsHeroPlayerCardMapStale()) ResetHeroPopupState();
+        if (State.heroPopupMapState !== HERO_MAP_BUILT) {
+            BuildHeroPlayerCardMap(root);
             return;
         }
         if (!container || !IsPanelValid(container)) return;
@@ -25327,7 +25327,7 @@ function GetUIRoot() {
             if (!State.recentPurchaseQuickSeenKeys[key]) {
                 State.recentPurchaseQuickSeenKeys[key] = true;
                 if (!purchase.BHasClass("filterHidden")) {
-                    AddQuickEntryRedux(purchase, name, quickMax, quickDisplaySec);
+                    AddHeroPurchaseEntry(purchase, name, quickMax, quickDisplaySec);
                 }
             }
         }
@@ -25406,7 +25406,7 @@ function GetUIRoot() {
 
             if (heroPopupsEnabled) {
                 // Per-hero popup panels on player cards
-                UpdateQuickPurchasesRedux(root, container, quickMax, quickDisplaySec);
+                UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec);
                 // Hide the centralized panel since we're using per-hero panels
                 var quickPanel = State.cachedPanels.quickPurchasesPanel;
                 if (IsPanelValid(quickPanel)) {
