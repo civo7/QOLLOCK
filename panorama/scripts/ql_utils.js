@@ -411,6 +411,19 @@
     }
     exports.ParseRevisionNumber = ParseRevisionNumber;
 
+    /**
+     * Push a panel to an array if it's not already present.
+     * Null-guards both the array and panel.
+     */
+    function PushUnique(arr, panel) {
+        if (!arr || !panel) return;
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] === panel) return;
+        }
+        arr.push(panel);
+    }
+    exports.PushUnique = PushUnique;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it

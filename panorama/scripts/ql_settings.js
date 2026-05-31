@@ -12758,6 +12758,9 @@ function BuildSettingsListRenderSignature() {
 }
 
 function IsPanelValidSafe(panel) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
+        return QOL_UTILS.IsPanelValid(panel);
+    }
     return !!(panel && panel.IsValid && panel.IsValid());
 }
 
