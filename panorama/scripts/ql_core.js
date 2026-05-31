@@ -20665,6 +20665,27 @@ function GetUIRoot() {
         var startupConsumedForAccount =
             String(State.buildCategoryPayloadStartupConsumedAccountId || "") === accountId;
         var probeStageActive = !!(State.buildCategoryPayloadHeroProbeStage && State.buildCategoryPayloadHeroProbeStage.length > 0);
+        // Fast path: if persistentStorage already has valid config, skip the startup
+        // Airheart probe entirely. The probe is only needed when no local config
+        // exists (first-ever launch) or when the user explicitly triggers a cloud sync.
+        if (!startupConsumedForAccount && !probeStageActive && !State.settingsLoaderSessionActive && !State.buildCategoryPayloadCorruptRepairActive) {
+            var psCheckRaw = "";
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                    psCheckRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                }
+            } catch (ePsFast) { psCheckRaw = ""; }
+            if (psCheckRaw && psCheckRaw.length > 0) {
+                State.buildCategoryPayloadStartupConsumedAccountId = accountId;
+                State.buildCategoryPayloadStartupConsumedResult = "persistent_storage_fast_path";
+                State.buildCategoryPayloadDormant = true;
+                State.buildCategoryPayloadDormantReason = "persistent_storage_fast_path";
+                SettingsLoaderDebugLog(
+                    "payload_override fast_path persistentStorage found; skipping Airheart probe account=" + accountId
+                );
+                return cfg;
+            }
+        }
         if (
             startupConsumedForAccount &&
             !State.settingsLoaderSessionActive &&
