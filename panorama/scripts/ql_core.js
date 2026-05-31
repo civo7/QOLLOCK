@@ -300,6 +300,7 @@
         recentPurchaseReduxHeroPanelCache: {},
         recentPurchaseReduxOverlapPending: false,
         recentPurchaseReduxHeroMapState: 0,
+        recentPurchaseReduxBuildGen: 0,
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
@@ -25226,6 +25227,8 @@ function GetUIRoot() {
     function BuildHeroNameMapRedux(root) {
         if (State.recentPurchaseReduxHeroMapState === HERO_MAP_BUILDING) return;
         State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILDING;
+        State.recentPurchaseReduxBuildGen++;
+        var myGen = State.recentPurchaseReduxBuildGen;
         var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
         if (!labels || labels.length === 0) {
             State.recentPurchaseReduxHeroMapState = HERO_MAP_IDLE;
@@ -25234,7 +25237,7 @@ function GetUIRoot() {
         var pending = labels.length;
         function onDone() {
             pending--;
-            if (pending === 0) {
+            if (pending === 0 && State.recentPurchaseReduxBuildGen === myGen) {
                 State.recentPurchaseReduxHeroMapState = HERO_MAP_BUILT;
             }
         }
@@ -25251,18 +25254,16 @@ function GetUIRoot() {
                 var heroId = badge.heroid;
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
                 playerPanel.SetDialogVariableInt("hero_id", heroId);
-                (function(pp, hid) {
-                    $.Schedule(0.3, function() {
-                        if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILDING) return;
-                        if (IsPanelValid(label)) {
-                            var name = label.text.trim().toUpperCase();
-                            if (name) {
-                                State.recentPurchaseReduxHeroPanelCache[name] = pp;
-                            }
+                $.Schedule(0.3, function() {
+                    if (State.recentPurchaseReduxBuildGen !== myGen) return;
+                    if (IsPanelValid(label)) {
+                        var name = label.text.trim().toUpperCase();
+                        if (name) {
+                            State.recentPurchaseReduxHeroPanelCache[name] = playerPanel;
                         }
-                        onDone();
-                    });
-                })(playerPanel, heroId);
+                    }
+                    onDone();
+                });
             })(labels[i]);
         }
     }
@@ -25270,6 +25271,7 @@ function GetUIRoot() {
     function IsHeroMapStaleRedux() {
         if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) return false;
         for (var hero in State.recentPurchaseReduxHeroPanelCache) {
+            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxHeroPanelCache, hero)) continue;
             var pp = State.recentPurchaseReduxHeroPanelCache[hero];
             if (!pp || !IsPanelValid(pp)) return true;
         }
@@ -25325,6 +25327,7 @@ function GetUIRoot() {
     function ResolveOverlapsRedux() {
         var active = [];
         for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxQuickPanelsByHero, hero)) continue;
             var p = State.recentPurchaseReduxQuickPanelsByHero[hero];
             if (!p || !IsPanelValid(p)) continue;
             var entries = State.recentPurchaseReduxActiveEntriesByHero[hero];
@@ -25463,6 +25466,7 @@ function GetUIRoot() {
 
     function ResetReduxHeroMap() {
         for (var hero in State.recentPurchaseReduxQuickPanelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.recentPurchaseReduxQuickPanelsByHero, hero)) continue;
             var panel = State.recentPurchaseReduxQuickPanelsByHero[hero];
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
@@ -25471,11 +25475,12 @@ function GetUIRoot() {
         State.recentPurchaseReduxQuickPanelsByHero = {};
         State.recentPurchaseReduxActiveEntriesByHero = {};
         State.recentPurchaseReduxLastEntryTime = {};
+        State.recentPurchaseReduxOverlapPending = false;
     }
 
     function UpdateQuickPurchasesRedux(root, container, quickMax, quickDisplaySec) {
+        if (IsHeroMapStaleRedux()) ResetReduxHeroMap();
         if (State.recentPurchaseReduxHeroMapState !== HERO_MAP_BUILT) {
-            if (IsHeroMapStaleRedux()) ResetReduxHeroMap();
             BuildHeroNameMapRedux(root);
             return;
         }
@@ -25598,8 +25603,9 @@ function GetUIRoot() {
                 var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
                 var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
                 SyncRejuvClassRP(rejuvEnabled);
-                var quickPanel = State.cachedPanels.quickPurchasesPanel;
+                quickPanel = State.cachedPanels.quickPurchasesPanel;
                 if (IsPanelValid(quickPanel)) {
+                    quickPanel.style.visibility = "visible";
                     quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
                     quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
                     quickPanel.style.x = String(quickOffsetX) + "px";
