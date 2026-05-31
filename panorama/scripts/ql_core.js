@@ -9085,7 +9085,8 @@ function GetUIRoot() {
             return cached;
         }
         var p = $.GetContextPanel();
-        while (p && p.GetParent && p.GetParent()) { p = p.GetParent(); }
+        var uiRootGuard = 0;
+        while (p && p.GetParent && p.GetParent() && uiRootGuard < 64) { p = p.GetParent(); uiRootGuard++; }
         State.cachedPanels.uiRoot = p || null;
         return p || null;
     }
@@ -12426,10 +12427,12 @@ function GetUIRoot() {
 
     function DetectTopBarPlayerTeam(playerPanel) {
         var p = playerPanel;
-        while (p && p.GetParent) {
+        var teamGuard = 0;
+        while (p && p.GetParent && teamGuard < 64) {
             if (p.id === "TeamFriendly") return "friendly";
             if (p.id === "TeamEnemy") return "enemy";
             p = p.GetParent();
+            teamGuard++;
         }
         return null;
     }
@@ -19041,8 +19044,10 @@ function GetUIRoot() {
             var contextPanel = $.GetContextPanel ? $.GetContextPanel() : null;
             AddStorageSignatureScanRoot(roots, contextPanel);
             var top = contextPanel;
-            while (top && IsPanelValid(top) && top.GetParent && top.GetParent()) {
+            var sigRootGuard = 0;
+            while (top && IsPanelValid(top) && top.GetParent && top.GetParent() && sigRootGuard < 64) {
                 top = top.GetParent();
+                sigRootGuard++;
             }
             AddStorageSignatureScanRoot(roots, top);
         } catch (e0) {}
@@ -25343,10 +25348,12 @@ function GetUIRoot() {
             (function(label) {
                 var playerPanel = label.GetParent();
                 var badge = null;
-                while (playerPanel && IsPanelValid(playerPanel)) {
+                var badgeWalkGuard = 0;
+                while (playerPanel && IsPanelValid(playerPanel) && badgeWalkGuard < 64) {
                     badge = playerPanel.FindChildTraverse("HeroBadge");
                     if (badge) break;
                     playerPanel = playerPanel.GetParent();
+                    badgeWalkGuard++;
                 }
                 if (!badge || !playerPanel) { onDone(); return; }
                 var heroId = badge.heroid;
@@ -25399,15 +25406,21 @@ function GetUIRoot() {
         if (!topBar) {
             try {
                 var root = $.GetContextPanel();
-                while (root && root.GetParent && root.GetParent() !== null) root = root.GetParent();
+                var rootGuard = 0;
+                while (root && root.GetParent && root.GetParent() !== null && rootGuard < 64) {
+                    root = root.GetParent();
+                    rootGuard++;
+                }
                 if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             } catch(e) {}
         }
         var x = 0;
         var current = panel;
-        while (current && IsPanelValid(current) && current !== topBar) {
+        var walkGuard = 0;
+        while (current && IsPanelValid(current) && current !== topBar && walkGuard < 64) {
             x += ReadSafePanelLayoutOffset(current.actualxoffset) || 0;
             current = current.GetParent();
+            walkGuard++;
         }
         return x;
     }
