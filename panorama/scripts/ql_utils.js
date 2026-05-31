@@ -15,57 +15,6 @@
     }
     exports.IsPanelValid = IsPanelValid;
 
-    // ---- Cached Panel Access (Fix 1 integration) ----
-
-    var panelCache = {};
-
-    /**
-     * Returns the cached panel if still valid, or null if stale/destroyed.
-     * Clears the stale reference so the next call reacquires.
-     */
-    function GetCachedPanel(key) {
-        var panel = panelCache[key];
-        if (IsPanelValid(panel)) {
-            return panel;
-        }
-        panelCache[key] = null;
-        return null;
-    }
-    exports.GetCachedPanel = GetCachedPanel;
-
-    /**
-     * Caches a panel reference if valid, or stores null.
-     */
-    function SetCachedPanel(key, panel) {
-        panelCache[key] = IsPanelValid(panel) ? panel : null;
-    }
-    exports.SetCachedPanel = SetCachedPanel;
-
-    /**
-     * Clears all cached panel references.
-     */
-    function ClearPanelCache() {
-        panelCache = {};
-    }
-    exports.ClearPanelCache = ClearPanelCache;
-
-    /**
-     * Sweeps the cache for stale entries. Call periodically (e.g., once per second)
-     * to prevent stale references from accumulating.
-     * Returns the number of entries swept.
-     */
-    function SweepStalePanelCache() {
-        var swept = 0;
-        for (var key in panelCache) {
-            if (panelCache.hasOwnProperty(key) && panelCache[key] && !IsPanelValid(panelCache[key])) {
-                panelCache[key] = null;
-                swept++;
-            }
-        }
-        return swept;
-    }
-    exports.SweepStalePanelCache = SweepStalePanelCache;
-
     // ---- Safe Attribute Access ----
 
     /**
@@ -173,30 +122,15 @@
     }
     exports.PerfNowMs = PerfNowMs;
 
-    // ---- Scheduling ----
-
-    var _prngState = 1;
+    // ---- Config Helpers ----
 
     /**
-     * Simple deterministic PRNG (LCG) for schedule jitter.
-     * Does not depend on Date.now() or Math.random().
+     * Returns true if a config key is enabled (strictly 1).
      */
-    function PseudoRandom() {
-        _prngState = (_prngState * 1664525 + 1013904223) & 0xFFFFFFFF;
-        return (_prngState >>> 0) / 0xFFFFFFFF;
+    function IsCfgEnabled(cfg, key) {
+        return Number(cfg && cfg[key]) === 1;
     }
-    exports.PseudoRandom = PseudoRandom;
-
-    /**
-     * Schedule a callback with a small random jitter to avoid frame alignment.
-     * Jitter is ±20ms by default.
-     */
-    function ScheduleStaggered(delaySec, fn, jitterRangeSec) {
-        var range = (typeof jitterRangeSec === "number" && jitterRangeSec > 0) ? jitterRangeSec : 0.04;
-        var jitter = (PseudoRandom() * range) - (range / 2);
-        $.Schedule(Math.max(0, delaySec + jitter), fn);
-    }
-    exports.ScheduleStaggered = ScheduleStaggered;
+    exports.IsCfgEnabled = IsCfgEnabled;
 
     // ---- Config Validation ----
 
