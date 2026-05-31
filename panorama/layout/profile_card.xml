@@ -1,21 +1,34 @@
 <root>
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
+		<include src="s2r://panorama/styles/citadel_ranked_badge_mini.vcss_c" />
 		<include src="s2r://panorama/styles/profile_card.vcss_c" />
+		<include src="s2r://panorama/styles/showrank_profile_card.vcss_c" />
 	</styles>
 	<scripts>
+		<include src="s2r://panorama/scripts/showrank_web_media_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_profile_card_statlocker.vjs_c" />
 	</scripts>
-	<CitadelProfileCard>
+	<CitadelProfileCard class="ShowRankProfileCardRoot" onload="if ($.ShowRankTriggerProfileCard) $.ShowRankTriggerProfileCard('profile_card_onload');" onmouseover="if ($.ShowRankTriggerProfileCard) $.ShowRankTriggerProfileCard('profile_card_mouseover');">
 		<Panel id="MiniProfileContainer" class="TopBottomFlow">
 			<Panel id="ContentsMain">
 				<Panel id="ContentsMainBackground" />
 				<Panel id="ContentsMainForeground">
-					<Panel id="AccountID">
+					<Panel id="AccountID" onload="if ($.ShowRankTriggerProfileCard) $.ShowRankTriggerProfileCard('account_id_onload');">
 						<Button id="QOLStatlockerProfileCardLink">
-							<Label id="QOLStatlockerProfileCardLabel" class="AccountID" text="Friend ID:" />
+							<Label id="QOLStatlockerProfileCardLabel" text="Friend ID:" />
 							<Image id="QOLStatlockerProfileCardIcon" src="s2r://panorama/images/qollock/statlocker.vtex" scaling="stretch-to-fit-preserve-aspect" />
 						</Button>
+						<Label id="WebMediaDemoAccountLabel" class="AccountID" text="#Citadel_ProfileCard_AccountID" />
+						<Panel class="WebMediaDemoAccountIdRow">
+							<Button class="WebMediaDemoProfileLink" onactivate="if ($.ShowRankOpenStatlocker) $.ShowRankOpenStatlocker();">
+								<Label text="StatLocker Profile" />
+							</Button>
+							<Panel class="WebMediaDemoMediaSlot" hittest="false">
+								<CitadelRankedBadgeMini id="WebMediaDemoLocalBadge" class="WebMediaDemoLocalBadge" hittest="false" />
+								<Image id="WebMediaDemoMedia" class="WebMediaDemoMedia" scaling="stretch-to-fit-preserve-aspect" hittest="false" />
+							</Panel>
+						</Panel>
 					</Panel>
 					<Panel id="HeroInfo">
 						<CitadelHeroImage id="HeroImage" />

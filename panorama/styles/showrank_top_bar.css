@@ -1,0 +1,170 @@
+CitadelHudTopBarPlayer,
+#PlayerDetailsContainer,
+#HeroContents
+{
+	overflow: noclip;
+}
+
+.ShowRankTopBarRankImage
+{
+	width: 48px;
+	height: 31px;
+	horizontal-align: center;
+	vertical-align: top;
+	margin-top: 62px;
+	z-index: 60;
+	ignore-parent-flow: true;
+	overflow: noclip;
+	visibility: collapse;
+	opacity: 0;
+}
+
+.ShowRankTopBarModeAlways .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
+.ShowRankTopBarModeScoreboardOnly.wants_scoreboard .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
+.ShowRankTopBarModeScoreboardOnly.gScoreboardOpen .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
+.ShowRankTopBarModeScoreboardOnly .wants_scoreboard .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
+.ShowRankTopBarModeScoreboardOnly .gScoreboardOpen .ShowRankTopBarRankImage.ShowRankTopBarRankVisible
+{
+	visibility: visible;
+	opacity: 1;
+}
+
+.wants_scoreboard .ShowRankTopBarRankImage,
+.gScoreboardOpen .ShowRankTopBarRankImage,
+.gDetailView .ShowRankTopBarRankImage
+{
+	width: 52px;
+	height: 34px;
+	margin-top: 60px;
+}
+
+.ShowRankTeamAverageLayer
+{
+	width: 300px;
+	height: 84px;
+	horizontal-align: center;
+	vertical-align: top;
+	margin-top: 118px;
+	z-index: 35;
+	ignore-parent-flow: true;
+	overflow: noclip;
+}
+
+.ShowRankTeamAverageRankImage
+{
+	width: 92px;
+	height: 60px;
+	horizontal-align: left;
+	vertical-align: top;
+	margin-top: 0px;
+	z-index: 35;
+	visibility: collapse;
+	opacity: 0;
+	ignore-parent-flow: true;
+}
+
+.ShowRankTopBarModeAlways .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankTopBarModeScoreboardOnly.wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankTopBarModeScoreboardOnly.gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankTopBarModeScoreboardOnly .wants_scoreboard .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible,
+.ShowRankTopBarModeScoreboardOnly .gScoreboardOpen .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
+{
+	visibility: visible;
+	opacity: 1;
+}
+
+.ShowRankTopBarModeDisabled .ShowRankTopBarRankImage.ShowRankTopBarRankVisible,
+.ShowRankTopBarModeDisabled .ShowRankTeamAverageRankImage.ShowRankTeamAverageRankVisible
+{
+	visibility: collapse;
+	opacity: 0;
+}
+
+.ShowRankTeamAverageFriendlyImage
+{
+	horizontal-align: left;
+	margin-left: 26px;
+}
+
+.ShowRankTeamAverageEnemyImage
+{
+	horizontal-align: right;
+	margin-right: 26px;
+}
+
+.wants_scoreboard .ShowRankTeamAverageRankImage,
+.gScoreboardOpen .ShowRankTeamAverageRankImage,
+.gDetailView .ShowRankTeamAverageRankImage
+{
+	width: 104px;
+	height: 68px;
+	margin-top: 0px;
+}
+
+.TeamScore .ScoreContainer
+{
+	z-index: 45;
+}
+
+.SoulsValueContainer
+{
+	z-index: 0;
+}
+
+#PauseIndicator
+{
+	width: 30px;
+	height: 30px;
+	horizontal-align: center;
+}
+
+#PauseIcon
+{
+	horizontal-align: center;
+	margin-right: 0px;
+}
+
+#PauseIndicator Label
+{
+	visibility: collapse;
+	opacity: 0;
+}
+
+.ShowRankTopBarEscapePrompt
+{
+	horizontal-align: center;
+	vertical-align: top;
+	margin-top: 8px;
+	padding: 3px 8px;
+	border-radius: 2px;
+	background-color: #10151bdd;
+	border: 1px solid #c7d5e055;
+	opacity: 0;
+	visibility: collapse;
+	z-index: 40;
+	transition-property: opacity;
+	transition-duration: 0.12s;
+}
+
+.ShowRankTopBarEscapePrompt Label
+{
+	color: #dfe8ef;
+	font-size: 13px;
+	font-weight: semi-bold;
+	text-shadow: 0px 1px 2px 2.0 #000000;
+}
+
+.ShowRankTopBarNeedsManualProfiles .ShowRankTopBarEscapePrompt,
+.ShowRankTopBarNeedsEscapePrompt .ShowRankTopBarEscapePrompt,
+.ShowRankTopBarEscapePrompt.ShowRankTopBarEscapePromptVisible
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.ShowRankCleanRanksReady .ShowRankTopBarEscapePrompt,
+.ShowRankTopBarEscapePrompt.ShowRankTopBarEscapePromptHidden
+{
+	opacity: 0;
+	visibility: collapse;
+}

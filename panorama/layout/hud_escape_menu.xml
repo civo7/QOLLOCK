@@ -4,6 +4,7 @@
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hud_escape_menu.vcss_c" />
 		<include src="s2r://panorama/styles/ql_settings.vcss_c" />
+		<include src="s2r://panorama/styles/showrank_player_list.vcss_c" />
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
@@ -12,14 +13,15 @@
 		<include src="s2r://panorama/scripts/ql_custom_announcer_slot3_pack_meta.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_custom_announcer_slot4_pack_meta.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_custom_announcer_slot5_pack_meta.vjs_c" />
+		<include src="s2r://panorama/scripts/showrank_web_media_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
-	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
-		<Panel id="EscapeBackground" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }" />
+	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else if (typeof CitadelResumePlaying === 'function') { CitadelResumePlaying(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }" onload="if ($.ShowRankEscapePreloadFromPlayerList) $.ShowRankEscapePreloadFromPlayerList('escape_menu_onload');">
+		<Panel id="EscapeBackground" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else if (typeof CitadelResumePlaying === 'function') { CitadelResumePlaying(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }" />
 		<Panel id="SettingsWindow" hittest="true" onactivate="">
 			<Panel id="SettingsHeader">
 				<Label id="SettingsTitle" text="QOL LOCK" />
-				<Button id="CloseBtn" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
+				<Button id="CloseBtn" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else if (typeof CitadelResumePlaying === 'function') { CitadelResumePlaying(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
 					<Label text="X" />
 				</Button>
 			</Panel>
@@ -104,16 +106,16 @@
 			<Panel id="PartySpacer" />
 			<Panel class="FriendsOrPlayersTabs">
 				<Panel class="Center">
-					<TabButton id="FriendsTab" class="FriendsOrPlayersButton" group="people_list_tabs" text="#Citadel_Friends_WindowTitle" selected="true" />
-					<TabButton id="PlayersTab" class="FriendsOrPlayersButton" group="people_list_tabs" text="#Citadel_Players_WindowTitle" />
+					<TabButton id="FriendsTab" class="FriendsOrPlayersButton" group="people_list_tabs" text="#Citadel_Friends_WindowTitle" />
+					<TabButton id="PlayersTab" class="FriendsOrPlayersButton" group="people_list_tabs" text="#Citadel_Players_WindowTitle" selected="true" onactivate="if ($.ShowRankEscapePreloadFromPlayerList) $.ShowRankEscapePreloadFromPlayerList('escape_menu_players_tab_activate');" />
 				</Panel>
 			</Panel>
 			<Panel class="FriendsOrPlayersContents" hittest="false">
-				<TabContents id="FriendsTabContents" tabid="FriendsTab" group="people_list_tabs" hittest="false" selected="true">
+				<TabContents id="FriendsTabContents" tabid="FriendsTab" group="people_list_tabs" hittest="false">
 					<CitadelFriendsList id="FriendsList" />
 				</TabContents>
-				<TabContents id="PlayersTabContents" tabid="PlayersTab" group="people_list_tabs" hittest="false">
-					<CitadelPlayersList id="PlayersList" />
+				<TabContents id="PlayersTabContents" tabid="PlayersTab" group="people_list_tabs" hittest="false" selected="true">
+					<CitadelPlayersList id="PlayersList" onload="if ($.ShowRankEscapePreloadFromPlayerList) $.ShowRankEscapePreloadFromPlayerList('escape_menu_players_list_onload');" />
 				</TabContents>
 			</Panel>
 		</Panel>

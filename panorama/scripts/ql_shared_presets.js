@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.0.3";
+var QOL_SCHEMA_SEMVER = "3.0.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 var QOL_CODEC = (typeof QOL_CODEC === "object" && QOL_CODEC) ? QOL_CODEC : {};
@@ -952,6 +952,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_MISSING_HERO: 0,
         ENABLE_NICKNAMES: 0,
         HUD_TOP_BAR_ENABLED: 1,
+        SHOW_RANK_TOP_BAR_MODE: 1,
         DISABLE_PLAYER_NAME_BLUR: 0,
         TOP_BAR_OPACITY: 1.0,
         TOP_BAR_SCALE: 1.0,
