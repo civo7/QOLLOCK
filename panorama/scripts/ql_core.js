@@ -7093,8 +7093,10 @@ function ExpressShotLog(msg) {
      */
     function ExecuteFeature(featureName, fn) {
         if (IsFeatureAutoDisabled(featureName)) return;
+        var _t = PerfNowMs();
         try {
             fn();
+            TimeFeature(featureName, _t);
             // Successful execution resets the error streak
             ResetFeatureErrorStreak(featureName);
         } catch (featureErr) {
