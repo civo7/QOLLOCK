@@ -342,25 +342,27 @@
         urnTrackerNextSampleMs: 0,
         urnTrackerNextPanelSearchMs: 0,
         urnTrackerCachedState: null,
-        spmNextSampleMs: 0,
-        spmPanelCacheNextMs: 0,
-        spmPlayerHistory: null,
-        spmPlayerPanels: null,
-        spmPlayerDisplayLabels: null,
-        spmPlayerTeamByIndex: null,
-        spmPlayerHiddenGoldLabels: null,
-        spmPlayerSoulsLabels: null,
-        spmCachedFriendlyScore: null,
-        spmCachedEnemyScore: null,
-        spmCachedFriendlyLabel: null,
-        spmCachedEnemyLabel: null,
-        spmTeamHistory: null,
-        spmLastClockSec: null,
-        spmWarmupActive: true,
-        spmWasDisabled: false,
-        spmNeedsFullPlayerCache: true,
-        spmPlayerRefreshCursor: 0,
-        spmPlayerRefreshRemaining: 0,
+        spm: {
+            nextSampleMs: 0,
+            panelCacheNextMs: 0,
+            playerHistory: null,
+            playerPanels: null,
+            playerDisplayLabels: null,
+            playerTeamByIndex: null,
+            playerHiddenGoldLabels: null,
+            playerSoulsLabels: null,
+            cachedFriendlyScore: null,
+            cachedEnemyScore: null,
+            cachedFriendlyLabel: null,
+            cachedEnemyLabel: null,
+            teamHistory: null,
+            lastClockSec: null,
+            warmupActive: true,
+            wasDisabled: false,
+            needsFullPlayerCache: true,
+            playerRefreshCursor: 0,
+            playerRefreshRemaining: 0
+        },
         topbarPlayerPanelRoot: null,
         topbarPlayerPanels: null,
         topbarPlayerPanelLastScanMs: null,
@@ -12209,55 +12211,55 @@ function GetUIRoot() {
     }
 
     function EnsureSpmState() {
-        if (!State.spmPlayerHistory || !State.spmTeamHistory) {
+        if (!State.spm.playerHistory || !State.spm.teamHistory) {
             var histories = [];
             for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-            State.spmPlayerHistory = histories;
-            State.spmTeamHistory = {
+            State.spm.playerHistory = histories;
+            State.spm.teamHistory = {
                 friendly: [],
                 enemy: []
             };
         }
-        if (!State.spmPlayerPanels) {
-            State.spmPlayerPanels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerPanels) {
+            State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerDisplayLabels) {
-            State.spmPlayerDisplayLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerDisplayLabels) {
+            State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerTeamByIndex) {
-            State.spmPlayerTeamByIndex = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerTeamByIndex) {
+            State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerHiddenGoldLabels) {
-            State.spmPlayerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerHiddenGoldLabels) {
+            State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!State.spmPlayerSoulsLabels) {
-            State.spmPlayerSoulsLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerSoulsLabels) {
+            State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
         }
-        if (!isFinite(State.spmPlayerRefreshCursor)) {
-            State.spmPlayerRefreshCursor = 0;
+        if (!isFinite(State.spm.playerRefreshCursor)) {
+            State.spm.playerRefreshCursor = 0;
         }
-        if (!isFinite(State.spmPlayerRefreshRemaining)) {
-            State.spmPlayerRefreshRemaining = 0;
+        if (!isFinite(State.spm.playerRefreshRemaining)) {
+            State.spm.playerRefreshRemaining = 0;
         }
-        if (State.spmNeedsFullPlayerCache === undefined || State.spmNeedsFullPlayerCache === null) {
-            State.spmNeedsFullPlayerCache = true;
+        if (State.spm.needsFullPlayerCache === undefined || State.spm.needsFullPlayerCache === null) {
+            State.spm.needsFullPlayerCache = true;
         }
     }
 
     function ResetSpmState() {
         var histories = [];
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-        State.spmPlayerHistory = histories;
-        State.spmTeamHistory = {
+        State.spm.playerHistory = histories;
+        State.spm.teamHistory = {
             friendly: [],
             enemy: []
         };
-        State.spmWarmupActive = true;
-        State.spmNextSampleMs = 0;
-        State.spmPanelCacheNextMs = 0;
-        State.spmPlayerRefreshCursor = 0;
-        State.spmPlayerRefreshRemaining = 0;
-        State.spmNeedsFullPlayerCache = true;
+        State.spm.warmupActive = true;
+        State.spm.nextSampleMs = 0;
+        State.spm.panelCacheNextMs = 0;
+        State.spm.playerRefreshCursor = 0;
+        State.spm.playerRefreshRemaining = 0;
+        State.spm.needsFullPlayerCache = true;
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
     }
@@ -12527,39 +12529,39 @@ function GetUIRoot() {
     function RefreshSpmPlayerSlotCache(root, index) {
         if (!root || index < 0 || index >= SPM_MAX_PLAYERS) return;
         var playerPanel = GetTopBarPlayerPanel(root, index, PerfNowMs(), true);
-        State.spmPlayerPanels[index] = playerPanel || null;
-        State.spmPlayerDisplayLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("PlayerSPMDisplay") || null) : null;
-        State.spmPlayerTeamByIndex[index] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
-        State.spmPlayerHiddenGoldLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
-        State.spmPlayerSoulsLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
+        State.spm.playerPanels[index] = playerPanel || null;
+        State.spm.playerDisplayLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("PlayerSPMDisplay") || null) : null;
+        State.spm.playerTeamByIndex[index] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
+        State.spm.playerHiddenGoldLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
+        State.spm.playerSoulsLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
     }
 
     function RefreshSpmPanelCache(root, nowMs) {
         if (!root) return;
         EnsureSpmState();
         var shouldRefreshScorePanels =
-            !IsPanelValid(State.spmCachedFriendlyScore) ||
-            !IsPanelValid(State.spmCachedEnemyScore) ||
-            !IsPanelValid(State.spmCachedFriendlyLabel) ||
-            !IsPanelValid(State.spmCachedEnemyLabel) ||
-            nowMs >= (State.spmPanelCacheNextMs || 0);
+            !IsPanelValid(State.spm.cachedFriendlyScore) ||
+            !IsPanelValid(State.spm.cachedEnemyScore) ||
+            !IsPanelValid(State.spm.cachedFriendlyLabel) ||
+            !IsPanelValid(State.spm.cachedEnemyLabel) ||
+            nowMs >= (State.spm.panelCacheNextMs || 0);
 
         if (shouldRefreshScorePanels) {
-            State.spmCachedFriendlyScore = root.FindChildTraverse("TeamScoreFriendly") || null;
-            State.spmCachedEnemyScore = root.FindChildTraverse("TeamScoreEnemy") || null;
-            State.spmCachedFriendlyLabel = State.spmCachedFriendlyScore ? (State.spmCachedFriendlyScore.FindChildTraverse("TeamSPMDisplay_friendly") || null) : null;
-            State.spmCachedEnemyLabel = State.spmCachedEnemyScore ? (State.spmCachedEnemyScore.FindChildTraverse("TeamSPMDisplay_enemy") || null) : null;
-            State.spmPanelCacheNextMs = nowMs + SPM_PANEL_CACHE_REFRESH_MS + 137;
+            State.spm.cachedFriendlyScore = root.FindChildTraverse("TeamScoreFriendly") || null;
+            State.spm.cachedEnemyScore = root.FindChildTraverse("TeamScoreEnemy") || null;
+            State.spm.cachedFriendlyLabel = State.spm.cachedFriendlyScore ? (State.spm.cachedFriendlyScore.FindChildTraverse("TeamSPMDisplay_friendly") || null) : null;
+            State.spm.cachedEnemyLabel = State.spm.cachedEnemyScore ? (State.spm.cachedEnemyScore.FindChildTraverse("TeamSPMDisplay_enemy") || null) : null;
+            State.spm.panelCacheNextMs = nowMs + SPM_PANEL_CACHE_REFRESH_MS + 137;
         }
 
-        if (!State.spmPlayerPanels) State.spmPlayerPanels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerDisplayLabels) State.spmPlayerDisplayLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerTeamByIndex) State.spmPlayerTeamByIndex = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerHiddenGoldLabels) State.spmPlayerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spmPlayerSoulsLabels) State.spmPlayerSoulsLabels = new Array(SPM_MAX_PLAYERS);
-        var remaining = Number(State.spmPlayerRefreshRemaining);
+        if (!State.spm.playerPanels) State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerDisplayLabels) State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerTeamByIndex) State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerHiddenGoldLabels) State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.spm.playerSoulsLabels) State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
+        var remaining = Number(State.spm.playerRefreshRemaining);
         if (!isFinite(remaining) || remaining < 0) remaining = 0;
-        if (State.spmNeedsFullPlayerCache && remaining <= 0) {
+        if (State.spm.needsFullPlayerCache && remaining <= 0) {
             remaining = SPM_MAX_PLAYERS;
         } else if (shouldRefreshScorePanels && remaining <= 0) {
             remaining = SPM_MAX_PLAYERS;
@@ -12567,7 +12569,7 @@ function GetUIRoot() {
         if (remaining <= 0) return;
 
         var refreshCount = Math.min(SPM_PLAYER_CACHE_REFRESH_BATCH, remaining);
-        var cursor = Number(State.spmPlayerRefreshCursor);
+        var cursor = Number(State.spm.playerRefreshCursor);
         if (!isFinite(cursor) || cursor < 0 || cursor >= SPM_MAX_PLAYERS) cursor = 0;
         if (refreshCount < 1) refreshCount = 1;
         if (refreshCount > SPM_MAX_PLAYERS) refreshCount = SPM_MAX_PLAYERS;
@@ -12576,10 +12578,10 @@ function GetUIRoot() {
             RefreshSpmPlayerSlotCache(root, index);
         }
 
-        State.spmPlayerRefreshCursor = (cursor + refreshCount) % SPM_MAX_PLAYERS;
-        State.spmPlayerRefreshRemaining = remaining - refreshCount;
-        if (State.spmPlayerRefreshRemaining <= 0 && State.spmNeedsFullPlayerCache) {
-            State.spmNeedsFullPlayerCache = false;
+        State.spm.playerRefreshCursor = (cursor + refreshCount) % SPM_MAX_PLAYERS;
+        State.spm.playerRefreshRemaining = remaining - refreshCount;
+        if (State.spm.playerRefreshRemaining <= 0 && State.spm.needsFullPlayerCache) {
+            State.spm.needsFullPlayerCache = false;
         }
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
@@ -12757,7 +12759,7 @@ function GetUIRoot() {
             var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
             var playerPanel = cachedPlayerPanel;
             if (!playerPanel) {
-                playerPanel = IsPanelValid(State.spmPlayerPanels && State.spmPlayerPanels[i]) ? State.spmPlayerPanels[i] : null;
+                playerPanel = IsPanelValid(State.spm.playerPanels && State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             }
             if (!playerPanel) playerPanel = GetTopBarPlayerPanel(root, i, now, false);
             if (cachedPlayerPanel && playerPanel && cachedPlayerPanel !== playerPanel) {
@@ -13131,10 +13133,10 @@ function GetUIRoot() {
     function ApplyZeroSpmDisplay(root, nowMs) {
         if (!root) return;
         RefreshSpmPanelCache(root, nowMs || 0);
-        var friendlyScore = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
-        var friendlyLabel = IsPanelValid(State.spmCachedFriendlyLabel) ? State.spmCachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spmCachedEnemyLabel) ? State.spmCachedEnemyLabel : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
         SetSpmLabel(friendlyLabel, 0, friendlyScore);
         SetSpmLabel(enemyLabel, 0, enemyScore);
     }
@@ -13142,7 +13144,7 @@ function GetUIRoot() {
     function BuildTopbarSoulSnapshot(root, nowMs) {
         if (!root) return null;
         RefreshSpmPanelCache(root, nowMs || 0);
-        if (!State.spmPlayerPanels || !State.spmPlayerTeamByIndex) return null;
+        if (!State.spm.playerPanels || !State.spm.playerTeamByIndex) return null;
 
         var players = new Array(SPM_MAX_PLAYERS);
         var friendlyTotal = 0;
@@ -13151,28 +13153,28 @@ function GetUIRoot() {
         var enemyPlayers = 0;
 
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var panel = IsPanelValid(State.spmPlayerPanels[i]) ? State.spmPlayerPanels[i] : null;
+            var panel = IsPanelValid(State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             if (!panel) {
                 players[i] = null;
                 continue;
             }
 
-            var hiddenGoldLabel = IsPanelValid(State.spmPlayerHiddenGoldLabels[i]) ? State.spmPlayerHiddenGoldLabels[i] : null;
-            var soulsLabel = IsPanelValid(State.spmPlayerSoulsLabels[i]) ? State.spmPlayerSoulsLabels[i] : null;
+            var hiddenGoldLabel = IsPanelValid(State.spm.playerHiddenGoldLabels[i]) ? State.spm.playerHiddenGoldLabels[i] : null;
+            var soulsLabel = IsPanelValid(State.spm.playerSoulsLabels[i]) ? State.spm.playerSoulsLabels[i] : null;
             if (!hiddenGoldLabel) {
                 hiddenGoldLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("HiddenGoldValue") || null) : null;
-                State.spmPlayerHiddenGoldLabels[i] = hiddenGoldLabel;
+                State.spm.playerHiddenGoldLabels[i] = hiddenGoldLabel;
             }
             if (!soulsLabel) {
                 soulsLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("SoulsValue") || null) : null;
-                State.spmPlayerSoulsLabels[i] = soulsLabel;
+                State.spm.playerSoulsLabels[i] = soulsLabel;
             }
 
             var soulValue = GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel);
-            var team = State.spmPlayerTeamByIndex[i];
+            var team = State.spm.playerTeamByIndex[i];
             if (team !== "friendly" && team !== "enemy") {
                 team = DetectTopBarPlayerTeam(panel);
-                State.spmPlayerTeamByIndex[i] = team;
+                State.spm.playerTeamByIndex[i] = team;
             }
 
             players[i] = {
@@ -13216,20 +13218,20 @@ function GetUIRoot() {
 
         var spmEnabled = !cfg || Number(cfg.ENABLE_MIN_SOULS) === 1;
         if (!spmEnabled) {
-            if (!State.spmWasDisabled) {
+            if (!State.spm.wasDisabled) {
                 ResetSpmState();
                 ApplyZeroSpmDisplay(root, nowMs);
-                State.spmLastClockSec = null;
-                State.spmWasDisabled = true;
+                State.spm.lastClockSec = null;
+                State.spm.wasDisabled = true;
             }
             return;
         }
-        State.spmWasDisabled = false;
+        State.spm.wasDisabled = false;
 
         if (isConnectedToHideout(root)) {
             ResetSpmState();
             ApplyZeroSpmDisplay(root, nowMs);
-            State.spmLastClockSec = null;
+            State.spm.lastClockSec = null;
             return;
         }
 
@@ -13239,20 +13241,20 @@ function GetUIRoot() {
             State.cachedPanels.gameTime = gameTimePanel || null;
         }
         var clockSec = gameTimePanel && gameTimePanel.text ? ParseClockSeconds(gameTimePanel.text) : 0;
-        if (State.spmLastClockSec !== null && clockSec < State.spmLastClockSec) {
+        if (State.spm.lastClockSec !== null && clockSec < State.spm.lastClockSec) {
             ResetSpmState();
         }
-        State.spmLastClockSec = clockSec;
+        State.spm.lastClockSec = clockSec;
 
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        if (nowMs < (State.spmNextSampleMs || 0)) return;
-        State.spmNextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
+        if (nowMs < (State.spm.nextSampleMs || 0)) return;
+        State.spm.nextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
 
         RefreshSpmPanelCache(root, nowMs);
-        var friendlyScore = IsPanelValid(State.spmCachedFriendlyScore) ? State.spmCachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spmCachedEnemyScore) ? State.spmCachedEnemyScore : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
         if (!friendlyScore || !enemyScore) {
             ApplyZeroSpmDisplay(root, nowMs);
             return;
@@ -13272,11 +13274,11 @@ function GetUIRoot() {
             var snapshotPlayer = snapshot.players[i];
             if (!snapshotPlayer) continue;
             var soulValue = snapshotPlayer.soulValue;
-            var history = State.spmPlayerHistory[i];
+            var history = State.spm.playerHistory[i];
             SpmAddSample(history, soulValue);
             var spm = SpmCalculate(history);
 
-            var playerDisplay = IsPanelValid(State.spmPlayerDisplayLabels[i]) ? State.spmPlayerDisplayLabels[i] : null;
+            var playerDisplay = IsPanelValid(State.spm.playerDisplayLabels[i]) ? State.spm.playerDisplayLabels[i] : null;
             if (playerDisplay) {
                 var playerText = SpmFormat(spm) + "/m";
                 if (playerDisplay.text !== playerText) playerDisplay.text = playerText;
@@ -13284,8 +13286,8 @@ function GetUIRoot() {
                 SetPanelClassIfChanged(playerDisplay, "negative", spm < 0);
             }
 
-            var team = snapshotPlayer.team || State.spmPlayerTeamByIndex[i];
-            State.spmPlayerTeamByIndex[i] = team;
+            var team = snapshotPlayer.team || State.spm.playerTeamByIndex[i];
+            State.spm.playerTeamByIndex[i] = team;
             if (team === "friendly") {
                 friendlyTotal += soulValue;
                 friendlyPlayers++;
@@ -13301,22 +13303,22 @@ function GetUIRoot() {
             return;
         }
 
-        SpmAddSample(State.spmTeamHistory.friendly, friendlyTotal);
-        SpmAddSample(State.spmTeamHistory.enemy, enemyTotal);
+        SpmAddSample(State.spm.teamHistory.friendly, friendlyTotal);
+        SpmAddSample(State.spm.teamHistory.enemy, enemyTotal);
 
-        if (State.spmWarmupActive) {
+        if (State.spm.warmupActive) {
             ApplyZeroSpmDisplay(root, nowMs);
-            if (State.spmTeamHistory.friendly.length >= 2 && State.spmTeamHistory.enemy.length >= 2) {
-                State.spmWarmupActive = false;
+            if (State.spm.teamHistory.friendly.length >= 2 && State.spm.teamHistory.enemy.length >= 2) {
+                State.spm.warmupActive = false;
             }
             return;
         }
 
-        var friendlySpm = SpmCalculate(State.spmTeamHistory.friendly);
-        var enemySpm = SpmCalculate(State.spmTeamHistory.enemy);
+        var friendlySpm = SpmCalculate(State.spm.teamHistory.friendly);
+        var enemySpm = SpmCalculate(State.spm.teamHistory.enemy);
 
-        var friendlyLabel = IsPanelValid(State.spmCachedFriendlyLabel) ? State.spmCachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spmCachedEnemyLabel) ? State.spmCachedEnemyLabel : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
 
         SetSpmLabel(friendlyLabel, friendlySpm, friendlyScore);
         SetSpmLabel(enemyLabel, enemySpm, enemyScore);
@@ -33916,7 +33918,7 @@ function GetUIRoot() {
         }
 
         gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 0));
-        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spmWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
+        gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 1))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
         gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, 2))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 2));
         gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 0));
         gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === 1));
