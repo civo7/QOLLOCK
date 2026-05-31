@@ -49,7 +49,6 @@
     var HasClassInHierarchy_utils = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function() { return false; };
     var LogUtilsError = QOL_UTILS_LOADED ? QOL_UTILS.LogError : function() {};
     var PerfNowMs_utils = QOL_UTILS_LOADED ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
-    var ScheduleStaggered_utils = QOL_UTILS_LOADED ? QOL_UTILS.ScheduleStaggered : function(d, f) { $.Schedule(d, f); };
     var ValidateConfigHealth_utils = QOL_UTILS_LOADED ? QOL_UTILS.ValidateConfigHealth : function() { return []; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
@@ -67,9 +66,7 @@
     }
     if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
 
-    function IsCfgEnabled(cfg, key) {
-        return Number(cfg && cfg[key]) === 1;
-    }
+    var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
 
     var State = {
         lastTime: -1, 
