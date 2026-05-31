@@ -26072,17 +26072,6 @@ function GetUIRoot() {
     }
 
     function UpdateMinimapRuntime(root, cfg, raw) {
-        // Bail early when all minimap features are disabled and no cached panels to clean up.
-        // EnsureMinimapPanelCache does 5 FindChildTraverse calls; skip it when nothing is active.
-        if (Number(cfg.ENABLE_ALT_ZOOM) !== 1 &&
-            Number(cfg.ENABLE_TAB_ZOOM) !== 1 &&
-            Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) !== 1 &&
-            Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) !== 1 &&
-            Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) !== 1 &&
-            Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) !== 1 &&
-            !State.minimapDrawOverUiActive &&
-            !IsPanelListValid(State.cachedPanels.minimap)) return;
-
         var minimapPanels = EnsureMinimapPanelCache(root);
         if (!minimapPanels || minimapPanels.length <= 0) return;
         var master = minimapPanels[0];
@@ -34798,6 +34787,7 @@ function GetUIRoot() {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
             FlushPerfIfNeeded(false);
         }
+        RecordFrameTime(PerfNowMs() - perfLoopStartMs);
 
         // ---- Adaptive Polling Degradation (Fix 9) ----
         // Track frame time for low-FPS detection
