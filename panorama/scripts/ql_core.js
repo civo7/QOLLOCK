@@ -22538,7 +22538,6 @@ function GetUIRoot() {
             if (selector.SetSelected) {
                 try { selector.SetSelected(optionId); setAttempted = true; } catch (e3) {}
             }
-            try { $.DispatchEvent("oninputsubmit", selector); } catch (e4) {}
             try { $.DispatchEvent("Activated", selector); } catch (e5) {}
         } else {
             State.cachedPanels.lanePreferenceWithPartyOption = null;
@@ -23375,12 +23374,8 @@ function GetUIRoot() {
         if (!panel) return false;
         var activated = false;
         var attempts = [
-            function() { $.DispatchEvent("MouseActivate", panel, "mouse"); },
-            function() { $.DispatchEvent("MouseActivate", panel); },
-            function() { $.DispatchEvent("Activated", panel, "mouse"); },
-            function() { $.DispatchEvent("Activated", panel); },
-            function() { $.DispatchEvent("onactivate", panel); },
-            function() { $.DispatchEvent("onmouseactivate", panel); }
+            function() { $.DispatchEvent("Activated", "mouse"); },
+            function() { $.DispatchEvent("Activated", "keyboard"); }
         ];
         for (var i = 0; i < attempts.length; i++) {
             try {
@@ -23459,11 +23454,9 @@ function GetUIRoot() {
                 if (!setViaMethod) {
                     entry.text = payloadText;
                     didSet = true;
-                    try { $.DispatchEvent("ontextentrychange", entry); } catch (e1) {}
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e2) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e1) {}
                 } else {
-                    try { $.DispatchEvent("ontextentrychange", entry); } catch (e3) {}
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e4) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e3) {}
                 }
             } catch (e5) {}
             if (typeof entry.Submit === "function") {
@@ -23472,9 +23465,7 @@ function GetUIRoot() {
                     didSet = true;
                 } catch (e6m) {}
             }
-            try { $.DispatchEvent("oninputsubmit", entry); } catch (e7) {}
-            try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e8) {}
-            try { $.DispatchEvent("Submit", entry); } catch (e9) {}
+            try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e7) {}
             DefocusBuildSaveCategoryEntry(root, null);
             var after = ReadPanelTextMaybe(entry);
             BuildSaveDebugLog("write name entry before=" + (before || "-") + " after=" + (after || "-"));
@@ -23492,11 +23483,8 @@ function GetUIRoot() {
                 entry.text = payloadText;
             } catch (e1) {}
         }
-        try { $.DispatchEvent("ontextentrychange", entry); didCommit = true; } catch (e2) {}
-        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch (e3) {}
-        try { $.DispatchEvent("oninputsubmit", entry); didCommit = true; } catch (e4) {}
-        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch (e5) {}
-        try { $.DispatchEvent("Submit", entry); didCommit = true; } catch (e6) {}
+        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch (e2) {}
+        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch (e3) {}
 
         // Simulate clicking away from the text field before pressing Save.
         var header = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("BuildCategoryHeader") : null;
