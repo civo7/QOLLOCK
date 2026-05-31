@@ -22181,15 +22181,14 @@ function RenderCurrentTabContent(list) {
             CreateSeparator(sectionParent);
             CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
                 CreateRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
+                CreateRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null,
+                    "Show purchase notifications under each hero's portrait instead of in the center.");
                 CreateRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
                 CreateRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
                 CreateRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
                 CreateRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
                 CreateRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "slider", 0, 1, 0.05, null);
                 CreateRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
-                CreateSeparator(notificationsParent);
-                CreateRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null,
-                    "Show purchase notifications under each hero's portrait instead of in the center.");
             });
         });
     } else if (currentTab === "Healthbar") {
