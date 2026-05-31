@@ -9073,31 +9073,49 @@ function GetUIRoot() {
 
     // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
     // panel attributes, picking the version with the highest user-edit revision number.
+    // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
     function ReadStorageConfigRawFromUi(root) {
-        if (!root || !root.GetAttributeString) return "";
+        var result = "";
+        if (root && root.GetAttributeString) {
+            var rootRaw = "";
+            try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
 
-        var rootRaw = "";
-        try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
-
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
-        if (!hud || !hud.GetAttributeString) return rootRaw;
-
-        var hudRaw = "";
-        try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
-        if (!hudRaw) return rootRaw;
-        if (!rootRaw) return hudRaw;
-
-        var parseRev = function(v) {
-            var n = Number(v);
-            if (!isFinite(n) || n < 0) return 0;
-            return Math.floor(n);
-        };
-        var rootRev = 0;
-        var hudRev = 0;
-        try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
-        try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
-        return (hudRev >= rootRev) ? hudRaw : rootRaw;
+            var hud = null;
+            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
+            if (!hud || !hud.GetAttributeString) {
+                result = rootRaw;
+            } else {
+                var hudRaw = "";
+                try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
+                if (!hudRaw) {
+                    result = rootRaw;
+                } else if (!rootRaw) {
+                    result = hudRaw;
+                } else {
+                    var parseRev = function(v) {
+                        var n = Number(v);
+                        if (!isFinite(n) || n < 0) return 0;
+                        return Math.floor(n);
+                    };
+                    var rootRev = 0;
+                    var hudRev = 0;
+                    try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
+                    try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
+                    result = (hudRev >= rootRev) ? hudRaw : rootRaw;
+                }
+            }
+        }
+        // Fallback: if panel attrs are empty (e.g. after game restart), recover from
+        // persistentStorage which IS disk-backed and survives restarts.
+        if (!result || result.length === 0) {
+            try {
+                if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                    var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                    if (psRaw && psRaw.length > 0) result = psRaw;
+                }
+            } catch (ePs) { /* ignore */ }
+        }
+        return result;
     }
 
     // WriteStorageConfigRawToUi — persists config to both root and Hud panel attributes,

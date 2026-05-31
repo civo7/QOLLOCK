@@ -13115,6 +13115,16 @@ function NormalizeConfig(config, parsed) {
 
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
+    // Fallback: if panel attrs are empty (e.g. after game restart), recover from
+    // persistentStorage which IS disk-backed and survives restarts.
+    if (!raw || raw.length === 0) {
+        try {
+            if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
+                if (psRaw && psRaw.length > 0) raw = psRaw;
+            }
+        } catch (ePs) { /* ignore */ }
+    }
     var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
         ? Object.assign({}, QOL_DEFAULT_CONFIG)
         : {};
@@ -13132,6 +13142,8 @@ function SyncConfigFromStorage() {
     }
     MOD_CONFIG = nextConfig;
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
+    // Pass the raw string we actually loaded from so the persistentStorage
+    // mirror stays in sync (not empty, which would overwrite with defaults).
     PersistStatlockerProfileState(raw, nextConfig);
     UpdateOnDeathArcadeBridgePollerState();
 }
