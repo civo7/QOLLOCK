@@ -9,6 +9,7 @@
     // Backward-compat aliases for utilities extracted to ql_utils.js
     // Fall back to inline stubs when QOL_UTILS isn't loaded (schema validator sandbox)
     var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var PushUnique = QOL_UTILS_LOADED ? QOL_UTILS.PushUnique : function(arr, panel) { if (!arr || !panel) return; for (var _i = 0; _i < arr.length; _i++) { if (arr[_i] === panel) return; } arr.push(panel); };
     // Safe cached-panel accessors — always use State.cachedPanels with IsPanelValid guards
     // (QOL_UTILS has its own panel cache, but ql_core.js uses State.cachedPanels exclusively)
     var GetCachedPanel = function(k) {
@@ -6292,11 +6293,7 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
@@ -6588,11 +6585,7 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var ri = 0; ri < roots.length; ri++) {
-                if (roots[ri] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root && root.FindChildTraverse) {
@@ -6676,11 +6669,7 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
@@ -6766,11 +6755,7 @@ function ExpressShotLog(msg) {
 
         var roots = [];
         function PushRootUnique(panel) {
-            if (!panel) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         if (root.FindChildTraverse) {
@@ -9725,10 +9710,7 @@ function GetUIRoot() {
         var seen = [];
         function pushUnique(panel) {
             if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < seen.length; i++) {
-                if (seen[i] === panel) return;
-            }
-            seen.push(panel);
+            PushUnique(seen, panel);
         }
 
         pushUnique(currentPanel);
@@ -21419,10 +21401,7 @@ function GetUIRoot() {
         var roots = [];
         function pushUnique(panel) {
             if (!panel || !IsPanelValid(panel)) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] === panel) return;
-            }
-            roots.push(panel);
+            PushUnique(roots, panel);
         }
 
         pushUnique(root);
@@ -22882,10 +22861,7 @@ function GetUIRoot() {
         function pushUnique(panel) {
             if (!panel || !IsPanelValid(panel)) return;
             if (!allowHidden && !IsPanelVisibleMaybe(panel)) return;
-            for (var i = 0; i < entries.length; i++) {
-                if (entries[i] === panel) return;
-            }
-            entries.push(panel);
+            PushUnique(entries, panel);
         }
         function addByClass(host, className) {
             if (!host || !className || !host.FindChildrenWithClassTraverse) return;
@@ -32856,10 +32832,7 @@ function GetUIRoot() {
         var targets = [];
         function pushUnique(panel) {
             if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < targets.length; i++) {
-                if (targets[i] === panel) return;
-            }
-            targets.push(panel);
+            PushUnique(targets, panel);
         }
 
         pushUnique(root);
