@@ -34,10 +34,10 @@
         }
         return swept;
     };
-    var ResolveCachedPanel = function(root, cacheKey, traverseId) {
+    var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-        if (!panel && root && root.FindChildTraverse) {
-            panel = root.FindChildTraverse(traverseId);
+        if (!panel && parent && parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(traverseId);
             State.cachedPanels[cacheKey] = panel || null;
         }
         return panel;
@@ -9013,18 +9013,10 @@ function GetUIRoot() {
         if (!className) return false;
         if (root && root.BHasClass && root.BHasClass(className)) return true;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
         if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
 
-        var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
-        if (!abilities && root && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
-            State.cachedPanels.abilitiesContainer = abilities || null;
-        }
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
         if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
 
         return false;
@@ -9753,46 +9745,18 @@ function GetUIRoot() {
             "HudTakeoverEnabled"
         ];
 
-        var hud = IsPanelValid(State.cachedPanels.hudPanel) ? State.cachedPanels.hudPanel : null;
-        if (!hud && root.FindChildTraverse) {
-            hud = root.FindChildTraverse(PANEL_ID_HUD);
-            State.cachedPanels.hudPanel = hud || null;
-        }
+        var hud = ResolveCachedPanel(root, "hudPanel", PANEL_ID_HUD);
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
-
-        var gameplayHudAlive = IsPanelValid(State.cachedPanels.gameplayHudAlive) ? State.cachedPanels.gameplayHudAlive : null;
-        if (!gameplayHudAlive && root.FindChildTraverse) {
-            gameplayHudAlive = root.FindChildTraverse("gameplay_hud_alive");
-            State.cachedPanels.gameplayHudAlive = gameplayHudAlive || null;
-        }
-
-        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
-        if (!topBar && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
-            State.cachedPanels.topBarPanel = topBar || null;
-        }
-
-        var abilities = IsPanelValid(State.cachedPanels.abilitiesContainer) ? State.cachedPanels.abilitiesContainer : null;
-        if (!abilities && root.FindChildTraverse) {
-            abilities = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
-            State.cachedPanels.abilitiesContainer = abilities || null;
-        }
-
-        var statsAndMods = IsPanelValid(State.cachedPanels.statsAndModsContainer) ? State.cachedPanels.statsAndModsContainer : null;
-        if (!statsAndMods && root.FindChildTraverse) {
-            statsAndMods = root.FindChildTraverse("StatsAndModsContainer");
-            State.cachedPanels.statsAndModsContainer = statsAndMods || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
+        var gameplayHudAlive = ResolveCachedPanel(root, "gameplayHudAlive", "gameplay_hud_alive");
+        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR);
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
+        var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer");
 
         if (!IsPanelEffectivelyVisibleMaybe(healthContainer, root)) return false;
         if (statsAndMods && !IsPanelEffectivelyVisibleMaybe(statsAndMods, root)) return false;
@@ -11724,11 +11688,7 @@ function GetUIRoot() {
     function IsStartupLoaderInActiveMatchContext(root) {
         if (!root) return false;
         var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
         var hideout = isConnectedToHideout(root);
 
         var hasPanelClass = function(panel, className) {
@@ -13943,11 +13903,7 @@ function GetUIRoot() {
     function ResolveActiveMinimapObjectiveSize(root, cfg) {
         var smallSize = Number(cfg && cfg.MINIMAP_SMALL_SIZE);
         if (!isFinite(smallSize)) smallSize = 400;
-        var minimapPersp = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
-        if (!minimapPersp && root && root.FindChildTraverse) {
-            minimapPersp = root.FindChildTraverse("minimap_persp");
-            State.cachedPanels.minimapPersp = minimapPersp || null;
-        }
+        var minimapPersp = ResolveCachedPanel(root, "minimapPersp", "minimap_persp")
         var isAlt = IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPersp, "gDetailView");
         var isTab = IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPersp, "gScoreboardOpen");
         if (isTab && cfg && IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) {
@@ -14668,11 +14624,7 @@ function GetUIRoot() {
 
         var state = EnsureRejuvState();
         var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
-        var minimapPerspForObjectiveSig = IsPanelValid(State.cachedPanels.minimapPersp) ? State.cachedPanels.minimapPersp : null;
-        if (!minimapPerspForObjectiveSig && root && root.FindChildTraverse) {
-            minimapPerspForObjectiveSig = root.FindChildTraverse("minimap_persp");
-            State.cachedPanels.minimapPersp = minimapPerspForObjectiveSig || null;
-        }
+        var minimapPerspForObjectiveSig = ResolveCachedPanel(root, "minimapPersp", "minimap_persp")
         var activeObjectiveZoomSig =
             (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gDetailView") ? "A" : "") +
             (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gScoreboardOpen") ? "T" : "");
@@ -24440,11 +24392,7 @@ function GetUIRoot() {
     function UpdateDamageImpactRuntime(root, cfg) {
         var active = HasNonDefaultDamageImpactRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
-        var panel = IsPanelValid(State.cachedPanels.damageImpactPanel) ? State.cachedPanels.damageImpactPanel : null;
-        if (!panel && root && root.FindChildTraverse) {
-            panel = root.FindChildTraverse("damage_impact");
-            State.cachedPanels.damageImpactPanel = panel || null;
-        }
+        var panel = ResolveCachedPanel(root, "damageImpactPanel", "damage_impact")
         if (!panel) return;
 
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
@@ -24465,11 +24413,7 @@ function GetUIRoot() {
     function UpdateTopBarRuntime(root, cfg) {
         var active = HasNonDefaultTopBarRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
-        var topBar = IsPanelValid(State.cachedPanels.topBarPanel) ? State.cachedPanels.topBarPanel : null;
-        if (!topBar && root && root.FindChildTraverse) {
-            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
-            State.cachedPanels.topBarPanel = topBar || null;
-        }
+        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR)
         if (!topBar) return;
 
         var hudVisible = IsHudVisibleForTopBarRuntime(root, topBar);
@@ -24492,11 +24436,7 @@ function GetUIRoot() {
     function UpdateBottomBarRuntime(root, cfg) {
         var active = HasNonDefaultBottomBarRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
-        var hudSignature = IsPanelValid(State.cachedPanels.bottomBarPanel) ? State.cachedPanels.bottomBarPanel : null;
-        if (!hudSignature && root && root.FindChildTraverse) {
-            hudSignature = root.FindChildTraverse(PANEL_ID_SIGNATURE);
-            State.cachedPanels.bottomBarPanel = hudSignature || null;
-        }
+        var hudSignature = ResolveCachedPanel(root, "bottomBarPanel", PANEL_ID_SIGNATURE)
 
         var washColor = active ? ResolveWashColorFromPalette(ReadBottomBarWashColorIndex(cfg)) : "";
         ApplyBottomBarCurrencyColor(root, washColor);
@@ -24639,11 +24579,7 @@ function GetUIRoot() {
     }
 
     function GetStaminaChargesContainer(root) {
-        var chargesContainer = IsPanelValid(State.cachedPanels.staminaChargesContainer) ? State.cachedPanels.staminaChargesContainer : null;
-        if (!chargesContainer && root && root.FindChildTraverse) {
-            chargesContainer = root.FindChildTraverse("charges_container");
-            State.cachedPanels.staminaChargesContainer = chargesContainer || null;
-        }
+        var chargesContainer = ResolveCachedPanel(root, "staminaChargesContainer", "charges_container")
         return chargesContainer;
     }
 
@@ -24682,11 +24618,7 @@ function GetUIRoot() {
         var enabled = IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = IsPanelValid(State.cachedPanels.itemsModsContainer) ? State.cachedPanels.itemsModsContainer : null;
         if (!modsContainer) {
-            var statsAndMods = IsPanelValid(State.cachedPanels.statsAndModsContainer) ? State.cachedPanels.statsAndModsContainer : null;
-            if (!statsAndMods && root && root.FindChildTraverse) {
-                statsAndMods = root.FindChildTraverse("StatsAndModsContainer");
-                State.cachedPanels.statsAndModsContainer = statsAndMods || null;
-            }
+            var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer")
             if (statsAndMods && statsAndMods.FindChildrenWithClassTraverse) {
                 var modsContainers = statsAndMods.FindChildrenWithClassTraverse("ModsContainer") || [];
                 for (var iMods = 0; iMods < modsContainers.length; iMods++) {
@@ -24735,11 +24667,7 @@ function GetUIRoot() {
     function UpdateSoulsRuntime(root, cfg) {
         var active = HasNonDefaultSoulsRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
-        var soulsPanel = IsPanelValid(State.cachedPanels.soulsContainer) ? State.cachedPanels.soulsContainer : null;
-        if (!soulsPanel && root && root.FindChildTraverse) {
-            soulsPanel = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
-            State.cachedPanels.soulsContainer = soulsPanel || null;
-        }
+        var soulsPanel = ResolveCachedPanel(root, "soulsContainer", PANEL_ID_GOLD_AP_CONTAINER)
         if (!soulsPanel) return;
 
         var offsetX = active ? NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) : 0;
@@ -25823,11 +25751,7 @@ function GetUIRoot() {
         if (scale < 0.20) scale = 0.20;
         if (scale > 2.00) scale = 2.00;
         var scaleText = scale.toFixed(3) + ", " + scale.toFixed(3);
-        var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
-        if (!hudMinimapPanel && root && root.FindChildTraverse) {
-            hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
-            State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
-        }
+        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
         var rangePanels = [];
         if (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse) {
             var mapButtons = hudMinimapPanel.FindChildrenWithClassTraverse("map_button") || [];
@@ -25943,11 +25867,7 @@ function GetUIRoot() {
                 }
             });
 
-            var mapRenderPanel = IsPanelValid(State.cachedPanels.minimapMapRender) ? State.cachedPanels.minimapMapRender : null;
-            if (!mapRenderPanel && root && root.FindChildTraverse) {
-                mapRenderPanel = root.FindChildTraverse("map_render");
-                State.cachedPanels.minimapMapRender = mapRenderPanel || null;
-            }
+            var mapRenderPanel = ResolveCachedPanel(root, "minimapMapRender", "map_render")
             if (mapRenderPanel) {
                 var minimalistEnabled = (!zoomAlt && !zoomTab && IsCfgEnabled(cfg, "MINIMAL_MINIMAP"));
                 if (minimalistEnabled) {
@@ -25958,11 +25878,7 @@ function GetUIRoot() {
                     SetPanelOpacitySafe(mapRenderPanel, minimalistOpacity, 1.0);
                     mapRenderPanel.style.brightness = "1.0";
                     mapRenderPanel.style.washColor = "none";
-                    var hudMinimapPanel = IsPanelValid(State.cachedPanels.hudMinimapPanel) ? State.cachedPanels.hudMinimapPanel : null;
-                    if (!hudMinimapPanel && root && root.FindChildTraverse) {
-                        hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
-                        State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
-                    }
+                    var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
                     if (hudMinimapPanel) {
                         if (hudMinimapPanel.AddClass) hudMinimapPanel.AddClass("minimalist_minimap_active");
                         hudMinimapPanel.style.backgroundColor = "rgba(0, 0, 0, 0)";
@@ -28870,11 +28786,7 @@ function GetUIRoot() {
     function FindCombatPanelById(root, uiRoot, panelId) {
         if (!panelId) return null;
 
-        var gameplayHud = IsPanelValid(State.cachedPanels.gameplayHud) ? State.cachedPanels.gameplayHud : null;
-        if (!gameplayHud && root && root.FindChildTraverse) {
-            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            State.cachedPanels.gameplayHud = gameplayHud || null;
-        }
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
 
         var roots = [root, gameplayHud, uiRoot];
         for (var i = 0; i < roots.length; i++) {
