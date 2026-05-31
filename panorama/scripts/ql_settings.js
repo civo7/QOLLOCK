@@ -11179,19 +11179,7 @@ function CloneSchemaWithoutFields(baseSchema, fieldKeys) {
     return out;
 }
 
-const COMPACT_SCHEMA_V61 = COMPACT_SCHEMA_V60.concat([
-    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
-    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
-]);
-
-const COMPACT_SCHEMA_2_0_0 = COMPACT_SCHEMA_V61;
+const COMPACT_SCHEMA_2_0_0 = COMPACT_SCHEMA_V60;
 const COMPACT_SCHEMA_2_0_1 = BuildSchemaWithLanguageMax(COMPACT_SCHEMA_2_0_0, 2);
 for (var iSchemaExtra = 0; iSchemaExtra < COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS.length; iSchemaExtra++) {
     COMPACT_SCHEMA_2_0_1.push(COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS[iSchemaExtra]);
@@ -11521,6 +11509,23 @@ const COMPACT_SCHEMA_3_0_5 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_0_4,
     SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
 );
+// 3.0.6: Add ally healthbar, perf debug, specials, drag, and previews keys
+// that were defined in QOL_DEFAULT_CONFIG but missing from compact serialization.
+const COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
+    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
+    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
+];
+const COMPACT_SCHEMA_3_0_6 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_5,
+    COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -11702,6 +11707,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.0.5": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_6
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")

@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.0.5";
+var QOL_SCHEMA_SEMVER = "3.0.6";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Storage envelope helpers (Fix: schema-versioned config storage) ----

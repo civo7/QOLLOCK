@@ -8134,19 +8134,7 @@ function ClonePayloadSchemaWithoutFields(baseSchema, fieldKeys) {
     return out;
 }
 
-const BUILD_CATEGORY_COMPACT_SCHEMA_V61 = BUILD_CATEGORY_COMPACT_SCHEMA_V60.concat([
-    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
-    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_V61;
+const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_V60;
 const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1 = BuildPayloadSchemaWithLanguageMax(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0, 2);
 for (var iPayloadSchemaExtra = 0; iPayloadSchemaExtra < BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS.length; iPayloadSchemaExtra++) {
     BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1.push(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS[iPayloadSchemaExtra]);
@@ -8511,6 +8499,21 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4,
     BUILD_CATEGORY_SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
+    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
+    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
+    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5,
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -8692,6 +8695,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.0.5": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
