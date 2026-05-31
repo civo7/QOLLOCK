@@ -33695,9 +33695,7 @@ function GetUIRoot() {
             keyboardRuntimeActive: IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY"),
             legacyAudioPassiveActive: (
                 IsPassiveCooldownBasicMode(passiveCooldownMode) ||
-                ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) ||
-                State.dl4dCaptionVisible ||
-                IsPanelValid(State.cachedPanels.dl4dCaptionPanel)
+                ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected)
             ),
             betterUnsecuredHudActive: IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED"),
             combatIndicatorActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR"),
@@ -34000,7 +33998,7 @@ function GetUIRoot() {
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
-        gates.legacyAudioPassive = gates.legacyAudioPassiveActive || State.oldItemCooldownRuntimeWasActive || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
+        gates.legacyAudioPassive = gates.legacyAudioPassiveActive;
         gates.imagesInChat = gates.imagesInChatActive;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
@@ -34008,10 +34006,7 @@ function GetUIRoot() {
             IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
             IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
         );
-        gates.colorWarning = gates.colorWarningActive ||
-            State.coloredHealthbarEnabledPrev === true ||
-            State.coloredHealthbarLastColor !== "" ||
-            IsPanelValid(State.cachedPanels.coloredHealthbarProgressLeft);
+        gates.colorWarning = gates.colorWarningActive;
         gates.enemyColorWarning = NeedsEnemyColorWarningRuntimeWork(cfg);
         gates.allyColorWarning = NeedsAllyColorWarningRuntimeWork(cfg);
         gates.ammo = gates.ammoActive || !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
