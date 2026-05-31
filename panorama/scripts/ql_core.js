@@ -23355,7 +23355,9 @@ function GetUIRoot() {
         var activated = false;
         var attempts = [
             function() { $.DispatchEvent("Activated", "mouse"); },
-            function() { $.DispatchEvent("Activated", "keyboard"); }
+            function() { $.DispatchEvent("Activated", "keyboard"); },
+            function() { $.DispatchEvent("Activated", panel, "mouse"); },
+            function() { $.DispatchEvent("Activated", panel); }
         ];
         for (var i = 0; i < attempts.length; i++) {
             try {
