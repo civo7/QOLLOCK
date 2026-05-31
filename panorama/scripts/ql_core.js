@@ -9165,17 +9165,17 @@ function GetUIRoot() {
 
         // Write data + revision as a paired update per panel so an interrupted
         // save never orphans new data with an old revision number.
-        try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) {}
-        try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) {}
+        try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) { QOL_ERROR("persist", "root.SetAttributeString(STORAGE_KEY) failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) { QOL_ERROR("persist", "root.SetAttributeString(USER_EDIT_REV) failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
         if (hud && hud.SetAttributeString) {
-            try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) {}
-            try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) {}
+            try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) { QOL_ERROR("persist", "hud.SetAttributeString(STORAGE_KEY) failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
+            try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
         try {
             if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                 $.persistentStorage.setItem("qol_settings_raw_v1", nextRaw);
             }
-        } catch (ePersistWrite) {}
+        } catch (ePersistWrite) { QOL_ERROR("persist", "persistentStorage.setItem failed: " + (ePersistWrite && ePersistWrite.message ? ePersistWrite.message : String(ePersistWrite || ""))); }
 
         return {
             raw: nextRaw,
