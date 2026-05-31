@@ -1095,8 +1095,8 @@
 
 #minimap_persp
 {
-	width: fit-children;
-	height: fit-children;
+	width: 400px;
+	height: 400px;
 	transform: none;
 	transform-origin: 100% 100%;
 	transition-property: opacity, margin, pre-transform-scale2d;
@@ -1109,15 +1109,21 @@
 
 #minimap_container
 {
-	width: fit-children;
-	height: fit-children;
+	width: 400px;
+	height: 400px;
 	margin-right: 15px;
+}
+
+#HudMinimapContainer
+{
+	width: 100%;
+	height: 100%;
 }
 
 #minimap_frame
 {
-	width: fit-children;
-	height: fit-children;
+	width: 400px;
+	height: 400px;
 }
 
 #QOLMinimapTimersRoot
