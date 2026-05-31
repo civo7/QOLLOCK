@@ -9521,24 +9521,10 @@ function GetZoomConfigKeysForMode(mode) {
 }
 
 function MigrateSplitZoomKeys(configTarget, sourceConfig) {
-    if (!configTarget) return;
-    var source = sourceConfig || configTarget;
-    var hasOwn = Object.prototype.hasOwnProperty;
-
-    function assignIfMissing(newKey, legacyKey) {
-        var hasNewInSource = source && hasOwn.call(source, newKey);
-        var hasLegacyInTarget = configTarget[legacyKey] !== undefined && configTarget[legacyKey] !== null;
-        if (!hasLegacyInTarget) return;
-        if (hasNewInSource && configTarget[newKey] !== undefined && configTarget[newKey] !== null) return;
-        configTarget[newKey] = configTarget[legacyKey];
+    var utils = GetSharedSchemaUtils();
+    if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
+        utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
     }
-
-    assignIfMissing("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE");
-    assignIfMissing("ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET");
-    assignIfMissing("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET");
-    assignIfMissing("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE");
-    assignIfMissing("ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET");
-    assignIfMissing("ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET");
 }
 
 function NormalizeNeutralCampFlags(configTarget, sourceConfig) {

@@ -835,6 +835,29 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.MigrateSplitZoomKeys !== "function") {
+    QOL_SCHEMA_UTILS.MigrateSplitZoomKeys = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        var source = sourceConfig || configTarget;
+        var hasOwn = Object.prototype.hasOwnProperty;
+
+        function assignIfMissing(newKey, legacyKey) {
+            var hasNewInSource = source && hasOwn.call(source, newKey);
+            var hasLegacyInTarget = configTarget[legacyKey] !== undefined && configTarget[legacyKey] !== null;
+            if (!hasLegacyInTarget) return;
+            if (hasNewInSource && configTarget[newKey] !== undefined && configTarget[newKey] !== null) return;
+            configTarget[newKey] = configTarget[legacyKey];
+        }
+
+        assignIfMissing("MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE");
+        assignIfMissing("ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET");
+        assignIfMissing("ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET");
+        assignIfMissing("MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE");
+        assignIfMissing("ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET");
+        assignIfMissing("ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET");
+    };
+}
+
 var QOL_DEFAULT_CONFIG = {
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,

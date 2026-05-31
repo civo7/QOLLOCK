@@ -7459,6 +7459,7 @@ function ExpressShotLog(msg) {
         for (var key in merged) {
             if (config.hasOwnProperty(key)) merged[key] = config[key];
         }
+        MigrateSplitZoomKeys(merged, config);
         NormalizeNeutralCampTierConfig(merged, config);
         NormalizeItemCooldownModeConfig(merged, config);
         NormalizeAmmoScaleConfig(merged, config);
@@ -7477,6 +7478,13 @@ function ExpressShotLog(msg) {
         var utils = GetSharedSchemaUtils();
         if (utils && typeof utils.NormalizeAmmoScaleConfig === "function") {
             utils.NormalizeAmmoScaleConfig(configTarget, sourceConfig);
+        }
+    }
+
+    function MigrateSplitZoomKeys(configTarget, sourceConfig) {
+        var utils = GetSharedSchemaUtils();
+        if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
+            utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
         }
     }
 
