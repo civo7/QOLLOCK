@@ -9056,6 +9056,8 @@ function GetUIRoot() {
         return fallback;
     }
 
+    // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
+    // panel attributes, picking the version with the highest user-edit revision number.
     function ReadStorageConfigRawFromUi(root) {
         if (!root || !root.GetAttributeString) return "";
 
@@ -9083,6 +9085,8 @@ function GetUIRoot() {
         return (hudRev >= rootRev) ? hudRaw : rootRaw;
     }
 
+    // WriteStorageConfigRawToUi — persists config to both root and Hud panel attributes,
+    // increments the user-edit revision, and mirrors to persistentStorage as backup.
     function WriteStorageConfigRawToUi(root, rawText) {
         if (!root || !root.SetAttributeString) {
             return { raw: String(rawText || ""), revision: 0, count: 0 };
@@ -11642,6 +11646,8 @@ function GetUIRoot() {
         State.reloadCdDirection = 0;
     }
 
+    // UpdateReloadCooldownOverlay — reads the active reload progress bar from the HUD,
+    // applies config-driven scale/opacity/offset, and manages EMA-smoothed reload duration display.
     function UpdateReloadCooldownOverlay(root, cfg) {
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN"));
         var cooldownLabel = IsPanelValid(State.cachedPanels.reloadCooldownLabel) ? State.cachedPanels.reloadCooldownLabel : null;
@@ -30762,6 +30768,8 @@ function GetUIRoot() {
         slotState.staticSyncSig = sourceSig;
     }
 
+    // SyncMirrorItemFromSourceMulti — synchronizes item mirror panel state from a source entry:
+    // manages cooldown EMA smoothing, direction tracking, display-lock window, and visual styling.
     function SyncMirrorItemFromSourceMulti(slotObj, source) {
         if (!slotObj || !source || !source.ownerIcon) return;
         var sourceIcon = source.ownerIcon;
