@@ -820,9 +820,9 @@
     // Delays allow the game's own HUD panels to initialize before QOLLOCK queries them.
     // Too low: panels not found, bootstrap retries waste CPU.
     // Too high: user sees default HUD before QOLLOCK activates.
-    const CORE_START_DELAY_LOOP_SEC = 0.90;   // main feature loop
-    const CORE_START_DELAY_COMPASS_SEC = 1.03; // compass/minimap loop
-    const CORE_START_DELAY_BUILD_SEC = 0.70;   // build category payload loop (reduced from 1.17)
+    const CORE_START_DELAY_LOOP_SEC = 0.05;   // poll immediately; isConnectedToHideout defers if not ready
+    const CORE_START_DELAY_COMPASS_SEC = 0.10; // compass/minimap loop
+    const CORE_START_DELAY_BUILD_SEC = 0.10;   // build category payload loop
     // Phase slot assignments (which feature runs in which corePhase % 5)
     const CORE_PHASE_REJUV_NICKNAMES = 0;
     const CORE_PHASE_SPM_STATLOCKER  = 1;
@@ -842,8 +842,8 @@
     const COMPASS_INTERVAL_SEC = 0.05;
 
     // Build request loop intervals at three degradation levels
-    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.16;       // player is in shop/build UI
-    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.45;          // in match but not in shop
+    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.05;       // tight poll during save/clear
+    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.20;          // in match but not in shop
     const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;     // outside match (menus)
 
     // Compass idle degradation — uses idle interval when not in custom HUD context
@@ -1140,36 +1140,36 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 800;  // reduced from 2500
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;    // reduced from 150
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 8000;  // reduced from 12000
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;   // poll immediately after switch
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 20;    // tight poll interval
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;  // reduced timeout
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES = 2;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 1200;
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 200;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_STALE_RUNTIME = 3;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_UIREADY = 2;
-    const BUILD_CATEGORY_PAYLOAD_CAPTURE_SHOP_PROBE_DELAY_MS = 350;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 250;
-    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 8000;
-    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 5000;
+    const BUILD_CATEGORY_PAYLOAD_CAPTURE_SHOP_PROBE_DELAY_MS = 100;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;   // poll every tick
+    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 4000;  // reduced timeout
+    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 1500;  // reduced backoff
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES = 3;
-    const BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 16;
-    const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 500;  // reduced from 900
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS = 260;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS = 360;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_MAX_RETRIES = 45;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_TIMEOUT_MS = 20000;
+    const BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 6;  // fewer scans per build
+    const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;  // minimal UI settle time
+    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS = 100;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS = 150;  // reduced
+    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_MAX_RETRIES = 60;  // more retries, faster
+    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_TIMEOUT_MS = 15000;  // reduced
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_PROMPT_RETRIES = 3;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS = 3;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_SAME_TITLE_LIMIT = 1;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 900;
-    const BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 6000;
-    const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 180;
-    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_STRICT_MS = 2500;
-    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_MAX_MS = 10000;
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS = 220;
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_VERIFY_DELAY_MS = 700;
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 30;
+    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 300;  // reduced from 900
+    const BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;  // reduced from 6000
+    const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;   // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_STRICT_MS = 1000;  // reduced
+    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_MAX_MS = 5000;  // reduced timeout
+    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS = 50;   // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_VERIFY_DELAY_MS = 100;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
 const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
     : "2.3.5";
@@ -1183,27 +1183,27 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     const BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
     const BUILD_CATEGORY_PAYLOAD_DONE_REARM_MAX_ATTEMPTS = 4;
-    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 420;
+    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 50;   // poll every tick
     const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_WAIT_MS = 7000;
-    const BUILD_CATEGORY_PAYLOAD_CAPTURE_FORCE_FALLBACK_MS = 9000;
+    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_WAIT_MS = 3000;  // reduced timeout
+    const BUILD_CATEGORY_PAYLOAD_CAPTURE_FORCE_FALLBACK_MS = 4000;  // reduced timeout
     const HERO_CAPTURE_FORCE_DEFAULT_FALLBACK = false;
-    const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 180;
-    const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 260;
-    const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 1200;
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 20;
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 6;
+    const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 400;  // reduced
+    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
+    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
     const BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS = 2;
-    const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.35;
-    const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC = 0.30;
-    const BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 1.5;
+    const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC = 0.05; // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 0.20;  // minimal settle
     const SETTINGS_LOADER_ENABLED = true;
     const SETTINGS_LOADER_DEBUG = false;
     const SETTINGS_LOADER_DEBUG_THROTTLE_MS = 350;
     const SETTINGS_LOADER_TRACE = false;
     const SETTINGS_LOADER_TRACE_THROTTLE_MS = 1000;
     const SETTINGS_LOADER_REASSERT_MS = 250;
-    const SETTINGS_LOADER_HOLD_MS = 0;
+    const SETTINGS_LOADER_HOLD_MS = 1000;
     const SETTINGS_LOADER_OVERLAY_ID = "QOLSettingsLoaderOverlay";
     const SETTINGS_LOADER_CARD_ID = "QOLSettingsLoaderCard";
     const SETTINGS_LOADER_WARNING_ID = "QOLSettingsLoaderWarning";
@@ -1241,7 +1241,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     const SAVE_SETTINGS_LOADER_ENABLED = true;
     const SAVE_SETTINGS_LOADER_REASSERT_MS = 250;
-    const SAVE_SETTINGS_LOADER_HOLD_MS = 0;
+    const SAVE_SETTINGS_LOADER_HOLD_MS = 1000;
     const SAVE_SETTINGS_LOADER_OVERLAY_ID = "QOLSaveSettingsLoaderOverlay";
     const SAVE_SETTINGS_LOADER_CARD_ID = "QOLSaveSettingsLoaderCard";
     const SAVE_SETTINGS_LOADER_WARNING_ID = "QOLSaveSettingsLoaderWarning";
@@ -1266,7 +1266,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     const CLEAR_SETTINGS_LOADER_ENABLED = true;
     const CLEAR_SETTINGS_LOADER_REASSERT_MS = 250;
-    const CLEAR_SETTINGS_LOADER_HOLD_MS = 0;
+    const CLEAR_SETTINGS_LOADER_HOLD_MS = 1000;
     const CLEAR_SETTINGS_LOADER_OVERLAY_ID = "QOLClearSettingsLoaderOverlay";
     const CLEAR_SETTINGS_LOADER_CARD_ID = "QOLClearSettingsLoaderCard";
     const CLEAR_SETTINGS_LOADER_WARNING_ID = "QOLClearSettingsLoaderWarning";
@@ -1300,31 +1300,31 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
-    const BUILD_SAVE_ACTION_DELAY_MS = 60;    // reduced from 120
-    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 40;   // reduced from 80
-    const BUILD_SAVE_VERIFY_DELAY_MS = 400;   // reduced from 800
-    const BUILD_SAVE_TIMEOUT_MS = 15000;  // reduced from 22000
-    const BUILD_SAVE_MAX_RETRIES = 9;
+    const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
+    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 30;   // poll-driven
+    const BUILD_SAVE_VERIFY_DELAY_MS = 200;   // poll-driven
+    const BUILD_SAVE_TIMEOUT_MS = 12000;  // reduced
+    const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
     const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
     const BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
-    const BUILD_SAVE_HERO_SWITCH_DELAY_MS = 450;
-    const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 1000;   // reduced from 2000
-    const BUILD_SAVE_RETURN_DELAY_SEC = 0.8;    // reduced from 1.5
-    const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 1.0;    // reduced from 2.0
+    const BUILD_SAVE_HERO_SWITCH_DELAY_MS = 150;  // poll-driven
+    const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 300;   // poll-driven
+    const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
+    const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
-    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 100;   // reduced from 180
-    const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 6000;   // reduced from 10000
-    const BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 1200;
+    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 50;   // poll-driven
+    const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;   // reduced
+    const BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
-    const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS = 1600;
+    const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS = 1000;  // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_REQUIRED_HITS = 2;
     const BUILD_SAVE_STORAGE_CONFIRM_REOPEN_MIN_RETRIES = 6;
-    const BUILD_SAVE_STORAGE_CONFIRM_REOPEN_COOLDOWN_MS = 2200;
+    const BUILD_SAVE_STORAGE_CONFIRM_REOPEN_COOLDOWN_MS = 1200;  // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 1;
     const BUILD_SAVE_TARGET_LOCK_STABLE_HITS = 3;
-    const BUILD_SAVE_TARGET_LOCK_QUIET_MS = 320;
-    const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 140;
+    const BUILD_SAVE_TARGET_LOCK_QUIET_MS = 150;  // reduced
+    const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 80;  // reduced
     const BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
     const BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
     const BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS = [
@@ -1342,15 +1342,15 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "Waiting...",
         "Waiting..."
     ];
-    const BUILD_CLEAR_ACTION_DELAY_MS = 180;
-    const BUILD_CLEAR_POST_DELETE_DELAY_MS = 420;
-    const BUILD_CLEAR_POST_SELECT_DELAY_MS = 220;
-    const BUILD_CLEAR_TIMEOUT_MS = 45000;
-    const BUILD_CLEAR_MAX_RETRIES = 30;
+    const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
+    const BUILD_CLEAR_POST_DELETE_DELAY_MS = 150;  // poll-driven
+    const BUILD_CLEAR_POST_SELECT_DELAY_MS = 80;   // poll-driven
+    const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
+    const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
-    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 180;
-    const BUILD_CLEAR_STORAGE_CONFIRM_TIMEOUT_MS = 10000;
-    const BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 1200;
+    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 60;  // poll-driven
+    const BUILD_CLEAR_STORAGE_CONFIRM_TIMEOUT_MS = 6000;  // reduced
+    const BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
     const BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_CLEAR_DEBUG = false;
     const BUILD_CLEAR_DEBUG_THROTTLE_MS = 300;
@@ -11762,7 +11762,9 @@ function GetUIRoot() {
         };
 
         // Hard match signals: if any of these are present, suppress startup loader immediately.
-        if (hasAnyClasses([
+        // Exception: the hideout sandbox uses GameStateGameInProgress internally
+        // (it spawns a local server with bots), so skip suppression when in hideout.
+        if (!hideout && hasAnyClasses([
             "GameStateGameInProgress",
             "GameStatePostGame",
             "GameStatePostGamePlayOfTheGame",
@@ -18504,18 +18506,26 @@ function GetUIRoot() {
 
         var opened = false;
         try {
-            if (typeof CitadelEnterUpgradeShop === "function") {
-                CitadelEnterUpgradeShop();
+            if (typeof CitadelOpenUpgradeShop === "function") {
+                CitadelOpenUpgradeShop();
                 opened = true;
             }
         } catch (e0) {}
+        if (!opened) {
+            try {
+                if (typeof CitadelEnterUpgradeShop === "function") {
+                    CitadelEnterUpgradeShop();
+                    opened = true;
+                }
+            } catch (e1) {}
+        }
         if (!opened) {
             try {
                 if (typeof CitadelToggleUpgradeShop === "function") {
                     CitadelToggleUpgradeShop();
                     opened = true;
                 }
-            } catch (e1) {}
+            } catch (e2) {}
         }
         if (!opened) {
             var actionUpgrade = FindFirstPanelByClass(root, "action_upgrade");
@@ -18548,6 +18558,17 @@ function GetUIRoot() {
             return true;
         }
 
+        // Don't burn retries while the hideout class hasn't appeared yet
+        // (e.g. during launch transition). Defer until connected.
+        if (!isConnectedToHideout(root)) return false;
+
+        // Shop functions (CitadelEnterUpgradeShop etc.) are no longer available
+        // in this game build. Wait passively for the user to open the shop
+        // themselves — don't consume retries while the shop is closed.
+        if (!IsHudClassActive(root, "gShopOpen") && !IsBrowseBuildsPopupOpen(root)) {
+            return false;
+        }
+
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (now < (State.buildCategoryPayloadSourceBootstrapNextMs || 0)) {
             return false;
@@ -18575,8 +18596,11 @@ function GetUIRoot() {
             if (browsePopupOpenNow) {
                 detail = "Build browser already open.";
             } else if (IsHudClassActive(root, "gShopOpen")) {
-                detail = "Shop already open.";
+                // Shop is open but browse popup isn't. Try opening it via
+                // the browse builds button.
+                detail = "Shop open; navigating to browse builds.";
             } else {
+                // Try active shop open (uses CitadelOpenUpgradeShop etc. from client.dll)
                 if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                     acted = TryOpenHeroShopForHeroProbe(root);
                     detail = acted ? "Requested hero shop open." : "Trying to open hero shop.";
@@ -23361,10 +23385,11 @@ function GetUIRoot() {
         if (!panel) return false;
         var activated = false;
         var attempts = [
-            function() { $.DispatchEvent("Activated", "mouse"); },
-            function() { $.DispatchEvent("Activated", "keyboard"); },
             function() { $.DispatchEvent("Activated", panel, "mouse"); },
-            function() { $.DispatchEvent("Activated", panel); }
+            function() { $.DispatchEvent("Activated", panel); },
+            function() { $.DispatchEvent("Activated", panel, "keyboard"); },
+            function() { $.DispatchEvent("Activated", "mouse"); },
+            function() { $.DispatchEvent("Activated", "keyboard"); }
         ];
         for (var i = 0; i < attempts.length; i++) {
             try {
