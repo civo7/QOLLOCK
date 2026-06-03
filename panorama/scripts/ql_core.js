@@ -34030,6 +34030,7 @@ function GetUIRoot() {
                 combatIndicatorActive: featureState.combatIndicatorActive,
                 signatureFlashActive: IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"),
                 imagesInChatActive: IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"),
+                recentPurchasesActive: featureState.recentPurchasesActive,
                 keyboardRuntimeActive: featureState.keyboardRuntimeActive,
                 legacyAudioPassiveActive: featureState.legacyAudioPassiveActive,
                 betterUnsecuredHudActive: featureState.betterUnsecuredHudActive,
@@ -34067,6 +34068,7 @@ function GetUIRoot() {
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive;
         gates.imagesInChat = gates.imagesInChatActive;
+        gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
             State.unsecuredSouls.hudStyleSig ||
@@ -34526,79 +34528,121 @@ function GetUIRoot() {
         var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
         TimeFeature("loop.resolve_gates", _tGates);
         State.lastResolvedGates = gates;
-        var redDiamondEnabled = gates.redDiamondEnabled;
 
+        // ---- intra-tick feature staggering ----
+        // Snapshot shared loop state so deferred $.Schedule callbacks
+        // see the correct tick's data even if they fire after the next
+        // loop invocation.
+        var _s = {
+            root: root,
+            cfg: cfg,
+            nowMs: nowMsLoop,
+            gates: gates,
+            raw: raw,
+            hideoutConnected: hideoutConnected,
+            hasConfigSource: hasConfigSource,
+            redDiamondEnabled: gates.redDiamondEnabled
+        };
+        var _buckets = [[], [], [], [], [], [], [], []];
+        var _b = FEATURE_STAGGER_ENABLED ? _buckets : null; // null = use bucket 0 only
+
+        // --- Bucket 0 (0ms): rejuvTimers, coreRoot ---
         if (gates.rejuvTimers) {
-            ExecuteFeature("rejuvTimers", function() {
-                perfSection = PerfStart();
-                UpdateRejuvBuffTimers(root, cfg, nowMsLoop);
-                PerfEnd("loop.rejuv_timers", perfSection);
+            (_b ? _b[0] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("rejuvTimers", function() {
+                    var _ps = PerfStart();
+                    UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.rejuv_timers", _ps);
+                });
             });
         }
 
+        // --- Bucket 1 (17ms): spm, nicknames ---
         if (gates.spm) {
-            ExecuteFeature("spm", function() {
-                perfSection = PerfStart();
-                UpdateSoulsPerMinute(root, nowMsLoop, cfg);
-                PerfEnd("loop.souls_per_min", perfSection);
+            (_b ? _b[1] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("spm", function() {
+                    var _ps = PerfStart();
+                    UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
+                    PerfEnd("loop.souls_per_min", _ps);
+                });
             });
         }
 
+        // --- Bucket 2 (33ms): unspent, statlocker ---
         if (gates.unspent) {
-            ExecuteFeature("unspent", function() {
-                perfSection = PerfStart();
-                UpdateUnspentSouls(root, nowMsLoop, cfg);
-                PerfEnd("loop.unspent", perfSection);
+            (_b ? _b[2] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("unspent", function() {
+                    var _ps = PerfStart();
+                    UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
+                    PerfEnd("loop.unspent", _ps);
+                });
             });
         }
 
         if (gates.nicknames) {
-            ExecuteFeature("nicknames", function() {
-                perfSection = PerfStart();
-                UpdateTopBarNicknames(root, nowMsLoop, cfg);
-                PerfEnd("loop.topbar_nicknames", perfSection);
+            (_b ? _b[1] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("nicknames", function() {
+                    var _ps = PerfStart();
+                    UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
+                    PerfEnd("loop.topbar_nicknames", _ps);
+                });
             });
         }
 
         if (gates.statlocker) {
-            ExecuteFeature("statlocker", function() {
-                perfSection = PerfStart();
-                UpdateStatlockerButtons(root, nowMsLoop, cfg);
-                PerfEnd("loop.statlocker", perfSection);
+            (_b ? _b[2] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("statlocker", function() {
+                    var _ps = PerfStart();
+                    UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
+                    PerfEnd("loop.statlocker", _ps);
+                });
             });
         }
 
         if (gates.panelCache) {
-            ExecuteFeature("panelCache", function() {
-                perfSection = PerfStart();
-                EnsureCoreLoopPanelCaches(root);
-                PerfEnd("loop.panel_cache", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("panelCache", function() {
+                    var _ps = PerfStart();
+                    EnsureCoreLoopPanelCaches(_s.root);
+                    PerfEnd("loop.panel_cache", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): onDeathArcade ---
         if (gates.onDeathArcade) {
-            ExecuteFeature("onDeathArcade", function() {
-                perfSection = PerfStart();
-                UpdateOnDeathArcadeBridge(root, cfg, nowMsLoop);
-                State.onDeathArcadeRuntimeWasActive = gates.onDeathArcadeActive;
-                PerfEnd("loop.on_death_arcade", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("onDeathArcade", function() {
+                    var _ps = PerfStart();
+                    UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
+                    State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    PerfEnd("loop.on_death_arcade", _ps);
+                });
             });
         }
 
+        // --- Bucket 0 (0ms): coreRoot ---
         if (root && gates.coreRoot) {
-            ExecuteFeature("coreRoot", function() {
-                perfSection = PerfStart();
-                redDiamondEnabled = ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource);
-                State.coreRootGateSig = gates.sig;
-                PerfEnd("loop.root_classes", perfSection);
-            });
-        } else if (root && gates.healthbarRuntimeHelpers) {
-            ExecuteFeature("healthbarRuntimeHelpers", function() {
-                perfSection = PerfStart();
-                UpdateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled, gates.featureState.fgHealthbarEnabled);
-                PerfEnd("loop.healthbar_helpers", perfSection);
+            (_b ? _b[0] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("coreRoot", function() {
+                    var _ps = PerfStart();
+                    ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
+                    State.coreRootGateSig = _s.gates.sig;
+                    PerfEnd("loop.root_classes", _ps);
+                });
             });
         }
+        // --- Bucket 1 (17ms): healthbarRuntimeHelpers ---
+        if (root && !gates.coreRoot && gates.healthbarRuntimeHelpers) {
+            (_b ? _b[1] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("healthbarRuntimeHelpers", function() {
+                    var _ps = PerfStart();
+                    UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
+                    PerfEnd("loop.healthbar_helpers", _ps);
+                });
+            });
+        }
+        // Healthbar accent color — runs synchronously (reads from State, not gates)
         var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
         var loopAccentNeedsRefresh = (
             loopAccentColor !== "" ||
@@ -34611,222 +34655,303 @@ function GetUIRoot() {
         var loopAccentSigParts = State._cachedAccentSigParts;
         var loopCurrentAccentColor = loopAccentSigParts.length > 1 ? loopAccentSigParts[loopAccentSigParts.length - 1] : "";
         if (root && loopAccentNeedsRefresh && loopCurrentAccentColor !== loopAccentColor) {
-            perfSection = PerfStart();
+            var _psAccent = PerfStart();
             var accentHealthContainer = IsPanelValid(State.cachedPanels.healthContainer) ? State.cachedPanels.healthContainer : null;
             if (!accentHealthContainer && root.FindChildTraverse) {
                 accentHealthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 State.cachedPanels.healthContainer = accentHealthContainer || null;
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
-            PerfEnd("loop.healthbar_accent_color", perfSection);
+            PerfEnd("loop.healthbar_accent_color", _psAccent);
         }
 
+        // --- Bucket 7 (117ms): laneWithParty ---
         if (gates.laneWithParty) {
-            ExecuteFeature("laneWithParty", function() {
-                perfSection = PerfStart();
-                UpdateLanePreferenceWithParty(root, cfg, nowMsLoop);
-                PerfEnd("loop.lane_with_party", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("laneWithParty", function() {
+                    var _ps = PerfStart();
+                    UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.lane_with_party", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): gameplayMouseCursor ---
         if (gates.gameplayMouseCursor) {
-            ExecuteFeature("gameplayMouseCursor", function() {
-                perfSection = PerfStart();
-                UpdateGameplayMouseCursor(root, nowMsLoop, hideoutConnected);
-                PerfEnd("loop.gameplay_mouse_cursor", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("gameplayMouseCursor", function() {
+                    var _ps = PerfStart();
+                    UpdateGameplayMouseCursor(_s.root, _s.nowMs, _s.hideoutConnected);
+                    PerfEnd("loop.gameplay_mouse_cursor", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): betterUnsecuredHud ---
         if (gates.betterUnsecuredHud) {
-            ExecuteFeature("betterUnsecuredHud", function() {
-                perfSection = PerfStart();
-                UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMsLoop);
-                PerfEnd("loop.unsecured_souls_hud", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("betterUnsecuredHud", function() {
+                    var _ps = PerfStart();
+                    UpdateUnsecuredSoulsHudContainerLayout(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.unsecured_souls_hud", _ps);
+                });
             });
         }
 
+        // --- Bucket 5 (83ms): colorWarning ---
         if (gates.colorWarning) {
-            ExecuteFeature("colorWarning", function() {
-                perfSection = PerfStart();
-                UpdateColoredHealthbarRuntime(root, cfg);
-                PerfEnd("loop.colored_healthbar", perfSection);
+            (_b ? _b[5] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("colorWarning", function() {
+                    var _ps = PerfStart();
+                    UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.colored_healthbar", _ps);
+                });
             });
         }
 
+        // --- Bucket 5 (83ms): enemyColorWarning ---
         if (gates.enemyColorWarning) {
-            ExecuteFeature("enemyColorWarning", function() {
-                perfSection = PerfStart();
-                UpdateEnemyColoredHealthRuntime(root, cfg, nowMsLoop);
-                PerfEnd("loop.enemy_colored_healthbar", perfSection);
+            (_b ? _b[5] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("enemyColorWarning", function() {
+                    var _ps = PerfStart();
+                    UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.enemy_colored_healthbar", _ps);
+                });
             });
         }
 
+        // --- Bucket 5 (83ms): allyColorWarning ---
         if (gates.allyColorWarning) {
-            ExecuteFeature("allyColorWarning", function() {
-                perfSection = PerfStart();
-                UpdateAllyColoredHealthRuntime(root, cfg, nowMsLoop);
-                PerfEnd("loop.ally_colored_healthbar", perfSection);
+            (_b ? _b[5] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("allyColorWarning", function() {
+                    var _ps = PerfStart();
+                    UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.ally_colored_healthbar", _ps);
+                });
             });
         }
 
+        // --- Bucket 4 (67ms): ammo, topBarRuntime ---
         if (gates.ammo) {
-            ExecuteFeature("ammo", function() {
-                perfSection = PerfStart();
-                UpdateAmmoPanelRuntime(root, cfg);
-                PerfEnd("loop.ammo_panel", perfSection);
+            (_b ? _b[4] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("ammo", function() {
+                    var _ps = PerfStart();
+                    UpdateAmmoPanelRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.ammo_panel", _ps);
+                });
             });
         }
 
         if (gates.topBarRuntime) {
-            ExecuteFeature("topBarRuntime", function() {
-                perfSection = PerfStart();
-                UpdateTopBarRuntime(root, cfg);
-                PerfEnd("loop.top_bar_runtime", perfSection);
+            (_b ? _b[4] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("topBarRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateTopBarRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.top_bar_runtime", _ps);
+                });
             });
         }
 
+        // --- Bucket 3 (50ms): bottomBarRuntime, itemsRuntime, soulsRuntime ---
         if (gates.bottomBarRuntime) {
-            ExecuteFeature("bottomBarRuntime", function() {
-                perfSection = PerfStart();
-                UpdateBottomBarRuntime(root, cfg);
-                PerfEnd("loop.bottom_bar_runtime", perfSection);
+            (_b ? _b[3] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("bottomBarRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateBottomBarRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.bottom_bar_runtime", _ps);
+                });
             });
         }
 
         if (gates.itemsRuntime) {
-            ExecuteFeature("itemsRuntime", function() {
-                perfSection = PerfStart();
-                UpdateItemsRuntime(root, cfg);
-                PerfEnd("loop.items_runtime", perfSection);
+            (_b ? _b[3] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("itemsRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateItemsRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.items_runtime", _ps);
+                });
             });
         }
 
         if (gates.soulsRuntime) {
-            ExecuteFeature("soulsRuntime", function() {
-                perfSection = PerfStart();
-                UpdateSoulsRuntime(root, cfg);
-                PerfEnd("loop.souls_runtime", perfSection);
+            (_b ? _b[3] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("soulsRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateSoulsRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.souls_runtime", _ps);
+                });
             });
         }
 
+        // --- Bucket 4 (67ms): heroShop ---
         if (gates.heroShop) {
-            ExecuteFeature("heroShop", function() {
-                perfSection = PerfStart();
-                var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
-                UpdateHeroShopRuntime(root, cfg, nowMsClass);
-                PerfEnd("loop.hero_shop", perfSection);
+            (_b ? _b[4] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("heroShop", function() {
+                    var _ps = PerfStart();
+                    var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
+                    UpdateHeroShopRuntime(_s.root, _s.cfg, nowMsClass);
+                    PerfEnd("loop.hero_shop", _ps);
+                });
             });
         }
-        if (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") || IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS") || State.recentPurchasesWasEnabled) {
-            ExecuteFeature("recentPurchases", function() {
-                UpdateRecentPurchases(root, cfg);
+        // --- Bucket 7 (117ms): recentPurchases ---
+        if (gates.recentPurchases) {
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("recentPurchases", function() {
+                    UpdateRecentPurchases(_s.root, _s.cfg);
+                });
             });
         }
 
+        // --- Bucket 6 (100ms): keyboardRuntime, zipBoost, unsecuredSouls, statBonuses ---
         if (gates.keyboardRuntime) {
-            ExecuteFeature("keyboardRuntime", function() {
-                perfSection = PerfStart();
-                UpdateKeyboardOverlayRuntime(root, cfg);
-                PerfEnd("loop.keyboard_overlay", perfSection);
+            (_b ? _b[6] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("keyboardRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateKeyboardOverlayRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.keyboard_overlay", _ps);
+                });
             });
         }
 
         if (gates.zipBoost) {
-            ExecuteFeature("zipBoost", function() {
-                perfSection = PerfStart();
-                UpdateZipBoostOverlay(root, cfg, hideoutConnected);
-                PerfEnd("loop.zip_boost", perfSection);
+            (_b ? _b[6] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("zipBoost", function() {
+                    var _ps = PerfStart();
+                    UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    PerfEnd("loop.zip_boost", _ps);
+                });
             });
         }
 
         if (gates.unsecuredSouls) {
-            ExecuteFeature("unsecuredSouls", function() {
-                perfSection = PerfStart();
-                UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
-                PerfEnd("loop.unsecured_souls_overlay", perfSection);
+            (_b ? _b[6] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("unsecuredSouls", function() {
+                    var _ps = PerfStart();
+                    UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    PerfEnd("loop.unsecured_souls_overlay", _ps);
+                });
             });
         }
 
         if (gates.statBonuses) {
-            ExecuteFeature("statBonuses", function() {
-                perfSection = PerfStart();
-                UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
-                PerfEnd("loop.stat_bonuses", perfSection);
+            (_b ? _b[6] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("statBonuses", function() {
+                    var _ps = PerfStart();
+                    UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    PerfEnd("loop.stat_bonuses", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): combatStatus ---
         if (gates.combatStatus) {
-            ExecuteFeature("combatStatus", function() {
-                perfSection = PerfStart();
-                UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
-                PerfEnd("loop.combat_status", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("combatStatus", function() {
+                    var _ps = PerfStart();
+                    UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    PerfEnd("loop.combat_status", _ps);
+                });
             });
         }
 
+        // --- Bucket 2 (33ms): signatureFlash ---
         if (gates.signatureFlash) {
-            ExecuteFeature("signatureFlash", function() {
-                perfSection = PerfStart();
-                UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMsLoop);
-                PerfEnd("loop.signature_flash", perfSection);
+            (_b ? _b[2] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("signatureFlash", function() {
+                    var _ps = PerfStart();
+                    UpdateSignatureCooldownPressFlashRuntime(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.signature_flash", _ps);
+                });
             });
         }
 
+        // --- Bucket 5 (83ms): targetShapes ---
         if (gates.targetShapes) {
-            ExecuteFeature("targetShapes", function() {
-                perfSection = PerfStart();
-                var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-                nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-                ApplyTargetShapeStyles(root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, nowMsLoop, redDiamondEnabled);
-                PerfEnd("loop.target_shapes", perfSection);
+            (_b ? _b[5] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("targetShapes", function() {
+                    var _ps = PerfStart();
+                    var unitTargetStyle = ResolveUnitTargetStyleTexts(_s.cfg);
+                    var _nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                    ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled);
+                    PerfEnd("loop.target_shapes", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): damageImpactRuntime, staminaChargeColorRuntime ---
         if (gates.damageImpactRuntime) {
-            ExecuteFeature("damageImpactRuntime", function() {
-                perfSection = PerfStart();
-                UpdateDamageImpactRuntime(root, cfg);
-                PerfEnd("loop.damage_impact_runtime", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("damageImpactRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateDamageImpactRuntime(_s.root, _s.cfg);
+                    PerfEnd("loop.damage_impact_runtime", _ps);
+                });
             });
         }
 
         if (gates.staminaChargeColorRuntime) {
-            ExecuteFeature("staminaChargeColorRuntime", function() {
-                perfSection = PerfStart();
-                UpdateStaminaChargeColorRuntime(root, cfg, nowMsLoop);
-                PerfEnd("loop.stamina_charge_color", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("staminaChargeColorRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateStaminaChargeColorRuntime(_s.root, _s.cfg, _s.nowMs);
+                    PerfEnd("loop.stamina_charge_color", _ps);
+                });
             });
         }
 
+        // --- Bucket 5 (83ms): damageNumbers ---
         if (gates.damageNumbers) {
-            ExecuteFeature("damageNumbers", function() {
-                perfSection = PerfStart();
-                UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop);
-                PerfEnd("loop.damage_numbers", perfSection);
+            (_b ? _b[5] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("damageNumbers", function() {
+                    var _ps = PerfStart();
+                    UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
+                    PerfEnd("loop.damage_numbers", _ps);
+                });
             });
         }
 
+        // --- Bucket 7 (117ms): minimapRuntime, legacyAudioPassive, imagesInChat ---
         if (gates.minimapRuntime) {
-            ExecuteFeature("minimapRuntime", function() {
-                perfSection = PerfStart();
-                UpdateMinimapRuntime(root, cfg, raw);
-                PerfEnd("loop.minimap", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("minimapRuntime", function() {
+                    var _ps = PerfStart();
+                    UpdateMinimapRuntime(_s.root, _s.cfg, _s.raw);
+                    PerfEnd("loop.minimap", _ps);
+                });
             });
         }
 
         if (gates.legacyAudioPassive) {
-            ExecuteFeature("legacyAudioPassive", function() {
-                perfSection = PerfStart();
-                UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
-                PerfEnd("loop.legacy_audio_and_passivehud", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("legacyAudioPassive", function() {
+                    var _ps = PerfStart();
+                    UpdateLegacyAudioAndPassiveHudRuntime(_s.root, _s.cfg, _s.hideoutConnected);
+                    PerfEnd("loop.legacy_audio_and_passivehud", _ps);
+                });
             });
         }
 
         if (gates.imagesInChat) {
-            ExecuteFeature("imagesInChat", function() {
-                perfSection = PerfStart();
-                UpdateImagesInChat(root, cfg);
-                PerfEnd("loop.images_in_chat", perfSection);
+            (_b ? _b[7] : _buckets[0]).push(function(_s) {
+                ExecuteFeature("imagesInChat", function() {
+                    var _ps = PerfStart();
+                    UpdateImagesInChat(_s.root, _s.cfg);
+                    PerfEnd("loop.images_in_chat", _ps);
+                });
             });
+        }
+
+        // ---- dispatch buckets at staggered offsets ----
+        if (FEATURE_STAGGER_ENABLED) {
+            if (_buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, _buckets[0], _s);
+            if (_buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, _buckets[1], _s);
+            if (_buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, _buckets[2], _s);
+            if (_buckets[3].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_3_MS, _buckets[3], _s);
+            if (_buckets[4].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_4_MS, _buckets[4], _s);
+            if (_buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, _buckets[5], _s);
+            if (_buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, _buckets[6], _s);
+            if (_buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, _buckets[7], _s);
         }
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
