@@ -32399,9 +32399,6 @@ function GetUIRoot() {
             }
             if (State.perfEnabled) {
                 State.perfCompassLoopCount += 1;
-                if (State.perfLastCompassStartMs > 0 && compassHasWork) {
-                    PerfRecord("compass.gap_ms", perfLoopStartMs - State.perfLastCompassStartMs);
-                }
                 State.perfLastCompassStartMs = perfLoopStartMs;
             }
             var hasCompassRuntimeWork = false;
@@ -34444,9 +34441,6 @@ function GetUIRoot() {
         UpdatePerfEnabledFromConfig(cfg);
         if (State.perfEnabled) {
             State.perfLoopCount += 1;
-            if (State.perfLastLoopStartMs > 0) {
-                PerfRecord("loop.gap_ms", perfLoopStartMs - State.perfLastLoopStartMs);
-            }
             State.perfLastLoopStartMs = perfLoopStartMs;
             PerfRecord("loop.config_load", PerfNowMs() - perfConfigStartMs);
         }
