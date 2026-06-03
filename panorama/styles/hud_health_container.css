@@ -1087,6 +1087,14 @@
 	text-shadow: 0px 0px 0px 3.0 offBlack;
 }
 
+#MinecraftHeartsHealthNumbers .minecraftHealthPercent
+{
+	font-size: 14px;
+	font-family: "Mojang", numericOracle;
+	text-shadow: 0px 0px 0px 3.0 offBlack;
+	margin-left: 0px;
+}
+
 #MinecraftHeartsHealthNumbersContainer
 {
 	width: 180px;

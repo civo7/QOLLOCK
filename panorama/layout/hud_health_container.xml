@@ -31,6 +31,7 @@
 					<Panel id="MinecraftHeartsHealthNumbers">
 						<Label id="currentHealthOverHearts" class="currentHealthLabel" text="{i:r:current_health}" />
 						<Label id="totalHealthOverHearts" class="totalHealthLabel" text="/ {i:r:total_health}" />
+						<Label id="MinecraftHealthPercent" class="minecraftHealthPercent" text="" />
 					</Panel>
 				</Panel>
 				<Panel id="MinecraftHearts" class="MinecraftHearts" />

@@ -10308,6 +10308,7 @@ function GetUIRoot() {
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
         State.mcWasEnabled = false;
+        State.cachedPanels.mcHealthPercentLabel = null;
     }
 
     function McStartHeartsBlink() {
@@ -10945,6 +10946,17 @@ function GetUIRoot() {
         if (!hv) return;
         var currentHealth = hv.currentHealth;
         var totalHealth = hv.totalHealth;
+
+        if (!IsPanelValid(State.cachedPanels.mcHealthPercentLabel)) {
+            State.cachedPanels.mcHealthPercentLabel = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHealthPercent") || null) : null;
+        }
+        var mcPercentLabel = State.cachedPanels.mcHealthPercentLabel;
+        if (IsPanelValid(mcPercentLabel) && totalHealth > 0) {
+            var mcPercent = (currentHealth / totalHealth) * 100;
+            if (!isFinite(mcPercent)) mcPercent = 0;
+            if (mcPercent < 0) mcPercent = 0;
+            mcPercentLabel.text = "  [" + String(Math.floor(mcPercent)) + "%]";
+        }
 
         var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot);
 
