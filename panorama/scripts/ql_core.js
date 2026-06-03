@@ -14103,9 +14103,12 @@ function GetUIRoot() {
             opacityValue = cfg && cfg.TAB_ZOOM_REM_TUNNELS_OPACITY;
         }
         if (!enabled) {
+            if (State._cachedMinimapTunnelHidden) return;
+            State._cachedMinimapTunnelHidden = true;
             HideMinimapTunnelOverlay(root);
             return;
         }
+        State._cachedMinimapTunnelHidden = false;
         var overlay = EnsureMinimapTunnelOverlay(root);
         if (!overlay) return;
         var opacity = Number(opacityValue);
@@ -14119,17 +14122,22 @@ function GetUIRoot() {
 
     function UpdateMinimapCrateOverlay(root, cfg) {
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY"));
-        var mapKey = ResolveMinimapCrateOverlayMapKey();
-        var renderMapKey = mapKey || "dl_midtown";
-        MinimapCrateOverlayDebugLogThrottled(
-            "update|" + (enabled ? "1" : "0") + "|" + String(mapKey || "") + "|" + renderMapKey,
-            "enabled=" + (enabled ? "1" : "0") + " mapKey=" + String(mapKey || "<none>") + " renderMapKey=" + renderMapKey,
-            PerfNowMs()
-        );
+        // Skip all work when disabled and already hidden — avoids ResolveMinimapCrateOverlayMapKey
+        // and debug logging every tick.
         if (!enabled) {
+            if (State._cachedMinimapCrateHidden) return;
+            State._cachedMinimapCrateHidden = true;
             HideMinimapCrateOverlay(root);
             return;
         }
+        State._cachedMinimapCrateHidden = false;
+        var mapKey = ResolveMinimapCrateOverlayMapKey();
+        var renderMapKey = mapKey || "dl_midtown";
+        MinimapCrateOverlayDebugLogThrottled(
+            "update|1|" + String(mapKey || "") + "|" + renderMapKey,
+            "enabled=1 mapKey=" + String(mapKey || "<none>") + " renderMapKey=" + renderMapKey,
+            PerfNowMs()
+        );
 
         var overlay = BuildMinimapCrateOverlay(root, renderMapKey);
         if (!overlay) {
@@ -25998,6 +26006,7 @@ function GetUIRoot() {
     function NeedsMinimapRuntimeWork(cfg, raw) {
         if (!cfg) return false;
         var sig = BuildMinimapRuntimeSignature(cfg);
+        State._cachedMinimapRuntimeSig = sig;
         if (raw !== State.lastRawConfig || sig !== State.minimapRuntimeSig || State.accountPresetTestActive || State.lastZoomState === null) return true;
         if (State.minimapRuntimeSig && !IsPanelListValid(State.cachedPanels.minimap)) return true;
         if (State.minimapDrawOverUiActive) return true;
@@ -26078,6 +26087,9 @@ function GetUIRoot() {
     function UpdateMinimapCastRangeScale(root, targetSize) {
         var size = Number(targetSize);
         if (!isFinite(size) || size <= 0) size = MINIMAP_CAST_RANGE_BASE_SIZE;
+        // Skip the expensive FindChildrenWithClassTraverse when size hasn't changed
+        if (size === State._cachedMinimapCastRangeSize) return;
+        State._cachedMinimapCastRangeSize = size;
         var scale = MINIMAP_CAST_RANGE_BASE_SIZE / size;
         if (!isFinite(scale) || scale <= 0) scale = 1.0;
         if (scale < 0.20) scale = 0.20;
@@ -26117,7 +26129,7 @@ function GetUIRoot() {
         var activeZoomModeForTunnels = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
         UpdateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
         var currentZoomKey = (isAlt ? "A" : "") + (isTab ? "T" : "");
-        var runtimeSig = BuildMinimapRuntimeSignature(cfg);
+        var runtimeSig = State._cachedMinimapRuntimeSig || BuildMinimapRuntimeSignature(cfg);
         var shouldZoom = zoomAlt || zoomTab;
         var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
 
