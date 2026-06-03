@@ -699,6 +699,9 @@
     ];
 
     const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
+    const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
+    const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
     const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
     const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
     const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
@@ -8050,6 +8053,9 @@ const BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS = [
 const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS = [
     { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
 ];
+const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS_3_0_5 = [
+    { key: "SETTINGS_THEME", min: 0, max: 6, step: 1 }
+];
 const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS = [
     { key: "ITEMS_WASH_COLOR", min: 0, max: 29, step: 1 },
     { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 29, step: 1 },
@@ -8232,6 +8238,15 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2,
     BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4 = ClonePayloadSchemaWithFieldOverrides(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3,
+    [{ key: "LANGUAGE", min: 0, max: 11, step: 1 }]
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5 = ClonePayloadSchemaWithFieldOverrides(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4,
+    BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS_3_0_5
+);
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_0 = BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5;
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -8405,6 +8420,18 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.0.3": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3
+    },
+    "3.0.4": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4
+    },
+    "3.0.5": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5
+    },
+    "3.1.0": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_0
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -8513,6 +8540,160 @@ function BuildDefaultPayloadToken(cfg) {
     var encoded = BuildPayloadToBase64Url(compact);
     if (!encoded || encoded.length === 0) return "";
     return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
+}
+
+function BuildMaxPayloadTokenForConvarStorageProbe() {
+    var maxConfig = BuildDefaultConfig();
+    var schema = GetBuildPayloadCompactSchema(BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+    for (var i = 0; i < schema.length; i++) {
+        var field = schema[i];
+        if (!field || !field.key) continue;
+        if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
+            if (BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length > 0) {
+                maxConfig.DEFAULT_HERO = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS[BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length - 1];
+            }
+            continue;
+        }
+        if (Object.prototype.hasOwnProperty.call(field, "max")) {
+            maxConfig[field.key] = field.max;
+        }
+    }
+
+    var compact = SerializeBuildPayloadCompact(maxConfig);
+    var encoded = BuildPayloadToBase64Url(compact);
+    return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
+}
+
+function RepeatConvarStorageProbeChars(length) {
+    var targetLen = Math.max(0, Math.floor(Number(length) || 0));
+    var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    var out = "";
+    for (var i = 0; i < targetLen; i++) {
+        out += alphabet.charAt(i % alphabet.length);
+    }
+    return out;
+}
+
+function SplitConvarStorageProbeParts(rawValue) {
+    var raw = String(rawValue || "");
+    var parts = [];
+    var current = "";
+    for (var i = 0; i < raw.length; i++) {
+        var ch = raw.charAt(i);
+        if (ch === "," || ch === ";" || ch === "|" || ch === " " || ch === "\t" || ch === "\n" || ch === "\r") {
+            if (current.length > 0) {
+                parts.push(current);
+                current = "";
+            }
+        } else {
+            current += ch;
+        }
+    }
+    if (current.length > 0) parts.push(current);
+    return parts;
+}
+
+function StripConvarStorageProbe(rawValue) {
+    var parts = SplitConvarStorageProbeParts(rawValue);
+    var kept = [];
+    for (var i = 0; i < parts.length; i++) {
+        if (String(parts[i] || "").indexOf(QOL_CONVAR_STORAGE_PROBE_PREFIX) === 0) continue;
+        kept.push(parts[i]);
+    }
+    return kept.join(",");
+}
+
+function ReadConvarStorageProbeValue() {
+    if (typeof GameInterfaceAPI === "undefined" || !GameInterfaceAPI || typeof GameInterfaceAPI.GetSettingString !== "function") return "";
+    try {
+        return String(GameInterfaceAPI.GetSettingString(QOL_CONVAR_STORAGE_PROBE_CONVAR) || "");
+    } catch (e0) {
+        return "";
+    }
+}
+
+function CanReadConvarStorageProbeValue() {
+    return typeof GameInterfaceAPI !== "undefined" && !!GameInterfaceAPI && typeof GameInterfaceAPI.GetSettingString === "function";
+}
+
+function DispatchConvarStorageProbeCommand(commandText) {
+    var command = String(commandText || "").trim();
+    var dispatched = false;
+    if (!command) return false;
+    try {
+        $.DispatchEvent("CitadelConCommand", command);
+        dispatched = true;
+    } catch (e0) {}
+    try {
+        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
+            GameInterfaceAPI.ConsoleCommand(command);
+            dispatched = true;
+        }
+    } catch (e1) {}
+    try {
+        $.DispatchEvent("ConsoleCommand", command);
+        dispatched = true;
+    } catch (e2) {}
+    try {
+        $.DispatchEvent("GameUIRunCommand", command);
+        dispatched = true;
+    } catch (e3) {}
+    return dispatched;
+}
+
+function WriteConvarStorageProbeValue(value) {
+    var text = String(value || "");
+    var wrote = false;
+    try {
+        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.SetSettingString === "function") {
+            GameInterfaceAPI.SetSettingString(QOL_CONVAR_STORAGE_PROBE_CONVAR, text);
+            wrote = true;
+        }
+    } catch (e0) {}
+    if (!wrote) {
+        try {
+            if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
+                GameInterfaceAPI.ConsoleCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
+                wrote = true;
+            }
+        } catch (e1) {}
+    }
+    if (!wrote) {
+        wrote = DispatchConvarStorageProbeCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
+    }
+    return wrote;
+}
+
+function RunConvarStorageProbe() {
+    if (!QOL_CONVAR_STORAGE_PROBE_ENABLED) return;
+    $.Schedule(1.0, function() {
+        try {
+            var canRead = CanReadConvarStorageProbeValue();
+            var defaultExport = BuildDefaultPayloadToken(BuildDefaultConfig());
+            var maxExport = BuildMaxPayloadTokenForConvarStorageProbe();
+            var targetLen = Math.max(1, Math.floor(maxExport.length * 2));
+            var fillerLen = Math.max(1, targetLen - QOL_CONVAR_STORAGE_PROBE_PREFIX.length);
+            var probeValue = QOL_CONVAR_STORAGE_PROBE_PREFIX + RepeatConvarStorageProbeChars(fillerLen);
+            var beforeRaw = canRead ? ReadConvarStorageProbeValue() : "";
+            var wrote = WriteConvarStorageProbeValue(probeValue);
+            DispatchConvarStorageProbeCommand("host_writeconfig");
+            var afterRaw = canRead ? ReadConvarStorageProbeValue() : "";
+            $.Msg(
+                "[QOLLock][ConvarStorageProbe] target=joy_name" +
+                " readApi=" + (canRead ? "1" : "0") +
+                " wrote=" + (wrote ? "1" : "0") +
+                " beforeLen=" + beforeRaw.length +
+                " afterLen=" + afterRaw.length +
+                " afterMatch=" + (afterRaw === probeValue ? "1" : "0") +
+                " defaultExportLen=" + defaultExport.length +
+                " maxExportLen=" + maxExport.length +
+                " targetProbeLen=" + targetLen +
+                " writeLen=" + probeValue.length
+            );
+        } catch (probeErr) {
+            $.Msg("[QOLLock][ConvarStorageProbe] error=" + String(probeErr && probeErr.message ? probeErr.message : probeErr));
+        }
+    });
 }
 
 function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
@@ -33534,6 +33715,7 @@ function GetUIRoot() {
 
     $.Schedule(0.0, BootstrapUnitTargetStyles);
 
+    RunConvarStorageProbe();
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
     $.Schedule(CORE_START_DELAY_COMPASS_SEC, compassLoop);
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);

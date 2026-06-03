@@ -466,7 +466,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.0.5", "3.1.0"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
@@ -917,11 +917,20 @@ function main() {
                 if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
             }
         }
-        if (semver === "3.0.3") {
+        if (semver === "3.0.3" || semver === "3.0.4" || semver === "3.0.5" || semver === "3.1.0") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
             }
+        }
+        if (semver === "3.0.4" || semver === "3.0.5" || semver === "3.1.0") {
+            const expectedThemeMax = semver === "3.0.4" ? 5 : 6;
+            const settingsThemeField = getSchemaField(settingsSchema, "SETTINGS_THEME");
+            const coreThemeField = getSchemaField(coreSchema, "SETTINGS_THEME");
+            if (!settingsThemeField) fail(`Settings ${semver} missing SETTINGS_THEME`);
+            if (!coreThemeField) fail(`Core ${semver} missing SETTINGS_THEME`);
+            if (settingsThemeField.max !== expectedThemeMax) fail(`Settings ${semver} SETTINGS_THEME max expected ${expectedThemeMax}, got ${settingsThemeField.max}`);
+            if (coreThemeField.max !== expectedThemeMax) fail(`Core ${semver} SETTINGS_THEME max expected ${expectedThemeMax}, got ${coreThemeField.max}`);
         }
 
         const expectedSchema = settingsRegistry[semver].schema;
