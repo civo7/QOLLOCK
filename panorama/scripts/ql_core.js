@@ -25174,17 +25174,14 @@ function GetUIRoot() {
 
         var itemInfo = $.CreatePanel("Panel", entry, "");
         itemInfo.AddClass("quickItemInfo");
-        itemInfo.AddClass("brawl_hide");
 
         var texture = $.CreatePanel("Panel", itemInfo, "");
         texture.AddClass("quickItemTexture");
-        texture.AddClass("brawl_hide");
 
         var iconUrl = RECENT_PURCHASE_ICON_MAP[nameText];
         if (iconUrl) {
             var icon = $.CreatePanel("Panel", itemInfo, "");
             icon.AddClass("mod_icon");
-            icon.AddClass("brawl_hide");
             var capturedIcon = icon;
             var capturedIconUrl = iconUrl;
             $.Schedule(0, function() { if (IsPanelValid(capturedIcon)) { capturedIcon.style.backgroundImage = capturedIconUrl; capturedIcon.style.backgroundSize = "100% 100%"; } });
@@ -25192,7 +25189,6 @@ function GetUIRoot() {
 
         var nameLabel = $.CreatePanel("Label", itemInfo, "");
         nameLabel.AddClass("quickPurchaseName");
-        nameLabel.AddClass("brawl_hide");
         nameLabel.text = nameText;
 
         State.recentPurchaseQuickActiveEntries.push(entry);
@@ -25329,7 +25325,8 @@ function GetUIRoot() {
     var HERO_MAP_IDLE = 0;
     var HERO_MAP_BUILDING = 1;
     var HERO_MAP_BUILT = 2;
-    var QUICK_ROW_UI_SCALE = 0.7;
+    var QUICK_ROW_UI_SCALE = 0.75;
+    var QUICK_OVERLAP_GAP = 0;
 
     function BuildHeroPlayerCardMap(root) {
         if (State.heroPopup.mapState === HERO_MAP_BUILDING) return;
@@ -25499,7 +25496,7 @@ function GetUIRoot() {
                 var bLeft = active[j].leftX;
                 var bRight = bLeft + active[j].width;
                 if (aLeft < bRight && aRight > bLeft) {
-                    var needed = margins[j] + (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE;
+                    var needed = margins[j] + (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE + QUICK_OVERLAP_GAP;
                     if (needed > margins[i]) margins[i] = needed;
                 }
             }
@@ -25561,13 +25558,11 @@ function GetUIRoot() {
 
         var itemInfo = $.CreatePanel("Panel", entry, "");
         itemInfo.AddClass("quickItemInfo");
-        itemInfo.AddClass("brawl_hide");
 
         var iconUrl = (typeof MOD_ICONS !== "undefined") ? MOD_ICONS[nameText] : null;
         if (iconUrl) {
             var icon = $.CreatePanel("Panel", itemInfo, "");
             icon.AddClass("mod_icon");
-            icon.AddClass("brawl_hide");
             (function(p, url) {
                 $.Schedule(0, function() {
                     if (IsPanelValid(p)) {
@@ -25580,7 +25575,6 @@ function GetUIRoot() {
 
         var nameLabel = $.CreatePanel("Label", itemInfo, "");
         nameLabel.AddClass("quickPurchaseName");
-        nameLabel.AddClass("brawl_hide");
         nameLabel.text = nameText;
 
         State.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);

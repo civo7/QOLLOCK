@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 CitadelShopMod
 {
@@ -2035,8 +2035,7 @@ CitadelItemDraftPanel .modIconContainer
 	border-color: courageBrightColor;
 }
 
-CitadelItemDraftPanel .brawl_hide,
-.gamemode_streetbrawl .brawl_hide
+CitadelItemDraftPanel .brawl_hide
 {
 	visibility: collapse;
 }

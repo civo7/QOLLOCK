@@ -1,8 +1,9 @@
-/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 @define playerDetailsWidth: 88px;
 @define playerContainerWidth: 120px;
 @define playerDetailsMargin: 0px;
+@define idolScoreResultDisplayTime: 3.1;
 CitadelHudTopBar
 {
 	height: 100%;
@@ -1273,6 +1274,328 @@ ProgressBar
 	background-repeat: no-repeat;
 	background-position: center bottom;
 	background-image: url("s2r://panorama/images/hud/icons/rebirth_and_rejuvenator.vsvg");
+}
+
+#IdolCashInMeter
+{
+	width: 78px;
+	height: 78px;
+	border-radius: 64px;
+	horizontal-align: middle;
+	margin-top: 130px;
+	ui-scale: 120%;
+	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
+	opacity-mask-scale: 100% 200%;
+	visibility: collapse;
+}
+
+#IdolCashInMeter.captured
+{
+	visibility: visible;
+	opacity: 0.0;
+	animation-name: Idol_Captured;
+	animation-duration: 3s;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-out;
+}
+
+#IdolCashInMeter.capturing
+{
+	visibility: visible;
+	animation-name: Idol_Capture_Pulse;
+	animation-duration: 0.8s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+
+#IdolCashInMeter.capturing.enemy
+{
+	animation-duration: 0.5s;
+	animation-name: Idol_Capture_Enemy_Pulse;
+}
+
+#IdolCashInMeter.trigger_swap.capturing.enemy,#IdolCashInMeter.trigger_swap.capturing.friendly
+{
+	animation-name: swap_owner;
+	animation-duration: 0.2s;
+	animation-iteration-count: 1;
+}
+
+.gScoreboardOpen #IdolCashInMeter
+{
+	visibility: collapse;
+}
+
+#IdolCashInMeter #IdolIndicator
+{
+	horizontal-align: center;
+	vertical-align: center;
+	width: 48px;
+	height: 48px;
+	border-radius: 64px;
+	box-shadow: 2px 2px 0px offBlack&30;
+	animation-name: TagGroove1;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+}
+
+.captured #IdolCashInMeter #IdolIndicator
+{
+	animation-name: TagGroove1;
+	animation-duration: 2s;
+	animation-iteration-count: infinite;
+}
+
+#IdolCashInMeter #IdolIndicator #IdolCashInMeter_Timer
+{
+	width: 100%;
+	height: 100%;
+	background-color: offWhite;
+}
+
+#IdolCashInMeter #IdolIndicator #Idol_Center
+{
+	width: 40px;
+	height: 40px;
+	background-color: black;
+	horizontal-align: center;
+	vertical-align: center;
+	border-radius: 50%;
+}
+
+#IdolCashInMeter #IdolIndicator .idol_icon
+{
+	width: 40px;
+	height: 40px;
+	horizontal-align: center;
+	vertical-align: center;
+	background-image: url("s2r://panorama/images/minimap/soul_jar_marker_psd.vtex");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+#IdolCashInMeter #IdolTextureElement
+{
+	width: 48px;
+	height: 48px;
+	horizontal-align: center;
+	vertical-align: center;
+	ignore-parent-flow: true;
+	border: 3px solid shardColor;
+	border-radius: 50%;
+}
+
+.friend #IdolCashInMeter #IdolTextureElement
+{
+	border: 3px solid shardColor;
+}
+
+.enemy #IdolCashInMeter #IdolTextureElement
+{
+	border: 0px solid #ffffff00;
+	background-image: url("s2r://panorama/images/icons/icon_x.vsvg");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	wash-color: colorEnemy;
+}
+
+.team_1 #IdolCashInMeter #IdolTextureElement
+{
+	border: 3px solid team1Color;
+}
+
+.team_2 #IdolCashInMeter #IdolTextureElement
+{
+	border: 3px solid team2Color;
+}
+
+#IdolCashInMeter.capturing #IdolTextureElement
+{
+	visibility: collapse;
+}
+
+#IdolCashInMeter.captured #IdolTextureElement
+{
+	animation-name: Idol_Captured_Texture_Success;
+	animation-duration: 1s;
+	animation-iteration-count: 3;
+}
+
+#IdolCashInMeter.captured.friend #IdolTextureElement
+{
+	border: 3px solid shardColor;
+}
+
+#IdolCashInMeter.captured.team_1 #IdolTextureElement
+{
+	border: 3px solid shardColor;
+}
+
+#IdolCashInMeter.captured.team_2 #IdolTextureElement
+{
+	border: 3px solid shardColor;
+}
+
+#IdolCashInMeter.captured.enemy #IdolTextureElement
+{
+	border: 0px solid #ffffff00;
+	background-image: url("s2r://panorama/images/icons/icon_x.vsvg");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	wash-color: colorEnemy;
+}
+
+#IdolCashInMeter.enemy #IdolIndicator #Idol_Center
+{
+	background-color: colorEnemy;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #e05a5a ), to( #971c1c ) );
+}
+
+#IdolCashInMeter.friendly #IdolIndicator #Idol_Center
+{
+	background-color: #49adb8;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5fc1cb ), to( #0b5685 ) );
+}
+
+#IdolCashInMeter.team_1 #IdolIndicator #Idol_Center
+{
+	background-color: colorEnemy;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( team1Color ), to( team1ColorDark ) );
+}
+
+#IdolCashInMeter.team_2 #IdolIndicator #Idol_Center
+{
+	background-color: #49adb8;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( team2Color ), to( team2ColorDark ) );
+}
+
+#IdolCashInMeter.enemy #IdolIndicator #IdolCashInMeter_Timer
+{
+	background-color: #ffc7c7;
+}
+
+@keyframes 'Idol_Capture_Pulse'
+{
+	0%
+	{
+		pre-transform-scale2d: 1;
+		brightness: 1;
+	}
+	
+	50%
+	{
+		pre-transform-scale2d: 1.08;
+		brightness: 1.2;
+	}
+	
+	100%
+	{
+		pre-transform-scale2d: 1;
+		brightness: 1;
+	}
+	
+}
+
+@keyframes 'Idol_Capture_Enemy_Pulse'
+{
+	0%
+	{
+		pre-transform-scale2d: 1;
+		transform: translate3d(0px, 0px, 0px) rotateZ(-5deg);
+		brightness: 1;
+	}
+	
+	50%
+	{
+		pre-transform-scale2d: 1.05;
+		transform: translate3d(0px, 4px, 0px) rotateZ(0deg);
+		brightness: 1.2;
+	}
+	
+	100%
+	{
+		pre-transform-scale2d: 1;
+		transform: translate3d(0px, 0px, 0px) rotateZ(5deg);
+		brightness: 1;
+	}
+	
+}
+
+@keyframes 'swap_owner'
+{
+	0%
+	{
+		pre-transform-scale2d: 1;
+		transform: translate3d(0px, 0px, 0px) rotateZ(0deg);
+		brightness: 1;
+	}
+	
+	33%
+	{
+		pre-transform-scale2d: 3;
+		transform: translate3d(0px, 4px, 0px) rotateZ(-10deg);
+	}
+	
+	66%
+	{
+		pre-transform-scale2d: 3;
+		transform: translate3d(0px, 4px, 0px) rotateZ(10deg);
+	}
+	
+	100%
+	{
+		pre-transform-scale2d: 1;
+		transform: translate3d(0px, 0px, 0px) rotateZ(0deg);
+		brightness: 1;
+	}
+	
+}
+
+@keyframes 'Idol_Captured'
+{
+	0%
+	{
+		pre-transform-scale2d: 1;
+		opacity: 1.0;
+	}
+	
+	5%
+	{
+		pre-transform-scale2d: 1.6;
+	}
+	
+	80%
+	{
+		pre-transform-scale2d: 1.6;
+		opacity: 1.0;
+	}
+	
+	100%
+	{
+		opacity: 0.0;
+		pre-transform-scale2d: 1.6;
+	}
+	
+}
+
+@keyframes 'Idol_Captured_Texture_Success'
+{
+	0%
+	{
+		pre-transform-scale2d: 1;
+		opacity: 0;
+		opacity: 0.1;
+	}
+	
+	100%
+	{
+		opacity: 0.0;
+		pre-transform-scale2d: 1.8;
+	}
+	
 }
 
 .NetworkStatus
@@ -2700,179 +3023,3 @@ CitadelHudTopBarPlayer.LaneSwapDefault.LaneNum6 #LaneSwapContainer,CitadelHudTop
 	wash-color: offWhite;
 }
 
-#IdolCashInMeter
-{
-	width: 48px;
-	height: 48px;
-	background-color: offWhite&20;
-	border-radius: 64px;
-	horizontal-align: middle;
-	margin-top: 170px;
-	box-shadow: 2px 2px 0px offBlack&30;
-	ui-scale: 120%;
-	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
-	opacity-mask-scale: 100% 200%;
-	visibility: collapse;
-}
-
-#IdolCashInMeter.capturing
-{
-	visibility: visible;
-	animation-name: Idol_Capture_Pulse;
-	animation-duration: 0.8s;
-	animation-iteration-count: infinite;
-	animation-direction: alternate;
-}
-
-#IdolCashInMeter.capturing.enemy
-{
-	animation-duration: 0.5s;
-	animation-name: Idol_Capture_Enemy_Pulse;
-}
-
-#IdolCashInMeter.trigger_swap.capturing.enemy,#IdolCashInMeter.trigger_swap.capturing.friendly
-{
-	animation-name: swap_owner;
-	animation-duration: 0.2s;
-	animation-iteration-count: 1;
-}
-
-.gScoreboardOpen #IdolCashInMeter
-{
-	visibility: collapse;
-}
-
-#IdolCashInMeter #IdolCashInMeter_Timer
-{
-	width: 100%;
-	height: 100%;
-	background-color: offWhite;
-}
-
-#IdolCashInMeter #Idol_Center
-{
-	width: 40px;
-	height: 40px;
-	background-color: black;
-	horizontal-align: center;
-	vertical-align: center;
-	border-radius: 50%;
-}
-
-#IdolCashInMeter .idol_icon
-{
-	width: 40px;
-	height: 40px;
-	horizontal-align: center;
-	vertical-align: center;
-	background-image: url("s2r://panorama/images/minimap/soul_jar_marker_psd.vtex");
-	background-repeat: no-repeat;
-	background-position: center;
-	background-size: contain;
-}
-
-#IdolCashInMeter.enemy #Idol_Center
-{
-	background-color: colorEnemy;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #e05a5a ), to( #971c1c ) );
-}
-
-#IdolCashInMeter.friendly #Idol_Center
-{
-	background-color: #49adb8;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #5fc1cb ), to( #0b5685 ) );
-}
-
-#IdolCashInMeter.team_1 #Idol_Center
-{
-	background-color: colorEnemy;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( team1Color ), to( team1ColorDark ) );
-}
-
-#IdolCashInMeter.team_2 #Idol_Center
-{
-	background-color: #49adb8;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( team2Color ), to( team2ColorDark ) );
-}
-
-#IdolCashInMeter.enemy #IdolCashInMeter_Timer
-{
-	background-color: #ffc7c7;
-}
-
-@keyframes 'Idol_Capture_Pulse'
-{
-	0%
-	{
-		pre-transform-scale2d: 1;
-		brightness: 1;
-	}
-	
-	50%
-	{
-		pre-transform-scale2d: 1.05;
-		brightness: 1.2;
-	}
-	
-	100%
-	{
-		pre-transform-scale2d: 1;
-		brightness: 1;
-	}
-	
-}
-
-@keyframes 'Idol_Capture_Enemy_Pulse'
-{
-	0%
-	{
-		pre-transform-scale2d: 1;
-		transform: translate3d(0px, 0px, 0px) rotateZ(-5deg);
-		brightness: 1;
-	}
-	
-	50%
-	{
-		pre-transform-scale2d: 1.05;
-		transform: translate3d(0px, 4px, 0px) rotateZ(0deg);
-		brightness: 1.2;
-	}
-	
-	100%
-	{
-		pre-transform-scale2d: 1;
-		transform: translate3d(0px, 0px, 0px) rotateZ(5deg);
-		brightness: 1;
-	}
-	
-}
-
-@keyframes 'swap_owner'
-{
-	0%
-	{
-		pre-transform-scale2d: 1;
-		transform: translate3d(0px, 0px, 0px) rotateZ(0deg);
-		brightness: 1;
-	}
-	
-	33%
-	{
-		pre-transform-scale2d: 3;
-		transform: translate3d(0px, 4px, 0px) rotateZ(-10deg);
-	}
-	
-	66%
-	{
-		pre-transform-scale2d: 3;
-		transform: translate3d(0px, 4px, 0px) rotateZ(10deg);
-	}
-	
-	100%
-	{
-		pre-transform-scale2d: 1;
-		transform: translate3d(0px, 0px, 0px) rotateZ(0deg);
-		brightness: 1;
-	}
-	
-}
