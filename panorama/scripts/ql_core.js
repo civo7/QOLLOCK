@@ -13611,21 +13611,12 @@ function GetUIRoot() {
                     needsTierScan = true;
                 }
                 if (needsTierScan) {
-                    // Use cached tier counts if structure hasn't changed since last scan
-                    var _tierCache = State._unspentTierCache;
-                    var cachedEntry = _tierCache ? _tierCache[i] : undefined;
-                    if (!structureChanged && !childCountChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
-                        spentSouls = cachedEntry.spentSouls;
-                    } else {
-                        var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
-                        spentSouls =
-                            (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
-                            (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
-                            (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
-                            (tierCounts.t4 * UNSPENT_TIER_COST[4]);
-                        if (!State._unspentTierCache) State._unspentTierCache = [];
-                        State._unspentTierCache[i] = { sig: prevStructureSig || structureSig, spentSouls: spentSouls };
-                    }
+                    var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
+                    spentSouls =
+                        (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
+                        (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
+                        (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
+                        (tierCounts.t4 * UNSPENT_TIER_COST[4]);
                     State.unspentCachedSpentSouls[i] = spentSouls;
                     var nextTierDelayMs = (childCountChanged || structureChanged)
                         ? UNSPENT_TIER_SCAN_INTERVAL_MS
