@@ -13908,6 +13908,11 @@ function SyncTabActiveStates(tabBar) {
     }
 
     var tabFooter = tabBar.FindChildTraverse("SettingsTabRailFooter");
+    // Highlight the version label when the hidden Dev tab is active
+    var footerVersionLabel = tabFooter ? tabFooter.FindChildTraverse("FooterVersionLabel") : null;
+    if (footerVersionLabel && footerVersionLabel.IsValid && footerVersionLabel.IsValid()) {
+        footerVersionLabel.SetHasClass("Active", currentTab === "Dev");
+    }
     var isRuFooter = IsRussianSettingsLanguage();
     var newsFooterBtn = tabFooter ? tabFooter.FindChildTraverse("FooterNewsLinkButton") : null;
     var staleDiscordFooterBtn = tabBar.FindChildTraverse("FooterDiscordLinkButton");
@@ -22255,6 +22260,19 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Size", "COMPASS_SCALE", "slider", 50, 200, 1);
         CreateRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "slider", -2000, 2000, 5);
         CreateRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
+    } else if (currentTab === "Dev") {
+        CreateSectionTitle(list, "Performance", "ENABLE_PERF_DEBUG");
+        CreateRow(list, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
+            "Enable performance tracking (required for overlay).");
+        CreateRow(list, "Detailed Console", "ENABLE_PERF_DEBUG_DETAIL", "toggle", null, null, null, null,
+            "Show full feature breakdown in console every 5s.");
+        CreateRow(list, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
+            "Show the performance overlay HUD in-game.");
+        CreateRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
+            "Console alert when any feature exceeds this ms threshold.");
+        CreateRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
+            "Opacity of the performance overlay panel.");
+        CreateSeparator(list);
     } else if (currentTab === "Minimap") {
         CreateSectionTitle(list, "Base");
         CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
@@ -23627,7 +23645,8 @@ $.BuildUI = function() {
         footerVersionLabel.DeleteAsync(0);
         footerVersionLabel = null;
     }
-    footerVersionLabel = $.CreatePanel("Panel", tabFooter, "FooterVersionLabel");
+    // Use Button so onactivate fires — otherwise identical to the other footer buttons
+    footerVersionLabel = $.CreatePanel("Button", tabFooter, "FooterVersionLabel");
     footerVersionLabel.AddClass("TabItem");
     footerVersionLabel.AddClass("FooterVersionLabel");
     var footerVersionIcon = $.CreatePanel("Image", footerVersionLabel, "FooterVersionIcon", {
@@ -23641,66 +23660,10 @@ $.BuildUI = function() {
     footerVersionText.AddClass("TabLabel");
     footerVersionText.AddClass("FooterVersionLabelText");
     footerVersionText.text = MOD_DISPLAY_VERSION;
-    footerVersionLabel.hittest = true;
-    footerVersionLabel.hittestchildren = true;
 
-    // ---- Secret dev panel (double-click FooterVersionLabel to open) ----
-    var devPanel = win.FindChildTraverse("QOL_DevPanel");
-    if (!devPanel) {
-        devPanel = $.CreatePanel("Panel", win, "QOL_DevPanel");
-        devPanel.AddClass("QOL_DevPanel");
-        devPanel.visible = false;
-
-        // Close button
-        var devCloseBtn = $.CreatePanel("Button", devPanel, "QOL_DevCloseBtn");
-        devCloseBtn.AddClass("QOL_DevCloseBtn");
-        var devCloseLabel = $.CreatePanel("Label", devCloseBtn, "");
-        devCloseLabel.text = "X";
-        devCloseBtn.SetPanelEvent("onactivate", function() {
-            if (devPanel && devPanel.IsValid()) {
-                QOL_UTILS.SetPanelVisibility(devPanel, false);
-            }
-        });
-
-        // Header
-        var devHeader = $.CreatePanel("Label", devPanel, "QOL_DevHeader");
-        devHeader.AddClass("QOL_DevHeader");
-        devHeader.text = "Dev";
-
-        // Perf controls container
-        var devControls = $.CreatePanel("Panel", devPanel, "QOL_DevControls");
-        devControls.AddClass("QOL_DevControls");
-
-        var devList = $.CreatePanel("Panel", devControls, "QOL_DevList");
-
-        CreateSectionTitle(devList, "Performance", "ENABLE_PERF_DEBUG_dev");
-        CreateRow(devList, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
-            "Enable performance tracking (required for overlay).");
-        CreateRow(devList, "Detailed Console", "ENABLE_PERF_DEBUG_DETAIL", "toggle", null, null, null, null,
-            "Show full feature breakdown in console every 5s.");
-        CreateRow(devList, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
-            "Show the performance overlay HUD in-game.");
-        CreateRow(devList, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
-            "Console alert when any feature exceeds this ms threshold.");
-        CreateRow(devList, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
-            "Opacity of the performance overlay panel.");
-    }
-
-    // Double-click handler (400ms window)
-    var devPanelVisible = false;
-    var lastFooterClickMs = 0;
+    // Single click switches to hidden Dev tab (perf controls)
     footerVersionLabel.SetPanelEvent("onactivate", function() {
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        if (nowMs - lastFooterClickMs < 400) {
-            // Double-click detected
-            lastFooterClickMs = 0;
-            if (devPanel && devPanel.IsValid()) {
-                devPanelVisible = !devPanelVisible;
-                QOL_UTILS.SetPanelVisibility(devPanel, devPanelVisible);
-            }
-        } else {
-            lastFooterClickMs = nowMs;
-        }
+        SetActiveTabAndRefresh("Dev");
     });
 
     var staleDiscordFooterBtn = tabFooter.FindChildTraverse("FooterDiscordLinkButton");
