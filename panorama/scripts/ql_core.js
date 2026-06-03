@@ -13600,23 +13600,35 @@ function GetUIRoot() {
                     childCountChanged = true;
                     needsTierScan = true;
                 }
-                var structureSig = BuildUnspentModsStructureSignature(modsContainer);
+                // Skip signature build when child count is unchanged (fast path)
+                var structureSig = "";
                 var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
-                var structureChanged = (structureSig !== prevStructureSig);
-                if (structureChanged) {
-                    State.unspentModsStructureSig[i] = structureSig;
-                    needsTierScan = true;
+                var structureChanged = false;
+                if (childCountChanged) {
+                    structureSig = BuildUnspentModsStructureSignature(modsContainer);
+                    structureChanged = (structureSig !== prevStructureSig);
+                    if (structureChanged) {
+                        State.unspentModsStructureSig[i] = structureSig;
+                        needsTierScan = true;
+                    }
                 }
                 if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
                     needsTierScan = true;
                 }
                 if (needsTierScan) {
-                    var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
-                    spentSouls =
-                        (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
-                        (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
-                        (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
-                        (tierCounts.t4 * UNSPENT_TIER_COST[4]);
+                    // Use cached tier counts if structure hasn't changed since last scan
+                    var cachedEntry = State._unspentTierCache[i];
+                    if (!structureChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
+                        spentSouls = cachedEntry.spentSouls;
+                    } else {
+                        var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
+                        spentSouls =
+                            (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
+                            (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
+                            (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
+                            (tierCounts.t4 * UNSPENT_TIER_COST[4]);
+                        State._unspentTierCache[i] = { sig: prevStructureSig || structureSig, spentSouls: spentSouls };
+                    }
                     State.unspentCachedSpentSouls[i] = spentSouls;
                     var nextTierDelayMs = (childCountChanged || structureChanged)
                         ? UNSPENT_TIER_SCAN_INTERVAL_MS
