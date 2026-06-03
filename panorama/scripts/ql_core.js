@@ -8516,6 +8516,9 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
     { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
     { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
     { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
+    { key: "ENABLE_PERF_OVERLAY", min: 0, max: 1, step: 1 },
+    { key: "PERF_ALERT_THRESHOLD_MS", min: 1, max: 50, step: 1 },
+    { key: "PERF_OVERLAY_OPACITY", min: 0.3, max: 1.0, step: 0.05 },
     { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
     { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
     { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
