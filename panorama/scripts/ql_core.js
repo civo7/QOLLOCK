@@ -1094,6 +1094,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const FORCE_DISABLE_STAT_BONUSES = false;
     const UNSPENT_MAX_PLAYERS = SPM_MAX_PLAYERS;
     const UNSPENT_SAMPLE_INTERVAL_MS = 1000;
+    const UNSPENT_PLAYER_BATCH_SIZE = 3;    // players processed per sample — rotates cursor
     const UNSPENT_PANEL_CACHE_REFRESH_MS = 9000;
     const UNSPENT_TIER_SCAN_INTERVAL_MS = 3000;
     const UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS = 5000;
@@ -13567,7 +13568,12 @@ function GetUIRoot() {
         State.unspentNextSampleMs = nowMs + UNSPENT_SAMPLE_INTERVAL_MS;
         RefreshUnspentPanelCache(root, nowMs, true);
 
-        for (var i = 0; i < UNSPENT_MAX_PLAYERS; i++) {
+        // Stagger per-player work: process a batch each sample, rotate cursor.
+        // Each player still gets checked within ~4s (12 players / 3 per sample * 1s interval).
+        var cursor = Number(State.unspentPlayerCursor);
+        if (!isFinite(cursor) || cursor < 0 || cursor >= UNSPENT_MAX_PLAYERS) cursor = 0;
+        var batchEnd = Math.min(cursor + UNSPENT_PLAYER_BATCH_SIZE, UNSPENT_MAX_PLAYERS);
+        for (var i = cursor; i < batchEnd; i++) {
             var playerPanel = IsPanelValid(State.unspentPlayerPanels[i]) ? State.unspentPlayerPanels[i] : null;
             if (!playerPanel) continue;
 
@@ -13651,6 +13657,8 @@ function GetUIRoot() {
                 State.unspentLastDisplayText[i] = kValue;
             }
         }
+        // Advance cursor for next sample; wrap around
+        State.unspentPlayerCursor = (batchEnd >= UNSPENT_MAX_PLAYERS) ? 0 : batchEnd;
     }
 
     function FormatClockMmSs(totalSec) {
