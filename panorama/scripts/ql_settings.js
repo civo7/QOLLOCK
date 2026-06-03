@@ -12066,7 +12066,7 @@ const COMPACT_SCHEMA_3_1_2 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_1_1,
     SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
 );
-// 3.0.6: Add ally healthbar, perf debug, specials, drag, and previews keys
+// 3.1.3: Add ally healthbar, perf debug, specials, drag, and previews keys
 // that were defined in QOL_DEFAULT_CONFIG but missing from compact serialization.
 const COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
     { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },

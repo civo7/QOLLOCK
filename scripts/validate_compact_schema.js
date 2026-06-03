@@ -1137,7 +1137,7 @@ function main() {
                 if (coreSchemaKeys.has(key)) fail(`Core ${semver} should omit ${key}`);
             }
         }
-        if (semver === "3.0.3" || semver === "3.0.4" || semver === "3.0.5" || semver === "3.1.0") {
+        if (semver === "3.0.3" || semver === "3.0.4" || semver === "3.0.5" || semver === "3.1.0" || semver === "3.1.1" || semver === "3.1.2" || semver === "3.1.3") {
             for (const key of topBarHpWarningKeys.concat(hudBarAndShopKeys, hudSectionAndPanelKeys, minimapCrateOverlayKeys, minimapRemTunnelsKeys, minimapElevationMarkerKeys, hudBarAndShopScaleKeys, zoomRemTunnelsKeys, damageImpactKeys, settingsThemeKeys, palettePickerKeys, staminaChargeKeys, cleanDamageIndicatorKeys, combatIndicatorKeys, shopStatsMinimalistKeys, enhancedQuickbuyKeys, shopPurchaseFeatureKeys, recentPurchasesQuickKeys, showBuildIdKeys, dl4dReminderKeys, quickbuyClickToNotifyKeys, recentPurchaseOpacityKeys, enhancedQuickbuyCountKeys)) {
                 if (!settingsSchemaKeys.has(key)) fail(`Settings ${semver} missing ${key}`);
                 if (!coreSchemaKeys.has(key)) fail(`Core ${semver} missing ${key}`);
