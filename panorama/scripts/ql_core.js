@@ -45,9 +45,6 @@
     };
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
-    var LogUtilsError = QOL_UTILS_LOADED ? QOL_UTILS.LogError : function() {};
-    var PerfNowMs_utils = QOL_UTILS_LOADED ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
-    var ValidateConfigHealth_utils = QOL_UTILS_LOADED ? QOL_UTILS.ValidateConfigHealth : function() { return []; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
     var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
@@ -25067,7 +25064,7 @@ function GetUIRoot() {
             toggle.checked = filter.active;
             var label = $.CreatePanel("Label", toggle, "");
             label.text = filter.label;
-            var capturedFilter = filter;
+            let capturedFilter = filter;
             $.RegisterEventHandler("Activated", toggle, function() { capturedFilter.active = !capturedFilter.active; });
         }
 

@@ -6,7 +6,7 @@ var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Storage envelope helpers (Fix: schema-versioned config storage) ----
 // Wraps a config object for storage with schema version tag.
-// Produces: {"schema":"3.0.4","data":{...}}
+// Produces: {"schema":"3.0.6","data":{...}}
 if (typeof WrapConfigForStorage !== "function") {
     var WrapConfigForStorage = function(config) {
         return JSON.stringify({ schema: QOL_SCHEMA_SEMVER, data: config });
