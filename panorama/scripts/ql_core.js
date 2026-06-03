@@ -32375,8 +32375,9 @@ function GetUIRoot() {
             // Don't use State.allFeaturesDisabled — that's global. The compass
             // should idle when its own features are off, regardless of what
             // else is running.
+            var compassHasWork = false;
             if (gates) {
-                var compassHasWork = gates.compassOverlay ||
+                compassHasWork = gates.compassOverlay ||
                     gates.compassMinimapRotate ||
                     gates.compassItemMirror ||
                     gates.compassReloadCd ||
@@ -32398,7 +32399,7 @@ function GetUIRoot() {
             }
             if (State.perfEnabled) {
                 State.perfCompassLoopCount += 1;
-                if (State.perfLastCompassStartMs > 0) {
+                if (State.perfLastCompassStartMs > 0 && compassHasWork) {
                     PerfRecord("compass.gap_ms", perfLoopStartMs - State.perfLastCompassStartMs);
                 }
                 State.perfLastCompassStartMs = perfLoopStartMs;
