@@ -17840,7 +17840,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Hikyo", preset: "Hikyo" });
     entries.push({ label: "Chjcago", preset: "Chjcago" });
     entries.push({ label: "Starjadian", preset: "Starjadian", presetExport: "[QOL-3-0-3]:AjwUSxQjZMhODk8lk6kBZCADt4clKBT4T0EGEJKi8mRkZI5YQjZiCZlkAqBQxhghgwygjCAcW1oyAiejy8HjAUssyRJLIR5kzkA-AEAyyJApIUMmQ8kHBowMSzIb_lOWyChLZGT0U5bIKEtkzKuU-ryKIkMGAAAAoEWgI_NakZGpkv8_pQKZ" });
-    entries.push({ label: "Synthronix", preset: "Synthronix", presetExport: "[QOL-3-0-6]:Aig0SxQjZMhM7gclk6kBZCADh4clKBT4Q0MGAIKicWRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDy8HjgSWWwBJLCh5kzh4wAAAZZMgsI0MmQ8kHA4QMSzIBAFCWyChLZGT0U5bIKEtkzKOU8ryKIkMGAAAAoAWgIyMLkZEpkP8fpRIwDw" });
+    entries.push({ label: "Synthronix", preset: "Synthronix" });
     entries.push({ label: "Shark", preset: "Shark" });
     entries.push({ label: "Neonvoid", preset: "Neonvoid" });
     entries.push({ label: "Fenmore", preset: "Fenmore" });
