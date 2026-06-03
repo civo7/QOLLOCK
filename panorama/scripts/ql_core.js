@@ -34476,6 +34476,9 @@ function GetUIRoot() {
             !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
             !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted &&
             !State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) {
+            if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
+                QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
+            }
             State.lastRawConfig = raw;
             nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
             return;
@@ -34812,6 +34815,9 @@ function GetUIRoot() {
         State.lastRawConfig = raw;
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
+            if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
+                QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
+            }
             FlushPerfIfNeeded(false);
         }
         RecordFrameTime(PerfNowMs() - perfLoopStartMs);
