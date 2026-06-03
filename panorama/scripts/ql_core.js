@@ -13600,9 +13600,11 @@ function GetUIRoot() {
                     childCountChanged = true;
                     needsTierScan = true;
                 }
-                // Per-player: skip structure sig when child count is stable
-                var structureSig = "";
+                // Per-player: skip structure sig rebuild when child count is stable.
+                // When skipped, reuse the stored sig — comparing "" against the
+                // real sig would falsely detect a change every call.
                 var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
+                var structureSig = prevStructureSig;
                 var structureChanged = false;
                 if (childCountChanged) {
                     structureSig = BuildUnspentModsStructureSignature(modsContainer);
@@ -13617,7 +13619,8 @@ function GetUIRoot() {
                 }
                 if (needsTierScan) {
                     // Use cached tier counts if structure hasn't changed since last scan
-                    var cachedEntry = State._unspentTierCache[i];
+                    var _tierCache = State._unspentTierCache;
+                    var cachedEntry = _tierCache ? _tierCache[i] : undefined;
                     if (!structureChanged && !childCountChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
                         spentSouls = cachedEntry.spentSouls;
                     } else {
@@ -13627,6 +13630,7 @@ function GetUIRoot() {
                             (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
                             (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
                             (tierCounts.t4 * UNSPENT_TIER_COST[4]);
+                        if (!State._unspentTierCache) State._unspentTierCache = [];
                         State._unspentTierCache[i] = { sig: prevStructureSig || structureSig, spentSouls: spentSouls };
                     }
                     State.unspentCachedSpentSouls[i] = spentSouls;
