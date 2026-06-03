@@ -22215,6 +22215,18 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
+        CreateSectionTitle(list, "Performance", "ENABLE_PERF_DEBUG");
+        CreateRow(list, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
+            "Enable performance tracking (required for overlay).");
+        CreateRow(list, "Detailed Console", "ENABLE_PERF_DEBUG_DETAIL", "toggle", null, null, null, null,
+            "Show full feature breakdown in console every 5s.");
+        CreateRow(list, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
+            "Show the performance overlay HUD in-game.");
+        CreateRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
+            "Console alert when any feature exceeds this ms threshold.");
+        CreateRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
+            "Opacity of the performance overlay panel.");
+        CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
             CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);
