@@ -18,6 +18,13 @@
     var _wasVisible = false;
     var _alertCooldowns = {};
 
+    // ---- 60-second rolling window ----
+    var ROLLING_WINDOW_MS = 60000;
+    var MAX_SNAPSHOTS = 12; // 12 × ~5s = 60s
+    var _windowSnapshots = [];   // [{ timeMs, entries: { name: {total, count, max} } }]
+    var _prevTotalCount = -1;    // total count across all features last tick
+    var _prevEntries = null;     // shallow copy of perfStats entries from last tick
+
     // ---- helpers ----
 
     /**
@@ -125,6 +132,113 @@
         }
     }
 
+    /**
+     * Sum the .count of every entry in a perfStats-like object.
+     * Used to detect 5s window resets: within a window counts only increase,
+     * so a drop means a new window started.
+     */
+    function _totalCount(stats) {
+        if (!stats) return 0;
+        var keys = Object.keys(stats);
+        var total = 0;
+        for (var i = 0; i < keys.length; i++) {
+            var entry = stats[keys[i]];
+            if (entry && entry.count > 0) total += entry.count;
+        }
+        return total;
+    }
+
+    /**
+     * Shallow-copy each entry from a perfStats-like object so we own the values.
+     * Returns null when stats is empty.
+     */
+    function _copyEntries(stats) {
+        if (!stats) return null;
+        var keys = Object.keys(stats);
+        if (keys.length === 0) return null;
+        var copy = {};
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var entry = stats[k];
+            if (entry && entry.count > 0) {
+                copy[k] = { total: entry.total, count: entry.count, max: entry.max };
+            }
+        }
+        return Object.keys(copy).length > 0 ? copy : null;
+    }
+
+    /**
+     * Detect whether the 5s perf window just reset and, if so, push the
+     * previous window's completed snapshot into the ring buffer.
+     */
+    function _captureWindowSnapshots(stats, nowMs) {
+        var curTotal = _totalCount(stats);
+        var curEntries = _copyEntries(stats);
+
+        // Detect reset: total count dropped → previous window is complete
+        if (_prevTotalCount > 0 && curTotal < _prevTotalCount && _prevEntries) {
+            _windowSnapshots.push({ timeMs: nowMs, entries: _prevEntries });
+            // Keep buffer bounded
+            while (_windowSnapshots.length > MAX_SNAPSHOTS) {
+                _windowSnapshots.shift();
+            }
+        }
+
+        _prevTotalCount = curTotal;
+        _prevEntries = curEntries;
+
+        // Prune snapshots older than ROLLING_WINDOW_MS
+        var cutoff = nowMs - ROLLING_WINDOW_MS;
+        while (_windowSnapshots.length > 0 && _windowSnapshots[0].timeMs < cutoff) {
+            _windowSnapshots.shift();
+        }
+    }
+
+    /**
+     * Merge all snapshots in the ring buffer + the current live window
+     * into a single flat { name: {total, count, max} } map.
+     * Returns null when there is no data at all.
+     */
+    function _mergeRollingStats(curStats) {
+        var merged = {};
+
+        // Helper: add one entry into merged
+        function _add(name, entry) {
+            var m = merged[name];
+            if (!m) {
+                m = { total: 0, count: 0, max: 0 };
+                merged[name] = m;
+            }
+            m.total += entry.total;
+            m.count += entry.count;
+            if (entry.max > m.max) m.max = entry.max;
+        }
+
+        // Add completed snapshots
+        for (var i = 0; i < _windowSnapshots.length; i++) {
+            var snap = _windowSnapshots[i];
+            var snapKeys = Object.keys(snap.entries);
+            for (var j = 0; j < snapKeys.length; j++) {
+                var name = snapKeys[j];
+                _add(name, snap.entries[name]);
+            }
+        }
+
+        // Add current live window
+        if (curStats) {
+            var liveKeys = Object.keys(curStats);
+            for (var k = 0; k < liveKeys.length; k++) {
+                var liveName = liveKeys[k];
+                var liveEntry = curStats[liveName];
+                if (liveEntry && liveEntry.count > 0) {
+                    _add(liveName, liveEntry);
+                }
+            }
+        }
+
+        return Object.keys(merged).length > 0 ? merged : null;
+    }
+
     // ---- export ----
 
     /**
@@ -134,7 +248,8 @@
      * When ENABLE_PERF_OVERLAY=1:
      *   - Creates/locates the overlay panel
      *   - Applies opacity from PERF_OVERLAY_OPACITY
-     *   - Builds top-8 entries from perfStats, sorted by avg descending
+     *   - Accumulates 5s window snapshots into a 60s rolling buffer
+     *   - Builds top-8 entries from the merged rolling stats, sorted by avg descending
      *   - Renders multi-line label text
      *   - Logs spike alerts to $.Msg when max > PERF_ALERT_THRESHOLD_MS (5s cooldown per feature)
      *
@@ -145,6 +260,12 @@
     function UpdateOverlay(root, cfg, perfStats) {
         try {
             var visible = !!(cfg && Number(cfg.ENABLE_PERF_OVERLAY) === 1);
+            var stats = perfStats || {};
+            var nowMs = Date.now();
+
+            // Always track rolling window — even when overlay is hidden —
+            // so data is current when the user re-enables it.
+            _captureWindowSnapshots(stats, nowMs);
 
             // ---- hide path ----
             if (!visible) {
@@ -177,11 +298,10 @@
                 ? Number(cfg.PERF_ALERT_THRESHOLD_MS)
                 : 10;
 
-            // Build perf text from State.perfStats
-            var stats = perfStats || {};
-            var keys = Object.keys(stats);
+            // ---- merge rolling 60s window ----
+            var merged = _mergeRollingStats(stats);
 
-            if (keys.length === 0) {
+            if (!merged) {
                 if (_titleLabel && IsPanelValid(_titleLabel)) {
                     _titleLabel.text = "Perf";
                 }
@@ -192,10 +312,11 @@
             }
 
             // Compute avg for each entry and sort descending
+            var mergedKeys = Object.keys(merged);
             var entries = [];
-            for (var i = 0; i < keys.length; i++) {
-                var k = keys[i];
-                var entry = stats[k];
+            for (var i = 0; i < mergedKeys.length; i++) {
+                var k = mergedKeys[i];
+                var entry = merged[k];
                 if (!entry || entry.count <= 0) continue;
                 var avg = entry.total / entry.count;
                 entries.push({
@@ -221,7 +342,6 @@
             }
 
             var lines = [];
-            var nowMs = Date.now();
             var topAvg = entries[0].avg;
 
             for (var j = 0; j < topN; j++) {
@@ -256,7 +376,13 @@
 
             // Update labels
             if (_titleLabel && IsPanelValid(_titleLabel)) {
-                _titleLabel.text = "Perf  (" + topAvg.toFixed(1) + "ms avg)";
+                var titleText = "Perf  (" + topAvg.toFixed(1) + "ms avg";
+                if (_windowSnapshots.length > 0) {
+                    var windowSec = Math.min(60, Math.round((nowMs - _windowSnapshots[0].timeMs) / 1000));
+                    titleText += ", " + windowSec + "s";
+                }
+                titleText += ")";
+                _titleLabel.text = titleText;
             }
             if (_bodyLabel && IsPanelValid(_bodyLabel)) {
                 _bodyLabel.text = lines.join("\n");
