@@ -831,6 +831,22 @@
     const CORE_PHASE_STAT_BONUSES    = 4;
 
     // ==========================================================================
+    // INTRA-TICK FEATURE STAGGERING
+    // ==========================================================================
+    // When enabled, features are collected into offset buckets and dispatched
+    // via $.Schedule at staggered intervals within each 200ms tick, spreading
+    // CPU load across frames instead of a single spike at t=0.
+    const FEATURE_STAGGER_ENABLED = true; // rollback: set false to restore synchronous execution
+    const FEATURE_OFFSET_BUCKET_0_MS = 0;
+    const FEATURE_OFFSET_BUCKET_1_MS = 0.017;
+    const FEATURE_OFFSET_BUCKET_2_MS = 0.033;
+    const FEATURE_OFFSET_BUCKET_3_MS = 0.050;
+    const FEATURE_OFFSET_BUCKET_4_MS = 0.067;
+    const FEATURE_OFFSET_BUCKET_5_MS = 0.083;
+    const FEATURE_OFFSET_BUCKET_6_MS = 0.100;
+    const FEATURE_OFFSET_BUCKET_7_MS = 0.117;
+
+    // ==========================================================================
     // LOOP INTERVALS (seconds)
     // ==========================================================================
     // 200ms (5Hz) — balance between responsiveness and CPU usage.
@@ -33529,6 +33545,28 @@ function GetUIRoot() {
         return (p % 3) === (s % 3);
     }
 
+    /**
+     * Schedule a bucket of features to run at a staggered offset within the tick.
+     * Each feature is a function f(_s) that receives the snapshot object.
+     * Per-feature errors are isolated — one crash won't kill the bucket.
+     */
+    function _scheduleFeatureBucket(offsetSec, features, _s) {
+        if (!features || features.length === 0) return;
+        $.Schedule(offsetSec, function() {
+            for (var i = 0; i < features.length; i++) {
+                var fn = features[i];
+                if (!fn) continue;
+                try {
+                    fn(_s);
+                } catch (e) {
+                    if (typeof $ !== "undefined" && $.Msg) {
+                        $.Msg("[QOLLock] bucket feature error: " + (e && e.message ? e.message : String(e)));
+                    }
+                }
+            }
+        });
+    }
+
     function NeedsAmmoRuntimeWork(cfg) {
         if (!cfg) return false;
         if (IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
@@ -33810,7 +33848,8 @@ function GetUIRoot() {
                 Math.round(damageReportOffsetY) !== 0
             ),
             urnTrackerActive: IsCfgEnabled(cfg, "ENABLE_URN_DIFF"),
-            colorBridgeTarget: colorWarningEnabled ? "1" : "0"
+            colorBridgeTarget: colorWarningEnabled ? "1" : "0",
+            recentPurchasesActive: IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") || IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS")
         };
     }
 
