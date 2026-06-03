@@ -13577,36 +13577,45 @@ function GetUIRoot() {
             );
             if (!isFinite(totalNetWorth)) totalNetWorth = 0;
 
-            // Per-player fast path: skip expensive mods-container scan when
-            // child count is stable and no tier scan is due for this player.
-            var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
             var modsContainer = IsPanelValid(State.unspentModsContainers[i]) ? State.unspentModsContainers[i] : null;
             if (!modsContainer && playerPanel && playerPanel.FindChildTraverse) {
                 modsContainer = playerPanel.FindChildTraverse("PlayerModsContainer");
                 State.unspentModsContainers[i] = modsContainer || null;
             }
 
-            // Read child count once, unconditionally
-            var prevChildCount = Number(State.unspentModsChildCount[i]);
-            if (!isFinite(prevChildCount)) prevChildCount = -1;
-            var childCount = -1;
+            var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
+            var needsTierScan = false;
             if (modsContainer && modsContainer.GetChildCount) {
-                try { childCount = modsContainer.GetChildCount(); } catch (e2) { childCount = -1; }
-            }
-            var childCountChanged = (childCount >= 0 && childCount !== prevChildCount);
-            if (childCountChanged) {
-                State.unspentModsChildCount[i] = childCount;
-            }
-            var needsScan = !modsContainer || childCountChanged || nowMs >= (State.unspentNextTierScanMs[i] || 0);
-
-            if (needsScan) {
-                if (modsContainer && childCount >= 0) {
-                    var structureSig = BuildUnspentModsStructureSignature(modsContainer);
-                    var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
-                    var structureChanged = (structureSig !== prevStructureSig);
+                var childCount = -1;
+                var childCountChanged = false;
+                try {
+                    childCount = modsContainer.GetChildCount();
+                } catch (e2) {
+                    childCount = -1;
+                }
+                var prevChildCount = Number(State.unspentModsChildCount[i]);
+                if (!isFinite(prevChildCount)) prevChildCount = -1;
+                if (childCount !== prevChildCount) {
+                    State.unspentModsChildCount[i] = childCount;
+                    childCountChanged = true;
+                    needsTierScan = true;
+                }
+                // Per-player: skip structure sig when child count is stable
+                var structureSig = "";
+                var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
+                var structureChanged = false;
+                if (childCountChanged) {
+                    structureSig = BuildUnspentModsStructureSignature(modsContainer);
+                    structureChanged = (structureSig !== prevStructureSig);
                     if (structureChanged) {
                         State.unspentModsStructureSig[i] = structureSig;
+                        needsTierScan = true;
                     }
+                }
+                if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
+                    needsTierScan = true;
+                }
+                if (needsTierScan) {
                     // Use cached tier counts if structure hasn't changed since last scan
                     var cachedEntry = State._unspentTierCache[i];
                     if (!structureChanged && !childCountChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
@@ -13625,13 +13634,13 @@ function GetUIRoot() {
                         ? UNSPENT_TIER_SCAN_INTERVAL_MS
                         : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
                     State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
-                } else {
-                    spentSouls = 0;
-                    State.unspentCachedSpentSouls[i] = 0;
-                    State.unspentModsChildCount[i] = -1;
-                    State.unspentModsStructureSig[i] = "";
-                    State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
                 }
+            } else {
+                spentSouls = 0;
+                State.unspentCachedSpentSouls[i] = 0;
+                State.unspentModsChildCount[i] = -1;
+                State.unspentModsStructureSig[i] = "";
+                State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
             }
 
             var unspentSouls = totalNetWorth - spentSouls;
