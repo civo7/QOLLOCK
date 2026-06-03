@@ -13600,19 +13600,12 @@ function GetUIRoot() {
                     childCountChanged = true;
                     needsTierScan = true;
                 }
-                // Per-player: skip structure sig rebuild when child count is stable.
-                // When skipped, reuse the stored sig — comparing "" against the
-                // real sig would falsely detect a change every call.
+                var structureSig = BuildUnspentModsStructureSignature(modsContainer);
                 var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
-                var structureSig = prevStructureSig;
-                var structureChanged = false;
-                if (childCountChanged) {
-                    structureSig = BuildUnspentModsStructureSignature(modsContainer);
-                    structureChanged = (structureSig !== prevStructureSig);
-                    if (structureChanged) {
-                        State.unspentModsStructureSig[i] = structureSig;
-                        needsTierScan = true;
-                    }
+                var structureChanged = (structureSig !== prevStructureSig);
+                if (structureChanged) {
+                    State.unspentModsStructureSig[i] = structureSig;
+                    needsTierScan = true;
                 }
                 if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
                     needsTierScan = true;
