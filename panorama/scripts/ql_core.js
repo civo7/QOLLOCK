@@ -14831,6 +14831,8 @@ function GetUIRoot() {
         state.lastGlobalSec = -1;
         state.lastRuntimeSec = -1;
         state.lastRuntimeFeatureSig = "";
+        state._cachedRuntimeFeatureSig = "";
+        state._cachedConfigRef = null;
         state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
         state.rotatingUntilMs = 0;
         state.rejuvBuffHideAtMs = 0;
@@ -14886,51 +14888,14 @@ function GetUIRoot() {
         State.rejuvWasDisabled = false;
 
         var state = EnsureRejuvState();
-        var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
-        var minimapPerspForObjectiveSig = ResolveCachedPanel(root, "minimapPersp", "minimap_persp")
-        var activeObjectiveZoomSig =
-            (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gDetailView") ? "A" : "") +
-            (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gScoreboardOpen") ? "T" : "");
-        var runtimeFeatureSig = [
-            rejuvHudEnabled ? "1" : "0",
-            buffHudEnabled ? "1" : "0",
-            minimapRejuvEnabled ? "1" : "0",
-            minimapBuffEnabled ? "1" : "0",
-            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? "1" : "0",
-            cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? "1" : "0",
-            String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : ""),
-            String(activeMinimapObjectiveSize),
-            activeObjectiveZoomSig
-        ].join("|");
-
-        var rLab = GetRejuvPanel(state, root, "rLab", "RejuvTime");
-        var rNum = GetRejuvPanel(state, root, "rNum", "RejuvNum");
-        var rImg = GetRejuvPanel(state, root, "rImg", "RejuvImg");
-        var buffLabel = GetRejuvPanel(state, root, "buffLabel", "BuffTime");
-        if (!rLab || !rNum || !rImg || !buffLabel) {
-            HideMinimapObjectiveTimers(root);
-            return;
-        }
-
-        var hideout = isConnectedToHideout(root);
-        if (hideout) {
-            if (!state.wasInHideout || state.running || state.buffStartTime > 0) {
-                RejuvResetState(state, root, nowMs);
-            }
-            state.wasInHideout = true;
-            HideMinimapObjectiveTimers(root);
-            return;
-        }
-        if (state.wasInHideout) {
-            state.wasInHideout = false;
-            state.nextScanMs = nowMs;
-        }
-
         var nowSec = GetGameSecondsForUrn(root);
+
+        // Detect game-time rollover
         if (state.lastGlobalSec >= 0 && (nowSec + 5 < state.lastGlobalSec || (state.lastGlobalSec > 30 && nowSec <= 2))) {
             RejuvResetState(state, root, nowMs);
         }
 
+        // Init on first run
         if (!state.running) {
             state.running = true;
             state.claimCount = 0;
@@ -14946,15 +14911,56 @@ function GetUIRoot() {
             state.lastGlobalSec = nowSec;
         }
 
+        // Cache runtime feature sig — only rebuild when config changes
+        if (State.lastConfig !== state._cachedConfigRef) {
+            var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
+            var minimapPerspForObjectiveSig = ResolveCachedPanel(root, "minimapPersp", "minimap_persp");
+            var activeObjectiveZoomSig =
+                (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gDetailView") ? "A" : "") +
+                (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSig, "gScoreboardOpen") ? "T" : "");
+            state._cachedRuntimeFeatureSig = [
+                rejuvHudEnabled ? "1" : "0",
+                buffHudEnabled ? "1" : "0",
+                minimapRejuvEnabled ? "1" : "0",
+                minimapBuffEnabled ? "1" : "0",
+                cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? "1" : "0",
+                cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS") ? "1" : "0",
+                String(cfg && cfg.MINIMAP_SMALL_SIZE !== undefined ? cfg.MINIMAP_SMALL_SIZE : ""),
+                String(activeMinimapObjectiveSize),
+                activeObjectiveZoomSig
+            ].join("|");
+            state._cachedConfigRef = State.lastConfig;
+        }
+
+        // Fast-path early-exit: skip all panel lookups and class checks
+        // when nothing stateful changed since last tick. This fires on
+        // ~24 of 25 ticks (every tick except second boundaries and scans).
         if (
             state.lastRuntimeSec === nowSec &&
-            state.lastRuntimeFeatureSig === runtimeFeatureSig &&
+            state.lastRuntimeFeatureSig === state._cachedRuntimeFeatureSig &&
             nowMs < (state.nextScanMs || 0) &&
             (state.rotatingUntilMs <= 0 || nowMs < state.rotatingUntilMs) &&
             (state.rejuvBuffHideAtMs <= 0 || nowMs < state.rejuvBuffHideAtMs) &&
             state.buffStartTime <= 0
         ) {
             return;
+        }
+
+        // ---- below this line only runs when something actually changed ----
+
+        // Panel lookups + hideout check (only on changed ticks, not every tick)
+        var hideout = isConnectedToHideout(root);
+        if (hideout) {
+            if (!state.wasInHideout || state.running || state.buffStartTime > 0) {
+                RejuvResetState(state, root, nowMs);
+            }
+            state.wasInHideout = true;
+            HideMinimapObjectiveTimers(root);
+            return;
+        }
+        if (state.wasInHideout) {
+            state.wasInHideout = false;
+            state.nextScanMs = nowMs;
         }
 
         if (state.rotatingUntilMs > 0 && nowMs >= state.rotatingUntilMs) {
@@ -15075,7 +15081,7 @@ function GetUIRoot() {
             state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
         }
         state.lastRuntimeSec = nowSec;
-        state.lastRuntimeFeatureSig = runtimeFeatureSig;
+        state.lastRuntimeFeatureSig = state._cachedRuntimeFeatureSig;
     }
 
     function GetGameplayHudPanel(root) {
