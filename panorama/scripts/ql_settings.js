@@ -22215,17 +22215,6 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
-        CreateSectionTitle(list, "Performance", "ENABLE_PERF_DEBUG");
-        CreateRow(list, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
-            "Enable performance tracking (required for overlay).");
-        CreateRow(list, "Detailed Console", "ENABLE_PERF_DEBUG_DETAIL", "toggle", null, null, null, null,
-            "Show full feature breakdown in console every 5s.");
-        CreateRow(list, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
-            "Show the performance overlay HUD in-game.");
-        CreateRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
-            "Console alert when any feature exceeds this ms threshold.");
-        CreateRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
-            "Opacity of the performance overlay panel.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
             CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
@@ -23652,8 +23641,67 @@ $.BuildUI = function() {
     footerVersionText.AddClass("TabLabel");
     footerVersionText.AddClass("FooterVersionLabelText");
     footerVersionText.text = MOD_DISPLAY_VERSION;
-    footerVersionLabel.hittest = false;
-    footerVersionLabel.hittestchildren = false;
+    footerVersionLabel.hittest = true;
+    footerVersionLabel.hittestchildren = true;
+
+    // ---- Secret dev panel (double-click FooterVersionLabel to open) ----
+    var devPanel = win.FindChildTraverse("QOL_DevPanel");
+    if (!devPanel) {
+        devPanel = $.CreatePanel("Panel", win, "QOL_DevPanel");
+        devPanel.AddClass("QOL_DevPanel");
+        devPanel.visible = false;
+
+        // Close button
+        var devCloseBtn = $.CreatePanel("Button", devPanel, "QOL_DevCloseBtn");
+        devCloseBtn.AddClass("QOL_DevCloseBtn");
+        var devCloseLabel = $.CreatePanel("Label", devCloseBtn, "");
+        devCloseLabel.text = "X";
+        devCloseBtn.SetPanelEvent("onactivate", function() {
+            if (devPanel && devPanel.IsValid()) {
+                QOL_UTILS.SetPanelVisibility(devPanel, false);
+            }
+        });
+
+        // Header
+        var devHeader = $.CreatePanel("Label", devPanel, "QOL_DevHeader");
+        devHeader.AddClass("QOL_DevHeader");
+        devHeader.text = "Dev";
+
+        // Perf controls container
+        var devControls = $.CreatePanel("Panel", devPanel, "QOL_DevControls");
+        devControls.AddClass("QOL_DevControls");
+
+        var devList = $.CreatePanel("Panel", devControls, "QOL_DevList");
+
+        CreateSectionTitle(devList, "Performance", "ENABLE_PERF_DEBUG_dev");
+        CreateRow(devList, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
+            "Enable performance tracking (required for overlay).");
+        CreateRow(devList, "Detailed Console", "ENABLE_PERF_DEBUG_DETAIL", "toggle", null, null, null, null,
+            "Show full feature breakdown in console every 5s.");
+        CreateRow(devList, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
+            "Show the performance overlay HUD in-game.");
+        CreateRow(devList, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
+            "Console alert when any feature exceeds this ms threshold.");
+        CreateRow(devList, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
+            "Opacity of the performance overlay panel.");
+    }
+
+    // Double-click handler (400ms window)
+    var devPanelVisible = false;
+    var lastFooterClickMs = 0;
+    footerVersionLabel.SetPanelEvent("onactivate", function() {
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        if (nowMs - lastFooterClickMs < 400) {
+            // Double-click detected
+            lastFooterClickMs = 0;
+            if (devPanel && devPanel.IsValid()) {
+                devPanelVisible = !devPanelVisible;
+                QOL_UTILS.SetPanelVisibility(devPanel, devPanelVisible);
+            }
+        } else {
+            lastFooterClickMs = nowMs;
+        }
+    });
 
     var staleDiscordFooterBtn = tabFooter.FindChildTraverse("FooterDiscordLinkButton");
     if (staleDiscordFooterBtn) {

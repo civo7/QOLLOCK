@@ -25034,3 +25034,93 @@
 	wash-color: #008a5a;
 	img-shadow: 0px 0px 6px rgba(0, 138, 90, 0.18);
 }
+
+/* ---- Secret Dev Panel ---- */
+
+#QOL_DevPanel
+{
+	visibility: collapse;
+	width: 340px;
+	height: fit-children;
+	horizontal-align: right;
+	vertical-align: top;
+	margin-top: 48px;
+	margin-right: -360px;
+	padding: 12px 14px 10px 14px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(18, 22, 20, 0.97) ), to( rgba(12, 16, 14, 0.97) ) );
+	border: 1px solid rgba(126, 237, 170, 0.18);
+	border-radius: 6px;
+	border-brush: gradient( linear, 0% 0%, 0% 100%, from( rgba(126, 237, 170, 0.22) ), to( rgba(126, 180, 150, 0.10) ) );
+	box-shadow: fill rgba(0, 0, 0, 0.50) 0px 4px 16px 0px;
+	flow-children: down;
+	z-index: 200;
+	ignore-parent-flow: true;
+}
+
+#QOL_DevPanel.QOL_DevPanelVisible
+{
+	visibility: visible;
+}
+
+#QOL_DevCloseBtn
+{
+	width: 22px;
+	height: 22px;
+	horizontal-align: right;
+	vertical-align: top;
+	background-color: rgba(255, 80, 80, 0.12);
+	border-radius: 4px;
+	border: 1px solid rgba(255, 100, 100, 0.20);
+	margin-bottom: 6px;
+}
+
+#QOL_DevCloseBtn Label
+{
+	font-size: 12px;
+	color: rgba(255, 120, 120, 0.85);
+	horizontal-align: center;
+	vertical-align: center;
+	font-weight: bold;
+}
+
+#QOL_DevCloseBtn:hover
+{
+	background-color: rgba(255, 80, 80, 0.28);
+	border-color: rgba(255, 100, 100, 0.45);
+}
+
+#QOL_DevHeader
+{
+	font-family: oracle;
+	font-size: 13px;
+	font-weight: bold;
+	color: rgba(126, 237, 170, 0.85);
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	margin-bottom: 8px;
+}
+
+#QOL_DevControls
+{
+	flow-children: down;
+	width: 100%;
+}
+
+#QOL_DevList
+{
+	flow-children: down;
+	width: 100%;
+}
+
+/* FooterVersionLabel hover hint */
+.FooterVersionLabel:hover .FooterVersionIcon
+{
+	wash-color: rgba(126, 237, 170, 0.85);
+	opacity: 1.0;
+	brightness: 1.2;
+}
+
+.FooterVersionLabel:hover .FooterVersionLabelText
+{
+	color: rgba(180, 200, 190, 0.92);
+}
