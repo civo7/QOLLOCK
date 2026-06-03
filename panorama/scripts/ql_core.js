@@ -13606,20 +13606,12 @@ function GetUIRoot() {
                     childCountChanged = true;
                     needsTierScan = true;
                 }
-                // Structure sig is expensive (full DFS tree walk). Only rebuild
-                // when childCount changed or a periodic deadline fires. Upgrades
-                // (which change CSS classes without changing childCount) are
-                // caught by the periodic check within STRUCTURE_CHECK_INTERVAL_MS.
-                var structureChanged = false;
-                if (childCountChanged || nowMs >= (State.unspentNextStructureCheckMs[i] || 0)) {
-                    var structureSig = BuildUnspentModsStructureSignature(modsContainer);
-                    var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
-                    structureChanged = (structureSig !== prevStructureSig);
-                    if (structureChanged) {
-                        State.unspentModsStructureSig[i] = structureSig;
-                        needsTierScan = true;
-                    }
-                    State.unspentNextStructureCheckMs[i] = nowMs + UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
+                var structureSig = BuildUnspentModsStructureSignature(modsContainer);
+                var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
+                var structureChanged = (structureSig !== prevStructureSig);
+                if (structureChanged) {
+                    State.unspentModsStructureSig[i] = structureSig;
+                    needsTierScan = true;
                 }
                 if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
                     needsTierScan = true;
