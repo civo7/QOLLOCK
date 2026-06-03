@@ -13580,28 +13580,27 @@ function GetUIRoot() {
             // Per-player fast path: skip expensive mods-container scan when
             // child count is stable and no tier scan is due for this player.
             var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
-            var prevChildCount = Number(State.unspentModsChildCount[i]);
-            if (!isFinite(prevChildCount)) prevChildCount = -1;
             var modsContainer = IsPanelValid(State.unspentModsContainers[i]) ? State.unspentModsContainers[i] : null;
             if (!modsContainer && playerPanel && playerPanel.FindChildTraverse) {
                 modsContainer = playerPanel.FindChildTraverse("PlayerModsContainer");
                 State.unspentModsContainers[i] = modsContainer || null;
             }
 
-            var needsScan = !modsContainer || prevChildCount < 0;
-            if (!needsScan && modsContainer.GetChildCount) {
-                var childCount = -1;
+            // Read child count once, unconditionally
+            var prevChildCount = Number(State.unspentModsChildCount[i]);
+            if (!isFinite(prevChildCount)) prevChildCount = -1;
+            var childCount = -1;
+            if (modsContainer && modsContainer.GetChildCount) {
                 try { childCount = modsContainer.GetChildCount(); } catch (e2) { childCount = -1; }
-                if (childCount !== prevChildCount || nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
-                    needsScan = true;
-                }
-                if (childCount !== prevChildCount) {
-                    State.unspentModsChildCount[i] = childCount;
-                }
             }
+            var childCountChanged = (childCount >= 0 && childCount !== prevChildCount);
+            if (childCountChanged) {
+                State.unspentModsChildCount[i] = childCount;
+            }
+            var needsScan = !modsContainer || childCountChanged || nowMs >= (State.unspentNextTierScanMs[i] || 0);
 
             if (needsScan) {
-                if (modsContainer) {
+                if (modsContainer && childCount >= 0) {
                     var structureSig = BuildUnspentModsStructureSignature(modsContainer);
                     var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
                     var structureChanged = (structureSig !== prevStructureSig);
@@ -13610,7 +13609,7 @@ function GetUIRoot() {
                     }
                     // Use cached tier counts if structure hasn't changed since last scan
                     var cachedEntry = State._unspentTierCache[i];
-                    if (!structureChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
+                    if (!structureChanged && !childCountChanged && cachedEntry && cachedEntry.sig === prevStructureSig) {
                         spentSouls = cachedEntry.spentSouls;
                     } else {
                         var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
@@ -13622,7 +13621,7 @@ function GetUIRoot() {
                         State._unspentTierCache[i] = { sig: prevStructureSig || structureSig, spentSouls: spentSouls };
                     }
                     State.unspentCachedSpentSouls[i] = spentSouls;
-                    var nextTierDelayMs = structureChanged
+                    var nextTierDelayMs = (childCountChanged || structureChanged)
                         ? UNSPENT_TIER_SCAN_INTERVAL_MS
                         : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
                     State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
