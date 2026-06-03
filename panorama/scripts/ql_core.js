@@ -34942,8 +34942,9 @@ function GetUIRoot() {
             });
         }
 
-        // ---- dispatch buckets at staggered offsets ----
+        // ---- dispatch or execute buckets ----
         if (FEATURE_STAGGER_ENABLED) {
+            // Staggered mode: dispatch each bucket at its frame-aligned offset
             if (_buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, _buckets[0], _s);
             if (_buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, _buckets[1], _s);
             if (_buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, _buckets[2], _s);
@@ -34952,6 +34953,18 @@ function GetUIRoot() {
             if (_buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, _buckets[5], _s);
             if (_buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, _buckets[6], _s);
             if (_buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, _buckets[7], _s);
+        } else {
+            // Rollback mode: execute all features synchronously from bucket 0
+            for (var _bi = 0; _bi < _buckets[0].length; _bi++) {
+                var _fn = _buckets[0][_bi];
+                if (_fn) {
+                    try { _fn(_s); } catch (e) {
+                        if (typeof $ !== "undefined" && $.Msg) {
+                            $.Msg("[QOLLock] feature error: " + (e && e.message ? e.message : String(e)));
+                        }
+                    }
+                }
+            }
         }
 
         // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
