@@ -30191,6 +30191,7 @@ function GetUIRoot() {
             overlay = root.FindChildTraverse("QOLItemMirrorRoot");
         }
         if (IsPanelValid(overlay)) {
+            overlay.style.visibility = "collapse";
             overlay.DeleteAsync(0);
         }
         State.cachedPanels.itemMirrorOverlay = null;
@@ -30261,8 +30262,6 @@ function GetUIRoot() {
                 });
             }
             State.cachedPanels.itemMirrorOverlay = overlay || null;
-            // Start collapsed; render paths set visible when items are present.
-            if (overlay) overlay.style.visibility = "collapse";
         }
         if (!overlay) return null;
 
@@ -30273,9 +30272,7 @@ function GetUIRoot() {
         overlay.style.x = "0px";
         overlay.style.y = "150px";
         overlay.style.uiScale = "100%";
-        // NOTE: visibility is managed by the render/shop/empty paths in
-        // UpdateItemMirrorProbeMulti — do NOT force it here every call,
-        // as the constant collapse→visible toggle can invalidate child panels.
+        overlay.style.visibility = "collapse";
 
         var row = State.cachedPanels.itemMirrorRow;
         if (!IsPanelValid(row)) {
@@ -32521,7 +32518,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (gates.compassItemMirror) {
+                    if (gates.compassItemMirror || State.itemMirror.displayMode === "active" || State.itemMirror.probeWasEnabled) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.item_mirror", function() {
                             var perfSection = PerfStart();
@@ -32590,7 +32587,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (itemMirrorRuntimeActive) {
+                    if (itemMirrorRuntimeActive || State.itemMirror.displayMode === "active" || State.itemMirror.probeWasEnabled) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.item_mirror", function() {
                             var perfSection = PerfStart();
