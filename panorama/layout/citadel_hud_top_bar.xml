@@ -122,12 +122,28 @@
 		</Panel>
 		<Panel id="IdolCashInMeter">
 			<Panel id="IdolIndicator">
-				<Panel id="IdolCashInMeter_Timer" />
+				<Panel id="IdolCashInMeterTeam1" class="IdolCashInMeter">
+					<ProgressBar id="IdolCashInTeamBar1" class="IdolProgressBar" />
+					<Label id="IdolCashInTeamLabel1" class="IdolTeamText" text="{i:IdolTeam1Progress}%" />
+				</Panel>
 				<Panel id="Idol_Center">
 					<Panel class="idol_icon" />
 				</Panel>
+				<Panel id="IdolCashInMeterTeam2" class="IdolCashInMeter">
+					<ProgressBar id="IdolCashInTeamBar2" class="IdolProgressBar" />
+					<Label id="IdolCashInTeamLabel2" class="IdolTeamText" text="{i:IdolTeam2Progress}%" />
+				</Panel>
+			</Panel>
+			<Panel id="IdolParticipants">
+				<Panel id="IdolParticipantsColumnLeft" class="IdolParticipantsColumn">
+					<Panel id="IdolParticipantsTeam1" class="IdolParticipantsTeam friendly" />
+				</Panel>
+				<Panel id="IdolParticipantsColumnRight" class="IdolParticipantsColumn">
+					<Panel id="IdolParticipantsTeam2" class="IdolParticipantsTeam enemy" />
+				</Panel>
 			</Panel>
 			<Panel id="IdolTextureElement" />
+			<Label class="idol_time_warning" text="#Citadel_HUD_Idol_Time_Warning" />
 		</Panel>
 	</CitadelHudTopBar>
 </root>
