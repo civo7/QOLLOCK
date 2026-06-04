@@ -23992,9 +23992,6 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
     CloseBlackjackModalIfOpen();
 });
 
-$.RegisterForUnhandledEvent("OnGameStateChanged", function() {
-    HandleSettingsGameTransitionSignal("OnGameStateChanged");
-});
 $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
 });
