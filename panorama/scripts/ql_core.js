@@ -28,7 +28,7 @@
         var swept = 0;
         var cache = State.cachedPanels;
         for (var k in cache) {
-            if (cache.hasOwnProperty(k) && cache[k] && !IsPanelValid(cache[k])) {
+            if (cache.hasOwnProperty(k) && cache[k] && typeof cache[k].IsValid === "function" && !IsPanelValid(cache[k])) {
                 cache[k] = null;
                 swept++;
             }
@@ -30024,6 +30024,8 @@ function GetUIRoot() {
         var modsContainers = CollectItemMirrorModsContainers(root);
         var entries = [];
         var scannedCount = 0;
+        var seenOwnerIcons = [];
+        var seenOwnerIds = [];
         for (var mc = 0; mc < modsContainers.length; mc++) {
             var modsContainer = modsContainers[mc];
             if (!modsContainer) continue;
@@ -30037,6 +30039,23 @@ function GetUIRoot() {
                 if (!ownerIcon || !ownerIcon.BHasClass || !ownerIcon.BHasClass("hasAbility")) continue;
 
                 var ownerId = ownerIcon.id ? ownerIcon.id : "unknown";
+
+                // Dedup: skip entries for the same owner icon (same item appearing
+                // under multiple ModsContainers, e.g. Universal + Locked Universal panels).
+                // Check by both panel identity AND ownerId string, since different
+                // ModsContainers may produce distinct panel instances for the same item.
+                var isDuplicateOwner = false;
+                for (var si = 0; si < seenOwnerIcons.length; si++) {
+                    if (seenOwnerIcons[si] === ownerIcon) { isDuplicateOwner = true; break; }
+                }
+                if (!isDuplicateOwner) {
+                    for (var sj = 0; sj < seenOwnerIds.length; sj++) {
+                        if (seenOwnerIds[sj] === ownerId) { isDuplicateOwner = true; break; }
+                    }
+                }
+                if (isDuplicateOwner) continue;
+                seenOwnerIcons.push(ownerIcon);
+                seenOwnerIds.push(ownerId);
                 var cooldownState = ownerIcon.BHasClass("OffCooldown") ? "off" : "on";
                 var sourceImage = nested.FindChildTraverse ? nested.FindChildTraverse("ModIconImage") : null;
                 if (!sourceImage && ownerIcon.FindChildTraverse) sourceImage = ownerIcon.FindChildTraverse("ModIconImage");
@@ -30242,6 +30261,8 @@ function GetUIRoot() {
                 });
             }
             State.cachedPanels.itemMirrorOverlay = overlay || null;
+            // Start collapsed; render paths set visible when items are present.
+            if (overlay) overlay.style.visibility = "collapse";
         }
         if (!overlay) return null;
 
@@ -30252,7 +30273,9 @@ function GetUIRoot() {
         overlay.style.x = "0px";
         overlay.style.y = "150px";
         overlay.style.uiScale = "100%";
-        overlay.style.visibility = "collapse";
+        // NOTE: visibility is managed by the render/shop/empty paths in
+        // UpdateItemMirrorProbeMulti — do NOT force it here every call,
+        // as the constant collapse→visible toggle can invalidate child panels.
 
         var row = State.cachedPanels.itemMirrorRow;
         if (!IsPanelValid(row)) {
