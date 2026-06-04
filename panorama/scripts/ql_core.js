@@ -8540,6 +8540,12 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
     { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
     { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
 ];
+// 3.0.6: Full schema including the missing fields that were added as 3.0.6.
+// Reconstructed for backward compatibility — saves encoded with 3.0.6 must decode.
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5,
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
 const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_3_1_2,
     BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
@@ -8725,6 +8731,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.0.5": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6
     },
     "3.1.0": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
@@ -15031,8 +15041,9 @@ function GetUIRoot() {
 
         var remainingBridge = BRIDGE_DURATION_SEC - (nowSec % BRIDGE_DURATION_SEC);
         var bridgeText = FormatClockMmSs(remainingBridge);
+        var buffLabel = GetRejuvPanel(state, root, "buffLabel", "BuffTime");
         var buffLabelHUD = GetRejuvPanel(state, root, "buffLabelHUD", "BuffTimeHUD");
-        if (buffLabel.text !== bridgeText) buffLabel.text = bridgeText;
+        if (buffLabel && buffLabel.text !== bridgeText) buffLabel.text = bridgeText;
         if (buffLabelHUD && buffLabelHUD.text !== bridgeText) buffLabelHUD.text = bridgeText;
 
         var buffHUD = GetRejuvPanel(state, root, "buffHUD", "BuffHUD");
@@ -15044,6 +15055,20 @@ function GetUIRoot() {
 
         var rejuvTextForMinimap = state.spawnWaiting ? "Spawn" : FormatClockMmSs(state.counter);
         var rejuvRemainForMinimap = state.spawnWaiting ? 0 : state.counter;
+
+        // Ensure runtime zoom/objective values are fresh for the minimap
+        // render sig — on ticks where the config-change block above didn't
+        // fire, these var-declared values are still undefined.
+        if (activeMinimapObjectiveSize === undefined) {
+            activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
+        }
+        if (activeObjectiveZoomSig === undefined) {
+            var minimapPerspForObjectiveSigFresh = ResolveCachedPanel(root, "minimapPersp", "minimap_persp");
+            activeObjectiveZoomSig =
+                (IsHudClassActive(root, "gDetailView") || hasClassInHierarchy(minimapPerspForObjectiveSigFresh, "gDetailView") ? "A" : "") +
+                (IsHudClassActive(root, "gScoreboardOpen") || hasClassInHierarchy(minimapPerspForObjectiveSigFresh, "gScoreboardOpen") ? "T" : "");
+        }
+
         var minimapRenderSig = [
             IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER") ? 1 : 0,
             IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE") ? 1 : 0,

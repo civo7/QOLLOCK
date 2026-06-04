@@ -121,10 +121,13 @@
 			</Panel>
 		</Panel>
 		<Panel id="IdolCashInMeter">
-			<Panel id="IdolCashInMeter_Timer" />
-			<Panel id="Idol_Center">
-				<Panel class="idol_icon" />
+			<Panel id="IdolIndicator">
+				<Panel id="IdolCashInMeter_Timer" />
+				<Panel id="Idol_Center">
+					<Panel class="idol_icon" />
+				</Panel>
 			</Panel>
+			<Panel id="IdolTextureElement" />
 		</Panel>
 	</CitadelHudTopBar>
 </root>

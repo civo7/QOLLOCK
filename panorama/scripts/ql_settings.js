@@ -12082,6 +12082,12 @@ const COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
     { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
     { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
 ];
+// 3.0.6: Full schema including the missing fields that were added as 3.0.6.
+// Reconstructed for backward compatibility — saves encoded with 3.0.6 must decode.
+const COMPACT_SCHEMA_3_0_6 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_0_5,
+    COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
+);
 const COMPACT_SCHEMA_3_1_3 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_1_2,
     COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
@@ -12267,6 +12273,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.0.5": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_0_5
+    },
+    "3.0.6": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_0_6
     },
     "3.1.0": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,

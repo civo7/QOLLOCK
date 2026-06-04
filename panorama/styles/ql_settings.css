@@ -23121,7 +23121,7 @@
 #SettingsWindow.SettingsThemePsycho .SettingToggleBtn.ToggleOn #handle,
 #SettingsWindow.SettingsThemePsycho .SectionInlineToggleBtn.ToggleOn #handle
 {
-	background-image: url("s2r://panorama/images/qollock/switch_handle_on.vsvg");
+	background-image: url("s2r://panorama/images/qollock/switch_handle_on_white.vsvg");
 }
 
 #SettingsWindow.SettingsThemeCream .SettingToggleBtn.ToggleOn #handle,
