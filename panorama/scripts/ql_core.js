@@ -3975,7 +3975,6 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_V2 = [
     { key: "ENABLE_RED_DIAMOND", min: 0, max: 1, step: 1 },
     { key: "UNIT_TARGET_SIZE", min: 50, max: 300, step: 5 },
     { key: "UNIT_TARGET_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 },
     { key: "ENABLE_HERO_SCENE_PANEL", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_FAILED_HINT", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_ABILITY_SUGGESTION", min: 0, max: 1, step: 1 },
