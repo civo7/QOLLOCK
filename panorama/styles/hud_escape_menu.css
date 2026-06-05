@@ -11,7 +11,22 @@
 .center_esc_active #LeftStripe
 {
 	horizontal-align: center;
-	margin-left: 0px;
+	margin-left: -300px;
+}
+
+.center_esc_active #Menu
+{
+	margin: 0px;
+}
+
+.center_esc_active #Menu > Panel,
+.center_esc_active #Menu > Button,
+.center_esc_active #ContextualMenu > Panel,
+.center_esc_active #ContextualMenu > Button,
+.center_esc_active #SubOptions > Panel,
+.center_esc_active #SubOptions > Button
+{
+	horizontal-align: center;
 }
 
 .center_friends_list_active #RightSide .FriendsOrPlayersTabs

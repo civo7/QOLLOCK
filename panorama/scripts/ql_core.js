@@ -669,6 +669,7 @@
         quickPurchasesPanel: null,
         cachedRejuvTimer: null,
         targetShapesCache: [],
+        hintContainerCache: [],
         targetShapeStyleSig: "",
         nextTargetShapeRefreshMs: 0,
         targetShapeHadNonDefaultRuntime: false,
@@ -3974,6 +3975,7 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_V2 = [
     { key: "ENABLE_RED_DIAMOND", min: 0, max: 1, step: 1 },
     { key: "UNIT_TARGET_SIZE", min: 50, max: 300, step: 5 },
     { key: "UNIT_TARGET_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 },
     { key: "ENABLE_HERO_SCENE_PANEL", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_FAILED_HINT", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_ABILITY_SUGGESTION", min: 0, max: 1, step: 1 },
@@ -4803,6 +4805,13 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3 = AppendUniquePayloadSchemaFields(
     BUILD_CATEGORY_COMPACT_SCHEMA_3_1_2,
     BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
 );
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS = [
+    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 }
+];
+const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4 = AppendUniquePayloadSchemaFields(
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3,
+    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS
+);
 const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
 const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -5004,6 +5013,10 @@ const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
     "3.1.3": {
         wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
         schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3
+    },
+    "3.1.4": {
+        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
+        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4
     }
 };
 const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -12367,17 +12380,24 @@ function GetUIRoot() {
         var unitTargetOpacity = (cfg && cfg.UNIT_TARGET_OPACITY !== undefined && cfg.UNIT_TARGET_OPACITY !== null)
             ? parseFloat(cfg.UNIT_TARGET_OPACITY)
             : 1.0;
+        var unitTargetHintSize = (cfg && cfg.UNIT_TARGET_HINT_SIZE !== undefined && cfg.UNIT_TARGET_HINT_SIZE !== null)
+            ? Math.round(Number(cfg.UNIT_TARGET_HINT_SIZE))
+            : 100;
 
         if (!isFinite(unitTargetSize)) unitTargetSize = 150;
         if (!isFinite(unitTargetOpacity)) unitTargetOpacity = 1.0;
+        if (!isFinite(unitTargetHintSize)) unitTargetHintSize = 100;
         if (unitTargetSize < 50) unitTargetSize = 50;
         if (unitTargetSize > 300) unitTargetSize = 300;
         if (unitTargetOpacity < 0) unitTargetOpacity = 0;
         if (unitTargetOpacity > 1) unitTargetOpacity = 1;
+        if (unitTargetHintSize < 50) unitTargetHintSize = 50;
+        if (unitTargetHintSize > 200) unitTargetHintSize = 200;
 
         return {
             scaleText: (unitTargetSize / 100).toFixed(3),
-            opacityText: unitTargetOpacity.toFixed(2)
+            opacityText: unitTargetOpacity.toFixed(2),
+            hintScaleText: (unitTargetHintSize / 100).toFixed(3)
         };
     }
 
@@ -12387,14 +12407,14 @@ function GetUIRoot() {
         if (UnitTargetDefaultStyleTexts) return UnitTargetDefaultStyleTexts;
         var result = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
         // Clone to avoid aliasing when ResolveUnitTargetStyleTexts reuses internal scratch objects.
-        UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText };
+        UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText, hintScaleText: result.hintScaleText };
         return UnitTargetDefaultStyleTexts;
     }
 
     function IsUnitTargetStyleCustomized(cfg) {
         var style = ResolveUnitTargetStyleTexts(cfg);
         var defaultStyle = GetUnitTargetDefaultStyleTexts();
-        return style.scaleText !== defaultStyle.scaleText || style.opacityText !== defaultStyle.opacityText;
+        return style.scaleText !== defaultStyle.scaleText || style.opacityText !== defaultStyle.opacityText || style.hintScaleText !== defaultStyle.hintScaleText;
     }
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
@@ -12408,7 +12428,7 @@ function GetUIRoot() {
         );
     }
 
-    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint) {
+    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
         function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
             if (!TARGET_SHAPE_DEBUG) return;
             var nowDbg = Number(nowMsDbg) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -12432,13 +12452,15 @@ function GetUIRoot() {
         var isDefaultUnitTargetStyle =
             !redDiamondActive &&
             scaleText === defaultStyle.scaleText &&
-            opacityText === defaultStyle.opacityText;
+            opacityText === defaultStyle.opacityText &&
+            (hintScaleText || "1.000") === defaultStyle.hintScaleText;
         var needsCleanupPass = isDefaultUnitTargetStyle && !!State.targetShapeHadNonDefaultRuntime;
 
         // Default style should be fully idle unless we need one restore pass
         // after leaving customized/red-diamond runtime.
         if (isDefaultUnitTargetStyle && !needsCleanupPass) {
             State.targetShapesCache = [];
+            State.hintContainerCache = [];
             State.targetShapeStyleSig = "";
             State.nextTargetShapeRefreshMs = 0;
             TargetShapeDebugLogThrottled(
@@ -12449,7 +12471,7 @@ function GetUIRoot() {
             return;
         }
 
-        var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0");
+        var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0") + "|" + (hintScaleText || "1.000");
         var styleChanged = (styleSig !== State.targetShapeStyleSig);
         var cacheValid = IsPanelListValid(State.targetShapesCache);
         var shouldRefreshList = needsCleanupPass || styleChanged || !cacheValid || nowMs >= (State.nextTargetShapeRefreshMs || 0);
@@ -12457,6 +12479,7 @@ function GetUIRoot() {
 
         if (shouldRefreshList) {
             State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
+            State.hintContainerCache = root.FindChildrenWithClassTraverse("qol_hint_target") || [];
             // Keep default settings low-frequency, but tighten when user customized
             // size/opacity (or red-diamond mode) so newly spawned targets don't
             // flash at default scale.
@@ -12465,7 +12488,8 @@ function GetUIRoot() {
                 redDiamondActive ||
                 styleChanged ||
                 scaleText !== defaultStyle.scaleText ||
-                opacityText !== defaultStyle.opacityText
+                opacityText !== defaultStyle.opacityText ||
+                (hintScaleText || "1.000") !== defaultStyle.hintScaleText
             ) ? 60 : 1000;
             State.nextTargetShapeRefreshMs = nowMs + targetShapeRefreshMs;
             TargetShapeDebugLogThrottled(
@@ -12488,6 +12512,14 @@ function GetUIRoot() {
             }
             SetPanelOpacitySafe(shape, opacityText, 1.0);
         }
+        var hintContainers = State.hintContainerCache || [];
+        for (var hc = 0; hc < hintContainers.length; hc++) {
+            var hint = hintContainers[hc];
+            if (!hint) continue;
+            if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
+                hint.style.preTransformScale2d = (hintScaleText || "1.000");
+            }
+        }
         State.targetShapeStyleSig = styleSig;
         if (!isDefaultUnitTargetStyle) {
             State.targetShapeHadNonDefaultRuntime = true;
@@ -12497,6 +12529,7 @@ function GetUIRoot() {
         if (needsCleanupPass) {
             State.targetShapeHadNonDefaultRuntime = false;
             State.targetShapesCache = [];
+            State.hintContainerCache = [];
             State.targetShapeStyleSig = "";
             State.nextTargetShapeRefreshMs = 0;
             TargetShapeDebugLogThrottled("cleanup_done", "default cleanup completed", nowMs);
@@ -22358,6 +22391,7 @@ function GetUIRoot() {
                 if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (State.indicatorPanelsCache || []).length) {
                     indicatorMeta = BuildIndicatorMetaCache(State.indicatorPanelsCache, indicatorMeta, hideSmallNumbers);
                     State.indicatorMetaCache = indicatorMeta;
+                    State._descDebugLogged = false;
                 }
 
                 var indicatorFontSizeText = indicatorSize + "px";
@@ -22380,8 +22414,18 @@ function GetUIRoot() {
                         }
                     }
 
-                    if (p.style.fontSize !== indicatorFontSizeText) {
-                        p.style.fontSize = indicatorFontSizeText;
+                    var targetSize = indicatorFontSizeText;
+                    try {
+                        var panelId = p.id;
+                        if (panelId === "Desc" || panelId === "Effectiveness") {
+                            var _dc = PerfStart();
+                            var capped = indicatorSize > 28 ? 28 : indicatorSize;
+                            targetSize = capped + "px";
+                            PerfEnd("indicators.desc_font_cap", _dc);
+                        }
+                    } catch (e) {}
+                    if (p.style.fontSize !== targetSize) {
+                        p.style.fontSize = targetSize;
                     }
                     if (meta.isCumulativeOrBatched) continue;
 
@@ -25326,7 +25370,7 @@ function GetUIRoot() {
             var nextColor = ResolveEnemyColoredHealthColor(pct, cfg, teamColor);
 
             EnemyColoredHealthDebugLogThrottled(
-                "apply|" + String(Math.round(fillSize)) + "|" + String(Math.round(pct)) + "|" + nextColor,
+                "apply|" + String(Math.round(Number(entry.healthBar.actuallayoutheight))) + "|" + String(Math.round(pct)) + "|" + nextColor,
                 "apply bar=" + String(entry.barId || "-") +
                     " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
                     " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
@@ -28739,7 +28783,7 @@ function GetUIRoot() {
                         ExecuteFeature("compass.target_shapes_fast", function() {
                             var perfSection = PerfStart();
                             var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, _rdEnabled);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, _rdEnabled, unitTargetStyleFast.hintScaleText);
                             PerfEnd("compass.target_shapes_fast", perfSection);
                         });
                     }
@@ -28807,7 +28851,7 @@ function GetUIRoot() {
                         ExecuteFeature("compass.target_shapes_fast", function() {
                             var perfSection = PerfStart();
                             var unitTargetStyleFast = ResolveUnitTargetStyleTexts(cfg);
-                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled);
+                            ApplyTargetShapeStyles(root, unitTargetStyleFast.scaleText, unitTargetStyleFast.opacityText, nowMsCompassLoop, redDiamondEnabled, unitTargetStyleFast.hintScaleText);
                             PerfEnd("compass.target_shapes_fast", perfSection);
                         });
                     }
@@ -30359,7 +30403,8 @@ function GetUIRoot() {
             State.targetShapeHadNonDefaultRuntime ||
             State.targetShapeStyleSig ||
             State.nextTargetShapeRefreshMs ||
-            (State.targetShapesCache && State.targetShapesCache.length > 0)
+            (State.targetShapesCache && State.targetShapesCache.length > 0) ||
+            (State.hintContainerCache && State.hintContainerCache.length > 0)
         );
         gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg);
         gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg);
@@ -31144,7 +31189,7 @@ function GetUIRoot() {
                     var _ps = PerfStart();
                     var unitTargetStyle = ResolveUnitTargetStyleTexts(_s.cfg);
                     var _nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                    ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled);
+                    ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled, unitTargetStyle.hintScaleText);
                     PerfEnd("loop.target_shapes", _ps);
                 });
             });
@@ -31310,7 +31355,7 @@ function GetUIRoot() {
 
             var style = ResolveUnitTargetStyleTexts(cfg);
             var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"));
+            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"), style.hintScaleText);
 
             var hasTargetShapes = !!(State.targetShapesCache && State.targetShapesCache.length > 0);
             var hasStoredConfig = (raw && raw.length > 0);

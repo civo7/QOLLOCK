@@ -133,6 +133,13 @@
 	animation-name: none !important;
 }
 
+/* Shrink desc text ("Shielded", "Too Far") when it overflows the WindowRoot */
+#HudEventIndicatorsPanel #Desc,
+CitadelHudEventIndicatorsPanel #Desc
+{
+	text-overflow: shrink;
+}
+
 .clean_damage_indicators_active .cumulative .HudIndicatorContainer,
 .clean_damage_indicators_active .cumulative.emphasize .HudIndicatorContainer
 {

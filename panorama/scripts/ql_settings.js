@@ -683,6 +683,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     BOTTOM_BAR_Y_OFFSET: "low",
     UNIT_TARGET_OPACITY: "medium",
     UNIT_TARGET_SIZE: "medium",
+    UNIT_TARGET_HINT_SIZE: "medium",
     UNSECURED_SOULS_HUD_SCALE: "low",
     UNSECURED_SOULS_HUD_X_OFFSET: "low",
     UNSECURED_SOULS_HUD_Y_OFFSET: "low",
@@ -10422,6 +10423,7 @@ function IsReloadCooldownPreviewConfig(configId) {
 function IsUnitTargetPreviewConfig(configId) {
     return configId === "UNIT_TARGET_SIZE" ||
         configId === "UNIT_TARGET_OPACITY" ||
+        configId === "UNIT_TARGET_HINT_SIZE" ||
         configId === "ENABLE_RED_DIAMOND" ||
         configId === "ENABLE_IMPROVED_HINT";
 }
@@ -11337,6 +11339,7 @@ const COMPACT_SCHEMA_V2 = [
     { key: "ENABLE_RED_DIAMOND", min: 0, max: 1, step: 1 },
     { key: "UNIT_TARGET_SIZE", min: 50, max: 300, step: 5 },
     { key: "UNIT_TARGET_OPACITY", min: 0, max: 1, step: 0.05 },
+    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 },
     { key: "ENABLE_HERO_SCENE_PANEL", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_FAILED_HINT", min: 0, max: 1, step: 1 },
     { key: "ENABLE_HIDE_ABILITY_SUGGESTION", min: 0, max: 1, step: 1 },
@@ -12092,6 +12095,13 @@ const COMPACT_SCHEMA_3_1_3 = AppendUniqueSchemaFields(
     COMPACT_SCHEMA_3_1_2,
     COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
 );
+const COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS = [
+    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 }
+];
+const COMPACT_SCHEMA_3_1_4 = AppendUniqueSchemaFields(
+    COMPACT_SCHEMA_3_1_3,
+    COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS
+);
 const LATEST_COMPACT_SEMVER = EXPORT_SCHEMA_SEMVER;
 const COMPACT_SCHEMA_REGISTRY = {
     "2.0.0": {
@@ -12293,6 +12303,10 @@ const COMPACT_SCHEMA_REGISTRY = {
     "3.1.3": {
         wireVersion: COMPACT_WIRE_VERSION_2_0_1,
         schema: COMPACT_SCHEMA_3_1_3
+    },
+    "3.1.4": {
+        wireVersion: COMPACT_WIRE_VERSION_2_0_1,
+        schema: COMPACT_SCHEMA_3_1_4
     }
 };
 const COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -22090,6 +22104,7 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Improved Hint", "ENABLE_IMPROVED_HINT", "toggle", null, null, null, null);
         CreateRow(list, "Size", "UNIT_TARGET_SIZE", "slider", 50, 300, 5, null);
         CreateRow(list, "Opacity", "UNIT_TARGET_OPACITY", "slider", 0, 1.0, 0.05, null);
+        CreateRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "slider", 50, 200, 5, null);
     } else if (currentTab === "HUD") {
         CreateAnimatedInlineToggleSection(list, "Top Bar", "HUD_TOP_BAR_ENABLED", "", function(sectionParent) {
             CreateRow(sectionParent, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
