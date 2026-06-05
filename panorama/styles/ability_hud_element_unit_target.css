@@ -113,6 +113,11 @@
 	
 }
 
+.improved_hint_active .button_hint
+{
+    padding: 0px 5px;
+}
+
 .improved_hint_active .ability_element_unit_target #unscaled_panel > #hint_container Citadel_AbilityHudButtonHintPanel,.improved_hint_active .ability_element_unit_target #unscaled_panel > #hint_container .ability_button_hint
 {
 	opacity: 0.8;
