@@ -228,16 +228,7 @@
             lastCombatMs: 0,
             combatStartMs: 0,
             signalActive: false,
-            nextShopProbeMs: 0,
-            nextAlertProbeMs: 0,
-            nextDamageProbeMs: 0,
-            nextHealthProbeMs: 0,
-            shopProbeMisses: 0,
-            alertProbeMisses: 0,
-            damageProbeMisses: 0,
-            healthProbeMisses: 0,
-            lastHealthValue: -1,
-            sawOutOfCombatClass: false
+            nextAlertProbeMs: 0
         },
         enemyColoredHealthPanelCache: [],
         enemyColoredHealthPanelCacheNextMs: 0,
@@ -945,11 +936,8 @@
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
     const ZIP_BOOST_READY_FLASH_MS = 2000;
     const COMBAT_STATUS_RECOVERY_MS = 3000;
-    const COMBAT_STATUS_SHOP_PROBE_MS = 1000;
     const COMBAT_STATUS_ALERT_PROBE_MS = 500;
-    const COMBAT_STATUS_HEALTH_PROBE_MS = 350;
     const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
-    const COMBAT_STATUS_HEALTH_PROBE_IDLE_MAX_MS = 1400;
     const ENEMY_COLORED_HEALTH_PANEL_SCAN_MS = 1200;
     const ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
     const ENEMY_COLORED_HEALTH_DEBUG = false;
@@ -25558,53 +25546,16 @@ function GetUIRoot() {
     }
 
     function ResetCombatStatusProbeBackoff() {
-        State.combatStatus.shopProbeMisses = 0;
-        State.combatStatus.alertProbeMisses = 0;
-        State.combatStatus.damageProbeMisses = 0;
-        State.combatStatus.healthProbeMisses = 0;
-    }
-
-    function ReadCombatHealthValue(root, uiRoot, nowMs) {
-        var healthLabel = IsPanelValid(State.cachedPanels.combatStatusHealthLabel) ? State.cachedPanels.combatStatusHealthLabel : null;
-        if (!healthLabel && nowMs >= (State.combatStatus.nextHealthProbeMs || 0)) {
-            var scanned = FindCombatPanelById(root, uiRoot, "current_health");
-            if (!scanned) scanned = FindCombatPanelById(root, uiRoot, "CurrentHealth");
-            if (!scanned && root && root.FindChildrenWithClassTraverse) {
-                var candidates = root.FindChildrenWithClassTraverse("progress_bar_current") || [];
-                for (var ci = 0; ci < candidates.length; ci++) {
-                    var candidate = candidates[ci];
-                    if (!candidate || !IsPanelValid(candidate) || typeof candidate.text !== "string") continue;
-                    var candidateNumeric = String(candidate.text).replace(/[^0-9]/g, "");
-                    if (candidateNumeric.length > 0) {
-                        scanned = candidate;
-                        break;
-                    }
-                }
-            }
-            if (scanned || !healthLabel) healthLabel = scanned || null;
-            State.cachedPanels.combatStatusHealthLabel = healthLabel || null;
-            State.combatStatus.nextHealthProbeMs = nowMs + GetCombatStatusProbeDelay(
-                !!healthLabel,
-                "combatStatusHealthProbeMisses",
-                COMBAT_STATUS_HEALTH_PROBE_MS,
-                COMBAT_STATUS_HEALTH_PROBE_IDLE_MAX_MS
-            );
-        }
-        if (!healthLabel || typeof healthLabel.text !== "string") return null;
-        var numeric = String(healthLabel.text).replace(/[^0-9]/g, "");
-        if (!numeric) return null;
-        var value = Number(numeric);
-        if (!isFinite(value)) return null;
-        return value;
+        State.combatStatusAlertProbeMisses = 0;
     }
 
     function IsCombatSignalActive(root, nowMs) {
         if (!root) return false;
-        var uiRoot = root;
 
+        // Probe InCombatAlert panel — directly driven by native b_InCombat property.
         var alertPanel = IsPanelValid(State.cachedPanels.combatStatusAlertPanel) ? State.cachedPanels.combatStatusAlertPanel : null;
         if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
-            var scannedAlert = FindCombatPanelById(root, uiRoot, "InCombatAlert");
+            var scannedAlert = FindCombatPanelById(root, root, "InCombatAlert");
             if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
             State.cachedPanels.combatStatusAlertPanel = alertPanel || null;
             State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
@@ -25631,27 +25582,7 @@ function GetUIRoot() {
             }
         }
 
-        var shop = IsPanelValid(State.cachedPanels.combatStatusShopPanel) ? State.cachedPanels.combatStatusShopPanel : null;
-        if (!shop && nowMs >= (State.combatStatus.nextShopProbeMs || 0)) {
-            var scannedShop = FindCombatPanelById(root, uiRoot, PANEL_ID_HERO_SHOP);
-            if (scannedShop || !shop) shop = scannedShop || null;
-            State.cachedPanels.combatStatusShopPanel = shop || null;
-            State.combatStatus.nextShopProbeMs = nowMs + GetCombatStatusProbeDelay(
-                !!shop,
-                "combatStatusShopProbeMisses",
-                COMBAT_STATUS_SHOP_PROBE_MS,
-                COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS
-            );
-        }
-        if (shop && shop.BHasClass) {
-            try {
-                if (shop.BHasClass(CLASS_IN_COMBAT)) {
-                    ResetCombatStatusProbeBackoff();
-                    return true;
-                }
-            } catch (eShopClass0) {}
-        }
-
+        // Lightweight fallback: check HUD root for inCombat class (also driven by native b_InCombat).
         try {
             if (IsHudClassActive(root, CLASS_IN_COMBAT)) {
                 ResetCombatStatusProbeBackoff();
@@ -25662,103 +25593,6 @@ function GetUIRoot() {
                 return true;
             }
         } catch (eHudClass0) {}
-
-        var combatReloadBar = IsPanelValid(State.cachedPanels.reloadProgressBar) ? State.cachedPanels.reloadProgressBar : null;
-        if (!combatReloadBar) {
-            combatReloadBar = root.FindChildTraverse ? (root.FindChildTraverse("attack_delayed_progress_bar") || null) : null;
-            State.cachedPanels.reloadProgressBar = combatReloadBar || null;
-        }
-        if (combatReloadBar) {
-            var offensiveCombat = false;
-            try { offensiveCombat = hasClassInHierarchy(combatReloadBar, "shoot"); } catch (eShoot0) { offensiveCombat = false; }
-            if (!offensiveCombat) {
-                try { offensiveCombat = hasClassInHierarchy(combatReloadBar, "attack_delayed"); } catch (eShoot1) { offensiveCombat = false; }
-            }
-            if (!offensiveCombat && root && root.BHasClass) {
-                try { offensiveCombat = !!root.BHasClass("shoot"); } catch (eShoot2) { offensiveCombat = false; }
-            }
-            if (offensiveCombat) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-        }
-
-        var damageMeter = IsPanelValid(State.cachedPanels.combatStatusDamageMeter) ? State.cachedPanels.combatStatusDamageMeter : null;
-        if (!damageMeter && nowMs >= (State.combatStatus.nextDamageProbeMs || 0)) {
-            var scannedDamageMeter = FindCombatPanelById(root, uiRoot, "damage_meter");
-            if (scannedDamageMeter || !damageMeter) damageMeter = scannedDamageMeter || null;
-            State.cachedPanels.combatStatusDamageMeter = damageMeter || null;
-            State.combatStatus.nextDamageProbeMs = nowMs + GetCombatStatusProbeDelay(
-                !!damageMeter,
-                "combatStatusDamageProbeMisses",
-                COMBAT_STATUS_SHOP_PROBE_MS,
-                COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS
-            );
-        }
-        if (damageMeter) {
-            var dmOut = false;
-            var dmIn = false;
-            try { dmOut = hasClassInHierarchy(damageMeter, CLASS_OUT_OF_COMBAT); } catch (eDm0) { dmOut = false; }
-            try { dmIn = hasClassInHierarchy(damageMeter, CLASS_IN_COMBAT) || hasClassInHierarchy(damageMeter, "in_combat"); } catch (eDm1) { dmIn = false; }
-            if (dmIn) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-            if (dmOut) {
-                State.combatStatus.sawOutOfCombatClass = true;
-                return false;
-            }
-            if (State.combatStatus.sawOutOfCombatClass) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-        }
-
-        var rootsToCheck = [root, uiRoot];
-        var foundOutOfCombat = false;
-        for (var ri = 0; ri < rootsToCheck.length; ri++) {
-            var checkRoot = rootsToCheck[ri];
-            if (ri > 0 && checkRoot === rootsToCheck[0]) continue;
-            if (!checkRoot || !checkRoot.BHasClass) continue;
-            try {
-                if (checkRoot.BHasClass("in_combat") || checkRoot.BHasClass(CLASS_IN_COMBAT)) {
-                    ResetCombatStatusProbeBackoff();
-                    return true;
-                }
-            } catch (eRootClass0) {}
-            try {
-                if (checkRoot.BHasClass(CLASS_OUT_OF_COMBAT)) foundOutOfCombat = true;
-            } catch (eRootClass1) {}
-        }
-        if (foundOutOfCombat) {
-            State.combatStatus.sawOutOfCombatClass = true;
-            return false;
-        }
-
-        if (State.combatStatus.sawOutOfCombatClass) {
-            try {
-                var rootOut = root && root.BHasClass ? root.BHasClass(CLASS_OUT_OF_COMBAT) : false;
-                var uiRootOut = uiRoot && uiRoot.BHasClass ? uiRoot.BHasClass(CLASS_OUT_OF_COMBAT) : false;
-                var rootClassSignal = !(rootOut || uiRootOut);
-                if (rootClassSignal) ResetCombatStatusProbeBackoff();
-                return rootClassSignal;
-            } catch (eRootClass2) {}
-        } else if (root && root.BHasClass) {
-            try {
-                State.combatStatus.sawOutOfCombatClass = !!root.BHasClass(CLASS_OUT_OF_COMBAT);
-            } catch (eRootClass3) {}
-        }
-
-        var healthValue = ReadCombatHealthValue(root, uiRoot, nowMs);
-        if (healthValue !== null) {
-            var previousHealth = Number(State.combatStatus.lastHealthValue);
-            if (isFinite(previousHealth) && previousHealth >= 0 && healthValue < previousHealth) {
-                State.combatStatus.lastHealthValue = healthValue;
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-            State.combatStatus.lastHealthValue = healthValue;
-        }
 
         return false;
     }
@@ -25895,10 +25729,7 @@ function GetUIRoot() {
         State.cachedPanels.combatStatusOverlay = null;
         State.cachedPanels.combatStatusState = null;
         State.cachedPanels.combatStatusTimer = null;
-        State.cachedPanels.combatStatusShopPanel = null;
         State.cachedPanels.combatStatusAlertPanel = null;
-        State.cachedPanels.combatStatusDamageMeter = null;
-        State.cachedPanels.combatStatusHealthLabel = null;
         State.combatStatus.displayMode = "";
         State.combatStatus.lastLayoutSig = "";
         State.combatStatus.lastClassSig = "";
@@ -25907,13 +25738,8 @@ function GetUIRoot() {
         State.combatStatus.lastCombatMs = 0;
         State.combatStatus.combatStartMs = 0;
         State.combatStatus.signalActive = false;
-        State.combatStatus.nextShopProbeMs = 0;
         State.combatStatus.nextAlertProbeMs = 0;
-        State.combatStatus.nextDamageProbeMs = 0;
-        State.combatStatus.nextHealthProbeMs = 0;
         ResetCombatStatusProbeBackoff();
-        State.combatStatus.lastHealthValue = -1;
-        State.combatStatus.sawOutOfCombatClass = false;
     }
 
     function UpdateCombatStatusOverlay(root, cfg, hideoutOverride) {
