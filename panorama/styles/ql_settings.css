@@ -25035,6 +25035,215 @@
 	img-shadow: 0px 0px 6px rgba(0, 138, 90, 0.18);
 }
 
+/* ---- Munfins Theme ---- */
+
+#SettingsWindow .ThemeSwitchBtn_Munfins,#SettingsWindow .ThemeSwitchBtn_Munfins:hover,#SettingsWindow .ThemeSwitchBtn_Munfins.Active,#SettingsWindow .ThemeSwitchBtn_Munfins.Active:hover,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins:hover,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins.Active,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins.Active:hover
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( #15101f ), color-stop( 0.50, #050407 ), to( #180547 ) );
+	border: 1px solid rgba(97, 19, 253, 0.58);
+	box-shadow: inset rgba(190, 157, 255, 0.20) 0px 1px 0px 0px, inset rgba(97, 19, 253, 0.38) 0px -1px 0px 0px, fill rgba(97, 19, 253, 0.20) 0px 0px 12px 0px;
+}
+
+#SettingsWindow .ThemeSwitchBtn_Munfins Label,#SettingsWindow .ThemeSwitchBtn_Munfins:hover Label,#SettingsWindow .ThemeSwitchBtn_Munfins.Active Label,#SettingsWindow .ThemeSwitchBtn_Munfins.Active:hover Label,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins Label,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins:hover Label,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins.Active Label,#SettingsWindow .QOLThemeSwatch.QOLThemeMunfins.Active:hover Label
+{
+	color: #f4efff;
+	text-shadow: 0px 0px 8px rgba(97, 19, 253, 0.46);
+}
+
+#SettingsWindow.SettingsThemeMunfins
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( #0b0a0e ), color-stop( 0.56, #040405 ), to( #010102 ) );
+	border: 1px solid rgba(97, 19, 253, 0.20);
+	box-shadow: rgba(0, 0, 0, 0.78) 0px 18px 44px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins #SettingsHeader,#SettingsWindow.SettingsThemeMunfins #SettingsList,#SettingsWindow.SettingsThemeMunfins #SettingsTabBar,#SettingsWindow.SettingsThemeMunfins .ConfigTabCard,#SettingsWindow.SettingsThemeMunfins .QOLUnifiedModalSurface,.QOLThemeMunfins .QOLUnifiedModalSurface
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(13, 12, 17, 0.92) ), color-stop( 0.58, rgba(5, 5, 8, 0.84) ), to( rgba(2, 1, 4, 0.78) ) );
+	border-color: rgba(97, 19, 253, 0.18);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingLabel,#SettingsWindow.SettingsThemeMunfins .SettingDescription,#SettingsWindow.SettingsThemeMunfins .SubInfoLabel,#SettingsWindow.SettingsThemeMunfins .SectionTitleInlineLabel,#SettingsWindow.SettingsThemeMunfins .InlineSecondaryCheckboxLabel,#SettingsWindow.SettingsThemeMunfins .MultiCheckboxLabel,#SettingsWindow.SettingsThemeMunfins .MultiToggleLabel,#SettingsWindow.SettingsThemeMunfins .SettingsDropDown.QOLSettingsDropDown Label,#SettingsWindow.SettingsThemeMunfins .ValueInput > Label,#SettingsWindow.SettingsThemeMunfins .ValueInput #TextEntryContents,#SettingsWindow.SettingsThemeMunfins .ValueInput #PlaceholderText,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry Label,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry #PlaceholderText,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry #TextEntryContents,#SettingsWindow.SettingsThemeMunfins .ModalInstructions,#SettingsWindow.SettingsThemeMunfins .ConfigDiffSummary,#SettingsWindow.SettingsThemeMunfins .ConfigDiffDetails,#SettingsWindow.SettingsThemeMunfins TextEntry,.QOLThemeMunfins .QOLUnifiedModalSurface .ModalInstructions,.QOLThemeMunfins .QOLUnifiedModalSurface .ConfigDiffSummary,.QOLThemeMunfins .QOLUnifiedModalSurface .ConfigDiffDetails
+{
+	color: #eee9f8;
+}
+
+#SettingsWindow.SettingsThemeMunfins #SettingsTitleAccent,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem:hover Label,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem.Active Label,#SettingsWindow.SettingsThemeMunfins .FooterSupportTab.Active Label,#SettingsWindow.SettingsThemeMunfins .GroupHeader,#SettingsWindow.SettingsThemeMunfins .SectionTitle Label,#SettingsWindow.SettingsThemeMunfins .MainSectionTitle,#SettingsWindow.SettingsThemeMunfins .SupportTabSectionTitle,#SettingsWindow.SettingsThemeMunfins #MogTabSiteLinkLabel,#SettingsWindow.SettingsThemeMunfins #MogTabSiteLink:hover #MogTabSiteLinkLabel,.QOLThemeMunfins .QOLUnifiedModalSurface .ModalTitle,.QOLThemeMunfins .QOLUnifiedModalSurface .ConfigDiffTitle
+{
+	color: #b99cff;
+	text-shadow: 0px 0px 8px rgba(97, 19, 253, 0.44);
+}
+
+#SettingsWindow.SettingsThemeMunfins #SettingsTitle
+{
+	color: #ffffff;
+	text-shadow: 0px 0px 8px rgba(255, 255, 255, 0.18);
+}
+
+#SettingsWindow.SettingsThemeMunfins #ModVersionLabelTop
+{
+	visibility: collapse;
+	opacity: 0;
+}
+
+#SettingsWindow.SettingsThemeMunfins #SettingsHeaderMogLogo
+{
+	wash-color: none;
+	background-color: rgba(97, 19, 253, 0.10);
+	img-shadow: 0px 0px 11px rgba(97, 19, 253, 0.46);
+	brightness: 1.12;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroupRule,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailFooterRule,#SettingsWindow.SettingsThemeMunfins .RowSeparator,#SettingsWindow.SettingsThemeMunfins .PresetGridDividerLine,#SettingsWindow.SettingsThemeMunfins .SupportThanksRule
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(97, 19, 253, 0.02) ), color-stop( 0.50, rgba(97, 19, 253, 0.52) ), to( rgba(97, 19, 253, 0.02) ) );
+	box-shadow: fill rgba(97, 19, 253, 0.18) 0px 0px 8px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingRow:hover
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(97, 19, 253, 0.10) ), color-stop( 0.48, rgba(97, 19, 253, 0.045) ), to( rgba(97, 19, 253, 0.00) ) );
+	border-color: rgba(97, 19, 253, 0.18);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem.Active,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem.Active:hover
+{
+	background-color: rgba(97, 19, 253, 0.00);
+	border-color: rgba(97, 19, 253, 0.00);
+	box-shadow: none;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem .TabIcon,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem:hover .TabIcon,#SettingsWindow.SettingsThemeMunfins .SettingsTabRailGroup .TabItem.Active .TabIcon,#SettingsWindow.SettingsThemeMunfins .FooterVersionIcon,#SettingsWindow.SettingsThemeMunfins .BuildSaveConfirmActionIcon,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintIcon,#SettingsWindow.SettingsThemeMunfins .SupportHeroBulletMarker,#SettingsWindow.SettingsThemeMunfins .ConsoleTabNoteMarker,#SettingsWindow.SettingsThemeMunfins .MogTabNoteMarker
+{
+	wash-color: #8e5dff;
+	img-shadow: 0px 0px 8px rgba(97, 19, 253, 0.36);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingsDropDown.QOLSettingsDropDown,#SettingsWindow.SettingsThemeMunfins .ValueInput,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry,#SettingsWindow.SettingsThemeMunfins .SettingButtonGroup,#SettingsWindow.SettingsThemeMunfins .SegmentBtn,#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(20, 16, 30, 0.88) ), to( rgba(4, 4, 7, 0.84) ) );
+	border-color: rgba(97, 19, 253, 0.24);
+	box-shadow: inset rgba(190, 157, 255, 0.08) 0px 1px 0px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingsDropDown.QOLSettingsDropDown:hover,#SettingsWindow.SettingsThemeMunfins .ValueInput:focus,#SettingsWindow.SettingsThemeMunfins .ConfigTextEntry:focus,#SettingsWindow.SettingsThemeMunfins .SettingButtonGroup:hover,#SettingsWindow.SettingsThemeMunfins .SettingActionBtn:hover,#SettingsWindow.SettingsThemeMunfins .SectionTitleActionBtn:hover,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn:hover
+{
+	border-color: rgba(142, 93, 255, 0.56);
+	box-shadow: inset rgba(190, 157, 255, 0.14) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.18) 0px 0px 12px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.selected,#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.IsSelected,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn.Active,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn.selected,#SettingsWindow.SettingsThemeMunfins .RuntimeOnOffBtn.Active,#SettingsWindow.SettingsThemeMunfins .SegmentBtn.Active,#SettingsWindow.SettingsThemeMunfins .LanguageSwitchBtn.Active,#SettingsWindow.SettingsThemeMunfins .ThemeSwitchBtn.Active
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(97, 19, 253, 0.36) ), to( rgba(31, 10, 83, 0.86) ) );
+	border-color: rgba(142, 93, 255, 0.58);
+	box-shadow: inset rgba(217, 204, 255, 0.18) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.22) 0px 0px 13px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.selected Label,#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.IsSelected Label,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn.Active Label,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn.selected Label,#SettingsWindow.SettingsThemeMunfins .RuntimeOnOffBtn.Active Label,#SettingsWindow.SettingsThemeMunfins .SegmentBtn.Active Label,#SettingsWindow.SettingsThemeMunfins .LanguageSwitchBtn.Active Label,#SettingsWindow.SettingsThemeMunfins .ThemeSwitchBtn.Active Label
+{
+	color: #ffffff;
+	text-shadow: 0px 0px 8px rgba(190, 157, 255, 0.40);
+}
+
+#SettingsWindow.SettingsThemeMunfins Slider.HorizontalSlider #SliderTrackProgress,#SettingsWindow.SettingsThemeMunfins SlottedSlider.HorizontalSlider #SliderTrackProgress
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(185, 156, 255, 0.66) ), color-stop( 0.60, #8e5dff ), to( #6113fd ) );
+}
+
+#SettingsWindow.SettingsThemeMunfins .PalettePickerSwatch.Active
+{
+	border-color: rgba(185, 156, 255, 0.78);
+	box-shadow: inset rgba(255, 255, 255, 0.22) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.30) 0px 0px 10px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingActionBtn,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn,#SettingsWindow.SettingsThemeMunfins .SectionTitleActionBtn,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn,#SettingsWindow.SettingsThemeMunfins .ConfigPresetBtn,#SettingsWindow.SettingsThemeMunfins .ConfigApplyBtn,#SettingsWindow.SettingsThemeMunfins .ConfigCopyBtn,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtn,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab,#SettingsWindow.SettingsThemeMunfins .ModalBtnApply,#SettingsWindow.SettingsThemeMunfins .ModalBtnClose,#SettingsWindow.SettingsThemeMunfins .ModalBtnCloseSingle,.QOLThemeMunfins .QOLUnifiedModalPrimary
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(21, 16, 34, 0.92) ), to( rgba(5, 4, 8, 0.90) ) );
+	border-color: rgba(97, 19, 253, 0.26);
+	box-shadow: inset rgba(190, 157, 255, 0.10) 0px 1px 0px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingActionBtn:hover,#SettingsWindow.SettingsThemeMunfins .SegmentBtn:hover,#SettingsWindow.SettingsThemeMunfins .MultiToggleBtn:hover,#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn:hover,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn:hover,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink:hover,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtn:hover,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn:hover,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab:hover,#SettingsWindow.SettingsThemeMunfins .ModalBtnApply:hover,.QOLThemeMunfins .QOLUnifiedModalPrimary:hover
+{
+	border-color: rgba(142, 93, 255, 0.62);
+	box-shadow: inset rgba(217, 204, 255, 0.16) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.23) 0px 0px 14px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingActionBtn Label,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn Label,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink Label,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtnTitle,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn Label,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab Label,.QOLThemeMunfins .QOLUnifiedModalPrimary Label
+{
+	color: #f2edff;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SupportCtaBtnHint
+{
+	color: rgba(242, 237, 255, 0.68);
+}
+
+#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab .FooterSaveBuildIcon,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins #ConfigSaveBuildBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .SettingActionBtn.SuccessState .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn.SuccessState .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn:hover .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn:hover .DL4DReminderTestIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn.SuccessState .DL4DReminderTestIcon
+{
+	wash-color: #8e5dff;
+	img-shadow: 0px 0px 8px rgba(97, 19, 253, 0.36);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingChangedBadge,#SettingsWindow.SettingsThemeMunfins .SettingRow.HasChanged .SettingLabel,#SettingsWindow.SettingsThemeMunfins .SettingRow.HasChanged:hover .SettingLabel,#SettingsWindow.SettingsThemeMunfins .ValueSavedFlash
+{
+	color: #b99cff;
+	text-shadow: 0px 0px 8px rgba(97, 19, 253, 0.42);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingChangedBadge
+{
+	background-color: #6113fd;
+	box-shadow: fill rgba(97, 19, 253, 0.34) 0px 0px 5px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingRow.HasChanged:hover .SettingChangedBadge.Visible
+{
+	box-shadow: fill rgba(97, 19, 253, 0.38) 0px 0px 7px 0px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingToggleBtn.ToggleOn #handle,#SettingsWindow.SettingsThemeMunfins .SectionInlineToggleBtn.ToggleOn #handle
+{
+	background-image: url("s2r://panorama/images/qollock/switch_handle_on_white.vsvg");
+	wash-color: #8e5dff;
+	img-shadow: 0px 0px 8px rgba(97, 19, 253, 0.38);
+}
+
+#SettingsWindow.SettingsThemeMunfins .SettingToggleBtn.ToggleOn .SwitchButton,
+#SettingsWindow.SettingsThemeMunfins .SectionInlineToggleBtn.ToggleOn .SwitchButton
+{
+	border: 1px solid rgba(142, 93, 255, 0.34);
+}
+
+#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.selected .TickBox,
+#SettingsWindow.SettingsThemeMunfins .MultiCheckboxBtn.IsSelected .TickBox
+{
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #6F47CC ), to( #8E5DFF ) );
+	border: 1px solid rgba(142, 93, 255, 0.60);
+	box-shadow: inset rgba(142, 93, 255, 0.10) 0px 0px 0px 2px;
+}
+
+#SettingsWindow.SettingsThemeMunfins .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.selected,
+#SettingsWindow.SettingsThemeMunfins .SectionTitleCheckboxToggle.InlineSecondaryCheckboxBtn.MultiCheckboxBtn.IsSelected
+{
+	border-color: rgba(142, 93, 255, 0.30);
+	background-color: rgba(142, 93, 255, 0.06);
+	box-shadow: inset rgba(142, 93, 255, 0.08) 0px 0px 0px 1px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins:hover,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins.PresetActive,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins.PresetActive:hover
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( #15101f ), color-stop( 0.50, #050407 ), to( #190548 ) );
+	border-color: rgba(97, 19, 253, 0.60);
+	box-shadow: inset rgba(190, 157, 255, 0.18) 0px 1px 0px 0px, inset rgba(97, 19, 253, 0.38) 0px -1px 0px 0px, fill rgba(97, 19, 253, 0.24) 0px 0px 13px 0px;
+}
+
+#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins Label,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins:hover Label,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins.PresetActive Label,#SettingsWindow .PresetGridBtn.PresetGridBtn_Munfins.PresetActive:hover Label
+{
+	color: #f5f0ff;
+	text-shadow: 0px 0px 8px rgba(97, 19, 253, 0.48);
+}
+
 /* ---- Secret Dev tab trigger (FooterVersionLabel) ---- */
 
 .FooterVersionLabel:hover .FooterVersionIcon
