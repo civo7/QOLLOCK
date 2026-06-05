@@ -1099,6 +1099,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     };
     const REJUV_DURATION_SEC = 240;
     const BRIDGE_DURATION_SEC = 300;
+    const BUFF_0TO1_LOCKOUT_SEC = 120;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 500;
     const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 2000;
@@ -10811,6 +10812,7 @@ function GetUIRoot() {
             lastMidBossActive: false,
             buffStartTime: 0,
             buffCounter: 0,
+            lastBuff0to1GameSec: 0,
             lastSec: -1,
             lastGlobalSec: -1,
             lastRuntimeSec: -1,
@@ -11122,6 +11124,7 @@ function GetUIRoot() {
         state.lastScanFound = false;
         state.lastRejuvChargeCount = 0;
         state.lastMidBossActive = false;
+        state.lastBuff0to1GameSec = 0;
         state.lastSec = -1;
         state.lastGlobalSec = -1;
         state.lastRuntimeSec = -1;
@@ -11367,7 +11370,6 @@ function GetUIRoot() {
         if (nowMs >= (state.nextScanMs || 0)) {
             var found = RejuvHasAnyCharges(state, root, nowMs);
             var chargeCount = RejuvGetChargeCount(state, root, nowMs);
-            var chargeIncreased = chargeCount > (state.lastRejuvChargeCount || 0);
             var midBossActive = RejuvIsMidBossSpawned(state, root, nowMs);
 
             var phaseAdvanced = false;
@@ -11382,8 +11384,16 @@ function GetUIRoot() {
                 var targetIdxFallback = state.claimCount > 2 ? 3 : state.claimCount;
                 RejuvStartPhaseManual(state, root, targetIdxFallback, nowSec, nowMs);
             }
-            if (chargeIncreased) {
-                RejuvStartBuff(state, root, nowSec, true);
+            // Only start buff on a 0->1 charge transition, and enforce a
+            // 2-minute lockout so the timer can't be reset by a second 0->1
+            // within the same window (buff lasts 4 minutes, so this is safe).
+            var chargeChangedFrom0to1 = ((state.lastRejuvChargeCount || 0) === 0 && chargeCount >= 1);
+            if (chargeChangedFrom0to1) {
+                var buffLockoutUntilSec = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
+                if (nowSec >= buffLockoutUntilSec) {
+                    state.lastBuff0to1GameSec = nowSec;
+                    RejuvStartBuff(state, root, nowSec, true);
+                }
             }
             state.lastScanFound = found;
             state.lastRejuvChargeCount = chargeCount;
