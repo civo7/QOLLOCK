@@ -15046,12 +15046,23 @@ function GetUIRoot() {
         }
 
         var opened = false;
-        try {
-            if (typeof CitadelOpenUpgradeShop === "function") {
-                CitadelOpenUpgradeShop();
-                opened = true;
-            }
-        } catch (e0) {}
+        // open_item_shop is the only confirmed working path in the current game build.
+        // It routes via CitadelConCommand -> RunConCommand -> Engine ClientCmd,
+        // which sends the predicted command to the server's ClientCommand dispatcher.
+        // CitadelOpenUpgradeShop is a type-0 notification event (native->JS), not an
+        // action. CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist
+        // in any decompiled DLL (0 occurrences in client.dll, server.dll).
+        if (!opened) {
+            opened = DispatchCitadelConCommand("open_item_shop");
+        }
+        if (!opened) {
+            try {
+                if (typeof CitadelOpenUpgradeShop === "function") {
+                    CitadelOpenUpgradeShop();
+                    opened = true;
+                }
+            } catch (e0) {}
+        }
         if (!opened) {
             try {
                 if (typeof CitadelEnterUpgradeShop === "function") {
@@ -15103,10 +15114,16 @@ function GetUIRoot() {
         // (e.g. during launch transition). Defer until connected.
         if (!isConnectedToHideout(root)) return false;
 
-        // Shop functions (CitadelEnterUpgradeShop etc.) are no longer available
-        // in this game build. Wait passively for the user to open the shop
-        // themselves — don't consume retries while the shop is closed.
+        // Shop is not open and browse popup is not visible. Try to open the shop
+        // via the open_item_shop client command (routes through CitadelConCommand ->
+        // RunConCommand -> Engine ClientCmd -> server ClientCommand dispatcher).
+        // This is the only confirmed working shop-open path in the current build.
+        // CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist in any DLL,
+        // and CitadelOpenUpgradeShop is a type-0 notification event (native->JS).
         if (!IsHudClassActive(root, "gShopOpen") && !IsBrowseBuildsPopupOpen(root)) {
+            if (ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+                DispatchCitadelConCommand("open_item_shop");
+            }
             return false;
         }
 
