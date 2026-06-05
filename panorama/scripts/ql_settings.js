@@ -17825,7 +17825,7 @@ function BuildCommunityPresetEntries() {
     var entries = [];
     entries.push({ label: "Sneed", preset: "Sneed", presetExport: "[QOL-2-6-1]:AjhwSUcjZMhMbm8lk6kxZCADh4clKBT4R0MG0EehYmRkZIxYQjZiCRlkLmIUxhgggwyAjCAcWFoyAicDy8HjgSWWYImlDQ8yZw54cREZZMiQkSFLouQDA0aGJZkAAChLZJQlMjL6KUtklCUy7lFKeV5FkSEDAAAA0AKIkJGtyMgUyP-PUjI" });
     entries.push({ label: "Basil", preset: "Basil" });
-    entries.push({ label: "Vegas", preset: "Vegas" });
+    entries.push({ label: "Vegas", preset: "Vegas", presetExport: "[QOL-3-1-3]:AjU0SxQjZMhMbk8lk6kBZCADh4clKBT5R0MGkEGhZGRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLZB5kzhwAAAAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkwKOU8ryKIkMGAAAAoAWgIyNbkZEpkP8fpQKQpAEJ" });
     entries.push({ label: "Poshy", preset: "Poshy" });
     entries.push({ label: "Goober", preset: "Goober" });
     entries.push({ label: "Piggy", preset: "Piggy", presetExport: "[QOL-3-0-1]:Aka0TQwjZMhMDs9hk5khZCADh4clKBSAR48lAIKiUmRkZI5YQjZiCZluAKBQxBgggwyAjCAcWFoyAieDU8TjwRJLZIklQQoyXwEAAIAMMmRMkCGToeSDAUKGJZkAMChLZJQlMjL6KUtklCUy4FFKeV71kGED6AAA0SLQkZGtyMgUyP-PUts" });
