@@ -10046,7 +10046,7 @@ function GetUIRoot() {
         state.nextMidBossLookupMs = 0;
         state.lastMinimapRenderSig = "";
         state._lastMidBossSpawned = undefined;
-        state._lastRejuvChargesChildCount = -1;
+        state._lastHadRejuvCharge = undefined;
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
@@ -10151,11 +10151,15 @@ function GetUIRoot() {
                 state.nextScanMs = 0; // force immediate full scan on change
             }
         }
-        var _rejuvCharges = IsPanelValid(state.cacheCharges) ? state.cacheCharges : null;
-        if (_rejuvCharges && typeof _rejuvCharges.GetChildCount === "function") {
-            var _cc = _rejuvCharges.GetChildCount();
-            if (_cc !== state._lastRejuvChargesChildCount) {
-                state._lastRejuvChargesChildCount = _cc;
+        // Rejuv charge detection via BHasClass on cached friendly/enemy panels.
+        // The game adds RejuvCount_N classes to these when rejuv is captured.
+        var _rejuvFriendly = IsPanelValid(state.cacheFriendly) ? state.cacheFriendly : null;
+        var _rejuvEnemy = IsPanelValid(state.cacheEnemy) ? state.cacheEnemy : null;
+        if (_rejuvFriendly || _rejuvEnemy) {
+            var _hasRejuv = (_rejuvFriendly && _rejuvFriendly.BHasClass && _rejuvFriendly.BHasClass("RejuvCount_1")) ||
+                            (_rejuvEnemy && _rejuvEnemy.BHasClass && _rejuvEnemy.BHasClass("RejuvCount_1"));
+            if (_hasRejuv !== state._lastHadRejuvCharge) {
+                state._lastHadRejuvCharge = _hasRejuv;
                 state.nextScanMs = 0; // force immediate full scan on change
             }
         }
