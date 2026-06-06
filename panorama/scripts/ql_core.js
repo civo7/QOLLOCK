@@ -10154,17 +10154,17 @@ function GetUIRoot() {
                 state.nextScanMs = 0; // force immediate full scan on change
             }
         }
-        // Rejuv capture detection via has_rejuv class on cached RejuvenatorTimer.
-        // Uses the same 0->1 transition + 2-minute lockout logic as the full
-        // scan path (see RejuvStartBuff at line ~10329).
+        // Per-tick rejuv capture detection via has_rejuv class on
+        // cached RejuvenatorTimer. Starts the buff timer directly on a
+        // 0->1 transition with a 2-minute lockout to prevent repeats.
         var _rejuvTimer = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
         if (_rejuvTimer && _rejuvTimer.BHasClass) {
             var _hasRejuvNow = _rejuvTimer.BHasClass("has_rejuv");
             if (_hasRejuvNow && !state._lastHadRejuvPerTick) {
-                // 0->1 transition detected — enforce 2-minute lockout
                 var _lockoutUntil = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
                 if (nowSec >= _lockoutUntil) {
-                    state.nextScanMs = 0; // force immediate full scan
+                    state.lastBuff0to1GameSec = nowSec;
+                    RejuvStartBuff(state, root, nowSec, true);
                 }
             }
             state._lastHadRejuvPerTick = _hasRejuvNow;
