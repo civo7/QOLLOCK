@@ -9735,6 +9735,7 @@ function GetUIRoot() {
             cacheCharges: null,
             cacheFriendly: null,
             cacheEnemy: null,
+            cacheRejuvTimer: null,
             cacheMidBossButton: null,
             panels: {}
         };
@@ -9970,6 +9971,7 @@ function GetUIRoot() {
             state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
             state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
             state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
+            state.cacheRejuvTimer = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorTimer") : null;
         }
 
         var chargeCount = Math.max(
@@ -10046,11 +10048,12 @@ function GetUIRoot() {
         state.nextMidBossLookupMs = 0;
         state.lastMinimapRenderSig = "";
         state._lastMidBossSpawned = undefined;
-        state._lastHadRejuvCharge = undefined;
+        state._lastHadRejuvPerTick = false;
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
         state.cacheEnemy = null;
+        state.cacheRejuvTimer = null;
         state.cacheMidBossButton = null;
         if (Number(REJUV_SEQ[0].dur) <= 0) {
             RejuvShowSpawn(state, root);
@@ -10151,17 +10154,20 @@ function GetUIRoot() {
                 state.nextScanMs = 0; // force immediate full scan on change
             }
         }
-        // Rejuv charge detection via BHasClass on cached friendly/enemy panels.
-        // The game adds RejuvCount_N classes to these when rejuv is captured.
-        var _rejuvFriendly = IsPanelValid(state.cacheFriendly) ? state.cacheFriendly : null;
-        var _rejuvEnemy = IsPanelValid(state.cacheEnemy) ? state.cacheEnemy : null;
-        if (_rejuvFriendly || _rejuvEnemy) {
-            var _hasRejuv = (_rejuvFriendly && _rejuvFriendly.BHasClass && _rejuvFriendly.BHasClass("RejuvCount_1")) ||
-                            (_rejuvEnemy && _rejuvEnemy.BHasClass && _rejuvEnemy.BHasClass("RejuvCount_1"));
-            if (_hasRejuv !== state._lastHadRejuvCharge) {
-                state._lastHadRejuvCharge = _hasRejuv;
-                state.nextScanMs = 0; // force immediate full scan on change
+        // Rejuv capture detection via has_rejuv class on cached RejuvenatorTimer.
+        // Uses the same 0->1 transition + 2-minute lockout logic as the full
+        // scan path (see RejuvStartBuff at line ~10329).
+        var _rejuvTimer = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
+        if (_rejuvTimer && _rejuvTimer.BHasClass) {
+            var _hasRejuvNow = _rejuvTimer.BHasClass("has_rejuv");
+            if (_hasRejuvNow && !state._lastHadRejuvPerTick) {
+                // 0->1 transition detected — enforce 2-minute lockout
+                var _lockoutUntil = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
+                if (nowSec >= _lockoutUntil) {
+                    state.nextScanMs = 0; // force immediate full scan
+                }
             }
+            state._lastHadRejuvPerTick = _hasRejuvNow;
         }
 
         // Fast-path early-exit: skip all panel lookups and class checks
