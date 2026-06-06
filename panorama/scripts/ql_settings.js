@@ -1057,7 +1057,6 @@ var gArcadeOnDeathSyncFns = [];
 var gSettingsUiBuilt = false;
 var gUserEditRevision = 0;
 var gLastSavedConfigRaw = "";
-var gMissingRuSettingsStrings = {};
 var gConfigFeedbackLabel = null;
 var gConfigFeedbackClearToken = 0;
 var gSettingsListRefreshToken = 0;
@@ -9122,10 +9121,6 @@ function LocalizeSettingsText(text, force) {
         if (lang === SETTINGS_LANGUAGE_SPANISH) return NormalizeLatinSettingsText(translated);
         return translated;
     }
-    if (lang === SETTINGS_LANGUAGE_RUSSIAN && SETTINGS_RU_MISSING_TRANSLATION_LOG && !gMissingRuSettingsStrings[raw] && /[A-Za-z]/.test(raw)) {
-        gMissingRuSettingsStrings[raw] = true;
-        $.Msg("[QOLLock][SettingsLang] missing_ru_translation key=" + raw);
-    }
     return raw;
 }
 
@@ -9195,7 +9190,6 @@ function ResolveArcadeDefaultDifficultyId() {
     return "MEDIUM";
 }
 
-const SETTINGS_RU_MISSING_TRANSLATION_LOG = false;
 const HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
 const FLAPPY_BAT_FLAP_SOUND_EVENT = "QOL.FlappyBat.Flap";
 const FLAPPY_BAT_FAIL_SOUND_EVENTS = [
