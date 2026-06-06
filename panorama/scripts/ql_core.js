@@ -30150,7 +30150,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("combatStatus", function() {
                     var _ps = PerfStart();
-                    UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["combatStatus"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.combat_status", _ps);
                 });
             });
@@ -30378,6 +30383,21 @@ function GetUIRoot() {
         stateKeys: ["rejuvState", "rejuvWasDisabled", "minimapObjectiveBuffClassCache",
                     "minimapObjectiveBuffBridgeLeftClassCache", "minimapObjectiveBuffBridgeRightClassCache",
                     "minimapObjectiveRejuvClassCache", "minimapObjectiveScaleSig"]
+    });
+
+    QOL_REGISTER_FEATURE("combatStatus", {
+        configKeys: ["ENABLE_COMBAT_STATUS", "ENABLE_COMBAT_INDICATOR"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS") ||
+                   IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["combatStatus", "combatStatusAlertProbeMisses",
+                    "combatIndicatorDebugLastSig", "combatIndicatorDebugNextMs"]
     });
 
 })();
