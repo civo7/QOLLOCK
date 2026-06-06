@@ -11842,19 +11842,6 @@ function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     var cfgQueued = LocalizeSettingsText("QUEUED", true);
     var cfgFailed = LocalizeSettingsText("FAILED", true);
 
-    if (!SETTINGS_SAVE_LOADER_ENABLED) {
-        saveBtn.RemoveClass("SuccessState");
-        saveBtn.AddClass("FailureState");
-        saveLbl.text = cfgFailed;
-        SetLocalizedConfigFeedbackMessage(SETTINGS_SAVE_DISABLED_WARNING, "error", 2600);
-        $.Schedule(0.6, function() {
-            if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
-            saveBtn.RemoveClass("FailureState");
-            saveLbl.text = cfgSave;
-        });
-        return;
-    }
-
     if (typeof onBeforeQueue === "function") {
         try { onBeforeQueue(); } catch (e0) {}
     }
