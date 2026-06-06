@@ -29368,7 +29368,9 @@ function GetUIRoot() {
 
         gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
         gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_SPM_STATLOCKER))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
-        gates.unspent = (gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_UNSPENT_LANE))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
+        // WHY: unspent processes 1 player per tick — light enough to run every tick
+        // instead of being gated by the 5-phase scheduler (which would limit it to 1Hz).
+        gates.unspent = gates.unspentActive || (!gates.unspentActive && !State.unspentWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_UNSPENT_LANE));
         gates.nicknames = (gates.nicknamesActive || !!State.topbarNicknamesWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_REJUV_NICKNAMES));
         gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         gates.onDeathArcade = gates.onDeathArcadeActive || State.onDeathArcadeRuntimeWasActive || State.onDeathArcadeWasDead;
@@ -30611,7 +30613,7 @@ function GetUIRoot() {
 
     QOL_REGISTER_FEATURE("unspent", {
         configKeys: ["ENABLE_UNSPENT_SOULS"],
-        bucket: 2, phase: 2,
+        bucket: 2, phase: -1,  // -1 = always-run, not gated by 5-phase scheduler
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"); },
         update: function(root, cfg, nowMs) { UpdateUnspentSouls(root, nowMs, cfg); },
         stateKeys: ["unspentNextSampleMs", "unspentPanelCacheNextMs", "unspentPlayerPanels",
