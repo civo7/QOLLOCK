@@ -8837,13 +8837,19 @@ function GetUIRoot() {
             // DEBUG: trace unspent calculation
             if (State._dbgUnspentNextLogMs === undefined) State._dbgUnspentNextLogMs = 0;
             if (nowMs >= State._dbgUnspentNextLogMs) {
-                State._dbgUnspentNextLogMs = nowMs + 2000;
-                $.Msg("[QOLLock][DEBUG][unspent] player[" + i + "] totalNetWorth=" +
-                    totalNetWorth + " spentSouls=" + spentSouls +
-                    " unspent=" + unspentSouls +
-                    " tierCounts=" + JSON.stringify(
-                        needsTierScan ? tierCounts : "(cached)") +
-                    " childCount=" + (modsContainer ? (modsContainer.GetChildCount ? modsContainer.GetChildCount() : "?") : "no container"));
+                State._dbgUnspentNextLogMs = nowMs + 4000;
+                var _dbgParts = [];
+                _dbgParts.push("cursor=" + cursor + " batch=[" + cursor + "-" + (batchEnd-1) + "] sampleMs=" + (nowMs - (State.unspentNextSampleMs || 0) - UNSPENT_SAMPLE_INTERVAL_MS));
+                for (var _dbgJ = cursor; _dbgJ < batchEnd; _dbgJ++) {
+                    var _dbgP = IsPanelValid(State.unspentPlayerPanels[_dbgJ]) ? State.unspentPlayerPanels[_dbgJ] : null;
+                    if (!_dbgP) continue;
+                    var _dbgNw = GetSoulValueFromLabels(
+                        State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[_dbgJ] : null,
+                        State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[_dbgJ] : null);
+                    var _dbgSp = Number(State.unspentCachedSpentSouls[_dbgJ]) || 0;
+                    _dbgParts.push("p" + _dbgJ + ":nw=" + _dbgNw + "s=" + _dbgSp + "u=" + (_dbgNw - _dbgSp));
+                }
+                $.Msg("[QOLLock][DEBUG][unspent] " + _dbgParts.join(" "));
             }
 
             var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
