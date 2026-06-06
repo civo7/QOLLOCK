@@ -29484,6 +29484,11 @@ function GetUIRoot() {
             }
             var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
             var h = (Number(img.actuallayoutheight) || 0) * 10.0;
+            if (retries === 0 || retries === 5 || retries === 29) {
+                $.Msg("[QOLLock][DEBUG][imgchat] tryScale retry=" + retries +
+                    " w=" + w.toFixed(1) + " h=" + h.toFixed(1) +
+                    " actualw=" + img.actuallayoutwidth + " actualh=" + img.actuallayoutheight);
+            }
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
@@ -29498,6 +29503,7 @@ function GetUIRoot() {
                 retries++;
                 $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
             } else {
+                $.Msg("[QOLLock][DEBUG][imgchat] tryScale gave up after " + retries + " retries");
                 msgContainer.style.opacity = 1;
             }
         }
@@ -29524,6 +29530,10 @@ function GetUIRoot() {
             }
             var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
             var h = (Number(img.actuallayoutheight) || 0) * 10.0;
+            if (retries === 0 || retries === 5 || retries === 29) {
+                $.Msg("[QOLLock][DEBUG][imgchat] tryScale(bottom) retry=" + retries +
+                    " w=" + w.toFixed(1) + " h=" + h.toFixed(1));
+            }
             if (w > 1 && h > 1) {
                 var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
                 img.style.width = Math.round(w * scale) + "px";
@@ -29537,6 +29547,7 @@ function GetUIRoot() {
                 retries++;
                 $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
             } else {
+                $.Msg("[QOLLock][DEBUG][imgchat] tryScale(bottom) gave up after " + retries + " retries");
                 img.DeleteAsync(0);
             }
         }
