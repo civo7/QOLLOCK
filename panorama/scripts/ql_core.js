@@ -10045,6 +10045,8 @@ function GetUIRoot() {
         state.lastChargeCountValue = 0;
         state.nextMidBossLookupMs = 0;
         state.lastMinimapRenderSig = "";
+        state._lastMidBossSpawned = undefined;
+        state._lastRejuvChargesChildCount = -1;
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
@@ -10134,6 +10136,28 @@ function GetUIRoot() {
                 activeObjectiveZoomSig
             ].join("|");
             state._cachedConfigRef = State.lastConfig;
+        }
+
+        // Per-tick cheap change detection — catches mid-boss kills and rejuv
+        // captures within ~200ms instead of waiting for the 3s scan interval.
+        // Uses BHasClass and GetChildCount on cached panels (property reads,
+        // no tree walks). Only fires when caches are already populated by a
+        // prior full scan.
+        var _mbBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
+        if (_mbBtn) {
+            var _mbSpawned = !!(_mbBtn.BHasClass && _mbBtn.BHasClass("midboss_spawned"));
+            if (_mbSpawned !== state._lastMidBossSpawned) {
+                state._lastMidBossSpawned = _mbSpawned;
+                state.nextScanMs = 0; // force immediate full scan on change
+            }
+        }
+        var _rejuvCharges = IsPanelValid(state.cacheCharges) ? state.cacheCharges : null;
+        if (_rejuvCharges && typeof _rejuvCharges.GetChildCount === "function") {
+            var _cc = _rejuvCharges.GetChildCount();
+            if (_cc !== state._lastRejuvChargesChildCount) {
+                state._lastRejuvChargesChildCount = _cc;
+                state.nextScanMs = 0; // force immediate full scan on change
+            }
         }
 
         // Fast-path early-exit: skip all panel lookups and class checks
