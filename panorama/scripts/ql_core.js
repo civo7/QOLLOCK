@@ -29471,7 +29471,10 @@ function GetUIRoot() {
         textContainer.style.maxWidth = "9999px";
         var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
-        img.SetImage(url);
+        // Use .src property instead of SetImage() — SetImage() has a file
+        // extension check that rejects HTTP URLs, but the engine's internal
+        // LoadImageFromURL (panorama.dll) does support http/https.
+        img.src = url;
         img.style.uiScale = "10%";
         var retries = 0;
         function tryScale() {
@@ -29511,7 +29514,10 @@ function GetUIRoot() {
         textContainer.style.maxWidth = "9999px";
         var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
-        img.SetImage(url);
+        // Use .src property instead of SetImage() — SetImage() has a file
+        // extension check that rejects HTTP URLs, but the engine's internal
+        // LoadImageFromURL (panorama.dll) does support http/https.
+        img.src = url;
         img.style.uiScale = "10%";
         var retries = 0;
         function tryScale() {
