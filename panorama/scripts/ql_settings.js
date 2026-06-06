@@ -11277,6 +11277,14 @@ function DecodeBase64(str) {
     return "";
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPACT SCHEMA DEFINITIONS MOVED to ql_shared_presets.js
+// See: QOL_COMPACT_SCHEMA_V2 … V60, QOL_COMPACT_SCHEMA_REGISTRY,
+//      QOL_COMPACT_SCHEMA_UTILS.*
+// The local definitions below are retained as comments for reference
+// during the transition. They will be removed in a follow-up commit.
+// ═══════════════════════════════════════════════════════════════════════════
+/* SCHEMA MOVED — BEGIN
 const COMPACT_SCHEMA_V2 = [
     { key: "MINIMAP_SMALL_SIZE", min: 200, max: 1000, step: 5 },
     { key: "MINIMAP_BASE_OPACITY", min: 0, max: 1, step: 0.05 },
@@ -12349,6 +12357,20 @@ function AreCompactSemversWireCompatible(expectedSemver, resolvedSemver) {
         return false;
     }
 }
+SCHEMA MOVED — END */
+
+// ── Compatibility aliases (commit 1.1: redirect to shared module) ──
+// These allow existing code to continue working without changes.
+// They will be replaced with direct QOL_COMPACT_SCHEMA_UTILS.* calls in commit 1.2.
+var COMPACT_SCHEMA_REGISTRY = QOL_COMPACT_SCHEMA_REGISTRY;
+var COMPACT_SCHEMA_WIRE_TO_SEMVER = QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
+var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
+function GetCompactSchema(semver)      { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(semver); }
+function GetCompactWireVersion(semver) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(semver); }
+function ResolveCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
+function AreCompactSemversWireCompatible(a, b) { return QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible(a, b); }
+
+// ── Serialization helpers (remain in ql_settings.js — export/import specific) ──
 
 function GetStepDecimals(step) {
     if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.GetStepDecimals === "function") {

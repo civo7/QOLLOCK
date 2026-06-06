@@ -3956,6 +3956,15 @@ function ExpressShotLog(msg) {
         return "";
     }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// BUILD PAYLOAD COMPACT SCHEMA — MOVED to ql_shared_presets.js
+// The build payload schema is identical to the export/import schema.
+// See: QOL_COMPACT_SCHEMA_V2 … V60, QOL_COMPACT_SCHEMA_REGISTRY,
+//      QOL_COMPACT_SCHEMA_UTILS.*
+// The local definitions below are retained as comments for reference
+// during the transition. They will be removed in a follow-up commit.
+// ═══════════════════════════════════════════════════════════════════════════
+/* BUILD PAYLOAD SCHEMA MOVED — BEGIN
 const BUILD_CATEGORY_COMPACT_SCHEMA_V2 = [
     { key: "MINIMAP_SMALL_SIZE", min: 200, max: 1000, step: 5 },
     { key: "MINIMAP_BASE_OPACITY", min: 0, max: 1, step: 0.05 },
@@ -5102,6 +5111,16 @@ function AreBuildPayloadSemversWireCompatible(expectedSemver, resolvedSemver) {
         return false;
     }
 }
+BUILD PAYLOAD SCHEMA MOVED — END */
+
+// ── Compatibility aliases (commit 1.1: redirect to shared module) ──
+var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = QOL_COMPACT_SCHEMA_REGISTRY;
+var BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
+var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
+function GetBuildPayloadCompactSchema(s)     { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(s); }
+function GetBuildPayloadCompactWireVersion(s) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(s); }
+function ResolveBuildPayloadCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
+function AreBuildPayloadSemversWireCompatible(a, b) { return QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible(a, b); }
 
 function BuildPayloadFromBase64Url(urlStr) {
     if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.FromBase64Url === "function") {
