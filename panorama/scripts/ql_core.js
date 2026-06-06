@@ -29824,7 +29824,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("spm", function() {
                     var _ps = PerfStart();
-                    UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["spm"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.souls_per_min", _ps);
                 });
             });
@@ -29835,7 +29840,12 @@ function GetUIRoot() {
             (_b ? _b[2] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("unspent", function() {
                     var _ps = PerfStart();
-                    UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["unspent"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.unspent", _ps);
                 });
             });
@@ -29845,7 +29855,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("nicknames", function() {
                     var _ps = PerfStart();
-                    UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["nicknames"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.topbar_nicknames", _ps);
                 });
             });
@@ -29899,8 +29914,14 @@ function GetUIRoot() {
             (_b ? _b[0] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("coreRoot", function() {
                     var _ps = PerfStart();
-                    ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
-                    State.coreRootGateSig = _s.gates.sig;
+                    var _feat = QOL_FEATURE_REGISTRY["coreRoot"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                        State.coreRootGateSig = _s.gates.sig;
+                    } else {
+                        ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
+                        State.coreRootGateSig = _s.gates.sig;
+                    }
                     PerfEnd("loop.root_classes", _ps);
                 });
             });
@@ -29910,7 +29931,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("healthbarRuntimeHelpers", function() {
                     var _ps = PerfStart();
-                    UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
+                    var _feat = QOL_FEATURE_REGISTRY["healthbarRuntimeHelpers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
+                    }
                     PerfEnd("loop.healthbar_helpers", _ps);
                 });
             });
@@ -29981,7 +30007,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("colorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["colorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.colored_healthbar", _ps);
                 });
             });
@@ -29992,7 +30023,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("enemyColorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["enemyColorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.enemy_colored_healthbar", _ps);
                 });
             });
@@ -30003,7 +30039,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("allyColorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["allyColorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.ally_colored_healthbar", _ps);
                 });
             });
@@ -30536,6 +30577,144 @@ function GetUIRoot() {
             UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
         },
         stateKeys: ["statBonuses"]
+    });
+
+    // ── Batch C: features with significant State footprint ──
+
+    QOL_REGISTER_FEATURE("spm", {
+        configKeys: ["ENABLE_MIN_SOULS"],
+        bucket: 1, phase: 1,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"); },
+        update: function(root, cfg, nowMs) { UpdateSoulsPerMinute(root, nowMs, cfg); },
+        stateKeys: ["spm"]
+    });
+
+    QOL_REGISTER_FEATURE("unspent", {
+        configKeys: ["ENABLE_UNSPENT_SOULS"],
+        bucket: 2, phase: 2,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"); },
+        update: function(root, cfg, nowMs) { UpdateUnspentSouls(root, nowMs, cfg); },
+        stateKeys: ["unspentNextSampleMs", "unspentPanelCacheNextMs", "unspentPlayerPanels",
+                    "unspentModsContainers", "unspentDisplayLabels",
+                    "unspentSoulValueLabelsPrimary", "unspentSoulValueLabelsFallback",
+                    "unspentCachedSpentSouls", "unspentModsChildCount",
+                    "unspentNextTierScanMs", "unspentLastDisplayText", "unspentWasDisabled"]
+    });
+
+    QOL_REGISTER_FEATURE("nicknames", {
+        configKeys: ["ENABLE_NICKNAMES"],
+        bucket: 1, phase: 0,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_NICKNAMES"); },
+        update: function(root, cfg, nowMs) { UpdateTopBarNicknames(root, nowMs, cfg); },
+        stateKeys: ["topbarNicknamesWasEnabled", "topbarNicknamesNextRefreshMs",
+                    "topbarNicknamePlayers", "topbarNicknameLabels",
+                    "topbarNicknameSourceLabels", "topbarNicknameFallbackLabels",
+                    "topbarNicknameResolvedTexts", "topbarNicknameResolveStates",
+                    "topbarNicknameRetryNextMs", "topbarNicknamesWasInHideout",
+                    "topbarNicknamesLastClockSec"]
+    });
+
+    QOL_REGISTER_FEATURE("coreRoot", {
+        configKeys: ["HUD_TOP_BAR_ENABLED", "HUD_BOTTOM_BAR_ENABLED",
+                     "HUD_ITEMS_ENABLED", "HUD_SOULS_ENABLED", "HUD_SHOP_ENABLED",
+                     "ENABLE_CHAT", "ENABLE_CENTER_ESC", "ENABLE_CENTER_FRIENDS_LIST",
+                     "SUPPORT_16_10", "SUPPORT_4_3", "HUD_INDICATOR_SIZE",
+                     "ENABLE_SPECIALS", "LANGUAGE", "ENABLE_GAME_AUDIO",
+                     "DISABLE_DAMAGE_REPORT", "DISABLE_QUICK_BUY",
+                     "ENABLE_LEGACY_COOLDOWNS", "ENABLE_HIDE_TESTING_TOOLS",
+                     "ENABLE_FORCE_TESTING_TOOLS", "ENABLE_COMBAT_INDICATOR",
+                     "ENABLE_ZIP_BOOST", "ENABLE_STAT_BONUSES", "ENABLE_COMPASS",
+                     "ENABLE_ENHANCED_QUICKBUY", "ENABLE_SHOP_ITEM_NOTIFICATIONS",
+                     "ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_HERO_PURCHASE_POPUPS",
+                     "ENABLE_SHOW_BUILD_ID", "ENABLE_HUD_SHIFT"],
+        bucket: 0, phase: 0,
+        gate: function(cfg) { return true; },  // coreRoot always evaluates
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            ApplyCoreLoopRootClassesAndState(root, cfg, nowMs, hideoutConnected,
+                !!(State.lastRawConfig && State.lastRawConfig.length > 0));
+        },
+        stateKeys: ["rootClassCache", "coreRootStaticSig", "coreRootGateSig"]
+    });
+
+    QOL_REGISTER_FEATURE("healthbarRuntimeHelpers", {
+        configKeys: ["HEALTHBAR_TYPE", "ENABLE_MINIMALIST_HEALTHBAR",
+                     "ENABLE_FG_HEALTHBAR"],
+        bucket: 1, phase: 0,
+        gate: function(cfg) {
+            var ht = Number(cfg.HEALTHBAR_TYPE);
+            return ht === 1 || ht === 2 || ht === 3 || ht === 4 || ht === 5;
+        },
+        update: function(root, cfg, nowMs) {
+            var ht = Number(cfg.HEALTHBAR_TYPE) || 0;
+            UpdateHealthbarRuntimeHelpers(root, cfg, nowMs, ht,
+                ht === 1, ht === 2);
+        },
+        stateKeys: ["minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
+                    "minimalistHealthbarOffsetPanel",
+                    "playerHealthbarScaleOpacityRuntimeApplied",
+                    "fgHeroImageRuntimeStyleSig", "fgHeroRuntimeLevelPanel",
+                    "fgHeroRuntimeHeroPanel", "budhudWasEnabled", "budhudNextUpdateMs",
+                    "budhudLastColor", "budhudLastPercentText",
+                    "budhudCurrentLabelBaseColor", "budhudCurrentLabelBaseColorCaptured",
+                    "mcWasEnabled", "mcNextUpdateMs",
+                    "mcHeartsBlinkTimer", "mcLowHealthJiggleTimer", "mcHealingWaveTimer",
+                    "mcIsAfflicted", "mcCheckModifierNextMs",
+                    "mcHeartSlots", "mcHeartContainerImages", "mcHeartHealingImages",
+                    "mcHeartDeferredImages", "mcHeartFillImages",
+                    "mcHeartsCapacity", "mcHeartsRowCount", "mcLastVisibleHeartsCount",
+                    "mcBarrierHeartsPanels", "mcBarrierHeartContainerImages",
+                    "mcBarrierHeartFillImages", "mcBarrierHeartsCapacity",
+                    "mcCachedFoodIcons", "mcLoggedHealthContainerMiss",
+                    "coloredHealthbarBridgeValue", "playerHealthbarAccentColorSig",
+                    "playerHealthbarAccentColorPanels", "playerHealthbarAccentColorToken"]
+    });
+
+    QOL_REGISTER_FEATURE("colorWarning", {
+        configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
+                     "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
+        },
+        update: function(root, cfg) { UpdateColoredHealthbarRuntime(root, cfg); },
+        stateKeys: ["coloredHealthbarLastColor", "coloredHealthbarEnabledPrev",
+                    "coloredHealthbarPulseDir", "coloredHealthbarPulseVal",
+                    "coloredHealthbarZeroHeightStreak"]
+    });
+
+    QOL_REGISTER_FEATURE("enemyColorWarning", {
+        configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
+                     "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ENEMY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) { UpdateEnemyColoredHealthRuntime(root, cfg, nowMs); },
+        stateKeys: ["enemyColoredHealthPanelCache", "enemyColoredHealthPanelCacheNextMs",
+                    "enemyColoredHealthNextUpdateMs", "enemyColoredHealthEnabledPrev",
+                    "enemyColoredHealthPulseDir", "enemyColoredHealthPulseVal"]
+    });
+
+    QOL_REGISTER_FEATURE("allyColorWarning", {
+        configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
+                     "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ALLY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) { UpdateAllyColoredHealthRuntime(root, cfg, nowMs); },
+        stateKeys: ["allyColoredHealthPanelCache", "allyColoredHealthPanelCacheNextMs",
+                    "allyColoredHealthNextUpdateMs", "allyColoredHealthEnabledPrev",
+                    "allyColoredHealthPulseDir", "allyColoredHealthPulseVal"]
     });
 
 })();
