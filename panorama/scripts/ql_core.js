@@ -29991,7 +29991,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("laneWithParty", function() {
                     var _ps = PerfStart();
-                    UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["laneWithParty"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.lane_with_party", _ps);
                 });
             });
@@ -30154,7 +30159,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("unsecuredSouls", function() {
                     var _ps = PerfStart();
-                    UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["unsecuredSoulsTimer"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.unsecured_souls_overlay", _ps);
                 });
             });
@@ -30164,7 +30174,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("statBonuses", function() {
                     var _ps = PerfStart();
-                    UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["statBonuses"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.stat_bonuses", _ps);
                 });
             });
@@ -30514,6 +30529,61 @@ function GetUIRoot() {
                     "imagesInChatTopWatermark", "imagesInChatBottomWatermark",
                     "imagesInChatTopFullScanNextMs", "imagesInChatBottomFullScanNextMs",
                     "imagesInChatTopMessageCache", "imagesInChatBottomMessageCache"]
+    });
+
+    QOL_REGISTER_FEATURE("statlocker", {
+        configKeys: ["ENABLE_STATLOCKER"],
+        bucket: 2,
+        phase: 1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateStatlockerButtons(root, nowMs, cfg);
+        },
+        stateKeys: ["statlockerWasEnabled", "statlockerNextScanMs",
+                    "statlockerScanMisses", "statlockerCorePanels",
+                    "statlockerButtons"]
+    });
+
+    QOL_REGISTER_FEATURE("laneWithParty", {
+        configKeys: ["ENABLE_LANE_WITH_PARTY"],
+        bucket: 7,
+        phase: 2,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateLanePreferenceWithParty(root, cfg, nowMs);
+        },
+        stateKeys: ["laneWithPartyNextApplyMs", "laneWithPartyLastApplyMs",
+                    "laneWithPartyLastState"]
+    });
+
+    QOL_REGISTER_FEATURE("unsecuredSoulsTimer", {
+        configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
+        bucket: 6,
+        phase: 3,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["unsecuredSouls"]
+    });
+
+    QOL_REGISTER_FEATURE("statBonuses", {
+        configKeys: ["ENABLE_STAT_BONUSES"],
+        bucket: 6,
+        phase: 4,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["statBonuses"]
     });
 
 })();
