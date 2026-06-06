@@ -785,7 +785,7 @@
         { time: 3585, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 }
     ];
 
-    const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    const STORAGE_KEY = QOL_STORAGE_KEY;
     // WHY: probes the `joy_name` convar as a persistent key-value store that survives
     // game restarts — used as an additional config persistence channel alongside panel attrs.
     const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
@@ -1170,9 +1170,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
     const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
-    const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
+    const USER_EDIT_REV_ATTR = QOL_USER_EDIT_REV_ATTR;
     // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
-    const PANEL_ID_HUD = "Hud";
+    const PANEL_ID_HUD = QOL_PANEL_ID_HUD;
     const PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
     const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     const PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";

@@ -4,6 +4,15 @@
 var QOL_SCHEMA_SEMVER = "3.1.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
+// ---- Shared storage keys ----
+// Panel attribute used to persist config across sessions.
+var QOL_STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+// Revision counter attribute — monotonically increasing, used to pick the
+// most recent config when multiple panel copies exist.
+var QOL_USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
+// ID of the Hud panel — used as a secondary config storage target alongside root.
+var QOL_PANEL_ID_HUD = "Hud";
+
 // ---- Storage envelope helpers (Fix: schema-versioned config storage) ----
 // Wraps a config object for storage with schema version tag.
 // Produces: {"schema":"3.1.3","data":{...}}
