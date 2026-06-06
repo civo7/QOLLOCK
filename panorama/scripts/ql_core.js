@@ -29915,8 +29915,14 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("onDeathArcade", function() {
                     var _ps = PerfStart();
-                    UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
-                    State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    var _feat = QOL_FEATURE_REGISTRY["onDeathArcade"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    } else {
+                        UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
+                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    }
                     PerfEnd("loop.on_death_arcade", _ps);
                 });
             });
@@ -30216,7 +30222,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("damageNumbers", function() {
                     var _ps = PerfStart();
-                    UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["damageNumbers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
+                    }
                     PerfEnd("loop.damage_numbers", _ps);
                 });
             });
@@ -30247,7 +30258,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("imagesInChat", function() {
                     var _ps = PerfStart();
-                    UpdateImagesInChat(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["imagesInChat"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateImagesInChat(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.images_in_chat", _ps);
                 });
             });
@@ -30420,6 +30436,70 @@ function GetUIRoot() {
                     "zipBoostLastClassSig", "zipBoostLastTitle",
                     "zipBoostLastStatus", "zipBoostNextSourceSearchMs",
                     "zipBoostActiveEndMs"]
+    });
+
+    QOL_REGISTER_FEATURE("damageNumbers", {
+        configKeys: ["ENABLE_CLEAN_DAMAGE_INDICATORS", "ENABLE_HIDE_SMALL_NUMBERS",
+                     "ENABLE_HIDE_TROOPER_DAMAGE", "DAMAGE_NUMBER_OPACITY",
+                     "ENABLE_DAMAGE_FOUNTAIN", "ENABLE_CUMULATIVE_DMG"],
+        bucket: 5,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS") ||
+                   IsCfgEnabled(cfg, "ENABLE_HIDE_SMALL_NUMBERS") ||
+                   IsCfgEnabled(cfg, "ENABLE_HIDE_TROOPER_DAMAGE") ||
+                   IsCfgEnabled(cfg, "ENABLE_DAMAGE_FOUNTAIN") ||
+                   IsCfgEnabled(cfg, "ENABLE_CUMULATIVE_DMG") ||
+                   Number(cfg.DAMAGE_NUMBER_OPACITY) !== 1;
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateDamageNumbersRuntime(root, cfg, State.lastRawConfig, nowMs);
+        },
+        stateKeys: ["lastIndicatorConfigSig", "lastIndicatorHideModesSig",
+                    "indicatorPanelsCache", "indicatorMetaCache",
+                    "lastIndicatorCount", "lastItemCount",
+                    "damageNumbersRuntimeStyleSig"]
+    });
+
+    QOL_REGISTER_FEATURE("onDeathArcade", {
+        configKeys: ["ENABLE_ON_DEATH_GAMES", "ON_DEATH_GAME_MINESWEEPER",
+                     "ON_DEATH_GAME_BLACKJACK", "ON_DEATH_GAME_FLAPPY_BAT",
+                     "ON_DEATH_GAME_GRAVES_TRAINER", "ON_DEATH_GAME_ZERGGY_MANIA",
+                     "ON_DEATH_GAME_WHACK_A_REM"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            if (Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
+            return IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateOnDeathArcadeBridge(root, cfg, nowMs);
+        },
+        stateKeys: ["onDeathArcadeWasDead", "onDeathArcadeLastTriggerMs",
+                    "onDeathArcadeRespawnPanel", "onDeathArcadeRequestSerial",
+                    "onDeathArcadeRuntimeWasActive"]
+    });
+
+    QOL_REGISTER_FEATURE("imagesInChat", {
+        configKeys: ["ENABLE_IMAGES_IN_CHAT"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateImagesInChat(root, cfg);
+        },
+        stateKeys: ["imagesInChatTopNextSearchMs", "imagesInChatBottomNextSearchMs",
+                    "imagesInChatTopIdleMisses", "imagesInChatBottomIdleMisses",
+                    "imagesInChatTopWatermark", "imagesInChatBottomWatermark",
+                    "imagesInChatTopFullScanNextMs", "imagesInChatBottomFullScanNextMs",
+                    "imagesInChatTopMessageCache", "imagesInChatBottomMessageCache"]
     });
 
 })();
