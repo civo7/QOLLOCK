@@ -27641,12 +27641,22 @@ function GetUIRoot() {
                     gates.compassUltCd ||
                     gates.compassTargetShapesFast;
                 if (!compassHasWork) {
+                    // DEBUG: trace when compass loop goes idle
+                    if (State._dbgCompassIdleLogged !== false) {
+                        State._dbgCompassIdleLogged = false;
+                        $.Msg("[QOLLock][DEBUG][compass] loop idle — gates: overlay=" +
+                            gates.compassOverlay + " rotate=" + gates.compassMinimapRotate +
+                            " mirror=" + gates.compassItemMirror + " reloadCd=" + gates.compassReloadCd +
+                            " ultCd=" + gates.compassUltCd + " targetShapes=" + gates.compassTargetShapesFast);
+                    }
                     nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
                     var _cidle = DetectGlobalIdleState(root);
                     if (_cidle.level !== "active") {
                         nextDelaySec = Math.max(nextDelaySec, GetDynamicLoopInterval(nextDelaySec, _cidle));
                     }
                     return;
+                } else {
+                    State._dbgCompassIdleLogged = true;
                 }
             }
 
@@ -28276,6 +28286,14 @@ function GetUIRoot() {
         // Speed display is a child of the compass panel — when the compass is off,
         // the speed readout is meaningless. Only ENABLE_COMPASS gates the panel.
         var compassEnabled = (cfg.ENABLE_COMPASS === 1);
+        // DEBUG: trace compass visibility
+        if (compassEnabled !== State._dbgCompassEnabled) {
+            State._dbgCompassEnabled = compassEnabled;
+            $.Msg("[QOLLock][DEBUG][compass] compassEnabled=" + compassEnabled +
+                " ENABLE_COMPASS=" + cfg.ENABLE_COMPASS +
+                " ENABLE_COMPASS_SPEED=" + cfg.ENABLE_COMPASS_SPEED +
+                " coreRoot gate=" + (gates ? gates.coreRoot : "N/A"));
+        }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
             hideoutConnected ? 1 : 0,
@@ -28408,7 +28426,14 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "colored_healthbar_active", colorWarningEnabled && healthbarType === HEALTHBAR_TYPE_DEFAULT);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "clean_stacks_inactive", false);
+            // DEBUG: trace compass class application
+            var _prevCompassClass = State.rootClassCache.values ? State.rootClassCache.values["compass_active"] : undefined;
             SetPanelClassCached(root, State.rootClassCache, "compass_active", compassEnabled);
+            if (_prevCompassClass !== compassEnabled) {
+                $.Msg("[QOLLock][DEBUG][compass] SetPanelClassCached compass_active: " +
+                    _prevCompassClass + " -> " + compassEnabled +
+                    " (root.BHasClass=" + (root && root.BHasClass ? root.BHasClass("compass_active") : "N/A") + ")");
+            }
             SetPanelClassCached(root, State.rootClassCache, "simplify_compass_active", cfg.ENABLE_SIMPLIFY_COMPASS === 1);
             SetPanelClassCached(root, State.rootClassCache, "ult_cooldowns_active", cfg.ENABLE_ULT_COOLDOWNS === 1);
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_active", cfg.ENABLE_KEYBOARD_OVERLAY === 1);
@@ -29358,6 +29383,13 @@ function GetUIRoot() {
         // ENABLE_COMPASS_SPEED controls the speed readout inside the panel —
         // when the compass itself is off, there's nothing to display speed on.
         gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS");
+        // DEBUG: trace compass gate changes
+        if (gates.compassOverlay !== State._dbgCompassGate) {
+            State._dbgCompassGate = gates.compassOverlay;
+            $.Msg("[QOLLock][DEBUG][compass] gate compassOverlay=" + gates.compassOverlay +
+                " ENABLE_COMPASS=" + cfg.ENABLE_COMPASS +
+                " coreRoot=" + gates.coreRoot);
+        }
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
