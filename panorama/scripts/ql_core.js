@@ -28272,7 +28272,10 @@ function GetUIRoot() {
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
-        var compassEnabled = (cfg.ENABLE_COMPASS === 1) || (cfg.ENABLE_COMPASS_SPEED === 1);
+        // WHY: compass_active class controls the entire compass panel visibility.
+        // Speed display is a child of the compass panel — when the compass is off,
+        // the speed readout is meaningless. Only ENABLE_COMPASS gates the panel.
+        var compassEnabled = (cfg.ENABLE_COMPASS === 1);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
             hideoutConnected ? 1 : 0,
@@ -29351,8 +29354,10 @@ function GetUIRoot() {
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
-        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
-            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
+        // WHY: compass panel visibility is gated solely by ENABLE_COMPASS.
+        // ENABLE_COMPASS_SPEED controls the speed readout inside the panel —
+        // when the compass itself is off, there's nothing to display speed on.
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS");
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
