@@ -1281,27 +1281,34 @@ ProgressBar
 	width: 270px;
 	height: 114px;
 	horizontal-align: middle;
-	margin-top: 120px;
+	margin-top: 95px;
 	ui-scale: 120%;
 	padding: 0px 8px;
 	visibility: collapse;
+	ui-scale: 70%;
 	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
 	opacity-mask-scale: 100% 200%;
-	transition-property: border, background-color;
+	transition-property: border, background-color, margin-top, ui-scale;
 	transition-duration: 0.1s;
 }
 
-#IdolCashInMeter.in_range.captured,#IdolCashInMeter.in_range.capturing
+#IdolCashInMeter.captured,#IdolCashInMeter.capturing
 {
 	visibility: visible;
 }
 
-.gScoreboardOpen #IdolCashInMeter.in_range.captured,.gScoreboardOpen #IdolCashInMeter.in_range.capturing
+.gScoreboardOpen #IdolCashInMeter.captured,.gScoreboardOpen #IdolCashInMeter.capturing
 {
 	visibility: collapse;
 }
 
-#IdolCashInMeter.give_up_warning,#IdolCashInMeter.gave_up
+#IdolCashInMeter.in_range.captured,#IdolCashInMeter.in_range.capturing
+{
+	ui-scale: 100%;
+	margin-top: 120px;
+}
+
+#IdolCashInMeter.in_range.give_up_warning,#IdolCashInMeter.in_range.gave_up
 {
 	border: 2px solid #f9ec7430;
 	border-radius: 10px;
@@ -1313,14 +1320,15 @@ ProgressBar
 
 #IdolCashInMeter.captured
 {
-	opacity: 0.0;
+	opacity: 0;
 	animation-name: Idol_Captured;
 	animation-duration: 5s;
 	animation-iteration-count: 1;
 	animation-timing-function: ease-out;
+	visibility: visible;
 }
 
-#IdolCashInMeter.capturing
+#IdolCashInMeter.in_range.capturing
 {
 	animation-name: Idol_Capture_Pulse;
 	animation-duration: 1s;
@@ -1434,6 +1442,10 @@ ProgressBar
 #IdolCashInMeter #IdolIndicator .capturing .IdolTeamText
 {
 	opacity: 1;
+}
+
+#IdolCashInMeter #IdolIndicator .capturing .IdolTeamText.in_range
+{
 	animation-name: Idol_ProgressText_Capturing;
 	animation-duration: 0.2s;
 	animation-iteration-count: infinite;
@@ -1444,6 +1456,11 @@ ProgressBar
 {
 	color: offBlack;
 	text-shadow: 0px 0px 0px 3.0 offWhite;
+	opacity: 1;
+}
+
+.in_range #IdolCashInMeter #IdolIndicator .blocked .IdolTeamText
+{
 	animation-name: Idol_ProgressText_Blocked;
 	animation-duration: 0.3s;
 	animation-iteration-count: infinite;
@@ -1620,6 +1637,12 @@ ProgressBar
 	margin-bottom: 10px;
 	width: 100%;
 	flow-children: right;
+	visibility: collapse;
+}
+
+.in_range #IdolParticipants
+{
+	visibility: visible;
 }
 
 #IdolParticipants .IdolParticipantsColumn
@@ -1701,7 +1724,7 @@ Label.idol_time_warning
 	animation-iteration-count: infinite;
 }
 
-.give_up_warning Label.idol_time_warning,.gave_up Label.idol_time_warning
+.give_up_warning.in_range Label.idol_time_warning,.gave_up.in_range Label.idol_time_warning
 {
 	visibility: visible;
 }
