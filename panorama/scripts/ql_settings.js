@@ -21018,10 +21018,10 @@ function RenderCurrentTabContent(list) {
                     { label: "Get Filter" }
                 ], "Get Filter File Only");
             }
-            CreateRow(sectionParent, "Size", "PASSIVE_COOLDOWN_SIZE", "slider", 30, 60, 1);
-            CreateRow(sectionParent, "Opacity", "PASSIVE_COOLDOWN_OPACITY", "slider", 0, 1.0, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "PASSIVE_COOLDOWN_X", "slider", -50, 50, 1);
-            CreateRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "slider", -50, 50, 1);
+            CreateSliderRow(sectionParent, "Size", "PASSIVE_COOLDOWN_SIZE", "size_30_60");
+            CreateSliderRow(sectionParent, "Opacity", "PASSIVE_COOLDOWN_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "PASSIVE_COOLDOWN_X", "offset_n50_50");
+            CreateSliderRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "offset_n50_50");
         }, null, {
             titleCheckbox: {
                 label: "Advanced",
@@ -21033,14 +21033,14 @@ function RenderCurrentTabContent(list) {
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {
-            CreateRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "slider", 0.5, 2.0, 0.05, null);
-            CreateRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "slider", 0, 1.0, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "DAMAGE_IMPACT_X_OFFSET", "slider", -1000, 1000, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "DAMAGE_IMPACT_Y_OFFSET", "slider", -1000, 1000, 5, null);
+            CreateSliderRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "scale_0_5_2_0");
+            CreateSliderRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_IMPACT_X_OFFSET", "offset_n1000_1000");
+            CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_IMPACT_Y_OFFSET", "offset_n1000_1000");
         });
         CreateSeparator(list);
         CreateSectionTitle(list, "Stamina");
-        CreateRow(list, "Rotate", "STAMINA_CHARGE_ANGLE", "angle_slider", 0, 360, 1, null, "Rotate the stamina charge indicator.");
+        CreateSliderRow(list, "Rotate", "STAMINA_CHARGE_ANGLE", "angle_0_360", "Rotate the stamina charge indicator.", true);
         CreateRow(list, "Color", "STAMINA_CHARGE_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset border color for stamina charge indicators.");
         CreateSeparator(list);
         CreateSectionTitle(list, "Damage Numbers");
@@ -21049,24 +21049,24 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Trooper Damage", "ENABLE_HIDE_TROOPER_DAMAGE", "toggle", null, null, null, [{ invert: true }]);
         CreateRow(list, "Clean Indicators", "ENABLE_CLEAN_DAMAGE_INDICATORS", "toggle", null, null, null, null, "Modify damage numbers for a cleaner style and animation to be more out of the way");
         CreateRow(list, "Damage Fountain", "ENABLE_DAMAGE_FOUNTAIN", "toggle", null, null, null, null, "Fountain-style damage number animation.");
-        CreateRow(list, "Size", "HUD_INDICATOR_SIZE", "slider", 10, 60, 1, null, "Default 18");
-        CreateRow(list, "Opacity", "DAMAGE_NUMBER_OPACITY", "slider", 0, 1.0, 0.05, null);
+        CreateSliderRow(list, "Size", "HUD_INDICATOR_SIZE", "size_10_60", "Default 18");
+        CreateSliderRow(list, "Opacity", "DAMAGE_NUMBER_OPACITY", "opacity");
         CreateSeparator(list);
         CreateSectionTitle(list, "Ammo");
         CreateRow(list, "Visual", "ENABLE_AMMO_STATUS", "toggle", null, null, null, null);
         CreateRow(list, "Current", "ENABLE_HIDE_AMMO_ALL", "toggle", null, null, null, [{ invert: true }]);
-        CreateRow(list, "Current Size", "AMMO_CURRENT_SCALE", "slider", 100, 300, 1, null);
+        CreateSliderRow(list, "Current Size", "AMMO_CURRENT_SCALE", "size_100_300");
         CreateRow(list, "Total", "ENABLE_HIDE_MAGAZINE", "toggle", null, null, null, [{ invert: true }]);
-        CreateRow(list, "Total Size", "AMMO_TOTAL_SCALE", "slider", 100, 300, 1, null);
-        CreateRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "slider", -200, 200, 5, null);
-        CreateRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "slider", -200, 200, 5, null);
+        CreateSliderRow(list, "Total Size", "AMMO_TOTAL_SCALE", "size_100_300");
+        CreateSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n200_200");
+        CreateSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n200_200");
         CreateRow(list, "Color", "AMMO_TEXT_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset text color for the ammo display.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Reload Cooldown", "ENABLE_RELOAD_COOLDOWN", "Estimated Active Reload Timer", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "RELOAD_COOLDOWN_SIZE", "slider", 16, 60, 1, null);
-            CreateRow(sectionParent, "Opacity", "RELOAD_COOLDOWN_OPACITY", "slider", 0, 1.0, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "RELOAD_COOLDOWN_X_OFFSET", "slider", -75, 75, 1, null);
-            CreateRow(sectionParent, "Vertical Offset", "RELOAD_COOLDOWN_Y_OFFSET", "slider", -75, 75, 1, null);
+            CreateSliderRow(sectionParent, "Size", "RELOAD_COOLDOWN_SIZE", "size_16_60");
+            CreateSliderRow(sectionParent, "Opacity", "RELOAD_COOLDOWN_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "RELOAD_COOLDOWN_X_OFFSET", "offset_n75_75");
+            CreateSliderRow(sectionParent, "Vertical Offset", "RELOAD_COOLDOWN_Y_OFFSET", "offset_n75_75");
         });
         CreateSeparator(list);
         CreateSectionTitle(list, "Reloading");
@@ -21076,9 +21076,9 @@ function RenderCurrentTabContent(list) {
         CreateSectionTitle(list, "Item Target Reticle");
         CreateRow(list, "Highlight Mode", "ENABLE_RED_DIAMOND", "toggle", null, null, null, null);
         CreateRow(list, "Improved Hint", "ENABLE_IMPROVED_HINT", "toggle", null, null, null, null);
-        CreateRow(list, "Size", "UNIT_TARGET_SIZE", "slider", 50, 300, 5, null);
-        CreateRow(list, "Opacity", "UNIT_TARGET_OPACITY", "slider", 0, 1.0, 0.05, null);
-        CreateRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "slider", 50, 200, 5, null);
+        CreateSliderRow(list, "Size", "UNIT_TARGET_SIZE", "size_50_300_s5");
+        CreateSliderRow(list, "Opacity", "UNIT_TARGET_OPACITY", "opacity");
+        CreateSliderRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "size_50_200_s5");
     } else if (currentTab === "HUD") {
         CreateAnimatedInlineToggleSection(list, "Top Bar", "HUD_TOP_BAR_ENABLED", "", function(sectionParent) {
             CreateRow(sectionParent, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
@@ -21093,10 +21093,10 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
             CreateRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
             CreateRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
-            CreateRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "slider", 0, 1, 0.05, null);
-            CreateRow(sectionParent, "Scale", "TOP_BAR_SCALE", "slider", 0.5, 1.5, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "TOP_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "TOP_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateSliderRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Scale", "TOP_BAR_SCALE", "scale_0_5_1_5");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "TOP_BAR_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "TOP_BAR_Y_OFFSET", "offset_n500_500");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Bottom Bar", "HUD_BOTTOM_BAR_ENABLED", "", function(sectionParent) {
@@ -21106,25 +21106,25 @@ function RenderCurrentTabContent(list) {
             // Hidden from UI by request; remains configurable via defaults/presets/import.
             CreateRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
-            CreateRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "slider", 0, 1, 0.05, null);
-            CreateRow(sectionParent, "Scale", "BOTTOM_BAR_SCALE", "slider", 0.5, 1.5, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "slider", -1500, 1500, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateSliderRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Scale", "BOTTOM_BAR_SCALE", "scale_0_5_1_5");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "offset_n500_500");
             CreateRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the bottom ability bar.");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Items", "HUD_ITEMS_ENABLED", "", function(sectionParent) {
             CreateRow(sectionParent, "Minimalist Item Bar", "ENABLE_SIMPLIFY_ITEMS", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Opacity", "ITEMS_OPACITY", "slider", 0, 1, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "ITEMS_X_OFFSET", "slider", -1500, 1500, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "ITEMS_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateSliderRow(sectionParent, "Opacity", "ITEMS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "ITEMS_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "ITEMS_Y_OFFSET", "offset_n500_500");
             CreateRow(sectionParent, "Color", "ITEMS_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the item bar.");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Souls", "HUD_SOULS_ENABLED", "", function(sectionParent) {
-            CreateRow(sectionParent, "Opacity", "SOULS_OPACITY", "slider", 0, 1, 0.05, null);
-            CreateRow(sectionParent, "Horizontal Offset", "SOULS_X_OFFSET", "slider", -1500, 1500, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "SOULS_Y_OFFSET", "slider", -500, 500, 5, null);
+            CreateSliderRow(sectionParent, "Opacity", "SOULS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "SOULS_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "SOULS_Y_OFFSET", "offset_n500_500");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Shop", "HUD_SHOP_ENABLED", "", function(sectionParent) {
@@ -21150,30 +21150,30 @@ function RenderCurrentTabContent(list) {
                 "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
                 { invert: true }
             );
-            CreateRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "slider", 1, 5, 1, null, "Controls how many enhanced quickbuy preview items are shown.");
+            CreateSliderRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
             CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
-            CreateRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "slider", -500, 500, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "slider", -500, 500, 5, null);
-            CreateRow(sectionParent, "Opacity", "SHOP_OPACITY", "slider", 0, 1, 0.05, null);
-            CreateRow(sectionParent, "Scale", "SHOP_SCALE", "slider", 0.5, 1.5, 0.05, null);
+            CreateSliderRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "offset_n500_500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "offset_n500_500");
+            CreateSliderRow(sectionParent, "Opacity", "SHOP_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Scale", "SHOP_SCALE", "scale_0_5_1_5");
             CreateSeparator(sectionParent);
             CreateAnimatedInlineToggleSection(sectionParent, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "See the recent purchases made in the game.", function(recentPurchasesParent) {
-                CreateRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "slider", -1000, 1000, 5, null);
-                CreateRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "slider", -500, 500, 5, null);
-                CreateRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "slider", 0, 1, 0.05, null);
-                CreateRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "slider", 0.5, 2.0, 0.05, null);
+                CreateSliderRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "offset_n1000_1000");
+                CreateSliderRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "offset_n500_500");
+                CreateSliderRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "opacity");
+                CreateSliderRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "scale_0_5_2_0");
             });
             CreateSeparator(sectionParent);
             CreateAnimatedInlineToggleSection(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", function(notificationsParent) {
                 CreateRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
                 CreateRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null,
                     "Show purchase notifications under each hero's portrait instead of in the center.");
-                CreateRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "slider", 1, 5, 1, null);
-                CreateRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "slider", 3, 15, 1, null, "Seconds each notification stays visible.");
-                CreateRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "slider", -500, 500, 5, null);
-                CreateRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "slider", -500, 500, 5, null);
-                CreateRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "slider", 0, 1, 0.05, null);
-                CreateRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "slider", 0.5, 1.5, 0.05, null);
+                CreateSliderRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "count_1_5");
+                CreateSliderRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "sec_3_15", "Seconds each notification stays visible.");
+                CreateSliderRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "offset_n500_500");
+                CreateSliderRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "offset_n500_500");
+                CreateSliderRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "opacity");
+                CreateSliderRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "scale_0_5_1_5");
             });
         });
     } else if (currentTab === "Healthbar") {
@@ -21185,10 +21185,10 @@ function RenderCurrentTabContent(list) {
         CreateAnimatedInlineEnumSection(list, "Healthbar Options", "HEALTHBAR_TYPE", 5, function(sectionParent) {
             CreateRow(sectionParent, "Health Numbers", "ENABLE_MINECRAFT_HEALTH_NUMBERS", "toggle", null, null, null, null, "");
         });
-        CreateRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "slider", 50, 200, 1, null, "");
-        CreateRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "slider", 0, 1.0, 0.05, null, "");
-        CreateRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "slider", -1000, 1000, 5, null, "");
-        CreateRow(list, "Vertical Offset", "PLAYER_HEALTHBAR_Y_OFFSET", "slider", -1000, 1000, 5, null, "");
+        CreateSliderRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "size_50_200", "");
+        CreateSliderRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "opacity", "");
+        CreateSliderRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "offset_n1000_1000", "");
+        CreateSliderRow(list, "Vertical Offset", "PLAYER_HEALTHBAR_Y_OFFSET", "offset_n1000_1000", "");
         CreateRow(list, "Accent Color", "PLAYER_HEALTHBAR_ACCENT_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset accent color for the player healthbar frame.");
     } else if (currentTab === "UI") {
         CreateSectionTitle(list, "UI Controls");
@@ -21208,45 +21208,45 @@ function RenderCurrentTabContent(list) {
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", function(sectionParent) {
-            CreateRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "slider", -1500, 1500, 5, null, "");
-            CreateRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "slider", -1500, 200, 5, null, "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
+            CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Chat", "ENABLE_CHAT", "", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "CHAT_SCALE", "slider", 50, 200, 1, null, "");
-            CreateRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "slider", -1500, 1500, 5, null, "");
-            CreateRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "slider", -250, 800, 5, null, "");
+            CreateSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "offset_n1500_1500", "");
+            CreateSliderRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "offset_n250_800", "");
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
         });
     } else if (currentTab === "Overlay") {
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "slider", 50, 200, 1, null, "");
-            CreateRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "slider", -2000, 2000, 5);
-            CreateRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "slider", 0, 1000, 5);
+            CreateSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
+            CreateSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", null, null);
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", function(sectionParent) {
-            CreateRow(sectionParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "slider", 50, 200, 1, null, "");
-            CreateRow(sectionParent, "Horizontal Offset", "UNSECURED_SOUL_TIMER_X_OFFSET", "slider", -1500, 1500, 5);
-            CreateRow(sectionParent, "Vertical Offset", "UNSECURED_SOUL_TIMER_Y_OFFSET", "slider", -100, 1000, 5);
+            CreateSliderRow(sectionParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "size_50_200", "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "UNSECURED_SOUL_TIMER_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "UNSECURED_SOUL_TIMER_Y_OFFSET", "offset_n100_1000");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Unsecured Plus", "ENABLE_BETTER_UNSECURED", "Customizable Unsecured Souls", function(sectionParent) {
             CreateRow(sectionParent, "Icon", "ENABLE_BETTER_UNSECURED_SHOW_ICON", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Text", "ENABLE_BETTER_UNSECURED_SHOW_TEXT", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Size", "UNSECURED_SOULS_HUD_SCALE", "slider", 50, 200, 1, null, "");
-            CreateRow(sectionParent, "Horizontal Offset", "UNSECURED_SOULS_HUD_X_OFFSET", "slider", -1000, 2000, 5, null);
-            CreateRow(sectionParent, "Vertical Offset", "UNSECURED_SOULS_HUD_Y_OFFSET", "slider", 800, 2000, 5, null);
+            CreateSliderRow(sectionParent, "Size", "UNSECURED_SOULS_HUD_SCALE", "size_50_200", "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "UNSECURED_SOULS_HUD_X_OFFSET", "offset_n1000_2000");
+            CreateSliderRow(sectionParent, "Vertical Offset", "UNSECURED_SOULS_HUD_Y_OFFSET", "offset_800_2000");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Keyboard", "ENABLE_KEYBOARD_OVERLAY", "Realtime Key Inputs", function(sectionParent) {
             CreateRow(sectionParent, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "slider", 70, 150, 1, null, "");
-            CreateRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "slider", -1500, 1500, 5);
-            CreateRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "slider", -400, 1000, 5);
+            CreateSliderRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
             CreateRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the keyboard overlay.");
         });
         CreateSeparator(list);
@@ -21254,11 +21254,11 @@ function RenderCurrentTabContent(list) {
         CreateRow(list, "Show Compass", "ENABLE_COMPASS", "toggle", null, null, null, null, "Shows the angle degrees and ticks.");
         CreateRow(list, "Show Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "Speed number tracker.");
         CreateRow(list, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
-        CreateRow(list, "Horizontal Stretch", "COMPASS_STRETCH_X", "slider", 50, 200, 1);
-        CreateRow(list, "Vertical Stretch", "COMPASS_STRETCH_Y", "slider", 50, 200, 1);
-        CreateRow(list, "Size", "COMPASS_SCALE", "slider", 50, 200, 1);
-        CreateRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "slider", -2000, 2000, 5);
-        CreateRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "slider", -1000, 300, 5);
+        CreateSliderRow(list, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
+        CreateSliderRow(list, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
+        CreateSliderRow(list, "Size", "COMPASS_SCALE", "size_50_200");
+        CreateSliderRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
+        CreateSliderRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
     } else if (currentTab === "Dev") {
         CreateSectionTitle(list, "Performance", "ENABLE_PERF_DEBUG");
         CreateRow(list, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
@@ -21267,22 +21267,20 @@ function RenderCurrentTabContent(list) {
             "Show full feature breakdown in console every 5s.");
         CreateRow(list, "Show Overlay", "ENABLE_PERF_OVERLAY", "toggle", null, null, null, null,
             "Show the performance overlay HUD in-game.");
-        CreateRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "slider", 1, 50, 1, null,
-            "Console alert when any feature exceeds this ms threshold.");
-        CreateRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "slider", 0.3, 1.0, 0.05, null,
-            "Opacity of the performance overlay panel.");
+        CreateSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
+        CreateSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         CreateSeparator(list);
     } else if (currentTab === "Minimap") {
         CreateSectionTitle(list, "Base");
         CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
-        CreateRow(list, "Minimalist Opacity", "MINIMAL_MINIMAP_OPACITY", "slider", 0, 1.0, 0.05);
+        CreateSliderRow(list, "Minimalist Opacity", "MINIMAL_MINIMAP_OPACITY", "opacity");
         CreateRow(list, "Flip", "MINIMAP_FLIP", "toggle", null, null, null, null, "Rotates the static minimap 180 degrees.");
         CreateRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
-        CreateRow(list, "Size", "MINIMAP_SMALL_SIZE", "slider", 200, 1000, 5, null, "Default 400");
-        CreateRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "slider", 0, 1.0, 0.05);
+        CreateSliderRow(list, "Size", "MINIMAP_SMALL_SIZE", "size_200_1000_s5", "Default 400");
+        CreateSliderRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "opacity");
         CreateRow(list, "Icons", "MINIMAP_ICON_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for minimap icons.");
-        CreateRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "slider", -1500, 1500, 5);
-        CreateRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "slider", -100, 1000, 5);
+        CreateSliderRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "offset_n1500_1500");
+        CreateSliderRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "offset_n100_1000");
         CreateSeparator(list);
         CreateSectionTitle(list, "Addons");
         CreateRow(list, "Elevation Markers", "ENABLE_MINIMAP_ELEVATION_MARKERS", "toggle", null, null, null, null, "Shows relative elevation difference between you and players.");
@@ -21306,31 +21304,31 @@ function RenderCurrentTabContent(list) {
         );
         CreateRow(list, "Crate Overlay", "ENABLE_MINIMAP_CRATE_OVERLAY", "toggle", null, null, null, null, "Midtown-only crate markers on the minimap.");
         CreateRow(list, "Rem Tunnels", "ENABLE_MINIMAP_REM_TUNNELS", "toggle", null, null, null, null, "Show an overlay of the underground tunnels.");
-        CreateRow(list, "Rem Tunnels Opacity", "MINIMAP_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
+        CreateSliderRow(list, "Rem Tunnels Opacity", "MINIMAP_REM_TUNNELS_OPACITY", "opacity");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Alt Zoom", "ENABLE_ALT_ZOOM", "Ability Menu Open", function(sectionParent) {
             CreateRow(sectionParent, "Draw Over UI", "ALT_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Rem Tunnels", "ENABLE_ALT_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Alt Zoom is active.");
-            CreateRow(sectionParent, "Rem Tunnels Opacity", "ALT_ZOOM_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
-            CreateRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_ALT", "slider", 400, 1200, 10);
-            CreateRow(sectionParent, "Opacity", "ALT_ZOOM_OPACITY", "slider", 0, 1.0, 0.05);
-            CreateRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_ALT", "slider", -1500, 1500, 5);
-            CreateRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_ALT", "slider", -1000, 1000, 5);
+            CreateSliderRow(sectionParent, "Rem Tunnels Opacity", "ALT_ZOOM_REM_TUNNELS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_ALT", "size_400_1200_s10");
+            CreateSliderRow(sectionParent, "Opacity", "ALT_ZOOM_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_ALT", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_ALT", "offset_n1000_1000");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Tab Zoom", "ENABLE_TAB_ZOOM", "Scoreboard Open", function(sectionParent) {
             CreateRow(sectionParent, "Draw Over UI", "TAB_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
             CreateRow(sectionParent, "Rem Tunnels", "ENABLE_TAB_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Tab Zoom is active.");
-            CreateRow(sectionParent, "Rem Tunnels Opacity", "TAB_ZOOM_REM_TUNNELS_OPACITY", "slider", 0, 1.0, 0.05);
-            CreateRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_TAB", "slider", 400, 1200, 10);
-            CreateRow(sectionParent, "Opacity", "TAB_ZOOM_OPACITY", "slider", 0, 1.0, 0.05);
-            CreateRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_TAB", "slider", -1500, 1500, 5);
-            CreateRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_TAB", "slider", -1000, 1000, 5);
+            CreateSliderRow(sectionParent, "Rem Tunnels Opacity", "TAB_ZOOM_REM_TUNNELS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_TAB", "size_400_1200_s10");
+            CreateSliderRow(sectionParent, "Opacity", "TAB_ZOOM_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_TAB", "offset_n1500_1500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_TAB", "offset_n1000_1000");
         });
     } else if (currentTab === "Audio") {
         CreateSectionTitle(list, "Announcer");
         CreateRow(list, "Voice", "VOICE_TYPE", "dropdown", null, null, null, BuildVoiceDropdownOptions());
-        CreateRow(list, "Volume", "VOICE_VOLUME", "slider", 0, 100, 1);
+        CreateSliderRow(list, "Volume", "VOICE_VOLUME", "volume_0_100");
         var announcerTypeRow = CreateRow(list, "Type", null, "multitoggle", null, null, null, NEUTRAL_CAMP_TIER_OPTIONS);
         if (announcerTypeRow && announcerTypeRow.IsValid && announcerTypeRow.IsValid()) {
             announcerTypeRow.AddClass("AnnouncerTypeFilterRow");
@@ -21339,14 +21337,14 @@ function RenderCurrentTabContent(list) {
         if (announcerBuffFilterRow && announcerBuffFilterRow.IsValid && announcerBuffFilterRow.IsValid()) {
             announcerBuffFilterRow.AddClass("AnnouncerTypeFilterRow");
         }
-        CreateRow(list, "Buff Delay", "BRIDGE_BUFF_START", "slider", 0, 60, 1, null, "In Seconds");
+        CreateSliderRow(list, "Buff Delay", "BRIDGE_BUFF_START", "sec_0_60", "In Seconds");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Minimap Reminder", "ENABLE_MINIMAP_REMINDER", "Ding to Check Minimap", function(sectionParent) {
-            CreateRow(sectionParent, "Timer", "MINIMAP_REMINDER_INTERVAL", "slider", 5, 60, 1, null, "In Seconds");
+            CreateSliderRow(sectionParent, "Timer", "MINIMAP_REMINDER_INTERVAL", "sec_5_60", "In Seconds");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Deadlock For Dummies", "ENABLE_DL4D_REMINDERS", "Timed audio reminders from Deadlock For Dummies.", function(sectionParent) {
-            CreateRow(sectionParent, "Volume", "DL4D_VOLUME", "slider", 0, 100, 1);
+            CreateSliderRow(sectionParent, "Volume", "DL4D_VOLUME", "volume_0_100");
             CreateRow(sectionParent, "Captions", "ENABLE_DL4D_CAPTIONS", "toggle", null, null, null, null);
             for (var dl4dIndex = 0; dl4dIndex < DL4D_REMINDER_OPTIONS.length; dl4dIndex++) {
                 CreateDl4dReminderRow(sectionParent, DL4D_REMINDER_OPTIONS[dl4dIndex]);
