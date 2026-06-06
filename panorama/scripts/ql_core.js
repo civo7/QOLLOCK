@@ -27641,11 +27641,6 @@ function GetUIRoot() {
                     gates.compassUltCd ||
                     gates.compassTargetShapesFast;
                 if (!compassHasWork) {
-                    // Hide compass panel when no compass features are active
-                    var _compassCleanup = State.cachedPanels.compassRoot;
-                    if (IsPanelValid(_compassCleanup)) {
-                        try { _compassCleanup.style.visibility = "collapse"; } catch (_ce) {}
-                    }
                     nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
                     var _cidle = DetectGlobalIdleState(root);
                     if (_cidle.level !== "active") {
