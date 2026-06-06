@@ -785,10 +785,15 @@
         { time: 3585, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 }
     ];
 
-    const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    const STORAGE_KEY = QOL_STORAGE_KEY;
+    // WHY: probes the `joy_name` convar as a persistent key-value store that survives
+    // game restarts — used as an additional config persistence channel alongside panel attrs.
     const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
     const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
     const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
+    // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
+    // and as standalone panel attributes (for synchronous bridging into CSS without
+    // waiting for the next loop tick).
     const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
     const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
     const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
@@ -796,6 +801,8 @@
     const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
     const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
     const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
+    // WHY: V2 enemy healthbar toggles are bridged through panel attributes so the
+    // native CitadelHealthBarV2 panel can read them without JS polling.
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
@@ -875,9 +882,16 @@
     // ==========================================================================
     // BOOTSTRAP & CACHE TIMING
     // ==========================================================================
-    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;  // retry interval for target shape panel discovery
-    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;     // give up after this many attempts
-    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;     // slow refresh when HUD is idle
+    // WHY: unit target bootstrap needs multiple retries because the target shape
+    // panels are created asynchronously by the game engine after HUD layout loads.
+    // 12 tries × 0.10s = 1.2s max wait, which covers the typical 200-800ms panel
+    // creation window with margin.
+    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;
+    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;
+    // WHY: idle refresh rates trade visual responsiveness for CPU. 1200ms for idle
+    // is just above human perception of "stale" (1s), and 2500ms for panel cache
+    // is long enough to avoid tree walks while still catching new panels within ~2.5s.
+    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
     const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
@@ -924,24 +938,33 @@
     // ==========================================================================
     // MINIMAP — LAYOUT & SCANNING
     // ==========================================================================
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;      // scan interval for local player position
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;  // faster scan after certain events
-    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // re-assert Z-order interval
-    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // base cast range circle size on minimap
-    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // base minimap size in pixels at default zoom
-    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // sanity cap on layout offset (prevents runaway values)
-    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // feature-gate constant for custom mouse cursor
+    // WHY: minimap player position scanning at 250ms (4Hz) balances smooth rotation
+    // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
+    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
+    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
+    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // WHY: sanity cap prevents runaway layout values from corrupting HUD; 100k px is far beyond any valid screen position
+    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // WHY: feature-gate constant — set false to globally disable the custom cursor without touching config
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
     const GAMEPLAY_MOUSE_CURSOR_HALF_PX = Math.floor(GAMEPLAY_MOUSE_CURSOR_SIZE_PX * 0.5);
+    // WHY: goat_sigilslam icon chosen as cursor image because it's a distinctive,
+    // always-available s2r:// asset that loads reliably in all game modes
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
+    // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
+    // WHY: combat recovery at 3s matches the game's own out-of-combat timer (player stops taking damage for 3s)
     const COMBAT_STATUS_RECOVERY_MS = 3000;
     const COMBAT_STATUS_ALERT_PROBE_MS = 500;
     const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
+    // WHY: enemy health panel scanning at 1200ms — full-tree scan is expensive;
+    // 1200ms is the sweet spot where health changes are still visible quickly
+    // but the scan cost is amortized over many frames
     const ENEMY_COLORED_HEALTH_PANEL_SCAN_MS = 1200;
     const ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
-    const ENEMY_COLORED_HEALTH_DEBUG = false;
+    const ENEMY_COLORED_HEALTH_DEBUG = false;               // WHY: debug gate — must be false in production; enables per-panel color dump every ~700ms
     const ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
     const MINIMAP_CRATE_OVERLAY_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
@@ -955,20 +978,28 @@
     const ENEMY_ULT_OLD_UPDATE_MS = 180;
     const ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS = 1500;
     const FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON = false;
+    // ---- Unsecured Souls overlay ----
+    // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
+    // re-scanning faster than 1Hz provides no benefit while wasting CPU
     const UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
     const UNSECURED_SOULS_HUD_SEARCH_MS = 1000;
     const UNSECURED_SOULS_MIN_SAMPLE_MS = 250;
+    // WHY: EMA alpha of 0.35 gives ~3-sample smoothing window (1/α ≈ 2.86),
+    // enough to filter jitter without introducing perceptible lag in the rate display
     const UNSECURED_SOULS_RATE_EMA_ALPHA = 0.35;
     const UNSECURED_SOULS_RATE_MIN = 0.01;
     const UNSECURED_SOULS_RATE_STALE_MS = 12000;
     const UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
     const UNSECURED_SOULS_ETA_MAX_SEC = 999;
+    // WHY: fallback drain at 0.5%/sec — conservative estimate when rate tracking
+    // is stale; matches observed unsecured soul decay in testing
     const UNSECURED_SOULS_FALLBACK_PCT_DRAIN = 0.005;
     const UNSECURED_SOULS_FALLBACK_BASE_FLAT = 1.6;
     const UNSECURED_SOULS_FALLBACK_FLAT_GROWTH = 0.08;
     const UNSECURED_SOULS_THRESH_YELLOW = 500;
     const UNSECURED_SOULS_THRESH_RED = 1000;
     const SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = "qol_signature_cooldown_pressed";
+    // WHY: 220ms flash matches the game's own ability press feedback animation duration
     const SIGNATURE_COOLDOWN_PRESS_FLASH_MS = 220;
     const SIGNATURE_COOLDOWN_PRESS_SCAN_MS = 1000;
     const STAT_BONUSES_DEBUG = false;
@@ -1058,32 +1089,45 @@ const ITEM_MIRROR_EXPRESS_DEBUG = false;
 const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // TEMP TEST SWITCH: keep base + optimize item cooldown paths enabled together for offset alignment checks.
     const ITEM_COOLDOWN_DUAL_MODE_TEST = false;
+    // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
+    // SPM window of 60 samples at 1s intervals = 60s rolling average.
     const SPM_MAX_PLAYERS = 13;
     const SPM_SAMPLE_INTERVAL_MS = 1000;
     const SPM_WINDOW_SIZE = 60;
+    // WHY: panel cache at 7s — SPM changes slowly (1 sample/sec), re-scanning
+    // faster provides no benefit while wasting CPU on tree walks
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
+    // WHY: nickname refresh at 1s initially, then 4.2s once stable — player names
+    // rarely change mid-game; fast initial scan resolves labels, slow steady state
+    // avoids unnecessary work
     const TOPBAR_NICKNAMES_REFRESH_MS = 1000;
     const TOPBAR_NICKNAMES_REFRESH_MS_STABLE = 4200;
     const TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS = 4000;
+    // WHY: 280ms sample interval (~3.6Hz) — fast enough to catch soul swings during
+    // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
     const STATLOCKER_SCAN_INTERVAL_MS = 1200;
     const STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
+    // WHY: soul snapshot TTL at 140ms — short enough to prevent stale reads when
+    // souls change rapidly (buying items), long enough to avoid per-tick re-reads
     const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
-    const ULT_CD_FULL_RESCAN_MS = 30000;     // periodic full cache flush to self-heal stale lookups
+    const ULT_CD_FULL_RESCAN_MS = 30000;     // WHY: periodic full cache flush every 30s to self-heal stale lookups from destroyed/recreated panels
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
     const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
     const FORCE_DISABLE_STAT_BONUSES = false;
     const UNSPENT_MAX_PLAYERS = SPM_MAX_PLAYERS;
-    const UNSPENT_SAMPLE_INTERVAL_MS = 1000;
-    const UNSPENT_PLAYER_BATCH_SIZE = 3;    // players processed per sample — rotates cursor
+    // WHY: 1 player every 200ms = full 12-player rotation every 2.4s.
+    // Spreads CPU evenly across ticks instead of bursting 3 players every 1s.
+    const UNSPENT_SAMPLE_INTERVAL_MS = 200;
+    const UNSPENT_PLAYER_BATCH_SIZE = 1;
     const UNSPENT_PANEL_CACHE_REFRESH_MS = 9000;
     const UNSPENT_TIER_SCAN_INTERVAL_MS = 3000;
     const UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS = 5000;
@@ -1099,7 +1143,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     };
     const REJUV_DURATION_SEC = 240;
     const BRIDGE_DURATION_SEC = 300;
-    const BUFF_0TO1_LOCKOUT_SEC = 120;
+    const BUFF_LOCKOUT_SEC = 120;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 500;
     const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 2000;
@@ -1128,9 +1172,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
     const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
-    const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
+    const USER_EDIT_REV_ATTR = QOL_USER_EDIT_REV_ATTR;
     // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
-    const PANEL_ID_HUD = "Hud";
+    const PANEL_ID_HUD = QOL_PANEL_ID_HUD;
     const PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
     const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     const PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";
@@ -3914,1152 +3958,16 @@ function ExpressShotLog(msg) {
         return "";
     }
 
-const BUILD_CATEGORY_COMPACT_SCHEMA_V2 = [
-    { key: "MINIMAP_SMALL_SIZE", min: 200, max: 1000, step: 5 },
-    { key: "MINIMAP_BASE_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "MINIMAL_MINIMAP", min: 0, max: 1, step: 1 },
-    { key: "MINIMAP_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "MINIMAP_Y_OFFSET", min: -100, max: 1000, step: 5 },
-    { key: "MINIMAP_LARGE_SIZE", min: 400, max: 1200, step: 10 },
-    { key: "ZOOM_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "ZOOM_Y_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "ENABLE_ALT_ZOOM", min: 0, max: 1, step: 1 },
-    { key: "ALT_ZOOM_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ENABLE_TAB_ZOOM", min: 0, max: 1, step: 1 },
-    { key: "TAB_ZOOM_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ENABLE_ONE_TIME", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_INTERVAL", min: 0, max: 1, step: 1 },
-    { key: "BRIDGE_BUFF_START", min: 0, max: 60, step: 1 },
-    { key: "ENABLE_AMMO_STATUS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PASSIVE_COOLDOWN", min: 0, max: 1, step: 1 },
-    { key: "PASSIVE_COOLDOWN_SIZE", min: 30, max: 60, step: 1 },
-    { key: "PASSIVE_COOLDOWN_Y", min: -50, max: 50, step: 1 },
-    { key: "PASSIVE_COOLDOWN_X", min: -50, max: 50, step: 1 },
-    { key: "PASSIVE_COOLDOWN_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ITEM_FILTER_DEF_PASSIVE", min: 0, max: 1, step: 1 },
-    { key: "ITEM_FILTER_OFF_PASSIVE", min: 0, max: 1, step: 1 },
-    { key: "ITEM_FILTER_DEF_ACTIVE", min: 0, max: 1, step: 1 },
-    { key: "ITEM_FILTER_OFF_ACTIVE", min: 0, max: 1, step: 1 },
-    { key: "VOICE_TYPE", min: 0, max: 8, step: 1 },
-    { key: "ENABLE_COMPASS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SIMPLIFY_COMPASS", min: 0, max: 1, step: 1 },
-    { key: "COMPASS_SCALE", min: 50, max: 200, step: 1 },
-    { key: "COMPASS_X_OFFSET", min: -2000, max: 2000, step: 5 },
-    { key: "COMPASS_Y_OFFSET", min: -1000, max: 300, step: 5 },
-    { key: "ENABLE_KEYBOARD_OVERLAY", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_FULL_KEYBOARD_LAYOUT", min: 0, max: 1, step: 1 },
-    { key: "KEYBOARD_OVERLAY_SCALE", min: 70, max: 150, step: 1 },
-    { key: "KEYBOARD_OVERLAY_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "KEYBOARD_OVERLAY_Y_OFFSET", min: -400, max: 1000, step: 5 },
-    { key: "ENABLE_MINIMAP_REMINDER", min: 0, max: 1, step: 1 },
-    { key: "MINIMAP_REMINDER_INTERVAL", min: 5, max: 60, step: 1 },
-    { key: "DISABLE_DAMAGE_REPORT", min: 0, max: 1, step: 1 },
-    { key: "DISABLE_QUICK_BUY", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_HUD_SHIFT", min: 0, max: 1, step: 1 },
-    { key: "SUPPORT_4_3", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_UNSPENT_SOULS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_MIN_SOULS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_OBJ_DMG", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_OBJ_MAP", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_URN_DIFF", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_MISSING_HERO", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_CUMULATIVE_DMG", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SHOP_STATS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SIMPLIFY_SHOP", min: 0, max: 1, step: 1 },
-    { key: "DAMAGE_NUMBER_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ENABLE_ZIP_BOOST", min: 0, max: 1, step: 1 },
-    { key: "ZIP_BOOST_X_OFFSET", min: -2000, max: 2000, step: 5 },
-    { key: "ZIP_BOOST_Y_OFFSET", min: 0, max: 1000, step: 5 },
-    { key: "ENABLE_CLEAN_STACKS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_CENTER_ESC", min: 0, max: 1, step: 1 },
-    { key: "HUD_INDICATOR_SIZE", min: 10, max: 60, step: 1 },
-    { key: "ENABLE_RED_DIAMOND", min: 0, max: 1, step: 1 },
-    { key: "UNIT_TARGET_SIZE", min: 50, max: 300, step: 5 },
-    { key: "UNIT_TARGET_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ENABLE_HERO_SCENE_PANEL", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_HIDE_FAILED_HINT", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_HIDE_ABILITY_SUGGESTION", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SIMPLIFY_ABILITY_ICONS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_HIDE_BEHAVIOR_SUMMARY", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_BUFF_HUD", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_REJUV_HUD", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 }
-];
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V3 = BUILD_CATEGORY_COMPACT_SCHEMA_V2.concat([
-    { key: "ENABLE_COMPASS_SPEED", min: 0, max: 1, step: 1 },
-    { key: "COMPASS_STRETCH_X", min: 50, max: 200, step: 1 },
-    { key: "COMPASS_STRETCH_Y", min: 50, max: 200, step: 1 },
-    { key: "ZIP_BOOST_SCALE", min: 50, max: 200, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V4 = BUILD_CATEGORY_COMPACT_SCHEMA_V3.concat([
-    { key: "ENABLE_SIMPLIFY_ITEMS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V5 = BUILD_CATEGORY_COMPACT_SCHEMA_V4.concat([
-    { key: "MINIMAP_LARGE_SIZE_ALT", min: 400, max: 1200, step: 10 },
-    { key: "ZOOM_X_OFFSET_ALT", min: -1500, max: 1500, step: 5 },
-    { key: "ZOOM_Y_OFFSET_ALT", min: -1000, max: 1000, step: 5 },
-    { key: "MINIMAP_LARGE_SIZE_TAB", min: 400, max: 1200, step: 10 },
-    { key: "ZOOM_X_OFFSET_TAB", min: -1500, max: 1500, step: 5 },
-    { key: "ZOOM_Y_OFFSET_TAB", min: -1000, max: 1000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V6 = BUILD_CATEGORY_COMPACT_SCHEMA_V5.concat([
-    { key: "SUPPORT_16_10", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V7 = BUILD_CATEGORY_COMPACT_SCHEMA_V6.concat([
-    { key: "DISABLE_SHOP_BLUE", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V8 = BUILD_CATEGORY_COMPACT_SCHEMA_V7.concat([
-    { key: "SHOP_OFFSET_X", min: -500, max: 500, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V9 = BUILD_CATEGORY_COMPACT_SCHEMA_V8.concat([
-    { key: "ENABLE_HIDE_SMALL_NUMBERS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V10 = BUILD_CATEGORY_COMPACT_SCHEMA_V9.concat([
-    { key: "ENABLE_HIDE_MAGAZINE", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V11 = BUILD_CATEGORY_COMPACT_SCHEMA_V10.concat([
-    { key: "AMMO_PANEL_SCALE", min: 100, max: 300, step: 1 },
-    { key: "AMMO_PANEL_X_OFFSET", min: -200, max: 200, step: 5 },
-    { key: "AMMO_PANEL_Y_OFFSET", min: -200, max: 200, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V12 = BUILD_CATEGORY_COMPACT_SCHEMA_V11;
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V13 = BUILD_CATEGORY_COMPACT_SCHEMA_V12.concat([
-    { key: "ENABLE_ON_DEATH_GAMES", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V14 = BUILD_CATEGORY_COMPACT_SCHEMA_V13.concat([
-    { key: "ENABLE_RELOAD_COOLDOWN", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V15 = BUILD_CATEGORY_COMPACT_SCHEMA_V14.concat([
-    { key: "ENABLE_HIDE_RELOAD_ICON", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V16 = BUILD_CATEGORY_COMPACT_SCHEMA_V15.concat([
-    { key: "ENABLE_HIDE_RELOAD_CIRCLE", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V17 = BUILD_CATEGORY_COMPACT_SCHEMA_V16.concat([
-    { key: "RELOAD_COOLDOWN_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "RELOAD_COOLDOWN_SIZE", min: 16, max: 60, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V18 = BUILD_CATEGORY_COMPACT_SCHEMA_V17.concat([
-    { key: "TAB_ZOOM_DRAW_OVER_UI", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V19 = BUILD_CATEGORY_COMPACT_SCHEMA_V18.concat([
-    { key: "ALT_ZOOM_DRAW_OVER_UI", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V20 = BUILD_CATEGORY_COMPACT_SCHEMA_V19.concat([
-    { key: "ENABLE_HIDE_TROOPER_DAMAGE", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V21 = BUILD_CATEGORY_COMPACT_SCHEMA_V20.concat([
-    { key: "MINIMAP_ROTATE_WITH_PLAYER", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V22 = BUILD_CATEGORY_COMPACT_SCHEMA_V21.concat([
-    { key: "ENABLE_STAT_BONUSES", min: 0, max: 1, step: 1 },
-    { key: "STAT_BONUSES_SCALE", min: 50, max: 200, step: 1 },
-    { key: "STAT_BONUSES_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "STAT_BONUSES_Y_OFFSET", min: 0, max: 1000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V23 = BUILD_CATEGORY_COMPACT_SCHEMA_V22.concat([
-    { key: "ENABLE_UNSECURED_SOUL_TIMER", min: 0, max: 1, step: 1 },
-    { key: "UNSECURED_SOUL_TIMER_SCALE", min: 50, max: 200, step: 1 },
-    { key: "UNSECURED_SOUL_TIMER_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "UNSECURED_SOUL_TIMER_Y_OFFSET", min: -100, max: 1000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V24 = BUILD_CATEGORY_COMPACT_SCHEMA_V23.concat([
-    { key: "ENABLE_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V25 = BUILD_CATEGORY_COMPACT_SCHEMA_V24;
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V26 = BUILD_CATEGORY_COMPACT_SCHEMA_V25.concat([
-    { key: "ENABLE_MINIMALIST_HEALTHBAR", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V27 = BUILD_CATEGORY_COMPACT_SCHEMA_V26.concat([
-    { key: "ENABLE_FORCE_TESTING_TOOLS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V28 = BUILD_CATEGORY_COMPACT_SCHEMA_V27.concat([
-    { key: "RELOAD_COOLDOWN_X_OFFSET", min: -75, max: 75, step: 1 },
-    { key: "RELOAD_COOLDOWN_Y_OFFSET", min: -75, max: 75, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V29 = BUILD_CATEGORY_COMPACT_SCHEMA_V28.concat([
-    { key: "UNSECURED_SOULS_HUD_SCALE", min: 50, max: 200, step: 1 },
-    { key: "UNSECURED_SOULS_HUD_X_OFFSET", min: -1000, max: 2000, step: 5 },
-    { key: "UNSECURED_SOULS_HUD_Y_OFFSET", min: 800, max: 2000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V30 = BUILD_CATEGORY_COMPACT_SCHEMA_V29;
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V31 = BUILD_CATEGORY_COMPACT_SCHEMA_V30.concat([
-    { key: "ENABLE_BETTER_UNSECURED", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V32 = BUILD_CATEGORY_COMPACT_SCHEMA_V31.concat([
-    { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V33 = BUILD_CATEGORY_COMPACT_SCHEMA_V32.concat([
-    { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V34 = BUILD_CATEGORY_COMPACT_SCHEMA_V33.concat([
-    { key: "ENABLE_ULT_COOLDOWNS", min: 0, max: 1, step: 1 },
-    { key: "ULT_COOLDOWN_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ULT_COOLDOWN_SIZE", min: 10, max: 32, step: 1 },
-    { key: "ULT_COOLDOWN_X_OFFSET", min: -60, max: 60, step: 1 },
-    { key: "ULT_COOLDOWN_Y_OFFSET", min: -60, max: 60, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V35 = BUILD_CATEGORY_COMPACT_SCHEMA_V34.concat([
-    { key: "LANGUAGE", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V36 = BUILD_CATEGORY_COMPACT_SCHEMA_V35.concat([
-    { key: "MINIMALIST_HEALTHBAR_X_OFFSET", min: -300, max: 300, step: 1 },
-    { key: "MINIMALIST_HEALTHBAR_Y_OFFSET", min: -300, max: 300, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V37 = BUILD_CATEGORY_COMPACT_SCHEMA_V36.concat([
-    { key: "ENABLE_HIDE_TESTING_TOOLS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V38 = BUILD_CATEGORY_COMPACT_SCHEMA_V37.concat([
-    { key: "ENABLE_HIDE_COSMETIC_ABILITY", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V39 = BUILD_CATEGORY_COMPACT_SCHEMA_V38.concat([
-    { key: "DAMAGE_REPORT_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "DAMAGE_REPORT_Y_OFFSET", min: -1500, max: 200, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V40 = BUILD_CATEGORY_COMPACT_SCHEMA_V39.concat([
-    { key: "ENABLE_HIDE_AMMO_ALL", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V41 = BUILD_CATEGORY_COMPACT_SCHEMA_V40;
-
-const BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD = "DEFAULT_HERO_INDEX";
-const BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS = [
-    "hero_inferno",
-    "hero_gigawatt",
-    "hero_hornet",
-    "hero_ghost",
-    "hero_atlas",
-    "hero_wraith",
-    "hero_forge",
-    "hero_chrono",
-    "hero_dynamo",
-    "hero_kelvin",
-    "hero_haze",
-    "hero_astro",
-    "hero_bebop",
-    "hero_nano",
-    "hero_orion",
-    "hero_krill",
-    "hero_shiv",
-    "hero_tengu",
-    "hero_warden",
-    "hero_yamato",
-    "hero_lash",
-    "hero_viscous",
-    "hero_synth",
-    "hero_mirage",
-    "hero_viper",
-    "hero_magician",
-    "hero_vampirebat",
-    "hero_drifter",
-    "hero_priest",
-    "hero_frank",
-    "hero_bookworm",
-    "hero_doorman",
-    "hero_punkgoat",
-    "hero_necro",
-    "hero_fencer",
-    "hero_familiar",
-    "hero_werewolf",
-    "hero_unicorn"
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_V42 = BUILD_CATEGORY_COMPACT_SCHEMA_V41.concat([
-    { key: BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD, min: 0, max: Math.max(0, BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length - 1), step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V43 = BUILD_CATEGORY_COMPACT_SCHEMA_V42.concat([
-    { key: "ENABLE_OLD_ITEM_COOLDOWNS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V44 = BUILD_CATEGORY_COMPACT_SCHEMA_V43.concat([
-    { key: "OLD_ITEM_COOLDOWNS_SCALE", min: 50, max: 200, step: 1 },
-    { key: "OLD_ITEM_COOLDOWNS_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "OLD_ITEM_COOLDOWNS_Y_OFFSET", min: -1000, max: 1000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V45 = BUILD_CATEGORY_COMPACT_SCHEMA_V44;
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V46 = BUILD_CATEGORY_COMPACT_SCHEMA_V45.concat([
-    { key: "ENABLE_LANE_WITH_PARTY", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V47 = BUILD_CATEGORY_COMPACT_SCHEMA_V46.concat([
-    { key: "ENABLE_ONE_TIME_TIER1", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ONE_TIME_TIER2", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ONE_TIME_TIER3", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V48 = BUILD_CATEGORY_COMPACT_SCHEMA_V47.concat([
-    { key: "ENABLE_FG_HEALTHBAR", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V49 = BUILD_CATEGORY_COMPACT_SCHEMA_V48.concat([
-    { key: "HEALTHBAR_TYPE", min: 0, max: 4, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V50 = BUILD_CATEGORY_COMPACT_SCHEMA_V49.concat([
-    { key: "ENABLE_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_COLOR_WARNING_75", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V51 = BUILD_CATEGORY_COMPACT_SCHEMA_V50.concat([
-    { key: "ENABLE_MINIMAP_BUFF_TIMER", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_MINIMAP_REJUV_TIMER", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V52 = BUILD_CATEGORY_COMPACT_SCHEMA_V51.concat([
-    { key: "AMMO_CURRENT_SCALE", min: 100, max: 300, step: 1 },
-    { key: "AMMO_TOTAL_SCALE", min: 100, max: 300, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V53 = BUILD_CATEGORY_COMPACT_SCHEMA_V52.concat([
-    { key: "ENABLE_IMPROVED_HINT", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V54 = BUILD_CATEGORY_COMPACT_SCHEMA_V53.concat([
-    { key: "ENABLE_COMBAT_STATUS", min: 0, max: 1, step: 1 },
-    { key: "COMBAT_STATUS_SCALE", min: 50, max: 200, step: 1 },
-    { key: "COMBAT_STATUS_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "COMBAT_STATUS_Y_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "ENABLE_ENEMY_ULT_INDICATOR", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V55 = BUILD_CATEGORY_COMPACT_SCHEMA_V54.concat([
-    { key: "ENABLE_NICKNAMES", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V56 = BUILD_CATEGORY_COMPACT_SCHEMA_V55.concat([
-    { key: "MINIMAL_MINIMAP_OPACITY", min: 0, max: 1, step: 0.05 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V57 = BUILD_CATEGORY_COMPACT_SCHEMA_V56.concat([
-    { key: "ENABLE_DAMAGE_FOUNTAIN", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V58 = BUILD_CATEGORY_COMPACT_SCHEMA_V57.concat([
-    { key: "PLAYER_HEALTHBAR_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "PLAYER_HEALTHBAR_Y_OFFSET", min: -1000, max: 1000, step: 5 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V59 = BUILD_CATEGORY_COMPACT_SCHEMA_V58.concat([
-    { key: "PLAYER_HEALTHBAR_SCALE", min: 50, max: 200, step: 1 },
-    { key: "PLAYER_HEALTHBAR_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "VOICE_VOLUME", min: 0, max: 100, step: 1 },
-    { key: "ENABLE_BUFF_SOUND_1", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_BUFF_SOUND_2", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_BUFF_SOUND_3", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_V60 = BUILD_CATEGORY_COMPACT_SCHEMA_V59.concat([
-    { key: "ENABLE_ENEMY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ENEMY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ENEMY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ENEMY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_URN_COLORS", min: 0, max: 1, step: 1 }
-]);
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS = [
-    { key: "ENABLE_ENEMY_V2_ENHANCED", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ENEMY_V2_ULT_INDICATOR", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ENEMY_V2_LEVEL", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_MINESWEEPER", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_BLACKJACK", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_FLAPPY_BAT", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_GRAVES_TRAINER", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_ZERGGY_MANIA", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_WHACK_A_REM", min: 0, max: 1, step: 1 }
-];
-
-function BuildPayloadSchemaWithLanguageMax(baseSchema, maxLanguageValue) {
-    var out = [];
-    var langMax = Math.max(1, Math.round(Number(maxLanguageValue) || 1));
-    for (var i = 0; i < baseSchema.length; i++) {
-        var field = baseSchema[i];
-        if (!field) continue;
-        var copy = {
-            key: field.key,
-            min: field.min,
-            max: field.max,
-            step: field.step
-        };
-        if (copy.key === "LANGUAGE") copy.max = langMax;
-        out.push(copy);
-    }
-    return out;
-}
-
-function AppendUniquePayloadSchemaFields(baseSchema, extraFields) {
-    var out = Array.isArray(baseSchema) ? baseSchema.slice() : [];
-    if (!Array.isArray(extraFields) || extraFields.length <= 0) return out;
-    var seen = {};
-    for (var iSeen = 0; iSeen < out.length; iSeen++) {
-        var existing = out[iSeen];
-        if (existing && existing.key) seen[String(existing.key)] = true;
-    }
-    for (var iExtra = 0; iExtra < extraFields.length; iExtra++) {
-        var field = extraFields[iExtra];
-        if (!field || !field.key) continue;
-        var key = String(field.key);
-        if (seen[key]) continue;
-        out.push({
-            key: field.key,
-            min: field.min,
-            max: field.max,
-            step: field.step
-        });
-        seen[key] = true;
-    }
-    return out;
-}
-
-function ClonePayloadSchemaWithFieldOverrides(baseSchema, overrideFields) {
-    var out = [];
-    var overrides = {};
-    var i;
-    if (Array.isArray(overrideFields)) {
-        for (i = 0; i < overrideFields.length; i++) {
-            var overrideField = overrideFields[i];
-            if (!overrideField || !overrideField.key) continue;
-            overrides[String(overrideField.key)] = overrideField;
-        }
-    }
-    if (!Array.isArray(baseSchema)) return out;
-    for (i = 0; i < baseSchema.length; i++) {
-        var field = baseSchema[i];
-        if (!field || !field.key) continue;
-        var key = String(field.key);
-        var sourceField = overrides[key] || field;
-        out.push({
-            key: sourceField.key,
-            min: sourceField.min,
-            max: sourceField.max,
-            step: sourceField.step
-        });
-    }
-    return out;
-}
-
-function ClonePayloadSchemaWithoutFields(baseSchema, fieldKeys) {
-    var out = [];
-    var blocked = {};
-    var i;
-    if (Array.isArray(fieldKeys)) {
-        for (i = 0; i < fieldKeys.length; i++) {
-            if (fieldKeys[i] === undefined || fieldKeys[i] === null) continue;
-            blocked[String(fieldKeys[i])] = true;
-        }
-    }
-    if (!Array.isArray(baseSchema)) return out;
-    for (i = 0; i < baseSchema.length; i++) {
-        var field = baseSchema[i];
-        if (!field || !field.key) continue;
-        if (blocked[String(field.key)]) continue;
-        out.push({
-            key: field.key,
-            min: field.min,
-            max: field.max,
-            step: field.step
-        });
-    }
-    return out;
-}
-
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_V60;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1 = BuildPayloadSchemaWithLanguageMax(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0, 2);
-for (var iPayloadSchemaExtra = 0; iPayloadSchemaExtra < BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS.length; iPayloadSchemaExtra++) {
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1.push(BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1_EXTRA_FIELDS[iPayloadSchemaExtra]);
-}
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_1_1 = BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_1_2_EXTRA_FIELDS = [
-    { key: "ENABLE_CENTER_FRIENDS_LIST", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_1_2 = BUILD_CATEGORY_COMPACT_SCHEMA_2_1_1.concat(BUILD_CATEGORY_COMPACT_SCHEMA_2_1_2_EXTRA_FIELDS);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_0_EXTRA_FIELDS = [
-    { key: "ENABLE_GAME_AUDIO", min: 0, max: 1, step: 1 },
-    { key: "GAME_DEFAULT_DIFFICULTY", min: 0, max: 2, step: 1 },
-    { key: "ON_DEATH_GAME_MINESWEEPER", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_BLACKJACK", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_FLAPPY_BAT", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_GRAVES_TRAINER", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_ZERGGY_MANIA", min: 0, max: 1, step: 1 },
-    { key: "ON_DEATH_GAME_WHACK_A_REM", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_STATLOCKER", min: 0, max: 1, step: 1 },
-    { key: "CHAT_SCALE", min: 50, max: 200, step: 1 },
-    { key: "CHAT_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "CHAT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_0 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_1_2,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_0_EXTRA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1_OVERRIDE_FIELDS = [
-    { key: "CHAT_Y_OFFSET", min: -250, max: 800, step: 5 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1_EXTRA_FIELDS = [
-    { key: "ENABLE_CHAT", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1 = AppendUniquePayloadSchemaFields(
-    ClonePayloadSchemaWithFieldOverrides(BUILD_CATEGORY_COMPACT_SCHEMA_2_2_0, BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1_OVERRIDE_FIELDS),
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1_EXTRA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_2_EXTRA_FIELDS = [
-    { key: "ENABLE_LEGACY_COOLDOWNS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_2 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_2_EXTRA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_3_OVERRIDE_FIELDS = [
-    { key: "LANGUAGE", min: 0, max: 3, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_3 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_2,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_3_OVERRIDE_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_4_OVERRIDE_FIELDS = [
-    { key: "LANGUAGE", min: 0, max: 4, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_4 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_3,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_4_OVERRIDE_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_5_OVERRIDE_FIELDS = [
-    { key: "LANGUAGE", min: 0, max: 5, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_5 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_4,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_5_OVERRIDE_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_6_OVERRIDE_FIELDS = [
-    { key: "LANGUAGE", min: 0, max: 6, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_6 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_5,
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_6_OVERRIDE_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_7 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_6,
-    [{ key: "MINIMAP_FLIP", min: 0, max: 1, step: 1 }]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_2_10 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_7,
-    [
-        { key: "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS", min: 0, max: 1, step: 1 },
-        { key: "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE", min: 0, max: 1, step: 1 }
-    ]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_2_10,
-    [
-        { key: "ENABLE_BHOP", min: 0, max: 1, step: 1 }
-    ]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3 = BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4_OVERRIDE_FIELDS = [
-    { key: "HEALTHBAR_TYPE", min: 0, max: 5, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4 = AppendUniquePayloadSchemaFields(
-    ClonePayloadSchemaWithFieldOverrides(
-        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1,
-        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4_OVERRIDE_FIELDS
-    ),
-    [
-        { key: "ENABLE_IMAGES_IN_CHAT", min: 0, max: 1, step: 1 },
-        { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", min: 0, max: 1, step: 1 }
-    ]
-);
-const BUILD_CATEGORY_TOPBAR_HP_WARNING_SCHEMA_FIELDS = [
-    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCHEMA_FIELDS = [
-    { key: "TOP_BAR_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "TOP_BAR_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "TOP_BAR_Y_OFFSET", min: -500, max: 500, step: 5 },
-    { key: "BOTTOM_BAR_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "BOTTOM_BAR_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "BOTTOM_BAR_Y_OFFSET", min: -500, max: 500, step: 5 },
-    { key: "SHOP_OFFSET_Y", min: -500, max: 500, step: 5 },
-    { key: "SHOP_OPACITY", min: 0, max: 1, step: 0.05 }
-];
-const BUILD_CATEGORY_HUD_SECTION_AND_PANEL_SCHEMA_FIELDS = [
-    { key: "HUD_TOP_BAR_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "HUD_BOTTOM_BAR_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "HUD_ITEMS_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "HUD_SOULS_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "HUD_SHOP_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "ITEMS_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ITEMS_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "ITEMS_Y_OFFSET", min: -500, max: 500, step: 5 },
-    { key: "SOULS_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "SOULS_X_OFFSET", min: -1500, max: 1500, step: 5 },
-    { key: "SOULS_Y_OFFSET", min: -500, max: 500, step: 5 }
-];
-const BUILD_CATEGORY_MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS = [
-    { key: "ENABLE_MINIMAP_CRATE_OVERLAY", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS = [
-    { key: "ENABLE_MINIMAP_REM_TUNNELS", min: 0, max: 1, step: 1 },
-    { key: "MINIMAP_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
-];
-const BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS = [
-    { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS = [
-    { key: "TOP_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
-    { key: "BOTTOM_BAR_SCALE", min: 0.5, max: 1.5, step: 0.05 },
-    { key: "SHOP_SCALE", min: 0.5, max: 1.5, step: 0.05 }
-];
-const BUILD_CATEGORY_ZOOM_REM_TUNNELS_SCHEMA_FIELDS = [
-    { key: "ENABLE_ALT_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
-    { key: "ALT_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "ENABLE_TAB_ZOOM_REM_TUNNELS", min: 0, max: 1, step: 1 },
-    { key: "TAB_ZOOM_REM_TUNNELS_OPACITY", min: 0, max: 1, step: 0.05 }
-];
-const BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS = [
-    { key: "ENABLE_DAMAGE_IMPACT", min: 0, max: 1, step: 1 },
-    { key: "DAMAGE_IMPACT_SCALE", min: 0.5, max: 2.0, step: 0.05 },
-    { key: "DAMAGE_IMPACT_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "DAMAGE_IMPACT_X_OFFSET", min: -1000, max: 1000, step: 5 },
-    { key: "DAMAGE_IMPACT_Y_OFFSET", min: -1000, max: 1000, step: 5 }
-];
-const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS = [
-    { key: "SETTINGS_THEME", min: 0, max: 5, step: 1 }
-];
-const BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS_3_0_5 = [
-    { key: "SETTINGS_THEME", min: 0, max: 6, step: 1 }
-];
-const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS = [
-    { key: "ITEMS_WASH_COLOR", min: 0, max: 29, step: 1 },
-    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 29, step: 1 },
-    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 29, step: 1 },
-    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 29, step: 1 },
-    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 29, step: 1 },
-    { key: "AMMO_TEXT_COLOR", min: 0, max: 29, step: 1 },
-    { key: "MINIMAP_ICON_COLOR", min: 0, max: 29, step: 1 }
-];
-const BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS_2_5_4 = [
-    { key: "ITEMS_WASH_COLOR", min: 0, max: 25, step: 1 },
-    { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", min: 0, max: 25, step: 1 },
-    { key: "BOTTOM_BAR_WASH_COLOR", min: 0, max: 25, step: 1 },
-    { key: "KEYBOARD_OVERLAY_WASH_COLOR", min: 0, max: 25, step: 1 },
-    { key: "STAMINA_CHARGE_COLOR", min: 0, max: 25, step: 1 },
-    { key: "AMMO_TEXT_COLOR", min: 0, max: 25, step: 1 }
-];
-const BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS = [
-    { key: "ENABLE_COMBAT_INDICATOR", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_STAMINA_CHARGE_SCHEMA_FIELDS = [
-    { key: "STAMINA_CHARGE_ANGLE", min: 0, max: 360, step: 1 }
-];
-const BUILD_CATEGORY_CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS = [
-    { key: "ENABLE_CLEAN_DAMAGE_INDICATORS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS = [
-    { key: "ENABLE_SIMPLIFY_SHOP_STATS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_ENHANCED_QUICKBUY_SCHEMA_FIELDS = [
-    { key: "ENABLE_ENHANCED_QUICKBUY", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS = [
-    { key: "ENHANCED_QUICKBUY_COUNT", min: 1, max: 5, step: 1 }
-];
-const BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOP_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SHOP_RECENT_PURCHASES", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS = [
-    { key: "RECENT_PURCHASES_QUICK_MAX",         min: 1,    max: 5,   step: 1    },
-    { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", min: 3,    max: 15,  step: 1    },
-    { key: "RECENT_PURCHASES_QUICK_X_OFFSET",    min: -500, max: 500, step: 5    },
-    { key: "RECENT_PURCHASES_QUICK_Y_OFFSET",    min: -500, max: 500, step: 5    },
-    { key: "RECENT_PURCHASES_QUICK_REJUV",       min: 0,    max: 1,   step: 1    },
-    { key: "RECENT_PURCHASES_QUICK_SCOREBOARD",  min: 0,    max: 1,   step: 1    },
-    { key: "RECENT_PURCHASES_QUICK_SCALE",       min: 0.5,  max: 1.5, step: 0.05 },
-    { key: "RECENT_PURCHASES_PANEL_X_OFFSET",    min: -500, max: 500, step: 5    },
-    { key: "RECENT_PURCHASES_PANEL_Y_OFFSET",    min: -500, max: 500, step: 5    },
-    { key: "RECENT_PURCHASES_PANEL_SCALE",       min: 0.5,  max: 2.0, step: 0.05 }
-];
-const BUILD_CATEGORY_RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS = [
-    { key: "RECENT_PURCHASES_QUICK_OPACITY", min: 0, max: 1, step: 0.05 },
-    { key: "RECENT_PURCHASES_PANEL_OPACITY", min: 0, max: 1, step: 0.05 }
-];
-const BUILD_CATEGORY_HERO_PURCHASE_POPUPS_SCHEMA_FIELDS = [
-    { key: "ENABLE_HERO_PURCHASE_POPUPS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_SHOW_BUILD_ID_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOW_BUILD_ID", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_SHOW_BUILD_ID_TITLE", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_DL4D_REMINDER_SCHEMA_FIELDS = [
-    { key: "ENABLE_DL4D_REMINDERS", min: 0, max: 1, step: 1 },
-    { key: "DL4D_VOLUME", min: 0, max: 100, step: 1 },
-    { key: "ENABLE_DL4D_CAPTIONS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_MEDIUM_CAMPS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_RUNE", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_WALKER_WEAK", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS = [
-    { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4,
-    [
-        { key: "DISABLE_PLAYER_NAME_BLUR", min: 0, max: 1, step: 1 }
-    ]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_6 = BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_3_7 = BUILD_CATEGORY_COMPACT_SCHEMA_2_3_6;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0 = AppendUniquePayloadSchemaFields(
-    AppendUniquePayloadSchemaFields(
-        AppendUniquePayloadSchemaFields(
-            AppendUniquePayloadSchemaFields(
-                AppendUniquePayloadSchemaFields(
-                    AppendUniquePayloadSchemaFields(
-                        BUILD_CATEGORY_COMPACT_SCHEMA_2_3_7,
-                        BUILD_CATEGORY_TOPBAR_HP_WARNING_SCHEMA_FIELDS
-                    ),
-                    BUILD_CATEGORY_COMBAT_INDICATOR_SCHEMA_FIELDS
-                ),
-                BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCHEMA_FIELDS
-            ),
-            BUILD_CATEGORY_HUD_SECTION_AND_PANEL_SCHEMA_FIELDS
-        ),
-        BUILD_CATEGORY_MINIMAP_CRATE_OVERLAY_SCHEMA_FIELDS
-    ),
-    AppendUniquePayloadSchemaFields(
-        BUILD_CATEGORY_SHOP_STATS_MINIMALIST_SCHEMA_FIELDS,
-        BUILD_CATEGORY_ENHANCED_QUICKBUY_SCHEMA_FIELDS
-    )
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0,
-    AppendUniquePayloadSchemaFields(
-        BUILD_CATEGORY_SHOP_PURCHASE_FEATURE_SCHEMA_FIELDS,
-        BUILD_CATEGORY_MINIMAP_REM_TUNNELS_SCHEMA_FIELDS
-    )
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0,
-    BUILD_CATEGORY_MINIMAP_ELEVATION_MARKERS_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1,
-    AppendUniquePayloadSchemaFields(
-        AppendUniquePayloadSchemaFields(
-            BUILD_CATEGORY_HUD_BAR_AND_SHOP_SCALE_SCHEMA_FIELDS,
-            BUILD_CATEGORY_ZOOM_REM_TUNNELS_SCHEMA_FIELDS
-        ),
-        BUILD_CATEGORY_DAMAGE_IMPACT_SCHEMA_FIELDS
-    )
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2,
-    BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3,
-    AppendUniquePayloadSchemaFields(
-        AppendUniquePayloadSchemaFields(
-            BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS_2_5_4,
-            BUILD_CATEGORY_STAMINA_CHARGE_SCHEMA_FIELDS
-        ),
-        BUILD_CATEGORY_CLEAN_DAMAGE_INDICATORS_SCHEMA_FIELDS
-    )
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5 = AppendUniquePayloadSchemaFields(
-    ClonePayloadSchemaWithFieldOverrides(
-        BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4,
-        BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS
-    ),
-    BUILD_CATEGORY_PALETTE_PICKER_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6,
-    BUILD_CATEGORY_RECENT_PURCHASES_QUICK_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7,
-    BUILD_CATEGORY_SHOW_BUILD_ID_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8,
-    BUILD_CATEGORY_DL4D_REMINDER_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9,
-    BUILD_CATEGORY_QUICKBUY_CLICK_TO_NOTIFY_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10,
-    BUILD_CATEGORY_RECENT_PURCHASES_OPACITY_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11;
-const BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0;
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0 = BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1;
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0,
-    [{ key: "LANGUAGE", min: 0, max: 10, step: 1 }]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2,
-    BUILD_CATEGORY_ENHANCED_QUICKBUY_COUNT_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3,
-    [{ key: "LANGUAGE", min: 0, max: 11, step: 1 }]
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5 = ClonePayloadSchemaWithFieldOverrides(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4,
-    BUILD_CATEGORY_SETTINGS_THEME_SCHEMA_FIELDS_3_0_5
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_0 = BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5;
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_1 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_0,
-    BUILD_CATEGORY_HERO_PURCHASE_POPUPS_SCHEMA_FIELDS
-);
-// Fix: ENABLE_SHOP_ITEM_NOTIFICATIONS was missing from the compact schema
-const BUILD_CATEGORY_SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS = [
-    { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", min: 0, max: 1, step: 1 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_2 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_1,
-    BUILD_CATEGORY_SHOP_ITEM_NOTIFICATION_SCHEMA_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS = [
-    { key: "ENABLE_ALLY_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_25", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_65", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_ALLY_COLOR_WARNING_75", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_DEBUG_DETAIL", min: 0, max: 1, step: 1 },
-    { key: "ENABLE_PERF_OVERLAY", min: 0, max: 1, step: 1 },
-    { key: "PERF_ALERT_THRESHOLD_MS", min: 1, max: 50, step: 1 },
-    { key: "PERF_OVERLAY_OPACITY", min: 0.3, max: 1.0, step: 0.05 },
-    { key: "ENABLE_SPECIALS", min: 0, max: 1, step: 1 },
-    { key: "DRAG_ENABLED", min: 0, max: 1, step: 1 },
-    { key: "PREVIEWS_ENABLED", min: 0, max: 1, step: 1 }
-];
-// 3.0.6: Full schema including the missing fields that were added as 3.0.6.
-// Reconstructed for backward compatibility — saves encoded with 3.0.6 must decode.
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5,
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_2,
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6_MISSING_FIELDS
-);
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS = [
-    { key: "UNIT_TARGET_HINT_SIZE", min: 50, max: 200, step: 5 }
-];
-const BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4 = AppendUniquePayloadSchemaFields(
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3,
-    BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS
-);
-const BUILD_CATEGORY_LATEST_COMPACT_SEMVER = BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER;
-const BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = {
-    "2.0.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_0,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_0_0
-    },
-    "2.0.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_0_1
-    },
-    "2.1.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_1_1
-    },
-    "2.1.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_1_1
-    },
-    "2.1.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_1_2
-    },
-    "2.2.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_0
-    },
-    "2.2.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_1
-    },
-    "2.2.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_2
-    },
-    "2.2.3": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_3
-    },
-    "2.2.4": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_4
-    },
-    "2.2.5": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_5
-    },
-    "2.2.6": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_6
-    },
-    "2.2.7": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_7
-    },
-    "2.2.8": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_7
-    },
-    "2.2.9": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_7
-    },
-    "2.2.10": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_10
-    },
-    "2.3.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_2_10
-    },
-    "2.3.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1
-    },
-    "2.3.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_1
-    },
-    "2.3.3": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_3
-    },
-    "2.3.4": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_4
-    },
-    "2.3.5": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_5
-    },
-    "2.3.6": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_6
-    },
-    "2.3.7": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_3_7
-    },
-    "2.4.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_4_0
-    },
-    "2.5.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_0
-    },
-    "2.5.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_1
-    },
-    "2.5.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_2
-    },
-    "2.5.3": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_3
-    },
-    "2.5.4": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_4
-    },
-    "2.5.5": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_5
-    },
-    "2.5.6": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_6
-    },
-    "2.5.7": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_7
-    },
-    "2.5.8": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_8
-    },
-    "2.5.9": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_9
-    },
-    "2.5.10": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_10
-    },
-    "2.5.11": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_5_11
-    },
-    "2.6.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_6_0
-    },
-    "2.6.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_2_6_1
-    },
-    "3.0.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0
-    },
-    "3.0.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_0
-    },
-    "3.0.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_2
-    },
-    "3.0.3": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_3
-    },
-    "3.0.4": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_4
-    },
-    "3.0.5": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_5
-    },
-    "3.0.6": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_0_6
-    },
-    "3.1.0": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_0
-    },
-    "3.1.1": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_1
-    },
-    "3.1.2": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_2
-    },
-    "3.1.3": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_3
-    },
-    "3.1.4": {
-        wireVersion: BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1,
-        schema: BUILD_CATEGORY_COMPACT_SCHEMA_3_1_4
-    }
-};
-const BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
-    ? QOL_CODEC.BuildWireToSemver(BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY)
-    : {};
-
-function GetBuildPayloadCompactSchema(semver) {
-    var key = String(semver || "");
-    var entry = BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY[key];
-    if (!entry || !Array.isArray(entry.schema)) throw new Error("Unsupported build payload schema semver");
-    return entry.schema;
-}
-
-function GetBuildPayloadCompactWireVersion(semver) {
-    var key = String(semver || "");
-    var entry = BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY[key];
-    if (!entry) throw new Error("Unsupported build payload schema semver");
-    var wireVersion = Math.max(0, Math.round(Number(entry.wireVersion) || 0));
-    if (wireVersion <= 0) throw new Error("Invalid build payload schema wire version");
-    return wireVersion;
-}
-
-function ResolveBuildPayloadCompactSemverFromWireVersion(wireVersion) {
-    var semver = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.ResolveSemverFromWire === "function")
-        ? QOL_CODEC.ResolveSemverFromWire(BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER, BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY, wireVersion)
-        : "";
-    if (!semver || !BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY[semver]) throw new Error("Unsupported build payload schema wire version");
-    return semver;
-}
-
-function AreBuildPayloadSemversWireCompatible(expectedSemver, resolvedSemver) {
-    var expected = String(expectedSemver || "");
-    var resolved = String(resolvedSemver || "");
-    if (!expected || !resolved) return false;
-    if (expected === resolved) return true;
-    if (!BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY.hasOwnProperty(expected)) return false;
-    if (!BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY.hasOwnProperty(resolved)) return false;
-    try {
-        return GetBuildPayloadCompactWireVersion(expected) === GetBuildPayloadCompactWireVersion(resolved);
-    } catch (eWire) {
-        return false;
-    }
-}
+// ── Compatibility aliases (commit 1.1: redirect to shared module) ──
+var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = QOL_COMPACT_SCHEMA_REGISTRY;
+var BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
+var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
+function GetBuildPayloadCompactSchema(s)     { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(s); }
+function GetBuildPayloadCompactWireVersion(s) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(s); }
+function ResolveBuildPayloadCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
+function AreBuildPayloadSemversWireCompatible(a, b) { return QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible(a, b); }
+var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD = QOL_COMPACT_DEFAULT_HERO_FIELD;
+var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS = QOL_COMPACT_DEFAULT_HERO_OPTIONS;
 
 function BuildPayloadFromBase64Url(urlStr) {
     if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.FromBase64Url === "function") {
@@ -9928,6 +8836,24 @@ function GetUIRoot() {
             var unspentSouls = totalNetWorth - spentSouls;
             if (!isFinite(unspentSouls)) unspentSouls = 0;
 
+            // DEBUG: trace unspent calculation
+            if (State._dbgUnspentNextLogMs === undefined) State._dbgUnspentNextLogMs = 0;
+            if (nowMs >= State._dbgUnspentNextLogMs) {
+                State._dbgUnspentNextLogMs = nowMs + 4000;
+                var _dbgParts = [];
+                _dbgParts.push("cursor=" + cursor + " batch=[" + cursor + "-" + (batchEnd-1) + "] sampleMs=" + (nowMs - (State.unspentNextSampleMs || 0) - UNSPENT_SAMPLE_INTERVAL_MS));
+                for (var _dbgJ = cursor; _dbgJ < batchEnd; _dbgJ++) {
+                    var _dbgP = IsPanelValid(State.unspentPlayerPanels[_dbgJ]) ? State.unspentPlayerPanels[_dbgJ] : null;
+                    if (!_dbgP) continue;
+                    var _dbgNw = GetSoulValueFromLabels(
+                        State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[_dbgJ] : null,
+                        State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[_dbgJ] : null);
+                    var _dbgSp = Number(State.unspentCachedSpentSouls[_dbgJ]) || 0;
+                    _dbgParts.push("p" + _dbgJ + ":nw=" + _dbgNw + "s=" + _dbgSp + "u=" + (_dbgNw - _dbgSp));
+                }
+                $.Msg("[QOLLock][DEBUG][unspent] " + _dbgParts.join(" "));
+            }
+
             var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display && playerPanel && playerPanel.FindChildTraverse) {
                 display = playerPanel.FindChildTraverse("SpentSoulDisplay");
@@ -10812,7 +9738,7 @@ function GetUIRoot() {
             lastMidBossActive: false,
             buffStartTime: 0,
             buffCounter: 0,
-            lastBuff0to1GameSec: 0,
+            lastBuffGameSec: -BUFF_LOCKOUT_SEC,
             lastSec: -1,
             lastGlobalSec: -1,
             lastRuntimeSec: -1,
@@ -10829,6 +9755,7 @@ function GetUIRoot() {
             cacheCharges: null,
             cacheFriendly: null,
             cacheEnemy: null,
+            cacheRejuvTimer: null,
             cacheMidBossButton: null,
             panels: {}
         };
@@ -11064,6 +9991,7 @@ function GetUIRoot() {
             state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
             state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
             state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
+            state.cacheRejuvTimer = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorTimer") : null;
         }
 
         var chargeCount = Math.max(
@@ -11124,7 +10052,7 @@ function GetUIRoot() {
         state.lastScanFound = false;
         state.lastRejuvChargeCount = 0;
         state.lastMidBossActive = false;
-        state.lastBuff0to1GameSec = 0;
+        state.lastBuffGameSec = -BUFF_LOCKOUT_SEC;
         state.lastSec = -1;
         state.lastGlobalSec = -1;
         state.lastRuntimeSec = -1;
@@ -11139,10 +10067,13 @@ function GetUIRoot() {
         state.lastChargeCountValue = 0;
         state.nextMidBossLookupMs = 0;
         state.lastMinimapRenderSig = "";
+        state._lastMidBossSpawned = undefined;
+        state._lastHadRejuvPerTick = false;
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
         state.cacheEnemy = null;
+        state.cacheRejuvTimer = null;
         state.cacheMidBossButton = null;
         if (Number(REJUV_SEQ[0].dur) <= 0) {
             RejuvShowSpawn(state, root);
@@ -11228,6 +10159,35 @@ function GetUIRoot() {
                 activeObjectiveZoomSig
             ].join("|");
             state._cachedConfigRef = State.lastConfig;
+        }
+
+        // Per-tick cheap change detection — catches mid-boss kills and rejuv
+        // captures within ~200ms instead of waiting for the 3s scan interval.
+        // Uses BHasClass and GetChildCount on cached panels (property reads,
+        // no tree walks). Only fires when caches are already populated by a
+        // prior full scan.
+        var _mbBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
+        if (_mbBtn) {
+            var _mbSpawned = !!(_mbBtn.BHasClass && _mbBtn.BHasClass("midboss_spawned"));
+            if (_mbSpawned !== state._lastMidBossSpawned) {
+                state._lastMidBossSpawned = _mbSpawned;
+                state.nextScanMs = 0; // force immediate full scan on change
+            }
+        }
+        // Per-tick rejuv capture detection via has_rejuv class on
+        // cached RejuvenatorTimer. Starts the buff timer directly on a
+        // Per-tick rejuv buff start via has_rejuv class on cached RejuvenatorTimer.
+        // 2-minute lockout prevents repeated triggers within the same buff window.
+        var _rejuvTimer = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
+        if (_rejuvTimer && _rejuvTimer.BHasClass) {
+            var _hasRejuvNow = _rejuvTimer.BHasClass("has_rejuv");
+            if (_hasRejuvNow && !state._lastHadRejuvPerTick) {
+                if (nowSec >= (state.lastBuffGameSec || 0) + BUFF_LOCKOUT_SEC) {
+                    state.lastBuffGameSec = nowSec;
+                    RejuvStartBuff(state, root, nowSec, true);
+                }
+            }
+            state._lastHadRejuvPerTick = _hasRejuvNow;
         }
 
         // Fast-path early-exit: skip all panel lookups and class checks
@@ -11384,14 +10344,14 @@ function GetUIRoot() {
                 var targetIdxFallback = state.claimCount > 2 ? 3 : state.claimCount;
                 RejuvStartPhaseManual(state, root, targetIdxFallback, nowSec, nowMs);
             }
-            // Only start buff on a 0->1 charge transition, and enforce a
-            // 2-minute lockout so the timer can't be reset by a second 0->1
+            // Start buff on charge count change, and enforce a
+            // 2-minute lockout so the timer can't be reset by a repeated trigger
             // within the same window (buff lasts 4 minutes, so this is safe).
             var chargeChangedFrom0to1 = ((state.lastRejuvChargeCount || 0) === 0 && chargeCount >= 1);
             if (chargeChangedFrom0to1) {
-                var buffLockoutUntilSec = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
+                var buffLockoutUntilSec = (state.lastBuffGameSec || 0) + BUFF_LOCKOUT_SEC;
                 if (nowSec >= buffLockoutUntilSec) {
-                    state.lastBuff0to1GameSec = nowSec;
+                    state.lastBuffGameSec = nowSec;
                     RejuvStartBuff(state, root, nowSec, true);
                 }
             }
@@ -29366,7 +28326,19 @@ function GetUIRoot() {
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
-        var compassEnabled = (cfg.ENABLE_COMPASS === 1) || (cfg.ENABLE_COMPASS_SPEED === 1);
+        // WHY: compass_active class controls the entire compass panel visibility.
+        // Speed display is a child of the compass panel — when the compass is off,
+        // the speed readout is meaningless. Only ENABLE_COMPASS gates the panel.
+        var compassEnabled = (cfg.ENABLE_COMPASS === 1);
+        // When compass is disabled, collapse the panel via inline style.
+        // CSS class removal alone isn't sufficient — UpdateCompassOverlay
+        // sets visibility:visible as an inline style which overrides CSS.
+        if (!compassEnabled) {
+            var _compassRoot = State.cachedPanels.compassRoot;
+            if (IsPanelValid(_compassRoot)) {
+                try { _compassRoot.style.visibility = "collapse"; } catch (_ce) {}
+            }
+        }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
             hideoutConnected ? 1 : 0,
@@ -30445,8 +29417,10 @@ function GetUIRoot() {
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
-        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
-            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
+        // WHY: compass panel visibility is gated solely by ENABLE_COMPASS.
+        // ENABLE_COMPASS_SPEED controls the speed readout inside the panel —
+        // when the compass itself is off, there's nothing to display speed on.
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS");
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
@@ -30481,11 +29455,9 @@ function GetUIRoot() {
         return !!(State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted);
     }
 
-    var IMAGES_IN_CHAT_URL_REGEX = /^https:\/\/i\.postimg\.cc\/\S+\.(?:png|jpg|jpeg|webp)$/i;
+    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
     var IMAGES_IN_CHAT_MAX_W = 150;
     var IMAGES_IN_CHAT_MAX_H = 150;
-    var IMAGES_IN_CHAT_MAX_RETRIES = 30;
-    var IMAGES_IN_CHAT_RETRY_INTERVAL = 0.5;
     var IMAGES_IN_CHAT_CACHE_MAX_MESSAGES = 80;
     var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
     var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
@@ -30513,40 +29485,20 @@ function GetUIRoot() {
         if (!msgText) return;
         var textContainer = msgText.GetParent();
         if (!textContainer) return;
-        msgContainer.style.opacity = 0.00001;
         textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
-        img.AddClass("InjectedChatImage");
-        img.SetImage(url);
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { msgContainer.style.opacity = 1; } catch (eOffTopA) {}
-                try { img.DeleteAsync(0); } catch (eOffTopB) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "8px 8px 8px 8px";
-                msgContainer.style.opacity = 1;
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                msgContainer.style.opacity = 1;
-            }
+        var panelId = "InjectedChatImage_" + PerfNowMs();
+        var img = $.CreatePanel("Image", textContainer, panelId);
+        if (!img) {
+            $.Msg("[QOLLock][imgchat] FAILED to create Image panel");
+            return;
         }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+        img.AddClass("InjectedChatImage");
+        img.SetImage("https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=150&h=150&fit=inside");
+        img.style.maxWidth = IMAGES_IN_CHAT_MAX_W + "px";
+        img.style.maxHeight = IMAGES_IN_CHAT_MAX_H + "px";
+        img.style.margin = "8px 8px 8px 8px";
+        msgText.style.visibility = "collapse";
+        $.Msg("[QOLLock][imgchat] injected \"" + url.substring(0, 60) + "\" on " + panelId);
     }
 
     function InjectBottomChatImage(msgPanel, url) {
@@ -30555,36 +29507,19 @@ function GetUIRoot() {
         var textContainer = msgText.GetParent();
         if (!textContainer) return;
         textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
-        img.AddClass("InjectedChatImage");
-        img.SetImage(url);
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { img.DeleteAsync(0); } catch (eOffBottomA) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "4px 4px 4px 4px";
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                img.DeleteAsync(0);
-            }
+        var panelId = "InjectedChatImage_bot_" + PerfNowMs();
+        var img = $.CreatePanel("Image", textContainer, panelId);
+        if (!img) {
+            $.Msg("[QOLLock][imgchat] FAILED to create Image panel (bottom)");
+            return;
         }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+        img.AddClass("InjectedChatImage");
+        img.SetImage("https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=150&h=150&fit=inside");
+        img.style.maxWidth = IMAGES_IN_CHAT_MAX_W + "px";
+        img.style.maxHeight = IMAGES_IN_CHAT_MAX_H + "px";
+        img.style.margin = "4px 4px 4px 4px";
+        msgText.style.visibility = "collapse";
+        $.Msg("[QOLLock][imgchat] injected(bot) \"" + url.substring(0, 60) + "\" on " + panelId);
     }
 
     function ClearInjectedChatImagesForMessage(msgPanel) {
@@ -30893,7 +29828,12 @@ function GetUIRoot() {
             (_b ? _b[0] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("rejuvTimers", function() {
                     var _ps = PerfStart();
-                    UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["rejuvTimers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.rejuv_timers", _ps);
                 });
             });
@@ -30904,7 +29844,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("spm", function() {
                     var _ps = PerfStart();
-                    UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["spm"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.souls_per_min", _ps);
                 });
             });
@@ -30915,7 +29860,12 @@ function GetUIRoot() {
             (_b ? _b[2] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("unspent", function() {
                     var _ps = PerfStart();
-                    UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["unspent"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.unspent", _ps);
                 });
             });
@@ -30925,7 +29875,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("nicknames", function() {
                     var _ps = PerfStart();
-                    UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["nicknames"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.topbar_nicknames", _ps);
                 });
             });
@@ -30935,7 +29890,12 @@ function GetUIRoot() {
             (_b ? _b[2] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("statlocker", function() {
                     var _ps = PerfStart();
-                    UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["statlocker"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.statlocker", _ps);
                 });
             });
@@ -30956,8 +29916,14 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("onDeathArcade", function() {
                     var _ps = PerfStart();
-                    UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
-                    State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    var _feat = QOL_FEATURE_REGISTRY["onDeathArcade"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    } else {
+                        UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
+                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    }
                     PerfEnd("loop.on_death_arcade", _ps);
                 });
             });
@@ -30968,8 +29934,14 @@ function GetUIRoot() {
             (_b ? _b[0] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("coreRoot", function() {
                     var _ps = PerfStart();
-                    ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
-                    State.coreRootGateSig = _s.gates.sig;
+                    var _feat = QOL_FEATURE_REGISTRY["coreRoot"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                        State.coreRootGateSig = _s.gates.sig;
+                    } else {
+                        ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
+                        State.coreRootGateSig = _s.gates.sig;
+                    }
                     PerfEnd("loop.root_classes", _ps);
                 });
             });
@@ -30979,7 +29951,12 @@ function GetUIRoot() {
             (_b ? _b[1] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("healthbarRuntimeHelpers", function() {
                     var _ps = PerfStart();
-                    UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
+                    var _feat = QOL_FEATURE_REGISTRY["healthbarRuntimeHelpers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
+                    }
                     PerfEnd("loop.healthbar_helpers", _ps);
                 });
             });
@@ -31012,7 +29989,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("laneWithParty", function() {
                     var _ps = PerfStart();
-                    UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["laneWithParty"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.lane_with_party", _ps);
                 });
             });
@@ -31045,7 +30027,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("colorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["colorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.colored_healthbar", _ps);
                 });
             });
@@ -31056,7 +30043,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("enemyColorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["enemyColorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.enemy_colored_healthbar", _ps);
                 });
             });
@@ -31067,7 +30059,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("allyColorWarning", function() {
                     var _ps = PerfStart();
-                    UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["allyColorWarning"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.ally_colored_healthbar", _ps);
                 });
             });
@@ -31160,7 +30157,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("zipBoost", function() {
                     var _ps = PerfStart();
-                    UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["zipBoost"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.zip_boost", _ps);
                 });
             });
@@ -31170,7 +30172,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("unsecuredSouls", function() {
                     var _ps = PerfStart();
-                    UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["unsecuredSoulsTimer"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.unsecured_souls_overlay", _ps);
                 });
             });
@@ -31180,7 +30187,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("statBonuses", function() {
                     var _ps = PerfStart();
-                    UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["statBonuses"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.stat_bonuses", _ps);
                 });
             });
@@ -31191,7 +30203,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("combatStatus", function() {
                     var _ps = PerfStart();
-                    UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["combatStatus"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.combat_status", _ps);
                 });
             });
@@ -31247,7 +30264,12 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("damageNumbers", function() {
                     var _ps = PerfStart();
-                    UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["damageNumbers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
+                    }
                     PerfEnd("loop.damage_numbers", _ps);
                 });
             });
@@ -31278,7 +30300,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("imagesInChat", function() {
                     var _ps = PerfStart();
-                    UpdateImagesInChat(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["imagesInChat"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateImagesInChat(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.images_in_chat", _ps);
                 });
             });
@@ -31405,4 +30432,309 @@ function GetUIRoot() {
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
     $.Schedule(CORE_START_DELAY_COMPASS_SEC, compassLoop);
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);
+
+    // ── Feature registrations (Phase 2: registry-based dispatch) ──
+    QOL_REGISTER_FEATURE("rejuvTimers", {
+        configKeys: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER", "ENABLE_MINIMAP_BUFF_TIMER"],
+        bucket: 0,
+        phase: 0,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_REJUV_HUD") || IsCfgEnabled(cfg, "ENABLE_BUFF_HUD") ||
+                   IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") || IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER");
+        },
+        update: function(root, cfg, nowMs) { UpdateRejuvBuffTimers(root, cfg, nowMs); },
+        stateKeys: ["rejuvState", "rejuvWasDisabled", "minimapObjectiveBuffClassCache",
+                    "minimapObjectiveBuffBridgeLeftClassCache", "minimapObjectiveBuffBridgeRightClassCache",
+                    "minimapObjectiveRejuvClassCache", "minimapObjectiveScaleSig"]
+    });
+
+    QOL_REGISTER_FEATURE("combatStatus", {
+        configKeys: ["ENABLE_COMBAT_STATUS", "ENABLE_COMBAT_INDICATOR"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS") ||
+                   IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["combatStatus", "combatStatusAlertProbeMisses",
+                    "combatIndicatorDebugLastSig", "combatIndicatorDebugNextMs"]
+    });
+
+    QOL_REGISTER_FEATURE("zipBoost", {
+        configKeys: ["ENABLE_ZIP_BOOST"],
+        bucket: 6,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["zipBoostLastState", "zipBoostReadyFlashUntilMs",
+                    "zipBoostDisplayMode", "zipBoostLastLayoutSig",
+                    "zipBoostLastClassSig", "zipBoostLastTitle",
+                    "zipBoostLastStatus", "zipBoostNextSourceSearchMs",
+                    "zipBoostActiveEndMs"]
+    });
+
+    QOL_REGISTER_FEATURE("damageNumbers", {
+        configKeys: ["ENABLE_CLEAN_DAMAGE_INDICATORS", "ENABLE_HIDE_SMALL_NUMBERS",
+                     "ENABLE_HIDE_TROOPER_DAMAGE", "DAMAGE_NUMBER_OPACITY",
+                     "ENABLE_DAMAGE_FOUNTAIN", "ENABLE_CUMULATIVE_DMG"],
+        bucket: 5,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS") ||
+                   IsCfgEnabled(cfg, "ENABLE_HIDE_SMALL_NUMBERS") ||
+                   IsCfgEnabled(cfg, "ENABLE_HIDE_TROOPER_DAMAGE") ||
+                   IsCfgEnabled(cfg, "ENABLE_DAMAGE_FOUNTAIN") ||
+                   IsCfgEnabled(cfg, "ENABLE_CUMULATIVE_DMG") ||
+                   Number(cfg.DAMAGE_NUMBER_OPACITY) !== 1;
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateDamageNumbersRuntime(root, cfg, State.lastRawConfig, nowMs);
+        },
+        stateKeys: ["lastIndicatorConfigSig", "lastIndicatorHideModesSig",
+                    "indicatorPanelsCache", "indicatorMetaCache",
+                    "lastIndicatorCount", "lastItemCount",
+                    "damageNumbersRuntimeStyleSig"]
+    });
+
+    QOL_REGISTER_FEATURE("onDeathArcade", {
+        configKeys: ["ENABLE_ON_DEATH_GAMES", "ON_DEATH_GAME_MINESWEEPER",
+                     "ON_DEATH_GAME_BLACKJACK", "ON_DEATH_GAME_FLAPPY_BAT",
+                     "ON_DEATH_GAME_GRAVES_TRAINER", "ON_DEATH_GAME_ZERGGY_MANIA",
+                     "ON_DEATH_GAME_WHACK_A_REM"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            if (Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
+            return IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
+                   IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateOnDeathArcadeBridge(root, cfg, nowMs);
+        },
+        stateKeys: ["onDeathArcadeWasDead", "onDeathArcadeLastTriggerMs",
+                    "onDeathArcadeRespawnPanel", "onDeathArcadeRequestSerial",
+                    "onDeathArcadeRuntimeWasActive"]
+    });
+
+    QOL_REGISTER_FEATURE("imagesInChat", {
+        configKeys: ["ENABLE_IMAGES_IN_CHAT"],
+        bucket: 7,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateImagesInChat(root, cfg);
+        },
+        stateKeys: ["imagesInChatTopNextSearchMs", "imagesInChatBottomNextSearchMs",
+                    "imagesInChatTopIdleMisses", "imagesInChatBottomIdleMisses",
+                    "imagesInChatTopWatermark", "imagesInChatBottomWatermark",
+                    "imagesInChatTopFullScanNextMs", "imagesInChatBottomFullScanNextMs",
+                    "imagesInChatTopMessageCache", "imagesInChatBottomMessageCache"]
+    });
+
+    QOL_REGISTER_FEATURE("statlocker", {
+        configKeys: ["ENABLE_STATLOCKER"],
+        bucket: 2,
+        phase: 1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateStatlockerButtons(root, nowMs, cfg);
+        },
+        stateKeys: ["statlockerWasEnabled", "statlockerNextScanMs",
+                    "statlockerScanMisses", "statlockerCorePanels",
+                    "statlockerButtons"]
+    });
+
+    QOL_REGISTER_FEATURE("laneWithParty", {
+        configKeys: ["ENABLE_LANE_WITH_PARTY"],
+        bucket: 7,
+        phase: 2,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateLanePreferenceWithParty(root, cfg, nowMs);
+        },
+        stateKeys: ["laneWithPartyNextApplyMs", "laneWithPartyLastApplyMs",
+                    "laneWithPartyLastState"]
+    });
+
+    QOL_REGISTER_FEATURE("unsecuredSoulsTimer", {
+        configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
+        bucket: 6,
+        phase: 3,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["unsecuredSouls"]
+    });
+
+    QOL_REGISTER_FEATURE("statBonuses", {
+        configKeys: ["ENABLE_STAT_BONUSES"],
+        bucket: 6,
+        phase: 4,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["statBonuses"]
+    });
+
+    // ── Batch C: features with significant State footprint ──
+
+    QOL_REGISTER_FEATURE("spm", {
+        configKeys: ["ENABLE_MIN_SOULS"],
+        bucket: 1, phase: 1,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"); },
+        update: function(root, cfg, nowMs) { UpdateSoulsPerMinute(root, nowMs, cfg); },
+        stateKeys: ["spm"]
+    });
+
+    QOL_REGISTER_FEATURE("unspent", {
+        configKeys: ["ENABLE_UNSPENT_SOULS"],
+        bucket: 2, phase: 2,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"); },
+        update: function(root, cfg, nowMs) { UpdateUnspentSouls(root, nowMs, cfg); },
+        stateKeys: ["unspentNextSampleMs", "unspentPanelCacheNextMs", "unspentPlayerPanels",
+                    "unspentModsContainers", "unspentDisplayLabels",
+                    "unspentSoulValueLabelsPrimary", "unspentSoulValueLabelsFallback",
+                    "unspentCachedSpentSouls", "unspentModsChildCount",
+                    "unspentNextTierScanMs", "unspentLastDisplayText", "unspentWasDisabled"]
+    });
+
+    QOL_REGISTER_FEATURE("nicknames", {
+        configKeys: ["ENABLE_NICKNAMES"],
+        bucket: 1, phase: 0,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_NICKNAMES"); },
+        update: function(root, cfg, nowMs) { UpdateTopBarNicknames(root, nowMs, cfg); },
+        stateKeys: ["topbarNicknamesWasEnabled", "topbarNicknamesNextRefreshMs",
+                    "topbarNicknamePlayers", "topbarNicknameLabels",
+                    "topbarNicknameSourceLabels", "topbarNicknameFallbackLabels",
+                    "topbarNicknameResolvedTexts", "topbarNicknameResolveStates",
+                    "topbarNicknameRetryNextMs", "topbarNicknamesWasInHideout",
+                    "topbarNicknamesLastClockSec"]
+    });
+
+    QOL_REGISTER_FEATURE("coreRoot", {
+        configKeys: ["HUD_TOP_BAR_ENABLED", "HUD_BOTTOM_BAR_ENABLED",
+                     "HUD_ITEMS_ENABLED", "HUD_SOULS_ENABLED", "HUD_SHOP_ENABLED",
+                     "ENABLE_CHAT", "ENABLE_CENTER_ESC", "ENABLE_CENTER_FRIENDS_LIST",
+                     "SUPPORT_16_10", "SUPPORT_4_3", "HUD_INDICATOR_SIZE",
+                     "ENABLE_SPECIALS", "LANGUAGE", "ENABLE_GAME_AUDIO",
+                     "DISABLE_DAMAGE_REPORT", "DISABLE_QUICK_BUY",
+                     "ENABLE_LEGACY_COOLDOWNS", "ENABLE_HIDE_TESTING_TOOLS",
+                     "ENABLE_FORCE_TESTING_TOOLS", "ENABLE_COMBAT_INDICATOR",
+                     "ENABLE_ZIP_BOOST", "ENABLE_STAT_BONUSES", "ENABLE_COMPASS",
+                     "ENABLE_ENHANCED_QUICKBUY", "ENABLE_SHOP_ITEM_NOTIFICATIONS",
+                     "ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_HERO_PURCHASE_POPUPS",
+                     "ENABLE_SHOW_BUILD_ID", "ENABLE_HUD_SHIFT"],
+        bucket: 0, phase: 0,
+        gate: function(cfg) { return true; },  // coreRoot always evaluates
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            ApplyCoreLoopRootClassesAndState(root, cfg, nowMs, hideoutConnected,
+                !!(State.lastRawConfig && State.lastRawConfig.length > 0));
+        },
+        stateKeys: ["rootClassCache", "coreRootStaticSig", "coreRootGateSig"]
+    });
+
+    QOL_REGISTER_FEATURE("healthbarRuntimeHelpers", {
+        configKeys: ["HEALTHBAR_TYPE", "ENABLE_MINIMALIST_HEALTHBAR",
+                     "ENABLE_FG_HEALTHBAR"],
+        bucket: 1, phase: 0,
+        gate: function(cfg) {
+            var ht = Number(cfg.HEALTHBAR_TYPE);
+            return ht === 1 || ht === 2 || ht === 3 || ht === 4 || ht === 5;
+        },
+        update: function(root, cfg, nowMs) {
+            var ht = Number(cfg.HEALTHBAR_TYPE) || 0;
+            UpdateHealthbarRuntimeHelpers(root, cfg, nowMs, ht,
+                ht === 1, ht === 2);
+        },
+        stateKeys: ["minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
+                    "minimalistHealthbarOffsetPanel",
+                    "playerHealthbarScaleOpacityRuntimeApplied",
+                    "fgHeroImageRuntimeStyleSig", "fgHeroRuntimeLevelPanel",
+                    "fgHeroRuntimeHeroPanel", "budhudWasEnabled", "budhudNextUpdateMs",
+                    "budhudLastColor", "budhudLastPercentText",
+                    "budhudCurrentLabelBaseColor", "budhudCurrentLabelBaseColorCaptured",
+                    "mcWasEnabled", "mcNextUpdateMs",
+                    "mcHeartsBlinkTimer", "mcLowHealthJiggleTimer", "mcHealingWaveTimer",
+                    "mcIsAfflicted", "mcCheckModifierNextMs",
+                    "mcHeartSlots", "mcHeartContainerImages", "mcHeartHealingImages",
+                    "mcHeartDeferredImages", "mcHeartFillImages",
+                    "mcHeartsCapacity", "mcHeartsRowCount", "mcLastVisibleHeartsCount",
+                    "mcBarrierHeartsPanels", "mcBarrierHeartContainerImages",
+                    "mcBarrierHeartFillImages", "mcBarrierHeartsCapacity",
+                    "mcCachedFoodIcons", "mcLoggedHealthContainerMiss",
+                    "coloredHealthbarBridgeValue", "playerHealthbarAccentColorSig",
+                    "playerHealthbarAccentColorPanels", "playerHealthbarAccentColorToken"]
+    });
+
+    QOL_REGISTER_FEATURE("colorWarning", {
+        configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
+                     "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
+        },
+        update: function(root, cfg) { UpdateColoredHealthbarRuntime(root, cfg); },
+        stateKeys: ["coloredHealthbarLastColor", "coloredHealthbarEnabledPrev",
+                    "coloredHealthbarPulseDir", "coloredHealthbarPulseVal",
+                    "coloredHealthbarZeroHeightStreak"]
+    });
+
+    QOL_REGISTER_FEATURE("enemyColorWarning", {
+        configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
+                     "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ENEMY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) { UpdateEnemyColoredHealthRuntime(root, cfg, nowMs); },
+        stateKeys: ["enemyColoredHealthPanelCache", "enemyColoredHealthPanelCacheNextMs",
+                    "enemyColoredHealthNextUpdateMs", "enemyColoredHealthEnabledPrev",
+                    "enemyColoredHealthPulseDir", "enemyColoredHealthPulseVal"]
+    });
+
+    QOL_REGISTER_FEATURE("allyColorWarning", {
+        configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
+                     "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ALLY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) { UpdateAllyColoredHealthRuntime(root, cfg, nowMs); },
+        stateKeys: ["allyColoredHealthPanelCache", "allyColoredHealthPanelCacheNextMs",
+                    "allyColoredHealthNextUpdateMs", "allyColoredHealthEnabledPrev",
+                    "allyColoredHealthPulseDir", "allyColoredHealthPulseVal"]
+    });
+
 })();
