@@ -9089,22 +9089,6 @@ function NormalizeLatinSettingsText(text) {
         .replace(/[^\x20-\x7E]/g, "");
 }
 
-function NormalizeFrenchSettingsText(text) {
-    return NormalizeLatinSettingsText(text);
-}
-
-function NormalizePortugueseSettingsText(text) {
-    return NormalizeLatinSettingsText(text);
-}
-
-function NormalizeBrazilianPortugueseSettingsText(text) {
-    return NormalizeLatinSettingsText(text);
-}
-
-function NormalizeSpanishSettingsText(text) {
-    return NormalizeLatinSettingsText(text);
-}
-
 function ShouldLocalizeTabContent() {
 
     return currentTab !== "Presets";
@@ -9132,10 +9116,10 @@ function LocalizeSettingsText(text, force) {
     else if (lang === SETTINGS_LANGUAGE_SPANISH) map = SETTINGS_ES_TEXT;
     if (map && map.hasOwnProperty(raw)) {
         var translated = map[raw];
-        if (lang === SETTINGS_LANGUAGE_FRENCH) return NormalizeFrenchSettingsText(translated);
-        if (lang === SETTINGS_LANGUAGE_PORTUGUESE) return NormalizePortugueseSettingsText(translated);
-        if (lang === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) return NormalizeBrazilianPortugueseSettingsText(translated);
-        if (lang === SETTINGS_LANGUAGE_SPANISH) return NormalizeSpanishSettingsText(translated);
+        if (lang === SETTINGS_LANGUAGE_FRENCH) return NormalizeLatinSettingsText(translated);
+        if (lang === SETTINGS_LANGUAGE_PORTUGUESE) return NormalizeLatinSettingsText(translated);
+        if (lang === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) return NormalizeLatinSettingsText(translated);
+        if (lang === SETTINGS_LANGUAGE_SPANISH) return NormalizeLatinSettingsText(translated);
         return translated;
     }
     if (lang === SETTINGS_LANGUAGE_RUSSIAN && SETTINGS_RU_MISSING_TRANSLATION_LOG && !gMissingRuSettingsStrings[raw] && /[A-Za-z]/.test(raw)) {
