@@ -29889,7 +29889,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("panelCache", function() {
                     var _ps = PerfStart();
-                    EnsureCoreLoopPanelCaches(_s.root);
+                    var _feat = QOL_FEATURE_REGISTRY["panelCache"];
+                    if (_feat) {
+                        _feat.update(_s.root);
+                    } else {
+                        EnsureCoreLoopPanelCaches(_s.root);
+                    }
                     PerfEnd("loop.panel_cache", _ps);
                 });
             });
@@ -29989,7 +29994,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("gameplayMouseCursor", function() {
                     var _ps = PerfStart();
-                    UpdateGameplayMouseCursor(_s.root, _s.nowMs, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["gameplayMouseCursor"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateGameplayMouseCursor(_s.root, _s.nowMs, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.gameplay_mouse_cursor", _ps);
                 });
             });
@@ -30000,7 +30010,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("betterUnsecuredHud", function() {
                     var _ps = PerfStart();
-                    UpdateUnsecuredSoulsHudContainerLayout(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["betterUnsecuredHud"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        UpdateUnsecuredSoulsHudContainerLayout(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.unsecured_souls_hud", _ps);
                 });
             });
@@ -30059,7 +30074,12 @@ function GetUIRoot() {
             (_b ? _b[4] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("ammo", function() {
                     var _ps = PerfStart();
-                    UpdateAmmoPanelRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["ammo"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateAmmoPanelRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.ammo_panel", _ps);
                 });
             });
@@ -30069,7 +30089,12 @@ function GetUIRoot() {
             (_b ? _b[4] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("topBarRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateTopBarRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["topBarRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateTopBarRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.top_bar_runtime", _ps);
                 });
             });
@@ -30080,7 +30105,12 @@ function GetUIRoot() {
             (_b ? _b[3] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("bottomBarRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateBottomBarRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["bottomBarRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateBottomBarRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.bottom_bar_runtime", _ps);
                 });
             });
@@ -30090,7 +30120,12 @@ function GetUIRoot() {
             (_b ? _b[3] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("itemsRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateItemsRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["itemsRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateItemsRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.items_runtime", _ps);
                 });
             });
@@ -30100,7 +30135,12 @@ function GetUIRoot() {
             (_b ? _b[3] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("soulsRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateSoulsRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["soulsRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateSoulsRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.souls_runtime", _ps);
                 });
             });
@@ -30111,8 +30151,13 @@ function GetUIRoot() {
             (_b ? _b[4] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("heroShop", function() {
                     var _ps = PerfStart();
-                    var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
-                    UpdateHeroShopRuntime(_s.root, _s.cfg, nowMsClass);
+                    var _feat = QOL_FEATURE_REGISTRY["heroShop"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
+                        UpdateHeroShopRuntime(_s.root, _s.cfg, nowMsClass);
+                    }
                     PerfEnd("loop.hero_shop", _ps);
                 });
             });
@@ -30121,7 +30166,14 @@ function GetUIRoot() {
         if (gates.recentPurchases) {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("recentPurchases", function() {
-                    UpdateRecentPurchases(_s.root, _s.cfg);
+                    var _ps = PerfStart();
+                    var _feat = QOL_FEATURE_REGISTRY["recentPurchases"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateRecentPurchases(_s.root, _s.cfg);
+                    }
+                    PerfEnd("loop.recent_purchases", _ps);
                 });
             });
         }
@@ -30131,7 +30183,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("keyboardRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateKeyboardOverlayRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["keyboardRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateKeyboardOverlayRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.keyboard_overlay", _ps);
                 });
             });
@@ -30203,7 +30260,12 @@ function GetUIRoot() {
             (_b ? _b[2] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("signatureFlash", function() {
                     var _ps = PerfStart();
-                    UpdateSignatureCooldownPressFlashRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["signatureFlash"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        UpdateSignatureCooldownPressFlashRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.signature_flash", _ps);
                 });
             });
@@ -30214,9 +30276,14 @@ function GetUIRoot() {
             (_b ? _b[5] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("targetShapes", function() {
                     var _ps = PerfStart();
-                    var unitTargetStyle = ResolveUnitTargetStyleTexts(_s.cfg);
-                    var _nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                    ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled, unitTargetStyle.hintScaleText);
+                    var _feat = QOL_FEATURE_REGISTRY["targetShapes"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        var unitTargetStyle = ResolveUnitTargetStyleTexts(_s.cfg);
+                        var _nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                        ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled, unitTargetStyle.hintScaleText);
+                    }
                     PerfEnd("loop.target_shapes", _ps);
                 });
             });
@@ -30227,7 +30294,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("damageImpactRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateDamageImpactRuntime(_s.root, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["damageImpactRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg);
+                    } else {
+                        UpdateDamageImpactRuntime(_s.root, _s.cfg);
+                    }
                     PerfEnd("loop.damage_impact_runtime", _ps);
                 });
             });
@@ -30237,7 +30309,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("staminaChargeColorRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateStaminaChargeColorRuntime(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["staminaChargeColorRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        UpdateStaminaChargeColorRuntime(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.stamina_charge_color", _ps);
                 });
             });
@@ -30264,7 +30341,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("minimapRuntime", function() {
                     var _ps = PerfStart();
-                    UpdateMinimapRuntime(_s.root, _s.cfg, _s.raw);
+                    var _feat = QOL_FEATURE_REGISTRY["minimapRuntime"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected, _s.raw);
+                    } else {
+                        UpdateMinimapRuntime(_s.root, _s.cfg, _s.raw);
+                    }
                     PerfEnd("loop.minimap", _ps);
                 });
             });
@@ -30274,7 +30356,12 @@ function GetUIRoot() {
             (_b ? _b[7] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("legacyAudioPassive", function() {
                     var _ps = PerfStart();
-                    UpdateLegacyAudioAndPassiveHudRuntime(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["legacyAudioPassive"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateLegacyAudioAndPassiveHudRuntime(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.legacy_audio_and_passivehud", _ps);
                 });
             });
@@ -30719,6 +30806,230 @@ function GetUIRoot() {
         stateKeys: ["allyColoredHealthPanelCache", "allyColoredHealthPanelCacheNextMs",
                     "allyColoredHealthNextUpdateMs", "allyColoredHealthEnabledPrev",
                     "allyColoredHealthPulseDir", "allyColoredHealthPulseVal"]
+    });
+
+    // ── Batch D: style-runtime features (simple root+cfg dispatch) ──
+
+    QOL_REGISTER_FEATURE("panelCache", {
+        configKeys: [],
+        bucket: 7, phase: -1,
+        gate: function(cfg) { return false; },  // always false — primed on-demand by features
+        update: function(root) { EnsureCoreLoopPanelCaches(root); },
+        stateKeys: ["cachedPanels"]
+    });
+
+    QOL_REGISTER_FEATURE("ammo", {
+        configKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL",
+                     "AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE",
+                     "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET"],
+        bucket: 4, phase: -1,
+        gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
+        stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
+    });
+
+    QOL_REGISTER_FEATURE("topBarRuntime", {
+        configKeys: ["HUD_TOP_BAR_ENABLED", "TOP_BAR_OPACITY", "TOP_BAR_SCALE",
+                     "TOP_BAR_X_OFFSET", "TOP_BAR_Y_OFFSET"],
+        bucket: 4, phase: -1,
+        gate: function(cfg) { return NeedsTopBarRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateTopBarRuntime(root, cfg); },
+        stateKeys: ["topBarRuntimeStyleSig", "cachedPanels.topBarPanel"]
+    });
+
+    QOL_REGISTER_FEATURE("bottomBarRuntime", {
+        configKeys: ["HUD_BOTTOM_BAR_ENABLED", "BOTTOM_BAR_OPACITY", "BOTTOM_BAR_SCALE",
+                     "BOTTOM_BAR_X_OFFSET", "BOTTOM_BAR_Y_OFFSET"],
+        bucket: 3, phase: -1,
+        gate: function(cfg) { return NeedsBottomBarRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateBottomBarRuntime(root, cfg); },
+        stateKeys: ["bottomBarRuntimeStyleSig", "bottomBarCurrencyColorStyleSig",
+                    "cachedPanels.bottomBarPanel"]
+    });
+
+    QOL_REGISTER_FEATURE("itemsRuntime", {
+        configKeys: ["HUD_ITEMS_ENABLED", "ITEMS_OPACITY", "ITEMS_X_OFFSET",
+                     "ITEMS_Y_OFFSET", "ITEMS_WASH_COLOR"],
+        bucket: 3, phase: -1,
+        gate: function(cfg) { return NeedsItemsRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateItemsRuntime(root, cfg); },
+        stateKeys: ["itemsRuntimeStyleSig", "cachedPanels.itemsModsContainer",
+                    "cachedPanels.statsAndModsContainer"]
+    });
+
+    QOL_REGISTER_FEATURE("soulsRuntime", {
+        configKeys: ["HUD_SOULS_ENABLED", "SOULS_OPACITY", "SOULS_X_OFFSET", "SOULS_Y_OFFSET"],
+        bucket: 3, phase: -1,
+        gate: function(cfg) { return NeedsSoulsRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateSoulsRuntime(root, cfg); },
+        stateKeys: ["soulsRuntimeStyleSig", "cachedPanels.soulsContainer"]
+    });
+
+    QOL_REGISTER_FEATURE("damageImpactRuntime", {
+        configKeys: ["ENABLE_DAMAGE_IMPACT", "DAMAGE_IMPACT_SCALE", "DAMAGE_IMPACT_OPACITY",
+                     "DAMAGE_IMPACT_X_OFFSET", "DAMAGE_IMPACT_Y_OFFSET"],
+        bucket: 7, phase: -1,
+        gate: function(cfg) { return NeedsDamageImpactRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateDamageImpactRuntime(root, cfg); },
+        stateKeys: ["damageImpactRuntimeStyleSig", "cachedPanels.damageImpactPanel"]
+    });
+
+    // ── Batch E: features needing nowMs ──
+
+    QOL_REGISTER_FEATURE("heroShop", {
+        configKeys: ["HUD_SHOP_ENABLED", "ENABLE_SHOP_STATS", "ENABLE_SIMPLIFY_SHOP_STATS",
+                     "ENABLE_SIMPLIFY_SHOP", "ENABLE_SIMPLIFY_ITEMS", "DISABLE_SHOP_BLUE",
+                     "SHOP_OFFSET_X", "SHOP_OFFSET_Y", "SHOP_OPACITY", "SHOP_SCALE"],
+        bucket: 4, phase: -1,
+        gate: function(cfg) { return NeedsHeroShopRuntimeWork(cfg); },
+        update: function(root, cfg, nowMs) {
+            UpdateHeroShopRuntime(root, cfg, nowMs);
+        },
+        stateKeys: ["heroShopNextSearchMs", "heroShopMainPanelStyleSig",
+                    "heroShopClassCache", "cachedPanels.heroShop",
+                    "cachedPanels.heroShopMainPanel"]
+    });
+
+    QOL_REGISTER_FEATURE("signatureFlash", {
+        configKeys: ["ENABLE_PASSIVE_COOLDOWN"],
+        bucket: 2, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN") ||
+                   !!State.signatureCooldownFlashWasEnabled;
+        },
+        update: function(root, cfg, nowMs) {
+            UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs);
+        },
+        stateKeys: ["signatureCooldownFlashWasEnabled"]
+    });
+
+    QOL_REGISTER_FEATURE("staminaChargeColorRuntime", {
+        configKeys: ["STAMINA_CHARGE_ANGLE", "STAMINA_CHARGE_COLOR"],
+        bucket: 7, phase: -1,
+        gate: function(cfg) { return NeedsStaminaChargeColorRuntimeWork(cfg); },
+        update: function(root, cfg, nowMs) {
+            UpdateStaminaChargeColorRuntime(root, cfg, nowMs);
+        },
+        stateKeys: ["staminaChargeAngleStyleSig", "staminaChargeColorStyleSig",
+                    "staminaChargeColorPanelCache", "staminaChargeColorPanelCacheNextMs",
+                    "cachedPanels.staminaChargesContainer"]
+    });
+
+    QOL_REGISTER_FEATURE("gameplayMouseCursor", {
+        configKeys: [],
+        bucket: 7, phase: -1,
+        gate: function(cfg, hideoutConnected, root) {
+            return NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateGameplayMouseCursor(root, nowMs, hideoutConnected);
+        },
+        stateKeys: ["customMouseCursorLastX", "customMouseCursorLastY",
+                    "customMouseCursorPanel", "customMouseCursorImage",
+                    "customMouseCursorImageBound", "customMouseCursorClassActive"]
+    });
+
+    QOL_REGISTER_FEATURE("betterUnsecuredHud", {
+        configKeys: ["ENABLE_BETTER_UNSECURED"],
+        bucket: 7, phase: -1,
+        gate: function(cfg) { return NeedsBetterUnsecuredHudLayoutWork(cfg); },
+        update: function(root, cfg, nowMs) {
+            UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs);
+        },
+        stateKeys: ["unsecuredSouls.hudNextSearchMs", "unsecuredSouls.hudLabel",
+                    "unsecuredSouls.hudMirrorLabel", "unsecuredSouls.hudMirrorIcon",
+                    "unsecuredSouls.hudMirrorText", "unsecuredSouls.hudBaseX",
+                    "unsecuredSouls.hudBaseY", "unsecuredSouls.hudStyleSig",
+                    "cachedPanels.betterUnsecuredOverlay",
+                    "cachedPanels.unsecuredSoulsHudContainer"]
+    });
+
+    // ── Batch F: features with complex state ──
+
+    QOL_REGISTER_FEATURE("recentPurchases", {
+        configKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS"],
+        bucket: 7, phase: -1,
+        gate: function(cfg) {
+            return (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
+                    IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS")) ||
+                   State.recentPurchasesWasEnabled;
+        },
+        update: function(root, cfg) { UpdateRecentPurchases(root, cfg); },
+        stateKeys: ["recentPurchasesWasEnabled", "cachedPanels.recentPurchasesPanel",
+                    "cachedPanels.recentPurchasesContainer",
+                    "cachedPanels.quickPurchasesPanel",
+                    "recentPurchaseFiltersCreated", "recentPurchaseLastVisibilitySig",
+                    "recentPurchaseLastFilterSig", "recentPurchaseQuickActiveEntries"]
+    });
+
+    QOL_REGISTER_FEATURE("keyboardRuntime", {
+        configKeys: ["ENABLE_KEYBOARD_OVERLAY"],
+        bucket: 6, phase: -1,
+        gate: function(cfg) { return NeedsKeyboardRuntimeWork(cfg); },
+        update: function(root, cfg) { UpdateKeyboardOverlayRuntime(root, cfg); },
+        stateKeys: ["allBindingsBoxes", "cachedPanels.keyboardOverlayRoot",
+                    "cachedPanels.keyboardOverlayBox", "keyboardOverlayWashSig",
+                    "keyboardBoxCaches"]
+    });
+
+    QOL_REGISTER_FEATURE("targetShapes", {
+        configKeys: ["ENABLE_RED_DIAMOND", "UNIT_TARGET_SIZE", "UNIT_TARGET_OPACITY",
+                     "UNIT_TARGET_HINT_SIZE"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return NeedsTargetShapeRuntimeWork(cfg,
+                !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled));
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
+            var rdEnabled = !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled);
+            ApplyTargetShapeStyles(root, unitTargetStyle.scaleText,
+                unitTargetStyle.opacityText, nowMs, rdEnabled,
+                unitTargetStyle.hintScaleText);
+        },
+        stateKeys: ["targetShapeStyleSig", "nextTargetShapeRefreshMs",
+                    "targetShapeHadNonDefaultRuntime", "targetShapesCache",
+                    "hintContainerCache", "targetShapeDebugLastSig",
+                    "targetShapeDebugNextMs"]
+    });
+
+    QOL_REGISTER_FEATURE("minimapRuntime", {
+        configKeys: ["ENABLE_ALT_ZOOM", "ENABLE_TAB_ZOOM", "MINIMAP_BASE_OPACITY",
+                     "MINIMAL_MINIMAP", "MINIMAP_ROTATE_WITH_PLAYER", "MINIMAP_FLIP",
+                     "ENABLE_MINIMAP_CRATE_OVERLAY", "ENABLE_MINIMAP_REM_TUNNELS",
+                     "ENABLE_MINIMAP_ELEVATION_MARKERS", "MINIMAP_ICON_COLOR",
+                     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"],
+        bucket: 7, phase: -1,
+        gate: function(cfg) { return NeedsMinimapRuntimeWork(cfg, State.lastRawConfig || ""); },
+        update: function(root, cfg, nowMs, State, hideoutConnected, raw) {
+            UpdateMinimapRuntime(root, cfg, raw);
+        },
+        stateKeys: ["lastZoomState", "minimapRuntimeSig",
+                    "minimapMinimalistOpacityApplied", "minimapCastRangeScaleApplied",
+                    "_cachedMinimapCastRangeSize", "minimapIconColorStyleSig",
+                    "cachedPanels.minimap", "cachedPanels.minimapMapRender",
+                    "cachedPanels.hudMinimapPanel", "cachedPanels.minimapCanvas",
+                    "cachedPanels.minimapCrateOverlayRoot",
+                    "cachedPanels.minimapTunnelOverlayRoot"]
+    });
+
+    QOL_REGISTER_FEATURE("legacyAudioPassive", {
+        configKeys: ["ENABLE_LEGACY_COOLDOWNS", "ENABLE_ONE_TIME", "ENABLE_ONE_TIME_TIER1",
+                     "ENABLE_ONE_TIME_TIER2", "ENABLE_ONE_TIME_TIER3", "ENABLE_INTERVAL",
+                     "VOICE_TYPE", "BRIDGE_BUFF_START"],
+        bucket: 7, phase: -1,
+        gate: function(cfg, hideoutConnected) {
+            return NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected);
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["oldItemCooldownRuntimeWasActive", "oldItemCooldownStylePanel",
+                    "oldItemCooldownStyleSig", "dl4dCaptionVisible",
+                    "dl4dCaptionNextSearchMs", "cachedPanels.dl4dCaptionPanel",
+                    "lastTime", "lastIntervalAlert", "lastMinimapAlert", "triggeredOneTimers",
+                    "cachedPanels.passiveHud", "cachedPanels.gameTime",
+                    "cachedPanels.abilitiesContainer"]
     });
 
 })();
