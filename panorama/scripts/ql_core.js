@@ -1124,8 +1124,10 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
     const FORCE_DISABLE_STAT_BONUSES = false;
     const UNSPENT_MAX_PLAYERS = SPM_MAX_PLAYERS;
-    const UNSPENT_SAMPLE_INTERVAL_MS = 1000;
-    const UNSPENT_PLAYER_BATCH_SIZE = 3;    // players processed per sample — rotates cursor
+    // WHY: 1 player every 200ms = full 12-player rotation every 2.4s.
+    // Spreads CPU evenly across ticks instead of bursting 3 players every 1s.
+    const UNSPENT_SAMPLE_INTERVAL_MS = 200;
+    const UNSPENT_PLAYER_BATCH_SIZE = 1;
     const UNSPENT_PANEL_CACHE_REFRESH_MS = 9000;
     const UNSPENT_TIER_SCAN_INTERVAL_MS = 3000;
     const UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS = 5000;
