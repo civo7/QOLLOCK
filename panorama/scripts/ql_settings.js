@@ -52,6 +52,82 @@ const RUNTIME_BUTTON_GROUP_DEFAULT_INDEX = {
     HITMARKERS_RUNTIME: 1,
     AUDIO_BEEP_TEST_RUNTIME: 1
 };
+
+// ---- Slider shape definitions ----
+// Canonical (min, max, step) triples for all sliders in the settings UI.
+// 99 sliders collapsed into 36 unique shapes. Add new shapes here when
+// adding sliders — never inline raw numbers in CreateRow("slider",...).
+var SLIDER_SHAPES = {
+    // Opacity: 0–100% in 5% steps
+    opacity:            { min: 0,   max: 1,    step: 0.05 },
+    opacity_perf:       { min: 0.3, max: 1,    step: 0.05 },
+
+    // Scale: multiplicative factors in 0.05 steps
+    scale_0_5_1_5:      { min: 0.5, max: 1.5,  step: 0.05 },
+    scale_0_5_2_0:      { min: 0.5, max: 2.0,  step: 0.05 },
+
+    // Size: pixel values with 1px step
+    size_10_60:         { min: 10,  max: 60,   step: 1 },
+    size_16_60:         { min: 16,  max: 60,   step: 1 },
+    size_30_60:         { min: 30,  max: 60,   step: 1 },
+    size_50_200:        { min: 50,  max: 200,  step: 1 },
+    size_70_150:        { min: 70,  max: 150,  step: 1 },
+    size_100_300:       { min: 100, max: 300,  step: 1 },
+
+    // Size: wider step increments
+    size_50_200_s5:     { min: 50,  max: 200,  step: 5 },
+    size_50_300_s5:     { min: 50,  max: 300,  step: 5 },
+    size_200_1000_s5:   { min: 200, max: 1000, step: 5 },
+    size_400_1200_s10:  { min: 400, max: 1200, step: 10 },
+
+    // Offset: position sliders
+    offset_n75_75:      { min: -75,  max: 75,   step: 1 },
+    offset_n50_50:      { min: -50,  max: 50,   step: 1 },
+    offset_n200_200:    { min: -200, max: 200,  step: 5 },
+    offset_n500_500:    { min: -500, max: 500,  step: 5 },
+    offset_n1000_1000:  { min: -1000,max: 1000, step: 5 },
+    offset_n1500_1500:  { min: -1500,max: 1500, step: 5 },
+    offset_n2000_2000:  { min: -2000,max: 2000, step: 5 },
+    offset_n1500_200:   { min: -1500,max: 200,  step: 5 },
+    offset_n1000_300:   { min: -1000,max: 300,  step: 5 },
+    offset_n1000_2000:  { min: -1000,max: 2000, step: 5 },
+    offset_n400_1000:   { min: -400, max: 1000, step: 5 },
+    offset_n250_800:    { min: -250, max: 800,  step: 5 },
+    offset_n100_1000:   { min: -100, max: 1000, step: 5 },
+    offset_0_1000:      { min: 0,    max: 1000, step: 5 },
+    offset_800_2000:    { min: 800,  max: 2000, step: 5 },
+
+    // Count: small integers
+    count_1_5:          { min: 1,   max: 5,    step: 1 },
+
+    // Time: seconds
+    sec_0_60:           { min: 0,   max: 60,   step: 1 },
+    sec_3_15:           { min: 3,   max: 15,   step: 1 },
+    sec_5_60:           { min: 5,   max: 60,   step: 1 },
+
+    // Volume: 0–100%
+    volume_0_100:       { min: 0,   max: 100,  step: 1 },
+
+    // Angle: degrees
+    angle_0_360:        { min: 0,   max: 360,  step: 1 },
+
+    // Performance alert threshold: ms
+    alert_ms_1_50:      { min: 1,   max: 50,   step: 1 }
+};
+
+// Creates a slider row using a named shape from SLIDER_SHAPES.
+// Delegates to CreateRow with the expanded (min, max, step).
+// Set isAngle=true for the angle_slider type.
+function CreateSliderRow(parent, label, configId, shapeKey, description, isAngle) {
+    var shape = SLIDER_SHAPES[shapeKey];
+    if (!shape) {
+        $.Msg("[QOLLock] ERROR: missing slider shape '" + shapeKey + "' for " + configId);
+        return CreateRow(parent, label, configId, "slider", 0, 1, 0.05, null, description || null);
+    }
+    var type = isAngle ? "angle_slider" : "slider";
+    return CreateRow(parent, label, configId, type, shape.min, shape.max, shape.step, null, description || null);
+}
+
 const PERF_IMPACT_TIER_NONE = "none";
 const PERF_IMPACT_TIER_LOW = "low";
 const PERF_IMPACT_TIER_MEDIUM = "medium";
