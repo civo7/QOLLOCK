@@ -8839,7 +8839,7 @@ function GetUIRoot() {
             // DEBUG: trace unspent calculation
             if (State._dbgUnspentNextLogMs === undefined) State._dbgUnspentNextLogMs = 0;
             if (nowMs >= State._dbgUnspentNextLogMs) {
-                State._dbgUnspentNextLogMs = nowMs + 4000;
+                State._dbgUnspentNextLogMs = nowMs + 200;
                 var _dbgParts = [];
                 _dbgParts.push("cursor=" + cursor + " batch=[" + cursor + "-" + (batchEnd-1) + "] sampleMs=" + (nowMs - (State.unspentNextSampleMs || 0) - UNSPENT_SAMPLE_INTERVAL_MS));
                 for (var _dbgJ = cursor; _dbgJ < batchEnd; _dbgJ++) {
