@@ -9718,7 +9718,7 @@ function GetUIRoot() {
             lastMidBossActive: false,
             buffStartTime: 0,
             buffCounter: 0,
-            lastBuff0to1GameSec: 0,
+            lastBuff0to1GameSec: -BUFF_0TO1_LOCKOUT_SEC,
             lastSec: -1,
             lastGlobalSec: -1,
             lastRuntimeSec: -1,
@@ -10032,7 +10032,7 @@ function GetUIRoot() {
         state.lastScanFound = false;
         state.lastRejuvChargeCount = 0;
         state.lastMidBossActive = false;
-        state.lastBuff0to1GameSec = 0;
+        state.lastBuff0to1GameSec = -BUFF_0TO1_LOCKOUT_SEC;
         state.lastSec = -1;
         state.lastGlobalSec = -1;
         state.lastRuntimeSec = -1;
