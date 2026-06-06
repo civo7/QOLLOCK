@@ -10049,6 +10049,7 @@ function GetUIRoot() {
         state.lastMinimapRenderSig = "";
         state._lastMidBossSpawned = undefined;
         state._lastHadRejuvPerTick = false;
+        state._dbgRejuvTimerMissingLogged = false;
         state.cacheTopBar = null;
         state.cacheCharges = null;
         state.cacheFriendly = null;
@@ -10160,14 +10161,29 @@ function GetUIRoot() {
         var _rejuvTimer = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
         if (_rejuvTimer && _rejuvTimer.BHasClass) {
             var _hasRejuvNow = _rejuvTimer.BHasClass("has_rejuv");
+            if (_hasRejuvNow !== state._lastHadRejuvPerTick) {
+                $.Msg("[QOLLock][DEBUG][rejuv] has_rejuv: " + state._lastHadRejuvPerTick +
+                    " -> " + _hasRejuvNow + " nowSec=" + nowSec +
+                    " lockoutUntil=" + ((state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC));
+            }
             if (_hasRejuvNow && !state._lastHadRejuvPerTick) {
                 var _lockoutUntil = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
                 if (nowSec >= _lockoutUntil) {
+                    $.Msg("[QOLLock][DEBUG][rejuv] STARTING buff timer");
                     state.lastBuff0to1GameSec = nowSec;
                     RejuvStartBuff(state, root, nowSec, true);
+                } else {
+                    $.Msg("[QOLLock][DEBUG][rejuv] LOCKED OUT until " + _lockoutUntil);
                 }
             }
             state._lastHadRejuvPerTick = _hasRejuvNow;
+        } else {
+            if (!state._dbgRejuvTimerMissingLogged) {
+                state._dbgRejuvTimerMissingLogged = true;
+                $.Msg("[QOLLock][DEBUG][rejuv] cacheRejuvTimer not valid yet" +
+                    " (cacheRejuvTimer=" + (state.cacheRejuvTimer ? "set" : "null") +
+                    " valid=" + (IsPanelValid(state.cacheRejuvTimer) ? "yes" : "no") + ")");
+            }
         }
 
         // Fast-path early-exit: skip all panel lookups and class checks
