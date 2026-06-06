@@ -29469,45 +29469,14 @@ function GetUIRoot() {
         if (!textContainer) return;
         msgContainer.style.opacity = 0.00001;
         textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        // Use HTML panel instead of Image — Panorama's SetImage() only
+        // supports s2r:// compiled textures, not HTTP URLs.
+        var img = $.CreatePanel("HTML", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
-        $.Msg("[QOLLock][DEBUG][imgchat] SetImage url=" + url);
-        img.SetImage(url);
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { msgContainer.style.opacity = 1; } catch (eOffTopA) {}
-                try { img.DeleteAsync(0); } catch (eOffTopB) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (retries === 0 || retries === 5 || retries === 29) {
-                $.Msg("[QOLLock][DEBUG][imgchat] tryScale retry=" + retries +
-                    " w=" + w.toFixed(1) + " h=" + h.toFixed(1) +
-                    " actualw=" + img.actuallayoutwidth + " actualh=" + img.actuallayoutheight);
-            }
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "8px 8px 8px 8px";
-                msgContainer.style.opacity = 1;
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                $.Msg("[QOLLock][DEBUG][imgchat] tryScale gave up after " + retries + " retries");
-                msgContainer.style.opacity = 1;
-            }
-        }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+        img.SetHTML("<img src='" + url + "' style='max-width:" +
+            IMAGES_IN_CHAT_MAX_W + "px;max-height:" + IMAGES_IN_CHAT_MAX_H + "px;'>");
+        msgText.style.visibility = "collapse";
+        msgContainer.style.opacity = 1;
     }
 
     function InjectBottomChatImage(msgPanel, url) {
@@ -29516,42 +29485,11 @@ function GetUIRoot() {
         var textContainer = msgText.GetParent();
         if (!textContainer) return;
         textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
+        var img = $.CreatePanel("HTML", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
-        $.Msg("[QOLLock][DEBUG][imgchat] SetImage url=" + url);
-        img.SetImage(url);
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { img.DeleteAsync(0); } catch (eOffBottomA) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (retries === 0 || retries === 5 || retries === 29) {
-                $.Msg("[QOLLock][DEBUG][imgchat] tryScale(bottom) retry=" + retries +
-                    " w=" + w.toFixed(1) + " h=" + h.toFixed(1));
-            }
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "4px 4px 4px 4px";
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                $.Msg("[QOLLock][DEBUG][imgchat] tryScale(bottom) gave up after " + retries + " retries");
-                img.DeleteAsync(0);
-            }
-        }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+        img.SetHTML("<img src='" + url + "' style='max-width:" +
+            IMAGES_IN_CHAT_MAX_W + "px;max-height:" + IMAGES_IN_CHAT_MAX_H + "px;'>");
+        msgText.style.visibility = "collapse";
     }
 
     function ClearInjectedChatImagesForMessage(msgPanel) {
@@ -29700,14 +29638,7 @@ function GetUIRoot() {
             if (alreadyProcessed) continue;
             msg.AddClass("imageProcessed");
             touched++;
-            if (!url) {
-                if (text && text.length > 0 && text !== entry._dbgLastText) {
-                    entry._dbgLastText = text;
-                    $.Msg("[QOLLock][DEBUG][imgchat] no URL match, text=" +
-                        text.substring(0, 80));
-                }
-                continue;
-            }
+            if (!url) continue;
             if (isBottomChat) {
                 InjectBottomChatImage(msg, url);
             } else {
