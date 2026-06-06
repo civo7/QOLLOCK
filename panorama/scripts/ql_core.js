@@ -29815,8 +29815,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["rejuvTimers"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    } else {
-                        UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.rejuv_timers", _ps);
                 });
@@ -29831,8 +29829,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["spm"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateSoulsPerMinute(_s.root, _s.nowMs, _s.cfg);
                     }
                     PerfEnd("loop.souls_per_min", _ps);
                 });
@@ -29847,8 +29843,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["unspent"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateUnspentSouls(_s.root, _s.nowMs, _s.cfg);
                     }
                     PerfEnd("loop.unspent", _ps);
                 });
@@ -29862,8 +29856,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["nicknames"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateTopBarNicknames(_s.root, _s.nowMs, _s.cfg);
                     }
                     PerfEnd("loop.topbar_nicknames", _ps);
                 });
@@ -29877,8 +29869,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["statlocker"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
                     }
                     PerfEnd("loop.statlocker", _ps);
                 });
@@ -29892,8 +29882,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["panelCache"];
                     if (_feat) {
                         _feat.update(_s.root);
-                    } else {
-                        EnsureCoreLoopPanelCaches(_s.root);
                     }
                     PerfEnd("loop.panel_cache", _ps);
                 });
@@ -29908,9 +29896,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["onDeathArcade"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
-                    } else {
-                        UpdateOnDeathArcadeBridge(_s.root, _s.cfg, _s.nowMs);
                         State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
                     }
                     PerfEnd("loop.on_death_arcade", _ps);
@@ -29927,9 +29912,6 @@ function GetUIRoot() {
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
                         State.coreRootGateSig = _s.gates.sig;
-                    } else {
-                        ApplyCoreLoopRootClassesAndState(_s.root, _s.cfg, _s.nowMs, _s.hideoutConnected, _s.hasConfigSource);
-                        State.coreRootGateSig = _s.gates.sig;
                     }
                     PerfEnd("loop.root_classes", _ps);
                 });
@@ -29943,8 +29925,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["healthbarRuntimeHelpers"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateHealthbarRuntimeHelpers(_s.root, _s.cfg, _s.nowMs, _s.gates.featureState.healthbarType, _s.gates.featureState.minimalistHealthbarEnabled, _s.gates.featureState.fgHealthbarEnabled);
                     }
                     PerfEnd("loop.healthbar_helpers", _ps);
                 });
@@ -29981,8 +29961,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["laneWithParty"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateLanePreferenceWithParty(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.lane_with_party", _ps);
                 });
@@ -29997,8 +29975,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["gameplayMouseCursor"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateGameplayMouseCursor(_s.root, _s.nowMs, _s.hideoutConnected);
                     }
                     PerfEnd("loop.gameplay_mouse_cursor", _ps);
                 });
@@ -30013,8 +29989,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["betterUnsecuredHud"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    } else {
-                        UpdateUnsecuredSoulsHudContainerLayout(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.unsecured_souls_hud", _ps);
                 });
@@ -30029,8 +30003,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["colorWarning"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateColoredHealthbarRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.colored_healthbar", _ps);
                 });
@@ -30045,8 +30017,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["enemyColorWarning"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateEnemyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.enemy_colored_healthbar", _ps);
                 });
@@ -30061,8 +30031,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["allyColorWarning"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateAllyColoredHealthRuntime(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.ally_colored_healthbar", _ps);
                 });
@@ -30077,8 +30045,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["ammo"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateAmmoPanelRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.ammo_panel", _ps);
                 });
@@ -30092,8 +30058,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["topBarRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateTopBarRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.top_bar_runtime", _ps);
                 });
@@ -30108,8 +30072,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["bottomBarRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateBottomBarRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.bottom_bar_runtime", _ps);
                 });
@@ -30123,8 +30085,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["itemsRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateItemsRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.items_runtime", _ps);
                 });
@@ -30138,8 +30098,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["soulsRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateSoulsRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.souls_runtime", _ps);
                 });
@@ -30154,9 +30112,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["heroShop"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    } else {
-                        var nowMsClass = Date.now ? Date.now() : (new Date()).getTime();
-                        UpdateHeroShopRuntime(_s.root, _s.cfg, nowMsClass);
                     }
                     PerfEnd("loop.hero_shop", _ps);
                 });
@@ -30170,8 +30125,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["recentPurchases"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateRecentPurchases(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.recent_purchases", _ps);
                 });
@@ -30186,8 +30139,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["keyboardRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateKeyboardOverlayRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.keyboard_overlay", _ps);
                 });
@@ -30201,8 +30152,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["zipBoost"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
                     }
                     PerfEnd("loop.zip_boost", _ps);
                 });
@@ -30216,8 +30165,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["unsecuredSoulsTimer"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateUnsecuredSoulsOverlay(_s.root, _s.cfg, _s.hideoutConnected);
                     }
                     PerfEnd("loop.unsecured_souls_overlay", _ps);
                 });
@@ -30231,8 +30178,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["statBonuses"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateStatBonusesOverlay(_s.root, _s.cfg, _s.hideoutConnected);
                     }
                     PerfEnd("loop.stat_bonuses", _ps);
                 });
@@ -30247,8 +30192,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["combatStatus"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateCombatStatusOverlay(_s.root, _s.cfg, _s.hideoutConnected);
                     }
                     PerfEnd("loop.combat_status", _ps);
                 });
@@ -30263,8 +30206,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["signatureFlash"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    } else {
-                        UpdateSignatureCooldownPressFlashRuntime(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.signature_flash", _ps);
                 });
@@ -30279,10 +30220,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["targetShapes"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        var unitTargetStyle = ResolveUnitTargetStyleTexts(_s.cfg);
-                        var _nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                        ApplyTargetShapeStyles(_s.root, unitTargetStyle.scaleText, unitTargetStyle.opacityText, _nowMs, _s.redDiamondEnabled, unitTargetStyle.hintScaleText);
                     }
                     PerfEnd("loop.target_shapes", _ps);
                 });
@@ -30297,8 +30234,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["damageImpactRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg);
-                    } else {
-                        UpdateDamageImpactRuntime(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.damage_impact_runtime", _ps);
                 });
@@ -30312,8 +30247,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["staminaChargeColorRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    } else {
-                        UpdateStaminaChargeColorRuntime(_s.root, _s.cfg, _s.nowMs);
                     }
                     PerfEnd("loop.stamina_charge_color", _ps);
                 });
@@ -30328,8 +30261,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["damageNumbers"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateDamageNumbersRuntime(_s.root, _s.cfg, _s.raw, _s.nowMs);
                     }
                     PerfEnd("loop.damage_numbers", _ps);
                 });
@@ -30344,8 +30275,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["minimapRuntime"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected, _s.raw);
-                    } else {
-                        UpdateMinimapRuntime(_s.root, _s.cfg, _s.raw);
                     }
                     PerfEnd("loop.minimap", _ps);
                 });
@@ -30359,8 +30288,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["legacyAudioPassive"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateLegacyAudioAndPassiveHudRuntime(_s.root, _s.cfg, _s.hideoutConnected);
                     }
                     PerfEnd("loop.legacy_audio_and_passivehud", _ps);
                 });
@@ -30374,8 +30301,6 @@ function GetUIRoot() {
                     var _feat = QOL_FEATURE_REGISTRY["imagesInChat"];
                     if (_feat) {
                         _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    } else {
-                        UpdateImagesInChat(_s.root, _s.cfg);
                     }
                     PerfEnd("loop.images_in_chat", _ps);
                 });
