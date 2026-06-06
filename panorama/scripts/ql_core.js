@@ -8834,6 +8834,18 @@ function GetUIRoot() {
             var unspentSouls = totalNetWorth - spentSouls;
             if (!isFinite(unspentSouls)) unspentSouls = 0;
 
+            // DEBUG: trace unspent calculation
+            if (State._dbgUnspentNextLogMs === undefined) State._dbgUnspentNextLogMs = 0;
+            if (nowMs >= State._dbgUnspentNextLogMs) {
+                State._dbgUnspentNextLogMs = nowMs + 2000;
+                $.Msg("[QOLLock][DEBUG][unspent] player[" + i + "] totalNetWorth=" +
+                    totalNetWorth + " spentSouls=" + spentSouls +
+                    " unspent=" + unspentSouls +
+                    " tierCounts=" + JSON.stringify(
+                        needsTierScan ? tierCounts : "(cached)") +
+                    " childCount=" + (modsContainer ? (modsContainer.GetChildCount ? modsContainer.GetChildCount() : "?") : "no container"));
+            }
+
             var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display && playerPanel && playerPanel.FindChildTraverse) {
                 display = playerPanel.FindChildTraverse("SpentSoulDisplay");
