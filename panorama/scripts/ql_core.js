@@ -8836,11 +8836,6 @@ function GetUIRoot() {
             var unspentSouls = totalNetWorth - spentSouls;
             if (!isFinite(unspentSouls)) unspentSouls = 0;
 
-            $.Msg("[QOLLock][DEBUG][unspent] p" + i + " cursor=" + cursor +
-                " total=" + totalNetWorth + " spent=" + spentSouls +
-                " unspent=" + unspentSouls +
-                " tiers=" + JSON.stringify(tierCounts));
-
             var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display && playerPanel && playerPanel.FindChildTraverse) {
                 display = playerPanel.FindChildTraverse("SpentSoulDisplay");
