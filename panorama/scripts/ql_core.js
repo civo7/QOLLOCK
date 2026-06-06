@@ -28291,8 +28291,16 @@ function GetUIRoot() {
             State._dbgCompassEnabled = compassEnabled;
             $.Msg("[QOLLock][DEBUG][compass] compassEnabled=" + compassEnabled +
                 " ENABLE_COMPASS=" + cfg.ENABLE_COMPASS +
-                " ENABLE_COMPASS_SPEED=" + cfg.ENABLE_COMPASS_SPEED +
-                " coreRoot gate=" + (gates ? gates.coreRoot : "N/A"));
+                " ENABLE_COMPASS_SPEED=" + cfg.ENABLE_COMPASS_SPEED);
+        }
+        // When compass is disabled, collapse the panel via inline style.
+        // CSS class removal alone isn't sufficient — UpdateCompassOverlay
+        // sets visibility:visible as an inline style which overrides CSS.
+        if (!compassEnabled) {
+            var _compassRoot = State.cachedPanels.compassRoot;
+            if (IsPanelValid(_compassRoot)) {
+                try { _compassRoot.style.visibility = "collapse"; } catch (_ce) {}
+            }
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var staticSig = [
