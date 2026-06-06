@@ -9149,11 +9149,6 @@ function SetLocalizedConfigFeedbackMessage(text, tone, durationMs) {
     SetConfigFeedbackMessage(LocalizeSettingsText(text, true), tone, durationMs);
 }
 
-function SettingsRuntimeLog(msg) {
-    if (!SETTINGS_RUNTIME_LOG) return;
-    $.Msg("[QOLLock][SettingsRuntime] " + String(msg || ""));
-}
-
 const MINESWEEPER_ROWS = 9;
 const MINESWEEPER_COLS = 9;
 const MINESWEEPER_MINES = 10;
@@ -9217,7 +9212,6 @@ function ResolveArcadeDefaultDifficultyId() {
 }
 
 const SETTINGS_RU_MISSING_TRANSLATION_LOG = false;
-const SETTINGS_RUNTIME_LOG = false;
 const HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
 const FLAPPY_BAT_FLAP_SOUND_EVENT = "QOL.FlappyBat.Flap";
 const FLAPPY_BAT_FAIL_SOUND_EVENTS = [
@@ -22860,9 +22854,6 @@ $.ToggleSettingsWindow = function() {
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     if (win) {
         win.ToggleClass("Visible");
-        try {
-            SettingsRuntimeLog("toggle visible=" + (win.BHasClass("Visible") ? "1" : "0"));
-        } catch (eToggleMsg) {}
         if (win.BHasClass("Visible")) {
             gSettingsOpenGuardUntilMs = GetNowMs() + 350;
             gSettingsOpenedInHideout = IsInHideoutForBuildSave();
@@ -22879,7 +22870,6 @@ $.ToggleSettingsWindow = function() {
                     UpdatePresetHighlightPollingState();
                 }
             } catch (eBuildOpen) {
-                try { SettingsRuntimeLog("open_error=" + String(eBuildOpen && eBuildOpen.message ? eBuildOpen.message : eBuildOpen)); } catch (eBuildOpenLog) {}
             }
             try { win.SetFocus(); } catch (eFocusOpen) {}
             if (gSettingsOpenedInHideout) {
