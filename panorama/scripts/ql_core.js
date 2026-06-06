@@ -786,9 +786,14 @@
     ];
 
     const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    // WHY: probes the `joy_name` convar as a persistent key-value store that survives
+    // game restarts — used as an additional config persistence channel alongside panel attrs.
     const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
     const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
     const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
+    // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
+    // and as standalone panel attributes (for synchronous bridging into CSS without
+    // waiting for the next loop tick).
     const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
     const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
     const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
@@ -796,6 +801,8 @@
     const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
     const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
     const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
+    // WHY: V2 enemy healthbar toggles are bridged through panel attributes so the
+    // native CitadelHealthBarV2 panel can read them without JS polling.
     const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
     const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
     const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
@@ -875,9 +882,16 @@
     // ==========================================================================
     // BOOTSTRAP & CACHE TIMING
     // ==========================================================================
-    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;  // retry interval for target shape panel discovery
-    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;     // give up after this many attempts
-    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;     // slow refresh when HUD is idle
+    // WHY: unit target bootstrap needs multiple retries because the target shape
+    // panels are created asynchronously by the game engine after HUD layout loads.
+    // 12 tries × 0.10s = 1.2s max wait, which covers the typical 200-800ms panel
+    // creation window with margin.
+    const UNIT_TARGET_BOOTSTRAP_RETRY_SEC = 0.10;
+    const UNIT_TARGET_BOOTSTRAP_MAX_TRIES = 12;
+    // WHY: idle refresh rates trade visual responsiveness for CPU. 1200ms for idle
+    // is just above human perception of "stale" (1s), and 2500ms for panel cache
+    // is long enough to avoid tree walks while still catching new panels within ~2.5s.
+    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
     const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
@@ -924,24 +938,33 @@
     // ==========================================================================
     // MINIMAP — LAYOUT & SCANNING
     // ==========================================================================
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;      // scan interval for local player position
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;  // faster scan after certain events
-    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // re-assert Z-order interval
-    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // base cast range circle size on minimap
-    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // base minimap size in pixels at default zoom
-    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // sanity cap on layout offset (prevents runaway values)
-    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // feature-gate constant for custom mouse cursor
+    // WHY: minimap player position scanning at 250ms (4Hz) balances smooth rotation
+    // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
+    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
+    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
+    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // WHY: sanity cap prevents runaway layout values from corrupting HUD; 100k px is far beyond any valid screen position
+    const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // WHY: feature-gate constant — set false to globally disable the custom cursor without touching config
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
     const GAMEPLAY_MOUSE_CURSOR_HALF_PX = Math.floor(GAMEPLAY_MOUSE_CURSOR_SIZE_PX * 0.5);
+    // WHY: goat_sigilslam icon chosen as cursor image because it's a distinctive,
+    // always-available s2r:// asset that loads reliably in all game modes
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
     const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
+    // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
+    // WHY: combat recovery at 3s matches the game's own out-of-combat timer (player stops taking damage for 3s)
     const COMBAT_STATUS_RECOVERY_MS = 3000;
     const COMBAT_STATUS_ALERT_PROBE_MS = 500;
     const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
+    // WHY: enemy health panel scanning at 1200ms — full-tree scan is expensive;
+    // 1200ms is the sweet spot where health changes are still visible quickly
+    // but the scan cost is amortized over many frames
     const ENEMY_COLORED_HEALTH_PANEL_SCAN_MS = 1200;
     const ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
-    const ENEMY_COLORED_HEALTH_DEBUG = false;
+    const ENEMY_COLORED_HEALTH_DEBUG = false;               // WHY: debug gate — must be false in production; enables per-panel color dump every ~700ms
     const ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
     const MINIMAP_CRATE_OVERLAY_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
@@ -955,20 +978,28 @@
     const ENEMY_ULT_OLD_UPDATE_MS = 180;
     const ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS = 1500;
     const FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON = false;
+    // ---- Unsecured Souls overlay ----
+    // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
+    // re-scanning faster than 1Hz provides no benefit while wasting CPU
     const UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
     const UNSECURED_SOULS_HUD_SEARCH_MS = 1000;
     const UNSECURED_SOULS_MIN_SAMPLE_MS = 250;
+    // WHY: EMA alpha of 0.35 gives ~3-sample smoothing window (1/α ≈ 2.86),
+    // enough to filter jitter without introducing perceptible lag in the rate display
     const UNSECURED_SOULS_RATE_EMA_ALPHA = 0.35;
     const UNSECURED_SOULS_RATE_MIN = 0.01;
     const UNSECURED_SOULS_RATE_STALE_MS = 12000;
     const UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
     const UNSECURED_SOULS_ETA_MAX_SEC = 999;
+    // WHY: fallback drain at 0.5%/sec — conservative estimate when rate tracking
+    // is stale; matches observed unsecured soul decay in testing
     const UNSECURED_SOULS_FALLBACK_PCT_DRAIN = 0.005;
     const UNSECURED_SOULS_FALLBACK_BASE_FLAT = 1.6;
     const UNSECURED_SOULS_FALLBACK_FLAT_GROWTH = 0.08;
     const UNSECURED_SOULS_THRESH_YELLOW = 500;
     const UNSECURED_SOULS_THRESH_RED = 1000;
     const SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = "qol_signature_cooldown_pressed";
+    // WHY: 220ms flash matches the game's own ability press feedback animation duration
     const SIGNATURE_COOLDOWN_PRESS_FLASH_MS = 220;
     const SIGNATURE_COOLDOWN_PRESS_SCAN_MS = 1000;
     const STAT_BONUSES_DEBUG = false;
@@ -1058,24 +1089,35 @@ const ITEM_MIRROR_EXPRESS_DEBUG = false;
 const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // TEMP TEST SWITCH: keep base + optimize item cooldown paths enabled together for offset alignment checks.
     const ITEM_COOLDOWN_DUAL_MODE_TEST = false;
+    // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
+    // SPM window of 60 samples at 1s intervals = 60s rolling average.
     const SPM_MAX_PLAYERS = 13;
     const SPM_SAMPLE_INTERVAL_MS = 1000;
     const SPM_WINDOW_SIZE = 60;
+    // WHY: panel cache at 7s — SPM changes slowly (1 sample/sec), re-scanning
+    // faster provides no benefit while wasting CPU on tree walks
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
+    // WHY: nickname refresh at 1s initially, then 4.2s once stable — player names
+    // rarely change mid-game; fast initial scan resolves labels, slow steady state
+    // avoids unnecessary work
     const TOPBAR_NICKNAMES_REFRESH_MS = 1000;
     const TOPBAR_NICKNAMES_REFRESH_MS_STABLE = 4200;
     const TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS = 4000;
+    // WHY: 280ms sample interval (~3.6Hz) — fast enough to catch soul swings during
+    // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
     const STATLOCKER_SCAN_INTERVAL_MS = 1200;
     const STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
+    // WHY: soul snapshot TTL at 140ms — short enough to prevent stale reads when
+    // souls change rapidly (buying items), long enough to avoid per-tick re-reads
     const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
-    const ULT_CD_FULL_RESCAN_MS = 30000;     // periodic full cache flush to self-heal stale lookups
+    const ULT_CD_FULL_RESCAN_MS = 30000;     // WHY: periodic full cache flush every 30s to self-heal stale lookups from destroyed/recreated panels
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
