@@ -29460,91 +29460,64 @@ function GetUIRoot() {
         return null;
     }
 
+    // InjectTopChatImage / InjectBottomChatImage
+    // Uses CitadelHTMLPanel (CEF/chromium) because Image panels cannot load
+    // HTTP URLs — SetImage() has a file extension check, and the .src
+    // property setter also rejects external URLs. CitadelHTMLPanel loads
+    // via HTMLLoadPage dispatch event which the decomp confirms accepts
+    // http:// and https:// URLs natively.
+    function InjectChatImageCommon(msgPanel, url, isBottom) {
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) {
+            $.Msg("[QOLLock][imgchat] no msgText for panel");
+            return;
+        }
+        var textContainer = msgText.GetParent();
+        if (!textContainer) {
+            $.Msg("[QOLLock][imgchat] no textContainer for panel");
+            return;
+        }
+        textContainer.style.maxWidth = "9999px";
+
+        var panelId = "InjectedChatImage_" + (isBottom ? "bot_" : "top_") + PerfNowMs();
+        $.Msg("[QOLLock][imgchat] creating CitadelHTMLPanel id=" + panelId +
+            " url=" + url.substring(0, 60));
+
+        var htmlPanel = $.CreatePanel("CitadelHTMLPanel", textContainer, panelId);
+        if (!htmlPanel) {
+            $.Msg("[QOLLock][imgchat] FAILED to create CitadelHTMLPanel");
+            return;
+        }
+        htmlPanel.AddClass("InjectedChatImage");
+        htmlPanel.style.width = IMAGES_IN_CHAT_MAX_W + "px";
+        htmlPanel.style.height = IMAGES_IN_CHAT_MAX_H + "px";
+        htmlPanel.style.margin = isBottom ? "4px 4px 4px 4px" : "8px 8px 8px 8px";
+
+        // Load the image URL via HTMLLoadPage dispatch event.
+        // This calls into CEF/chromium which handles HTTP URLs natively.
+        $.Msg("[QOLLock][imgchat] loading url via HTMLLoadPage: " + url);
+        if (htmlPanel.DispatchEvent) {
+            htmlPanel.DispatchEvent("HTMLLoadPage", url);
+        } else {
+            $.DispatchEvent("HTMLLoadPage", url);
+        }
+
+        msgText.style.visibility = "collapse";
+    }
+
     function InjectTopChatImage(msgPanel, url) {
         var msgContainer = msgPanel.FindChildTraverse("MessageContents");
-        if (!msgContainer) return;
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (!msgText) return;
-        var textContainer = msgText.GetParent();
-        if (!textContainer) return;
-        msgContainer.style.opacity = 0.00001;
-        textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
-        img.AddClass("InjectedChatImage");
-        // Use .src property instead of SetImage() — SetImage() has a file
-        // extension check that rejects HTTP URLs, but the engine's internal
-        // LoadImageFromURL (panorama.dll) does support http/https.
-        img.src = url;
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { msgContainer.style.opacity = 1; } catch (eOffTopA) {}
-                try { img.DeleteAsync(0); } catch (eOffTopB) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "8px 8px 8px 8px";
-                msgContainer.style.opacity = 1;
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                msgContainer.style.opacity = 1;
-            }
+        if (msgContainer) msgContainer.style.opacity = 0.00001;
+        InjectChatImageCommon(msgPanel, url, false);
+        if (msgContainer) {
+            $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, function() {
+                try { msgContainer.style.opacity = 1; } catch (_e) {}
+            });
         }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
     }
 
     function InjectBottomChatImage(msgPanel, url) {
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (!msgText) return;
-        var textContainer = msgText.GetParent();
-        if (!textContainer) return;
-        textContainer.style.maxWidth = "9999px";
-        var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
-        img.AddClass("InjectedChatImage");
-        // Use .src property instead of SetImage() — SetImage() has a file
-        // extension check that rejects HTTP URLs, but the engine's internal
-        // LoadImageFromURL (panorama.dll) does support http/https.
-        img.src = url;
-        img.style.uiScale = "10%";
-        var retries = 0;
-        function tryScale() {
-            if (!IsPanelValid(img)) return;
-            if (!IsImagesInChatEnabledNow()) {
-                try { img.DeleteAsync(0); } catch (eOffBottomA) {}
-                return;
-            }
-            var w = (Number(img.actuallayoutwidth) || 0) * 10.0;
-            var h = (Number(img.actuallayoutheight) || 0) * 10.0;
-            if (w > 1 && h > 1) {
-                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
-                img.style.width = Math.round(w * scale) + "px";
-                img.style.height = Math.round(h * scale) + "px";
-                msgText.style.visibility = "collapse";
-                img.style.uiScale = "100%";
-                img.style.margin = "4px 4px 4px 4px";
-                return;
-            }
-            if (retries < IMAGES_IN_CHAT_MAX_RETRIES) {
-                retries++;
-                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
-            } else {
-                img.DeleteAsync(0);
-            }
-        }
-        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, tryScale);
+        InjectChatImageCommon(msgPanel, url, true);
     }
 
     function ClearInjectedChatImagesForMessage(msgPanel) {
