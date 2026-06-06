@@ -29813,7 +29813,12 @@ function GetUIRoot() {
             (_b ? _b[0] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("rejuvTimers", function() {
                     var _ps = PerfStart();
-                    UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
+                    var _feat = QOL_FEATURE_REGISTRY["rejuvTimers"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs);
+                    } else {
+                        UpdateRejuvBuffTimers(_s.root, _s.cfg, _s.nowMs);
+                    }
                     PerfEnd("loop.rejuv_timers", _ps);
                 });
             });
@@ -30325,4 +30330,20 @@ function GetUIRoot() {
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
     $.Schedule(CORE_START_DELAY_COMPASS_SEC, compassLoop);
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);
+
+    // ── Feature registrations (Phase 2: registry-based dispatch) ──
+    QOL_REGISTER_FEATURE("rejuvTimers", {
+        configKeys: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER", "ENABLE_MINIMAP_BUFF_TIMER"],
+        bucket: 0,
+        phase: 0,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_REJUV_HUD") || IsCfgEnabled(cfg, "ENABLE_BUFF_HUD") ||
+                   IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") || IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER");
+        },
+        update: function(root, cfg, nowMs) { UpdateRejuvBuffTimers(root, cfg, nowMs); },
+        stateKeys: ["rejuvState", "rejuvWasDisabled", "minimapObjectiveBuffClassCache",
+                    "minimapObjectiveBuffBridgeLeftClassCache", "minimapObjectiveBuffBridgeRightClassCache",
+                    "minimapObjectiveRejuvClassCache", "minimapObjectiveScaleSig"]
+    });
+
 })();
