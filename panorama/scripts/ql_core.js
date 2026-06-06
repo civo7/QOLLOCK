@@ -8836,23 +8836,10 @@ function GetUIRoot() {
             var unspentSouls = totalNetWorth - spentSouls;
             if (!isFinite(unspentSouls)) unspentSouls = 0;
 
-            // DEBUG: trace unspent calculation
-            if (State._dbgUnspentNextLogMs === undefined) State._dbgUnspentNextLogMs = 0;
-            if (nowMs >= State._dbgUnspentNextLogMs) {
-                State._dbgUnspentNextLogMs = nowMs + 200;
-                var _dbgParts = [];
-                _dbgParts.push("cursor=" + cursor + " batch=[" + cursor + "-" + (batchEnd-1) + "] sampleMs=" + (nowMs - (State.unspentNextSampleMs || 0) - UNSPENT_SAMPLE_INTERVAL_MS));
-                for (var _dbgJ = cursor; _dbgJ < batchEnd; _dbgJ++) {
-                    var _dbgP = IsPanelValid(State.unspentPlayerPanels[_dbgJ]) ? State.unspentPlayerPanels[_dbgJ] : null;
-                    if (!_dbgP) continue;
-                    var _dbgNw = GetSoulValueFromLabels(
-                        State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[_dbgJ] : null,
-                        State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[_dbgJ] : null);
-                    var _dbgSp = Number(State.unspentCachedSpentSouls[_dbgJ]) || 0;
-                    _dbgParts.push("p" + _dbgJ + ":nw=" + _dbgNw + "s=" + _dbgSp + "u=" + (_dbgNw - _dbgSp));
-                }
-                $.Msg("[QOLLock][DEBUG][unspent] " + _dbgParts.join(" "));
-            }
+            $.Msg("[QOLLock][DEBUG][unspent] p" + i + " cursor=" + cursor +
+                " total=" + totalNetWorth + " spent=" + spentSouls +
+                " unspent=" + unspentSouls +
+                " tiers=" + JSON.stringify(tierCounts));
 
             var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display && playerPanel && playerPanel.FindChildTraverse) {
