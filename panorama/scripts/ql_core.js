@@ -29471,6 +29471,7 @@ function GetUIRoot() {
         textContainer.style.maxWidth = "9999px";
         var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
+        $.Msg("[QOLLock][DEBUG][imgchat] SetImage url=" + url);
         img.SetImage(url);
         img.style.uiScale = "10%";
         var retries = 0;
@@ -29511,6 +29512,7 @@ function GetUIRoot() {
         textContainer.style.maxWidth = "9999px";
         var img = $.CreatePanel("Image", textContainer, "InjectedChatImage_" + PerfNowMs());
         img.AddClass("InjectedChatImage");
+        $.Msg("[QOLLock][DEBUG][imgchat] SetImage url=" + url);
         img.SetImage(url);
         img.style.uiScale = "10%";
         var retries = 0;
@@ -29687,7 +29689,14 @@ function GetUIRoot() {
             if (alreadyProcessed) continue;
             msg.AddClass("imageProcessed");
             touched++;
-            if (!url) continue;
+            if (!url) {
+                if (text && text.length > 0 && text !== entry._dbgLastText) {
+                    entry._dbgLastText = text;
+                    $.Msg("[QOLLock][DEBUG][imgchat] no URL match, text=" +
+                        text.substring(0, 80));
+                }
+                continue;
+            }
             if (isBottomChat) {
                 InjectBottomChatImage(msg, url);
             } else {
@@ -29894,7 +29903,12 @@ function GetUIRoot() {
             (_b ? _b[2] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("statlocker", function() {
                     var _ps = PerfStart();
-                    UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
+                    var _feat = QOL_FEATURE_REGISTRY["statlocker"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateStatlockerButtons(_s.root, _s.nowMs, _s.cfg);
+                    }
                     PerfEnd("loop.statlocker", _ps);
                 });
             });
