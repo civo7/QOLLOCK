@@ -1100,6 +1100,9 @@ var QOL_COMPACT_SCHEMA_V23 = QOL_COMPACT_SCHEMA_V22.concat([
     { key: "UNSECURED_SOUL_TIMER_Y_OFFSET", min: -100, max: 1000, step: 5 }
 ]);
 
+// NOTE: V24 adds ENABLE_COLORED_HEALTHBAR as a duplicate — it already exists
+// in V2 (the base schema). The decode overwrite is harmless (same value wins)
+// but costs 2 wasted bits per compact payload. Not fixed for binary compat.
 var QOL_COMPACT_SCHEMA_V24 = QOL_COMPACT_SCHEMA_V23.concat([
     { key: "ENABLE_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 }
 ]);
@@ -1754,7 +1757,40 @@ var QOL_COMPACT_SCHEMA_3_1_4= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS
 );
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
+
+// ==========================================================================
+// Compact schema version history
+// ==========================================================================
+// 2.0.0        Initial compact schema (wire version 1, 69 fields from V60).
+// 2.0.1        Wire version 2. Added on-death games, DL4D, enemy V2, and
+//              quickbuy notification fields.
+// 2.1.x        Language max, friends list, center ESC, HUD shift, build ID.
+// 2.2.0        Large batch: passive cooldowns, keyboard overlay, zip boost,
+//              unsecured souls, minimap rotate/flip, topbar HP warnings, urn.
+// 2.2.1-2.2.6  Chat, legacy cooldowns, LANGUAGE max progression (3→6).
+// 2.2.7-2.2.10 Minimap additions: flip, mid boss, buff timers on bridge.
+// 2.3.x        BHOP, healthbar type (0–5), images in chat, Minecraft numbers,
+//              player name blur toggle.
+// 2.4.0        Topbar HP warnings, combat indicator, HUD bar/shop toggles,
+//              minimap crate overlay, shop stats simplification, quickbuy.
+// 2.5.x        Progressive additions: recent purchases, minimap tunnels,
+//              elevation markers, zoom tunnels, damage impact, settings theme,
+//              palette picker, stamina charge, damage numbers, DL4D, show build
+//              ID. Each minor version added 1–3 fields.
+// 2.6.x        Aliases for 2.5.11.
+// 3.0.0        Major version bump (alias for 2.6.1).
+// 3.0.1-3.0.6  LANGUAGE max →10→11, SETTINGS_THEME max→6, 12 missing fields
+//              (ally healthbar, perf debug, specials, drag, previews).
+// 3.1.0-3.1.4  Hero purchase popups, shop item notifications fix, 12-field
+//              reconstruction, UNIT_TARGET_HINT_SIZE (current).
+// ==========================================================================
+// Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
+// (once from V2 base, once from V24 concat). Harmless — the decode
+// overwrite produces the same value — but costs 2 bits per payload.
+// Not fixed to preserve binary compatibility with existing exports.
+// ==========================================================================
 var QOL_COMPACT_SCHEMA_REGISTRY = {
+    // 2.0.0: Initial compact schema (wire version 1)
     "2.0.0": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_0,
         schema: QOL_COMPACT_SCHEMA_2_0_0
