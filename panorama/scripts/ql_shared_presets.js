@@ -25,6 +25,14 @@ if (typeof UnwrapConfigFromStorage !== "function") {
             // Legacy format: the whole object IS the config
             return { config: parsed, schema: null, isEnveloped: false };
         } catch (e) {
+            // JSON.parse failure — caller (SafeParseConfig) handles recovery,
+            // but log here so the raw error is visible in console for diagnosis.
+            if (typeof $ !== "undefined" && $.Msg) {
+                var preview = String(raw || "").substring(0, 120);
+                $.Msg("[QOLLock] UnwrapConfigFromStorage: JSON parse failed: " +
+                    (e && e.message ? e.message : String(e || "")) +
+                    " | raw preview: " + preview + (raw && raw.length > 120 ? "..." : ""));
+            }
             return null;
         }
     };
