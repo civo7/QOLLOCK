@@ -21635,11 +21635,6 @@ function RenderCurrentTabContent(list) {
             }
         ], "");
     } else if (currentTab === "MOG") {
-        if (gSearchCollectMode && gSearchCollectState) {
-            CreateSectionTitle(list, "Gamemodes");
-            CreateRow(list, "BHOP UI", "ENABLE_BHOP", "toggle", null, null, null, null, "For custom BHop gamemode UI changes.");
-            return;
-        }
         var mogNoteWrap = $.CreatePanel("Panel", list, "MogTabNoteWrap");
         mogNoteWrap.AddClass("ConsoleTabNoteWrap");
         mogNoteWrap.AddClass("MogTabNoteWrap");
