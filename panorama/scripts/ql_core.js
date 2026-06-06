@@ -1141,7 +1141,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     };
     const REJUV_DURATION_SEC = 240;
     const BRIDGE_DURATION_SEC = 300;
-    const BUFF_0TO1_LOCKOUT_SEC = 120;
+    const BUFF_LOCKOUT_SEC = 120;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 500;
     const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 2000;
@@ -9718,7 +9718,7 @@ function GetUIRoot() {
             lastMidBossActive: false,
             buffStartTime: 0,
             buffCounter: 0,
-            lastBuff0to1GameSec: -BUFF_0TO1_LOCKOUT_SEC,
+            lastBuffGameSec: -BUFF_LOCKOUT_SEC,
             lastSec: -1,
             lastGlobalSec: -1,
             lastRuntimeSec: -1,
@@ -10032,7 +10032,7 @@ function GetUIRoot() {
         state.lastScanFound = false;
         state.lastRejuvChargeCount = 0;
         state.lastMidBossActive = false;
-        state.lastBuff0to1GameSec = -BUFF_0TO1_LOCKOUT_SEC;
+        state.lastBuffGameSec = -BUFF_LOCKOUT_SEC;
         state.lastSec = -1;
         state.lastGlobalSec = -1;
         state.lastRuntimeSec = -1;
@@ -10157,20 +10157,20 @@ function GetUIRoot() {
         }
         // Per-tick rejuv capture detection via has_rejuv class on
         // cached RejuvenatorTimer. Starts the buff timer directly on a
-        // 0->1 transition with a 2-minute lockout to prevent repeats.
+        // has_rejuv class detection with a 2-minute lockout to prevent repeats.
         var _rejuvTimer = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
         if (_rejuvTimer && _rejuvTimer.BHasClass) {
             var _hasRejuvNow = _rejuvTimer.BHasClass("has_rejuv");
             if (_hasRejuvNow !== state._lastHadRejuvPerTick) {
                 $.Msg("[QOLLock][DEBUG][rejuv] has_rejuv: " + state._lastHadRejuvPerTick +
                     " -> " + _hasRejuvNow + " nowSec=" + nowSec +
-                    " lockoutUntil=" + ((state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC));
+                    " lockoutUntil=" + ((state.lastBuffGameSec || 0) + BUFF_LOCKOUT_SEC));
             }
             if (_hasRejuvNow && !state._lastHadRejuvPerTick) {
-                var _lockoutUntil = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
+                var _lockoutUntil = (state.lastBuffGameSec || 0) + BUFF_LOCKOUT_SEC;
                 if (nowSec >= _lockoutUntil) {
                     $.Msg("[QOLLock][DEBUG][rejuv] STARTING buff timer");
-                    state.lastBuff0to1GameSec = nowSec;
+                    state.lastBuffGameSec = nowSec;
                     RejuvStartBuff(state, root, nowSec, true);
                 } else {
                     $.Msg("[QOLLock][DEBUG][rejuv] LOCKED OUT until " + _lockoutUntil);
@@ -10340,14 +10340,14 @@ function GetUIRoot() {
                 var targetIdxFallback = state.claimCount > 2 ? 3 : state.claimCount;
                 RejuvStartPhaseManual(state, root, targetIdxFallback, nowSec, nowMs);
             }
-            // Only start buff on a 0->1 charge transition, and enforce a
-            // 2-minute lockout so the timer can't be reset by a second 0->1
+            // Start buff on charge count change, and enforce a
+            // 2-minute lockout so the timer can't be reset by a repeated trigger
             // within the same window (buff lasts 4 minutes, so this is safe).
             var chargeChangedFrom0to1 = ((state.lastRejuvChargeCount || 0) === 0 && chargeCount >= 1);
             if (chargeChangedFrom0to1) {
-                var buffLockoutUntilSec = (state.lastBuff0to1GameSec || 0) + BUFF_0TO1_LOCKOUT_SEC;
+                var buffLockoutUntilSec = (state.lastBuffGameSec || 0) + BUFF_LOCKOUT_SEC;
                 if (nowSec >= buffLockoutUntilSec) {
-                    state.lastBuff0to1GameSec = nowSec;
+                    state.lastBuffGameSec = nowSec;
                     RejuvStartBuff(state, root, nowSec, true);
                 }
             }
