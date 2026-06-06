@@ -29460,64 +29460,142 @@ function GetUIRoot() {
         return null;
     }
 
-    // InjectTopChatImage / InjectBottomChatImage
-    // Uses CitadelHTMLPanel (CEF/chromium) because Image panels cannot load
-    // HTTP URLs — SetImage() has a file extension check, and the .src
-    // property setter also rejects external URLs. CitadelHTMLPanel loads
-    // via HTMLLoadPage dispatch event which the decomp confirms accepts
-    // http:// and https:// URLs natively.
-    function InjectChatImageCommon(msgPanel, url, isBottom) {
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (!msgText) {
-            $.Msg("[QOLLock][imgchat] no msgText for panel");
-            return;
-        }
-        var textContainer = msgText.GetParent();
-        if (!textContainer) {
-            $.Msg("[QOLLock][imgchat] no textContainer for panel");
-            return;
-        }
-        textContainer.style.maxWidth = "9999px";
-
-        var panelId = "InjectedChatImage_" + (isBottom ? "bot_" : "top_") + PerfNowMs();
-        $.Msg("[QOLLock][imgchat] creating CitadelHTMLPanel id=" + panelId +
-            " url=" + url.substring(0, 60));
-
-        var htmlPanel = $.CreatePanel("CitadelHTMLPanel", textContainer, panelId);
-        if (!htmlPanel) {
-            $.Msg("[QOLLock][imgchat] FAILED to create CitadelHTMLPanel");
-            return;
-        }
-        htmlPanel.AddClass("InjectedChatImage");
-        htmlPanel.style.width = IMAGES_IN_CHAT_MAX_W + "px";
-        htmlPanel.style.height = IMAGES_IN_CHAT_MAX_H + "px";
-        htmlPanel.style.margin = isBottom ? "4px 4px 4px 4px" : "8px 8px 8px 8px";
-
-        // Load the image URL via HTMLLoadPage dispatch event.
-        // This calls into CEF/chromium which handles HTTP URLs natively.
-        $.Msg("[QOLLock][imgchat] loading url via HTMLLoadPage: " + url);
-        if (htmlPanel.DispatchEvent) {
-            htmlPanel.DispatchEvent("HTMLLoadPage", url);
-        } else {
-            $.DispatchEvent("HTMLLoadPage", url);
-        }
-
-        msgText.style.visibility = "collapse";
-    }
-
     function InjectTopChatImage(msgPanel, url) {
         var msgContainer = msgPanel.FindChildTraverse("MessageContents");
-        if (msgContainer) msgContainer.style.opacity = 0.00001;
-        InjectChatImageCommon(msgPanel, url, false);
-        if (msgContainer) {
-            $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, function() {
-                try { msgContainer.style.opacity = 1; } catch (_e) {}
-            });
+        if (!msgContainer) return;
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        msgContainer.style.opacity = 0.00001;
+        textContainer.style.maxWidth = "9999px";
+        var panelId = "InjectedChatImage_" + PerfNowMs();
+        var img = $.CreatePanel("Image", textContainer, panelId);
+        if (!img) {
+            $.Msg("[QOLLock][imgchat] FAILED to create Image panel");
+            msgContainer.style.opacity = 1;
+            return;
         }
+        img.AddClass("InjectedChatImage");
+        $.Msg("[QOLLock][imgchat] SetImage(\"" + url.substring(0, 70) + "\") on " + panelId);
+
+        img.SetImage(url);
+
+        // Log post-SetImage state
+        $.Msg("[QOLLock][imgchat] after SetImage: loaded=" + img.BLoaded +
+            " src=" + String(img.src).substring(0, 70) +
+            " actualw=" + img.actuallayoutwidth + " actualh=" + img.actuallayoutheight +
+            " paneltype=" + (img.paneltype || "?"));
+        img.style.uiScale = "10%";
+
+        var _retries = 0;
+        function _tryScale() {
+            if (!IsPanelValid(img)) {
+                $.Msg("[QOLLock][imgchat] panel became invalid at retry " + _retries);
+                msgContainer.style.opacity = 1;
+                return;
+            }
+            if (!IsImagesInChatEnabledNow()) {
+                $.Msg("[QOLLock][imgchat] feature disabled at retry " + _retries);
+                try { msgContainer.style.opacity = 1; } catch (eA) {}
+                try { img.DeleteAsync(0); } catch (eB) {}
+                return;
+            }
+            var _aw = Number(img.actuallayoutwidth) || 0;
+            var _ah = Number(img.actuallayoutheight) || 0;
+            var w = _aw * 10.0;
+            var h = _ah * 10.0;
+            $.Msg("[QOLLock][imgchat] tryScale r=" + _retries +
+                " actualw=" + _aw + " actualh=" + _ah +
+                " w=" + w.toFixed(1) + " h=" + h.toFixed(1) +
+                " loaded=" + img.BLoaded + " src=" + String(img.src).substring(0, 40));
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "8px 8px 8px 8px";
+                msgContainer.style.opacity = 1;
+                $.Msg("[QOLLock][imgchat] SUCCESS scale=" + scale.toFixed(2) +
+                    " finalW=" + Math.round(w * scale) + " finalH=" + Math.round(h * scale));
+                return;
+            }
+            if (_retries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                _retries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, _tryScale);
+            } else {
+                $.Msg("[QOLLock][imgchat] GAVE UP after " + IMAGES_IN_CHAT_MAX_RETRIES + " retries" +
+                    " — actualw=" + _aw + " actualh=" + _ah +
+                    " loaded=" + img.BLoaded + " src=" + String(img.src));
+                msgContainer.style.opacity = 1;
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, _tryScale);
     }
 
     function InjectBottomChatImage(msgPanel, url) {
-        InjectChatImageCommon(msgPanel, url, true);
+        var msgText = FindChatMessageLabel(msgPanel);
+        if (!msgText) return;
+        var textContainer = msgText.GetParent();
+        if (!textContainer) return;
+        textContainer.style.maxWidth = "9999px";
+        var panelId = "InjectedChatImage_bot_" + PerfNowMs();
+        var img = $.CreatePanel("Image", textContainer, panelId);
+        if (!img) {
+            $.Msg("[QOLLock][imgchat] FAILED to create Image panel (bottom)");
+            return;
+        }
+        img.AddClass("InjectedChatImage");
+        $.Msg("[QOLLock][imgchat] SetImage(bottom) \"" + url.substring(0, 70) + "\" on " + panelId);
+
+        img.SetImage(url);
+
+        $.Msg("[QOLLock][imgchat] bottom after SetImage: loaded=" + img.BLoaded +
+            " src=" + String(img.src).substring(0, 70) +
+            " actualw=" + img.actuallayoutwidth + " actualh=" + img.actuallayoutheight);
+        img.style.uiScale = "10%";
+
+        var _bretries = 0;
+        function _btryScale() {
+            if (!IsPanelValid(img)) {
+                $.Msg("[QOLLock][imgchat] bottom panel became invalid at retry " + _bretries);
+                return;
+            }
+            if (!IsImagesInChatEnabledNow()) {
+                $.Msg("[QOLLock][imgchat] bottom feature disabled at retry " + _bretries);
+                try { img.DeleteAsync(0); } catch (eC) {}
+                return;
+            }
+            var _aw = Number(img.actuallayoutwidth) || 0;
+            var _ah = Number(img.actuallayoutheight) || 0;
+            var w = _aw * 10.0;
+            var h = _ah * 10.0;
+            $.Msg("[QOLLock][imgchat] tryScale(bot) r=" + _bretries +
+                " actualw=" + _aw + " actualh=" + _ah +
+                " w=" + w.toFixed(1) + " h=" + h.toFixed(1) +
+                " loaded=" + img.BLoaded + " src=" + String(img.src).substring(0, 40));
+            if (w > 1 && h > 1) {
+                var scale = Math.min(IMAGES_IN_CHAT_MAX_W / w, IMAGES_IN_CHAT_MAX_H / h, 1.0);
+                img.style.width = Math.round(w * scale) + "px";
+                img.style.height = Math.round(h * scale) + "px";
+                msgText.style.visibility = "collapse";
+                img.style.uiScale = "100%";
+                img.style.margin = "4px 4px 4px 4px";
+                $.Msg("[QOLLock][imgchat] bottom SUCCESS scale=" + scale.toFixed(2));
+                return;
+            }
+            if (_bretries < IMAGES_IN_CHAT_MAX_RETRIES) {
+                _bretries++;
+                $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, _btryScale);
+            } else {
+                $.Msg("[QOLLock][imgchat] bottom GAVE UP after " + IMAGES_IN_CHAT_MAX_RETRIES + " retries" +
+                    " — actualw=" + _aw + " actualh=" + _ah +
+                    " loaded=" + img.BLoaded + " src=" + String(img.src));
+                img.DeleteAsync(0);
+            }
+        }
+        $.Schedule(IMAGES_IN_CHAT_RETRY_INTERVAL, _btryScale);
     }
 
     function ClearInjectedChatImagesForMessage(msgPanel) {
