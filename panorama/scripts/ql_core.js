@@ -30119,7 +30119,12 @@ function GetUIRoot() {
             (_b ? _b[6] : _buckets[0]).push(function(_s) {
                 ExecuteFeature("zipBoost", function() {
                     var _ps = PerfStart();
-                    UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    var _feat = QOL_FEATURE_REGISTRY["zipBoost"];
+                    if (_feat) {
+                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    } else {
+                        UpdateZipBoostOverlay(_s.root, _s.cfg, _s.hideoutConnected);
+                    }
                     PerfEnd("loop.zip_boost", _ps);
                 });
             });
@@ -30398,6 +30403,23 @@ function GetUIRoot() {
         },
         stateKeys: ["combatStatus", "combatStatusAlertProbeMisses",
                     "combatIndicatorDebugLastSig", "combatIndicatorDebugNextMs"]
+    });
+
+    QOL_REGISTER_FEATURE("zipBoost", {
+        configKeys: ["ENABLE_ZIP_BOOST"],
+        bucket: 6,
+        phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST");
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+        },
+        stateKeys: ["zipBoostLastState", "zipBoostReadyFlashUntilMs",
+                    "zipBoostDisplayMode", "zipBoostLastLayoutSig",
+                    "zipBoostLastClassSig", "zipBoostLastTitle",
+                    "zipBoostLastStatus", "zipBoostNextSourceSearchMs",
+                    "zipBoostActiveEndMs"]
     });
 
 })();
