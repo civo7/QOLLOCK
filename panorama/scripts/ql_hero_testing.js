@@ -715,10 +715,12 @@ function NormalizeHeroIdSimple(heroId) {
 
 function ResolveConfiguredDefaultHeroForLoadMap() {
     let parsed = null;
+    var _rawSettings = ReadQolSettingsRaw();
     try {
-        parsed = JSON.parse(ReadQolSettingsRaw());
+        parsed = JSON.parse(_rawSettings);
     } catch (e0) {
         parsed = null;
+        $.Msg("[QOLLock][WARN][config] JSON parse failed in ResolveConfiguredDefaultHeroForLoadMap: " + (e0 && e0.message ? e0.message : String(e0 || "")) + " | input_preview=" + String(_rawSettings || "").substring(0, 100));
     }
 
     const configured = NormalizeHeroIdSimple(parsed && parsed.DEFAULT_HERO ? parsed.DEFAULT_HERO : "");

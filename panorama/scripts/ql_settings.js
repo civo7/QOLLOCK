@@ -11624,7 +11624,7 @@ function IsInHideoutForBuildSave() {
                 }
             }
         }
-    } catch (e0) {}
+    } catch (e0) { $.Msg("[QOLLock][WARN][settings] IsInHideoutForBuildSave failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     var root = FindRootPanel();
     if (root && root.BHasClass) {
@@ -12165,7 +12165,7 @@ function SyncConfigFromStorage() {
                 var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
                 if (psRaw && psRaw.length > 0) raw = psRaw;
             }
-        } catch (ePs) { /* ignore */ }
+        } catch (ePs) { $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || ""))); }
     }
     var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
         ? Object.assign({}, QOL_DEFAULT_CONFIG)
@@ -12180,7 +12180,7 @@ function SyncConfigFromStorage() {
                 }
             }
             NormalizeConfig(nextConfig, parsed);
-        } catch (e) {}
+        } catch (e) { $.Msg("[QOLLock][WARN][config] SyncConfigFromStorage parse/merge failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     MOD_CONFIG = nextConfig;
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
@@ -12643,7 +12643,7 @@ function CollectResetKeysFromPanel(panel, outKeys, seen) {
                 outKeys.push(key);
             }
         }
-    } catch (e0) {}
+    } catch (e0) { $.Msg("[QOLLock][WARN][settings] CollectResetKeysFromPanel failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     var children = [];
     try { children = panel.Children ? panel.Children() : []; } catch (e1) { children = []; }

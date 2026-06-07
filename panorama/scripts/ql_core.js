@@ -99,7 +99,8 @@
         }
         return panel;
     };
-    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
+    var _safeAttrDegradedLogged = false;
+    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
@@ -4403,7 +4404,7 @@ function GetUIRoot() {
                     var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
                     if (psRaw && psRaw.length > 0) result = psRaw;
                 }
-            } catch (ePs) { /* ignore */ }
+            } catch (ePs) { $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || ""))); }
         }
         return result;
     }
