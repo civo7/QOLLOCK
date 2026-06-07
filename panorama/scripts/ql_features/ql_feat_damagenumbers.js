@@ -66,6 +66,72 @@ function CreateIndicatorMeta(panel, needsSmallDamage) {
         return false;
     };
 
+    var PERF_DEBUG_SLOW_MS = 8;
+function IsPanelListValid(list) {
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
+    }
+function PerfEnd(name, startMs) {
+        if (!_perfTrackingActive || !startMs) return;
+        PerfRecord(name, PerfNowMs() - startMs);
+    }
+function PerfNowMs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+function PerfRecord(name, elapsedMs) {
+        if (!_perfTrackingActive) return;
+        if (!name) return;
+        var ms = Number(elapsedMs);
+        if (!isFinite(ms) || ms < 0) return;
+        var stats = S.perfStats || {};
+        var entry = stats[name];
+        if (!entry) {
+            entry = { count: 0, total: 0, max: 0, slow: 0 };
+            stats[name] = entry;
+        }
+        entry.count += 1;
+        entry.total += ms;
+        if (ms > entry.max) entry.max = ms;
+        if (ms >= PERF_DEBUG_SLOW_MS) entry.slow += 1;
+        S.perfStats = stats;
+    }
+function PerfStart() {
+        if (!_perfTrackingActive) return 0;
+        return PerfNowMs();
+    }
+function RuntimeSchedulerGetStore() {
+        var store = S.runtimeTaskNextMs;
+        if (!store || typeof store !== "object") {
+            store = {};
+            S.runtimeTaskNextMs = store;
+        }
+        return store;
+    }
+function RuntimeSchedulerNowMs(nowMs) {
+        var now = Number(nowMs);
+        if (isFinite(now) && now > 0) return now;
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+function RuntimeTaskIsDue(taskKey, nowMs) {
+        if (!taskKey) return true;
+        var now = RuntimeSchedulerNowMs(nowMs);
+        var store = RuntimeSchedulerGetStore();
+        var nextMs = Number(store[taskKey]) || 0;
+        return now >= nextMs;
+    }
+function RuntimeTaskSetDelay(taskKey, nowMs, delayMs) {
+        if (!taskKey) return;
+        var now = RuntimeSchedulerNowMs(nowMs);
+        var delay = Number(delayMs);
+        if (!isFinite(delay) || delay < 0) delay = 0;
+        var store = RuntimeSchedulerGetStore();
+        store[taskKey] = now + delay;
+    }
     function BuildIndicatorMetaCache(indicators, previousMeta, needsSmallDamage) {
         var out = [];
         if (!indicators || indicators.length === 0) return out;

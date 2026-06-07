@@ -35,6 +35,29 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { r
     }
 
     var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
+    var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+function GetGameplayHudPanel(root) {
+        if (!root || !root.FindChildTraverse) return root || null;
+        return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
+    }
+function ParseSpmNumber(valueText) {
+        if (!valueText) return 0;
+        var raw = String(valueText).replace(/,/g, "").trim().toLowerCase();
+        if (raw.length === 0) return 0;
+        var scale = 1;
+        var suffix = raw.charAt(raw.length - 1);
+        if (suffix === "k" || suffix === "m" || suffix === "b") {
+            raw = raw.substring(0, raw.length - 1);
+            if (suffix === "k") scale = 1000;
+            else if (suffix === "m") scale = 1000000;
+            else if (suffix === "b") scale = 1000000000;
+        }
+        var v = parseFloat(raw);
+        return isFinite(v) ? (v * scale) : 0;
+    }
+function ParseUnsecuredSoulsValue(valueText) {
+        return Math.max(0, Math.round(ParseSpmNumber(valueText)));
+    }
     function FindUnsecuredSoulsHudContainer(root) {
         if (!root) return null;
         var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;

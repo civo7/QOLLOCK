@@ -93,6 +93,49 @@ function GetRecentPurchaseTime(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
+    var PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";
+    var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+    var RECENT_PURCHASE_QUICK_CLASSES = [
+        "isTier1Purchase", "isTier2Purchase", "isTier3Purchase", "isTier4Purchase",
+        "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
+        "isTeam1Purchase", "isTeam2Purchase"
+    ];
+function IsHudClassActive(root, className) {
+        if (!className) return false;
+        if (root && root.BHasClass && root.BHasClass(className)) return true;
+
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
+        if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
+
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
+        if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
+
+        return false;
+    }
+function IsPanelVisibleMaybe(panel) {
+        if (!panel || !IsPanelValid(panel)) return false;
+        try {
+            if (panel.visible === false) return false;
+        } catch (e0) {}
+        var vis = "";
+        try {
+            if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
+                vis = String(panel.style.visibility || "").toLowerCase();
+            }
+        } catch (e1) {
+            vis = "";
+        }
+        if (vis === "collapse" || vis === "none" || vis === "hidden") return false;
+        return true;
+    }
+var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
+        var panel = IsPanelValid(S.cachedPanels[cacheKey]) ? S.cachedPanels[cacheKey] : null;
+        if (!panel && parent && parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(traverseId);
+            S.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    };
     function GetRecentPurchaseHeroName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaserHero");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";

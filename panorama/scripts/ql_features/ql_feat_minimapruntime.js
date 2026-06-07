@@ -271,6 +271,74 @@ function RestoreMinimapOriginalOrder(minimapPersp) {
         return false;
     };
 
+    var PANEL_ID_ABILITIES_CONTAINER = "AbilitiesContainer";
+    var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+function EnsureMinimapPanelCache(root) {
+        if (S.cachedPanels.minimap && IsPanelListValid(S.cachedPanels.minimap)) {
+            return S.cachedPanels.minimap;
+        }
+        var panels = [];
+        if (root && root.FindChildTraverse) {
+            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
+            for (var i = 0; i < ids.length; i++) {
+                var panel = root.FindChildTraverse(ids[i]);
+                if (panel) panels.push(panel);
+            }
+        }
+        S.cachedPanels.minimap = panels;
+        return panels;
+    }
+function IsHudClassActive(root, className) {
+        if (!className) return false;
+        if (root && root.BHasClass && root.BHasClass(className)) return true;
+
+        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
+        if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
+
+        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
+        if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
+
+        return false;
+    }
+function IsPanelListValid(list) {
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
+    }
+function NormalizePaletteColorIndex(value) {
+        var numeric = Math.round(Number(value));
+        if (!isFinite(numeric)) numeric = 0;
+        if (numeric < 0) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        return numeric;
+    }
+function PerfNowMs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
+        var panel = IsPanelValid(S.cachedPanels[cacheKey]) ? S.cachedPanels[cacheKey] : null;
+        if (!panel && parent && parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(traverseId);
+            S.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    };
+function ResolveWashColorFromPalette(value) {
+        var index = NormalizePaletteColorIndex(value);
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        return color ? String(color) : "";
+    }
+function SetWashColorSafe(panel, color) {
+        if (color) {
+            SetStyleSafe(panel, "washColor", String(color));
+        } else {
+            ClearStyleSafe(panel, "washColor");
+        }
+    }
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
