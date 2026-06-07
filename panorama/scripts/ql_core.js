@@ -29292,7 +29292,14 @@ function GetUIRoot() {
             if (_fname === "healthbarRuntimeHelpers" && gates.coreRoot) return;
 
             var _feat = QOL_FEATURE_REGISTRY[_fname];
-            if (!_feat) return;
+            if (!_feat) {
+                if (!State._missingFeatureLogged || !State._missingFeatureLogged[_fname]) {
+                    if (!State._missingFeatureLogged) State._missingFeatureLogged = {};
+                    State._missingFeatureLogged[_fname] = true;
+                    $.Msg("[QOLLock] ERROR: feature '" + _fname + "' is in dispatch order but not registered — extracted file missing or failed to load?");
+                }
+                return;
+            }
 
             var _bucket = _b ? (_feat.bucket != null ? _feat.bucket : 0) : 0;
             var _perfName = FEATURE_PERF_MAP[_fname] || ("loop." + _fname);
