@@ -20141,27 +20141,6 @@ function GetUIRoot() {
         }
     }
 
-    function UpdateDamageImpactRuntime(root, cfg) {
-        var active = HasNonDefaultDamageImpactRuntimeConfig(cfg);
-        var enabled = IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
-        var panel = ResolveCachedPanel(root, "damageImpactPanel", "damage_impact")
-        if (!panel) return;
-
-        var offsetX = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
-        var offsetY = active ? NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) : 0;
-        var opacityText = active ? NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0).toFixed(2) : "1.00";
-        var scaleText = active ? NormalizeDamageImpactScaleNumber(cfg.DAMAGE_IMPACT_SCALE, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0");
-        if (State.damageImpactRuntimeStyleSig === styleSig) return;
-
-        panel.style.x = String(offsetX) + "px";
-        panel.style.y = String(-offsetY) + "px";
-        panel.style.opacity = opacityText;
-        panel.style.preTransformScale2d = scaleText + ", " + scaleText;
-        panel.style.visibility = enabled ? "visible" : "collapse";
-        State.damageImpactRuntimeStyleSig = styleSig;
-    }
-
     function GetStaminaChargeColorPanels(root, nowMs) {
         var cached = State.staminaChargeColorPanelCache || [];
         if (IsPanelListValid(cached) && nowMs < (State.staminaChargeColorPanelCacheNextMs || 0)) {
@@ -30197,15 +30176,6 @@ function GetUIRoot() {
         gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
         update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("damageImpactRuntime", {
-        configKeys: ["ENABLE_DAMAGE_IMPACT", "DAMAGE_IMPACT_SCALE", "DAMAGE_IMPACT_OPACITY",
-                     "DAMAGE_IMPACT_X_OFFSET", "DAMAGE_IMPACT_Y_OFFSET"],
-        bucket: 7, phase: -1,
-        gate: function(cfg) { return NeedsDamageImpactRuntimeWork(cfg); },
-        update: function(root, cfg) { UpdateDamageImpactRuntime(root, cfg); },
-        stateKeys: ["damageImpactRuntimeStyleSig", "cachedPanels.damageImpactPanel"]
     });
 
     // ── Batch E: features needing nowMs ──
