@@ -29,16 +29,16 @@
     }
     function SetGameplayMouseCursorRootClass(root, active) {
         var on = !!active;
-        if (!!State.customMouseCursorClassActive === on) return;
+        if (!!S.customMouseCursorClassActive === on) return;
         if (root && root.SetHasClass) {
             try { root.SetHasClass("qol_custom_cursor_replace_active", on); } catch (e0) {}
         }
-        State.customMouseCursorClassActive = on;
+        S.customMouseCursorClassActive = on;
     }
 
     function EnsureGameplayMouseCursorPanel(root) {
         if (!root) return null;
-        var panel = IsPanelValid(State.customMouseCursorPanel) ? State.customMouseCursorPanel : null;
+        var panel = IsPanelValid(S.customMouseCursorPanel) ? S.customMouseCursorPanel : null;
         if (!panel) {
             panel = root.FindChildTraverse ? root.FindChildTraverse("QOLGameplayMouseCursor") : null;
             if (!panel) {
@@ -49,13 +49,13 @@
                     panel = null;
                 }
             }
-            State.customMouseCursorPanel = panel || null;
+            S.customMouseCursorPanel = panel || null;
         }
         if (!panel) return null;
         try { panel.hittest = false; } catch (ePanelA) {}
         try { panel.hittestchildren = false; } catch (ePanelB) {}
 
-        var image = IsPanelValid(State.customMouseCursorImage) ? State.customMouseCursorImage : null;
+        var image = IsPanelValid(S.customMouseCursorImage) ? S.customMouseCursorImage : null;
         if (!image || (panel && image.GetParent && image.GetParent() !== panel)) {
             image = panel.FindChildTraverse ? panel.FindChildTraverse("QOLGameplayMouseCursorImage") : null;
             if (!image) {
@@ -66,19 +66,19 @@
                     image = null;
                 }
             }
-            State.customMouseCursorImage = image || null;
-            State.customMouseCursorImageBound = false;
+            S.customMouseCursorImage = image || null;
+            S.customMouseCursorImageBound = false;
         }
-        if (image && !State.customMouseCursorImageBound) {
+        if (image && !S.customMouseCursorImageBound) {
             try {
                 image.SetImage(GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH);
-                State.customMouseCursorImageBound = true;
+                S.customMouseCursorImageBound = true;
             } catch (e2) {
                 try {
                     image.SetImage(GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK);
-                    State.customMouseCursorImageBound = true;
+                    S.customMouseCursorImageBound = true;
                 } catch (e3) {
-                    State.customMouseCursorImageBound = false;
+                    S.customMouseCursorImageBound = false;
                 }
             }
         }
@@ -87,14 +87,14 @@
 
     function HideGameplayMouseCursor(root) {
         SetGameplayMouseCursorRootClass(root, false);
-        var panel = IsPanelValid(State.customMouseCursorPanel) ? State.customMouseCursorPanel : null;
+        var panel = IsPanelValid(S.customMouseCursorPanel) ? S.customMouseCursorPanel : null;
         if (panel) {
             try {
                 if (panel.style.visibility !== "collapse") panel.style.visibility = "collapse";
             } catch (e0) {}
         }
-        State.customMouseCursorLastX = null;
-        State.customMouseCursorLastY = null;
+        S.customMouseCursorLastX = null;
+        S.customMouseCursorLastY = null;
     }
 
     function IsGameplayMouseCursorContextActive(root, hideoutConnected) {
@@ -125,13 +125,13 @@
 
         var x = Math.round(pos.x - GAMEPLAY_MOUSE_CURSOR_HALF_PX);
         var y = Math.round(pos.y - GAMEPLAY_MOUSE_CURSOR_HALF_PX);
-        if (State.customMouseCursorLastX !== x) {
+        if (S.customMouseCursorLastX !== x) {
             panel.style.x = x + "px";
-            State.customMouseCursorLastX = x;
+            S.customMouseCursorLastX = x;
         }
-        if (State.customMouseCursorLastY !== y) {
+        if (S.customMouseCursorLastY !== y) {
             panel.style.y = y + "px";
-            State.customMouseCursorLastY = y;
+            S.customMouseCursorLastY = y;
         }
         if (panel.style.visibility !== "visible") panel.style.visibility = "visible";
         SetGameplayMouseCursorRootClass(root, true);

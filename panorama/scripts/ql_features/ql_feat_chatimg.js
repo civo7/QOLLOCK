@@ -88,10 +88,10 @@
     }
 
     function GetImagesInChatContainer(root, cacheKey, panelId) {
-        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+        var panel = IsPanelValid(S.cachedPanels[cacheKey]) ? S.cachedPanels[cacheKey] : null;
         if (!panel && root && root.FindChildTraverse) {
             panel = root.FindChildTraverse(panelId);
-            State.cachedPanels[cacheKey] = panel || null;
+            S.cachedPanels[cacheKey] = panel || null;
         }
         return panel;
     }
@@ -110,30 +110,30 @@
     function UpdateImagesInChat(root, cfg) {
         if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
         var nowMs = PerfNowMs();
-        if (nowMs >= State.imagesInChatTopNextSearchMs) {
+        if (nowMs >= S.imagesInChatTopNextSearchMs) {
             var topContainer = GetImagesInChatContainer(root, "imagesInChatTopContainer", "Messages");
             if (!IsPanelValid(topContainer)) {
-                State.imagesInChatTopNextSearchMs = nowMs + 2000;
+                S.imagesInChatTopNextSearchMs = nowMs + 2000;
                 ResetImagesInChatContainerState("imagesInChatTopWatermark", "imagesInChatTopFullScanNextMs", "imagesInChatTopMessageCache");
             } else {
                 var topTouched = 0;
                 if (ShouldScanImagesInChatContainer(topContainer, "imagesInChatTopWatermark", "imagesInChatTopFullScanNextMs", nowMs)) {
                     topTouched = ProcessChatContainerImages(topContainer, false, "imagesInChatTopMessageCache");
                 }
-                State.imagesInChatTopNextSearchMs = nowMs + GetImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
+                S.imagesInChatTopNextSearchMs = nowMs + GetImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
             }
         }
-        if (nowMs >= State.imagesInChatBottomNextSearchMs) {
+        if (nowMs >= S.imagesInChatBottomNextSearchMs) {
             var bottomContainer = GetImagesInChatContainer(root, "imagesInChatBottomContainer", "ChatMessages");
             if (!IsPanelValid(bottomContainer)) {
-                State.imagesInChatBottomNextSearchMs = nowMs + 2000;
+                S.imagesInChatBottomNextSearchMs = nowMs + 2000;
                 ResetImagesInChatContainerState("imagesInChatBottomWatermark", "imagesInChatBottomFullScanNextMs", "imagesInChatBottomMessageCache");
             } else {
                 var bottomTouched = 0;
                 if (ShouldScanImagesInChatContainer(bottomContainer, "imagesInChatBottomWatermark", "imagesInChatBottomFullScanNextMs", nowMs)) {
                     bottomTouched = ProcessChatContainerImages(bottomContainer, true, "imagesInChatBottomMessageCache");
                 }
-                State.imagesInChatBottomNextSearchMs = nowMs + GetImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
+                S.imagesInChatBottomNextSearchMs = nowMs + GetImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
             }
         }
     }

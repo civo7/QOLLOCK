@@ -26,7 +26,7 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
     function EnsureStatBonusesOverlay(root) {
-        var overlay = GetCachedPanel("statBonusesOverlay");
+        var overlay = GC("statBonusesOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -61,42 +61,42 @@
             maxHealth.text = "Max Health: --";
         }
 
-        SetCachedPanel("statBonusesOverlay", overlay);
-        SetCachedPanel("statBonusesTitle", overlay ? overlay.FindChildTraverse("QOLStatBonusesTitle") : null);
-        SetCachedPanel("statBonusesFireRate", overlay ? overlay.FindChildTraverse("QOLStatBonusesFireRate") : null);
-        SetCachedPanel("statBonusesAbilityCooldown", overlay ? overlay.FindChildTraverse("QOLStatBonusesAbilityCooldown") : null);
-        SetCachedPanel("statBonusesSpiritPower", overlay ? overlay.FindChildTraverse("QOLStatBonusesSpiritPower") : null);
-        SetCachedPanel("statBonusesClipSize", overlay ? overlay.FindChildTraverse("QOLStatBonusesClipSize") : null);
-        SetCachedPanel("statBonusesWeaponDamage", overlay ? overlay.FindChildTraverse("QOLStatBonusesWeaponDamage") : null);
-        SetCachedPanel("statBonusesMaxHealth", overlay ? overlay.FindChildTraverse("QOLStatBonusesMaxHealth") : null);
+        SC("statBonusesOverlay", overlay);
+        SC("statBonusesTitle", overlay ? overlay.FindChildTraverse("QOLStatBonusesTitle") : null);
+        SC("statBonusesFireRate", overlay ? overlay.FindChildTraverse("QOLStatBonusesFireRate") : null);
+        SC("statBonusesAbilityCooldown", overlay ? overlay.FindChildTraverse("QOLStatBonusesAbilityCooldown") : null);
+        SC("statBonusesSpiritPower", overlay ? overlay.FindChildTraverse("QOLStatBonusesSpiritPower") : null);
+        SC("statBonusesClipSize", overlay ? overlay.FindChildTraverse("QOLStatBonusesClipSize") : null);
+        SC("statBonusesWeaponDamage", overlay ? overlay.FindChildTraverse("QOLStatBonusesWeaponDamage") : null);
+        SC("statBonusesMaxHealth", overlay ? overlay.FindChildTraverse("QOLStatBonusesMaxHealth") : null);
         return overlay;
     }
 
     function RemoveStatBonusesOverlay(root) {
-        var overlay = GetCachedPanel("statBonusesOverlay");
+        var overlay = GC("statBonusesOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLStatBonusesOverlay");
         }
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        SetCachedPanel("statBonusesOverlay", null);
-        SetCachedPanel("statBonusesTitle", null);
-        SetCachedPanel("statBonusesFireRate", null);
-        SetCachedPanel("statBonusesAbilityCooldown", null);
-        SetCachedPanel("statBonusesSpiritPower", null);
-        SetCachedPanel("statBonusesClipSize", null);
-        SetCachedPanel("statBonusesWeaponDamage", null);
-        SetCachedPanel("statBonusesMaxHealth", null);
-        SetCachedPanel("statBonusesFireRateSource", null);
-        SetCachedPanel("statBonusesAbilityCooldownSource", null);
-        SetCachedPanel("statBonusesSpiritPowerSource", null);
-        SetCachedPanel("statBonusesClipSizeSource", null);
-        SetCachedPanel("statBonusesWeaponDamageSource", null);
-        SetCachedPanel("statBonusesMaxHealthSource", null);
-        SetCachedPanel("statBonusesIdolCountSource", null);
-        SetCachedPanel("statBonusesTooltipBreakdown", null);
-        State.statBonuses = {
+        SC("statBonusesOverlay", null);
+        SC("statBonusesTitle", null);
+        SC("statBonusesFireRate", null);
+        SC("statBonusesAbilityCooldown", null);
+        SC("statBonusesSpiritPower", null);
+        SC("statBonusesClipSize", null);
+        SC("statBonusesWeaponDamage", null);
+        SC("statBonusesMaxHealth", null);
+        SC("statBonusesFireRateSource", null);
+        SC("statBonusesAbilityCooldownSource", null);
+        SC("statBonusesSpiritPowerSource", null);
+        SC("statBonusesClipSizeSource", null);
+        SC("statBonusesWeaponDamageSource", null);
+        SC("statBonusesMaxHealthSource", null);
+        SC("statBonusesIdolCountSource", null);
+        SC("statBonusesTooltipBreakdown", null);
+        S.statBonuses = {
             displayMode: "",
             lastLayoutSig: "",
             lastClassSig: "",
@@ -120,18 +120,18 @@
     function UpdateStatBonusesOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (State.statBonuses.displayMode !== "context_off") {
+            if (S.statBonuses.displayMode !== "context_off") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonuses.displayMode = "context_off";
+                S.statBonuses.displayMode = "context_off";
             }
             return;
         }
 
         var enabled = cfg.ENABLE_STAT_BONUSES === 1;
         if (!enabled) {
-            if (State.statBonuses.displayMode !== "disabled") {
+            if (S.statBonuses.displayMode !== "disabled") {
                 RemoveStatBonusesOverlay(root);
-                State.statBonuses.displayMode = "disabled";
+                S.statBonuses.displayMode = "disabled";
             }
             return;
         }
@@ -141,30 +141,30 @@
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (State.statBonuses.displayMode !== "hideout") {
+            if (S.statBonuses.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
-                var fireRateHideout = GetCachedPanel("statBonusesFireRate");
-                var abilityHideout = GetCachedPanel("statBonusesAbilityCooldown");
-                var spiritHideout = GetCachedPanel("statBonusesSpiritPower");
-                var clipHideout = GetCachedPanel("statBonusesClipSize");
-                var weaponHideout = GetCachedPanel("statBonusesWeaponDamage");
-                var healthHideout = GetCachedPanel("statBonusesMaxHealth");
+                var fireRateHideout = GC("statBonusesFireRate");
+                var abilityHideout = GC("statBonusesAbilityCooldown");
+                var spiritHideout = GC("statBonusesSpiritPower");
+                var clipHideout = GC("statBonusesClipSize");
+                var weaponHideout = GC("statBonusesWeaponDamage");
+                var healthHideout = GC("statBonusesMaxHealth");
                 if (fireRateHideout) fireRateHideout.SetHasClass("is_zero", false);
                 if (abilityHideout) abilityHideout.SetHasClass("is_zero", false);
                 if (spiritHideout) spiritHideout.SetHasClass("is_zero", false);
                 if (clipHideout) clipHideout.SetHasClass("is_zero", false);
                 if (weaponHideout) weaponHideout.SetHasClass("is_zero", false);
                 if (healthHideout) healthHideout.SetHasClass("is_zero", false);
-                State.statBonuses.lastClassSig = "";
+                S.statBonuses.lastClassSig = "";
             }
-            State.statBonuses.displayMode = "hideout";
+            S.statBonuses.displayMode = "hideout";
             return;
         }
 
-        if (State.statBonuses.displayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (S.statBonuses.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.statBonuses.displayMode = "active";
+        S.statBonuses.displayMode = "active";
 
         var statOffsetX = Number(cfg.STAT_BONUSES_X_OFFSET);
         var statOffsetY = Number(cfg.STAT_BONUSES_Y_OFFSET);
@@ -186,11 +186,11 @@
             String(statOffsetY),
             String(statScale)
         ].join("|");
-        if (layoutSig !== State.statBonuses.lastLayoutSig) {
+        if (layoutSig !== S.statBonuses.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + statOffsetX) + "px";
             overlay.style.marginBottom = (70 + statOffsetY) + "px";
             overlay.style.preTransformScale2d = (statScale / 100).toFixed(2);
-            State.statBonuses.lastLayoutSig = layoutSig;
+            S.statBonuses.lastLayoutSig = layoutSig;
         }
 
         var sourceFireRate = ResolveStatBonusesSource(root, "statBonusesFireRateSource", STAT_BONUSES_FIRE_RATE_IDS, nowMs);
@@ -242,12 +242,12 @@
                     (sourceWeaponDamage ? (ExtractStatDisplayText(sourceWeaponDamage) || "-") : "-") + "," +
                     (sourceMaxHealth ? (ExtractStatDisplayText(sourceMaxHealth) || "-") : "-") + ")";
                 var cacheSig = "cache(" +
-                    "fr=" + (State.statBonuses.goldenValues.fireRate || "-") + "," +
-                    "cd=" + (State.statBonuses.goldenValues.abilityCooldown || "-") + "," +
-                    "sp=" + (State.statBonuses.goldenValues.spiritPower || "-") + "," +
-                    "cl=" + (State.statBonuses.goldenValues.clipSize || "-") + "," +
-                    "wd=" + (State.statBonuses.goldenValues.weaponDamage || "-") + "," +
-                    "hp=" + (State.statBonuses.goldenValues.maxHealth || "-") + ")";
+                    "fr=" + (S.statBonuses.goldenValues.fireRate || "-") + "," +
+                    "cd=" + (S.statBonuses.goldenValues.abilityCooldown || "-") + "," +
+                    "sp=" + (S.statBonuses.goldenValues.spiritPower || "-") + "," +
+                    "cl=" + (S.statBonuses.goldenValues.clipSize || "-") + "," +
+                    "wd=" + (S.statBonuses.goldenValues.weaponDamage || "-") + "," +
+                    "hp=" + (S.statBonuses.goldenValues.maxHealth || "-") + ")";
                 var unresolvedKey = unresolved.join(",");
                 var unresolvedSig = "overlay_unresolved|" + unresolvedKey + "|" + srcSig + "|" + totalsSig + "|" + cacheSig;
                 StatBonusesDebugLogThrottled(
@@ -306,10 +306,10 @@
         var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass(CLASS_IS_ZERO_VALUE));
 
         var titleText = "Stat Bonuses (Golden Statues)";
-        var titleLabel = GetCachedPanel("statBonusesTitle");
-        if (titleLabel && titleText !== State.statBonuses.lastTitleText) {
+        var titleLabel = GC("statBonusesTitle");
+        if (titleLabel && titleText !== S.statBonuses.lastTitleText) {
             titleLabel.text = titleText;
-            State.statBonuses.lastTitleText = titleText;
+            S.statBonuses.lastTitleText = titleText;
         }
 
         var fireRateText = "Fire Rate: " + fireRateValue;
@@ -325,51 +325,51 @@
             "|" + (clipSizeZero ? "1" : "0") +
             "|" + (weaponDamageZero ? "1" : "0") +
             "|" + (maxHealthZero ? "1" : "0");
-        if (classSig !== State.statBonuses.lastClassSig) {
-            var fireRateLabelForClass = GetCachedPanel("statBonusesFireRate");
-            var abilityLabelForClass = GetCachedPanel("statBonusesAbilityCooldown");
-            var spiritLabelForClass = GetCachedPanel("statBonusesSpiritPower");
-            var clipLabelForClass = GetCachedPanel("statBonusesClipSize");
-            var weaponLabelForClass = GetCachedPanel("statBonusesWeaponDamage");
-            var healthLabelForClass = GetCachedPanel("statBonusesMaxHealth");
+        if (classSig !== S.statBonuses.lastClassSig) {
+            var fireRateLabelForClass = GC("statBonusesFireRate");
+            var abilityLabelForClass = GC("statBonusesAbilityCooldown");
+            var spiritLabelForClass = GC("statBonusesSpiritPower");
+            var clipLabelForClass = GC("statBonusesClipSize");
+            var weaponLabelForClass = GC("statBonusesWeaponDamage");
+            var healthLabelForClass = GC("statBonusesMaxHealth");
             if (fireRateLabelForClass) fireRateLabelForClass.SetHasClass("is_zero", fireRateZero);
             if (abilityLabelForClass) abilityLabelForClass.SetHasClass("is_zero", abilityCooldownZero);
             if (spiritLabelForClass) spiritLabelForClass.SetHasClass("is_zero", spiritPowerZero);
             if (clipLabelForClass) clipLabelForClass.SetHasClass("is_zero", clipSizeZero);
             if (weaponLabelForClass) weaponLabelForClass.SetHasClass("is_zero", weaponDamageZero);
             if (healthLabelForClass) healthLabelForClass.SetHasClass("is_zero", maxHealthZero);
-            State.statBonuses.lastClassSig = classSig;
+            S.statBonuses.lastClassSig = classSig;
         }
 
-        var fireRateLabel = GetCachedPanel("statBonusesFireRate");
-        if (fireRateLabel && fireRateText !== State.statBonuses.lastFireRateText) {
+        var fireRateLabel = GC("statBonusesFireRate");
+        if (fireRateLabel && fireRateText !== S.statBonuses.lastFireRateText) {
             fireRateLabel.text = fireRateText;
-            State.statBonuses.lastFireRateText = fireRateText;
+            S.statBonuses.lastFireRateText = fireRateText;
         }
-        var abilityCooldownLabel = GetCachedPanel("statBonusesAbilityCooldown");
-        if (abilityCooldownLabel && abilityCooldownText !== State.statBonuses.lastAbilityCooldownText) {
+        var abilityCooldownLabel = GC("statBonusesAbilityCooldown");
+        if (abilityCooldownLabel && abilityCooldownText !== S.statBonuses.lastAbilityCooldownText) {
             abilityCooldownLabel.text = abilityCooldownText;
-            State.statBonuses.lastAbilityCooldownText = abilityCooldownText;
+            S.statBonuses.lastAbilityCooldownText = abilityCooldownText;
         }
-        var spiritPowerLabel = GetCachedPanel("statBonusesSpiritPower");
-        if (spiritPowerLabel && spiritPowerText !== State.statBonuses.lastSpiritPowerText) {
+        var spiritPowerLabel = GC("statBonusesSpiritPower");
+        if (spiritPowerLabel && spiritPowerText !== S.statBonuses.lastSpiritPowerText) {
             spiritPowerLabel.text = spiritPowerText;
-            State.statBonuses.lastSpiritPowerText = spiritPowerText;
+            S.statBonuses.lastSpiritPowerText = spiritPowerText;
         }
-        var clipSizeLabel = GetCachedPanel("statBonusesClipSize");
-        if (clipSizeLabel && clipSizeText !== State.statBonuses.lastClipSizeText) {
+        var clipSizeLabel = GC("statBonusesClipSize");
+        if (clipSizeLabel && clipSizeText !== S.statBonuses.lastClipSizeText) {
             clipSizeLabel.text = clipSizeText;
-            State.statBonuses.lastClipSizeText = clipSizeText;
+            S.statBonuses.lastClipSizeText = clipSizeText;
         }
-        var weaponDamageLabel = GetCachedPanel("statBonusesWeaponDamage");
-        if (weaponDamageLabel && weaponDamageText !== State.statBonuses.lastWeaponDamageText) {
+        var weaponDamageLabel = GC("statBonusesWeaponDamage");
+        if (weaponDamageLabel && weaponDamageText !== S.statBonuses.lastWeaponDamageText) {
             weaponDamageLabel.text = weaponDamageText;
-            State.statBonuses.lastWeaponDamageText = weaponDamageText;
+            S.statBonuses.lastWeaponDamageText = weaponDamageText;
         }
-        var maxHealthLabel = GetCachedPanel("statBonusesMaxHealth");
-        if (maxHealthLabel && maxHealthText !== State.statBonuses.lastMaxHealthText) {
+        var maxHealthLabel = GC("statBonusesMaxHealth");
+        if (maxHealthLabel && maxHealthText !== S.statBonuses.lastMaxHealthText) {
             maxHealthLabel.text = maxHealthText;
-            State.statBonuses.lastMaxHealthText = maxHealthText;
+            S.statBonuses.lastMaxHealthText = maxHealthText;
         }
     }
 

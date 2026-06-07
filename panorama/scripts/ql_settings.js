@@ -21313,6 +21313,55 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
         CreateSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         CreateSeparator(list);
+        // ── Diagnostics ──
+        var diagHeader = CreateSectionTitle(list, "Diagnostics");
+        var copyLogsBtn = CreateSectionInlineIconButton(diagHeader, "DiagCopyLogsBtn",
+            "s2r://panorama/images/icons/icon_copy.vsvg",
+            "Copy QOLLock diagnostic logs to clipboard.");
+        if (copyLogsBtn) {
+            copyLogsBtn.SetPanelEvent("onactivate", function() {
+                var diagText = "";
+                try {
+                    if (typeof window !== "undefined" && window.QOL_DumpDiagnostics) {
+                        diagText = window.QOL_DumpDiagnostics();
+                    } else if (typeof QOL_DumpDiagnostics !== "undefined") {
+                        diagText = QOL_DumpDiagnostics();
+                    } else {
+                        diagText = "=== QOLLOCK Diagnostics ===\nDiagnostic function not available (ql_core.js may not be loaded).\n";
+                    }
+                } catch(e) {
+                    diagText = "=== QOLLOCK Diagnostics ===\nError: " + String(e && e.message ? e.message : String(e)) + "\n";
+                }
+                var hiddenEntry = $.CreatePanel("TextEntry", list, "DiagCopyTextEntry");
+                hiddenEntry.text = diagText;
+                hiddenEntry.multiline = true;
+                hiddenEntry.maxchars = Math.max(diagText.length + 100, 1000);
+                hiddenEntry.SetPanelEvent("onfocus", function() {
+                    try { hiddenEntry.SelectAll(); } catch(e) {}
+                });
+                var copied = TryCopyTextToClipboard(diagText, hiddenEntry);
+                if (hiddenEntry && hiddenEntry.IsValid && hiddenEntry.IsValid()) {
+                    try { hiddenEntry.DeleteAsync(0); } catch(e) {}
+                }
+                if (copied) {
+                    copyLogsBtn.RemoveClass("FailureState");
+                    copyLogsBtn.AddClass("SuccessState");
+                    SetLocalizedConfigFeedbackMessage("Diagnostic logs copied.", "success", 2200);
+                    $.Schedule(0.6, function() {
+                        if (!copyLogsBtn || !copyLogsBtn.IsValid || !copyLogsBtn.IsValid()) return;
+                        copyLogsBtn.RemoveClass("SuccessState");
+                    });
+                } else {
+                    copyLogsBtn.RemoveClass("SuccessState");
+                    copyLogsBtn.AddClass("FailureState");
+                    SetLocalizedConfigFeedbackMessage("Clipboard copy failed.", "error", 2200);
+                    $.Schedule(0.5, function() {
+                        if (!copyLogsBtn || !copyLogsBtn.IsValid || !copyLogsBtn.IsValid()) return;
+                        copyLogsBtn.RemoveClass("FailureState");
+                    });
+                }
+            });
+        }
     } else if (currentTab === "Minimap") {
         CreateSectionTitle(list, "Base");
         CreateRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");

@@ -26,16 +26,16 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
     function GetKeyboardBoxCache(allBindingsBox) {
-        if (!State.keyboardBoxCaches) State.keyboardBoxCaches = [];
+        if (!S.keyboardBoxCaches) S.keyboardBoxCaches = [];
         var next = [];
         var found = null;
-        for (var i = 0; i < State.keyboardBoxCaches.length; i++) {
-            var entry = State.keyboardBoxCaches[i];
+        for (var i = 0; i < S.keyboardBoxCaches.length; i++) {
+            var entry = S.keyboardBoxCaches[i];
             if (!entry || !IsPanelValid(entry.box)) continue;
             if (entry.box === allBindingsBox) found = entry;
             next.push(entry);
         }
-        State.keyboardBoxCaches = next;
+        S.keyboardBoxCaches = next;
         if (found) return found;
 
         var created = {
@@ -45,7 +45,7 @@
             mouseGlyphs: null,
             lastStyleSig: ""
         };
-        State.keyboardBoxCaches.push(created);
+        S.keyboardBoxCaches.push(created);
         return created;
     }
 
@@ -133,7 +133,7 @@
     }
 
     function EnsureKeyboardOverlay(root) {
-        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+        var overlayRoot = GC("keyboardOverlayRoot");
         if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
             if (!overlayRoot) {
@@ -144,11 +144,11 @@
                     hittestchildren: "false"
                 });
             }
-            SetCachedPanel("keyboardOverlayRoot", overlayRoot);
+            SC("keyboardOverlayRoot", overlayRoot);
         }
         if (!overlayRoot) return null;
 
-        var allBindingsBox = GetCachedPanel("keyboardOverlayBox");
+        var allBindingsBox = GC("keyboardOverlayBox");
         if (!IsPanelValid(allBindingsBox)) {
             allBindingsBox = overlayRoot.FindChildTraverse("AllBindingsBox");
             if (!allBindingsBox) {
@@ -159,30 +159,30 @@
                 });
                 BuildKeyboardOverlayLayouts(allBindingsBox);
             }
-            SetCachedPanel("keyboardOverlayBox", allBindingsBox);
+            SC("keyboardOverlayBox", allBindingsBox);
         }
-        State.allBindingsBoxes = allBindingsBox ? [allBindingsBox] : [];
+        S.allBindingsBoxes = allBindingsBox ? [allBindingsBox] : [];
         return allBindingsBox;
     }
 
     function RemoveKeyboardOverlay(root) {
-        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+        var overlayRoot = GC("keyboardOverlayRoot");
         if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
         }
         if (IsPanelValid(overlayRoot)) {
             overlayRoot.DeleteAsync(0);
         }
-        SetCachedPanel("keyboardOverlayRoot", null);
-        SetCachedPanel("keyboardOverlayBox", null);
-        State.keyboardOverlayWashSig = "";
-        State.allBindingsBoxes = [];
+        SC("keyboardOverlayRoot", null);
+        SC("keyboardOverlayBox", null);
+        S.keyboardOverlayWashSig = "";
+        S.allBindingsBoxes = [];
         ResetKeyboardOverlayCaches();
     }
 
     function UpdateKeyboardOverlayRuntime(root, cfg) {
         if (cfg && cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
-            var allBindingsBoxes = State.allBindingsBoxes || [];
+            var allBindingsBoxes = S.allBindingsBoxes || [];
             var validBoxes = [];
             for (var bi = 0; bi < allBindingsBoxes.length; bi++) {
                 var candidate = allBindingsBoxes[bi];
@@ -192,14 +192,14 @@
                 var keyboardBox = EnsureKeyboardOverlay(root);
                 validBoxes = keyboardBox ? [keyboardBox] : [];
             }
-            State.allBindingsBoxes = validBoxes;
+            S.allBindingsBoxes = validBoxes;
 
-            var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+            var overlayRoot = GC("keyboardOverlayRoot");
             var keyboardWashColor = ResolveWashColorFromPalette(ReadKeyboardOverlayWashColorIndex(cfg));
             var keyboardWashSig = keyboardWashColor || "";
-            if (overlayRoot && State.keyboardOverlayWashSig !== keyboardWashSig) {
+            if (overlayRoot && S.keyboardOverlayWashSig !== keyboardWashSig) {
                 SetWashColorSafe(overlayRoot, keyboardWashColor);
-                State.keyboardOverlayWashSig = keyboardWashSig;
+                S.keyboardOverlayWashSig = keyboardWashSig;
             }
 
             for (var vb = 0; vb < validBoxes.length; vb++) {
@@ -207,10 +207,10 @@
                 if (!allBindingsBox) continue;
                 ApplyKeyboardOverlayLayout(allBindingsBox, cfg);
             }
-        } else if (GetCachedPanel("keyboardOverlayRoot")) {
+        } else if (GC("keyboardOverlayRoot")) {
             RemoveKeyboardOverlay(root);
         } else {
-            State.allBindingsBoxes = [];
+            S.allBindingsBoxes = [];
             ResetKeyboardOverlayCaches();
         }
     }

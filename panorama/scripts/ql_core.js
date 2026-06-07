@@ -28644,4 +28644,69 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
+    // ── Diagnostic log buffer + dump function ──
+    // Captures QOLLock-prefixed console messages into a ring buffer
+    // and exposes a dump function for clipboard copy from the Dev tab.
+    try {
+        var _qolDiagBuffer = [];
+        var _qolDiagMax = 500;
+        var _qolOriginalMsg = $.Msg;
+        $.Msg = function() {
+            try {
+                var msg = "";
+                for (var _di = 0; _di < arguments.length; _di++) {
+                    if (_di > 0) msg += " ";
+                    msg += String(arguments[_di]);
+                }
+                if (msg.indexOf("[QOLLock]") !== -1 || msg.indexOf("[QOL") !== -1) {
+                    _qolDiagBuffer.push(msg);
+                    if (_qolDiagBuffer.length > _qolDiagMax) _qolDiagBuffer.shift();
+                }
+            } catch(_e) {}
+            return _qolOriginalMsg.apply($, arguments);
+        };
+        var QOL_DumpDiagnostics = function() {
+            var lines = [];
+            lines.push("=== QOLLOCK Diagnostics ===");
+            lines.push("Version: " + (typeof MOD_DISPLAY_VERSION !== "undefined" ? MOD_DISPLAY_VERSION : "?"));
+            lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
+            lines.push("");
+            lines.push("--- Loaded Features (" + (typeof QOL_FEATURE_REGISTRY !== "undefined" ? Object.keys(QOL_FEATURE_REGISTRY).length : 0) + ") ---");
+            if (typeof QOL_FEATURE_REGISTRY !== "undefined") {
+                var _fkeys = Object.keys(QOL_FEATURE_REGISTRY).sort();
+                for (var _fi = 0; _fi < _fkeys.length; _fi++) {
+                    lines.push("  + " + _fkeys[_fi]);
+                }
+            }
+            lines.push("");
+            lines.push("--- Missing / Unregistered Features ---");
+            if (State && State._missingFeatureLogged) {
+                var _mkeys = Object.keys(State._missingFeatureLogged);
+                for (var _mj = 0; _mj < _mkeys.length; _mj++) {
+                    lines.push("  - " + _mkeys[_mj]);
+                }
+                if (_mkeys.length === 0) lines.push("  (none)");
+            } else {
+                lines.push("  (none)");
+            }
+            lines.push("");
+            lines.push("--- Auto-Disabled Features (error count) ---");
+            if (State && State._featureErrorCount) {
+                var _ekeys = Object.keys(State._featureErrorCount);
+                for (var _ek = 0; _ek < _ekeys.length; _ek++) {
+                    lines.push("  " + _ekeys[_ek] + ": " + State._featureErrorCount[_ekeys[_ek]] + " errors");
+                }
+                if (_ekeys.length === 0) lines.push("  (none)");
+            } else {
+                lines.push("  (none)");
+            }
+            lines.push("");
+            lines.push("--- Recent QOL Console Logs (last " + _qolDiagBuffer.length + ") ---");
+            for (var _li = 0; _li < _qolDiagBuffer.length; _li++) {
+                lines.push(_qolDiagBuffer[_li]);
+            }
+            return lines.join("\n");
+        };
+        if (typeof window !== "undefined") window.QOL_DumpDiagnostics = QOL_DumpDiagnostics;
+    } catch(_e) {}
 })();

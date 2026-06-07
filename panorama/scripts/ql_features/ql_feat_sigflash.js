@@ -27,11 +27,11 @@
     }
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var slots = State.signatureCooldownFlashSlots;
+        var slots = S.signatureCooldownFlashSlots;
         var needsRescan = false;
         if (!slots || !slots.length) {
             needsRescan = true;
-        } else if (now >= (State.signatureCooldownFlashNextScanMs || 0)) {
+        } else if (now >= (S.signatureCooldownFlashNextScanMs || 0)) {
             needsRescan = true;
         } else {
             for (var i = 0; i < slots.length; i++) {
@@ -61,8 +61,8 @@
             }
         }
 
-        State.signatureCooldownFlashSlots = refreshed;
-        State.signatureCooldownFlashNextScanMs = now + SIGNATURE_COOLDOWN_PRESS_SCAN_MS;
+        S.signatureCooldownFlashSlots = refreshed;
+        S.signatureCooldownFlashNextScanMs = now + SIGNATURE_COOLDOWN_PRESS_SCAN_MS;
         return refreshed;
     }
 
@@ -85,56 +85,56 @@
             var binding = entry.binding;
             var cooling = !!(icon.BHasClass && (icon.BHasClass("cooling_down") || icon.BHasClass("ability_not_ready")));
             var pressed = !!(binding.BHasClass && (binding.BHasClass("IsPressed") || binding.BHasClass("DownActivated")));
-            var wasPressed = !!State.signatureCooldownFlashPressById[key];
+            var wasPressed = !!S.signatureCooldownFlashPressById[key];
 
             if (cooling && pressed && !wasPressed) {
-                State.signatureCooldownFlashUntilById[key] = now + SIGNATURE_COOLDOWN_PRESS_FLASH_MS;
+                S.signatureCooldownFlashUntilById[key] = now + SIGNATURE_COOLDOWN_PRESS_FLASH_MS;
             }
-            State.signatureCooldownFlashPressById[key] = pressed;
+            S.signatureCooldownFlashPressById[key] = pressed;
 
-            var activeUntil = Number(State.signatureCooldownFlashUntilById[key]) || 0;
+            var activeUntil = Number(S.signatureCooldownFlashUntilById[key]) || 0;
             var active = activeUntil > now;
             if (!cooling && !active) {
-                State.signatureCooldownFlashUntilById[key] = 0;
+                S.signatureCooldownFlashUntilById[key] = 0;
             }
             icon.SetHasClass(SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS, active);
         }
 
-        for (var pressKey in State.signatureCooldownFlashPressById) {
-            if (!State.signatureCooldownFlashPressById.hasOwnProperty(pressKey)) continue;
+        for (var pressKey in S.signatureCooldownFlashPressById) {
+            if (!S.signatureCooldownFlashPressById.hasOwnProperty(pressKey)) continue;
             if (seen[pressKey]) continue;
-            delete State.signatureCooldownFlashPressById[pressKey];
+            delete S.signatureCooldownFlashPressById[pressKey];
         }
-        for (var untilKey in State.signatureCooldownFlashUntilById) {
-            if (!State.signatureCooldownFlashUntilById.hasOwnProperty(untilKey)) continue;
+        for (var untilKey in S.signatureCooldownFlashUntilById) {
+            if (!S.signatureCooldownFlashUntilById.hasOwnProperty(untilKey)) continue;
             if (seen[untilKey]) continue;
-            delete State.signatureCooldownFlashUntilById[untilKey];
+            delete S.signatureCooldownFlashUntilById[untilKey];
         }
     }
 
     function ResetSignatureCooldownPressFlashRuntime() {
-        var slots = State.signatureCooldownFlashSlots || [];
+        var slots = S.signatureCooldownFlashSlots || [];
         for (var i = 0; i < slots.length; i++) {
             var entry = slots[i];
             if (!entry || !IsPanelValid(entry.icon) || !entry.icon.SetHasClass) continue;
             try { entry.icon.SetHasClass(SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS, false); } catch (e0) {}
         }
-        State.signatureCooldownFlashSlots = [];
-        State.signatureCooldownFlashNextScanMs = 0;
-        State.signatureCooldownFlashUntilById = {};
-        State.signatureCooldownFlashPressById = {};
+        S.signatureCooldownFlashSlots = [];
+        S.signatureCooldownFlashNextScanMs = 0;
+        S.signatureCooldownFlashUntilById = {};
+        S.signatureCooldownFlashPressById = {};
     }
 
     function UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs) {
         var enabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
         if (!enabled) {
-            if (State.signatureCooldownFlashWasEnabled) {
+            if (S.signatureCooldownFlashWasEnabled) {
                 ResetSignatureCooldownPressFlashRuntime();
-                State.signatureCooldownFlashWasEnabled = false;
+                S.signatureCooldownFlashWasEnabled = false;
             }
             return;
         }
-        State.signatureCooldownFlashWasEnabled = true;
+        S.signatureCooldownFlashWasEnabled = true;
         UpdateSignatureCooldownPressFlash(root, nowMs);
     }
 
