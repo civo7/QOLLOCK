@@ -22994,40 +22994,54 @@ $.ForceCloseModSettings = function() {
     $.DispatchEvent("CitadelResumePlaying", $.GetContextPanel());
 };
 
-$.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
-    if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (win) {
-        win.RemoveClass("Visible");
-    }
-    StopSettingsGameTransitionWatch();
-    gSettingsOpenedInHideout = false;
-    SetSettingsTooltipThemeActive(false);
-    HideSettingsRowFloatingTooltip();
-    StopPresetHighlightPolling();
-    HideMinimapSizePreview();
-    CloseSettingsSideModalsIfOpen();
-    CloseMinesweeperModalIfOpen();
-    CloseFlappyModalIfOpen();
-    CloseAimTrainerModalIfOpen();
-    CloseTrainTrackingModalIfOpen();
-    CloseWhackRemModalIfOpen();
-    CloseBlackjackModalIfOpen();
-});
+try {
+    $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
+        if (GetNowMs() < gSettingsOpenGuardUntilMs) return;
+        var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
+        if (win) {
+            win.RemoveClass("Visible");
+        }
+        StopSettingsGameTransitionWatch();
+        gSettingsOpenedInHideout = false;
+        SetSettingsTooltipThemeActive(false);
+        HideSettingsRowFloatingTooltip();
+        StopPresetHighlightPolling();
+        HideMinimapSizePreview();
+        CloseSettingsSideModalsIfOpen();
+        CloseMinesweeperModalIfOpen();
+        CloseFlappyModalIfOpen();
+        CloseAimTrainerModalIfOpen();
+        CloseTrainTrackingModalIfOpen();
+        CloseWhackRemModalIfOpen();
+        CloseBlackjackModalIfOpen();
+    });
+} catch(e) {
+    $.Msg("[QOLLock][Settings] CitadelResumePlaying event not available: " + (e && e.message ? e.message : String(e)));
+}
 
-$.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
-    HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
-});
+try {
+    $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
+        HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
+    });
+} catch(e) {
+    $.Msg("[QOLLock][Settings] CitadelGameStateChanged event not available: " + (e && e.message ? e.message : String(e)));
+}
+
 try {
     $.RegisterForUnhandledEvent("CitadelConnectedToGame", function() {
         HandleSettingsGameTransitionSignal("CitadelConnectedToGame");
     });
 } catch(e) {
-    // CitadelConnectedToGame event not available in this game version
+    $.Msg("[QOLLock][Settings] CitadelConnectedToGame event not available: " + (e && e.message ? e.message : String(e)));
 }
-$.RegisterForUnhandledEvent("CitadelMatchStateChanged", function() {
-    HandleSettingsGameTransitionSignal("CitadelMatchStateChanged");
-});
+
+try {
+    $.RegisterForUnhandledEvent("CitadelMatchStateChanged", function() {
+        HandleSettingsGameTransitionSignal("CitadelMatchStateChanged");
+    });
+} catch(e) {
+    $.Msg("[QOLLock][Settings] CitadelMatchStateChanged event not available: " + (e && e.message ? e.message : String(e)));
+}
 
 SyncConfigFromStorage();
 RunJoyNameStorageReadProbe();
