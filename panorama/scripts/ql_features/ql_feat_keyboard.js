@@ -8,6 +8,7 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var FormatHudPx = U ? U.FormatHudPx : function(v, fb) { var n = Number(v); return isFinite(n) ? n + "px" : (fb !== undefined ? fb + "px" : "0px"); };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
     var BuildKeyboardOverlayLayouts = typeof QOL_BuildKeyboardOverlayLayouts !== "undefined" ? QOL_BuildKeyboardOverlayLayouts : function() {};
     var GetKeyboardCachedPanels = typeof QOL_GetKeyboardCachedPanels !== "undefined" ? QOL_GetKeyboardCachedPanels : function() { return []; };
