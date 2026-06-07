@@ -11,6 +11,15 @@
     var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
     var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
     var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
+    var BuildImagesInChatContainerWatermark = typeof QOL_BuildImagesInChatContainerWatermark !== "undefined" ? QOL_BuildImagesInChatContainerWatermark : function() { return ""; };
+    var ClearInjectedChatImagesForMessage = typeof QOL_ClearInjectedChatImagesForMessage !== "undefined" ? QOL_ClearInjectedChatImagesForMessage : function() {};
+    var FindChatMessageLabel = typeof QOL_FindChatMessageLabel !== "undefined" ? QOL_FindChatMessageLabel : function() { return null; };
+    var FindImagesInChatMessageCacheEntry = typeof QOL_FindImagesInChatMessageCacheEntry !== "undefined" ? QOL_FindImagesInChatMessageCacheEntry : function() { return null; };
+    var GetImagesInChatMessageCache = typeof QOL_GetImagesInChatMessageCache !== "undefined" ? QOL_GetImagesInChatMessageCache : function() { return []; };
+    var InjectBottomChatImage = typeof QOL_InjectBottomChatImage !== "undefined" ? QOL_InjectBottomChatImage : function() {};
+    var InjectTopChatImage = typeof QOL_InjectTopChatImage !== "undefined" ? QOL_InjectTopChatImage : function() {};
+    var PerfNowMs = typeof QOL_PerfNowMs !== "undefined" ? QOL_PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    var PruneImagesInChatMessageCache = typeof QOL_PruneImagesInChatMessageCache !== "undefined" ? QOL_PruneImagesInChatMessageCache : function() {};
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

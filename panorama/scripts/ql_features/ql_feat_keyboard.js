@@ -9,6 +9,9 @@
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+    var BuildKeyboardOverlayLayouts = typeof QOL_BuildKeyboardOverlayLayouts !== "undefined" ? QOL_BuildKeyboardOverlayLayouts : function() {};
+    var GetKeyboardCachedPanels = typeof QOL_GetKeyboardCachedPanels !== "undefined" ? QOL_GetKeyboardCachedPanels : function() { return []; };
+    var ResetKeyboardOverlayCaches = typeof QOL_ResetKeyboardOverlayCaches !== "undefined" ? QOL_ResetKeyboardOverlayCaches : function() {};
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

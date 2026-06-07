@@ -10,6 +10,12 @@
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
     var STAT_BONUSES_DEBUG = false;
+    var ExtractStatDisplayText = typeof QOL_ExtractStatDisplayText !== "undefined" ? QOL_ExtractStatDisplayText : function() { return "-"; };
+    var HarvestGoldenStatuesTooltipValue = typeof QOL_HarvestGoldenStatuesTooltipValue !== "undefined" ? QOL_HarvestGoldenStatuesTooltipValue : function() {};
+    var IsStatBonusTokenZero = typeof QOL_IsStatBonusTokenZero !== "undefined" ? QOL_IsStatBonusTokenZero : function() { return false; };
+    var ResolveGoldenStatBonusesValue = typeof QOL_ResolveGoldenStatBonusesValue !== "undefined" ? QOL_ResolveGoldenStatBonusesValue : function() { return ""; };
+    var ResolveStatBonusesSource = typeof QOL_ResolveStatBonusesSource !== "undefined" ? QOL_ResolveStatBonusesSource : function() { return null; };
+    var StatBonusesDebugLogThrottled = typeof QOL_StatBonusesDebugLogThrottled !== "undefined" ? QOL_StatBonusesDebugLogThrottled : function() {};
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

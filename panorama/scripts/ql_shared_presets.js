@@ -2152,12 +2152,28 @@ var QOL_DumpDiagnostics = function() {
             lines.push("  (none)");
         }
         lines.push("");
-        lines.push("--- Auto-Disabled Features (error count) ---");
+        lines.push("--- Auto-Disabled Features ---");
+        if (_diag.disabled && _diag.disabled.length > 0) {
+            for (var _di = 0; _di < _diag.disabled.length; _di++) {
+                var _dn = _diag.disabled[_di];
+                var _dc = (_diag.errors && _diag.errors[_dn]) ? (" (" + _diag.errors[_dn] + " errors)") : "";
+                lines.push("  " + _dn + _dc);
+            }
+        } else {
+            lines.push("  (none)");
+        }
+        lines.push("");
+        lines.push("--- Error Streaks (not yet disabled) ---");
         if (_diag.errors && Object.keys(_diag.errors).length > 0) {
+            var _hasActive = false;
             var _ekeys = Object.keys(_diag.errors).sort();
             for (var _ek = 0; _ek < _ekeys.length; _ek++) {
-                lines.push("  " + _ekeys[_ek] + ": " + _diag.errors[_ekeys[_ek]] + " errors");
+                if (!_diag.disabled || _diag.disabled.indexOf(_ekeys[_ek]) === -1) {
+                    lines.push("  " + _ekeys[_ek] + ": " + _diag.errors[_ekeys[_ek]] + " errors");
+                    _hasActive = true;
+                }
             }
+            if (!_hasActive) lines.push("  (none — all errored features are disabled)");
         } else {
             lines.push("  (none)");
         }

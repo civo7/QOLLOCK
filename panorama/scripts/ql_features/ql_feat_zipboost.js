@@ -12,6 +12,7 @@
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
     var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
     var ZIP_BOOST_READY_FLASH_MS = 2000;
+    var FindNumericLabelTextInTree = typeof QOL_FindNumericLabelTextInTree !== "undefined" ? QOL_FindNumericLabelTextInTree : function() { return null; };
     var FindZipBoostSource = typeof QOL_FindZipBoostSource !== "undefined" ? QOL_FindZipBoostSource : function() { return null; };
 
     // One-shot dependency validation

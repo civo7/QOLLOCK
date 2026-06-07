@@ -17,6 +17,12 @@
     var UNSECURED_SOULS_RATE_STALE_MS = 12000;
     var UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
     var UNSECURED_SOULS_ETA_MAX_SEC = 999;
+    var FindUnsecuredSoulsSource = typeof QOL_FindUnsecuredSoulsSource !== "undefined" ? QOL_FindUnsecuredSoulsSource : function() { return null; };
+    var EstimateUnsecuredSoulsEtaFallbackSec = typeof QOL_EstimateUnsecuredSoulsEtaFallbackSec !== "undefined" ? QOL_EstimateUnsecuredSoulsEtaFallbackSec : function() { return 999; };
+    var GetGameSecondsForUrn = typeof QOL_GetGameSecondsForUrn !== "undefined" ? QOL_GetGameSecondsForUrn : function() { return 0; };
+    var GetUnsecuredSoulsDangerLevel = typeof QOL_GetUnsecuredSoulsDangerLevel !== "undefined" ? QOL_GetUnsecuredSoulsDangerLevel : function() { return "normal"; };
+    var ParseUnsecuredSoulsValue = typeof QOL_ParseUnsecuredSoulsValue !== "undefined" ? QOL_ParseUnsecuredSoulsValue : function() { return 0; };
+    var ResetUnsecuredSoulsTracking = typeof QOL_ResetUnsecuredSoulsTracking !== "undefined" ? QOL_ResetUnsecuredSoulsTracking : function() {};
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
