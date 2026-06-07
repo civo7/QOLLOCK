@@ -26801,7 +26801,7 @@ function GetUIRoot() {
                     ticks.push(tick);
                 }
             }
-            SetCachedPanel("compassTicks", ticks);
+            State.cachedPanels.compassTicks = ticks;
             State.compass.tickClassSigs = [];
             State.compass.tickXTexts = [];
         }
