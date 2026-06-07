@@ -392,6 +392,90 @@ function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
         }
         return ToRgbString(teamColorRgb || ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
     }
+    var COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
+    var COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
+    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
+    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
+    var ENEMY_COLORED_HEALTH_DEBUG = false;
+    var ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
+    var ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
+    var ENEMY_COLORED_HEALTH_NEUTRAL_COLOR = [91, 239, 181];
+    var ENEMY_COLORED_HEALTH_PANEL_SCAN_MS = 1200;
+    var ENEMY_COLORED_HEALTH_PULSE_COLOR = [225, 97, 97];
+    var ENEMY_COLORED_HEALTH_PULSE_DARK_COLOR = [85, 28, 28];
+    var ENEMY_COLORED_HEALTH_TEAM1_COLOR = [255, 201, 97];
+    var ENEMY_COLORED_HEALTH_TEAM2_COLOR = [100, 133, 252];
+    var ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR = [255, 86, 86];
+    var PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
+function BlendRgb(a, b, t) {
+        return [
+            Math.round(a[0] + ((b[0] - a[0]) * t)),
+            Math.round(a[1] + ((b[1] - a[1]) * t)),
+            Math.round(a[2] + ((b[2] - a[2]) * t))
+        ];
+    }
+function EnemyColoredHealthDebugLog(msg) {
+        if (!ENEMY_COLORED_HEALTH_DEBUG) return;
+        $.Msg("[QOLLock][EnemyColoredHealthDbg] " + msg);
+    }
+var GetCachedPanel = function(k) {
+        var p = S.cachedPanels[k];
+        if (IsPanelValid(p)) return p;
+        S.cachedPanels[k] = null;
+        return null;
+    };
+function IsColorWarningEnabled(cfg) {
+        if (!cfg) return false;
+        return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
+            IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
+    }
+function IsDescendantOf(panel, ancestor) {
+        if (!panel || !ancestor) return false;
+        var current = panel;
+        while (current) {
+            if (current === ancestor) return true;
+            current = current.GetParent ? current.GetParent() : null;
+        }
+        return false;
+    }
+function ResolveEnemyColoredHealthTeamClass(panel) {
+        if (!panel) return "";
+        if (hasClassInHierarchy(panel, "team1")) return "team1";
+        if (hasClassInHierarchy(panel, "team2")) return "team2";
+        if (hasClassInHierarchy(panel, "team_neutral") || hasClassInHierarchy(panel, "neutral")) return "neutral";
+        return "";
+    }
+function ResolveFriendlyTopBarTeamClass(root, nowMs) {
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        if (S.enemyColoredHealthFriendlyTeamClass && now < (S.enemyColoredHealthFriendlyTeamNextMs || 0)) {
+            return S.enemyColoredHealthFriendlyTeamClass;
+        }
+        var friendlyTeamClass = "";
+        var friendlyPanel = root && root.FindChildTraverse ? (root.FindChildTraverse("TeamFriendly") || null) : null;
+        if (friendlyPanel && IsPanelValid(friendlyPanel)) {
+            if (hasClassInHierarchy(friendlyPanel, "team1")) friendlyTeamClass = "team1";
+            else if (hasClassInHierarchy(friendlyPanel, "team2")) friendlyTeamClass = "team2";
+        }
+        S.enemyColoredHealthFriendlyTeamClass = friendlyTeamClass;
+        S.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
+        return friendlyTeamClass;
+    }
+var SetCachedPanel = function(k, p) {
+        S.cachedPanels[k] = IsPanelValid(p) ? p : null;
+    };
+function SetWashColorSafe(panel, color) {
+        if (color) {
+            SetStyleSafe(panel, "washColor", String(color));
+        } else {
+            ClearStyleSafe(panel, "washColor");
+        }
+    }
+function ToRgbString(rgb) {
+        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
+    }
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
         var enabled = IsColorWarningEnabled(cfg);
