@@ -20162,29 +20162,6 @@ function GetUIRoot() {
         State.damageImpactRuntimeStyleSig = styleSig;
     }
 
-    function UpdateTopBarRuntime(root, cfg) {
-        var active = HasNonDefaultTopBarRuntimeConfig(cfg);
-        var enabled = IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
-        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR)
-        if (!topBar) return;
-
-        var hudVisible = IsHudVisibleForTopBarRuntime(root, topBar);
-        var offsetX = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_X_OFFSET, 0) : 0;
-        var offsetY = active ? NormalizeHudOffsetNumber(cfg.TOP_BAR_Y_OFFSET, 0) : 0;
-        var opacityText = active ? NormalizeOpacityNumber(cfg.TOP_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
-        var scaleText = active ? NormalizeHudScaleNumber(cfg.TOP_BAR_SCALE, 1.0).toFixed(2) : "1.00";
-        var shouldShow = enabled && hudVisible;
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
-        if (State.topBarRuntimeStyleSig === styleSig) return;
-
-        topBar.style.x = String(offsetX) + "px";
-        topBar.style.y = String(-offsetY) + "px";
-        topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
-        topBar.style.visibility = shouldShow ? "visible" : "collapse";
-        SetPanelOpacitySafe(topBar, opacityText, 1.0);
-        State.topBarRuntimeStyleSig = styleSig;
-    }
-
     function UpdateBottomBarRuntime(root, cfg) {
         var active = HasNonDefaultBottomBarRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
@@ -30401,15 +30378,6 @@ function GetUIRoot() {
         gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
         update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("topBarRuntime", {
-        configKeys: ["HUD_TOP_BAR_ENABLED", "TOP_BAR_OPACITY", "TOP_BAR_SCALE",
-                     "TOP_BAR_X_OFFSET", "TOP_BAR_Y_OFFSET"],
-        bucket: 4, phase: -1,
-        gate: function(cfg) { return NeedsTopBarRuntimeWork(cfg); },
-        update: function(root, cfg) { UpdateTopBarRuntime(root, cfg); },
-        stateKeys: ["topBarRuntimeStyleSig", "cachedPanels.topBarPanel"]
     });
 
     QOL_REGISTER_FEATURE("bottomBarRuntime", {
