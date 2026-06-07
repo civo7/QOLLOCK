@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: topBarRuntime\n");
     var S = window.QOL_STATE;
     var RC = window.QOL_ResolveCachedPanel;
     var GC = window.QOL_GetCachedPanel;
@@ -33,6 +34,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_topBarRuntime) { $.Msg("[QOL DEBUG] First update: topBarRuntime\n"); S._debug_topBarRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = U.IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
         var topBar = RC(root, "topBarPanel", PID_TOP_BAR);

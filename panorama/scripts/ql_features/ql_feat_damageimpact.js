@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: damageImpactRuntime\n");
     var S = window.QOL_STATE;
     var RC = window.QOL_ResolveCachedPanel;
     var U = window.QOL_UTILS;
@@ -27,6 +28,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_damageImpactRuntime) { $.Msg("[QOL DEBUG] First update: damageImpactRuntime\n"); S._debug_damageImpactRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = U.IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
         var panel = RC(root, "damageImpactPanel", "damage_impact");

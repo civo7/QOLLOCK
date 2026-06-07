@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: staminaChargeColorRuntime\n");
     var S = window.QOL_STATE;
     var GC = window.QOL_GetCachedPanel;
     var RC = window.QOL_ResolveCachedPanel;
@@ -70,6 +71,7 @@
 
     // ── Update ──
     function update(root, cfg, nowMs) {
+        if (!S._debug_staminaChargeColorRuntime) { $.Msg("[QOL DEBUG] First update: staminaChargeColorRuntime\n"); S._debug_staminaChargeColorRuntime = true; }
         if (!hasNonDefaultConfig(cfg) &&
             !GC("staminaChargesContainer") &&
             !(S.staminaChargeColorPanelCache && S.staminaChargeColorPanelCache.length > 0)) return;

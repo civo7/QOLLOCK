@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: bottomBarRuntime\n");
     var S = window.QOL_STATE;
     var GC = window.QOL_GetCachedPanel;
     var RC = window.QOL_ResolveCachedPanel;
@@ -84,6 +85,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_bottomBarRuntime) { $.Msg("[QOL DEBUG] First update: bottomBarRuntime\n"); S._debug_bottomBarRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = U.IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = RC(root, "bottomBarPanel", PID_SIGNATURE);

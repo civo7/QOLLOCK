@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
     var S = window.QOL_STATE;
     var GC = window.QOL_GetCachedPanel;
     var SC = window.QOL_SetCachedPanel;
@@ -26,6 +27,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); S._debug_ammo = true; }
         if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&
             Number(cfg.ENABLE_HIDE_MAGAZINE) !== 1 &&
             Number(cfg.ENABLE_HIDE_AMMO_ALL) !== 1 &&

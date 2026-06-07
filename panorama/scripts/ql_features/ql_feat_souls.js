@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
     var S = window.QOL_STATE;
     var RC = window.QOL_ResolveCachedPanel;
     var U = window.QOL_UTILS;
@@ -27,6 +28,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_soulsRuntime) { $.Msg("[QOL DEBUG] First update: soulsRuntime\n"); S._debug_soulsRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = U.IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = RC(root, "soulsContainer", PID);

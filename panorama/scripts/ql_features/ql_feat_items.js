@@ -2,6 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: itemsRuntime\n");
     var S = window.QOL_STATE;
     var GC = window.QOL_GetCachedPanel;
     var SC = window.QOL_SetCachedPanel;
@@ -32,6 +33,7 @@
 
     // ── Update ──
     function update(root, cfg) {
+        if (!S._debug_itemsRuntime) { $.Msg("[QOL DEBUG] First update: itemsRuntime\n"); S._debug_itemsRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = U.IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = GC("itemsModsContainer");
