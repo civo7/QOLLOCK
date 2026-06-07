@@ -1,3 +1,36 @@
+// $.Msg wrapper — captures all [QOLLock]/[QOL-prefixed messages into a ring
+// buffer for the diagnostic "Copy Logs" button. Must run FIRST — before any
+// "use strict" or IIFE — so it intercepts messages in both HUD and settings
+// contexts. Logs its own failure (no silent catch).
+(function() {
+    var _qolLogBuf = [];
+    var _qolLogMax = 500;
+    var _qolOrigMsg = null;
+    try {
+        if (typeof $ !== "undefined" && $.Msg) {
+            _qolOrigMsg = $.Msg;
+            $.Msg = function() {
+                try {
+                    var _s = "";
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        if (_i) _s += " ";
+                        _s += String(arguments[_i]);
+                    }
+                    if (_s.indexOf("[QOLLock]") === 0 || _s.indexOf("[QOL ") === 0 || _s.indexOf("[QOL]") === 0) {
+                        _qolLogBuf.push(_s);
+                        if (_qolLogBuf.length > _qolLogMax) _qolLogBuf.shift();
+                    }
+                } catch(_ignore) {}
+                return _qolOrigMsg.apply($, arguments);
+            };
+        }
+    } catch(_e) {
+        try { if (_qolOrigMsg) $.Msg = _qolOrigMsg; } catch(_r) {}
+        try { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock] $.Msg wrapper failed: " + (_e.message || String(_e))); } catch(_x) {}
+    }
+    try { __qolLogBuf = _qolLogBuf; } catch(_e) {}
+})();
+
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
@@ -2145,10 +2178,26 @@ var QOL_DumpDiagnostics = function() {
             lines.push("  (none)");
         }
         lines.push("");
-        lines.push("--- QOL Console Logs (" + (_diag.logs ? _diag.logs.length : 0) + " messages) ---");
+        // Merge HUD-side logs (from panel attribute) with settings-side logs
+        // (from local __qolLogBuf, captured by the $.Msg wrapper in this file).
+        var _allLogs = [];
         if (_diag.logs && _diag.logs.length > 0) {
-            for (var _li = 0; _li < _diag.logs.length; _li++) {
-                lines.push(_diag.logs[_li]);
+            for (var _li = 0; _li < _diag.logs.length; _li++) { _allLogs.push(_diag.logs[_li]); }
+        }
+        try {
+            if (typeof __qolLogBuf !== "undefined" && __qolLogBuf && __qolLogBuf.length > 0) {
+                for (var _lj = 0; _lj < __qolLogBuf.length; _lj++) {
+                    var _entry = __qolLogBuf[_lj];
+                    // Deduplicate — HUD-side buffer may share entries written before
+                    // the contexts diverged
+                    if (_allLogs.indexOf(_entry) === -1) _allLogs.push(_entry);
+                }
+            }
+        } catch(e) {}
+        lines.push("--- QOL Console Logs (" + _allLogs.length + " messages) ---");
+        if (_allLogs.length > 0) {
+            for (var _lk = 0; _lk < _allLogs.length; _lk++) {
+                lines.push(_allLogs[_lk]);
             }
         } else {
             lines.push("  (no logs captured yet)");
