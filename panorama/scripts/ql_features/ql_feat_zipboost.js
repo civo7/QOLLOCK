@@ -14,6 +14,7 @@
     var ZIP_BOOST_READY_FLASH_MS = 2000;
     var FindNumericLabelTextInTree = typeof QOL_FindNumericLabelTextInTree !== "undefined" ? QOL_FindNumericLabelTextInTree : function() { return null; };
     var FindZipBoostSource = typeof QOL_FindZipBoostSource !== "undefined" ? QOL_FindZipBoostSource : function() { return null; };
+    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

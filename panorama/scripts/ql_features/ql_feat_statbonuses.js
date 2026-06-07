@@ -16,6 +16,8 @@
     var ResolveGoldenStatBonusesValue = typeof QOL_ResolveGoldenStatBonusesValue !== "undefined" ? QOL_ResolveGoldenStatBonusesValue : function() { return ""; };
     var ResolveStatBonusesSource = typeof QOL_ResolveStatBonusesSource !== "undefined" ? QOL_ResolveStatBonusesSource : function() { return null; };
     var StatBonusesDebugLogThrottled = typeof QOL_StatBonusesDebugLogThrottled !== "undefined" ? QOL_StatBonusesDebugLogThrottled : function() {};
+    var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
+    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

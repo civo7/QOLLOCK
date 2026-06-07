@@ -23,6 +23,7 @@
     var GetUnsecuredSoulsDangerLevel = typeof QOL_GetUnsecuredSoulsDangerLevel !== "undefined" ? QOL_GetUnsecuredSoulsDangerLevel : function() { return "normal"; };
     var ParseUnsecuredSoulsValue = typeof QOL_ParseUnsecuredSoulsValue !== "undefined" ? QOL_ParseUnsecuredSoulsValue : function() { return 0; };
     var ResetUnsecuredSoulsTracking = typeof QOL_ResetUnsecuredSoulsTracking !== "undefined" ? QOL_ResetUnsecuredSoulsTracking : function() {};
+    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

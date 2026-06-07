@@ -12,6 +12,9 @@
     var BuildKeyboardOverlayLayouts = typeof QOL_BuildKeyboardOverlayLayouts !== "undefined" ? QOL_BuildKeyboardOverlayLayouts : function() {};
     var GetKeyboardCachedPanels = typeof QOL_GetKeyboardCachedPanels !== "undefined" ? QOL_GetKeyboardCachedPanels : function() { return []; };
     var ResetKeyboardOverlayCaches = typeof QOL_ResetKeyboardOverlayCaches !== "undefined" ? QOL_ResetKeyboardOverlayCaches : function() {};
+    var ResolveWashColorFromPalette = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : function() { return ""; };
+    var ReadKeyboardOverlayWashColorIndex = typeof QOL_ReadKeyboardOverlayWashColorIndex !== "undefined" ? QOL_ReadKeyboardOverlayWashColorIndex : function() { return 0; };
+    var SetWashColorSafe = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : function() {};
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
