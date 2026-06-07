@@ -56,6 +56,7 @@
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
         window._qol_feat_deps_logged = {};
     }
+    var IsPanelVisibleMaybe = typeof QOL_IsPanelVisibleMaybe !== "undefined" ? QOL_IsPanelVisibleMaybe : function() { return false; };
     var _dk = "ql_feat_recentpurchases";
     if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
         var _m = [];
@@ -66,6 +67,7 @@
         if (typeof QOL_SetPanelClassCached === "undefined") _m.push("QOL_SetPanelClassCached");
         if (typeof QOL_WARN === "undefined") _m.push("QOL_WARN");
         if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
+        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }

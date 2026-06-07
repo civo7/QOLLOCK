@@ -18,6 +18,7 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { r
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
         window._qol_feat_deps_logged = {};
     }
+    var ParseUnsecuredSoulsValue = typeof QOL_ParseUnsecuredSoulsValue !== "undefined" ? QOL_ParseUnsecuredSoulsValue : function() { return 0; };
     var _dk = "ql_feat_betterunsecuredhud";
     if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
         var _m = [];
@@ -26,6 +27,7 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { r
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
         if (typeof QOL_GetGameplayHudPanel === "undefined") _m.push("QOL_GetGameplayHudPanel");
+        if (typeof QOL_ParseUnsecuredSoulsValue === "undefined") _m.push("QOL_ParseUnsecuredSoulsValue");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
         }

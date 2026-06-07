@@ -18,6 +18,7 @@
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
         window._qol_feat_deps_logged = {};
     }
+    var FindAncestorWithClass = typeof QOL_FindAncestorWithClass !== "undefined" ? QOL_FindAncestorWithClass : function() { return null; };
     var _dk = "ql_feat_damagenumbers";
     if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
         var _m = [];
@@ -29,6 +30,7 @@
         if (typeof QOL_RuntimeTaskIsDue === "undefined") _m.push("QOL_RuntimeTaskIsDue");
         if (typeof QOL_RuntimeTaskSetDelay === "undefined") _m.push("QOL_RuntimeTaskSetDelay");
         if (typeof QOL_PerfStart === "undefined") _m.push("QOL_PerfStart");
+        if (typeof QOL_FindAncestorWithClass === "undefined") _m.push("QOL_FindAncestorWithClass");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
         }
