@@ -977,7 +977,6 @@
     const ENEMY_UNIT_STATUS_OLD_PANEL_SCAN_MS = Math.min(ENEMY_COLORED_HEALTH_PANEL_SCAN_MS, ENEMY_ULT_OLD_PANEL_SCAN_MS);
     const ENEMY_ULT_OLD_UPDATE_MS = 180;
     const ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS = 1500;
-    const FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON = false;
     // ---- Unsecured Souls overlay ----
     // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
     // re-scanning faster than 1Hz provides no benefit while wasting CPU
@@ -1122,7 +1121,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
     const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
-    const FORCE_DISABLE_STAT_BONUSES = false;
     const UNSPENT_MAX_PLAYERS = SPM_MAX_PLAYERS;
     // WHY: 1 player every 200ms = full 12-player rotation every 2.4s.
     // Spreads CPU evenly across ticks instead of bursting 3 players every 1s.
@@ -10430,7 +10428,6 @@ function GetUIRoot() {
 
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
-        if (FORCE_DISABLE_STAT_BONUSES) cfg.ENABLE_STAT_BONUSES = 0;
         // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
         // force-disabled here. Removed because no runtime gate or feature
         // execution path reads these values — they were dead writes.
@@ -23989,7 +23986,7 @@ function GetUIRoot() {
 
     function UpdateEnemyUltIndicatorOld(root, cfg) {
         if (!root || !cfg) return;
-        var enabled = FORCE_OLD_ENEMY_ULT_INDICATOR_ALWAYS_ON ? true : (IsCfgEnabled(cfg, "ENABLE_ENEMY_ULT_INDICATOR"));
+        var enabled = IsCfgEnabled(cfg, "ENABLE_ENEMY_ULT_INDICATOR");
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_active", enabled);
         SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_off", !enabled);
 
