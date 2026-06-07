@@ -25983,6 +25983,30 @@ function GetUIRoot() {
         }
     }
 
+
+    function ResolveDamageNumbersRuntimeSig(cfg) {
+        var rawOpacity = cfg ? cfg.DAMAGE_NUMBER_OPACITY : null;
+        var indicatorOpacity = (rawOpacity === undefined || rawOpacity === null) ? 1.0 : parseFloat(rawOpacity);
+        if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
+        if (indicatorOpacity < 0) indicatorOpacity = 0;
+        if (indicatorOpacity > 1) indicatorOpacity = 1;
+        var rawSize = cfg ? cfg.HUD_INDICATOR_SIZE : null;
+        var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
+        if (!isFinite(indicatorSize)) indicatorSize = 18;
+        var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
+        var cleanIndicators = (cfg && IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
+        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
+    }
+
+    function NeedsDamageNumbersRuntimeWork(cfg, raw) {
+        var sig = ResolveDamageNumbersRuntimeSig(cfg);
+        var defaultSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
+        if (sig !== defaultSig) return true;
+        if (S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
+        if (S.accountPresetTestActive) return true;
+        if (raw !== S.lastRawConfig && S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
+        return false;
+    }
     // ── Additional bridge exports for extracted feature files ──
     try { if (typeof window !== "undefined") window.QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
