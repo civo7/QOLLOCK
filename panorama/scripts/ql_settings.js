@@ -21331,41 +21331,48 @@ function RenderCurrentTabContent(list) {
         var _presetCycleIndex = 0;
 
         if (presetCycleBtn) {
+            // ── Panel-safe helpers: panels may be destroyed by SaveAndSync() ──
+            function _pcSetStatus(text, color) {
+                try { if (presetCycleStatus && presetCycleStatus.IsValid && presetCycleStatus.IsValid()) { presetCycleStatus.text = text; presetCycleStatus.style.color = color; } } catch(e) {}
+            }
+            function _pcSetBtnActive(active) {
+                try { if (presetCycleBtn && presetCycleBtn.IsValid && presetCycleBtn.IsValid()) { if (active) presetCycleBtn.AddClass("CycleActive"); else presetCycleBtn.RemoveClass("CycleActive"); } } catch(e) {}
+            }
             presetCycleBtn.SetPanelEvent("onactivate", function() {
                 if (_presetCycleRunning) {
                     // Stop cycling
                     _presetCycleRunning = false;
                     _presetCycleToken++;
-                    try { presetCycleBtn.RemoveClass("CycleActive"); } catch(e) {}
-                    presetCycleStatus.text = "Stopped (applied " + _presetCycleIndex + " of " + _presetCycleNames.length + ")";
-                    presetCycleStatus.style.color = "#aa8844";
+                    _pcSetBtnActive(false);
+                    _pcSetStatus("Stopped (applied " + _presetCycleIndex + " of " + _presetCycleNames.length + ")", "#aa8844");
+                    SetLocalizedConfigFeedbackMessage("Stopped after " + _presetCycleIndex + " presets.", "info", 2400);
                 } else {
                     // Start cycling
                     _presetCycleNames = Object.keys(PRESETS).sort();
                     if (_presetCycleNames.length === 0) {
-                        presetCycleStatus.text = "No presets found.";
-                        presetCycleStatus.style.color = "#cc4444";
+                        _pcSetStatus("No presets found.", "#cc4444");
                         return;
                     }
                     _presetCycleRunning = true;
                     _presetCycleIndex = 0;
                     var token = ++_presetCycleToken;
-                    try { presetCycleBtn.AddClass("CycleActive"); } catch(e) {}
-                    presetCycleStatus.style.color = "#66cc99";
+                    _pcSetBtnActive(true);
+                    _pcSetStatus("Starting...", "#66cc99");
 
                     function applyNext() {
                         if (!_presetCycleRunning || token !== _presetCycleToken) return;
                         if (_presetCycleIndex >= _presetCycleNames.length) {
                             // Done
                             _presetCycleRunning = false;
-                            try { presetCycleBtn.RemoveClass("CycleActive"); } catch(e) {}
-                            presetCycleStatus.text = "Complete! All " + _presetCycleNames.length + " presets applied.";
-                            presetCycleStatus.style.color = "#66cc99";
+                            _pcSetBtnActive(false);
+                            _pcSetStatus("Complete! All " + _presetCycleNames.length + " presets applied.", "#66cc99");
                             SetLocalizedConfigFeedbackMessage("Cycled through all " + _presetCycleNames.length + " presets.", "success", 3000);
                             return;
                         }
                         var presetName = _presetCycleNames[_presetCycleIndex];
-                        presetCycleStatus.text = "[" + (_presetCycleIndex + 1) + "/" + _presetCycleNames.length + "] " + presetName;
+                        var msg = "[" + (_presetCycleIndex + 1) + "/" + _presetCycleNames.length + "] " + presetName;
+                        _pcSetStatus(msg, "#66cc99");
+                        $.Msg("[QOLLock][presetCycle] " + msg);
                         try {
                             ApplyPresetByName(presetName);
                         } catch(e) {
