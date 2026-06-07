@@ -2131,10 +2131,7 @@ var QOL_DumpDiagnostics = function() {
             var _raw = _hud.GetAttributeString("QOL_Diag", "");
             if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
         }
-        // Debug: log what we found
-        if (typeof $ !== "undefined" && $.Msg) {
-            $.Msg("[QOLLock][Diag] ctx=" + _rootId + " root=" + _rootPanelId + " find=" + _hasFind + " hud=" + _hudFound + " attr=" + _hasAttr + " raw=" + (typeof _raw !== "undefined" ? (_raw ? _raw.substring(0,50) : "(empty)") : "n/a"));
-        }
+
     } catch(e) {}
 
     if (_diag) {

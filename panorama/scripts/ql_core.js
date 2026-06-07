@@ -28121,7 +28121,7 @@ function GetUIRoot() {
 
         // Sync diagnostic state to Hud panel attribute (same cross-context path as config)
         try {
-            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && State._diagWriteNextMs <= nowMsLoop) {
+            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && (!State._diagWriteNextMs || State._diagWriteNextMs <= nowMsLoop)) {
                 State._diagWriteNextMs = nowMsLoop + 5000;
                 var _diag = {
                     features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
