@@ -20162,117 +20162,6 @@ function GetUIRoot() {
         State.damageImpactRuntimeStyleSig = styleSig;
     }
 
-    function UpdateBottomBarRuntime(root, cfg) {
-        var active = HasNonDefaultBottomBarRuntimeConfig(cfg);
-        var enabled = IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
-        var hudSignature = ResolveCachedPanel(root, "bottomBarPanel", PANEL_ID_SIGNATURE)
-
-        var washColor = active ? ResolveWashColorFromPalette(ReadBottomBarWashColorIndex(cfg)) : "";
-        ApplyBottomBarCurrencyColor(root, washColor);
-        if (!hudSignature) return;
-
-        var offsetX = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) : 0;
-        var offsetY = active ? NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) : 0;
-        var opacityText = active ? NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
-        var scaleText = active ? NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + washColor + "|" + (enabled ? "1" : "0");
-        if (State.bottomBarRuntimeStyleSig === styleSig) return;
-
-        hudSignature.style.x = String(offsetX) + "px";
-        hudSignature.style.y = String(-offsetY) + "px";
-        hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
-        hudSignature.style.visibility = enabled ? "visible" : "collapse";
-        SetWashColorSafe(hudSignature, washColor);
-        SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
-        State.bottomBarRuntimeStyleSig = styleSig;
-    }
-
-    function ApplyBottomBarCurrencyColor(root, washColor) {
-        var color = washColor || "";
-        var searchRoot = GetGameplayHudPanel(root) || root;
-        var apContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("APContainer") : null;
-        var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
-        var contextPanel = null;
-        try { contextPanel = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eContext) { contextPanel = null; }
-        var uiRoot = GetUIRoot();
-        var containers = [];
-        if (IsPanelValid(contextPanel)) containers.push(contextPanel);
-        if (IsPanelValid(uiRoot)) containers.push(uiRoot);
-        if (IsPanelValid(searchRoot)) containers.push(searchRoot);
-        if (IsPanelValid(apContainer)) containers.push(apContainer);
-        if (IsPanelValid(goldApContainer)) containers.push(goldApContainer);
-
-        var icons = [];
-        var amounts = [];
-        var infiniteIcons = [];
-        for (var c = 0; c < containers.length; c++) {
-            var container = containers[c];
-            if (!IsPanelValid(container)) continue;
-            if (container.FindChildrenWithClassTraverse) {
-                icons = icons.concat(container.FindChildrenWithClassTraverse("APCurrencyIcon") || []);
-                amounts = amounts.concat(container.FindChildrenWithClassTraverse("APCurrencyAmount") || []);
-            }
-            if (container.FindChildTraverse) {
-                var infiniteIcon = container.FindChildTraverse("hudAPInfinite");
-                if (IsPanelValid(infiniteIcon)) infiniteIcons.push(infiniteIcon);
-            }
-        }
-
-        for (var i = 0; i < icons.length; i++) {
-            if (IsPanelValid(icons[i])) SetWashColorSafe(icons[i], color);
-        }
-
-        for (var k = 0; k < infiniteIcons.length; k++) {
-            if (IsPanelValid(infiniteIcons[k])) SetWashColorSafe(infiniteIcons[k], color);
-        }
-
-        for (var j = 0; j < amounts.length; j++) {
-            if (IsPanelValid(amounts[j])) SetStyleSafe(amounts[j], "color", color);
-        }
-
-        if (BOTTOM_BAR_CURRENCY_DEBUG) {
-            var sampleIcon = icons.length > 0 ? icons[0] : null;
-            var sampleAmount = amounts.length > 0 ? amounts[0] : null;
-            var sampleInfinite = infiniteIcons.length > 0 ? infiniteIcons[0] : null;
-            var sampleIconWash = "-";
-            var sampleAmountColor = "-";
-            var sampleInfiniteWash = "-";
-            try { sampleIconWash = sampleIcon && sampleIcon.style ? String(sampleIcon.style.washColor || "-") : "-"; } catch (e0) {}
-            try { sampleAmountColor = sampleAmount && sampleAmount.style ? String(sampleAmount.style.color || "-") : "-"; } catch (e1) {}
-            try { sampleInfiniteWash = sampleInfinite && sampleInfinite.style ? String(sampleInfinite.style.washColor || "-") : "-"; } catch (e2) {}
-            var debugSig = [
-                color || "default",
-                IsPanelValid(apContainer) ? 1 : 0,
-                IsPanelValid(goldApContainer) ? 1 : 0,
-                icons.length,
-                amounts.length,
-                infiniteIcons.length,
-                sampleIconWash,
-                sampleAmountColor,
-                sampleInfiniteWash
-            ].join("|");
-            BottomBarCurrencyDebugLogThrottled(
-                debugSig,
-                "raw=" + String(State.lastConfig && State.lastConfig.BOTTOM_BAR_WASH_COLOR) +
-                    " color=" + (color || "<default>") +
-                    " context=" + (IsPanelValid(contextPanel) ? String(contextPanel.id || contextPanel.paneltype || "panel") : "0") +
-                    " searchRoot=" + (IsPanelValid(searchRoot) ? String(searchRoot.id || searchRoot.paneltype || "panel") : "0") +
-                    " apContainer=" + (IsPanelValid(apContainer) ? "1" : "0") +
-                    " goldApContainer=" + (IsPanelValid(goldApContainer) ? "1" : "0") +
-                    " containers=" + String(containers.length) +
-                    " icons=" + String(icons.length) +
-                    " amounts=" + String(amounts.length) +
-                    " infinite=" + String(infiniteIcons.length) +
-                    " sampleIconWash=" + sampleIconWash +
-                    " sampleAmountColor=" + sampleAmountColor +
-                    " sampleInfiniteWash=" + sampleInfiniteWash,
-                Date.now ? Date.now() : (new Date()).getTime()
-            );
-        }
-
-        State.bottomBarCurrencyColorStyleSig = color;
-    }
-
     function GetStaminaChargeColorPanels(root, nowMs) {
         var cached = State.staminaChargeColorPanelCache || [];
         if (IsPanelListValid(cached) && nowMs < (State.staminaChargeColorPanelCacheNextMs || 0)) {
@@ -30378,16 +30267,6 @@ function GetUIRoot() {
         gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
         update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("bottomBarRuntime", {
-        configKeys: ["HUD_BOTTOM_BAR_ENABLED", "BOTTOM_BAR_OPACITY", "BOTTOM_BAR_SCALE",
-                     "BOTTOM_BAR_X_OFFSET", "BOTTOM_BAR_Y_OFFSET"],
-        bucket: 3, phase: -1,
-        gate: function(cfg) { return NeedsBottomBarRuntimeWork(cfg); },
-        update: function(root, cfg) { UpdateBottomBarRuntime(root, cfg); },
-        stateKeys: ["bottomBarRuntimeStyleSig", "bottomBarCurrencyColorStyleSig",
-                    "cachedPanels.bottomBarPanel"]
     });
 
     QOL_REGISTER_FEATURE("itemsRuntime", {

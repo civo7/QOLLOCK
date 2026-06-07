@@ -19,6 +19,7 @@
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_topBar.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottomBar.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
