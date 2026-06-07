@@ -28644,48 +28644,14 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
-    // ── Diagnostic dump function ──
-    // Dumps loaded/missing/disabled features from State.
-    // Exposed for the "Copy Logs" button in the Dev tab (ql_settings.js).
-    // NOTE: local var named _qolDiag to avoid shadowing the bare-global export.
-    var _qolDiag = function() {
-            var lines = [];
-            lines.push("=== QOLLOCK Diagnostics ===");
-            lines.push("Version: " + (typeof MOD_DISPLAY_VERSION !== "undefined" ? MOD_DISPLAY_VERSION : "?"));
-            lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
-            lines.push("");
-            lines.push("--- Loaded Features (" + (typeof QOL_FEATURE_REGISTRY !== "undefined" ? Object.keys(QOL_FEATURE_REGISTRY).length : 0) + ") ---");
-            if (typeof QOL_FEATURE_REGISTRY !== "undefined") {
-                var _fkeys = Object.keys(QOL_FEATURE_REGISTRY).sort();
-                for (var _fi = 0; _fi < _fkeys.length; _fi++) {
-                    lines.push("  + " + _fkeys[_fi]);
-                }
-            }
-            lines.push("");
-            lines.push("--- Missing / Unregistered Features ---");
-            if (State && State._missingFeatureLogged) {
-                var _mkeys = Object.keys(State._missingFeatureLogged);
-                for (var _mj = 0; _mj < _mkeys.length; _mj++) {
-                    lines.push("  - " + _mkeys[_mj]);
-                }
-                if (_mkeys.length === 0) lines.push("  (none)");
-            } else {
-                lines.push("  (none)");
-            }
-            lines.push("");
-            lines.push("--- Auto-Disabled Features (error count) ---");
-            if (State && State._featureErrorCount) {
-                var _ekeys = Object.keys(State._featureErrorCount);
-                for (var _ek = 0; _ek < _ekeys.length; _ek++) {
-                    lines.push("  " + _ekeys[_ek] + ": " + State._featureErrorCount[_ekeys[_ek]] + " errors");
-                }
-                if (_ekeys.length === 0) lines.push("  (none)");
-            } else {
-                lines.push("  (none)");
-            }
-            return lines.join("\n");
-        };
-    try { QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
-    $.Msg("[QOLLock] Diagnostic export done — bare=" + (typeof QOL_DumpDiagnostics) + " window=" + (typeof (typeof window !== "undefined" ? window.QOL_DumpDiagnostics : "no-window")));
+    // ── Sync diagnostic state to QOL_FEATURE_REGISTRY.__diag ──
+    // ql_shared_presets.js defines QOL_DumpDiagnostics() which reads this state.
+    // QOL_FEATURE_REGISTRY is shared across Panorama contexts.
+    try {
+        if (typeof QOL_FEATURE_REGISTRY !== "undefined") {
+            if (!QOL_FEATURE_REGISTRY.__diag) QOL_FEATURE_REGISTRY.__diag = {};
+            QOL_FEATURE_REGISTRY.__diag.missingFeatures = (State && State._missingFeatureLogged) ? State._missingFeatureLogged : {};
+            QOL_FEATURE_REGISTRY.__diag.errorCounts = (State && State._featureErrorCount) ? State._featureErrorCount : {};
+        }
+    } catch(e) {}
 })();

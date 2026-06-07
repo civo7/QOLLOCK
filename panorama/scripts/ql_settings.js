@@ -21322,15 +21322,10 @@ function RenderCurrentTabContent(list) {
             copyLogsBtn.SetPanelEvent("onactivate", function() {
                 var diagText = "";
                 try {
-                    var _hasWin = (typeof window !== "undefined" && typeof window.QOL_DumpDiagnostics === "function");
-                    var _hasBare = (typeof QOL_DumpDiagnostics === "function");
-                    $.Msg("[QOLLock][DiagBtn] window.fn=" + _hasWin + " bare.fn=" + _hasBare + " bare.typeof=" + typeof QOL_DumpDiagnostics);
-                    if (_hasWin) {
-                        diagText = window.QOL_DumpDiagnostics();
-                    } else if (_hasBare) {
+                    if (typeof QOL_DumpDiagnostics === "function") {
                         diagText = QOL_DumpDiagnostics();
                     } else {
-                        diagText = "=== QOLLOCK Diagnostics ===\nbwin=" + _hasWin + " bare=" + _hasBare + " typeof=" + typeof QOL_DumpDiagnostics + "\n";
+                        diagText = "=== QOLLOCK Diagnostics ===\nQOL_DumpDiagnostics not available.\n(typeof = " + typeof QOL_DumpDiagnostics + ")\n";
                     }
                 } catch(e) {
                     diagText = "=== QOLLOCK Diagnostics ===\nError: " + String(e && e.message ? e.message : String(e)) + "\n";

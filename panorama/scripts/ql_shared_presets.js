@@ -2105,6 +2105,49 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
     };
 };
 
+// ── Diagnostic dump function ──
+// Available in both settings and HUD contexts (ql_shared_presets.js loads in both).
+// ql_core.js writes runtime state into QOL_FEATURE_REGISTRY.__diag each tick.
+var QOL_DumpDiagnostics = function() {
+    var lines = [];
+    lines.push("=== QOLLOCK Diagnostics ===");
+    lines.push("Version: " + (typeof MOD_DISPLAY_VERSION !== "undefined" ? MOD_DISPLAY_VERSION : "?"));
+    lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
+    lines.push("");
+    lines.push("--- Loaded Features (" + (QOL_FEATURE_REGISTRY ? Object.keys(QOL_FEATURE_REGISTRY).filter(function(k) { return k.charAt(0) !== "_"; }).length : 0) + ") ---");
+    if (QOL_FEATURE_REGISTRY) {
+        var _fkeys = Object.keys(QOL_FEATURE_REGISTRY).filter(function(k) { return k.charAt(0) !== "_"; }).sort();
+        for (var _fi = 0; _fi < _fkeys.length; _fi++) {
+            lines.push("  + " + _fkeys[_fi]);
+        }
+    }
+    // Runtime state written by ql_core.js into QOL_FEATURE_REGISTRY.__diag
+    var _diag = (QOL_FEATURE_REGISTRY && QOL_FEATURE_REGISTRY.__diag) || {};
+    lines.push("");
+    lines.push("--- Missing / Unregistered Features ---");
+    if (_diag.missingFeatures) {
+        var _mkeys = Object.keys(_diag.missingFeatures);
+        for (var _mj = 0; _mj < _mkeys.length; _mj++) {
+            lines.push("  - " + _mkeys[_mj]);
+        }
+        if (_mkeys.length === 0) lines.push("  (none)");
+    } else {
+        lines.push("  (no data — ql_core.js may not be loaded)");
+    }
+    lines.push("");
+    lines.push("--- Auto-Disabled Features (error count) ---");
+    if (_diag.errorCounts) {
+        var _ekeys = Object.keys(_diag.errorCounts);
+        for (var _ek = 0; _ek < _ekeys.length; _ek++) {
+            lines.push("  " + _ekeys[_ek] + ": " + _diag.errorCounts[_ekeys[_ek]] + " errors");
+        }
+        if (_ekeys.length === 0) lines.push("  (none)");
+    } else {
+        lines.push("  (no data — ql_core.js may not be loaded)");
+    }
+    return lines.join("\n");
+};
+
 var QOL_DEFAULT_CONFIG = {
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,
