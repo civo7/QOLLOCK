@@ -2892,7 +2892,7 @@ function ExpressShotLog(msg) {
                     "abilityHud fast ignored low-confidence hero=" + fastEval.hero + " score=" + fastEval.score + " min=" + HERO_DETECT_PROGRESS_MIN_SCORE + " panel=" + (progressPanel.id ? String(progressPanel.id) : "-"),
                     now
                 );
-                State.cachedPanels.heroAbilityProgressPanel = null;
+                SetCachedPanel("heroAbilityProgressPanel", null);
             }
         }
 
@@ -2948,7 +2948,7 @@ function ExpressShotLog(msg) {
         }
 
         var passConfidence = !!(bestHero && bestScore >= HERO_DETECT_PROGRESS_MIN_SCORE);
-        State.cachedPanels.heroAbilityProgressPanel = passConfidence ? (bestPanel || null) : null;
+        SetCachedPanel("heroAbilityProgressPanel", passConfidence ? (bestPanel || null) : null);
         if (!bestHero) {
             HeroReturnDebugLogThrottled(
                 "progress_scan_none",
@@ -4292,7 +4292,7 @@ function GetUIRoot() {
         var uiRootGuard = 0;
         while (p && p.GetParent && p.GetParent() && uiRootGuard < 64) { p = p.GetParent(); uiRootGuard++; }
         if (uiRootGuard >= 64) QOL_WARN("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
-        State.cachedPanels.uiRoot = p || null;
+        SetCachedPanel("uiRoot", p);
         return p || null;
     }
 
@@ -4657,7 +4657,7 @@ function GetUIRoot() {
         var passiveHud = GetCachedPanel("passiveHud");
         if (!passiveHud && root.FindChildTraverse) {
             passiveHud = root.FindChildTraverse("hud_passive_items");
-            State.cachedPanels.passiveHud = passiveHud || null;
+            SetCachedPanel("passiveHud", passiveHud);
         }
         if (passiveHud) {
             SetStyleSafe(passiveHud, "visibility", "");
@@ -4698,9 +4698,9 @@ function GetUIRoot() {
     }
 
     function ResetColoredHealthbarPanelCache() {
-        State.cachedPanels.coloredHealthbarHealthBar = null;
-        State.cachedPanels.coloredHealthbarProgressLeft = null;
-        State.cachedPanels.coloredHealthbarCurrentHealth = null;
+        SetCachedPanel("coloredHealthbarHealthBar", null);
+        SetCachedPanel("coloredHealthbarProgressLeft", null);
+        SetCachedPanel("coloredHealthbarCurrentHealth", null);
     }
 
     function IsDescendantOf(panel, ancestor) {
@@ -4717,7 +4717,7 @@ function GetUIRoot() {
         var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
         var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (GetCachedPanel("healthContainer"));
         if (healthContainer !== State.cachedPanels.healthContainer) {
-            State.cachedPanels.healthContainer = healthContainer || null;
+            SetCachedPanel("healthContainer", healthContainer);
             ResetColoredHealthbarPanelCache();
         }
         if (!healthContainer) return null;
@@ -4733,13 +4733,13 @@ function GetUIRoot() {
             if (!healthBar && healthContainer.FindChildTraverse) {
                 healthBar = healthContainer.FindChildTraverse("health_bar");
             }
-            State.cachedPanels.coloredHealthbarHealthBar = healthBar || null;
+            SetCachedPanel("coloredHealthbarHealthBar", healthBar);
         }
         if (!healthBar) return null;
 
         var progressLeft = GetCachedPanel("coloredHealthbarProgressLeft");
         if (progressLeft && !IsDescendantOf(progressLeft, healthBar)) {
-            State.cachedPanels.coloredHealthbarProgressLeft = null;
+            SetCachedPanel("coloredHealthbarProgressLeft", null);
             progressLeft = null;
         }
         if (!progressLeft) {
@@ -4759,18 +4759,18 @@ function GetUIRoot() {
                     }
                 }
             }
-            State.cachedPanels.coloredHealthbarProgressLeft = progressLeft || null;
+            SetCachedPanel("coloredHealthbarProgressLeft", progressLeft);
         }
         if (!progressLeft) return null;
 
         var currentHealth = GetCachedPanel("coloredHealthbarCurrentHealth");
         if (currentHealth && !IsDescendantOf(currentHealth, healthBar)) {
-            State.cachedPanels.coloredHealthbarCurrentHealth = null;
+            SetCachedPanel("coloredHealthbarCurrentHealth", null);
             currentHealth = null;
         }
         if (!currentHealth) {
             currentHealth = healthBar.FindChildTraverse ? healthBar.FindChildTraverse("current_health") : null;
-            State.cachedPanels.coloredHealthbarCurrentHealth = currentHealth || null;
+            SetCachedPanel("coloredHealthbarCurrentHealth", currentHealth);
         }
 
         return {
@@ -5246,7 +5246,7 @@ function GetUIRoot() {
         var healthContainer = GetCachedPanel("healthContainer");
         if (!healthContainer) {
             healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
-            State.cachedPanels.healthContainer = healthContainer || null;
+            SetCachedPanel("healthContainer", healthContainer);
         }
 
         var previousPanel = IsPanelValid(State.minimalistHealthbarOffsetPanel) ? State.minimalistHealthbarOffsetPanel : null;
@@ -5302,35 +5302,35 @@ function GetUIRoot() {
         var content = GetCachedPanel("budhudHealthBarContent");
         if (!content) {
             content = root.FindChildTraverse("HealthBarContent");
-            State.cachedPanels.budhudHealthBarContent = content || null;
+            SetCachedPanel("budhudHealthBarContent", content);
         }
         if (!IsPanelValid(content)) return null;
 
         var regenTotal = GetCachedPanel("budhudHealthRegenAndTotal");
         if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== root)) {
             regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
-            State.cachedPanels.budhudHealthRegenAndTotal = regenTotal || null;
+            SetCachedPanel("budhudHealthRegenAndTotal", regenTotal);
         }
         if (!IsPanelValid(regenTotal)) return null;
 
         var healthContainer = GetCachedPanel("budhudHealthContainer");
         if (!healthContainer || (healthContainer.GetParent && healthContainer.GetParent() !== regenTotal)) {
             healthContainer = FindFirstPanelByClass(regenTotal, "healthContainer");
-            State.cachedPanels.budhudHealthContainer = healthContainer || null;
+            SetCachedPanel("budhudHealthContainer", healthContainer);
         }
         if (!IsPanelValid(healthContainer)) return null;
 
         var currentLabel = GetCachedPanel("budhudCurrentHealthLabel");
         if (!currentLabel || (currentLabel.GetParent && !currentLabel.GetParent())) {
             currentLabel = FindFirstPanelByClass(regenTotal, "currentHealthLabel");
-            State.cachedPanels.budhudCurrentHealthLabel = currentLabel || null;
+            SetCachedPanel("budhudCurrentHealthLabel", currentLabel);
         }
         if (!IsPanelValid(currentLabel)) return null;
 
         var totalLabel = GetCachedPanel("budhudTotalHealthLabel");
         if (!totalLabel || (totalLabel.GetParent && !totalLabel.GetParent())) {
             totalLabel = FindFirstPanelByClass(regenTotal, "totalHealthLabel");
-            State.cachedPanels.budhudTotalHealthLabel = totalLabel || null;
+            SetCachedPanel("budhudTotalHealthLabel", totalLabel);
         }
         if (!IsPanelValid(totalLabel)) return null;
 
@@ -5344,7 +5344,7 @@ function GetUIRoot() {
                     percentLabel = null;
                 }
             }
-            State.cachedPanels.budhudPercentLabel = percentLabel || null;
+            SetCachedPanel("budhudPercentLabel", percentLabel);
         }
         if (!IsPanelValid(percentLabel)) return null;
 
@@ -5458,7 +5458,7 @@ function GetUIRoot() {
         if (cached) return cached;
         var heartsRoot = root && root.FindChildTraverse ? root.FindChildTraverse("MinecraftHeartsRoot") : null;
         var panel = (heartsRoot && heartsRoot.GetParent) ? heartsRoot.GetParent() : null;
-        State.cachedPanels.mcHudRoot = IsPanelValid(panel) ? panel : null;
+        SetCachedPanel("mcHudRoot", IsPanelValid(panel) ? panel : null);
         return State.cachedPanels.mcHudRoot;
     }
 
@@ -5497,7 +5497,7 @@ function GetUIRoot() {
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
         State.mcWasEnabled = false;
-        State.cachedPanels.mcHealthPercentLabel = null;
+        SetCachedPanel("mcHealthPercentLabel", null);
     }
 
     function McStartHeartsBlink() {
@@ -5629,7 +5629,7 @@ function GetUIRoot() {
     function McEnsureHeartsCapacity(hudRoot, heartsNeeded) {
         if (heartsNeeded <= 0) return false;
         if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
-            State.cachedPanels.mcHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHearts") || null) : null;
+            SetCachedPanel("mcHeartsContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHearts") || null) : null);
             if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
                 $.Msg("[QOLLock][MC] MinecraftHearts container not found");
                 return false;
@@ -5704,14 +5704,14 @@ function GetUIRoot() {
     function McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded) {
         if (heartsNeeded <= 0) return false;
         if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
-            State.cachedPanels.mcBarrierHeartsContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHeartsContainer") || null) : null;
+            SetCachedPanel("mcBarrierHeartsContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHeartsContainer") || null) : null);
             if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
                 $.Msg("[QOLLock][MC] MinecraftBarrierHeartsContainer not found");
                 return false;
             }
         }
         if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
-            State.cachedPanels.mcBarrierHearts = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHearts") || null) : null;
+            SetCachedPanel("mcBarrierHearts", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHearts") || null) : null);
             if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
                 $.Msg("[QOLLock][MC] MinecraftBarrierHearts not found");
                 return false;
@@ -5941,21 +5941,21 @@ function GetUIRoot() {
                 return null;
             }
             State.mcLoggedHealthContainerMiss = false;
-            State.cachedPanels.mcHealthContainer = hc;
+            SetCachedPanel("mcHealthContainer", hc);
         }
         if (!IsPanelValid(State.cachedPanels.mcCurrentHealthLabel)) {
             var hcPanel = State.cachedPanels.mcHealthContainer;
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
             if (!lbl) return null;
-            State.cachedPanels.mcCurrentHealthLabel = lbl;
+            SetCachedPanel("mcCurrentHealthLabel", lbl);
         }
         if (!IsPanelValid(State.cachedPanels.mcTotalHealthLabel)) {
             var hcPanel = State.cachedPanels.mcHealthContainer;
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
             if (!lbl) return null;
-            State.cachedPanels.mcTotalHealthLabel = lbl;
+            SetCachedPanel("mcTotalHealthLabel", lbl);
         }
         var currentHealth = parseInt(State.cachedPanels.mcCurrentHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
         var totalHealth = parseInt(State.cachedPanels.mcTotalHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
@@ -5978,7 +5978,7 @@ function GetUIRoot() {
     function McParseChargesForHunger(root) {
         try {
             if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) {
-                State.cachedPanels.mcChargesContainer = root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null;
+                SetCachedPanel("mcChargesContainer", root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null);
             }
             if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) return null;
             var allCharges = State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse ? State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse("charge") : null;
@@ -6013,7 +6013,7 @@ function GetUIRoot() {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
             if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) {
-                State.cachedPanels.mcFoodContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null;
+                SetCachedPanel("mcFoodContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null);
                 if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
                 var children = State.cachedPanels.mcFoodContainer.Children();
                 State.mcCachedFoodIcons = [];
@@ -6044,9 +6044,9 @@ function GetUIRoot() {
                     return;
                 }
                 State.mcLoggedGoldApMiss = false;
-                State.cachedPanels.mcGoldApContainer = panel;
+                SetCachedPanel("mcGoldApContainer", panel);
             }
-            if (!IsPanelValid(State.cachedPanels.mcSoulsFill)) State.cachedPanels.mcSoulsFill = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcSoulsFill)) SetCachedPanel("mcSoulsFill", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null);
             if (IsPanelValid(State.cachedPanels.mcSoulsFill)) {
                 var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
                 var heightValue = parseFloat(heightStr) || 0;
@@ -6056,13 +6056,13 @@ function GetUIRoot() {
                 }
                 var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
                 if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
-                if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) State.cachedPanels.mcXpBarFill = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null;
+                if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) SetCachedPanel("mcXpBarFill", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null);
                 if (IsPanelValid(State.cachedPanels.mcXpBarFill) && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
             }
-            if (!IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) State.cachedPanels.mcPlayerLevelLabel = State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) SetCachedPanel("mcPlayerLevelLabel", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null);
             if (IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) {
                 var levelValue = parseInt((State.cachedPanels.mcPlayerLevelLabel.text || "").replace(/[^0-9]/g, "")) || 0;
-                if (!IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel = root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null;
+                if (!IsPanelValid(State.cachedPanels.mcXpLevelLabel)) SetCachedPanel("mcXpLevelLabel", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null);
                 if (IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
             }
         } catch (error) { $.Msg("[QOLLock][MC] Error in McParseSoulsAndLevel: " + error); }
@@ -6088,15 +6088,15 @@ function GetUIRoot() {
         var bulletBarrierMax = 0;
         if (IsPanelValid(State.cachedPanels.mcBarriersContainer)) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
         if (hasBarrier) {
-            if (!IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) State.cachedPanels.mcBulletBarrierNumbers = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null;
+            if (!IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) SetCachedPanel("mcBulletBarrierNumbers", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null);
             if (IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) {
                 if (!IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) {
                     var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_current") : null;
-                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierCurrentLabel = lbls[0];
+                    if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierCurrentLabel", lbls[0]);
                 }
                 if (!IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) {
                     var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_max") : null;
-                    if (lbls && lbls.length > 0) State.cachedPanels.mcBulletBarrierMaxLabel = lbls[0];
+                    if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierMaxLabel", lbls[0]);
                 }
                 if (IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
                 if (IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
@@ -6124,10 +6124,10 @@ function GetUIRoot() {
 
         State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
 
-        if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) State.cachedPanels.mcHudHealthBars = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null;
-        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) State.cachedPanels.mcTotemContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null;
+        if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) SetCachedPanel("mcHudHealthBars", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null);
+        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) SetCachedPanel("mcTotemContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null);
         if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) {
-            State.cachedPanels.mcBarriersContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("HudShieldsContainer") || null) : null;
+            SetCachedPanel("mcBarriersContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("HudShieldsContainer") || null) : null);
             if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) $.Msg("[QOLLock][MC] HudBarriersContainer not found");
         }
 
@@ -6137,7 +6137,7 @@ function GetUIRoot() {
         var totalHealth = hv.totalHealth;
 
         if (!IsPanelValid(State.cachedPanels.mcHealthPercentLabel)) {
-            State.cachedPanels.mcHealthPercentLabel = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHealthPercent") || null) : null;
+            SetCachedPanel("mcHealthPercentLabel", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHealthPercent") || null) : null);
         }
         var mcPercentLabel = State.cachedPanels.mcHealthPercentLabel;
         if (IsPanelValid(mcPercentLabel) && totalHealth > 0) {
@@ -6241,7 +6241,7 @@ function GetUIRoot() {
         var goldContainer = GetCachedPanel("goldAndApContainer");
         if (!goldContainer) {
             goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
-            State.cachedPanels.goldAndApContainer = goldContainer || null;
+            SetCachedPanel("goldAndApContainer", goldContainer);
         }
         if (!IsPanelValid(goldContainer) || !goldContainer.FindChildTraverse) return null;
         var levelAmount = goldContainer.FindChildTraverse("LevelAmount");
@@ -6378,7 +6378,7 @@ function GetUIRoot() {
         var fgAnchor = GetCachedPanel("fgHeroImageAnchor");
         if (!fgAnchor) {
             fgAnchor = root.FindChildTraverse("FgHeroImageAnchor");
-            State.cachedPanels.fgHeroImageAnchor = fgAnchor || null;
+            SetCachedPanel("fgHeroImageAnchor", fgAnchor);
         }
 
         var levelAmount = FindLiveGoldLevelAmount(root);
@@ -6388,12 +6388,12 @@ function GetUIRoot() {
         if (!IsPanelValid(levelAmount)) {
             levelAmount = root.FindChildTraverse("LevelAmount");
         }
-        State.cachedPanels.fgHeroLevelAmount = IsPanelValid(levelAmount) ? levelAmount : null;
+        SetCachedPanel("fgHeroLevelAmount", IsPanelValid(levelAmount) ? levelAmount : null);
 
         var staleProxy = GetCachedPanel("fgHeroImageProxy");
         if (staleProxy) {
             try { staleProxy.DeleteAsync(0); } catch (eProxyDel) {}
-            State.cachedPanels.fgHeroImageProxy = null;
+            SetCachedPanel("fgHeroImageProxy", null);
         }
 
         var cachedHeroImage = GetCachedPanel("fgHeroImagePanel");
@@ -6413,18 +6413,18 @@ function GetUIRoot() {
         }
         var anchorHeroImage = (IsPanelValid(fgAnchor) && fgAnchor.FindChildTraverse) ? fgAnchor.FindChildTraverse("HeroImage") : null;
         var heroImage = liveHeroImage || cachedHeroImage || anchorHeroImage || null;
-        State.cachedPanels.fgHeroImagePanel = IsPanelValid(heroImage) ? heroImage : null;
+        SetCachedPanel("fgHeroImagePanel", IsPanelValid(heroImage) ? heroImage : null);
 
         var goldContainer = GetCachedPanel("goldAndApContainer");
         if (!goldContainer) {
             goldContainer = root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER);
-            State.cachedPanels.goldAndApContainer = goldContainer || null;
+            SetCachedPanel("goldAndApContainer", goldContainer);
         }
 
         var healthContainer = GetCachedPanel("healthContainer");
         if (!healthContainer) {
             healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
-            State.cachedPanels.healthContainer = healthContainer || null;
+            SetCachedPanel("healthContainer", healthContainer);
         }
         var hudVisibleForRuntime = IsHudVisibleForPlayerHealthbarRuntime(root, healthContainer);
 
@@ -6635,7 +6635,7 @@ function GetUIRoot() {
         var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("Chat") : null;
         var chatPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("chatPanel"));
         if (chatPanel !== State.cachedPanels.chatPanel) {
-            State.cachedPanels.chatPanel = chatPanel || null;
+            SetCachedPanel("chatPanel", chatPanel);
         }
 
         var previousPanel = IsPanelValid(State.chatStylePanel) ? State.chatStylePanel : null;
@@ -6697,7 +6697,7 @@ function GetUIRoot() {
         var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("CitadelHudDamageReport") : null;
         var damageReportPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("damageReportPanel"));
         if (damageReportPanel !== State.cachedPanels.damageReportPanel) {
-            State.cachedPanels.damageReportPanel = damageReportPanel || null;
+            SetCachedPanel("damageReportPanel", damageReportPanel);
         }
 
         var previousPanel = IsPanelValid(State.damageReportOffsetPanel) ? State.damageReportOffsetPanel : null;
@@ -6749,7 +6749,7 @@ function GetUIRoot() {
             if (!gameplayHud) {
                 gameplayHud = $.GetContextPanel ? $.GetContextPanel() : null;
             }
-            State.cachedPanels.gameplayHud = gameplayHud || null;
+            SetCachedPanel("gameplayHud", gameplayHud);
         }
         if (gameplayHud && hasClassInHierarchy(gameplayHud, "gamemode_streetbrawl")) {
             return true;
@@ -6912,7 +6912,7 @@ function GetUIRoot() {
         var reticleStatus = GetCachedPanel("reloadReticleStatus");
         if (!reticleStatus) {
             reticleStatus = root.FindChildTraverse("reticle_status");
-            State.cachedPanels.reloadReticleStatus = reticleStatus || null;
+            SetCachedPanel("reloadReticleStatus", reticleStatus);
         }
         var reloadProgressBar = GetCachedPanel("reloadProgressBar");
         if (!reloadProgressBar) {
@@ -6920,7 +6920,7 @@ function GetUIRoot() {
             if (!reloadProgressBar) {
                 reloadProgressBar = root.FindChildTraverse("attack_delayed_progress_bar");
             }
-            State.cachedPanels.reloadProgressBar = reloadProgressBar || null;
+            SetCachedPanel("reloadProgressBar", reloadProgressBar);
         }
 
         if (!reticleStatus || !reloadProgressBar) {
@@ -6940,7 +6940,7 @@ function GetUIRoot() {
             if (cooldownLabel) {
                 cooldownLabel.hittest = false;
                 cooldownLabel.hittestchildren = false;
-                State.cachedPanels.reloadCooldownLabel = cooldownLabel;
+                SetCachedPanel("reloadCooldownLabel", cooldownLabel);
             }
         }
         if (!cooldownLabel) {
@@ -7085,14 +7085,14 @@ function GetUIRoot() {
         var hideReloadCircleEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"));
         if (!hideReloadCircleEnabled) {
             SetPanelClassCached(root, State.rootClassCache, "hide_reload_circle_exception_active", false);
-            State.cachedPanels.activeReloadProgressBar = null;
+            SetCachedPanel("activeReloadProgressBar", null);
             return;
         }
 
         var activeReloadBar = GetCachedPanel("activeReloadProgressBar");
         if (!activeReloadBar) {
             activeReloadBar = root.FindChildTraverse("active_reload_progress_bar");
-            State.cachedPanels.activeReloadProgressBar = activeReloadBar || null;
+            SetCachedPanel("activeReloadProgressBar", activeReloadBar);
         }
 
         var hasActiveReloadClass = false;
@@ -7215,7 +7215,7 @@ function GetUIRoot() {
         var gameTimePanel = GetCachedPanel("gameTime");
         if (!gameTimePanel && root) {
             gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
-            State.cachedPanels.gameTime = gameTimePanel || null;
+            SetCachedPanel("gameTime", gameTimePanel);
         }
         if (gameTimePanel && gameTimePanel.text) {
             return ParseClockSeconds(gameTimePanel.text);
@@ -7242,12 +7242,12 @@ function GetUIRoot() {
         var topBar = GetCachedPanel("topBarPanel");
         if (!topBar && root.FindChildTraverse) {
             topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
-            State.cachedPanels.topBarPanel = topBar;
+            SetCachedPanel("topBarPanel", topBar);
         }
         if (!topBar) return;
 
         teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
-        State.cachedPanels.urnTrackerTeamsContainer = teamsContainer;
+        SetCachedPanel("urnTrackerTeamsContainer", teamsContainer);
 
         if (!teamsContainer) {
             State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
@@ -7268,10 +7268,10 @@ function GetUIRoot() {
         friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse) ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
         enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse) ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
 
-        State.cachedPanels.urnTrackerFriendlyTeamPanel = friendlyTeamPanel || null;
-        State.cachedPanels.urnTrackerEnemyTeamPanel = enemyTeamPanel || null;
-        State.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
-        State.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
+        SetCachedPanel("urnTrackerFriendlyTeamPanel", friendlyTeamPanel);
+        SetCachedPanel("urnTrackerEnemyTeamPanel", enemyTeamPanel);
+        SetCachedPanel("urnTrackerFriendlyGoldLabels", friendlyLabels);
+        SetCachedPanel("urnTrackerEnemyGoldLabels", enemyLabels);
         State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
     }
 
@@ -7323,8 +7323,8 @@ function GetUIRoot() {
             });
         }
 
-        State.cachedPanels.urnTrackerPanel = panel || null;
-        State.cachedPanels.urnTrackerLabel = label || null;
+        SetCachedPanel("urnTrackerPanel", panel);
+        SetCachedPanel("urnTrackerLabel", label);
         return panel;
     }
 
@@ -7355,7 +7355,7 @@ function GetUIRoot() {
         if (!panel && root && root.FindChildTraverse) {
             panel = root.FindChildTraverse("UrnTracker");
             if (IsPanelValid(panel)) {
-                State.cachedPanels.urnTrackerPanel = panel;
+                SetCachedPanel("urnTrackerPanel", panel);
             }
         }
         if (IsPanelValid(panel)) panel.visible = false;
@@ -8522,7 +8522,7 @@ function GetUIRoot() {
         var gameTimePanel = GetCachedPanel("gameTime");
         if (!gameTimePanel) {
             gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
-            State.cachedPanels.gameTime = gameTimePanel || null;
+            SetCachedPanel("gameTime", gameTimePanel);
         }
         var clockSec = gameTimePanel && gameTimePanel.text ? ParseClockSeconds(gameTimePanel.text) : 0;
         if (State.spm.lastClockSec !== null && clockSec < State.spm.lastClockSec) {
@@ -8926,7 +8926,7 @@ function GetUIRoot() {
         if (!anchor) {
             anchor = root.FindChildTraverse("minimap_container");
             if (!anchor) anchor = root.FindChildTraverse("minimap_persp");
-            State.cachedPanels.minimapObjectiveTimersAnchor = anchor || null;
+            SetCachedPanel("minimapObjectiveTimersAnchor", anchor);
         }
         return anchor || null;
     }
@@ -9066,19 +9066,19 @@ function GetUIRoot() {
         rejuvTime.hittest = false;
         rejuvTime.hittestchildren = false;
 
-        State.cachedPanels.minimapObjectiveTimersRoot = overlay || null;
-        State.cachedPanels.minimapObjectiveBuffPanel = buffPanel || null;
-        State.cachedPanels.minimapObjectiveBuffTime = buffTime || null;
-        State.cachedPanels.minimapObjectiveBuffIcon = buffIcon || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeLeftPanel = buffBridgeLeftPanel || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeLeftTime = buffBridgeLeftTime || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeLeftIcon = buffBridgeLeftIcon || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeRightPanel = buffBridgeRightPanel || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeRightTime = buffBridgeRightTime || null;
-        State.cachedPanels.minimapObjectiveBuffBridgeRightIcon = buffBridgeRightIcon || null;
-        State.cachedPanels.minimapObjectiveRejuvPanel = rejuvPanel || null;
-        State.cachedPanels.minimapObjectiveRejuvTime = rejuvTime || null;
-        State.cachedPanels.minimapObjectiveRejuvIcon = rejuvIcon || null;
+        SetCachedPanel("minimapObjectiveTimersRoot", overlay);
+        SetCachedPanel("minimapObjectiveBuffPanel", buffPanel);
+        SetCachedPanel("minimapObjectiveBuffTime", buffTime);
+        SetCachedPanel("minimapObjectiveBuffIcon", buffIcon);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", buffBridgeLeftPanel);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", buffBridgeLeftTime);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", buffBridgeLeftIcon);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", buffBridgeRightPanel);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightTime", buffBridgeRightTime);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", buffBridgeRightIcon);
+        SetCachedPanel("minimapObjectiveRejuvPanel", rejuvPanel);
+        SetCachedPanel("minimapObjectiveRejuvTime", rejuvTime);
+        SetCachedPanel("minimapObjectiveRejuvIcon", rejuvIcon);
         if (overlay.MoveChildBefore && rejuvPanel && buffPanel) {
             overlay.MoveChildBefore(rejuvPanel, buffPanel);
         }
@@ -9137,8 +9137,8 @@ function GetUIRoot() {
             " markers=" + (markers ? (markers.id || markers.paneltype || "<anon>") : "<null>"),
             PerfNowMs()
         );
-        State.cachedPanels.minimapCrateOverlayRoot = overlay || null;
-        State.cachedPanels.minimapCrateMarkersRoot = markers || null;
+        SetCachedPanel("minimapCrateOverlayRoot", overlay);
+        SetCachedPanel("minimapCrateMarkersRoot", markers);
         return {
             root: overlay,
             markers: markers
@@ -9167,7 +9167,7 @@ function GetUIRoot() {
         overlay.style.backgroundSize = "100% 100%";
         overlay.style.backgroundRepeat = "no-repeat";
         overlay.style.backgroundPosition = "center";
-        State.cachedPanels.minimapTunnelOverlayRoot = overlay;
+        SetCachedPanel("minimapTunnelOverlayRoot", overlay);
         return overlay;
     }
 
@@ -9246,7 +9246,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLMinimapTimersRoot");
-            if (overlay) State.cachedPanels.minimapObjectiveTimersRoot = overlay;
+            if (overlay) SetCachedPanel("minimapObjectiveTimersRoot", overlay);
         }
         if (!overlay) return;
         if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
@@ -9280,7 +9280,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("minimapCrateOverlayRoot");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("minimap_overlay_root");
-            if (overlay) State.cachedPanels.minimapCrateOverlayRoot = overlay;
+            if (overlay) SetCachedPanel("minimapCrateOverlayRoot", overlay);
         }
         if (overlay && overlay.style.visibility !== "collapse") {
             overlay.style.visibility = "collapse";
@@ -9292,7 +9292,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("minimapTunnelOverlayRoot");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("tunnel_overlay");
-            if (overlay) State.cachedPanels.minimapTunnelOverlayRoot = overlay;
+            if (overlay) SetCachedPanel("minimapTunnelOverlayRoot", overlay);
         }
         if (!overlay) return;
         if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
@@ -10714,7 +10714,7 @@ function GetUIRoot() {
             });
         }
         if (!panel) return null;
-        State.cachedPanels.dl4dCaptionPanel = panel;
+        SetCachedPanel("dl4dCaptionPanel", panel);
         panel.style.horizontalAlign = "center";
         panel.style.verticalAlign = "top";
         panel.style.marginTop = "140px";
@@ -11160,7 +11160,7 @@ function GetUIRoot() {
         var hud = GetCachedPanel("hudPanel");
         if (!hud && root.FindChildTraverse) {
             hud = root.FindChildTraverse(PANEL_ID_HUD);
-            State.cachedPanels.hudPanel = hud || null;
+            SetCachedPanel("hudPanel", hud);
         }
 
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
@@ -11172,13 +11172,13 @@ function GetUIRoot() {
         var gameplayHud = GetCachedPanel("gameplayHud");
         if (!gameplayHud && root.FindChildTraverse) {
             gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            State.cachedPanels.gameplayHud = gameplayHud || null;
+            SetCachedPanel("gameplayHud", gameplayHud);
         }
 
         var gameplayHudAlive = GetCachedPanel("gameplayHudAlive");
         if (!gameplayHudAlive && root.FindChildTraverse) {
             gameplayHudAlive = root.FindChildTraverse("gameplay_hud_alive");
-            State.cachedPanels.gameplayHudAlive = gameplayHudAlive || null;
+            SetCachedPanel("gameplayHudAlive", gameplayHudAlive);
         }
 
         if (gameplayHud && !IsPanelEffectivelyVisibleMaybe(gameplayHud, root)) return false;
@@ -12416,7 +12416,7 @@ function GetUIRoot() {
                 lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
             };
         }
-        State.cachedPanels.settingsLoaderStepRows = rows;
+        SetCachedPanel("settingsLoaderStepRows", rows);
         return rows;
     }
 
@@ -12540,7 +12540,7 @@ function GetUIRoot() {
                 else subtitle.style.visibility = "collapse";
             } catch (e0) {}
         }
-        State.cachedPanels.settingsLoaderSubtitle = null;
+        SetCachedPanel("settingsLoaderSubtitle", null);
 
         var legacySteps = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_LEGACY_STEPS_ID) || null) : null;
         if (legacySteps) {
@@ -12691,17 +12691,17 @@ function GetUIRoot() {
             skipLabel = null;
         }
 
-        State.cachedPanels.settingsLoaderOverlay = overlay;
-        State.cachedPanels.settingsLoaderCard = card;
-        State.cachedPanels.settingsLoaderWarning = warning || null;
-        State.cachedPanels.settingsLoaderTitle = title || null;
-        State.cachedPanels.settingsLoaderStepsWrap = stepsWrap || null;
-        State.cachedPanels.settingsLoaderDetail = detailLabel || null;
-        State.cachedPanels.settingsLoaderActionsRow = actionsRow || null;
-        State.cachedPanels.settingsLoaderSkipDock = skipDock || null;
-        State.cachedPanels.settingsLoaderSkipBacker = skipBacker || null;
-        State.cachedPanels.settingsLoaderSkipButton = skipButton || null;
-        State.cachedPanels.settingsLoaderSkipLabel = skipLabel || null;
+        SetCachedPanel("settingsLoaderOverlay", overlay);
+        SetCachedPanel("settingsLoaderCard", card);
+        SetCachedPanel("settingsLoaderWarning", warning);
+        SetCachedPanel("settingsLoaderTitle", title);
+        SetCachedPanel("settingsLoaderStepsWrap", stepsWrap);
+        SetCachedPanel("settingsLoaderDetail", detailLabel);
+        SetCachedPanel("settingsLoaderActionsRow", actionsRow);
+        SetCachedPanel("settingsLoaderSkipDock", skipDock);
+        SetCachedPanel("settingsLoaderSkipBacker", skipBacker);
+        SetCachedPanel("settingsLoaderSkipButton", skipButton);
+        SetCachedPanel("settingsLoaderSkipLabel", skipLabel);
         return overlay;
     }
 
@@ -13080,7 +13080,7 @@ function GetUIRoot() {
                 lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
             };
         }
-        State.cachedPanels.saveSettingsLoaderStepRows = rows;
+        SetCachedPanel("saveSettingsLoaderStepRows", rows);
         return rows;
     }
 
@@ -13235,13 +13235,13 @@ function GetUIRoot() {
             if (stallHint.text !== SAVE_SETTINGS_LOADER_STALL_HINT_TEXT) stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
         }
 
-        State.cachedPanels.saveSettingsLoaderOverlay = overlay;
-        State.cachedPanels.saveSettingsLoaderCard = card;
-        State.cachedPanels.saveSettingsLoaderWarning = warning || null;
-        State.cachedPanels.saveSettingsLoaderTitle = title || null;
-        State.cachedPanels.saveSettingsLoaderStepsWrap = stepsWrap || null;
-        State.cachedPanels.saveSettingsLoaderDetail = detailLabel || null;
-        State.cachedPanels.saveSettingsLoaderStallHint = stallHint || null;
+        SetCachedPanel("saveSettingsLoaderOverlay", overlay);
+        SetCachedPanel("saveSettingsLoaderCard", card);
+        SetCachedPanel("saveSettingsLoaderWarning", warning);
+        SetCachedPanel("saveSettingsLoaderTitle", title);
+        SetCachedPanel("saveSettingsLoaderStepsWrap", stepsWrap);
+        SetCachedPanel("saveSettingsLoaderDetail", detailLabel);
+        SetCachedPanel("saveSettingsLoaderStallHint", stallHint);
         return overlay;
     }
 
@@ -13567,7 +13567,7 @@ function GetUIRoot() {
                 lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
             };
         }
-        State.cachedPanels.clearSettingsLoaderStepRows = rows;
+        SetCachedPanel("clearSettingsLoaderStepRows", rows);
         return rows;
     }
 
@@ -13695,12 +13695,12 @@ function GetUIRoot() {
             ApplyLoaderDetailTheme(detailLabel);
         }
 
-        State.cachedPanels.clearSettingsLoaderOverlay = overlay;
-        State.cachedPanels.clearSettingsLoaderCard = card;
-        State.cachedPanels.clearSettingsLoaderWarning = warning || null;
-        State.cachedPanels.clearSettingsLoaderTitle = title || null;
-        State.cachedPanels.clearSettingsLoaderStepsWrap = stepsWrap || null;
-        State.cachedPanels.clearSettingsLoaderDetail = detailLabel || null;
+        SetCachedPanel("clearSettingsLoaderOverlay", overlay);
+        SetCachedPanel("clearSettingsLoaderCard", card);
+        SetCachedPanel("clearSettingsLoaderWarning", warning);
+        SetCachedPanel("clearSettingsLoaderTitle", title);
+        SetCachedPanel("clearSettingsLoaderStepsWrap", stepsWrap);
+        SetCachedPanel("clearSettingsLoaderDetail", detailLabel);
         return overlay;
     }
 
@@ -13974,14 +13974,14 @@ function GetUIRoot() {
             }
         }
 
-        State.cachedPanels.shopFavoritesNavButton = (favoritesNav && IsPanelValid(favoritesNav)) ? favoritesNav : null;
+        SetCachedPanel("shopFavoritesNavButton", (favoritesNav && IsPanelValid(favoritesNav)) ? favoritesNav : null);
         return State.cachedPanels.shopFavoritesNavButton;
     }
 
     function EnsureShopFavoritesNavActive(root, nowMs, stateField, cooldownMs) {
         var favoritesNav = FindShopFavoritesNavButton(root);
         if (!favoritesNav || !IsPanelValid(favoritesNav)) {
-            State.cachedPanels.shopFavoritesNavButton = null;
+            SetCachedPanel("shopFavoritesNavButton", null);
             return false;
         }
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -15506,7 +15506,7 @@ function GetUIRoot() {
         var selectedBuild = GetCachedPanel("shopModsSelectedBuild");
         if (!selectedBuild) {
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
-            State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+            SetCachedPanel("shopModsSelectedBuild", selectedBuild);
         }
         if (!selectedBuild) return false;
         if (selectedBuild.FindChildTraverse && selectedBuild.FindChildTraverse("BuildCategoryName")) return true;
@@ -15528,7 +15528,7 @@ function GetUIRoot() {
         var selectedBuild = GetCachedPanel("shopModsSelectedBuild");
         if (!selectedBuild) selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
-        State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+        SetCachedPanel("shopModsSelectedBuild", selectedBuild);
         var initCreateLookup = FindCreateBuildButtonStrict(root);
         var initCreateBtn = initCreateLookup && initCreateLookup.panel ? initCreateLookup.panel : null;
 
@@ -15569,7 +15569,7 @@ function GetUIRoot() {
             // Re-check before creating: if any category exists, reuse it.
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
-            State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+            SetCachedPanel("shopModsSelectedBuild", selectedBuild);
             if (!IsStorageBuildListEmpty(root)) {
                 ResetBuildCategoryPayloadProbeInitState();
                 return true;
@@ -15640,7 +15640,7 @@ function GetUIRoot() {
         if (stage === "create_verify") {
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
-            State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+            SetCachedPanel("shopModsSelectedBuild", selectedBuild);
 
             var createdSignal = !IsStorageBuildListEmpty(root);
             var saveLookupVerify = FindSaveBuildButtonStrict(root, selectedBuild);
@@ -15677,7 +15677,7 @@ function GetUIRoot() {
         if (stage === "save") {
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
-            State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+            SetCachedPanel("shopModsSelectedBuild", selectedBuild);
 
             var saveLookup = FindSaveBuildButtonStrict(root, selectedBuild);
             var saveBtn = saveLookup && saveLookup.panel ? saveLookup.panel : null;
@@ -15702,7 +15702,7 @@ function GetUIRoot() {
 
         selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (!IsPanelValid(selectedBuild)) selectedBuild = null;
-        State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+        SetCachedPanel("shopModsSelectedBuild", selectedBuild);
         if (selectedBuild && CountBuildCategoryHeaders(selectedBuild) > 0) {
             ResetBuildCategoryPayloadProbeInitState();
             return true;
@@ -15765,7 +15765,7 @@ function GetUIRoot() {
         var lowerLeft = GetCachedPanel("lowerLeft");
         if (!lowerLeft) {
             lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
-            State.cachedPanels.lowerLeft = lowerLeft || null;
+            SetCachedPanel("lowerLeft", lowerLeft);
         }
         if (!lowerLeft) return null;
 
@@ -15781,7 +15781,7 @@ function GetUIRoot() {
             }
         }
         if (!panel) return null;
-        State.cachedPanels.showBuildIdPanel = panel;
+        SetCachedPanel("showBuildIdPanel", panel);
 
         var label = GetCachedPanel("showBuildIdLabel");
         if (!label) {
@@ -15794,7 +15794,7 @@ function GetUIRoot() {
                 label = null;
             }
         }
-        State.cachedPanels.showBuildIdLabel = label || null;
+        SetCachedPanel("showBuildIdLabel", label);
         return label ? { panel: panel, label: label } : null;
     }
 
@@ -15806,7 +15806,7 @@ function GetUIRoot() {
         var source = GetCachedPanel("selectedBuildInfoTitle");
         if (!source) {
             source = root.FindChildTraverse ? root.FindChildTraverse("SelectedBuildInfoTitle") : null;
-            State.cachedPanels.selectedBuildInfoTitle = source || null;
+            SetCachedPanel("selectedBuildInfoTitle", source);
         }
         var parsed = ParseSelectedBuildInfoText(ReadPanelTextMaybe(source));
         if (!parsed) {
@@ -15854,7 +15854,7 @@ function GetUIRoot() {
         var selectedBuild = GetCachedPanel("shopModsSelectedBuild");
         if (!selectedBuild) {
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
-            State.cachedPanels.shopModsSelectedBuild = selectedBuild || null;
+            SetCachedPanel("shopModsSelectedBuild", selectedBuild);
         }
         if (!selectedBuild) return "";
 
@@ -16690,7 +16690,7 @@ function GetUIRoot() {
             } catch (e0) {}
         }
         hudBuilds = root.FindChildTraverse("CitadelHudHeroBuilds");
-        State.cachedPanels.buildSaveHudPanel = hudBuilds || null;
+        SetCachedPanel("buildSaveHudPanel", hudBuilds);
         return hudBuilds || null;
     }
 
@@ -18100,7 +18100,7 @@ function GetUIRoot() {
             }
         }
 
-        State.cachedPanels.lanePreferenceWithPartyOption = option || null;
+        SetCachedPanel("lanePreferenceWithPartyOption", option);
         return option || null;
     }
 
@@ -18123,11 +18123,11 @@ function GetUIRoot() {
         var selector = GetCachedPanel("lanePreferenceSelector");
         if (!selector) {
             selector = root.FindChildTraverse(LANE_PREF_SELECTOR_ID);
-            State.cachedPanels.lanePreferenceSelector = selector || null;
+            SetCachedPanel("lanePreferenceSelector", selector);
         }
         if (!selector || !IsPanelValid(selector)) {
-            State.cachedPanels.lanePreferenceSelector = null;
-            State.cachedPanels.lanePreferenceWithPartyOption = null;
+            SetCachedPanel("lanePreferenceSelector", null);
+            SetCachedPanel("lanePreferenceWithPartyOption", null);
             State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
             return;
         }
@@ -18166,7 +18166,7 @@ function GetUIRoot() {
             }
             try { $.DispatchEvent("Activated", selector); } catch (e5) {}
         } else {
-            State.cachedPanels.lanePreferenceWithPartyOption = null;
+            SetCachedPanel("lanePreferenceWithPartyOption", null);
         }
 
         if (IsLanePreferenceWithPartySelected(selector)) {
@@ -20030,7 +20030,7 @@ function GetUIRoot() {
         var ammoPanel = GetCachedPanel("ammoPanel");
         if (!ammoPanel) {
             ammoPanel = root.FindChildTraverse("ammo_panel");
-            State.cachedPanels.ammoPanel = ammoPanel || null;
+            SetCachedPanel("ammoPanel", ammoPanel);
         }
         if (ammoPanel) {
             var ammoCurrentScale = (cfg.AMMO_CURRENT_SCALE === undefined || cfg.AMMO_CURRENT_SCALE === null) ? cfg.AMMO_PANEL_SCALE : cfg.AMMO_CURRENT_SCALE;
@@ -20344,7 +20344,7 @@ function GetUIRoot() {
                     }
                 }
             }
-            State.cachedPanels.itemsModsContainer = modsContainer || null;
+            SetCachedPanel("itemsModsContainer", modsContainer);
         }
         if (!modsContainer) return;
 
@@ -20630,12 +20630,12 @@ function GetUIRoot() {
     function GetOrCreateQuickPanelRP(root) {
         if (IsPanelValid(State.cachedPanels.quickPurchasesPanel)) return State.cachedPanels.quickPurchasesPanel;
         if (!IsPanelValid(State.cachedPanels.quickPurchasesHostPanel)) {
-            State.cachedPanels.quickPurchasesHostPanel = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
+            SetCachedPanel("quickPurchasesHostPanel", root.FindChildTraverse(PANEL_ID_TOP_BAR));
         }
         var topBar = State.cachedPanels.quickPurchasesHostPanel;
         if (!topBar) return null;
         var qp = $.CreatePanel("Panel", topBar, "QuickPurchasesPanel");
-        State.cachedPanels.quickPurchasesPanel = qp;
+        SetCachedPanel("quickPurchasesPanel", qp);
         return qp;
     }
 
@@ -20687,8 +20687,8 @@ function GetUIRoot() {
         if (!IsPanelValid(State.cachedPanels.cachedRejuvTimer)) {
             var _ctxPanel = $.GetContextPanel();
             var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
-            State.cachedPanels.cachedRejuvTimer = _ctxParent ?
-                _ctxParent.FindChildTraverse("RejuvenatorTimer") : null;
+            SetCachedPanel("cachedRejuvTimer", _ctxParent ?
+                _ctxParent.FindChildTraverse("RejuvenatorTimer") : null);
         }
         var timer = State.cachedPanels.cachedRejuvTimer;
         if (!timer) return;
@@ -21090,7 +21090,7 @@ function GetUIRoot() {
                 var _rpPanel = State.cachedPanels.recentPurchasesPanel;
                 if (!IsPanelValid(_rpPanel)) {
                     _rpPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
-                    State.cachedPanels.recentPurchasesPanel = _rpPanel;
+                    SetCachedPanel("recentPurchasesPanel", _rpPanel);
                 }
                 if (_rpPanel) {
                     _rpPanel.style.visibility = "collapse";
@@ -21102,7 +21102,7 @@ function GetUIRoot() {
         State.recentPurchasesWasEnabled = true;
 
         if (!IsPanelValid(State.cachedPanels.recentPurchasesPanel)) {
-            State.cachedPanels.recentPurchasesPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
+            SetCachedPanel("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
         }
         var rpPanel = State.cachedPanels.recentPurchasesPanel;
         if (rpPanel) {
@@ -21123,7 +21123,7 @@ function GetUIRoot() {
         if (quickDisplaySec < 3 || quickDisplaySec > 15) quickDisplaySec = RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT;
 
         if (!IsPanelValid(State.cachedPanels.recentPurchasesContainer)) {
-            State.cachedPanels.recentPurchasesContainer = root.FindChildTraverse("RecentPurchasesContainer") || null;
+            SetCachedPanel("recentPurchasesContainer", root.FindChildTraverse("RecentPurchasesContainer"));
         }
         var container = State.cachedPanels.recentPurchasesContainer;
         if (!container) return;
@@ -21209,7 +21209,7 @@ function GetUIRoot() {
         }
         if (needsHeroShopFeatures && !heroShop && nowMsClass >= (State.heroShopNextSearchMs || 0)) {
             heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
-            State.cachedPanels.heroShop = heroShop || null;
+            SetCachedPanel("heroShop", heroShop);
             State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
         }
         if (needsHeroShopFeatures) {
@@ -21223,7 +21223,7 @@ function GetUIRoot() {
                 var heroShopMainPanel = GetCachedPanel("heroShopMainPanel");
                 if (!heroShopMainPanel) {
                     heroShopMainPanel = heroShop.FindChildTraverse("MainPanel");
-                    State.cachedPanels.heroShopMainPanel = heroShopMainPanel || null;
+                    SetCachedPanel("heroShopMainPanel", heroShopMainPanel);
                 }
                 if (heroShopMainPanel) {
                     var marginLeftText = String(shopOffsetXRaw) + "px";
@@ -21245,7 +21245,7 @@ function GetUIRoot() {
                     }
                 }
             } else {
-                State.cachedPanels.heroShopMainPanel = null;
+                SetCachedPanel("heroShopMainPanel", null);
                 State.heroShopMainPanelStyleSig = "";
             }
         } else if (heroShop) {
@@ -21258,7 +21258,7 @@ function GetUIRoot() {
             var resetMainPanel = GetCachedPanel("heroShopMainPanel");
             if (!resetMainPanel) {
                 resetMainPanel = heroShop.FindChildTraverse("MainPanel");
-                State.cachedPanels.heroShopMainPanel = resetMainPanel || null;
+                SetCachedPanel("heroShopMainPanel", resetMainPanel);
             }
             if (resetMainPanel) {
                 var resetSig = "0px|0px|0px|0px|1.00|1.00|1";
@@ -21274,8 +21274,8 @@ function GetUIRoot() {
                     SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
                 }
             }
-            State.cachedPanels.heroShop = null;
-            State.cachedPanels.heroShopMainPanel = null;
+            SetCachedPanel("heroShop", null);
+            SetCachedPanel("heroShopMainPanel", null);
             State.heroShopMainPanelStyleSig = "";
         }
     }
@@ -21352,7 +21352,7 @@ function GetUIRoot() {
                     var dmgContainer = GetCachedPanel("dmgIndicators");
                     if (!dmgContainer && root.FindChildTraverse) {
                         dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
-                        State.cachedPanels.dmgIndicators = dmgContainer || null;
+                        SetCachedPanel("dmgIndicators", dmgContainer);
                     }
                     var searchRoot = dmgContainer ? dmgContainer : root;
                     State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
@@ -21481,13 +21481,13 @@ function GetUIRoot() {
             var hudMinimapPanel = GetCachedPanel("hudMinimapPanel");
             if (!hudMinimapPanel) {
                 hudMinimapPanel = root.FindChildTraverse(PANEL_ID_MINIMAP);
-                State.cachedPanels.hudMinimapPanel = hudMinimapPanel || null;
+                SetCachedPanel("hudMinimapPanel", hudMinimapPanel);
             }
             canvas = hudMinimapPanel && hudMinimapPanel.FindChildTraverse
                 ? hudMinimapPanel.FindChildTraverse("canvas")
                 : null;
             if (!canvas) canvas = root.FindChildTraverse("canvas");
-            State.cachedPanels.minimapCanvas = canvas || null;
+            SetCachedPanel("minimapCanvas", canvas);
         }
         if (!canvas) {
             State.minimapIconColorStyleSig = "";
@@ -21783,7 +21783,7 @@ function GetUIRoot() {
                     hittestchildren: "false"
                 });
             }
-            State.cachedPanels.keyboardOverlayRoot = overlayRoot || null;
+            SetCachedPanel("keyboardOverlayRoot", overlayRoot);
         }
         if (!overlayRoot) return null;
 
@@ -21798,7 +21798,7 @@ function GetUIRoot() {
                 });
                 BuildKeyboardOverlayLayouts(allBindingsBox);
             }
-            State.cachedPanels.keyboardOverlayBox = allBindingsBox || null;
+            SetCachedPanel("keyboardOverlayBox", allBindingsBox);
         }
         State.allBindingsBoxes = allBindingsBox ? [allBindingsBox] : [];
         return allBindingsBox;
@@ -21812,8 +21812,8 @@ function GetUIRoot() {
         if (IsPanelValid(overlayRoot)) {
             overlayRoot.DeleteAsync(0);
         }
-        State.cachedPanels.keyboardOverlayRoot = null;
-        State.cachedPanels.keyboardOverlayBox = null;
+        SetCachedPanel("keyboardOverlayRoot", null);
+        SetCachedPanel("keyboardOverlayBox", null);
         State.keyboardOverlayWashSig = "";
         State.allBindingsBoxes = [];
         ResetKeyboardOverlayCaches();
@@ -21962,7 +21962,7 @@ function GetUIRoot() {
                     text.text = "UNSECURED";
                 }
             }
-            State.cachedPanels.betterUnsecuredOverlay = overlay || null;
+            SetCachedPanel("betterUnsecuredOverlay", overlay);
         }
         var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
         var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
@@ -21993,7 +21993,7 @@ function GetUIRoot() {
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.betterUnsecuredOverlay = null;
+        SetCachedPanel("betterUnsecuredOverlay", null);
         State.unsecuredSouls.hudMirrorLabel = null;
         State.unsecuredSouls.hudMirrorIcon = null;
         State.unsecuredSouls.hudMirrorText = null;
@@ -22046,7 +22046,7 @@ function GetUIRoot() {
         if (!panel) {
             if (nowMs >= (State.unsecuredSouls.hudNextSearchMs || 0)) {
                 panel = FindUnsecuredSoulsHudContainer(root);
-                State.cachedPanels.unsecuredSoulsHudContainer = panel || null;
+                SetCachedPanel("unsecuredSoulsHudContainer", panel);
                 State.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
             }
         }
@@ -22190,9 +22190,9 @@ function GetUIRoot() {
             state.text = "";
         }
 
-        State.cachedPanels.unsecuredSoulsOverlay = overlay || null;
-        State.cachedPanels.unsecuredSoulsLabel = overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsLabel") : null;
-        State.cachedPanels.unsecuredSoulsState = overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsState") : null;
+        SetCachedPanel("unsecuredSoulsOverlay", overlay);
+        SetCachedPanel("unsecuredSoulsLabel", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsLabel") : null);
+        SetCachedPanel("unsecuredSoulsState", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsState") : null);
         return overlay;
     }
 
@@ -22212,10 +22212,10 @@ function GetUIRoot() {
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.unsecuredSoulsOverlay = null;
-        State.cachedPanels.unsecuredSoulsLabel = null;
-        State.cachedPanels.unsecuredSoulsState = null;
-        State.cachedPanels.unsecuredSoulsSource = null;
+        SetCachedPanel("unsecuredSoulsOverlay", null);
+        SetCachedPanel("unsecuredSoulsLabel", null);
+        SetCachedPanel("unsecuredSoulsState", null);
+        SetCachedPanel("unsecuredSoulsSource", null);
         State.unsecuredSouls.displayMode = "";
         State.unsecuredSouls.lastLayoutSig = "";
         State.unsecuredSouls.lastClassSig = "";
@@ -22309,7 +22309,7 @@ function GetUIRoot() {
             if (nowMs >= (State.unsecuredSouls.nextSourceSearchMs || 0)) {
                 source = FindUnsecuredSoulsSource(root);
                 State.unsecuredSouls.nextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
-                State.cachedPanels.unsecuredSoulsSource = source || null;
+                SetCachedPanel("unsecuredSoulsSource", source);
             }
         }
 
@@ -22432,9 +22432,9 @@ function GetUIRoot() {
             state.text = "Ready";
         }
 
-        State.cachedPanels.zipBoostOverlay = overlay || null;
-        State.cachedPanels.zipBoostLabel = overlay ? overlay.FindChildTraverse("QOLZipBoostLabel") : null;
-        State.cachedPanels.zipBoostState = overlay ? overlay.FindChildTraverse("QOLZipBoostState") : null;
+        SetCachedPanel("zipBoostOverlay", overlay);
+        SetCachedPanel("zipBoostLabel", overlay ? overlay.FindChildTraverse("QOLZipBoostLabel") : null);
+        SetCachedPanel("zipBoostState", overlay ? overlay.FindChildTraverse("QOLZipBoostState") : null);
         return overlay;
     }
 
@@ -22446,12 +22446,12 @@ function GetUIRoot() {
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.zipBoostOverlay = null;
-        State.cachedPanels.zipBoostLabel = null;
-        State.cachedPanels.zipBoostState = null;
-        State.cachedPanels.zipBoostSource = null;
-        State.cachedPanels.zipBoostAbilityName = null;
-        State.cachedPanels.zipBoostCountdown = null;
+        SetCachedPanel("zipBoostOverlay", null);
+        SetCachedPanel("zipBoostLabel", null);
+        SetCachedPanel("zipBoostState", null);
+        SetCachedPanel("zipBoostSource", null);
+        SetCachedPanel("zipBoostAbilityName", null);
+        SetCachedPanel("zipBoostCountdown", null);
         State.zipBoostDisplayMode = "";
         State.zipBoostLastLayoutSig = "";
         State.zipBoostLastClassSig = "";
@@ -22539,9 +22539,9 @@ function GetUIRoot() {
             if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
                 source = FindZipBoostSource(root);
                 State.zipBoostNextSourceSearchMs = source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
-                State.cachedPanels.zipBoostSource = source || null;
-                State.cachedPanels.zipBoostAbilityName = null;
-                State.cachedPanels.zipBoostCountdown = null;
+                SetCachedPanel("zipBoostSource", source);
+                SetCachedPanel("zipBoostAbilityName", null);
+                SetCachedPanel("zipBoostCountdown", null);
             }
         }
 
@@ -22562,7 +22562,7 @@ function GetUIRoot() {
             if (!IsPanelValid(abilityNamePanel) && source.FindChildrenWithClassTraverse) {
                 var abilityNames = source.FindChildrenWithClassTraverse("AbilityName") || [];
                 abilityNamePanel = abilityNames.length > 0 ? abilityNames[0] : null;
-                State.cachedPanels.zipBoostAbilityName = abilityNamePanel || null;
+                SetCachedPanel("zipBoostAbilityName", abilityNamePanel);
             }
             var abilityName = (abilityNamePanel && typeof abilityNamePanel.text === "string") ? abilityNamePanel.text : "";
             if (abilityName && abilityName.length > 0) title = abilityName;
@@ -22571,7 +22571,7 @@ function GetUIRoot() {
             if (!IsPanelValid(countdownPanel) && source.FindChildrenWithClassTraverse) {
                 var countdowns = source.FindChildrenWithClassTraverse("Countdown") || [];
                 countdownPanel = countdowns.length > 0 ? countdowns[0] : null;
-                State.cachedPanels.zipBoostCountdown = countdownPanel || null;
+                SetCachedPanel("zipBoostCountdown", countdownPanel);
             }
             var countdown = (countdownPanel && typeof countdownPanel.text === "string") ? countdownPanel.text : "";
 
@@ -22800,7 +22800,7 @@ function GetUIRoot() {
         if (!root) return null;
         var byId = root.FindChildTraverse ? root.FindChildTraverse(STAT_BONUSES_TOOLTIP_BREAKDOWN_ID) : null;
         if (byId && IsLikelyStatBreakdownContainer(byId)) {
-            State.cachedPanels.statBonusesTooltipBreakdown = byId;
+            SetCachedPanel("statBonusesTooltipBreakdown", byId);
             return byId;
         }
 
@@ -22808,7 +22808,7 @@ function GetUIRoot() {
         for (var i = 0; i < subRows.length; i++) {
             var fromSub = FindAncestorLikelyStatBreakdownContainer(subRows[i], 6);
             if (fromSub) {
-                State.cachedPanels.statBonusesTooltipBreakdown = fromSub;
+                SetCachedPanel("statBonusesTooltipBreakdown", fromSub);
                 return fromSub;
             }
         }
@@ -22817,7 +22817,7 @@ function GetUIRoot() {
         for (var j = 0; j < mainRows.length; j++) {
             var fromMain = FindAncestorLikelyStatBreakdownContainer(mainRows[j], 6);
             if (fromMain) {
-                State.cachedPanels.statBonusesTooltipBreakdown = fromMain;
+                SetCachedPanel("statBonusesTooltipBreakdown", fromMain);
                 return fromMain;
             }
         }
@@ -22826,7 +22826,7 @@ function GetUIRoot() {
         for (var k = 0; k < statNames.length; k++) {
             var fromName = FindAncestorLikelyStatBreakdownContainer(statNames[k], 8);
             if (fromName) {
-                State.cachedPanels.statBonusesTooltipBreakdown = fromName;
+                SetCachedPanel("statBonusesTooltipBreakdown", fromName);
                 return fromName;
             }
         }
@@ -23128,14 +23128,14 @@ function GetUIRoot() {
             maxHealth.text = "Max Health: --";
         }
 
-        State.cachedPanels.statBonusesOverlay = overlay || null;
-        State.cachedPanels.statBonusesTitle = overlay ? overlay.FindChildTraverse("QOLStatBonusesTitle") : null;
-        State.cachedPanels.statBonusesFireRate = overlay ? overlay.FindChildTraverse("QOLStatBonusesFireRate") : null;
-        State.cachedPanels.statBonusesAbilityCooldown = overlay ? overlay.FindChildTraverse("QOLStatBonusesAbilityCooldown") : null;
-        State.cachedPanels.statBonusesSpiritPower = overlay ? overlay.FindChildTraverse("QOLStatBonusesSpiritPower") : null;
-        State.cachedPanels.statBonusesClipSize = overlay ? overlay.FindChildTraverse("QOLStatBonusesClipSize") : null;
-        State.cachedPanels.statBonusesWeaponDamage = overlay ? overlay.FindChildTraverse("QOLStatBonusesWeaponDamage") : null;
-        State.cachedPanels.statBonusesMaxHealth = overlay ? overlay.FindChildTraverse("QOLStatBonusesMaxHealth") : null;
+        SetCachedPanel("statBonusesOverlay", overlay);
+        SetCachedPanel("statBonusesTitle", overlay ? overlay.FindChildTraverse("QOLStatBonusesTitle") : null);
+        SetCachedPanel("statBonusesFireRate", overlay ? overlay.FindChildTraverse("QOLStatBonusesFireRate") : null);
+        SetCachedPanel("statBonusesAbilityCooldown", overlay ? overlay.FindChildTraverse("QOLStatBonusesAbilityCooldown") : null);
+        SetCachedPanel("statBonusesSpiritPower", overlay ? overlay.FindChildTraverse("QOLStatBonusesSpiritPower") : null);
+        SetCachedPanel("statBonusesClipSize", overlay ? overlay.FindChildTraverse("QOLStatBonusesClipSize") : null);
+        SetCachedPanel("statBonusesWeaponDamage", overlay ? overlay.FindChildTraverse("QOLStatBonusesWeaponDamage") : null);
+        SetCachedPanel("statBonusesMaxHealth", overlay ? overlay.FindChildTraverse("QOLStatBonusesMaxHealth") : null);
         return overlay;
     }
 
@@ -23147,22 +23147,22 @@ function GetUIRoot() {
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.statBonusesOverlay = null;
-        State.cachedPanels.statBonusesTitle = null;
-        State.cachedPanels.statBonusesFireRate = null;
-        State.cachedPanels.statBonusesAbilityCooldown = null;
-        State.cachedPanels.statBonusesSpiritPower = null;
-        State.cachedPanels.statBonusesClipSize = null;
-        State.cachedPanels.statBonusesWeaponDamage = null;
-        State.cachedPanels.statBonusesMaxHealth = null;
-        State.cachedPanels.statBonusesFireRateSource = null;
-        State.cachedPanels.statBonusesAbilityCooldownSource = null;
-        State.cachedPanels.statBonusesSpiritPowerSource = null;
-        State.cachedPanels.statBonusesClipSizeSource = null;
-        State.cachedPanels.statBonusesWeaponDamageSource = null;
-        State.cachedPanels.statBonusesMaxHealthSource = null;
-        State.cachedPanels.statBonusesIdolCountSource = null;
-        State.cachedPanels.statBonusesTooltipBreakdown = null;
+        SetCachedPanel("statBonusesOverlay", null);
+        SetCachedPanel("statBonusesTitle", null);
+        SetCachedPanel("statBonusesFireRate", null);
+        SetCachedPanel("statBonusesAbilityCooldown", null);
+        SetCachedPanel("statBonusesSpiritPower", null);
+        SetCachedPanel("statBonusesClipSize", null);
+        SetCachedPanel("statBonusesWeaponDamage", null);
+        SetCachedPanel("statBonusesMaxHealth", null);
+        SetCachedPanel("statBonusesFireRateSource", null);
+        SetCachedPanel("statBonusesAbilityCooldownSource", null);
+        SetCachedPanel("statBonusesSpiritPowerSource", null);
+        SetCachedPanel("statBonusesClipSizeSource", null);
+        SetCachedPanel("statBonusesWeaponDamageSource", null);
+        SetCachedPanel("statBonusesMaxHealthSource", null);
+        SetCachedPanel("statBonusesIdolCountSource", null);
+        SetCachedPanel("statBonusesTooltipBreakdown", null);
         State.statBonuses = {
             displayMode: "",
             lastLayoutSig: "",
@@ -24572,7 +24572,7 @@ function GetUIRoot() {
         if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
             var scannedAlert = FindCombatPanelById(root, root, "InCombatAlert");
             if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
-            State.cachedPanels.combatStatusAlertPanel = alertPanel || null;
+            SetCachedPanel("combatStatusAlertPanel", alertPanel);
             State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
                 !!alertPanel,
                 "combatStatusAlertProbeMisses",
@@ -24727,9 +24727,9 @@ function GetUIRoot() {
             timerLabel.text = "0.0s";
         }
 
-        State.cachedPanels.combatStatusOverlay = overlay || null;
-        State.cachedPanels.combatStatusState = overlay ? overlay.FindChildTraverse("QOLCombatStatusState") : null;
-        State.cachedPanels.combatStatusTimer = overlay ? overlay.FindChildTraverse("QOLCombatStatusTimer") : null;
+        SetCachedPanel("combatStatusOverlay", overlay);
+        SetCachedPanel("combatStatusState", overlay ? overlay.FindChildTraverse("QOLCombatStatusState") : null);
+        SetCachedPanel("combatStatusTimer", overlay ? overlay.FindChildTraverse("QOLCombatStatusTimer") : null);
         return overlay;
     }
 
@@ -24741,10 +24741,10 @@ function GetUIRoot() {
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.combatStatusOverlay = null;
-        State.cachedPanels.combatStatusState = null;
-        State.cachedPanels.combatStatusTimer = null;
-        State.cachedPanels.combatStatusAlertPanel = null;
+        SetCachedPanel("combatStatusOverlay", null);
+        SetCachedPanel("combatStatusState", null);
+        SetCachedPanel("combatStatusTimer", null);
+        SetCachedPanel("combatStatusAlertPanel", null);
         State.combatStatus.displayMode = "";
         State.combatStatus.lastLayoutSig = "";
         State.combatStatus.lastClassSig = "";
@@ -25397,22 +25397,22 @@ function GetUIRoot() {
             overlay.style.visibility = "collapse";
             overlay.DeleteAsync(0);
         }
-        State.cachedPanels.itemMirrorOverlay = null;
-        State.cachedPanels.itemMirrorIcon = null;
-        State.cachedPanels.itemMirrorModContainer = null;
-        State.cachedPanels.itemMirrorBackground = null;
-        State.cachedPanels.itemMirrorIconInner = null;
-        State.cachedPanels.itemMirrorImage = null;
-        State.cachedPanels.itemMirrorItemHidden = null;
-        State.cachedPanels.itemMirrorActiveTagContainer = null;
-        State.cachedPanels.itemMirrorEnhanced = null;
-        State.cachedPanels.itemMirrorCooldownMask = null;
-        State.cachedPanels.itemMirrorCooldownText = null;
-        State.cachedPanels.itemMirrorSourceIcon = null;
-        State.cachedPanels.itemMirrorSourceContainer = null;
-        State.cachedPanels.itemMirrorSourceItemClass = null;
-        State.cachedPanels.itemMirrorRow = null;
-        State.cachedPanels.itemMirrorSlots = [];
+        SetCachedPanel("itemMirrorOverlay", null);
+        SetCachedPanel("itemMirrorIcon", null);
+        SetCachedPanel("itemMirrorModContainer", null);
+        SetCachedPanel("itemMirrorBackground", null);
+        SetCachedPanel("itemMirrorIconInner", null);
+        SetCachedPanel("itemMirrorImage", null);
+        SetCachedPanel("itemMirrorItemHidden", null);
+        SetCachedPanel("itemMirrorActiveTagContainer", null);
+        SetCachedPanel("itemMirrorEnhanced", null);
+        SetCachedPanel("itemMirrorCooldownMask", null);
+        SetCachedPanel("itemMirrorCooldownText", null);
+        SetCachedPanel("itemMirrorSourceIcon", null);
+        SetCachedPanel("itemMirrorSourceContainer", null);
+        SetCachedPanel("itemMirrorSourceItemClass", null);
+        SetCachedPanel("itemMirrorRow", null);
+        SetCachedPanel("itemMirrorSlots", []);
         State.itemMirror = {
             probeLastScanMs: 0,
             probeLastSignature: "",
@@ -25464,7 +25464,7 @@ function GetUIRoot() {
                     hittestchildren: "false"
                 });
             }
-            State.cachedPanels.itemMirrorOverlay = overlay || null;
+            SetCachedPanel("itemMirrorOverlay", overlay);
         }
         if (!overlay) return null;
 
@@ -25486,7 +25486,7 @@ function GetUIRoot() {
                     hittestchildren: "false"
                 });
             }
-            State.cachedPanels.itemMirrorRow = row || null;
+            SetCachedPanel("itemMirrorRow", row);
         }
         if (!row) return overlay;
         row.style.flowChildren = "right";
@@ -25501,14 +25501,14 @@ function GetUIRoot() {
             legacyIcon.DeleteAsync(0);
         }
 
-        if (!State.cachedPanels.itemMirrorSlots) State.cachedPanels.itemMirrorSlots = [];
+        if (!State.cachedPanels.itemMirrorSlots) SetCachedPanel("itemMirrorSlots", []);
         return overlay;
     }
 
     function EnsureItemMirrorSlotMulti(slotIndex) {
         var row = State.cachedPanels.itemMirrorRow;
         if (!IsPanelValid(row)) return null;
-        if (!State.cachedPanels.itemMirrorSlots) State.cachedPanels.itemMirrorSlots = [];
+        if (!State.cachedPanels.itemMirrorSlots) SetCachedPanel("itemMirrorSlots", []);
 
         var slots = State.cachedPanels.itemMirrorSlots;
         var slotObj = slots[slotIndex];
@@ -26556,7 +26556,7 @@ function GetUIRoot() {
         var abilitiesContainer = State.cachedPanels.abilitiesContainer;
         if (!IsPanelValid(abilitiesContainer)) {
             abilitiesContainer = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
-            State.cachedPanels.abilitiesContainer = abilitiesContainer || null;
+            SetCachedPanel("abilitiesContainer", abilitiesContainer);
         }
         var passiveInShop = abilitiesContainer && abilitiesContainer.BHasClass && abilitiesContainer.BHasClass("gShopOpen");
         var shopJustClosed = !!State.itemMirror.lastShopOpen && !passiveInShop;
@@ -26702,7 +26702,7 @@ function GetUIRoot() {
                 if (!parent) return null;
                 compassRoot = $.CreatePanel("Panel", parent, "QOLCompassRoot");
             }
-            State.cachedPanels.compassRoot = compassRoot || null;
+            SetCachedPanel("compassRoot", compassRoot);
         }
         if (!compassRoot) return null;
 
@@ -26712,7 +26712,7 @@ function GetUIRoot() {
             if (!compassBox) {
                 compassBox = $.CreatePanel("Panel", compassRoot, "QOLCompassBox");
             }
-            State.cachedPanels.compassBox = compassBox || null;
+            SetCachedPanel("compassBox", compassBox);
         }
 
         var ticksContainer = State.cachedPanels.compassTicksContainer;
@@ -26721,7 +26721,7 @@ function GetUIRoot() {
             if (!ticksContainer && compassBox) {
                 ticksContainer = $.CreatePanel("Panel", compassBox, "QOLCompassTicks");
             }
-            State.cachedPanels.compassTicksContainer = ticksContainer || null;
+            SetCachedPanel("compassTicksContainer", ticksContainer);
         }
 
         var needle = State.cachedPanels.compassNeedle;
@@ -26730,7 +26730,7 @@ function GetUIRoot() {
             if (!needle && compassBox) {
                 needle = $.CreatePanel("Panel", compassBox, "QOLCompassNeedle");
             }
-            State.cachedPanels.compassNeedle = needle || null;
+            SetCachedPanel("compassNeedle", needle);
         }
 
         var fadeLeft = State.cachedPanels.compassFadeLeft;
@@ -26739,7 +26739,7 @@ function GetUIRoot() {
             if (!fadeLeft && compassBox) {
                 fadeLeft = $.CreatePanel("Panel", compassBox, "QOLCompassFadeLeft");
             }
-            State.cachedPanels.compassFadeLeft = fadeLeft || null;
+            SetCachedPanel("compassFadeLeft", fadeLeft);
         }
 
         var fadeRight = State.cachedPanels.compassFadeRight;
@@ -26748,7 +26748,7 @@ function GetUIRoot() {
             if (!fadeRight && compassBox) {
                 fadeRight = $.CreatePanel("Panel", compassBox, "QOLCompassFadeRight");
             }
-            State.cachedPanels.compassFadeRight = fadeRight || null;
+            SetCachedPanel("compassFadeRight", fadeRight);
         }
 
         var readout = State.cachedPanels.compassReadout;
@@ -26757,7 +26757,7 @@ function GetUIRoot() {
             if (!readout) {
                 readout = $.CreatePanel("Panel", compassRoot, "QOLCompassReadout");
             }
-            State.cachedPanels.compassReadout = readout || null;
+            SetCachedPanel("compassReadout", readout);
         }
 
         var degree = State.cachedPanels.compassDegree;
@@ -26766,7 +26766,7 @@ function GetUIRoot() {
             if (!degree && readout) {
                 degree = $.CreatePanel("Label", readout, "QOLCompassDegree");
             }
-            State.cachedPanels.compassDegree = degree || null;
+            SetCachedPanel("compassDegree", degree);
         }
 
         var speed = State.cachedPanels.compassSpeed;
@@ -26775,7 +26775,7 @@ function GetUIRoot() {
             if (!speed && readout) {
                 speed = $.CreatePanel("Label", readout, "QOLCompassSpeed");
             }
-            State.cachedPanels.compassSpeed = speed || null;
+            SetCachedPanel("compassSpeed", speed);
         }
 
         var ticks = State.cachedPanels.compassTicks || [];
@@ -26801,7 +26801,7 @@ function GetUIRoot() {
                     ticks.push(tick);
                 }
             }
-            State.cachedPanels.compassTicks = ticks;
+            SetCachedPanel("compassTicks", ticks);
             State.compass.tickClassSigs = [];
             State.compass.tickXTexts = [];
         }
@@ -26985,7 +26985,7 @@ function GetUIRoot() {
         if (preferredPlayer) {
             var preferredImage = preferredPlayer.FindChildTraverse("MainImage");
             if (preferredImage) {
-                State.cachedPanels.minimapLocalMainImage = preferredImage;
+                SetCachedPanel("minimapLocalMainImage", preferredImage);
                 State.minimapLocalMainImageNextScanMs = 0;
                 return preferredImage;
             }
@@ -26997,13 +26997,13 @@ function GetUIRoot() {
             if (!p) continue;
             var img = p.FindChildTraverse("MainImage");
             if (img) {
-                State.cachedPanels.minimapLocalMainImage = img;
+                SetCachedPanel("minimapLocalMainImage", img);
                 State.minimapLocalMainImageNextScanMs = 0;
                 return img;
             }
         }
 
-        State.cachedPanels.minimapLocalMainImage = null;
+        SetCachedPanel("minimapLocalMainImage", null);
         State.minimapLocalMainImageNextScanMs = now + scanCooldownMs;
         return null;
     }
@@ -27031,7 +27031,7 @@ function GetUIRoot() {
             var cp = cones[i];
             if (!cp) continue;
             if (PanelHasAllClasses(cp, ["active", "player", "client_cone_fov", "enemy"])) {
-                State.cachedPanels.minimapLocalPlayerPanel = cp;
+                SetCachedPanel("minimapLocalPlayerPanel", cp);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
                 return cp;
             }
@@ -27041,7 +27041,7 @@ function GetUIRoot() {
             var cp2 = cones[j];
             if (!cp2) continue;
             if (PanelHasAllClasses(cp2, ["active", "player", "client_cone_fov"])) {
-                State.cachedPanels.minimapLocalPlayerPanel = cp2;
+                SetCachedPanel("minimapLocalPlayerPanel", cp2);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
                 return cp2;
             }
@@ -27052,13 +27052,13 @@ function GetUIRoot() {
             var p = locals[k];
             if (!p) continue;
             if (p.BHasClass && p.BHasClass("player")) {
-                State.cachedPanels.minimapLocalPlayerPanel = p;
+                SetCachedPanel("minimapLocalPlayerPanel", p);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
                 return p;
             }
         }
 
-        State.cachedPanels.minimapLocalPlayerPanel = null;
+        SetCachedPanel("minimapLocalPlayerPanel", null);
         State.minimapLocalPlayerPanelNextScanMs = now + scanCooldownMs;
         return null;
     }
@@ -27076,7 +27076,7 @@ function GetUIRoot() {
             if (!target) target = root.FindChildTraverse("minimap_persp");
             if (!target) target = root.FindChildTraverse("map_render");
         }
-        State.cachedPanels.minimapRotateTarget = target || null;
+        SetCachedPanel("minimapRotateTarget", target);
         return target;
     }
 
@@ -27103,7 +27103,7 @@ function GetUIRoot() {
         if (!IsPanelValid(target) && IsPanelValid(rotateTarget)) {
             target = rotateTarget;
         }
-        State.cachedPanels.minimapFlipClassTarget = target || null;
+        SetCachedPanel("minimapFlipClassTarget", target);
         return target;
     }
 
@@ -27260,7 +27260,7 @@ function GetUIRoot() {
         var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
         var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
         var target = hudRoot || hudCore || fallback || root || null;
-        State.cachedPanels.minimapDrawHudRoot = target || null;
+        SetCachedPanel("minimapDrawHudRoot", target);
         return target;
     }
 
@@ -27440,7 +27440,7 @@ function GetUIRoot() {
             var existing = State.cachedPanels.compassRoot;
             if (!IsPanelValid(existing) && root && root.FindChildTraverse) {
                 existing = root.FindChildTraverse("QOLCompassRoot");
-                State.cachedPanels.compassRoot = existing || null;
+                SetCachedPanel("compassRoot", existing);
             }
             if (IsPanelValid(existing)) {
                 if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
@@ -27503,7 +27503,7 @@ function GetUIRoot() {
         var compassBox = State.cachedPanels.compassBox;
         if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
-            State.cachedPanels.compassBox = compassBox || null;
+            SetCachedPanel("compassBox", compassBox);
         }
         var boxWidth = Math.round(200 * (stretchX / 100));
         var boxHeight = Math.round(50 * (stretchY / 100));
@@ -27541,12 +27541,12 @@ function GetUIRoot() {
         var degreeLabel = State.cachedPanels.compassDegree;
         if (!IsPanelValid(degreeLabel)) {
             degreeLabel = compassRoot.FindChildTraverse("QOLCompassDegree");
-            State.cachedPanels.compassDegree = degreeLabel || null;
+            SetCachedPanel("compassDegree", degreeLabel);
         }
         var speedLabel = State.cachedPanels.compassSpeed;
         if (!IsPanelValid(speedLabel)) {
             speedLabel = compassRoot.FindChildTraverse("QOLCompassSpeed");
-            State.cachedPanels.compassSpeed = speedLabel || null;
+            SetCachedPanel("compassSpeed", speedLabel);
         }
         if (degreeLabel) {
             degreeLabel.style.width = showSpeed ? "50%" : "100%";
@@ -27979,7 +27979,7 @@ function GetUIRoot() {
                 if (panel) panels.push(panel);
             }
         }
-        State.cachedPanels.minimap = panels;
+        SetCachedPanel("minimap", panels);
         return panels;
     }
 
@@ -28515,7 +28515,7 @@ function GetUIRoot() {
         var quickbuyPanel = GetCachedPanel("quickbuy");
         if (!quickbuyPanel) {
             quickbuyPanel = root.FindChildTraverse("CitadelHudQuickbuy");
-            State.cachedPanels.quickbuy = quickbuyPanel || null;
+            SetCachedPanel("quickbuy", quickbuyPanel);
         }
         if (quickbuyPanel) {
             var quickbuyFeatureActive = enhancedQuickbuyEnabled || quickbuyClickToNotifyEnabled;
@@ -28584,7 +28584,7 @@ function GetUIRoot() {
             var healthContainer = GetCachedPanel("healthContainer");
             if (!healthContainer) {
                 healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
-                State.cachedPanels.healthContainer = healthContainer || null;
+                SetCachedPanel("healthContainer", healthContainer);
             }
             LogHealthbarVisibilityDebug(root, healthContainer, cfg);
             var fgIconPulseMid = false;
@@ -28609,7 +28609,7 @@ function GetUIRoot() {
         if (shouldApplyStaticClasses || abilitiesContainerForClass) {
             if (!abilitiesContainerForClass) {
                 abilitiesContainerForClass = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
-                State.cachedPanels.abilitiesContainer = abilitiesContainerForClass || null;
+                SetCachedPanel("abilitiesContainer", abilitiesContainerForClass);
             }
         }
         if (abilitiesContainerForClass && shouldApplyStaticClasses) {
@@ -28632,7 +28632,7 @@ function GetUIRoot() {
             var passiveHudPanelForClass = GetCachedPanel("passiveHud");
             if (!passiveHudPanelForClass) {
                 passiveHudPanelForClass = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
-                State.cachedPanels.passiveHud = passiveHudPanelForClass || null;
+                SetCachedPanel("passiveHud", passiveHudPanelForClass);
             }
             ApplyPassiveCooldownModeClasses(root, passiveHudPanelForClass, passiveCooldownMode);
         }
@@ -29950,7 +29950,7 @@ function GetUIRoot() {
             var accentHealthContainer = GetCachedPanel("healthContainer");
             if (!accentHealthContainer && root.FindChildTraverse) {
                 accentHealthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
-                State.cachedPanels.healthContainer = accentHealthContainer || null;
+                SetCachedPanel("healthContainer", accentHealthContainer);
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
             PerfEnd("loop.healthbar_accent_color", _psAccent);
