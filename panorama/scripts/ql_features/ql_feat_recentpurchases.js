@@ -20,6 +20,7 @@
     var CLASS_RECENT_PURCHASE = "recentPurchase";
     var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
     var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 10.0;
+    var RECENT_PURCHASE_MAX_ITEMS = 50;
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
@@ -41,6 +42,25 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
 
+    var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
+    var PANEL_ID_TOP_BAR = "TopBar";
+    var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
+function GetRecentPurchaseName(panel) {
+        var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
+        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
+    }
+function HasAncestorClass(panel, className) {
+        var p = panel;
+        while (p) {
+            if (p.BHasClass(className)) return true;
+            p = p.GetParent();
+        }
+        return false;
+    }
+function GetRecentPurchaseTime(panel) {
+        var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
+        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
+    }
     function GetRecentPurchaseHeroName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaserHero");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";

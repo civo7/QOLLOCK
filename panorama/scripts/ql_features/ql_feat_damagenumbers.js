@@ -35,6 +35,26 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
 
+    var DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
+    var HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
+    var HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
+    var HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
+    var HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
+function EnsureIndicatorMetaSmallDamage(meta) {
+        if (!meta || meta.smallDamageKnown) return meta;
+        meta.isSmallDamage = IsIndicatorSmallDamage(meta.panel);
+        meta.smallDamageKnown = true;
+        return meta;
+    }
+function CreateIndicatorMeta(panel, needsSmallDamage) {
+        return {
+            panel: panel,
+            container: null,
+            isCumulativeOrBatched: hasClassInHierarchy(panel, "cumulative") || hasClassInHierarchy(panel, "batched"),
+            isSmallDamage: needsSmallDamage ? IsIndicatorSmallDamage(panel) : false,
+            smallDamageKnown: !!needsSmallDamage
+        };
+    }
     function BuildIndicatorMetaCache(indicators, previousMeta, needsSmallDamage) {
         var out = [];
         if (!indicators || indicators.length === 0) return out;

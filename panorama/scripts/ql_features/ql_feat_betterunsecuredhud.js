@@ -11,6 +11,7 @@
     var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { return null; };
 
     var UNSECURED_SOULS_HUD_SEARCH_MS = 1000;
+    var PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
@@ -29,6 +30,7 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
 
+    var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
     function FindUnsecuredSoulsHudContainer(root) {
         if (!root) return null;
         var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;

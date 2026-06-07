@@ -26047,8 +26047,8 @@ function GetUIRoot() {
         var p = panel;
         var guard = 0;
         while (p && p !== ancestor && guard < 64) {
-            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
-            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
+            var ox = QOL_UTILS.ReadSafePanelLayoutOffset(p.actualxoffset);
+            var oy = QOL_UTILS.ReadSafePanelLayoutOffset(p.actualyoffset);
             if (ox === null || oy === null) return null;
             x += ox;
             y += oy;

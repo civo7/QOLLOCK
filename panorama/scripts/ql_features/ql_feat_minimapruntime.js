@@ -30,6 +30,234 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
 
+    var PANEL_ID_MINIMAP = "hud_minimap";
+    var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
+    var MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
+    var MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
+function HideMinimapTunnelOverlay(root) {
+        var overlay = GetCachedPanel("minimapTunnelOverlayRoot");
+        if (!overlay && root && root.FindChildTraverse) {
+            overlay = root.FindChildTraverse("tunnel_overlay");
+            if (overlay) SetCachedPanel("minimapTunnelOverlayRoot", overlay);
+        }
+        if (!overlay) return;
+        if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
+        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
+    }
+function EnsureMinimapTunnelOverlay(root) {
+        var anchor = EnsureMinimapOverlayAnchor(root);
+        if (!anchor) return null;
+        var overlay = GetCachedPanel("minimapTunnelOverlayRoot");
+        if (!overlay) {
+            overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("tunnel_overlay") || null) : null;
+            if (!overlay) {
+                overlay = $.CreatePanel("Panel", anchor, "tunnel_overlay", {
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+            }
+        } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
+            overlay.SetParent(anchor);
+        }
+        if (!overlay) return null;
+        overlay.hittest = false;
+        overlay.hittestchildren = false;
+        overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png.vtex")';
+        overlay.style.backgroundSize = "100% 100%";
+        overlay.style.backgroundRepeat = "no-repeat";
+        overlay.style.backgroundPosition = "center";
+        SetCachedPanel("minimapTunnelOverlayRoot", overlay);
+        return overlay;
+    }
+function HideMinimapCrateOverlay(root) {
+        var overlay = GetCachedPanel("minimapCrateOverlayRoot");
+        if (!overlay && root && root.FindChildTraverse) {
+            overlay = root.FindChildTraverse("minimap_overlay_root");
+            if (overlay) SetCachedPanel("minimapCrateOverlayRoot", overlay);
+        }
+        if (overlay && overlay.style.visibility !== "collapse") {
+            overlay.style.visibility = "collapse";
+        }
+        MinimapCrateOverlayDebugLogThrottled("hide|" + (overlay ? "1" : "0"), "overlay=" + (overlay ? "1" : "0") + " visibility=collapse", PerfNowMs());
+    }
+function ResolveMinimapCrateOverlayMapKey() {
+        try {
+            if (typeof Game !== "undefined" && Game.GetMapInfo) {
+                var mapInfo = Game.GetMapInfo();
+                if (mapInfo) {
+                    var candidates = [];
+                    if (mapInfo.map_name !== undefined && mapInfo.map_name !== null) {
+                        candidates.push(String(mapInfo.map_name));
+                    }
+                    if (mapInfo.map_display_name !== undefined && mapInfo.map_display_name !== null) {
+                        candidates.push(String(mapInfo.map_display_name));
+                    }
+                    for (var i = 0; i < candidates.length; i++) {
+                        var raw = String(candidates[i] || "");
+                        var normalized = raw.toLowerCase();
+                        if (
+                            normalized === "dl_midtown" ||
+                            normalized === "midtown" ||
+                            normalized.indexOf("midtown") !== -1
+                        ) {
+                            MinimapCrateOverlayDebugLogThrottled(
+                                "mapkey|" + normalized,
+                                "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=dl_midtown from=" + raw,
+                                PerfNowMs()
+                            );
+                            return "dl_midtown";
+                        }
+                    }
+                    MinimapCrateOverlayDebugLogThrottled(
+                        "mapkey|none|" + candidates.join("|"),
+                        "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=<none>",
+                        PerfNowMs()
+                    );
+                }
+            }
+        } catch (eCrateMapKey) {}
+        return "";
+    }
+function MinimapCrateOverlayDebugLogThrottled(sig, msg, nowMs) {
+        if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var sameSig = sig && sig === S.minimapCrateOverlayDebugLastSig;
+        if (sameSig && now < (S.minimapCrateOverlayDebugNextMs || 0)) return;
+        S.minimapCrateOverlayDebugLastSig = sig || "";
+        S.minimapCrateOverlayDebugNextMs = now + MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS;
+        MinimapCrateOverlayDebugLog(msg);
+    }
+function BuildMinimapCrateOverlay(root, mapName) {
+        var panels = EnsureMinimapCrateOverlay(root);
+        if (!panels || !panels.root || !panels.markers) {
+            MinimapCrateOverlayDebugLogThrottled("build|nopanels|" + String(mapName), "map=" + String(mapName) + " panels=<null>", PerfNowMs());
+            return null;
+        }
+        var overlay = panels.root;
+        var markers = panels.markers;
+        var dataRoot = null;
+        if (typeof QOL_MINIMAP_CRATE_DATA === "object" && QOL_MINIMAP_CRATE_DATA) dataRoot = QOL_MINIMAP_CRATE_DATA;
+        else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
+        else if (typeof MINIMAP_DATA === "object" && MINIMAP_DATA) dataRoot = MINIMAP_DATA;
+        var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
+        var points = null;
+        if (mapData && Array.isArray(mapData.crates)) points = mapData.crates;
+        else if (Array.isArray(mapData)) points = mapData;
+        if (!Array.isArray(points) || points.length <= 0) {
+            ClearMinimapCrateOverlayMarkers(markers);
+            S.minimapCrateOverlayBuildSig = "";
+            MinimapCrateOverlayDebugLogThrottled(
+                "build|nodata|" + String(mapName),
+                "map=" + String(mapName) + " dataRoot=" + (dataRoot ? "1" : "0") + " mapData=" + (mapData ? "1" : "0") + " points=0",
+                PerfNowMs()
+            );
+            return overlay;
+        }
+
+        var buildSig = String(mapName) + "|" + String(points.length);
+        if (S.minimapCrateOverlayBuildSig === buildSig && markers.GetChildCount && Number(markers.GetChildCount()) === points.length) {
+            MinimapCrateOverlayDebugLogThrottled(
+                "build|cached|" + buildSig,
+                "map=" + String(mapName) + " points=" + String(points.length) + " children=" + String(Number(markers.GetChildCount()) || 0),
+                PerfNowMs()
+            );
+            return overlay;
+        }
+
+        ClearMinimapCrateOverlayMarkers(markers);
+        var builtCount = 0;
+        for (var i = 0; i < points.length; i++) {
+            var point = points[i];
+            var u = Array.isArray(point) ? Number(point[0]) : Number(point && point.u);
+            var v = Array.isArray(point) ? Number(point[1]) : Number(point && point.v);
+            if (!isFinite(u) || !isFinite(v)) continue;
+            var marker = $.CreatePanel("Panel", markers, "");
+            marker.AddClass("minimap_marker");
+            marker.style.position = (u * 100) + "% " + (v * 100) + "% 0";
+            marker.style.width = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
+            marker.style.height = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
+            marker.style.transform =
+                "translateX(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px) translateY(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px)";
+            marker.style.opacity = "1.0";
+            marker.style.backgroundColor = "rgba(255, 213, 74, " + MINIMAP_CRATE_OVERLAY_MARKER_OPACITY.toFixed(2) + ")";
+            marker.style.border = "1px solid rgba(42, 33, 0, " + MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY.toFixed(2) + ")";
+            builtCount++;
+        }
+        S.minimapCrateOverlayBuildSig = buildSig;
+        MinimapCrateOverlayDebugLogThrottled(
+            "build|done|" + buildSig,
+            "map=" + String(mapName) + " points=" + String(points.length) + " built=" + String(builtCount) + " children=" + String(Number(markers.GetChildCount()) || 0),
+            PerfNowMs()
+        );
+        return overlay;
+    }
+function ReadMinimapIconColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR", MINIMAP_ICON_COLOR_ATTR, "");
+    }
+function CaptureMinimapOriginalParent(minimapPersp) {
+        if (!minimapPersp || S.minimapDrawOverUiOriginalParent) {
+            return;
+        }
+
+        var parent = minimapPersp.GetParent ? minimapPersp.GetParent() : null;
+        S.minimapDrawOverUiOriginalParent = parent || null;
+        S.minimapDrawOverUiOriginalIndex = -1;
+        if (!parent || !parent.GetChildCount || !parent.GetChild) {
+            return;
+        }
+
+        var count = parent.GetChildCount();
+        for (var i = 0; i < count; i++) {
+            if (parent.GetChild(i) === minimapPersp) {
+                S.minimapDrawOverUiOriginalIndex = i;
+                break;
+            }
+        }
+    }
+function ResolveHudRootForMinimapDraw(root) {
+        var cached = GetCachedPanel("minimapDrawHudRoot");
+        if (IsPanelValid(cached)) {
+            return cached;
+        }
+
+        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null;
+        var hudCore = gameplayHud && gameplayHud.GetParent ? gameplayHud.GetParent() : null;
+        var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
+        var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
+        var target = hudRoot || hudCore || fallback || root || null;
+        SetCachedPanel("minimapDrawHudRoot", target);
+        return target;
+    }
+function RestoreMinimapOriginalOrder(minimapPersp) {
+        var parent = S.minimapDrawOverUiOriginalParent;
+        if (!minimapPersp || !parent || !IsPanelValid(parent)) {
+            return;
+        }
+
+        if (minimapPersp.GetParent && minimapPersp.GetParent() !== parent && minimapPersp.SetParent) {
+            minimapPersp.SetParent(parent);
+        }
+
+        if (!parent.GetChildCount || !parent.GetChild || !parent.MoveChildBefore) {
+            return;
+        }
+
+        var targetIndex = S.minimapDrawOverUiOriginalIndex;
+        if (!isFinite(targetIndex) || targetIndex < 0) {
+            return;
+        }
+
+        var count = parent.GetChildCount();
+        if (count <= 1 || targetIndex >= count) {
+            return;
+        }
+
+        var anchor = parent.GetChild(targetIndex);
+        if (anchor && anchor !== minimapPersp) {
+            parent.MoveChildBefore(minimapPersp, anchor);
+        }
+    }
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
