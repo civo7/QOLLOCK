@@ -29844,129 +29844,96 @@ function GetUIRoot() {
         var _buckets = [[], [], [], [], [], [], [], []];
         var _b = FEATURE_STAGGER_ENABLED ? _buckets : null; // null = use bucket 0 only
 
-        // --- Bucket 0 (0ms): rejuvTimers, coreRoot ---
-        if (gates.rejuvTimers) {
-            (_b ? _b[0] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("rejuvTimers", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["rejuvTimers"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    }
-                    PerfEnd("loop.rejuv_timers", _ps);
-                });
-            });
-        }
+        // ── Data-driven feature dispatch (Step 1: iterate registry instead of hardcoded if-blocks) ──
+        // Feature dispatch order — preserves original scheduling order within each bucket
+        var FEATURE_DISPATCH_ORDER = [
+            "rejuvTimers",
+            "spm", "nicknames",
+            "unspent", "statlocker",
+            "panelCache",
+            "onDeathArcade",
+            "coreRoot",
+            "healthbarRuntimeHelpers",
+            "laneWithParty",
+            "gameplayMouseCursor",
+            "betterUnsecuredHud",
+            "colorWarning", "enemyColorWarning", "allyColorWarning",
+            "ammo", "topBarRuntime",
+            "bottomBarRuntime", "itemsRuntime", "soulsRuntime",
+            "heroShop",
+            "recentPurchases",
+            "keyboardRuntime", "zipBoost", "unsecuredSoulsTimer", "statBonuses",
+            "combatStatus",
+            "signatureFlash",
+            "targetShapes",
+            "damageImpactRuntime", "staminaChargeColorRuntime",
+            "damageNumbers",
+            "minimapRuntime", "legacyAudioPassive", "imagesInChat"
+        ];
 
-        // --- Bucket 1 (17ms): spm, nicknames ---
-        if (gates.spm) {
-            (_b ? _b[1] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("spm", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["spm"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.souls_per_min", _ps);
-                });
-            });
-        }
+        // Perf trace labels that differ from the feature key
+        var FEATURE_PERF_MAP = {
+            "spm": "loop.souls_per_min",
+            "coreRoot": "loop.root_classes",
+            "nicknames": "loop.topbar_nicknames",
+            "betterUnsecuredHud": "loop.unsecured_souls_hud",
+            "keyboardRuntime": "loop.keyboard_overlay",
+            "unsecuredSoulsTimer": "loop.unsecured_souls_overlay",
+            "gameplayMouseCursor": "loop.gameplay_mouse_cursor",
+            "legacyAudioPassive": "loop.legacy_audio_and_passivehud",
+            "imagesInChat": "loop.images_in_chat"
+        };
 
-        // --- Bucket 2 (33ms): unspent, statlocker ---
-        if (gates.unspent) {
-            (_b ? _b[2] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("unspent", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["unspent"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.unspent", _ps);
-                });
-            });
-        }
+        // Gate name overrides (when the gates key differs from the feature key)
+        var FEATURE_GATE_MAP = {
+            "unsecuredSoulsTimer": "unsecuredSouls"
+        };
 
-        if (gates.nicknames) {
-            (_b ? _b[1] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("nicknames", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["nicknames"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.topbar_nicknames", _ps);
-                });
-            });
-        }
+        // Features that require a valid root panel reference
+        var FEATURE_REQUIRES_ROOT = {
+            "coreRoot": true,
+            "healthbarRuntimeHelpers": true
+        };
 
-        if (gates.statlocker) {
-            (_b ? _b[2] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("statlocker", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["statlocker"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.statlocker", _ps);
-                });
-            });
-        }
+        FEATURE_DISPATCH_ORDER.forEach(function(_fname) {
+            var _gateKey = FEATURE_GATE_MAP[_fname] || _fname;
 
-        if (gates.panelCache) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("panelCache", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["panelCache"];
-                    if (_feat) {
-                        _feat.update(_s.root);
-                    }
-                    PerfEnd("loop.panel_cache", _ps);
-                });
-            });
-        }
+            // Gate check
+            if (!gates[_gateKey]) return;
 
-        // --- Bucket 7 (117ms): onDeathArcade ---
-        if (gates.onDeathArcade) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("onDeathArcade", function() {
+            // Root guard
+            if (FEATURE_REQUIRES_ROOT[_fname] && !root) return;
+
+            // Special: healthbarRuntimeHelpers only runs when coreRoot is OFF
+            if (_fname === "healthbarRuntimeHelpers" && gates.coreRoot) return;
+
+            var _feat = QOL_FEATURE_REGISTRY[_fname];
+            if (!_feat) return;
+
+            var _bucket = _b ? (_feat.bucket != null ? _feat.bucket : 0) : 0;
+            var _perfName = FEATURE_PERF_MAP[_fname] || ("loop." + _fname);
+
+            _buckets[_bucket].push(function(_s) {
+                ExecuteFeature(_fname, function() {
                     var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["onDeathArcade"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    // minimapRuntime gets raw config as 6th arg
+                    if (_fname === "minimapRuntime") {
+                        QOL_FEATURE_REGISTRY[_fname].update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected, _s.raw);
+                    } else {
+                        QOL_FEATURE_REGISTRY[_fname].update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    }
+                    // Post-update side effects
+                    if (_fname === "onDeathArcade") {
                         State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
                     }
-                    PerfEnd("loop.on_death_arcade", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 0 (0ms): coreRoot ---
-        if (root && gates.coreRoot) {
-            (_b ? _b[0] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("coreRoot", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["coreRoot"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                    if (_fname === "coreRoot") {
                         State.coreRootGateSig = _s.gates.sig;
                     }
-                    PerfEnd("loop.root_classes", _ps);
+                    PerfEnd(_perfName, _ps);
                 });
             });
-        }
-        // --- Bucket 1 (17ms): healthbarRuntimeHelpers ---
-        if (root && !gates.coreRoot && gates.healthbarRuntimeHelpers) {
-            (_b ? _b[1] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("healthbarRuntimeHelpers", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["healthbarRuntimeHelpers"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.healthbar_helpers", _ps);
-                });
-            });
-        }
+        });
+
         // Healthbar accent color — runs synchronously (reads from State, not gates)
         var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
         var loopAccentNeedsRefresh = (
@@ -29988,360 +29955,6 @@ function GetUIRoot() {
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
             PerfEnd("loop.healthbar_accent_color", _psAccent);
-        }
-
-        // --- Bucket 7 (117ms): laneWithParty ---
-        if (gates.laneWithParty) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("laneWithParty", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["laneWithParty"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.lane_with_party", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 7 (117ms): gameplayMouseCursor ---
-        if (gates.gameplayMouseCursor) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("gameplayMouseCursor", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["gameplayMouseCursor"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.gameplay_mouse_cursor", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 7 (117ms): betterUnsecuredHud ---
-        if (gates.betterUnsecuredHud) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("betterUnsecuredHud", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["betterUnsecuredHud"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    }
-                    PerfEnd("loop.unsecured_souls_hud", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 5 (83ms): colorWarning ---
-        if (gates.colorWarning) {
-            (_b ? _b[5] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("colorWarning", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["colorWarning"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.colored_healthbar", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 5 (83ms): enemyColorWarning ---
-        if (gates.enemyColorWarning) {
-            (_b ? _b[5] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("enemyColorWarning", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["enemyColorWarning"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.enemy_colored_healthbar", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 5 (83ms): allyColorWarning ---
-        if (gates.allyColorWarning) {
-            (_b ? _b[5] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("allyColorWarning", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["allyColorWarning"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.ally_colored_healthbar", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 4 (67ms): ammo, topBarRuntime ---
-        if (gates.ammo) {
-            (_b ? _b[4] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("ammo", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["ammo"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.ammo_panel", _ps);
-                });
-            });
-        }
-
-        if (gates.topBarRuntime) {
-            (_b ? _b[4] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("topBarRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["topBarRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.top_bar_runtime", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 3 (50ms): bottomBarRuntime, itemsRuntime, soulsRuntime ---
-        if (gates.bottomBarRuntime) {
-            (_b ? _b[3] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("bottomBarRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["bottomBarRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.bottom_bar_runtime", _ps);
-                });
-            });
-        }
-
-        if (gates.itemsRuntime) {
-            (_b ? _b[3] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("itemsRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["itemsRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.items_runtime", _ps);
-                });
-            });
-        }
-
-        if (gates.soulsRuntime) {
-            (_b ? _b[3] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("soulsRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["soulsRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.souls_runtime", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 4 (67ms): heroShop ---
-        if (gates.heroShop) {
-            (_b ? _b[4] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("heroShop", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["heroShop"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    }
-                    PerfEnd("loop.hero_shop", _ps);
-                });
-            });
-        }
-        // --- Bucket 7 (117ms): recentPurchases ---
-        if (gates.recentPurchases) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("recentPurchases", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["recentPurchases"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.recent_purchases", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 6 (100ms): keyboardRuntime, zipBoost, unsecuredSouls, statBonuses ---
-        if (gates.keyboardRuntime) {
-            (_b ? _b[6] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("keyboardRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["keyboardRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.keyboard_overlay", _ps);
-                });
-            });
-        }
-
-        if (gates.zipBoost) {
-            (_b ? _b[6] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("zipBoost", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["zipBoost"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.zip_boost", _ps);
-                });
-            });
-        }
-
-        if (gates.unsecuredSouls) {
-            (_b ? _b[6] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("unsecuredSouls", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["unsecuredSoulsTimer"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.unsecured_souls_overlay", _ps);
-                });
-            });
-        }
-
-        if (gates.statBonuses) {
-            (_b ? _b[6] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("statBonuses", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["statBonuses"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.stat_bonuses", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 7 (117ms): combatStatus ---
-        if (gates.combatStatus) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("combatStatus", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["combatStatus"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.combat_status", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 2 (33ms): signatureFlash ---
-        if (gates.signatureFlash) {
-            (_b ? _b[2] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("signatureFlash", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["signatureFlash"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    }
-                    PerfEnd("loop.signature_flash", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 5 (83ms): targetShapes ---
-        if (gates.targetShapes) {
-            (_b ? _b[5] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("targetShapes", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["targetShapes"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.target_shapes", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 7 (117ms): damageImpactRuntime, staminaChargeColorRuntime ---
-        if (gates.damageImpactRuntime) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("damageImpactRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["damageImpactRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg);
-                    }
-                    PerfEnd("loop.damage_impact_runtime", _ps);
-                });
-            });
-        }
-
-        if (gates.staminaChargeColorRuntime) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("staminaChargeColorRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["staminaChargeColorRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs);
-                    }
-                    PerfEnd("loop.stamina_charge_color", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 5 (83ms): damageNumbers ---
-        if (gates.damageNumbers) {
-            (_b ? _b[5] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("damageNumbers", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["damageNumbers"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.damage_numbers", _ps);
-                });
-            });
-        }
-
-        // --- Bucket 7 (117ms): minimapRuntime, legacyAudioPassive, imagesInChat ---
-        if (gates.minimapRuntime) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("minimapRuntime", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["minimapRuntime"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected, _s.raw);
-                    }
-                    PerfEnd("loop.minimap", _ps);
-                });
-            });
-        }
-
-        if (gates.legacyAudioPassive) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("legacyAudioPassive", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["legacyAudioPassive"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.legacy_audio_and_passivehud", _ps);
-                });
-            });
-        }
-
-        if (gates.imagesInChat) {
-            (_b ? _b[7] : _buckets[0]).push(function(_s) {
-                ExecuteFeature("imagesInChat", function() {
-                    var _ps = PerfStart();
-                    var _feat = QOL_FEATURE_REGISTRY["imagesInChat"];
-                    if (_feat) {
-                        _feat.update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
-                    }
-                    PerfEnd("loop.images_in_chat", _ps);
-                });
-            });
         }
 
         // ---- dispatch or execute buckets ----
