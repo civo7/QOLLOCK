@@ -28647,7 +28647,8 @@ function GetUIRoot() {
     // ── Diagnostic dump function ──
     // Dumps loaded/missing/disabled features from State.
     // Exposed for the "Copy Logs" button in the Dev tab (ql_settings.js).
-    var QOL_DumpDiagnostics = function() {
+    // NOTE: local var named _qolDiag to avoid shadowing the bare-global export.
+    var _qolDiag = function() {
             var lines = [];
             lines.push("=== QOLLOCK Diagnostics ===");
             lines.push("Version: " + (typeof MOD_DISPLAY_VERSION !== "undefined" ? MOD_DISPLAY_VERSION : "?"));
@@ -28684,6 +28685,6 @@ function GetUIRoot() {
             }
             return lines.join("\n");
         };
-    try { QOL_DumpDiagnostics = QOL_DumpDiagnostics; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_DumpDiagnostics = QOL_DumpDiagnostics; } catch(e) {}
+    try { QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
 })();
