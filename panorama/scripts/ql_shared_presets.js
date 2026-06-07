@@ -2106,8 +2106,9 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
 };
 
 // ── Diagnostic dump function ──
-// Reads HUD state from panel attributes (cross-context via the panel tree).
-// ql_core.js writes QOL_DIAG_ATTR on the root panel each tick.
+// Reads HUD state from globalThis.__qolDiag (written by ql_core.js).
+// globalThis is the only cross-context channel in Panorama that works
+// between the HUD and settings panel JS contexts.
 var QOL_DumpDiagnostics = function() {
     var lines = [];
     lines.push("=== QOLLOCK Diagnostics ===");
@@ -2115,14 +2116,7 @@ var QOL_DumpDiagnostics = function() {
     lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
     lines.push("");
 
-    // Try to read runtime state from the panel tree (HUD context writes here)
-    var _diag = null;
-    try {
-        var _ctx = $.GetContextPanel();
-        while (_ctx && _ctx.GetParent) { var _p = _ctx.GetParent(); if (!_p) break; _ctx = _p; }
-        var _raw = (_ctx && _ctx.GetAttributeString) ? _ctx.GetAttributeString("QOL_Diag", "") : "";
-        if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
-    } catch(e) {}
+    var _diag = (typeof globalThis !== "undefined" && globalThis.__qolDiag) ? globalThis.__qolDiag : null;
 
     if (_diag) {
         lines.push("--- Loaded Features (" + (_diag.features ? _diag.features.length : 0) + ") ---");
