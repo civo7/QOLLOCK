@@ -10868,38 +10868,6 @@ function GetUIRoot() {
         return meta;
     }
 
-    function BuildIndicatorMetaCache(indicators, previousMeta, needsSmallDamage) {
-        var out = [];
-        if (!indicators || indicators.length === 0) return out;
-        var previous = Array.isArray(previousMeta) ? previousMeta : [];
-        var usedPrevious = [];
-
-        function reuseMeta(meta, previousIndex) {
-            if (!meta) return null;
-            usedPrevious[previousIndex] = true;
-            if (needsSmallDamage) EnsureIndicatorMetaSmallDamage(meta);
-            return meta;
-        }
-
-        for (var i = 0; i < indicators.length; i++) {
-            var panel = indicators[i];
-            if (!panel) continue;
-            var existingMeta = null;
-            if (previous[i] && previous[i].panel === panel) {
-                existingMeta = reuseMeta(previous[i], i);
-            } else {
-                for (var em = 0; em < previous.length; em++) {
-                    if (usedPrevious[em]) continue;
-                    if (previous[em] && previous[em].panel === panel) {
-                        existingMeta = reuseMeta(previous[em], em);
-                        break;
-                    }
-                }
-            }
-            out.push(existingMeta || CreateIndicatorMeta(panel, needsSmallDamage));
-        }
-        return out;
-    }
 
     function EnsurePanelClassCache(cacheObj, panel) {
         if (!cacheObj) return;
@@ -19371,144 +19339,8 @@ function GetUIRoot() {
         var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
-    function ResolveDamageNumbersRuntimeSig(cfg) {
-        var rawOpacity = cfg ? cfg.DAMAGE_NUMBER_OPACITY : null;
-        var indicatorOpacity = (rawOpacity === undefined || rawOpacity === null) ? 1.0 : parseFloat(rawOpacity);
-        if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
-        if (indicatorOpacity < 0) indicatorOpacity = 0;
-        if (indicatorOpacity > 1) indicatorOpacity = 1;
-        var rawSize = cfg ? cfg.HUD_INDICATOR_SIZE : null;
-        var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
-        if (!isFinite(indicatorSize)) indicatorSize = 18;
-        var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
-        var cleanIndicators = (cfg && IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
-        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
-    }
 
-    function NeedsDamageNumbersRuntimeWork(cfg, raw) {
-        var sig = ResolveDamageNumbersRuntimeSig(cfg);
-        var defaultSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
-        if (sig !== defaultSig) return true;
-        if (State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
-        if (State.accountPresetTestActive) return true;
-        if (raw !== State.lastRawConfig && State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
-        return false;
-    }
 
-    function UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop) {
-        // Bail early when indicator config is at default and no cached panel work to clean up.
-        if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
-            !IsPanelListValid(State.indicatorPanelsCache) &&
-            !State.accountPresetTestActive) return;
-
-        var indicatorOpacity = (cfg.DAMAGE_NUMBER_OPACITY === undefined || cfg.DAMAGE_NUMBER_OPACITY === null) ? 1.0 : parseFloat(cfg.DAMAGE_NUMBER_OPACITY);
-        if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
-        if (indicatorOpacity < 0) indicatorOpacity = 0;
-        if (indicatorOpacity > 1) indicatorOpacity = 1;
-        var indicatorOpacityText = indicatorOpacity.toFixed(2);
-        var indicatorSize = (cfg.HUD_INDICATOR_SIZE === undefined || cfg.HUD_INDICATOR_SIZE === null) ? 18 : Math.round(Number(cfg.HUD_INDICATOR_SIZE));
-        if (!isFinite(indicatorSize)) indicatorSize = 18;
-        var hideSmallNumbers = (cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
-        var hideModesSig = (hideSmallNumbers ? "1" : "0");
-        var hideModesChanged = (hideModesSig !== State.lastIndicatorHideModesSig);
-        var cleanIndicators = (IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
-        var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
-        var indicatorDefaultsSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
-        var indicatorIsDefault = (indicatorConfigSig === indicatorDefaultsSig);
-        var indicatorRefreshIntervalMs = hideSmallNumbers ? HUD_INDICATOR_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_REFRESH_MS_IDLE;
-        var indicatorPanelCacheRefreshMs = hideSmallNumbers ? HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE;
-        var indicatorRefreshDue = RuntimeTaskIsDue("hud_indicator_refresh", nowMsLoop);
-        var shouldRefreshIndicators =
-            raw !== State.lastRawConfig ||
-            State.accountPresetTestActive ||
-            indicatorConfigSig !== State.lastIndicatorConfigSig ||
-            indicatorRefreshDue;
-
-        if (shouldRefreshIndicators) {
-            var shouldSkipDefaultPass =
-                indicatorIsDefault &&
-                indicatorConfigSig === State.lastIndicatorConfigSig &&
-                !State.accountPresetTestActive &&
-                raw === State.lastRawConfig;
-            if (shouldSkipDefaultPass) {
-                RuntimeTaskSetDelay("hud_indicator_refresh", nowMsLoop, indicatorRefreshIntervalMs);
-            } else {
-                var indicatorCacheValid = IsPanelListValid(State.indicatorPanelsCache);
-                var indicatorPanelCacheDue = RuntimeTaskIsDue("hud_indicator_panel_cache", nowMsLoop);
-                var shouldRefreshIndicatorPanels =
-                    !indicatorCacheValid ||
-                    indicatorPanelCacheDue ||
-                    indicatorConfigSig !== State.lastIndicatorConfigSig;
-                if (shouldRefreshIndicatorPanels) {
-                    var dmgContainer = GetCachedPanel("dmgIndicators");
-                    if (!dmgContainer && root.FindChildTraverse) {
-                        dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
-                        SetCachedPanel("dmgIndicators", dmgContainer);
-                    }
-                    var searchRoot = dmgContainer ? dmgContainer : root;
-                    State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
-                    RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
-                }
-                var indicatorMeta = State.indicatorMetaCache || [];
-                if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (State.indicatorPanelsCache || []).length) {
-                    indicatorMeta = BuildIndicatorMetaCache(State.indicatorPanelsCache, indicatorMeta, hideSmallNumbers);
-                    State.indicatorMetaCache = indicatorMeta;
-                    State._descDebugLogged = false;
-                }
-
-                var indicatorFontSizeText = indicatorSize + "px";
-                for (var im = 0; im < indicatorMeta.length; im++) {
-                    var meta = indicatorMeta[im];
-                    if (!meta || !meta.panel) continue;
-                    var p = meta.panel;
-                    if (!IsPanelValid(p)) continue;
-
-                    if (hideModesChanged) {
-                        var indicatorContainer = IsPanelValid(meta.container) ? meta.container : FindAncestorWithClass(p, "HudIndicatorContainer");
-                        if (indicatorContainer && indicatorContainer !== meta.container) {
-                            meta.container = indicatorContainer;
-                        }
-                        if (p.style.opacity === "0" || p.style.opacity === "0.00") {
-                            SetPanelOpacitySafe(p, 1.0, 1.0);
-                        }
-                        if (indicatorContainer && (indicatorContainer.style.opacity === "0" || indicatorContainer.style.opacity === "0.00")) {
-                            SetPanelOpacitySafe(indicatorContainer, 1.0, 1.0);
-                        }
-                    }
-
-                    var targetSize = indicatorFontSizeText;
-                    try {
-                        var panelId = p.id;
-                        if (panelId === "Desc" || panelId === "Effectiveness") {
-                            var _dc = PerfStart();
-                            var capped = indicatorSize > 28 ? 28 : indicatorSize;
-                            targetSize = capped + "px";
-                            PerfEnd("indicators.desc_font_cap", _dc);
-                        }
-                    } catch (e) {}
-                    if (p.style.fontSize !== targetSize) {
-                        p.style.fontSize = targetSize;
-                    }
-                    if (meta.isCumulativeOrBatched) continue;
-
-                    if (hideSmallNumbers && meta.isSmallDamage) {
-                        SetPanelOpacitySafe(p, 0, 0);
-                        continue;
-                    }
-                    SetPanelOpacitySafe(p, indicatorOpacityText, 1.0);
-                }
-                State.lastIndicatorCount = indicatorMeta.length;
-                if (indicatorIsDefault && !State.accountPresetTestActive) {
-                    State.indicatorPanelsCache = [];
-                    State.indicatorMetaCache = [];
-                    State.lastIndicatorCount = 0;
-                }
-            }
-            State.lastIndicatorConfigSig = indicatorConfigSig;
-            State.lastIndicatorHideModesSig = hideModesSig;
-            RuntimeTaskSetDelay("hud_indicator_refresh", nowMsLoop, indicatorRefreshIntervalMs);
-        }
-    }
 
 
 
@@ -25771,29 +25603,6 @@ function GetUIRoot() {
         stateKeys: ["rejuvState", "rejuvWasDisabled", "minimapObjectiveBuffClassCache",
                     "minimapObjectiveBuffBridgeLeftClassCache", "minimapObjectiveBuffBridgeRightClassCache",
                     "minimapObjectiveRejuvClassCache", "minimapObjectiveScaleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("damageNumbers", {
-        configKeys: ["ENABLE_CLEAN_DAMAGE_INDICATORS", "ENABLE_HIDE_SMALL_NUMBERS",
-                     "ENABLE_HIDE_TROOPER_DAMAGE", "DAMAGE_NUMBER_OPACITY",
-                     "ENABLE_DAMAGE_FOUNTAIN", "ENABLE_CUMULATIVE_DMG"],
-        bucket: 5,
-        phase: -1,
-        gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS") ||
-                   IsCfgEnabled(cfg, "ENABLE_HIDE_SMALL_NUMBERS") ||
-                   IsCfgEnabled(cfg, "ENABLE_HIDE_TROOPER_DAMAGE") ||
-                   IsCfgEnabled(cfg, "ENABLE_DAMAGE_FOUNTAIN") ||
-                   IsCfgEnabled(cfg, "ENABLE_CUMULATIVE_DMG") ||
-                   Number(cfg.DAMAGE_NUMBER_OPACITY) !== 1;
-        },
-        update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateDamageNumbersRuntime(root, cfg, State.lastRawConfig, nowMs);
-        },
-        stateKeys: ["lastIndicatorConfigSig", "lastIndicatorHideModesSig",
-                    "indicatorPanelsCache", "indicatorMetaCache",
-                    "lastIndicatorCount", "lastItemCount",
-                    "damageNumbersRuntimeStyleSig"]
     });
 
     // ── Batch C: features with significant State footprint ──
