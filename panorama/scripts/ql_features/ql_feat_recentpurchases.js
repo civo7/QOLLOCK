@@ -14,6 +14,7 @@
     var NormalizeOpacityNumber = U ? U.NormalizeOpacityNumber : function(v,d) { return Number(v)||d; };
     var QOL_WARN = typeof QOL_WARN !== "undefined" ? QOL_WARN : function() {};
     var SetPanelClassCached = typeof QOL_SetPanelClassCached !== "undefined" ? QOL_SetPanelClassCached : function() {};
+    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
 
     // ── Feature-specific constants ──
     var CLASS_RECENT_PURCHASE = "recentPurchase";
