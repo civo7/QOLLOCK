@@ -28119,7 +28119,7 @@ function GetUIRoot() {
         }
         State.lastRawConfig = raw;
 
-        // Sync diagnostic state to globalThis (cross-context for Dev tab)
+        // Sync diagnostic state to Hud panel attribute (same cross-context path as config)
         try {
             if (typeof QOL_FEATURE_REGISTRY !== "undefined" && State._diagWriteNextMs <= nowMsLoop) {
                 State._diagWriteNextMs = nowMsLoop + 5000;
@@ -28128,8 +28128,12 @@ function GetUIRoot() {
                     missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
                     errors: (State._featureErrorCount) ? State._featureErrorCount : {}
                 };
-                if (typeof globalThis !== "undefined") {
-                    globalThis.__qolDiag = _diag;
+                var _diagRoot = State.rootPanel || root;
+                if (_diagRoot && _diagRoot.FindChildTraverse) {
+                    var _diagHud = _diagRoot.FindChildTraverse("Hud");
+                    if (_diagHud && _diagHud.SetAttributeString) {
+                        _diagHud.SetAttributeString("QOL_Diag", JSON.stringify(_diag));
+                    }
                 }
             }
         } catch(e) {}
