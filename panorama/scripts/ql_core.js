@@ -28652,6 +28652,7 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_GetUIRoot = GetUIRoot; } catch(e) {}
     try { QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_FindZipBoostSource = FindZipBoostSource; } catch(e) {}
     try { QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
     try { QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
