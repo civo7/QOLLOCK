@@ -20229,25 +20229,6 @@ function GetUIRoot() {
         State.staminaChargeColorStyleSig = styleSig;
     }
 
-    function UpdateSoulsRuntime(root, cfg) {
-        var active = HasNonDefaultSoulsRuntimeConfig(cfg);
-        var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
-        var soulsPanel = ResolveCachedPanel(root, "soulsContainer", PANEL_ID_GOLD_AP_CONTAINER)
-        if (!soulsPanel) return;
-
-        var offsetX = active ? NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) : 0;
-        var offsetY = active ? NormalizeHudOffsetNumber(cfg.SOULS_Y_OFFSET, 0) : 0;
-        var opacityText = active ? NormalizeOpacityNumber(cfg.SOULS_OPACITY, 1.0).toFixed(2) : "1.00";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0");
-        if (State.soulsRuntimeStyleSig === styleSig) return;
-
-        soulsPanel.style.x = String(offsetX) + "px";
-        soulsPanel.style.y = String(-offsetY) + "px";
-        soulsPanel.style.visibility = enabled ? "visible" : "collapse";
-        SetPanelOpacitySafe(soulsPanel, opacityText, 1.0);
-        State.soulsRuntimeStyleSig = styleSig;
-    }
-
     // ── Recent Purchases runtime ──────────────────────────────────────────────────
 
     function HasAncestorClass(panel, className) {
@@ -30216,14 +30197,6 @@ function GetUIRoot() {
         gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
         update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("soulsRuntime", {
-        configKeys: ["HUD_SOULS_ENABLED", "SOULS_OPACITY", "SOULS_X_OFFSET", "SOULS_Y_OFFSET"],
-        bucket: 3, phase: -1,
-        gate: function(cfg) { return NeedsSoulsRuntimeWork(cfg); },
-        update: function(root, cfg) { UpdateSoulsRuntime(root, cfg); },
-        stateKeys: ["soulsRuntimeStyleSig", "cachedPanels.soulsContainer"]
     });
 
     QOL_REGISTER_FEATURE("damageImpactRuntime", {
