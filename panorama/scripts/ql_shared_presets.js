@@ -2120,13 +2120,20 @@ var QOL_DumpDiagnostics = function() {
     var _diag = null;
     try {
         var _ctx = $.GetContextPanel();
+        var _rootId = (_ctx && _ctx.id) ? _ctx.id : "?";
         while (_ctx && _ctx.GetParent && _ctx.GetParent()) { _ctx = _ctx.GetParent(); }
-        if (_ctx && _ctx.FindChildTraverse) {
-            var _hud = _ctx.FindChildTraverse("Hud");
-            if (_hud && _hud.GetAttributeString) {
-                var _raw = _hud.GetAttributeString("QOL_Diag", "");
-                if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
-            }
+        var _rootPanelId = (_ctx && _ctx.id) ? _ctx.id : "?";
+        var _hasFind = !!(_ctx && _ctx.FindChildTraverse);
+        var _hud = (_hasFind) ? _ctx.FindChildTraverse("Hud") : null;
+        var _hudFound = !!(_hud && _hud.IsValid && _hud.IsValid());
+        var _hasAttr = !!(_hudFound && _hud.GetAttributeString);
+        if (_hasAttr) {
+            var _raw = _hud.GetAttributeString("QOL_Diag", "");
+            if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
+        }
+        // Debug: log what we found
+        if (typeof $ !== "undefined" && $.Msg) {
+            $.Msg("[QOLLock][Diag] ctx=" + _rootId + " root=" + _rootPanelId + " find=" + _hasFind + " hud=" + _hudFound + " attr=" + _hasAttr + " raw=" + (typeof _raw !== "undefined" ? (_raw ? _raw.substring(0,50) : "(empty)") : "n/a"));
         }
     } catch(e) {}
 
