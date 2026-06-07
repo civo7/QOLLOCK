@@ -26855,6 +26855,20 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
+    try { QOL_ResolveUnitTargetStyleTexts = ResolveUnitTargetStyleTexts; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ResolveUnitTargetStyleTexts = ResolveUnitTargetStyleTexts; } catch(e) {}
+    try { QOL_ApplyTargetShapeStyles = ApplyTargetShapeStyles; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ApplyTargetShapeStyles = ApplyTargetShapeStyles; } catch(e) {}
+    try { QOL_IsColorWarningEnabled = IsColorWarningEnabled; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsColorWarningEnabled = IsColorWarningEnabled; } catch(e) {}
+    try { QOL_EnsureMinimapPanelCache = EnsureMinimapPanelCache; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_EnsureMinimapPanelCache = EnsureMinimapPanelCache; } catch(e) {}
+    try { QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
+    try { QOL_RuntimeTaskIsDue = RuntimeTaskIsDue; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_RuntimeTaskIsDue = RuntimeTaskIsDue; } catch(e) {}
+    try { QOL_RuntimeTaskSetDelay = RuntimeTaskSetDelay; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_RuntimeTaskSetDelay = RuntimeTaskSetDelay; } catch(e) {}
     // ── Additional bridge exports for extracted feature files ──
     try { if (typeof window !== "undefined") window.QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
