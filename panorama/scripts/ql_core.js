@@ -4828,9 +4828,9 @@ function GetUIRoot() {
 
         if (!enabled) {
             if (State.coloredHealthbarLastColor !== "" ||
-                IsPanelValid(State.cachedPanels.coloredHealthbarHealthBar) ||
-                IsPanelValid(State.cachedPanels.coloredHealthbarProgressLeft) ||
-                IsPanelValid(State.cachedPanels.coloredHealthbarCurrentHealth)) {
+                GetCachedPanel("coloredHealthbarHealthBar") ||
+                GetCachedPanel("coloredHealthbarProgressLeft") ||
+                GetCachedPanel("coloredHealthbarCurrentHealth")) {
                 ResetColoredHealthbarRuntimeStyles();
                 ResetColoredHealthbarPanelCache();
             }
@@ -5628,9 +5628,9 @@ function GetUIRoot() {
 
     function McEnsureHeartsCapacity(hudRoot, heartsNeeded) {
         if (heartsNeeded <= 0) return false;
-        if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+        if (!GetCachedPanel("mcHeartsContainer")) {
             SetCachedPanel("mcHeartsContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHearts") || null) : null);
-            if (!IsPanelValid(State.cachedPanels.mcHeartsContainer)) {
+            if (!GetCachedPanel("mcHeartsContainer")) {
                 $.Msg("[QOLLock][MC] MinecraftHearts container not found");
                 return false;
             }
@@ -5703,16 +5703,16 @@ function GetUIRoot() {
 
     function McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded) {
         if (heartsNeeded <= 0) return false;
-        if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+        if (!GetCachedPanel("mcBarrierHeartsContainer")) {
             SetCachedPanel("mcBarrierHeartsContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHeartsContainer") || null) : null);
-            if (!IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) {
+            if (!GetCachedPanel("mcBarrierHeartsContainer")) {
                 $.Msg("[QOLLock][MC] MinecraftBarrierHeartsContainer not found");
                 return false;
             }
         }
-        if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+        if (!GetCachedPanel("mcBarrierHearts")) {
             SetCachedPanel("mcBarrierHearts", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftShieldHearts") || null) : null);
-            if (!IsPanelValid(State.cachedPanels.mcBarrierHearts)) {
+            if (!GetCachedPanel("mcBarrierHearts")) {
                 $.Msg("[QOLLock][MC] MinecraftBarrierHearts not found");
                 return false;
             }
@@ -5872,7 +5872,7 @@ function GetUIRoot() {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
             if (!hasBarrier) {
-                if (IsPanelValid(State.cachedPanels.mcBarrierHeartsContainer)) State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "collapse";
+                if (GetCachedPanel("mcBarrierHeartsContainer")) State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "collapse";
                 State.mcLastBarrierFullHearts = -1;
                 State.mcLastBarrierHasHalf = null;
                 State.mcLastBarrierLastSlotIsHalf = null;
@@ -5930,7 +5930,7 @@ function GetUIRoot() {
     }
 
     function McReadHealthValues(hudRoot) {
-        if (!IsPanelValid(State.cachedPanels.mcHealthContainer)) {
+        if (!GetCachedPanel("mcHealthContainer")) {
             var hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
             if (!hc) {
                 var all = hudRoot.FindChildrenWithClassTraverse ? hudRoot.FindChildrenWithClassTraverse("healthContainer") : null;
@@ -5943,14 +5943,14 @@ function GetUIRoot() {
             State.mcLoggedHealthContainerMiss = false;
             SetCachedPanel("mcHealthContainer", hc);
         }
-        if (!IsPanelValid(State.cachedPanels.mcCurrentHealthLabel)) {
+        if (!GetCachedPanel("mcCurrentHealthLabel")) {
             var hcPanel = State.cachedPanels.mcHealthContainer;
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
             if (!lbl) return null;
             SetCachedPanel("mcCurrentHealthLabel", lbl);
         }
-        if (!IsPanelValid(State.cachedPanels.mcTotalHealthLabel)) {
+        if (!GetCachedPanel("mcTotalHealthLabel")) {
             var hcPanel = State.cachedPanels.mcHealthContainer;
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
@@ -5977,10 +5977,10 @@ function GetUIRoot() {
 
     function McParseChargesForHunger(root) {
         try {
-            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) {
+            if (!GetCachedPanel("mcChargesContainer")) {
                 SetCachedPanel("mcChargesContainer", root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null);
             }
-            if (!IsPanelValid(State.cachedPanels.mcChargesContainer)) return null;
+            if (!GetCachedPanel("mcChargesContainer")) return null;
             var allCharges = State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse ? State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse("charge") : null;
             if (!allCharges || allCharges.length === 0) return null;
             var maxCharges = 0;
@@ -6012,9 +6012,9 @@ function GetUIRoot() {
         try {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
-            if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) {
+            if (!GetCachedPanel("mcFoodContainer")) {
                 SetCachedPanel("mcFoodContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null);
-                if (!IsPanelValid(State.cachedPanels.mcFoodContainer)) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
+                if (!GetCachedPanel("mcFoodContainer")) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
                 var children = State.cachedPanels.mcFoodContainer.Children();
                 State.mcCachedFoodIcons = [];
                 for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
@@ -6037,7 +6037,7 @@ function GetUIRoot() {
 
     function McParseSoulsAndLevel(root) {
         try {
-            if (!IsPanelValid(State.cachedPanels.mcGoldApContainer)) {
+            if (!GetCachedPanel("mcGoldApContainer")) {
                 var panel = root && root.FindChildTraverse ? (root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) || null) : null;
                 if (!panel) {
                     if (!State.mcLoggedGoldApMiss) { $.Msg("[QOLLock][MC] gold_and_ap_container not found"); State.mcLoggedGoldApMiss = true; }
@@ -6046,8 +6046,8 @@ function GetUIRoot() {
                 State.mcLoggedGoldApMiss = false;
                 SetCachedPanel("mcGoldApContainer", panel);
             }
-            if (!IsPanelValid(State.cachedPanels.mcSoulsFill)) SetCachedPanel("mcSoulsFill", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null);
-            if (IsPanelValid(State.cachedPanels.mcSoulsFill)) {
+            if (!GetCachedPanel("mcSoulsFill")) SetCachedPanel("mcSoulsFill", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null);
+            if (GetCachedPanel("mcSoulsFill")) {
                 var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
                 var heightValue = parseFloat(heightStr) || 0;
                 if (heightValue <= 0) {
@@ -6056,14 +6056,14 @@ function GetUIRoot() {
                 }
                 var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
                 if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
-                if (!IsPanelValid(State.cachedPanels.mcXpBarFill)) SetCachedPanel("mcXpBarFill", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null);
-                if (IsPanelValid(State.cachedPanels.mcXpBarFill) && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
+                if (!GetCachedPanel("mcXpBarFill")) SetCachedPanel("mcXpBarFill", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null);
+                if (GetCachedPanel("mcXpBarFill") && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
             }
-            if (!IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) SetCachedPanel("mcPlayerLevelLabel", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null);
-            if (IsPanelValid(State.cachedPanels.mcPlayerLevelLabel)) {
+            if (!GetCachedPanel("mcPlayerLevelLabel")) SetCachedPanel("mcPlayerLevelLabel", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null);
+            if (GetCachedPanel("mcPlayerLevelLabel")) {
                 var levelValue = parseInt((State.cachedPanels.mcPlayerLevelLabel.text || "").replace(/[^0-9]/g, "")) || 0;
-                if (!IsPanelValid(State.cachedPanels.mcXpLevelLabel)) SetCachedPanel("mcXpLevelLabel", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null);
-                if (IsPanelValid(State.cachedPanels.mcXpLevelLabel)) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
+                if (!GetCachedPanel("mcXpLevelLabel")) SetCachedPanel("mcXpLevelLabel", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null);
+                if (GetCachedPanel("mcXpLevelLabel")) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
             }
         } catch (error) { $.Msg("[QOLLock][MC] Error in McParseSoulsAndLevel: " + error); }
     }
@@ -6077,8 +6077,8 @@ function GetUIRoot() {
     }
 
     function McUpdateTotem() {
-        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) return;
-        var hasRejuvenator = IsPanelValid(State.cachedPanels.mcHudHealthBars) ? State.cachedPanels.mcHudHealthBars.BHasClass("HasRejuvenator") : false;
+        if (!GetCachedPanel("mcTotemContainer")) return;
+        var hasRejuvenator = GetCachedPanel("mcHudHealthBars") ? State.cachedPanels.mcHudHealthBars.BHasClass("HasRejuvenator") : false;
         State.cachedPanels.mcTotemContainer.style.visibility = hasRejuvenator ? "visible" : "collapse";
     }
 
@@ -6086,20 +6086,20 @@ function GetUIRoot() {
         var hasBarrier = false;
         var bulletBarrierCurrent = 0;
         var bulletBarrierMax = 0;
-        if (IsPanelValid(State.cachedPanels.mcBarriersContainer)) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
+        if (GetCachedPanel("mcBarriersContainer")) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
         if (hasBarrier) {
-            if (!IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) SetCachedPanel("mcBulletBarrierNumbers", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null);
-            if (IsPanelValid(State.cachedPanels.mcBulletBarrierNumbers)) {
-                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) {
+            if (!GetCachedPanel("mcBulletBarrierNumbers")) SetCachedPanel("mcBulletBarrierNumbers", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null);
+            if (GetCachedPanel("mcBulletBarrierNumbers")) {
+                if (!GetCachedPanel("mcBulletBarrierCurrentLabel")) {
                     var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_current") : null;
                     if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierCurrentLabel", lbls[0]);
                 }
-                if (!IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) {
+                if (!GetCachedPanel("mcBulletBarrierMaxLabel")) {
                     var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_max") : null;
                     if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierMaxLabel", lbls[0]);
                 }
-                if (IsPanelValid(State.cachedPanels.mcBulletBarrierCurrentLabel)) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
-                if (IsPanelValid(State.cachedPanels.mcBulletBarrierMaxLabel)) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
+                if (GetCachedPanel("mcBulletBarrierCurrentLabel")) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
+                if (GetCachedPanel("mcBulletBarrierMaxLabel")) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
                 McUpdateBarrierHearts(bulletBarrierCurrent, bulletBarrierMax, true);
             } else {
                 if (!State.mcLoggedBulletBarrierMiss) { $.Msg("[QOLLock][MC] BulletBarrierNumbers panel not found"); State.mcLoggedBulletBarrierMiss = true; }
@@ -6124,11 +6124,11 @@ function GetUIRoot() {
 
         State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
 
-        if (!IsPanelValid(State.cachedPanels.mcHudHealthBars)) SetCachedPanel("mcHudHealthBars", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null);
-        if (!IsPanelValid(State.cachedPanels.mcTotemContainer)) SetCachedPanel("mcTotemContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null);
-        if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) {
+        if (!GetCachedPanel("mcHudHealthBars")) SetCachedPanel("mcHudHealthBars", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("hud_health_bars") || null) : null);
+        if (!GetCachedPanel("mcTotemContainer")) SetCachedPanel("mcTotemContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftTotemContainer") || null) : null);
+        if (!GetCachedPanel("mcBarriersContainer")) {
             SetCachedPanel("mcBarriersContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("HudShieldsContainer") || null) : null);
-            if (!IsPanelValid(State.cachedPanels.mcBarriersContainer)) $.Msg("[QOLLock][MC] HudBarriersContainer not found");
+            if (!GetCachedPanel("mcBarriersContainer")) $.Msg("[QOLLock][MC] HudBarriersContainer not found");
         }
 
         var hv = McReadHealthValues(hudRoot);
@@ -6136,7 +6136,7 @@ function GetUIRoot() {
         var currentHealth = hv.currentHealth;
         var totalHealth = hv.totalHealth;
 
-        if (!IsPanelValid(State.cachedPanels.mcHealthPercentLabel)) {
+        if (!GetCachedPanel("mcHealthPercentLabel")) {
             SetCachedPanel("mcHealthPercentLabel", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHealthPercent") || null) : null);
         }
         var mcPercentLabel = State.cachedPanels.mcHealthPercentLabel;
@@ -7487,7 +7487,7 @@ function GetUIRoot() {
         if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) return true;
         return !!(
             State.urnTrackerDisplayMode === "active" ||
-            (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
+            (GetCachedPanel("urnTrackerPanel") && State.urnTrackerDisplayMode !== "disabled")
         );
     }
 
@@ -10300,7 +10300,7 @@ function GetUIRoot() {
         ].join("|");
         if (
             minimapRenderSig !== String(state.lastMinimapRenderSig || "") ||
-            !IsPanelValid(State.cachedPanels.minimapObjectiveTimersRoot)
+            !GetCachedPanel("minimapObjectiveTimersRoot")
         ) {
             UpdateMinimapObjectiveTimers(
                 root,
@@ -10770,7 +10770,7 @@ function GetUIRoot() {
 
     function UpdateDl4dReminderRuntime(root, cfg, currentTime, suppressAudio) {
         if (!IsDl4dReminderRuntimeActive(cfg) || suppressAudio) {
-            if (State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel)) HideDl4dCaption();
+            if (State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel")) HideDl4dCaption();
             if (!IsDl4dReminderRuntimeActive(cfg)) {
                 State.dl4dLastTime = -1;
                 State.dl4dTriggeredTimes = {};
@@ -20025,7 +20025,7 @@ function GetUIRoot() {
             Number(cfg.AMMO_TOTAL_SCALE) === 100 &&
             Number(cfg.AMMO_PANEL_X_OFFSET) === 0 &&
             Number(cfg.AMMO_PANEL_Y_OFFSET) === 0 &&
-            !IsPanelValid(State.cachedPanels.ammoPanel)) return;
+            !GetCachedPanel("ammoPanel")) return;
 
         var ammoPanel = GetCachedPanel("ammoPanel");
         if (!ammoPanel) {
@@ -20302,7 +20302,7 @@ function GetUIRoot() {
     function UpdateStaminaChargeColorRuntime(root, cfg, nowMs) {
         // Bail early when stamina charge config is at default and no cached panels exist.
         if (!HasNonDefaultStaminaChargeRuntimeConfig(cfg) &&
-            !IsPanelValid(State.cachedPanels.staminaChargesContainer) &&
+            !GetCachedPanel("staminaChargesContainer") &&
             !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
 
         var color = ResolveWashColorFromPalette(ReadStaminaChargeColorIndex(cfg));
@@ -20628,8 +20628,8 @@ function GetUIRoot() {
     }
 
     function GetOrCreateQuickPanelRP(root) {
-        if (IsPanelValid(State.cachedPanels.quickPurchasesPanel)) return State.cachedPanels.quickPurchasesPanel;
-        if (!IsPanelValid(State.cachedPanels.quickPurchasesHostPanel)) {
+        if (GetCachedPanel("quickPurchasesPanel")) return State.cachedPanels.quickPurchasesPanel;
+        if (!GetCachedPanel("quickPurchasesHostPanel")) {
             SetCachedPanel("quickPurchasesHostPanel", root.FindChildTraverse(PANEL_ID_TOP_BAR));
         }
         var topBar = State.cachedPanels.quickPurchasesHostPanel;
@@ -20684,7 +20684,7 @@ function GetUIRoot() {
         var quickPanel = State.cachedPanels.quickPurchasesPanel;
         if (!IsPanelValid(quickPanel)) return;
         quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
-        if (!IsPanelValid(State.cachedPanels.cachedRejuvTimer)) {
+        if (!GetCachedPanel("cachedRejuvTimer")) {
             var _ctxPanel = $.GetContextPanel();
             var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
             SetCachedPanel("cachedRejuvTimer", _ctxParent ?
@@ -20737,7 +20737,7 @@ function GetUIRoot() {
     }
 
     function ClearContainerRP(root) {
-        var container = IsPanelValid(State.cachedPanels.recentPurchasesContainer)
+        var container = GetCachedPanel("recentPurchasesContainer")
             ? State.cachedPanels.recentPurchasesContainer
             : root.FindChildTraverse("RecentPurchasesContainer");
         if (container && IsPanelValid(container)) {
@@ -21101,7 +21101,7 @@ function GetUIRoot() {
         }
         State.recentPurchasesWasEnabled = true;
 
-        if (!IsPanelValid(State.cachedPanels.recentPurchasesPanel)) {
+        if (!GetCachedPanel("recentPurchasesPanel")) {
             SetCachedPanel("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
         }
         var rpPanel = State.cachedPanels.recentPurchasesPanel;
@@ -21122,7 +21122,7 @@ function GetUIRoot() {
         if (quickMax < 1 || quickMax > 5) quickMax = RECENT_PURCHASE_QUICK_MAX_DEFAULT;
         if (quickDisplaySec < 3 || quickDisplaySec > 15) quickDisplaySec = RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT;
 
-        if (!IsPanelValid(State.cachedPanels.recentPurchasesContainer)) {
+        if (!GetCachedPanel("recentPurchasesContainer")) {
             SetCachedPanel("recentPurchasesContainer", root.FindChildTraverse("RecentPurchasesContainer"));
         }
         var container = State.cachedPanels.recentPurchasesContainer;
@@ -21428,14 +21428,14 @@ function GetUIRoot() {
         if (State.minimapDrawOverUiActive) return true;
         if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
         if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && State.minimapCastRangeScaleApplied) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !IsPanelValid(State.cachedPanels.minimapCrateOverlayRoot)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !GetCachedPanel("minimapCrateOverlayRoot")) return true;
         if (
             (
                 IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ||
                 IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ||
                 IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS")
             ) &&
-            !IsPanelValid(State.cachedPanels.minimapTunnelOverlayRoot)
+            !GetCachedPanel("minimapTunnelOverlayRoot")
         ) return true;
         if (IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") || IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) return true;
         return false;
@@ -28558,7 +28558,7 @@ function GetUIRoot() {
             State.quickbuyRuntimeHostOffsetApplied = false;
         }
 
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) {
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
         var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
@@ -28626,7 +28626,7 @@ function GetUIRoot() {
         if (
             shouldApplyStaticClasses ||
             State.passiveCooldownModeApplied !== passiveCooldownMode ||
-            (passiveCooldownMode !== "default" && !IsPanelValid(State.cachedPanels.passiveHud)) ||
+            (passiveCooldownMode !== "default" && !GetCachedPanel("passiveHud")) ||
             State.oldItemCooldownRuntimeWasActive
         ) {
             var passiveHudPanelForClass = GetCachedPanel("passiveHud");
@@ -28666,7 +28666,7 @@ function GetUIRoot() {
         var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
         var reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
         var dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
-        var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
+        var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel");
 
         if (!needsPassiveRuntime && !needsReminderRuntime) return;
 
@@ -28882,7 +28882,7 @@ function GetUIRoot() {
     function NeedsDamageImpactRuntimeWork(cfg) {
         return HasNonDefaultDamageImpactRuntimeConfig(cfg) ||
             !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.damageImpactPanel);
+            GetCachedPanel("damageImpactPanel");
     }
 
     function NeedsHeroShopRuntimeWork(cfg) {
@@ -28904,48 +28904,48 @@ function GetUIRoot() {
             shopOpacity !== 1.0 ||
             shopScale !== 1.0 ||
             !!(State.heroShopMainPanelStyleSig && String(State.heroShopMainPanelStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.heroShop)
+            GetCachedPanel("heroShop")
         );
     }
 
     function NeedsTopBarRuntimeWork(cfg) {
         return HasNonDefaultTopBarRuntimeConfig(cfg) ||
             !!(State.topBarRuntimeStyleSig && String(State.topBarRuntimeStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.topBarPanel);
+            GetCachedPanel("topBarPanel");
     }
 
     function NeedsBottomBarRuntimeWork(cfg) {
         return HasNonDefaultBottomBarRuntimeConfig(cfg) ||
             !!(State.bottomBarRuntimeStyleSig && String(State.bottomBarRuntimeStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.bottomBarPanel);
+            GetCachedPanel("bottomBarPanel");
     }
 
     function NeedsStaminaChargeColorRuntimeWork(cfg) {
         return HasNonDefaultStaminaChargeRuntimeConfig(cfg) ||
             !!(State.staminaChargeAngleStyleSig && String(State.staminaChargeAngleStyleSig).length > 0) ||
             !!(State.staminaChargeColorStyleSig && String(State.staminaChargeColorStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.staminaChargesContainer) ||
+            GetCachedPanel("staminaChargesContainer") ||
             !!(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0);
     }
 
     function NeedsItemsRuntimeWork(cfg) {
         return HasNonDefaultItemsRuntimeConfig(cfg) ||
             !!(State.itemsRuntimeStyleSig && String(State.itemsRuntimeStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.itemsModsContainer);
+            GetCachedPanel("itemsModsContainer");
     }
 
     function NeedsSoulsRuntimeWork(cfg) {
         return HasNonDefaultSoulsRuntimeConfig(cfg) ||
             !!(State.soulsRuntimeStyleSig && String(State.soulsRuntimeStyleSig).length > 0) ||
-            IsPanelValid(State.cachedPanels.soulsContainer);
+            GetCachedPanel("soulsContainer");
     }
 
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
         if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
         return !!(
             State.unsecuredSouls.hudStyleSig ||
-            IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
-            IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
+            GetCachedPanel("betterUnsecuredOverlay") ||
+            GetCachedPanel("unsecuredSoulsHudContainer")
         );
     }
 
@@ -28953,7 +28953,7 @@ function GetUIRoot() {
         return IsColorWarningEnabled(cfg) ||
             State.coloredHealthbarEnabledPrev === true ||
             State.coloredHealthbarLastColor !== "" ||
-            IsPanelValid(State.cachedPanels.coloredHealthbarProgressLeft);
+            GetCachedPanel("coloredHealthbarProgressLeft");
     }
 
     function NeedsEnemyColorWarningRuntimeWork(cfg) {
@@ -28970,14 +28970,14 @@ function GetUIRoot() {
 
     function NeedsKeyboardRuntimeWork(cfg) {
         if (IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY")) return true;
-        if (IsPanelValid(State.cachedPanels.keyboardOverlayRoot)) return true;
+        if (GetCachedPanel("keyboardOverlayRoot")) return true;
         return !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
     }
 
     function NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected) {
         var basicModeActive = IsPassiveCooldownBasicMode(ResolvePassiveCooldownMode(cfg));
         var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
-        var needsDl4dCleanup = State.dl4dCaptionVisible || IsPanelValid(State.cachedPanels.dl4dCaptionPanel);
+        var needsDl4dCleanup = State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel");
         var needsReminderRuntime = ((IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg)) && !hideoutConnected) || needsDl4dCleanup;
         return needsPassiveRuntime || needsReminderRuntime;
     }
@@ -29014,11 +29014,11 @@ function GetUIRoot() {
         var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
         var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) return true;
         if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
         if (fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
         if (State.passiveCooldownModeApplied !== passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
-        if (passiveCooldownMode !== "default" && !IsPanelValid(State.cachedPanels.passiveHud)) return true;
+        if (passiveCooldownMode !== "default" && !GetCachedPanel("passiveHud")) return true;
         if (HEALTHBAR_VIS_DEBUG) return true;
         var colorBridgeTarget = IsColorWarningEnabled(cfg) ? "1" : "0";
         if (colorBridgeTarget === "1" && State.coloredHealthbarBridgeValue !== "1") return true;
@@ -29170,7 +29170,7 @@ function GetUIRoot() {
 
     function NeedsCoreRootDynamicRuntimeWorkFromState(featureState) {
         if (!featureState) return false;
-        if (featureState.reloadCircleActive || IsPanelValid(State.cachedPanels.activeReloadProgressBar)) return true;
+        if (featureState.reloadCircleActive || GetCachedPanel("activeReloadProgressBar")) return true;
         if (
             featureState.healthbarRuntimeActive ||
             State.minimalistHealthbarOffsetApplied ||
@@ -29186,7 +29186,7 @@ function GetUIRoot() {
             State.fgHeroImageCurrentSig !== ""
         ) return true;
         if (State.passiveCooldownModeApplied !== featureState.passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
-        if (featureState.passiveCooldownMode !== "default" && !IsPanelValid(State.cachedPanels.passiveHud)) return true;
+        if (featureState.passiveCooldownMode !== "default" && !GetCachedPanel("passiveHud")) return true;
         if (HEALTHBAR_VIS_DEBUG) return true;
         if (featureState.colorBridgeTarget === "1" && State.coloredHealthbarBridgeValue !== "1") return true;
         if (featureState.colorBridgeTarget === "0" && State.coloredHealthbarBridgeValue !== "" && State.coloredHealthbarBridgeValue !== "0") return true;
@@ -29200,7 +29200,7 @@ function GetUIRoot() {
         if (
             featureState.urnTrackerActive ||
             State.urnTrackerDisplayMode === "active" ||
-            (IsPanelValid(State.cachedPanels.urnTrackerPanel) && State.urnTrackerDisplayMode !== "disabled")
+            (GetCachedPanel("urnTrackerPanel") && State.urnTrackerDisplayMode !== "disabled")
         ) return true;
         if (featureState.staminaChargeColorRuntimeActive) return true;
         return false;
@@ -29360,7 +29360,7 @@ function GetUIRoot() {
         gates.statlocker = (gates.statlockerActive || State.statlockerWasEnabled) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         gates.onDeathArcade = gates.onDeathArcadeActive || State.onDeathArcadeRuntimeWasActive || State.onDeathArcadeWasDead;
         gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
-        gates.keyboardRuntime = gates.keyboardRuntimeActive || IsPanelValid(State.cachedPanels.keyboardOverlayRoot) || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
+        gates.keyboardRuntime = gates.keyboardRuntimeActive || GetCachedPanel("keyboardOverlayRoot") || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
         gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED));
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
@@ -29372,8 +29372,8 @@ function GetUIRoot() {
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
             State.unsecuredSouls.hudStyleSig ||
-            IsPanelValid(State.cachedPanels.betterUnsecuredOverlay) ||
-            IsPanelValid(State.cachedPanels.unsecuredSoulsHudContainer)
+            GetCachedPanel("betterUnsecuredOverlay") ||
+            GetCachedPanel("unsecuredSoulsHudContainer")
         );
         gates.colorWarning = gates.colorWarningActive;
         gates.enemyColorWarning = NeedsEnemyColorWarningRuntimeWork(cfg);
