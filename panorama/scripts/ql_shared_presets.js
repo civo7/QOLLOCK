@@ -2106,9 +2106,8 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
 };
 
 // ── Diagnostic dump function ──
-// Reads HUD state from Hud panel attribute "QOL_Diag" (written by ql_core.js).
-// Uses the same cross-context path as config storage: traverse to root,
-// find the "Hud" child panel, read the attribute.
+// Reads HUD state + captured logs from Hud panel attribute "QOL_Diag"
+// (written by ql_core.js each tick via the cross-context panel bridge).
 var QOL_DumpDiagnostics = function() {
     var lines = [];
     lines.push("=== QOLLOCK Diagnostics ===");
@@ -2116,22 +2115,15 @@ var QOL_DumpDiagnostics = function() {
     lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
     lines.push("");
 
-    // Read diagnostic state from Hud panel (same cross-context path as config storage)
     var _diag = null;
     try {
         var _ctx = $.GetContextPanel();
-        
         while (_ctx && _ctx.GetParent && _ctx.GetParent()) { _ctx = _ctx.GetParent(); }
-        
-        
-        var _hud = _ctx.FindChildTraverse("Hud");
-        
-        
+        var _hud = _ctx && _ctx.FindChildTraverse ? _ctx.FindChildTraverse("Hud") : null;
         if (_hud && _hud.GetAttributeString) {
             var _raw = _hud.GetAttributeString("QOL_Diag", "");
             if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
         }
-
     } catch(e) {}
 
     if (_diag) {
@@ -2140,16 +2132,6 @@ var QOL_DumpDiagnostics = function() {
             for (var _fi = 0; _fi < _diag.features.length; _fi++) {
                 lines.push("  + " + _diag.features[_fi]);
             }
-        }
-        lines.push("");
-        lines.push("--- Missing / Unregistered Features ---");
-        if (_diag.missing && Object.keys(_diag.missing).length > 0) {
-            var _mkeys = Object.keys(_diag.missing).sort();
-            for (var _mj = 0; _mj < _mkeys.length; _mj++) {
-                lines.push("  - " + _mkeys[_mj]);
-            }
-        } else {
-            lines.push("  (none)");
         }
         lines.push("");
         lines.push("--- Auto-Disabled Features ---");
@@ -2163,19 +2145,13 @@ var QOL_DumpDiagnostics = function() {
             lines.push("  (none)");
         }
         lines.push("");
-        lines.push("--- Error Streaks (not yet disabled) ---");
-        if (_diag.errors && Object.keys(_diag.errors).length > 0) {
-            var _hasActive = false;
-            var _ekeys = Object.keys(_diag.errors).sort();
-            for (var _ek = 0; _ek < _ekeys.length; _ek++) {
-                if (!_diag.disabled || _diag.disabled.indexOf(_ekeys[_ek]) === -1) {
-                    lines.push("  " + _ekeys[_ek] + ": " + _diag.errors[_ekeys[_ek]] + " errors");
-                    _hasActive = true;
-                }
+        lines.push("--- QOL Console Logs (" + (_diag.logs ? _diag.logs.length : 0) + " messages) ---");
+        if (_diag.logs && _diag.logs.length > 0) {
+            for (var _li = 0; _li < _diag.logs.length; _li++) {
+                lines.push(_diag.logs[_li]);
             }
-            if (!_hasActive) lines.push("  (none — all errored features are disabled)");
         } else {
-            lines.push("  (none)");
+            lines.push("  (no logs captured yet)");
         }
     } else {
         lines.push("--- HUD Runtime State ---");

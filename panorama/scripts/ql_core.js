@@ -1,6 +1,41 @@
 // ==========================================================================
 // ql_core.js — QOLLOCK main runtime (~31k lines)
 // ==========================================================================
+// $.Msg wrapper — captures all [QOLLock]/[QOL-prefixed messages into a ring
+// buffer for the diagnostic "Copy Logs" button. Must run BEFORE the IIFE so
+// it intercepts messages from feature files that loaded earlier but emit
+// runtime messages later. Logs its own failure (no silent catch).
+(function() {
+    var _qolLogBuf = [];
+    var _qolLogMax = 500;
+    var _qolOrigMsg = null;
+    try {
+        if (typeof $ !== "undefined" && $.Msg) {
+            _qolOrigMsg = $.Msg;
+            $.Msg = function() {
+                try {
+                    var _s = "";
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        if (_i) _s += " ";
+                        _s += String(arguments[_i]);
+                    }
+                    if (_s.indexOf("[QOLLock]") === 0 || _s.indexOf("[QOL ") === 0 || _s.indexOf("[QOL]") === 0) {
+                        _qolLogBuf.push(_s);
+                        if (_qolLogBuf.length > _qolLogMax) _qolLogBuf.shift();
+                    }
+                } catch(_ignore) {}
+                return _qolOrigMsg.apply($, arguments);
+            };
+        }
+    } catch(_e) {
+        // If wrapping fails, restore original and log
+        try { if (_qolOrigMsg) $.Msg = _qolOrigMsg; } catch(_r) {}
+        try { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock] $.Msg wrapper failed: " + (_e.message || String(_e))); } catch(_x) {}
+    }
+    // Expose buffer as bare global for the diagnostic sync code in the main IIFE
+    try { __qolLogBuf = _qolLogBuf; } catch(_e) {}
+})();
+// ==========================================================================
 //   §1  Module setup: State, cache accessors, logging, debug constants
 //   §2  Config I/O: read, write, SafeParseConfig, MergeConfig, normalize
 //   §3  Gate system: BuildRuntimeFeatureConfigState, ResolveRuntimeGates
@@ -28127,7 +28162,8 @@ function GetUIRoot() {
                     features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
                     missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
                     errors: (State.featureErrorStreaks) ? State.featureErrorStreaks : {},
-                    disabled: (State.featureAutoDisabled) ? Object.keys(State.featureAutoDisabled) : []
+                    disabled: (State.featureAutoDisabled) ? Object.keys(State.featureAutoDisabled) : [],
+                    logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : []
                 };
                 var _diagRoot = State.rootPanel || root;
                 if (_diagRoot && _diagRoot.FindChildTraverse) {
