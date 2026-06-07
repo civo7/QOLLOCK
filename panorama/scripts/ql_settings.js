@@ -23018,9 +23018,13 @@ $.RegisterForUnhandledEvent("CitadelResumePlaying", function() {
 $.RegisterForUnhandledEvent("CitadelGameStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelGameStateChanged");
 });
-$.RegisterForUnhandledEvent("CitadelConnectedToGame", function() {
-    HandleSettingsGameTransitionSignal("CitadelConnectedToGame");
-});
+try {
+    $.RegisterForUnhandledEvent("CitadelConnectedToGame", function() {
+        HandleSettingsGameTransitionSignal("CitadelConnectedToGame");
+    });
+} catch(e) {
+    // CitadelConnectedToGame event not available in this game version
+}
 $.RegisterForUnhandledEvent("CitadelMatchStateChanged", function() {
     HandleSettingsGameTransitionSignal("CitadelMatchStateChanged");
 });
