@@ -30650,6 +30650,25 @@ function GetUIRoot() {
 
         // Feature dispatch wrapper with error isolation
         window.QOL_ExecuteFeature = ExecuteFeature;
+
+        // ── Shared style helpers used by feature files ──
+        window.QOL_SetWashColorSafe = SetWashColorSafe;
+        window.QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette;
+        window.QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex;
+
+        // ── Per-feature palette readers (internally use closure-scoped helpers) ──
+        window.QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex;
+        window.QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex;
+        window.QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex;
+        window.QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex;
+        window.QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex;
+
+        // ── Utility functions used across features ──
+        window.QOL_GetUIRoot = GetUIRoot;
+        window.QOL_GetGameplayHudPanel = GetGameplayHudPanel;
+        window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber;
+        window.QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle;
+        window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime;
     }
 
 })();
