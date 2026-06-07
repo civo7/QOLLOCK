@@ -9,6 +9,22 @@
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
 
+    // One-shot dependency validation
+    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
+        window._qol_feat_deps_logged = {};
+    }
+    var _dk = "ql_feat_sigflash";
+    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
+        var _m = [];
+        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
+        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
+        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
+        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (_m.length > 0) {
+            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
+        }
+        window._qol_feat_deps_logged[_dk] = true;
+    }
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var slots = State.signatureCooldownFlashSlots;

@@ -8,6 +8,22 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var NDS = typeof QOL_NormalizeDamageImpactScaleNumber !== "undefined" ? QOL_NormalizeDamageImpactScaleNumber : undefined;
 
+    // One-shot dependency validation
+    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
+        window._qol_feat_deps_logged = {};
+    }
+    var _dk = "ql_feat_damageimpact";
+    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
+        var _m = [];
+        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
+        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
+        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
+        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (_m.length > 0) {
+            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
+        }
+        window._qol_feat_deps_logged[_dk] = true;
+    }
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||

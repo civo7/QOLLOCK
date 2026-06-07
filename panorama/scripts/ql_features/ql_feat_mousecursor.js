@@ -11,6 +11,22 @@
     var GAMEPLAY_MOUSE_CURSOR_ENABLED = typeof QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED : true;
     var IsStartupLoaderInActiveMatchContext = typeof QOL_IsStartupLoaderInActiveMatchContext !== "undefined" ? QOL_IsStartupLoaderInActiveMatchContext : function() { return false; };
 
+    // One-shot dependency validation
+    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
+        window._qol_feat_deps_logged = {};
+    }
+    var _dk = "ql_feat_mousecursor";
+    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
+        var _m = [];
+        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
+        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
+        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
+        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (_m.length > 0) {
+            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
+        }
+        window._qol_feat_deps_logged[_dk] = true;
+    }
     function SetGameplayMouseCursorRootClass(root, active) {
         var on = !!active;
         if (!!State.customMouseCursorClassActive === on) return;
