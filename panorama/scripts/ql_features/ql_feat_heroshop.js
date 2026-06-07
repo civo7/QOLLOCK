@@ -1,0 +1,165 @@
+// ql_feat_heroshop.js — Hero shop HUD customization (offset, scale, opacity, simplify)
+// Extracted from ql_core.js, Phase 9 Step 2c
+(function() {
+    'use strict';
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
+    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
+    var NormalizeHudOffsetNumber = U ? U.NormalizeHudOffsetNumber : function(v,d) { return Number(v)||d; };
+    var NormalizeHudScaleNumber = U ? U.NormalizeHudScaleNumber : function(v,d) { return Number(v)||d; };
+    var NormalizeOpacityNumber = U ? U.NormalizeOpacityNumber : function(v,d) { return Number(v)||d; };
+    var SetPanelClassCached = typeof QOL_SetPanelClassCached !== "undefined" ? QOL_SetPanelClassCached : function() {};
+
+    // ── Feature-specific constants ──
+    var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    var HERO_SHOP_PANEL_SEARCH_MS = 2470;
+
+    // One-shot dependency validation
+    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
+        window._qol_feat_deps_logged = {};
+    }
+    var _dk = "ql_feat_heroshop";
+    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
+        var _m = [];
+        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
+        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
+        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
+        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (_m.length > 0) {
+            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
+        }
+        window._qol_feat_deps_logged[_dk] = true;
+    }
+
+    function UpdateHeroShopRuntime(root, cfg, nowMsClass) {
+        var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
+        var shopOffsetYRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0);
+        var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
+        var shopScaleText = NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0).toFixed(2);
+        var shopEnabled = IsCfgEnabled(cfg, "HUD_SHOP_ENABLED");
+        var simplifyShopStats = IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
+        var shopRecentPurchases = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+        var needsHeroShopFeatures =
+            simplifyShopStats ||
+            shopRecentPurchases ||
+            cfg.ENABLE_SIMPLIFY_SHOP === 1 ||
+            cfg.ENABLE_SIMPLIFY_ITEMS === 1 ||
+            cfg.DISABLE_SHOP_BLUE === 1 ||
+            !shopEnabled ||
+            shopOffsetXRaw !== 0 ||
+            shopOffsetYRaw !== 0 ||
+            shopOpacityText !== "1.00" ||
+            shopScaleText !== "1.00";
+
+        var heroShop = GetCachedPanel("heroShop");
+        if (heroShop && needsHeroShopFeatures) {
+            try {
+                var shopVis = heroShop.style && heroShop.style.visibility;
+                if (shopVis === "collapse") return;
+            } catch (eVis) {}
+        }
+        if (needsHeroShopFeatures && !heroShop && nowMsClass >= (State.heroShopNextSearchMs || 0)) {
+            heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
+            SetCachedPanel("heroShop", heroShop);
+            State.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
+        }
+        if (needsHeroShopFeatures) {
+            if (heroShop) {
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_stats_active", simplifyShopStats);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", cfg.DISABLE_SHOP_BLUE === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", shopRecentPurchases);
+
+                var heroShopMainPanel = GetCachedPanel("heroShopMainPanel");
+                if (!heroShopMainPanel) {
+                    heroShopMainPanel = heroShop.FindChildTraverse("MainPanel");
+                    SetCachedPanel("heroShopMainPanel", heroShopMainPanel);
+                }
+                if (heroShopMainPanel) {
+                    var marginLeftText = String(shopOffsetXRaw) + "px";
+                    var marginRightText = String(-shopOffsetXRaw) + "px";
+                    var marginTopText = String(-shopOffsetYRaw) + "px";
+                    var marginBottomText = String(shopOffsetYRaw) + "px";
+                    var styleSig = marginLeftText + "|" + marginRightText + "|" + marginTopText + "|" + marginBottomText + "|" + shopOpacityText + "|" + shopScaleText + "|" + (shopEnabled ? "1" : "0");
+                    if (State.heroShopMainPanelStyleSig !== styleSig) {
+                        heroShopMainPanel.style.marginLeft = marginLeftText;
+                        heroShopMainPanel.style.marginRight = marginRightText;
+                        heroShopMainPanel.style.marginTop = marginTopText;
+                        heroShopMainPanel.style.marginBottom = marginBottomText;
+                        heroShopMainPanel.style.x = "0px";
+                        heroShopMainPanel.style.y = "0px";
+                        heroShopMainPanel.style.preTransformScale2d = shopScaleText + ", " + shopScaleText;
+                        heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
+                        SetPanelOpacitySafe(heroShopMainPanel, shopOpacityText, 1.0);
+                        State.heroShopMainPanelStyleSig = styleSig;
+                    }
+                }
+            } else {
+                SetCachedPanel("heroShopMainPanel", null);
+                State.heroShopMainPanelStyleSig = "";
+            }
+        } else if (heroShop) {
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_stats_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", false);
+
+            var resetMainPanel = GetCachedPanel("heroShopMainPanel");
+            if (!resetMainPanel) {
+                resetMainPanel = heroShop.FindChildTraverse("MainPanel");
+                SetCachedPanel("heroShopMainPanel", resetMainPanel);
+            }
+            if (resetMainPanel) {
+                var resetSig = "0px|0px|0px|0px|1.00|1.00|1";
+                if (State.heroShopMainPanelStyleSig !== resetSig) {
+                    resetMainPanel.style.marginLeft = "0px";
+                    resetMainPanel.style.marginRight = "0px";
+                    resetMainPanel.style.marginTop = "0px";
+                    resetMainPanel.style.marginBottom = "0px";
+                    resetMainPanel.style.x = "0px";
+                    resetMainPanel.style.y = "0px";
+                    resetMainPanel.style.preTransformScale2d = "1.00, 1.00";
+                    resetMainPanel.style.visibility = "visible";
+                    SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
+                }
+            }
+            SetCachedPanel("heroShop", null);
+            SetCachedPanel("heroShopMainPanel", null);
+            State.heroShopMainPanelStyleSig = "";
+        }
+    }
+
+
+    // ── Registration ──
+    QOL_REGISTER_FEATURE("heroShop", {
+        configKeys: ["HUD_SHOP_ENABLED", "SHOP_OFFSET_X", "SHOP_OFFSET_Y",
+                     "SHOP_OPACITY", "SHOP_SCALE", "ENABLE_SHOP_STATS",
+                     "ENABLE_SIMPLIFY_SHOP_STATS", "ENABLE_SHOP_RECENT_PURCHASES",
+                     "ENABLE_SIMPLIFY_SHOP", "ENABLE_SIMPLIFY_ITEMS", "DISABLE_SHOP_BLUE"],
+        bucket: 4, phase: 4,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") ||
+                   IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
+                   cfg.ENABLE_SIMPLIFY_SHOP === 1 ||
+                   cfg.ENABLE_SIMPLIFY_ITEMS === 1 ||
+                   cfg.DISABLE_SHOP_BLUE === 1 ||
+                   !IsCfgEnabled(cfg, "HUD_SHOP_ENABLED") ||
+                   NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0) !== 0 ||
+                   NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0) !== 0 ||
+                   NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0) !== 1.0 ||
+                   NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0) !== 1.0;
+        },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateHeroShopRuntime(root, cfg, nowMs);
+        },
+        stateKeys: ["heroShopNextSearchMs", "heroShopClassCache",
+                    "heroShopMainPanelStyleSig"]
+    });
+
+})();

@@ -28328,20 +28328,6 @@ function GetUIRoot() {
 
     // ── Batch E: features needing nowMs ──
 
-    QOL_REGISTER_FEATURE("heroShop", {
-        configKeys: ["HUD_SHOP_ENABLED", "ENABLE_SHOP_STATS", "ENABLE_SIMPLIFY_SHOP_STATS",
-                     "ENABLE_SIMPLIFY_SHOP", "ENABLE_SIMPLIFY_ITEMS", "DISABLE_SHOP_BLUE",
-                     "SHOP_OFFSET_X", "SHOP_OFFSET_Y", "SHOP_OPACITY", "SHOP_SCALE"],
-        bucket: 4, phase: -1,
-        gate: function(cfg) { return NeedsHeroShopRuntimeWork(cfg); },
-        update: function(root, cfg, nowMs) {
-            UpdateHeroShopRuntime(root, cfg, nowMs);
-        },
-        stateKeys: ["heroShopNextSearchMs", "heroShopMainPanelStyleSig",
-                    "heroShopClassCache", "cachedPanels.heroShop",
-                    "cachedPanels.heroShopMainPanel"]
-    });
-
     QOL_REGISTER_FEATURE("betterUnsecuredHud", {
         configKeys: ["ENABLE_BETTER_UNSECURED"],
         bucket: 7, phase: -1,
@@ -28527,6 +28513,8 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsPanelListValid = IsPanelListValid; } catch(e) {}
     try { QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
+    try { QOL_SetPanelClassCached = SetPanelClassCached; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_SetPanelClassCached = SetPanelClassCached; } catch(e) {}
     try { QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
