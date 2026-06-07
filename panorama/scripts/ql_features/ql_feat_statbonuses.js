@@ -10,6 +10,48 @@
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
     var STAT_BONUSES_DEBUG = false;
+    var STAT_BONUSES_DEBUG_MIN_INTERVAL_MS = 600;
+    var STAT_BONUSES_SOURCE_SEARCH_MS = 500;
+    var STAT_BONUSES_TOOLTIP_SCAN_MS = 250;
+    var STAT_BONUSES_TOOLTIP_BREAKDOWN_ID = "StatsBreakdownContainer";
+    var STAT_BONUSES_GOLDEN_ROW_KEYS = [
+        "#citadel_shopstats_goldenstatues",
+        "golden statues",
+        "#citadel_shopstats_boons",
+        "boons"
+    ];
+    var STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
+    var STAT_BONUSES_ABILITY_COOLDOWN_IDS = [
+        "StatContainer_TechCooldown",
+        "StatContainer_AbilityCooldown",
+        "StatContainer_AbilityCooldownReduction",
+        "StatContainer_CooldownReduction",
+        "StatContainer_Cooldown",
+        "StatContainer_CooldownDecrease",
+        "StatContainer_AbilityCD"
+    ];
+    var STAT_BONUSES_SPIRIT_POWER_IDS = [
+        "StatContainer_TechPower",
+        "StatContainer_SpiritPower",
+        "StatContainer_Spirit"
+    ];
+    var STAT_BONUSES_CLIP_SIZE_IDS = [
+        "StatContainer_ClipSizeIncrease",
+        "StatContainer_ClipSize",
+        "StatContainer_ClipSizeBonus",
+        "StatContainer_AmmoCapacity"
+    ];
+    var STAT_BONUSES_WEAPON_DAMAGE_IDS = [
+        "StatContainer_BaseWeaponDamage",
+        "StatContainer_BonusBaseWeaponDamage",
+        "StatContainer_BaseAttackDamagePercent",
+        "StatContainer_BulletDamage"
+    ];
+    var STAT_BONUSES_MAX_HEALTH_IDS = [
+        "StatContainer_MaxHealth",
+        "StatContainer_BaseHealth",
+        "StatContainer_ArmorPower"
+    ];
     var ExtractStatDisplayText = typeof QOL_ExtractStatDisplayText !== "undefined" ? QOL_ExtractStatDisplayText : function() { return "-"; };
     var HarvestGoldenStatuesTooltipValue = typeof QOL_HarvestGoldenStatuesTooltipValue !== "undefined" ? QOL_HarvestGoldenStatuesTooltipValue : function() {};
     var IsStatBonusTokenZero = typeof QOL_IsStatBonusTokenZero !== "undefined" ? QOL_IsStatBonusTokenZero : function() { return false; };

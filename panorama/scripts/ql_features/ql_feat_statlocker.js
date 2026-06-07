@@ -139,7 +139,7 @@
     }
 
     function IsStatlockerDiscoveryContextActive(root) {
-        if (IsPanelListValid(State.statlockerCorePanels) || IsPanelListValid(State.statlockerButtons)) return true;
+        if (IsPanelListValid(S.statlockerCorePanels) || IsPanelListValid(S.statlockerButtons)) return true;
 
         var ctx = null;
         try { ctx = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eCtx) { ctx = null; }
@@ -153,11 +153,11 @@
     function GetStatlockerScanDelay(foundCount) {
         var count = Number(foundCount) || 0;
         if (count > 0) {
-            State.statlockerScanMisses = 0;
+            S.statlockerScanMisses = 0;
             return STATLOCKER_SCAN_INTERVAL_MS;
         }
-        var misses = Math.min(4, (Number(State.statlockerScanMisses) || 0) + 1);
-        State.statlockerScanMisses = misses;
+        var misses = Math.min(4, (Number(S.statlockerScanMisses) || 0) + 1);
+        S.statlockerScanMisses = misses;
         return Math.min(STATLOCKER_SCAN_IDLE_MAX_MS, STATLOCKER_SCAN_INTERVAL_MS * (1 + misses));
     }
 
@@ -258,14 +258,14 @@
     }
 
     function RemoveStatlockerButtons(root) {
-        var knownButtons = Array.isArray(State.statlockerButtons) ? State.statlockerButtons : [];
+        var knownButtons = Array.isArray(S.statlockerButtons) ? S.statlockerButtons : [];
         for (var i = 0; i < knownButtons.length; i++) {
             var button = knownButtons[i];
             if (!IsPanelValid(button)) continue;
             try { button.DeleteAsync(0); } catch (e0) {}
         }
 
-        var knownPanels = Array.isArray(State.statlockerCorePanels) ? State.statlockerCorePanels : [];
+        var knownPanels = Array.isArray(S.statlockerCorePanels) ? S.statlockerCorePanels : [];
         var cleanupPanels = [];
         for (var kp = 0; kp < knownPanels.length; kp++) {
             if (IsPanelValid(knownPanels[kp]) && cleanupPanels.indexOf(knownPanels[kp]) === -1) cleanupPanels.push(knownPanels[kp]);
@@ -281,51 +281,51 @@
             if (!IsPanelValid(child)) continue;
             try { child.DeleteAsync(0); } catch (e1) {}
         }
-        State.statlockerButtons = [];
-        State.statlockerCorePanels = [];
-        State.statlockerNextScanMs = 0;
-        State.statlockerScanMisses = 0;
+        S.statlockerButtons = [];
+        S.statlockerCorePanels = [];
+        S.statlockerNextScanMs = 0;
+        S.statlockerScanMisses = 0;
     }
 
     function UpdateStatlockerButtons(root, nowMs, cfg) {
         if (!root) return;
         var enabled = IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
         if (!enabled) {
-            if (State.statlockerWasEnabled) {
+            if (S.statlockerWasEnabled) {
                 RemoveStatlockerButtons(root);
             }
-            State.statlockerWasEnabled = false;
+            S.statlockerWasEnabled = false;
             return;
         }
 
         if (!isFinite(Number(nowMs))) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        if (!Array.isArray(State.statlockerCorePanels)) State.statlockerCorePanels = [];
-        var cacheValid = IsPanelListValid(State.statlockerCorePanels);
-        if (!cacheValid || nowMs >= (State.statlockerNextScanMs || 0)) {
+        if (!Array.isArray(S.statlockerCorePanels)) S.statlockerCorePanels = [];
+        var cacheValid = IsPanelListValid(S.statlockerCorePanels);
+        if (!cacheValid || nowMs >= (S.statlockerNextScanMs || 0)) {
             if (!cacheValid && !IsStatlockerDiscoveryContextActive(root)) {
-                State.statlockerCorePanels = [];
-                State.statlockerButtons = [];
-                State.statlockerNextScanMs = nowMs + GetStatlockerScanDelay(0);
-                State.statlockerWasEnabled = true;
+                S.statlockerCorePanels = [];
+                S.statlockerButtons = [];
+                S.statlockerNextScanMs = nowMs + GetStatlockerScanDelay(0);
+                S.statlockerWasEnabled = true;
                 return;
             }
             var corePanels = CollectStatlockerCorePanels(root);
-            State.statlockerCorePanels = corePanels;
-            State.statlockerNextScanMs = nowMs + GetStatlockerScanDelay(corePanels.length);
+            S.statlockerCorePanels = corePanels;
+            S.statlockerNextScanMs = nowMs + GetStatlockerScanDelay(corePanels.length);
         }
 
         var liveButtons = [];
-        var panels = State.statlockerCorePanels || [];
+        var panels = S.statlockerCorePanels || [];
         for (var iPanel = 0; iPanel < panels.length; iPanel++) {
             var corePanel = panels[iPanel];
             if (!IsPanelValid(corePanel)) continue;
             var button = EnsureStatlockerButton(corePanel, root);
             if (IsPanelValid(button)) liveButtons.push(button);
         }
-        State.statlockerButtons = liveButtons;
-        State.statlockerWasEnabled = true;
+        S.statlockerButtons = liveButtons;
+        S.statlockerWasEnabled = true;
     }
 
     // ── Registration ──

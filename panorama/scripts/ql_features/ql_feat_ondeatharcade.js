@@ -43,13 +43,13 @@
 
     function FindRespawnTimerPanelForOnDeathArcade(root) {
         if (!root || !root.FindChildTraverse) {
-            State.onDeathArcadeRespawnPanel = null;
+            S.onDeathArcadeRespawnPanel = null;
             return null;
         }
 
-        var cached = IsPanelValid(State.onDeathArcadeRespawnPanel) ? State.onDeathArcadeRespawnPanel : null;
+        var cached = IsPanelValid(S.onDeathArcadeRespawnPanel) ? S.onDeathArcadeRespawnPanel : null;
         if (cached && IsPanelVisibleMaybe(cached)) return cached;
-        State.onDeathArcadeRespawnPanel = null;
+        S.onDeathArcadeRespawnPanel = null;
 
         var localRespawnRoot = null;
         try { localRespawnRoot = root.FindChildTraverse("respawn_timer"); } catch (e0) { localRespawnRoot = null; }
@@ -59,7 +59,7 @@
             for (var iLocal = 0; iLocal < localLabels.length; iLocal++) {
                 var localCandidate = localLabels[iLocal];
                 if (!IsPanelValid(localCandidate) || !IsPanelVisibleMaybe(localCandidate)) continue;
-                State.onDeathArcadeRespawnPanel = localCandidate;
+                S.onDeathArcadeRespawnPanel = localCandidate;
                 return localCandidate;
             }
         }
@@ -70,7 +70,7 @@
         for (var i = 0; i < labels.length; i++) {
             var candidate = labels[i];
             if (!IsPanelValid(candidate) || !IsPanelVisibleMaybe(candidate)) continue;
-            State.onDeathArcadeRespawnPanel = candidate;
+            S.onDeathArcadeRespawnPanel = candidate;
             return candidate;
         }
         return null;
@@ -153,25 +153,25 @@
         if (!featureEnabled) {
             var staleActive = "";
             try { staleActive = String(root.GetAttributeString ? root.GetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, "") : ""); } catch (e0) { staleActive = ""; }
-            if (State.onDeathArcadeWasDead || staleActive === "1") {
+            if (S.onDeathArcadeWasDead || staleActive === "1") {
                 SetOnDeathArcadeBridgeAttributes(root, false, "", "");
                 SetOnDeathArcadeEscapeMenuOpen(root, false);
             }
-            State.onDeathArcadeWasDead = false;
-            State.onDeathArcadeRespawnPanel = null;
+            S.onDeathArcadeWasDead = false;
+            S.onDeathArcadeRespawnPanel = null;
             return;
         }
 
         var timerSeconds = GetRespawnTimerSecondsForOnDeathArcade(root);
         var isDead = isFinite(timerSeconds) && timerSeconds > 0;
-        var wasDead = State.onDeathArcadeWasDead === true;
+        var wasDead = S.onDeathArcadeWasDead === true;
 
         if (isDead && !wasDead) {
-            if ((nowMsLoop - State.onDeathArcadeLastTriggerMs) >= ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS) {
-                State.onDeathArcadeLastTriggerMs = nowMsLoop;
-                State.onDeathArcadeRequestSerial = Number(State.onDeathArcadeRequestSerial || 0) + 1;
+            if ((nowMsLoop - S.onDeathArcadeLastTriggerMs) >= ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS) {
+                S.onDeathArcadeLastTriggerMs = nowMsLoop;
+                S.onDeathArcadeRequestSerial = Number(S.onDeathArcadeRequestSerial || 0) + 1;
                 var gameId = pool[Math.floor(Math.random() * pool.length)] || "";
-                var requestToken = String(State.onDeathArcadeRequestSerial);
+                var requestToken = String(S.onDeathArcadeRequestSerial);
                 SetOnDeathArcadeBridgeAttributes(root, true, gameId, requestToken);
                 SetOnDeathArcadeEscapeMenuOpen(root, true);
             }
@@ -182,7 +182,7 @@
             SetOnDeathArcadeBridgeAttributes(root, false, "", "");
         }
 
-        State.onDeathArcadeWasDead = isDead;
+        S.onDeathArcadeWasDead = isDead;
     }
 
 
