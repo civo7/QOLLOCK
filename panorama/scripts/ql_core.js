@@ -3397,6 +3397,13 @@ function ExpressShotLog(msg) {
         if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
         State.featureAutoDisabled[featureName] = true;
         QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors");
+        // Publish to shared global so settings UI can surface the warning
+        if (typeof QOL_AUTO_DISABLED_FEATURES === "undefined") {
+            QOL_AUTO_DISABLED_FEATURES = [];
+        }
+        if (QOL_AUTO_DISABLED_FEATURES.indexOf(featureName) === -1) {
+            QOL_AUTO_DISABLED_FEATURES.push(featureName);
+        }
     }
 
     /**

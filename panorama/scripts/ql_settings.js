@@ -13209,6 +13209,32 @@ function RenderConfigTabContent(list) {
     gConfigFeedbackLabel = null;
     gConfigFeedbackClearToken++;
 
+    // Auto-disabled feature warning banner (4.1: reads global set by ql_core.js)
+    if (!gSearchCollectMode && typeof QOL_AUTO_DISABLED_FEATURES !== "undefined" && QOL_AUTO_DISABLED_FEATURES.length > 0) {
+        try {
+            var disabledFeatures = QOL_AUTO_DISABLED_FEATURES;
+            var filtered = [];
+            for (var di = 0; di < disabledFeatures.length; di++) {
+                var dn = String(disabledFeatures[di]).trim();
+                if (dn) filtered.push(dn);
+            }
+            if (filtered.length > 0) {
+                var warnSection = $.CreatePanel("Panel", list, "AutoDisableWarning");
+                warnSection.AddClass("ConfigFeedbackPanel");
+                warnSection.AddClass("AutoDisableWarning");
+                var warnTitle = $.CreatePanel("Label", warnSection, "AutoDisableWarningTitle");
+                warnTitle.AddClass("ConfigFeedbackLabel");
+                warnTitle.text = "Some QOLLOCK features were auto-disabled due to errors:";
+                var warnList = $.CreatePanel("Label", warnSection, "AutoDisableWarningList");
+                warnList.AddClass("ConfigFeedbackText");
+                warnList.text = filtered.join(", ");
+                var warnHint = $.CreatePanel("Label", warnSection, "AutoDisableWarningHint");
+                warnHint.AddClass("ConfigFeedbackText");
+                warnHint.text = "Restart your game to re-enable these features.";
+            }
+        } catch (eAutoDisableWarn) {}
+    }
+
     if (gSearchCollectMode && gSearchCollectState) {
         CreateSectionTitle(list, "General");
         CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
