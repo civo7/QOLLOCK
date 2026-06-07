@@ -2106,44 +2106,54 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
 };
 
 // ── Diagnostic dump function ──
-// Available in both settings and HUD contexts (ql_shared_presets.js loads in both).
-// ql_core.js writes runtime state into QOL_FEATURE_REGISTRY.__diag each tick.
+// Reads HUD state from panel attributes (cross-context via the panel tree).
+// ql_core.js writes QOL_DIAG_ATTR on the root panel each tick.
 var QOL_DumpDiagnostics = function() {
     var lines = [];
     lines.push("=== QOLLOCK Diagnostics ===");
     lines.push("Version: " + (typeof MOD_DISPLAY_VERSION !== "undefined" ? MOD_DISPLAY_VERSION : "?"));
     lines.push("Schema: " + (typeof QOL_SCHEMA_SEMVER !== "undefined" ? QOL_SCHEMA_SEMVER : "?"));
     lines.push("");
-    lines.push("--- Loaded Features (" + (QOL_FEATURE_REGISTRY ? Object.keys(QOL_FEATURE_REGISTRY).filter(function(k) { return k.charAt(0) !== "_"; }).length : 0) + ") ---");
-    if (QOL_FEATURE_REGISTRY) {
-        var _fkeys = Object.keys(QOL_FEATURE_REGISTRY).filter(function(k) { return k.charAt(0) !== "_"; }).sort();
-        for (var _fi = 0; _fi < _fkeys.length; _fi++) {
-            lines.push("  + " + _fkeys[_fi]);
+
+    // Try to read runtime state from the panel tree (HUD context writes here)
+    var _diag = null;
+    try {
+        var _ctx = $.GetContextPanel();
+        while (_ctx && _ctx.GetParent) { var _p = _ctx.GetParent(); if (!_p) break; _ctx = _p; }
+        var _raw = (_ctx && _ctx.GetAttributeString) ? _ctx.GetAttributeString("QOL_Diag", "") : "";
+        if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
+    } catch(e) {}
+
+    if (_diag) {
+        lines.push("--- Loaded Features (" + (_diag.features ? _diag.features.length : 0) + ") ---");
+        if (_diag.features) {
+            for (var _fi = 0; _fi < _diag.features.length; _fi++) {
+                lines.push("  + " + _diag.features[_fi]);
+            }
         }
-    }
-    // Runtime state written by ql_core.js into QOL_FEATURE_REGISTRY.__diag
-    var _diag = (QOL_FEATURE_REGISTRY && QOL_FEATURE_REGISTRY.__diag) || {};
-    lines.push("");
-    lines.push("--- Missing / Unregistered Features ---");
-    if (_diag.missingFeatures) {
-        var _mkeys = Object.keys(_diag.missingFeatures);
-        for (var _mj = 0; _mj < _mkeys.length; _mj++) {
-            lines.push("  - " + _mkeys[_mj]);
+        lines.push("");
+        lines.push("--- Missing / Unregistered Features ---");
+        if (_diag.missing && Object.keys(_diag.missing).length > 0) {
+            var _mkeys = Object.keys(_diag.missing).sort();
+            for (var _mj = 0; _mj < _mkeys.length; _mj++) {
+                lines.push("  - " + _mkeys[_mj]);
+            }
+        } else {
+            lines.push("  (none)");
         }
-        if (_mkeys.length === 0) lines.push("  (none)");
+        lines.push("");
+        lines.push("--- Auto-Disabled Features (error count) ---");
+        if (_diag.errors && Object.keys(_diag.errors).length > 0) {
+            var _ekeys = Object.keys(_diag.errors).sort();
+            for (var _ek = 0; _ek < _ekeys.length; _ek++) {
+                lines.push("  " + _ekeys[_ek] + ": " + _diag.errors[_ekeys[_ek]] + " errors");
+            }
+        } else {
+            lines.push("  (none)");
+        }
     } else {
-        lines.push("  (no data — ql_core.js may not be loaded)");
-    }
-    lines.push("");
-    lines.push("--- Auto-Disabled Features (error count) ---");
-    if (_diag.errorCounts) {
-        var _ekeys = Object.keys(_diag.errorCounts);
-        for (var _ek = 0; _ek < _ekeys.length; _ek++) {
-            lines.push("  " + _ekeys[_ek] + ": " + _diag.errorCounts[_ekeys[_ek]] + " errors");
-        }
-        if (_ekeys.length === 0) lines.push("  (none)");
-    } else {
-        lines.push("  (no data — ql_core.js may not be loaded)");
+        lines.push("--- HUD Runtime State ---");
+        lines.push("  (not available — ql_core.js may not be loaded or no data written yet)");
     }
     return lines.join("\n");
 };

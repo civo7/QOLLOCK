@@ -28118,6 +28118,26 @@ function GetUIRoot() {
             if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
         }
         State.lastRawConfig = raw;
+
+        // Sync diagnostic state to root panel attribute (cross-context for Dev tab)
+        try {
+            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && State._diagWriteNextMs <= nowMsLoop) {
+                State._diagWriteNextMs = nowMsLoop + 5000;
+                var _diag = {
+                    features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
+                    missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
+                    errors: (State._featureErrorCount) ? State._featureErrorCount : {}
+                };
+                var _diagRoot = State.rootPanel;
+                if (!_diagRoot) {
+                    try { _diagRoot = $.GetContextPanel(); while (_diagRoot && _diagRoot.GetParent) { var _dp = _diagRoot.GetParent(); if (!_dp) break; _diagRoot = _dp; } } catch(e) { _diagRoot = null; }
+                }
+                if (_diagRoot && _diagRoot.SetAttributeString) {
+                    _diagRoot.SetAttributeString("QOL_Diag", JSON.stringify(_diag));
+                }
+            }
+        } catch(e) {}
+
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
             if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
@@ -28644,14 +28664,4 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
-    // ── Sync diagnostic state to QOL_FEATURE_REGISTRY.__diag ──
-    // ql_shared_presets.js defines QOL_DumpDiagnostics() which reads this state.
-    // QOL_FEATURE_REGISTRY is shared across Panorama contexts.
-    try {
-        if (typeof QOL_FEATURE_REGISTRY !== "undefined") {
-            if (!QOL_FEATURE_REGISTRY.__diag) QOL_FEATURE_REGISTRY.__diag = {};
-            QOL_FEATURE_REGISTRY.__diag.missingFeatures = (State && State._missingFeatureLogged) ? State._missingFeatureLogged : {};
-            QOL_FEATURE_REGISTRY.__diag.errorCounts = (State && State._featureErrorCount) ? State._featureErrorCount : {};
-        }
-    } catch(e) {}
 })();
