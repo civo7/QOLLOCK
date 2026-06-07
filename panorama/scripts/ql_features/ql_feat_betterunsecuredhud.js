@@ -145,7 +145,7 @@
         S.unsecuredSouls.hudMirrorText = null;
     }
 
-    var ReadSafePanelLayoutOffset = QOL_UTILS_LOADED ? QOL_UTILS.ReadSafePanelLayoutOffset : function(rawValue) {
+    var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawValue) {
         var n = Number(rawValue);
         if (!isFinite(n)) return null;
         if (Math.abs(n) > PANEL_LAYOUT_OFFSET_ABS_MAX) return null;
