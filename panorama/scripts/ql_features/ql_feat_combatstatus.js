@@ -15,6 +15,7 @@
     var SetWashColorSafe = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : function() {};
     var SetPanelClassIfChanged = typeof QOL_SetPanelClassIfChanged !== "undefined" ? QOL_SetPanelClassIfChanged : function() {};
     var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
+    var IsCombatSignalActive = typeof QOL_IsCombatSignalActive !== "undefined" ? QOL_IsCombatSignalActive : function() { return false; };
 
     // ── Feature constants ──
     var COMBAT_STATUS_RECOVERY_MS = 3000;
@@ -32,67 +33,19 @@
     function CombatIndicatorDebugLogThrottled(sig, msg, nowMs) {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.combatIndicatorDebugLastSig;
-        if (sameSig && now < (State.combatIndicatorDebugNextMs || 0)) return;
-        State.combatIndicatorDebugLastSig = sig || "";
-        State.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
+        var sameSig = sig && sig === S.combatIndicatorDebugLastSig;
+        if (sameSig && now < (S.combatIndicatorDebugNextMs || 0)) return;
+        S.combatIndicatorDebugLastSig = sig || "";
+        S.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
         CombatIndicatorDebugLog(msg);
     }
 
     function ResetCombatStatusProbeBackoff() {
-        State.combatStatusAlertProbeMisses = 0;
-    }
-
-    function IsCombatSignalActive(root, nowMs) {
-        if (!root) return false;
-
-        // Probe InCombatAlert panel — directly driven by native b_InCombat property.
-        var alertPanel = GetCachedPanel("combatStatusAlertPanel");
-        if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
-            var scannedAlert = FindCombatPanelById(root, root, "InCombatAlert");
-            if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
-            SetCachedPanel("combatStatusAlertPanel", alertPanel);
-            State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
-                !!alertPanel,
-                "combatStatusAlertProbeMisses",
-                COMBAT_STATUS_ALERT_PROBE_MS,
-                COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS
-            );
-        }
-        if (alertPanel) {
-            var alertParent = alertPanel;
-            for (var ai = 0; ai < 12 && alertParent; ai++) {
-                try {
-                    if (alertParent.BHasClass && alertParent.BHasClass(CLASS_IN_COMBAT)) {
-                        ResetCombatStatusProbeBackoff();
-                        return true;
-                    }
-                    if (alertParent.BHasClass && alertParent.BHasClass("in_combat")) {
-                        ResetCombatStatusProbeBackoff();
-                        return true;
-                    }
-                } catch (eAlertClass0) {}
-                alertParent = alertParent.GetParent ? alertParent.GetParent() : null;
-            }
-        }
-
-        // Lightweight fallback: check HUD root for inCombat class (also driven by native b_InCombat).
-        try {
-            if (IsHudClassActive(root, CLASS_IN_COMBAT)) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-            if (IsHudClassActive(root, "in_combat")) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-        } catch (eHudClass0) {}
-
-        return false;
+        S.combatStatusAlertProbeMisses = 0;
     }
 
     function EnsureCombatStatusOverlay(root) {
-        var overlay = GetCachedPanel("combatStatusOverlay");
+        var overlay = GC("combatStatusOverlay");
         if (overlay) return overlay;
 
         overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLCombatStatusOverlay") : null;
@@ -109,33 +62,33 @@
             timerLabel.text = "0.0s";
         }
 
-        SetCachedPanel("combatStatusOverlay", overlay);
-        SetCachedPanel("combatStatusState", overlay ? overlay.FindChildTraverse("QOLCombatStatusState") : null);
-        SetCachedPanel("combatStatusTimer", overlay ? overlay.FindChildTraverse("QOLCombatStatusTimer") : null);
+        SC("combatStatusOverlay", overlay);
+        SC("combatStatusState", overlay ? overlay.FindChildTraverse("QOLCombatStatusState") : null);
+        SC("combatStatusTimer", overlay ? overlay.FindChildTraverse("QOLCombatStatusTimer") : null);
         return overlay;
     }
 
     function RemoveCombatStatusOverlay(root) {
-        var overlay = GetCachedPanel("combatStatusOverlay");
+        var overlay = GC("combatStatusOverlay");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLCombatStatusOverlay");
         }
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        SetCachedPanel("combatStatusOverlay", null);
-        SetCachedPanel("combatStatusState", null);
-        SetCachedPanel("combatStatusTimer", null);
-        SetCachedPanel("combatStatusAlertPanel", null);
-        State.combatStatus.displayMode = "";
-        State.combatStatus.lastLayoutSig = "";
-        State.combatStatus.lastClassSig = "";
-        State.combatStatus.lastStateText = "";
-        State.combatStatus.lastTimerText = "";
-        State.combatStatus.lastCombatMs = 0;
-        State.combatStatus.combatStartMs = 0;
-        State.combatStatus.signalActive = false;
-        State.combatStatus.nextAlertProbeMs = 0;
+        SC("combatStatusOverlay", null);
+        SC("combatStatusState", null);
+        SC("combatStatusTimer", null);
+        SC("combatStatusAlertPanel", null);
+        S.combatStatus.displayMode = "";
+        S.combatStatus.lastLayoutSig = "";
+        S.combatStatus.lastClassSig = "";
+        S.combatStatus.lastStateText = "";
+        S.combatStatus.lastTimerText = "";
+        S.combatStatus.lastCombatMs = 0;
+        S.combatStatus.combatStartMs = 0;
+        S.combatStatus.signalActive = false;
+        S.combatStatus.nextAlertProbeMs = 0;
         ResetCombatStatusProbeBackoff();
     }
 
@@ -143,27 +96,27 @@
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
         if (!IsCustomHudContextActive(root)) {
-            if (State.combatStatus.displayMode !== "context_off") {
+            if (S.combatStatus.displayMode !== "context_off") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatus.displayMode = "context_off";
+                S.combatStatus.displayMode = "context_off";
             }
             return;
         }
 
         if (Number(cfg.ENABLE_COMBAT_STATUS) !== 1) {
-            if (State.combatStatus.displayMode !== "disabled") {
+            if (S.combatStatus.displayMode !== "disabled") {
                 RemoveCombatStatusOverlay(root);
-                State.combatStatus.displayMode = "disabled";
+                S.combatStatus.displayMode = "disabled";
             }
             return;
         }
 
         var overlay = EnsureCombatStatusOverlay(root);
         if (!overlay) return;
-        if (State.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (S.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        State.combatStatus.displayMode = "active";
+        S.combatStatus.displayMode = "active";
 
         var scale = Math.round(Number(cfg.COMBAT_STATUS_SCALE));
         var offsetX = Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET));
@@ -179,41 +132,41 @@
         if (offsetY > 1000) offsetY = 1000;
 
         var layoutSig = String(scale) + "|" + String(offsetX) + "|" + String(offsetY);
-        if (layoutSig !== State.combatStatus.lastLayoutSig) {
+        if (layoutSig !== S.combatStatus.lastLayoutSig) {
             overlay.style.preTransformScale2d = (scale / 100).toFixed(2);
             overlay.style.marginLeft = String(offsetX) + "px";
             overlay.style.marginBottom = String(165 + offsetY) + "px";
-            State.combatStatus.lastLayoutSig = layoutSig;
+            S.combatStatus.lastLayoutSig = layoutSig;
         }
 
         var combatSignal = IsCombatSignalActive(root, nowMs);
         if (combatSignal) {
-            if (!State.combatStatus.signalActive || State.combatStatus.combatStartMs <= 0) {
-                State.combatStatus.combatStartMs = nowMs;
+            if (!S.combatStatus.signalActive || S.combatStatus.combatStartMs <= 0) {
+                S.combatStatus.combatStartMs = nowMs;
             }
-            State.combatStatus.lastCombatMs = nowMs;
+            S.combatStatus.lastCombatMs = nowMs;
         }
-        State.combatStatus.signalActive = combatSignal;
+        S.combatStatus.signalActive = combatSignal;
 
-        var recentCombatMs = nowMs - Number(State.combatStatus.lastCombatMs || 0);
-        var recoveryActive = !combatSignal && State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
+        var recentCombatMs = nowMs - Number(S.combatStatus.lastCombatMs || 0);
+        var recoveryActive = !combatSignal && S.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
         var phase = combatSignal ? "combat" : (recoveryActive ? "recover" : "idle");
         if (phase === "idle") {
-            State.combatStatus.combatStartMs = 0;
+            S.combatStatus.combatStartMs = 0;
         }
 
         var classSig = phase;
-        if (classSig !== State.combatStatus.lastClassSig) {
+        if (classSig !== S.combatStatus.lastClassSig) {
             overlay.SetHasClass("phase_combat", combatSignal);
             overlay.SetHasClass("phase_recover", recoveryActive);
             overlay.SetHasClass("phase_idle", !combatSignal && !recoveryActive);
-            State.combatStatus.lastClassSig = classSig;
+            S.combatStatus.lastClassSig = classSig;
         }
 
         var stateText = "OUT OF COMBAT";
         var timerText = "--";
         if (combatSignal) {
-            var combatStartMs = Number(State.combatStatus.combatStartMs || nowMs);
+            var combatStartMs = Number(S.combatStatus.combatStartMs || nowMs);
             if (!isFinite(combatStartMs) || combatStartMs <= 0) combatStartMs = nowMs;
             var combatSec = Math.max(0, (nowMs - combatStartMs) / 1000.0);
             stateText = "IN COMBAT";
@@ -224,15 +177,15 @@
             timerText = recoverSec.toFixed(1) + "s";
         }
 
-        var stateLabel = GetCachedPanel("combatStatusState");
-        if (stateLabel && stateText !== State.combatStatus.lastStateText) {
+        var stateLabel = GC("combatStatusState");
+        if (stateLabel && stateText !== S.combatStatus.lastStateText) {
             stateLabel.text = stateText;
-            State.combatStatus.lastStateText = stateText;
+            S.combatStatus.lastStateText = stateText;
         }
-        var timerLabel = GetCachedPanel("combatStatusTimer");
-        if (timerLabel && timerText !== State.combatStatus.lastTimerText) {
+        var timerLabel = GC("combatStatusTimer");
+        if (timerLabel && timerText !== S.combatStatus.lastTimerText) {
             timerLabel.text = timerText;
-            State.combatStatus.lastTimerText = timerText;
+            S.combatStatus.lastTimerText = timerText;
         }
     }
 

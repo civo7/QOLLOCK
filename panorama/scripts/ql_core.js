@@ -24198,6 +24198,32 @@ function GetUIRoot() {
     var COMBAT_INDICATOR_DEBUG = false;
     var COMBAT_INDICATOR_DEBUG_THROTTLE_MS = 700;
 
+    function IsCombatSignalActive(root, nowMs) {
+        if (!root) return false;
+        var alertPanel = GetCachedPanel("combatStatusAlertPanel");
+        if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
+            alertPanel = root.FindChildTraverse ? root.FindChildTraverse("InCombatAlert") : null;
+            SetCachedPanel("combatStatusAlertPanel", alertPanel);
+            State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
+                !!alertPanel,
+                "combatStatusAlertProbeMisses",
+                COMBAT_STATUS_ALERT_PROBE_MS,
+                COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS
+            );
+        }
+        if (IsPanelValid(alertPanel) && alertPanel.BHasClass && alertPanel.BHasClass("Visible")) {
+            State.combatStatus.signalActive = true;
+            return true;
+        }
+        try {
+            if (root.BHasClass && (root.BHasClass("InCombat") || root.BHasClass("in_combat"))) {
+                State.combatStatus.signalActive = true;
+                return true;
+            }
+        } catch (eHudClass0) {}
+        return false;
+    }
+
     function LogCombatIndicatorDebugState(root, cfg, nowMs, combatSignal, recoveryActive, classActive) {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var rawEnabled = Number(cfg && cfg.ENABLE_COMBAT_INDICATOR);
@@ -30029,5 +30055,6 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsCombatSignalActive = IsCombatSignalActive; } catch(e) {}
 
 })();
