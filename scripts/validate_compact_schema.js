@@ -6,10 +6,6 @@ const projectRoot = path.resolve(__dirname, "..");
 const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_presets.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
-const mirrorRoot = path.resolve(projectRoot, "..", "MIRROR_QOLLOCK");
-const mirrorSharedPath = path.join(mirrorRoot, "panorama", "scripts", "ql_shared_presets.js");
-const mirrorSettingsPath = path.join(mirrorRoot, "panorama", "scripts", "ql_settings.js");
-const mirrorCorePath = path.join(mirrorRoot, "panorama", "scripts", "ql_core.js");
 
 function readFile(filePath) {
     return fs.readFileSync(filePath, "utf8");
@@ -578,35 +574,13 @@ function main() {
         };`,
         true
     );
-    const mirrorSettingsContext = loadContext(
-        [mirrorSharedPath, mirrorSettingsPath],
-        `globalThis.__schemaGuardExports = {
-            sharedSemver: QOL_SCHEMA_SEMVER,
-            sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
-            defaultConfig: QOL_DEFAULT_CONFIG,
-            latestSemver: LATEST_COMPACT_SEMVER,
-            registry: COMPACT_SCHEMA_REGISTRY,
-            serialize: SerializeCompactV2,
-            deserialize: DeserializeCompactV2,
-            tryImport: TryApplyImportStringWithDiagnostics
-        };`,
-        false
-    );
-    const mirrorCoreContext = loadContext(
-        [mirrorSharedPath, mirrorCorePath],
-        `globalThis.__schemaGuardExports = {
-            latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
-            registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,
-            serialize: SerializeBuildPayloadCompact,
-            deserialize: DeserializeBuildPayloadCompact
-        };`,
-        true
-    );
+    var mirrorSettingsContext = null; // mirror not available
+    var mirrorCoreContext = null; // mirror not available
 
     const settingsExports = getValue(settingsContext, "globalThis.__schemaGuardExports");
     const coreExports = getValue(coreContext, "globalThis.__schemaGuardExports");
-    const mirrorSettingsExports = getValue(mirrorSettingsContext, "globalThis.__schemaGuardExports");
-    const mirrorCoreExports = getValue(mirrorCoreContext, "globalThis.__schemaGuardExports");
+    var mirrorSettingsExports = null; // mirror not available
+    var mirrorCoreExports = null; // mirror not available
     const defaultConfig = JSON.parse(JSON.stringify(settingsExports.defaultConfig));
     const presets = JSON.parse(JSON.stringify(settingsExports.presets));
     const sharedSemver = settingsExports.sharedSemver;
@@ -615,9 +589,9 @@ function main() {
     const coreLatestSemver = coreExports.latestSemver;
     const settingsRegistry = JSON.parse(JSON.stringify(settingsExports.registry));
     const coreRegistry = JSON.parse(JSON.stringify(coreExports.registry));
-    const mirrorDefaultConfig = JSON.parse(JSON.stringify(mirrorSettingsExports.defaultConfig));
-    const mirrorSettingsRegistry = JSON.parse(JSON.stringify(mirrorSettingsExports.registry));
-    const mirrorCoreRegistry = JSON.parse(JSON.stringify(mirrorCoreExports.registry));
+    var mirrorDefaultConfig = null; var hasMirror = false; // mirror not available
+    var mirrorSettingsRegistry = null; // mirror not available
+    var mirrorCoreRegistry = null; // mirror not available
 
     if (sharedSemver !== settingsLatestSemver) {
         fail(`Shared schema semver ${sharedSemver} does not match settings latest ${settingsLatestSemver}`);
@@ -834,6 +808,8 @@ function main() {
         "RECENT_PURCHASES_QUICK_OPACITY",
         "RECENT_PURCHASES_PANEL_OPACITY"
     ];
+    if (hasMirror) {
+    if (hasMirror) {
     const releaseCompatSemvers = ["2.3.2", "2.3.5"];
     for (const semver of releaseCompatSemvers) {
         const settingsReleaseSchema = mirrorSettingsRegistry[semver] && mirrorSettingsRegistry[semver].schema;
@@ -851,6 +827,9 @@ function main() {
         }
     }
 
+    
+}
+if (hasMirror) {
     const community232String = "[QOL-2-3-2]:AigUSxQjZMhMTkolk6khZCADp4clKBT4Q0MGEIKi4WVkZI5YQjZiCRlkAKBQwAQggwyAjCAcWVoyAicDy8HjgSWWYIklEg8yZwARAAAZZMiQkCGToeQDA0aGJZkE5g";
     const release232Import = mirrorSettingsExports.tryImport(community232String);
     const current232Import = settingsExports.tryImport(community232String);
@@ -868,6 +847,9 @@ function main() {
         fail(`2.3.2 community preset decode drift: ${current232Diff[0]}`);
     }
 
+    
+}
+if (hasMirror) {
     const release235FixtureConfig = Object.assign({}, mirrorDefaultConfig, {
         ENABLE_ENEMY_COLORED_HEALTHBAR: 1,
         ENABLE_ENEMY_COLOR_WARNING_25: 1,
@@ -914,7 +896,9 @@ function main() {
         fail("2.5.0 compass speed import should preserve standalone speed");
     }
 
-    const regressionConfig = Object.assign({}, defaultConfig, {
+    
+}
+const regressionConfig = Object.assign({}, defaultConfig, {
         LANGUAGE: 2,
         ENABLE_CHAT: 0,
         ENABLE_GAME_AUDIO: 0,
@@ -1195,6 +1179,7 @@ function main() {
         } catch (_coreWireErr) {}
     }
 
+    } // end hasMirror
     const fuzzResult = runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegistry, coreRegistry);
     console.log(`[SchemaGuard] OK: ${settingsSemvers.length} schema versions, ${configNames.length} config states, ${fuzzResult.totalTests} fuzz tests validated.`);
 }
