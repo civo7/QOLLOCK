@@ -27592,51 +27592,16 @@ function GetUIRoot() {
         if (nowMs >= (Number(State.compass.nextSpeedSampleMs) || 0)) {
             speedValueText = "--";
             var playerPanel = IsPanelValid(State.minimapHeadingSnapshotPlayerPanel) ? State.minimapHeadingSnapshotPlayerPanel : FindLocalMinimapPlayerPanel(root, nowMs);
-            if (!playerPanel) {
-                if (!State._compassSpeedDebugNoPanelLogged) {
-                    $.Msg("[QOLLock][compassSpeed] no player panel found — minimapHeadingSnapshotPlayerPanel valid=" + (IsPanelValid(State.minimapHeadingSnapshotPlayerPanel) ? "1" : "0"));
-                    State._compassSpeedDebugNoPanelLogged = true;
-                }
-            }
             if (playerPanel) {
-                State._compassSpeedDebugNoPanelLogged = false;
-                // Try playerPanel (client_cone_fov) — it's positioned by the engine via layout.
-                // The mainImage only has rotation, not position.
                 var positionText = "";
                 if (playerPanel.style && typeof playerPanel.style.position === "string") {
                     positionText = playerPanel.style.position;
                 }
-                if ((!positionText || positionText.length === 0) && playerPanel.style && typeof playerPanel.style.transform === "string") {
-                    positionText = playerPanel.style.transform;
+                if ((!positionText || positionText.length === 0) && playerPanel.GetAttributeString) {
+                    positionText = playerPanel.GetAttributeString("style", "");
                 }
-                // Fallback: actualxoffset/actualyoffset give pixel position after layout
-                var pos = null;
-                if (positionText && positionText.length > 0) {
-                    pos = ParsePositionXYPercent(positionText);
-                }
-                if (!pos && typeof playerPanel.actualxoffset === "number" && typeof playerPanel.actualyoffset === "number") {
-                    // Convert pixel offsets to percentages relative to minimap size
-                    var parentPanel = playerPanel.GetParent ? playerPanel.GetParent() : null;
-                    var parentW = IsPanelValid(parentPanel) && typeof parentPanel.actuallayoutwidth === "number" ? parentPanel.actuallayoutwidth : 0;
-                    var parentH = IsPanelValid(parentPanel) && typeof parentPanel.actuallayoutheight === "number" ? parentPanel.actuallayoutheight : 0;
-                    if (parentW > 0 && parentH > 0) {
-                        var xPct = (playerPanel.actualxoffset / parentW) * 100;
-                        var yPct = (playerPanel.actualyoffset / parentH) * 100;
-                        _posResultScratch.x = xPct;
-                        _posResultScratch.y = yPct;
-                        pos = _posResultScratch;
-                    }
-                }
-                if (!pos) {
-                    if (!State._compassSpeedDebugNoPosLogged) {
-                        $.Msg("[QOLLock][compassSpeed] position parse failed — playerPanel actualxoffset=" + playerPanel.actualxoffset + " actualyoffset=" + playerPanel.actualyoffset + " transform='" + String(playerPanel.style && playerPanel.style.transform ? playerPanel.style.transform : "undefined") + "'");
-                        var pp = playerPanel.GetParent ? playerPanel.GetParent() : null;
-                        $.Msg("[QOLLock][compassSpeed] parent w=" + (IsPanelValid(pp) ? pp.actuallayoutwidth : "n/a") + " h=" + (IsPanelValid(pp) ? pp.actuallayoutheight : "n/a"));
-                        State._compassSpeedDebugNoPosLogged = true;
-                    }
-                }
+                var pos = ParsePositionXYPercent(positionText);
                 if (pos) {
-                    State._compassSpeedDebugNoPosLogged = false;
                     if (State.compass.lastPosX !== null && State.compass.lastPosY !== null && State.compass.lastPosTimeMs > 0) {
                         var dtSec = (nowMs - State.compass.lastPosTimeMs) / 1000.0;
                         if (dtSec > 0.01 && dtSec < 1.0) {
