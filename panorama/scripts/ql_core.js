@@ -20047,72 +20047,7 @@ function GetUIRoot() {
         PerfEnd("loop.build_clear_request", perfSection);
     }
 
-    function GetStaminaChargeColorPanels(root, nowMs) {
-        var cached = State.staminaChargeColorPanelCache || [];
-        if (IsPanelListValid(cached) && nowMs < (State.staminaChargeColorPanelCacheNextMs || 0)) {
-            return cached;
-        }
 
-        var panels = [];
-        var searchRoot = GetCachedPanel("staminaChargesContainer");
-        if (!searchRoot && root && root.FindChildTraverse) {
-            searchRoot = root.FindChildTraverse("charges_container") || root;
-        }
-        if (!searchRoot) searchRoot = root;
-
-        if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
-            var finishedCharges = searchRoot.FindChildrenWithClassTraverse("charge_fg") || [];
-            for (var i = 0; i < finishedCharges.length; i++) {
-                var fg = finishedCharges[i];
-                if (IsPanelValid(fg) && fg.BHasClass && fg.BHasClass("finished")) panels.push(fg);
-            }
-
-            var drainedCharges = searchRoot.FindChildrenWithClassTraverse("charge_drained") || [];
-            for (var j = 0; j < drainedCharges.length; j++) {
-                var drained = drainedCharges[j];
-                if (IsPanelValid(drained)) panels.push(drained);
-            }
-        }
-
-        State.staminaChargeColorPanelCache = panels;
-        State.staminaChargeColorPanelCacheNextMs = nowMs + 500;
-        return panels;
-    }
-
-    function GetStaminaChargesContainer(root) {
-        var chargesContainer = ResolveCachedPanel(root, "staminaChargesContainer", "charges_container")
-        return chargesContainer;
-    }
-
-    function UpdateStaminaChargeColorRuntime(root, cfg, nowMs) {
-        // Bail early when stamina charge config is at default and no cached panels exist.
-        if (!HasNonDefaultStaminaChargeRuntimeConfig(cfg) &&
-            !GetCachedPanel("staminaChargesContainer") &&
-            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
-
-        var color = ResolveWashColorFromPalette(ReadStaminaChargeColorIndex(cfg));
-        var angle = NormalizeStaminaChargeAngle(cfg && cfg.STAMINA_CHARGE_ANGLE);
-        var angleSig = String(angle);
-        var chargesContainer = GetStaminaChargesContainer(root);
-        if (chargesContainer && State.staminaChargeAngleStyleSig !== angleSig) {
-            SetStyleSafe(chargesContainer, "transform", "rotateZ(" + String(angle) + "deg)");
-            State.staminaChargeAngleStyleSig = angleSig;
-        } else if (!chargesContainer) {
-            State.staminaChargeAngleStyleSig = "";
-        }
-
-        var styleSig = color || "";
-        var panels = GetStaminaChargeColorPanels(root, nowMs || 0);
-        if (State.staminaChargeColorStyleSig === styleSig && IsPanelListValid(panels)) return;
-
-        for (var i = 0; i < panels.length; i++) {
-            var panel = panels[i];
-            if (!IsPanelValid(panel)) continue;
-            SetStyleSafe(panel, "borderColor", color || "");
-        }
-
-        State.staminaChargeColorStyleSig = styleSig;
-    }
 
     // ── Recent Purchases runtime ──────────────────────────────────────────────────
 
@@ -30101,18 +30036,6 @@ function GetUIRoot() {
             UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs);
         },
         stateKeys: ["signatureCooldownFlashWasEnabled"]
-    });
-
-    QOL_REGISTER_FEATURE("staminaChargeColorRuntime", {
-        configKeys: ["STAMINA_CHARGE_ANGLE", "STAMINA_CHARGE_COLOR"],
-        bucket: 7, phase: -1,
-        gate: function(cfg) { return NeedsStaminaChargeColorRuntimeWork(cfg); },
-        update: function(root, cfg, nowMs) {
-            UpdateStaminaChargeColorRuntime(root, cfg, nowMs);
-        },
-        stateKeys: ["staminaChargeAngleStyleSig", "staminaChargeColorStyleSig",
-                    "staminaChargeColorPanelCache", "staminaChargeColorPanelCacheNextMs",
-                    "cachedPanels.staminaChargesContainer"]
     });
 
     QOL_REGISTER_FEATURE("gameplayMouseCursor", {

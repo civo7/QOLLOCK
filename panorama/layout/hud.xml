@@ -24,6 +24,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_souls.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_damageImpact.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_ammo.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_stamina.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
