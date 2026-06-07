@@ -6,7 +6,6 @@
 	visibility: collapse;
 }
 
-@define healthbarHeight: 75px;
 .colored_healthbar_active .bars_container
 {
 	margin-top: 20px;
@@ -273,12 +272,12 @@
 .colored_healthbar_active .large_progress_bar
 {
 	width: 40px;
-	height: healthbarHeight;
+	height: QOL_HEALTHBAR_HEIGHT;
 }
 
 .colored_healthbar_active .small_progress_bar
 {
-	height: healthbarHeight;
+	height: QOL_HEALTHBAR_HEIGHT;
 	width: 10px;
 	margin-top: 3px;
 }
@@ -489,7 +488,7 @@
 .colored_healthbar_active #shield_bar .ProgressBarLeft
 {
 	background-color: courageBrightColor;
-	background-color: #4bdc68;
+	background-color: QOL_HEALTHBAR_SHIELD_GREEN;
 }
 
 .colored_healthbar_active #tech_shield_bar .ProgressBarLeft
@@ -649,7 +648,7 @@
 
 .colored_healthbar_active #health_bar_frame
 {
-	wash-color: #142304;
+	wash-color: QOL_HEALTHBAR_FRAME_DARK;
 	width: 68px;
 	height: 220px;
 	background-size: cover;
@@ -660,7 +659,7 @@
 .colored_healthbar_active .healthLow #health_bar_frame
 {
 	wash-color: #FF410D;
-	wash-color: #FF5656;
+	wash-color: QOL_HEALTHBAR_LOW_BRIGHT;
 	wash-color: #cc340a;
 }
 
@@ -838,13 +837,13 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) #health_bar .ProgressBarLeft
 {
-	background-color: gradient(linear, 0% 0%, 0% 100%, from( #feeed5 ), to ( #feeed5 ));
+	background-color: gradient(linear, 0% 0%, 0% 100%, from( QOL_HEALTHBAR_FILL_CREAM ), to ( QOL_HEALTHBAR_FILL_CREAM ));
 	background-image: none;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthMid #health_bar .ProgressBarLeft
 {
-	background-color: gradient(linear, 0% 0%, 0% 100%, from( #feeed5 ), to ( #feeed5 ));
+	background-color: gradient(linear, 0% 0%, 0% 100%, from( QOL_HEALTHBAR_FILL_CREAM ), to ( QOL_HEALTHBAR_FILL_CREAM ));
 	background-image: none;
 }
 
@@ -855,7 +854,7 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) #health_bar_frame
 {
-	wash-color: #2d402a;
+	wash-color: QOL_HEALTHBAR_BG_DARK;
 	transition-duration: 0.0s;
 	width: 75px;
 	height: 400px;
@@ -866,17 +865,17 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthLow #health_bar_frame
 {
-	wash-color: #2d402a;
+	wash-color: QOL_HEALTHBAR_BG_DARK;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthMid #health_bar_frame
 {
-	wash-color: #2d402a;
+	wash-color: QOL_HEALTHBAR_BG_DARK;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .SpectatingTeamWest .healthLow #health_bar_frame
 {
-	wash-color: #2d402a;
+	wash-color: QOL_HEALTHBAR_BG_DARK;
 }
 
 .colored_healthbar_active #RejuvenatorContainer
@@ -1366,12 +1365,12 @@
 .klutz_healthbar_active .large_progress_bar
 {
 	width: 40px;
-	height: healthbarHeight;
+	height: QOL_HEALTHBAR_HEIGHT;
 }
 
 .klutz_healthbar_active .small_progress_bar
 {
-	height: healthbarHeight;
+	height: QOL_HEALTHBAR_HEIGHT;
 	width: 10px;
 	margin-top: 3px;
 }
@@ -1558,7 +1557,7 @@
 
 .klutz_healthbar_active #health_bar_frame
 {
-	wash-color: #142304;
+	wash-color: QOL_HEALTHBAR_FRAME_DARK;
 	width: 18px;
 	height: 158px;
 	background-size: 100% 158px;
@@ -1913,7 +1912,7 @@
 .klutz_healthbar_active .healthLow #health_bar_frame
 {
 	wash-color: #FF410D;
-	wash-color: #FF5656;
+	wash-color: QOL_HEALTHBAR_LOW_BRIGHT;
 	wash-color: #cc340a;
 }
 

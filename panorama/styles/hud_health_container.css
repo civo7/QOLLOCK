@@ -252,11 +252,11 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .currentHealthLabel
 {
-	color: gradient(linear, 0% 0%, 100% 0%, from( #feeed5 ), to ( #feeed5 ));
+	color: gradient(linear, 0% 0%, 100% 0%, from( QOL_HEALTHBAR_FILL_CREAM ), to ( QOL_HEALTHBAR_FILL_CREAM ));
 	font-family: sans;
 	font-size: 36px;
 	padding: 2px;
-	text-shadow: 0px 0px 0px 5.0 #2d402a;
+	text-shadow: 0px 0px 0px 5.0 QOL_HEALTHBAR_BG_DARK;
 	max-width: 100%;
 	margin-left: 0px;
 	margin-top: 0px;
@@ -270,7 +270,7 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .localPlayerLowHealth .currentHealthLabel,.fg_healthbar_active:not(.minimalist_healthbar_active) .healthLow .currentHealthLabel
 {
-	color: #FF5656;
+	color: QOL_HEALTHBAR_LOW_BRIGHT;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .totalHealthLabel
@@ -429,7 +429,7 @@
 
 .budhud_healthbar_active #BulletShieldNumbers .progress_bar_current
 {
-	color: #4bdc68;
+	color: QOL_HEALTHBAR_SHIELD_GREEN;
 }
 
 .budhud_healthbar_active .shield_bar_numbers .progress_bar_current
@@ -686,7 +686,7 @@
 
 .klutz_healthbar_active .localPlayerLowHealth .currentHealthLabel,.klutz_healthbar_active .healthLow .currentHealthLabel
 {
-	color: #FF5656;
+	color: QOL_HEALTHBAR_LOW_BRIGHT;
 	text-shadow: 0px 0px 0px 5.0 offBlack;
 	font-size: 36px;
 	margin-top: 0px;
