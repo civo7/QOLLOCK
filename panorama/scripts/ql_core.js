@@ -7230,8 +7230,8 @@ function GetUIRoot() {
         var teamsContainer = GetCachedPanel("urnTrackerTeamsContainer");
         var friendlyTeamPanel = GetCachedPanel("urnTrackerFriendlyTeamPanel");
         var enemyTeamPanel = GetCachedPanel("urnTrackerEnemyTeamPanel");
-        var friendlyLabels = Array.isArray(GetCachedPanel("urnTrackerFriendlyGoldLabels")) ? GetCachedPanel("urnTrackerFriendlyGoldLabels") : null;
-        var enemyLabels = Array.isArray(GetCachedPanel("urnTrackerEnemyGoldLabels")) ? GetCachedPanel("urnTrackerEnemyGoldLabels") : null;
+        var friendlyLabels = Array.isArray(State.cachedPanels.urnTrackerFriendlyGoldLabels) ? State.cachedPanels.urnTrackerFriendlyGoldLabels : null;
+        var enemyLabels = Array.isArray(State.cachedPanels.urnTrackerEnemyGoldLabels) ? State.cachedPanels.urnTrackerEnemyGoldLabels : null;
 
         var friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every(function(p) { return IsPanelValid(p); });
         var enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every(function(p) { return IsPanelValid(p); });
@@ -7270,8 +7270,8 @@ function GetUIRoot() {
 
         SetCachedPanel("urnTrackerFriendlyTeamPanel", friendlyTeamPanel);
         SetCachedPanel("urnTrackerEnemyTeamPanel", enemyTeamPanel);
-        SetCachedPanel("urnTrackerFriendlyGoldLabels", friendlyLabels);
-        SetCachedPanel("urnTrackerEnemyGoldLabels", enemyLabels);
+        State.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
+        State.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
         State.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
     }
 
