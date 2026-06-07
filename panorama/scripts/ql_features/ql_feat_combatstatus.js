@@ -2,19 +2,19 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = window.QOL_STATE;
-    var GC = window.QOL_GetCachedPanel;
-    var SC = window.QOL_SetCachedPanel;
-    var U = window.QOL_UTILS;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
-    var PerfStart = window.QOL_PerfStart;
-    var PerfEnd = window.QOL_PerfEnd;
-    var GetUIRoot = window.QOL_GetUIRoot;
-    var GetGameplayHudPanel = window.QOL_GetGameplayHudPanel;
-    var SetWashColorSafe = window.QOL_SetWashColorSafe;
-    var SetPanelClassIfChanged = window.QOL_SetPanelClassIfChanged;
-    var IsCustomHudContextActive = window.QOL_IsCustomHudContextActive;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
+    var PerfStart = typeof QOL_PerfStart !== "undefined" ? QOL_PerfStart : function() { return 0; };
+    var PerfEnd = typeof QOL_PerfEnd !== "undefined" ? QOL_PerfEnd : function() {};
+    var GetUIRoot = typeof QOL_GetUIRoot !== "undefined" ? QOL_GetUIRoot : function() { return null; };
+    var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+    var SetWashColorSafe = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : function() {};
+    var SetPanelClassIfChanged = typeof QOL_SetPanelClassIfChanged !== "undefined" ? QOL_SetPanelClassIfChanged : function() {};
+    var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
 
     // ── Feature constants ──
     var COMBAT_STATUS_RECOVERY_MS = 3000;
