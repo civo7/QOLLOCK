@@ -1,0 +1,358 @@
+// ql_feat_colorwarnings.js — Color-coded healthbar warnings (self/enemy/ally)
+// Bundles 3 features that share IsColorWarningEnabled logic
+// Extracted from ql_core.js, Phase 9 Step 2c
+(function() {
+    'use strict';
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
+    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var IsColorWarningEnabled = typeof QOL_IsColorWarningEnabled !== "undefined" ? QOL_IsColorWarningEnabled : function() { return false; };
+
+    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
+        window._qol_feat_deps_logged = {};
+    }
+    var _dk = "ql_feat_colorwarnings";
+    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
+        var _m = [];
+        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
+        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
+        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
+        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_IsColorWarningEnabled === "undefined") _m.push("QOL_IsColorWarningEnabled");
+        if (_m.length > 0) {
+            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
+        }
+        window._qol_feat_deps_logged[_dk] = true;
+    }
+
+    function UpdateColoredHealthbarRuntime(root, cfg) {
+        try {
+        var enabled = IsColorWarningEnabled(cfg);
+        if (State.coloredHealthbarEnabledPrev === null) {
+            State.coloredHealthbarEnabledPrev = enabled;
+        } else if (State.coloredHealthbarEnabledPrev !== enabled) {
+            if (!enabled) {
+                ResetColoredHealthbarRuntimeStyles();
+            } else {
+                S.coloredHealthbarLastColor = "";
+                S.coloredHealthbarPulseDir = 1;
+                S.coloredHealthbarPulseVal = 0;
+                S.coloredHealthbarZeroHeightStreak = 0;
+            }
+            ResetColoredHealthbarPanelCache();
+            S.coloredHealthbarEnabledPrev = enabled;
+        }
+
+        if (!enabled) {
+            if (S.coloredHealthbarLastColor !== "" ||
+                GC("coloredHealthbarHealthBar") ||
+                GC("coloredHealthbarProgressLeft") ||
+                GC("coloredHealthbarCurrentHealth")) {
+                ResetColoredHealthbarRuntimeStyles();
+                ResetColoredHealthbarPanelCache();
+            }
+            return;
+        }
+
+        var panels = ResolveColoredHealthbarPanels(root);
+        if (!panels || !panels.progressLeft) return;
+
+        var progressLeft = panels.progressLeft;
+        var parent = progressLeft.GetParent ? progressLeft.GetParent() : null;
+        var pH = Number(progressLeft.actuallayoutheight);
+        var cH = parent ? Number(parent.actuallayoutheight) : 0;
+        if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
+            S.coloredHealthbarZeroHeightStreak += 1;
+            if (S.coloredHealthbarZeroHeightStreak >= 4) {
+                ResetColoredHealthbarPanelCache();
+            }
+            return;
+        }
+        S.coloredHealthbarZeroHeightStreak = 0;
+
+        var pct = (pH / cH) * 100;
+        var color = ResolveColoredHealthbarColor(pct, cfg);
+        if (panels.healthBar) SetWashColorSafe(panels.healthBar, color);
+        if (panels.progressLeft) SetWashColorSafe(panels.progressLeft, color);
+        if (panels.currentHealth) {
+            SetStyleSafe(panels.currentHealth, "color", color);
+            SetWashColorSafe(panels.currentHealth, color);
+        }
+        S.coloredHealthbarLastColor = color;
+        } catch (e) {
+            ResetColoredHealthbarRuntimeStyles();
+            ResetColoredHealthbarPanelCache();
+            S.coloredHealthbarEnabledPrev = null;
+        }
+    }
+
+    function UpdateEnemyColoredHealthRuntime(root, cfg, nowMs) {
+        if (!root || !cfg) return;
+        var enabled = IsEnemyColorWarningEnabled(cfg);
+        if (S.enemyColoredHealthEnabledPrev === null) {
+            S.enemyColoredHealthEnabledPrev = enabled;
+        } else if (S.enemyColoredHealthEnabledPrev !== enabled) {
+            if (!enabled) {
+                ResetEnemyColoredHealthRuntimeStyles();
+            } else {
+                S.enemyColoredHealthPulseDir = 1;
+                S.enemyColoredHealthPulseVal = 0;
+                S.enemyColoredHealthNextUpdateMs = 0;
+            }
+            S.enemyColoredHealthEnabledPrev = enabled;
+        }
+
+        if (!enabled) {
+            if (Array.isArray(S.enemyColoredHealthPanelCache) && S.enemyColoredHealthPanelCache.length > 0) {
+                ResetEnemyColoredHealthRuntimeStyles();
+                S.enemyColoredHealthPanelCache = [];
+            }
+            S.enemyColoredHealthPanelCacheNextMs = 0;
+            return;
+        }
+
+        var now = Number(nowMs) || Date.now();
+        if (now < (S.enemyColoredHealthNextUpdateMs || 0)) return;
+
+        RefreshEnemyColoredHealthPanelCache(root, now);
+        var entries = Array.isArray(S.enemyColoredHealthPanelCache) ? S.enemyColoredHealthPanelCache : [];
+        var scanStats = S.enemyColoredHealthLastScanStats || null;
+        var use25dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? 1 : 0;
+        var use65dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? 1 : 0;
+        var use75dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? 1 : 0;
+        var sampleBar = "-";
+        var sampleTeam = "-";
+        if (entries.length > 0 && entries[0]) sampleBar = String(entries[0].barId || "-");
+        if (entries.length > 0 && entries[0]) sampleTeam = String(entries[0].teamClass || "-");
+        var scanSig =
+            "en=" + (enabled ? "1" : "0") +
+            "|t=" + use25dbg + use65dbg + use75dbg +
+            "|e=" + entries.length +
+            "|bar=" + sampleBar +
+            "|team=" + sampleTeam +
+            "|friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
+            "|r=" + (scanStats ? scanStats.roots : -1) +
+            "|us=" + (scanStats ? scanStats.unitStatus : -1) +
+            "|uo=" + (scanStats ? scanStats.unitStatusOld : -1) +
+            "|c=" + (scanStats ? scanStats.candidates : -1) +
+            "|lag=" + (scanStats ? scanStats.foundLagging : -1) +
+            "|state=" + (scanStats ? scanStats.foundState : -1) +
+            "|skipEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
+            "|inferTeam=" + (scanStats ? scanStats.inferredByTeam : -1);
+        EnemyColoredHealthDebugLogThrottled(
+            scanSig,
+            "enabled=" + (enabled ? "1" : "0") +
+                " thresholds=" + use25dbg + "/" + use65dbg + "/" + use75dbg +
+                " entries=" + entries.length +
+                " sampleBar=" + sampleBar +
+                " sampleTeam=" + sampleTeam +
+                " friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
+                " roots=" + (scanStats ? scanStats.roots : -1) +
+                " unitStatus=" + (scanStats ? scanStats.unitStatus : -1) +
+                " unitStatusOld=" + (scanStats ? scanStats.unitStatusOld : -1) +
+                " candidates=" + (scanStats ? scanStats.candidates : -1) +
+                " foundLagging=" + (scanStats ? scanStats.foundLagging : -1) +
+                " foundState=" + (scanStats ? scanStats.foundState : -1) +
+                " skippedNoEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
+                " inferredByTeam=" + (scanStats ? scanStats.inferredByTeam : -1),
+            now
+        );
+        if (entries.length <= 0) {
+            S.enemyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
+            return;
+        }
+
+        var pulseAdvanced = false;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
+            if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
+
+            var pct = ResolveTopBarHealthPct(entry);
+            if (!isFinite(pct)) continue;
+
+            if (!pulseAdvanced && use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
+                S.enemyColoredHealthPulseVal += (S.enemyColoredHealthPulseDir * COLORED_HEALTHBAR_PULSE_STEP);
+                if (S.enemyColoredHealthPulseVal >= 1) {
+                    S.enemyColoredHealthPulseVal = 1;
+                    S.enemyColoredHealthPulseDir = -1;
+                } else if (S.enemyColoredHealthPulseVal <= 0) {
+                    S.enemyColoredHealthPulseVal = 0;
+                    S.enemyColoredHealthPulseDir = 1;
+                }
+                pulseAdvanced = true;
+            }
+
+            var teamColor = ResolveEnemyColoredHealthTeamColor(entry);
+            var nextColor = ResolveEnemyColoredHealthColor(pct, cfg, teamColor);
+
+            EnemyColoredHealthDebugLogThrottled(
+                "apply|" + String(Math.round(Number(entry.healthBar.actuallayoutheight))) + "|" + String(Math.round(pct)) + "|" + nextColor,
+                "apply bar=" + String(entry.barId || "-") +
+                    " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
+                    " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
+                    " use25=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? "1" : "0") +
+                    " use65=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? "1" : "0") +
+                    " use75=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? "1" : "0") +
+                    " color=" + nextColor,
+                now
+            );
+
+            if (String(entry.lastColor || "") === nextColor) continue;
+
+            if (entry.healthBar && IsPanelValid(entry.healthBar)) {
+                SetWashColorSafe(entry.healthBar, "");
+                SetStyleSafe(entry.healthBar, "backgroundColor", nextColor);
+            }
+            entry.lastColor = nextColor;
+        }
+
+        S.enemyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
+    }
+
+    function UpdateAllyColoredHealthRuntime(root, cfg, nowMs) {
+        if (!root || !cfg) return;
+        var enabled = IsAllyColorWarningEnabled(cfg);
+        if (S.allyColoredHealthEnabledPrev === null) {
+            S.allyColoredHealthEnabledPrev = enabled;
+        } else if (S.allyColoredHealthEnabledPrev !== enabled) {
+            if (!enabled) {
+                ResetAllyColoredHealthRuntimeStyles();
+            } else {
+                S.allyColoredHealthPulseDir = 1;
+                S.allyColoredHealthPulseVal = 0;
+                S.allyColoredHealthNextUpdateMs = 0;
+            }
+            S.allyColoredHealthEnabledPrev = enabled;
+        }
+
+        if (!enabled) {
+            if (Array.isArray(S.allyColoredHealthPanelCache) && S.allyColoredHealthPanelCache.length > 0) {
+                ResetAllyColoredHealthRuntimeStyles();
+                S.allyColoredHealthPanelCache = [];
+            }
+            S.allyColoredHealthPanelCacheNextMs = 0;
+            return;
+        }
+
+        var now = Number(nowMs) || Date.now();
+        if (now < (S.allyColoredHealthNextUpdateMs || 0)) return;
+
+        RefreshAllyColoredHealthPanelCache(root, now);
+        var entries = Array.isArray(S.allyColoredHealthPanelCache) ? S.allyColoredHealthPanelCache : [];
+        if (entries.length <= 0) {
+            S.allyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
+            return;
+        }
+
+        var pulseAdvanced = false;
+        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
+            if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
+
+            var pct = ResolveTopBarHealthPct(entry);
+            if (!isFinite(pct)) continue;
+
+            if (!pulseAdvanced && use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
+                S.allyColoredHealthPulseVal += (S.allyColoredHealthPulseDir * COLORED_HEALTHBAR_PULSE_STEP);
+                if (S.allyColoredHealthPulseVal >= 1) {
+                    S.allyColoredHealthPulseVal = 1;
+                    S.allyColoredHealthPulseDir = -1;
+                } else if (S.allyColoredHealthPulseVal <= 0) {
+                    S.allyColoredHealthPulseVal = 0;
+                    S.allyColoredHealthPulseDir = 1;
+                }
+                pulseAdvanced = true;
+            }
+
+            var nextColor = ResolveAllyColoredHealthColor(pct, cfg, ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
+            if (String(entry.lastColor || "") === nextColor) continue;
+
+            if (entry.healthBar && IsPanelValid(entry.healthBar)) {
+                SetWashColorSafe(entry.healthBar, "");
+                SetStyleSafe(entry.healthBar, "backgroundColor", nextColor);
+            }
+            entry.lastColor = nextColor;
+        }
+
+        S.allyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
+    }
+
+    // ── Registrations (3 features, 1 file) ──
+
+    QOL_REGISTER_FEATURE("colorWarning", {
+        configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
+                     "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
+        },
+        update: function(root, cfg) {
+            try { UpdateColoredHealthbarRuntime(root, cfg); } catch(e) {
+                $.Msg("[QOLLock][ERROR][colorWarning] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
+        },
+        stateKeys: ["coloredHealthbarLastColor", "coloredHealthbarEnabledPrev",
+                    "coloredHealthbarPulseDir", "coloredHealthbarPulseVal",
+                    "coloredHealthbarZeroHeightStreak"]
+    });
+
+    QOL_REGISTER_FEATURE("enemyColorWarning", {
+        configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
+                     "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ENEMY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ENEMY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) {
+            try { UpdateEnemyColoredHealthRuntime(root, cfg, nowMs); } catch(e) {
+                $.Msg("[QOLLock][ERROR][enemyColorWarning] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
+        },
+        stateKeys: ["enemyColoredHealthPanelCache", "enemyColoredHealthPanelCacheNextMs",
+                    "enemyColoredHealthNextUpdateMs", "enemyColoredHealthEnabledPrev",
+                    "enemyColoredHealthPulseDir", "enemyColoredHealthPulseVal"]
+    });
+
+    QOL_REGISTER_FEATURE("allyColorWarning", {
+        configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
+                     "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],
+        bucket: 5, phase: -1,
+        gate: function(cfg) {
+            return IsCfgEnabled(cfg, "ENABLE_ALLY_COLORED_HEALTHBAR") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_25") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_65") ||
+                   IsCfgEnabled(cfg, "ENABLE_ALLY_COLOR_WARNING_75");
+        },
+        update: function(root, cfg, nowMs) {
+            try { UpdateAllyColoredHealthRuntime(root, cfg, nowMs); } catch(e) {
+                $.Msg("[QOLLock][ERROR][allyColorWarning] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
+        },
+        stateKeys: ["allyColoredHealthPanelCache", "allyColoredHealthPanelCacheNextMs",
+                    "allyColoredHealthNextUpdateMs", "allyColoredHealthEnabledPrev",
+                    "allyColoredHealthPulseDir", "allyColoredHealthPulseVal"]
+    });
+
+    try {
+        if (typeof UpdateColoredHealthbarRuntime !== "function") throw new Error("UpdateColoredHealthbarRuntime is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
+
+})();
