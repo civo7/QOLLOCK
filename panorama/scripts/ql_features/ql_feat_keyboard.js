@@ -1,0 +1,217 @@
+// ql_feat_keyboard.js — Keyboard overlay
+// Extracted from ql_core.js, Phase 9 Step 2b
+(function() {
+    'use strict';
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
+    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+
+    function GetKeyboardBoxCache(allBindingsBox) {
+        if (!State.keyboardBoxCaches) State.keyboardBoxCaches = [];
+        var next = [];
+        var found = null;
+        for (var i = 0; i < State.keyboardBoxCaches.length; i++) {
+            var entry = State.keyboardBoxCaches[i];
+            if (!entry || !IsPanelValid(entry.box)) continue;
+            if (entry.box === allBindingsBox) found = entry;
+            next.push(entry);
+        }
+        State.keyboardBoxCaches = next;
+        if (found) return found;
+
+        var created = {
+            box: allBindingsBox,
+            keyPanels: null,
+            glyphLabels: null,
+            mouseGlyphs: null,
+            lastStyleSig: ""
+        };
+        State.keyboardBoxCaches.push(created);
+        return created;
+    }
+
+    function ApplyKeyboardOverlayLayout(allBindingsBox, cfg) {
+        if (!allBindingsBox) return;
+
+        var kbScale = (cfg.KEYBOARD_OVERLAY_SCALE === undefined || cfg.KEYBOARD_OVERLAY_SCALE === null) ? 100 : Math.round(cfg.KEYBOARD_OVERLAY_SCALE);
+        var kbOffsetX = (cfg.KEYBOARD_OVERLAY_X_OFFSET === undefined || cfg.KEYBOARD_OVERLAY_X_OFFSET === null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_X_OFFSET);
+        var kbOffsetY = (cfg.KEYBOARD_OVERLAY_Y_OFFSET === undefined || cfg.KEYBOARD_OVERLAY_Y_OFFSET === null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_Y_OFFSET);
+        var kbFullLayout = cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1;
+        var kbBaseMarginLeft = kbFullLayout ? 70 : 150;
+        var kbBaseMarginBottom = 300;
+
+        if (kbScale < 70) kbScale = 70;
+        if (kbScale > 150) kbScale = 150;
+        if (kbOffsetX < -1500) kbOffsetX = -1500;
+        if (kbOffsetX > 1500) kbOffsetX = 1500;
+        if (kbOffsetY < -400) kbOffsetY = -400;
+        if (kbOffsetY > 1000) kbOffsetY = 1000;
+
+        var styleSig = [
+            kbFullLayout ? "1" : "0",
+            String(kbScale),
+            String(kbOffsetX),
+            String(kbOffsetY)
+        ].join("|");
+        var cache = GetKeyboardBoxCache(allBindingsBox);
+        if (cache.lastStyleSig === styleSig) return;
+
+        var kbScaleFactor = kbScale / 100;
+        var scaledHeight = Math.max(1, Math.round(40 * kbScaleFactor));
+        var scaledGap = 2;
+        var labelScaleFactor = kbScale > 100 ? kbScaleFactor : 1;
+        var scaledLabelSize = Math.max(1, Math.round(16 * labelScaleFactor));
+        var scaledMouseGlyphSize = Math.max(1, Math.round(20 * labelScaleFactor));
+
+        allBindingsBox.style.uiScale = "100%";
+        allBindingsBox.style.marginLeft = kbBaseMarginLeft + "px";
+        allBindingsBox.style.marginBottom = kbBaseMarginBottom + "px";
+        allBindingsBox.style.x = FormatHudPx(kbOffsetX, 0);
+        allBindingsBox.style.y = FormatHudPx(-kbOffsetY, 0);
+        allBindingsBox.style.width = "fit-children";
+
+        var keyPanels = GetKeyboardCachedPanels(cache, allBindingsBox, "keyPanels", "Key");
+        for (var kp = 0; kp < keyPanels.length; kp++) {
+            var keyPanel = keyPanels[kp];
+            if (!keyPanel) continue;
+
+            var baseKeyWidth = 40;
+            if (keyPanel.BHasClass("TabKey")) {
+                baseKeyWidth = 53;
+            } else if (keyPanel.BHasClass("SpaceKey")) {
+                baseKeyWidth = kbFullLayout ? 133 : 192;
+            } else if (keyPanel.BHasClass("ShiftKey")) {
+                baseKeyWidth = 80;
+            } else if (keyPanel.BHasClass("AltKey") || keyPanel.BHasClass("CtrlKey")) {
+                baseKeyWidth = 60;
+            } else if (keyPanel.BHasClass("EmptyKeyWide")) {
+                baseKeyWidth = kbFullLayout ? 60 : 80;
+            }
+
+            keyPanel.style.width = Math.max(1, Math.round(baseKeyWidth * kbScaleFactor)) + "px";
+            keyPanel.style.height = scaledHeight + "px";
+            keyPanel.style.margin = scaledGap + "px";
+        }
+
+        var keyboardGlyphLabels = GetKeyboardCachedPanels(cache, allBindingsBox, "glyphLabels", "Label");
+        for (var kl = 0; kl < keyboardGlyphLabels.length; kl++) {
+            var glyphLabel = keyboardGlyphLabels[kl];
+            if (!glyphLabel) continue;
+            glyphLabel.style.fontSize = scaledLabelSize + "px";
+            glyphLabel.style.lineHeight = "0px";
+        }
+
+        var mouseGlyphs = GetKeyboardCachedPanels(cache, allBindingsBox, "mouseGlyphs", "MouseButtonGlyph");
+        for (var mg = 0; mg < mouseGlyphs.length; mg++) {
+            var mouseGlyph = mouseGlyphs[mg];
+            if (!mouseGlyph) continue;
+            mouseGlyph.style.width = scaledMouseGlyphSize + "px";
+            mouseGlyph.style.height = scaledMouseGlyphSize + "px";
+            mouseGlyph.style.backgroundTextureSize = scaledMouseGlyphSize + "px " + scaledMouseGlyphSize + "px";
+        }
+
+        cache.lastStyleSig = styleSig;
+    }
+
+    function EnsureKeyboardOverlay(root) {
+        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+        if (!IsPanelValid(overlayRoot)) {
+            overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
+            if (!overlayRoot) {
+                var parent = GetGameplayHudPanel(root);
+                if (!parent) return null;
+                overlayRoot = $.CreatePanel("Panel", parent, "QOLKeyboardOverlayRoot", {
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+            }
+            SetCachedPanel("keyboardOverlayRoot", overlayRoot);
+        }
+        if (!overlayRoot) return null;
+
+        var allBindingsBox = GetCachedPanel("keyboardOverlayBox");
+        if (!IsPanelValid(allBindingsBox)) {
+            allBindingsBox = overlayRoot.FindChildTraverse("AllBindingsBox");
+            if (!allBindingsBox) {
+                allBindingsBox = $.CreatePanel("Panel", overlayRoot, "AllBindingsBox", {
+                    "class": "AllBindingsScope",
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+                BuildKeyboardOverlayLayouts(allBindingsBox);
+            }
+            SetCachedPanel("keyboardOverlayBox", allBindingsBox);
+        }
+        State.allBindingsBoxes = allBindingsBox ? [allBindingsBox] : [];
+        return allBindingsBox;
+    }
+
+    function RemoveKeyboardOverlay(root) {
+        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+        if (!IsPanelValid(overlayRoot)) {
+            overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
+        }
+        if (IsPanelValid(overlayRoot)) {
+            overlayRoot.DeleteAsync(0);
+        }
+        SetCachedPanel("keyboardOverlayRoot", null);
+        SetCachedPanel("keyboardOverlayBox", null);
+        State.keyboardOverlayWashSig = "";
+        State.allBindingsBoxes = [];
+        ResetKeyboardOverlayCaches();
+    }
+
+    function UpdateKeyboardOverlayRuntime(root, cfg) {
+        if (cfg && cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
+            var allBindingsBoxes = State.allBindingsBoxes || [];
+            var validBoxes = [];
+            for (var bi = 0; bi < allBindingsBoxes.length; bi++) {
+                var candidate = allBindingsBoxes[bi];
+                if (IsPanelValid(candidate)) validBoxes.push(candidate);
+            }
+            if (validBoxes.length === 0) {
+                var keyboardBox = EnsureKeyboardOverlay(root);
+                validBoxes = keyboardBox ? [keyboardBox] : [];
+            }
+            State.allBindingsBoxes = validBoxes;
+
+            var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
+            var keyboardWashColor = ResolveWashColorFromPalette(ReadKeyboardOverlayWashColorIndex(cfg));
+            var keyboardWashSig = keyboardWashColor || "";
+            if (overlayRoot && State.keyboardOverlayWashSig !== keyboardWashSig) {
+                SetWashColorSafe(overlayRoot, keyboardWashColor);
+                State.keyboardOverlayWashSig = keyboardWashSig;
+            }
+
+            for (var vb = 0; vb < validBoxes.length; vb++) {
+                var allBindingsBox = validBoxes[vb];
+                if (!allBindingsBox) continue;
+                ApplyKeyboardOverlayLayout(allBindingsBox, cfg);
+            }
+        } else if (GetCachedPanel("keyboardOverlayRoot")) {
+            RemoveKeyboardOverlay(root);
+        } else {
+            State.allBindingsBoxes = [];
+            ResetKeyboardOverlayCaches();
+        }
+    }
+
+    // ── Registration ──
+    QOL_REGISTER_FEATURE("keyboardRuntime", {
+        configKeys: ["ENABLE_KEYBOARD_OVERLAY"],
+        bucket: 6, phase: -1,
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY") || GC("keyboardOverlayRoot") || !!(S.allBindingsBoxes && S.allBindingsBoxes.length > 0); },
+        update: function(root, cfg, nowMs, State, hideoutConnected) {
+            UpdateKeyboardOverlayRuntime(root, cfg);
+        },
+        stateKeys: ["allBindingsBoxes",
+                    "cachedPanels.keyboardOverlayRoot",
+                    "cachedPanels.keyboardOverlayBox",
+                    "keyboardOverlayWashSig",
+                    "keyboardBoxCaches"]
+    });
+
+})();
