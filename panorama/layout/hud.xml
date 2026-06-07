@@ -18,11 +18,11 @@
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_topBar.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottomBar.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_topbar.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottombar.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_items.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_souls.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_damageImpact.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_damageimpact.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_ammo.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_stamina.vjs_c" />
 	</scripts>
