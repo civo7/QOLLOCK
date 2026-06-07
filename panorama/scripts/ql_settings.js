@@ -21313,6 +21313,71 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
         CreateSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         CreateSeparator(list);
+        // ── Preset Cycle ──
+        var presetCycleHeader = CreateSectionTitle(list, "Preset Cycle");
+        var presetCycleBtn = CreateSectionInlineIconButton(presetCycleHeader, "PresetCycleBtn",
+            "s2r://panorama/images/icons/icon_reorder.vsvg",
+            "Sequentially apply every preset with a short delay between each.");
+        var presetCycleStatus = $.CreatePanel("Label", presetCycleHeader, "PresetCycleStatus");
+        presetCycleStatus.text = "Idle";
+        presetCycleStatus.style.fontSize = "13px";
+        presetCycleStatus.style.color = "#666";
+        presetCycleStatus.style.marginLeft = "6px";
+        presetCycleStatus.style.verticalAlign = "center";
+
+        var _presetCycleRunning = false;
+        var _presetCycleToken = 0;
+        var _presetCycleNames = [];
+        var _presetCycleIndex = 0;
+
+        if (presetCycleBtn) {
+            presetCycleBtn.SetPanelEvent("onactivate", function() {
+                if (_presetCycleRunning) {
+                    // Stop cycling
+                    _presetCycleRunning = false;
+                    _presetCycleToken++;
+                    try { presetCycleBtn.RemoveClass("CycleActive"); } catch(e) {}
+                    presetCycleStatus.text = "Stopped (applied " + _presetCycleIndex + " of " + _presetCycleNames.length + ")";
+                    presetCycleStatus.style.color = "#aa8844";
+                } else {
+                    // Start cycling
+                    _presetCycleNames = Object.keys(PRESETS).sort();
+                    if (_presetCycleNames.length === 0) {
+                        presetCycleStatus.text = "No presets found.";
+                        presetCycleStatus.style.color = "#cc4444";
+                        return;
+                    }
+                    _presetCycleRunning = true;
+                    _presetCycleIndex = 0;
+                    var token = ++_presetCycleToken;
+                    try { presetCycleBtn.AddClass("CycleActive"); } catch(e) {}
+                    presetCycleStatus.style.color = "#66cc99";
+
+                    function applyNext() {
+                        if (!_presetCycleRunning || token !== _presetCycleToken) return;
+                        if (_presetCycleIndex >= _presetCycleNames.length) {
+                            // Done
+                            _presetCycleRunning = false;
+                            try { presetCycleBtn.RemoveClass("CycleActive"); } catch(e) {}
+                            presetCycleStatus.text = "Complete! All " + _presetCycleNames.length + " presets applied.";
+                            presetCycleStatus.style.color = "#66cc99";
+                            SetLocalizedConfigFeedbackMessage("Cycled through all " + _presetCycleNames.length + " presets.", "success", 3000);
+                            return;
+                        }
+                        var presetName = _presetCycleNames[_presetCycleIndex];
+                        presetCycleStatus.text = "[" + (_presetCycleIndex + 1) + "/" + _presetCycleNames.length + "] " + presetName;
+                        try {
+                            ApplyPresetByName(presetName);
+                        } catch(e) {
+                            $.Msg("[QOLLock][presetCycle] ApplyPresetByName failed for '" + presetName + "': " + (e && e.message ? e.message : String(e || "")));
+                        }
+                        _presetCycleIndex++;
+                        $.Schedule(1.2, applyNext);
+                    }
+                    $.Schedule(0.1, applyNext);
+                }
+            });
+        }
         // ── Diagnostics ──
         var diagHeader = CreateSectionTitle(list, "Diagnostics");
         var copyLogsBtn = CreateSectionInlineIconButton(diagHeader, "DiagCopyLogsBtn",
