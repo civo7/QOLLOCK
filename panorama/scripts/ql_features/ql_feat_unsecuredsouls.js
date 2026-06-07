@@ -10,6 +10,13 @@
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+    var UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
+    var UNSECURED_SOULS_MIN_SAMPLE_MS = 250;
+    var UNSECURED_SOULS_RATE_EMA_ALPHA = 0.35;
+    var UNSECURED_SOULS_RATE_MIN = 0.01;
+    var UNSECURED_SOULS_RATE_STALE_MS = 12000;
+    var UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
+    var UNSECURED_SOULS_ETA_MAX_SEC = 999;
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

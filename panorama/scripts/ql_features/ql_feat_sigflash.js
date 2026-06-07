@@ -9,6 +9,9 @@
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var PANEL_ID_SIGNATURE = typeof QOL_PANEL_ID_SIGNATURE !== "undefined" ? QOL_PANEL_ID_SIGNATURE : "hud_signature";
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS : "qol_signature_cooldown_pressed";
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_MS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_MS : 220;
+    var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_SCAN_MS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_SCAN_MS : 1000;
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {

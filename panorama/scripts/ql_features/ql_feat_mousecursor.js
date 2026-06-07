@@ -9,6 +9,9 @@
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var GAMEPLAY_MOUSE_CURSOR_ENABLED = typeof QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED : true;
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = typeof QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH : "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = typeof QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK : "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
+    var GAMEPLAY_MOUSE_CURSOR_HALF_PX = typeof QOL_GAMEPLAY_MOUSE_CURSOR_HALF_PX !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_HALF_PX : 27;
     var IsStartupLoaderInActiveMatchContext = typeof QOL_IsStartupLoaderInActiveMatchContext !== "undefined" ? QOL_IsStartupLoaderInActiveMatchContext : function() { return false; };
 
     // One-shot dependency validation

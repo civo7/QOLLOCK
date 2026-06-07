@@ -8,6 +8,9 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
+    var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
+    var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
@@ -26,9 +29,9 @@
         window._qol_feat_deps_logged[_dk] = true;
     }
     function ResetImagesInChatContainerState(watermarkKey, fullScanKey, cacheKey) {
-        State[watermarkKey] = "";
-        State[fullScanKey] = 0;
-        State[cacheKey] = [];
+        S[watermarkKey] = "";
+        S[fullScanKey] = 0;
+        S[cacheKey] = [];
     }
 
     function ProcessChatContainerImages(container, isBottomChat, cacheKey) {
@@ -74,14 +77,14 @@
 
     function ShouldScanImagesInChatContainer(container, watermarkKey, fullScanKey, nowMs) {
         var watermark = BuildImagesInChatContainerWatermark(container);
-        var previousWatermark = String(State[watermarkKey] || "");
+        var previousWatermark = String(S[watermarkKey] || "");
         if (watermark !== previousWatermark) {
-            State[watermarkKey] = watermark;
-            State[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
+            S[watermarkKey] = watermark;
+            S[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
             return true;
         }
-        if (nowMs >= (Number(State[fullScanKey]) || 0)) {
-            State[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
+        if (nowMs >= (Number(S[fullScanKey]) || 0)) {
+            S[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
             return true;
         }
         return false;
@@ -98,12 +101,12 @@
 
     function GetImagesInChatNextDelayMs(touchedCount, idleKey) {
         if (touchedCount > 0) {
-            State[idleKey] = 0;
+            S[idleKey] = 0;
             return 200;
         }
-        var idleMisses = Number(State[idleKey]) || 0;
+        var idleMisses = Number(S[idleKey]) || 0;
         idleMisses = Math.min(8, idleMisses + 1);
-        State[idleKey] = idleMisses;
+        S[idleKey] = idleMisses;
         return Math.min(IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS, 200 + (idleMisses * 250));
     }
 

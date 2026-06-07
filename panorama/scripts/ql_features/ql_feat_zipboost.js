@@ -10,6 +10,8 @@
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+    var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+    var ZIP_BOOST_READY_FLASH_MS = 2000;
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
