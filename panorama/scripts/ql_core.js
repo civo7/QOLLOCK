@@ -1,3 +1,24 @@
+// ==========================================================================
+// ql_core.js — QOLLOCK main runtime (~31k lines)
+// ==========================================================================
+//   §1  Module setup: State, cache accessors, logging, debug constants
+//   §2  Config I/O: read, write, SafeParseConfig, MergeConfig, normalize
+//   §3  Gate system: BuildRuntimeFeatureConfigState, ResolveRuntimeGates
+//   §4  Core loop: loop(), compassLoop(), buildRequestLoop(), bucket dispatch
+//   §5  Healthbar: colored, minimalist, FG, klutz, budhud, minecraft (MC)
+//   §6  Enemy/Ally colored health, enemy ult indicators
+//   §7  Compass, minimap rotate/flip/zoom/crate/tunnels
+//   §8  Top bar: SPM, unspent souls, nicknames, HP warnings, buff/rejuv HUD
+//   §9  Shop: layout, quickbuy, recent purchases, item notifications
+//   §10 Overlays: keyboard, zip boost, unsecured souls, stat bonuses, urn
+//   §11 Combat: combat status, damage numbers/impact, stamina charge
+//   §12 Crosshair: item cooldowns, reload CD, target shapes, ammo
+//   §13 HUD layout: top/bottom/items/souls bars, chat, damage report
+//   §14 Misc: images in chat, on-death arcade, mouse cursor, DL4D, audio
+//   §15 Build category payload, account preset binding, settings loader
+//   §16 Feature registrations (QOL_REGISTER_FEATURE calls)
+//   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
+// ==========================================================================
 (function() {
     // Verify ql_utils.js loaded before us — log warning if missing
     // (non-fatal: schema validator sandbox runs ql_core.js in isolation)
