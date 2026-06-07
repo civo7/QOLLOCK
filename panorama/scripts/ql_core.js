@@ -27979,7 +27979,7 @@ function GetUIRoot() {
                 if (panel) panels.push(panel);
             }
         }
-        SetCachedPanel("minimap", panels);
+        State.cachedPanels.minimap = panels;
         return panels;
     }
 
