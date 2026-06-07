@@ -25,6 +25,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_damageimpact.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_ammo.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_stamina.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_combatstatus.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">

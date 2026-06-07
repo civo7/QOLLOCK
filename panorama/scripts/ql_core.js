@@ -80,7 +80,8 @@
         QOL_UTILS.SetDebugEnabled(next);
         $.Msg("[QOLLock] debug logging " + (next ? "ENABLED" : "DISABLED"));
     }
-    if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug;
+    try { ToggleQollockDebug = ToggleQollockDebug; } catch(e) {}
+    try { if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug; } catch(e) {}
 
     var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
     var ProfileHit = QOL_UTILS_LOADED ? QOL_UTILS.ProfileHit : function() {};
@@ -993,9 +994,6 @@
     // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
     // WHY: combat recovery at 3s matches the game's own out-of-combat timer (player stops taking damage for 3s)
-    const COMBAT_STATUS_RECOVERY_MS = 3000;
-    const COMBAT_STATUS_ALERT_PROBE_MS = 500;
-    const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
     // WHY: enemy health panel scanning at 1200ms — full-tree scan is expensive;
     // 1200ms is the sweet spot where health changes are still visible quickly
     // but the scan cost is amortized over many frames
@@ -1005,8 +1003,6 @@
     const ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
     const MINIMAP_CRATE_OVERLAY_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
-    const COMBAT_INDICATOR_DEBUG = false;
-    const COMBAT_INDICATOR_DEBUG_THROTTLE_MS = 700;
     const BOTTOM_BAR_CURRENCY_DEBUG = false;
     const BOTTOM_BAR_CURRENCY_DEBUG_THROTTLE_MS = 700;
     const ULT_CD_DEBUG_ENABLED = false;
@@ -1660,20 +1656,7 @@ function ExpressShotLog(msg) {
         MinimapCrateOverlayDebugLog(msg);
     }
 
-    function CombatIndicatorDebugLog(msg) {
-        if (!COMBAT_INDICATOR_DEBUG) return;
-        $.Msg("[QOLLock][CombatIndicatorDbg] " + msg);
-    }
 
-    function CombatIndicatorDebugLogThrottled(sig, msg, nowMs) {
-        if (!COMBAT_INDICATOR_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.combatIndicatorDebugLastSig;
-        if (sameSig && now < (State.combatIndicatorDebugNextMs || 0)) return;
-        State.combatIndicatorDebugLastSig = sig || "";
-        State.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
-        CombatIndicatorDebugLog(msg);
-    }
 
     function BottomBarCurrencyDebugLog(msg) {
         if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
@@ -24210,57 +24193,7 @@ function GetUIRoot() {
         return Math.min(maxDelay, base * (1 + misses));
     }
 
-    function ResetCombatStatusProbeBackoff() {
-        State.combatStatusAlertProbeMisses = 0;
-    }
 
-    function IsCombatSignalActive(root, nowMs) {
-        if (!root) return false;
-
-        // Probe InCombatAlert panel — directly driven by native b_InCombat property.
-        var alertPanel = GetCachedPanel("combatStatusAlertPanel");
-        if (!alertPanel && nowMs >= (State.combatStatus.nextAlertProbeMs || 0)) {
-            var scannedAlert = FindCombatPanelById(root, root, "InCombatAlert");
-            if (scannedAlert || !alertPanel) alertPanel = scannedAlert || null;
-            SetCachedPanel("combatStatusAlertPanel", alertPanel);
-            State.combatStatus.nextAlertProbeMs = nowMs + GetCombatStatusProbeDelay(
-                !!alertPanel,
-                "combatStatusAlertProbeMisses",
-                COMBAT_STATUS_ALERT_PROBE_MS,
-                COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS
-            );
-        }
-        if (alertPanel) {
-            var alertParent = alertPanel;
-            for (var ai = 0; ai < 12 && alertParent; ai++) {
-                try {
-                    if (alertParent.BHasClass && alertParent.BHasClass(CLASS_IN_COMBAT)) {
-                        ResetCombatStatusProbeBackoff();
-                        return true;
-                    }
-                    if (alertParent.BHasClass && alertParent.BHasClass("in_combat")) {
-                        ResetCombatStatusProbeBackoff();
-                        return true;
-                    }
-                } catch (eAlertClass0) {}
-                alertParent = alertParent.GetParent ? alertParent.GetParent() : null;
-            }
-        }
-
-        // Lightweight fallback: check HUD root for inCombat class (also driven by native b_InCombat).
-        try {
-            if (IsHudClassActive(root, CLASS_IN_COMBAT)) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-            if (IsHudClassActive(root, "in_combat")) {
-                ResetCombatStatusProbeBackoff();
-                return true;
-            }
-        } catch (eHudClass0) {}
-
-        return false;
-    }
 
     function LogCombatIndicatorDebugState(root, cfg, nowMs, combatSignal, recoveryActive, classActive) {
         if (!COMBAT_INDICATOR_DEBUG) return;
@@ -24335,174 +24268,9 @@ function GetUIRoot() {
         );
     }
 
-    function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
-        if (!root || !root.FindChildTraverse) return;
-        var panels = [];
-        function pushPanel(panel) {
-            if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < panels.length; i++) {
-                if (panels[i] === panel) return;
-            }
-            panels.push(panel);
-        }
 
-        pushPanel(GetCachedPanel("healthContainer"));
-        pushPanel(GetCachedPanel("gameplayHud"));
-        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-        pushPanel(root.FindChildTraverse("HealthBarContent"));
-        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
-        pushPanel(root.FindChildTraverse("hud_health_bars"));
 
-        for (var p = 0; p < panels.length; p++) {
-            SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
-            SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
-        }
-    }
 
-    function EnsureCombatStatusOverlay(root) {
-        var overlay = GetCachedPanel("combatStatusOverlay");
-        if (overlay) return overlay;
-
-        overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLCombatStatusOverlay") : null;
-        if (!overlay) {
-            var parent = GetGameplayHudPanel(root);
-            if (!parent) return null;
-            overlay = $.CreatePanel("Panel", parent, "QOLCombatStatusOverlay", {
-                hittest: "false",
-                hittestchildren: "false"
-            });
-            var stateLabel = $.CreatePanel("Label", overlay, "QOLCombatStatusState");
-            stateLabel.text = "IN COMBAT";
-            var timerLabel = $.CreatePanel("Label", overlay, "QOLCombatStatusTimer");
-            timerLabel.text = "0.0s";
-        }
-
-        SetCachedPanel("combatStatusOverlay", overlay);
-        SetCachedPanel("combatStatusState", overlay ? overlay.FindChildTraverse("QOLCombatStatusState") : null);
-        SetCachedPanel("combatStatusTimer", overlay ? overlay.FindChildTraverse("QOLCombatStatusTimer") : null);
-        return overlay;
-    }
-
-    function RemoveCombatStatusOverlay(root) {
-        var overlay = GetCachedPanel("combatStatusOverlay");
-        if (!overlay && root && root.FindChildTraverse) {
-            overlay = root.FindChildTraverse("QOLCombatStatusOverlay");
-        }
-        if (IsPanelValid(overlay)) {
-            overlay.DeleteAsync(0);
-        }
-        SetCachedPanel("combatStatusOverlay", null);
-        SetCachedPanel("combatStatusState", null);
-        SetCachedPanel("combatStatusTimer", null);
-        SetCachedPanel("combatStatusAlertPanel", null);
-        State.combatStatus.displayMode = "";
-        State.combatStatus.lastLayoutSig = "";
-        State.combatStatus.lastClassSig = "";
-        State.combatStatus.lastStateText = "";
-        State.combatStatus.lastTimerText = "";
-        State.combatStatus.lastCombatMs = 0;
-        State.combatStatus.combatStartMs = 0;
-        State.combatStatus.signalActive = false;
-        State.combatStatus.nextAlertProbeMs = 0;
-        ResetCombatStatusProbeBackoff();
-    }
-
-    function UpdateCombatStatusOverlay(root, cfg, hideoutOverride) {
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-
-        if (!IsCustomHudContextActive(root)) {
-            if (State.combatStatus.displayMode !== "context_off") {
-                RemoveCombatStatusOverlay(root);
-                State.combatStatus.displayMode = "context_off";
-            }
-            return;
-        }
-
-        if (Number(cfg.ENABLE_COMBAT_STATUS) !== 1) {
-            if (State.combatStatus.displayMode !== "disabled") {
-                RemoveCombatStatusOverlay(root);
-                State.combatStatus.displayMode = "disabled";
-            }
-            return;
-        }
-
-        var overlay = EnsureCombatStatusOverlay(root);
-        if (!overlay) return;
-        if (State.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
-        }
-        State.combatStatus.displayMode = "active";
-
-        var scale = Math.round(Number(cfg.COMBAT_STATUS_SCALE));
-        var offsetX = Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET));
-        var offsetY = Math.round(Number(cfg.COMBAT_STATUS_Y_OFFSET));
-        if (!isFinite(scale)) scale = 100;
-        if (!isFinite(offsetX)) offsetX = 0;
-        if (!isFinite(offsetY)) offsetY = 0;
-        if (scale < 50) scale = 50;
-        if (scale > 200) scale = 200;
-        if (offsetX < -1000) offsetX = -1000;
-        if (offsetX > 1000) offsetX = 1000;
-        if (offsetY < -1000) offsetY = -1000;
-        if (offsetY > 1000) offsetY = 1000;
-
-        var layoutSig = String(scale) + "|" + String(offsetX) + "|" + String(offsetY);
-        if (layoutSig !== State.combatStatus.lastLayoutSig) {
-            overlay.style.preTransformScale2d = (scale / 100).toFixed(2);
-            overlay.style.marginLeft = String(offsetX) + "px";
-            overlay.style.marginBottom = String(165 + offsetY) + "px";
-            State.combatStatus.lastLayoutSig = layoutSig;
-        }
-
-        var combatSignal = IsCombatSignalActive(root, nowMs);
-        if (combatSignal) {
-            if (!State.combatStatus.signalActive || State.combatStatus.combatStartMs <= 0) {
-                State.combatStatus.combatStartMs = nowMs;
-            }
-            State.combatStatus.lastCombatMs = nowMs;
-        }
-        State.combatStatus.signalActive = combatSignal;
-
-        var recentCombatMs = nowMs - Number(State.combatStatus.lastCombatMs || 0);
-        var recoveryActive = !combatSignal && State.combatStatus.lastCombatMs > 0 && recentCombatMs <= COMBAT_STATUS_RECOVERY_MS;
-        var phase = combatSignal ? "combat" : (recoveryActive ? "recover" : "idle");
-        if (phase === "idle") {
-            State.combatStatus.combatStartMs = 0;
-        }
-
-        var classSig = phase;
-        if (classSig !== State.combatStatus.lastClassSig) {
-            overlay.SetHasClass("phase_combat", combatSignal);
-            overlay.SetHasClass("phase_recover", recoveryActive);
-            overlay.SetHasClass("phase_idle", !combatSignal && !recoveryActive);
-            State.combatStatus.lastClassSig = classSig;
-        }
-
-        var stateText = "OUT OF COMBAT";
-        var timerText = "--";
-        if (combatSignal) {
-            var combatStartMs = Number(State.combatStatus.combatStartMs || nowMs);
-            if (!isFinite(combatStartMs) || combatStartMs <= 0) combatStartMs = nowMs;
-            var combatSec = Math.max(0, (nowMs - combatStartMs) / 1000.0);
-            stateText = "IN COMBAT";
-            timerText = combatSec.toFixed(1) + "s";
-        } else if (recoveryActive) {
-            var recoverSec = Math.max(0, (COMBAT_STATUS_RECOVERY_MS - recentCombatMs) / 1000.0);
-            stateText = "RECOVERING";
-            timerText = recoverSec.toFixed(1) + "s";
-        }
-
-        var stateLabel = GetCachedPanel("combatStatusState");
-        if (stateLabel && stateText !== State.combatStatus.lastStateText) {
-            stateLabel.text = stateText;
-            State.combatStatus.lastStateText = stateText;
-        }
-        var timerLabel = GetCachedPanel("combatStatusTimer");
-        if (timerLabel && timerText !== State.combatStatus.lastTimerText) {
-            timerLabel.text = timerText;
-            State.combatStatus.lastTimerText = timerText;
-        }
-    }
 
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -29710,21 +29478,6 @@ function GetUIRoot() {
                     "minimapObjectiveRejuvClassCache", "minimapObjectiveScaleSig"]
     });
 
-    QOL_REGISTER_FEATURE("combatStatus", {
-        configKeys: ["ENABLE_COMBAT_STATUS", "ENABLE_COMBAT_INDICATOR"],
-        bucket: 7,
-        phase: -1,
-        gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS") ||
-                   IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");
-        },
-        update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateCombatStatusOverlay(root, cfg, hideoutConnected);
-        },
-        stateKeys: ["combatStatus", "combatStatusAlertProbeMisses",
-                    "combatIndicatorDebugLastSig", "combatIndicatorDebugNextMs"]
-    });
-
     QOL_REGISTER_FEATURE("zipBoost", {
         configKeys: ["ENABLE_ZIP_BOOST"],
         bucket: 6,
@@ -30181,42 +29934,68 @@ function GetUIRoot() {
     //   NormalizeHudOffsetNumber, FormatHudPx, NormalizeHudScaleNumber,
     //   NormalizeDegrees360/180, ShortestDegreesDelta
     // =========================================================================
-    if (typeof window !== "undefined") {
-        // State object — all ~600 feature-owned fields
-        window.QOL_STATE = State;
+    // Export to global scope — Panorama has no 'window', so use direct
+    // assignment from within a non-strict IIFE (creates global properties).
+    // Each assignment is wrapped in try/catch for safety in strict-mode loaders.
 
-        // Panel cache helpers — use State.cachedPanels with IsPanelValid guards
-        window.QOL_GetCachedPanel = GetCachedPanel;
-        window.QOL_SetCachedPanel = SetCachedPanel;
-        window.QOL_ClearPanelCache = ClearPanelCache;
-        window.QOL_SweepStalePanelCache = SweepStalePanelCache;
-        window.QOL_ResolveCachedPanel = ResolveCachedPanel;
+    // State object — all ~600 feature-owned fields
+    try { QOL_STATE = State; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_STATE = State; } catch(e) {}
 
-        // Performance timing — ties into the core loop's perf tracking
-        window.QOL_PerfStart = PerfStart;
-        window.QOL_PerfEnd = PerfEnd;
+    // Panel cache helpers — use State.cachedPanels with IsPanelValid guards
+    try { QOL_GetCachedPanel = GetCachedPanel; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_GetCachedPanel = GetCachedPanel; } catch(e) {}
+    try { QOL_SetCachedPanel = SetCachedPanel; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_SetCachedPanel = SetCachedPanel; } catch(e) {}
+    try { QOL_ClearPanelCache = ClearPanelCache; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ClearPanelCache = ClearPanelCache; } catch(e) {}
+    try { QOL_SweepStalePanelCache = SweepStalePanelCache; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_SweepStalePanelCache = SweepStalePanelCache; } catch(e) {}
+    try { QOL_ResolveCachedPanel = ResolveCachedPanel; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ResolveCachedPanel = ResolveCachedPanel; } catch(e) {}
 
-        // Feature dispatch wrapper with error isolation
-        window.QOL_ExecuteFeature = ExecuteFeature;
+    // Performance timing — ties into the core loop's perf tracking
+    try { QOL_PerfStart = PerfStart; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_PerfStart = PerfStart; } catch(e) {}
+    try { QOL_PerfEnd = PerfEnd; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_PerfEnd = PerfEnd; } catch(e) {}
 
-        // ── Shared style helpers used by feature files ──
-        window.QOL_SetWashColorSafe = SetWashColorSafe;
-        window.QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette;
-        window.QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex;
+    // Feature dispatch wrapper with error isolation
+    try { QOL_ExecuteFeature = ExecuteFeature; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ExecuteFeature = ExecuteFeature; } catch(e) {}
 
-        // ── Per-feature palette readers (internally use closure-scoped helpers) ──
-        window.QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex;
-        window.QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex;
-        window.QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex;
-        window.QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex;
-        window.QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex;
+    // ── Shared style helpers used by feature files ──
+    try { QOL_SetWashColorSafe = SetWashColorSafe; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_SetWashColorSafe = SetWashColorSafe; } catch(e) {}
+    try { QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette; } catch(e) {}
+    try { QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex; } catch(e) {}
 
-        // ── Utility functions used across features ──
-        window.QOL_GetUIRoot = GetUIRoot;
-        window.QOL_GetGameplayHudPanel = GetGameplayHudPanel;
-        window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber;
-        window.QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle;
-        window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime;
-    }
+    // ── Per-feature palette readers (internally use closure-scoped helpers) ──
+    try { QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex; } catch(e) {}
+    try { QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex; } catch(e) {}
+    try { QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex; } catch(e) {}
+    try { QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex; } catch(e) {}
+    try { QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex; } catch(e) {}
+
+    // ── Utility functions used across features ──
+    try { QOL_GetUIRoot = GetUIRoot; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_GetUIRoot = GetUIRoot; } catch(e) {}
+    try { QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
+    try { QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
+    try { QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
+    try { QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
 
 })();
