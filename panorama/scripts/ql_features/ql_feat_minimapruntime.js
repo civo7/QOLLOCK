@@ -258,6 +258,15 @@ function RestoreMinimapOriginalOrder(minimapPersp) {
             parent.MoveChildBefore(minimapPersp, anchor);
         }
     }
+    var hasClassInHierarchy = function(panel, className) {
+        var current = panel;
+        while (current) {
+            if (current.BHasClass(className)) return true;
+            current = current.GetParent();
+        }
+        return false;
+    };
+
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));

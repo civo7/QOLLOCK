@@ -8,7 +8,8 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { return null; };
+        var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { return null; };
 
     var UNSECURED_SOULS_HUD_SEARCH_MS = 1000;
     var PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
@@ -24,6 +25,7 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_GetGameplayHudPanel === "undefined") _m.push("QOL_GetGameplayHudPanel");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
         }
@@ -147,7 +149,8 @@
         S.unsecuredSouls.hudMirrorText = null;
     }
 
-    var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawValue) {
+        var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawValue) {
         var n = Number(rawValue);
         if (!isFinite(n)) return null;
         if (Math.abs(n) > PANEL_LAYOUT_OFFSET_ABS_MAX) return null;

@@ -20,6 +20,36 @@
     var CLASS_RECENT_PURCHASE = "recentPurchase";
     var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
     var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 10.0;
+    var RECENT_PURCHASE_FILTERS = [
+        { id: "Tier1Toggle", label: "T1", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier1Purchase"); } },
+        { id: "Tier2Toggle", label: "T2", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier2Purchase"); } },
+        { id: "Tier3Toggle", label: "T3", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier3Purchase"); } },
+        { id: "Tier4Toggle", label: "T4", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier4Purchase"); } },
+        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
+          ShouldHideItem: function(p) { return p.BHasClass("isTeam1Purchase"); } },
+        { id: "Team2OnlyToggle", label: "Archmother", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
+          ShouldHideItem: function(p) { return p.BHasClass("isTeam2Purchase"); } },
+        { id: "MyTeamToggle", label: "My Team", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
+          ShouldHideItem: function(p, ctx) {
+              if (ctx.localTeam === 1) return p.BHasClass("isTeam1Purchase");
+              if (ctx.localTeam === 2) return p.BHasClass("isTeam2Purchase");
+              return false;
+          } },
+        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
+          ShouldHideItem: function(p, ctx) {
+              if (ctx.localTeam === 1) return p.BHasClass("isTeam2Purchase");
+              if (ctx.localTeam === 2) return p.BHasClass("isTeam1Purchase");
+              return false;
+          } }
+    ]
     var RECENT_PURCHASE_MAX_ITEMS = 50;
 
     // One-shot dependency validation

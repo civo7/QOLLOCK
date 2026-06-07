@@ -55,6 +55,15 @@ function CreateIndicatorMeta(panel, needsSmallDamage) {
             smallDamageKnown: !!needsSmallDamage
         };
     }
+    var hasClassInHierarchy = function(panel, className) {
+        var current = panel;
+        while (current) {
+            if (current.BHasClass(className)) return true;
+            current = current.GetParent();
+        }
+        return false;
+    };
+
     function BuildIndicatorMetaCache(indicators, previousMeta, needsSmallDamage) {
         var out = [];
         if (!indicators || indicators.length === 0) return out;
