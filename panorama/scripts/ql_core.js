@@ -26007,6 +26007,95 @@ function GetUIRoot() {
         if (raw !== S.lastRawConfig && S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
         return false;
     }
+
+    function NeedsMinimapRuntimeWork(cfg, raw) {
+        if (!cfg) return false;
+        var sig = BuildMinimapRuntimeSignature(cfg);
+        S._cachedMinimapRuntimeSig = sig;
+        if (raw !== S.lastRawConfig || sig !== S.minimapRuntimeSig || S.accountPresetTestActive || S.lastZoomState === null) return true;
+        if (S.minimapRuntimeSig && !IsPanelListValid(S.cachedPanels.minimap)) return true;
+        if (S.minimapDrawOverUiActive) return true;
+        if (S.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
+        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && S.minimapCastRangeScaleApplied) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !GC("minimapCrateOverlayRoot")) return true;
+        if (
+            (
+                IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ||
+                IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS")
+            ) &&
+            !GC("minimapTunnelOverlayRoot")
+        ) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") || IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) return true;
+        return false;
+    }
+
+    function CombatIndicatorDebugLogThrottled(sig, msg, nowMs) {
+        if (!COMBAT_INDICATOR_DEBUG) return;
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var sameSig = sig && sig === S.combatIndicatorDebugLastSig;
+        if (sameSig && now < (S.combatIndicatorDebugNextMs || 0)) return;
+        S.combatIndicatorDebugLastSig = sig || "";
+        S.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
+        CombatIndicatorDebugLog(msg);
+    }
+
+    function GetPanelPositionRelativeToAncestor(panel, ancestor) {
+        if (!panel || !ancestor) return null;
+        var x = 0;
+        var y = 0;
+        var p = panel;
+        var guard = 0;
+        while (p && p !== ancestor && guard < 64) {
+            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
+            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
+            if (ox === null || oy === null) return null;
+            x += ox;
+            y += oy;
+            p = p.GetParent ? p.GetParent() : null;
+            guard++;
+        }
+        if (p !== ancestor) return null;
+        return { x: x, y: y };
+    }
+
+    function CombatIndicatorDebugLog(msg) {
+        if (!COMBAT_INDICATOR_DEBUG) return;
+        $.Msg("[QOLLock][CombatIndicatorDbg] " + msg);
+    }
+
+    function BuildMinimapRuntimeSignature(cfg) {
+        if (!cfg) return "";
+        return [
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM") ? "1" : "0",
+            IsCfgEnabled(cfg, "MINIMAL_MINIMAP") ? "1" : "0",
+            String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
+            String(Number(cfg.MINIMAP_BASE_OPACITY) || 1),
+            String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
+            String(Math.round(Number(cfg.MINIMAP_Y_OFFSET) || 0)),
+            String(Number(cfg.MINIMAP_LARGE_SIZE_ALT) || Number(cfg.MINIMAP_LARGE_SIZE) || 0),
+            String(Number(cfg.MINIMAP_LARGE_SIZE_TAB) || Number(cfg.MINIMAP_LARGE_SIZE) || 0),
+            String(Number(cfg.ZOOM_X_OFFSET_ALT) || Number(cfg.ZOOM_X_OFFSET) || 0),
+            String(Number(cfg.ZOOM_Y_OFFSET_ALT) || Number(cfg.ZOOM_Y_OFFSET) || 0),
+            String(Number(cfg.ZOOM_X_OFFSET_TAB) || Number(cfg.ZOOM_X_OFFSET) || 0),
+            String(Number(cfg.ZOOM_Y_OFFSET_TAB) || Number(cfg.ZOOM_Y_OFFSET) || 0),
+            String(Number(cfg.ALT_ZOOM_OPACITY) || 1),
+            String(Number(cfg.TAB_ZOOM_OPACITY) || 1),
+            String(Number(cfg.MINIMAL_MINIMAP_OPACITY) || 0.9),
+            IsCfgEnabled(cfg, "ALT_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "TAB_ZOOM_DRAW_OVER_UI") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") ? "1" : "0",
+            IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ? "1" : "0",
+            String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
+            IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ? "1" : "0",
+            String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
+            IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS") ? "1" : "0",
+            String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
+            String(ReadMinimapIconColorIndex(cfg)),
+            ResolveMinimapCrateOverlayMapKey()
+        ].join("|");
+    }
     // ── Additional bridge exports for extracted feature files ──
     try { if (typeof window !== "undefined") window.QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
