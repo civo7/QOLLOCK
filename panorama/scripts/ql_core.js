@@ -27600,29 +27600,28 @@ function GetUIRoot() {
             }
             if (playerPanel) {
                 State._compassSpeedDebugNoPanelLogged = false;
+                // Try mainImage first — it has transform data (heading already uses it).
+                // The playerPanel (client_cone_fov) may not expose position in newer game versions.
+                var positionSource = playerPanel;
+                var mainImage = GetCachedPanel("minimapLocalMainImage");
+                if (IsPanelValid(mainImage)) {
+                    positionSource = mainImage;
+                }
                 var positionText = "";
-                // Try multiple sources for position data (API changed across Deadlock versions)
-                if (playerPanel.style && typeof playerPanel.style.position === "string") {
-                    positionText = playerPanel.style.position;
+                if (positionSource.style && typeof positionSource.style.position === "string") {
+                    positionText = positionSource.style.position;
                 }
-                if ((!positionText || positionText.length === 0) && playerPanel.style && typeof playerPanel.style.transform === "string") {
-                    positionText = playerPanel.style.transform;
+                if ((!positionText || positionText.length === 0) && positionSource.style && typeof positionSource.style.transform === "string") {
+                    positionText = positionSource.style.transform;
                 }
-                if ((!positionText || positionText.length === 0) && playerPanel.GetAttributeString) {
-                    positionText = playerPanel.GetAttributeString("style", "");
-                }
-                // Fallback: try actuallayoutx/y as a last resort
-                if ((!positionText || positionText.length === 0) && typeof playerPanel.actuallayoutx === "number" && typeof playerPanel.actuallayouty === "number") {
-                    if (!State._compassSpeedDebugNoPosLogged) {
-                        $.Msg("[QOLLock][compassSpeed] trying actuallayout fallback: x=" + playerPanel.actuallayoutx + " y=" + playerPanel.actuallayouty);
-                    }
+                if ((!positionText || positionText.length === 0) && positionSource.GetAttributeString) {
+                    positionText = positionSource.GetAttributeString("style", "");
                 }
                 var pos = ParsePositionXYPercent(positionText);
                 if (!pos) {
                     if (!State._compassSpeedDebugNoPosLogged) {
-                        $.Msg("[QOLLock][compassSpeed] position parse failed — len=" + String(positionText).length + " text='" + String(positionText).substring(0, 200) + "'");
-                        $.Msg("[QOLLock][compassSpeed] style.position='" + String(playerPanel.style && playerPanel.style.position ? playerPanel.style.position : "undefined") + "' style.transform='" + String(playerPanel.style && playerPanel.style.transform ? playerPanel.style.transform : "undefined") + "'");
-                        $.Msg("[QOLLock][compassSpeed] actuallayout x=" + playerPanel.actuallayoutx + " y=" + playerPanel.actuallayouty + " w=" + playerPanel.actuallayoutwidth + " h=" + playerPanel.actuallayoutheight);
+                        $.Msg("[QOLLock][compassSpeed] position parse failed — source=" + (positionSource === mainImage ? "mainImage" : "playerPanel") + " len=" + String(positionText).length + " text='" + String(positionText).substring(0, 200) + "'");
+                        $.Msg("[QOLLock][compassSpeed] source pos='" + String(positionSource.style && positionSource.style.position ? positionSource.style.position : "undefined") + "' transform='" + String(positionSource.style && positionSource.style.transform ? positionSource.style.transform : "undefined") + "'");
                         State._compassSpeedDebugNoPosLogged = true;
                     }
                 }
