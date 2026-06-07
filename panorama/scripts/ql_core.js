@@ -24197,6 +24197,9 @@ function GetUIRoot() {
 
     var COMBAT_INDICATOR_DEBUG = false;
     var COMBAT_INDICATOR_DEBUG_THROTTLE_MS = 700;
+    var COMBAT_STATUS_ALERT_PROBE_MS = 500;
+    var COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
+    var COMBAT_STATUS_RECOVERY_MS = 3000;
 
     function IsCombatSignalActive(root, nowMs) {
         if (!root) return false;
