@@ -1410,9 +1410,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
     const BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
     const BUILD_CLEAR_TOKEN_ATTR = "QOL_BUILD_CLEAR_TOKEN";
-    const ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
-    const ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
-    const ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
@@ -28179,30 +28176,6 @@ function GetUIRoot() {
                     "indicatorPanelsCache", "indicatorMetaCache",
                     "lastIndicatorCount", "lastItemCount",
                     "damageNumbersRuntimeStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("onDeathArcade", {
-        configKeys: ["ENABLE_ON_DEATH_GAMES", "ON_DEATH_GAME_MINESWEEPER",
-                     "ON_DEATH_GAME_BLACKJACK", "ON_DEATH_GAME_FLAPPY_BAT",
-                     "ON_DEATH_GAME_GRAVES_TRAINER", "ON_DEATH_GAME_ZERGGY_MANIA",
-                     "ON_DEATH_GAME_WHACK_A_REM"],
-        bucket: 7,
-        phase: -1,
-        gate: function(cfg) {
-            if (Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
-            return IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
-                   IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
-                   IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
-                   IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
-                   IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
-                   IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM");
-        },
-        update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateOnDeathArcadeBridge(root, cfg, nowMs);
-        },
-        stateKeys: ["onDeathArcadeWasDead", "onDeathArcadeLastTriggerMs",
-                    "onDeathArcadeRespawnPanel", "onDeathArcadeRequestSerial",
-                    "onDeathArcadeRuntimeWasActive"]
     });
 
     // ── Batch C: features with significant State footprint ──
