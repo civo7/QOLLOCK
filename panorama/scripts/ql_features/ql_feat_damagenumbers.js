@@ -6,6 +6,7 @@
     var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
     var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var IsPanelListValid = typeof QOL_IsPanelListValid !== "undefined" ? QOL_IsPanelListValid : function() { return false; };
@@ -131,6 +132,20 @@ function RuntimeTaskSetDelay(taskKey, nowMs, delayMs) {
         if (!isFinite(delay) || delay < 0) delay = 0;
         var store = RuntimeSchedulerGetStore();
         store[taskKey] = now + delay;
+    }
+function IsIndicatorSmallDamage(panel) {
+        if (!panel) return false;
+        return (
+            hasClassInHierarchy(panel, "bullet_damage_new") ||
+            hasClassInHierarchy(panel, "ability_damage_new") ||
+            hasClassInHierarchy(panel, "melee_damage_new") ||
+            hasClassInHierarchy(panel, "pure_damage_new") ||
+            hasClassInHierarchy(panel, "damage_type_gun") ||
+            hasClassInHierarchy(panel, "damage_type_melee") ||
+            hasClassInHierarchy(panel, "damage_type_ability") ||
+            hasClassInHierarchy(panel, "damage_type_pure") ||
+            hasClassInHierarchy(panel, "damage_type_poison")
+        );
     }
     function BuildIndicatorMetaCache(indicators, previousMeta, needsSmallDamage) {
         var out = [];

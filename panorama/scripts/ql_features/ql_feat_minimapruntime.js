@@ -6,6 +6,8 @@
     var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
     var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var SetStyleSafe = U ? U.SetStyleSafe : function() {};
+    var ClearStyleSafe = U ? U.ClearStyleSafe : function() {};
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
@@ -339,6 +341,113 @@ function SetWashColorSafe(panel, color) {
             ClearStyleSafe(panel, "washColor");
         }
     }
+    var MINIMAP_CRATE_OVERLAY_DEBUG = false;
+    var MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
+    var MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
+    var MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
+    var MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
+    var MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
+    var PANEL_ID_HUD = QOL_PANEL_ID_HUD;
+function ClearMinimapCrateOverlayMarkers(markers) {
+        if (markers && markers.RemoveAndDeleteChildren) {
+            markers.RemoveAndDeleteChildren();
+        }
+    }
+function EnsureMinimapCrateOverlay(root) {
+        var anchor = EnsureMinimapOverlayAnchor(root);
+        if (!anchor) {
+            MinimapCrateOverlayDebugLogThrottled("ensure|noanchor", "anchor=<null>", PerfNowMs());
+            return null;
+        }
+        var overlay = GC("minimapCrateOverlayRoot");
+        var markers = GC("minimapCrateMarkersRoot");
+        if (!overlay) {
+            overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("minimap_overlay_root") || null) : null;
+            if (!overlay) {
+                overlay = $.CreatePanel("Panel", anchor, "minimap_overlay_root", {
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+            }
+        } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
+            overlay.SetParent(anchor);
+        }
+        if (!overlay) return null;
+        overlay.hittest = false;
+        overlay.hittestchildren = false;
+        if (!markers) {
+            markers = overlay.FindChildTraverse ? (overlay.FindChildTraverse("minimap_markers") || null) : null;
+            if (!markers) {
+                markers = $.CreatePanel("Panel", overlay, "minimap_markers", {
+                    hittest: "false",
+                    hittestchildren: "false"
+                });
+            }
+        }
+        if (!markers) return null;
+        markers.hittest = false;
+        markers.hittestchildren = false;
+        MinimapCrateOverlayDebugLogThrottled(
+            "ensure|" + (anchor.id || anchor.paneltype || "anchor") + "|" + (overlay ? "1" : "0") + "|" + (markers ? "1" : "0"),
+            "anchor=" + (anchor.id || anchor.paneltype || "<anon>") +
+            " overlay=" + (overlay ? (overlay.id || overlay.paneltype || "<anon>") : "<null>") +
+            " markers=" + (markers ? (markers.id || markers.paneltype || "<anon>") : "<null>"),
+            PerfNowMs()
+        );
+        SC("minimapCrateOverlayRoot", overlay);
+        SC("minimapCrateMarkersRoot", markers);
+        return {
+            root: overlay,
+            markers: markers
+        };
+    }
+function EnsureMinimapOverlayAnchor(root) {
+        if (!root || !root.FindChildTraverse) return null;
+        var anchor = GC("minimapObjectiveTimersAnchor");
+        if (!anchor) {
+            anchor = root.FindChildTraverse("minimap_container");
+            if (!anchor) anchor = root.FindChildTraverse("minimap_persp");
+            SC("minimapObjectiveTimersAnchor", anchor);
+        }
+        return anchor || null;
+    }
+var GetCachedPanel = function(k) {
+        var p = S.cachedPanels[k];
+        if (IsPanelValid(p)) return p;
+        S.cachedPanels[k] = null;
+        return null;
+    };
+function MinimapCrateOverlayDebugLog(msg) {
+        if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
+        $.Msg("[QOLLock][MinimapCrateDbg] " + msg);
+    }
+function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName, persistentStorageKey) {
+        var fromConfig = NormalizePaletteColorIndex(cfg && cfg[key]);
+        var root = GetUIRoot();
+        try {
+            if (root && root.GetAttributeString) {
+                var rootAttr = String(root.GetAttributeString(attrName, "") || "");
+                if (rootAttr !== "") return NormalizePaletteColorIndex(rootAttr);
+            }
+        } catch (eAttrRoot) {}
+        try {
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
+            if (hud && hud.GetAttributeString) {
+                var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
+                if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
+            }
+        } catch (eAttrHud) {}
+        try {
+            if (persistentStorageKey && $ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
+                var raw = String($.persistentStorage.getItem(persistentStorageKey) || "");
+                if (raw !== "") return NormalizePaletteColorIndex(raw);
+            }
+        } catch (e0) {}
+        return fromConfig;
+    }
+var SetCachedPanel = function(k, p) {
+        S.cachedPanels[k] = IsPanelValid(p) ? p : null;
+    };
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));

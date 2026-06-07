@@ -3,6 +3,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
+    $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
     var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
     var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
     var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;

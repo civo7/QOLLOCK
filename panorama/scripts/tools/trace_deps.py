@@ -128,10 +128,33 @@ def trace(feat_path):
     for m in re.finditer(r'var (\w+)\s*=\s*function', content):
         have_fns.add(m.group(1))
 
-    # Work queue: start with the entire feature body
+    # Work queue: start with the entire feature body AND each existing function
     body_start = content.find("    function ")
     if body_start == -1: body_start = len(content) // 2
     queue = [content[body_start:]]
+    # Also queue each existing function body for re-tracing
+    for m in re.finditer(r'function (\w+)\(', content):
+        name = m.group(1)
+        idx = m.start()
+        brace = 0; in_fn = False
+        for i in range(idx, min(idx + 50000, len(content))):
+            if content[i] == '{': brace += 1; in_fn = True
+            elif content[i] == '}':
+                brace -= 1
+                if in_fn and brace == 0:
+                    queue.append(content[idx:i+1])
+                    break
+    for m in re.finditer(r'var (\w+)\s*=\s*function', content):
+        name = m.group(1)
+        idx = m.start()
+        brace = 0; in_fn = False
+        for i in range(idx, min(idx + 5000, len(content))):
+            if content[i] == '{': brace += 1; in_fn = True
+            elif content[i] == '}':
+                brace -= 1
+                if in_fn and brace == 0:
+                    queue.append(content[idx:i+1] + ';')
+                    break
     seen = set()
 
     needed_consts = {}
