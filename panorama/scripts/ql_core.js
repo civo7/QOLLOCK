@@ -4284,7 +4284,7 @@ function DeserializeBuildPayloadCompact(binaryStr, expectedSemver) {
 
 
 function GetUIRoot() {
-        var cached = State.cachedPanels.uiRoot;
+        var cached = GetCachedPanel("uiRoot");
         if (IsPanelValid(cached)) {
             return cached;
         }
@@ -4716,7 +4716,7 @@ function GetUIRoot() {
     function ResolveColoredHealthbarPanels(root) {
         var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
         var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (GetCachedPanel("healthContainer"));
-        if (healthContainer !== State.cachedPanels.healthContainer) {
+        if (healthContainer !== GetCachedPanel("healthContainer")) {
             SetCachedPanel("healthContainer", healthContainer);
             ResetColoredHealthbarPanelCache();
         }
@@ -4928,7 +4928,7 @@ function GetUIRoot() {
 
         pushUnique(currentPanel);
         pushUnique(previousPanel);
-        pushUnique(State.cachedPanels.healthContainer);
+        pushUnique(GetCachedPanel("healthContainer"));
 
         if (root && root.FindChildTraverse) {
             pushUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
@@ -5459,7 +5459,7 @@ function GetUIRoot() {
         var heartsRoot = root && root.FindChildTraverse ? root.FindChildTraverse("MinecraftHeartsRoot") : null;
         var panel = (heartsRoot && heartsRoot.GetParent) ? heartsRoot.GetParent() : null;
         SetCachedPanel("mcHudRoot", IsPanelValid(panel) ? panel : null);
-        return State.cachedPanels.mcHudRoot;
+        return GetCachedPanel("mcHudRoot");
     }
 
     function McResetRuntime() {
@@ -5637,7 +5637,7 @@ function GetUIRoot() {
         }
         var heartsNeededRowCount = Math.ceil(heartsNeeded / MC_HEARTS_PER_ROW);
         if (State.mcHeartsCapacity >= heartsNeeded && State.mcHeartSlots.length >= State.mcHeartsCapacity && State.mcHeartsRowCount === heartsNeededRowCount) return true;
-        State.cachedPanels.mcHeartsContainer.RemoveAndDeleteChildren();
+        GetCachedPanel("mcHeartsContainer").RemoveAndDeleteChildren();
         State.mcHeartSlots = [];
         State.mcHeartContainerImages = [];
         State.mcHeartHealingImages = [];
@@ -5662,10 +5662,10 @@ function GetUIRoot() {
         var rowPanels = [];
         function ensureRow() {
             if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
-                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcHeartsContainer, "");
+                currentRow = $.CreatePanel("Panel", GetCachedPanel("mcHeartsContainer"), "");
                 currentRow.AddClass("HeartsRow");
-                var firstChild = State.cachedPanels.mcHeartsContainer.GetChild(0);
-                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcHeartsContainer.MoveChildBefore(currentRow, firstChild);
+                var firstChild = GetCachedPanel("mcHeartsContainer").GetChild(0);
+                if (firstChild && firstChild !== currentRow) GetCachedPanel("mcHeartsContainer").MoveChildBefore(currentRow, firstChild);
                 rowPanels.push(currentRow);
                 heartsInCurrentRow = 0;
             }
@@ -5718,7 +5718,7 @@ function GetUIRoot() {
             }
         }
         if (State.mcBarrierHeartsCapacity === heartsNeeded && State.mcBarrierHeartsPanels.length === State.mcBarrierHeartsCapacity) return true;
-        State.cachedPanels.mcBarrierHearts.RemoveAndDeleteChildren();
+        GetCachedPanel("mcBarrierHearts").RemoveAndDeleteChildren();
         State.mcBarrierHeartsPanels = [];
         State.mcBarrierHeartContainerImages = [];
         State.mcBarrierHeartFillImages = [];
@@ -5727,10 +5727,10 @@ function GetUIRoot() {
         var heartsInCurrentRow = 0;
         function ensureRow() {
             if (currentRow === null || heartsInCurrentRow >= MC_HEARTS_PER_ROW) {
-                currentRow = $.CreatePanel("Panel", State.cachedPanels.mcBarrierHearts, "");
+                currentRow = $.CreatePanel("Panel", GetCachedPanel("mcBarrierHearts"), "");
                 currentRow.AddClass("HeartsRow");
-                var firstChild = State.cachedPanels.mcBarrierHearts.GetChild(0);
-                if (firstChild && firstChild !== currentRow) State.cachedPanels.mcBarrierHearts.MoveChildBefore(currentRow, firstChild);
+                var firstChild = GetCachedPanel("mcBarrierHearts").GetChild(0);
+                if (firstChild && firstChild !== currentRow) GetCachedPanel("mcBarrierHearts").MoveChildBefore(currentRow, firstChild);
                 heartsInCurrentRow = 0;
             }
         }
@@ -5872,7 +5872,7 @@ function GetUIRoot() {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
             if (!hasBarrier) {
-                if (GetCachedPanel("mcBarrierHeartsContainer")) State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "collapse";
+                if (GetCachedPanel("mcBarrierHeartsContainer")) GetCachedPanel("mcBarrierHeartsContainer").style.visibility = "collapse";
                 State.mcLastBarrierFullHearts = -1;
                 State.mcLastBarrierHasHalf = null;
                 State.mcLastBarrierLastSlotIsHalf = null;
@@ -5881,7 +5881,7 @@ function GetUIRoot() {
             var totalHalfSegments = Math.ceil(totalBarrier / MC_HP_PER_HALF_SEGMENT);
             var heartsNeeded = Math.ceil(totalHalfSegments / 2);
             if (!McEnsureBarrierHeartsCapacity(hudRoot, heartsNeeded)) return;
-            State.cachedPanels.mcBarrierHeartsContainer.style.visibility = "visible";
+            GetCachedPanel("mcBarrierHeartsContainer").style.visibility = "visible";
             var lastSlotIsHalf = (totalHalfSegments % 2) === 1;
             var currentHalfSegments = Math.ceil(currentBarrier / MC_HP_PER_HALF_SEGMENT);
             var fullHearts = Math.floor(currentHalfSegments / 2);
@@ -5944,21 +5944,21 @@ function GetUIRoot() {
             SetCachedPanel("mcHealthContainer", hc);
         }
         if (!GetCachedPanel("mcCurrentHealthLabel")) {
-            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var hcPanel = GetCachedPanel("mcHealthContainer");
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
             if (!lbl) return null;
             SetCachedPanel("mcCurrentHealthLabel", lbl);
         }
         if (!GetCachedPanel("mcTotalHealthLabel")) {
-            var hcPanel = State.cachedPanels.mcHealthContainer;
+            var hcPanel = GetCachedPanel("mcHealthContainer");
             var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
             if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
             if (!lbl) return null;
             SetCachedPanel("mcTotalHealthLabel", lbl);
         }
-        var currentHealth = parseInt(State.cachedPanels.mcCurrentHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
-        var totalHealth = parseInt(State.cachedPanels.mcTotalHealthLabel.text.replace(/[^0-9]/g, "")) || 0;
+        var currentHealth = parseInt(GetCachedPanel("mcCurrentHealthLabel").text.replace(/[^0-9]/g, "")) || 0;
+        var totalHealth = parseInt(GetCachedPanel("mcTotalHealthLabel").text.replace(/[^0-9]/g, "")) || 0;
         return { currentHealth: currentHealth, totalHealth: totalHealth };
     }
 
@@ -5981,7 +5981,7 @@ function GetUIRoot() {
                 SetCachedPanel("mcChargesContainer", root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null);
             }
             if (!GetCachedPanel("mcChargesContainer")) return null;
-            var allCharges = State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse ? State.cachedPanels.mcChargesContainer.FindChildrenWithClassTraverse("charge") : null;
+            var allCharges = GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse ? GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse("charge") : null;
             if (!allCharges || allCharges.length === 0) return null;
             var maxCharges = 0;
             var activeCharges = [];
@@ -6015,7 +6015,7 @@ function GetUIRoot() {
             if (!GetCachedPanel("mcFoodContainer")) {
                 SetCachedPanel("mcFoodContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null);
                 if (!GetCachedPanel("mcFoodContainer")) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
-                var children = State.cachedPanels.mcFoodContainer.Children();
+                var children = GetCachedPanel("mcFoodContainer").Children();
                 State.mcCachedFoodIcons = [];
                 for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
             }
@@ -6046,24 +6046,24 @@ function GetUIRoot() {
                 State.mcLoggedGoldApMiss = false;
                 SetCachedPanel("mcGoldApContainer", panel);
             }
-            if (!GetCachedPanel("mcSoulsFill")) SetCachedPanel("mcSoulsFill", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("SoulsFill") || null) : null);
+            if (!GetCachedPanel("mcSoulsFill")) SetCachedPanel("mcSoulsFill", GetCachedPanel("mcGoldApContainer").FindChildTraverse ? (GetCachedPanel("mcGoldApContainer").FindChildTraverse("SoulsFill") || null) : null);
             if (GetCachedPanel("mcSoulsFill")) {
-                var heightStr = State.cachedPanels.mcSoulsFill.style && State.cachedPanels.mcSoulsFill.style.height ? State.cachedPanels.mcSoulsFill.style.height.toString() : "";
+                var heightStr = GetCachedPanel("mcSoulsFill").style && GetCachedPanel("mcSoulsFill").style.height ? GetCachedPanel("mcSoulsFill").style.height.toString() : "";
                 var heightValue = parseFloat(heightStr) || 0;
                 if (heightValue <= 0) {
-                    var actualHeight = Number(State.cachedPanels.mcSoulsFill.actuallayoutheight);
+                    var actualHeight = Number(GetCachedPanel("mcSoulsFill").actuallayoutheight);
                     if (isFinite(actualHeight) && actualHeight > 0) heightValue = actualHeight;
                 }
                 var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
                 if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
                 if (!GetCachedPanel("mcXpBarFill")) SetCachedPanel("mcXpBarFill", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null);
-                if (GetCachedPanel("mcXpBarFill") && State.cachedPanels.mcXpBarFill.style) State.cachedPanels.mcXpBarFill.style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
+                if (GetCachedPanel("mcXpBarFill") && GetCachedPanel("mcXpBarFill").style) GetCachedPanel("mcXpBarFill").style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
             }
-            if (!GetCachedPanel("mcPlayerLevelLabel")) SetCachedPanel("mcPlayerLevelLabel", State.cachedPanels.mcGoldApContainer.FindChildTraverse ? (State.cachedPanels.mcGoldApContainer.FindChildTraverse("PlayerLevelNumber") || null) : null);
+            if (!GetCachedPanel("mcPlayerLevelLabel")) SetCachedPanel("mcPlayerLevelLabel", GetCachedPanel("mcGoldApContainer").FindChildTraverse ? (GetCachedPanel("mcGoldApContainer").FindChildTraverse("PlayerLevelNumber") || null) : null);
             if (GetCachedPanel("mcPlayerLevelLabel")) {
-                var levelValue = parseInt((State.cachedPanels.mcPlayerLevelLabel.text || "").replace(/[^0-9]/g, "")) || 0;
+                var levelValue = parseInt((GetCachedPanel("mcPlayerLevelLabel").text || "").replace(/[^0-9]/g, "")) || 0;
                 if (!GetCachedPanel("mcXpLevelLabel")) SetCachedPanel("mcXpLevelLabel", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null);
-                if (GetCachedPanel("mcXpLevelLabel")) State.cachedPanels.mcXpLevelLabel.text = levelValue.toString();
+                if (GetCachedPanel("mcXpLevelLabel")) GetCachedPanel("mcXpLevelLabel").text = levelValue.toString();
             }
         } catch (error) { $.Msg("[QOLLock][MC] Error in McParseSoulsAndLevel: " + error); }
     }
@@ -6078,28 +6078,28 @@ function GetUIRoot() {
 
     function McUpdateTotem() {
         if (!GetCachedPanel("mcTotemContainer")) return;
-        var hasRejuvenator = GetCachedPanel("mcHudHealthBars") ? State.cachedPanels.mcHudHealthBars.BHasClass("HasRejuvenator") : false;
-        State.cachedPanels.mcTotemContainer.style.visibility = hasRejuvenator ? "visible" : "collapse";
+        var hasRejuvenator = GetCachedPanel("mcHudHealthBars") ? GetCachedPanel("mcHudHealthBars").BHasClass("HasRejuvenator") : false;
+        GetCachedPanel("mcTotemContainer").style.visibility = hasRejuvenator ? "visible" : "collapse";
     }
 
     function McUpdateBulletBarrier(hudRoot) {
         var hasBarrier = false;
         var bulletBarrierCurrent = 0;
         var bulletBarrierMax = 0;
-        if (GetCachedPanel("mcBarriersContainer")) hasBarrier = State.cachedPanels.mcBarriersContainer.BHasClass("HasBulletShield");
+        if (GetCachedPanel("mcBarriersContainer")) hasBarrier = GetCachedPanel("mcBarriersContainer").BHasClass("HasBulletShield");
         if (hasBarrier) {
             if (!GetCachedPanel("mcBulletBarrierNumbers")) SetCachedPanel("mcBulletBarrierNumbers", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("BulletShieldNumbers") || null) : null);
             if (GetCachedPanel("mcBulletBarrierNumbers")) {
                 if (!GetCachedPanel("mcBulletBarrierCurrentLabel")) {
-                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_current") : null;
+                    var lbls = GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse ? GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse("progress_bar_current") : null;
                     if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierCurrentLabel", lbls[0]);
                 }
                 if (!GetCachedPanel("mcBulletBarrierMaxLabel")) {
-                    var lbls = State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse ? State.cachedPanels.mcBulletBarrierNumbers.FindChildrenWithClassTraverse("progress_bar_max") : null;
+                    var lbls = GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse ? GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse("progress_bar_max") : null;
                     if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierMaxLabel", lbls[0]);
                 }
-                if (GetCachedPanel("mcBulletBarrierCurrentLabel")) bulletBarrierCurrent = parseInt(State.cachedPanels.mcBulletBarrierCurrentLabel.text.replace(/[^0-9]/g, "")) || 0;
-                if (GetCachedPanel("mcBulletBarrierMaxLabel")) bulletBarrierMax = parseInt(State.cachedPanels.mcBulletBarrierMaxLabel.text.replace(/[^0-9]/g, "")) || 0;
+                if (GetCachedPanel("mcBulletBarrierCurrentLabel")) bulletBarrierCurrent = parseInt(GetCachedPanel("mcBulletBarrierCurrentLabel").text.replace(/[^0-9]/g, "")) || 0;
+                if (GetCachedPanel("mcBulletBarrierMaxLabel")) bulletBarrierMax = parseInt(GetCachedPanel("mcBulletBarrierMaxLabel").text.replace(/[^0-9]/g, "")) || 0;
                 McUpdateBarrierHearts(bulletBarrierCurrent, bulletBarrierMax, true);
             } else {
                 if (!State.mcLoggedBulletBarrierMiss) { $.Msg("[QOLLock][MC] BulletBarrierNumbers panel not found"); State.mcLoggedBulletBarrierMiss = true; }
@@ -6139,7 +6139,7 @@ function GetUIRoot() {
         if (!GetCachedPanel("mcHealthPercentLabel")) {
             SetCachedPanel("mcHealthPercentLabel", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftHealthPercent") || null) : null);
         }
-        var mcPercentLabel = State.cachedPanels.mcHealthPercentLabel;
+        var mcPercentLabel = GetCachedPanel("mcHealthPercentLabel");
         if (IsPanelValid(mcPercentLabel) && totalHealth > 0) {
             var mcPercent = (currentHealth / totalHealth) * 100;
             if (!isFinite(mcPercent)) mcPercent = 0;
@@ -6634,7 +6634,7 @@ function GetUIRoot() {
     function UpdateChatRuntime(root, cfg) {
         var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("Chat") : null;
         var chatPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("chatPanel"));
-        if (chatPanel !== State.cachedPanels.chatPanel) {
+        if (chatPanel !== GetCachedPanel("chatPanel")) {
             SetCachedPanel("chatPanel", chatPanel);
         }
 
@@ -6696,7 +6696,7 @@ function GetUIRoot() {
     function UpdateDamageReportOffsets(root, cfg) {
         var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("CitadelHudDamageReport") : null;
         var damageReportPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("damageReportPanel"));
-        if (damageReportPanel !== State.cachedPanels.damageReportPanel) {
+        if (damageReportPanel !== GetCachedPanel("damageReportPanel")) {
             SetCachedPanel("damageReportPanel", damageReportPanel);
         }
 
@@ -7230,8 +7230,8 @@ function GetUIRoot() {
         var teamsContainer = GetCachedPanel("urnTrackerTeamsContainer");
         var friendlyTeamPanel = GetCachedPanel("urnTrackerFriendlyTeamPanel");
         var enemyTeamPanel = GetCachedPanel("urnTrackerEnemyTeamPanel");
-        var friendlyLabels = Array.isArray(State.cachedPanels.urnTrackerFriendlyGoldLabels) ? State.cachedPanels.urnTrackerFriendlyGoldLabels : null;
-        var enemyLabels = Array.isArray(State.cachedPanels.urnTrackerEnemyGoldLabels) ? State.cachedPanels.urnTrackerEnemyGoldLabels : null;
+        var friendlyLabels = Array.isArray(GetCachedPanel("urnTrackerFriendlyGoldLabels")) ? GetCachedPanel("urnTrackerFriendlyGoldLabels") : null;
+        var enemyLabels = Array.isArray(GetCachedPanel("urnTrackerEnemyGoldLabels")) ? GetCachedPanel("urnTrackerEnemyGoldLabels") : null;
 
         var friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every(function(p) { return IsPanelValid(p); });
         var enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every(function(p) { return IsPanelValid(p); });
@@ -12367,7 +12367,7 @@ function GetUIRoot() {
 
     function EnsureSettingsLoaderStepRows(stepsWrap) {
         if (!stepsWrap) return null;
-        var rows = State.cachedPanels.settingsLoaderStepRows;
+        var rows = GetCachedPanel("settingsLoaderStepRows");
         if (!rows || typeof rows !== "object") rows = {};
         for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
             var step = SETTINGS_LOADER_STEPS[i];
@@ -13031,7 +13031,7 @@ function GetUIRoot() {
 
     function EnsureSaveSettingsLoaderStepRows(stepsWrap) {
         if (!stepsWrap) return null;
-        var rows = State.cachedPanels.saveSettingsLoaderStepRows;
+        var rows = GetCachedPanel("saveSettingsLoaderStepRows");
         if (!rows || typeof rows !== "object") rows = {};
         for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
             var step = SAVE_SETTINGS_LOADER_STEPS[i];
@@ -13518,7 +13518,7 @@ function GetUIRoot() {
 
     function EnsureClearSettingsLoaderStepRows(stepsWrap) {
         if (!stepsWrap) return null;
-        var rows = State.cachedPanels.clearSettingsLoaderStepRows;
+        var rows = GetCachedPanel("clearSettingsLoaderStepRows");
         if (!rows || typeof rows !== "object") rows = {};
         for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
             var step = CLEAR_SETTINGS_LOADER_STEPS[i];
@@ -13975,7 +13975,7 @@ function GetUIRoot() {
         }
 
         SetCachedPanel("shopFavoritesNavButton", (favoritesNav && IsPanelValid(favoritesNav)) ? favoritesNav : null);
-        return State.cachedPanels.shopFavoritesNavButton;
+        return GetCachedPanel("shopFavoritesNavButton");
     }
 
     function EnsureShopFavoritesNavActive(root, nowMs, stateField, cooldownMs) {
@@ -16868,8 +16868,8 @@ function GetUIRoot() {
 
         pushUnique(root);
         try { pushUnique(GetUIRoot()); } catch (e0) {}
-        pushUnique(State.cachedPanels.buildSaveHudPanel);
-        pushUnique(State.cachedPanels.shopModsSelectedBuild);
+        pushUnique(GetCachedPanel("buildSaveHudPanel"));
+        pushUnique(GetCachedPanel("shopModsSelectedBuild"));
         if (root && root.FindChildTraverse) {
             pushUnique(root.FindChildTraverse("CitadelHudHeroBuilds"));
             pushUnique(root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD));
@@ -20628,11 +20628,11 @@ function GetUIRoot() {
     }
 
     function GetOrCreateQuickPanelRP(root) {
-        if (GetCachedPanel("quickPurchasesPanel")) return State.cachedPanels.quickPurchasesPanel;
+        if (GetCachedPanel("quickPurchasesPanel")) return GetCachedPanel("quickPurchasesPanel");
         if (!GetCachedPanel("quickPurchasesHostPanel")) {
             SetCachedPanel("quickPurchasesHostPanel", root.FindChildTraverse(PANEL_ID_TOP_BAR));
         }
-        var topBar = State.cachedPanels.quickPurchasesHostPanel;
+        var topBar = GetCachedPanel("quickPurchasesHostPanel");
         if (!topBar) return null;
         var qp = $.CreatePanel("Panel", topBar, "QuickPurchasesPanel");
         SetCachedPanel("quickPurchasesPanel", qp);
@@ -20681,7 +20681,7 @@ function GetUIRoot() {
     }
 
     function SyncRejuvClassRP(rejuvEnabled) {
-        var quickPanel = State.cachedPanels.quickPurchasesPanel;
+        var quickPanel = GetCachedPanel("quickPurchasesPanel");
         if (!IsPanelValid(quickPanel)) return;
         quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
         if (!GetCachedPanel("cachedRejuvTimer")) {
@@ -20690,7 +20690,7 @@ function GetUIRoot() {
             SetCachedPanel("cachedRejuvTimer", _ctxParent ?
                 _ctxParent.FindChildTraverse("RejuvenatorTimer") : null);
         }
-        var timer = State.cachedPanels.cachedRejuvTimer;
+        var timer = GetCachedPanel("cachedRejuvTimer");
         if (!timer) return;
         if (timer.BHasClass("has_rejuv")) quickPanel.AddClass("has_rejuv");
         else quickPanel.RemoveClass("has_rejuv");
@@ -20715,7 +20715,7 @@ function GetUIRoot() {
         var marginTop = 90;
         if (isScoreboardOpen) marginTop = 175;
         else {
-            var quickPanel = State.cachedPanels.quickPurchasesPanel;
+            var quickPanel = GetCachedPanel("quickPurchasesPanel");
             var hasRejuv = IsPanelValid(quickPanel) && quickPanel.BHasClass && quickPanel.BHasClass("has_rejuv");
             if (rejuvEnabled && hasRejuv) marginTop = 153;
         }
@@ -20738,7 +20738,7 @@ function GetUIRoot() {
 
     function ClearContainerRP(root) {
         var container = GetCachedPanel("recentPurchasesContainer")
-            ? State.cachedPanels.recentPurchasesContainer
+            ? GetCachedPanel("recentPurchasesContainer")
             : root.FindChildTraverse("RecentPurchasesContainer");
         if (container && IsPanelValid(container)) {
             var count = container.GetChildCount();
@@ -21087,7 +21087,7 @@ function GetUIRoot() {
         // Early-return when both features are disabled — hide panel once on transition.
         if (!shopEnabled && !notifyEnabled) {
             if (State.recentPurchasesWasEnabled) {
-                var _rpPanel = State.cachedPanels.recentPurchasesPanel;
+                var _rpPanel = GetCachedPanel("recentPurchasesPanel");
                 if (!IsPanelValid(_rpPanel)) {
                     _rpPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
                     SetCachedPanel("recentPurchasesPanel", _rpPanel);
@@ -21104,7 +21104,7 @@ function GetUIRoot() {
         if (!GetCachedPanel("recentPurchasesPanel")) {
             SetCachedPanel("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
         }
-        var rpPanel = State.cachedPanels.recentPurchasesPanel;
+        var rpPanel = GetCachedPanel("recentPurchasesPanel");
         if (rpPanel) {
             rpPanel.style.visibility = shopEnabled ? "visible" : "collapse";
             var panelOffsetX = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
@@ -21125,7 +21125,7 @@ function GetUIRoot() {
         if (!GetCachedPanel("recentPurchasesContainer")) {
             SetCachedPanel("recentPurchasesContainer", root.FindChildTraverse("RecentPurchasesContainer"));
         }
-        var container = State.cachedPanels.recentPurchasesContainer;
+        var container = GetCachedPanel("recentPurchasesContainer");
         if (!container) return;
 
         HandleHideoutRP(root);
@@ -21152,7 +21152,7 @@ function GetUIRoot() {
                 State.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
                 UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
                 // Hide the centralized panel since we're using per-hero panels
-                var quickPanel = State.cachedPanels.quickPurchasesPanel;
+                var quickPanel = GetCachedPanel("quickPurchasesPanel");
                 if (IsPanelValid(quickPanel)) {
                     quickPanel.style.visibility = "collapse";
                 }
@@ -21166,7 +21166,7 @@ function GetUIRoot() {
                 var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
                 var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
                 SyncRejuvClassRP(rejuvEnabled);
-                quickPanel = State.cachedPanels.quickPurchasesPanel;
+                quickPanel = GetCachedPanel("quickPurchasesPanel");
                 if (IsPanelValid(quickPanel)) {
                     quickPanel.style.visibility = "visible";
                     quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
@@ -21772,7 +21772,7 @@ function GetUIRoot() {
     }
 
     function EnsureKeyboardOverlay(root) {
-        var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
+        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
         if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
             if (!overlayRoot) {
@@ -21787,7 +21787,7 @@ function GetUIRoot() {
         }
         if (!overlayRoot) return null;
 
-        var allBindingsBox = State.cachedPanels.keyboardOverlayBox;
+        var allBindingsBox = GetCachedPanel("keyboardOverlayBox");
         if (!IsPanelValid(allBindingsBox)) {
             allBindingsBox = overlayRoot.FindChildTraverse("AllBindingsBox");
             if (!allBindingsBox) {
@@ -21805,7 +21805,7 @@ function GetUIRoot() {
     }
 
     function RemoveKeyboardOverlay(root) {
-        var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
+        var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
         if (!IsPanelValid(overlayRoot)) {
             overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
         }
@@ -21833,7 +21833,7 @@ function GetUIRoot() {
             }
             State.allBindingsBoxes = validBoxes;
 
-            var overlayRoot = State.cachedPanels.keyboardOverlayRoot;
+            var overlayRoot = GetCachedPanel("keyboardOverlayRoot");
             var keyboardWashColor = ResolveWashColorFromPalette(ReadKeyboardOverlayWashColorIndex(cfg));
             var keyboardWashSig = keyboardWashColor || "";
             if (overlayRoot && State.keyboardOverlayWashSig !== keyboardWashSig) {
@@ -21846,7 +21846,7 @@ function GetUIRoot() {
                 if (!allBindingsBox) continue;
                 ApplyKeyboardOverlayLayout(allBindingsBox, cfg);
             }
-        } else if (State.cachedPanels.keyboardOverlayRoot) {
+        } else if (GetCachedPanel("keyboardOverlayRoot")) {
             RemoveKeyboardOverlay(root);
         } else {
             State.allBindingsBoxes = [];
@@ -22169,7 +22169,7 @@ function GetUIRoot() {
     }
 
     function EnsureUnsecuredSoulsOverlay(root) {
-        var overlay = State.cachedPanels.unsecuredSoulsOverlay;
+        var overlay = GetCachedPanel("unsecuredSoulsOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -22205,7 +22205,7 @@ function GetUIRoot() {
     }
 
     function RemoveUnsecuredSoulsOverlay(root) {
-        var overlay = State.cachedPanels.unsecuredSoulsOverlay;
+        var overlay = GetCachedPanel("unsecuredSoulsOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
         }
@@ -22285,7 +22285,7 @@ function GetUIRoot() {
         if (timerOffsetY > 1000) timerOffsetY = 1000;
         if (timerScale < 50) timerScale = 50;
         if (timerScale > 200) timerScale = 200;
-        var stateLabel = State.cachedPanels.unsecuredSoulsState;
+        var stateLabel = GetCachedPanel("unsecuredSoulsState");
         var timerFontPx = Math.round(16 * (timerScale / 100));
         if (timerFontPx < 8) timerFontPx = 8;
         if (timerFontPx > 72) timerFontPx = 72;
@@ -22303,7 +22303,7 @@ function GetUIRoot() {
             State.unsecuredSouls.lastLayoutSig = layoutSig;
         }
 
-        var source = State.cachedPanels.unsecuredSoulsSource;
+        var source = GetCachedPanel("unsecuredSoulsSource");
         if (!IsPanelValid(source)) {
             source = null;
             if (nowMs >= (State.unsecuredSouls.nextSourceSearchMs || 0)) {
@@ -22411,7 +22411,7 @@ function GetUIRoot() {
     }
 
     function EnsureZipBoostOverlay(root) {
-        var overlay = State.cachedPanels.zipBoostOverlay;
+        var overlay = GetCachedPanel("zipBoostOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -22439,7 +22439,7 @@ function GetUIRoot() {
     }
 
     function RemoveZipBoostOverlay(root) {
-        var overlay = State.cachedPanels.zipBoostOverlay;
+        var overlay = GetCachedPanel("zipBoostOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLZipBoostOverlay");
         }
@@ -22533,7 +22533,7 @@ function GetUIRoot() {
             State.zipBoostLastLayoutSig = layoutSig;
         }
 
-        var source = State.cachedPanels.zipBoostSource;
+        var source = GetCachedPanel("zipBoostSource");
         if (!IsPanelValid(source)) {
             source = null;
             if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
@@ -22558,7 +22558,7 @@ function GetUIRoot() {
                 State.zipBoostActiveEndMs = nowMs + 32000;
             }
 
-            var abilityNamePanel = State.cachedPanels.zipBoostAbilityName;
+            var abilityNamePanel = GetCachedPanel("zipBoostAbilityName");
             if (!IsPanelValid(abilityNamePanel) && source.FindChildrenWithClassTraverse) {
                 var abilityNames = source.FindChildrenWithClassTraverse("AbilityName") || [];
                 abilityNamePanel = abilityNames.length > 0 ? abilityNames[0] : null;
@@ -22567,7 +22567,7 @@ function GetUIRoot() {
             var abilityName = (abilityNamePanel && typeof abilityNamePanel.text === "string") ? abilityNamePanel.text : "";
             if (abilityName && abilityName.length > 0) title = abilityName;
 
-            var countdownPanel = State.cachedPanels.zipBoostCountdown;
+            var countdownPanel = GetCachedPanel("zipBoostCountdown");
             if (!IsPanelValid(countdownPanel) && source.FindChildrenWithClassTraverse) {
                 var countdowns = source.FindChildrenWithClassTraverse("Countdown") || [];
                 countdownPanel = countdowns.length > 0 ? countdowns[0] : null;
@@ -22606,8 +22606,8 @@ function GetUIRoot() {
             State.zipBoostLastClassSig = classSig;
         }
 
-        var label = State.cachedPanels.zipBoostLabel;
-        var state = State.cachedPanels.zipBoostState;
+        var label = GetCachedPanel("zipBoostLabel");
+        var state = GetCachedPanel("zipBoostState");
         if (label && title !== State.zipBoostLastTitle) {
             label.text = title;
             State.zipBoostLastTitle = title;
@@ -22794,7 +22794,7 @@ function GetUIRoot() {
     }
 
     function ResolveStatBonusesTooltipBreakdownPanel(root) {
-        var cached = State.cachedPanels.statBonusesTooltipBreakdown;
+        var cached = GetCachedPanel("statBonusesTooltipBreakdown");
         if (IsPanelValid(cached)) return cached;
 
         if (!root) return null;
@@ -23093,7 +23093,7 @@ function GetUIRoot() {
     }
 
     function EnsureStatBonusesOverlay(root) {
-        var overlay = State.cachedPanels.statBonusesOverlay;
+        var overlay = GetCachedPanel("statBonusesOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -23140,7 +23140,7 @@ function GetUIRoot() {
     }
 
     function RemoveStatBonusesOverlay(root) {
-        var overlay = State.cachedPanels.statBonusesOverlay;
+        var overlay = GetCachedPanel("statBonusesOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLStatBonusesOverlay");
         }
@@ -23210,12 +23210,12 @@ function GetUIRoot() {
         if (hideout) {
             if (State.statBonuses.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
-                var fireRateHideout = State.cachedPanels.statBonusesFireRate;
-                var abilityHideout = State.cachedPanels.statBonusesAbilityCooldown;
-                var spiritHideout = State.cachedPanels.statBonusesSpiritPower;
-                var clipHideout = State.cachedPanels.statBonusesClipSize;
-                var weaponHideout = State.cachedPanels.statBonusesWeaponDamage;
-                var healthHideout = State.cachedPanels.statBonusesMaxHealth;
+                var fireRateHideout = GetCachedPanel("statBonusesFireRate");
+                var abilityHideout = GetCachedPanel("statBonusesAbilityCooldown");
+                var spiritHideout = GetCachedPanel("statBonusesSpiritPower");
+                var clipHideout = GetCachedPanel("statBonusesClipSize");
+                var weaponHideout = GetCachedPanel("statBonusesWeaponDamage");
+                var healthHideout = GetCachedPanel("statBonusesMaxHealth");
                 if (fireRateHideout) fireRateHideout.SetHasClass("is_zero", false);
                 if (abilityHideout) abilityHideout.SetHasClass("is_zero", false);
                 if (spiritHideout) spiritHideout.SetHasClass("is_zero", false);
@@ -23373,7 +23373,7 @@ function GetUIRoot() {
         var maxHealthZero = IsStatBonusTokenZero(maxHealthValue) || !!(sourceMaxHealth && sourceMaxHealth.BHasClass && sourceMaxHealth.BHasClass(CLASS_IS_ZERO_VALUE));
 
         var titleText = "Stat Bonuses (Golden Statues)";
-        var titleLabel = State.cachedPanels.statBonusesTitle;
+        var titleLabel = GetCachedPanel("statBonusesTitle");
         if (titleLabel && titleText !== State.statBonuses.lastTitleText) {
             titleLabel.text = titleText;
             State.statBonuses.lastTitleText = titleText;
@@ -23393,12 +23393,12 @@ function GetUIRoot() {
             "|" + (weaponDamageZero ? "1" : "0") +
             "|" + (maxHealthZero ? "1" : "0");
         if (classSig !== State.statBonuses.lastClassSig) {
-            var fireRateLabelForClass = State.cachedPanels.statBonusesFireRate;
-            var abilityLabelForClass = State.cachedPanels.statBonusesAbilityCooldown;
-            var spiritLabelForClass = State.cachedPanels.statBonusesSpiritPower;
-            var clipLabelForClass = State.cachedPanels.statBonusesClipSize;
-            var weaponLabelForClass = State.cachedPanels.statBonusesWeaponDamage;
-            var healthLabelForClass = State.cachedPanels.statBonusesMaxHealth;
+            var fireRateLabelForClass = GetCachedPanel("statBonusesFireRate");
+            var abilityLabelForClass = GetCachedPanel("statBonusesAbilityCooldown");
+            var spiritLabelForClass = GetCachedPanel("statBonusesSpiritPower");
+            var clipLabelForClass = GetCachedPanel("statBonusesClipSize");
+            var weaponLabelForClass = GetCachedPanel("statBonusesWeaponDamage");
+            var healthLabelForClass = GetCachedPanel("statBonusesMaxHealth");
             if (fireRateLabelForClass) fireRateLabelForClass.SetHasClass("is_zero", fireRateZero);
             if (abilityLabelForClass) abilityLabelForClass.SetHasClass("is_zero", abilityCooldownZero);
             if (spiritLabelForClass) spiritLabelForClass.SetHasClass("is_zero", spiritPowerZero);
@@ -23408,32 +23408,32 @@ function GetUIRoot() {
             State.statBonuses.lastClassSig = classSig;
         }
 
-        var fireRateLabel = State.cachedPanels.statBonusesFireRate;
+        var fireRateLabel = GetCachedPanel("statBonusesFireRate");
         if (fireRateLabel && fireRateText !== State.statBonuses.lastFireRateText) {
             fireRateLabel.text = fireRateText;
             State.statBonuses.lastFireRateText = fireRateText;
         }
-        var abilityCooldownLabel = State.cachedPanels.statBonusesAbilityCooldown;
+        var abilityCooldownLabel = GetCachedPanel("statBonusesAbilityCooldown");
         if (abilityCooldownLabel && abilityCooldownText !== State.statBonuses.lastAbilityCooldownText) {
             abilityCooldownLabel.text = abilityCooldownText;
             State.statBonuses.lastAbilityCooldownText = abilityCooldownText;
         }
-        var spiritPowerLabel = State.cachedPanels.statBonusesSpiritPower;
+        var spiritPowerLabel = GetCachedPanel("statBonusesSpiritPower");
         if (spiritPowerLabel && spiritPowerText !== State.statBonuses.lastSpiritPowerText) {
             spiritPowerLabel.text = spiritPowerText;
             State.statBonuses.lastSpiritPowerText = spiritPowerText;
         }
-        var clipSizeLabel = State.cachedPanels.statBonusesClipSize;
+        var clipSizeLabel = GetCachedPanel("statBonusesClipSize");
         if (clipSizeLabel && clipSizeText !== State.statBonuses.lastClipSizeText) {
             clipSizeLabel.text = clipSizeText;
             State.statBonuses.lastClipSizeText = clipSizeText;
         }
-        var weaponDamageLabel = State.cachedPanels.statBonusesWeaponDamage;
+        var weaponDamageLabel = GetCachedPanel("statBonusesWeaponDamage");
         if (weaponDamageLabel && weaponDamageText !== State.statBonuses.lastWeaponDamageText) {
             weaponDamageLabel.text = weaponDamageText;
             State.statBonuses.lastWeaponDamageText = weaponDamageText;
         }
-        var maxHealthLabel = State.cachedPanels.statBonusesMaxHealth;
+        var maxHealthLabel = GetCachedPanel("statBonusesMaxHealth");
         if (maxHealthLabel && maxHealthText !== State.statBonuses.lastMaxHealthText) {
             maxHealthLabel.text = maxHealthText;
             State.statBonuses.lastMaxHealthText = maxHealthText;
@@ -24696,8 +24696,8 @@ function GetUIRoot() {
             panels.push(panel);
         }
 
-        pushPanel(State.cachedPanels.healthContainer);
-        pushPanel(State.cachedPanels.gameplayHud);
+        pushPanel(GetCachedPanel("healthContainer"));
+        pushPanel(GetCachedPanel("gameplayHud"));
         pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
         pushPanel(root.FindChildTraverse("HealthBarContent"));
         pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
@@ -24842,12 +24842,12 @@ function GetUIRoot() {
             timerText = recoverSec.toFixed(1) + "s";
         }
 
-        var stateLabel = State.cachedPanels.combatStatusState;
+        var stateLabel = GetCachedPanel("combatStatusState");
         if (stateLabel && stateText !== State.combatStatus.lastStateText) {
             stateLabel.text = stateText;
             State.combatStatus.lastStateText = stateText;
         }
-        var timerLabel = State.cachedPanels.combatStatusTimer;
+        var timerLabel = GetCachedPanel("combatStatusTimer");
         if (timerLabel && timerText !== State.combatStatus.lastTimerText) {
             timerLabel.text = timerText;
             State.combatStatus.lastTimerText = timerText;
@@ -25389,7 +25389,7 @@ function GetUIRoot() {
     }
 
     function RemoveItemMirrorOverlay(root) {
-        var overlay = State.cachedPanels.itemMirrorOverlay;
+        var overlay = GetCachedPanel("itemMirrorOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLItemMirrorRoot");
         }
@@ -25453,7 +25453,7 @@ function GetUIRoot() {
     }
 
     function EnsureItemMirrorOverlayMulti(root) {
-        var overlay = State.cachedPanels.itemMirrorOverlay;
+        var overlay = GetCachedPanel("itemMirrorOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLItemMirrorRoot");
             if (!overlay) {
@@ -25477,7 +25477,7 @@ function GetUIRoot() {
         overlay.style.uiScale = "100%";
         overlay.style.visibility = "collapse";
 
-        var row = State.cachedPanels.itemMirrorRow;
+        var row = GetCachedPanel("itemMirrorRow");
         if (!IsPanelValid(row)) {
             row = overlay.FindChildTraverse("QOLItemMirrorRow");
             if (!row) {
@@ -25506,7 +25506,7 @@ function GetUIRoot() {
     }
 
     function EnsureItemMirrorSlotMulti(slotIndex) {
-        var row = State.cachedPanels.itemMirrorRow;
+        var row = GetCachedPanel("itemMirrorRow");
         if (!IsPanelValid(row)) return null;
         if (!State.cachedPanels.itemMirrorSlots) SetCachedPanel("itemMirrorSlots", []);
 
@@ -26553,7 +26553,7 @@ function GetUIRoot() {
         State.itemMirror.probeWasEnabled = true;
         State.itemMirror.displayMode = "active";
         var sources = State.itemMirror.sources || [];
-        var abilitiesContainer = State.cachedPanels.abilitiesContainer;
+        var abilitiesContainer = GetCachedPanel("abilitiesContainer");
         if (!IsPanelValid(abilitiesContainer)) {
             abilitiesContainer = root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER);
             SetCachedPanel("abilitiesContainer", abilitiesContainer);
@@ -26564,7 +26564,7 @@ function GetUIRoot() {
 
         if (passiveInShop) {
             EnsureItemMirrorOverlayMulti(root);
-            var hiddenOverlay = State.cachedPanels.itemMirrorOverlay;
+            var hiddenOverlay = GetCachedPanel("itemMirrorOverlay");
             if (hiddenOverlay && hiddenOverlay.style.visibility !== "collapse") {
                 hiddenOverlay.style.visibility = "collapse";
             }
@@ -26613,7 +26613,7 @@ function GetUIRoot() {
         }
 
         EnsureItemMirrorOverlayMulti(root);
-        var mirrorOverlay = State.cachedPanels.itemMirrorOverlay;
+        var mirrorOverlay = GetCachedPanel("itemMirrorOverlay");
         if (!mirrorOverlay) return;
 
         // Migrate mirror layout controls to legacy passive cooldown vars so existing configs still work.
@@ -26643,7 +26643,7 @@ function GetUIRoot() {
             mirrorOverlay.style.marginTop = (-offsetY) + "%";
             State.itemMirror.lastLayoutSig = layoutSig;
         }
-        var mirrorRow = State.cachedPanels.itemMirrorRow;
+        var mirrorRow = GetCachedPanel("itemMirrorRow");
         var rowOpacityText = rowOpacity.toFixed(2);
         State.itemMirror.visualOpacityText = rowOpacityText;
         if (mirrorRow && (State.itemMirror.lastRowOpacityPanel !== mirrorRow || State.itemMirror.lastRowOpacityText !== rowOpacityText)) {
@@ -26694,7 +26694,7 @@ function GetUIRoot() {
     }
 
     function EnsureCompassOverlay(root) {
-        var compassRoot = State.cachedPanels.compassRoot;
+        var compassRoot = GetCachedPanel("compassRoot");
         if (!IsPanelValid(compassRoot)) {
             compassRoot = root.FindChildTraverse("QOLCompassRoot");
             if (!compassRoot) {
@@ -26706,7 +26706,7 @@ function GetUIRoot() {
         }
         if (!compassRoot) return null;
 
-        var compassBox = State.cachedPanels.compassBox;
+        var compassBox = GetCachedPanel("compassBox");
         if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             if (!compassBox) {
@@ -26715,7 +26715,7 @@ function GetUIRoot() {
             SetCachedPanel("compassBox", compassBox);
         }
 
-        var ticksContainer = State.cachedPanels.compassTicksContainer;
+        var ticksContainer = GetCachedPanel("compassTicksContainer");
         if (!IsPanelValid(ticksContainer)) {
             ticksContainer = compassBox ? compassBox.FindChildTraverse("QOLCompassTicks") : null;
             if (!ticksContainer && compassBox) {
@@ -26724,7 +26724,7 @@ function GetUIRoot() {
             SetCachedPanel("compassTicksContainer", ticksContainer);
         }
 
-        var needle = State.cachedPanels.compassNeedle;
+        var needle = GetCachedPanel("compassNeedle");
         if (!IsPanelValid(needle)) {
             needle = compassBox ? compassBox.FindChildTraverse("QOLCompassNeedle") : null;
             if (!needle && compassBox) {
@@ -26733,7 +26733,7 @@ function GetUIRoot() {
             SetCachedPanel("compassNeedle", needle);
         }
 
-        var fadeLeft = State.cachedPanels.compassFadeLeft;
+        var fadeLeft = GetCachedPanel("compassFadeLeft");
         if (!IsPanelValid(fadeLeft)) {
             fadeLeft = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeLeft") : null;
             if (!fadeLeft && compassBox) {
@@ -26742,7 +26742,7 @@ function GetUIRoot() {
             SetCachedPanel("compassFadeLeft", fadeLeft);
         }
 
-        var fadeRight = State.cachedPanels.compassFadeRight;
+        var fadeRight = GetCachedPanel("compassFadeRight");
         if (!IsPanelValid(fadeRight)) {
             fadeRight = compassBox ? compassBox.FindChildTraverse("QOLCompassFadeRight") : null;
             if (!fadeRight && compassBox) {
@@ -26751,7 +26751,7 @@ function GetUIRoot() {
             SetCachedPanel("compassFadeRight", fadeRight);
         }
 
-        var readout = State.cachedPanels.compassReadout;
+        var readout = GetCachedPanel("compassReadout");
         if (!IsPanelValid(readout)) {
             readout = compassRoot.FindChildTraverse("QOLCompassReadout");
             if (!readout) {
@@ -26760,7 +26760,7 @@ function GetUIRoot() {
             SetCachedPanel("compassReadout", readout);
         }
 
-        var degree = State.cachedPanels.compassDegree;
+        var degree = GetCachedPanel("compassDegree");
         if (!IsPanelValid(degree)) {
             degree = compassRoot.FindChildTraverse("QOLCompassDegree");
             if (!degree && readout) {
@@ -26769,7 +26769,7 @@ function GetUIRoot() {
             SetCachedPanel("compassDegree", degree);
         }
 
-        var speed = State.cachedPanels.compassSpeed;
+        var speed = GetCachedPanel("compassSpeed");
         if (!IsPanelValid(speed)) {
             speed = compassRoot.FindChildTraverse("QOLCompassSpeed");
             if (!speed && readout) {
@@ -26966,7 +26966,7 @@ function GetUIRoot() {
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
         }
-        var cached = State.cachedPanels.minimapLocalMainImage;
+        var cached = GetCachedPanel("minimapLocalMainImage");
         if (IsPanelValid(cached)) {
             var parent = cached.GetParent ? cached.GetParent() : null;
             if (PanelHasAllClasses(parent, ["active", "player", "client_cone_fov", "enemy"]) ||
@@ -27012,7 +27012,7 @@ function GetUIRoot() {
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotPlayerPanel)) {
             return State.minimapHeadingSnapshotPlayerPanel;
         }
-        var cached = State.cachedPanels.minimapLocalPlayerPanel;
+        var cached = GetCachedPanel("minimapLocalPlayerPanel");
         if (IsPanelValid(cached)) {
             if (PanelHasAllClasses(cached, ["active", "player", "client_cone_fov", "enemy"]) ||
                 (cached.BHasClass && cached.BHasClass("player") && hasClassInHierarchy(cached, "localplayer"))) {
@@ -27064,7 +27064,7 @@ function GetUIRoot() {
     }
 
     function FindMinimapRotateTarget(root) {
-        var cached = State.cachedPanels.minimapRotateTarget;
+        var cached = GetCachedPanel("minimapRotateTarget");
         if (IsPanelValid(cached)) {
             return cached;
         }
@@ -27081,7 +27081,7 @@ function GetUIRoot() {
     }
 
     function FindMinimapFlipClassTarget(root) {
-        var cached = State.cachedPanels.minimapFlipClassTarget;
+        var cached = GetCachedPanel("minimapFlipClassTarget");
         if (IsPanelValid(cached)) {
             return cached;
         }
@@ -27250,7 +27250,7 @@ function GetUIRoot() {
     }
 
     function ResolveHudRootForMinimapDraw(root) {
-        var cached = State.cachedPanels.minimapDrawHudRoot;
+        var cached = GetCachedPanel("minimapDrawHudRoot");
         if (IsPanelValid(cached)) {
             return cached;
         }
@@ -27437,7 +27437,7 @@ function GetUIRoot() {
 
     function UpdateCompassOverlay(root, nowMsHint) {
         if (!IsCustomHudContextActive(root)) {
-            var existing = State.cachedPanels.compassRoot;
+            var existing = GetCachedPanel("compassRoot");
             if (!IsPanelValid(existing) && root && root.FindChildTraverse) {
                 existing = root.FindChildTraverse("QOLCompassRoot");
                 SetCachedPanel("compassRoot", existing);
@@ -27468,7 +27468,7 @@ function GetUIRoot() {
 
         if (compassRoot.style.visibility !== "visible") compassRoot.style.visibility = "visible";
         
-        var compassBox = State.cachedPanels.compassBox;
+        var compassBox = GetCachedPanel("compassBox");
         if (compassBox) {
             compassBox.style.visibility = showCompass ? "visible" : "collapse";
         }
@@ -27500,7 +27500,7 @@ function GetUIRoot() {
         var marginLeftText = Math.round(offsetX) + "px";
         var uniformScale = (scale / 100).toFixed(3);
         var scaleText = uniformScale + ", " + uniformScale;
-        var compassBox = State.cachedPanels.compassBox;
+        var compassBox = GetCachedPanel("compassBox");
         if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
             SetCachedPanel("compassBox", compassBox);
@@ -27528,7 +27528,7 @@ function GetUIRoot() {
                 compassBox.style.visibility = showCompass ? "visible" : "collapse";
             }
 
-            var readout = State.cachedPanels.compassReadout;
+            var readout = GetCachedPanel("compassReadout");
             if (readout) {
                 readout.style.width = "100%";
                 readout.style.height = "40px";
@@ -27538,12 +27538,12 @@ function GetUIRoot() {
             State.compass.layoutSig = layoutSig;
         }
 
-        var degreeLabel = State.cachedPanels.compassDegree;
+        var degreeLabel = GetCachedPanel("compassDegree");
         if (!IsPanelValid(degreeLabel)) {
             degreeLabel = compassRoot.FindChildTraverse("QOLCompassDegree");
             SetCachedPanel("compassDegree", degreeLabel);
         }
-        var speedLabel = State.cachedPanels.compassSpeed;
+        var speedLabel = GetCachedPanel("compassSpeed");
         if (!IsPanelValid(speedLabel)) {
             speedLabel = compassRoot.FindChildTraverse("QOLCompassSpeed");
             SetCachedPanel("compassSpeed", speedLabel);
@@ -28319,7 +28319,7 @@ function GetUIRoot() {
         // CSS class removal alone isn't sufficient — UpdateCompassOverlay
         // sets visibility:visible as an inline style which overrides CSS.
         if (!compassEnabled) {
-            var _compassRoot = State.cachedPanels.compassRoot;
+            var _compassRoot = GetCachedPanel("compassRoot");
             if (IsPanelValid(_compassRoot)) {
                 try { _compassRoot.style.visibility = "collapse"; } catch (_ce) {}
             }
@@ -28670,7 +28670,7 @@ function GetUIRoot() {
 
         if (!needsPassiveRuntime && !needsReminderRuntime) return;
 
-        var passiveHud = needsPassiveRuntime ? EnsurePassiveHudPanelCache(root) : State.cachedPanels.passiveHud;
+        var passiveHud = needsPassiveRuntime ? EnsurePassiveHudPanelCache(root) : GetCachedPanel("passiveHud");
         if (needsPassiveRuntime && passiveHud) {
             if (!basicModeActive) {
                 ResetPassiveCooldownRuntimeStyles(passiveHud);
