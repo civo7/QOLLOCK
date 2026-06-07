@@ -28644,27 +28644,10 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
-    // ── Diagnostic log buffer + dump function ──
-    // Captures QOLLock-prefixed console messages into a ring buffer
-    // and exposes a dump function for clipboard copy from the Dev tab.
+    // ── Diagnostic dump function ──
+    // Dumps loaded/missing/disabled features from State.
+    // Exposed for the "Copy Logs" button in the Dev tab (ql_settings.js).
     try {
-        var _qolDiagBuffer = [];
-        var _qolDiagMax = 500;
-        var _qolOriginalMsg = $.Msg;
-        $.Msg = function() {
-            try {
-                var msg = "";
-                for (var _di = 0; _di < arguments.length; _di++) {
-                    if (_di > 0) msg += " ";
-                    msg += String(arguments[_di]);
-                }
-                if (msg.indexOf("[QOLLock]") !== -1 || msg.indexOf("[QOL") !== -1) {
-                    _qolDiagBuffer.push(msg);
-                    if (_qolDiagBuffer.length > _qolDiagMax) _qolDiagBuffer.shift();
-                }
-            } catch(_e) {}
-            return _qolOriginalMsg.apply($, arguments);
-        };
         var QOL_DumpDiagnostics = function() {
             var lines = [];
             lines.push("=== QOLLOCK Diagnostics ===");
@@ -28700,13 +28683,11 @@ function GetUIRoot() {
             } else {
                 lines.push("  (none)");
             }
-            lines.push("");
-            lines.push("--- Recent QOL Console Logs (last " + _qolDiagBuffer.length + ") ---");
-            for (var _li = 0; _li < _qolDiagBuffer.length; _li++) {
-                lines.push(_qolDiagBuffer[_li]);
-            }
             return lines.join("\n");
         };
-        if (typeof window !== "undefined") window.QOL_DumpDiagnostics = QOL_DumpDiagnostics;
-    } catch(_e) {}
+    } catch(_e) {
+        $.Msg("[QOLLock] Diagnostic function setup failed: " + (_e && _e.message ? _e.message : String(_e)));
+    }
+    try { QOL_DumpDiagnostics = QOL_DumpDiagnostics; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_DumpDiagnostics = QOL_DumpDiagnostics; } catch(e) {}
 })();
