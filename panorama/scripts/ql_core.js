@@ -1406,7 +1406,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_CLEAR_DEBUG = false;
     const BUILD_CLEAR_DEBUG_THROTTLE_MS = 300;
-    const BUILD_SAVE_DEBUG = true;
+    const BUILD_SAVE_DEBUG = false;  // set true to enable build-save trace logging
     const BUILD_SAVE_DEBUG_THROTTLE_MS = 400;
     const ENEMY_ULT_OLD_DEBUG = false;
     const ENEMY_ULT_OLD_DEBUG_THROTTLE_MS = 500;
