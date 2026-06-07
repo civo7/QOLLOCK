@@ -1177,8 +1177,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
-    const STATLOCKER_SCAN_INTERVAL_MS = 1200;
-    const STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
     // WHY: soul snapshot TTL at 140ms — short enough to prevent stale reads when
     // souls change rapidly (buying items), long enough to avoid per-tick re-reads
     const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
@@ -28207,21 +28205,6 @@ function GetUIRoot() {
                     "onDeathArcadeRuntimeWasActive"]
     });
 
-    QOL_REGISTER_FEATURE("statlocker", {
-        configKeys: ["ENABLE_STATLOCKER"],
-        bucket: 2,
-        phase: 1,
-        gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
-        },
-        update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateStatlockerButtons(root, nowMs, cfg);
-        },
-        stateKeys: ["statlockerWasEnabled", "statlockerNextScanMs",
-                    "statlockerScanMisses", "statlockerCorePanels",
-                    "statlockerButtons"]
-    });
-
     // ── Batch C: features with significant State footprint ──
 
     QOL_REGISTER_FEATURE("spm", {
@@ -28567,6 +28550,12 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
     try { QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
+    try { QOL_IsPanelListValid = IsPanelListValid; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsPanelListValid = IsPanelListValid; } catch(e) {}
+    try { QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
+    try { QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
