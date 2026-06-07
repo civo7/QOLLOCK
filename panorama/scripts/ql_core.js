@@ -27600,28 +27600,38 @@ function GetUIRoot() {
             }
             if (playerPanel) {
                 State._compassSpeedDebugNoPanelLogged = false;
-                // Try mainImage first — it has transform data (heading already uses it).
-                // The playerPanel (client_cone_fov) may not expose position in newer game versions.
-                var positionSource = playerPanel;
-                var mainImage = GetCachedPanel("minimapLocalMainImage");
-                if (IsPanelValid(mainImage)) {
-                    positionSource = mainImage;
-                }
+                // Try playerPanel (client_cone_fov) — it's positioned by the engine via layout.
+                // The mainImage only has rotation, not position.
                 var positionText = "";
-                if (positionSource.style && typeof positionSource.style.position === "string") {
-                    positionText = positionSource.style.position;
+                if (playerPanel.style && typeof playerPanel.style.position === "string") {
+                    positionText = playerPanel.style.position;
                 }
-                if ((!positionText || positionText.length === 0) && positionSource.style && typeof positionSource.style.transform === "string") {
-                    positionText = positionSource.style.transform;
+                if ((!positionText || positionText.length === 0) && playerPanel.style && typeof playerPanel.style.transform === "string") {
+                    positionText = playerPanel.style.transform;
                 }
-                if ((!positionText || positionText.length === 0) && positionSource.GetAttributeString) {
-                    positionText = positionSource.GetAttributeString("style", "");
+                // Fallback: actualxoffset/actualyoffset give pixel position after layout
+                var pos = null;
+                if (positionText && positionText.length > 0) {
+                    pos = ParsePositionXYPercent(positionText);
                 }
-                var pos = ParsePositionXYPercent(positionText);
+                if (!pos && typeof playerPanel.actualxoffset === "number" && typeof playerPanel.actualyoffset === "number") {
+                    // Convert pixel offsets to percentages relative to minimap size
+                    var parentPanel = playerPanel.GetParent ? playerPanel.GetParent() : null;
+                    var parentW = IsPanelValid(parentPanel) && typeof parentPanel.actuallayoutwidth === "number" ? parentPanel.actuallayoutwidth : 0;
+                    var parentH = IsPanelValid(parentPanel) && typeof parentPanel.actuallayoutheight === "number" ? parentPanel.actuallayoutheight : 0;
+                    if (parentW > 0 && parentH > 0) {
+                        var xPct = (playerPanel.actualxoffset / parentW) * 100;
+                        var yPct = (playerPanel.actualyoffset / parentH) * 100;
+                        _posResultScratch.x = xPct;
+                        _posResultScratch.y = yPct;
+                        pos = _posResultScratch;
+                    }
+                }
                 if (!pos) {
                     if (!State._compassSpeedDebugNoPosLogged) {
-                        $.Msg("[QOLLock][compassSpeed] position parse failed — source=" + (positionSource === mainImage ? "mainImage" : "playerPanel") + " len=" + String(positionText).length + " text='" + String(positionText).substring(0, 200) + "'");
-                        $.Msg("[QOLLock][compassSpeed] source pos='" + String(positionSource.style && positionSource.style.position ? positionSource.style.position : "undefined") + "' transform='" + String(positionSource.style && positionSource.style.transform ? positionSource.style.transform : "undefined") + "'");
+                        $.Msg("[QOLLock][compassSpeed] position parse failed — playerPanel actualxoffset=" + playerPanel.actualxoffset + " actualyoffset=" + playerPanel.actualyoffset + " transform='" + String(playerPanel.style && playerPanel.style.transform ? playerPanel.style.transform : "undefined") + "'");
+                        var pp = playerPanel.GetParent ? playerPanel.GetParent() : null;
+                        $.Msg("[QOLLock][compassSpeed] parent w=" + (IsPanelValid(pp) ? pp.actuallayoutwidth : "n/a") + " h=" + (IsPanelValid(pp) ? pp.actuallayoutheight : "n/a"));
                         State._compassSpeedDebugNoPosLogged = true;
                     }
                 }
