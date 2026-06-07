@@ -24195,6 +24195,9 @@ function GetUIRoot() {
 
 
 
+    var COMBAT_INDICATOR_DEBUG = false;
+    var COMBAT_INDICATOR_DEBUG_THROTTLE_MS = 700;
+
     function LogCombatIndicatorDebugState(root, cfg, nowMs, combatSignal, recoveryActive, classActive) {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var rawEnabled = Number(cfg && cfg.ENABLE_COMBAT_INDICATOR);
