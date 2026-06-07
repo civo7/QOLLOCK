@@ -91,30 +91,6 @@
         return false;
     }
 
-    function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
-        if (!root || !root.FindChildTraverse) return;
-        var panels = [];
-        function pushPanel(panel) {
-            if (!IsPanelValid(panel)) return;
-            for (var i = 0; i < panels.length; i++) {
-                if (panels[i] === panel) return;
-            }
-            panels.push(panel);
-        }
-
-        pushPanel(GetCachedPanel("healthContainer"));
-        pushPanel(GetCachedPanel("gameplayHud"));
-        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-        pushPanel(root.FindChildTraverse("HealthBarContent"));
-        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
-        pushPanel(root.FindChildTraverse("hud_health_bars"));
-
-        for (var p = 0; p < panels.length; p++) {
-            SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
-            SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
-        }
-    }
-
     function EnsureCombatStatusOverlay(root) {
         var overlay = GetCachedPanel("combatStatusOverlay");
         if (overlay) return overlay;
@@ -261,7 +237,7 @@
     }
 
     // ── Registration ──
-    window.QOL_REGISTER_FEATURE("combatStatus", {
+    QOL_REGISTER_FEATURE("combatStatus", {
         configKeys: ["ENABLE_COMBAT_STATUS", "ENABLE_COMBAT_INDICATOR"],
         bucket: 7,
         phase: -1,
