@@ -3,16 +3,16 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: bottomBarRuntime\n");
-    var S = window.QOL_STATE;
-    var GC = window.QOL_GetCachedPanel;
-    var RC = window.QOL_ResolveCachedPanel;
-    var U = window.QOL_UTILS;
-    var SWC = window.QOL_SetWashColorSafe;
-    var RWP = window.QOL_ResolveWashColorFromPalette;
-    var RBW = window.QOL_ReadBottomBarWashColorIndex;
-    var GUIR = window.QOL_GetUIRoot;
-    var GGHP = window.QOL_GetGameplayHudPanel;
-    var IPV = window.QOL_UTILS.IsPanelValid;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var SWC = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : undefined;
+    var RWP = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : undefined;
+    var RBW = typeof QOL_ReadBottomBarWashColorIndex !== "undefined" ? QOL_ReadBottomBarWashColorIndex : undefined;
+    var GUIR = typeof QOL_GetUIRoot !== "undefined" ? QOL_GetUIRoot : undefined;
+    var GGHP = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : undefined;
+    var IPV = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS.IsPanelValid : null);
 
     var PID_SIGNATURE = "hud_signature";
     var PID_GOLD_AP = "gold_and_ap_container";
@@ -111,7 +111,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("bottomBarRuntime", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("bottomBarRuntime", {
         configKeys: ["HUD_BOTTOM_BAR_ENABLED", "BOTTOM_BAR_OPACITY", "BOTTOM_BAR_SCALE",
                      "BOTTOM_BAR_X_OFFSET", "BOTTOM_BAR_Y_OFFSET"],
         bucket: 3, phase: -1,

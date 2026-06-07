@@ -3,9 +3,9 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
-    var S = window.QOL_STATE;
-    var RC = window.QOL_ResolveCachedPanel;
-    var U = window.QOL_UTILS;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
 
     var PID = "gold_and_ap_container";
 
@@ -13,7 +13,7 @@
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(S.soulsRuntimeStyleSig && String(S.soulsRuntimeStyleSig).length > 0) ||
-            window.QOL_GetCachedPanel("soulsContainer");
+            (typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : null)("soulsContainer");
     }
 
     function hasNonDefaultConfig(cfg) {
@@ -48,7 +48,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("soulsRuntime", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("soulsRuntime", {
         configKeys: ["HUD_SOULS_ENABLED", "SOULS_OPACITY", "SOULS_X_OFFSET", "SOULS_Y_OFFSET"],
         bucket: 3, phase: -1,
         gate: gate,

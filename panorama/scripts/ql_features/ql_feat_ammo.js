@@ -3,12 +3,12 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
-    var S = window.QOL_STATE;
-    var GC = window.QOL_GetCachedPanel;
-    var SC = window.QOL_SetCachedPanel;
-    var U = window.QOL_UTILS;
-    var RWP = window.QOL_ResolveWashColorFromPalette;
-    var RAI = window.QOL_ReadAmmoTextColorIndex;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var RWP = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : undefined;
+    var RAI = typeof QOL_ReadAmmoTextColorIndex !== "undefined" ? QOL_ReadAmmoTextColorIndex : undefined;
 
     // ── Gate ──
     function gate(cfg) {
@@ -119,7 +119,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("ammo", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("ammo", {
         configKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL",
                      "AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE",
                      "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET"],

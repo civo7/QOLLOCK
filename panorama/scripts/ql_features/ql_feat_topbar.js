@@ -3,12 +3,12 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: topBarRuntime\n");
-    var S = window.QOL_STATE;
-    var RC = window.QOL_ResolveCachedPanel;
-    var GC = window.QOL_GetCachedPanel;
-    var SC = window.QOL_SetCachedPanel;
-    var U = window.QOL_UTILS;
-    var IH = window.QOL_IsHudVisibleForTopBarRuntime;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var IH = typeof QOL_IsHudVisibleForTopBarRuntime !== "undefined" ? QOL_IsHudVisibleForTopBarRuntime : undefined;
 
     var PID_TOP_BAR = "TopBar";
     var PID_HUD = "CitadelHud";
@@ -58,7 +58,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("topBarRuntime", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("topBarRuntime", {
         configKeys: ["HUD_TOP_BAR_ENABLED", "TOP_BAR_OPACITY", "TOP_BAR_SCALE",
                      "TOP_BAR_X_OFFSET", "TOP_BAR_Y_OFFSET"],
         bucket: 4, phase: -1,

@@ -3,14 +3,14 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: staminaChargeColorRuntime\n");
-    var S = window.QOL_STATE;
-    var GC = window.QOL_GetCachedPanel;
-    var RC = window.QOL_ResolveCachedPanel;
-    var U = window.QOL_UTILS;
-    var RWP = window.QOL_ResolveWashColorFromPalette;
-    var RSC = window.QOL_ReadStaminaChargeColorIndex;
-    var NSA = window.QOL_NormalizeStaminaChargeAngle;
-    var IPV = window.QOL_UTILS.IsPanelValid;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
+    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var RWP = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : undefined;
+    var RSC = typeof QOL_ReadStaminaChargeColorIndex !== "undefined" ? QOL_ReadStaminaChargeColorIndex : undefined;
+    var NSA = typeof QOL_NormalizeStaminaChargeAngle !== "undefined" ? QOL_NormalizeStaminaChargeAngle : undefined;
+    var IPV = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS.IsPanelValid : null);
 
     // ── Gate ──
     function gate(cfg) {
@@ -101,7 +101,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("staminaChargeColorRuntime", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("staminaChargeColorRuntime", {
         configKeys: ["STAMINA_CHARGE_ANGLE", "STAMINA_CHARGE_COLOR"],
         bucket: 7, phase: -1,
         gate: gate,

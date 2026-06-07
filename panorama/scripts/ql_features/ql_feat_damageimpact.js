@@ -3,16 +3,16 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: damageImpactRuntime\n");
-    var S = window.QOL_STATE;
-    var RC = window.QOL_ResolveCachedPanel;
-    var U = window.QOL_UTILS;
-    var NDS = window.QOL_NormalizeDamageImpactScaleNumber;
+    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
+    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
+    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var NDS = typeof QOL_NormalizeDamageImpactScaleNumber !== "undefined" ? QOL_NormalizeDamageImpactScaleNumber : undefined;
 
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(S.damageImpactRuntimeStyleSig && String(S.damageImpactRuntimeStyleSig).length > 0) ||
-            window.QOL_GetCachedPanel("damageImpactPanel");
+            (typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : null)("damageImpactPanel");
     }
 
     function hasNonDefaultConfig(cfg) {
@@ -50,7 +50,7 @@
     }
 
     // ── Register ──
-    window.QOL_REGISTER_FEATURE("damageImpactRuntime", {
+    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("damageImpactRuntime", {
         configKeys: ["ENABLE_DAMAGE_IMPACT", "DAMAGE_IMPACT_SCALE", "DAMAGE_IMPACT_OPACITY",
                      "DAMAGE_IMPACT_X_OFFSET", "DAMAGE_IMPACT_Y_OFFSET"],
         bucket: 7, phase: -1,
