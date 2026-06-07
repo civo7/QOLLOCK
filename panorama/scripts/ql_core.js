@@ -30607,4 +30607,49 @@ function GetUIRoot() {
                     "cachedPanels.abilitiesContainer"]
     });
 
+    // =========================================================================
+    // §18 Global bridge — exported for per-feature files in ql_features/
+    // =========================================================================
+    // Features extracted to separate files lose IIFE closure access to State,
+    // cache helpers, and perf tools. This bridge publishes them on window so
+    // feature files can use the same APIs without being inline in ql_core.js.
+    //
+    // Load order: ql_utils.js → ql_shared_presets.js → ql_core.js → ql_features/*.js
+    //
+    // Feature files should use:
+    //   QOL_STATE.*                  (was: State.*)
+    //   QOL_GetCachedPanel(id)       (was: GetCachedPanel(id))
+    //   QOL_SetCachedPanel(id, p)    (was: SetCachedPanel(id, p))
+    //   QOL_ClearPanelCache()        (was: ClearPanelCache())
+    //   QOL_ResolveCachedPanel(...)  (was: ResolveCachedPanel(...))
+    //   QOL_PerfStart()              (was: PerfStart())
+    //   QOL_PerfEnd(name, startMs)   (was: PerfEnd(name, startMs))
+    //   QOL_ExecuteFeature(name, fn) (was: ExecuteFeature(name, fn))
+    //
+    // QOL_UTILS exports (already global): IsPanelValid, IsCfgEnabled,
+    //   SafeGetAttribute, SafeSetAttribute, PushUnique, PerfNowMs,
+    //   DebugLog/InfoLog/WarnLog/ErrorLog, SetStyleSafe/ClearStyleSafe,
+    //   SetPanelOpacitySafe, SetPanelVisibility, NormalizeOpacityNumber,
+    //   NormalizeHudOffsetNumber, FormatHudPx, NormalizeHudScaleNumber,
+    //   NormalizeDegrees360/180, ShortestDegreesDelta
+    // =========================================================================
+    if (typeof window !== "undefined") {
+        // State object — all ~600 feature-owned fields
+        window.QOL_STATE = State;
+
+        // Panel cache helpers — use State.cachedPanels with IsPanelValid guards
+        window.QOL_GetCachedPanel = GetCachedPanel;
+        window.QOL_SetCachedPanel = SetCachedPanel;
+        window.QOL_ClearPanelCache = ClearPanelCache;
+        window.QOL_SweepStalePanelCache = SweepStalePanelCache;
+        window.QOL_ResolveCachedPanel = ResolveCachedPanel;
+
+        // Performance timing — ties into the core loop's perf tracking
+        window.QOL_PerfStart = PerfStart;
+        window.QOL_PerfEnd = PerfEnd;
+
+        // Feature dispatch wrapper with error isolation
+        window.QOL_ExecuteFeature = ExecuteFeature;
+    }
+
 })();
