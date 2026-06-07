@@ -20229,57 +20229,6 @@ function GetUIRoot() {
         State.staminaChargeColorStyleSig = styleSig;
     }
 
-    function UpdateItemsRuntime(root, cfg) {
-        var active = HasNonDefaultItemsRuntimeConfig(cfg);
-        var enabled = IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
-        var modsContainer = GetCachedPanel("itemsModsContainer");
-        if (!modsContainer) {
-            var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer")
-            if (statsAndMods && statsAndMods.FindChildrenWithClassTraverse) {
-                var modsContainers = statsAndMods.FindChildrenWithClassTraverse("ModsContainer") || [];
-                for (var iMods = 0; iMods < modsContainers.length; iMods++) {
-                    if (IsPanelValid(modsContainers[iMods])) {
-                        modsContainer = modsContainers[iMods];
-                        break;
-                    }
-                }
-            }
-            SetCachedPanel("itemsModsContainer", modsContainer);
-        }
-        if (!modsContainer) return;
-
-        var offsetX = active ? NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) : 0;
-        var offsetY = active ? NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) : 0;
-        var opacityText = active ? NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0).toFixed(2) : "1.00";
-        var washColor = active ? ResolveWashColorFromPalette(cfg.ITEMS_WASH_COLOR) : "";
-        var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + washColor + "|" + (enabled ? "1" : "0");
-        if (State.itemsRuntimeStyleSig === styleSig) return;
-
-        modsContainer.style.x = String(offsetX) + "px";
-        modsContainer.style.y = String(-offsetY) + "px";
-        modsContainer.style.visibility = enabled ? "visible" : "collapse";
-        SetWashColorSafe(modsContainer, washColor);
-        // Opacity on structural item wrappers creates clipped composition layers.
-        // Keep layout wrappers default and fade only leaf visuals.
-        ClearStyleSafe(modsContainer, "opacity");
-        var barGraphContainer = modsContainer.FindChildTraverse ? modsContainer.FindChildTraverse("BarGraphContainer") : null;
-        if (IsPanelValid(barGraphContainer)) {
-            if (opacityText === "1.00") ClearStyleSafe(barGraphContainer, "opacity");
-            else SetPanelOpacitySafe(barGraphContainer, opacityText, 1.0);
-        }
-        var modSections = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("ModSection") || []) : [];
-        for (var sectionIndex = 0; sectionIndex < modSections.length; sectionIndex++) {
-            if (IsPanelValid(modSections[sectionIndex])) ClearStyleSafe(modSections[sectionIndex], "opacity");
-        }
-        var modIconContainers = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("mod_icon_single_container") || []) : [];
-        for (var iconIndex = 0; iconIndex < modIconContainers.length; iconIndex++) {
-            if (!IsPanelValid(modIconContainers[iconIndex])) continue;
-            if (opacityText === "1.00") ClearStyleSafe(modIconContainers[iconIndex], "opacity");
-            else SetPanelOpacitySafe(modIconContainers[iconIndex], opacityText, 1.0);
-        }
-        State.itemsRuntimeStyleSig = styleSig;
-    }
-
     function UpdateSoulsRuntime(root, cfg) {
         var active = HasNonDefaultSoulsRuntimeConfig(cfg);
         var enabled = IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
@@ -30267,16 +30216,6 @@ function GetUIRoot() {
         gate: function(cfg) { return NeedsAmmoRuntimeWork(cfg); },
         update: function(root, cfg) { UpdateAmmoPanelRuntime(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
-    });
-
-    QOL_REGISTER_FEATURE("itemsRuntime", {
-        configKeys: ["HUD_ITEMS_ENABLED", "ITEMS_OPACITY", "ITEMS_X_OFFSET",
-                     "ITEMS_Y_OFFSET", "ITEMS_WASH_COLOR"],
-        bucket: 3, phase: -1,
-        gate: function(cfg) { return NeedsItemsRuntimeWork(cfg); },
-        update: function(root, cfg) { UpdateItemsRuntime(root, cfg); },
-        stateKeys: ["itemsRuntimeStyleSig", "cachedPanels.itemsModsContainer",
-                    "cachedPanels.statsAndModsContainer"]
     });
 
     QOL_REGISTER_FEATURE("soulsRuntime", {
