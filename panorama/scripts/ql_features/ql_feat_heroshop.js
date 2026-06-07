@@ -29,6 +29,7 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_SetPanelClassCached === "undefined") _m.push("QOL_SetPanelClassCached");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -156,10 +157,22 @@
                    NormalizeHudScaleNumber(cfg.SHOP_SCALE, 1.0) !== 1.0;
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateHeroShopRuntime(root, cfg, nowMs);
+                        try {
+                UpdateHeroShopRuntime(root, cfg, nowMs);
+            } catch(e) {
+                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
         },
         stateKeys: ["heroShopNextSearchMs", "heroShopClassCache",
                     "heroShopMainPanelStyleSig"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateHeroShopRuntime !== "function") throw new Error("UpdateHeroShopRuntime is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();

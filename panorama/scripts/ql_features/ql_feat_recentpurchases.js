@@ -32,6 +32,9 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_SetPanelClassCached === "undefined") _m.push("QOL_SetPanelClassCached");
+        if (typeof QOL_WARN === "undefined") _m.push("QOL_WARN");
+        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -817,5 +820,12 @@
                     "recentPurchaseFiltersCreated", "recentPurchaseLastVisibilitySig",
                     "recentPurchaseLastFilterSig", "recentPurchaseQuickActiveEntries"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateRecentPurchases !== "function") throw new Error("UpdateRecentPurchases is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();

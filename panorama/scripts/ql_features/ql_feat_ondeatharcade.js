@@ -25,6 +25,8 @@
         var _m = [];
         if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
+        if (typeof QOL_PANEL_ID_HUD === "undefined") _m.push("QOL_PANEL_ID_HUD");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -203,11 +205,23 @@
                    IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM");
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateOnDeathArcadeBridge(root, cfg, nowMs);
+                        try {
+                UpdateOnDeathArcadeBridge(root, cfg, nowMs);
+            } catch(e) {
+                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
         },
         stateKeys: ["onDeathArcadeWasDead", "onDeathArcadeLastTriggerMs",
                     "onDeathArcadeRespawnPanel", "onDeathArcadeRequestSerial",
                     "onDeathArcadeRuntimeWasActive"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateOnDeathArcadeBridge !== "function") throw new Error("UpdateOnDeathArcadeBridge is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();

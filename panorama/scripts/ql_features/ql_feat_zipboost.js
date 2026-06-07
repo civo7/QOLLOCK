@@ -27,6 +27,11 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_FindNumericLabelTextInTree === "undefined") _m.push("QOL_FindNumericLabelTextInTree");
+        if (typeof QOL_FindZipBoostSource === "undefined") _m.push("QOL_FindZipBoostSource");
+        if (typeof QOL_GetGameplayHudPanel === "undefined") _m.push("QOL_GetGameplayHudPanel");
+        if (typeof QOL_IsCustomHudContextActive === "undefined") _m.push("QOL_IsCustomHudContextActive");
+        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -248,11 +253,23 @@
             return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST") || !!(S.zipBoostDisplayMode && S.zipBoostDisplayMode !== "");
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+                        try {
+                UpdateZipBoostOverlay(root, cfg, hideoutConnected);
+            } catch(e) {
+                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
         },
         stateKeys: ["zipBoostLastState", "zipBoostReadyFlashUntilMs", "zipBoostDisplayMode",
                     "zipBoostLastLayoutSig", "zipBoostLastClassSig", "zipBoostLastTitle",
                     "zipBoostLastStatus", "zipBoostNextSourceSearchMs", "zipBoostActiveEndMs"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateZipBoostOverlay !== "function") throw new Error("UpdateZipBoostOverlay is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();

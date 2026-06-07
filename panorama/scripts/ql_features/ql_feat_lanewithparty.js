@@ -31,6 +31,10 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_ActivatePanelSafe === "undefined") _m.push("QOL_ActivatePanelSafe");
+        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
+        if (typeof QOL_ReadPanelIdTextMaybe === "undefined") _m.push("QOL_ReadPanelIdTextMaybe");
+        if (typeof QOL_ReadPanelTextDeepMaybe === "undefined") _m.push("QOL_ReadPanelTextDeepMaybe");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -161,10 +165,22 @@
             return IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY");
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateLanePreferenceWithParty(root, cfg, nowMs);
+                        try {
+                UpdateLanePreferenceWithParty(root, cfg, nowMs);
+            } catch(e) {
+                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
         },
         stateKeys: ["laneWithPartyNextApplyMs", "laneWithPartyLastApplyMs",
                     "laneWithPartyLastState"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateLanePreferenceWithParty !== "function") throw new Error("UpdateLanePreferenceWithParty is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();

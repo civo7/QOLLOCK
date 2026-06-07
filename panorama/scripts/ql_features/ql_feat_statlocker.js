@@ -28,6 +28,10 @@
         if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
         if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
         if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
+        if (typeof QOL_GetAccountIdForBuildCategoryPayload === "undefined") _m.push("QOL_GetAccountIdForBuildCategoryPayload");
+        if (typeof QOL_GetUIRoot === "undefined") _m.push("QOL_GetUIRoot");
+        if (typeof QOL_IsPanelListValid === "undefined") _m.push("QOL_IsPanelListValid");
+        if (typeof QOL_IsStartupLoaderInActiveMatchContext === "undefined") _m.push("QOL_IsStartupLoaderInActiveMatchContext");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
         }
@@ -336,11 +340,23 @@
             return IsCfgEnabled(cfg, "ENABLE_STATLOCKER");
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
-            UpdateStatlockerButtons(root, nowMs, cfg);
+                        try {
+                UpdateStatlockerButtons(root, nowMs, cfg);
+            } catch(e) {
+                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                throw e;
+            }
         },
         stateKeys: ["statlockerWasEnabled", "statlockerNextScanMs",
                     "statlockerScanMisses", "statlockerCorePanels",
                     "statlockerButtons"]
     });
+
+    // Self-test: verify update function exists at load time
+    try {
+        if (typeof UpdateStatlockerButtons !== "function") throw new Error("UpdateStatlockerButtons is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 
 })();
