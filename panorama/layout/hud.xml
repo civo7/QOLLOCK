@@ -37,6 +37,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_statlocker.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_ondeatharcade.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_heroshop.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_recentpurchases.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
