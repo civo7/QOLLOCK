@@ -28687,4 +28687,5 @@ function GetUIRoot() {
         };
     try { QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_DumpDiagnostics = _qolDiag; } catch(e) {}
+    $.Msg("[QOLLock] Diagnostic export done — bare=" + (typeof QOL_DumpDiagnostics) + " window=" + (typeof (typeof window !== "undefined" ? window.QOL_DumpDiagnostics : "no-window")));
 })();
