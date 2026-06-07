@@ -8,6 +8,7 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
+    var PANEL_ID_SIGNATURE = typeof QOL_PANEL_ID_SIGNATURE !== "undefined" ? QOL_PANEL_ID_SIGNATURE : "hud_signature";
 
     // One-shot dependency validation
     if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
