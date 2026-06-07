@@ -1,7 +1,23 @@
 /* ==========================================================================
    QOLLOCK Design Tokens — single source of truth for color/size/animation values
    Include this first in any QOLLOCK CSS file: @include "qollock_defines.css";
+   
+   Token inventory (24 base + 9 added = 33 tokens):
+     HEALTHBAR:  Ally, Enemy, Shield, Bulwark, Low, Mid, Critical,
+                 ShieldGreen, LowBright, FrameDark, FillCream, BgDark, Height
+     MINIMAP:    AllyIcon, EnemyIcon, NeutralIcon, Background, Size
+     COMPASS:    Needle, Tick, Text, Size
+     ACCENT:     Primary, Danger, Success
+     TRANSITION: Fast, Normal, Slow
+     COLOR:      White, Transparent, OpaqueWhite, GrayMedium
+     LAYOUT:     TopbarHeight
    ========================================================================== */
+
+/* ---- Universal Colors ---- */
+@define QOL_COLOR_WHITE: #FFFFFF;
+@define QOL_COLOR_TRANSPARENT: #00000000;
+@define QOL_COLOR_OPAQUE_WHITE: #FFFFFFFF;
+@define QOL_COLOR_GRAY_MEDIUM: #AAAAAA;
 
 /* ---- Health Bar Colors ---- */
 @define QOL_HEALTHBAR_ALLY: #33CC33;
@@ -11,6 +27,16 @@
 @define QOL_HEALTHBAR_LOW: #FF3333;
 @define QOL_HEALTHBAR_MID: #FFAA33;
 @define QOL_HEALTHBAR_CRITICAL: #FF0000;
+
+/* ---- Health Bar Theme Colors (shared across hud_health + hud_health_container) ---- */
+@define QOL_HEALTHBAR_SHIELD_GREEN: #4BDC68;
+@define QOL_HEALTHBAR_LOW_BRIGHT: #FF5656;
+@define QOL_HEALTHBAR_FRAME_DARK: #142304;
+@define QOL_HEALTHBAR_FILL_CREAM: #FEEED5;
+@define QOL_HEALTHBAR_BG_DARK: #2D402A;
+
+/* ---- Health Bar Sizing ---- */
+@define QOL_HEALTHBAR_HEIGHT: 75px;
 
 /* ---- Minimap Colors ---- */
 @define QOL_MINIMAP_ALLY_ICON: #33FF33;
