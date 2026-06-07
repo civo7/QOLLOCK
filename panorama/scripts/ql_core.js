@@ -27610,7 +27610,8 @@ function GetUIRoot() {
                 var pos = ParsePositionXYPercent(positionText);
                 if (!pos) {
                     if (!State._compassSpeedDebugNoPosLogged) {
-                        $.Msg("[QOLLock][compassSpeed] position parse failed — positionText='" + String(positionText).substring(0, 80) + "'");
+                        $.Msg("[QOLLock][compassSpeed] position parse failed — len=" + String(positionText).length + " text='" + String(positionText).substring(0, 200) + "'");
+                        $.Msg("[QOLLock][compassSpeed] style.position='" + String(playerPanel.style && playerPanel.style.position ? playerPanel.style.position : "undefined") + "'");
                         State._compassSpeedDebugNoPosLogged = true;
                     }
                 }
