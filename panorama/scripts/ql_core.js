@@ -850,6 +850,22 @@
     const CORE_PHASE_UNSECURED       = 3;
     const CORE_PHASE_STAT_BONUSES    = 4;
 
+    // ── Constants index by feature ─────────────────────────────────────────
+    // Compass:    COMPASS_INTERVAL_SEC, COMPASS_SPEED_SCALE/QUANT/SAMPLE_MS,
+    //             COMPASS_TICK_COUNT, COMPASS_STRETCH_*
+    // Unsecured:  UNSECURED_SOULS_RATE_EMA_ALPHA, UNSECURED_SOULS_ETA_*
+    // Zip boost:  ZIP_BOOST_READY_FLASH_MS
+    // Rejuv:      BUFF_LOCKOUT_SEC, BUFF_PHASE_*, REJUV_*
+    // MC health:  MC_* (all MC_ prefixed constants)
+    // SPM:        SPM_SAMPLE_INTERVAL_MS, SPM_MAX_PLAYERS
+    // Unspent:    UNSPENT_MAX_PLAYERS, UNSPENT_SAMPLE_MS
+    // Item mirror:ITEM_MIRROR_*
+    // Enemy hp:   ENEMY_COLORED_HEALTH_*
+    // Urn:        URN_TRACKER_*
+    // DL4D:       DL4D_* (all DL4D_ prefixed constants)
+    // Perf:       PERF_DEBUG_*, LOOP_INTERVAL_SEC, LOOP_IDLE_MULTIPLIER, etc.
+    // ────────────────────────────────────────────────────────────────────────
+
     // ==========================================================================
     // INTRA-TICK FEATURE STAGGERING
     // ==========================================================================
