@@ -26002,29 +26002,29 @@ function GetUIRoot() {
         var sig = ResolveDamageNumbersRuntimeSig(cfg);
         var defaultSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
         if (sig !== defaultSig) return true;
-        if (S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
-        if (S.accountPresetTestActive) return true;
-        if (raw !== S.lastRawConfig && S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
+        if (State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
+        if (State.accountPresetTestActive) return true;
+        if (raw !== State.lastRawConfig && State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
         return false;
     }
 
     function NeedsMinimapRuntimeWork(cfg, raw) {
         if (!cfg) return false;
         var sig = BuildMinimapRuntimeSignature(cfg);
-        S._cachedMinimapRuntimeSig = sig;
-        if (raw !== S.lastRawConfig || sig !== S.minimapRuntimeSig || S.accountPresetTestActive || S.lastZoomState === null) return true;
-        if (S.minimapRuntimeSig && !IsPanelListValid(S.cachedPanels.minimap)) return true;
-        if (S.minimapDrawOverUiActive) return true;
-        if (S.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
-        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && S.minimapCastRangeScaleApplied) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !GC("minimapCrateOverlayRoot")) return true;
+        State._cachedMinimapRuntimeSig = sig;
+        if (raw !== State.lastRawConfig || sig !== State.minimapRuntimeSig || State.accountPresetTestActive || State.lastZoomState === null) return true;
+        if (State.minimapRuntimeSig && !IsPanelListValid(State.cachedPanels.minimap)) return true;
+        if (State.minimapDrawOverUiActive) return true;
+        if (State.minimapMinimalistOpacityApplied && Number(cfg.MINIMAL_MINIMAP) !== 1) return true;
+        if (Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || MINIMAP_CAST_RANGE_BASE_SIZE) === MINIMAP_CAST_RANGE_BASE_SIZE && State.minimapCastRangeScaleApplied) return true;
+        if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_CRATE_OVERLAY") && ResolveMinimapCrateOverlayMapKey() === "dl_midtown" && !GetCachedPanel("minimapCrateOverlayRoot")) return true;
         if (
             (
                 IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS") ||
                 IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM_REM_TUNNELS") ||
                 IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM_REM_TUNNELS")
             ) &&
-            !GC("minimapTunnelOverlayRoot")
+            !GetCachedPanel("minimapTunnelOverlayRoot")
         ) return true;
         if (IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM") || IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM")) return true;
         return false;
@@ -26033,10 +26033,10 @@ function GetUIRoot() {
     function CombatIndicatorDebugLogThrottled(sig, msg, nowMs) {
         if (!COMBAT_INDICATOR_DEBUG) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === S.combatIndicatorDebugLastSig;
-        if (sameSig && now < (S.combatIndicatorDebugNextMs || 0)) return;
-        S.combatIndicatorDebugLastSig = sig || "";
-        S.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
+        var sameSig = sig && sig === State.combatIndicatorDebugLastSig;
+        if (sameSig && now < (State.combatIndicatorDebugNextMs || 0)) return;
+        State.combatIndicatorDebugLastSig = sig || "";
+        State.combatIndicatorDebugNextMs = now + COMBAT_INDICATOR_DEBUG_THROTTLE_MS;
         CombatIndicatorDebugLog(msg);
     }
 
