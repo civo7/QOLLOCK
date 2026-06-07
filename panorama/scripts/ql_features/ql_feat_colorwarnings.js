@@ -476,6 +476,15 @@ function SetWashColorSafe(panel, color) {
 function ToRgbString(rgb) {
         return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
     }
+    var hasClassInHierarchy = function(panel, className) {
+        var current = panel;
+        while (current) {
+            if (current.BHasClass(className)) return true;
+            current = current.GetParent();
+        }
+        return false;
+    };
+
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
         var enabled = IsColorWarningEnabled(cfg);
