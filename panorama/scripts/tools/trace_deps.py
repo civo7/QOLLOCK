@@ -74,7 +74,8 @@ def load_core(path=None):
                     break
 
     # Also find var-defined functions (var X = function(...) {...})
-    for m in re.finditer(r'var (\w+)\s*=\s*function\s*\(', core):
+    # And ternary patterns: var X = QOL_UTILS_LOADED ? QOL_UTILS.X : function(...) {...}
+    for m in re.finditer(r'var (\w+)\s*=\s*(?:.*\?\s*.*\s*:\s*)?function\s*\(', core):
         name = m.group(1)
         if name in fns: continue
         idx = m.start()
@@ -85,7 +86,8 @@ def load_core(path=None):
                 brace -= 1
                 if in_fn and brace == 0:
                     # Check for }; (var assignment) vs just } (function)
-                    fns[name] = core[idx:i+1] + ';'
+                    suffix = ';' if core[i+1:i+2] == ';' or core[i+1:i+3] == ';\n' else ''
+                    fns[name] = core[idx:i+1] + suffix
                     break
 
     return core, consts, fns
