@@ -27592,7 +27592,14 @@ function GetUIRoot() {
         if (nowMs >= (Number(State.compass.nextSpeedSampleMs) || 0)) {
             speedValueText = "--";
             var playerPanel = IsPanelValid(State.minimapHeadingSnapshotPlayerPanel) ? State.minimapHeadingSnapshotPlayerPanel : FindLocalMinimapPlayerPanel(root, nowMs);
+            if (!playerPanel) {
+                if (!State._compassSpeedDebugNoPanelLogged) {
+                    $.Msg("[QOLLock][compassSpeed] no player panel found — minimapHeadingSnapshotPlayerPanel valid=" + (IsPanelValid(State.minimapHeadingSnapshotPlayerPanel) ? "1" : "0"));
+                    State._compassSpeedDebugNoPanelLogged = true;
+                }
+            }
             if (playerPanel) {
+                State._compassSpeedDebugNoPanelLogged = false;
                 var positionText = "";
                 if (playerPanel.style && typeof playerPanel.style.position === "string") {
                     positionText = playerPanel.style.position;
@@ -27601,7 +27608,14 @@ function GetUIRoot() {
                     positionText = playerPanel.GetAttributeString("style", "");
                 }
                 var pos = ParsePositionXYPercent(positionText);
+                if (!pos) {
+                    if (!State._compassSpeedDebugNoPosLogged) {
+                        $.Msg("[QOLLock][compassSpeed] position parse failed — positionText='" + String(positionText).substring(0, 80) + "'");
+                        State._compassSpeedDebugNoPosLogged = true;
+                    }
+                }
                 if (pos) {
+                    State._compassSpeedDebugNoPosLogged = false;
                     if (State.compass.lastPosX !== null && State.compass.lastPosY !== null && State.compass.lastPosTimeMs > 0) {
                         var dtSec = (nowMs - State.compass.lastPosTimeMs) / 1000.0;
                         if (dtSec > 0.01 && dtSec < 1.0) {
@@ -27614,7 +27628,7 @@ function GetUIRoot() {
                             State.compass.speedSmoothed = speedInstant;
                         } else {
                             var isDecelerating = speedInstant < State.compass.speedSmoothed;
-                            var tau = isDecelerating ? 0.25 : 0.02; 
+                            var tau = isDecelerating ? 0.25 : 0.02;
                             var alpha = 1.0 - Math.exp(-dtSec / tau);
                             if (Math.abs(speedInstant - State.compass.speedSmoothed) < State.compass.speedSmoothed * 0.10) {
                                 alpha *= 0.2;
