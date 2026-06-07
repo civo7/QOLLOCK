@@ -364,24 +364,6 @@
 	text-shadow: 0px 0px 7px rgba(255, 126, 126, 0.12);
 }
 
-.passive_cooldown_basic_active #hud_passive_items .ability_container
-{
-	overflow: noclip;
-}
-
-.passive_cooldown_basic_active #hud_passive_items .button_container
-{
-	height: 100%;
-	overflow: noclip;
-}
-
-.passive_cooldown_basic_active #hud_passive_items #cooldown_mask
-{
-	height: 100%;
-	margin-top: 0px;
-	overflow: noclip;
-}
-
 .passive_cooldown_basic_active #AbilitiesContainer.gShopOpen #hud_passive_items,.passive_cooldown_basic_active #gameplay_hud.gShopOpen #hud_passive_items
 {
 	visibility: collapse;
