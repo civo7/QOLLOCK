@@ -3,7 +3,7 @@
 	<styles>
 		<include src="s2r://panorama/styles/hud_common.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
-		<include src="s2r://panorama/styles/_qollock_defines.vcss_c" />
+		<include src="s2r://panorama/styles/qollock_defines.vcss_c" />
 		<include src="s2r://panorama/styles/hud_health_container.vcss_c" />
 	</styles>
 	<snippets>
