@@ -791,9 +791,6 @@
     const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
     // WHY: V2 enemy healthbar toggles are bridged through panel attributes so the
     // native CitadelHealthBarV2 panel can read them without JS polling.
-    const ENEMY_V2_ATTR_ENHANCED = "QOL_ENEMY_V2_ENHANCED";
-    const ENEMY_V2_ATTR_ULT = "QOL_ENEMY_V2_ULT";
-    const ENEMY_V2_ATTR_LEVEL = "QOL_ENEMY_V2_LEVEL";
     // ==========================================================================
     // SCHEDULER
     // ==========================================================================
@@ -929,11 +926,7 @@
     // display = raw_speed * SCALE + OFFSET, clamped to MAX_STEP, quantized by QUANT.
     // Empirically tuned so a hero at normal speed shows ~5-7 on the readout.
     const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
-    const COMPASS_SPEED_OFFSET = 2.0;       // offset added after scaling
-    const COMPASS_SPEED_DEADBAND = 2.0;     // minimum display value below which readout shows zero
-    const COMPASS_SPEED_MAX_STEP = 12.0;    // max change per update (smooths display)
     const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
-    const COMPASS_SPEED_ZERO_FLOOR = 10.0;  // raw speed below this floors display to zero
     const COMPASS_SPEED_SAMPLE_MS = 50;     // speed sample window in milliseconds
 
     // ==========================================================================
@@ -965,7 +958,6 @@
     const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
     const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // WHY: sanity cap prevents runaway layout values from corrupting HUD; 100k px is far beyond any valid screen position
     const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // WHY: feature-gate constant — set false to globally disable the custom cursor without touching config
-    const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
     // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
     // WHY: combat recovery at 3s matches the game's own out-of-combat timer (player stops taking damage for 3s)
@@ -979,11 +971,9 @@
     const MINIMAP_CRATE_OVERLAY_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
     const BOTTOM_BAR_CURRENCY_DEBUG = false;
-    const BOTTOM_BAR_CURRENCY_DEBUG_THROTTLE_MS = 700;
     const ULT_CD_DEBUG_ENABLED = false;
     const ENEMY_ULT_OLD_PANEL_SCAN_MS = 1200;
     const ENEMY_UNIT_STATUS_OLD_PANEL_SCAN_MS = Math.min(ENEMY_COLORED_HEALTH_PANEL_SCAN_MS, ENEMY_ULT_OLD_PANEL_SCAN_MS);
-    const ENEMY_ULT_OLD_UPDATE_MS = 180;
     const ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS = 1500;
     // ---- Unsecured Souls overlay ----
     // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
@@ -1080,8 +1070,6 @@
     const ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
     const ITEM_MIRROR_RAPID_RETRIGGER_WINDOW_MS = 1300;
     const ITEM_MIRROR_RAPID_RETRIGGER_SUPPRESS_MS = 900;
-    const ITEM_MIRROR_READY_FLASH_COOLDOWN_MS = 140;
-    const ITEM_MIRROR_READY_FLASH_CLASS_MS = 340;
     const ITEM_MIRROR_READY_OVERLAY_FLASH_MS = 420;
 const ITEM_MIRROR_FLASH_DEBUG = false;
 const ITEM_MIRROR_PROBE_DEBUG = false;
@@ -1115,13 +1103,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
     const MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
     const MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
-    const ACCOUNT_PROBE_WINDOW_MS = 60000;
-    const ACCOUNT_PROBE_SCAN_INTERVAL_MS = 500;
     const ACCOUNT_PROBE_DEEP_SCAN_INTERVAL_MS = 2000;
     const ACCOUNT_PROBE_REPORT_INTERVAL_MS = 10000;
     const ACCOUNT_PROBE_MAX_PANELS = 4000;
-    const ACCOUNT_PROBE_RETRY_BACKOFF_MS = 3000;
-    const ACCOUNT_PROBE_CONFIRM_HITS = 2;
     const ACCOUNT_PROBE_LOG = false;
     const URN_TRACKER_DEBUG = false;
     const PERF_DEBUG_FLUSH_MS = 5000;
@@ -1141,8 +1125,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const PANEL_ID_MINIMAP = "hud_minimap";
     const PANEL_ID_SIGNATURE = "hud_signature";
     const PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
-    const ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS = 1500;
-    const ACCOUNT_PRESET_TEST_ENABLED = false;
     const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
     const BUILD_LOADER_TEMP_DISABLED = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
@@ -1154,9 +1136,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES = 2;
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 200;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
-    const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_STALE_RUNTIME = 3;
-    const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_UIREADY = 2;
-    const BUILD_CATEGORY_PAYLOAD_CAPTURE_SHOP_PROBE_DELAY_MS = 100;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;   // poll every tick
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 4000;  // reduced timeout
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 1500;  // reduced backoff
@@ -1173,19 +1152,10 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 300;  // reduced from 900
     const BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;  // reduced from 6000
     const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;   // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_STRICT_MS = 1000;  // reduced
-    const BUILD_CATEGORY_PAYLOAD_POSTSAVE_PROMPT_MAX_MS = 5000;  // reduced timeout
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS = 50;   // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_VERIFY_DELAY_MS = 100;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
 const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
     : "2.3.5";
-    const BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_0 = 1;
-    const BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1 = 2;
-    const BUILD_CATEGORY_PAYLOAD_SCHEMA_WIRE_VERSION = (String(BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER || "") === "2.0.0")
-        ? BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_0
-        : BUILD_CATEGORY_PAYLOAD_WIRE_VERSION_2_0_1;
     const BUILD_CATEGORY_PAYLOAD_SCHEMA_TOKEN_VERSION = String(BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER || "").replace(/\./g, "-");
     const BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX = "[QOL-" + BUILD_CATEGORY_PAYLOAD_SCHEMA_TOKEN_VERSION + "]:";
     const BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
@@ -1193,9 +1163,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_DONE_REARM_MAX_ATTEMPTS = 4;
     const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 50;   // poll every tick
     const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_WAIT_MS = 3000;  // reduced timeout
-    const BUILD_CATEGORY_PAYLOAD_CAPTURE_FORCE_FALLBACK_MS = 4000;  // reduced timeout
-    const HERO_CAPTURE_FORCE_DEFAULT_FALLBACK = false;
     const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 400;  // reduced
@@ -1312,7 +1279,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
     const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
     const BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
-    const BUILD_SAVE_HERO_SWITCH_DELAY_MS = 150;  // poll-driven
     const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 300;   // poll-driven
     const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
@@ -1355,7 +1321,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
     const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 60;  // poll-driven
-    const BUILD_CLEAR_STORAGE_CONFIRM_TIMEOUT_MS = 6000;  // reduced
     const BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
     const BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_CLEAR_DEBUG = false;
@@ -1364,29 +1329,12 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_DEBUG_THROTTLE_MS = 400;
     const ENEMY_ULT_OLD_DEBUG = false;
     const ENEMY_ULT_OLD_DEBUG_THROTTLE_MS = 500;
-    const ENEMY_V2_BRIDGE_DEBUG = false;
     const HERO_DETECT_DEBUG = false;
-    const HERO_DETECT_DEBUG_MIN_INTERVAL_MS = 1000;
     const HERO_RETURN_DEBUG = false;
     const HERO_RETURN_DEBUG_THROTTLE_MS = 350;
-    const HERO_DETECT_DEEP_SCAN_INTERVAL_MS = 2000;
-    const HERO_DETECT_DEEP_SCAN_MAX_PANELS = 900;
-    const HERO_DETECT_DEEP_SCAN_EXTENDED_INTERVAL_MS = 6000;
-    const HERO_DETECT_DEEP_SCAN_EXTENDED_MAX_PANELS = 3200;
     const HERO_SELECT_COMMAND_SCAN_MAX_PANELS = 2500;
     const HERO_PERSISTED_KEY = "__QOL_LAST_KNOWN_PLAYABLE_HERO";
-    const HERO_RETURN_CAPTURE_RETRY_MS = 650;
-    const HERO_RETURN_CAPTURE_MAX_WAIT_MS = 5000;
     const HERO_PERSIST_MIN_INTERVAL_MS = 1200;
-    const HERO_PERSIST_CHECK_INTERVAL_MS = 2500;
-    const HERO_DETECT_ABILITY_HINT_SCAN_INTERVAL_MS = 800;
-    const HERO_DETECT_PROGRESS_PANEL_SCAN_INTERVAL_MS = 1200;
-    const HERO_DETECT_PROGRESS_MIN_SCORE = 10;
-    const HERO_DETECT_LOGO_SPOTLIGHT_SCAN_INTERVAL_MS = 900;
-    const HERO_DETECT_CAPTURE_SNAPSHOT_SCAN_INTERVAL_MS = 600;
-    const HERO_DETECT_CAPTURE_SNAPSHOT_MAX_PANELS = 2200;
-    const HERO_DETECT_CAPTURE_ABILITY_SCAN_INTERVAL_MS = 600;
-    const HERO_DETECT_CAPTURE_ABILITY_MAX_PANELS = 2500;
     const HERO_RESTORE_VERIFY_DELAY_MS = 450;
     const HERO_RESTORE_RETRY_DELAY_MS = 350;
     const HERO_RESTORE_MAX_WAIT_MS = 3200;
