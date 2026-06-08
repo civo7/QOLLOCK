@@ -67,7 +67,7 @@
     };
     var _safeAttrDegradedLogged = false;
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
-    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) {} return false; };
+    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
     var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
@@ -4253,6 +4253,7 @@ function GetUIRoot() {
         return p || null;
     }
 
+    var _readEnemyV2BridgeBoolDegradedLogged = false;
     function ReadEnemyV2BridgeBool(storageKey, fallbackValue) {
         var fallback = !!fallbackValue;
         try {
@@ -4261,7 +4262,12 @@ function GetUIRoot() {
                 if (raw === "1") return true;
                 if (raw === "0") return false;
             }
-        } catch (e0) {}
+        } catch (e0) {
+            if (!_readEnemyV2BridgeBoolDegradedLogged) {
+                _readEnemyV2BridgeBoolDegradedLogged = true;
+                $.Msg("[QOLLock][WARN][storage] ReadEnemyV2BridgeBool persistentStorage read failed: " + (e0 && e0.message ? e0.message : String(e0 || "")));
+            }
+        }
         return fallback;
     }
 
@@ -4553,7 +4559,9 @@ function GetUIRoot() {
                 var raw = String($.persistentStorage.getItem(persistentStorageKey) || "");
                 if (raw !== "") return NormalizePaletteColorIndex(raw);
             }
-        } catch (e0) {}
+        } catch (e0) {
+            QOL_WARN("storage", "ReadPaletteColorIndexWithPanelAttr persistentStorage read failed for key=" + String(persistentStorageKey || "") + ": " + (e0 && e0.message ? e0.message : String(e0 || "")));
+        }
         return fromConfig;
     }
 

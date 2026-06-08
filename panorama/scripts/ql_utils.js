@@ -385,6 +385,31 @@
     exports.ErrorLog = ErrorLog;
 
     /**
+     * Safely execute a function, logging errors at debug level when debug mode is on.
+     * Returns the function's result on success, or null on failure.
+     * Use for converting try { ... } catch(e) {} into auditable operations:
+     *   SafeLog(function() { panel.style.opacity = "1.00"; }, "style.opacity");
+     */
+    var _safeLogThrottles = {};
+    var _SAFELOG_THROTTLE_MS = 5000;
+    function SafeLog(fn, label) {
+        try {
+            return fn();
+        } catch (e) {
+            if (DEBUG_ENABLED) {
+                var now = PerfNowMs();
+                var nextMs = Number(_safeLogThrottles[label] || 0);
+                if (now >= nextMs) {
+                    _safeLogThrottles[label] = now + _SAFELOG_THROTTLE_MS;
+                    $.Msg("[QOLLock][DEBUG][SafeLog] " + (label || "unnamed") + ": " + (e && e.message ? e.message : String(e)));
+                }
+            }
+            return null;
+        }
+    }
+    exports.SafeLog = SafeLog;
+
+    /**
      * Enable or disable debug-level logging at runtime.
      */
     function SetDebugEnabled(enabled) {
