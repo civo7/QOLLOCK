@@ -16,6 +16,10 @@
     var ReadPanelTextDeepMaybe = _deps.readPanelTextDeepMaybe;
     var LANE_PREF_SELECTOR_ID = _deps.lanePrefSelectorId;
 
+    var LANE_PREF_APPLY_INTERVAL_MS = 650;
+    var LANE_PREF_HIDDEN_INTERVAL_MS = 2630;
+    var LANE_PREF_SELECTED_INTERVAL_MS = 4870;
+    var LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
     function IsLanePreferenceWithPartySelected(selector) {
         if (!selector || !IsPanelValid(selector)) return false;
         var selectedId = "";

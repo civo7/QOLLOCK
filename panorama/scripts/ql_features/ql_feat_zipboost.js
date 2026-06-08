@@ -16,6 +16,8 @@
     var FindZipBoostSource = _deps.findZipBoostSource;
     var FindNumericLabelTextInTree = _deps.findNumericLabelTextInTree;
     var isConnectedToHideout = _deps.isConnectedToHideout;
+    var ZIP_BOOST_READY_FLASH_MS = 2000;
+    var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
     function EnsureZipBoostOverlay(root) {
         var overlay = GC("zipBoostOverlay");
         if (IsPanelValid(overlay)) {

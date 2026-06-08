@@ -23663,6 +23663,7 @@ function GetUIRoot() {
         ["minimapCrateOverlayDebugLogThrottled", function() { return MinimapCrateOverlayDebugLogThrottled; }],
         ["normalizeDamageImpactScaleNumber", function() { return NormalizeDamageImpactScaleNumber; }],
         ["normalizeHudOffsetNumber", function() { return NormalizeHudOffsetNumber; }],
+        ["normalizeHudScaleNumber", function() { return NormalizeHudScaleNumber; }],
         ["normalizePaletteColorIndex", function() { return NormalizePaletteColorIndex; }],
         ["normalizeStaminaChargeAngle", function() { return NormalizeStaminaChargeAngle; }],
         ["normalizeVoiceTypeValue", function() { return NormalizeVoiceTypeValue; }],

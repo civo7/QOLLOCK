@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_rejuvtimers";
-    var _deps = QOL.import(["buffLockoutSec","ensureMinimapPanelCache","getCachedPanel","isHudClassActive","isStreetBrawlModeActive","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
+    var _deps = QOL.import(["buffLockoutSec","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","isHudClassActive","isStreetBrawlModeActive","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
@@ -19,6 +19,7 @@
     var IsHudClassActive = _deps.isHudClassActive;
     var SetPanelClassCached = _deps.setPanelClassCached;
     var PerfNowMs = _deps.perfNowMs;
+    var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
 
     // ── Constants ──
     const REJUV_DURATION_SEC = 240;

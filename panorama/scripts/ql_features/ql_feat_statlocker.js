@@ -16,6 +16,8 @@
     var GetAccountIdForBuildCategoryPayload = _deps.getAccountIdForBuildCategoryPayload;
     var GetUIRoot = _deps.getUIRoot;
 
+    var STATLOCKER_SCAN_INTERVAL_MS = 1200;
+    var STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
     function ParseAccountIdDigitsFromText(rawText) {
         if (rawText === undefined || rawText === null) return "";
         var digits = String(rawText).replace(/[^0-9]/g, "");

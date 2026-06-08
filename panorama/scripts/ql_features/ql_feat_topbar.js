@@ -12,6 +12,7 @@
     var U = _deps.utils;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
     var IsHudVisibleForTopBarRuntime = _deps.isHudVisibleForTopBarRuntime;
+    var IH = _deps.isHudVisibleForTopBarRuntime;
     var PID_TOP_BAR = _deps.panelIdTopBar;
     // ── Gate ──
     function gate(cfg) {

@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber"]);
+    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -13,6 +13,7 @@
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
     var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
     var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
+    var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
     var isConnectedToHideout = _deps.isConnectedToHideout;
     var IsPanelVisibleMaybe = QOL.isPanelVisibleMaybe || function() { return false; };
