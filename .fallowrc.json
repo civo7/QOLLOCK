@@ -1,0 +1,22 @@
+{
+  "entry": [
+    "panorama/scripts/*.js",
+    "panorama/scripts/ql_features/*.js",
+    "panorama/scripts/tools/*.js",
+    "scripts/*.js"
+  ],
+  "ignorePatterns": [
+    "**/ql_recent_purchases_data.js",
+    "**/ql_minimap_crate_data.js",
+    "**/ql_settings.js",
+    "**/ql_legacy_cooldowns.js"
+  ],
+  "ignoreDependencies": [],
+  "rules": {
+    "unused-files": "off",
+    "unused-exports": "warn",
+    "circular-dependencies": "warn",
+    "unresolved-imports": "off",
+    "unlisted-dependencies": "off"
+  }
+}
