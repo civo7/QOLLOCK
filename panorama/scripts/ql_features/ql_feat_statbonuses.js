@@ -20,6 +20,7 @@
     var ResolveStatBonusesSource = _deps.resolveStatBonusesSource;
     var StatBonusesDebugLogThrottled = _deps.statBonusesDebugLogThrottled;
     var isConnectedToHideout = _deps.isConnectedToHideout;
+    var CLASS_IS_ZERO_VALUE = "isZeroValue";
     var STAT_BONUSES_DEBUG = false;
     var STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
     var STAT_BONUSES_ABILITY_COOLDOWN_IDS = ["StatContainer_TechCooldown", "StatContainer_AbilityCooldown", "StatContainer_AbilityCooldownReduction", "StatContainer_CooldownReduction", "StatContainer_Cooldown", "StatContainer_CooldownDecrease", "StatContainer_AbilityCD"];
