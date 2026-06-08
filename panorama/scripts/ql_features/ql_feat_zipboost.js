@@ -2,41 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
-    var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
-    var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
-    var ZIP_BOOST_READY_FLASH_MS = 2000;
-    var FindNumericLabelTextInTree = typeof QOL_FindNumericLabelTextInTree !== "undefined" ? QOL_FindNumericLabelTextInTree : function() { return null; };
-    var FindZipBoostSource = typeof QOL_FindZipBoostSource !== "undefined" ? QOL_FindZipBoostSource : function() { return null; };
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_zipboost";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_FindNumericLabelTextInTree === "undefined") _m.push("QOL_FindNumericLabelTextInTree");
-        if (typeof QOL_FindZipBoostSource === "undefined") _m.push("QOL_FindZipBoostSource");
-        if (typeof QOL_GetGameplayHudPanel === "undefined") _m.push("QOL_GetGameplayHudPanel");
-        if (typeof QOL_IsCustomHudContextActive === "undefined") _m.push("QOL_IsCustomHudContextActive");
-        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["findNumericLabelTextInTree","findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var GGHP = _deps.getGameplayHudPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function EnsureZipBoostOverlay(root) {
         var overlay = GC("zipBoostOverlay");
         if (IsPanelValid(overlay)) {
@@ -246,7 +218,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("zipBoost", {
+    QOL.register("zipBoost", {
         configKeys: ["ENABLE_ZIP_BOOST"],
         bucket: 6, phase: -1,
         gate: function(cfg) {

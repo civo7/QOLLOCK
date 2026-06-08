@@ -2,77 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
-    var NormalizeHudOffsetNumber = U ? U.NormalizeHudOffsetNumber : function(v,d) { return Number(v)||d; };
-    var NormalizeHudScaleNumber = U ? U.NormalizeHudScaleNumber : function(v,d) { return Number(v)||d; };
-    var NormalizeOpacityNumber = U ? U.NormalizeOpacityNumber : function(v,d) { return Number(v)||d; };
-    var QOL_WARN = typeof QOL_WARN !== "undefined" ? QOL_WARN : function() {};
-    var SetPanelClassCached = typeof QOL_SetPanelClassCached !== "undefined" ? QOL_SetPanelClassCached : function() {};
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-
-    // ── Feature-specific constants ──
-    var CLASS_RECENT_PURCHASE = "recentPurchase";
-    var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
-    var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 10.0;
-    var RECENT_PURCHASE_FILTERS = [
-        { id: "Tier1Toggle", label: "T1", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier1Purchase"); } },
-        { id: "Tier2Toggle", label: "T2", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier2Purchase"); } },
-        { id: "Tier3Toggle", label: "T3", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier3Purchase"); } },
-        { id: "Tier4Toggle", label: "T4", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier4Purchase"); } },
-        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam1Purchase"); } },
-        { id: "Team2OnlyToggle", label: "Archmother", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam2Purchase"); } },
-        { id: "MyTeamToggle", label: "My Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam1Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam2Purchase");
-              return false;
-          } },
-        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam2Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam1Purchase");
-              return false;
-          } }
-    ]
-    var RECENT_PURCHASE_MAX_ITEMS = 50;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var IsPanelVisibleMaybe = typeof QOL_IsPanelVisibleMaybe !== "undefined" ? QOL_IsPanelVisibleMaybe : function() { return false; };
     var _dk = "ql_feat_recentpurchases";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_SetPanelClassCached === "undefined") _m.push("QOL_SetPanelClassCached");
-        if (typeof QOL_WARN === "undefined") _m.push("QOL_WARN");
-        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
-        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","isPanelVisibleMaybe","state","setCachedPanel","setPanelClassCached","utils","warn","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
+    var IsPanelVisibleMaybe = QOL.isPanelVisibleMaybe || function() { return false; };
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
     var PANEL_ID_TOP_BAR = "TopBar";
@@ -898,9 +834,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         }
     }
 
-
     // ── Registration ──
-    QOL_REGISTER_FEATURE("recentPurchases", {
+    QOL.register("recentPurchases", {
         configKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS"],
         bucket: 7, phase: -1,
         gate: function(cfg) {

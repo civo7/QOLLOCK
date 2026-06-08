@@ -3,29 +3,13 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var RWP = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : undefined;
-    var RAI = typeof QOL_ReadAmmoTextColorIndex !== "undefined" ? QOL_ReadAmmoTextColorIndex : undefined;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var _dk = "ql_feat_ammo";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+        var _dk = "ql_feat_ammo";
+    var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var RWP = _deps.resolveWashColorFromPalette;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     // ── Gate ──
     function gate(cfg) {
         if (!cfg) return false;
@@ -135,7 +119,7 @@
     }
 
     // ── Register ──
-    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("ammo", {
+    QOL.register("ammo", {
         configKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL",
                      "AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE",
                      "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET"],

@@ -2,37 +2,14 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-        var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
-var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function() { return null; };
-
-    var UNSECURED_SOULS_HUD_SEARCH_MS = 1000;
-    var PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var ParseUnsecuredSoulsValue = typeof QOL_ParseUnsecuredSoulsValue !== "undefined" ? QOL_ParseUnsecuredSoulsValue : function() { return 0; };
     var _dk = "ql_feat_betterunsecuredhud";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_GetGameplayHudPanel === "undefined") _m.push("QOL_GetGameplayHudPanel");
-        if (typeof QOL_ParseUnsecuredSoulsValue === "undefined") _m.push("QOL_ParseUnsecuredSoulsValue");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","parseUnsecuredSoulsValue","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var GGHP = _deps.getGameplayHudPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
+    var ParseUnsecuredSoulsValue = QOL.parseUnsecuredSoulsValue || function() { return 0; };
 
     var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
     var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
@@ -174,7 +151,7 @@ function ParseUnsecuredSoulsValue(valueText) {
         S.unsecuredSouls.hudMirrorText = null;
     }
 
-        var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
+        var GetGameplayHudPanel = QOL.getGameplayHudPanel || function() { return null; };
 var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawValue) {
         var n = Number(rawValue);
         if (!isFinite(n)) return null;
@@ -344,7 +321,6 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawVa
         S.unsecuredSouls.hudStyleSig = sig;
     }
 
-
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
         if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
         return !!(
@@ -355,7 +331,7 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawVa
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("betterUnsecuredHud", {
+    QOL.register("betterUnsecuredHud", {
         configKeys: ["ENABLE_BETTER_UNSECURED"],
         bucket: 7, phase: -1,
         gate: function(cfg) { return NeedsBetterUnsecuredHudLayoutWork(cfg); },

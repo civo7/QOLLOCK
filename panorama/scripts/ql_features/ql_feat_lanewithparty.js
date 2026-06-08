@@ -2,44 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelVisibleMaybe = typeof QOL_IsPanelVisibleMaybe !== "undefined" ? QOL_IsPanelVisibleMaybe : function() { return false; };
-    var ActivatePanelSafe = typeof QOL_ActivatePanelSafe !== "undefined" ? QOL_ActivatePanelSafe : function() { return false; };
-    var ReadPanelIdTextMaybe = typeof QOL_ReadPanelIdTextMaybe !== "undefined" ? QOL_ReadPanelIdTextMaybe : function() { return ""; };
-    var ReadPanelTextDeepMaybe = typeof QOL_ReadPanelTextDeepMaybe !== "undefined" ? QOL_ReadPanelTextDeepMaybe : function() { return ""; };
-
-    // ── Feature-specific constants ──
-    var LANE_PREF_SELECTOR_ID = "LanePreferenceSelector";
-    var LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
-    var LANE_PREF_APPLY_INTERVAL_MS = 650;
-    var LANE_PREF_HIDDEN_INTERVAL_MS = 2630;
-    var LANE_PREF_SELECTED_INTERVAL_MS = 4870;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_lanewithparty";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_ActivatePanelSafe === "undefined") _m.push("QOL_ActivatePanelSafe");
-        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
-        if (typeof QOL_ReadPanelIdTextMaybe === "undefined") _m.push("QOL_ReadPanelIdTextMaybe");
-        if (typeof QOL_ReadPanelTextDeepMaybe === "undefined") _m.push("QOL_ReadPanelTextDeepMaybe");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["activatePanelSafe","getCachedPanel","isPanelVisibleMaybe","readPanelIdTextMaybe","readPanelTextDeepMaybe","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     function IsLanePreferenceWithPartySelected(selector) {
         if (!selector || !IsPanelValid(selector)) return false;
@@ -158,7 +126,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("laneWithParty", {
+    QOL.register("laneWithParty", {
         configKeys: ["ENABLE_LANE_WITH_PARTY"],
         bucket: 7, phase: 2,
         gate: function(cfg) {

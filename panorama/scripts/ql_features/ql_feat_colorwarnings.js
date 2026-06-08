@@ -4,32 +4,12 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var SetStyleSafe = U ? U.SetStyleSafe : function() {};
-    var ClearStyleSafe = U ? U.ClearStyleSafe : function() {};
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsColorWarningEnabled = typeof QOL_IsColorWarningEnabled !== "undefined" ? QOL_IsColorWarningEnabled : function() { return false; };
-
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var _dk = "ql_feat_colorwarnings";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_IsColorWarningEnabled === "undefined") _m.push("QOL_IsColorWarningEnabled");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+        var _dk = "ql_feat_colorwarnings";
+    var _deps = QOL.import(["getCachedPanel","isColorWarningEnabled","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     var ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
     var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
@@ -747,7 +727,7 @@ function ToRgbString(rgb) {
     // ── Registrations (3 features, 1 file) ──
 
     $.Msg("[QOL DEBUG] Registering colorWarning");
-    QOL_REGISTER_FEATURE("colorWarning", {
+    QOL.register("colorWarning", {
         configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
                      "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
         bucket: 5, phase: -1,
@@ -769,7 +749,7 @@ function ToRgbString(rgb) {
     });
 
     $.Msg("[QOL DEBUG] Registering enemyColorWarning");
-    QOL_REGISTER_FEATURE("enemyColorWarning", {
+    QOL.register("enemyColorWarning", {
         configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
                      "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
         bucket: 5, phase: -1,
@@ -791,7 +771,7 @@ function ToRgbString(rgb) {
     });
 
     $.Msg("[QOL DEBUG] Registering allyColorWarning");
-    QOL_REGISTER_FEATURE("allyColorWarning", {
+    QOL.register("allyColorWarning", {
         configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
                      "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],
         bucket: 5, phase: -1,

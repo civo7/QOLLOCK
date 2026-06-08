@@ -2,51 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var SetStyleSafe = U ? U.SetStyleSafe : function() {};
-    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
-    var SetPanelClassCached = typeof QOL_SetPanelClassCached !== "undefined" ? QOL_SetPanelClassCached : function() {};
-    var ResolvePassiveCooldownMode = typeof QOL_ResolvePassiveCooldownMode !== "undefined" ? QOL_ResolvePassiveCooldownMode : function() { return "default"; };
-    var IsPassiveCooldownBasicMode = typeof QOL_IsPassiveCooldownBasicMode !== "undefined" ? QOL_IsPassiveCooldownBasicMode : function() { return false; };
-    var IsStreetBrawlModeActive = typeof QOL_IsStreetBrawlModeActive !== "undefined" ? QOL_IsStreetBrawlModeActive : function() { return false; };
-    var IsColorWarningEnabled = typeof QOL_IsColorWarningEnabled !== "undefined" ? QOL_IsColorWarningEnabled : function() { return false; };
-    var GetSharedSchemaUtils = typeof QOL_GetSharedSchemaUtils !== "undefined" ? QOL_GetSharedSchemaUtils : function() { return null; };
-    var NormalizeVoiceTypeValue = typeof QOL_NormalizeVoiceTypeValue !== "undefined" ? QOL_NormalizeVoiceTypeValue : function(v) { return 0; };
-    var NormalizeVoiceVolumeValue = typeof QOL_NormalizeVoiceVolumeValue !== "undefined" ? QOL_NormalizeVoiceVolumeValue : function(v) { return 100; };
-    var EnsurePassiveHudPanelCache = typeof QOL_EnsurePassiveHudPanelCache !== "undefined" ? QOL_EnsurePassiveHudPanelCache : function() { return null; };
-    var EnsureGameTimePanelCache = typeof QOL_EnsureGameTimePanelCache !== "undefined" ? QOL_EnsureGameTimePanelCache : function() { return null; };
-    var EnsureAbilitiesContainerPanelCache = typeof QOL_EnsureAbilitiesContainerPanelCache !== "undefined" ? QOL_EnsureAbilitiesContainerPanelCache : function() { return null; };
-
-    // ── One-shot dependency validation ──
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_legacyaudiopassive";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_ResolvePassiveCooldownMode === "undefined") _m.push("QOL_ResolvePassiveCooldownMode");
-        if (typeof QOL_IsPassiveCooldownBasicMode === "undefined") _m.push("QOL_IsPassiveCooldownBasicMode");
-        if (typeof QOL_IsStreetBrawlModeActive === "undefined") _m.push("QOL_IsStreetBrawlModeActive");
-        if (typeof QOL_IsColorWarningEnabled === "undefined") _m.push("QOL_IsColorWarningEnabled");
-        if (typeof QOL_GetSharedSchemaUtils === "undefined") _m.push("QOL_GetSharedSchemaUtils");
-        if (typeof QOL_NormalizeVoiceTypeValue === "undefined") _m.push("QOL_NormalizeVoiceTypeValue");
-        if (typeof QOL_NormalizeVoiceVolumeValue === "undefined") _m.push("QOL_NormalizeVoiceVolumeValue");
-        if (typeof QOL_EnsurePassiveHudPanelCache === "undefined") _m.push("QOL_EnsurePassiveHudPanelCache");
-        if (typeof QOL_EnsureGameTimePanelCache === "undefined") _m.push("QOL_EnsureGameTimePanelCache");
-        if (typeof QOL_EnsureAbilitiesContainerPanelCache === "undefined") _m.push("QOL_EnsureAbilitiesContainerPanelCache");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["ensureAbilitiesContainerPanelCache","ensureGameTimePanelCache","ensurePassiveHudPanelCache","getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","state","setCachedPanel","setPanelClassCached","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     // ── Constants ──
     var SOUND_DEBUG = false;
@@ -428,7 +389,7 @@
 
     // ── Registration ──
 
-    QOL_REGISTER_FEATURE("legacyAudioPassive", {
+    QOL.register("legacyAudioPassive", {
         configKeys: ["ENABLE_LEGACY_COOLDOWNS", "ENABLE_ONE_TIME", "ENABLE_ONE_TIME_TIER1",
                      "ENABLE_ONE_TIME_TIER2", "ENABLE_ONE_TIME_TIER3", "ENABLE_INTERVAL",
                      "VOICE_TYPE", "BRIDGE_BUFF_START"],

@@ -2,39 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var SetPanelClassIfChanged = typeof QOL_SetPanelClassIfChanged !== "undefined" ? QOL_SetPanelClassIfChanged : function() {};
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-    var RefreshSpmPanelCache = typeof QOL_RefreshSpmPanelCache !== "undefined" ? QOL_RefreshSpmPanelCache : function() {};
-    var GetGameSecondsForUrn = typeof QOL_GetGameSecondsForUrn !== "undefined" ? QOL_GetGameSecondsForUrn : function() { return 0; };
-    var GetTopBarPlayerPanel = typeof QOL_GetTopBarPlayerPanel !== "undefined" ? QOL_GetTopBarPlayerPanel : function() { return null; };
-
-    // ── One-shot dependency validation ──
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_nicknames";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_SetPanelClassIfChanged === "undefined") _m.push("QOL_SetPanelClassIfChanged");
-        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
-        if (typeof QOL_RefreshSpmPanelCache === "undefined") _m.push("QOL_RefreshSpmPanelCache");
-        if (typeof QOL_GetGameSecondsForUrn === "undefined") _m.push("QOL_GetGameSecondsForUrn");
-        if (typeof QOL_GetTopBarPlayerPanel === "undefined") _m.push("QOL_GetTopBarPlayerPanel");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","getGameSecondsForUrn","getTopBarPlayerPanel","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     // ── Constants ──
     var SPM_MAX_PLAYERS = 13;
@@ -285,7 +258,7 @@
 
     // ── Registration ──
 
-    QOL_REGISTER_FEATURE("nicknames", {
+    QOL.register("nicknames", {
         configKeys: ["ENABLE_NICKNAMES"],
         bucket: 1, phase: 0,
         gate: function(cfg) {

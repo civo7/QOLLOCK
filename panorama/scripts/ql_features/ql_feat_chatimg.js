@@ -2,41 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
-    var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
-    var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
-    var BuildImagesInChatContainerWatermark = typeof QOL_BuildImagesInChatContainerWatermark !== "undefined" ? QOL_BuildImagesInChatContainerWatermark : function() { return ""; };
-    var ClearInjectedChatImagesForMessage = typeof QOL_ClearInjectedChatImagesForMessage !== "undefined" ? QOL_ClearInjectedChatImagesForMessage : function() {};
-    var FindChatMessageLabel = typeof QOL_FindChatMessageLabel !== "undefined" ? QOL_FindChatMessageLabel : function() { return null; };
-    var FindImagesInChatMessageCacheEntry = typeof QOL_FindImagesInChatMessageCacheEntry !== "undefined" ? QOL_FindImagesInChatMessageCacheEntry : function() { return null; };
-    var GetImagesInChatMessageCache = typeof QOL_GetImagesInChatMessageCache !== "undefined" ? QOL_GetImagesInChatMessageCache : function() { return []; };
-    var InjectBottomChatImage = typeof QOL_InjectBottomChatImage !== "undefined" ? QOL_InjectBottomChatImage : function() {};
-    var InjectTopChatImage = typeof QOL_InjectTopChatImage !== "undefined" ? QOL_InjectTopChatImage : function() {};
-    var PerfNowMs = typeof QOL_PerfNowMs !== "undefined" ? QOL_PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
-    var PruneImagesInChatMessageCache = typeof QOL_PruneImagesInChatMessageCache !== "undefined" ? QOL_PruneImagesInChatMessageCache : function() {};
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_chatimg";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["buildImagesInChatContainerWatermark","clearInjectedChatImagesForMessage","findChatMessageLabel","findImagesInChatMessageCacheEntry","getCachedPanel","getImagesInChatMessageCache","injectBottomChatImage","injectTopChatImage","perfNowMs","pruneImagesInChatMessageCache","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function ResetImagesInChatContainerState(watermarkKey, fullScanKey, cacheKey) {
         S[watermarkKey] = "";
         S[fullScanKey] = 0;
@@ -151,7 +122,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("imagesInChat", {
+    QOL.register("imagesInChat", {
         configKeys: ["ENABLE_IMAGES_IN_CHAT"],
         bucket: 7, phase: -1,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"); },

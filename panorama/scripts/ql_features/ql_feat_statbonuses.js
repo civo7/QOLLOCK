@@ -2,82 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
-    var STAT_BONUSES_DEBUG = false;
-    var CLASS_IS_ZERO_VALUE = "isZeroValue";
-    var STAT_BONUSES_DEBUG_MIN_INTERVAL_MS = 600;
-    var STAT_BONUSES_SOURCE_SEARCH_MS = 500;
-    var STAT_BONUSES_TOOLTIP_SCAN_MS = 250;
-    var STAT_BONUSES_TOOLTIP_BREAKDOWN_ID = "StatsBreakdownContainer";
-    var STAT_BONUSES_GOLDEN_ROW_KEYS = [
-        "#citadel_shopstats_goldenstatues",
-        "golden statues",
-        "#citadel_shopstats_boons",
-        "boons"
-    ];
-    var STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
-    var STAT_BONUSES_ABILITY_COOLDOWN_IDS = [
-        "StatContainer_TechCooldown",
-        "StatContainer_AbilityCooldown",
-        "StatContainer_AbilityCooldownReduction",
-        "StatContainer_CooldownReduction",
-        "StatContainer_Cooldown",
-        "StatContainer_CooldownDecrease",
-        "StatContainer_AbilityCD"
-    ];
-    var STAT_BONUSES_SPIRIT_POWER_IDS = [
-        "StatContainer_TechPower",
-        "StatContainer_SpiritPower",
-        "StatContainer_Spirit"
-    ];
-    var STAT_BONUSES_CLIP_SIZE_IDS = [
-        "StatContainer_ClipSizeIncrease",
-        "StatContainer_ClipSize",
-        "StatContainer_ClipSizeBonus",
-        "StatContainer_AmmoCapacity"
-    ];
-    var STAT_BONUSES_WEAPON_DAMAGE_IDS = [
-        "StatContainer_BaseWeaponDamage",
-        "StatContainer_BonusBaseWeaponDamage",
-        "StatContainer_BaseAttackDamagePercent",
-        "StatContainer_BulletDamage"
-    ];
-    var STAT_BONUSES_MAX_HEALTH_IDS = [
-        "StatContainer_MaxHealth",
-        "StatContainer_BaseHealth",
-        "StatContainer_ArmorPower"
-    ];
-    var ExtractStatDisplayText = typeof QOL_ExtractStatDisplayText !== "undefined" ? QOL_ExtractStatDisplayText : function() { return "-"; };
-    var HarvestGoldenStatuesTooltipValue = typeof QOL_HarvestGoldenStatuesTooltipValue !== "undefined" ? QOL_HarvestGoldenStatuesTooltipValue : function() {};
-    var IsStatBonusTokenZero = typeof QOL_IsStatBonusTokenZero !== "undefined" ? QOL_IsStatBonusTokenZero : function() { return false; };
-    var ResolveGoldenStatBonusesValue = typeof QOL_ResolveGoldenStatBonusesValue !== "undefined" ? QOL_ResolveGoldenStatBonusesValue : function() { return ""; };
-    var ResolveStatBonusesSource = typeof QOL_ResolveStatBonusesSource !== "undefined" ? QOL_ResolveStatBonusesSource : function() { return null; };
-    var StatBonusesDebugLogThrottled = typeof QOL_StatBonusesDebugLogThrottled !== "undefined" ? QOL_StatBonusesDebugLogThrottled : function() {};
-    var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_statbonuses";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["extractStatDisplayText","getCachedPanel","getGameplayHudPanel","harvestGoldenStatuesTooltipValue","isCustomHudContextActive","isStatBonusTokenZero","resolveGoldenStatBonusesValue","resolveStatBonusesSource","state","setCachedPanel","statBonusesDebugLogThrottled","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var GGHP = _deps.getGameplayHudPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function EnsureStatBonusesOverlay(root) {
         var overlay = GC("statBonusesOverlay");
         if (IsPanelValid(overlay)) {
@@ -427,7 +358,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("statBonuses", {
+    QOL.register("statBonuses", {
         configKeys: ["ENABLE_STAT_BONUSES"],
         bucket: 6, phase: 4,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES") || !!(S.statBonuses && S.statBonuses.displayMode && S.statBonuses.displayMode !== ""); },

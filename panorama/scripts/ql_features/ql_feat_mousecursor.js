@@ -2,37 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var GAMEPLAY_MOUSE_CURSOR_ENABLED = typeof QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED : true;
-    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = typeof QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH : "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
-    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = typeof QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK : "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
-    var GAMEPLAY_MOUSE_CURSOR_HALF_PX = typeof QOL_GAMEPLAY_MOUSE_CURSOR_HALF_PX !== "undefined" ? QOL_GAMEPLAY_MOUSE_CURSOR_HALF_PX : 27;
-    var IsStartupLoaderInActiveMatchContext = typeof QOL_IsStartupLoaderInActiveMatchContext !== "undefined" ? QOL_IsStartupLoaderInActiveMatchContext : function() { return false; };
-    var IsHudClassActive = typeof QOL_IsHudClassActive !== "undefined" ? QOL_IsHudClassActive : function() { return false; };
-    var IsPanelVisibleMaybe = typeof QOL_IsPanelVisibleMaybe !== "undefined" ? QOL_IsPanelVisibleMaybe : function() { return false; };
-    var TryGetGameplayMouseCursorPosition = typeof QOL_TryGetGameplayMouseCursorPosition !== "undefined" ? QOL_TryGetGameplayMouseCursorPosition : function() { return null; };
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_mousecursor";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["gameplayMouseCursorEnabled","gameplayMouseCursorHalfPx","gameplayMouseCursorImagePath","gameplayMouseCursorImagePathFallback","getCachedPanel","isHudClassActive","isPanelVisibleMaybe","isStartupLoaderInActiveMatchContext","state","setCachedPanel","tryGetGameplayMouseCursorPosition","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function SetGameplayMouseCursorRootClass(root, active) {
         var on = !!active;
         if (!!S.customMouseCursorClassActive === on) return;
@@ -144,7 +119,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("gameplayMouseCursor", {
+    QOL.register("gameplayMouseCursor", {
         configKeys: [],
         bucket: 7, phase: -1,
         gate: function(cfg) { return true; },

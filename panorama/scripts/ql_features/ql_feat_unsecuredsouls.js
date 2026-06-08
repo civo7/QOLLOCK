@@ -2,45 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsCustomHudContextActive = typeof QOL_IsCustomHudContextActive !== "undefined" ? QOL_IsCustomHudContextActive : function() { return true; };
-    var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
-    var UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
-    var UNSECURED_SOULS_MIN_SAMPLE_MS = 250;
-    var UNSECURED_SOULS_RATE_EMA_ALPHA = 0.35;
-    var UNSECURED_SOULS_RATE_MIN = 0.01;
-    var UNSECURED_SOULS_RATE_STALE_MS = 12000;
-    var UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
-    var UNSECURED_SOULS_ETA_MAX_SEC = 999;
-    var FindUnsecuredSoulsSource = typeof QOL_FindUnsecuredSoulsSource !== "undefined" ? QOL_FindUnsecuredSoulsSource : function() { return null; };
-    var EstimateUnsecuredSoulsEtaFallbackSec = typeof QOL_EstimateUnsecuredSoulsEtaFallbackSec !== "undefined" ? QOL_EstimateUnsecuredSoulsEtaFallbackSec : function() { return 999; };
-    var GetGameSecondsForUrn = typeof QOL_GetGameSecondsForUrn !== "undefined" ? QOL_GetGameSecondsForUrn : function() { return 0; };
-    var GetUnsecuredSoulsDangerLevel = typeof QOL_GetUnsecuredSoulsDangerLevel !== "undefined" ? QOL_GetUnsecuredSoulsDangerLevel : function() { return "normal"; };
-    var ParseUnsecuredSoulsValue = typeof QOL_ParseUnsecuredSoulsValue !== "undefined" ? QOL_ParseUnsecuredSoulsValue : function() { return 0; };
-    var ResetUnsecuredSoulsTracking = typeof QOL_ResetUnsecuredSoulsTracking !== "undefined" ? QOL_ResetUnsecuredSoulsTracking : function() {};
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_unsecuredsouls";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var GGHP = _deps.getGameplayHudPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function EnsureUnsecuredSoulsOverlay(root) {
         var overlay = GC("unsecuredSoulsOverlay");
         if (IsPanelValid(overlay)) {
@@ -276,7 +244,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("unsecuredSoulsTimer", {
+    QOL.register("unsecuredSoulsTimer", {
         configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
         bucket: 6, phase: 3,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(S.unsecuredSouls && S.unsecuredSouls.displayMode && S.unsecuredSouls.displayMode !== ""); },

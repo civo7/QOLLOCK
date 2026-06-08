@@ -2,39 +2,16 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var SetStyleSafe = U ? U.SetStyleSafe : function() {};
-    var ClearStyleSafe = U ? U.ClearStyleSafe : function() {};
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
-    var EnsureMinimapPanelCache = typeof QOL_EnsureMinimapPanelCache !== "undefined" ? QOL_EnsureMinimapPanelCache : function() {};
-    var ResolveCachedPanel = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : function() { return null; };
-    var IsHudClassActive = typeof QOL_IsHudClassActive !== "undefined" ? QOL_IsHudClassActive : function() { return false; };
-
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var ResolveWashColorFromPalette = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : function() { return ""; };
-    var ReadMinimapIconColorIndex = typeof QOL_ReadMinimapIconColorIndex !== "undefined" ? QOL_ReadMinimapIconColorIndex : function() { return 0; };
     var _dk = "ql_feat_minimapruntime";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_EnsureMinimapPanelCache === "undefined") _m.push("QOL_EnsureMinimapPanelCache");
-        if (typeof QOL_ResolveWashColorFromPalette === "undefined") _m.push("QOL_ResolveWashColorFromPalette");
-        if (typeof QOL_ReadMinimapIconColorIndex === "undefined") _m.push("QOL_ReadMinimapIconColorIndex");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var RC = _deps.resolveCachedPanel;
+    var RWP = _deps.resolveWashColorFromPalette;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
+    var ResolveWashColorFromPalette = QOL.resolveWashColorFromPalette || function() { return ""; };
+    var ReadMinimapIconColorIndex = QOL.readMinimapIconColorIndex || function() { return 0; };
 
     var PANEL_ID_MINIMAP = "hud_minimap";
     var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
@@ -143,7 +120,7 @@ function BuildMinimapCrateOverlay(root, mapName) {
         var overlay = panels.root;
         var markers = panels.markers;
         var dataRoot = null;
-        if (typeof QOL_MINIMAP_CRATE_DATA === "object" && QOL_MINIMAP_CRATE_DATA) dataRoot = QOL_MINIMAP_CRATE_DATA;
+        if (QOL.minimapCrateData && QOL.minimapCrateData) dataRoot = QOL_MINIMAP_CRATE_DATA;
         else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
         else if (typeof MINIMAP_DATA === "object" && MINIMAP_DATA) dataRoot = MINIMAP_DATA;
         var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
@@ -779,7 +756,6 @@ var SetCachedPanel = function(k, p) {
         S.minimapDrawOverUiNextReassertMs = 0;
     }
 
-
     function NeedsMinimapRuntimeWork(cfg, raw) {
         if (!cfg) return false;
         var sig = BuildMinimapRuntimeSignature(cfg);
@@ -803,7 +779,7 @@ var SetCachedPanel = function(k, p) {
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("minimapRuntime", {
+    QOL.register("minimapRuntime", {
         configKeys: ["ENABLE_ALT_ZOOM", "ENABLE_TAB_ZOOM", "MINIMAP_BASE_OPACITY",
                      "MINIMAL_MINIMAP", "MINIMAP_ROTATE_WITH_PLAYER", "MINIMAP_FLIP",
                      "ENABLE_MINIMAP_CRATE_OVERLAY", "ENABLE_MINIMAP_REM_TUNNELS",

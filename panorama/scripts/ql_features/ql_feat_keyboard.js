@@ -2,37 +2,15 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var FormatHudPx = U ? U.FormatHudPx : function(v, fb) { var n = Number(v); return isFinite(n) ? n + "px" : (fb !== undefined ? fb + "px" : "0px"); };
-    var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
-    var BuildKeyboardOverlayLayouts = typeof QOL_BuildKeyboardOverlayLayouts !== "undefined" ? QOL_BuildKeyboardOverlayLayouts : function() {};
-    var GetKeyboardCachedPanels = typeof QOL_GetKeyboardCachedPanels !== "undefined" ? QOL_GetKeyboardCachedPanels : function() { return []; };
-    var ResetKeyboardOverlayCaches = typeof QOL_ResetKeyboardOverlayCaches !== "undefined" ? QOL_ResetKeyboardOverlayCaches : function() {};
-    var ResolveWashColorFromPalette = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : function() { return ""; };
-    var ReadKeyboardOverlayWashColorIndex = typeof QOL_ReadKeyboardOverlayWashColorIndex !== "undefined" ? QOL_ReadKeyboardOverlayWashColorIndex : function() { return 0; };
-    var SetWashColorSafe = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : function() {};
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_keyboard";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["buildKeyboardOverlayLayouts","getCachedPanel","getGameplayHudPanel","getKeyboardCachedPanels","readKeyboardOverlayWashColorIndex","resetKeyboardOverlayCaches","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
+    var GC = _deps.getCachedPanel;
+    var GGHP = _deps.getGameplayHudPanel;
+    var RWP = _deps.resolveWashColorFromPalette;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var SWC = _deps.setWashColorSafe;
+    var U = _deps.utils;
     function GetKeyboardBoxCache(allBindingsBox) {
         if (!S.keyboardBoxCaches) S.keyboardBoxCaches = [];
         var next = [];
@@ -224,7 +202,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("keyboardRuntime", {
+    QOL.register("keyboardRuntime", {
         configKeys: ["ENABLE_KEYBOARD_OVERLAY"],
         bucket: 6, phase: -1,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY") || GC("keyboardOverlayRoot") || !!(S.allBindingsBoxes && S.allBindingsBoxes.length > 0); },

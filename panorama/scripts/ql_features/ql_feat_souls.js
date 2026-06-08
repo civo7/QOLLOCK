@@ -3,33 +3,17 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-
-    var PID = "gold_and_ap_container";
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var _dk = "ql_feat_souls";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+        var _dk = "ql_feat_souls";
+    var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils"]);
+    var GC = _deps.getCachedPanel;
+    var RC = _deps.resolveCachedPanel;
+    var S = _deps.state;
+    var U = _deps.utils;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(S.soulsRuntimeStyleSig && String(S.soulsRuntimeStyleSig).length > 0) ||
-            (typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : null)("soulsContainer");
+            QOL.getCachedPanel("soulsContainer");
     }
 
     function hasNonDefaultConfig(cfg) {
@@ -64,7 +48,7 @@
     }
 
     // ── Register ──
-    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("soulsRuntime", {
+    QOL.register("soulsRuntime", {
         configKeys: ["HUD_SOULS_ENABLED", "SOULS_OPACITY", "SOULS_X_OFFSET", "SOULS_Y_OFFSET"],
         bucket: 3, phase: -1,
         gate: gate,

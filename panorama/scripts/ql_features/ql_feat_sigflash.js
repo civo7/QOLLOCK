@@ -2,33 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var PANEL_ID_SIGNATURE = typeof QOL_PANEL_ID_SIGNATURE !== "undefined" ? QOL_PANEL_ID_SIGNATURE : "hud_signature";
-    var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS : "qol_signature_cooldown_pressed";
-    var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_MS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_FLASH_MS : 220;
-    var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = typeof QOL_SIGNATURE_COOLDOWN_PRESS_SCAN_MS !== "undefined" ? QOL_SIGNATURE_COOLDOWN_PRESS_SCAN_MS : 1000;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_sigflash";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","panelIdSignature","signatureCooldownPressFlashClass","signatureCooldownPressFlashMs","signatureCooldownPressScanMs","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var slots = S.signatureCooldownFlashSlots;
@@ -143,7 +122,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("signatureFlash", {
+    QOL.register("signatureFlash", {
         configKeys: ["ENABLE_PASSIVE_COOLDOWN"],
         bucket: 2, phase: -1,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN") || !!S.signatureCooldownFlashWasEnabled; },

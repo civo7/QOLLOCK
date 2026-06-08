@@ -3,32 +3,15 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: itemsRuntime\n");
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var RC = typeof QOL_ResolveCachedPanel !== "undefined" ? QOL_ResolveCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var SWC = typeof QOL_SetWashColorSafe !== "undefined" ? QOL_SetWashColorSafe : undefined;
-    var RWP = typeof QOL_ResolveWashColorFromPalette !== "undefined" ? QOL_ResolveWashColorFromPalette : undefined;
-    var NPC = typeof QOL_NormalizePaletteColorIndex !== "undefined" ? QOL_NormalizePaletteColorIndex : undefined;
-    var IPV = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS.IsPanelValid : null);
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var _dk = "ql_feat_items";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+        var _dk = "ql_feat_items";
+    var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
+    var GC = _deps.getCachedPanel;
+    var RC = _deps.resolveCachedPanel;
+    var RWP = _deps.resolveWashColorFromPalette;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var SWC = _deps.setWashColorSafe;
+    var U = _deps.utils;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
@@ -99,7 +82,7 @@
     }
 
     // ── Register ──
-    (typeof QOL_REGISTER_FEATURE !== "undefined" ? QOL_REGISTER_FEATURE : null)("itemsRuntime", {
+    QOL.register("itemsRuntime", {
         configKeys: ["HUD_ITEMS_ENABLED", "ITEMS_OPACITY", "ITEMS_X_OFFSET",
                      "ITEMS_Y_OFFSET", "ITEMS_WASH_COLOR"],
         bucket: 3, phase: -1,

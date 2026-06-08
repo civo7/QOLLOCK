@@ -2,35 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-    var GetSoulValueFromLabels = typeof QOL_GetSoulValueFromLabels !== "undefined" ? QOL_GetSoulValueFromLabels : function() { return 0; };
-    var GetTopBarPlayerPanel = typeof QOL_GetTopBarPlayerPanel !== "undefined" ? QOL_GetTopBarPlayerPanel : function() { return null; };
-
-    // ── One-shot dependency validation ──
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_unspent";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
-        if (typeof QOL_GetSoulValueFromLabels === "undefined") _m.push("QOL_GetSoulValueFromLabels");
-        if (typeof QOL_GetTopBarPlayerPanel === "undefined") _m.push("QOL_GetTopBarPlayerPanel");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","getSoulValueFromLabels","getTopBarPlayerPanel","state","setCachedPanel","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     // ── Constants ──
     var UNSPENT_MAX_PLAYERS = 13;
@@ -297,7 +274,7 @@
 
     // ── Registration ──
 
-    QOL_REGISTER_FEATURE("unspent", {
+    QOL.register("unspent", {
         configKeys: ["ENABLE_UNSPENT_SOULS"],
         bucket: 2, phase: -1,
         gate: function(cfg) {

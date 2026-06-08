@@ -2,39 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
-    var NormalizeHudOffsetNumber = U ? U.NormalizeHudOffsetNumber : function(v,d) { return Number(v)||d; };
-    var NormalizeHudScaleNumber = U ? U.NormalizeHudScaleNumber : function(v,d) { return Number(v)||d; };
-    var NormalizeOpacityNumber = U ? U.NormalizeOpacityNumber : function(v,d) { return Number(v)||d; };
-    var SetPanelClassCached = typeof QOL_SetPanelClassCached !== "undefined" ? QOL_SetPanelClassCached : function() {};
-
-    // ── Feature-specific constants ──
-    var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
-    var HERO_SHOP_PANEL_SEARCH_MS = 2470;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_heroshop";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_SetPanelClassCached === "undefined") _m.push("QOL_SetPanelClassCached");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     function UpdateHeroShopRuntime(root, cfg, nowMsClass) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
@@ -136,9 +109,8 @@
         }
     }
 
-
     // ── Registration ──
-    QOL_REGISTER_FEATURE("heroShop", {
+    QOL.register("heroShop", {
         configKeys: ["HUD_SHOP_ENABLED", "SHOP_OFFSET_X", "SHOP_OFFSET_Y",
                      "SHOP_OPACITY", "SHOP_SCALE", "ENABLE_SHOP_STATS",
                      "ENABLE_SIMPLIFY_SHOP_STATS", "ENABLE_SHOP_RECENT_PURCHASES",

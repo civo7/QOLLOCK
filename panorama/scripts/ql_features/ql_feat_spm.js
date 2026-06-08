@@ -2,43 +2,12 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var SetPanelClassIfChanged = typeof QOL_SetPanelClassIfChanged !== "undefined" ? QOL_SetPanelClassIfChanged : function() {};
-    var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
-    var EnsureSpmState = typeof QOL_EnsureSpmState !== "undefined" ? QOL_EnsureSpmState : function() {};
-    var ParseClockSeconds = typeof QOL_ParseClockSeconds !== "undefined" ? QOL_ParseClockSeconds : function() { return 0; };
-    var RefreshSpmPanelCache = typeof QOL_RefreshSpmPanelCache !== "undefined" ? QOL_RefreshSpmPanelCache : function() {};
-    var GetSoulValueFromLabels = typeof QOL_GetSoulValueFromLabels !== "undefined" ? QOL_GetSoulValueFromLabels : function() { return 0; };
-    var DetectTopBarPlayerTeam = typeof QOL_DetectTopBarPlayerTeam !== "undefined" ? QOL_DetectTopBarPlayerTeam : function() { return null; };
-
-    // ── One-shot dependency validation ──
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_spm";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_isConnectedToHideout === "undefined") _m.push("QOL_isConnectedToHideout");
-        if (typeof QOL_EnsureSpmState === "undefined") _m.push("QOL_EnsureSpmState");
-        if (typeof QOL_ParseClockSeconds === "undefined") _m.push("QOL_ParseClockSeconds");
-        if (typeof QOL_RefreshSpmPanelCache === "undefined") _m.push("QOL_RefreshSpmPanelCache");
-        if (typeof QOL_GetSoulValueFromLabels === "undefined") _m.push("QOL_GetSoulValueFromLabels");
-        if (typeof QOL_DetectTopBarPlayerTeam === "undefined") _m.push("QOL_DetectTopBarPlayerTeam");
-        if (typeof QOL_SetPanelClassIfChanged === "undefined") _m.push("QOL_SetPanelClassIfChanged");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["detectTopBarPlayerTeam","ensureSpmState","getCachedPanel","getSoulValueFromLabels","parseClockSeconds","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     // ── Private constants ──
     var SPM_MAX_PLAYERS = 13;
@@ -270,7 +239,7 @@
 
     // ── Registration ──
 
-    QOL_REGISTER_FEATURE("spm", {
+    QOL.register("spm", {
         configKeys: ["ENABLE_MIN_SOULS"],
         bucket: 1, phase: 1,
         gate: function(cfg) {

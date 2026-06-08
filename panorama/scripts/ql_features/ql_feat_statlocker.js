@@ -2,41 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelListValid = typeof QOL_IsPanelListValid !== "undefined" ? QOL_IsPanelListValid : function() { return false; };
-    var GetUIRoot = typeof QOL_GetUIRoot !== "undefined" ? QOL_GetUIRoot : function() { return null; };
-    var GetAccountIdForBuildCategoryPayload = typeof QOL_GetAccountIdForBuildCategoryPayload !== "undefined" ? QOL_GetAccountIdForBuildCategoryPayload : function() { return ""; };
-    var IsStartupLoaderInActiveMatchContext = typeof QOL_IsStartupLoaderInActiveMatchContext !== "undefined" ? QOL_IsStartupLoaderInActiveMatchContext : function() { return false; };
-
-    // ── Feature-specific constants ──
-    var STATLOCKER_SCAN_INTERVAL_MS = 1200;
-    var STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_statlocker";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_GetAccountIdForBuildCategoryPayload === "undefined") _m.push("QOL_GetAccountIdForBuildCategoryPayload");
-        if (typeof QOL_GetUIRoot === "undefined") _m.push("QOL_GetUIRoot");
-        if (typeof QOL_IsPanelListValid === "undefined") _m.push("QOL_IsPanelListValid");
-        if (typeof QOL_IsStartupLoaderInActiveMatchContext === "undefined") _m.push("QOL_IsStartupLoaderInActiveMatchContext");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isPanelListValid","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var GUIR = _deps.getUIRoot;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
 
     function ParseAccountIdDigitsFromText(rawText) {
         if (rawText === undefined || rawText === null) return "";
@@ -333,7 +305,7 @@
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("statlocker", {
+    QOL.register("statlocker", {
         configKeys: ["ENABLE_STATLOCKER"],
         bucket: 2, phase: 1,
         gate: function(cfg) {

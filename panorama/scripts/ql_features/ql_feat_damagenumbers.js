@@ -2,41 +2,13 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
-    var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var SetPanelOpacitySafe = U ? U.SetPanelOpacitySafe : function() {};
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelListValid = typeof QOL_IsPanelListValid !== "undefined" ? QOL_IsPanelListValid : function() { return false; };
-    var ResolveDamageNumbersRuntimeSig = typeof QOL_ResolveDamageNumbersRuntimeSig !== "undefined" ? QOL_ResolveDamageNumbersRuntimeSig : function() { return ""; };
-    var RuntimeTaskIsDue = typeof QOL_RuntimeTaskIsDue !== "undefined" ? QOL_RuntimeTaskIsDue : function() { return false; };
-    var RuntimeTaskSetDelay = typeof QOL_RuntimeTaskSetDelay !== "undefined" ? QOL_RuntimeTaskSetDelay : function() {};
-    var PerfStart = typeof QOL_PerfStart !== "undefined" ? QOL_PerfStart : function() {};
-    var PerfEnd = typeof QOL_PerfEnd !== "undefined" ? QOL_PerfEnd : function() {};
-
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
-    var FindAncestorWithClass = typeof QOL_FindAncestorWithClass !== "undefined" ? QOL_FindAncestorWithClass : function() { return null; };
     var _dk = "ql_feat_damagenumbers";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_GetCachedPanel === "undefined") _m.push("QOL_GetCachedPanel");
-        if (typeof QOL_SetCachedPanel === "undefined") _m.push("QOL_SetCachedPanel");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_ResolveDamageNumbersRuntimeSig === "undefined") _m.push("QOL_ResolveDamageNumbersRuntimeSig");
-        if (typeof QOL_RuntimeTaskIsDue === "undefined") _m.push("QOL_RuntimeTaskIsDue");
-        if (typeof QOL_RuntimeTaskSetDelay === "undefined") _m.push("QOL_RuntimeTaskSetDelay");
-        if (typeof QOL_PerfStart === "undefined") _m.push("QOL_PerfStart");
-        if (typeof QOL_FindAncestorWithClass === "undefined") _m.push("QOL_FindAncestorWithClass");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["findAncestorWithClass","getCachedPanel","isPanelListValid","perfEnd","perfStart","resolveDamageNumbersRuntimeSig","runtimeTaskIsDue","runtimeTaskSetDelay","state","setCachedPanel","utils"]);
+    var GC = _deps.getCachedPanel;
+    var S = _deps.state;
+    var SC = _deps.setCachedPanel;
+    var U = _deps.utils;
+    var FindAncestorWithClass = QOL.findAncestorWithClass || function() { return null; };
 
     var DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
     var HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
@@ -320,7 +292,7 @@ function IsIndicatorSmallDamage(panel) {
     }
 
     // ── Registration ──
-    QOL_REGISTER_FEATURE("damageNumbers", {
+    QOL.register("damageNumbers", {
         configKeys: ["ENABLE_CLEAN_DAMAGE_INDICATORS", "ENABLE_HIDE_SMALL_NUMBERS",
                      "ENABLE_HIDE_TROOPER_DAMAGE", "DAMAGE_NUMBER_OPACITY",
                      "ENABLE_DAMAGE_FOUNTAIN", "ENABLE_CUMULATIVE_DMG"],

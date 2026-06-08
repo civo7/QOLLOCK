@@ -2,36 +2,10 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var S = typeof QOL_STATE !== "undefined" ? QOL_STATE : undefined;
-    var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
-    var IsPanelVisibleMaybe = typeof QOL_IsPanelVisibleMaybe !== "undefined" ? QOL_IsPanelVisibleMaybe : function() { return false; };
-    var PushUnique = U ? U.PushUnique : function(arr, panel) { if (!arr || !panel) return; for (var _i = 0; _i < arr.length; _i++) { if (arr[_i] === panel) return; } arr.push(panel); };
-
-    // ── Feature-specific constants ──
-    var ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
-    var ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
-    var ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
-    var ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
-    var PANEL_ID_HUD = typeof QOL_PANEL_ID_HUD !== "undefined" ? QOL_PANEL_ID_HUD : "Hud";
-
-    // One-shot dependency validation
-    if (typeof window !== "undefined" && !window._qol_feat_deps_logged) {
-        window._qol_feat_deps_logged = {};
-    }
     var _dk = "ql_feat_ondeatharcade";
-    if (typeof window !== "undefined" && window._qol_feat_deps_logged && !window._qol_feat_deps_logged[_dk]) {
-        var _m = [];
-        if (typeof QOL_STATE === "undefined") _m.push("QOL_STATE");
-        if (typeof QOL_UTILS === "undefined") _m.push("QOL_UTILS");
-        if (typeof QOL_IsPanelVisibleMaybe === "undefined") _m.push("QOL_IsPanelVisibleMaybe");
-        if (typeof QOL_PANEL_ID_HUD === "undefined") _m.push("QOL_PANEL_ID_HUD");
-        if (_m.length > 0) {
-            $.Msg("[QOLLock] WARNING: " + _dk + " missing bridge globals: " + _m.join(", ") + " - feature may not work");
-        }
-        window._qol_feat_deps_logged[_dk] = true;
-    }
+    var _deps = QOL.import(["isPanelVisibleMaybe","panelIdHud","state","utils"]);
+    var S = _deps.state;
+    var U = _deps.utils;
 
     function ParseOnDeathArcadeRespawnSeconds(rawText) {
         var raw = String(rawText || "").trim();
@@ -187,9 +161,8 @@
         S.onDeathArcadeWasDead = isDead;
     }
 
-
     // ── Registration ──
-    QOL_REGISTER_FEATURE("onDeathArcade", {
+    QOL.register("onDeathArcade", {
         configKeys: ["ENABLE_ON_DEATH_GAMES", "ON_DEATH_GAME_MINESWEEPER",
                      "ON_DEATH_GAME_BLACKJACK", "ON_DEATH_GAME_FLAPPY_BAT",
                      "ON_DEATH_GAME_GRAVES_TRAINER", "ON_DEATH_GAME_ZERGGY_MANIA",
