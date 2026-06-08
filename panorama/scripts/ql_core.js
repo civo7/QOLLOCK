@@ -4252,6 +4252,10 @@ function GetUIRoot() {
     }
 
     var _readEnemyV2BridgeBoolDegradedLogged = false;
+    var _readStorageDiagLogged = false;
+    var _writeStorageDiagLogged = false;
+    var _startupConfigLoadDiagLogged = false;
+    var _startupConfigDefaultDiagLogged = false;
     function ReadEnemyV2BridgeBool(storageKey, fallbackValue) {
         var fallback = !!fallbackValue;
         try {
@@ -4274,21 +4278,29 @@ function GetUIRoot() {
     // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
     function ReadStorageConfigRawFromUi(root) {
         var result = "";
+        var source = "none";
+        var rootLen = 0;
+        var hudLen = 0;
         if (root && root.GetAttributeString) {
             var rootRaw = "";
             try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
+            rootLen = rootRaw.length;
 
             var hud = null;
             try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
             if (!hud || !hud.GetAttributeString) {
                 result = rootRaw;
+                if (rootLen > 0) source = "root_attr";
             } else {
                 var hudRaw = "";
                 try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
+                hudLen = hudRaw.length;
                 if (!hudRaw) {
                     result = rootRaw;
+                    source = rootLen > 0 ? "root_attr" : "none";
                 } else if (!rootRaw) {
                     result = hudRaw;
+                    source = "hud_attr";
                 } else {
                     var parseRev = function(v) {
                         var n = Number(v);
@@ -4300,18 +4312,30 @@ function GetUIRoot() {
                     try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
                     try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
                     result = (hudRev >= rootRev) ? hudRaw : rootRaw;
+                    source = "attr_rev(" + rootRev + "/" + hudRev + ")";
                 }
             }
         }
         // Fallback: if panel attrs are empty (e.g. after game restart), recover from
         // persistentStorage which IS disk-backed and survives restarts.
+        var psLen = 0;
         if (!result || result.length === 0) {
             try {
                 if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
                     var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
-                    if (psRaw && psRaw.length > 0) result = psRaw;
+                    psLen = psRaw.length;
+                    if (psRaw && psRaw.length > 0) { result = psRaw; source = "persistentStorage"; }
+                } else {
+                    source = "no_persistentStorage_api";
                 }
-            } catch (ePs) { $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || ""))); }
+            } catch (ePs) {
+                source = "persistentStorage_error";
+                $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || "")));
+            }
+        }
+        if (!_readStorageDiagLogged) {
+            _readStorageDiagLogged = true;
+            $.Msg("[QOLLock][DIAG][storage] ReadStorageConfig: source=" + source + " resultLen=" + result.length + " rootAttrLen=" + rootLen + " hudAttrLen=" + hudLen + " psLen=" + psLen);
         }
         return result;
     }
@@ -4341,11 +4365,19 @@ function GetUIRoot() {
             try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) { QOL_ERROR("persist", "hud.SetAttributeString(STORAGE_KEY) failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
             try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
+        var psWriteOk = false;
         try {
             if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                 $.persistentStorage.setItem("qol_settings_raw_v1", nextRaw);
+                psWriteOk = true;
             }
         } catch (ePersistWrite) { QOL_ERROR("persist", "persistentStorage.setItem failed: " + (ePersistWrite && ePersistWrite.message ? ePersistWrite.message : String(ePersistWrite || ""))); }
+
+        if (!_writeStorageDiagLogged) {
+            _writeStorageDiagLogged = true;
+            var psAvail = !!($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function");
+            $.Msg("[QOLLock][DIAG][storage] WriteStorageConfig: len=" + nextRaw.length + " rev=" + nextRevision + " hud=" + (hud && hud.SetAttributeString ? "yes" : "no") + " psAvail=" + (psAvail ? "yes" : "no") + " psWriteOk=" + (psWriteOk ? "yes" : "no"));
+        }
 
         return {
             raw: nextRaw,
@@ -13906,6 +13938,10 @@ function GetUIRoot() {
             finalizeResultDetail = "No payload found. Kept current/default config.";
             SettingsLoaderDebugLog("payload_override no payload token found in storage build");
             SetSettingsLoaderDebugOverlayLine("payload missing in storage build");
+            if (!_startupConfigDefaultDiagLogged) {
+                _startupConfigDefaultDiagLogged = true;
+                $.Msg("[QOLLock][DIAG][load] Startup config: no build payload found, using defaults. (Did you save settings in a previous session?)");
+            }
             return ReturnCfgWithProbe(cfg, true);
         }
         SetSettingsLoaderStepState("read_payload", "done", "Payload token found.");
@@ -13953,6 +13989,10 @@ function GetUIRoot() {
             SetBuildCategoryPayloadProbeReturnHeroFromConfig(null, "base_default_hero");
             finalizeResultCode = "default";
             finalizeResultDetail = "Payload decode failed. Kept current/default config.";
+            if (!_startupConfigDefaultDiagLogged) {
+                _startupConfigDefaultDiagLogged = true;
+                $.Msg("[QOLLock][DIAG][load] Startup config: payload found but decode FAILED — " + (parsedResult.error || "unknown") + ". Using defaults.");
+            }
             SettingsLoaderDebugLog(
                 "payload_override decode_failed error=\"" + String(parsedResult.error || "unknown") +
                 "\" misses=" + String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0) +
@@ -14027,6 +14067,10 @@ function GetUIRoot() {
         SetSettingsLoaderStepState("return_hero", "active", "Finalizing and returning hero.");
         finalizeResultCode = "success";
         finalizeResultDetail = "Payload decoded and applied.";
+        if (!_startupConfigLoadDiagLogged) {
+            _startupConfigLoadDiagLogged = true;
+            $.Msg("[QOLLock][DIAG][load] Startup config applied: source=build_payload account=" + accountId + " payloadLen=" + payloadText.length + " configKeys=" + Object.keys(appliedObj || {}).length);
+        }
         SettingsLoaderDebugLog(
             "payload_override applied account=" + accountId +
             " payloadLen=" + String(payloadText.length)
