@@ -25182,8 +25182,11 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_GetUIRoot = GetUIRoot; } catch(e) {}
     try { QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
+    try { QOL_FindZipBoostSource = FindZipBoostSource; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_FindZipBoostSource = FindZipBoostSource; } catch(e) {}
+    try { QOL_BuildKeyboardOverlayLayouts = BuildKeyboardOverlayLayouts; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_BuildKeyboardOverlayLayouts = BuildKeyboardOverlayLayouts; } catch(e) {}
+    try { QOL_FindUnsecuredSoulsSource = FindUnsecuredSoulsSource; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_FindUnsecuredSoulsSource = FindUnsecuredSoulsSource; } catch(e) {}
     try { QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
@@ -25201,10 +25204,15 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
     try { QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
+    try { QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
+    try { QOL_isConnectedToHideout = isConnectedToHideout; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_isConnectedToHideout = isConnectedToHideout; } catch(e) {}
+    try { QOL_IsCombatSignalActive = IsCombatSignalActive; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsCombatSignalActive = IsCombatSignalActive; } catch(e) {}
+    try { QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
+    try { QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
 
     try { QOL_ResolveUnitTargetStyleTexts = ResolveUnitTargetStyleTexts; } catch(e) {}
@@ -25499,31 +25507,57 @@ function GetUIRoot() {
         ].join("|");
     }
     // ── Additional bridge exports for extracted feature files ──
+    try { QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
+    try { QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
+    try { QOL_EstimateUnsecuredSoulsEtaFallbackSec = EstimateUnsecuredSoulsEtaFallbackSec; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_EstimateUnsecuredSoulsEtaFallbackSec = EstimateUnsecuredSoulsEtaFallbackSec; } catch(e) {}
+    try { QOL_ExtractStatDisplayText = ExtractStatDisplayText; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ExtractStatDisplayText = ExtractStatDisplayText; } catch(e) {}
+    try { QOL_FindChatMessageLabel = FindChatMessageLabel; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_FindChatMessageLabel = FindChatMessageLabel; } catch(e) {}
+    try { QOL_FindImagesInChatMessageCacheEntry = FindImagesInChatMessageCacheEntry; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_FindImagesInChatMessageCacheEntry = FindImagesInChatMessageCacheEntry; } catch(e) {}
+    try { QOL_FindNumericLabelTextInTree = FindNumericLabelTextInTree; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_FindNumericLabelTextInTree = FindNumericLabelTextInTree; } catch(e) {}
+    try { QOL_GetGameSecondsForUrn = GetGameSecondsForUrn; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetGameSecondsForUrn = GetGameSecondsForUrn; } catch(e) {}
+    try { QOL_GetImagesInChatMessageCache = GetImagesInChatMessageCache; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetImagesInChatMessageCache = GetImagesInChatMessageCache; } catch(e) {}
+    try { QOL_GetKeyboardCachedPanels = GetKeyboardCachedPanels; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetKeyboardCachedPanels = GetKeyboardCachedPanels; } catch(e) {}
+    try { QOL_GetUnsecuredSoulsDangerLevel = GetUnsecuredSoulsDangerLevel; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_GetUnsecuredSoulsDangerLevel = GetUnsecuredSoulsDangerLevel; } catch(e) {}
+    try { QOL_HarvestGoldenStatuesTooltipValue = HarvestGoldenStatuesTooltipValue; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_HarvestGoldenStatuesTooltipValue = HarvestGoldenStatuesTooltipValue; } catch(e) {}
+    try { QOL_InjectBottomChatImage = InjectBottomChatImage; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_InjectBottomChatImage = InjectBottomChatImage; } catch(e) {}
+    try { QOL_InjectTopChatImage = InjectTopChatImage; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_InjectTopChatImage = InjectTopChatImage; } catch(e) {}
+    try { QOL_IsHudClassActive = IsHudClassActive; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsHudClassActive = IsHudClassActive; } catch(e) {}
+    try { QOL_IsPanelVisibleMaybe = IsPanelVisibleMaybe; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsPanelVisibleMaybe = IsPanelVisibleMaybe; } catch(e) {}
+    try { QOL_IsStatBonusTokenZero = IsStatBonusTokenZero; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_IsStatBonusTokenZero = IsStatBonusTokenZero; } catch(e) {}
+    try { QOL_ParseUnsecuredSoulsValue = ParseUnsecuredSoulsValue; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ParseUnsecuredSoulsValue = ParseUnsecuredSoulsValue; } catch(e) {}
+    try { QOL_PerfNowMs = PerfNowMs; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_PerfNowMs = PerfNowMs; } catch(e) {}
+    try { QOL_PruneImagesInChatMessageCache = PruneImagesInChatMessageCache; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_PruneImagesInChatMessageCache = PruneImagesInChatMessageCache; } catch(e) {}
+    try { QOL_ResetKeyboardOverlayCaches = ResetKeyboardOverlayCaches; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ResetKeyboardOverlayCaches = ResetKeyboardOverlayCaches; } catch(e) {}
+    try { QOL_ResetUnsecuredSoulsTracking = ResetUnsecuredSoulsTracking; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ResetUnsecuredSoulsTracking = ResetUnsecuredSoulsTracking; } catch(e) {}
+    try { QOL_ResolveGoldenStatBonusesValue = ResolveGoldenStatBonusesValue; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ResolveGoldenStatBonusesValue = ResolveGoldenStatBonusesValue; } catch(e) {}
+    try { QOL_ResolveStatBonusesSource = ResolveStatBonusesSource; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ResolveStatBonusesSource = ResolveStatBonusesSource; } catch(e) {}
+    try { QOL_StatBonusesDebugLogThrottled = StatBonusesDebugLogThrottled; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_StatBonusesDebugLogThrottled = StatBonusesDebugLogThrottled; } catch(e) {}
+    try { QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
 
 })();
