@@ -8,7 +8,7 @@
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
-    var SetPanelClassIfChanged = U ? U.SetPanelClassIfChanged : function() {};
+    var SetPanelClassIfChanged = typeof QOL_SetPanelClassIfChanged !== "undefined" ? QOL_SetPanelClassIfChanged : function() {};
     var isConnectedToHideout = typeof QOL_isConnectedToHideout !== "undefined" ? QOL_isConnectedToHideout : function() { return false; };
     var EnsureSpmState = typeof QOL_EnsureSpmState !== "undefined" ? QOL_EnsureSpmState : function() {};
     var ParseClockSeconds = typeof QOL_ParseClockSeconds !== "undefined" ? QOL_ParseClockSeconds : function() { return 0; };
@@ -33,6 +33,7 @@
         if (typeof QOL_RefreshSpmPanelCache === "undefined") _m.push("QOL_RefreshSpmPanelCache");
         if (typeof QOL_GetSoulValueFromLabels === "undefined") _m.push("QOL_GetSoulValueFromLabels");
         if (typeof QOL_DetectTopBarPlayerTeam === "undefined") _m.push("QOL_DetectTopBarPlayerTeam");
+        if (typeof QOL_SetPanelClassIfChanged === "undefined") _m.push("QOL_SetPanelClassIfChanged");
         if (_m.length > 0) {
             $.Msg("[QOLLock] WARNING: " + _dk + " missing " + _m.length + " bridge(s): " + _m.join(", ") + " — feature will fail");
         }
