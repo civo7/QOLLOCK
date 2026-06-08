@@ -11,6 +11,9 @@
     var SC = _deps.setCachedPanel;
     var SWC = _deps.setWashColorSafe;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var FormatHudPx = U.FormatHudPx;
     function GetKeyboardBoxCache(allBindingsBox) {
         if (!S.keyboardBoxCaches) S.keyboardBoxCaches = [];
         var next = [];

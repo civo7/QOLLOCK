@@ -9,6 +9,8 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
     var ParseUnsecuredSoulsValue = QOL.parseUnsecuredSoulsValue || function() { return 0; };
 
     var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;

@@ -8,6 +8,9 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var SetStyleSafe = U.SetStyleSafe;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
 
     // ── Constants ──
     var SOUND_DEBUG = false;

@@ -8,6 +8,9 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
 
     function UpdateHeroShopRuntime(root, cfg, nowMsClass) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);

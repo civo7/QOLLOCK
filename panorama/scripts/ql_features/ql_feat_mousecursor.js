@@ -8,6 +8,7 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsPanelValid = U.IsPanelValid;
     var GAMEPLAY_MOUSE_CURSOR_ENABLED = _deps.gameplayMouseCursorEnabled;
     var GAMEPLAY_MOUSE_CURSOR_HALF_PX = _deps.gameplayMouseCursorHalfPx;
     var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = _deps.gameplayMouseCursorImagePath;

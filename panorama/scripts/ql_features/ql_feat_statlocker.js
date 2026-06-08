@@ -9,6 +9,9 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var IsPanelListValid = U.IsPanelListValid;
 
     function ParseAccountIdDigitsFromText(rawText) {
         if (rawText === undefined || rawText === null) return "";

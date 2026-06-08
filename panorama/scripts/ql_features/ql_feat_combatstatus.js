@@ -11,6 +11,8 @@
     var SC = _deps.setCachedPanel;
     var SWC = _deps.setWashColorSafe;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
     // ── Feature constants ──
     var COMBAT_STATUS_RECOVERY_MS = 3000;
     var COMBAT_STATUS_ALERT_PROBE_MS = 500;

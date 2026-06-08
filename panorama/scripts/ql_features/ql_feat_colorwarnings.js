@@ -10,6 +10,10 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var SetStyleSafe = U.SetStyleSafe;
+    var ClearStyleSafe = U.ClearStyleSafe;
 
     var ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
     var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;

@@ -8,6 +8,8 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
 
     function IsLanePreferenceWithPartySelected(selector) {
         if (!selector || !IsPanelValid(selector)) return false;

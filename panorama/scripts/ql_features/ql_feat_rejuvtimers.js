@@ -9,6 +9,10 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var SetPanelClassIfChanged = U.SetPanelClassIfChanged;
 
     // ── Constants ──
     const REJUV_DURATION_SEC = 240;

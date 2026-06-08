@@ -6,6 +6,8 @@
     var _deps = QOL.import(["applyTargetShapeStyles","resolveUnitTargetStyleTexts","state","utils"]);
     var S = _deps.state;
     var U = _deps.utils;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var IsPanelListValid = U.IsPanelListValid;
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;

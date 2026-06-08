@@ -8,6 +8,10 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
     var IsPanelVisibleMaybe = QOL.isPanelVisibleMaybe || function() { return false; };
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;

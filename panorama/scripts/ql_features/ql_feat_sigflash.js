@@ -8,6 +8,8 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
     var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = _deps.signatureCooldownPressFlashClass;
     var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = _deps.signatureCooldownPressFlashMs;
     var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = _deps.signatureCooldownPressScanMs;

@@ -10,6 +10,13 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var PerfNowMs = U.PerfNowMs;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var SetStyleSafe = U.SetStyleSafe;
+    var ClearStyleSafe = U.ClearStyleSafe;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var IsPanelListValid = U.IsPanelListValid;
     var ResolveWashColorFromPalette = QOL.resolveWashColorFromPalette || function() { return ""; };
     var ReadMinimapIconColorIndex = QOL.readMinimapIconColorIndex || function() { return 0; };
 

@@ -8,6 +8,9 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var PerfNowMs = U.PerfNowMs;
     function ResetImagesInChatContainerState(watermarkKey, fullScanKey, cacheKey) {
         S[watermarkKey] = "";
         S[fullScanKey] = 0;

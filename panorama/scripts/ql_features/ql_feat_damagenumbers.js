@@ -8,6 +8,11 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
+    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var IsPanelListValid = U.IsPanelListValid;
+    var PerfNowMs = U.PerfNowMs;
     var FindAncestorWithClass = QOL.findAncestorWithClass || function() { return null; };
 
     var DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";

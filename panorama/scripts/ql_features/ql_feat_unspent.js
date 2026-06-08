@@ -8,6 +8,8 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsCfgEnabled = U.IsCfgEnabled;
+    var IsPanelValid = U.IsPanelValid;
 
     // ── Constants ──
     var UNSPENT_MAX_PLAYERS = 13;
