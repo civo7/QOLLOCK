@@ -8855,6 +8855,113 @@ function GetUIRoot() {
     }
 
 
+    function ResolveUnitTargetStyleTexts(cfg) {
+        var unitTargetSize = (cfg && cfg.UNIT_TARGET_SIZE !== undefined && cfg.UNIT_TARGET_SIZE !== null)
+            ? Math.round(Number(cfg.UNIT_TARGET_SIZE))
+            : 150;
+        var unitTargetOpacity = (cfg && cfg.UNIT_TARGET_OPACITY !== undefined && cfg.UNIT_TARGET_OPACITY !== null)
+            ? parseFloat(cfg.UNIT_TARGET_OPACITY)
+            : 1.0;
+        var unitTargetHintSize = (cfg && cfg.UNIT_TARGET_HINT_SIZE !== undefined && cfg.UNIT_TARGET_HINT_SIZE !== null)
+            ? Math.round(Number(cfg.UNIT_TARGET_HINT_SIZE))
+            : 100;
+
+        if (!isFinite(unitTargetSize)) unitTargetSize = 150;
+        if (!isFinite(unitTargetOpacity)) unitTargetOpacity = 1.0;
+        if (!isFinite(unitTargetHintSize)) unitTargetHintSize = 100;
+        if (unitTargetSize < 50) unitTargetSize = 50;
+        if (unitTargetSize > 300) unitTargetSize = 300;
+        if (unitTargetOpacity < 0) unitTargetOpacity = 0;
+        if (unitTargetOpacity > 1) unitTargetOpacity = 1;
+        if (unitTargetHintSize < 50) unitTargetHintSize = 50;
+        if (unitTargetHintSize > 200) unitTargetHintSize = 200;
+
+        return {
+            scaleText: (unitTargetSize / 100).toFixed(3),
+            opacityText: unitTargetOpacity.toFixed(2),
+            hintScaleText: (unitTargetHintSize / 100).toFixed(3)
+        };
+    }
+
+    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
+        var redDiamondActive = !!redDiamondEnabledHint;
+        if (!redDiamondActive && root && root.BHasClass) {
+            try {
+                redDiamondActive = !!root.BHasClass("red_diamond_active");
+            } catch (e0) {
+                redDiamondActive = false;
+            }
+        }
+
+        var defaultStyle = GetUnitTargetDefaultStyleTexts();
+        var isDefaultUnitTargetStyle =
+            !redDiamondActive &&
+            scaleText === defaultStyle.scaleText &&
+            opacityText === defaultStyle.opacityText &&
+            (hintScaleText || "1.000") === defaultStyle.hintScaleText;
+        var needsCleanupPass = isDefaultUnitTargetStyle && !!State.targetShapeHadNonDefaultRuntime;
+
+        if (isDefaultUnitTargetStyle && !needsCleanupPass) {
+            State.targetShapesCache = [];
+            State.hintContainerCache = [];
+            State.targetShapeStyleSig = "";
+            State.nextTargetShapeRefreshMs = 0;
+            return;
+        }
+
+        var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0") + "|" + (hintScaleText || "1.000");
+        var styleChanged = (styleSig !== State.targetShapeStyleSig);
+        var cacheValid = IsPanelListValid(State.targetShapesCache);
+        var shouldRefreshList = needsCleanupPass || styleChanged || !cacheValid || nowMs >= (State.nextTargetShapeRefreshMs || 0);
+        if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
+
+        if (shouldRefreshList) {
+            State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
+            State.hintContainerCache = root.FindChildrenWithClassTraverse("qol_hint_target") || [];
+            var _tsDefaultStyle = GetUnitTargetDefaultStyleTexts();
+            var _tsRefreshMs = (
+                redDiamondActive ||
+                styleChanged ||
+                scaleText !== _tsDefaultStyle.scaleText ||
+                opacityText !== _tsDefaultStyle.opacityText ||
+                (hintScaleText || "1.000") !== _tsDefaultStyle.hintScaleText
+            ) ? 60 : 1000;
+            State.nextTargetShapeRefreshMs = nowMs + _tsRefreshMs;
+        }
+
+        var targetShapes = State.targetShapesCache || [];
+        for (var ts = 0; ts < targetShapes.length; ts++) {
+            var shape = targetShapes[ts];
+            if (!shape) continue;
+            if (shape.style.preTransformScale2d !== scaleText) {
+                shape.style.preTransformScale2d = scaleText;
+            }
+            SetPanelOpacitySafe(shape, opacityText, 1.0);
+        }
+        var hintContainers = State.hintContainerCache || [];
+        for (var hc = 0; hc < hintContainers.length; hc++) {
+            var hint = hintContainers[hc];
+            if (!hint) continue;
+            if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
+                hint.style.preTransformScale2d = (hintScaleText || "1.000");
+            }
+        }
+        State.targetShapeStyleSig = styleSig;
+        if (!isDefaultUnitTargetStyle) {
+            State.targetShapeHadNonDefaultRuntime = true;
+            return;
+        }
+
+        if (needsCleanupPass) {
+            State.targetShapeHadNonDefaultRuntime = false;
+            State.targetShapesCache = [];
+            State.hintContainerCache = [];
+            State.targetShapeStyleSig = "";
+            State.nextTargetShapeRefreshMs = 0;
+        }
+    }
+
+
     var UnitTargetDefaultStyleTexts = null;
 
     function GetUnitTargetDefaultStyleTexts() {
