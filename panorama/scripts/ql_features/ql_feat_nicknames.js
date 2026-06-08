@@ -10,7 +10,7 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
-    var SetPanelClassIfChanged = U.SetPanelClassIfChanged;
+    var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
 
     // ── Constants ──
     var SPM_MAX_PLAYERS = 13;

@@ -10,7 +10,7 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
-    var SetPanelClassIfChanged = U.SetPanelClassIfChanged;
+    var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
     var EnsureSpmState = _deps.ensureSpmState;
     var ParseClockSeconds = _deps.parseClockSeconds;
     var RefreshSpmPanelCache = _deps.refreshSpmPanelCache;
