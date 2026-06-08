@@ -10728,6 +10728,8 @@ function GetUIRoot() {
             if (resolvedResultCode === "success" || resolvedResultCode === "default") {
                 State.buildCategoryPayloadStartupConsumedAccountId = accountId ? String(accountId) : "";
                 State.buildCategoryPayloadStartupConsumedResult = resolvedResultCode;
+                State.buildCategoryPayloadDormant = true;
+                State.buildCategoryPayloadDormantReason = resolvedResultCode === "success" ? "load_done" : "load_default";
             }
             State.buildCategoryPayloadHeroProbeDoneAccountId = accountId ? String(accountId) : "";
             FinalizeSettingsLoaderSession(resolvedResultCode, resolvedResultDetail, now);
