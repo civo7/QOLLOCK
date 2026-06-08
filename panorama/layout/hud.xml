@@ -46,6 +46,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_legacyaudiopassive.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_spm.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_unspent.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_nicknames.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
