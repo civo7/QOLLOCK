@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_lanewithparty";
-    var _deps = QOL.import(["activatePanelSafe", "getCachedPanel", "isPanelVisibleMaybe", "readPanelIdTextMaybe", "readPanelTextDeepMaybe", "state", "setCachedPanel", "utils", "lanePrefSelectorId"]);
+    var _deps = QOL.import(["activatePanelSafe", "getCachedPanel", "isPanelVisibleMaybe", "readPanelIdTextMaybe", "readPanelTextDeepMaybe", "state", "setCachedPanel", "utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -14,7 +14,7 @@
     var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;
     var ReadPanelIdTextMaybe = _deps.readPanelIdTextMaybe;
     var ReadPanelTextDeepMaybe = _deps.readPanelTextDeepMaybe;
-    var LANE_PREF_SELECTOR_ID = _deps.lanePrefSelectorId;
+    var LANE_PREF_SELECTOR_ID = "LanePreferenceSelector";
 
     var LANE_PREF_APPLY_INTERVAL_MS = 650;
     var LANE_PREF_HIDDEN_INTERVAL_MS = 2630;

@@ -3,12 +3,12 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_ondeatharcade";
-    var _deps = QOL.import(["isPanelVisibleMaybe","panelIdHud","state","utils"]);
+    var _deps = QOL.import(["isPanelVisibleMaybe","state","utils"]);
     var S = _deps.state;
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
-    var PANEL_ID_HUD = _deps.panelIdHud;
+    var PANEL_ID_HUD = QOL_PANEL_ID_HUD;
     function ParseOnDeathArcadeRespawnSeconds(rawText) {
         var raw = String(rawText || "").trim();
         if (raw.length <= 0) return -1;

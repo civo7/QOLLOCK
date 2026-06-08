@@ -3,16 +3,16 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_mousecursor";
-    var _deps = QOL.import(["gameplayMouseCursorEnabled","gameplayMouseCursorHalfPx","gameplayMouseCursorImagePath","gameplayMouseCursorImagePathFallback","getCachedPanel","isHudClassActive","isPanelVisibleMaybe","isStartupLoaderInActiveMatchContext","state","setCachedPanel","tryGetGameplayMouseCursorPosition","utils"]);
+    var _deps = QOL.import(["getCachedPanel","isHudClassActive","isPanelVisibleMaybe","isStartupLoaderInActiveMatchContext","state","setCachedPanel","tryGetGameplayMouseCursorPosition","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
     var IsPanelValid = U.IsPanelValid;
-    var GAMEPLAY_MOUSE_CURSOR_ENABLED = _deps.gameplayMouseCursorEnabled;
-    var GAMEPLAY_MOUSE_CURSOR_HALF_PX = _deps.gameplayMouseCursorHalfPx;
-    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = _deps.gameplayMouseCursorImagePath;
-    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = _deps.gameplayMouseCursorImagePathFallback;
+    var GAMEPLAY_MOUSE_CURSOR_ENABLED = true;
+    var GAMEPLAY_MOUSE_CURSOR_HALF_PX = 27;
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH + "_c";
     var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
     var IsHudClassActive = _deps.isHudClassActive;
     var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;

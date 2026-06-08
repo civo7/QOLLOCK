@@ -966,11 +966,6 @@
     const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // WHY: sanity cap prevents runaway layout values from corrupting HUD; 100k px is far beyond any valid screen position
     const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // WHY: feature-gate constant — set false to globally disable the custom cursor without touching config
     const GAMEPLAY_MOUSE_CURSOR_SIZE_PX = 54;
-    const GAMEPLAY_MOUSE_CURSOR_HALF_PX = Math.floor(GAMEPLAY_MOUSE_CURSOR_SIZE_PX * 0.5);
-    // WHY: goat_sigilslam icon chosen as cursor image because it's a distinctive,
-    // always-available s2r:// asset that loads reliably in all game modes
-    const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex";
-    const GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = "s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex_c";
     // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
     // WHY: combat recovery at 3s matches the game's own out-of-combat timer (player stops taking damage for 3s)
@@ -1009,10 +1004,6 @@
     const UNSECURED_SOULS_FALLBACK_FLAT_GROWTH = 0.08;
     const UNSECURED_SOULS_THRESH_YELLOW = 500;
     const UNSECURED_SOULS_THRESH_RED = 1000;
-    const SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = "qol_signature_cooldown_pressed";
-    // WHY: 220ms flash matches the game's own ability press feedback animation duration
-    const SIGNATURE_COOLDOWN_PRESS_FLASH_MS = 220;
-    const SIGNATURE_COOLDOWN_PRESS_SCAN_MS = 1000;
     const STAT_BONUSES_DEBUG = false;
     const STAT_BONUSES_DEBUG_MIN_INTERVAL_MS = 600;
     const STAT_BONUSES_SOURCE_SEARCH_MS = 500;
@@ -1121,8 +1112,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
     const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
-    const BRIDGE_DURATION_SEC = 300;
-    const BUFF_LOCKOUT_SEC = 120;
     const MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
     const MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
     const MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
@@ -1403,7 +1392,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const HERO_RESTORE_MAX_WAIT_MS = 3200;
     const HERO_RESTORE_MAX_RETRIES = 1;
     const HERO_RESTORE_BLIND_SUCCESS_MS = 800;   // reduced from 1300
-    const LANE_PREF_SELECTOR_ID = "LanePreferenceSelector";
     const LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
     const LANE_PREF_APPLY_INTERVAL_MS = 650;
     const LANE_PREF_HIDDEN_INTERVAL_MS = 2630;
@@ -1420,36 +1408,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "isTier1Purchase", "isTier2Purchase", "isTier3Purchase", "isTier4Purchase",
         "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
         "isTeam1Purchase", "isTeam2Purchase"
-    ];
-    const RECENT_PURCHASE_FILTERS = [
-        { id: "Tier1Toggle", label: "T1", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier1Purchase"); } },
-        { id: "Tier2Toggle", label: "T2", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier2Purchase"); } },
-        { id: "Tier3Toggle", label: "T3", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier3Purchase"); } },
-        { id: "Tier4Toggle", label: "T4", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier4Purchase"); } },
-        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam1Purchase"); } },
-        { id: "Team2OnlyToggle", label: "Archmother", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam2Purchase"); } },
-        { id: "MyTeamToggle", label: "My Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam1Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam2Purchase");
-              return false;
-          } },
-        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam2Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam1Purchase");
-              return false;
-          } }
     ];
     const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
     // ── Minecraft healthbar ────────────────────────────────────────────────────
@@ -21559,7 +21517,6 @@ function GetUIRoot() {
         ["findNumericLabelTextInTree", function() { return FindNumericLabelTextInTree; }],
         ["findUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
         ["findZipBoostSource", function() { return FindZipBoostSource; }],
-        ["gameplayMouseCursorEnabled", function() { return GAMEPLAY_MOUSE_CURSOR_ENABLED; }],
         ["getAccountIdForBuildCategoryPayload", function() { return GetAccountIdForBuildCategoryPayload; }],
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
@@ -21582,7 +21539,6 @@ function GetUIRoot() {
         ["isConnectedToHideout", function() { return isConnectedToHideout; }],
         ["isCustomHudContextActive", function() { return IsCustomHudContextActive; }],
         ["isHudClassActive", function() { return IsHudClassActive; }],
-        ["lanePrefSelectorId", function() { return LANE_PREF_SELECTOR_ID; }],
         ["isHudVisibleForTopBarRuntime", function() { return IsHudVisibleForTopBarRuntime; }],
         ["isPanelListValid", function() { return IsPanelListValid; }],
         ["isPanelVisibleMaybe", function() { return IsPanelVisibleMaybe; }],
@@ -21604,7 +21560,6 @@ function GetUIRoot() {
         ["perfStart", function() { return PerfStart; }],
         ["pruneImagesInChatMessageCache", function() { return PruneImagesInChatMessageCache; }],
         ["readAmmoTextColorIndex", function() { return ReadAmmoTextColorIndex; }],
-        ["recentPurchaseFilters", function() { return RECENT_PURCHASE_FILTERS; }],
         ["readBottomBarWashColorIndex", function() { return ReadBottomBarWashColorIndex; }],
         ["readKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
         ["readStaminaChargeColorIndex", function() { return ReadStaminaChargeColorIndex; }],
@@ -21623,25 +21578,14 @@ function GetUIRoot() {
         ["setCachedPanel", function() { return SetCachedPanel; }],
         ["setPanelClassCached", function() { return SetPanelClassCached; }],
         ["activatePanelSafe", function() { return ActivatePanelSafe; }],
-        ["bridgeDurationSec", function() { return BRIDGE_DURATION_SEC; }],
-        ["buffLockoutSec", function() { return BUFF_LOCKOUT_SEC; }],
         ["findAncestorWithClass", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.FindAncestorWithClass : function() { return null; }; }],
-        ["gameplayMouseCursorEnabled", function() { return GAMEPLAY_MOUSE_CURSOR_ENABLED; }],
-        ["gameplayMouseCursorHalfPx", function() { return GAMEPLAY_MOUSE_CURSOR_HALF_PX; }],
         ["readPanelIdTextMaybe", function() { return ReadPanelIdTextMaybe; }],
         ["readPanelTextDeepMaybe", function() { return ReadPanelTextDeepMaybe; }],
-        ["gameplayMouseCursorImagePath", function() { return GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH; }],
-        ["gameplayMouseCursorImagePathFallback", function() { return GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK; }],
         ["panelHasClassToken", function() { return PanelHasClassToken; }],
         ["panelIdGoldApContainer", function() { return PANEL_ID_GOLD_AP_CONTAINER; }],
-        ["panelIdHeroShop", function() { return PANEL_ID_HERO_SHOP; }],
-        ["panelIdHud", function() { return PANEL_ID_HUD; }],
         ["panelIdSignature", function() { return PANEL_ID_SIGNATURE; }],
         ["panelIdTopBar", function() { return PANEL_ID_TOP_BAR; }],
         ["readMinimapIconColorIndex", function() { return ReadMinimapIconColorIndex; }],
-        ["signatureCooldownPressFlashClass", function() { return SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS; }],
-        ["signatureCooldownPressFlashMs", function() { return SIGNATURE_COOLDOWN_PRESS_FLASH_MS; }],
-        ["signatureCooldownPressScanMs", function() { return SIGNATURE_COOLDOWN_PRESS_SCAN_MS; }],
         ["setPanelClassIfChanged", function() { return SetPanelClassIfChanged; }],
         ["setWashColorSafe", function() { return SetWashColorSafe; }],
         ["statBonusesAbilityCooldownIds", function() { return STAT_BONUSES_ABILITY_COOLDOWN_IDS; }],
@@ -21658,7 +21602,7 @@ function GetUIRoot() {
         try {
             QOL[_ek] = _getter();
         } catch(e) {
-            _qolFailed.push(_ek);
+            _qolFailed.push(_ek + " [" + (e && e.message ? e.message : String(e)) + "]");
         }
     }
     if (_qolFailed.length > 0) {
@@ -21769,7 +21713,7 @@ function GetUIRoot() {
         try {
             _compatCtx[_ck] = _cgetter();
         } catch(e) {
-            _compatFailed.push(_ck);
+            _compatFailed.push(_ck + " [" + (e && e.message ? e.message : String(e)) + "]");
         }
     }
     if (_compatFailed.length > 0) {

@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber", "recentPurchaseFilters"]);
+    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -23,7 +23,36 @@
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     var CLASS_RECENT_PURCHASE = "recentPurchase";
-    var RECENT_PURCHASE_FILTERS = _deps.recentPurchaseFilters;
+    var RECENT_PURCHASE_FILTERS = [
+        { id: "Tier1Toggle", label: "T1", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier1Purchase"); } },
+        { id: "Tier2Toggle", label: "T2", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier2Purchase"); } },
+        { id: "Tier3Toggle", label: "T3", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier3Purchase"); } },
+        { id: "Tier4Toggle", label: "T4", group: "tier", active: true, invert: true,
+          ShouldHideItem: function(p) { return p.BHasClass("isTier4Purchase"); } },
+        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
+          ShouldHideItem: function(p) { return p.BHasClass("isTeam1Purchase"); } },
+        { id: "Team2OnlyToggle", label: "Archmother", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
+          ShouldHideItem: function(p) { return p.BHasClass("isTeam2Purchase"); } },
+        { id: "MyTeamToggle", label: "My Team", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
+          ShouldHideItem: function(p, ctx) {
+              if (ctx.localTeam === 1) return p.BHasClass("isTeam1Purchase");
+              if (ctx.localTeam === 2) return p.BHasClass("isTeam2Purchase");
+              return false;
+          } },
+        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", active: true, invert: true,
+          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
+          ShouldHideItem: function(p, ctx) {
+              if (ctx.localTeam === 1) return p.BHasClass("isTeam2Purchase");
+              if (ctx.localTeam === 2) return p.BHasClass("isTeam1Purchase");
+              return false;
+          } }
+    ];
 function GetRecentPurchaseName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";

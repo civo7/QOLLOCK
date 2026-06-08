@@ -3,16 +3,16 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_sigflash";
-    var _deps = QOL.import(["getCachedPanel","panelIdSignature","signatureCooldownPressFlashClass","signatureCooldownPressFlashMs","signatureCooldownPressScanMs","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel","panelIdSignature","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
-    var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = _deps.signatureCooldownPressFlashClass;
-    var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = _deps.signatureCooldownPressFlashMs;
-    var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = _deps.signatureCooldownPressScanMs;
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = "qol_signature_cooldown_pressed";
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = 220;
+    var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = 1000;
     var PANEL_ID_SIGNATURE = _deps.panelIdSignature;
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
