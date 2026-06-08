@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
+    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber", "recentPurchaseFilters"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -23,6 +23,7 @@
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     var CLASS_RECENT_PURCHASE = "recentPurchase";
+    var RECENT_PURCHASE_FILTERS = _deps.recentPurchaseFilters;
 function GetRecentPurchaseName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";

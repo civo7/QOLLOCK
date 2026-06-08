@@ -20,7 +20,13 @@
     var ResolveStatBonusesSource = _deps.resolveStatBonusesSource;
     var StatBonusesDebugLogThrottled = _deps.statBonusesDebugLogThrottled;
     var isConnectedToHideout = _deps.isConnectedToHideout;
+    var STAT_BONUSES_DEBUG = false;
     var STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
+    var STAT_BONUSES_ABILITY_COOLDOWN_IDS = ["StatContainer_TechCooldown", "StatContainer_AbilityCooldown", "StatContainer_AbilityCooldownReduction", "StatContainer_CooldownReduction", "StatContainer_Cooldown", "StatContainer_CooldownDecrease", "StatContainer_AbilityCD"];
+    var STAT_BONUSES_SPIRIT_POWER_IDS = ["StatContainer_TechPower", "StatContainer_SpiritPower", "StatContainer_Spirit"];
+    var STAT_BONUSES_CLIP_SIZE_IDS = ["StatContainer_ClipSizeIncrease", "StatContainer_ClipSize", "StatContainer_ClipSizeBonus", "StatContainer_AmmoCapacity"];
+    var STAT_BONUSES_WEAPON_DAMAGE_IDS = ["StatContainer_BaseWeaponDamage", "StatContainer_BonusBaseWeaponDamage", "StatContainer_BaseAttackDamagePercent", "StatContainer_BulletDamage"];
+    var STAT_BONUSES_MAX_HEALTH_IDS = ["StatContainer_MaxHealth", "StatContainer_BaseHealth", "StatContainer_ArmorPower"];
     function EnsureStatBonusesOverlay(root) {
         var overlay = GC("statBonusesOverlay");
         if (IsPanelValid(overlay)) {
