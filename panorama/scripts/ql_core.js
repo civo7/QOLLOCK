@@ -21214,12 +21214,13 @@ function GetUIRoot() {
         if (State.accountPresetTestActive) {
             State.accountPresetTestActive = false;
         }
-        if (State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted ||
+        var _settingsLoaderShowing = State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted;
+        if (_settingsLoaderShowing ||
             State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
             State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
             if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
-            if (ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
-            if (ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+            if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
+            if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
         }
         State.lastRawConfig = raw;
 
