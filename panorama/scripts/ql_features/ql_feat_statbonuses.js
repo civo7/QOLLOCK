@@ -10,6 +10,7 @@
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var GetGameplayHudPanel = typeof QOL_GetGameplayHudPanel !== "undefined" ? QOL_GetGameplayHudPanel : function() { return null; };
     var STAT_BONUSES_DEBUG = false;
+    var CLASS_IS_ZERO_VALUE = "isZeroValue";
     var STAT_BONUSES_DEBUG_MIN_INTERVAL_MS = 600;
     var STAT_BONUSES_SOURCE_SEARCH_MS = 500;
     var STAT_BONUSES_TOOLTIP_SCAN_MS = 250;
