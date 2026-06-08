@@ -14572,9 +14572,9 @@ function GetUIRoot() {
                 FinalizeSaveSettingsLoaderSession("failed", detail || "Save failed.", nowMs, didSwitchToStorageHero);
             }
         }
-        SetBuildSaveStatus(root, state, message, token);
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
+        SetBuildSaveStatus(root, state, message, token);
     }
 
     function FinishBuildClearRequest(root, token, state, message) {
