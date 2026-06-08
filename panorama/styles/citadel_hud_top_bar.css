@@ -1015,8 +1015,16 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	margin-top: 133px;
 }
 
-.gScoreboardOpen #QuickPurchasesPanel.rp_quick_scoreboard_active
+.gScoreboardOpen #QuickPurchasesPanel,
+.gScoreboardOpen .QuickPurchasesPanel
 {
+	visibility: collapse;
+}
+
+.gScoreboardOpen #QuickPurchasesPanel.rp_quick_scoreboard_active,
+.gScoreboardOpen .QuickPurchasesPanel.rp_quick_scoreboard_active
+{
+	visibility: visible;
 	ui-scale: 85%;
 	margin-top: 175px;
 }
