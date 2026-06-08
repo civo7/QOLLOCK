@@ -4383,7 +4383,7 @@ function GetUIRoot() {
                     $.persistentStorage.setItem("qol_config_corruption_detected", String(PerfNowMs()));
                     $.persistentStorage.setItem("qol_last_corruption_key", backupKey);
                 }
-            } catch (eCorruptFlag) {}
+            } catch (eCorruptFlag) { $.Msg("[QOLLock][WARN][storage] Failed to write corruption flag to persistentStorage: " + (eCorruptFlag && eCorruptFlag.message ? eCorruptFlag.message : String(eCorruptFlag || ""))); }
             $.Msg("\n====================================================================\n");
             $.Msg("[QOLLOCK] WARNING: Your settings were corrupted and have been reset to defaults.\n");
             $.Msg("[QOLLOCK] A backup of the corrupt data has been saved for recovery.\n");
@@ -4399,7 +4399,7 @@ function GetUIRoot() {
                 if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                     $.persistentStorage.setItem("qol_settings_raw_v1", "");
                 }
-            } catch (eClear) {}
+            } catch (eClear) { $.Msg("[QOLLock][WARN][storage] Failed to clear corrupt config from persistentStorage: " + (eClear && eClear.message ? eClear.message : String(eClear || ""))); }
             QOL_WARN("config", "corrupt config cleared, using defaults");
             return null;
         }

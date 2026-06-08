@@ -11486,7 +11486,7 @@ function BuildSchemaFieldMap(version) {
     var map = {};
     var schema = [];
     var schemaSemver = String(version || LATEST_COMPACT_SEMVER);
-    try { schema = GetCompactSchema(schemaSemver) || []; } catch (e0) { schema = []; }
+    try { schema = GetCompactSchema(schemaSemver) || []; } catch (e0) { $.Msg("[QOLLock][WARN][schema] GetCompactSchema failed for v" + schemaSemver + ": " + (e0 && e0.message ? e0.message : String(e0 || ""))); schema = []; }
     for (var i = 0; i < schema.length; i++) {
         var field = schema[i];
         if (!field || !field.key) continue;
@@ -11571,6 +11571,7 @@ function ExtractLastHeroTokenFromText(rawText) {
     return last;
 }
 
+var _heroHintApiDegradedLogged = false;
 function PublishHeroHintFromSettings() {
     var root = FindRootPanel();
     if (!root || !root.SetAttributeString) return;
@@ -11589,7 +11590,7 @@ function PublishHeroHintFromSettings() {
     for (var i = 0; i < settingKeys.length; i++) {
         var key = settingKeys[i];
         var val = "";
-        try { val = String(GameInterfaceAPI.GetSettingString(key) || ""); } catch (e0) { val = ""; }
+        try { val = String(GameInterfaceAPI.GetSettingString(key) || ""); } catch (e0) { if (!_heroHintApiDegradedLogged) { _heroHintApiDegradedLogged = true; $.Msg("[QOLLock][WARN][settings] GameInterfaceAPI.GetSettingString unavailable — hero hint detection degraded"); } val = ""; }
         if (!val || val.length === 0) continue;
         heroHint = ExtractLastHeroTokenFromText(val) || ExtractHeroTokenFromText(val);
         if (heroHint) break;
@@ -12192,12 +12193,12 @@ function SyncConfigFromStorage() {
 
 function PersistStatlockerProfileState(rawConfig, configObj) {
     var enabled = Number(configObj && configObj.ENABLE_STATLOCKER) === 1 ? "1" : "0";
-    try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) {}
+    try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) { $.Msg("[QOLLock][WARN][storage] Failed to persist qol_statlocker_enabled: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     try {
         var raw = String(rawConfig || "");
         if (!raw || raw.length <= 0) raw = WrapConfigForStorage(configObj || {});
         $.persistentStorage.setItem("qol_settings_raw_v1", raw);
-    } catch (e1) {}
+    } catch (e1) { $.Msg("[QOLLock][WARN][storage] Failed to persist qol_settings_raw_v1: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
 }
 
 function GetRuntimePresetName() {
@@ -12266,7 +12267,7 @@ function PublishPaletteColorBridge(configId, value) {
             if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
                 $.persistentStorage.setItem(PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY, bridgeValue);
             }
-        } catch (ePersist) {}
+        } catch (ePersist) { $.Msg("[QOLLock][WARN][storage] Failed to persist player healthbar accent color: " + (ePersist && ePersist.message ? ePersist.message : String(ePersist || ""))); }
     }
     return bridgeValue;
 }
@@ -12522,7 +12523,7 @@ function RefreshRuntimeControlVisuals() {
         if (!gRuntimeButtonGroupRefreshers.hasOwnProperty(key)) continue;
         var refreshFn = gRuntimeButtonGroupRefreshers[key];
         if (typeof refreshFn !== "function") continue;
-        try { refreshFn(); } catch (e0) {}
+        try { refreshFn(); } catch (e0) { $.Msg("[QOLLock][WARN][settings] Button group refresh callback failed for key=" + key + ": " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
     if (Array.isArray(gArcadeOnDeathSyncFns)) {
         for (var i = gArcadeOnDeathSyncFns.length - 1; i >= 0; i--) {
@@ -12531,7 +12532,7 @@ function RefreshRuntimeControlVisuals() {
             if (typeof syncFn !== "function") {
                 keep = false;
             } else {
-                try { keep = (syncFn() !== false); } catch (e1) { keep = false; }
+                try { keep = (syncFn() !== false); } catch (e1) { $.Msg("[QOLLock][WARN][settings] Arcade sync callback failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); keep = false; }
             }
             if (!keep) gArcadeOnDeathSyncFns.splice(i, 1);
         }

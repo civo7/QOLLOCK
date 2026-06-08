@@ -2155,7 +2155,7 @@ var QOL_DumpDiagnostics = function() {
         var _hud = _ctx && _ctx.FindChildTraverse ? _ctx.FindChildTraverse("Hud") : null;
         if (_hud && _hud.GetAttributeString) {
             var _raw = _hud.GetAttributeString("QOL_Diag", "");
-            if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) {} }
+            if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) { $.Msg("[QOLLock][WARN][diag] Diagnostic JSON parse failed: " + (e && e.message ? e.message : String(e || "")) + " | preview=" + String(_raw || "").substring(0, 100)); } }
         }
     } catch(e) {}
 
