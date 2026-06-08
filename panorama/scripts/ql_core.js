@@ -8048,7 +8048,6 @@ function GetUIRoot() {
     }
 
     function BeginSettingsLoaderSession(accountId, nowMs) {
-        _TLog("load:BeginSession", "account=" + String(accountId || "").slice(0,8));
         if (!SETTINGS_LOADER_ENABLED) return;
         var id = accountId ? String(accountId) : "";
         if (!id) return;
@@ -8058,6 +8057,7 @@ function GetUIRoot() {
         ) {
             return;
         }
+        _TLog("load:BeginSession", "account=" + String(id).slice(0,8));
         ResetSettingsLoaderStepStates();
         State.settingsLoaderSessionAccountId = id;
         State.settingsLoaderSessionActive = true;
