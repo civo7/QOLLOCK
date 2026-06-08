@@ -22946,27 +22946,7 @@ function GetUIRoot() {
         return EnsureCachedPanelByIds(root, "abilitiesContainer", [PANEL_ID_ABILITIES_CONTAINER]);
     }
 
-    function EnsureCoreLoopPanelCaches(root) {
-        // Lazy-init: only refresh caches for active features (Fix 8)
-        // Each Ensure* function is a no-op if the cache is still valid
-        if (State.lastResolvedGates) {
-            var gates = State.lastResolvedGates;
-            if (gates.minimapRuntime) EnsureMinimapPanelCache(root);
-            if (gates.legacyAudioPassive) EnsurePassiveHudPanelCache(root);
-            if (gates.rejuvTimers) EnsureGameTimePanelCache(root);
-            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
-            if (gates.itemsRuntime || gates.statBonuses) EnsureAbilitiesContainerPanelCache(root);
-            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
-        } else {
-            // No gates resolved yet — refresh all
-            EnsureMinimapPanelCache(root);
-            EnsurePassiveHudPanelCache(root);
-            EnsureGameTimePanelCache(root);
-            EnsureCachedPanelByIds(root, "gameplayHud", [PANEL_ID_GAMEPLAY_HUD]);
-            EnsureAbilitiesContainerPanelCache(root);
-            EnsureCachedPanelByIds(root, "healthContainer", [PANEL_ID_HEALTH_CONTAINER]);
-        }
-    }
+    // EnsureCoreLoopPanelCaches extracted to ql_feat_panelcache.js
 
     function TryGetGameplayMouseCursorPosition() {
         var cursor = null;
@@ -24555,13 +24535,7 @@ function GetUIRoot() {
 
     // ── Batch D: style-runtime features (simple root+cfg dispatch) ──
 
-    QOL_REGISTER_FEATURE("panelCache", {
-        configKeys: [],
-        bucket: 7, phase: -1,
-        gate: function(cfg) { return false; },  // always false — primed on-demand by features
-        update: function(root) { EnsureCoreLoopPanelCaches(root); },
-        stateKeys: ["cachedPanels"]
-    });
+    // panelCache feature extracted to ql_feat_panelcache.js
 
     // ── Batch E: features needing nowMs ──
 
@@ -25027,5 +25001,7 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_StatBonusesDebugLogThrottled = StatBonusesDebugLogThrottled; } catch(e) {}
     try { QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
+    try { QOL_EnsureCachedPanelByIds = EnsureCachedPanelByIds; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_EnsureCachedPanelByIds = EnsureCachedPanelByIds; } catch(e) {}
 
 })();
