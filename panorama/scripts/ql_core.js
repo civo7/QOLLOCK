@@ -1131,10 +1131,8 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;   // poll immediately after switch
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 20;    // tight poll interval
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;   // poll interval (was 20 — too tight)
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;  // reduced timeout
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES = 2;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 200;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
     const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;   // poll every tick
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 4000;  // reduced timeout
@@ -1283,10 +1281,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
-    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 50;   // poll-driven
+    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;  // poll-driven (was 50)
     const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;   // reduced
-    const BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
-    const BUILD_SAVE_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS = 1000;  // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_REQUIRED_HITS = 2;
@@ -1320,9 +1316,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
-    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 60;  // poll-driven
-    const BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
-    const BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
+    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 200; // poll-driven (was 60)
     const BUILD_CLEAR_DEBUG = false;
     const BUILD_CLEAR_DEBUG_THROTTLE_MS = 300;
     const BUILD_SAVE_DEBUG = false;  // set true to enable build-save trace logging
@@ -10902,23 +10896,6 @@ function GetUIRoot() {
                 nowMs
             );
             var switchStartMs = Number(State.buildCategoryPayloadHeroProbeSwitchStartMs) || nowMs;
-            var switchRetries = Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0;
-            var nextReswitchAt = switchStartMs + ((switchRetries + 1) * BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS);
-            if (switchRetries < BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES && nowMs >= nextReswitchAt) {
-                var reswitched = SelectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_reswitch_storage");
-                if (reswitched) {
-                    State.buildCategoryPayloadHeroProbeSwitchRetries = switchRetries + 1;
-                    SetSettingsLoaderStepState(
-                        "confirm_airheart",
-                        "active",
-                        "Re-sent Airheart switch command (" + State.buildCategoryPayloadHeroProbeSwitchRetries + ")."
-                    );
-                    SettingsLoaderDebugLog(
-                        "probe_reswitch sent retry=" + String(State.buildCategoryPayloadHeroProbeSwitchRetries) +
-                        " account=" + accountId
-                    );
-                }
-            }
             var waitElapsedMs = nowMs - switchStartMs;
             if (waitElapsedMs >= BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) {
                 SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
@@ -14858,19 +14835,6 @@ function GetUIRoot() {
             }
 
             State.buildClearStorageConfirmRetries = (Number(State.buildClearStorageConfirmRetries) || 0) + 1;
-            var reswitchTickModUser = Math.max(1, Math.floor(BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS / BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS));
-            var shouldReswitchUser =
-                (State.buildClearStorageSwitchRetries < BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES) &&
-                (State.buildClearStorageConfirmRetries === 1 || (State.buildClearStorageConfirmRetries % reswitchTickModUser) === 0);
-            if (shouldReswitchUser) {
-                var reswitchOkUser = SelectHeroForBuildSave(BUILD_SAVE_STORAGE_HERO_ID);
-                State.buildClearStorageSwitchRetries += 1;
-                BuildClearDebugLog(
-                    "await_user_shop_open reswitch retry=" + State.buildClearStorageSwitchRetries +
-                    " pollRetry=" + State.buildClearStorageConfirmRetries +
-                    " ok=" + (reswitchOkUser ? "1" : "0")
-                );
-            }
 
             SetBuildClearStatus(root, "pending", "await_user_open_shop", requestToken);
             SetBuildClearDebugOverlayLine("waiting user to open shop on airheart");
@@ -15215,24 +15179,6 @@ function GetUIRoot() {
                 var confirmStartedMs = Number(State.buildSaveStorageConfirmStartedMs) || nowMs;
                 if (!(confirmStartedMs > 0)) confirmStartedMs = nowMs;
                 State.buildSaveStorageConfirmStartedMs = confirmStartedMs;
-                var reswitchTickMod = Math.max(1, Math.floor(BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS / BUILD_SAVE_STORAGE_CONFIRM_POLL_MS));
-                var shouldReswitch =
-                    (State.buildSaveStorageSwitchRetries < BUILD_SAVE_STORAGE_CONFIRM_MAX_RESWITCHES) &&
-                    (State.buildSaveStorageConfirmRetries === 1 || (State.buildSaveStorageConfirmRetries % reswitchTickMod) === 0);
-                if (shouldReswitch) {
-                    var reswitchOk = SelectHeroForBuildSave(BUILD_SAVE_STORAGE_HERO_ID);
-                    if (reswitchOk) {
-                        State.buildSaveDidSwitchToStorageHero = true;
-                        State.buildSaveStorageLastSwitchMs = nowMs;
-                        State.buildSaveStorageProvisionalHits = 0;
-                    }
-                    State.buildSaveStorageSwitchRetries += 1;
-                    BuildSaveDebugLog(
-                        "confirm_storage_context reswitch retry=" + State.buildSaveStorageSwitchRetries +
-                        " pollRetry=" + State.buildSaveStorageConfirmRetries +
-                        " ok=" + (reswitchOk ? "1" : "0")
-                    );
-                }
                 if ((nowMs - confirmStartedMs) > BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS) {
                     FinishBuildSaveRequest(root, requestToken, "failed", "storage_not_confirmed");
                     return;
