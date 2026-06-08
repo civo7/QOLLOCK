@@ -8,6 +8,8 @@
     var GC = typeof QOL_GetCachedPanel !== "undefined" ? QOL_GetCachedPanel : undefined;
     var SC = typeof QOL_SetCachedPanel !== "undefined" ? QOL_SetCachedPanel : undefined;
     var U = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : undefined;
+    var SetStyleSafe = U ? U.SetStyleSafe : function() {};
+    var ClearStyleSafe = U ? U.ClearStyleSafe : function() {};
     var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
     var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
     var IsColorWarningEnabled = typeof QOL_IsColorWarningEnabled !== "undefined" ? QOL_IsColorWarningEnabled : function() { return false; };
@@ -485,6 +487,18 @@ function ToRgbString(rgb) {
         return false;
     };
 
+var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
+        if (!panel || !panel.style || !prop) return;
+        try { delete panel.style[prop]; } catch (e0) {}
+        try { panel.style[prop] = null; } catch (e1) {}
+        try { panel.style[prop] = ""; } catch (e2) {}
+    };
+var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
+var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return;
+        try { panel.style[prop] = value; } catch (e) {}
+    };
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
         var enabled = IsColorWarningEnabled(cfg);
