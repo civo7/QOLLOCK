@@ -23592,11 +23592,20 @@ function GetUIRoot() {
     // QOL is defined by ql_shared_presets.js (loaded before us)
     // Feature files use QOL.import([...]) to resolve dependencies
     // =========================================================================
-    // Access the QOL namespace through window — ql_shared_presets.js published
-    // it there. Using var QOL inside this IIFE would hoist and shadow the global,
-    // losing QOL.import/QOL.register/QOL.utils set by shared_presets.
-    var QOL = (typeof window !== "undefined" && window.QOL) ? window.QOL :
-              (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : {};
+    // Reuse the QOL namespace from ql_shared_presets.js (QOL.import, QOL.register,
+    // QOL.utils live there). Must read through globalThis/window because a local
+    // var QOL would hoist and shadow the global, losing QOL.import.
+    // Panorama has globalThis but not always window, so check globalThis first.
+    var QOL = null;
+    if (typeof globalThis !== "undefined" && globalThis.QOL) {
+        QOL = globalThis.QOL;
+    } else if (typeof window !== "undefined" && window.QOL) {
+        QOL = window.QOL;
+    }
+    if (!QOL) {
+        $.Msg("[QOLLock][BRIDGE] QOL namespace not found on globalThis or window — ql_shared_presets.js may not have loaded. Feature imports will fail.");
+        QOL = {};
+    }
 
     // Lazy-getter array: each getter is a function that returns the value.
     // Wrapping in a function defers the identifier resolution until the
