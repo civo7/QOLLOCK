@@ -790,7 +790,7 @@ var SetCachedPanel = function(k, p) {
                      "ENABLE_MINIMAP_ELEVATION_MARKERS", "MINIMAP_ICON_COLOR",
                      "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"],
         bucket: 7, phase: -1,
-        gate: function(cfg) { return NeedsMinimapRuntimeWork(cfg, S.lastRawConfig || ""); },
+        gate: function(cfg, raw) { return QOL.NeedsMinimapRuntimeWork(cfg, raw || S.lastRawConfig || ""); },
         update: function(root, cfg, nowMs, State, hideoutConnected, raw) {
             try {
                 UpdateMinimapRuntime(root, cfg, raw);
