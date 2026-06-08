@@ -8007,6 +8007,7 @@ function GetUIRoot() {
     }
 
     function ResetSettingsLoaderSession(hideOverlay) {
+        _TLog("load:ResetSession", "hideOverlay=" + (hideOverlay ? "1" : "0") + " prevAccount=" + String(State.settingsLoaderSessionAccountId || "-").slice(0, 8));
         var prevAccountId = State.settingsLoaderSessionAccountId ? String(State.settingsLoaderSessionAccountId) : "";
         State.settingsLoaderSessionAccountId = "";
         State.settingsLoaderSessionActive = false;
@@ -10774,7 +10775,8 @@ function GetUIRoot() {
         ResetBuildCategoryPayloadHeroProbeState();
         State.buildCategoryPayloadDoneRearmAttempts = attempts + 1;
         State.buildCategoryPayloadDoneRearmNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
-        if (State.settingsLoaderSessionCompleted && !State.settingsLoaderSessionActive) {
+        if (State.settingsLoaderSessionCompleted && !State.settingsLoaderSessionActive &&
+            State.settingsLoaderResult !== "success") {
             ResetSettingsLoaderSession(false);
         }
         SettingsLoaderDebugLog(
