@@ -81,7 +81,7 @@ CitadelHudHeroShop.simplify_shop_stats_active .HasScalingStat .statAttributeCont
 CitadelHudHeroShop.simplify_shop_stats_active .LabelsContainer
 {
 	width: 100% !important;
-	flow-children: right !important;
+	flow-children: right;
 	horizontal-align: center;
 	vertical-align: top !important;
 	height: 24px !important;
@@ -92,7 +92,7 @@ CitadelHudHeroShop.simplify_shop_stats_active .LabelsContainer
 .simplify_shop_stats_active #AdditionalText,
 CitadelHudHeroShop.simplify_shop_stats_active #AdditionalText
 {
-	visibility: visible !important;
+	visibility: visible;
 	opacity: 1;
 	font-size: 8px;
 	line-height: 9px;
@@ -115,7 +115,7 @@ CitadelHudHeroShop.simplify_shop_stats_active #AdditionalText
 .simplify_shop_stats_active .StatImageArea,
 CitadelHudHeroShop.simplify_shop_stats_active .StatImageArea
 {
-	visibility: visible !important;
+	visibility: visible;
 	width: fit-children;
 	margin-right: 4px;
 }

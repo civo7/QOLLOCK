@@ -507,7 +507,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 #UrnTracker[visible="false"]
 {
 	opacity: 0 !important;
-	pointer-events: none;
 }
 
 #UrnTracker.good
