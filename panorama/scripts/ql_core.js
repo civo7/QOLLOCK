@@ -3285,7 +3285,7 @@ function GetUIRoot() {
     // panel attributes, picking the version with the highest user-edit revision number.
     // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
     function ReadStorageConfigRawFromUi(root) {
-        _TLog("config:ReadFromUi", "");
+        
         var result = "";
         var source = "none";
         var rootLen = 0;
