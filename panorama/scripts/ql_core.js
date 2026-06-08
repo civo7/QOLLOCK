@@ -10251,7 +10251,7 @@ function GetUIRoot() {
                 var desiredX = 12;
                 var desiredY = 142;
                 if (card) {
-                    var cardPos = GetPanelPositionRelativeToAncestor(card, overlay);
+                    var cardPos = QOL_UTILS.GetPanelPositionRelativeToAncestor(card, overlay);
                     var overlayWidth = Number(overlay && overlay.actuallayoutwidth);
                     var cardX = cardPos && isFinite(Number(cardPos.x)) ? Number(cardPos.x) : 0;
                     var cardY = cardPos && isFinite(Number(cardPos.y)) ? Number(cardPos.y) : 36;

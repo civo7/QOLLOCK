@@ -152,31 +152,7 @@ function ParseUnsecuredSoulsValue(valueText) {
     }
 
         var GetGameplayHudPanel = QOL.getGameplayHudPanel || function() { return null; };
-var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawValue) {
-        var n = Number(rawValue);
-        if (!isFinite(n)) return null;
-        if (Math.abs(n) > PANEL_LAYOUT_OFFSET_ABS_MAX) return null;
-        return n;
-    };
-
-    function GetPanelPositionRelativeToAncestor(panel, ancestor) {
-        if (!panel || !ancestor) return null;
-        var x = 0;
-        var y = 0;
-        var p = panel;
-        var guard = 0;
-        while (p && p !== ancestor && guard < 64) {
-            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
-            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
-            if (ox === null || oy === null) return null;
-            x += ox;
-            y += oy;
-            p = p.GetParent ? p.GetParent() : null;
-            guard++;
-        }
-        if (p !== ancestor) return null;
-        return { x: x, y: y };
-    }
+    // GetPanelPositionRelativeToAncestor — now in ql_utils.js, accessed via U.*
 
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
         var enabled = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED");
@@ -278,7 +254,7 @@ var ReadSafePanelLayoutOffset = U ? U.ReadSafePanelLayoutOffset : function(rawVa
             return;
         }
         var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
-        var sourcePos = GetPanelPositionRelativeToAncestor(label, overlayParent);
+        var sourcePos = U.GetPanelPositionRelativeToAncestor(label, overlayParent);
         var baseX = null;
         var baseY = null;
         if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {

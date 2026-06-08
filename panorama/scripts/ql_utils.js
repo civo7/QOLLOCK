@@ -308,6 +308,31 @@
     exports.ReadSafePanelLayoutOffset = ReadSafePanelLayoutOffset;
 
     /**
+     * Calculate a panel's (x, y) position relative to an ancestor by walking
+     * the parent chain and summing actualxoffset / actualyoffset.
+     * Returns null if the ancestor is not reached within 64 steps.
+     */
+    function GetPanelPositionRelativeToAncestor(panel, ancestor) {
+        if (!panel || !ancestor) return null;
+        var x = 0;
+        var y = 0;
+        var p = panel;
+        var guard = 0;
+        while (p && p !== ancestor && guard < 64) {
+            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
+            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
+            if (ox === null || oy === null) return null;
+            x += ox;
+            y += oy;
+            p = p.GetParent ? p.GetParent() : null;
+            guard++;
+        }
+        if (p !== ancestor) return null;
+        return { x: x, y: y };
+    }
+    exports.GetPanelPositionRelativeToAncestor = GetPanelPositionRelativeToAncestor;
+
+    /**
      * Safely check if a panel has a CSS class, with null guard.
      */
     function PanelHasClass(panel, className) {
