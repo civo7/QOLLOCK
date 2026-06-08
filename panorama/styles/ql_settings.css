@@ -300,6 +300,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #MinimapSizePreview.Visible
@@ -319,6 +321,8 @@
 	border: 2px solid rgba(173, 226, 205, 0.82);
 	background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( rgba(102, 204, 153, 0.14) ), to( rgba(102, 204, 153, 0.02) ) );
 	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #MinimapSizePreviewLabel
@@ -334,6 +338,8 @@
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.30);
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZoomMinimapPreview
@@ -352,6 +358,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZoomMinimapPreview.Visible
@@ -371,6 +379,8 @@
 	border: 2px solid rgba(173, 226, 205, 0.82);
 	background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( rgba(102, 204, 153, 0.14) ), to( rgba(102, 204, 153, 0.02) ) );
 	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZoomMinimapPreviewLabel
@@ -384,6 +394,8 @@
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.30);
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZipBoostPreview
@@ -401,6 +413,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZipBoostPreview.Visible
@@ -419,6 +433,8 @@
 	border-radius: 6px;
 	background-color: gradient( radial, 50% 50%, 0% 0%, 80% 80%, from( rgba(102, 204, 153, 0.18) ), to( rgba(102, 204, 153, 0.04) ) );
 	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ZipBoostPreviewLabel
@@ -431,6 +447,8 @@
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.30);
+	hittest: false;
+	hittestchildren: false;
 }
 
 #UnsecuredSoulsPreview
@@ -448,6 +466,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #UnsecuredSoulsPreview.Visible
@@ -467,6 +487,8 @@
 	letter-spacing: 0.7px;
 	text-transform: uppercase;
 	text-shadow: 0px 0px 7px rgba(118, 255, 186, 0.35);
+	hittest: false;
+	hittestchildren: false;
 }
 
 #CompassPreview
@@ -484,6 +506,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #CompassPreview.Visible
@@ -532,6 +556,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #KeyboardOverlayPreview.Visible
@@ -550,6 +576,8 @@
 	background-color: gradient( radial, 50% 50%, 0% 0%, 90% 90%, from( rgba(102, 204, 153, 0.18) ), to( rgba(102, 204, 153, 0.05) ) );
 	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 .KeyboardOverlayPreviewRow
@@ -558,6 +586,8 @@
 	flow-children: right;
 	horizontal-align: center;
 	vertical-align: center;
+	hittest: false;
+	hittestchildren: false;
 }
 
 .KeyboardOverlayPreviewKey
@@ -568,6 +598,8 @@
 	border: 1px solid rgba(173, 226, 205, 0.75);
 	border-radius: 4px;
 	background-color: rgba(102, 204, 153, 0.16);
+	hittest: false;
+	hittestchildren: false;
 }
 
 .KeyboardOverlayPreviewKey.Wide
@@ -611,6 +643,8 @@
 	transition-timing-function: ease-out;
 	z-index: 5200;
 	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ItemCooldownPreview.Visible
@@ -628,6 +662,8 @@
 	width: fit-children;
 	height: fit-children;
 	opacity: 0.5;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ItemCooldownPreviewIcon
@@ -639,6 +675,8 @@
 	border-radius: 50%;
 	overflow: clip clip;
 	clip: radial(50% 50%, 0deg, 360deg);
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ItemCooldownPreviewModContainer
@@ -710,6 +748,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #AmmoPreview.Visible
@@ -727,6 +767,7 @@
 	text-shadow: 0px 0px 6px #000000ee;
 	text-align: right;
 	width: 32px;
+	hittest: false;
 }
 
 #AmmoPreviewTotal
@@ -738,6 +779,7 @@
 	text-align: left;
 	width: 50px;
 	margin-left: 2px;
+	hittest: false;
 }
 
 #ReloadCooldownPreview
@@ -754,6 +796,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ReloadCooldownPreview.Visible
@@ -798,6 +842,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #UnitTargetPreview.Visible
@@ -864,6 +910,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #DamageReportPreview.Visible
@@ -911,6 +959,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #ShopPreview.Visible
@@ -955,6 +1005,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #UltCooldownPreview.Visible
@@ -1006,6 +1058,8 @@
 	transition-duration: 0.14s;
 	transition-timing-function: ease-out;
 	z-index: 5200;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #UnsecuredPlusPreview.Visible
@@ -1062,6 +1116,8 @@
 	width: 0px;
 	height: 100%;
 	margin-right: 0px;
+	hittest: true;
+	hittestchildren: false;
 	background-color: rgba(0, 0, 0, 0);
 	z-index: 1;
 }
@@ -1094,6 +1150,7 @@
 	animation-duration: 3.0s;
 	animation-timing-function: ease-in-out;
 	animation-iteration-count: infinite;
+	hittest: false;
 }
 
 #SettingsTitleAccent
@@ -1109,6 +1166,7 @@
 	margin-left: 0px;
 	margin-right: -1px;
 	text-shadow: none;
+	hittest: false;
 }
 
 #SettingsHeaderMogLogo
@@ -1119,6 +1177,7 @@
 	margin-left: 0px;
 	margin-right: 6px;
 	opacity: 1.0;
+	hittest: false;
 }
 
 #CloseBtn
@@ -1127,6 +1186,7 @@
 	width: 32px;
 	height: 32px;
 	background-color: transparent;
+	hittest: true;
 	z-index: 5;
 }
 
@@ -1140,6 +1200,7 @@
 	background-image: none;
 	border: 0px solid transparent;
 	padding: 0px;
+	hittest: true;
 	z-index: 5;
 	transition-property: brightness, transform;
 	transition-duration: 0.28s;
@@ -1489,6 +1550,8 @@
 	opacity: 0;
 	transition-property: opacity, brightness, transform;
 	transition-duration: 0.12s;
+	hittest: true;
+	hittestchildren: true;
 }
 
 #SettingsSearchClear Label
@@ -1501,6 +1564,8 @@
 	text-shadow: 0px 0px 0px #00000000;
 	transition-property: color, text-shadow;
 	transition-duration: 0.12s;
+	hittest: false;
+	hittestchildren: false;
 }
 
 #SettingsSearchWrap.HasSearchText #SettingsSearchClear
@@ -3332,18 +3397,18 @@
 
 #SettingsWindow .SearchResultRow .SettingToggleBtn .SwitchButton
 {
-	transition-property: none;
-	transition-duration: 0.0s;
-	transition-timing-function: linear;
-	animation-name: none;
+	transition-property: none !important;
+	transition-duration: 0.0s !important;
+	transition-timing-function: linear !important;
+	animation-name: none !important;
 }
 
 #SettingsWindow .SearchResultRow .SettingToggleBtn #handle
 {
-	transition-property: none;
-	transition-duration: 0.0s;
-	transition-timing-function: linear;
-	animation-name: none;
+	transition-property: none !important;
+	transition-duration: 0.0s !important;
+	transition-timing-function: linear !important;
+	animation-name: none !important;
 }
 
 #SettingsWindow .SettingsDropDown.QOLSettingsDropDown
@@ -3583,6 +3648,7 @@
 	vertical-align: center;
 	padding-top: 5px;
 	letter-spacing: 0.5px;
+	hittest: false;
 }
 
 .GenerateSettingsBtn
@@ -9758,6 +9824,8 @@
 
 #SupportTabThanksBlock .SupportThanksPlaqueClickable
 {
+	hittest: true;
+	hittestchildren: true;
 }
 
 #SupportTabThanksBlock .SupportThanksPlaqueClickable:hover

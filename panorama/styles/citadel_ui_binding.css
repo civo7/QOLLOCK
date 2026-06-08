@@ -32,7 +32,7 @@
 	height: 100%;
 	vertical-align: center;
 	horizontal-align: center;
-	flow-children: none;
+	flow-children: none !important;
 }
 
 .keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelBinding.QOLFallbackBinding #QOLFallbackKeyLabel

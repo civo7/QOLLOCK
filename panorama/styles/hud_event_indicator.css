@@ -128,9 +128,9 @@
 
 .hide_trooper_damage_active #HudEventIndicatorsPanel .trooper,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper .HudIndicatorContainer,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper .HudIndicatorText,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper .HudIndicatorIcon,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper.HudIndicatorContainer,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper.HudIndicatorText,.hide_trooper_damage_active #HudEventIndicatorsPanel .trooper.HudIndicatorIcon
 {
-	visibility: collapse;
+	visibility: collapse !important;
 	opacity: 0 !important;
-	animation-name: none;
+	animation-name: none !important;
 }
 
 .clean_damage_indicators_active .cumulative .HudIndicatorContainer,

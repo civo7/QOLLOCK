@@ -108,15 +108,15 @@
 	horizontal-align: center !important;
 	vertical-align: center !important;
 	background-color: #00000000 !important;
-	background-image: none;
-	border: 0px;
+	background-image: none !important;
+	border: 0px !important;
 	box-shadow: none !important;
 }
 
 .improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .KeyboardKeyGlyphContainer,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .MouseGlyphBackground,.improved_hint_active Citadel_AbilityHUDElement_UnitTarget #unscaled_panel #hint_container .light .MouseButtonGlyphContainer
 {
 	background-color: #d8ebe2cc !important;
-	background-image: none;
+	background-image: none !important;
 	wash-color: #ffffff00 !important;
     border-radius: 4px 4px 130px 130px / 4px 4px 100px 100px;
     padding: 0px 0px -20px 0px;
@@ -135,8 +135,8 @@
 	horizontal-align: center !important;
 	vertical-align: center !important;
 	background-color: #00000000 !important;
-	background-image: none;
-	border: 0px;
+	background-image: none !important;
+	border: 0px !important;
 	box-shadow: none !important;
 }
 
@@ -147,9 +147,9 @@
 	width: 24px !important;
 	height: 24px !important;
 	background-color: #ffffff !important;
-	background-image: none;
-	border: 0px;
-	border-radius: 50%;
+	background-image: none !important;
+	border: 0px !important;
+	border-radius: 50% !important;
 	box-shadow: none !important;
 }
 
@@ -168,18 +168,18 @@
 	width: 24px !important;
 	height: 24px !important;
 	background-color: #ffffff !important;
-	background-image: none;
-	border: 0px;
-	border-radius: 50%;
+	background-image: none !important;
+	border: 0px !important;
+	border-radius: 50% !important;
 	box-shadow: none !important;
 }
 
 .improved_hint_active Citadel_AbilityHudButtonHintPanel CitadelKeyboardGlyph.light .KeyboardKeyGlyphContainer,.improved_hint_active Citadel_AbilityHudButtonHintPanel CitadelKeyboardGlyph.dark .KeyboardKeyGlyphContainer,.improved_hint_active Citadel_AbilityHudButtonHintPanel .light .MouseGlyphBackground,.improved_hint_active Citadel_AbilityHudButtonHintPanel .dark .MouseGlyphBackground
 {
 	background-color: #ffffff !important;
-	background-image: none;
+	background-image: none !important;
 	wash-color: #ffffff !important;
-	border-radius: 50%;
+	border-radius: 50% !important;
 }
 
 .improved_hint_active Citadel_AbilityHudButtonHintPanel .KeyboardButtonGlyph,.improved_hint_active Citadel_AbilityHudButtonHintPanel .MouseButtonGlyph,.improved_hint_active Citadel_AbilityHudButtonHintPanel .InlineGlyph,.improved_hint_active Citadel_AbilityHudButtonHintPanel CitadelKeyboardGlyph.light .KeyboardButtonGlyph,.improved_hint_active Citadel_AbilityHudButtonHintPanel CitadelKeyboardGlyph.dark .KeyboardButtonGlyph

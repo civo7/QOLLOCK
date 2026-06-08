@@ -1636,8 +1636,8 @@
 	width: 14px;
 	height: 100%;
 	margin: 4px 0px 1px 1px;
-	opacity-mask: none;
-	opacity-mask-threshold: 0% 100%;
+	opacity-mask: none !important;
+	opacity-mask-threshold: 0% 100% !important;
 }
 
 .klutz_healthbar_active #pending_incoming_damage .ProgressBarMiddle
@@ -1655,14 +1655,14 @@
 	width: 14px;
 	height: 100%;
 	margin: 4px 0px 1px 1px;
-	opacity-mask: none;
-	opacity-mask-threshold: 0% 100%;
+	opacity-mask: none !important;
+	opacity-mask-threshold: 0% 100% !important;
 }
 
 .klutz_healthbar_active #pending_incoming_damage .ProgressBarLeft,.klutz_healthbar_active #pending_incoming_damage .ProgressBarMiddle,.klutz_healthbar_active #pending_incoming_damage .ProgressBarRight,.klutz_healthbar_active #pending_incoming_heal .ProgressBarLeft,.klutz_healthbar_active #pending_incoming_heal .ProgressBarMiddle,.klutz_healthbar_active #pending_incoming_heal .ProgressBarRight
 {
-	opacity-mask: none;
-	opacity-mask-threshold: 0% 100%;
+	opacity-mask: none !important;
+	opacity-mask-threshold: 0% 100% !important;
 }
 
 .klutz_healthbar_active #pending_incoming_heal .ProgressBarMiddle

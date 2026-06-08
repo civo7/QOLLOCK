@@ -171,14 +171,14 @@
 
 .simplify_ability_icons_active CitadelHudTopBarPlayer #PlayerAbilitiesContainer .ability_bg
 {
-	background-image: none;
+	background-image: none !important;
 	background-color: #d9d9d9 !important;
 	border-radius: 13px;
 }
 
 .simplify_ability_icons_active #hud_items .ability_bg,.simplify_ability_icons_active #hud_passive_items .ability_bg
 {
-	background-image: none;
+	background-image: none !important;
 	background-color: #ffffff00 !important;
 }
 
@@ -214,14 +214,14 @@
 
 .simplify_ability_icons_active #hud_items #cooldown_mask
 {
-	opacity-mask: url("s2r://panorama/images/hud/core/ability_frame_standard.vsvg");
+	opacity-mask: url("s2r://panorama/images/hud/core/ability_frame_standard.vsvg") !important;
 	height: 100%;
 	margin-top: 0px;
 }
 
 .simplify_ability_icons_active #ActiveAbilitiesMenu DraggableAbilityIcon #cooldown_mask,.simplify_ability_icons_active #ActiveAbilitiesMenu #cooldown_mask
 {
-	opacity-mask: url("s2r://panorama/images/hud/core/ability_frame_standard.vsvg");
+	opacity-mask: url("s2r://panorama/images/hud/core/ability_frame_standard.vsvg") !important;
 	height: 100% !important;
 	margin-top: 0px !important;
 	background-size: 100% 100%;
