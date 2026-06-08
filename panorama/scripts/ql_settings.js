@@ -11946,7 +11946,13 @@ function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     WatchBuildSaveStatus(saveBtn, saveLbl, token, cfgSave);
 }
 
+var gClearButtonLastActionMs = 0;
+var CLEAR_BUTTON_DEBOUNCE_MS = 1000;
+
 function QueueBuildClearRequest() {
+    var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+    if (gClearButtonLastActionMs > nowMs - CLEAR_BUTTON_DEBOUNCE_MS) return "";
+    gClearButtonLastActionMs = nowMs;
     var token = String(Date.now ? Date.now() : (new Date()).getTime()) + "_" + String(Math.floor(Math.random() * 1000000));
     var panel = $.GetContextPanel();
     var root = FindRootPanel();

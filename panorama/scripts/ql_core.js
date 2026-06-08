@@ -14829,7 +14829,10 @@ function GetUIRoot() {
     }
 
     function AdvanceBuildClearRequestStage(root, nowMs, requestToken) {
-        _TLog("clear:AdvanceStage", (State.buildClearStage || "-"));
+        if (State.buildClearLastTraceStage !== State.buildClearStage) {
+            State.buildClearLastTraceStage = State.buildClearStage;
+            _TLog("clear:AdvanceStage", (State.buildClearStage || "-"));
+        }
         if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
@@ -14864,6 +14867,7 @@ function GetUIRoot() {
             var gateReady = !!(shopOpen && selectedBuildGate);
             if (gateReady) {
                 State.buildClearUserShopGateSatisfied = true;
+                _TLog("clear:AdvanceStage", "await_user_shop_open → open_browse");
                 BuildClearDebugLog("await_user_shop_open satisfied shopOpen=1 selectedBuild=1; entering open_browse");
                 SetBuildClearDebugOverlayLine("user gate satisfied; opening builds");
                 State.buildClearStage = "open_browse";
@@ -14889,6 +14893,7 @@ function GetUIRoot() {
                 " source=" + (browseLookup ? browseLookup.source : "none") +
                 " scanned=" + (browseLookup ? browseLookup.scanned : 0) + "/" + (browseLookup ? browseLookup.roots : 0)
             );
+            _TLog("clear:AdvanceStage", "open_browse → clear_loop ok=" + (browseOk ? "1" : "0"));
             State.buildClearStage = "clear_loop";
             State.buildClearNextActionMs = nowMs + BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS;
             if (!browseOk) {
@@ -14972,6 +14977,7 @@ function GetUIRoot() {
                 );
                 SetBuildClearStatus(root, "pending", "verifying_clear", requestToken);
                 if (State.buildClearEmptyConfirmHits >= BUILD_CLEAR_EMPTY_CONFIRM_HITS) {
+                    _TLog("clear:AdvanceStage", "verify_clear done → success");
                     FinishBuildClearRequest(root, requestToken, "success", "cleared");
                     return;
                 }
@@ -15173,7 +15179,10 @@ function GetUIRoot() {
     }
 
     function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
-        _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
+        if (State.buildSaveLastTraceStage !== State.buildSaveStage) {
+            State.buildSaveLastTraceStage = State.buildSaveStage;
+            _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
+        }
         if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
