@@ -8806,7 +8806,6 @@ function GetUIRoot() {
     }
 
     function BeginSaveSettingsLoaderSession(requestToken, nowMs) {
-        _TLog("save:BeginSession", "token=" + String(requestToken || "").slice(0,8));
         if (!SAVE_SETTINGS_LOADER_ENABLED) return;
         var token = requestToken ? String(requestToken) : "";
         if (!token) return;
@@ -8816,6 +8815,7 @@ function GetUIRoot() {
         ) {
             return;
         }
+        _TLog("save:BeginSession", "token=" + String(token).slice(0,8));
         ResetSaveSettingsLoaderStepStates();
         State.saveSettingsLoaderSessionToken = token;
         State.saveSettingsLoaderSessionActive = true;
@@ -14574,6 +14574,7 @@ function GetUIRoot() {
         }
         SetBuildSaveStatus(root, state, message, token);
         ResetBuildSaveRuntimeState();
+        if (root) ResetBuildSaveRequestAttributes(root);
     }
 
     function FinishBuildClearRequest(root, token, state, message) {
@@ -14779,9 +14780,9 @@ function GetUIRoot() {
     }
 
     function TryAdvanceStorageSwitchStage(root, nowMs, requestToken, options) {
-        _TLog("save:SwitchStorage", "hero=" + BUILD_SAVE_STORAGE_HERO_ID);
         if (!options || !options.stageKey || !options.nextActionKey) return false;
         if (State[options.stageKey] !== "switch_to_storage") return false;
+        _TLog("save:SwitchStorage", "hero=" + BUILD_SAVE_STORAGE_HERO_ID);
 
         var switchedToStorage = SelectHeroForBuildSave(BUILD_SAVE_STORAGE_HERO_ID);
         if (switchedToStorage && options.didSwitchFlagKey) {
