@@ -903,6 +903,20 @@
     const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
     const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0"; // default damage number config signature
 
+    function ResolveDamageNumbersRuntimeSig(cfg) {
+        var rawOpacity = cfg ? cfg.DAMAGE_NUMBER_OPACITY : null;
+        var indicatorOpacity = (rawOpacity === undefined || rawOpacity === null) ? 1.0 : parseFloat(rawOpacity);
+        if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
+        if (indicatorOpacity < 0) indicatorOpacity = 0;
+        if (indicatorOpacity > 1) indicatorOpacity = 1;
+        var rawSize = cfg ? cfg.HUD_INDICATOR_SIZE : null;
+        var indicatorSize = (rawSize === undefined || rawSize === null) ? 18 : Math.round(Number(rawSize));
+        if (!isFinite(indicatorSize)) indicatorSize = 18;
+        var hideSmallNumbers = (cfg && cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
+        var cleanIndicators = (cfg && IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
+        return String(indicatorSize) + "|" + indicatorOpacity.toFixed(2) + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
+    }
+
     // ==========================================================================
     // COMPASS — GEOMETRY
     // ==========================================================================
