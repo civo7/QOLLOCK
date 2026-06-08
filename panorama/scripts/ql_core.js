@@ -462,8 +462,6 @@
         buildCategoryPayloadLastAppliedAccountId: "",
         buildCategoryPayloadLastAppliedText: "",
         buildCategoryPayloadLastParseErrorKey: "",
-        selectHeroLastTarget: "",
-        selectHeroLastMs: 0,
         buildCategoryPayloadHeroProbeStage: "",
         buildCategoryPayloadHeroProbeNextMs: 0,
         buildCategoryPayloadHeroProbeDidSwitch: false,
@@ -14137,12 +14135,6 @@ function GetUIRoot() {
     function SelectHeroForBuildSave(heroId, reason) {
         if (!heroId || heroId.length === 0) return false;
         var target = String(heroId);
-        var now = Date.now ? Date.now() : (new Date()).getTime();
-        if (State.selectHeroLastTarget === target && (State.selectHeroLastMs || 0) > now - 500) {
-            return true;
-        }
-        State.selectHeroLastTarget = target;
-        State.selectHeroLastMs = now;
         var ok = DispatchCitadelConCommand("selecthero " + target);
         if (SETTINGS_LOADER_DEBUG) {
             var now = Date.now ? Date.now() : (new Date()).getTime();
