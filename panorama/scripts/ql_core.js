@@ -1130,13 +1130,13 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;   // poll immediately after switch
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 20;    // tight poll interval
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 250;  // ×5 poll immediately after switch
+    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;   // ×5 tight poll interval
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;  // reduced timeout
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_RETRIES = 2;
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_RESWITCH_INTERVAL_MS = 200;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;   // poll every tick
+    const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 250;  // ×5 poll every tick
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 4000;  // reduced timeout
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 1500;  // reduced backoff
     const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES = 3;
@@ -1151,7 +1151,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_SAME_TITLE_LIMIT = 1;
     const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 300;  // reduced from 900
     const BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;  // reduced from 6000
-    const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;   // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 250;  // ×5 poll-driven
     const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
 const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
@@ -1161,10 +1161,10 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     const BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
     const BUILD_CATEGORY_PAYLOAD_DONE_REARM_MAX_ATTEMPTS = 4;
-    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 50;   // poll every tick
+    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 250;  // ×5 poll every tick
     const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
-    const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
+    const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 250;  // ×5 poll-driven
+    const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 250; // ×5 poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 400;  // reduced
     const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
     const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
@@ -1272,9 +1272,9 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
-    const BUILD_SAVE_ACTION_DELAY_MS = 50;    // poll-driven (was 20 — too tight at 20Hz)
-    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 100;   // poll-driven (was 30 — let Steam cloud settle)
-    const BUILD_SAVE_VERIFY_DELAY_MS = 300;   // poll-driven (was 200 — more breathing room)
+    const BUILD_SAVE_ACTION_DELAY_MS = 100;    // poll-driven (was 20 — too tight at 20Hz)
+    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 500;   // poll-driven (was 30 — let Steam cloud settle)
+    const BUILD_SAVE_VERIFY_DELAY_MS = 800;   // poll-driven (was 200 — more breathing room)
     const BUILD_SAVE_TIMEOUT_MS = 12000;  // reduced
     const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
     const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
@@ -1283,7 +1283,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
-    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 50;   // poll-driven
+    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 250;  // ×5 poll-driven
     const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;   // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
@@ -1295,7 +1295,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 1;
     const BUILD_SAVE_TARGET_LOCK_STABLE_HITS = 3;
     const BUILD_SAVE_TARGET_LOCK_QUIET_MS = 150;  // reduced
-    const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 80;  // reduced
+    const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 400; // ×5 reduced
     const BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
     const BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
     const BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS = [
@@ -1314,13 +1314,13 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "Waiting...",
         "Waiting..."
     ];
-    const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
+    const BUILD_CLEAR_ACTION_DELAY_MS = 300;  // ×5 poll-driven
     const BUILD_CLEAR_POST_DELETE_DELAY_MS = 150;  // poll-driven
-    const BUILD_CLEAR_POST_SELECT_DELAY_MS = 80;   // poll-driven
+    const BUILD_CLEAR_POST_SELECT_DELAY_MS = 400; // ×5 poll-driven
     const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
-    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 60;  // poll-driven
+    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 300; // ×5 poll-driven
     const BUILD_CLEAR_STORAGE_CONFIRM_RESWITCH_INTERVAL_MS = 500;  // reduced
     const BUILD_CLEAR_STORAGE_CONFIRM_MAX_RESWITCHES = 4;
     const BUILD_CLEAR_DEBUG = false;
