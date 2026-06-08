@@ -1272,9 +1272,9 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
-    const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
-    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 30;   // poll-driven
-    const BUILD_SAVE_VERIFY_DELAY_MS = 200;   // poll-driven
+    const BUILD_SAVE_ACTION_DELAY_MS = 50;    // poll-driven (was 20 — too tight at 20Hz)
+    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 100;   // poll-driven (was 30 — let Steam cloud settle)
+    const BUILD_SAVE_VERIFY_DELAY_MS = 300;   // poll-driven (was 200 — more breathing room)
     const BUILD_SAVE_TIMEOUT_MS = 12000;  // reduced
     const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
     const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
