@@ -1399,7 +1399,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const HERO_SHOP_PANEL_SEARCH_MS = 2470;
     const RECENT_PURCHASE_MAX_ITEMS  = 50;
     // Repeated CSS class names
-    const CLASS_IS_ZERO_VALUE = "isZeroValue";
     const CLASS_OUT_OF_COMBAT = "out_of_combat";
     const CLASS_IN_COMBAT = "inCombat";
     const CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
@@ -21612,113 +21611,6 @@ function GetUIRoot() {
     // Publish namespace to global scope
     try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) {}
     try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) {}
-    // =========================================================================
-    // [DEPRECATED] Backward-compat QOL_* globals
-    // Publishes QOL_STATE, QOL_GetCachedPanel, etc. for consumers that haven't
-    // migrated to QOL.import() yet (e.g. ql_settings.js, ql_perf_overlay.js).
-    // Remove after all consumers migrate to QOL.import().
-    // =========================================================================
-    // Lazy-getter array for backward-compat globals
-    var _compatDefs = [
-        ["QOL_ApplyTargetShapeStyles", function() { return ApplyTargetShapeStyles; }],
-        ["QOL_BuildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
-        ["QOL_BuildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
-        ["QOL_ClearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
-        ["QOL_ClearPanelCache", function() { return ClearPanelCache; }],
-        ["QOL_DetectTopBarPlayerTeam", function() { return DetectTopBarPlayerTeam; }],
-        ["QOL_EnsureAbilitiesContainerPanelCache", function() { return EnsureAbilitiesContainerPanelCache; }],
-        ["QOL_EnsureCachedPanelByIds", function() { return EnsureCachedPanelByIds; }],
-        ["QOL_EnsureGameTimePanelCache", function() { return EnsureGameTimePanelCache; }],
-        ["QOL_EnsureMinimapPanelCache", function() { return EnsureMinimapPanelCache; }],
-        ["QOL_EnsurePassiveHudPanelCache", function() { return EnsurePassiveHudPanelCache; }],
-        ["QOL_EnsureSpmState", function() { return EnsureSpmState; }],
-        ["QOL_EstimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
-        ["QOL_ExecuteFeature", function() { return ExecuteFeature; }],
-        ["QOL_ExtractStatDisplayText", function() { return ExtractStatDisplayText; }],
-        ["QOL_FindChatMessageLabel", function() { return FindChatMessageLabel; }],
-        ["QOL_FindImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
-        ["QOL_FindNumericLabelTextInTree", function() { return FindNumericLabelTextInTree; }],
-        ["QOL_FindUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
-        ["QOL_FindZipBoostSource", function() { return FindZipBoostSource; }],
-        ["QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED", function() { return GAMEPLAY_MOUSE_CURSOR_ENABLED; }],
-        ["QOL_GetAccountIdForBuildCategoryPayload", function() { return GetAccountIdForBuildCategoryPayload; }],
-        ["QOL_GetCachedPanel", function() { return GetCachedPanel; }],
-        ["QOL_GetGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
-        ["QOL_GetGameplayHudPanel", function() { return GetGameplayHudPanel; }],
-        ["QOL_GetImagesInChatMessageCache", function() { return GetImagesInChatMessageCache; }],
-        ["QOL_GetKeyboardCachedPanels", function() { return GetKeyboardCachedPanels; }],
-        ["QOL_GetSharedSchemaUtils", function() { return GetSharedSchemaUtils; }],
-        ["QOL_GetSoulValueFromLabels", function() { return GetSoulValueFromLabels; }],
-        ["QOL_GetTopBarPlayerPanel", function() { return GetTopBarPlayerPanel; }],
-        ["QOL_GetUIRoot", function() { return GetUIRoot; }],
-        ["QOL_GetUnsecuredSoulsDangerLevel", function() { return GetUnsecuredSoulsDangerLevel; }],
-        ["QOL_HarvestGoldenStatuesTooltipValue", function() { return HarvestGoldenStatuesTooltipValue; }],
-        ["QOL_InjectBottomChatImage", function() { return InjectBottomChatImage; }],
-        ["QOL_InjectTopChatImage", function() { return InjectTopChatImage; }],
-        ["QOL_IsColorWarningEnabled", function() { return IsColorWarningEnabled; }],
-        ["QOL_IsCombatSignalActive", function() { return IsCombatSignalActive; }],
-        ["QOL_isConnectedToHideout", function() { return isConnectedToHideout; }],
-        ["QOL_IsCustomHudContextActive", function() { return IsCustomHudContextActive; }],
-        ["QOL_IsHudClassActive", function() { return IsHudClassActive; }],
-        ["QOL_IsHudVisibleForTopBarRuntime", function() { return IsHudVisibleForTopBarRuntime; }],
-        ["QOL_IsPanelListValid", function() { return IsPanelListValid; }],
-        ["QOL_IsPanelVisibleMaybe", function() { return IsPanelVisibleMaybe; }],
-        ["QOL_IsPassiveCooldownBasicMode", function() { return IsPassiveCooldownBasicMode; }],
-        ["QOL_IsStartupLoaderInActiveMatchContext", function() { return IsStartupLoaderInActiveMatchContext; }],
-        ["QOL_IsStatBonusTokenZero", function() { return IsStatBonusTokenZero; }],
-        ["QOL_IsStreetBrawlModeActive", function() { return IsStreetBrawlModeActive; }],
-        ["QOL_MinimapCrateOverlayDebugLogThrottled", function() { return MinimapCrateOverlayDebugLogThrottled; }],
-        ["QOL_NormalizeDamageImpactScaleNumber", function() { return NormalizeDamageImpactScaleNumber; }],
-        ["QOL_NormalizePaletteColorIndex", function() { return NormalizePaletteColorIndex; }],
-        ["QOL_NormalizeStaminaChargeAngle", function() { return NormalizeStaminaChargeAngle; }],
-        ["QOL_NormalizeVoiceTypeValue", function() { return NormalizeVoiceTypeValue; }],
-        ["QOL_NormalizeVoiceVolumeValue", function() { return NormalizeVoiceVolumeValue; }],
-        ["QOL_ParseClockSeconds", function() { return ParseClockSeconds; }],
-        ["QOL_ParseUnsecuredSoulsValue", function() { return ParseUnsecuredSoulsValue; }],
-        ["QOL_PerfEnd", function() { return PerfEnd; }],
-        ["QOL_PerfNowMs", function() { return PerfNowMs; }],
-        ["QOL_PerfStart", function() { return PerfStart; }],
-        ["QOL_PruneImagesInChatMessageCache", function() { return PruneImagesInChatMessageCache; }],
-        ["QOL_ReadAmmoTextColorIndex", function() { return ReadAmmoTextColorIndex; }],
-        ["QOL_ReadBottomBarWashColorIndex", function() { return ReadBottomBarWashColorIndex; }],
-        ["QOL_ReadKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
-        ["QOL_ReadPlayerHealthbarAccentColorIndex", function() { return ReadPlayerHealthbarAccentColorIndex; }],
-        ["QOL_ReadStaminaChargeColorIndex", function() { return ReadStaminaChargeColorIndex; }],
-        ["QOL_RefreshSpmPanelCache", function() { return RefreshSpmPanelCache; }],
-        ["QOL_ResetKeyboardOverlayCaches", function() { return ResetKeyboardOverlayCaches; }],
-        ["QOL_ResetUnsecuredSoulsTracking", function() { return ResetUnsecuredSoulsTracking; }],
-        ["QOL_ResolveCachedPanel", function() { return ResolveCachedPanel; }],
-        ["QOL_ResolveDamageNumbersRuntimeSig", function() { return ResolveDamageNumbersRuntimeSig; }],
-        ["QOL_ResolveGoldenStatBonusesValue", function() { return ResolveGoldenStatBonusesValue; }],
-        ["QOL_ResolvePassiveCooldownMode", function() { return ResolvePassiveCooldownMode; }],
-        ["QOL_ResolveStatBonusesSource", function() { return ResolveStatBonusesSource; }],
-        ["QOL_ResolveUnitTargetStyleTexts", function() { return ResolveUnitTargetStyleTexts; }],
-        ["QOL_ResolveWashColorFromPalette", function() { return ResolveWashColorFromPalette; }],
-        ["QOL_RuntimeTaskIsDue", function() { return RuntimeTaskIsDue; }],
-        ["QOL_RuntimeTaskSetDelay", function() { return RuntimeTaskSetDelay; }],
-        ["QOL_SetCachedPanel", function() { return SetCachedPanel; }],
-        ["QOL_SetPanelClassCached", function() { return SetPanelClassCached; }],
-        ["QOL_SetPanelClassIfChanged", function() { return SetPanelClassIfChanged; }],
-        ["QOL_SetWashColorSafe", function() { return SetWashColorSafe; }],
-        ["QOL_StatBonusesDebugLogThrottled", function() { return StatBonusesDebugLogThrottled; }],
-        ["QOL_STATE", function() { return State; }],
-        ["QOL_SweepStalePanelCache", function() { return SweepStalePanelCache; }],
-        ["QOL_TryGetGameplayMouseCursorPosition", function() { return TryGetGameplayMouseCursorPosition; }]
-    ];
-    var _compatCtx = (typeof window !== "undefined") ? window : (typeof globalThis !== "undefined" ? globalThis : this);
-    var _compatFailed = [];
-    for (var _ci = 0; _ci < _compatDefs.length; _ci++) {
-        var _ck = _compatDefs[_ci][0];
-        var _cgetter = _compatDefs[_ci][1];
-        try {
-            _compatCtx[_ck] = _cgetter();
-        } catch(e) {
-            _compatFailed.push(_ck + " [" + (e && e.message ? e.message : String(e)) + "]");
-        }
-    }
-    if (_compatFailed.length > 0) {
-        $.Msg("[QOLLock][BRIDGE] failed to publish " + _compatFailed.length + " backward-compat global(s): " + _compatFailed.join(", "));
-    }
 
 
 
