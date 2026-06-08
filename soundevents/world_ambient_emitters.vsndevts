@@ -27556,7 +27556,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V0 = 
@@ -27565,7 +27565,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V1 = 
@@ -27574,7 +27574,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V2 = 
@@ -27583,7 +27583,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V3 = 
@@ -27592,7 +27592,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V4 = 
@@ -27601,7 +27601,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V5 = 
@@ -27610,7 +27610,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V6 = 
@@ -27619,7 +27619,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V7 = 
@@ -27628,7 +27628,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V8 = 
@@ -27637,7 +27637,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V9 = 
@@ -27646,7 +27646,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V10 = 
@@ -27655,7 +27655,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V11 = 
@@ -27664,7 +27664,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V12 = 
@@ -27673,7 +27673,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V13 = 
@@ -27682,7 +27682,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V14 = 
@@ -27691,7 +27691,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V15 = 
@@ -27700,7 +27700,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V16 = 
@@ -27709,7 +27709,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V17 = 
@@ -27718,7 +27718,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V18 = 
@@ -27727,7 +27727,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V19 = 
@@ -27736,7 +27736,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V20 = 
@@ -27745,7 +27745,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V21 = 
@@ -27754,7 +27754,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V22 = 
@@ -27763,7 +27763,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V23 = 
@@ -27772,7 +27772,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V24 = 
@@ -27781,7 +27781,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V25 = 
@@ -27790,7 +27790,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V26 = 
@@ -27799,7 +27799,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V27 = 
@@ -27808,7 +27808,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V28 = 
@@ -27817,7 +27817,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V29 = 
@@ -27826,7 +27826,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V30 = 
@@ -27835,7 +27835,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V31 = 
@@ -27844,7 +27844,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V32 = 
@@ -27853,7 +27853,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V33 = 
@@ -27862,7 +27862,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V34 = 
@@ -27871,7 +27871,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V35 = 
@@ -27880,7 +27880,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V36 = 
@@ -27889,7 +27889,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V37 = 
@@ -27898,7 +27898,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V38 = 
@@ -27907,7 +27907,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V39 = 
@@ -27916,7 +27916,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V40 = 
@@ -27925,7 +27925,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V41 = 
@@ -27934,7 +27934,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V42 = 
@@ -27943,7 +27943,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V43 = 
@@ -27952,7 +27952,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V44 = 
@@ -27961,7 +27961,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V45 = 
@@ -27970,7 +27970,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V46 = 
@@ -27979,7 +27979,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V47 = 
@@ -27988,7 +27988,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V48 = 
@@ -27997,7 +27997,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V49 = 
@@ -28006,7 +28006,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V50 = 
@@ -28015,7 +28015,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V51 = 
@@ -28024,7 +28024,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V52 = 
@@ -28033,7 +28033,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V53 = 
@@ -28042,7 +28042,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V54 = 
@@ -28051,7 +28051,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V55 = 
@@ -28060,7 +28060,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V56 = 
@@ -28069,7 +28069,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V57 = 
@@ -28078,7 +28078,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V58 = 
@@ -28087,7 +28087,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V59 = 
@@ -28096,7 +28096,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V60 = 
@@ -28105,7 +28105,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V61 = 
@@ -28114,7 +28114,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V62 = 
@@ -28123,7 +28123,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V63 = 
@@ -28132,7 +28132,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V64 = 
@@ -28141,7 +28141,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V65 = 
@@ -28150,7 +28150,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V66 = 
@@ -28159,7 +28159,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V67 = 
@@ -28168,7 +28168,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V68 = 
@@ -28177,7 +28177,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V69 = 
@@ -28186,7 +28186,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V70 = 
@@ -28195,7 +28195,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V71 = 
@@ -28204,7 +28204,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V72 = 
@@ -28213,7 +28213,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V73 = 
@@ -28222,7 +28222,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V74 = 
@@ -28231,7 +28231,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V75 = 
@@ -28240,7 +28240,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V76 = 
@@ -28249,7 +28249,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V77 = 
@@ -28258,7 +28258,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V78 = 
@@ -28267,7 +28267,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V79 = 
@@ -28276,7 +28276,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V80 = 
@@ -28285,7 +28285,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V81 = 
@@ -28294,7 +28294,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V82 = 
@@ -28303,7 +28303,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V83 = 
@@ -28312,7 +28312,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V84 = 
@@ -28321,7 +28321,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V85 = 
@@ -28330,7 +28330,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V86 = 
@@ -28339,7 +28339,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V87 = 
@@ -28348,7 +28348,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V88 = 
@@ -28357,7 +28357,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V89 = 
@@ -28366,7 +28366,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V90 = 
@@ -28375,7 +28375,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V91 = 
@@ -28384,7 +28384,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V92 = 
@@ -28393,7 +28393,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V93 = 
@@ -28402,7 +28402,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V94 = 
@@ -28411,7 +28411,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V95 = 
@@ -28420,7 +28420,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V96 = 
@@ -28429,7 +28429,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V97 = 
@@ -28438,7 +28438,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V98 = 
@@ -28447,7 +28447,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V99 = 
@@ -28456,7 +28456,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Beep_V100 = 
@@ -28465,7 +28465,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Minimap = 
@@ -28474,7 +28474,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28484,7 +28484,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28494,7 +28494,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28504,7 +28504,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28514,7 +28514,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28524,7 +28524,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28534,7 +28534,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28544,7 +28544,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28554,7 +28554,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28564,7 +28564,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28574,7 +28574,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28584,7 +28584,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28594,7 +28594,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28604,7 +28604,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28614,7 +28614,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28624,7 +28624,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28634,7 +28634,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28644,7 +28644,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28654,7 +28654,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28664,7 +28664,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28674,7 +28674,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28684,7 +28684,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28694,7 +28694,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28704,7 +28704,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28714,7 +28714,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28724,7 +28724,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28734,7 +28734,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28744,7 +28744,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28754,7 +28754,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28764,7 +28764,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28774,7 +28774,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28784,7 +28784,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28794,7 +28794,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28804,7 +28804,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28814,7 +28814,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28824,7 +28824,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28834,7 +28834,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28844,7 +28844,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28854,7 +28854,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28864,7 +28864,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28874,7 +28874,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28884,7 +28884,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28894,7 +28894,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28904,7 +28904,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28914,7 +28914,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28924,7 +28924,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28934,7 +28934,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28944,7 +28944,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28954,7 +28954,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28964,7 +28964,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28974,7 +28974,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28984,7 +28984,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -28994,7 +28994,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29004,7 +29004,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29014,7 +29014,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29024,7 +29024,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29034,7 +29034,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29044,7 +29044,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29054,7 +29054,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29064,7 +29064,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29074,7 +29074,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29084,7 +29084,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29094,7 +29094,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29104,7 +29104,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29114,7 +29114,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29124,7 +29124,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29134,7 +29134,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29144,7 +29144,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29154,7 +29154,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29164,7 +29164,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29174,7 +29174,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29184,7 +29184,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29194,7 +29194,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29204,7 +29204,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29214,7 +29214,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29224,7 +29224,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29234,7 +29234,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29244,7 +29244,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29254,7 +29254,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29264,7 +29264,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29274,7 +29274,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29284,7 +29284,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29294,7 +29294,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29304,7 +29304,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29314,7 +29314,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29324,7 +29324,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29334,7 +29334,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29344,7 +29344,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29354,7 +29354,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29364,7 +29364,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29374,7 +29374,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29384,7 +29384,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29394,7 +29394,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29404,7 +29404,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29414,7 +29414,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29424,7 +29424,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29434,7 +29434,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29444,7 +29444,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29454,7 +29454,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29464,7 +29464,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29474,7 +29474,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29484,7 +29484,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/minimap.vsnd",
+			"sounds/mods/minimap_normal.vsnd",
 		]
 		vsnd_duration = 0.180000
 	}
@@ -29494,7 +29494,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V0 = 
@@ -29503,7 +29503,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V1 = 
@@ -29512,7 +29512,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V2 = 
@@ -29521,7 +29521,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V3 = 
@@ -29530,7 +29530,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V4 = 
@@ -29539,7 +29539,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V5 = 
@@ -29548,7 +29548,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V6 = 
@@ -29557,7 +29557,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V7 = 
@@ -29566,7 +29566,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V8 = 
@@ -29575,7 +29575,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V9 = 
@@ -29584,7 +29584,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V10 = 
@@ -29593,7 +29593,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V11 = 
@@ -29602,7 +29602,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V12 = 
@@ -29611,7 +29611,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V13 = 
@@ -29620,7 +29620,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V14 = 
@@ -29629,7 +29629,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V15 = 
@@ -29638,7 +29638,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V16 = 
@@ -29647,7 +29647,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V17 = 
@@ -29656,7 +29656,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V18 = 
@@ -29665,7 +29665,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V19 = 
@@ -29674,7 +29674,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V20 = 
@@ -29683,7 +29683,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V21 = 
@@ -29692,7 +29692,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V22 = 
@@ -29701,7 +29701,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V23 = 
@@ -29710,7 +29710,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V24 = 
@@ -29719,7 +29719,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V25 = 
@@ -29728,7 +29728,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V26 = 
@@ -29737,7 +29737,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V27 = 
@@ -29746,7 +29746,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V28 = 
@@ -29755,7 +29755,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V29 = 
@@ -29764,7 +29764,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V30 = 
@@ -29773,7 +29773,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V31 = 
@@ -29782,7 +29782,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V32 = 
@@ -29791,7 +29791,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V33 = 
@@ -29800,7 +29800,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V34 = 
@@ -29809,7 +29809,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V35 = 
@@ -29818,7 +29818,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V36 = 
@@ -29827,7 +29827,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V37 = 
@@ -29836,7 +29836,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V38 = 
@@ -29845,7 +29845,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V39 = 
@@ -29854,7 +29854,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V40 = 
@@ -29863,7 +29863,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V41 = 
@@ -29872,7 +29872,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V42 = 
@@ -29881,7 +29881,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V43 = 
@@ -29890,7 +29890,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V44 = 
@@ -29899,7 +29899,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V45 = 
@@ -29908,7 +29908,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V46 = 
@@ -29917,7 +29917,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V47 = 
@@ -29926,7 +29926,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V48 = 
@@ -29935,7 +29935,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V49 = 
@@ -29944,7 +29944,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V50 = 
@@ -29953,7 +29953,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V51 = 
@@ -29962,7 +29962,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V52 = 
@@ -29971,7 +29971,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V53 = 
@@ -29980,7 +29980,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V54 = 
@@ -29989,7 +29989,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V55 = 
@@ -29998,7 +29998,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V56 = 
@@ -30007,7 +30007,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V57 = 
@@ -30016,7 +30016,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V58 = 
@@ -30025,7 +30025,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V59 = 
@@ -30034,7 +30034,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V60 = 
@@ -30043,7 +30043,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V61 = 
@@ -30052,7 +30052,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V62 = 
@@ -30061,7 +30061,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V63 = 
@@ -30070,7 +30070,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V64 = 
@@ -30079,7 +30079,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V65 = 
@@ -30088,7 +30088,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V66 = 
@@ -30097,7 +30097,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V67 = 
@@ -30106,7 +30106,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V68 = 
@@ -30115,7 +30115,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V69 = 
@@ -30124,7 +30124,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V70 = 
@@ -30133,7 +30133,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V71 = 
@@ -30142,7 +30142,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V72 = 
@@ -30151,7 +30151,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V73 = 
@@ -30160,7 +30160,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V74 = 
@@ -30169,7 +30169,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V75 = 
@@ -30178,7 +30178,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V76 = 
@@ -30187,7 +30187,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V77 = 
@@ -30196,7 +30196,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V78 = 
@@ -30205,7 +30205,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V79 = 
@@ -30214,7 +30214,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V80 = 
@@ -30223,7 +30223,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V81 = 
@@ -30232,7 +30232,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V82 = 
@@ -30241,7 +30241,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V83 = 
@@ -30250,7 +30250,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V84 = 
@@ -30259,7 +30259,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V85 = 
@@ -30268,7 +30268,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V86 = 
@@ -30277,7 +30277,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V87 = 
@@ -30286,7 +30286,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V88 = 
@@ -30295,7 +30295,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V89 = 
@@ -30304,7 +30304,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V90 = 
@@ -30313,7 +30313,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V91 = 
@@ -30322,7 +30322,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V92 = 
@@ -30331,7 +30331,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V93 = 
@@ -30340,7 +30340,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V94 = 
@@ -30349,7 +30349,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V95 = 
@@ -30358,7 +30358,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V96 = 
@@ -30367,7 +30367,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V97 = 
@@ -30376,7 +30376,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V98 = 
@@ -30385,7 +30385,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V99 = 
@@ -30394,7 +30394,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test0_5_V100 = 
@@ -30403,7 +30403,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1 = 
@@ -30412,7 +30412,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V0 = 
@@ -30421,7 +30421,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V1 = 
@@ -30430,7 +30430,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V2 = 
@@ -30439,7 +30439,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V3 = 
@@ -30448,7 +30448,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V4 = 
@@ -30457,7 +30457,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V5 = 
@@ -30466,7 +30466,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V6 = 
@@ -30475,7 +30475,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V7 = 
@@ -30484,7 +30484,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V8 = 
@@ -30493,7 +30493,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V9 = 
@@ -30502,7 +30502,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V10 = 
@@ -30511,7 +30511,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V11 = 
@@ -30520,7 +30520,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V12 = 
@@ -30529,7 +30529,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V13 = 
@@ -30538,7 +30538,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V14 = 
@@ -30547,7 +30547,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V15 = 
@@ -30556,7 +30556,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V16 = 
@@ -30565,7 +30565,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V17 = 
@@ -30574,7 +30574,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V18 = 
@@ -30583,7 +30583,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V19 = 
@@ -30592,7 +30592,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V20 = 
@@ -30601,7 +30601,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V21 = 
@@ -30610,7 +30610,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V22 = 
@@ -30619,7 +30619,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V23 = 
@@ -30628,7 +30628,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V24 = 
@@ -30637,7 +30637,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V25 = 
@@ -30646,7 +30646,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V26 = 
@@ -30655,7 +30655,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V27 = 
@@ -30664,7 +30664,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V28 = 
@@ -30673,7 +30673,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V29 = 
@@ -30682,7 +30682,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V30 = 
@@ -30691,7 +30691,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V31 = 
@@ -30700,7 +30700,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V32 = 
@@ -30709,7 +30709,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V33 = 
@@ -30718,7 +30718,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V34 = 
@@ -30727,7 +30727,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V35 = 
@@ -30736,7 +30736,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V36 = 
@@ -30745,7 +30745,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V37 = 
@@ -30754,7 +30754,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V38 = 
@@ -30763,7 +30763,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V39 = 
@@ -30772,7 +30772,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V40 = 
@@ -30781,7 +30781,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V41 = 
@@ -30790,7 +30790,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V42 = 
@@ -30799,7 +30799,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V43 = 
@@ -30808,7 +30808,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V44 = 
@@ -30817,7 +30817,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V45 = 
@@ -30826,7 +30826,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V46 = 
@@ -30835,7 +30835,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V47 = 
@@ -30844,7 +30844,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V48 = 
@@ -30853,7 +30853,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V49 = 
@@ -30862,7 +30862,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V50 = 
@@ -30871,7 +30871,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V51 = 
@@ -30880,7 +30880,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V52 = 
@@ -30889,7 +30889,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V53 = 
@@ -30898,7 +30898,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V54 = 
@@ -30907,7 +30907,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V55 = 
@@ -30916,7 +30916,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V56 = 
@@ -30925,7 +30925,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V57 = 
@@ -30934,7 +30934,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V58 = 
@@ -30943,7 +30943,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V59 = 
@@ -30952,7 +30952,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V60 = 
@@ -30961,7 +30961,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V61 = 
@@ -30970,7 +30970,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V62 = 
@@ -30979,7 +30979,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V63 = 
@@ -30988,7 +30988,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V64 = 
@@ -30997,7 +30997,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V65 = 
@@ -31006,7 +31006,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V66 = 
@@ -31015,7 +31015,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V67 = 
@@ -31024,7 +31024,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V68 = 
@@ -31033,7 +31033,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V69 = 
@@ -31042,7 +31042,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V70 = 
@@ -31051,7 +31051,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V71 = 
@@ -31060,7 +31060,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V72 = 
@@ -31069,7 +31069,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V73 = 
@@ -31078,7 +31078,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V74 = 
@@ -31087,7 +31087,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V75 = 
@@ -31096,7 +31096,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V76 = 
@@ -31105,7 +31105,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V77 = 
@@ -31114,7 +31114,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V78 = 
@@ -31123,7 +31123,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V79 = 
@@ -31132,7 +31132,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V80 = 
@@ -31141,7 +31141,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V81 = 
@@ -31150,7 +31150,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V82 = 
@@ -31159,7 +31159,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V83 = 
@@ -31168,7 +31168,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V84 = 
@@ -31177,7 +31177,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V85 = 
@@ -31186,7 +31186,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V86 = 
@@ -31195,7 +31195,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V87 = 
@@ -31204,7 +31204,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V88 = 
@@ -31213,7 +31213,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V89 = 
@@ -31222,7 +31222,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V90 = 
@@ -31231,7 +31231,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V91 = 
@@ -31240,7 +31240,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V92 = 
@@ -31249,7 +31249,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V93 = 
@@ -31258,7 +31258,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V94 = 
@@ -31267,7 +31267,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V95 = 
@@ -31276,7 +31276,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V96 = 
@@ -31285,7 +31285,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V97 = 
@@ -31294,7 +31294,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V98 = 
@@ -31303,7 +31303,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V99 = 
@@ -31312,7 +31312,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test1_V100 = 
@@ -31321,7 +31321,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5 = 
@@ -31330,7 +31330,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V0 = 
@@ -31339,7 +31339,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V1 = 
@@ -31348,7 +31348,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V2 = 
@@ -31357,7 +31357,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V3 = 
@@ -31366,7 +31366,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V4 = 
@@ -31375,7 +31375,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V5 = 
@@ -31384,7 +31384,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V6 = 
@@ -31393,7 +31393,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V7 = 
@@ -31402,7 +31402,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V8 = 
@@ -31411,7 +31411,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V9 = 
@@ -31420,7 +31420,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V10 = 
@@ -31429,7 +31429,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V11 = 
@@ -31438,7 +31438,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V12 = 
@@ -31447,7 +31447,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V13 = 
@@ -31456,7 +31456,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V14 = 
@@ -31465,7 +31465,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V15 = 
@@ -31474,7 +31474,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V16 = 
@@ -31483,7 +31483,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V17 = 
@@ -31492,7 +31492,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V18 = 
@@ -31501,7 +31501,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V19 = 
@@ -31510,7 +31510,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V20 = 
@@ -31519,7 +31519,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V21 = 
@@ -31528,7 +31528,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V22 = 
@@ -31537,7 +31537,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V23 = 
@@ -31546,7 +31546,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V24 = 
@@ -31555,7 +31555,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V25 = 
@@ -31564,7 +31564,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V26 = 
@@ -31573,7 +31573,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V27 = 
@@ -31582,7 +31582,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V28 = 
@@ -31591,7 +31591,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V29 = 
@@ -31600,7 +31600,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V30 = 
@@ -31609,7 +31609,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V31 = 
@@ -31618,7 +31618,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V32 = 
@@ -31627,7 +31627,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V33 = 
@@ -31636,7 +31636,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V34 = 
@@ -31645,7 +31645,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V35 = 
@@ -31654,7 +31654,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V36 = 
@@ -31663,7 +31663,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V37 = 
@@ -31672,7 +31672,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V38 = 
@@ -31681,7 +31681,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V39 = 
@@ -31690,7 +31690,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V40 = 
@@ -31699,7 +31699,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V41 = 
@@ -31708,7 +31708,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V42 = 
@@ -31717,7 +31717,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V43 = 
@@ -31726,7 +31726,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V44 = 
@@ -31735,7 +31735,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V45 = 
@@ -31744,7 +31744,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V46 = 
@@ -31753,7 +31753,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V47 = 
@@ -31762,7 +31762,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V48 = 
@@ -31771,7 +31771,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V49 = 
@@ -31780,7 +31780,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V50 = 
@@ -31789,7 +31789,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V51 = 
@@ -31798,7 +31798,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V52 = 
@@ -31807,7 +31807,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V53 = 
@@ -31816,7 +31816,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V54 = 
@@ -31825,7 +31825,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V55 = 
@@ -31834,7 +31834,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V56 = 
@@ -31843,7 +31843,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V57 = 
@@ -31852,7 +31852,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V58 = 
@@ -31861,7 +31861,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V59 = 
@@ -31870,7 +31870,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V60 = 
@@ -31879,7 +31879,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V61 = 
@@ -31888,7 +31888,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V62 = 
@@ -31897,7 +31897,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V63 = 
@@ -31906,7 +31906,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V64 = 
@@ -31915,7 +31915,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V65 = 
@@ -31924,7 +31924,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V66 = 
@@ -31933,7 +31933,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V67 = 
@@ -31942,7 +31942,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V68 = 
@@ -31951,7 +31951,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V69 = 
@@ -31960,7 +31960,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V70 = 
@@ -31969,7 +31969,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V71 = 
@@ -31978,7 +31978,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V72 = 
@@ -31987,7 +31987,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V73 = 
@@ -31996,7 +31996,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V74 = 
@@ -32005,7 +32005,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V75 = 
@@ -32014,7 +32014,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V76 = 
@@ -32023,7 +32023,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V77 = 
@@ -32032,7 +32032,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V78 = 
@@ -32041,7 +32041,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V79 = 
@@ -32050,7 +32050,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V80 = 
@@ -32059,7 +32059,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V81 = 
@@ -32068,7 +32068,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V82 = 
@@ -32077,7 +32077,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V83 = 
@@ -32086,7 +32086,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V84 = 
@@ -32095,7 +32095,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V85 = 
@@ -32104,7 +32104,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V86 = 
@@ -32113,7 +32113,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V87 = 
@@ -32122,7 +32122,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V88 = 
@@ -32131,7 +32131,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V89 = 
@@ -32140,7 +32140,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V90 = 
@@ -32149,7 +32149,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V91 = 
@@ -32158,7 +32158,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V92 = 
@@ -32167,7 +32167,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V93 = 
@@ -32176,7 +32176,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V94 = 
@@ -32185,7 +32185,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V95 = 
@@ -32194,7 +32194,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V96 = 
@@ -32203,7 +32203,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V97 = 
@@ -32212,7 +32212,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V98 = 
@@ -32221,7 +32221,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V99 = 
@@ -32230,7 +32230,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test5_V100 = 
@@ -32239,7 +32239,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8 = 
@@ -32248,7 +32248,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V0 = 
@@ -32257,7 +32257,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V1 = 
@@ -32266,7 +32266,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V2 = 
@@ -32275,7 +32275,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V3 = 
@@ -32284,7 +32284,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V4 = 
@@ -32293,7 +32293,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V5 = 
@@ -32302,7 +32302,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V6 = 
@@ -32311,7 +32311,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V7 = 
@@ -32320,7 +32320,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V8 = 
@@ -32329,7 +32329,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V9 = 
@@ -32338,7 +32338,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V10 = 
@@ -32347,7 +32347,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V11 = 
@@ -32356,7 +32356,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V12 = 
@@ -32365,7 +32365,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V13 = 
@@ -32374,7 +32374,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V14 = 
@@ -32383,7 +32383,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V15 = 
@@ -32392,7 +32392,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V16 = 
@@ -32401,7 +32401,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V17 = 
@@ -32410,7 +32410,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V18 = 
@@ -32419,7 +32419,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V19 = 
@@ -32428,7 +32428,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V20 = 
@@ -32437,7 +32437,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V21 = 
@@ -32446,7 +32446,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V22 = 
@@ -32455,7 +32455,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V23 = 
@@ -32464,7 +32464,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V24 = 
@@ -32473,7 +32473,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V25 = 
@@ -32482,7 +32482,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V26 = 
@@ -32491,7 +32491,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V27 = 
@@ -32500,7 +32500,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V28 = 
@@ -32509,7 +32509,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V29 = 
@@ -32518,7 +32518,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V30 = 
@@ -32527,7 +32527,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V31 = 
@@ -32536,7 +32536,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V32 = 
@@ -32545,7 +32545,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V33 = 
@@ -32554,7 +32554,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V34 = 
@@ -32563,7 +32563,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V35 = 
@@ -32572,7 +32572,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V36 = 
@@ -32581,7 +32581,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V37 = 
@@ -32590,7 +32590,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V38 = 
@@ -32599,7 +32599,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V39 = 
@@ -32608,7 +32608,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V40 = 
@@ -32617,7 +32617,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V41 = 
@@ -32626,7 +32626,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V42 = 
@@ -32635,7 +32635,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V43 = 
@@ -32644,7 +32644,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V44 = 
@@ -32653,7 +32653,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V45 = 
@@ -32662,7 +32662,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V46 = 
@@ -32671,7 +32671,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V47 = 
@@ -32680,7 +32680,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V48 = 
@@ -32689,7 +32689,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V49 = 
@@ -32698,7 +32698,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V50 = 
@@ -32707,7 +32707,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V51 = 
@@ -32716,7 +32716,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V52 = 
@@ -32725,7 +32725,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V53 = 
@@ -32734,7 +32734,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V54 = 
@@ -32743,7 +32743,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V55 = 
@@ -32752,7 +32752,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V56 = 
@@ -32761,7 +32761,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V57 = 
@@ -32770,7 +32770,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V58 = 
@@ -32779,7 +32779,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V59 = 
@@ -32788,7 +32788,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V60 = 
@@ -32797,7 +32797,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V61 = 
@@ -32806,7 +32806,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V62 = 
@@ -32815,7 +32815,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V63 = 
@@ -32824,7 +32824,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V64 = 
@@ -32833,7 +32833,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V65 = 
@@ -32842,7 +32842,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V66 = 
@@ -32851,7 +32851,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V67 = 
@@ -32860,7 +32860,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V68 = 
@@ -32869,7 +32869,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V69 = 
@@ -32878,7 +32878,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V70 = 
@@ -32887,7 +32887,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V71 = 
@@ -32896,7 +32896,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V72 = 
@@ -32905,7 +32905,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V73 = 
@@ -32914,7 +32914,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V74 = 
@@ -32923,7 +32923,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V75 = 
@@ -32932,7 +32932,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V76 = 
@@ -32941,7 +32941,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V77 = 
@@ -32950,7 +32950,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V78 = 
@@ -32959,7 +32959,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V79 = 
@@ -32968,7 +32968,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V80 = 
@@ -32977,7 +32977,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V81 = 
@@ -32986,7 +32986,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V82 = 
@@ -32995,7 +32995,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V83 = 
@@ -33004,7 +33004,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V84 = 
@@ -33013,7 +33013,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V85 = 
@@ -33022,7 +33022,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V86 = 
@@ -33031,7 +33031,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V87 = 
@@ -33040,7 +33040,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V88 = 
@@ -33049,7 +33049,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V89 = 
@@ -33058,7 +33058,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V90 = 
@@ -33067,7 +33067,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V91 = 
@@ -33076,7 +33076,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V92 = 
@@ -33085,7 +33085,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V93 = 
@@ -33094,7 +33094,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V94 = 
@@ -33103,7 +33103,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V95 = 
@@ -33112,7 +33112,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V96 = 
@@ -33121,7 +33121,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V97 = 
@@ -33130,7 +33130,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V98 = 
@@ -33139,7 +33139,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V99 = 
@@ -33148,7 +33148,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test8_V100 = 
@@ -33157,7 +33157,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12 = 
@@ -33166,7 +33166,7 @@
 		volume = 12.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V0 = 
@@ -33175,7 +33175,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V1 = 
@@ -33184,7 +33184,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V2 = 
@@ -33193,7 +33193,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V3 = 
@@ -33202,7 +33202,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V4 = 
@@ -33211,7 +33211,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V5 = 
@@ -33220,7 +33220,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V6 = 
@@ -33229,7 +33229,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V7 = 
@@ -33238,7 +33238,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V8 = 
@@ -33247,7 +33247,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V9 = 
@@ -33256,7 +33256,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V10 = 
@@ -33265,7 +33265,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V11 = 
@@ -33274,7 +33274,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V12 = 
@@ -33283,7 +33283,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V13 = 
@@ -33292,7 +33292,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V14 = 
@@ -33301,7 +33301,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V15 = 
@@ -33310,7 +33310,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V16 = 
@@ -33319,7 +33319,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V17 = 
@@ -33328,7 +33328,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V18 = 
@@ -33337,7 +33337,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V19 = 
@@ -33346,7 +33346,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V20 = 
@@ -33355,7 +33355,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V21 = 
@@ -33364,7 +33364,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V22 = 
@@ -33373,7 +33373,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V23 = 
@@ -33382,7 +33382,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V24 = 
@@ -33391,7 +33391,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V25 = 
@@ -33400,7 +33400,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V26 = 
@@ -33409,7 +33409,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V27 = 
@@ -33418,7 +33418,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V28 = 
@@ -33427,7 +33427,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V29 = 
@@ -33436,7 +33436,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V30 = 
@@ -33445,7 +33445,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V31 = 
@@ -33454,7 +33454,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V32 = 
@@ -33463,7 +33463,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V33 = 
@@ -33472,7 +33472,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V34 = 
@@ -33481,7 +33481,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V35 = 
@@ -33490,7 +33490,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V36 = 
@@ -33499,7 +33499,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V37 = 
@@ -33508,7 +33508,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V38 = 
@@ -33517,7 +33517,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V39 = 
@@ -33526,7 +33526,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V40 = 
@@ -33535,7 +33535,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V41 = 
@@ -33544,7 +33544,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V42 = 
@@ -33553,7 +33553,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V43 = 
@@ -33562,7 +33562,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V44 = 
@@ -33571,7 +33571,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V45 = 
@@ -33580,7 +33580,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V46 = 
@@ -33589,7 +33589,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V47 = 
@@ -33598,7 +33598,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V48 = 
@@ -33607,7 +33607,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V49 = 
@@ -33616,7 +33616,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V50 = 
@@ -33625,7 +33625,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V51 = 
@@ -33634,7 +33634,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V52 = 
@@ -33643,7 +33643,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V53 = 
@@ -33652,7 +33652,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V54 = 
@@ -33661,7 +33661,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V55 = 
@@ -33670,7 +33670,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V56 = 
@@ -33679,7 +33679,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V57 = 
@@ -33688,7 +33688,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V58 = 
@@ -33697,7 +33697,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V59 = 
@@ -33706,7 +33706,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V60 = 
@@ -33715,7 +33715,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V61 = 
@@ -33724,7 +33724,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V62 = 
@@ -33733,7 +33733,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V63 = 
@@ -33742,7 +33742,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V64 = 
@@ -33751,7 +33751,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V65 = 
@@ -33760,7 +33760,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V66 = 
@@ -33769,7 +33769,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V67 = 
@@ -33778,7 +33778,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V68 = 
@@ -33787,7 +33787,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V69 = 
@@ -33796,7 +33796,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V70 = 
@@ -33805,7 +33805,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V71 = 
@@ -33814,7 +33814,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V72 = 
@@ -33823,7 +33823,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V73 = 
@@ -33832,7 +33832,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V74 = 
@@ -33841,7 +33841,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V75 = 
@@ -33850,7 +33850,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V76 = 
@@ -33859,7 +33859,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V77 = 
@@ -33868,7 +33868,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V78 = 
@@ -33877,7 +33877,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V79 = 
@@ -33886,7 +33886,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V80 = 
@@ -33895,7 +33895,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V81 = 
@@ -33904,7 +33904,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V82 = 
@@ -33913,7 +33913,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V83 = 
@@ -33922,7 +33922,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V84 = 
@@ -33931,7 +33931,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V85 = 
@@ -33940,7 +33940,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V86 = 
@@ -33949,7 +33949,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V87 = 
@@ -33958,7 +33958,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V88 = 
@@ -33967,7 +33967,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V89 = 
@@ -33976,7 +33976,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V90 = 
@@ -33985,7 +33985,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V91 = 
@@ -33994,7 +33994,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V92 = 
@@ -34003,7 +34003,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V93 = 
@@ -34012,7 +34012,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V94 = 
@@ -34021,7 +34021,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V95 = 
@@ -34030,7 +34030,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V96 = 
@@ -34039,7 +34039,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V97 = 
@@ -34048,7 +34048,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V98 = 
@@ -34057,7 +34057,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V99 = 
@@ -34066,7 +34066,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test12_V100 = 
@@ -34075,7 +34075,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16 = 
@@ -34084,7 +34084,7 @@
 		volume = 16.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V0 = 
@@ -34093,7 +34093,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V1 = 
@@ -34102,7 +34102,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V2 = 
@@ -34111,7 +34111,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V3 = 
@@ -34120,7 +34120,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V4 = 
@@ -34129,7 +34129,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V5 = 
@@ -34138,7 +34138,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V6 = 
@@ -34147,7 +34147,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V7 = 
@@ -34156,7 +34156,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V8 = 
@@ -34165,7 +34165,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V9 = 
@@ -34174,7 +34174,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V10 = 
@@ -34183,7 +34183,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V11 = 
@@ -34192,7 +34192,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V12 = 
@@ -34201,7 +34201,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V13 = 
@@ -34210,7 +34210,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V14 = 
@@ -34219,7 +34219,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V15 = 
@@ -34228,7 +34228,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V16 = 
@@ -34237,7 +34237,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V17 = 
@@ -34246,7 +34246,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V18 = 
@@ -34255,7 +34255,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V19 = 
@@ -34264,7 +34264,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V20 = 
@@ -34273,7 +34273,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V21 = 
@@ -34282,7 +34282,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V22 = 
@@ -34291,7 +34291,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V23 = 
@@ -34300,7 +34300,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V24 = 
@@ -34309,7 +34309,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V25 = 
@@ -34318,7 +34318,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V26 = 
@@ -34327,7 +34327,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V27 = 
@@ -34336,7 +34336,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V28 = 
@@ -34345,7 +34345,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V29 = 
@@ -34354,7 +34354,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V30 = 
@@ -34363,7 +34363,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V31 = 
@@ -34372,7 +34372,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V32 = 
@@ -34381,7 +34381,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V33 = 
@@ -34390,7 +34390,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V34 = 
@@ -34399,7 +34399,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V35 = 
@@ -34408,7 +34408,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V36 = 
@@ -34417,7 +34417,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V37 = 
@@ -34426,7 +34426,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V38 = 
@@ -34435,7 +34435,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V39 = 
@@ -34444,7 +34444,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V40 = 
@@ -34453,7 +34453,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V41 = 
@@ -34462,7 +34462,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V42 = 
@@ -34471,7 +34471,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V43 = 
@@ -34480,7 +34480,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V44 = 
@@ -34489,7 +34489,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V45 = 
@@ -34498,7 +34498,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V46 = 
@@ -34507,7 +34507,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V47 = 
@@ -34516,7 +34516,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V48 = 
@@ -34525,7 +34525,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V49 = 
@@ -34534,7 +34534,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V50 = 
@@ -34543,7 +34543,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V51 = 
@@ -34552,7 +34552,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V52 = 
@@ -34561,7 +34561,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V53 = 
@@ -34570,7 +34570,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V54 = 
@@ -34579,7 +34579,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V55 = 
@@ -34588,7 +34588,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V56 = 
@@ -34597,7 +34597,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V57 = 
@@ -34606,7 +34606,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V58 = 
@@ -34615,7 +34615,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V59 = 
@@ -34624,7 +34624,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V60 = 
@@ -34633,7 +34633,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V61 = 
@@ -34642,7 +34642,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V62 = 
@@ -34651,7 +34651,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V63 = 
@@ -34660,7 +34660,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V64 = 
@@ -34669,7 +34669,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V65 = 
@@ -34678,7 +34678,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V66 = 
@@ -34687,7 +34687,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V67 = 
@@ -34696,7 +34696,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V68 = 
@@ -34705,7 +34705,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V69 = 
@@ -34714,7 +34714,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V70 = 
@@ -34723,7 +34723,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V71 = 
@@ -34732,7 +34732,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V72 = 
@@ -34741,7 +34741,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V73 = 
@@ -34750,7 +34750,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V74 = 
@@ -34759,7 +34759,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V75 = 
@@ -34768,7 +34768,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V76 = 
@@ -34777,7 +34777,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V77 = 
@@ -34786,7 +34786,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V78 = 
@@ -34795,7 +34795,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V79 = 
@@ -34804,7 +34804,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V80 = 
@@ -34813,7 +34813,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V81 = 
@@ -34822,7 +34822,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V82 = 
@@ -34831,7 +34831,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V83 = 
@@ -34840,7 +34840,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V84 = 
@@ -34849,7 +34849,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V85 = 
@@ -34858,7 +34858,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V86 = 
@@ -34867,7 +34867,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V87 = 
@@ -34876,7 +34876,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V88 = 
@@ -34885,7 +34885,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V89 = 
@@ -34894,7 +34894,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V90 = 
@@ -34903,7 +34903,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V91 = 
@@ -34912,7 +34912,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V92 = 
@@ -34921,7 +34921,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V93 = 
@@ -34930,7 +34930,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V94 = 
@@ -34939,7 +34939,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V95 = 
@@ -34948,7 +34948,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V96 = 
@@ -34957,7 +34957,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V97 = 
@@ -34966,7 +34966,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V98 = 
@@ -34975,7 +34975,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V99 = 
@@ -34984,7 +34984,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test16_V100 = 
@@ -34993,7 +34993,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30 = 
@@ -35002,7 +35002,7 @@
 		volume = 30.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V0 = 
@@ -35011,7 +35011,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V1 = 
@@ -35020,7 +35020,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V2 = 
@@ -35029,7 +35029,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V3 = 
@@ -35038,7 +35038,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V4 = 
@@ -35047,7 +35047,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V5 = 
@@ -35056,7 +35056,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V6 = 
@@ -35065,7 +35065,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V7 = 
@@ -35074,7 +35074,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V8 = 
@@ -35083,7 +35083,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V9 = 
@@ -35092,7 +35092,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V10 = 
@@ -35101,7 +35101,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V11 = 
@@ -35110,7 +35110,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V12 = 
@@ -35119,7 +35119,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V13 = 
@@ -35128,7 +35128,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V14 = 
@@ -35137,7 +35137,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V15 = 
@@ -35146,7 +35146,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V16 = 
@@ -35155,7 +35155,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V17 = 
@@ -35164,7 +35164,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V18 = 
@@ -35173,7 +35173,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V19 = 
@@ -35182,7 +35182,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V20 = 
@@ -35191,7 +35191,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V21 = 
@@ -35200,7 +35200,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V22 = 
@@ -35209,7 +35209,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V23 = 
@@ -35218,7 +35218,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V24 = 
@@ -35227,7 +35227,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V25 = 
@@ -35236,7 +35236,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V26 = 
@@ -35245,7 +35245,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V27 = 
@@ -35254,7 +35254,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V28 = 
@@ -35263,7 +35263,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V29 = 
@@ -35272,7 +35272,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V30 = 
@@ -35281,7 +35281,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V31 = 
@@ -35290,7 +35290,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V32 = 
@@ -35299,7 +35299,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V33 = 
@@ -35308,7 +35308,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V34 = 
@@ -35317,7 +35317,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V35 = 
@@ -35326,7 +35326,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V36 = 
@@ -35335,7 +35335,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V37 = 
@@ -35344,7 +35344,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V38 = 
@@ -35353,7 +35353,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V39 = 
@@ -35362,7 +35362,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V40 = 
@@ -35371,7 +35371,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V41 = 
@@ -35380,7 +35380,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V42 = 
@@ -35389,7 +35389,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V43 = 
@@ -35398,7 +35398,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V44 = 
@@ -35407,7 +35407,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V45 = 
@@ -35416,7 +35416,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V46 = 
@@ -35425,7 +35425,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V47 = 
@@ -35434,7 +35434,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V48 = 
@@ -35443,7 +35443,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V49 = 
@@ -35452,7 +35452,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V50 = 
@@ -35461,7 +35461,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V51 = 
@@ -35470,7 +35470,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V52 = 
@@ -35479,7 +35479,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V53 = 
@@ -35488,7 +35488,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V54 = 
@@ -35497,7 +35497,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V55 = 
@@ -35506,7 +35506,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V56 = 
@@ -35515,7 +35515,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V57 = 
@@ -35524,7 +35524,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V58 = 
@@ -35533,7 +35533,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V59 = 
@@ -35542,7 +35542,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V60 = 
@@ -35551,7 +35551,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V61 = 
@@ -35560,7 +35560,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V62 = 
@@ -35569,7 +35569,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V63 = 
@@ -35578,7 +35578,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V64 = 
@@ -35587,7 +35587,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V65 = 
@@ -35596,7 +35596,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V66 = 
@@ -35605,7 +35605,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V67 = 
@@ -35614,7 +35614,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V68 = 
@@ -35623,7 +35623,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V69 = 
@@ -35632,7 +35632,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V70 = 
@@ -35641,7 +35641,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V71 = 
@@ -35650,7 +35650,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V72 = 
@@ -35659,7 +35659,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V73 = 
@@ -35668,7 +35668,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V74 = 
@@ -35677,7 +35677,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V75 = 
@@ -35686,7 +35686,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V76 = 
@@ -35695,7 +35695,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V77 = 
@@ -35704,7 +35704,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V78 = 
@@ -35713,7 +35713,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V79 = 
@@ -35722,7 +35722,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V80 = 
@@ -35731,7 +35731,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V81 = 
@@ -35740,7 +35740,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V82 = 
@@ -35749,7 +35749,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V83 = 
@@ -35758,7 +35758,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V84 = 
@@ -35767,7 +35767,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V85 = 
@@ -35776,7 +35776,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V86 = 
@@ -35785,7 +35785,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V87 = 
@@ -35794,7 +35794,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V88 = 
@@ -35803,7 +35803,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V89 = 
@@ -35812,7 +35812,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V90 = 
@@ -35821,7 +35821,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V91 = 
@@ -35830,7 +35830,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V92 = 
@@ -35839,7 +35839,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V93 = 
@@ -35848,7 +35848,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V94 = 
@@ -35857,7 +35857,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V95 = 
@@ -35866,7 +35866,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V96 = 
@@ -35875,7 +35875,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V97 = 
@@ -35884,7 +35884,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V98 = 
@@ -35893,7 +35893,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V99 = 
@@ -35902,7 +35902,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test30_V100 = 
@@ -35911,7 +35911,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50 = 
@@ -35920,7 +35920,7 @@
 		volume = 50.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V0 = 
@@ -35929,7 +35929,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V1 = 
@@ -35938,7 +35938,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V2 = 
@@ -35947,7 +35947,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V3 = 
@@ -35956,7 +35956,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V4 = 
@@ -35965,7 +35965,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V5 = 
@@ -35974,7 +35974,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V6 = 
@@ -35983,7 +35983,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V7 = 
@@ -35992,7 +35992,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V8 = 
@@ -36001,7 +36001,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V9 = 
@@ -36010,7 +36010,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V10 = 
@@ -36019,7 +36019,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V11 = 
@@ -36028,7 +36028,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V12 = 
@@ -36037,7 +36037,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V13 = 
@@ -36046,7 +36046,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V14 = 
@@ -36055,7 +36055,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V15 = 
@@ -36064,7 +36064,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V16 = 
@@ -36073,7 +36073,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V17 = 
@@ -36082,7 +36082,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V18 = 
@@ -36091,7 +36091,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V19 = 
@@ -36100,7 +36100,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V20 = 
@@ -36109,7 +36109,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V21 = 
@@ -36118,7 +36118,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V22 = 
@@ -36127,7 +36127,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V23 = 
@@ -36136,7 +36136,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V24 = 
@@ -36145,7 +36145,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V25 = 
@@ -36154,7 +36154,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V26 = 
@@ -36163,7 +36163,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V27 = 
@@ -36172,7 +36172,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V28 = 
@@ -36181,7 +36181,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V29 = 
@@ -36190,7 +36190,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V30 = 
@@ -36199,7 +36199,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V31 = 
@@ -36208,7 +36208,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V32 = 
@@ -36217,7 +36217,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V33 = 
@@ -36226,7 +36226,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V34 = 
@@ -36235,7 +36235,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V35 = 
@@ -36244,7 +36244,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V36 = 
@@ -36253,7 +36253,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V37 = 
@@ -36262,7 +36262,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V38 = 
@@ -36271,7 +36271,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V39 = 
@@ -36280,7 +36280,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V40 = 
@@ -36289,7 +36289,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V41 = 
@@ -36298,7 +36298,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V42 = 
@@ -36307,7 +36307,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V43 = 
@@ -36316,7 +36316,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V44 = 
@@ -36325,7 +36325,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V45 = 
@@ -36334,7 +36334,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V46 = 
@@ -36343,7 +36343,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V47 = 
@@ -36352,7 +36352,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V48 = 
@@ -36361,7 +36361,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V49 = 
@@ -36370,7 +36370,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V50 = 
@@ -36379,7 +36379,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V51 = 
@@ -36388,7 +36388,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V52 = 
@@ -36397,7 +36397,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V53 = 
@@ -36406,7 +36406,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V54 = 
@@ -36415,7 +36415,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V55 = 
@@ -36424,7 +36424,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V56 = 
@@ -36433,7 +36433,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V57 = 
@@ -36442,7 +36442,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V58 = 
@@ -36451,7 +36451,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V59 = 
@@ -36460,7 +36460,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V60 = 
@@ -36469,7 +36469,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V61 = 
@@ -36478,7 +36478,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V62 = 
@@ -36487,7 +36487,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V63 = 
@@ -36496,7 +36496,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V64 = 
@@ -36505,7 +36505,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V65 = 
@@ -36514,7 +36514,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V66 = 
@@ -36523,7 +36523,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V67 = 
@@ -36532,7 +36532,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V68 = 
@@ -36541,7 +36541,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V69 = 
@@ -36550,7 +36550,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V70 = 
@@ -36559,7 +36559,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V71 = 
@@ -36568,7 +36568,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V72 = 
@@ -36577,7 +36577,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V73 = 
@@ -36586,7 +36586,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V74 = 
@@ -36595,7 +36595,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V75 = 
@@ -36604,7 +36604,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V76 = 
@@ -36613,7 +36613,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V77 = 
@@ -36622,7 +36622,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V78 = 
@@ -36631,7 +36631,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V79 = 
@@ -36640,7 +36640,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V80 = 
@@ -36649,7 +36649,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V81 = 
@@ -36658,7 +36658,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V82 = 
@@ -36667,7 +36667,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V83 = 
@@ -36676,7 +36676,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V84 = 
@@ -36685,7 +36685,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V85 = 
@@ -36694,7 +36694,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V86 = 
@@ -36703,7 +36703,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V87 = 
@@ -36712,7 +36712,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V88 = 
@@ -36721,7 +36721,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V89 = 
@@ -36730,7 +36730,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V90 = 
@@ -36739,7 +36739,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V91 = 
@@ -36748,7 +36748,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V92 = 
@@ -36757,7 +36757,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V93 = 
@@ -36766,7 +36766,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V94 = 
@@ -36775,7 +36775,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V95 = 
@@ -36784,7 +36784,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V96 = 
@@ -36793,7 +36793,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V97 = 
@@ -36802,7 +36802,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V98 = 
@@ -36811,7 +36811,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V99 = 
@@ -36820,7 +36820,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test50_V100 = 
@@ -36829,7 +36829,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100 = 
@@ -36838,7 +36838,7 @@
 		volume = 100.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V0 = 
@@ -36847,7 +36847,7 @@
 		volume = 0.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V1 = 
@@ -36856,7 +36856,7 @@
 		volume = 0.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V2 = 
@@ -36865,7 +36865,7 @@
 		volume = 0.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V3 = 
@@ -36874,7 +36874,7 @@
 		volume = 0.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V4 = 
@@ -36883,7 +36883,7 @@
 		volume = 0.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V5 = 
@@ -36892,7 +36892,7 @@
 		volume = 0.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V6 = 
@@ -36901,7 +36901,7 @@
 		volume = 0.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V7 = 
@@ -36910,7 +36910,7 @@
 		volume = 0.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V8 = 
@@ -36919,7 +36919,7 @@
 		volume = 0.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V9 = 
@@ -36928,7 +36928,7 @@
 		volume = 0.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V10 = 
@@ -36937,7 +36937,7 @@
 		volume = 1.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V11 = 
@@ -36946,7 +36946,7 @@
 		volume = 1.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V12 = 
@@ -36955,7 +36955,7 @@
 		volume = 1.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V13 = 
@@ -36964,7 +36964,7 @@
 		volume = 1.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V14 = 
@@ -36973,7 +36973,7 @@
 		volume = 1.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V15 = 
@@ -36982,7 +36982,7 @@
 		volume = 1.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V16 = 
@@ -36991,7 +36991,7 @@
 		volume = 1.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V17 = 
@@ -37000,7 +37000,7 @@
 		volume = 1.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V18 = 
@@ -37009,7 +37009,7 @@
 		volume = 1.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V19 = 
@@ -37018,7 +37018,7 @@
 		volume = 1.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V20 = 
@@ -37027,7 +37027,7 @@
 		volume = 2.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V21 = 
@@ -37036,7 +37036,7 @@
 		volume = 2.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V22 = 
@@ -37045,7 +37045,7 @@
 		volume = 2.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V23 = 
@@ -37054,7 +37054,7 @@
 		volume = 2.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V24 = 
@@ -37063,7 +37063,7 @@
 		volume = 2.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V25 = 
@@ -37072,7 +37072,7 @@
 		volume = 2.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V26 = 
@@ -37081,7 +37081,7 @@
 		volume = 2.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V27 = 
@@ -37090,7 +37090,7 @@
 		volume = 2.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V28 = 
@@ -37099,7 +37099,7 @@
 		volume = 2.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V29 = 
@@ -37108,7 +37108,7 @@
 		volume = 2.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V30 = 
@@ -37117,7 +37117,7 @@
 		volume = 3.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V31 = 
@@ -37126,7 +37126,7 @@
 		volume = 3.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V32 = 
@@ -37135,7 +37135,7 @@
 		volume = 3.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V33 = 
@@ -37144,7 +37144,7 @@
 		volume = 3.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V34 = 
@@ -37153,7 +37153,7 @@
 		volume = 3.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V35 = 
@@ -37162,7 +37162,7 @@
 		volume = 3.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V36 = 
@@ -37171,7 +37171,7 @@
 		volume = 3.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V37 = 
@@ -37180,7 +37180,7 @@
 		volume = 3.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V38 = 
@@ -37189,7 +37189,7 @@
 		volume = 3.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V39 = 
@@ -37198,7 +37198,7 @@
 		volume = 3.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V40 = 
@@ -37207,7 +37207,7 @@
 		volume = 4.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V41 = 
@@ -37216,7 +37216,7 @@
 		volume = 4.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V42 = 
@@ -37225,7 +37225,7 @@
 		volume = 4.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V43 = 
@@ -37234,7 +37234,7 @@
 		volume = 4.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V44 = 
@@ -37243,7 +37243,7 @@
 		volume = 4.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V45 = 
@@ -37252,7 +37252,7 @@
 		volume = 4.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V46 = 
@@ -37261,7 +37261,7 @@
 		volume = 4.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V47 = 
@@ -37270,7 +37270,7 @@
 		volume = 4.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V48 = 
@@ -37279,7 +37279,7 @@
 		volume = 4.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V49 = 
@@ -37288,7 +37288,7 @@
 		volume = 4.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V50 = 
@@ -37297,7 +37297,7 @@
 		volume = 5.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V51 = 
@@ -37306,7 +37306,7 @@
 		volume = 5.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V52 = 
@@ -37315,7 +37315,7 @@
 		volume = 5.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V53 = 
@@ -37324,7 +37324,7 @@
 		volume = 5.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V54 = 
@@ -37333,7 +37333,7 @@
 		volume = 5.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V55 = 
@@ -37342,7 +37342,7 @@
 		volume = 5.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V56 = 
@@ -37351,7 +37351,7 @@
 		volume = 5.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V57 = 
@@ -37360,7 +37360,7 @@
 		volume = 5.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V58 = 
@@ -37369,7 +37369,7 @@
 		volume = 5.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V59 = 
@@ -37378,7 +37378,7 @@
 		volume = 5.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V60 = 
@@ -37387,7 +37387,7 @@
 		volume = 6.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V61 = 
@@ -37396,7 +37396,7 @@
 		volume = 6.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V62 = 
@@ -37405,7 +37405,7 @@
 		volume = 6.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V63 = 
@@ -37414,7 +37414,7 @@
 		volume = 6.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V64 = 
@@ -37423,7 +37423,7 @@
 		volume = 6.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V65 = 
@@ -37432,7 +37432,7 @@
 		volume = 6.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V66 = 
@@ -37441,7 +37441,7 @@
 		volume = 6.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V67 = 
@@ -37450,7 +37450,7 @@
 		volume = 6.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V68 = 
@@ -37459,7 +37459,7 @@
 		volume = 6.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V69 = 
@@ -37468,7 +37468,7 @@
 		volume = 6.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V70 = 
@@ -37477,7 +37477,7 @@
 		volume = 7.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V71 = 
@@ -37486,7 +37486,7 @@
 		volume = 7.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V72 = 
@@ -37495,7 +37495,7 @@
 		volume = 7.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V73 = 
@@ -37504,7 +37504,7 @@
 		volume = 7.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V74 = 
@@ -37513,7 +37513,7 @@
 		volume = 7.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V75 = 
@@ -37522,7 +37522,7 @@
 		volume = 7.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V76 = 
@@ -37531,7 +37531,7 @@
 		volume = 7.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V77 = 
@@ -37540,7 +37540,7 @@
 		volume = 7.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V78 = 
@@ -37549,7 +37549,7 @@
 		volume = 7.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V79 = 
@@ -37558,7 +37558,7 @@
 		volume = 7.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V80 = 
@@ -37567,7 +37567,7 @@
 		volume = 8.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V81 = 
@@ -37576,7 +37576,7 @@
 		volume = 8.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V82 = 
@@ -37585,7 +37585,7 @@
 		volume = 8.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V83 = 
@@ -37594,7 +37594,7 @@
 		volume = 8.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V84 = 
@@ -37603,7 +37603,7 @@
 		volume = 8.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V85 = 
@@ -37612,7 +37612,7 @@
 		volume = 8.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V86 = 
@@ -37621,7 +37621,7 @@
 		volume = 8.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V87 = 
@@ -37630,7 +37630,7 @@
 		volume = 8.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V88 = 
@@ -37639,7 +37639,7 @@
 		volume = 8.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V89 = 
@@ -37648,7 +37648,7 @@
 		volume = 8.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V90 = 
@@ -37657,7 +37657,7 @@
 		volume = 9.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V91 = 
@@ -37666,7 +37666,7 @@
 		volume = 9.100000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V92 = 
@@ -37675,7 +37675,7 @@
 		volume = 9.200000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V93 = 
@@ -37684,7 +37684,7 @@
 		volume = 9.300000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V94 = 
@@ -37693,7 +37693,7 @@
 		volume = 9.400000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V95 = 
@@ -37702,7 +37702,7 @@
 		volume = 9.500000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V96 = 
@@ -37711,7 +37711,7 @@
 		volume = 9.600000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V97 = 
@@ -37720,7 +37720,7 @@
 		volume = 9.700000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V98 = 
@@ -37729,7 +37729,7 @@
 		volume = 9.800000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V99 = 
@@ -37738,7 +37738,7 @@
 		volume = 9.900000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	BuffReminder.Test100_V100 = 
@@ -37747,7 +37747,7 @@
 		volume = 10.000000
 		vsnd_files = 
 		[
-			"sounds/mods/beep.vsnd",
+			"sounds/mods/beep_normal.vsnd",
 		]
 	}
 	QOL.WhackRem.Hit1 = 
