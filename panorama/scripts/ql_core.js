@@ -11882,7 +11882,6 @@ function GetUIRoot() {
     }
 
     function ApplyBuildCategoryPayloadOverride(root, cfg, nowMs, rawCfg) {
-        _TLog("load:ApplyOverride", "nowMs=" + nowMs);
         if (!cfg) return cfg;
         State.buildCategoryPayloadDormant = false;
         State.buildCategoryPayloadDormantReason = "";
@@ -15251,6 +15250,7 @@ function GetUIRoot() {
             if (!EnsureBuildSaveTargetSelectionLocked(root, nowMs, requestToken, selectedBuild, true)) {
                 return;
             }
+            _TLog("save:AdvanceStage", "lock_target_build done → start token=" + String(requestToken || "").slice(0, 8));
             SetBuildSaveStatus(root, "pending", "target_locked", requestToken);
             State.buildSaveStage = "start";
             State.buildSaveNextActionMs = nowMs;
@@ -15289,6 +15289,7 @@ function GetUIRoot() {
                 return;
             }
             State.buildSaveStage = "wait_category_focus";
+            _TLog("save:AdvanceStage", "edit_mode ok → wait_category_focus");
         }
 
         if (State.buildSaveStage === "wait_category_focus") {
@@ -15379,6 +15380,7 @@ function GetUIRoot() {
                 }
                 return;
             }
+            _TLog("save:AdvanceStage", "write done → save");
             State.buildSaveStage = "save";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_AFTER_WRITE_DELAY_MS;
             return;
@@ -15403,6 +15405,7 @@ function GetUIRoot() {
             BuildSaveDebugLog("pre-save commit ok=" + (committed ? "1" : "0") + " " + BuildSaveDebugSnapshot(root));
             var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
             State.buildSaveMutationClosed = true;
+            _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
             State.buildSaveStage = "verify";
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
@@ -15450,6 +15453,7 @@ function GetUIRoot() {
             return;
         }
 
+        $.Msg("[QOLLock][WARN][save] unrecognized stage \"" + (State.buildSaveStage || "") + "\" — falling back to switch_to_storage");
         State.buildSaveStage = "switch_to_storage";
         State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
     }
@@ -15486,11 +15490,11 @@ function GetUIRoot() {
     }
 
     function EnsureBuildSaveRequestToken(root, nowMs) {
-        _TLog("save:EnsureToken", "nowMs=" + nowMs);
         var requestToken = root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "");
         if (!requestToken || requestToken.length === 0) {
             requestToken = String(nowMs);
             root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, requestToken);
+            _TLog("save:EnsureToken", "new token=" + String(requestToken).slice(0, 8));
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
             BeginSaveSettingsLoaderSession(requestToken, nowMs);

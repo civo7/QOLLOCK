@@ -11907,9 +11907,15 @@ function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
     tick();
 }
 
+var gSaveButtonLastActionMs = 0;
+var SAVE_BUTTON_DEBOUNCE_MS = 1000;
+
 function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
     if (!saveLbl || !saveLbl.IsValid || !saveLbl.IsValid()) return;
+    var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+    if (gSaveButtonLastActionMs > nowMs - SAVE_BUTTON_DEBOUNCE_MS) return;
+    gSaveButtonLastActionMs = nowMs;
     var cfgSave = LocalizeSettingsText("SAVE", true);
     var cfgQueued = LocalizeSettingsText("QUEUED", true);
     var cfgFailed = LocalizeSettingsText("FAILED", true);
