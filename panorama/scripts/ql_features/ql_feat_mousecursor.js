@@ -8,6 +8,10 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var GAMEPLAY_MOUSE_CURSOR_ENABLED = _deps.gameplayMouseCursorEnabled;
+    var GAMEPLAY_MOUSE_CURSOR_HALF_PX = _deps.gameplayMouseCursorHalfPx;
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = _deps.gameplayMouseCursorImagePath;
+    var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = _deps.gameplayMouseCursorImagePathFallback;
     function SetGameplayMouseCursorRootClass(root, active) {
         var on = !!active;
         if (!!S.customMouseCursorClassActive === on) return;

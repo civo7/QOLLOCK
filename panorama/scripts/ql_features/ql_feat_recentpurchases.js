@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel","isPanelVisibleMaybe","state","setCachedPanel","setPanelClassCached","utils","warn","isConnectedToHideout"]);
+    var _deps = QOL.import(["getCachedPanel","isPanelVisibleMaybe","state","setCachedPanel","setPanelClassCached","utils","isConnectedToHideout"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;

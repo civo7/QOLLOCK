@@ -8,6 +8,10 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS = _deps.signatureCooldownPressFlashClass;
+    var SIGNATURE_COOLDOWN_PRESS_FLASH_MS = _deps.signatureCooldownPressFlashMs;
+    var SIGNATURE_COOLDOWN_PRESS_SCAN_MS = _deps.signatureCooldownPressScanMs;
+    var PANEL_ID_SIGNATURE = _deps.panelIdSignature;
     function RefreshSignatureCooldownFlashSlots(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var slots = S.signatureCooldownFlashSlots;
