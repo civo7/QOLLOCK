@@ -2138,6 +2138,54 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
     };
 };
 
+// ==========================================================================
+// QOL bridge namespace — shared module system
+// ==========================================================================
+// ql_utils.js publishes to QOL.utils
+// ql_core.js publishes State + ~85 shared functions as QOL.* properties
+// Feature files use QOL.import(["state","utils",...]) instead of typeof guards
+// ==========================================================================
+var QOL = (typeof QOL !== "undefined") ? QOL : {};
+
+// Re-home the feature registry on the namespace
+QOL.featureRegistry = QOL_FEATURE_REGISTRY;
+QOL.register = QOL_REGISTER_FEATURE;
+
+// Attach QOL_UTILS (loaded before us by ql_utils.js) to the namespace
+if (typeof QOL_UTILS !== "undefined") {
+    QOL.utils = QOL_UTILS;
+}
+
+// Keep bare var globals for backward compat during migration
+// (removed in cleanup step)
+
+// Dependency import helper — resolves named symbols from QOL namespace.
+// Logs a single consolidated warning listing ALL missing dependencies.
+QOL.import = function(names) {
+    var out = {};
+    var missing = [];
+    for (var i = 0; i < names.length; i++) {
+        var key = names[i];
+        var val = QOL[key];
+        if (val !== undefined) {
+            out[key] = val;
+        } else {
+            out[key] = undefined;
+            missing.push("QOL." + key);
+        }
+    }
+    if (missing.length > 0) {
+        if (typeof $ !== "undefined" && $.Msg) {
+            $.Msg("[QOLLock][BRIDGE] missing " + missing.length + " dependency(s): " + missing.join(", "));
+        }
+    }
+    return out;
+};
+
+// Publish namespace to global scope
+try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) {}
+try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) {}
+
 // ── Diagnostic dump function ──
 // Reads HUD state + captured logs from Hud panel attribute "QOL_Diag"
 // (written by ql_core.js each tick via the cross-context panel bridge).

@@ -636,4 +636,6 @@
     } else if (typeof globalThis !== "undefined") {
         globalThis.QOL_UTILS = exports;
     }
+    // Note: ql_shared_presets.js (loaded after us) attaches QOL_UTILS
+    // to the QOL bridge namespace as QOL.utils — see QOL namespace setup.
 })();
