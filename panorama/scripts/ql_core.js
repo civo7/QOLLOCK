@@ -23576,182 +23576,114 @@ function GetUIRoot() {
     // Publish namespace to global scope
     try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) {}
     try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) {}
-
     // =========================================================================
-    // [DEPRECATED] Backward-compat bare QOL_* globals
-    // Remove after all feature files migrate to QOL.import()
+    // [DEPRECATED] Backward-compat QOL_* globals
+    // Publishes QOL_STATE, QOL_GetCachedPanel, etc. for consumers that haven't
+    // migrated to QOL.import() yet (e.g. ql_settings.js, ql_perf_overlay.js).
+    // Remove after all consumers migrate to QOL.import().
     // =========================================================================
-    try { QOL_ApplyTargetShapeStyles = ApplyTargetShapeStyles; } catch(e) {}
-    try { QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
-    try { QOL_BuildKeyboardOverlayLayouts = BuildKeyboardOverlayLayouts; } catch(e) {}
-    try { QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
-    try { QOL_ClearPanelCache = ClearPanelCache; } catch(e) {}
-    try { QOL_DetectTopBarPlayerTeam = DetectTopBarPlayerTeam; } catch(e) {}
-    try { QOL_EnsureAbilitiesContainerPanelCache = EnsureAbilitiesContainerPanelCache; } catch(e) {}
-    try { QOL_EnsureCachedPanelByIds = EnsureCachedPanelByIds; } catch(e) {}
-    try { QOL_EnsureGameTimePanelCache = EnsureGameTimePanelCache; } catch(e) {}
-    try { QOL_EnsureMinimapPanelCache = EnsureMinimapPanelCache; } catch(e) {}
-    try { QOL_EnsurePassiveHudPanelCache = EnsurePassiveHudPanelCache; } catch(e) {}
-    try { QOL_EnsureSpmState = EnsureSpmState; } catch(e) {}
-    try { QOL_EstimateUnsecuredSoulsEtaFallbackSec = EstimateUnsecuredSoulsEtaFallbackSec; } catch(e) {}
-    try { QOL_ExecuteFeature = ExecuteFeature; } catch(e) {}
-    try { QOL_ExtractStatDisplayText = ExtractStatDisplayText; } catch(e) {}
-    try { QOL_FindChatMessageLabel = FindChatMessageLabel; } catch(e) {}
-    try { QOL_FindImagesInChatMessageCacheEntry = FindImagesInChatMessageCacheEntry; } catch(e) {}
-    try { QOL_FindNumericLabelTextInTree = FindNumericLabelTextInTree; } catch(e) {}
-    try { QOL_FindUnsecuredSoulsSource = FindUnsecuredSoulsSource; } catch(e) {}
-    try { QOL_FindZipBoostSource = FindZipBoostSource; } catch(e) {}
-    try { QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
-    try { QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
-    try { QOL_GetCachedPanel = GetCachedPanel; } catch(e) {}
-    try { QOL_GetGameSecondsForUrn = GetGameSecondsForUrn; } catch(e) {}
-    try { QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
-    try { QOL_GetImagesInChatMessageCache = GetImagesInChatMessageCache; } catch(e) {}
-    try { QOL_GetKeyboardCachedPanels = GetKeyboardCachedPanels; } catch(e) {}
-    try { QOL_GetSharedSchemaUtils = GetSharedSchemaUtils; } catch(e) {}
-    try { QOL_GetSoulValueFromLabels = GetSoulValueFromLabels; } catch(e) {}
-    try { QOL_GetTopBarPlayerPanel = GetTopBarPlayerPanel; } catch(e) {}
-    try { QOL_GetUIRoot = GetUIRoot; } catch(e) {}
-    try { QOL_GetUnsecuredSoulsDangerLevel = GetUnsecuredSoulsDangerLevel; } catch(e) {}
-    try { QOL_HarvestGoldenStatuesTooltipValue = HarvestGoldenStatuesTooltipValue; } catch(e) {}
-    try { QOL_InjectBottomChatImage = InjectBottomChatImage; } catch(e) {}
-    try { QOL_InjectTopChatImage = InjectTopChatImage; } catch(e) {}
-    try { QOL_IsColorWarningEnabled = IsColorWarningEnabled; } catch(e) {}
-    try { QOL_IsCombatSignalActive = IsCombatSignalActive; } catch(e) {}
-    try { QOL_isConnectedToHideout = isConnectedToHideout; } catch(e) {}
-    try { QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
-    try { QOL_IsHudClassActive = IsHudClassActive; } catch(e) {}
-    try { QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
-    try { QOL_IsPanelListValid = IsPanelListValid; } catch(e) {}
-    try { QOL_IsPanelVisibleMaybe = IsPanelVisibleMaybe; } catch(e) {}
-    try { QOL_IsPassiveCooldownBasicMode = IsPassiveCooldownBasicMode; } catch(e) {}
-    try { QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
-    try { QOL_IsStatBonusTokenZero = IsStatBonusTokenZero; } catch(e) {}
-    try { QOL_IsStreetBrawlModeActive = IsStreetBrawlModeActive; } catch(e) {}
-    try { QOL_MinimapCrateOverlayDebugLogThrottled = MinimapCrateOverlayDebugLogThrottled; } catch(e) {}
-    try { QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
-    try { QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex; } catch(e) {}
-    try { QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
-    try { QOL_NormalizeVoiceTypeValue = NormalizeVoiceTypeValue; } catch(e) {}
-    try { QOL_NormalizeVoiceVolumeValue = NormalizeVoiceVolumeValue; } catch(e) {}
-    try { QOL_ParseClockSeconds = ParseClockSeconds; } catch(e) {}
-    try { QOL_ParseUnsecuredSoulsValue = ParseUnsecuredSoulsValue; } catch(e) {}
-    try { QOL_PerfEnd = PerfEnd; } catch(e) {}
-    try { QOL_PerfNowMs = PerfNowMs; } catch(e) {}
-    try { QOL_PerfStart = PerfStart; } catch(e) {}
-    try { QOL_PruneImagesInChatMessageCache = PruneImagesInChatMessageCache; } catch(e) {}
-    try { QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex; } catch(e) {}
-    try { QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex; } catch(e) {}
-    try { QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex; } catch(e) {}
-    try { QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex; } catch(e) {}
-    try { QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex; } catch(e) {}
-    try { QOL_RefreshSpmPanelCache = RefreshSpmPanelCache; } catch(e) {}
-    try { QOL_ResetKeyboardOverlayCaches = ResetKeyboardOverlayCaches; } catch(e) {}
-    try { QOL_ResetUnsecuredSoulsTracking = ResetUnsecuredSoulsTracking; } catch(e) {}
-    try { QOL_ResolveCachedPanel = ResolveCachedPanel; } catch(e) {}
-    try { QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
-    try { QOL_ResolveGoldenStatBonusesValue = ResolveGoldenStatBonusesValue; } catch(e) {}
-    try { QOL_ResolvePassiveCooldownMode = ResolvePassiveCooldownMode; } catch(e) {}
-    try { QOL_ResolveStatBonusesSource = ResolveStatBonusesSource; } catch(e) {}
-    try { QOL_ResolveUnitTargetStyleTexts = ResolveUnitTargetStyleTexts; } catch(e) {}
-    try { QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette; } catch(e) {}
-    try { QOL_RuntimeTaskIsDue = RuntimeTaskIsDue; } catch(e) {}
-    try { QOL_RuntimeTaskSetDelay = RuntimeTaskSetDelay; } catch(e) {}
-    try { QOL_SetCachedPanel = SetCachedPanel; } catch(e) {}
-    try { QOL_SetPanelClassCached = SetPanelClassCached; } catch(e) {}
-    try { QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
-    try { QOL_SetWashColorSafe = SetWashColorSafe; } catch(e) {}
-    try { QOL_StatBonusesDebugLogThrottled = StatBonusesDebugLogThrottled; } catch(e) {}
-    try { QOL_STATE = State; } catch(e) {}
-    try { QOL_SweepStalePanelCache = SweepStalePanelCache; } catch(e) {}
-    try { QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
+    var _compatCtx = (typeof window !== "undefined") ? window : (typeof globalThis !== "undefined" ? globalThis : this);
+    var _compatMap = {
+        "QOL_ApplyTargetShapeStyles": ApplyTargetShapeStyles,
+        "QOL_BuildImagesInChatContainerWatermark": BuildImagesInChatContainerWatermark,
+        "QOL_BuildKeyboardOverlayLayouts": BuildKeyboardOverlayLayouts,
+        "QOL_ClearInjectedChatImagesForMessage": ClearInjectedChatImagesForMessage,
+        "QOL_ClearPanelCache": ClearPanelCache,
+        "QOL_DetectTopBarPlayerTeam": DetectTopBarPlayerTeam,
+        "QOL_EnsureAbilitiesContainerPanelCache": EnsureAbilitiesContainerPanelCache,
+        "QOL_EnsureCachedPanelByIds": EnsureCachedPanelByIds,
+        "QOL_EnsureGameTimePanelCache": EnsureGameTimePanelCache,
+        "QOL_EnsureMinimapPanelCache": EnsureMinimapPanelCache,
+        "QOL_EnsurePassiveHudPanelCache": EnsurePassiveHudPanelCache,
+        "QOL_EnsureSpmState": EnsureSpmState,
+        "QOL_EstimateUnsecuredSoulsEtaFallbackSec": EstimateUnsecuredSoulsEtaFallbackSec,
+        "QOL_ExecuteFeature": ExecuteFeature,
+        "QOL_ExtractStatDisplayText": ExtractStatDisplayText,
+        "QOL_FindChatMessageLabel": FindChatMessageLabel,
+        "QOL_FindImagesInChatMessageCacheEntry": FindImagesInChatMessageCacheEntry,
+        "QOL_FindNumericLabelTextInTree": FindNumericLabelTextInTree,
+        "QOL_FindUnsecuredSoulsSource": FindUnsecuredSoulsSource,
+        "QOL_FindZipBoostSource": FindZipBoostSource,
+        "QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED": GAMEPLAY_MOUSE_CURSOR_ENABLED,
+        "QOL_GetAccountIdForBuildCategoryPayload": GetAccountIdForBuildCategoryPayload,
+        "QOL_GetCachedPanel": GetCachedPanel,
+        "QOL_GetGameSecondsForUrn": GetGameSecondsForUrn,
+        "QOL_GetGameplayHudPanel": GetGameplayHudPanel,
+        "QOL_GetImagesInChatMessageCache": GetImagesInChatMessageCache,
+        "QOL_GetKeyboardCachedPanels": GetKeyboardCachedPanels,
+        "QOL_GetSharedSchemaUtils": GetSharedSchemaUtils,
+        "QOL_GetSoulValueFromLabels": GetSoulValueFromLabels,
+        "QOL_GetTopBarPlayerPanel": GetTopBarPlayerPanel,
+        "QOL_GetUIRoot": GetUIRoot,
+        "QOL_GetUnsecuredSoulsDangerLevel": GetUnsecuredSoulsDangerLevel,
+        "QOL_HarvestGoldenStatuesTooltipValue": HarvestGoldenStatuesTooltipValue,
+        "QOL_InjectBottomChatImage": InjectBottomChatImage,
+        "QOL_InjectTopChatImage": InjectTopChatImage,
+        "QOL_IsColorWarningEnabled": IsColorWarningEnabled,
+        "QOL_IsCombatSignalActive": IsCombatSignalActive,
+        "QOL_isConnectedToHideout": isConnectedToHideout,
+        "QOL_IsCustomHudContextActive": IsCustomHudContextActive,
+        "QOL_IsHudClassActive": IsHudClassActive,
+        "QOL_IsHudVisibleForTopBarRuntime": IsHudVisibleForTopBarRuntime,
+        "QOL_IsPanelListValid": IsPanelListValid,
+        "QOL_IsPanelVisibleMaybe": IsPanelVisibleMaybe,
+        "QOL_IsPassiveCooldownBasicMode": IsPassiveCooldownBasicMode,
+        "QOL_IsStartupLoaderInActiveMatchContext": IsStartupLoaderInActiveMatchContext,
+        "QOL_IsStatBonusTokenZero": IsStatBonusTokenZero,
+        "QOL_IsStreetBrawlModeActive": IsStreetBrawlModeActive,
+        "QOL_MinimapCrateOverlayDebugLogThrottled": MinimapCrateOverlayDebugLogThrottled,
+        "QOL_NormalizeDamageImpactScaleNumber": NormalizeDamageImpactScaleNumber,
+        "QOL_NormalizePaletteColorIndex": NormalizePaletteColorIndex,
+        "QOL_NormalizeStaminaChargeAngle": NormalizeStaminaChargeAngle,
+        "QOL_NormalizeVoiceTypeValue": NormalizeVoiceTypeValue,
+        "QOL_NormalizeVoiceVolumeValue": NormalizeVoiceVolumeValue,
+        "QOL_ParseClockSeconds": ParseClockSeconds,
+        "QOL_ParseUnsecuredSoulsValue": ParseUnsecuredSoulsValue,
+        "QOL_PerfEnd": PerfEnd,
+        "QOL_PerfNowMs": PerfNowMs,
+        "QOL_PerfStart": PerfStart,
+        "QOL_PruneImagesInChatMessageCache": PruneImagesInChatMessageCache,
+        "QOL_ReadAmmoTextColorIndex": ReadAmmoTextColorIndex,
+        "QOL_ReadBottomBarWashColorIndex": ReadBottomBarWashColorIndex,
+        "QOL_ReadKeyboardOverlayWashColorIndex": ReadKeyboardOverlayWashColorIndex,
+        "QOL_ReadPlayerHealthbarAccentColorIndex": ReadPlayerHealthbarAccentColorIndex,
+        "QOL_ReadStaminaChargeColorIndex": ReadStaminaChargeColorIndex,
+        "QOL_RefreshSpmPanelCache": RefreshSpmPanelCache,
+        "QOL_ResetKeyboardOverlayCaches": ResetKeyboardOverlayCaches,
+        "QOL_ResetUnsecuredSoulsTracking": ResetUnsecuredSoulsTracking,
+        "QOL_ResolveCachedPanel": ResolveCachedPanel,
+        "QOL_ResolveDamageNumbersRuntimeSig": ResolveDamageNumbersRuntimeSig,
+        "QOL_ResolveGoldenStatBonusesValue": ResolveGoldenStatBonusesValue,
+        "QOL_ResolvePassiveCooldownMode": ResolvePassiveCooldownMode,
+        "QOL_ResolveStatBonusesSource": ResolveStatBonusesSource,
+        "QOL_ResolveUnitTargetStyleTexts": ResolveUnitTargetStyleTexts,
+        "QOL_ResolveWashColorFromPalette": ResolveWashColorFromPalette,
+        "QOL_RuntimeTaskIsDue": RuntimeTaskIsDue,
+        "QOL_RuntimeTaskSetDelay": RuntimeTaskSetDelay,
+        "QOL_SetCachedPanel": SetCachedPanel,
+        "QOL_SetPanelClassCached": SetPanelClassCached,
+        "QOL_SetPanelClassIfChanged": SetPanelClassIfChanged,
+        "QOL_SetWashColorSafe": SetWashColorSafe,
+        "QOL_StatBonusesDebugLogThrottled": StatBonusesDebugLogThrottled,
+        "QOL_STATE": State,
+        "QOL_SweepStalePanelCache": SweepStalePanelCache,
+        "QOL_TryGetGameplayMouseCursorPosition": TryGetGameplayMouseCursorPosition
+    };
+    var _compatKeys = Object.keys(_compatMap);
+    var _compatFailed = [];
+    for (var _ci = 0; _ci < _compatKeys.length; _ci++) {
+        var _ck = _compatKeys[_ci];
+        try {
+            _compatCtx[_ck] = _compatMap[_ck];
+        } catch(e) {
+            _compatFailed.push(_ck);
+        }
+    }
+    if (_compatFailed.length > 0) {
+        $.Msg("[QOLLock][BRIDGE] failed to publish " + _compatFailed.length + " backward-compat global(s): " + _compatFailed.join(", "));
+    }
 
-    // [DEPRECATED] Backward-compat window.QOL_* assignments
-    // Remove after all feature files migrate to QOL.import()
-    try { if (typeof window !== "undefined") window.QOL_ApplyTargetShapeStyles = ApplyTargetShapeStyles; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_BuildImagesInChatContainerWatermark = BuildImagesInChatContainerWatermark; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_BuildKeyboardOverlayLayouts = BuildKeyboardOverlayLayouts; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ClearInjectedChatImagesForMessage = ClearInjectedChatImagesForMessage; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ClearPanelCache = ClearPanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_DetectTopBarPlayerTeam = DetectTopBarPlayerTeam; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsureAbilitiesContainerPanelCache = EnsureAbilitiesContainerPanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsureCachedPanelByIds = EnsureCachedPanelByIds; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsureGameTimePanelCache = EnsureGameTimePanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsureMinimapPanelCache = EnsureMinimapPanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsurePassiveHudPanelCache = EnsurePassiveHudPanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EnsureSpmState = EnsureSpmState; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_EstimateUnsecuredSoulsEtaFallbackSec = EstimateUnsecuredSoulsEtaFallbackSec; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ExecuteFeature = ExecuteFeature; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ExtractStatDisplayText = ExtractStatDisplayText; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_FindChatMessageLabel = FindChatMessageLabel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_FindImagesInChatMessageCacheEntry = FindImagesInChatMessageCacheEntry; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_FindNumericLabelTextInTree = FindNumericLabelTextInTree; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_FindUnsecuredSoulsSource = FindUnsecuredSoulsSource; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_FindZipBoostSource = FindZipBoostSource; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GAMEPLAY_MOUSE_CURSOR_ENABLED = GAMEPLAY_MOUSE_CURSOR_ENABLED; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetCachedPanel = GetCachedPanel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetGameSecondsForUrn = GetGameSecondsForUrn; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetGameplayHudPanel = GetGameplayHudPanel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetImagesInChatMessageCache = GetImagesInChatMessageCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetKeyboardCachedPanels = GetKeyboardCachedPanels; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetSharedSchemaUtils = GetSharedSchemaUtils; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetSoulValueFromLabels = GetSoulValueFromLabels; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetTopBarPlayerPanel = GetTopBarPlayerPanel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetUIRoot = GetUIRoot; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_GetUnsecuredSoulsDangerLevel = GetUnsecuredSoulsDangerLevel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_HarvestGoldenStatuesTooltipValue = HarvestGoldenStatuesTooltipValue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_InjectBottomChatImage = InjectBottomChatImage; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_InjectTopChatImage = InjectTopChatImage; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsColorWarningEnabled = IsColorWarningEnabled; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsCombatSignalActive = IsCombatSignalActive; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_isConnectedToHideout = isConnectedToHideout; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsCustomHudContextActive = IsCustomHudContextActive; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsHudClassActive = IsHudClassActive; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsHudVisibleForTopBarRuntime = IsHudVisibleForTopBarRuntime; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsPanelListValid = IsPanelListValid; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsPanelVisibleMaybe = IsPanelVisibleMaybe; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsPassiveCooldownBasicMode = IsPassiveCooldownBasicMode; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsStartupLoaderInActiveMatchContext = IsStartupLoaderInActiveMatchContext; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsStatBonusTokenZero = IsStatBonusTokenZero; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_IsStreetBrawlModeActive = IsStreetBrawlModeActive; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_MinimapCrateOverlayDebugLogThrottled = MinimapCrateOverlayDebugLogThrottled; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_NormalizeDamageImpactScaleNumber = NormalizeDamageImpactScaleNumber; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_NormalizePaletteColorIndex = NormalizePaletteColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_NormalizeStaminaChargeAngle = NormalizeStaminaChargeAngle; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_NormalizeVoiceTypeValue = NormalizeVoiceTypeValue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_NormalizeVoiceVolumeValue = NormalizeVoiceVolumeValue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ParseClockSeconds = ParseClockSeconds; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ParseUnsecuredSoulsValue = ParseUnsecuredSoulsValue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_PerfEnd = PerfEnd; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_PerfNowMs = PerfNowMs; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_PerfStart = PerfStart; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_PruneImagesInChatMessageCache = PruneImagesInChatMessageCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ReadAmmoTextColorIndex = ReadAmmoTextColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_RefreshSpmPanelCache = RefreshSpmPanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResetKeyboardOverlayCaches = ResetKeyboardOverlayCaches; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResetUnsecuredSoulsTracking = ResetUnsecuredSoulsTracking; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveCachedPanel = ResolveCachedPanel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveGoldenStatBonusesValue = ResolveGoldenStatBonusesValue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolvePassiveCooldownMode = ResolvePassiveCooldownMode; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveStatBonusesSource = ResolveStatBonusesSource; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveUnitTargetStyleTexts = ResolveUnitTargetStyleTexts; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_ResolveWashColorFromPalette = ResolveWashColorFromPalette; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_RuntimeTaskIsDue = RuntimeTaskIsDue; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_RuntimeTaskSetDelay = RuntimeTaskSetDelay; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_SetCachedPanel = SetCachedPanel; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_SetPanelClassCached = SetPanelClassCached; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_SetPanelClassIfChanged = SetPanelClassIfChanged; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_SetWashColorSafe = SetWashColorSafe; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_StatBonusesDebugLogThrottled = StatBonusesDebugLogThrottled; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_STATE = State; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_SweepStalePanelCache = SweepStalePanelCache; } catch(e) {}
-    try { if (typeof window !== "undefined") window.QOL_TryGetGameplayMouseCursorPosition = TryGetGameplayMouseCursorPosition; } catch(e) {}
+
 
 
 
