@@ -4,12 +4,15 @@
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: topBarRuntime\n");
         var _dk = "ql_feat_topbar";
-    var _deps = QOL.import(["getCachedPanel","isHudVisibleForTopBarRuntime","resolveCachedPanel","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel", "isHudVisibleForTopBarRuntime", "resolveCachedPanel", "state", "setCachedPanel", "utils", "panelIdTopBar"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var ResolveCachedPanel = _deps.resolveCachedPanel;
+    var IsHudVisibleForTopBarRuntime = _deps.isHudVisibleForTopBarRuntime;
+    var PID_TOP_BAR = _deps.panelIdTopBar;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||

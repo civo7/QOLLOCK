@@ -13,6 +13,10 @@
     var GAMEPLAY_MOUSE_CURSOR_HALF_PX = _deps.gameplayMouseCursorHalfPx;
     var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH = _deps.gameplayMouseCursorImagePath;
     var GAMEPLAY_MOUSE_CURSOR_IMAGE_PATH_FALLBACK = _deps.gameplayMouseCursorImagePathFallback;
+    var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
+    var IsHudClassActive = _deps.isHudClassActive;
+    var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;
+    var TryGetGameplayMouseCursorPosition = _deps.tryGetGameplayMouseCursorPosition;
     function SetGameplayMouseCursorRootClass(root, active) {
         var on = !!active;
         if (!!S.customMouseCursorClassActive === on) return;

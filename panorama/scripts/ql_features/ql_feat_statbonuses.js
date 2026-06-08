@@ -11,6 +11,15 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var IsCustomHudContextActive = _deps.isCustomHudContextActive;
+    var ExtractStatDisplayText = _deps.extractStatDisplayText;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var HarvestGoldenStatuesTooltipValue = _deps.harvestGoldenStatuesTooltipValue;
+    var IsStatBonusTokenZero = _deps.isStatBonusTokenZero;
+    var ResolveGoldenStatBonusesValue = _deps.resolveGoldenStatBonusesValue;
+    var ResolveStatBonusesSource = _deps.resolveStatBonusesSource;
+    var StatBonusesDebugLogThrottled = _deps.statBonusesDebugLogThrottled;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
     function EnsureStatBonusesOverlay(root) {
         var overlay = GC("statBonusesOverlay");
         if (IsPanelValid(overlay)) {

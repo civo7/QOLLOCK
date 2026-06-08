@@ -11,6 +11,15 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var IsCustomHudContextActive = _deps.isCustomHudContextActive;
+    var EstimateUnsecuredSoulsEtaFallbackSec = _deps.estimateUnsecuredSoulsEtaFallbackSec;
+    var FindUnsecuredSoulsSource = _deps.findUnsecuredSoulsSource;
+    var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var GetUnsecuredSoulsDangerLevel = _deps.getUnsecuredSoulsDangerLevel;
+    var ParseUnsecuredSoulsValue = _deps.parseUnsecuredSoulsValue;
+    var ResetUnsecuredSoulsTracking = _deps.resetUnsecuredSoulsTracking;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
     function EnsureUnsecuredSoulsOverlay(root) {
         var overlay = GC("unsecuredSoulsOverlay");
         if (IsPanelValid(overlay)) {

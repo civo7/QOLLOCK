@@ -3,13 +3,18 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_lanewithparty";
-    var _deps = QOL.import(["activatePanelSafe","getCachedPanel","isPanelVisibleMaybe","readPanelIdTextMaybe","readPanelTextDeepMaybe","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["activatePanelSafe", "getCachedPanel", "isPanelVisibleMaybe", "readPanelIdTextMaybe", "readPanelTextDeepMaybe", "state", "setCachedPanel", "utils", "lanePrefSelectorId"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var ActivatePanelSafe = _deps.activatePanelSafe;
+    var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;
+    var ReadPanelIdTextMaybe = _deps.readPanelIdTextMaybe;
+    var ReadPanelTextDeepMaybe = _deps.readPanelTextDeepMaybe;
+    var LANE_PREF_SELECTOR_ID = _deps.lanePrefSelectorId;
 
     function IsLanePreferenceWithPartySelected(selector) {
         if (!selector || !IsPanelValid(selector)) return false;

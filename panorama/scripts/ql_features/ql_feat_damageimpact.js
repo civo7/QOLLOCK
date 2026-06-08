@@ -9,6 +9,7 @@
     var RC = _deps.resolveCachedPanel;
     var S = _deps.state;
     var U = _deps.utils;
+    var NDS = _deps.normalizeDamageImpactScaleNumber;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||

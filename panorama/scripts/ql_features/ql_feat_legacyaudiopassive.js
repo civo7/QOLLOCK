@@ -11,6 +11,17 @@
     var IsCfgEnabled = U.IsCfgEnabled;
     var SetStyleSafe = U.SetStyleSafe;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var ResolvePassiveCooldownMode = _deps.resolvePassiveCooldownMode;
+    var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
+    var IsPassiveCooldownBasicMode = _deps.isPassiveCooldownBasicMode;
+    var IsColorWarningEnabled = _deps.isColorWarningEnabled;
+    var EnsureAbilitiesContainerPanelCache = _deps.ensureAbilitiesContainerPanelCache;
+    var EnsureGameTimePanelCache = _deps.ensureGameTimePanelCache;
+    var EnsurePassiveHudPanelCache = _deps.ensurePassiveHudPanelCache;
+    var NormalizeVoiceTypeValue = _deps.normalizeVoiceTypeValue;
+    var NormalizeVoiceVolumeValue = _deps.normalizeVoiceVolumeValue;
+    var GetSharedSchemaUtils = _deps.getSharedSchemaUtils;
+    var SetPanelClassCached = _deps.setPanelClassCached;
 
     // ── Constants ──
     var SOUND_DEBUG = false;

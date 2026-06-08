@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel","isPanelVisibleMaybe","state","setCachedPanel","setPanelClassCached","utils","isConnectedToHideout"]);
+    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -12,6 +12,9 @@
     var IsPanelValid = U.IsPanelValid;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
     var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
+    var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
+    var SetPanelClassCached = _deps.setPanelClassCached;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
     var IsPanelVisibleMaybe = QOL.isPanelVisibleMaybe || function() { return false; };
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;

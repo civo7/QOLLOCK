@@ -6,6 +6,7 @@
     var _deps = QOL.import(["buffLockoutSec","ensureMinimapPanelCache","getCachedPanel","isHudClassActive","isStreetBrawlModeActive","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
+    var ResolveCachedPanel = _deps.resolveCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
@@ -14,6 +15,10 @@
     var IsPanelValid = U.IsPanelValid;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
     var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
+    var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
+    var IsHudClassActive = _deps.isHudClassActive;
+    var SetPanelClassCached = _deps.setPanelClassCached;
+    var PerfNowMs = _deps.perfNowMs;
 
     // ── Constants ──
     const REJUV_DURATION_SEC = 240;

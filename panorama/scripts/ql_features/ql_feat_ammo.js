@@ -10,6 +10,7 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var RAI = _deps.readAmmoTextColorIndex;
     // ── Gate ──
     function gate(cfg) {
         if (!cfg) return false;

@@ -14,6 +14,13 @@
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var FormatHudPx = U.FormatHudPx;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var BuildKeyboardOverlayLayouts = _deps.buildKeyboardOverlayLayouts;
+    var GetKeyboardCachedPanels = _deps.getKeyboardCachedPanels;
+    var ReadKeyboardOverlayWashColorIndex = _deps.readKeyboardOverlayWashColorIndex;
+    var ResetKeyboardOverlayCaches = _deps.resetKeyboardOverlayCaches;
+    var ResolveWashColorFromPalette = _deps.resolveWashColorFromPalette;
+    var SetWashColorSafe = _deps.setWashColorSafe;
     function GetKeyboardBoxCache(allBindingsBox) {
         if (!S.keyboardBoxCaches) S.keyboardBoxCaches = [];
         var next = [];

@@ -13,6 +13,14 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var IsCustomHudContextActive = _deps.isCustomHudContextActive;
+    var IsCombatSignalActive = _deps.isCombatSignalActive;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var GetUIRoot = _deps.getUIRoot;
+    var PerfStart = _deps.perfStart;
+    var PerfEnd = _deps.perfEnd;
+    var SetWashColorSafe = _deps.setWashColorSafe;
+    var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
     // ── Feature constants ──
     var COMBAT_STATUS_RECOVERY_MS = 3000;
     var COMBAT_STATUS_ALERT_PROBE_MS = 500;

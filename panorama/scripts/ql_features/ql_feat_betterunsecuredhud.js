@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_betterunsecuredhud";
-    var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","parseUnsecuredSoulsValue","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel", "getGameplayHudPanel", "parseUnsecuredSoulsValue", "state", "setCachedPanel", "utils", "panelIdGoldApContainer"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
     var S = _deps.state;
@@ -11,6 +11,7 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var PANEL_ID_GOLD_AP_CONTAINER = _deps.panelIdGoldApContainer;
     var ParseUnsecuredSoulsValue = QOL.parseUnsecuredSoulsValue || function() { return 0; };
 
     var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;

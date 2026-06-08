@@ -12,6 +12,9 @@
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var IsPanelListValid = U.IsPanelListValid;
+    var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
+    var GetAccountIdForBuildCategoryPayload = _deps.getAccountIdForBuildCategoryPayload;
+    var GetUIRoot = _deps.getUIRoot;
 
     function ParseAccountIdDigitsFromText(rawText) {
         if (rawText === undefined || rawText === null) return "";

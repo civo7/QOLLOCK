@@ -11,6 +11,10 @@
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
+    var RefreshSpmPanelCache = _deps.refreshSpmPanelCache;
+    var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
+    var GetTopBarPlayerPanel = _deps.getTopBarPlayerPanel;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
 
     // ── Constants ──
     var SPM_MAX_PLAYERS = 13;

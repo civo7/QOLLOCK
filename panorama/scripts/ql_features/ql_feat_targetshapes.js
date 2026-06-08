@@ -3,11 +3,14 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_targetshapes";
-    var _deps = QOL.import(["applyTargetShapeStyles","resolveUnitTargetStyleTexts","state","utils"]);
+    var _deps = QOL.import(["applyTargetShapeStyles", "resolveUnitTargetStyleTexts", "state", "utils", "getUnitTargetDefaultStyleTexts"]);
     var S = _deps.state;
     var U = _deps.utils;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
     var IsPanelListValid = U.IsPanelListValid;
+    var ApplyTargetShapeStyles = _deps.applyTargetShapeStyles;
+    var ResolveUnitTargetStyleTexts = _deps.resolveUnitTargetStyleTexts;
+    var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;

@@ -11,6 +11,11 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var IsCustomHudContextActive = _deps.isCustomHudContextActive;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var FindZipBoostSource = _deps.findZipBoostSource;
+    var FindNumericLabelTextInTree = _deps.findNumericLabelTextInTree;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
     function EnsureZipBoostOverlay(root) {
         var overlay = GC("zipBoostOverlay");
         if (IsPanelValid(overlay)) {
