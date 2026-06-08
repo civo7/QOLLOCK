@@ -12191,7 +12191,12 @@ function SyncConfigFromStorage() {
     UpdateOnDeathArcadeBridgePollerState();
 }
 
+var _psUnavailableLogged = false;
 function PersistStatlockerProfileState(rawConfig, configObj) {
+    if (!$ || !$.persistentStorage || typeof $.persistentStorage.setItem !== "function") {
+        if (!_psUnavailableLogged) { _psUnavailableLogged = true; $.Msg("[QOLLock][WARN][storage] persistentStorage unavailable in settings context — config will not survive restart"); }
+        return;
+    }
     var enabled = Number(configObj && configObj.ENABLE_STATLOCKER) === 1 ? "1" : "0";
     try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) { $.Msg("[QOLLock][WARN][storage] Failed to persist qol_statlocker_enabled: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     try {
