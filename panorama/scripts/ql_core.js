@@ -1533,10 +1533,6 @@ function ExpressShotLog(msg) {
         StatBonusesDebugLog(msg);
     }
 
-    function HeroDetectDebugLog(msg) {
-        if (!HERO_DETECT_DEBUG) return;
-        $.Msg("[QOLLock][HeroDetectDbg] " + msg);
-    }
     function HeroReturnDebugLog(msg) {
         if (!HERO_RETURN_DEBUG) return;
         $.Msg("[QOLLock][HeroReturnDbg] " + msg);
@@ -1583,11 +1579,6 @@ function ExpressShotLog(msg) {
     }
 
 
-
-    function BottomBarCurrencyDebugLog(msg) {
-        if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
-        $.Msg("[QOLLock][BottomBarCurrencyDbg] " + msg);
-    }
     function EnemyUltOldDebugLog(msg) {
         if (!ENEMY_ULT_OLD_DEBUG) return;
         $.Msg("[QOLLock][EnemyUltOldDbg] " + msg);
@@ -21598,7 +21589,6 @@ function GetUIRoot() {
         ["buildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
         ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
         ["clearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
-        ["clearPanelCache", function() { return ClearPanelCache; }],
         ["detectTopBarPlayerTeam", function() { return DetectTopBarPlayerTeam; }],
         ["ensureAbilitiesContainerPanelCache", function() { return EnsureAbilitiesContainerPanelCache; }],
         ["ensureCachedPanelByIds", function() { return EnsureCachedPanelByIds; }],
@@ -21608,7 +21598,6 @@ function GetUIRoot() {
         ["ensurePassiveHudPanelCache", function() { return EnsurePassiveHudPanelCache; }],
         ["ensureSpmState", function() { return EnsureSpmState; }],
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
-        ["executeFeature", function() { return ExecuteFeature; }],
         ["extractStatDisplayText", function() { return ExtractStatDisplayText; }],
         ["findChatMessageLabel", function() { return FindChatMessageLabel; }],
         ["findImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
@@ -21646,7 +21635,6 @@ function GetUIRoot() {
         ["isStartupLoaderInActiveMatchContext", function() { return IsStartupLoaderInActiveMatchContext; }],
         ["isStatBonusTokenZero", function() { return IsStatBonusTokenZero; }],
         ["isStreetBrawlModeActive", function() { return IsStreetBrawlModeActive; }],
-        ["minimapCrateOverlayDebugLogThrottled", function() { return MinimapCrateOverlayDebugLogThrottled; }],
         ["normalizeDamageImpactScaleNumber", function() { return NormalizeDamageImpactScaleNumber; }],
         ["normalizeHudOffsetNumber", function() { return NormalizeHudOffsetNumber; }],
         ["normalizeHudScaleNumber", function() { return NormalizeHudScaleNumber; }],
@@ -21664,7 +21652,6 @@ function GetUIRoot() {
         ["recentPurchaseFilters", function() { return RECENT_PURCHASE_FILTERS; }],
         ["readBottomBarWashColorIndex", function() { return ReadBottomBarWashColorIndex; }],
         ["readKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
-        ["readPlayerHealthbarAccentColorIndex", function() { return ReadPlayerHealthbarAccentColorIndex; }],
         ["readStaminaChargeColorIndex", function() { return ReadStaminaChargeColorIndex; }],
         ["refreshSpmPanelCache", function() { return RefreshSpmPanelCache; }],
         ["resetKeyboardOverlayCaches", function() { return ResetKeyboardOverlayCaches; }],
@@ -21705,7 +21692,6 @@ function GetUIRoot() {
         ["statBonusesAbilityCooldownIds", function() { return STAT_BONUSES_ABILITY_COOLDOWN_IDS; }],
         ["statBonusesDebugLogThrottled", function() { return StatBonusesDebugLogThrottled; }],
         ["state", function() { return State; }],
-        ["sweepStalePanelCache", function() { return SweepStalePanelCache; }],
         ["tryGetGameplayMouseCursorPosition", function() { return TryGetGameplayMouseCursorPosition; }]
     ];
 
