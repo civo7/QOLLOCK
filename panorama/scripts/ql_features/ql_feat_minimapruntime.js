@@ -778,6 +778,10 @@ var SetCachedPanel = function(k, p) {
         return false;
     }
 
+
+    // ── Bridge: bare export for ResolveRuntimeGates in ql_core.js ──
+    QOL.NeedsMinimapRuntimeWork = NeedsMinimapRuntimeWork;
+
     // ── Registration ──
     QOL.register("minimapRuntime", {
         configKeys: ["ENABLE_ALT_ZOOM", "ENABLE_TAB_ZOOM", "MINIMAP_BASE_OPACITY",

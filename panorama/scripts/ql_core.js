@@ -22923,7 +22923,9 @@ function GetUIRoot() {
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;
-        gates.minimapRuntime = NeedsMinimapRuntimeWork(cfg, raw);
+        // minimapRuntime gate resolved via feature registry (extracted to ql_feat_minimapruntime.js)
+        var _mmFeat = QOL_FEATURE_REGISTRY["minimapRuntime"];
+        gates.minimapRuntime = _mmFeat && _mmFeat.gate ? _mmFeat.gate(cfg) : false;
         gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
         gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.panelCache = false;
