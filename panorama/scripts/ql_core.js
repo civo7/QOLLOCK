@@ -10000,7 +10000,9 @@ function GetUIRoot() {
         // CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist in any DLL,
         // and CitadelOpenUpgradeShop is a type-0 notification event (native->JS).
         if (!IsHudClassActive(root, "gShopOpen") && !IsBrowseBuildsPopupOpen(root)) {
-            if (ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+            if ((State.openItemShopLastMs || 0) <= nowMs - 1000 &&
+                ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+                State.openItemShopLastMs = nowMs;
                 DispatchCitadelConCommand("open_item_shop");
             }
             return false;
