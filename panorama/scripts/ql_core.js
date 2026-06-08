@@ -1537,17 +1537,6 @@ function ExpressShotLog(msg) {
         if (!HERO_DETECT_DEBUG) return;
         $.Msg("[QOLLock][HeroDetectDbg] " + msg);
     }
-
-    function HeroDetectDebugLogThrottled(sig, msg, nowMs) {
-        if (!HERO_DETECT_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.heroDetectDebugLastSig;
-        if (sameSig && now < (State.heroDetectDebugNextMs || 0)) return;
-        State.heroDetectDebugLastSig = sig || "";
-        State.heroDetectDebugNextMs = now + HERO_DETECT_DEBUG_MIN_INTERVAL_MS;
-        HeroDetectDebugLog(msg);
-    }
-
     function HeroReturnDebugLog(msg) {
         if (!HERO_RETURN_DEBUG) return;
         $.Msg("[QOLLock][HeroReturnDbg] " + msg);
@@ -1599,17 +1588,6 @@ function ExpressShotLog(msg) {
         if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
         $.Msg("[QOLLock][BottomBarCurrencyDbg] " + msg);
     }
-
-    function BottomBarCurrencyDebugLogThrottled(sig, msg, nowMs) {
-        if (!BOTTOM_BAR_CURRENCY_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.bottomBarCurrencyDebugLastSig;
-        if (sameSig && now < (State.bottomBarCurrencyDebugNextMs || 0)) return;
-        State.bottomBarCurrencyDebugLastSig = sig || "";
-        State.bottomBarCurrencyDebugNextMs = now + BOTTOM_BAR_CURRENCY_DEBUG_THROTTLE_MS;
-        BottomBarCurrencyDebugLog(msg);
-    }
-
     function EnemyUltOldDebugLog(msg) {
         if (!ENEMY_ULT_OLD_DEBUG) return;
         $.Msg("[QOLLock][EnemyUltOldDbg] " + msg);
@@ -2222,23 +2200,6 @@ function ExpressShotLog(msg) {
         }
         return EnsureBuildCategoryPayloadProbeReturnHeroFallback();
     }
-
-    function IsTrustedLocalHeroSource(sourceName) {
-        var src = sourceName ? String(sourceName) : "";
-        if (!src) return false;
-        if (src === "abilityHintPanel") return true;
-        if (src === "abilityHudProgressClass") return true;
-        if (src === "abilityCaptureSnapshot") return true;
-        if (src === "heroLogoSpotlight") return true;
-        if (src === "gameLocalInfo") return true;
-        if (src === "playersData") return true;
-        if (src === "playersInfo") return true;
-        if (src === "heroShop") return true;
-        if (src === "healthAbilities") return true;
-        if (src.indexOf("gameInterfaceSetting:") === 0) return true;
-        return false;
-    }
-
     function TryParseStorageConfigRaw(rawText) {
         if (!rawText || rawText.length === 0) return {};
         try {
@@ -2315,80 +2276,6 @@ function ExpressShotLog(msg) {
         State.heroPersistLastWriteMs = now;
         return true;
     }
-
-    function RememberPlayableHero(heroId, root, nowMs, persistToStorage) {
-        var hero = NormalizeHeroId(heroId);
-        if (!IsPlayableHeroId(hero)) return false;
-        State.heroDetectLastKnownPlayableHero = hero;
-        if (root && root.SetAttributeString) {
-            try { root.SetAttributeString(HERO_HINT_ATTR, hero); } catch (e0) {}
-        }
-        if (persistToStorage !== false) {
-            PersistPlayableHeroToStorage(root, hero, nowMs);
-        }
-        return true;
-    }
-
-    function EnsurePlayableHeroPersisted(root, nowMs) {
-        if (!root) return;
-        var persisted = ReadPersistedPlayableHero(root);
-        if (persisted && !State.heroDetectLastKnownPlayableHero) {
-            State.heroDetectLastKnownPlayableHero = persisted;
-        }
-        var cached = NormalizeHeroId(State.heroDetectLastKnownPlayableHero);
-        if (IsPlayableHeroId(cached)) {
-            PersistPlayableHeroToStorage(root, cached, nowMs);
-        }
-    }
-
-    function TryReadSelectedHeroFromCommandPanels(root) {
-        if (!root) return "";
-        var stack = [root];
-        var scanned = 0;
-        var bestHero = "";
-        var bestScore = -999;
-
-        while (stack.length > 0 && scanned < HERO_SELECT_COMMAND_SCAN_MAX_PANELS) {
-            var panel = stack.pop();
-            if (!panel) continue;
-            scanned++;
-
-            var onactivate = "";
-            try { onactivate = panel.GetAttributeString ? String(panel.GetAttributeString("onactivate", "") || "") : ""; } catch (e0) { onactivate = ""; }
-            var heroFromCmd = NormalizeHeroId(ExtractHeroTokenFromText(onactivate));
-            if (heroFromCmd) {
-                var score = 0;
-                if (PanelLooksSelected(panel)) score += 8;
-                try {
-                    var idText = panel.id ? String(panel.id).toLowerCase() : "";
-                    if (idText.indexOf("selected") !== -1) score += 3;
-                    if (idText.indexOf("hero") !== -1) score += 1;
-                } catch (e1) {}
-                try {
-                    if (panel.visible === true) score += 1;
-                } catch (e2) {}
-                if (heroFromCmd === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) score -= 4;
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestHero = heroFromCmd;
-                }
-            }
-
-            var childCount = 0;
-            try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e3) { childCount = 0; }
-            for (var i = 0; i < childCount; i++) {
-                var child = null;
-                try { child = panel.GetChild(i); } catch (e4) { child = null; }
-                if (child) stack.push(child);
-            }
-        }
-
-        if (bestHero && bestScore >= 4 && bestHero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            return bestHero;
-        }
-        return "";
-    }
-
     function ReadPanelClassTextMaybe(panel) {
         if (!panel) return "";
         var classText = "";
@@ -2554,764 +2441,6 @@ function ExpressShotLog(msg) {
         }
         return "";
     }
-
-    function TryReadHeroFromAbilityHintPanels(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (now < (State.heroDetectAbilityHintNextScanMs || 0)) {
-            return State.heroDetectAbilityHintLastHero || "";
-        }
-        State.heroDetectAbilityHintNextScanMs = now + HERO_DETECT_ABILITY_HINT_SCAN_INTERVAL_MS;
-        State.heroDetectAbilityHintLastHero = "";
-        if (!root) return "";
-
-        var roots = [];
-        function PushRootUnique(panel) {
-            PushUnique(roots, panel);
-        }
-
-        if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
-            PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
-            PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
-        }
-        PushRootUnique(root);
-
-        var scanned = 0;
-        var maxPanels = 1800;
-        for (var ri = 0; ri < roots.length && scanned < maxPanels; ri++) {
-            var scanRoot = roots[ri];
-            if (!scanRoot) continue;
-            var stack = [scanRoot];
-            while (stack.length > 0 && scanned < maxPanels) {
-                var panel = stack.pop();
-                if (!panel) continue;
-                scanned++;
-
-                var idText = ReadPanelIdTextMaybe(panel);
-                var classText = ReadPanelClassTextMaybe(panel);
-                var typeText = ReadPanelTypeTextMaybe(panel);
-                var combined = (idText + " " + classText + " " + typeText).toLowerCase();
-                var looksAbilityish =
-                    combined.indexOf("ability") !== -1 ||
-                    combined.indexOf("citadel_abilityhud") !== -1 ||
-                    combined.indexOf("abilityhud") !== -1;
-
-                if (looksAbilityish) {
-                    var hero =
-                        NormalizeHeroId(
-                            ExtractHeroTokenFromText(idText) ||
-                            ExtractHeroFromLooseAliasTokens(idText) ||
-                            ExtractHeroTokenFromText(classText) ||
-                            ExtractHeroFromLooseAliasTokens(classText) ||
-                            ExtractHeroTokenFromText(typeText) ||
-                            ExtractHeroFromLooseAliasTokens(typeText)
-                        ) ||
-                        NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
-                    if (hero) {
-                        State.heroDetectAbilityHintLastHero = hero;
-                        HeroReturnDebugLogThrottled(
-                            "ability_hint|" + hero,
-                            "ability hint hero=" + hero + " scanned=" + scanned + " panel=" + (idText || "-"),
-                            now
-                        );
-                        return hero;
-                    }
-                }
-
-                var childCount = 0;
-                try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e0) { childCount = 0; }
-                for (var ci = 0; ci < childCount; ci++) {
-                    var child = null;
-                    try { child = panel.GetChild(ci); } catch (e1) { child = null; }
-                    if (child) stack.push(child);
-                }
-            }
-        }
-
-        return "";
-    }
-
-    function TryReadHeroFromLogoSpotlightPanels(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (now < (State.heroDetectLogoSpotlightNextScanMs || 0)) {
-            return State.heroDetectLogoSpotlightLastHero || "";
-        }
-        State.heroDetectLogoSpotlightNextScanMs = now + HERO_DETECT_LOGO_SPOTLIGHT_SCAN_INTERVAL_MS;
-        State.heroDetectLogoSpotlightLastHero = "";
-        if (!root) return "";
-
-        var classNames = ["CitadelHeroLogo", "CitadelHeroSpotlight"];
-        var maxPanels = 80;
-        var inspected = 0;
-        var classHits = 0;
-        var typeHits = 0;
-
-        // Pass A: direct class lookup (cheap if present).
-        for (var ci = 0; ci < classNames.length; ci++) {
-            var className = classNames[ci];
-            var panels = [];
-            try {
-                if (root.FindChildrenWithClassTraverse) panels = root.FindChildrenWithClassTraverse(className) || [];
-            } catch (e0) { panels = []; }
-            for (var pi = 0; pi < panels.length; pi++) {
-                var panel = panels[pi];
-                if (!panel) continue;
-                inspected++;
-                classHits++;
-                var hero = TryReadHeroFromPanelDetails(panel);
-                if (!hero && panel.FindChildTraverse) {
-                    var heroImage = panel.FindChildTraverse("HeroImage");
-                    if (heroImage) hero = TryReadHeroFromPanelDetails(heroImage);
-                }
-                if (!hero) hero = TryReadHeroFromPanelSubtree(panel, 90);
-                if (hero) {
-                    State.heroDetectLogoSpotlightLastHero = hero;
-                    HeroReturnDebugLogThrottled(
-                        "logo_spotlight|" + hero,
-                        "logo/spotlight hero=" + hero + " class=" + className + " inspected=" + inspected,
-                        now
-                    );
-                    return hero;
-                }
-                if (inspected >= maxPanels) return "";
-            }
-        }
-
-        // Pass B: type/id/class token walk, for cases where CitadelHeroLogo/Spotlight
-        // is panel type (not class), which class traversal won't find.
-        var stack = [root];
-        var scanned = 0;
-        var maxScan = 1400;
-        while (stack.length > 0 && scanned < maxScan && inspected < maxPanels) {
-            var panelScan = stack.pop();
-            if (!panelScan) continue;
-            scanned++;
-
-            var typeText = ReadPanelTypeTextMaybe(panelScan).toLowerCase();
-            var idText = ReadPanelIdTextMaybe(panelScan).toLowerCase();
-            var classText = ReadPanelClassTextMaybe(panelScan).toLowerCase();
-            var looksLikeLogoSpotlight =
-                typeText.indexOf("citadelherologo") !== -1 ||
-                typeText.indexOf("citadelherospotlight") !== -1 ||
-                idText.indexOf("citadelherologo") !== -1 ||
-                idText.indexOf("citadelherospotlight") !== -1 ||
-                classText.indexOf("citadelherologo") !== -1 ||
-                classText.indexOf("citadelherospotlight") !== -1;
-
-            if (looksLikeLogoSpotlight) {
-                inspected++;
-                typeHits++;
-                var typeHero = TryReadHeroFromPanelDetails(panelScan);
-                if (!typeHero) typeHero = TryReadHeroFromPanelSubtree(panelScan, 90);
-                if (typeHero) {
-                    State.heroDetectLogoSpotlightLastHero = typeHero;
-                    HeroReturnDebugLogThrottled(
-                        "logo_spotlight_type|" + typeHero,
-                        "logo/spotlight hero=" + typeHero + " source=typeScan inspected=" + inspected + " scanned=" + scanned,
-                        now
-                    );
-                    return typeHero;
-                }
-            }
-
-            var childCount = 0;
-            try { childCount = panelScan.GetChildCount ? panelScan.GetChildCount() : 0; } catch (e1) { childCount = 0; }
-            for (var i = 0; i < childCount; i++) {
-                var child = null;
-                try { child = panelScan.GetChild(i); } catch (e2) { child = null; }
-                if (child) stack.push(child);
-            }
-        }
-
-        HeroReturnDebugLogThrottled(
-            "logo_spotlight_none|" + classHits + "|" + typeHits,
-            "logo/spotlight unresolved classHits=" + classHits + " typeHits=" + typeHits + " inspected=" + inspected,
-            now
-        );
-        return "";
-    }
-
-    function TryReadHeroFromAbilityHudProgressClass(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var progressPanel = GetCachedPanel("heroAbilityProgressPanel");
-
-        function EvalAbilityHudElementHero(panel) {
-            if (!panel) return null;
-            var classText = ReadPanelClassTextMaybe(panel);
-            var idText = ReadPanelIdTextMaybe(panel);
-            var typeText = ReadPanelTypeTextMaybe(panel);
-            var combined = (classText + " " + idText + " " + typeText).toLowerCase();
-
-            var isAbilityHudElementFamily =
-                combined.indexOf("citadel_abilityhudelement_") !== -1 ||
-                combined.indexOf("citadel abilityhudelement_") !== -1 ||
-                combined.indexOf("abilityhudelement_") !== -1 ||
-                combined.indexOf("citadel_abilityhudbuttonhintpanel") !== -1 ||
-                combined.indexOf("citadel abilityhudbuttonhintpanel") !== -1 ||
-                combined.indexOf("abilityhudbuttonhintpanel") !== -1;
-            var isProgressHint =
-                combined.indexOf("citadel_abilityhudelement_progress") !== -1 ||
-                combined.indexOf("citadel abilityhudelement_progress") !== -1 ||
-                combined.indexOf("abilityhudelement_progress") !== -1;
-
-            var heroToken = NormalizeHeroId(
-                ExtractHeroTokenFromText(classText) ||
-                ExtractHeroTokenFromText(idText) ||
-                ExtractHeroTokenFromText(typeText)
-            );
-            if (!heroToken) {
-                heroToken = NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
-            }
-            var score = 0;
-            var reason = "";
-
-            if (!heroToken && panel.GetAttributeString) {
-                var attrKeys = ["hero_name", "hero_internal_name", "hero", "current_hero", "class", "id", "style", "src", "value", "text", "onactivate"];
-                for (var ai = 0; ai < attrKeys.length; ai++) {
-                    var attrVal = "";
-                    try { attrVal = String(panel.GetAttributeString(attrKeys[ai], "") || ""); } catch (e0) { attrVal = ""; }
-                    if (!attrVal || attrVal.length === 0) continue;
-                    heroToken = NormalizeHeroId(ExtractHeroTokenFromText(attrVal) || NormalizeHeroAliasToken(attrVal));
-                    if (heroToken) {
-                        score += 6;
-                        reason = "attr:" + attrKeys[ai];
-                        break;
-                    }
-                }
-            }
-
-            if (!heroToken && (isAbilityHudElementFamily || isProgressHint)) {
-                heroToken = NormalizeHeroId(
-                    ExtractHeroFromLooseAliasTokens(idText) ||
-                    ExtractHeroFromLooseAliasTokens(classText) ||
-                    ExtractHeroFromLooseAliasTokens(typeText)
-                );
-                if (heroToken) {
-                    score += 5;
-                    reason = "loose_alias_token";
-                }
-            }
-
-            if (!heroToken && (isAbilityHudElementFamily || isProgressHint)) {
-                var parent = panel;
-                for (var pd = 0; pd < 4; pd++) {
-                    try { parent = parent && parent.GetParent ? parent.GetParent() : null; } catch (e1) { parent = null; }
-                    if (!parent) break;
-                    var parentCombined = ReadPanelClassTextMaybe(parent) + " " + ReadPanelIdTextMaybe(parent) + " " + ReadPanelTypeTextMaybe(parent);
-                    var parentHero = NormalizeHeroId(ExtractHeroTokenFromText(parentCombined));
-                    if (parentHero) {
-                        heroToken = parentHero;
-                        score += (5 - pd);
-                        reason = "parentDepth:" + (pd + 1);
-                        break;
-                    }
-                }
-            }
-
-            if (!heroToken) return null;
-
-            if (isAbilityHudElementFamily) score += 18;
-            if (isProgressHint) score += 8;
-            if (classText && classText.toLowerCase().indexOf("hero_") !== -1) score += 4;
-            if (idText && idText.toLowerCase().indexOf("hero_") !== -1) score += 3;
-            if (typeText && typeText.toLowerCase().indexOf("hero_") !== -1) score += 5;
-            try { if (panel.visible === true) score += 1; } catch (e2) {}
-
-            return {
-                hero: heroToken,
-                score: score,
-                reason: reason || (isProgressHint ? "progress_hint" : "abilityhud_element"),
-                classText: classText,
-                idText: idText,
-                typeText: typeText
-            };
-        }
-
-        // Fast path from cached panel.
-        if (progressPanel) {
-            var fastEval = EvalAbilityHudElementHero(progressPanel);
-            if (fastEval && fastEval.hero && fastEval.score >= HERO_DETECT_PROGRESS_MIN_SCORE) {
-                State.heroDetectAbilityProgressLastHero = fastEval.hero;
-                HeroReturnDebugLogThrottled(
-                    "progress_fast|" + fastEval.hero,
-                    "abilityHud fast hero=" + fastEval.hero + " score=" + fastEval.score + " reason=" + fastEval.reason + " panel=" + (progressPanel.id ? String(progressPanel.id) : "-"),
-                    now
-                );
-                return fastEval.hero;
-            } else if (fastEval && fastEval.hero) {
-                HeroReturnDebugLogThrottled(
-                    "progress_fast_low|" + fastEval.hero + "|" + fastEval.score,
-                    "abilityHud fast ignored low-confidence hero=" + fastEval.hero + " score=" + fastEval.score + " min=" + HERO_DETECT_PROGRESS_MIN_SCORE + " panel=" + (progressPanel.id ? String(progressPanel.id) : "-"),
-                    now
-                );
-                SetCachedPanel("heroAbilityProgressPanel", null);
-            }
-        }
-
-        if (now < (State.heroDetectAbilityProgressNextScanMs || 0)) return "";
-        State.heroDetectAbilityProgressNextScanMs = now + HERO_DETECT_PROGRESS_PANEL_SCAN_INTERVAL_MS;
-
-        var roots = [];
-        function PushRootUnique(panel) {
-            PushUnique(roots, panel);
-        }
-
-        if (root && root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
-            PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
-        }
-        PushRootUnique(root);
-        if (roots.length === 0) return "";
-
-        var scanned = 0;
-        var maxPanels = 3500;
-        var bestHero = "";
-        var bestScore = -999;
-        var bestPanel = null;
-        var bestReason = "";
-
-        for (var r = 0; r < roots.length && scanned < maxPanels; r++) {
-            var scanRoot = roots[r];
-            if (!scanRoot) continue;
-            var stack = [scanRoot];
-            while (stack.length > 0 && scanned < maxPanels) {
-                var panel = stack.pop();
-                if (!panel) continue;
-                scanned++;
-
-                var evalRes = EvalAbilityHudElementHero(panel);
-                if (evalRes && evalRes.hero && evalRes.score > bestScore) {
-                    bestScore = evalRes.score;
-                    bestHero = evalRes.hero;
-                    bestPanel = panel;
-                    bestReason = evalRes.reason;
-                }
-
-                var childCount = 0;
-                try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e3) { childCount = 0; }
-                for (var i = 0; i < childCount; i++) {
-                    var child = null;
-                    try { child = panel.GetChild(i); } catch (e4) { child = null; }
-                    if (child) stack.push(child);
-                }
-            }
-        }
-
-        var passConfidence = !!(bestHero && bestScore >= HERO_DETECT_PROGRESS_MIN_SCORE);
-        SetCachedPanel("heroAbilityProgressPanel", passConfidence ? (bestPanel || null) : null);
-        if (!bestHero) {
-            HeroReturnDebugLogThrottled(
-                "progress_scan_none",
-                "abilityHud scan no hero scanned=" + scanned + " roots=" + roots.length,
-                now
-            );
-            return "";
-        }
-        if (!passConfidence) {
-            HeroReturnDebugLogThrottled(
-                "progress_scan_low|" + bestHero + "|" + bestScore,
-                "abilityHud scan ignored low-confidence hero=" + bestHero + " score=" + bestScore + " min=" + HERO_DETECT_PROGRESS_MIN_SCORE + " reason=" + bestReason + " scanned=" + scanned + " roots=" + roots.length + " panel=" + (bestPanel && bestPanel.id ? String(bestPanel.id) : "-"),
-                now
-            );
-            return "";
-        }
-        State.heroDetectAbilityProgressLastHero = bestHero;
-        HeroReturnDebugLogThrottled(
-            "progress_scan|" + bestHero,
-            "abilityHud scan hero=" + bestHero + " score=" + bestScore + " reason=" + bestReason + " scanned=" + scanned + " roots=" + roots.length + " panel=" + (bestPanel && bestPanel.id ? String(bestPanel.id) : "-"),
-            now
-        );
-        return bestHero;
-    }
-
-    function TryReadHeroFromCaptureSnapshotPanels(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (now < (State.heroDetectCaptureSnapshotNextScanMs || 0)) {
-            return State.heroDetectCaptureSnapshotLastHero || "";
-        }
-        State.heroDetectCaptureSnapshotNextScanMs = now + HERO_DETECT_CAPTURE_SNAPSHOT_SCAN_INTERVAL_MS;
-        State.heroDetectCaptureSnapshotLastHero = "";
-        if (!root) return "";
-
-        var roots = [];
-        function PushRootUnique(panel) {
-            PushUnique(roots, panel);
-        }
-
-        if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
-            PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
-            PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_SIGNATURE));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
-        }
-        PushRootUnique(root);
-
-        var scanned = 0;
-        var maxPanels = HERO_DETECT_CAPTURE_SNAPSHOT_MAX_PANELS;
-        for (var r = 0; r < roots.length && scanned < maxPanels; r++) {
-            var scanRoot = roots[r];
-            if (!scanRoot) continue;
-
-            var queue = [scanRoot];
-            for (var qi = 0; qi < queue.length && scanned < maxPanels; qi++) {
-                var panel = queue[qi];
-                if (!panel) continue;
-                scanned++;
-
-                var idText = ReadPanelIdTextMaybe(panel);
-                var classText = ReadPanelClassTextMaybe(panel);
-                var typeText = ReadPanelTypeTextMaybe(panel);
-                var combined = (idText + " " + classText + " " + typeText).toLowerCase();
-                var abilityish =
-                    combined.indexOf("ability") !== -1 ||
-                    combined.indexOf("abilityhud") !== -1 ||
-                    combined.indexOf("citadel_abilityhud") !== -1 ||
-                    combined.indexOf("health_and_abilities") !== -1;
-                if (abilityish) {
-                    var hero = NormalizeHeroId(
-                        ExtractHeroTokenFromText(idText) ||
-                        ExtractHeroFromLooseAliasTokens(idText) ||
-                        ExtractHeroTokenFromText(classText) ||
-                        ExtractHeroFromLooseAliasTokens(classText) ||
-                        ExtractHeroTokenFromText(typeText) ||
-                        ExtractHeroFromLooseAliasTokens(typeText)
-                    );
-                    if (!hero) hero = NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
-                    if (!hero) hero = TryReadHeroFromPanelDetails(panel);
-                    if (IsPlayableHeroId(hero)) {
-                        State.heroDetectCaptureSnapshotLastHero = hero;
-                        HeroReturnDebugLogThrottled(
-                            "capture_snapshot|" + hero,
-                            "capture snapshot hero=" + hero + " scanned=" + scanned + " roots=" + roots.length + " panel=" + (idText || "-"),
-                            now
-                        );
-                        return hero;
-                    }
-                }
-
-                var childCount = 0;
-                try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e0) { childCount = 0; }
-                for (var ci = 0; ci < childCount; ci++) {
-                    var child = null;
-                    try { child = panel.GetChild(ci); } catch (e1) { child = null; }
-                    if (child) queue.push(child);
-                }
-            }
-        }
-
-        HeroReturnDebugLogThrottled(
-            "capture_snapshot_none",
-            "capture snapshot no hero scanned=" + scanned + " roots=" + roots.length,
-            now
-        );
-        return "";
-    }
-
-    function TryReadHeroFromCaptureAbilityPanels(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (now < (State.heroDetectCaptureAbilityNextScanMs || 0)) {
-            return State.heroDetectCaptureAbilityLastHero || "";
-        }
-        State.heroDetectCaptureAbilityNextScanMs = now + HERO_DETECT_CAPTURE_ABILITY_SCAN_INTERVAL_MS;
-        State.heroDetectCaptureAbilityLastHero = "";
-        if (!root) return "";
-
-        var roots = [];
-        function PushRootUnique(panel) {
-            PushUnique(roots, panel);
-        }
-
-        if (root.FindChildTraverse) {
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_ABILITIES_CONTAINER));
-            PushRootUnique(root.FindChildTraverse("ActiveAbilitiesMenu"));
-            PushRootUnique(root.FindChildTraverse("ModifiedAbilitiesPanel"));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_HUD));
-            PushRootUnique(root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD));
-        }
-        PushRootUnique(root);
-
-        var scanned = 0;
-        var hits = 0;
-        var maxPanels = HERO_DETECT_CAPTURE_ABILITY_MAX_PANELS;
-        var heroScores = {};
-        var heroReasons = {};
-
-        function addCandidate(heroId, score, reason) {
-            var hero = NormalizeHeroId(heroId);
-            if (!IsPlayableHeroId(hero)) return;
-            var current = Number(heroScores[hero]) || 0;
-            heroScores[hero] = current + (Number(score) || 0);
-            if (!heroReasons[hero]) heroReasons[hero] = [];
-            if (reason && heroReasons[hero].length < 4) heroReasons[hero].push(String(reason));
-            hits++;
-        }
-
-        for (var r = 0; r < roots.length && scanned < maxPanels; r++) {
-            var scanRoot = roots[r];
-            if (!scanRoot) continue;
-
-            var stack = [scanRoot];
-            while (stack.length > 0 && scanned < maxPanels) {
-                var panel = stack.pop();
-                if (!panel) continue;
-                scanned++;
-
-                var idText = ReadPanelIdTextMaybe(panel);
-                var classText = ReadPanelClassTextMaybe(panel);
-                var typeText = ReadPanelTypeTextMaybe(panel);
-                var panelText = ReadPanelTextMaybe(panel);
-                var lower = (idText + " " + classText + " " + typeText).toLowerCase();
-                var looksAbilityish =
-                    lower.indexOf("ability") !== -1 ||
-                    lower.indexOf("citadel_abilityhud") !== -1 ||
-                    lower.indexOf("abilityhud") !== -1 ||
-                    lower.indexOf("health_and_abilities") !== -1 ||
-                    lower.indexOf("activeabilities") !== -1 ||
-                    lower.indexOf("ability_") !== -1 ||
-                    lower.indexOf("_melee_") !== -1;
-
-                var canonicalHero = NormalizeHeroId(
-                    ExtractHeroTokenFromText(idText) ||
-                    ExtractHeroTokenFromText(classText) ||
-                    ExtractHeroTokenFromText(typeText) ||
-                    ExtractHeroTokenFromText(panelText)
-                );
-                if (canonicalHero) {
-                    var canonicalScore = looksAbilityish ? 24 : 14;
-                    addCandidate(canonicalHero, canonicalScore, "canonical");
-                }
-
-                var classHero = NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
-                if (classHero) {
-                    addCandidate(classHero, looksAbilityish ? 22 : 12, "bhasclass");
-                }
-
-                if (looksAbilityish) {
-                    var looseHero = NormalizeHeroId(
-                        ExtractHeroFromLooseAliasTokens(idText) ||
-                        ExtractHeroFromLooseAliasTokens(classText) ||
-                        ExtractHeroFromLooseAliasTokens(typeText)
-                    );
-                    if (looseHero) {
-                        addCandidate(looseHero, 10, "loose_alias");
-                    }
-                }
-
-                var childCount = 0;
-                try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e0) { childCount = 0; }
-                for (var ci = 0; ci < childCount; ci++) {
-                    var child = null;
-                    try { child = panel.GetChild(ci); } catch (e1) { child = null; }
-                    if (child) stack.push(child);
-                }
-            }
-        }
-
-        var bestHero = "";
-        var bestScore = -1;
-        for (var heroId in heroScores) {
-            var score = Number(heroScores[heroId]) || 0;
-            if (score > bestScore) {
-                bestScore = score;
-                bestHero = heroId;
-            }
-        }
-
-        if (bestHero && bestScore >= 14) {
-            State.heroDetectCaptureAbilityLastHero = bestHero;
-            HeroReturnDebugLogThrottled(
-                "capture_ability|" + bestHero + "|" + bestScore,
-                "capture ability hero=" + bestHero + " score=" + bestScore + " hits=" + hits + " scanned=" + scanned + " roots=" + roots.length + " reasons=" + ((heroReasons[bestHero] || []).join(",") || "-"),
-                now
-            );
-            return bestHero;
-        }
-
-        HeroReturnDebugLogThrottled(
-            "capture_ability_none|" + scanned,
-            "capture ability no hero scanned=" + scanned + " roots=" + roots.length + " hits=" + hits,
-            now
-        );
-        return "";
-    }
-
-    function ResolvePreferredReturnHero(root, allowFallback, disallowDefaultFallback, cfg) {
-        var allow = (allowFallback !== false);
-        var disallowHardFallback = (disallowDefaultFallback === true);
-        State.heroResolveLastSource = "none";
-        if (!allow || disallowHardFallback) return "";
-        var hero = GetConfiguredDefaultHeroId(cfg);
-        State.heroResolveLastSource = "config_default";
-        HeroReturnDebugLog("resolve source=config_default hero=" + hero + " allowFallback=1");
-        return hero;
-    }
-
-    function ScanPanelTreeForHeroToken(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (!root) return { hero: "", detail: "no_root" };
-        if (now < (State.heroDetectDeepScanNextMs || 0)) return { hero: "", detail: "scan_throttled" };
-        State.heroDetectDeepScanNextMs = now + HERO_DETECT_DEEP_SCAN_INTERVAL_MS;
-
-        var maxPanels = HERO_DETECT_DEEP_SCAN_MAX_PANELS;
-        var usingExtendedScan = false;
-        if ((Number(State.heroDetectNoMatchStreak) || 0) >= 3 && now >= (State.heroDetectDeepScanExtendedNextMs || 0)) {
-            maxPanels = HERO_DETECT_DEEP_SCAN_EXTENDED_MAX_PANELS;
-            State.heroDetectDeepScanExtendedNextMs = now + HERO_DETECT_DEEP_SCAN_EXTENDED_INTERVAL_MS;
-            usingExtendedScan = true;
-        }
-
-        function readDirectMaybe(panel, key) {
-            if (!panel || !key) return "";
-            var val = null;
-            try { val = panel[key]; } catch (e0) { val = null; }
-            if (val === undefined || val === null) return "";
-            return String(val);
-        }
-
-        function parseHeroFromText(rawText) {
-            if (!rawText) return "";
-            return NormalizeHeroId(
-                ExtractHeroTokenFromText(rawText) ||
-                ExtractHeroFromLooseAliasTokens(rawText) ||
-                NormalizeHeroAliasToken(rawText)
-            );
-        }
-
-        function buildHit(hero, reason, panelRef, scannedCount) {
-            var debugSig = BuildPanelDebugSignature(panelRef, 8);
-            var detail = reason + " scanned=" + scannedCount + " " + debugSig;
-            State.heroDetectNoMatchStreak = 0;
-            State.heroDetectLastDeepScanHero = hero || "";
-            State.heroDetectLastDeepScanDetail = detail;
-            return { hero: hero || "", detail: detail };
-        }
-
-        var stack = [root];
-        var scanned = 0;
-        while (stack.length > 0 && scanned < maxPanels) {
-            var panel = stack.pop();
-            if (!panel) continue;
-            scanned++;
-
-            var selectedMatchOnly = false;
-            var selectedLikely = PanelLooksSelected(panel);
-
-            var idText = "";
-            try { idText = panel.id ? String(panel.id) : ""; } catch (e0) { idText = ""; }
-            var heroFromId = parseHeroFromText(idText);
-            if (heroFromId) {
-                return buildHit(heroFromId, "panel_id:" + idText, panel, scanned);
-            }
-
-            var panelText = ReadPanelTextMaybe(panel);
-            var heroFromText = parseHeroFromText(panelText);
-            if (heroFromText) {
-                return buildHit(heroFromText, "panel_text", panel, scanned);
-            }
-
-            var heroFromClassMembership = NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
-            if (heroFromClassMembership) {
-                return buildHit(heroFromClassMembership, "panel_bhasclass", panel, scanned);
-            }
-
-            if (panel.GetAttributeString) {
-                var attrKeys = [
-                    "hero_name",
-                    "selected_hero",
-                    "hero",
-                    "current_hero",
-                    "hero_internal_name",
-                    "class",
-                    "style",
-                    "value",
-                    "text",
-                    "src",
-                    "onactivate",
-                    "onmouseover",
-                    "onfocus"
-                ];
-                for (var a = 0; a < attrKeys.length; a++) {
-                    var attrVal = "";
-                    try { attrVal = panel.GetAttributeString(attrKeys[a], ""); } catch (e1) { attrVal = ""; }
-                    var heroFromAttr = parseHeroFromText(attrVal);
-                    if (heroFromAttr) {
-                        if ((attrKeys[a] === "onactivate" || attrKeys[a] === "onmouseover") && !selectedLikely) {
-                            selectedMatchOnly = true;
-                            continue;
-                        }
-                        return buildHit(heroFromAttr, "attr:" + attrKeys[a], panel, scanned);
-                    }
-                }
-            }
-
-            // Check common direct properties exposed by custom panorama panels.
-            var directHeroKeys = [
-                "hero_name", "selected_hero", "hero", "current_hero", "hero_internal_name",
-                "heroName", "heroname", "m_sHeroInternalName", "heroid", "heroId", "m_nHeroID",
-                "unit_name", "unitName", "unit", "playerid", "playerId", "entityindex", "src", "value", "text"
-            ];
-            for (var d = 0; d < directHeroKeys.length; d++) {
-                var directVal = readDirectMaybe(panel, directHeroKeys[d]);
-                if (!directVal || directVal.length === 0) continue;
-                var heroFromDirect = parseHeroFromText(directVal);
-                if (heroFromDirect) {
-                    return buildHit(heroFromDirect, "direct:" + directHeroKeys[d], panel, scanned);
-                }
-            }
-
-            // Check common style-backed paths that may include hero icon filenames.
-            var style = null;
-            try { style = panel.style || null; } catch (e2) { style = null; }
-            if (style) {
-                var styleKeys = ["image", "backgroundImage", "backgroundImg", "opacityMask", "textureName"];
-                for (var s = 0; s < styleKeys.length; s++) {
-                    var styleVal = "";
-                    try { styleVal = String(style[styleKeys[s]] || ""); } catch (e3) { styleVal = ""; }
-                    if (!styleVal || styleVal.length === 0) continue;
-                    var heroFromStyle = parseHeroFromText(styleVal);
-                    if (heroFromStyle) {
-                        return buildHit(heroFromStyle, "style:" + styleKeys[s], panel, scanned);
-                    }
-                }
-            }
-
-            if (selectedMatchOnly && selectedLikely) {
-                var selectedActivate = "";
-                try {
-                    selectedActivate = panel.GetAttributeString ? String(panel.GetAttributeString("onactivate", "") || "") : "";
-                } catch (e4) {
-                    selectedActivate = "";
-                }
-                var heroFromSelectedCmd = parseHeroFromText(selectedActivate);
-                if (heroFromSelectedCmd) {
-                    return buildHit(heroFromSelectedCmd, "selected_cmd", panel, scanned);
-                }
-            }
-
-            var childCount = 0;
-            try { childCount = panel.GetChildCount ? panel.GetChildCount() : 0; } catch (e5) { childCount = 0; }
-            for (var i = 0; i < childCount; i++) {
-                var child = null;
-                try { child = panel.GetChild(i); } catch (e6) { child = null; }
-                if (child) stack.push(child);
-            }
-        }
-
-        State.heroDetectNoMatchStreak = (Number(State.heroDetectNoMatchStreak) || 0) + 1;
-        State.heroDetectLastDeepScanHero = "";
-        State.heroDetectLastDeepScanDetail = "no_match scanned=" + scanned + (usingExtendedScan ? " ext=1" : " ext=0");
-        return { hero: "", detail: State.heroDetectLastDeepScanDetail };
-    }
-
     function LogLoopException(loopName, err, stateKey, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var key = stateKey || "loopErrorNextLogMs";
@@ -3925,7 +3054,6 @@ var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
 function GetBuildPayloadCompactSchema(s)     { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(s); }
 function GetBuildPayloadCompactWireVersion(s) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(s); }
 function ResolveBuildPayloadCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
-function AreBuildPayloadSemversWireCompatible(a, b) { return QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible(a, b); }
 var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD = QOL_COMPACT_DEFAULT_HERO_FIELD;
 var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS = QOL_COMPACT_DEFAULT_HERO_OPTIONS;
 
@@ -4045,17 +3173,6 @@ function SplitConvarStorageProbeParts(rawValue) {
     if (current.length > 0) parts.push(current);
     return parts;
 }
-
-function StripConvarStorageProbe(rawValue) {
-    var parts = SplitConvarStorageProbeParts(rawValue);
-    var kept = [];
-    for (var i = 0; i < parts.length; i++) {
-        if (String(parts[i] || "").indexOf(QOL_CONVAR_STORAGE_PROBE_PREFIX) === 0) continue;
-        kept.push(parts[i]);
-    }
-    return kept.join(",");
-}
-
 function ReadConvarStorageProbeValue() {
     if (typeof GameInterfaceAPI === "undefined" || !GameInterfaceAPI || typeof GameInterfaceAPI.GetSettingString !== "function") return "";
     try {
@@ -4663,25 +3780,6 @@ function GetUIRoot() {
         }
         State.passiveCooldownModeApplied = passiveCooldownMode;
     }
-
-    function ResetColoredHealthbarRuntimeStyles() {
-        var healthBar = GetCachedPanel("coloredHealthbarHealthBar");
-        var progressLeft = GetCachedPanel("coloredHealthbarProgressLeft");
-        var currentHealth = GetCachedPanel("coloredHealthbarCurrentHealth");
-
-        if (healthBar) SetWashColorSafe(healthBar, "white");
-        if (progressLeft) SetWashColorSafe(progressLeft, "white");
-        if (currentHealth) {
-            SetStyleSafe(currentHealth, "color", "white");
-            SetWashColorSafe(currentHealth, "white");
-        }
-
-        State.coloredHealthbarLastColor = "";
-        State.coloredHealthbarPulseDir = 1;
-        State.coloredHealthbarPulseVal = 0;
-        State.coloredHealthbarZeroHeightStreak = 0;
-    }
-
     function ResetColoredHealthbarPanelCache() {
         SetCachedPanel("coloredHealthbarHealthBar", null);
         SetCachedPanel("coloredHealthbarProgressLeft", null);
@@ -4697,74 +3795,6 @@ function GetUIRoot() {
         }
         return false;
     }
-
-    function ResolveColoredHealthbarPanels(root) {
-        var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
-        var healthContainer = IsPanelValid(liveHealthContainer) ? liveHealthContainer : (GetCachedPanel("healthContainer"));
-        if (healthContainer !== GetCachedPanel("healthContainer")) {
-            SetCachedPanel("healthContainer", healthContainer);
-            ResetColoredHealthbarPanelCache();
-        }
-        if (!healthContainer) return null;
-
-        var healthBar = GetCachedPanel("coloredHealthbarHealthBar");
-        if (healthBar && !IsDescendantOf(healthBar, healthContainer)) {
-            ResetColoredHealthbarPanelCache();
-            healthBar = null;
-        }
-        if (!healthBar) {
-            var hudHealthBars = healthContainer.FindChildTraverse ? healthContainer.FindChildTraverse("hud_health_bars") : null;
-            healthBar = hudHealthBars && hudHealthBars.FindChildTraverse ? hudHealthBars.FindChildTraverse("health_bar") : null;
-            if (!healthBar && healthContainer.FindChildTraverse) {
-                healthBar = healthContainer.FindChildTraverse("health_bar");
-            }
-            SetCachedPanel("coloredHealthbarHealthBar", healthBar);
-        }
-        if (!healthBar) return null;
-
-        var progressLeft = GetCachedPanel("coloredHealthbarProgressLeft");
-        if (progressLeft && !IsDescendantOf(progressLeft, healthBar)) {
-            SetCachedPanel("coloredHealthbarProgressLeft", null);
-            progressLeft = null;
-        }
-        if (!progressLeft) {
-            progressLeft = healthBar.FindChild ? healthBar.FindChild("health_bar_left") : null;
-            if (!progressLeft && healthBar.GetChildCount && healthBar.GetChild) {
-                var childCount = healthBar.GetChildCount();
-                for (var i = 0; i < childCount; i++) {
-                    var child = null;
-                    try {
-                        child = healthBar.GetChild(i);
-                    } catch (e) {
-                        child = null;
-                    }
-                    if (child && child.BHasClass && child.BHasClass("ProgressBarLeft")) {
-                        progressLeft = child;
-                        break;
-                    }
-                }
-            }
-            SetCachedPanel("coloredHealthbarProgressLeft", progressLeft);
-        }
-        if (!progressLeft) return null;
-
-        var currentHealth = GetCachedPanel("coloredHealthbarCurrentHealth");
-        if (currentHealth && !IsDescendantOf(currentHealth, healthBar)) {
-            SetCachedPanel("coloredHealthbarCurrentHealth", null);
-            currentHealth = null;
-        }
-        if (!currentHealth) {
-            currentHealth = healthBar.FindChildTraverse ? healthBar.FindChildTraverse("current_health") : null;
-            SetCachedPanel("coloredHealthbarCurrentHealth", currentHealth);
-        }
-
-        return {
-            healthBar: healthBar,
-            progressLeft: progressLeft,
-            currentHealth: currentHealth
-        };
-    }
-
     function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
@@ -7742,29 +6772,6 @@ function GetUIRoot() {
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
     }
-
-
-    // UpdateTopBarNicknames extracted to ql_feat_nicknames.js
-
-    // ApplyZeroSpmDisplay / UpdateSoulsPerMinute extracted to ql_feat_spm.js
-
-    // EnsureUnspentState / UpdateUnspentSouls extracted to ql_feat_unspent.js
-
-
-    // FormatClockMmSs extracted to ql_feat_rejuvtimers.js
-
-    function GetCurrentMapDisplayName() {
-        try {
-            if (typeof Game !== "undefined" && Game.GetMapInfo) {
-                var mapInfo = Game.GetMapInfo();
-                if (mapInfo && mapInfo.map_display_name) {
-                    return String(mapInfo.map_display_name);
-                }
-            }
-        } catch (eMapName) {}
-        return "";
-    }
-
     function ResolveMinimapCrateOverlayMapKey() {
         try {
             if (typeof Game !== "undefined" && Game.GetMapInfo) {
@@ -7866,104 +6873,11 @@ function GetUIRoot() {
             markers: markers
         };
     }
-
-    function EnsureMinimapTunnelOverlay(root) {
-        var anchor = EnsureMinimapOverlayAnchor(root);
-        if (!anchor) return null;
-        var overlay = GetCachedPanel("minimapTunnelOverlayRoot");
-        if (!overlay) {
-            overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("tunnel_overlay") || null) : null;
-            if (!overlay) {
-                overlay = $.CreatePanel("Panel", anchor, "tunnel_overlay", {
-                    hittest: "false",
-                    hittestchildren: "false"
-                });
-            }
-        } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
-            overlay.SetParent(anchor);
-        }
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = false;
-        overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png.vtex")';
-        overlay.style.backgroundSize = "100% 100%";
-        overlay.style.backgroundRepeat = "no-repeat";
-        overlay.style.backgroundPosition = "center";
-        SetCachedPanel("minimapTunnelOverlayRoot", overlay);
-        return overlay;
-    }
-
     function ClearMinimapCrateOverlayMarkers(markers) {
         if (markers && markers.RemoveAndDeleteChildren) {
             markers.RemoveAndDeleteChildren();
         }
     }
-
-    function BuildMinimapCrateOverlay(root, mapName) {
-        var panels = EnsureMinimapCrateOverlay(root);
-        if (!panels || !panels.root || !panels.markers) {
-            MinimapCrateOverlayDebugLogThrottled("build|nopanels|" + String(mapName), "map=" + String(mapName) + " panels=<null>", PerfNowMs());
-            return null;
-        }
-        var overlay = panels.root;
-        var markers = panels.markers;
-        var dataRoot = null;
-        if (typeof QOL_MINIMAP_CRATE_DATA === "object" && QOL_MINIMAP_CRATE_DATA) dataRoot = QOL_MINIMAP_CRATE_DATA;
-        else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
-        else if (typeof MINIMAP_DATA === "object" && MINIMAP_DATA) dataRoot = MINIMAP_DATA;
-        var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
-        var points = null;
-        if (mapData && Array.isArray(mapData.crates)) points = mapData.crates;
-        else if (Array.isArray(mapData)) points = mapData;
-        if (!Array.isArray(points) || points.length <= 0) {
-            ClearMinimapCrateOverlayMarkers(markers);
-            State.minimapCrateOverlayBuildSig = "";
-            MinimapCrateOverlayDebugLogThrottled(
-                "build|nodata|" + String(mapName),
-                "map=" + String(mapName) + " dataRoot=" + (dataRoot ? "1" : "0") + " mapData=" + (mapData ? "1" : "0") + " points=0",
-                PerfNowMs()
-            );
-            return overlay;
-        }
-
-        var buildSig = String(mapName) + "|" + String(points.length);
-        if (State.minimapCrateOverlayBuildSig === buildSig && markers.GetChildCount && Number(markers.GetChildCount()) === points.length) {
-            MinimapCrateOverlayDebugLogThrottled(
-                "build|cached|" + buildSig,
-                "map=" + String(mapName) + " points=" + String(points.length) + " children=" + String(Number(markers.GetChildCount()) || 0),
-                PerfNowMs()
-            );
-            return overlay;
-        }
-
-        ClearMinimapCrateOverlayMarkers(markers);
-        var builtCount = 0;
-        for (var i = 0; i < points.length; i++) {
-            var point = points[i];
-            var u = Array.isArray(point) ? Number(point[0]) : Number(point && point.u);
-            var v = Array.isArray(point) ? Number(point[1]) : Number(point && point.v);
-            if (!isFinite(u) || !isFinite(v)) continue;
-            var marker = $.CreatePanel("Panel", markers, "");
-            marker.AddClass("minimap_marker");
-            marker.style.position = (u * 100) + "% " + (v * 100) + "% 0";
-            marker.style.width = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
-            marker.style.height = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
-            marker.style.transform =
-                "translateX(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px) translateY(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px)";
-            marker.style.opacity = "1.0";
-            marker.style.backgroundColor = "rgba(255, 213, 74, " + MINIMAP_CRATE_OVERLAY_MARKER_OPACITY.toFixed(2) + ")";
-            marker.style.border = "1px solid rgba(42, 33, 0, " + MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY.toFixed(2) + ")";
-            builtCount++;
-        }
-        State.minimapCrateOverlayBuildSig = buildSig;
-        MinimapCrateOverlayDebugLogThrottled(
-            "build|done|" + buildSig,
-            "map=" + String(mapName) + " points=" + String(points.length) + " built=" + String(builtCount) + " children=" + String(Number(markers.GetChildCount()) || 0),
-            PerfNowMs()
-        );
-        return overlay;
-    }
-
 
     // HideMinimapObjectiveTimers extracted to ql_feat_rejuvtimers.js
 
@@ -8039,15 +6953,6 @@ function GetUIRoot() {
         }
         return false;
     }
-
-    function PanelHasAnyToken(panel, tokens) {
-        if (!panel || !tokens || tokens.length === 0) return false;
-        for (var i = 0; i < tokens.length; i++) {
-            if (PanelHasClassToken(panel, tokens[i])) return true;
-        }
-        return false;
-    }
-
     function GetHighestRejuvChargeTokenOnPanel(panel) {
         if (!panel) return 0;
         var max = 0;
@@ -8329,81 +7234,6 @@ function GetUIRoot() {
         if (!raw) return null;
         return ParseEnemyV2BridgeBool(raw);
     }
-
-    function ReadEnemyV2AttrBridgeState(root) {
-        if (!root) return null;
-        var candidatePanels = [root];
-        try {
-            if (root.FindChildTraverse) {
-                var hud = root.FindChildTraverse(PANEL_ID_HUD);
-                var escape = root.FindChildTraverse("EscapeMenu");
-                if (hud) candidatePanels.push(hud);
-                if (escape) candidatePanels.push(escape);
-            }
-        } catch (e0) {}
-
-        var enhanced = null;
-        var ult = null;
-        var level = null;
-        for (var i = 0; i < candidatePanels.length; i++) {
-            var p = candidatePanels[i];
-            if (enhanced === null) enhanced = ReadEnemyV2BoolAttr(p, ENEMY_V2_ATTR_ENHANCED);
-            if (ult === null) ult = ReadEnemyV2BoolAttr(p, ENEMY_V2_ATTR_ULT);
-            if (level === null) level = ReadEnemyV2BoolAttr(p, ENEMY_V2_ATTR_LEVEL);
-        }
-
-        if (enhanced === null || ult === null || level === null) return null;
-        return {
-            enhanced: enhanced,
-            ult: ult,
-            level: level
-        };
-    }
-
-    function OnEnemyV2BridgeEvent(a0, a1, a2, a3) {
-        var v0 = ParseEnemyV2BridgeBool(a0);
-        var v1 = ParseEnemyV2BridgeBool(a1);
-        var v2 = ParseEnemyV2BridgeBool(a2);
-        var v3 = ParseEnemyV2BridgeBool(a3);
-        if (v0 === null && v1 !== null && v2 !== null && v3 !== null) {
-            v0 = v1;
-            v1 = v2;
-            v2 = v3;
-        }
-
-        var didSet = false;
-        if (v0 !== null) {
-            State.enemyV2BridgeEventEnhanced = v0;
-            didSet = true;
-        }
-        if (v1 !== null) {
-            State.enemyV2BridgeEventUlt = v1;
-            didSet = true;
-        }
-        if (v2 !== null) {
-            State.enemyV2BridgeEventLevel = v2;
-            didSet = true;
-        }
-        if (!didSet) return;
-
-        State.enemyV2BridgeEventLastMs = Date.now ? Date.now() : (new Date()).getTime();
-        SyncEnemyV2RuntimeBridge(
-            !!State.enemyV2BridgeEventEnhanced,
-            !!State.enemyV2BridgeEventUlt,
-            !!State.enemyV2BridgeEventLevel,
-            true
-        );
-        if (ENEMY_V2_BRIDGE_DEBUG) {
-            try {
-                $.Msg(
-                    "[QOLLock][EnemyV2BridgeDbg] source=event E=" + (State.enemyV2BridgeEventEnhanced ? "1" : "0") +
-                    " U=" + (State.enemyV2BridgeEventUlt ? "1" : "0") +
-                    " L=" + (State.enemyV2BridgeEventLevel ? "1" : "0")
-                );
-            } catch (e0) {}
-        }
-    }
-
     // Announcer/DL4D functions extracted to ql_feat_legacyaudiopassive.js
 
     function GetFirstPanelTextByClass(panel, className) {
@@ -8857,24 +7687,6 @@ function GetUIRoot() {
         );
     }
 
-    function CreateIndicatorMeta(panel, needsSmallDamage) {
-        return {
-            panel: panel,
-            container: null,
-            isCumulativeOrBatched: hasClassInHierarchy(panel, "cumulative") || hasClassInHierarchy(panel, "batched"),
-            isSmallDamage: needsSmallDamage ? IsIndicatorSmallDamage(panel) : false,
-            smallDamageKnown: !!needsSmallDamage
-        };
-    }
-
-    function EnsureIndicatorMetaSmallDamage(meta) {
-        if (!meta || meta.smallDamageKnown) return meta;
-        meta.isSmallDamage = IsIndicatorSmallDamage(meta.panel);
-        meta.smallDamageKnown = true;
-        return meta;
-    }
-
-
     function EnsurePanelClassCache(cacheObj, panel) {
         if (!cacheObj) return;
         if (cacheObj.panel !== panel) {
@@ -9278,94 +8090,6 @@ function GetUIRoot() {
         }
         return 0;
     }
-
-    function UpdateAccountIdProbe(root, nowMs) {
-        if (!root) return;
-
-        if (State.accountPresetBootstrapDone && State.accountPresetSessionLockId) {
-            State.accountProbeDone = true;
-            State.accountProbeFoundId = String(State.accountPresetSessionLockId);
-            State.accountProbeFoundSource = "bootstrap_lock";
-            return;
-        }
-
-        if (State.accountProbeStartMs <= 0) {
-            State.accountProbeStartMs = nowMs;
-            State.accountProbeWindowEndMs = nowMs + ACCOUNT_PROBE_WINDOW_MS;
-            State.accountProbeNextMs = nowMs;
-            State.accountProbeDeepScanNextMs = nowMs;
-            State.accountProbeReportNextMs = 0;
-            State.accountProbeFoundId = "";
-            State.accountProbeDone = false;
-            State.accountProbeMissLogged = false;
-            State.accountProbeScans = 0;
-            State.accountProbeLastPanelsScanned = 0;
-            State.accountProbeFoundSource = "";
-            State.accountProbeCandidateId = "";
-            State.accountProbeCandidateHits = 0;
-            AccountProbeLog("started (" + Math.floor(ACCOUNT_PROBE_WINDOW_MS / 1000) + "s window)");
-            LogAccountProbeApiHintsOnce();
-        }
-
-        if (State.accountProbeFoundId && State.accountProbeFoundId.length > 0) {
-            if (ACCOUNT_PROBE_LOG && nowMs >= (State.accountProbeReportNextMs || 0)) {
-                var sourceText = State.accountProbeFoundSource ? (" source=" + State.accountProbeFoundSource) : "";
-                AccountProbeLog("account_id=" + State.accountProbeFoundId + sourceText);
-                State.accountProbeReportNextMs = nowMs + ACCOUNT_PROBE_REPORT_INTERVAL_MS;
-            }
-            return;
-        }
-
-        if (State.accountProbeDone && nowMs >= (State.accountProbeNextMs || 0)) {
-            State.accountProbeDone = false;
-            State.accountProbeWindowEndMs = nowMs + ACCOUNT_PROBE_WINDOW_MS;
-            State.accountProbeMissLogged = false;
-            State.accountProbeCandidateId = "";
-            State.accountProbeCandidateHits = 0;
-        }
-
-        var knownPathId = TryReadAccountIdFromKnownPartyPath(root);
-        if (knownPathId && knownPathId.length > 0) {
-            var knownPathResult = {
-                id: knownPathId,
-                source: "known_party_path",
-                detail: ""
-            };
-            if (ConfirmAccountProbeResult(knownPathResult, nowMs, 1)) {
-                AccountProbeLog("found account_id=" + knownPathId + " via known_party_path");
-            }
-            return;
-        }
-
-        if (State.accountProbeDone) return;
-        if (nowMs < (State.accountProbeNextMs || 0)) return;
-        State.accountProbeNextMs = nowMs + ACCOUNT_PROBE_SCAN_INTERVAL_MS;
-        State.accountProbeScans++;
-
-        var probeResult = TryReadLocalAccountId(root, nowMs);
-        if (probeResult && probeResult.panelsScanned) {
-            State.accountProbeLastPanelsScanned = probeResult.panelsScanned;
-        }
-
-        if (probeResult && probeResult.id && probeResult.id.length > 0) {
-            if (ConfirmAccountProbeResult(probeResult, nowMs, ACCOUNT_PROBE_CONFIRM_HITS)) {
-                AccountProbeLog("found account_id=" + probeResult.id + " via " + (probeResult.source || "unknown") + (probeResult.detail ? (" @ " + probeResult.detail) : ""));
-            }
-            return;
-        }
-
-        if (nowMs >= State.accountProbeWindowEndMs) {
-            State.accountProbeDone = true;
-            State.accountProbeNextMs = nowMs + ACCOUNT_PROBE_RETRY_BACKOFF_MS;
-            State.accountProbeCandidateId = "";
-            State.accountProbeCandidateHits = 0;
-            if (!State.accountProbeMissLogged) {
-                AccountProbeLog("no account_id found after " + Math.floor(ACCOUNT_PROBE_WINDOW_MS / 1000) + "s (scans=" + State.accountProbeScans + ", lastTreePanels=" + State.accountProbeLastPanelsScanned + ")");
-                State.accountProbeMissLogged = true;
-            }
-        }
-    }
-
     function TryReadAccountIdFromKnownPartyPath(root) {
         if (!root) return "";
         var partyContainer = root.FindChildTraverse("CitadelPartyContainer");
@@ -9392,192 +8116,6 @@ function GetUIRoot() {
             try { root.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e2) {}
         }
     }
-
-    function ApplyAccountPresetOverride(root, cfg, nowMs, rawCfg) {
-        if (!cfg) return cfg;
-        State.accountPresetRawOverride = "";
-        if (!ACCOUNT_PRESET_TEST_ENABLED) {
-            if (State.accountPresetTestActive) {
-                State.accountPresetTestActive = false;
-            }
-            State.accountPresetBootstrapDone = false;
-            State.accountPresetBootstrapAccountId = "";
-            State.accountPresetSessionLockId = "";
-            State.accountPresetLastAppliedRaw = "";
-            State.accountPresetBootstrapAtMs = 0;
-            State.accountPresetLastUserEditRev = 0;
-            State.accountPresetManualUnlockActive = false;
-            State.accountPresetManualUnlockAccountId = "";
-            SetRuntimePresetMarker(root, "");
-            return cfg;
-        }
-
-        var knownPathId = TryReadAccountIdFromKnownPartyPath(root);
-        var detectedId = "";
-        var sessionLockId = State.accountPresetSessionLockId ? String(State.accountPresetSessionLockId) : "";
-        if (sessionLockId.length > 0) {
-            if (knownPathId && knownPathId.length > 0) {
-                if (knownPathId !== sessionLockId) {
-                    // Trust explicit local-party-path account switches and re-bootstrap for the new account.
-                    detectedId = knownPathId;
-                    State.accountProbeFoundId = knownPathId;
-                    State.accountProbeFoundSource = "known_party_path_switch";
-                    State.accountPresetSessionLockId = knownPathId;
-                    State.accountPresetBootstrapAccountId = knownPathId;
-                    State.accountPresetBootstrapDone = false;
-                    State.accountPresetLastAppliedRaw = "";
-                    State.accountPresetManualUnlockActive = false;
-                    State.accountPresetManualUnlockAccountId = "";
-                } else {
-                    detectedId = sessionLockId;
-                }
-            } else {
-                // Keep account binding stable for this runtime if known-path is temporarily unavailable.
-                detectedId = sessionLockId;
-            }
-        } else if (knownPathId && knownPathId.length > 0) {
-            detectedId = knownPathId;
-            State.accountProbeFoundId = knownPathId;
-            State.accountProbeFoundSource = "known_party_path";
-        } else if (State.accountPresetBootstrapDone && State.accountPresetBootstrapAccountId) {
-            // Keep the last confirmed bound account latched to avoid transient probe misses.
-            detectedId = String(State.accountPresetBootstrapAccountId);
-        } else {
-            detectedId = State.accountProbeFoundId ? String(State.accountProbeFoundId) : "";
-        }
-
-        var boundPreset = ResolveAccountPresetConfig(detectedId);
-        if (!boundPreset || !boundPreset.config) {
-            var hasDetectedId = !!(detectedId && detectedId.length > 0);
-            var hasBootstrappedBinding = !!(
-                State.accountPresetBootstrapDone &&
-                State.accountPresetBootstrapAccountId &&
-                String(State.accountPresetBootstrapAccountId).length > 0
-            );
-            if (!hasDetectedId && hasBootstrappedBinding) {
-                // Account-id lookup can flicker in some UI trees; don't clear an active binding on a miss.
-                return cfg;
-            }
-            if (
-                hasDetectedId &&
-                sessionLockId.length > 0 &&
-                detectedId === sessionLockId &&
-                (!knownPathId || knownPathId.length === 0)
-            ) {
-                // Recover from stale/incorrect session lock IDs when trusted local-path lookup is unavailable.
-                State.accountProbeFoundId = "";
-                State.accountProbeFoundSource = "";
-                State.accountProbeCandidateId = "";
-                State.accountProbeCandidateHits = 0;
-                State.accountProbeDone = false;
-                State.accountProbeStartMs = 0;
-            }
-            if (State.accountPresetTestActive) {
-                State.accountPresetTestActive = false;
-            }
-            State.accountPresetBootstrapDone = false;
-            State.accountPresetBootstrapAccountId = "";
-            State.accountPresetSessionLockId = "";
-            State.accountPresetLastAppliedRaw = "";
-            State.accountPresetBootstrapAtMs = 0;
-            State.accountPresetLastUserEditRev = 0;
-            State.accountPresetManualUnlockActive = false;
-            State.accountPresetManualUnlockAccountId = "";
-            SetRuntimePresetMarker(root, "");
-            return cfg;
-        }
-        var boundPresetName = boundPreset.name;
-        var boundPresetConfig = boundPreset.config;
-        var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
-        var rawComparableNow = BuildComparableStorageConfigRaw(rawNow);
-        var userEditRev = GetUserEditRevision(root);
-
-        if (State.accountPresetManualUnlockActive && State.accountPresetManualUnlockAccountId === detectedId) {
-            State.accountPresetTestActive = false;
-            SetRuntimePresetMarker(root, "");
-            return cfg;
-        }
-
-        if (
-            State.accountPresetBootstrapDone &&
-            State.accountPresetBootstrapAccountId === detectedId &&
-            State.accountPresetLastAppliedRaw &&
-            rawComparableNow.length > 0 &&
-            rawComparableNow !== State.accountPresetLastAppliedRaw
-        ) {
-            var userEditedSinceBootstrap = userEditRev > (State.accountPresetLastUserEditRev || 0);
-            var graceElapsed = nowMs >= ((State.accountPresetBootstrapAtMs || 0) + ACCOUNT_PRESET_POST_BOOTSTRAP_GRACE_MS);
-            if (userEditedSinceBootstrap && graceElapsed) {
-                // Explicit user edits override account-bound preset for this session.
-                State.accountPresetManualUnlockActive = true;
-                State.accountPresetManualUnlockAccountId = detectedId;
-                State.accountPresetTestActive = false;
-                SetRuntimePresetMarker(root, "");
-                return cfg;
-            }
-            if (!userEditedSinceBootstrap && graceElapsed) {
-                // Non-user config drift: re-assert bound preset rather than unlocking it.
-                State.accountPresetBootstrapDone = false;
-            }
-        }
-
-        if (State.accountPresetBootstrapAccountId !== detectedId) {
-            State.accountPresetBootstrapAccountId = detectedId;
-            State.accountPresetBootstrapDone = false;
-        }
-
-        if (State.accountPresetBootstrapDone) {
-            State.accountPresetTestActive = false;
-            SetRuntimePresetMarker(root, boundPresetName);
-            return cfg;
-        }
-
-        var rawObj = {};
-        if (rawNow && rawNow.length > 0) {
-            try { var u0 = UnwrapConfigFromStorage(rawNow); rawObj = (u0 && u0.config) ? u0.config : {}; } catch (e0) { rawObj = {}; }
-        }
-
-        var appliedObj = {};
-        for (var rawKey in rawObj) {
-            appliedObj[rawKey] = rawObj[rawKey];
-        }
-        var defaults = BuildDefaultConfig();
-        for (var defKey in defaults) {
-            appliedObj[defKey] = defaults[defKey];
-        }
-        for (var presetKey in boundPresetConfig) {
-            appliedObj[presetKey] = boundPresetConfig[presetKey];
-        }
-        if (rawObj.hasOwnProperty("DRAG_ENABLED")) {
-            appliedObj.DRAG_ENABLED = rawObj.DRAG_ENABLED;
-        }
-        if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
-            appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
-        }
-
-        var appliedRaw = WrapConfigForStorage(appliedObj);
-        var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
-        var appliedRevision = Number(appliedWrite && appliedWrite.revision) || userEditRev;
-        State.accountPresetRawOverride = appliedRaw;
-        State.accountPresetBootstrapDone = true;
-        State.accountPresetTestActive = true;
-        State.accountPresetSessionLockId = detectedId;
-        State.accountPresetLastAppliedRaw = BuildComparableStorageConfigRaw(appliedRaw);
-        State.accountPresetBootstrapAtMs = nowMs;
-        State.accountPresetLastUserEditRev = appliedRevision;
-        State.accountPresetManualUnlockActive = false;
-        State.accountPresetManualUnlockAccountId = "";
-        State.accountProbeDone = true;
-        State.accountProbeFoundId = detectedId;
-        State.accountProbeFoundSource = "preset_bootstrap";
-        State.accountProbeCandidateId = detectedId;
-        State.accountProbeCandidateHits = ACCOUNT_PROBE_CONFIRM_HITS;
-        SetRuntimePresetMarker(root, boundPresetName);
-
-        var merged = MergeConfig(appliedObj);
-        return merged;
-    }
-
     function GetAccountIdForBuildCategoryPayload(root) {
         var knownPathId = TryReadAccountIdFromKnownPartyPath(root);
         if (knownPathId && knownPathId.length > 0) return String(knownPathId);
@@ -9592,13 +8130,6 @@ function GetUIRoot() {
         }
         return "";
     }
-
-    function TryReadLocalHeroInternalName(cfg) {
-        var hero = GetConfiguredDefaultHeroId(cfg);
-        State.heroDetectLastSource = "configDefaultHero";
-        return hero || "";
-    }
-
     function GetSettingsLoaderStepIndex(stepKey) {
         if (!stepKey) return -1;
         for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
@@ -11715,22 +10246,6 @@ function GetUIRoot() {
         );
         return false;
     }
-
-    function TryCloseSettingsMenuForStartupPrompt() {
-        var closed = false;
-        try {
-            $.DispatchEvent("CitadelResumePlaying", $.GetContextPanel());
-            closed = true;
-        } catch (e0) {}
-        if (!closed) {
-            try {
-                $.DispatchEvent("CitadelResumePlaying");
-                closed = true;
-            } catch (e1) {}
-        }
-        return closed;
-    }
-
     function ResetStartupDefaultPayloadBootstrapState() {
         State.buildCategoryPayloadDefaultBootstrapPayloadText = "";
         State.buildCategoryPayloadDefaultBootstrapRetries = 0;
@@ -11774,82 +10289,6 @@ function GetUIRoot() {
         SettingsLoaderDebugLog("payload_override entering automatic repair bootstrap reason=" + why);
         SetSettingsLoaderDebugOverlayLine("corrupt repair bootstrap reason=" + why);
     }
-
-    function AdvanceStartupDefaultPayloadBootstrap(root, nowMs, cfg) {
-        if (!root || !root.FindChildTraverse) {
-            return { state: "wait", detail: "Waiting for build panel context.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS };
-        }
-
-        var payloadToken = State.buildCategoryPayloadDefaultBootstrapPayloadText
-            ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
-            : "";
-        if (!payloadToken) {
-            payloadToken = BuildDefaultPayloadToken(cfg);
-            if (!payloadToken || payloadToken.length === 0) {
-                return { state: "failed", detail: "Failed to generate default payload token." };
-            }
-            State.buildCategoryPayloadDefaultBootstrapPayloadText = payloadToken;
-        }
-
-        if (CurrentBuildHasPayload(root, payloadToken)) {
-            State.buildCategoryPayloadDefaultBootstrapRetries = 0;
-            return { state: "ready", detail: "Default startup payload verified." };
-        }
-
-        var retries = Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0;
-        if (retries >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
-            return { state: "failed", detail: "First-time payload bootstrap timed out." };
-        }
-
-        var strictConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, false);
-        if (!strictConfirm.confirmed) {
-            State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-            return {
-                state: "wait",
-                detail: strictConfirm.detail || "Confirming Airheart context for first-time setup.",
-                waitMs: BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS
-            };
-        }
-
-        var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
-        if (!selectedBuild) {
-            State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-            return { state: "wait", detail: "Waiting for shop build panel.", waitMs: BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS };
-        }
-
-        var initReady = EnsureStorageBuildInitialized(root, nowMs);
-        if (!initReady) {
-            State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-            return { state: "wait", detail: "Creating first-time Airheart build.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS };
-        }
-
-        var editModeActive = IsBuildSaveEditModeActive(root);
-        if (!editModeActive) {
-            TriggerBuildEditMode(selectedBuild);
-            State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-            return { state: "wait", detail: "Opening edit mode for default payload.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS };
-        }
-
-        var focusedCategory = FocusFirstBuildCategory(selectedBuild);
-        if (!focusedCategory) {
-            if (!(HasWritableBuildCategoryEntry(root) && editModeActive)) {
-                State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-                return { state: "wait", detail: "Selecting first build category.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS };
-            }
-        }
-
-        var wrotePayload = SetBuildCategoryNameText(root, payloadToken);
-        if (!wrotePayload && !HasWritableBuildCategoryEntry(root)) {
-            State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-            return { state: "wait", detail: "Writing default payload string.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_ACTION_DELAY_MS };
-        }
-
-        CommitCategoryNameEdit(root, selectedBuild, payloadToken);
-        TriggerBuildSaveCommit(selectedBuild);
-        State.buildCategoryPayloadDefaultBootstrapRetries = retries + 1;
-        return { state: "saved", detail: "Saving default payload build.", waitMs: BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_VERIFY_DELAY_MS };
-    }
-
     function IsBuildCategoryPayloadStorageConflictStrong(signal) {
         var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return false;
@@ -11858,29 +10297,6 @@ function GetUIRoot() {
         if (source === "commands" || source.indexOf("commands") === 0) return true;
         return false;
     }
-
-    function GetBuildCategoryStorageConfirmRequiredHits(sourceName, viaUiReady) {
-        if (viaUiReady) return BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_UIREADY;
-        var source = sourceName ? String(sourceName) : "";
-        if (source.indexOf("runtime:") === 0 && IsBuildSaveStorageRuntimeSourceStale(source)) {
-            return BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS_STALE_RUNTIME;
-        }
-        return BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS;
-    }
-
-    function TrackBuildCategoryStorageConfirmHit(sig, requiredHits) {
-        var sigText = sig ? String(sig) : "";
-        var required = Number(requiredHits);
-        if (!isFinite(required) || required < 1) required = 1;
-        if (State.buildCategoryPayloadStorageConfirmSig !== sigText) {
-            State.buildCategoryPayloadStorageConfirmSig = sigText;
-            State.buildCategoryPayloadStorageConfirmHits = 1;
-        } else {
-            State.buildCategoryPayloadStorageConfirmHits = (Number(State.buildCategoryPayloadStorageConfirmHits) || 0) + 1;
-        }
-        return State.buildCategoryPayloadStorageConfirmHits >= required;
-    }
-
     function CleanStorageHeroSignatureText(text) {
         if (text === null || text === undefined) return "";
         var clean = String(text).replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
@@ -14358,42 +12774,12 @@ function GetUIRoot() {
         if (legacyCount > count) count = legacyCount;
         return count;
     }
-
-    function HasExistingBuildCategorySignal(root, selectedBuild) {
-        if (!selectedBuild) return false;
-        if (CountBuildCategoryHeaders(selectedBuild) > 0) return true;
-        if (HasFocusedBuildCategory(selectedBuild)) return true;
-        if (selectedBuild.FindChildrenWithClassTraverse) {
-            var entries = selectedBuild.FindChildrenWithClassTraverse("FavoriteBuildEntryContainer") || [];
-            if (entries.length > 0) return true;
-        }
-        return false;
-    }
-
     function HasWritableBuildCategoryEntry(root) {
         var entry = GetBuildSaveCategoryNameEntry(root);
         if (!entry || !IsPanelValid(entry)) return false;
         var text = ReadPanelTextMaybe(entry);
         return !!(text && String(text).trim().length > 0);
     }
-
-    function TriggerBuildAddCategory(selectedBuild) {
-        var activated = false;
-        try {
-            if (typeof CitadelHudHeroBuildsAddNewCategory === "function") {
-                CitadelHudHeroBuildsAddNewCategory();
-                activated = true;
-            }
-        } catch (e0) {}
-        if (selectedBuild && selectedBuild.FindChildrenWithClassTraverse) {
-            var addButtons = selectedBuild.FindChildrenWithClassTraverse("AddCategoryButton") || [];
-            for (var i = 0; i < addButtons.length; i++) {
-                if (ActivatePanelSafe(addButtons[i])) activated = true;
-            }
-        }
-        return activated;
-    }
-
     function DescribeBuildButtonPanel(panel) {
         if (!BUILD_SAVE_DEBUG) return "";
         if (!panel) return "panel=-";
@@ -14727,13 +13113,6 @@ function GetUIRoot() {
         }
         return { panel: null, scanned: scanned, roots: roots.length, source: "none" };
     }
-
-    function IsBrowseBuildsButtonVisible(root) {
-        var browseLookup = FindBrowseBuildsButton(root);
-        var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
-        return !!(browseBtn && IsPanelVisibleMaybe(browseBtn));
-    }
-
     function IsBrowseBuildsPopupOpen(root) {
         if (!root || !root.FindChildTraverse) return false;
         var ids = ["PopupBuildBrowser", "BrowseBuilds", "HeroBuildSelector"];
@@ -15853,31 +14232,6 @@ function GetUIRoot() {
         }
         return visibleCount;
     }
-
-    function IsStorageBuildListLikelyEmptyForCorruptRepair(root) {
-        if (!root) return false;
-        if (IsStorageBuildListEmpty(root)) return true;
-
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        if (selectedBuild && IsPanelValid(selectedBuild)) {
-            try {
-                if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
-            } catch (e0) {}
-            var headerCount = CountBuildCategoryHeaders(selectedBuild);
-            if (headerCount > 0) return false;
-            if (selectedBuild.FindChildrenWithClassTraverse) {
-                var entries = selectedBuild.FindChildrenWithClassTraverse("FavoriteBuildEntryContainer") || [];
-                if (entries.length > 0) return false;
-            }
-        }
-
-        var createLookup = FindCreateBuildButtonStrict(root);
-        if (createLookup && createLookup.panel) return true;
-        createLookup = FindCreateBuildButton(root);
-        if (createLookup && createLookup.panel) return true;
-        return false;
-    }
-
     function TryTriggerCreateBuild(createBuildBtn) {
         var attempts = [];
         if (createBuildBtn && IsPanelValid(createBuildBtn)) {
@@ -16173,40 +14527,6 @@ function GetUIRoot() {
         );
         return false;
     }
-
-    function ConfirmBuildClearStorageHero(root, nowMs, allowUiFallback) {
-        if (State.buildClearStorageHeroConfirmed) return true;
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal.hero);
-        var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
-
-        if (hero === BUILD_SAVE_STORAGE_HERO_ID) {
-            State.buildClearStorageHeroConfirmed = true;
-            State.buildClearStorageHeroConfirmedSource = source;
-            BuildClearDebugLog("storage hero confirmed hero=" + hero + " source=" + source);
-            SetBuildClearDebugOverlayLine("storage confirmed source=" + source);
-            return true;
-        }
-
-        if (hero && hero !== BUILD_SAVE_STORAGE_HERO_ID) {
-            BuildClearDebugLogThrottled(
-                "storage_confirm_conflict|" + hero + "|" + source,
-                "storage hero conflict current=" + hero + " source=" + source,
-                nowMs
-            );
-            SetBuildClearDebugOverlayLine("storage conflict hero=" + hero + " source=" + source);
-            return false;
-        }
-
-        BuildClearDebugLogThrottled(
-            "storage_confirm_wait|" + (hero || "-") + "|" + source,
-            "storage hero wait current=" + (hero || "-") + " source=" + source,
-            nowMs
-        );
-        SetBuildClearDebugOverlayLine("storage wait hero=" + (hero || "-") + " source=" + source);
-        return false;
-    }
-
     function EnsureBuildSaveStorageContextUi(root, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var acted = false;
@@ -16894,16 +15214,6 @@ function GetUIRoot() {
         }
         return requestToken;
     }
-
-    function EnsureBuildClearRequestPayload(root, requestToken) {
-        var requestPayload = root.GetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "");
-        if (!requestPayload || String(requestPayload).length === 0) {
-            FinishBuildClearRequest(root, requestToken, "failed", "missing_request");
-            return false;
-        }
-        return true;
-    }
-
     function EnsureBuildClearRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero) {
         if (State.buildClearActiveToken === requestToken) return;
         var reuseLoaderAirheart = CanReuseLoaderConfirmedAirheartContext(root, nowMs);
@@ -17442,29 +15752,6 @@ function GetUIRoot() {
         ProcessBuildClearRequest(root, nowMs, cfg);
         PerfEnd("loop.build_clear_request", perfSection);
     }
-
-
-
-    // ── Recent Purchases runtime ──────────────────────────────────────────────────
-
-    function HasAncestorClass(panel, className) {
-        var p = panel;
-        while (p) {
-            if (p.BHasClass(className)) return true;
-            p = p.GetParent();
-        }
-        return false;
-    }
-
-    function GetRecentPurchaseName(panel) {
-        var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
-        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
-    }
-    function GetRecentPurchaseTime(panel) {
-        var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
-        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
-    }
-
 
 
 
@@ -18539,80 +16826,6 @@ function GetUIRoot() {
             nowMs
         );
     }
-
-    function UpdateEnemyUltIndicatorOld(root, cfg) {
-        if (!root || !cfg) return;
-        var enabled = IsCfgEnabled(cfg, "ENABLE_ENEMY_ULT_INDICATOR");
-        SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_active", enabled);
-        SetPanelClassCached(root, State.rootClassCache, "qol_enemy_ult_indicator_off", !enabled);
-
-        var cachedPanels = Array.isArray(State.enemyUltOldPanelCache) ? State.enemyUltOldPanelCache : [];
-        if (!enabled) {
-            EnemyUltOldDebugLogThrottled("disabled", "update disabled cfg.ENABLE_ENEMY_ULT_INDICATOR=0", Date.now ? Date.now() : (new Date()).getTime());
-            for (var ci = 0; ci < cachedPanels.length; ci++) {
-                var cachedWindow = cachedPanels[ci] && cachedPanels[ci].windowRoot ? cachedPanels[ci].windowRoot : null;
-                if (!cachedWindow || !IsPanelValid(cachedWindow)) continue;
-                try { cachedWindow.SetHasClass("qol_enemy_ult_indicator_active", false); } catch (eOffA0) {}
-                try { cachedWindow.SetHasClass("qol_enemy_ult_indicator_off", true); } catch (eOffA1) {}
-                try { cachedWindow.SetHasClass("qol_enemy_ult_ready", false); } catch (eOff0) {}
-            }
-            State.enemyUltOldNextUpdateMs = 0;
-            return;
-        }
-
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        if (nowMs < (State.enemyUltOldNextUpdateMs || 0)) return;
-        RefreshEnemyUltTopBarNameCache(root, nowMs);
-        RefreshEnemyUltOldPanelCache(root, nowMs);
-
-        var entries = Array.isArray(State.enemyUltOldPanelCache) ? State.enemyUltOldPanelCache : [];
-        var readyCount = 0;
-        var topbarMappedCount = 0;
-        var signalFallbackCount = 0;
-        var detail = [];
-        for (var i = 0; i < entries.length; i++) {
-            var entry = entries[i];
-            var unitStatusPanel = entry && entry.unitStatusPanel ? entry.unitStatusPanel : null;
-            var windowRoot = entry && entry.windowRoot ? entry.windowRoot : null;
-            if (!unitStatusPanel || !windowRoot || !IsPanelValid(unitStatusPanel) || !IsPanelValid(windowRoot)) continue;
-            try { windowRoot.SetHasClass("qol_enemy_ult_indicator_active", true); } catch (eSetA0) {}
-            try { windowRoot.SetHasClass("qol_enemy_ult_indicator_off", false); } catch (eSetA1) {}
-            var topBarIndex = IsUltCooldownTrackedIndex(entry && entry.resolvedTopBarIndex) ? entry.resolvedTopBarIndex : -1;
-            if (!IsUltCooldownTrackedIndex(topBarIndex)) {
-                var fallbackIndex = entry && IsUltCooldownTrackedIndex(entry.fallbackTopBarIndex) ? entry.fallbackTopBarIndex : -1;
-                if (IsUltCooldownTrackedIndex(fallbackIndex)) topBarIndex = fallbackIndex;
-            }
-            if (!IsUltCooldownTrackedIndex(topBarIndex)) {
-                topBarIndex = ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root);
-            }
-            var ready = false;
-            var topBarReady = IsTopBarUltReadyByIndex(root, topBarIndex, entry);
-            if (topBarReady === null) {
-                signalFallbackCount += 1;
-                ready = IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot, entry);
-            } else {
-                topbarMappedCount += 1;
-                ready = !!topBarReady;
-            }
-            if (ready) readyCount += 1;
-            try { windowRoot.SetHasClass("qol_enemy_ult_ready", !!ready); } catch (eSet0) {}
-            if (detail.length < 8) {
-                detail.push(
-                    "i=" + String(i) +
-                    " tb=" + String(IsUltCooldownTrackedIndex(topBarIndex) ? topBarIndex : -1) +
-                    " src=" + (topBarReady === null ? "panel" : "topbar") +
-                    " ready=" + (ready ? "1" : "0")
-                );
-            }
-        }
-        EnemyUltOldDebugLogThrottled(
-            "tick|" + String(entries.length) + "|" + String(readyCount) + "|" + String(topbarMappedCount) + "|" + String(signalFallbackCount),
-            "tick entries=" + String(entries.length) + " ready=" + String(readyCount) + " topbarMapped=" + String(topbarMappedCount) + " signalFallback=" + String(signalFallbackCount) + " details=[" + detail.join(" | ") + "]",
-            nowMs
-        );
-        State.enemyUltOldNextUpdateMs = nowMs + ENEMY_ULT_OLD_UPDATE_MS;
-    }
-
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsColorWarningEnabled(cfg) ||
@@ -18656,28 +16869,6 @@ function GetUIRoot() {
         State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
         return friendlyTeamClass;
     }
-
-    function ResolveEnemyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25");
-        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65");
-        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
-
-        if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
-            return ToRgbString(BlendRgb(
-                ENEMY_COLORED_HEALTH_PULSE_COLOR,
-                ENEMY_COLORED_HEALTH_PULSE_DARK_COLOR,
-                State.enemyColoredHealthPulseVal
-            ));
-        }
-        if (use65 && pct <= COLORED_HEALTHBAR_MID_HP_THRESHOLD) {
-            return ToRgbString(ENEMY_COLORED_HEALTH_MID_COLOR);
-        }
-        if (use75 && pct <= COLORED_HEALTHBAR_HIGH_HP_THRESHOLD) {
-            return ToRgbString(COLORED_HEALTHBAR_COLOR_YELLOW);
-        }
-        return ToRgbString(teamColorRgb || ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR);
-    }
-
     function ResolveTopBarHealthPct(entry) {
         if (!entry) return NaN;
         var fillPanel = entry.healthBar || null;
@@ -18689,24 +16880,6 @@ function GetUIRoot() {
         if (pct > 100) pct = 100;
         return pct;
     }
-
-    function ResetEnemyColoredHealthRuntimeStyles() {
-        var entries = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
-        for (var i = 0; i < entries.length; i++) {
-            var entry = entries[i];
-            if (!entry) continue;
-            var teamColor = ToRgbString(ResolveEnemyColoredHealthTeamColor(entry));
-            if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetWashColorSafe(entry.healthBar, "");
-                SetStyleSafe(entry.healthBar, "backgroundColor", teamColor);
-            }
-            entry.lastColor = teamColor;
-        }
-        State.enemyColoredHealthPulseDir = 1;
-        State.enemyColoredHealthPulseVal = 0;
-        State.enemyColoredHealthNextUpdateMs = 0;
-    }
-
     function RefreshEnemyColoredHealthPanelCache(root, nowMs) {
         if (!root) return;
         if (nowMs < (State.enemyColoredHealthPanelCacheNextMs || 0)) {
@@ -18798,114 +16971,6 @@ function GetUIRoot() {
         return IsColorWarningEnabled(cfg) ||
             IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
     }
-
-    function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
-        var use25 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_25");
-        var use65 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_65");
-        var use75 = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ALLY_HP_WARNING_75");
-
-        if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
-            return ToRgbString(BlendRgb(
-                COLORED_HEALTHBAR_COLOR_RED,
-                COLORED_HEALTHBAR_COLOR_DARK_RED,
-                State.allyColoredHealthPulseVal
-            ));
-        }
-        if (use65 && pct <= COLORED_HEALTHBAR_MID_HP_THRESHOLD) {
-            return ToRgbString(COLORED_HEALTHBAR_COLOR_ORANGE);
-        }
-        if (use75 && pct <= COLORED_HEALTHBAR_HIGH_HP_THRESHOLD) {
-            return ToRgbString(COLORED_HEALTHBAR_COLOR_YELLOW);
-        }
-        return ToRgbString(teamColorRgb || ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
-    }
-
-    function ResetAllyColoredHealthRuntimeStyles() {
-        var entries = Array.isArray(State.allyColoredHealthPanelCache) ? State.allyColoredHealthPanelCache : [];
-        for (var i = 0; i < entries.length; i++) {
-            var entry = entries[i];
-            if (!entry) continue;
-            var teamColor = ToRgbString(ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
-            if (entry.healthBar && IsPanelValid(entry.healthBar)) {
-                SetWashColorSafe(entry.healthBar, "");
-                SetStyleSafe(entry.healthBar, "backgroundColor", teamColor);
-            }
-            entry.lastColor = teamColor;
-        }
-        State.allyColoredHealthPulseDir = 1;
-        State.allyColoredHealthPulseVal = 0;
-        State.allyColoredHealthNextUpdateMs = 0;
-    }
-
-    function RefreshAllyColoredHealthPanelCache(root, nowMs) {
-        if (!root) return;
-        if (nowMs < (State.allyColoredHealthPanelCacheNextMs || 0)) {
-            return;
-        }
-
-        var previous = Array.isArray(State.allyColoredHealthPanelCache) ? State.allyColoredHealthPanelCache : [];
-        var next = [];
-
-        function findPrevious(windowRoot, healthBar) {
-            for (var pi = 0; pi < previous.length; pi++) {
-                var prev = previous[pi];
-                if (prev && (prev.windowRoot === windowRoot || prev.healthBar === healthBar)) return prev;
-            }
-            return null;
-        }
-
-        var progressLeftPanels = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("ProgressBarLeft") || []) : [];
-        for (var pli = 0; pli < progressLeftPanels.length; pli++) {
-            var progressLeft = progressLeftPanels[pli];
-            if (!progressLeft || !IsPanelValid(progressLeft)) continue;
-
-            var progressLeftId = progressLeft.id ? String(progressLeft.id) : "";
-            if (progressLeftId !== "HeroHealth_Left") continue;
-            if (!hasClassInHierarchy(progressLeft, "friend")) continue;
-
-            var heroHealthParent = progressLeft.GetParent ? progressLeft.GetParent() : null;
-            if (!heroHealthParent || !IsPanelValid(heroHealthParent)) continue;
-            if (String(heroHealthParent.id || "") !== "HeroHealth") continue;
-
-            var healthBarRoot = heroHealthParent.GetParent ? heroHealthParent.GetParent() : null;
-            if (!healthBarRoot || !IsPanelValid(healthBarRoot)) continue;
-            if (String(healthBarRoot.id || "") !== "HealthBar") continue;
-
-            var prevEntry = findPrevious(healthBarRoot, progressLeft);
-            next.push({
-                windowRoot: healthBarRoot,
-                unitStatusPanel: null,
-                healthBar: progressLeft,
-                healthBarParent: heroHealthParent,
-                ultIcon: null,
-                barId: "HeroHealth_Left",
-                teamClass: "friend",
-                baseColorRgb: ALLY_TOPBAR_HEALTH_DEFAULT_COLOR,
-                lastColor: prevEntry ? String(prevEntry.lastColor || "") : ""
-            });
-        }
-
-        State.allyColoredHealthPanelCache = next;
-        State.allyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
-    }
-
-
-    function FindCombatPanelById(root, uiRoot, panelId) {
-        if (!panelId) return null;
-
-        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
-
-        var roots = [root, gameplayHud, uiRoot];
-        for (var i = 0; i < roots.length; i++) {
-            var searchRoot = roots[i];
-            if (!searchRoot || !searchRoot.FindChildTraverse) continue;
-            if ((i > 0 && searchRoot === roots[0]) || (i > 1 && searchRoot === roots[1])) continue;
-            var found = searchRoot.FindChildTraverse(panelId);
-            if (found && IsPanelValid(found)) return found;
-        }
-        return null;
-    }
-
     function GetCombatStatusProbeDelay(foundPanel, missKey, baseMs, maxMs) {
         var base = Number(baseMs);
         if (!isFinite(base) || base <= 0) base = COMBAT_STATUS_ALERT_PROBE_MS;
@@ -21330,73 +19395,6 @@ function GetUIRoot() {
         State.minimapRotateLastDeg = roundedDeg;
     }
 
-    function ResolveHudRootForMinimapDraw(root) {
-        var cached = GetCachedPanel("minimapDrawHudRoot");
-        if (IsPanelValid(cached)) {
-            return cached;
-        }
-
-        var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null;
-        var hudCore = gameplayHud && gameplayHud.GetParent ? gameplayHud.GetParent() : null;
-        var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
-        var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
-        var target = hudRoot || hudCore || fallback || root || null;
-        SetCachedPanel("minimapDrawHudRoot", target);
-        return target;
-    }
-
-    function CaptureMinimapOriginalParent(minimapPersp) {
-        if (!minimapPersp || State.minimapDrawOverUiOriginalParent) {
-            return;
-        }
-
-        var parent = minimapPersp.GetParent ? minimapPersp.GetParent() : null;
-        State.minimapDrawOverUiOriginalParent = parent || null;
-        State.minimapDrawOverUiOriginalIndex = -1;
-        if (!parent || !parent.GetChildCount || !parent.GetChild) {
-            return;
-        }
-
-        var count = parent.GetChildCount();
-        for (var i = 0; i < count; i++) {
-            if (parent.GetChild(i) === minimapPersp) {
-                State.minimapDrawOverUiOriginalIndex = i;
-                break;
-            }
-        }
-    }
-
-    function RestoreMinimapOriginalOrder(minimapPersp) {
-        var parent = State.minimapDrawOverUiOriginalParent;
-        if (!minimapPersp || !parent || !IsPanelValid(parent)) {
-            return;
-        }
-
-        if (minimapPersp.GetParent && minimapPersp.GetParent() !== parent && minimapPersp.SetParent) {
-            minimapPersp.SetParent(parent);
-        }
-
-        if (!parent.GetChildCount || !parent.GetChild || !parent.MoveChildBefore) {
-            return;
-        }
-
-        var targetIndex = State.minimapDrawOverUiOriginalIndex;
-        if (!isFinite(targetIndex) || targetIndex < 0) {
-            return;
-        }
-
-        var count = parent.GetChildCount();
-        if (count <= 1 || targetIndex >= count) {
-            return;
-        }
-
-        var anchor = parent.GetChild(targetIndex);
-        if (anchor && anchor !== minimapPersp) {
-            parent.MoveChildBefore(minimapPersp, anchor);
-        }
-    }
-
-
     function UpdateCompassTicks(heading360, boxWidthPx, stretchXFactor, stretchYFactor) {
         var ticks = State.cachedPanels.compassTicks || [];
         if (!ticks || ticks.length === 0) return;
@@ -22435,21 +20433,6 @@ function GetUIRoot() {
             }
         });
     }
-
-    function NeedsAmmoRuntimeWork(cfg) {
-        if (!cfg) return false;
-        if (IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
-        if (Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
-        if (Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
-        if (Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
-        if (ReadAmmoTextColorIndex(cfg) !== 0) return true;
-        return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
-    }
-
     function NeedsDamageImpactRuntimeWork(cfg) {
         return HasNonDefaultDamageImpactRuntimeConfig(cfg) ||
             !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
@@ -22510,15 +20493,6 @@ function GetUIRoot() {
             !!(State.soulsRuntimeStyleSig && String(State.soulsRuntimeStyleSig).length > 0) ||
             GetCachedPanel("soulsContainer");
     }
-
-
-    function NeedsColorWarningRuntimeWork(cfg) {
-        return IsColorWarningEnabled(cfg) ||
-            State.coloredHealthbarEnabledPrev === true ||
-            State.coloredHealthbarLastColor !== "" ||
-            GetCachedPanel("coloredHealthbarProgressLeft");
-    }
-
     function NeedsEnemyColorWarningRuntimeWork(cfg) {
         return IsEnemyColorWarningEnabled(cfg) ||
             State.enemyColoredHealthEnabledPrev === true ||
@@ -22530,13 +20504,6 @@ function GetUIRoot() {
             State.allyColoredHealthEnabledPrev === true ||
             !!(State.allyColoredHealthPanelCache && State.allyColoredHealthPanelCache.length > 0);
     }
-
-    function NeedsKeyboardRuntimeWork(cfg) {
-        if (IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY")) return true;
-        if (GetCachedPanel("keyboardOverlayRoot")) return true;
-        return !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
-    }
-
 
     function IsOnDeathArcadeConfigActive(cfg) {
         if (!cfg || Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
@@ -22563,29 +20530,6 @@ function GetUIRoot() {
         if (!uiContextActive) return false;
         return IsStartupLoaderInActiveMatchContext(root);
     }
-
-    function NeedsCoreRootDynamicRuntimeWork(cfg) {
-        if (!cfg) return false;
-        var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
-        var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
-        var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
-        var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
-        if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) return true;
-        if (NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled)) return true;
-        if (fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
-        if (State.passiveCooldownModeApplied !== passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
-        if (passiveCooldownMode !== "default" && !GetCachedPanel("passiveHud")) return true;
-        if (HEALTHBAR_VIS_DEBUG) return true;
-        var colorBridgeTarget = IsColorWarningEnabled(cfg) ? "1" : "0";
-        if (colorBridgeTarget === "1" && State.coloredHealthbarBridgeValue !== "1") return true;
-        if (colorBridgeTarget === "0" && State.coloredHealthbarBridgeValue !== "" && State.coloredHealthbarBridgeValue !== "0") return true;
-        if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) return true;
-        if (NeedsDamageReportOffsetWork(cfg)) return true;
-        if (NeedsUrnTrackerRuntimeWork(cfg)) return true;
-        if (NeedsStaminaChargeColorRuntimeWork(cfg)) return true;
-        return false;
-    }
-
     function IsDl4dReminderRuntimeActive(cfg) {
         return !!(cfg && IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS"));
     }
@@ -23021,11 +20965,6 @@ function GetUIRoot() {
     var IMAGES_IN_CHAT_CACHE_MAX_MESSAGES = 80;
     var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
     var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
-
-    function IsImagesInChatEnabledNow() {
-        return !!(State.lastConfig && Number(State.lastConfig.ENABLE_IMAGES_IN_CHAT) === 1);
-    }
-
     function FindChatMessageLabel(msgPanel) {
         var msgText = msgPanel.FindChildTraverse("MessageText");
         if (msgText) return msgText;
