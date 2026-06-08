@@ -22,6 +22,7 @@
     var RECENT_PURCHASE_MAX_ITEMS = 50;
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
+    var CLASS_RECENT_PURCHASE = "recentPurchase";
 function GetRecentPurchaseName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";

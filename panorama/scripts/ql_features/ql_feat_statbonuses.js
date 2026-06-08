@@ -20,6 +20,7 @@
     var ResolveStatBonusesSource = _deps.resolveStatBonusesSource;
     var StatBonusesDebugLogThrottled = _deps.statBonusesDebugLogThrottled;
     var isConnectedToHideout = _deps.isConnectedToHideout;
+    var STAT_BONUSES_FIRE_RATE_IDS = ["StatContainer_FireRate"];
     function EnsureStatBonusesOverlay(root) {
         var overlay = GC("statBonusesOverlay");
         if (IsPanelValid(overlay)) {

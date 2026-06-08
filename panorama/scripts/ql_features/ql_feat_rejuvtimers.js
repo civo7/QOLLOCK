@@ -3,13 +3,14 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_rejuvtimers";
-    var _deps = QOL.import(["buffLockoutSec","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","hasClassInHierarchy","isHudClassActive","isStreetBrawlModeActive","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
+    var _deps = QOL.import(["bridgeDurationSec","buffLockoutSec","ensureMinimapOverlayAnchor","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var BRIDGE_DURATION_SEC = _deps.bridgeDurationSec;
     var BUFF_LOCKOUT_SEC = _deps.buffLockoutSec;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
@@ -22,6 +23,10 @@
     var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
     var hasClassInHierarchy = _deps.hasClassInHierarchy;
     var PANEL_ID_TOP_BAR = _deps.panelIdTopBar;
+    var GetHighestRejuvChargeTokenOnPanel = _deps.getHighestRejuvChargeTokenOnPanel;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
+    var EnsureMinimapOverlayAnchor = _deps.ensureMinimapOverlayAnchor;
+    var PanelHasClassToken = _deps.panelHasClassToken;
 
     // ── Constants ──
     const REJUV_DURATION_SEC = 240;
