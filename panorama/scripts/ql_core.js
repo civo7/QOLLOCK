@@ -23690,6 +23690,7 @@ function GetUIRoot() {
         ["setCachedPanel", function() { return SetCachedPanel; }],
         ["setPanelClassCached", function() { return SetPanelClassCached; }],
         ["activatePanelSafe", function() { return ActivatePanelSafe; }],
+        ["buffLockoutSec", function() { return BUFF_LOCKOUT_SEC; }],
         ["findAncestorWithClass", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.FindAncestorWithClass : function() { return null; }; }],
         ["gameplayMouseCursorEnabled", function() { return GAMEPLAY_MOUSE_CURSOR_ENABLED; }],
         ["gameplayMouseCursorHalfPx", function() { return GAMEPLAY_MOUSE_CURSOR_HALF_PX; }],

@@ -3,12 +3,13 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_rejuvtimers";
-    var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","isStreetBrawlModeActive","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
+    var _deps = QOL.import(["buffLockoutSec","ensureMinimapPanelCache","getCachedPanel","isHudClassActive","isStreetBrawlModeActive","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var BUFF_LOCKOUT_SEC = _deps.buffLockoutSec;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;

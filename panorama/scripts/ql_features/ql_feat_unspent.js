@@ -10,6 +10,9 @@
     var U = _deps.utils;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
+    var GetSoulValueFromLabels = _deps.getSoulValueFromLabels;
+    var GetTopBarPlayerPanel = _deps.getTopBarPlayerPanel;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
 
     // ── Constants ──
     var UNSPENT_MAX_PLAYERS = 13;
