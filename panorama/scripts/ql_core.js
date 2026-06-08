@@ -462,6 +462,9 @@
         buildCategoryPayloadLastAppliedAccountId: "",
         buildCategoryPayloadLastAppliedText: "",
         buildCategoryPayloadLastParseErrorKey: "",
+        selectHeroLastTarget: "",
+        selectHeroLastMs: 0,
+        openItemShopLastMs: 0,
         buildCategoryPayloadHeroProbeStage: "",
         buildCategoryPayloadHeroProbeNextMs: 0,
         buildCategoryPayloadHeroProbeDidSwitch: false,
@@ -9920,6 +9923,8 @@ function GetUIRoot() {
         }
 
         var opened = false;
+        if ((State.openItemShopLastMs || 0) > now - 1000) return false;
+        State.openItemShopLastMs = now;
         // open_item_shop is the only confirmed working path in the current game build.
         // It routes via CitadelConCommand -> RunConCommand -> Engine ClientCmd,
         // which sends the predicted command to the server's ClientCommand dispatcher.
@@ -14112,6 +14117,12 @@ function GetUIRoot() {
     function SelectHeroForBuildSave(heroId, reason) {
         if (!heroId || heroId.length === 0) return false;
         var target = String(heroId);
+        var now = Date.now ? Date.now() : (new Date()).getTime();
+        if (State.selectHeroLastTarget === target && (State.selectHeroLastMs || 0) > now - 1000) {
+            return true;
+        }
+        State.selectHeroLastTarget = target;
+        State.selectHeroLastMs = now;
         var ok = DispatchCitadelConCommand("selecthero " + target);
         if (SETTINGS_LOADER_DEBUG) {
             var now = Date.now ? Date.now() : (new Date()).getTime();
