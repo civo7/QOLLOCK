@@ -28,7 +28,6 @@
         $.Msg("[QOLLock] WARNING: ql_utils.js not loaded before ql_core.js!");
     }
 
-    // Backward-compat aliases for utilities extracted to ql_utils.js
     // Fall back to inline stubs when QOL_UTILS isn't loaded (schema validator sandbox)
     var IsPanelValid = QOL_UTILS_LOADED ? QOL_UTILS.IsPanelValid : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
     var PushUnique = QOL_UTILS_LOADED ? QOL_UTILS.PushUnique : function(arr, panel) { if (!arr || !panel) return; for (var _i = 0; _i < arr.length; _i++) { if (arr[_i] === panel) return; } arr.push(panel); };
@@ -773,7 +772,6 @@
         dl4dCaptionVisible: false
     };
 
-    // INTERNAL_CONFIG + DL4D_REMINDER_EVENTS extracted to ql_feat_legacyaudiopassive.js
 
     const STORAGE_KEY = QOL_STORAGE_KEY;
     // WHY: probes the `joy_name` convar as a persistent key-value store that survives
@@ -1105,19 +1103,16 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
     // SPM window of 60 samples at 1s intervals = 60s rolling average.
     const SPM_MAX_PLAYERS = 13;
-    // SPM_SAMPLE_INTERVAL_MS + SPM_WINDOW_SIZE extracted to ql_feat_spm.js
     // WHY: panel cache at 7s — SPM changes slowly (1 sample/sec), re-scanning
     // faster provides no benefit while wasting CPU on tree walks
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
     // WHY: nickname refresh at 1s initially, then 4.2s once stable — player names
-    // TOPBAR_NICKNAMES_* constants extracted to ql_feat_nicknames.js
     // WHY: 280ms sample interval (~3.6Hz) — fast enough to catch soul swings during
     // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
-    // TOPBAR_SOUL_SNAPSHOT_TTL_MS extracted to ql_feat_spm.js
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
@@ -1126,7 +1121,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
     const HEALTHBAR_VIS_DEBUG = false;
     const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
-    // UNSPENT_* constants extracted to ql_feat_unspent.js
     const BRIDGE_DURATION_SEC = 300;
     const BUFF_LOCKOUT_SEC = 120;
     const MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
@@ -3742,7 +3736,6 @@ function GetUIRoot() {
         return mode === "advanced";
     }
 
-    // ResetPassiveCooldownRuntimeStyles extracted to ql_feat_legacyaudiopassive.js
 
     function ResetPassiveCooldownCustomRuntimeState(root) {
         if (!root) return;
@@ -6473,7 +6466,6 @@ function GetUIRoot() {
         }
     }
 
-    // ResetSpmState extracted to ql_feat_spm.js
 
     function ParseSpmNumber(valueText) {
         if (!valueText) return 0;
@@ -6524,7 +6516,6 @@ function GetUIRoot() {
         return 0;
     }
 
-    // SpmAddSample/SpmCalculate/SpmFormat/SpmFormatTeam extracted to ql_feat_spm.js
 
     function GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel) {
         var soulValue = 0;
@@ -6701,7 +6692,6 @@ function GetUIRoot() {
 
 
 
-    // SetSpmLabel extracted to ql_feat_spm.js
 
     function RefreshSpmPlayerSlotCache(root, index) {
         if (!root || index < 0 || index >= SPM_MAX_PLAYERS) return;
@@ -6814,7 +6804,6 @@ function GetUIRoot() {
     }
 
 
-    // EnsureMinimapObjectiveTimers extracted to ql_feat_rejuvtimers.js
 
     function EnsureMinimapCrateOverlay(root) {
         var anchor = EnsureMinimapOverlayAnchor(root);
@@ -6870,60 +6859,42 @@ function GetUIRoot() {
         }
     }
 
-    // HideMinimapObjectiveTimers extracted to ql_feat_rejuvtimers.js
-
-
-    // HideMinimapCrateOverlay extracted to ql_feat_rejuvtimers.js
-
-
-    // HideMinimapTunnelOverlay extracted to ql_feat_rejuvtimers.js
 
 
 
 
-    // GetMinimapConfigNumber extracted to ql_feat_rejuvtimers.js
 
 
-    // ResolveActiveMinimapObjectiveSize extracted to ql_feat_rejuvtimers.js
 
 
-    // UpdateMinimapObjectiveTimers extracted to ql_feat_rejuvtimers.js
 
 
-    // EnsureRejuvState extracted to ql_feat_rejuvtimers.js
 
 
-    // GetRejuvPanel extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvResetImage extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvSetPhaseImage extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvSetLabels extracted to ql_feat_rejuvtimers.js
 
 
-    // ApplyRedYellowPanelClasses extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvShowSpawn extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvCalcPhaseAt extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvStartPhaseAuto extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvStartPhaseManual extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvEndBuff extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvStartBuff extracted to ql_feat_rejuvtimers.js
+
+
+
+
 
     function PanelHasClassToken(panel, token) {
         if (!panel || !token) return false;
@@ -6975,28 +6946,20 @@ function GetUIRoot() {
     }
 
 
-    // RejuvReadChargeCount extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvHasAnyCharges extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvGetChargeCount extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvFindMidBossButton extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvIsMidBossSpawned extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvGetScanIntervalMs extracted to ql_feat_rejuvtimers.js
 
 
-    // RejuvResetState extracted to ql_feat_rejuvtimers.js
 
 
-    // UpdateRejuvBuffTimers extracted to ql_feat_rejuvtimers.js
 
     function GetGameplayHudPanel(root) {
         if (!root || !root.FindChildTraverse) return root || null;
@@ -7225,7 +7188,6 @@ function GetUIRoot() {
         if (!raw) return null;
         return ParseEnemyV2BridgeBool(raw);
     }
-    // Announcer/DL4D functions extracted to ql_feat_legacyaudiopassive.js
 
     function GetFirstPanelTextByClass(panel, className) {
         if (!panel || !panel.FindChildrenWithClassTraverse) return "";
@@ -20010,7 +19972,6 @@ function GetUIRoot() {
         return EnsureCachedPanelByIds(root, "abilitiesContainer", [PANEL_ID_ABILITIES_CONTAINER]);
     }
 
-    // EnsureCoreLoopPanelCaches extracted to ql_feat_panelcache.js
 
     function TryGetGameplayMouseCursorPosition() {
         var cursor = null;
@@ -20380,7 +20341,6 @@ function GetUIRoot() {
         return redDiamondEnabled;
     }
 
-    // UpdateLegacyAudioAndPassiveHudRuntime extracted to ql_feat_legacyaudiopassive.js
 
     function NextCoreSchedulerPhase() {
         if (!CORE_SCHEDULER_V2_ENABLED) return 0;
@@ -21465,13 +21425,9 @@ function GetUIRoot() {
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);
 
     // ── Feature registrations (Phase 2: registry-based dispatch) ──
-    // registration extracted to ql_feat_rejuvtimers.js
 
     // ── Batch C: features with significant State footprint ──
 
-    // spm feature extracted to ql_feat_spm.js
-    // unspent feature extracted to ql_feat_unspent.js
-    // nicknames feature extracted to ql_feat_nicknames.js
 
     QOL_REGISTER_FEATURE("coreRoot", {
         configKeys: ["HUD_TOP_BAR_ENABLED", "HUD_BOTTOM_BAR_ENABLED",
@@ -21530,7 +21486,6 @@ function GetUIRoot() {
 
     // ── Batch D: style-runtime features (simple root+cfg dispatch) ──
 
-    // panelCache feature extracted to ql_feat_panelcache.js
 
     // ── Batch E: features needing nowMs ──
 
