@@ -10891,6 +10891,7 @@ function GetUIRoot() {
             State.buildCategoryPayloadHeroProbeStage = "wait_storage";
             State.buildCategoryPayloadHeroProbeSwitchStartMs = nowMs;
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS;
+            _TLog("load:ProbeStage", "hero switch done → wait_storage");
             return "wait";
         }
 
@@ -10904,6 +10905,7 @@ function GetUIRoot() {
                 SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
                 SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
                 State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+                _TLog("load:ProbeStage", "wait_storage confirmed → scan_storage");
                 return "ready";
             }
             SetSettingsLoaderStepState("confirm_airheart", "active", storageConfirm.detail || "Waiting for Airheart context.");
@@ -10925,6 +10927,7 @@ function GetUIRoot() {
                 State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
                 State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+                _TLog("load:ProbeStage", "wait_storage timeout → bootstrap_via_save_enqueue elapsed=" + String(waitElapsedMs));
                 SettingsLoaderDebugLog(
                     "probe_wait_storage_bootstrap_save account=" + accountId +
                         " elapsedMs=" + String(waitElapsedMs)
@@ -10957,6 +10960,7 @@ function GetUIRoot() {
                             " signature=1"
                         );
                         State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+                        _TLog("load:ProbeStage", "wait_storage timeout+signature → scan_storage (degraded)");
                         return "ready";
                     }
                     SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Airheart signature abilities.");
@@ -12217,6 +12221,7 @@ function GetUIRoot() {
             return ReturnCfgWithProbe(cfg, true);
         }
         SetSettingsLoaderStepState("read_payload", "done", "Payload token found.");
+        _TLog("load:PayloadFound", "len=" + String(payloadText.length));
         SettingsLoaderDebugLogThrottled(
             "payload_token_found|" + String(payloadText.length) + "|" + String(payloadText.slice(0, 16)),
             "payload_token_found len=" + String(payloadText.length) +
