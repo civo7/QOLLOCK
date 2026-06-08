@@ -1490,6 +1490,10 @@ function ExpressShotLog(msg) {
         EnemyUltOldDebugLog(msg);
     }
 
+    function _TLog(label, detail) {
+        try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+    }
+
     function SettingsLoaderDebugLog(msg) {
         if (!SETTINGS_LOADER_DEBUG) return;
         $.Msg("[QOLLock][SettingsLoaderDbg] " + msg);
@@ -3281,6 +3285,7 @@ function GetUIRoot() {
     // panel attributes, picking the version with the highest user-edit revision number.
     // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
     function ReadStorageConfigRawFromUi(root) {
+        _TLog("config:ReadFromUi", "");
         var result = "";
         var source = "none";
         var rootLen = 0;
@@ -3347,6 +3352,7 @@ function GetUIRoot() {
     // WriteStorageConfigRawToUi — persists config to both root and Hud panel attributes,
     // increments the user-edit revision, and mirrors to persistentStorage as backup.
     function WriteStorageConfigRawToUi(root, rawText) {
+        _TLog("config:WriteToUi", "len=" + (rawText ? String(rawText).length : 0));
         if (!root || !root.SetAttributeString) {
             return { raw: String(rawText || ""), revision: 0, count: 0 };
         }
@@ -8041,6 +8047,7 @@ function GetUIRoot() {
     }
 
     function BeginSettingsLoaderSession(accountId, nowMs) {
+        _TLog("load:BeginSession", "account=" + String(accountId || "").slice(0,8));
         if (!SETTINGS_LOADER_ENABLED) return;
         var id = accountId ? String(accountId) : "";
         if (!id) return;
@@ -8128,6 +8135,7 @@ function GetUIRoot() {
     }
 
     function FinalizeSettingsLoaderSession(resultCode, detail, nowMs) {
+        _TLog("load:FinalizeSession", resultCode + " " + (detail || ""));
         if (!SETTINGS_LOADER_ENABLED) return;
         if (!State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -8797,6 +8805,7 @@ function GetUIRoot() {
     }
 
     function BeginSaveSettingsLoaderSession(requestToken, nowMs) {
+        _TLog("save:BeginSession", "token=" + String(requestToken || "").slice(0,8));
         if (!SAVE_SETTINGS_LOADER_ENABLED) return;
         var token = requestToken ? String(requestToken) : "";
         if (!token) return;
@@ -8846,6 +8855,7 @@ function GetUIRoot() {
     }
 
     function FinalizeSaveSettingsLoaderSession(resultCode, detail, nowMs, didSwitchToStorageHero) {
+        _TLog("save:FinalizeSession", resultCode + " " + (detail || ""));
         if (!SAVE_SETTINGS_LOADER_ENABLED) return;
         if (!State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted) return;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -11868,6 +11878,7 @@ function GetUIRoot() {
     }
 
     function ApplyBuildCategoryPayloadOverride(root, cfg, nowMs, rawCfg) {
+        _TLog("load:ApplyOverride", "nowMs=" + nowMs);
         if (!cfg) return cfg;
         State.buildCategoryPayloadDormant = false;
         State.buildCategoryPayloadDormantReason = "";
@@ -14281,6 +14292,7 @@ function GetUIRoot() {
     }
 
     function ConfirmBuildSaveStorageHero(root, nowMs) {
+        _TLog("save:ConfirmStorage", "nowMs=" + nowMs);
         if (State.buildSaveStorageHeroConfirmed) return true;
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = NormalizeHeroId(signal.hero);
@@ -14376,6 +14388,7 @@ function GetUIRoot() {
         return false;
     }
     function EnsureBuildSaveStorageContextUi(root, nowMs) {
+        _TLog("save:ContextUi", "nowMs=" + nowMs);
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var acted = false;
         if (EnsureStorageHeroFavoritesHeaderVisible(root, now)) acted = true;
@@ -14530,6 +14543,7 @@ function GetUIRoot() {
     }
 
     function FinishBuildSaveRequest(root, token, state, message) {
+        _TLog("save:Finish", state + " " + (message || ""));
         BuildSaveDebugLog("finish state=" + state + " msg=" + message + " token=" + token + " switched=" + (State.buildSaveDidSwitchToStorageHero ? "1" : "0"));
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var didSwitchToStorageHero = !!State.buildSaveDidSwitchToStorageHero;
@@ -14761,6 +14775,7 @@ function GetUIRoot() {
     }
 
     function TryAdvanceStorageSwitchStage(root, nowMs, requestToken, options) {
+        _TLog("save:SwitchStorage", "hero=" + BUILD_SAVE_STORAGE_HERO_ID);
         if (!options || !options.stageKey || !options.nextActionKey) return false;
         if (State[options.stageKey] !== "switch_to_storage") return false;
 
@@ -14805,6 +14820,7 @@ function GetUIRoot() {
     }
 
     function AdvanceBuildClearRequestStage(root, nowMs, requestToken) {
+        _TLog("clear:AdvanceStage", (State.buildClearStage || "-"));
         if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
@@ -15148,6 +15164,7 @@ function GetUIRoot() {
     }
 
     function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
+        _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
         if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
@@ -15464,6 +15481,7 @@ function GetUIRoot() {
     }
 
     function EnsureBuildSaveRequestToken(root, nowMs) {
+        _TLog("save:EnsureToken", "nowMs=" + nowMs);
         var requestToken = root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "");
         if (!requestToken || requestToken.length === 0) {
             requestToken = String(nowMs);
