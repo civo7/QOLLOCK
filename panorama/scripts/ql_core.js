@@ -1091,8 +1091,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
     // SPM window of 60 samples at 1s intervals = 60s rolling average.
     const SPM_MAX_PLAYERS = 13;
-    const SPM_SAMPLE_INTERVAL_MS = 1000;
-    const SPM_WINDOW_SIZE = 60;
+    // SPM_SAMPLE_INTERVAL_MS + SPM_WINDOW_SIZE extracted to ql_feat_spm.js
     // WHY: panel cache at 7s — SPM changes slowly (1 sample/sec), re-scanning
     // faster provides no benefit while wasting CPU on tree walks
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
@@ -1108,9 +1107,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
-    // WHY: soul snapshot TTL at 140ms — short enough to prevent stale reads when
-    // souls change rapidly (buying items), long enough to avoid per-tick re-reads
-    const TOPBAR_SOUL_SNAPSHOT_TTL_MS = 140;
+    // TOPBAR_SOUL_SNAPSHOT_TTL_MS extracted to ql_feat_spm.js
     const ULT_CD_MAX_PLAYERS = 12;
     const ULT_CD_SLOT_MIN_INDEX = 0;
     const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
@@ -7434,23 +7431,7 @@ function GetUIRoot() {
         }
     }
 
-    function ResetSpmState() {
-        var histories = [];
-        for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-        State.spm.playerHistory = histories;
-        State.spm.teamHistory = {
-            friendly: [],
-            enemy: []
-        };
-        State.spm.warmupActive = true;
-        State.spm.nextSampleMs = 0;
-        State.spm.panelCacheNextMs = 0;
-        State.spm.playerRefreshCursor = 0;
-        State.spm.playerRefreshRemaining = 0;
-        State.spm.needsFullPlayerCache = true;
-        State.topbarSoulSnapshot = null;
-        State.topbarSoulSnapshotUntilMs = 0;
-    }
+    // ResetSpmState extracted to ql_feat_spm.js
 
     function ParseSpmNumber(valueText) {
         if (!valueText) return 0;
@@ -7501,33 +7482,7 @@ function GetUIRoot() {
         return 0;
     }
 
-    function SpmAddSample(history, value) {
-        if (!history) return;
-        history.push(value);
-        if (history.length > SPM_WINDOW_SIZE) history.shift();
-    }
-
-    function SpmCalculate(history) {
-        if (!history || history.length < 2) return 0;
-        return history[history.length - 1] - history[0];
-    }
-
-    function SpmFormat(spm) {
-        if (spm >= 1000) return (spm / 1000).toFixed(1) + "k";
-        return Math.round(spm).toString();
-    }
-
-    function SpmFormatTeam(spm) {
-        var value = Number(spm);
-        if (!isFinite(value)) value = 0;
-        if (Math.abs(value) < 0.0001) return "0";
-        var sign = value < 0 ? "-" : "";
-        var k = Math.abs(value) / 1000;
-        var text = k.toFixed(1);
-        if (text.indexOf("0.") === 0) text = text.substring(1);
-        if (text === "0.0") return "0";
-        return sign + text + "k";
-    }
+    // SpmAddSample/SpmCalculate/SpmFormat/SpmFormatTeam extracted to ql_feat_spm.js
 
     function GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel) {
         var soulValue = 0;
@@ -7704,18 +7659,7 @@ function GetUIRoot() {
 
 
 
-    function SetSpmLabel(label, spm, scorePanel) {
-        if (!label) return;
-        var nextText = SpmFormatTeam(spm);
-        if (label.text !== nextText) label.text = nextText;
-        SetPanelClassIfChanged(label, "positive", spm > 0);
-        SetPanelClassIfChanged(label, "negative", spm < 0);
-        if (scorePanel) {
-            var isTeam1 = !!(scorePanel.BHasClass && scorePanel.BHasClass("team1"));
-            SetPanelClassIfChanged(label, "isTeam1", isTeam1);
-            SetPanelClassIfChanged(label, "isTeam2", !isTeam1);
-        }
-    }
+    // SetSpmLabel extracted to ql_feat_spm.js
 
     function RefreshSpmPlayerSlotCache(root, index) {
         if (!root || index < 0 || index >= SPM_MAX_PLAYERS) return;
@@ -8027,199 +7971,7 @@ function GetUIRoot() {
         State.topbarNicknamesNextRefreshMs = now + nextRefreshMs;
     }
 
-    function ApplyZeroSpmDisplay(root, nowMs) {
-        if (!root) return;
-        RefreshSpmPanelCache(root, nowMs || 0);
-        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
-        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
-        SetSpmLabel(friendlyLabel, 0, friendlyScore);
-        SetSpmLabel(enemyLabel, 0, enemyScore);
-    }
-
-    function BuildTopbarSoulSnapshot(root, nowMs) {
-        if (!root) return null;
-        RefreshSpmPanelCache(root, nowMs || 0);
-        if (!State.spm.playerPanels || !State.spm.playerTeamByIndex) return null;
-
-        var players = new Array(SPM_MAX_PLAYERS);
-        var friendlyTotal = 0;
-        var enemyTotal = 0;
-        var friendlyPlayers = 0;
-        var enemyPlayers = 0;
-
-        for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var panel = IsPanelValid(State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
-            if (!panel) {
-                players[i] = null;
-                continue;
-            }
-
-            var hiddenGoldLabel = IsPanelValid(State.spm.playerHiddenGoldLabels[i]) ? State.spm.playerHiddenGoldLabels[i] : null;
-            var soulsLabel = IsPanelValid(State.spm.playerSoulsLabels[i]) ? State.spm.playerSoulsLabels[i] : null;
-            if (!hiddenGoldLabel) {
-                hiddenGoldLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("HiddenGoldValue") || null) : null;
-                State.spm.playerHiddenGoldLabels[i] = hiddenGoldLabel;
-            }
-            if (!soulsLabel) {
-                soulsLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("SoulsValue") || null) : null;
-                State.spm.playerSoulsLabels[i] = soulsLabel;
-            }
-
-            var soulValue = GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel);
-            var team = State.spm.playerTeamByIndex[i];
-            if (team !== "friendly" && team !== "enemy") {
-                team = DetectTopBarPlayerTeam(panel);
-                State.spm.playerTeamByIndex[i] = team;
-            }
-
-            players[i] = {
-                panel: panel,
-                soulValue: soulValue,
-                team: team
-            };
-
-            if (team === "friendly") {
-                friendlyTotal += soulValue;
-                friendlyPlayers++;
-            } else if (team === "enemy") {
-                enemyTotal += soulValue;
-                enemyPlayers++;
-            }
-        }
-
-        var snapshot = {
-            players: players,
-            friendlyTotal: friendlyTotal,
-            enemyTotal: enemyTotal,
-            friendlyPlayers: friendlyPlayers,
-            enemyPlayers: enemyPlayers
-        };
-        State.topbarSoulSnapshot = snapshot;
-        State.topbarSoulSnapshotUntilMs = (nowMs || 0) + TOPBAR_SOUL_SNAPSHOT_TTL_MS;
-        return snapshot;
-    }
-
-    function GetTopbarSoulSnapshot(root, nowMs) {
-        var snapshot = State.topbarSoulSnapshot;
-        if (snapshot && nowMs <= (State.topbarSoulSnapshotUntilMs || 0)) {
-            return snapshot;
-        }
-        return BuildTopbarSoulSnapshot(root, nowMs);
-    }
-
-    function UpdateSoulsPerMinute(root, nowMs, cfg) {
-        if (!root) return;
-        EnsureSpmState();
-
-        var spmEnabled = !cfg || IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
-        if (!spmEnabled) {
-            if (!State.spm.wasDisabled) {
-                ResetSpmState();
-                ApplyZeroSpmDisplay(root, nowMs);
-                State.spm.lastClockSec = null;
-                State.spm.wasDisabled = true;
-            }
-            return;
-        }
-        State.spm.wasDisabled = false;
-
-        if (isConnectedToHideout(root)) {
-            ResetSpmState();
-            ApplyZeroSpmDisplay(root, nowMs);
-            State.spm.lastClockSec = null;
-            return;
-        }
-
-        var gameTimePanel = GetCachedPanel("gameTime");
-        if (!gameTimePanel) {
-            gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
-            SetCachedPanel("gameTime", gameTimePanel);
-        }
-        var clockSec = gameTimePanel && gameTimePanel.text ? ParseClockSeconds(gameTimePanel.text) : 0;
-        if (State.spm.lastClockSec !== null && clockSec < State.spm.lastClockSec) {
-            ResetSpmState();
-        }
-        State.spm.lastClockSec = clockSec;
-
-        if (!isFinite(nowMs)) {
-            nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        }
-        if (nowMs < (State.spm.nextSampleMs || 0)) return;
-        State.spm.nextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
-
-        RefreshSpmPanelCache(root, nowMs);
-        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
-        if (!friendlyScore || !enemyScore) {
-            ApplyZeroSpmDisplay(root, nowMs);
-            return;
-        }
-
-        var snapshot = GetTopbarSoulSnapshot(root, nowMs);
-        if (!snapshot || !snapshot.players) {
-            ApplyZeroSpmDisplay(root, nowMs);
-            return;
-        }
-
-        var friendlyTotal = 0;
-        var enemyTotal = 0;
-        var friendlyPlayers = 0;
-        var enemyPlayers = 0;
-        for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var snapshotPlayer = snapshot.players[i];
-            if (!snapshotPlayer) continue;
-            var soulValue = snapshotPlayer.soulValue;
-            var history = State.spm.playerHistory[i];
-            SpmAddSample(history, soulValue);
-            var spm = SpmCalculate(history);
-
-            var playerDisplay = IsPanelValid(State.spm.playerDisplayLabels[i]) ? State.spm.playerDisplayLabels[i] : null;
-            if (playerDisplay) {
-                var playerText = SpmFormat(spm) + "/m";
-                if (playerDisplay.text !== playerText) playerDisplay.text = playerText;
-                SetPanelClassIfChanged(playerDisplay, "positive", spm > 0);
-                SetPanelClassIfChanged(playerDisplay, "negative", spm < 0);
-            }
-
-            var team = snapshotPlayer.team || State.spm.playerTeamByIndex[i];
-            State.spm.playerTeamByIndex[i] = team;
-            if (team === "friendly") {
-                friendlyTotal += soulValue;
-                friendlyPlayers++;
-            }
-            else if (team === "enemy") {
-                enemyTotal += soulValue;
-                enemyPlayers++;
-            }
-        }
-
-        if (friendlyPlayers <= 0 || enemyPlayers <= 0) {
-            ApplyZeroSpmDisplay(root, nowMs);
-            return;
-        }
-
-        SpmAddSample(State.spm.teamHistory.friendly, friendlyTotal);
-        SpmAddSample(State.spm.teamHistory.enemy, enemyTotal);
-
-        if (State.spm.warmupActive) {
-            ApplyZeroSpmDisplay(root, nowMs);
-            if (State.spm.teamHistory.friendly.length >= 2 && State.spm.teamHistory.enemy.length >= 2) {
-                State.spm.warmupActive = false;
-            }
-            return;
-        }
-
-        var friendlySpm = SpmCalculate(State.spm.teamHistory.friendly);
-        var enemySpm = SpmCalculate(State.spm.teamHistory.enemy);
-
-        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
-
-        SetSpmLabel(friendlyLabel, friendlySpm, friendlyScore);
-        SetSpmLabel(enemyLabel, enemySpm, enemyScore);
-    }
+    // ApplyZeroSpmDisplay / UpdateSoulsPerMinute extracted to ql_feat_spm.js
 
     function EnsureUnspentState() {
         if (!State.unspentPlayerPanels) State.unspentPlayerPanels = new Array(UNSPENT_MAX_PLAYERS);
@@ -25253,13 +25005,7 @@ function GetUIRoot() {
 
     // ── Batch C: features with significant State footprint ──
 
-    QOL_REGISTER_FEATURE("spm", {
-        configKeys: ["ENABLE_MIN_SOULS"],
-        bucket: 1, phase: 1,
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"); },
-        update: function(root, cfg, nowMs) { UpdateSoulsPerMinute(root, nowMs, cfg); },
-        stateKeys: ["spm"]
-    });
+    // spm feature extracted to ql_feat_spm.js
 
     QOL_REGISTER_FEATURE("unspent", {
         configKeys: ["ENABLE_UNSPENT_SOULS"],
@@ -25486,6 +25232,16 @@ function GetUIRoot() {
     try { if (typeof window !== "undefined") window.QOL_EnsureGameTimePanelCache = EnsureGameTimePanelCache; } catch(e) {}
     try { QOL_EnsureAbilitiesContainerPanelCache = EnsureAbilitiesContainerPanelCache; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_EnsureAbilitiesContainerPanelCache = EnsureAbilitiesContainerPanelCache; } catch(e) {}
+    try { QOL_EnsureSpmState = EnsureSpmState; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_EnsureSpmState = EnsureSpmState; } catch(e) {}
+    try { QOL_ParseClockSeconds = ParseClockSeconds; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_ParseClockSeconds = ParseClockSeconds; } catch(e) {}
+    try { QOL_RefreshSpmPanelCache = RefreshSpmPanelCache; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_RefreshSpmPanelCache = RefreshSpmPanelCache; } catch(e) {}
+    try { QOL_GetSoulValueFromLabels = GetSoulValueFromLabels; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_GetSoulValueFromLabels = GetSoulValueFromLabels; } catch(e) {}
+    try { QOL_DetectTopBarPlayerTeam = DetectTopBarPlayerTeam; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL_DetectTopBarPlayerTeam = DetectTopBarPlayerTeam; } catch(e) {}
     try { QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
     try { if (typeof window !== "undefined") window.QOL_ResolveDamageNumbersRuntimeSig = ResolveDamageNumbersRuntimeSig; } catch(e) {}
     try { QOL_RuntimeTaskIsDue = RuntimeTaskIsDue; } catch(e) {}
