@@ -19,6 +19,7 @@
     var IsPanelVisibleMaybe = QOL.isPanelVisibleMaybe || function() { return false; };
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
+    var RECENT_PURCHASE_MAX_ITEMS = 50;
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
 function GetRecentPurchaseName(panel) {

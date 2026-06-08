@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_heroshop";
-    var _deps = QOL.import(["getCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
+    var _deps = QOL.import(["getCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "normalizeHudOffsetNumber", "normalizeHudScaleNumber", "panelIdHeroShop"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
@@ -14,6 +14,7 @@
     var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
+    var PANEL_ID_HERO_SHOP = _deps.panelIdHeroShop;
 
     function UpdateHeroShopRuntime(root, cfg, nowMsClass) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);

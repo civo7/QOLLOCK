@@ -4,7 +4,7 @@
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: bottomBarRuntime\n");
         var _dk = "ql_feat_bottombar";
-    var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
+    var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","panelIdGoldApContainer","panelIdSignature","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
     var GUIR = _deps.getUIRoot;
@@ -14,6 +14,9 @@
     var S = _deps.state;
     var SWC = _deps.setWashColorSafe;
     var U = _deps.utils;
+    var IPV = U.IsPanelValid;
+    var PID_GOLD_AP = _deps.panelIdGoldApContainer;
+    var PID_SIGNATURE = _deps.panelIdSignature;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||

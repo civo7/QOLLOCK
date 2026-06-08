@@ -4,11 +4,12 @@
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
         var _dk = "ql_feat_souls";
-    var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils"]);
+    var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var S = _deps.state;
     var U = _deps.utils;
+    var PID = _deps.panelIdGoldApContainer;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||

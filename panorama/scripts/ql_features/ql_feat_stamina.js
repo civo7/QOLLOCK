@@ -10,6 +10,8 @@
     var RWP = _deps.resolveWashColorFromPalette;
     var S = _deps.state;
     var U = _deps.utils;
+    var NSA = _deps.normalizeStaminaChargeAngle;
+    var RSC = _deps.readStaminaChargeColorIndex;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
