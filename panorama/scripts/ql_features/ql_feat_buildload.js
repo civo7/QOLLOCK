@@ -19,6 +19,7 @@
         "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry"]);
     var S = _deps.state;
     var U = _deps.utils;
+    var State = S;
     var GC = _deps.getCachedPanel;
     var SC = _deps.setCachedPanel;
     var NormalizeHeroId = _deps.normalizeHeroId;
