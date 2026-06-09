@@ -9999,7 +9999,7 @@ function GetUIRoot() {
 
     function EnsureStorageHeroFavoritesHeaderVisible(root, nowMs) {
         if (!root) return false;
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
+        var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = QOL.normalizeHeroId(signal.hero);
         if (hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return true;
 
