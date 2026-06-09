@@ -18343,7 +18343,8 @@ function GetUIRoot() {
         ["beginSettingsLoaderSession", function() { return BeginSettingsLoaderSession; }],
         ["finalizeSettingsLoaderSession", function() { return FinalizeSettingsLoaderSession; }],
         ["resetSettingsLoaderSession", function() { return ResetSettingsLoaderSession; }],
-        ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }]
+        ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }],
+        ["createLoaderOverlay", function() { return _CreateLoaderOverlay; }]
     ];
 
     // Publish to QOL namespace with error logging
