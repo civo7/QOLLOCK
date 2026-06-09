@@ -7986,18 +7986,301 @@ function GetUIRoot() {
         return "";
     }
     function GetSettingsLoaderStepIndex(stepKey) {
+        return _GetLoaderStepIndex(stepKey, SETTINGS_LOADER_STEPS);
+    }
+    // ── Generic Loader Overlay Helpers ──
+    // Replaces 3 near-identical copies of step-row creation, state management,
+    // and overlay rendering. Each existing overlay function delegates to these.
+
+    function _GetLoaderStepIndex(stepKey, steps) {
         if (!stepKey) return -1;
-        for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
-            if (SETTINGS_LOADER_STEPS[i].key === stepKey) return i;
+        for (var i = 0; i < steps.length; i++) {
+            if (steps[i].key === stepKey) return i;
         }
         return -1;
     }
 
-    function ResetSettingsLoaderStepStates() {
-        State.settingsLoaderStepStates = {};
-        for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
-            State.settingsLoaderStepStates[SETTINGS_LOADER_STEPS[i].key] = "pending";
+    function _ResetLoaderStepStates(stateObj, steps) {
+        if (!stateObj || typeof stateObj !== "object") return;
+        for (var k in stateObj) {
+            if (stateObj.hasOwnProperty(k)) delete stateObj[k];
         }
+        for (var i = 0; i < steps.length; i++) {
+            stateObj[steps[i].key] = "pending";
+        }
+    }
+
+    function _ResetLoaderSession(statePrefix, cachedOverlayKey, steps, hideOverlay) {
+        State[statePrefix + "SessionToken"] = "";
+        State[statePrefix + "SessionActive"] = false;
+        State[statePrefix + "SessionCompleted"] = false;
+        State[statePrefix + "CurrentStep"] = "";
+        State[statePrefix + "Detail"] = "";
+        State[statePrefix + "Result"] = "";
+        State[statePrefix + "ShowUntilMs"] = 0;
+        State[statePrefix + "NextReassertMs"] = 0;
+        State[statePrefix + "LastRenderSig"] = "";
+        _ResetLoaderStepStates(State[statePrefix + "StepStates"], steps);
+        if (hideOverlay) {
+            var overlay = GetCachedPanel(cachedOverlayKey);
+            if (overlay) {
+                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+            }
+        }
+    }
+
+    function _BeginLoaderSession(statePrefix, steps, requestToken, nowMs, initialDetail, enabledCheck) {
+        if (enabledCheck && !enabledCheck()) return;
+        var token = requestToken ? String(requestToken) : "";
+        if (!token) return;
+        if (
+            State[statePrefix + "SessionToken"] === token &&
+            (State[statePrefix + "SessionActive"] || State[statePrefix + "SessionCompleted"])
+        ) {
+            return;
+        }
+        _ResetLoaderStepStates(State[statePrefix + "StepStates"], steps);
+        State[statePrefix + "SessionToken"] = token;
+        State[statePrefix + "SessionActive"] = true;
+        State[statePrefix + "SessionCompleted"] = false;
+        State[statePrefix + "CurrentStep"] = "start";
+        State[statePrefix + "Detail"] = initialDetail || "";
+        State[statePrefix + "Result"] = "";
+        State[statePrefix + "ShowUntilMs"] = 0;
+        State[statePrefix + "LastRenderSig"] = "";
+        if (State[statePrefix + "StepStates"] && typeof State[statePrefix + "StepStates"] === "object") {
+            State[statePrefix + "StepStates"].start = "active";
+        }
+    }
+
+    function _SetLoaderStepState(statePrefix, steps, stepKey, status, detail, enabledCheck) {
+        if (enabledCheck && !enabledCheck()) return;
+        var idx = _GetLoaderStepIndex(stepKey, steps);
+        if (idx < 0) return;
+        var stepStates = State[statePrefix + "StepStates"];
+        if (!stepStates || typeof stepStates !== "object") {
+            State[statePrefix + "StepStates"] = {};
+            stepStates = State[statePrefix + "StepStates"];
+            for (var i = 0; i < steps.length; i++) {
+                stepStates[steps[i].key] = "pending";
+            }
+        }
+        var st = status ? String(status) : "pending";
+        stepStates[stepKey] = st;
+        if (st === "active") {
+            State[statePrefix + "CurrentStep"] = stepKey;
+            if (!State[statePrefix + "SessionCompleted"]) {
+                State[statePrefix + "SessionActive"] = true;
+            }
+        }
+        if (detail !== undefined && detail !== null && String(detail).length > 0) {
+            State[statePrefix + "Detail"] = String(detail);
+        }
+    }
+
+    function _GetLoaderStepState(statePrefix, stepKey) {
+        if (!stepKey) return "pending";
+        var stepStates = State[statePrefix + "StepStates"];
+        if (!stepStates || typeof stepStates !== "object") return "pending";
+        if (!stepStates.hasOwnProperty(stepKey)) return "pending";
+        return String(stepStates[stepKey] || "pending");
+    }
+
+    function _BuildLoaderStepStateSignature(statePrefix, steps) {
+        var parts = [];
+        for (var i = 0; i < steps.length; i++) {
+            parts.push(steps[i].key + ":" + _GetLoaderStepState(statePrefix, steps[i].key));
+        }
+        return parts.join("|");
+    }
+
+    function _EnsureLoaderStepRows(stepsWrap, steps, stepRowIdPrefix, iconSuffix, labelSuffix, cachedRowsKey) {
+        if (!stepsWrap) return null;
+        var rows = GetCachedPanel(cachedRowsKey);
+        if (!rows || typeof rows !== "object") rows = {};
+        for (var i = 0; i < steps.length; i++) {
+            var step = steps[i];
+            var key = step.key;
+            var existing = rows.hasOwnProperty(key) ? rows[key] : null;
+            var row = existing && IsPanelValid(existing.row) ? existing.row : null;
+            var icon = existing && IsPanelValid(existing.icon) ? existing.icon : null;
+            var label = existing && IsPanelValid(existing.label) ? existing.label : null;
+            var rowId = stepRowIdPrefix + key;
+            if (!row) row = stepsWrap.FindChildTraverse ? (stepsWrap.FindChildTraverse(rowId) || null) : null;
+            if (!row) row = $.CreatePanel("Panel", stepsWrap, rowId, { hittest: "false", hittestchildren: "false" });
+            if (!row) continue;
+            row.hittest = false;
+            row.hittestchildren = false;
+            if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
+            ApplyLoaderStepRowTheme(row);
+
+            var iconId = rowId + iconSuffix;
+            if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
+            if (!icon) icon = $.CreatePanel("Image", row, iconId, { hittest: "false", hittestchildren: "false" });
+            if (icon) {
+                icon.hittest = false;
+                icon.hittestchildren = false;
+                if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
+                ApplyLoaderStepIconTheme(icon);
+            }
+
+            var labelId = rowId + labelSuffix;
+            if (!label) label = row.FindChildTraverse ? (row.FindChildTraverse(labelId) || null) : null;
+            if (!label) label = $.CreatePanel("Label", row, labelId);
+            if (label) {
+                label.hittest = false;
+                label.hittestchildren = false;
+                if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
+                ApplyLoaderStepLabelTheme(label);
+            }
+            var reuseRow = !!(existing && row && existing.row === row);
+            var reuseIcon = !!(existing && icon && existing.icon === icon);
+            var reuseLabel = !!(existing && label && existing.label === label);
+            rows[key] = {
+                row: row,
+                icon: icon || null,
+                label: label || null,
+                lastState: reuseRow && existing ? String(existing.lastState || "") : "",
+                lastIcon: reuseIcon && existing ? String(existing.lastIcon || "") : "",
+                lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
+            };
+        }
+        SetCachedPanel(cachedRowsKey, rows);
+        return rows;
+    }
+
+    function _RenderLoaderStepRows(stepsWrap, steps, stepRowIdPrefix, iconSuffix, labelSuffix, cachedRowsKey, statePrefix) {
+        var rows = _EnsureLoaderStepRows(stepsWrap, steps, stepRowIdPrefix, iconSuffix, labelSuffix, cachedRowsKey);
+        if (!rows || typeof rows !== "object") return "";
+        for (var i = 0; i < steps.length; i++) {
+            var step = steps[i];
+            var key = step.key;
+            if (!rows.hasOwnProperty(key)) continue;
+            var entry = rows[key];
+            if (!entry) continue;
+            var status = _GetLoaderStepState(statePrefix, key);
+            if (entry.row) SetSettingsLoaderStepRowStateClasses(entry.row, status);
+            if (entry.label) {
+                if (entry.lastLabel !== step.label || entry.label.text !== step.label) {
+                    entry.label.text = step.label;
+                    entry.lastLabel = step.label;
+                }
+            }
+            if (entry.icon) {
+                var iconPath = GetSettingsLoaderIconForState(status);
+                if (entry.lastIcon !== iconPath) {
+                    try {
+                        if (entry.icon.SetImage) entry.icon.SetImage(iconPath);
+                        else entry.icon.style.backgroundImage = "url(\"" + iconPath + "\")";
+                    } catch (e0) {}
+                    entry.lastIcon = iconPath;
+                }
+            }
+            ApplySettingsLoaderStepStateFallback(entry, status);
+            entry.lastState = status;
+        }
+        return _BuildLoaderStepStateSignature(statePrefix, steps);
+    }
+
+    // ── Generic Overlay Panel Builder ──
+    // Used by save + clear overlays (load overlay has too many unique extras for a generic)
+
+    function _EnsureLoaderOverlaySimple(root, nowMs, cfg) {
+        // cfg: { enabledCheck, overlayId, cardId, warningId, titleId, titleText,
+        //        stepsWrapId, steps, stepRowIdPrefix, iconSuffix, labelSuffix,
+        //        cachedOverlayKey, cachedCardKey, cachedStepRowsKey,
+        //        detailId, detailTextFn, reassertMs, holdMs, statePrefix,
+        //        optionalExtras: { stallHintId, stallHintText } }
+        if (!cfg.enabledCheck || !root) return null;
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var overlay = GetCachedPanel(cfg.cachedOverlayKey);
+        if (overlay && !IsPanelValid(overlay)) { SetCachedPanel(cfg.cachedOverlayKey, null); overlay = null; }
+        if (!overlay) overlay = root.FindChildTraverse ? (root.FindChildTraverse(cfg.overlayId) || null) : null;
+        if (!overlay) overlay = $.CreatePanel("Panel", root, cfg.overlayId);
+        if (!overlay) return null;
+        overlay.hittest = false;
+        overlay.hittestchildren = false;
+        SetCachedPanel(cfg.cachedOverlayKey, overlay);
+
+        var card = GetCachedPanel(cfg.cachedCardKey);
+        if (card && !IsPanelValid(card)) { SetCachedPanel(cfg.cachedCardKey, null); card = null; }
+        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(cfg.cardId) || null) : null;
+        if (!card) card = $.CreatePanel("Panel", overlay, cfg.cardId);
+        if (!card) return overlay;
+        SetCachedPanel(cfg.cachedCardKey, card);
+
+        var warning = card.FindChildTraverse ? (card.FindChildTraverse(cfg.warningId) || null) : null;
+        if (!warning) warning = $.CreatePanel("Label", card, cfg.warningId);
+        var title = card.FindChildTraverse ? (card.FindChildTraverse(cfg.titleId) || null) : null;
+        if (!title) title = $.CreatePanel("Label", card, cfg.titleId);
+        var stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(cfg.stepsWrapId) || null) : null;
+        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, cfg.stepsWrapId, { hittest: "false", hittestchildren: "false" });
+        var detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(cfg.detailId) || null) : null;
+        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, cfg.detailId);
+
+        var isDone = State[cfg.statePrefix + "SessionCompleted"];
+        var isActive = !isDone && State[cfg.statePrefix + "SessionActive"];
+        var showUntilMs = Number(State[cfg.statePrefix + "ShowUntilMs"]) || 0;
+        var doShow = isActive || (isDone && now < showUntilMs);
+        if (doShow && State[cfg.statePrefix + "LastRenderSig"]) {
+            var prevReassert = Number(State[cfg.statePrefix + "NextReassertMs"]) || 0;
+            if (now < prevReassert) return overlay;
+        }
+        try {
+            overlay.style.visibility = doShow ? "visible" : "collapse";
+        } catch (eOv) {}
+
+        if (!doShow) return overlay;
+
+        var renderDetail = cfg.detailTextFn ? cfg.detailTextFn() : String(State[cfg.statePrefix + "Detail"] || "");
+        var isPromptDetail = false;
+
+        if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
+        if (title && title.text !== cfg.titleText) title.text = cfg.titleText;
+        if (detailLabel) {
+            ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
+            if (detailLabel.text !== renderDetail) detailLabel.text = renderDetail;
+        }
+
+        // Optional stall hint (save overlay)
+        if (cfg.optionalExtras && cfg.optionalExtras.stallHintId) {
+            var stallHint = card.FindChildTraverse ? (card.FindChildTraverse(cfg.optionalExtras.stallHintId) || null) : null;
+            if (!stallHint) stallHint = $.CreatePanel("Label", card, cfg.optionalExtras.stallHintId);
+            if (stallHint && stallHint.text !== cfg.optionalExtras.stallHintText) {
+                stallHint.text = cfg.optionalExtras.stallHintText;
+            }
+        }
+
+        _EnsureLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey);
+        _RenderLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey, cfg.statePrefix);
+
+        State[cfg.statePrefix + "NextReassertMs"] = now + (cfg.reassertMs || 250);
+        return overlay;
+    }
+
+    // ── Loader overlay factory (bundles state management + panel helpers) ──
+    // Returns an object with methods bound to one overlay's config.
+
+    function _CreateLoaderOverlay(cfg) {
+        // cfg: { statePrefix, steps, cachedOverlayKey, enabledCheck, stepRowIdPrefix,
+        //        iconSuffix, labelSuffix, cachedStepRowsKey }
+        var o = {};
+        o.getStepIndex = function(stepKey) { return _GetLoaderStepIndex(stepKey, cfg.steps); };
+        o.resetStepStates = function() { _ResetLoaderStepStates(State[cfg.statePrefix + "StepStates"], cfg.steps); };
+        o.resetSession = function(hideOverlay) { _ResetLoaderSession(cfg.statePrefix, cfg.cachedOverlayKey, cfg.steps, hideOverlay); };
+        o.beginSession = function(requestToken, nowMs, initialDetail) { _BeginLoaderSession(cfg.statePrefix, cfg.steps, requestToken, nowMs, initialDetail, cfg.enabledCheck); };
+        o.setStepState = function(stepKey, status, detail) { _SetLoaderStepState(cfg.statePrefix, cfg.steps, stepKey, status, detail, cfg.enabledCheck); };
+        o.getStepState = function(stepKey) { return _GetLoaderStepState(cfg.statePrefix, stepKey); };
+        o.buildSignature = function() { return _BuildLoaderStepStateSignature(cfg.statePrefix, cfg.steps); };
+        o.ensureStepRows = function(stepsWrap) { return _EnsureLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey); };
+        o.renderStepRows = function(stepsWrap) { return _RenderLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey, cfg.statePrefix); };
+        return o;
+    }
+
+    // ── Settings Loader (load) overlay ──
+
+    function ResetSettingsLoaderStepStates() {
+        _ResetLoaderStepStates(State.settingsLoaderStepStates, SETTINGS_LOADER_STEPS);
     }
 
     function ResetSettingsLoaderSession(hideOverlay) {
@@ -8086,49 +8369,8 @@ function GetUIRoot() {
     }
 
     function SetSettingsLoaderStepState(stepKey, status, detail) {
-        if (!SETTINGS_LOADER_ENABLED) return;
-        var idx = GetSettingsLoaderStepIndex(stepKey);
-        if (idx < 0) return;
-        if (!State.settingsLoaderStepStates || typeof State.settingsLoaderStepStates !== "object") {
-            ResetSettingsLoaderStepStates();
-        }
-        var st = status ? String(status) : "pending";
-        var prevStatus = State.settingsLoaderStepStates.hasOwnProperty(stepKey) ? String(State.settingsLoaderStepStates[stepKey] || "") : "";
-        var prevDetail = State.settingsLoaderDetail ? String(State.settingsLoaderDetail) : "";
-        State.settingsLoaderStepStates[stepKey] = st;
-        if (st === "active") {
-            State.settingsLoaderCurrentStep = stepKey;
-            if (!State.settingsLoaderSessionCompleted) {
-                State.settingsLoaderSessionActive = true;
-            }
-        }
-        if (detail !== undefined && detail !== null && String(detail).length > 0) {
-            State.settingsLoaderDetail = String(detail);
-        }
-        var nextDetail = State.settingsLoaderDetail ? String(State.settingsLoaderDetail) : "";
-        if (prevStatus !== st || prevDetail !== nextDetail) {
-            var now = Date.now ? Date.now() : (new Date()).getTime();
-            SettingsLoaderDebugLogThrottled(
-                "step|" + stepKey + "|" + st + "|" + nextDetail,
-                "step_update step=" + stepKey + " status=" + st + " detail=\"" + nextDetail + "\"",
-                now
-            );
-            SettingsLoaderTraceLog(
-                "step_update step=" + stepKey +
-                " status=" + st +
-                " detail=\"" + nextDetail + "\"" +
-                " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-")
-            );
-            SetSettingsLoaderDebugOverlayLine(
-                "step=" + stepKey +
-                " st=" + st +
-                " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-") +
-                " retries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0) +
-                " misses=" + String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
-            );
-        }
+        _SetLoaderStepState("settingsLoader", SETTINGS_LOADER_STEPS, stepKey, status, detail, function() { return SETTINGS_LOADER_ENABLED; });
     }
-
     function FinalizeSettingsLoaderSession(resultCode, detail, nowMs) {
         _TLog("load:FinalizeSession", resultCode + " " + (detail || ""));
         if (!SETTINGS_LOADER_ENABLED) return;
@@ -8222,21 +8464,11 @@ function GetUIRoot() {
     }
 
     function GetSettingsLoaderStepState(stepKey) {
-        if (!stepKey) return "pending";
-        if (!State.settingsLoaderStepStates || typeof State.settingsLoaderStepStates !== "object") return "pending";
-        if (!State.settingsLoaderStepStates.hasOwnProperty(stepKey)) return "pending";
-        return String(State.settingsLoaderStepStates[stepKey] || "pending");
+        return _GetLoaderStepState("settingsLoader", stepKey);
     }
-
     function BuildSettingsLoaderStepStateSignature() {
-        var parts = [];
-        for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SETTINGS_LOADER_STEPS[i];
-            parts.push(step.key + ":" + GetSettingsLoaderStepState(step.key));
-        }
-        return parts.join("|");
+        return _BuildLoaderStepStateSignature("settingsLoader", SETTINGS_LOADER_STEPS);
     }
-
     function GetSettingsLoaderIconForState(status) {
         var st = status ? String(status) : "pending";
         if (st === "done") return SETTINGS_LOADER_ICON_DONE;
@@ -8289,98 +8521,11 @@ function GetUIRoot() {
     }
 
     function EnsureSettingsLoaderStepRows(stepsWrap) {
-        if (!stepsWrap) return null;
-        var rows = GetCachedPanel("settingsLoaderStepRows");
-        if (!rows || typeof rows !== "object") rows = {};
-        for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            var existing = rows.hasOwnProperty(key) ? rows[key] : null;
-            var row = existing && IsPanelValid(existing.row) ? existing.row : null;
-            var icon = existing && IsPanelValid(existing.icon) ? existing.icon : null;
-            var label = existing && IsPanelValid(existing.label) ? existing.label : null;
-            var rowId = SETTINGS_LOADER_STEP_ROW_ID_PREFIX + key;
-            if (!row) row = stepsWrap.FindChildTraverse ? (stepsWrap.FindChildTraverse(rowId) || null) : null;
-            if (!row) row = $.CreatePanel("Panel", stepsWrap, rowId, { hittest: "false", hittestchildren: "false" });
-            if (!row) continue;
-            row.hittest = false;
-            row.hittestchildren = false;
-            if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            ApplyLoaderStepRowTheme(row);
-
-            var iconId = rowId + SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
-            if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
-            if (!icon) icon = $.CreatePanel("Image", row, iconId, { hittest: "false", hittestchildren: "false" });
-            if (icon) {
-                icon.hittest = false;
-                icon.hittestchildren = false;
-                if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                ApplyLoaderStepIconTheme(icon);
-            }
-
-            var labelId = rowId + SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
-            if (!label) label = row.FindChildTraverse ? (row.FindChildTraverse(labelId) || null) : null;
-            if (!label) label = $.CreatePanel("Label", row, labelId);
-            if (label) {
-                label.hittest = false;
-                label.hittestchildren = false;
-                if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                ApplyLoaderStepLabelTheme(label);
-            }
-            var reuseRow = !!(existing && row && existing.row === row);
-            var reuseIcon = !!(existing && icon && existing.icon === icon);
-            var reuseLabel = !!(existing && label && existing.label === label);
-            rows[key] = {
-                row: row,
-                icon: icon || null,
-                label: label || null,
-                lastState: reuseRow && existing ? String(existing.lastState || "") : "",
-                lastIcon: reuseIcon && existing ? String(existing.lastIcon || "") : "",
-                lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
-            };
-        }
-        SetCachedPanel("settingsLoaderStepRows", rows);
-        return rows;
+        return _EnsureLoaderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX, "settingsLoaderStepRows");
     }
-
     function RenderSettingsLoaderStepRows(stepsWrap) {
-        var rows = EnsureSettingsLoaderStepRows(stepsWrap);
-        if (!rows || typeof rows !== "object") return "";
-        for (var i = 0; i < SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            if (!rows.hasOwnProperty(key)) continue;
-            var entry = rows[key];
-            if (!entry) continue;
-            var status = GetSettingsLoaderStepState(key);
-            if (entry.row) {
-                SetSettingsLoaderStepRowStateClasses(entry.row, status);
-            }
-            if (entry.label) {
-                if (entry.lastLabel !== step.label || entry.label.text !== step.label) {
-                    entry.label.text = step.label;
-                    entry.lastLabel = step.label;
-                }
-            }
-            if (entry.icon) {
-                var iconPath = GetSettingsLoaderIconForState(status);
-                if (entry.lastIcon !== iconPath) {
-                    try {
-                        if (entry.icon.SetImage) {
-                            entry.icon.SetImage(iconPath);
-                        } else {
-                            entry.icon.style.backgroundImage = "url(\"" + iconPath + "\")";
-                        }
-                    } catch (e0) {}
-                    entry.lastIcon = iconPath;
-                }
-            }
-            ApplySettingsLoaderStepStateFallback(entry, status);
-            entry.lastState = status;
-        }
-        return BuildSettingsLoaderStepStateSignature();
+        return _RenderLoaderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX, "settingsLoaderStepRows", "settingsLoader");
     }
-
     function EnsureSettingsLoaderOverlay(root, nowMs) {
         if (!SETTINGS_LOADER_ENABLED || !root) return null;
         var overlay = GetCachedPanel("settingsLoaderOverlay");
@@ -8765,88 +8910,40 @@ function GetUIRoot() {
         return Math.round(parsed);
     }
 
+    // ── Save overlay config ──
+    var _saveLoader = _CreateLoaderOverlay({
+        statePrefix: "saveSettingsLoader",
+        steps: SAVE_SETTINGS_LOADER_STEPS,
+        cachedOverlayKey: "saveSettingsLoaderOverlay",
+        enabledCheck: function() { return SAVE_SETTINGS_LOADER_ENABLED; },
+        stepRowIdPrefix: SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX,
+        iconSuffix: SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX,
+        labelSuffix: SAVE_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX,
+        cachedStepRowsKey: "saveSettingsLoaderStepRows",
+    });
+
     function GetSaveSettingsLoaderStepIndex(stepKey) {
-        if (!stepKey) return -1;
-        for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
-            if (SAVE_SETTINGS_LOADER_STEPS[i].key === stepKey) return i;
-        }
-        return -1;
+        return _saveLoader.getStepIndex(stepKey);
     }
 
     function ResetSaveSettingsLoaderStepStates() {
-        State.saveSettingsLoaderStepStates = {};
-        for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
-            State.saveSettingsLoaderStepStates[SAVE_SETTINGS_LOADER_STEPS[i].key] = "pending";
-        }
+        _saveLoader.resetStepStates();
     }
 
     function ResetSaveSettingsLoaderSession(hideOverlay) {
-        State.saveSettingsLoaderSessionToken = "";
-        State.saveSettingsLoaderSessionActive = false;
-        State.saveSettingsLoaderSessionCompleted = false;
-        State.saveSettingsLoaderCurrentStep = "";
-        State.saveSettingsLoaderDetail = "";
-        State.saveSettingsLoaderResult = "";
-        State.saveSettingsLoaderShowUntilMs = 0;
-        State.saveSettingsLoaderNextReassertMs = 0;
-        State.saveSettingsLoaderLastRenderSig = "";
-        ResetSaveSettingsLoaderStepStates();
-        if (hideOverlay) {
-            var overlay = GetCachedPanel("saveSettingsLoaderOverlay");
-            if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
-            }
-        }
+        _saveLoader.resetSession(hideOverlay);
     }
 
     function BeginSaveSettingsLoaderSession(requestToken, nowMs) {
-        if (!SAVE_SETTINGS_LOADER_ENABLED) return;
-        var token = requestToken ? String(requestToken) : "";
-        if (!token) return;
-        if (
-            State.saveSettingsLoaderSessionToken === token &&
-            (State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted)
-        ) {
-            return;
-        }
-        _TLog("save:BeginSession", "token=" + String(token).slice(0,8));
-        ResetSaveSettingsLoaderStepStates();
-        State.saveSettingsLoaderSessionToken = token;
-        State.saveSettingsLoaderSessionActive = true;
-        State.saveSettingsLoaderSessionCompleted = false;
-        State.saveSettingsLoaderCurrentStep = "start";
-        State.saveSettingsLoaderDetail = "Initializing save request.";
-        State.saveSettingsLoaderResult = "";
-        State.saveSettingsLoaderShowUntilMs = 0;
-        State.saveSettingsLoaderLastRenderSig = "";
-        State.saveSettingsLoaderStepStates.start = "active";
+        _saveLoader.beginSession(requestToken, nowMs, "Initializing save request.");
     }
 
     function SetSaveSettingsLoaderStepState(stepKey, status, detail) {
-        if (!SAVE_SETTINGS_LOADER_ENABLED) return;
-        var idx = GetSaveSettingsLoaderStepIndex(stepKey);
-        if (idx < 0) return;
-        if (!State.saveSettingsLoaderStepStates || typeof State.saveSettingsLoaderStepStates !== "object") {
-            ResetSaveSettingsLoaderStepStates();
-        }
-        var st = status ? String(status) : "pending";
-        State.saveSettingsLoaderStepStates[stepKey] = st;
-        if (st === "active") {
-            State.saveSettingsLoaderCurrentStep = stepKey;
-            if (!State.saveSettingsLoaderSessionCompleted) {
-                State.saveSettingsLoaderSessionActive = true;
-            }
-        }
-        if (detail !== undefined && detail !== null && String(detail).length > 0) {
-            State.saveSettingsLoaderDetail = String(detail);
-        }
+        _saveLoader.setStepState(stepKey, status, detail);
     }
 
     function GetSaveSettingsLoaderStepState(stepKey) {
-        if (!stepKey) return "pending";
-        if (!State.saveSettingsLoaderStepStates || typeof State.saveSettingsLoaderStepStates !== "object") return "pending";
-        if (!State.saveSettingsLoaderStepStates.hasOwnProperty(stepKey)) return "pending";
-        return String(State.saveSettingsLoaderStepStates[stepKey] || "pending");
+        return _saveLoader.getStepState(stepKey);
     }
 
     function FinalizeSaveSettingsLoaderSession(resultCode, detail, nowMs, didSwitchToStorageHero) {
@@ -8878,12 +8975,7 @@ function GetUIRoot() {
     }
 
     function BuildSaveSettingsLoaderStepStateSignature() {
-        var parts = [];
-        for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SAVE_SETTINGS_LOADER_STEPS[i];
-            parts.push(step.key + ":" + GetSaveSettingsLoaderStepState(step.key));
-        }
-        return parts.join("|");
+        return _saveLoader.buildSignature();
     }
 
     function GetSaveSettingsLoaderDetailForMessage(statusMessage) {
@@ -8955,98 +9047,11 @@ function GetUIRoot() {
     }
 
     function EnsureSaveSettingsLoaderStepRows(stepsWrap) {
-        if (!stepsWrap) return null;
-        var rows = GetCachedPanel("saveSettingsLoaderStepRows");
-        if (!rows || typeof rows !== "object") rows = {};
-        for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SAVE_SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            var existing = rows.hasOwnProperty(key) ? rows[key] : null;
-            var row = existing && IsPanelValid(existing.row) ? existing.row : null;
-            var icon = existing && IsPanelValid(existing.icon) ? existing.icon : null;
-            var label = existing && IsPanelValid(existing.label) ? existing.label : null;
-            var rowId = SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX + key;
-            if (!row) row = stepsWrap.FindChildTraverse ? (stepsWrap.FindChildTraverse(rowId) || null) : null;
-            if (!row) row = $.CreatePanel("Panel", stepsWrap, rowId, { hittest: "false", hittestchildren: "false" });
-            if (!row) continue;
-            row.hittest = false;
-            row.hittestchildren = false;
-            if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            ApplyLoaderStepRowTheme(row);
-
-            var iconId = rowId + SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
-            if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
-            if (!icon) icon = $.CreatePanel("Image", row, iconId, { hittest: "false", hittestchildren: "false" });
-            if (icon) {
-                icon.hittest = false;
-                icon.hittestchildren = false;
-                if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                ApplyLoaderStepIconTheme(icon);
-            }
-
-            var labelId = rowId + SAVE_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
-            if (!label) label = row.FindChildTraverse ? (row.FindChildTraverse(labelId) || null) : null;
-            if (!label) label = $.CreatePanel("Label", row, labelId);
-            if (label) {
-                label.hittest = false;
-                label.hittestchildren = false;
-                if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                ApplyLoaderStepLabelTheme(label);
-            }
-            var reuseRow = !!(existing && row && existing.row === row);
-            var reuseIcon = !!(existing && icon && existing.icon === icon);
-            var reuseLabel = !!(existing && label && existing.label === label);
-            rows[key] = {
-                row: row,
-                icon: icon || null,
-                label: label || null,
-                lastState: reuseRow && existing ? String(existing.lastState || "") : "",
-                lastIcon: reuseIcon && existing ? String(existing.lastIcon || "") : "",
-                lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
-            };
-        }
-        SetCachedPanel("saveSettingsLoaderStepRows", rows);
-        return rows;
+        return _saveLoader.ensureStepRows(stepsWrap);
     }
-
     function RenderSaveSettingsLoaderStepRows(stepsWrap) {
-        var rows = EnsureSaveSettingsLoaderStepRows(stepsWrap);
-        if (!rows || typeof rows !== "object") return "";
-        for (var i = 0; i < SAVE_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = SAVE_SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            if (!rows.hasOwnProperty(key)) continue;
-            var entry = rows[key];
-            if (!entry) continue;
-            var status = GetSaveSettingsLoaderStepState(key);
-            if (entry.row) {
-                SetSettingsLoaderStepRowStateClasses(entry.row, status);
-            }
-            if (entry.label) {
-                if (entry.lastLabel !== step.label || entry.label.text !== step.label) {
-                    entry.label.text = step.label;
-                    entry.lastLabel = step.label;
-                }
-            }
-            if (entry.icon) {
-                var iconPath = GetSettingsLoaderIconForState(status);
-                if (entry.lastIcon !== iconPath) {
-                    try {
-                        if (entry.icon.SetImage) {
-                            entry.icon.SetImage(iconPath);
-                        } else {
-                            entry.icon.style.backgroundImage = "url(\"" + iconPath + "\")";
-                        }
-                    } catch (e0) {}
-                    entry.lastIcon = iconPath;
-                }
-            }
-            ApplySettingsLoaderStepStateFallback(entry, status);
-            entry.lastState = status;
-        }
-        return BuildSaveSettingsLoaderStepStateSignature();
+        return _saveLoader.renderStepRows(stepsWrap);
     }
-
     function EnsureSaveSettingsLoaderOverlay(root, nowMs) {
         if (!SAVE_SETTINGS_LOADER_ENABLED || !root) return null;
         var overlay = GetCachedPanel("saveSettingsLoaderOverlay");
@@ -9254,89 +9259,37 @@ function GetUIRoot() {
         }
     }
 
+    // ── Clear overlay config ──
+    var _clearLoader = _CreateLoaderOverlay({
+        statePrefix: "clearSettingsLoader",
+        steps: CLEAR_SETTINGS_LOADER_STEPS,
+        cachedOverlayKey: "clearSettingsLoaderOverlay",
+        enabledCheck: function() { return CLEAR_SETTINGS_LOADER_ENABLED; },
+        stepRowIdPrefix: CLEAR_SETTINGS_LOADER_STEP_ROW_ID_PREFIX,
+        iconSuffix: CLEAR_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX,
+        labelSuffix: CLEAR_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX,
+        cachedStepRowsKey: "clearSettingsLoaderStepRows",
+    });
+
+
     function GetClearSettingsLoaderStepIndex(stepKey) {
-        if (!stepKey) return -1;
-        for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
-            if (CLEAR_SETTINGS_LOADER_STEPS[i].key === stepKey) return i;
-        }
-        return -1;
+        return _clearLoader.getStepIndex(stepKey);
     }
-
     function ResetClearSettingsLoaderStepStates() {
-        State.clearSettingsLoaderStepStates = {};
-        for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
-            State.clearSettingsLoaderStepStates[CLEAR_SETTINGS_LOADER_STEPS[i].key] = "pending";
-        }
+        _clearLoader.resetStepStates();
     }
-
     function ResetClearSettingsLoaderSession(hideOverlay) {
-        State.clearSettingsLoaderSessionToken = "";
-        State.clearSettingsLoaderSessionActive = false;
-        State.clearSettingsLoaderSessionCompleted = false;
-        State.clearSettingsLoaderCurrentStep = "";
-        State.clearSettingsLoaderDetail = "";
-        State.clearSettingsLoaderResult = "";
-        State.clearSettingsLoaderShowUntilMs = 0;
-        State.clearSettingsLoaderNextReassertMs = 0;
-        State.clearSettingsLoaderLastRenderSig = "";
-        ResetClearSettingsLoaderStepStates();
-        if (hideOverlay) {
-            var overlay = GetCachedPanel("clearSettingsLoaderOverlay");
-            if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
-            }
-        }
+        _clearLoader.resetSession(hideOverlay);
     }
-
     function BeginClearSettingsLoaderSession(requestToken, nowMs) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
-        var token = requestToken ? String(requestToken) : "";
-        if (!token) return;
-        if (
-            State.clearSettingsLoaderSessionToken === token &&
-            (State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted)
-        ) {
-            return;
-        }
-        ResetClearSettingsLoaderStepStates();
-        State.clearSettingsLoaderSessionToken = token;
-        State.clearSettingsLoaderSessionActive = true;
-        State.clearSettingsLoaderSessionCompleted = false;
-        State.clearSettingsLoaderCurrentStep = "start";
-        State.clearSettingsLoaderDetail = "Initializing clear request.";
-        State.clearSettingsLoaderResult = "";
-        State.clearSettingsLoaderShowUntilMs = 0;
-        State.clearSettingsLoaderLastRenderSig = "";
-        State.clearSettingsLoaderStepStates.start = "active";
+        _clearLoader.beginSession(requestToken, nowMs, "Initializing clear request.");
     }
-
     function SetClearSettingsLoaderStepState(stepKey, status, detail) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
-        var idx = GetClearSettingsLoaderStepIndex(stepKey);
-        if (idx < 0) return;
-        if (!State.clearSettingsLoaderStepStates || typeof State.clearSettingsLoaderStepStates !== "object") {
-            ResetClearSettingsLoaderStepStates();
-        }
-        var st = status ? String(status) : "pending";
-        State.clearSettingsLoaderStepStates[stepKey] = st;
-        if (st === "active") {
-            State.clearSettingsLoaderCurrentStep = stepKey;
-            if (!State.clearSettingsLoaderSessionCompleted) {
-                State.clearSettingsLoaderSessionActive = true;
-            }
-        }
-        if (detail !== undefined && detail !== null && String(detail).length > 0) {
-            State.clearSettingsLoaderDetail = String(detail);
-        }
+        _clearLoader.setStepState(stepKey, status, detail);
     }
-
     function GetClearSettingsLoaderStepState(stepKey) {
-        if (!stepKey) return "pending";
-        if (!State.clearSettingsLoaderStepStates || typeof State.clearSettingsLoaderStepStates !== "object") return "pending";
-        if (!State.clearSettingsLoaderStepStates.hasOwnProperty(stepKey)) return "pending";
-        return String(State.clearSettingsLoaderStepStates[stepKey] || "pending");
+        return _clearLoader.getStepState(stepKey);
     }
-
     function FinalizeClearSettingsLoaderSession(resultCode, detail, nowMs, didSwitchToStorageHero) {
         if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
         if (!State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) return;
@@ -9365,14 +9318,8 @@ function GetUIRoot() {
     }
 
     function BuildClearSettingsLoaderStepStateSignature() {
-        var parts = [];
-        for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = CLEAR_SETTINGS_LOADER_STEPS[i];
-            parts.push(step.key + ":" + GetClearSettingsLoaderStepState(step.key));
-        }
-        return parts.join("|");
+        return _clearLoader.buildSignature();
     }
-
     function GetClearSettingsLoaderDetailForMessage(statusMessage) {
         var msg = statusMessage ? String(statusMessage) : "";
         if (msg === "starting") return "Initializing clear request.";
@@ -9442,93 +9389,11 @@ function GetUIRoot() {
     }
 
     function EnsureClearSettingsLoaderStepRows(stepsWrap) {
-        if (!stepsWrap) return null;
-        var rows = GetCachedPanel("clearSettingsLoaderStepRows");
-        if (!rows || typeof rows !== "object") rows = {};
-        for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = CLEAR_SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            var existing = rows.hasOwnProperty(key) ? rows[key] : null;
-            var row = existing && IsPanelValid(existing.row) ? existing.row : null;
-            var icon = existing && IsPanelValid(existing.icon) ? existing.icon : null;
-            var label = existing && IsPanelValid(existing.label) ? existing.label : null;
-            var rowId = CLEAR_SETTINGS_LOADER_STEP_ROW_ID_PREFIX + key;
-            if (!row) row = stepsWrap.FindChildTraverse ? (stepsWrap.FindChildTraverse(rowId) || null) : null;
-            if (!row) row = $.CreatePanel("Panel", stepsWrap, rowId, { hittest: "false", hittestchildren: "false" });
-            if (!row) continue;
-            row.hittest = false;
-            row.hittestchildren = false;
-            if (row.AddClass) row.AddClass("QOLSettingsLoaderStepRow");
-            ApplyLoaderStepRowTheme(row);
-
-            var iconId = rowId + CLEAR_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX;
-            if (!icon) icon = row.FindChildTraverse ? (row.FindChildTraverse(iconId) || null) : null;
-            if (!icon) icon = $.CreatePanel("Image", row, iconId, { hittest: "false", hittestchildren: "false" });
-            if (icon) {
-                icon.hittest = false;
-                icon.hittestchildren = false;
-                if (icon.AddClass) icon.AddClass("QOLSettingsLoaderStepIcon");
-                ApplyLoaderStepIconTheme(icon);
-            }
-
-            var labelId = rowId + CLEAR_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX;
-            if (!label) label = row.FindChildTraverse ? (row.FindChildTraverse(labelId) || null) : null;
-            if (!label) label = $.CreatePanel("Label", row, labelId);
-            if (label) {
-                label.hittest = false;
-                label.hittestchildren = false;
-                if (label.AddClass) label.AddClass("QOLSettingsLoaderStepLabel");
-                ApplyLoaderStepLabelTheme(label);
-            }
-            var reuseRow = !!(existing && row && existing.row === row);
-            var reuseIcon = !!(existing && icon && existing.icon === icon);
-            var reuseLabel = !!(existing && label && existing.label === label);
-            rows[key] = {
-                row: row,
-                icon: icon || null,
-                label: label || null,
-                lastState: reuseRow && existing ? String(existing.lastState || "") : "",
-                lastIcon: reuseIcon && existing ? String(existing.lastIcon || "") : "",
-                lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
-            };
-        }
-        SetCachedPanel("clearSettingsLoaderStepRows", rows);
-        return rows;
+        return _clearLoader.ensureStepRows(stepsWrap);
     }
-
     function RenderClearSettingsLoaderStepRows(stepsWrap) {
-        var rows = EnsureClearSettingsLoaderStepRows(stepsWrap);
-        if (!rows || typeof rows !== "object") return "";
-        for (var i = 0; i < CLEAR_SETTINGS_LOADER_STEPS.length; i++) {
-            var step = CLEAR_SETTINGS_LOADER_STEPS[i];
-            var key = step.key;
-            if (!rows.hasOwnProperty(key)) continue;
-            var entry = rows[key];
-            if (!entry) continue;
-            var status = GetClearSettingsLoaderStepState(key);
-            if (entry.row) SetSettingsLoaderStepRowStateClasses(entry.row, status);
-            if (entry.label) {
-                if (entry.lastLabel !== step.label || entry.label.text !== step.label) {
-                    entry.label.text = step.label;
-                    entry.lastLabel = step.label;
-                }
-            }
-            if (entry.icon) {
-                var iconPath = GetSettingsLoaderIconForState(status);
-                if (entry.lastIcon !== iconPath) {
-                    try {
-                        if (entry.icon.SetImage) entry.icon.SetImage(iconPath);
-                        else entry.icon.style.backgroundImage = "url(\"" + iconPath + "\")";
-                    } catch (e0) {}
-                    entry.lastIcon = iconPath;
-                }
-            }
-            ApplySettingsLoaderStepStateFallback(entry, status);
-            entry.lastState = status;
-        }
-        return BuildClearSettingsLoaderStepStateSignature();
+        return _clearLoader.renderStepRows(stepsWrap);
     }
-
     function EnsureClearSettingsLoaderOverlay(root, nowMs) {
         if (!CLEAR_SETTINGS_LOADER_ENABLED || !root) return null;
         var overlay = GetCachedPanel("clearSettingsLoaderOverlay");
