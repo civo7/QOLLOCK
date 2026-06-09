@@ -1910,6 +1910,7 @@
     QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader;
     QOL.resetBuildCategoryPayloadProbeInitState = ResetBuildCategoryPayloadProbeInitState;
     QOL.shouldRunBuildCategoryPayloadUiAction = ShouldRunBuildCategoryPayloadUiAction;
+    QOL.isBuildCategoryPayloadSourceReady = IsBuildCategoryPayloadSourceReady;
 
     // ── Registration ──
     QOL.register("buildLoad", {

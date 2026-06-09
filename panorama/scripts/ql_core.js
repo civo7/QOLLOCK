@@ -11141,7 +11141,7 @@ function GetUIRoot() {
             }
             return { state: "wait", detail: "Opening shop/build list for corruption clear.", waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS };
         }
-        if (!IsBuildCategoryPayloadSourceReady(root)) {
+        if (!QOL.isBuildCategoryPayloadSourceReady(root)) {
             State.buildCategoryPayloadCorruptRepairClearRetries = (Number(State.buildCategoryPayloadCorruptRepairClearRetries) || 0) + 1;
             if (State.buildCategoryPayloadCorruptRepairClearRetries > BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_MAX_RETRIES) {
                 State.buildCategoryPayloadCorruptRepairClearRetries = 0;
