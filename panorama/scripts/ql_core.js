@@ -10492,6 +10492,7 @@ function GetUIRoot() {
     }
 
     function CompleteBuildCategoryPayloadHeroProbe(accountId, markDone, resultCode, resultDetail, options) {
+        _TLog("load:ProbeComplete", "result=" + (resultCode || "success") + " markDone=" + (markDone ? "1" : "0") + " account=" + String(accountId || "").slice(0, 8));
         var now = Date.now ? Date.now() : (new Date()).getTime();
         var returnHeroOnAbort = !(options && options.returnHeroOnAbort === false);
         var shouldPulseShop =
@@ -11794,6 +11795,7 @@ function GetUIRoot() {
         BeginSettingsLoaderSession(accountId, nowMs);
 
         var probeState = PrepareBuildCategoryPayloadHeroProbe(root, accountId, nowMs, cfg);
+        _TLog("load:ProbeState", "state=" + probeState + " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-") + " account=" + String(accountId || "").slice(0, 8));
         if (probeState !== "ready") {
             SettingsLoaderDebugLogThrottled(
                 "payload_override_probe_wait|" + probeState + "|" + (State.buildCategoryPayloadHeroProbeStage || "-"),
@@ -11952,6 +11954,7 @@ function GetUIRoot() {
             payloadText = TryFindBuildCategoryPayloadText(root);
         }
         if (!payloadText || payloadText.length === 0) {
+            _TLog("load:PayloadScan", "found=0 stage=" + probeStage);
             if (probeStage === "scan_bootstrap_token") {
                 SetSettingsLoaderStepState("read_payload", "active", "Bootstrap payload unavailable, reading storage build payload.");
                 State.buildCategoryPayloadHeroProbeStage = "scan_storage";
@@ -12030,6 +12033,7 @@ function GetUIRoot() {
 
         SetSettingsLoaderStepState("decode_payload", "active", "Decoding payload.");
         var parsedResult = TryParseBuildCategoryPayloadConfig(payloadText);
+        _TLog("load:ParseResult", "ok=" + (parsedResult.ok ? "1" : "0") + " schema=" + (parsedResult.schemaVersion || "-") + " error=" + (parsedResult.error || "-"));
         if (!parsedResult.ok || !parsedResult.parsed) {
             var errorKey = accountId + "|" + payloadText + "|" + (parsedResult.error || "parse_error");
             State.buildCategoryPayloadLastParseErrorKey = errorKey;
@@ -14829,6 +14833,8 @@ function GetUIRoot() {
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
                 return;
             }
+            var confirmSource = State.buildSaveStorageHeroConfirmedSource || "unknown";
+            _TLog("save:ConfirmDone", "source=" + confirmSource + " retries=" + (Number(State.buildSaveStorageConfirmRetries) || 0));
             State.buildSaveStage = "lock_target_build";
             SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveNextActionMs = nowMs;
@@ -14841,6 +14847,7 @@ function GetUIRoot() {
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
             SetBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
             if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                _TLog("save:Failed", "reason=shop_not_ready retries=" + State.buildSaveRetries);
                 FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
             }
             return;
@@ -14851,6 +14858,7 @@ function GetUIRoot() {
                 return;
             }
             _TLog("save:AdvanceStage", "lock_target_build done → start token=" + String(requestToken || "").slice(0, 8));
+            _TLog("save:TargetLocked", "title=\"" + (State.buildSaveTargetBuildTitle || "") + "\" sig=" + (State.buildSaveTargetBuildSig || "-"));
             SetBuildSaveStatus(root, "pending", "target_locked", requestToken);
             State.buildSaveStage = "start";
             State.buildSaveNextActionMs = nowMs;
@@ -14871,13 +14879,16 @@ function GetUIRoot() {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                 SetBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+                _TLog("save:EditMode", "active=0 triggered=" + (editTriggered ? "1" : "0") + " retries=" + State.buildSaveRetries);
                 var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
                 if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
+                    _TLog("save:EditMode", "skipping to wait_category_focus — category entry visible at retries=" + State.buildSaveRetries);
                     State.buildSaveStage = "wait_category_focus";
                     State.buildSaveNextActionMs = nowMs;
                     return;
                 }
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                    _TLog("save:Failed", "reason=edit_mode_unavailable retries=" + State.buildSaveRetries);
                     FinishBuildSaveRequest(root, requestToken, "failed", "edit_mode_unavailable");
                 }
                 return;
@@ -14902,6 +14913,7 @@ function GetUIRoot() {
                     if (!initReady) {
                         SetBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
                         if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
+                            _TLog("save:Failed", "reason=category_init_unavailable initRetries=" + initRetries);
                             FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
                         }
                         return;
@@ -14929,11 +14941,13 @@ function GetUIRoot() {
                 return;
             }
             State.buildSaveStage = "write";
+            _TLog("save:CategoryFocus", "ok=1");
         }
 
         if (State.buildSaveStage === "write") {
             var writeSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
             if (!writeSignature.confirmed) {
+                _TLog("save:WriteCheck", "signature not confirmed — falling back to confirm_storage_context");
                 State.buildSaveStorageHeroConfirmed = false;
                 State.buildSaveStorageHeroConfirmedSource = "";
                 State.buildSaveStorageConfirmStartedMs = nowMs;
@@ -14946,12 +14960,15 @@ function GetUIRoot() {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                 SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                _TLog("save:WriteAttempt", "ok=0 retries=" + State.buildSaveRetries);
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                    _TLog("save:Failed", "reason=write_failed retries=" + State.buildSaveRetries);
                     FinishBuildSaveRequest(root, requestToken, "failed", "write_failed");
                 }
                 return;
             }
             _TLog("save:AdvanceStage", "write done → save");
+            _TLog("save:WriteDone", "textLen=" + String(payloadText ? payloadText.length : 0));
             State.buildSaveStage = "save";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_AFTER_WRITE_DELAY_MS;
             return;
@@ -14973,6 +14990,7 @@ function GetUIRoot() {
             var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
             State.buildSaveMutationClosed = true;
             _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
+            _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0"));
             State.buildSaveStage = "verify";
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
@@ -14982,6 +15000,7 @@ function GetUIRoot() {
 
         if (State.buildSaveStage === "verify") {
             if (CurrentBuildHasPayload(root, payloadText)) {
+                _TLog("save:VerifyOk", "payload confirmed in build");
                 FinishBuildSaveRequest(root, requestToken, "success", "saved");
                 return;
             }
@@ -15002,6 +15021,7 @@ function GetUIRoot() {
             }
 
             if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries);
                 FinishBuildSaveRequest(root, requestToken, "failed", "verify_failed");
                 return;
             }
