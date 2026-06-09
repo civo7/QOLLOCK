@@ -13,7 +13,8 @@
         "activatePanelSafe",
         "finalizeSaveSettingsLoaderSession", "beginSaveSettingsLoaderSession",
         "updateSaveSettingsLoaderFromBuildSaveState", "setSaveSettingsLoaderStepState",
-        "getSaveSettingsLoaderStepState", "saveSettingsLoaderEnabled"]);
+        "getSaveSettingsLoaderStepState", "saveSettingsLoaderEnabled",
+        "captureBuildSaveTargetSelection", "ensureShopFavoritesNavActive", "ensureStorageHeroFavoritesHeaderVisible", "getBuildSaveHudPanel", "hasBuildSaveStorageUiReady", "isBuildSaveStorageRuntimeSourceStale", "isBuildSaveTargetSelectionMatch", "isHudClassActive", "resolveBuildSaveStorageHeroSignal", "tryCloseHeroShopForLoader", "tryOpenHeroShopForHeroProbe", "tryReselectBuildSaveTargetByTitle"]);
     var S = _deps.state;
     var U = _deps.utils;
     var State = S;
@@ -40,6 +41,18 @@
     var SetSaveSettingsLoaderStepState = _deps.setSaveSettingsLoaderStepState;
     var GetSaveSettingsLoaderStepState = _deps.getSaveSettingsLoaderStepState;
     var SAVE_SETTINGS_LOADER_ENABLED = _deps.saveSettingsLoaderEnabled;
+    var CaptureBuildSaveTargetSelection = _deps.captureBuildSaveTargetSelection;
+    var EnsureShopFavoritesNavActive = _deps.ensureShopFavoritesNavActive;
+    var EnsureStorageHeroFavoritesHeaderVisible = _deps.ensureStorageHeroFavoritesHeaderVisible;
+    var GetBuildSaveHudPanel = _deps.getBuildSaveHudPanel;
+    var HasBuildSaveStorageUiReady = _deps.hasBuildSaveStorageUiReady;
+    var IsBuildSaveStorageRuntimeSourceStale = _deps.isBuildSaveStorageRuntimeSourceStale;
+    var IsBuildSaveTargetSelectionMatch = _deps.isBuildSaveTargetSelectionMatch;
+    var IsHudClassActive = _deps.isHudClassActive;
+    var ResolveBuildSaveStorageHeroSignal = _deps.resolveBuildSaveStorageHeroSignal;
+    var TryCloseHeroShopForLoader = _deps.tryCloseHeroShopForLoader;
+    var TryOpenHeroShopForHeroProbe = _deps.tryOpenHeroShopForHeroProbe;
+    var TryReselectBuildSaveTargetByTitle = _deps.tryReselectBuildSaveTargetByTitle;
 
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;

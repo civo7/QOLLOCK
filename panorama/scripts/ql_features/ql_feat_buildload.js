@@ -16,7 +16,8 @@
         "isStartupLoaderInActiveMatchContext",
         "canReuseLoaderConfirmedAirheartContext",
         "resetBuildCategoryPayloadProbeInitState",
-        "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry"]);
+        "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry",
+        "beginSettingsLoaderSession", "buildDefaultConfig", "buildDefaultPayloadToken", "buildPayloadFromBase64Url", "collectStorageBuildEntryPanels", "deserializeBuildPayloadCompact", "ensureStorageHeroFavoritesHeaderVisible", "enterStartupCorruptRepairPrompt", "extractLastHeroTokenFromText", "finalizeSettingsLoaderSession", "findBrowseBuildsButton", "getLoaderBaseDefaultHeroId", "getSaveSettingsLoaderDetailForMessage", "hasBuildSaveStorageUiReady", "isBrowseBuildsPopupOpen", "isBuildSaveStorageRuntimeSourceStale", "isHudClassActive", "isStartupCorruptRepairPending", "isStorageBuildListEmpty", "mergeConfig", "normalizeAllyColorWarningConfig", "normalizeAmmoScaleConfig", "normalizeColorWarningConfig", "normalizeCompassSpeedSchemaMigration", "normalizeEnemyColorWarningConfig", "normalizeHealthbarTypeConfig", "normalizeLanguageSchemaMigration", "normalizeNeutralCampTierConfig", "normalizeTopbarAllyHpWarningConfig", "normalizeTopbarEnemyHpWarningConfig", "normalizeVoiceTypeConfig", "queueBuildSaveRequestFromLoader", "readPanelTextDeepMaybe", "resetBuildClearRequestAttributes", "resetBuildClearRuntimeState", "resetBuildLoaderForTempDisable", "resetSettingsLoaderSession", "resetStartupDefaultPayloadBootstrapState", "setSettingsLoaderDebugOverlayLine", "setSettingsLoaderStepState", "setStartupCorruptRepairPending", "settingsLoaderBuildProbeSnapshot", "settingsLoaderDebugLog", "settingsLoaderDebugLogThrottled", "settingsLoaderTraceLogThrottled", "stepCorruptRepairClearStorageBuilds", "suppressStartupLoaderForSession", "traceSettingsLoaderProbeHeartbeat", "tryCloseBrowseBuildsPopupForLoader", "tryDismissBuildDeletePopup", "tryOpenHeroShopForHeroProbe", "tryReadAccountIdFromKnownPartyPath", "trySelectFirstStorageBuildEntry", "trySelectNextStorageBuildEntry", "writeStorageConfigRawToUi"]);
     var S = _deps.state;
     var U = _deps.utils;
     var State = S;
@@ -46,6 +47,62 @@
     var ResetBuildCategoryPayloadProbeInitState = _deps.resetBuildCategoryPayloadProbeInitState;
     var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
     var GetBuildSaveCategoryNameEntry = _deps.getBuildSaveCategoryNameEntry;
+    var BeginSettingsLoaderSession = _deps.beginSettingsLoaderSession;
+    var BuildDefaultConfig = _deps.buildDefaultConfig;
+    var BuildDefaultPayloadToken = _deps.buildDefaultPayloadToken;
+    var BuildPayloadFromBase64Url = _deps.buildPayloadFromBase64Url;
+    var CollectStorageBuildEntryPanels = _deps.collectStorageBuildEntryPanels;
+    var DeserializeBuildPayloadCompact = _deps.deserializeBuildPayloadCompact;
+    var EnsureStorageHeroFavoritesHeaderVisible = _deps.ensureStorageHeroFavoritesHeaderVisible;
+    var EnterStartupCorruptRepairPrompt = _deps.enterStartupCorruptRepairPrompt;
+    var ExtractLastHeroTokenFromText = _deps.extractLastHeroTokenFromText;
+    var FinalizeSettingsLoaderSession = _deps.finalizeSettingsLoaderSession;
+    var FindBrowseBuildsButton = _deps.findBrowseBuildsButton;
+    var GetLoaderBaseDefaultHeroId = _deps.getLoaderBaseDefaultHeroId;
+    var GetSaveSettingsLoaderDetailForMessage = _deps.getSaveSettingsLoaderDetailForMessage;
+    var HasBuildSaveStorageUiReady = _deps.hasBuildSaveStorageUiReady;
+    var IsBrowseBuildsPopupOpen = _deps.isBrowseBuildsPopupOpen;
+    var IsBuildSaveStorageRuntimeSourceStale = _deps.isBuildSaveStorageRuntimeSourceStale;
+    var IsHudClassActive = _deps.isHudClassActive;
+    var IsStartupCorruptRepairPending = _deps.isStartupCorruptRepairPending;
+    var IsStorageBuildListEmpty = _deps.isStorageBuildListEmpty;
+    var MergeConfig = _deps.mergeConfig;
+    var NormalizeAllyColorWarningConfig = _deps.normalizeAllyColorWarningConfig;
+    var NormalizeAmmoScaleConfig = _deps.normalizeAmmoScaleConfig;
+    var NormalizeColorWarningConfig = _deps.normalizeColorWarningConfig;
+    var NormalizeCompassSpeedSchemaMigration = _deps.normalizeCompassSpeedSchemaMigration;
+    var NormalizeEnemyColorWarningConfig = _deps.normalizeEnemyColorWarningConfig;
+    var NormalizeHealthbarTypeConfig = _deps.normalizeHealthbarTypeConfig;
+    var NormalizeLanguageSchemaMigration = _deps.normalizeLanguageSchemaMigration;
+    var NormalizeNeutralCampTierConfig = _deps.normalizeNeutralCampTierConfig;
+    var NormalizeTopbarAllyHpWarningConfig = _deps.normalizeTopbarAllyHpWarningConfig;
+    var NormalizeTopbarEnemyHpWarningConfig = _deps.normalizeTopbarEnemyHpWarningConfig;
+    var NormalizeVoiceTypeConfig = _deps.normalizeVoiceTypeConfig;
+    var QueueBuildSaveRequestFromLoader = _deps.queueBuildSaveRequestFromLoader;
+    var ReadPanelTextDeepMaybe = _deps.readPanelTextDeepMaybe;
+    var ResetBuildClearRequestAttributes = _deps.resetBuildClearRequestAttributes;
+    var ResetBuildClearRuntimeState = _deps.resetBuildClearRuntimeState;
+    var ResetBuildLoaderForTempDisable = _deps.resetBuildLoaderForTempDisable;
+    var ResetSettingsLoaderSession = _deps.resetSettingsLoaderSession;
+    var ResetStartupDefaultPayloadBootstrapState = _deps.resetStartupDefaultPayloadBootstrapState;
+    var SetSettingsLoaderDebugOverlayLine = _deps.setSettingsLoaderDebugOverlayLine;
+    var SetSettingsLoaderStepState = _deps.setSettingsLoaderStepState;
+    var SetStartupCorruptRepairPending = _deps.setStartupCorruptRepairPending;
+    var SettingsLoaderBuildProbeSnapshot = _deps.settingsLoaderBuildProbeSnapshot;
+    var SettingsLoaderDebugLog = _deps.settingsLoaderDebugLog;
+    var SettingsLoaderDebugLogThrottled = _deps.settingsLoaderDebugLogThrottled;
+    var SettingsLoaderTraceLogThrottled = _deps.settingsLoaderTraceLogThrottled;
+    var StepCorruptRepairClearStorageBuilds = _deps.stepCorruptRepairClearStorageBuilds;
+    var SuppressStartupLoaderForSession = _deps.suppressStartupLoaderForSession;
+    var TraceSettingsLoaderProbeHeartbeat = _deps.traceSettingsLoaderProbeHeartbeat;
+    var TryCloseBrowseBuildsPopupForLoader = _deps.tryCloseBrowseBuildsPopupForLoader;
+    var TryDismissBuildDeletePopup = _deps.tryDismissBuildDeletePopup;
+    var TryOpenHeroShopForHeroProbe = _deps.tryOpenHeroShopForHeroProbe;
+    var TryReadAccountIdFromKnownPartyPath = _deps.tryReadAccountIdFromKnownPartyPath;
+    var TrySelectFirstStorageBuildEntry = _deps.trySelectFirstStorageBuildEntry;
+    var TrySelectNextStorageBuildEntry = _deps.trySelectNextStorageBuildEntry;
+    var WriteStorageConfigRawToUi = _deps.writeStorageConfigRawToUi;
+    var isConnectedToHideout = _deps.isConnectedToHideout;
     var BUILD_LOADER_TEMP_DISABLED = false;
 
     // ── Constants (from ql_core.js) ──
