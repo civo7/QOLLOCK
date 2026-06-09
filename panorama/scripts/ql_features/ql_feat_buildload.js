@@ -131,6 +131,8 @@
     var BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;
     var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;
+    var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (typeof QOL_COMPACT_SCHEMA_REGISTRY !== "undefined") ? QOL_COMPACT_SCHEMA_REGISTRY : {};
+    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined") ? QOL_LATEST_COMPACT_SEMVER : "3.1.4";
     var BUILD_LOADER_TEMP_DISABLED = false;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
@@ -1907,6 +1909,7 @@
     QOL.confirmBuildCategoryPayloadStorageHero = ConfirmBuildCategoryPayloadStorageHero;
     QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader;
     QOL.resetBuildCategoryPayloadProbeInitState = ResetBuildCategoryPayloadProbeInitState;
+    QOL.shouldRunBuildCategoryPayloadUiAction = ShouldRunBuildCategoryPayloadUiAction;
 
     // ── Registration ──
     QOL.register("buildLoad", {

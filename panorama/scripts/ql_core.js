@@ -9642,7 +9642,7 @@ function GetUIRoot() {
         var field = stateField ? String(stateField) : "";
         var cd = Number(cooldownMs);
         if (!isFinite(cd) || cd < 0) cd = BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS;
-        if (field.length > 0 && !ShouldRunBuildCategoryPayloadUiAction(now, field, cd)) {
+        if (field.length > 0 && !QOL.shouldRunBuildCategoryPayloadUiAction(now, field, cd)) {
             return false;
         }
         return ActivatePanelSafe(favoritesNav);
@@ -10010,7 +10010,7 @@ function GetUIRoot() {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var acted = false;
         if (!IsHudClassActive(root, "gShopOpen")) {
-            if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+            if (QOL.shouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 if (TryOpenHeroShopForHeroProbe(root, now)) acted = true;
             }
         }
@@ -11127,7 +11127,7 @@ function GetUIRoot() {
         // Browse Builds repeatedly and stack extra browser layers.
         EnsureStorageHeroFavoritesHeaderVisible(root, now);
         if (!shopOpenNow) {
-            if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+            if (QOL.shouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 TryOpenHeroShopForHeroProbe(root);
             }
             State.buildCategoryPayloadCorruptRepairBrowseReady = false;
@@ -11174,7 +11174,7 @@ function GetUIRoot() {
             var browseBtnGate = browseBtnCurrent;
             var browsePopupOpenGate = IsBrowseBuildsPopupOpen(root);
             var browseGateActed = false;
-            if (!browsePopupOpenGate && browseButtonVisible && ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+            if (!browsePopupOpenGate && browseButtonVisible && QOL.shouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 browseGateActed = ActivatePanelSafe(browseBtnGate);
             }
             var firstSelectGate = TrySelectFirstStorageBuildEntry(root, true);
@@ -11224,7 +11224,7 @@ function GetUIRoot() {
         }
         if (browseButtonVisible && !hasDeleteControlsGate && browseEntryVisibleCount < 1 && !IsStorageBuildListEmpty(root) && !IsBrowseBuildsPopupOpen(root)) {
             // Browser likely collapsed and we don't yet have actionable delete context.
-            if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+            if (QOL.shouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 ActivatePanelSafe(browseBtnCurrent);
             }
             State.buildCategoryPayloadCorruptRepairBrowseReady = false;
@@ -11279,7 +11279,7 @@ function GetUIRoot() {
             State.buildCategoryPayloadCorruptRepairClearEmptyHits = emptyHits;
             if (emptyHits < BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) {
                 var firstBuildSelect = { ok: false };
-                if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+                if (QOL.shouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                     firstBuildSelect = TrySelectFirstStorageBuildEntry(root, true);
                 }
                 State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
