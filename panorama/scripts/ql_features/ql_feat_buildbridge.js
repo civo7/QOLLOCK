@@ -7,13 +7,25 @@
     // so we access State and other globals at call time, not via QOL.import().
     // Functions that need QOL symbols should use direct global access.
 
+    // ── Constants (from ql_core.js) ──
+    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
+    var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
+    var BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
+    var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
+    var BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
+    var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
+    var HERO_RESTORE_VERIFY_DELAY_MS = 450;
+    var SETTINGS_LOADER_DEBUG = false;
+
     // ── Bridge functions ──
 
     function NormalizeHeroId(heroId) {
         if (!heroId) return "";
         var text = String(heroId).trim().toLowerCase();
         if (!/^hero_[a-z0-9_]+$/.test(text)) return "";
-        var alias = ResolvePlayableHeroAlias(text.slice(5));
+        var alias = QOL.resolvePlayableHeroAlias(text.slice(5));
         if (!alias) return "";
         return "hero_" + alias;
     }
@@ -25,7 +37,7 @@
         } else if (State.lastConfig && State.lastConfig.hasOwnProperty("DEFAULT_HERO")) {
             rawHero = String(State.lastConfig.DEFAULT_HERO || "");
         } else {
-            var defaults = BuildDefaultConfig();
+            var defaults = QOL.buildDefaultConfig();
             rawHero = defaults && defaults.hasOwnProperty("DEFAULT_HERO")
                 ? String(defaults.DEFAULT_HERO || "")
                 : "";
@@ -61,13 +73,13 @@
                 (State.settingsLoaderSessionCompleted && now2 < (State.settingsLoaderShowUntilMs || 0));
             if (!inLoaderContext) return ok;
             var why = reason ? String(reason) : "-";
-            SettingsLoaderDebugLogThrottled(
+            QOL.settingsLoaderDebugLogThrottled(
                 "selecthero|" + target + "|" + why + "|" + (ok ? "1" : "0"),
                 "selecthero target=" + target + " reason=" + why + " ok=" + (ok ? "1" : "0") +
                     " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-"),
                 now2
             );
-            SetSettingsLoaderDebugOverlayLine(
+            QOL.setSettingsLoaderDebugOverlayLine(
                 "cmd=selecthero target=" + target +
                 " reason=" + why +
                 " ok=" + (ok ? "1" : "0") +
@@ -87,17 +99,17 @@
         if (confirmedAtMs > 0 && (now - confirmedAtMs) > BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS) {
             return false;
         }
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
+        var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
         if (hero !== BUILD_SAVE_STORAGE_HERO_ID) return false;
-        var signature = ConfirmStorageHeroSignatureAbilities(root, now, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+        var signature = QOL.confirmStorageHeroSignatureAbilities(root, now, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
         return !!(signature && signature.confirmed);
     }
 
     function BeginHeroRestoreWithVerification(targetHero, contextLabel, nowMs) {
         var hero = NormalizeHeroId(targetHero);
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            HeroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
+            QOL.heroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
             return false;
         }
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -107,7 +119,7 @@
         State.heroRestorePendingNextMs = now + HERO_RESTORE_VERIFY_DELAY_MS;
         State.heroRestorePendingRetries = 0;
         State.heroRestorePendingContext = contextLabel ? String(contextLabel) : "";
-        HeroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
+        QOL.heroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
         return switched;
     }
 

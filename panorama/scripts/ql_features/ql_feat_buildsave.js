@@ -10,7 +10,7 @@
         "canReuseLoaderConfirmedAirheartContext", "readPanelTextMaybe",
         "extractBuildCategoryPayloadToken", "resolveCachedPanel",
         "confirmStorageHeroSignatureAbilities", "ensureStorageBuildInitialized",
-        "activatePanelSafe", "resetBuildCategoryPayloadProbeInitState",
+        "activatePanelSafe",
         "finalizeSaveSettingsLoaderSession", "beginSaveSettingsLoaderSession",
         "updateSaveSettingsLoaderFromBuildSaveState", "setSaveSettingsLoaderStepState",
         "getSaveSettingsLoaderStepState", "saveSettingsLoaderEnabled"]);
@@ -33,13 +33,30 @@
     var ConfirmStorageHeroSignatureAbilities = _deps.confirmStorageHeroSignatureAbilities;
     var EnsureStorageBuildInitialized = _deps.ensureStorageBuildInitialized;
     var ActivatePanelSafe = _deps.activatePanelSafe;
-    var ResetBuildCategoryPayloadProbeInitState = _deps.resetBuildCategoryPayloadProbeInitState;
     var FinalizeSaveSettingsLoaderSession = _deps.finalizeSaveSettingsLoaderSession;
     var BeginSaveSettingsLoaderSession = _deps.beginSaveSettingsLoaderSession;
     var UpdateSaveSettingsLoaderFromBuildSaveState = _deps.updateSaveSettingsLoaderFromBuildSaveState;
     var SetSaveSettingsLoaderStepState = _deps.setSaveSettingsLoaderStepState;
     var GetSaveSettingsLoaderStepState = _deps.getSaveSettingsLoaderStepState;
     var SAVE_SETTINGS_LOADER_ENABLED = _deps.saveSettingsLoaderEnabled;
+
+    // ── Constants (from ql_core.js) ──
+    var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
+    var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
+    var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
+    var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
+    var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
+    var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 1;
+    var BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
+    var BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_REQUIRED_HITS = 2;
+    var BUILD_SAVE_STORAGE_CONFIRM_REOPEN_MIN_RETRIES = 6;
+    var BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
+    var BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
+    var BUILD_SAVE_TARGET_LOCK_STABLE_HITS = 3;
+    var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
+    var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
+    var SAVE_SETTINGS_LOADER_ENABLED = true;
 
     // ── ResetBuildSaveRequestAttributes ──
 function ResetBuildSaveRequestAttributes(root) {
@@ -922,7 +939,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveTargetDriftRetries = 0;
         State.buildSaveTargetQuietUntilMs = 0;
         State.buildSaveCaptureStartedMs = nowMs;
-        ResetBuildCategoryPayloadProbeInitState();
+        QOL.resetBuildCategoryPayloadProbeInitState();
         SetBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
     }
 

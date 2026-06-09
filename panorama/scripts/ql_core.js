@@ -18250,7 +18250,6 @@ function GetUIRoot() {
         ["findNumericLabelTextInTree", function() { return FindNumericLabelTextInTree; }],
         ["findUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
         ["findZipBoostSource", function() { return FindZipBoostSource; }],
-        ["getAccountIdForBuildCategoryPayload", function() { return GetAccountIdForBuildCategoryPayload; }],
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
         ["getGameplayHudPanel", function() { return GetGameplayHudPanel; }],
@@ -18328,9 +18327,8 @@ function GetUIRoot() {
         ["readPanelTextMaybe", function() { return ReadPanelTextMaybe; }],
         ["extractBuildCategoryPayloadToken", function() { return ExtractBuildCategoryPayloadToken; }],
         ["confirmStorageHeroSignatureAbilities", function() { return ConfirmStorageHeroSignatureAbilities; }],
-        ["tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader", function() { return TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader; }],
         ["ensureStorageBuildInitialized", function() { return EnsureStorageBuildInitialized; }],
-        ["resetBuildCategoryPayloadProbeInitState", function() { return ResetBuildCategoryPayloadProbeInitState; }],
+        ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
         ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
         ["tryReadBuildSaveStorageHeroFromSettings", function() { return TryReadBuildSaveStorageHeroFromSettings; }],
         ["tryReadSelectedHeroIncludingStorageFromCommandPanels", function() { return TryReadSelectedHeroIncludingStorageFromCommandPanels; }],
@@ -18344,7 +18342,11 @@ function GetUIRoot() {
         ["finalizeSettingsLoaderSession", function() { return FinalizeSettingsLoaderSession; }],
         ["resetSettingsLoaderSession", function() { return ResetSettingsLoaderSession; }],
         ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }],
-        ["createLoaderOverlay", function() { return _CreateLoaderOverlay; }]
+        ["createLoaderOverlay", function() { return _CreateLoaderOverlay; }],
+        ["buildDefaultConfig", function() { return BuildDefaultConfig; }],
+        ["heroReturnDebugLog", function() { return HeroReturnDebugLog; }],
+        ["settingsLoaderDebugLogThrottled", function() { return SettingsLoaderDebugLogThrottled; }],
+        ["setSettingsLoaderDebugOverlayLine", function() { return SetSettingsLoaderDebugOverlayLine; }]
     ];
 
     // Publish to QOL namespace with error logging

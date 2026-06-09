@@ -5,7 +5,8 @@
     var _dk = "ql_feat_buildload";
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
         "normalizeHeroId", "getConfiguredDefaultHeroId", "selectHeroForBuildSave",
-        "queueDelayedHeroRestore", "setBuildSaveStatus", "isPanelValid",
+        "queueDelayedHeroRestore", "setBuildSaveStatus", "dispatchCitadelConCommand",
+        "resetBuildSaveRequestAttributes",
         "readPanelTextMaybe", "extractBuildCategoryPayloadToken",
         "confirmStorageHeroSignatureAbilities", "ensureStorageBuildInitialized",
         "activatePanelSafe", "resolveCachedPanel", "resolveBuildSaveStorageHeroSignal",
@@ -25,7 +26,9 @@
     var SelectHeroForBuildSave = _deps.selectHeroForBuildSave;
     var QueueDelayedHeroRestore = _deps.queueDelayedHeroRestore;
     var SetBuildSaveStatus = _deps.setBuildSaveStatus;
-    var IsPanelValid = _deps.isPanelValid;
+    var DispatchCitadelConCommand = _deps.dispatchCitadelConCommand;
+    var ResetBuildSaveRequestAttributes = _deps.resetBuildSaveRequestAttributes;
+    var IsPanelValid = U.IsPanelValid;
     var ReadPanelTextMaybe = _deps.readPanelTextMaybe;
     var ExtractBuildCategoryPayloadToken = _deps.extractBuildCategoryPayloadToken;
     var ConfirmStorageHeroSignatureAbilities = _deps.confirmStorageHeroSignatureAbilities;
@@ -42,6 +45,27 @@
     var ResetBuildCategoryPayloadProbeInitState = _deps.resetBuildCategoryPayloadProbeInitState;
     var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
     var GetBuildSaveCategoryNameEntry = _deps.getBuildSaveCategoryNameEntry;
+    var BUILD_LOADER_TEMP_DISABLED = false;
+
+    // ── Constants (from ql_core.js) ──
+    var BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
+    var BUILD_CATEGORY_PAYLOAD_DONE_REARM_MAX_ATTEMPTS = 4;
+    var BUILD_CATEGORY_PAYLOAD_ENABLED = true;
+    var BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES = 3;
+    var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
+    var BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
+    var BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
+    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
+    var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
+    var BUILD_LOADER_TEMP_DISABLED = false;
+    var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
+    var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
+    var BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
+    var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
+    var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
+    var SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL = "Potential corrupt save detected.\nPlease open your shop to resolve.\nPlease patient and allow the loader to run.";
 
     // ── SetBuildCategoryPayloadProbeReturnHeroFromConfig ──
     function SetBuildCategoryPayloadProbeReturnHeroFromConfig(configObj, sourceLabel) {
@@ -134,7 +158,7 @@
             if ((State.openItemShopLastMs || 0) <= nowMs - 1000 &&
                 ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 State.openItemShopLastMs = nowMs;
-                QOL.dispatchCitadelConCommand("open_item_shop");
+                DispatchCitadelConCommand("open_item_shop");
             }
             return false;
         }
@@ -806,7 +830,7 @@
                 State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS;
                 ResetBuildClearRequestAttributes(root);
                 ResetBuildClearRuntimeState();
-                QOL.resetBuildSaveRequestAttributes(root);
+                ResetBuildSaveRequestAttributes(root);
                 State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
                 TryDismissBuildDeletePopup(root);
                 TryCloseBrowseBuildsPopupForLoader(root);
@@ -1809,6 +1833,7 @@
     QOL.getAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload;
     QOL.confirmBuildCategoryPayloadStorageHero = ConfirmBuildCategoryPayloadStorageHero;
     QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader;
+    QOL.resetBuildCategoryPayloadProbeInitState = ResetBuildCategoryPayloadProbeInitState;
 
     // ── Registration ──
     QOL.register("buildLoad", {
