@@ -105,6 +105,10 @@
     var isConnectedToHideout = _deps.isConnectedToHideout;
     var BUILD_LOADER_TEMP_DISABLED = false;
 
+    // ── One-shot diagnostic sentinels ──
+    var _startupConfigLoadDiagLogged = false;
+    var _startupConfigDefaultDiagLogged = false;
+
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
     var BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 300;
