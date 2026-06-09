@@ -1777,7 +1777,7 @@ function ExpressShotLog(msg) {
         var signal = { hero: "", source: "none" };
         try { signal = ResolveBuildSaveStorageHeroSignal(root) || signal; } catch (e4) { signal = { hero: "", source: "none" }; }
         var signalHero = "";
-        try { signalHero = NormalizeHeroId(signal.hero); } catch (e5) { signalHero = ""; }
+        try { signalHero = QOL.normalizeHeroId(signal.hero); } catch (e5) { signalHero = ""; }
         var signalSource = signal && signal.source ? String(signal.source) : "none";
 
         return "shopOpen=" + (shopOpen ? "1" : "0") +
@@ -2005,35 +2005,9 @@ function ExpressShotLog(msg) {
         return false;
     }
 
-    function NormalizeHeroId(heroId) {
-        if (!heroId) return "";
-        var text = String(heroId).trim().toLowerCase();
-        if (!/^hero_[a-z0-9_]+$/.test(text)) return "";
-        var alias = ResolvePlayableHeroAlias(text.slice(5));
-        if (!alias) return "";
-        return "hero_" + alias;
-    }
-
     function IsPlayableHeroId(heroId) {
-        var normalized = NormalizeHeroId(heroId);
+        var normalized = QOL.normalizeHeroId(heroId);
         return !!(normalized && normalized !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID);
-    }
-
-    function GetConfiguredDefaultHeroId(cfg) {
-        var rawHero = "";
-        if (cfg && cfg.hasOwnProperty("DEFAULT_HERO")) {
-            rawHero = String(cfg.DEFAULT_HERO || "");
-        } else if (State.lastConfig && State.lastConfig.hasOwnProperty("DEFAULT_HERO")) {
-            rawHero = String(State.lastConfig.DEFAULT_HERO || "");
-        } else {
-            var defaults = BuildDefaultConfig();
-            rawHero = defaults && defaults.hasOwnProperty("DEFAULT_HERO")
-                ? String(defaults.DEFAULT_HERO || "")
-                : "";
-        }
-        var normalized = NormalizeHeroId(rawHero);
-        if (normalized) return normalized;
-        return BUILD_SAVE_RETURN_HERO_ID;
     }
 
     function GetLoaderBaseDefaultHeroId() {
@@ -2041,9 +2015,9 @@ function ExpressShotLog(msg) {
         var rawHero = (defaults && defaults.hasOwnProperty("DEFAULT_HERO"))
             ? String(defaults.DEFAULT_HERO || "")
             : "";
-        var normalized = NormalizeHeroId(rawHero);
+        var normalized = QOL.normalizeHeroId(rawHero);
         if (normalized && normalized !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return normalized;
-        var fallback = NormalizeHeroId(BUILD_SAVE_RETURN_HERO_ID);
+        var fallback = QOL.normalizeHeroId(BUILD_SAVE_RETURN_HERO_ID);
         if (fallback && fallback !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return fallback;
         return "hero_werewolf";
     }
@@ -2051,7 +2025,7 @@ function ExpressShotLog(msg) {
     function SetBuildCategoryPayloadProbeReturnHeroFromConfig(configObj, sourceLabel) {
         var heroFromConfig = "";
         if (configObj && typeof configObj === "object" && configObj.hasOwnProperty("DEFAULT_HERO")) {
-            heroFromConfig = NormalizeHeroId(configObj.DEFAULT_HERO);
+            heroFromConfig = QOL.normalizeHeroId(configObj.DEFAULT_HERO);
         }
         if (heroFromConfig && heroFromConfig !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
             State.buildCategoryPayloadHeroProbeReturnHero = heroFromConfig;
@@ -2065,7 +2039,7 @@ function ExpressShotLog(msg) {
     }
 
     function EnsureBuildCategoryPayloadProbeReturnHeroFallback() {
-        var current = NormalizeHeroId(State.buildCategoryPayloadHeroProbeReturnHero || "");
+        var current = QOL.normalizeHeroId(State.buildCategoryPayloadHeroProbeReturnHero || "");
         if (current && current !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
             State.buildCategoryPayloadHeroProbeReturnHero = current;
             if (!State.buildCategoryPayloadHeroProbeReturnHeroSource) {
@@ -2123,14 +2097,14 @@ function ExpressShotLog(msg) {
         var raw = ReadStorageConfigRawFromUi(root);
         if (!raw || raw.length === 0) return "";
         var obj = TryParseStorageConfigRaw(raw);
-        var hero = NormalizeHeroId(obj[HERO_PERSISTED_KEY]);
+        var hero = QOL.normalizeHeroId(obj[HERO_PERSISTED_KEY]);
         if (!IsPlayableHeroId(hero)) return "";
         return hero;
     }
 
     function PersistPlayableHeroToStorage(root, heroId, nowMs) {
         if (!root) return false;
-        var hero = NormalizeHeroId(heroId);
+        var hero = QOL.normalizeHeroId(heroId);
         if (!IsPlayableHeroId(hero)) return false;
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -2143,7 +2117,7 @@ function ExpressShotLog(msg) {
 
         var raw = ReadStorageConfigRawFromUi(root);
         var obj = TryParseStorageConfigRaw(raw);
-        var existing = NormalizeHeroId(obj[HERO_PERSISTED_KEY]);
+        var existing = QOL.normalizeHeroId(obj[HERO_PERSISTED_KEY]);
         if (existing === hero) {
             State.heroPersistLastWrittenHero = hero;
             State.heroPersistLastWriteMs = now;
@@ -2230,7 +2204,7 @@ function ExpressShotLog(msg) {
         if (!panel) return "";
         function parseTextCandidate(raw) {
             if (!raw) return "";
-            return NormalizeHeroId(
+            return QOL.normalizeHeroId(
                 ExtractHeroTokenFromText(raw) ||
                 NormalizeHeroAliasToken(raw) ||
                 ExtractHeroFromLooseAliasTokens(raw)
@@ -2248,7 +2222,7 @@ function ExpressShotLog(msg) {
             if (parsed) return parsed;
         }
 
-        var parsedFromClassMembership = NormalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
+        var parsedFromClassMembership = QOL.normalizeHeroId(TryReadHeroFromPanelBHasClass(panel));
         if (parsedFromClassMembership) return parsedFromClassMembership;
 
         if (panel.GetAttributeString) {
@@ -2998,7 +2972,7 @@ function BuildDefaultPayloadToken(cfg) {
     for (var key in defaults) {
         payloadConfig[key] = defaults[key];
     }
-    var defaultHero = GetConfiguredDefaultHeroId(cfg);
+    var defaultHero = QOL.getConfiguredDefaultHeroId(cfg);
     if (defaultHero && defaultHero.length > 0) {
         payloadConfig.DEFAULT_HERO = defaultHero;
     }
@@ -5093,9 +5067,9 @@ function GetUIRoot() {
         if (!IsPanelValid(levelAmount)) return "";
         var heroImage = levelAmount.FindChildTraverse ? levelAmount.FindChildTraverse("HeroImage") : null;
         var sig = "";
-        try { sig = NormalizeHeroId(TryReadHeroFromPanelDetails(heroImage)); } catch (e0) { sig = ""; }
+        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(heroImage)); } catch (e0) { sig = ""; }
         if (sig) return sig;
-        try { sig = NormalizeHeroId(TryReadHeroFromPanelDetails(levelAmount)); } catch (e1) { sig = ""; }
+        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(levelAmount)); } catch (e1) { sig = ""; }
         return sig || "";
     }
 
@@ -5103,7 +5077,7 @@ function GetUIRoot() {
         if (rawValue === undefined || rawValue === null) return "";
         var text = String(rawValue);
         if (!text || text.length === 0) return "";
-        return NormalizeHeroId(
+        return QOL.normalizeHeroId(
             ExtractHeroTokenFromText(text) ||
             ExtractLastHeroTokenFromText(text) ||
             NormalizeHeroAliasToken(text) ||
@@ -5194,18 +5168,18 @@ function GetUIRoot() {
 
         try {
             var settingsSignal = TryReadBuildSaveStorageHeroFromSettings();
-            hero = NormalizeHeroId(settingsSignal && settingsSignal.hero ? settingsSignal.hero : "");
+            hero = QOL.normalizeHeroId(settingsSignal && settingsSignal.hero ? settingsSignal.hero : "");
         } catch (e0) { hero = ""; }
         if (hero) return hero;
 
         try {
             if (root && root.GetAttributeString) {
-                hero = NormalizeHeroId(root.GetAttributeString(HERO_HINT_ATTR, ""));
+                hero = QOL.normalizeHeroId(root.GetAttributeString(HERO_HINT_ATTR, ""));
             }
         } catch (e1) { hero = ""; }
         if (hero) return hero;
 
-        return NormalizeHeroId(State.heroDetectLastKnownPlayableHero || "");
+        return QOL.normalizeHeroId(State.heroDetectLastKnownPlayableHero || "");
     }
 
     function SyncFgHeroImageMotionState(root, cfg) {
@@ -9631,7 +9605,7 @@ function GetUIRoot() {
                 if (ActivatePanelSafe(preLeftCommandPanel)) preClosed = true;
             }
             if (!preClosed) {
-                DispatchCitadelConCommand("-openherosheet");
+                QOL.dispatchCitadelConCommand("-openherosheet");
             }
         }
 
@@ -9657,7 +9631,7 @@ function GetUIRoot() {
             }
         }
         if (!opened) {
-            opened = DispatchCitadelConCommand("+openherosheet") || DispatchCitadelConCommand("openherosheet");
+            opened = QOL.dispatchCitadelConCommand("+openherosheet") || QOL.dispatchCitadelConCommand("openherosheet");
         }
 
         $.Schedule(BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC, function() {
@@ -9678,7 +9652,7 @@ function GetUIRoot() {
                 }
             }
             if (!closed) {
-                DispatchCitadelConCommand("-openherosheet");
+                QOL.dispatchCitadelConCommand("-openherosheet");
             }
         });
 
@@ -9712,7 +9686,7 @@ function GetUIRoot() {
             if (ActivatePanelSafe(leftCommandPanel)) closed = true;
         }
         if (!closed) {
-            DispatchCitadelConCommand("-openherosheet");
+            QOL.dispatchCitadelConCommand("-openherosheet");
             closed = true;
         }
         return closed || closedBrowsePopup;
@@ -9802,7 +9776,7 @@ function GetUIRoot() {
         // action. CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist
         // in any decompiled DLL (0 occurrences in client.dll, server.dll).
         if (!opened) {
-            opened = DispatchCitadelConCommand("open_item_shop");
+            opened = QOL.dispatchCitadelConCommand("open_item_shop");
         }
         if (!opened) {
             try {
@@ -9833,7 +9807,7 @@ function GetUIRoot() {
             if (ActivatePanelSafe(actionUpgrade)) opened = true;
         }
         if (!opened) {
-            opened = DispatchCitadelConCommand("+openherosheet") || DispatchCitadelConCommand("openherosheet");
+            opened = QOL.dispatchCitadelConCommand("+openherosheet") || QOL.dispatchCitadelConCommand("openherosheet");
         }
         if (opened || IsHudClassActive(root, "gShopOpen")) {
             EnsureShopFavoritesNavActive(root, now, "buildCategoryPayloadFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS);
@@ -9873,7 +9847,7 @@ function GetUIRoot() {
             if ((State.openItemShopLastMs || 0) <= nowMs - 1000 &&
                 ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 State.openItemShopLastMs = nowMs;
-                DispatchCitadelConCommand("open_item_shop");
+                QOL.dispatchCitadelConCommand("open_item_shop");
             }
             return false;
         }
@@ -10019,7 +9993,7 @@ function GetUIRoot() {
         SetSettingsLoaderDebugOverlayLine("corrupt repair bootstrap reason=" + why);
     }
     function IsBuildCategoryPayloadStorageConflictStrong(signal) {
-        var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
+        var hero = QOL.normalizeHeroId(signal && signal.hero ? signal.hero : "");
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return false;
         var source = signal && signal.source ? String(signal.source) : "";
         if (source.indexOf("setting:") === 0) return true;
@@ -10295,7 +10269,7 @@ function GetUIRoot() {
             var txt = ReadPanelTextMaybe(label);
             if (!txt || txt.length === 0) continue;
             var low = String(txt).toLowerCase();
-            var parsed = NormalizeHeroId(ExtractHeroTokenFromText(txt) || ExtractLastHeroTokenFromText(txt));
+            var parsed = QOL.normalizeHeroId(ExtractHeroTokenFromText(txt) || ExtractLastHeroTokenFromText(txt));
             if (!parsed) continue;
             if (low.indexOf("recommended mods") !== -1) {
                 return { hero: parsed, source: "shopFavoritesHeader" };
@@ -10309,7 +10283,7 @@ function GetUIRoot() {
     function EnsureStorageHeroFavoritesHeaderVisible(root, nowMs) {
         if (!root) return false;
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal.hero);
+        var hero = QOL.normalizeHeroId(signal.hero);
         if (hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return true;
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -10356,7 +10330,7 @@ function GetUIRoot() {
             };
         }
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal.hero);
+        var hero = QOL.normalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         function traceConfirm(confirmed, traceSource, traceHero, traceDetail) {
             SettingsLoaderTraceLogThrottled(
@@ -10439,7 +10413,7 @@ function GetUIRoot() {
         var canUseRuntimeFallback = !!allowFallback && !!(sourceReady || IsHudClassActive(root, "gShopOpen"));
         if (canUseRuntimeFallback) {
             var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
-            var runtimeHero = NormalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
+            var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
             var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
             var runtimeSourceTagged = "runtime:" + runtimeSource;
             var runtimeUiReady = !!(HasBuildSaveStorageUiReady(root) || sourceReady);
@@ -10518,7 +10492,7 @@ function GetUIRoot() {
                     "active",
                     "Returning to original hero in " + String(Number(BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC).toFixed(1)) + "s."
                 );
-                queuedReturn = QueueDelayedHeroRestore(
+                queuedReturn = QOL.queueDelayedHeroRestore(
                     returnHero,
                     "loader_return_original",
                     BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC
@@ -10528,7 +10502,7 @@ function GetUIRoot() {
                 SetSettingsLoaderStepState("return_hero", "done", "Queued return to original hero.");
             } else {
                 SetSettingsLoaderStepState("return_hero", "active", "Returning to original hero.");
-                var switchedBack = SelectHeroForBuildSave(returnHero, "loader_return_original");
+                var switchedBack = QOL.selectHeroForBuildSave(returnHero, "loader_return_original");
                 if (switchedBack) {
                     SetSettingsLoaderStepState("return_hero", "done", "Returned to original hero.");
                 } else {
@@ -10700,7 +10674,7 @@ function GetUIRoot() {
             );
 
             SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Airheart.");
-            var switched = SelectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
+            var switched = QOL.selectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
             if (!switched) {
                 // Startup payload load is read-only: never consume payload unless Airheart switch succeeds.
                 SetSettingsLoaderStepState("switch_airheart", "active", "Airheart switch unavailable, retrying.");
@@ -10766,7 +10740,7 @@ function GetUIRoot() {
                 var timeoutSignal = ResolveBuildSaveStorageHeroSignal(root);
                 if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
                     var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
-                    var timeoutHero = NormalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
+                    var timeoutHero = QOL.normalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
                     var timeoutSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
                     if (timeoutSignature.confirmed) {
                         SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
@@ -12178,18 +12152,6 @@ function GetUIRoot() {
         State.buildSaveTargetQuietUntilMs = 0;
     }
 
-    function SetBuildSaveStatus(root, state, message, token) {
-        if (!root || !root.SetAttributeString) return;
-        var st = state ? String(state) : "";
-        var msg = message ? String(message) : "";
-        var tok = token ? String(token) : "";
-        root.SetAttributeString(BUILD_SAVE_STATE_ATTR, st);
-        root.SetAttributeString(BUILD_SAVE_MSG_ATTR, msg);
-        if (tok.length > 0) {
-            root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, tok);
-        }
-    }
-
     function ResetBuildClearRuntimeState() {
         State.buildClearActiveToken = "";
         State.buildClearStage = "";
@@ -13523,7 +13485,7 @@ function GetUIRoot() {
                 ActivatePanelSafe(State.buildSaveTargetBuildPanel);
             }
 
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveStage = "lock_target_build";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
 
@@ -13539,7 +13501,7 @@ function GetUIRoot() {
 
         State.buildSaveTargetStableHits = (Number(State.buildSaveTargetStableHits) || 0) + 1;
         if (State.buildSaveTargetStableHits < BUILD_SAVE_TARGET_LOCK_STABLE_HITS) {
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
             return false;
         }
@@ -13549,7 +13511,7 @@ function GetUIRoot() {
                 State.buildSaveTargetQuietUntilMs = nowMs + BUILD_SAVE_TARGET_LOCK_QUIET_MS;
             }
             if (nowMs < State.buildSaveTargetQuietUntilMs) {
-                SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
                 return false;
             }
@@ -13835,49 +13797,6 @@ function GetUIRoot() {
         return { ok: false, path: attempts.join(",") || "none" };
     }
 
-    function DispatchCitadelConCommand(command) {
-        if (!command || command.length === 0) return false;
-        try {
-            $.DispatchEvent("CitadelConCommand", String(command));
-            return true;
-        } catch (e) {}
-        return false;
-    }
-
-    function SelectHeroForBuildSave(heroId, reason) {
-        if (!heroId || heroId.length === 0) return false;
-        var target = String(heroId);
-        var now = Date.now ? Date.now() : (new Date()).getTime();
-        if (State.selectHeroLastTarget === target && (State.selectHeroLastMs || 0) > now - 1000) {
-            return true;
-        }
-        State.selectHeroLastTarget = target;
-        State.selectHeroLastMs = now;
-        var ok = DispatchCitadelConCommand("selecthero " + target);
-        if (SETTINGS_LOADER_DEBUG) {
-            var now = Date.now ? Date.now() : (new Date()).getTime();
-            var inLoaderContext =
-                !!State.settingsLoaderSessionActive ||
-                (State.settingsLoaderSessionCompleted && now < (State.settingsLoaderShowUntilMs || 0));
-            if (!inLoaderContext) return ok;
-            var why = reason ? String(reason) : "-";
-            SettingsLoaderDebugLogThrottled(
-                "selecthero|" + target + "|" + why + "|" + (ok ? "1" : "0"),
-                "selecthero target=" + target + " reason=" + why + " ok=" + (ok ? "1" : "0") +
-                    " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-"),
-                now
-            );
-            SetSettingsLoaderDebugOverlayLine(
-                "cmd=selecthero target=" + target +
-                " reason=" + why +
-                " ok=" + (ok ? "1" : "0") +
-                " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-")
-            );
-        }
-        _TLog("bridge:SwitchHero", "hero=" + target + " reason=" + (reason || "-") + " ok=" + (ok ? "1" : "0"));
-        return ok;
-    }
-
     function TryReadSelectedHeroIncludingStorageFromCommandPanels(root) {
         if (!root) return "";
         var stack = [root];
@@ -13892,7 +13811,7 @@ function GetUIRoot() {
 
             var onactivate = "";
             try { onactivate = panel.GetAttributeString ? String(panel.GetAttributeString("onactivate", "") || "") : ""; } catch (e0) { onactivate = ""; }
-            var heroFromCmd = NormalizeHeroId(ExtractHeroTokenFromText(onactivate));
+            var heroFromCmd = QOL.normalizeHeroId(ExtractHeroTokenFromText(onactivate));
             if (heroFromCmd) {
                 var score = 0;
                 if (PanelLooksSelected(panel)) score += 8;
@@ -13939,7 +13858,7 @@ function GetUIRoot() {
             var raw = "";
             try { raw = String(GameInterfaceAPI.GetSettingString(key) || ""); } catch (e0) { raw = ""; }
             if (!raw || raw.length === 0) continue;
-            var parsed = NormalizeHeroId(ExtractLastHeroTokenFromText(raw) || ExtractHeroTokenFromText(raw));
+            var parsed = QOL.normalizeHeroId(ExtractLastHeroTokenFromText(raw) || ExtractHeroTokenFromText(raw));
             if (parsed) {
                 return { hero: parsed, source: "setting:" + key };
             }
@@ -13951,7 +13870,7 @@ function GetUIRoot() {
         var fromSetting = TryReadBuildSaveStorageHeroFromSettings();
         if (fromSetting.hero) return fromSetting;
 
-        var fromCommands = NormalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
+        var fromCommands = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
         if (fromCommands) {
             return { hero: fromCommands, source: "commands" };
         }
@@ -13971,7 +13890,7 @@ function GetUIRoot() {
             for (var pr = 0; pr < panelRoots.length; pr++) {
                 var probe = panelRoots[pr];
                 if (!probe) continue;
-                var fromPanel = NormalizeHeroId(TryReadHeroFromPanelSubtree(probe, 320));
+                var fromPanel = QOL.normalizeHeroId(TryReadHeroFromPanelSubtree(probe, 320));
                 if (fromPanel) {
                     var pid = ReadPanelIdTextMaybe(probe) || "-";
                     return { hero: fromPanel, source: "panel:" + pid };
@@ -14013,7 +13932,7 @@ function GetUIRoot() {
         _TLog("save:ConfirmStorage", "nowMs=" + nowMs);
         if (State.buildSaveStorageHeroConfirmed) return true;
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal.hero);
+        var hero = QOL.normalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         if (hero === BUILD_SAVE_STORAGE_HERO_ID) {
             var directSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
@@ -14046,7 +13965,7 @@ function GetUIRoot() {
         var uiReady = HasBuildSaveStorageUiReady(root);
         var sourceReady = IsBuildCategoryPayloadSourceReady(root);
         var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
-        var runtimeHero = NormalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
+        var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
         var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
         var runtimeConflict =
             !!runtimeHero &&
@@ -14113,22 +14032,6 @@ function GetUIRoot() {
         return acted;
     }
 
-    function CanReuseLoaderConfirmedAirheartContext(root, nowMs) {
-        if (!root) return false;
-        if (!State.settingsLoaderSessionActive) return false;
-        if (!State.buildCategoryPayloadAirheartHeaderConfirmed) return false;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var confirmedAtMs = Number(State.buildCategoryPayloadAirheartHeaderConfirmedMs) || 0;
-        if (confirmedAtMs > 0 && (now - confirmedAtMs) > BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS) {
-            return false;
-        }
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
-        if (hero !== BUILD_SAVE_STORAGE_HERO_ID) return false;
-        var signature = ConfirmStorageHeroSignatureAbilities(root, now, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-        return !!(signature && signature.confirmed);
-    }
-
     function IsBuildSaveMutationStage(stageName) {
         var stage = stageName ? String(stageName) : "";
         return (
@@ -14149,25 +14052,8 @@ function GetUIRoot() {
         State.heroRestorePendingContext = "";
     }
 
-    function BeginHeroRestoreWithVerification(targetHero, contextLabel, nowMs) {
-        var hero = NormalizeHeroId(targetHero);
-        if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            HeroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
-            return false;
-        }
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var switched = SelectHeroForBuildSave(hero);
-        State.heroRestorePendingTarget = hero;
-        State.heroRestorePendingStartedMs = now;
-        State.heroRestorePendingNextMs = now + HERO_RESTORE_VERIFY_DELAY_MS;
-        State.heroRestorePendingRetries = 0;
-        State.heroRestorePendingContext = contextLabel ? String(contextLabel) : "";
-        HeroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
-        return switched;
-    }
-
     function ProcessPendingHeroRestore(nowMs) {
-        var targetHero = NormalizeHeroId(State.heroRestorePendingTarget);
+        var targetHero = QOL.normalizeHeroId(State.heroRestorePendingTarget);
         if (!targetHero) {
             ResetPendingHeroRestoreState();
             return;
@@ -14196,7 +14082,7 @@ function GetUIRoot() {
         );
 
         if ((Number(State.heroRestorePendingRetries) || 0) < HERO_RESTORE_MAX_RETRIES) {
-            var retried = SelectHeroForBuildSave(targetHero);
+            var retried = QOL.selectHeroForBuildSave(targetHero);
             State.heroRestorePendingRetries = (Number(State.heroRestorePendingRetries) || 0) + 1;
             State.heroRestorePendingNextMs = now + HERO_RESTORE_RETRY_DELAY_MS;
             return;
@@ -14205,31 +14091,16 @@ function GetUIRoot() {
         State.heroRestorePendingNextMs = now + HERO_RESTORE_RETRY_DELAY_MS;
     }
 
-    function QueueDelayedHeroRestore(targetHero, contextLabel, delaySec) {
-        var hero = NormalizeHeroId(targetHero);
-        if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return false;
-        var delay = Number(delaySec);
-        if (!isFinite(delay) || delay < 0) delay = 0;
-        if (typeof $.Schedule !== "function") {
-            var switchedImmediate = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
-            return switchedImmediate;
-        }
-        $.Schedule(delay, function() {
-            var switched = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
-        });
-        return true;
-    }
-
     function FinishBuildSaveRequest(root, token, state, message) {
         _TLog("save:Finish", state + " " + (message || ""));
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var didSwitchToStorageHero = !!State.buildSaveDidSwitchToStorageHero;
-        var returnHero = NormalizeHeroId(State.buildSaveReturnHero) || GetConfiguredDefaultHeroId(State.lastConfig);
+        var returnHero = QOL.normalizeHeroId(State.buildSaveReturnHero) || QOL.getConfiguredDefaultHeroId(State.lastConfig);
         if (State.buildSaveDidSwitchToStorageHero) {
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(returnHero, "build_save_finish", BUILD_SAVE_RETURN_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(returnHero, "build_save_finish", BUILD_SAVE_RETURN_DELAY_SEC);
             } else {
-                var switchedBack = SelectHeroForBuildSave(returnHero);
+                var switchedBack = QOL.selectHeroForBuildSave(returnHero);
             }
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
@@ -14245,18 +14116,18 @@ function GetUIRoot() {
         }
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
-        SetBuildSaveStatus(root, state, message, token);
+        QOL.setBuildSaveStatus(root, state, message, token);
     }
 
     function FinishBuildClearRequest(root, token, state, message) {
         var didSwitchToStorageHero = !!State.buildClearDidSwitchToStorageHero;
-        var returnHero = NormalizeHeroId(State.buildClearReturnHero) || GetConfiguredDefaultHeroId(State.lastConfig);
+        var returnHero = QOL.normalizeHeroId(State.buildClearReturnHero) || QOL.getConfiguredDefaultHeroId(State.lastConfig);
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (didSwitchToStorageHero) {
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(returnHero, "build_clear_finish", BUILD_SAVE_PRE_RESTORE_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(returnHero, "build_clear_finish", BUILD_SAVE_PRE_RESTORE_DELAY_SEC);
             } else {
-                SelectHeroForBuildSave(returnHero);
+                QOL.selectHeroForBuildSave(returnHero);
             }
         }
         if (CLEAR_SETTINGS_LOADER_ENABLED) {
@@ -14426,57 +14297,12 @@ function GetUIRoot() {
         return false;
     }
 
-    function TryAdvanceStorageSwitchStage(root, nowMs, requestToken, options) {
-        if (!options || !options.stageKey || !options.nextActionKey) return false;
-        if (State[options.stageKey] !== "switch_to_storage") return false;
-        _TLog("save:SwitchStorage", "hero=" + BUILD_SAVE_STORAGE_HERO_ID);
-
-        var switchedToStorage = SelectHeroForBuildSave(BUILD_SAVE_STORAGE_HERO_ID);
-        if (switchedToStorage && options.didSwitchFlagKey) {
-            State[options.didSwitchFlagKey] = true;
-        }
-        if (switchedToStorage && typeof options.onSwitchSuccess === "function") {
-            try { options.onSwitchSuccess(nowMs); } catch (e0) {}
-        }
-
-        if (typeof options.debugLog === "function") {
-            options.debugLog("switch to " + BUILD_SAVE_STORAGE_HERO_ID + " ok=" + (switchedToStorage ? "1" : "0"));
-        }
-        if (typeof options.setOverlayLine === "function") {
-            options.setOverlayLine("switch_airheart ok=" + (switchedToStorage ? "1" : "0"));
-        }
-
-        State[options.stageKey] = "wait_storage_switch";
-        State[options.nextActionKey] = nowMs + BUILD_SAVE_STORAGE_SETTLE_DELAY_MS;
-
-        if (typeof options.setStatus === "function") {
-            options.setStatus(root, requestToken);
-        }
-        return true;
-    }
-
-    function TryAdvanceStorageSwitchSettleStage(nowMs, options) {
-        if (!options || !options.stageKey || !options.nextActionKey || !options.nextStage) return false;
-        if (State[options.stageKey] !== "wait_storage_switch") return false;
-
-        if (typeof options.debugLog === "function") {
-            options.debugLog(String(options.debugMessage || ""));
-        }
-        if (typeof options.onEnterNextStage === "function") {
-            try { options.onEnterNextStage(nowMs); } catch (e0) {}
-        }
-
-        State[options.stageKey] = options.nextStage;
-        State[options.nextActionKey] = nowMs;
-        return true;
-    }
-
     function AdvanceBuildClearRequestStage(root, nowMs, requestToken) {
         if (State.buildClearLastTraceStage !== State.buildClearStage) {
             State.buildClearLastTraceStage = State.buildClearStage;
             _TLog("clear:AdvanceStage", (State.buildClearStage || "-"));
         }
-        if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
+        if (QOL.tryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
             didSwitchFlagKey: "buildClearDidSwitchToStorageHero",
@@ -14487,7 +14313,7 @@ function GetUIRoot() {
             return;
         }
 
-        if (TryAdvanceStorageSwitchSettleStage(nowMs, {
+        if (QOL.tryAdvanceStorageSwitchSettleStage(nowMs, {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
             nextStage: "await_user_shop_open",
@@ -14663,11 +14489,11 @@ function GetUIRoot() {
             FinalizeClearSettingsLoaderSession(endCode, endDetail, nowMs, switchedForFinalize);
         }
         if (State.buildClearDidSwitchToStorageHero) {
-            var pendingReturnHero = NormalizeHeroId(State.buildClearReturnHero) || configuredReturnHero;
+            var pendingReturnHero = QOL.normalizeHeroId(State.buildClearReturnHero) || configuredReturnHero;
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(pendingReturnHero, "build_clear_state_exit", BUILD_SAVE_PRE_RESTORE_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(pendingReturnHero, "build_clear_state_exit", BUILD_SAVE_PRE_RESTORE_DELAY_SEC);
             } else {
-                SelectHeroForBuildSave(pendingReturnHero);
+                QOL.selectHeroForBuildSave(pendingReturnHero);
             }
         }
         ResetBuildClearRuntimeState();
@@ -14687,7 +14513,7 @@ function GetUIRoot() {
     }
     function EnsureBuildClearRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero) {
         if (State.buildClearActiveToken === requestToken) return;
-        var reuseLoaderAirheart = CanReuseLoaderConfirmedAirheartContext(root, nowMs);
+        var reuseLoaderAirheart = QOL.canReuseLoaderConfirmedAirheartContext(root, nowMs);
         var reuseGateReady = false;
         if (reuseLoaderAirheart) {
             var reuseShopOpen = IsHudClassActive(root, "gShopOpen");
@@ -14743,7 +14569,7 @@ function GetUIRoot() {
         if (tryHandleUnavailableFn && tryHandleUnavailableFn(root, nowMs)) return;
         if (tryHandlePreGateFn && tryHandlePreGateFn(root, nowMs)) return;
 
-        var configuredReturnHero = GetConfiguredDefaultHeroId(cfg);
+        var configuredReturnHero = QOL.getConfiguredDefaultHeroId(cfg);
         var requestState = root.GetAttributeString(requestStateAttr, "");
         var requestMessage = root.GetAttributeString(requestMessageAttr, "");
         if (tryFinalizeWhenNotPendingFn && tryFinalizeWhenNotPendingFn(root, nowMs, configuredReturnHero, requestState, requestMessage)) return;
@@ -14781,7 +14607,7 @@ function GetUIRoot() {
             State.buildSaveLastTraceStage = State.buildSaveStage;
             _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
         }
-        if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
+        if (QOL.tryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             didSwitchFlagKey: "buildSaveDidSwitchToStorageHero",
@@ -14790,13 +14616,13 @@ function GetUIRoot() {
                 State.buildSaveStorageProvisionalHits = 0;
             },
             setStatus: function(activeRoot, token) {
-                SetBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
+                QOL.setBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
             }
         })) {
             return;
         }
 
-        if (TryAdvanceStorageSwitchSettleStage(nowMs, {
+        if (QOL.tryAdvanceStorageSwitchSettleStage(nowMs, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             nextStage: "confirm_storage_context",
@@ -14810,7 +14636,7 @@ function GetUIRoot() {
                 if (!(Number(State.buildSaveStorageLastSwitchMs) > 0)) {
                     State.buildSaveStorageLastSwitchMs = nowValue;
                 }
-                SetBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
             }
         })) {
             return;
@@ -14830,14 +14656,14 @@ function GetUIRoot() {
                 var confirmMessage = "confirming_airheart";
                 var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
                 if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
-                SetBuildSaveStatus(root, "pending", confirmMessage, requestToken);
+                QOL.setBuildSaveStatus(root, "pending", confirmMessage, requestToken);
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
                 return;
             }
             var confirmSource = State.buildSaveStorageHeroConfirmedSource || "unknown";
             _TLog("save:ConfirmDone", "source=" + confirmSource + " retries=" + (Number(State.buildSaveStorageConfirmRetries) || 0));
             State.buildSaveStage = "lock_target_build";
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveNextActionMs = nowMs;
             return;
         }
@@ -14846,7 +14672,7 @@ function GetUIRoot() {
         if (!selectedBuild) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
             if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                 _TLog("save:Failed", "reason=shop_not_ready retries=" + State.buildSaveRetries);
                 FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
@@ -14860,7 +14686,7 @@ function GetUIRoot() {
             }
             _TLog("save:AdvanceStage", "lock_target_build done → start token=" + String(requestToken || "").slice(0, 8));
             _TLog("save:TargetLocked", "title=\"" + (State.buildSaveTargetBuildTitle || "") + "\" sig=" + (State.buildSaveTargetBuildSig || "-"));
-            SetBuildSaveStatus(root, "pending", "target_locked", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "target_locked", requestToken);
             State.buildSaveStage = "start";
             State.buildSaveNextActionMs = nowMs;
         } else if (IsBuildSaveMutationStage(State.buildSaveStage)) {
@@ -14879,7 +14705,7 @@ function GetUIRoot() {
                 State.buildSaveStage = "wait_editor";
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
                 _TLog("save:EditMode", "active=0 triggered=" + (editTriggered ? "1" : "0") + " retries=" + State.buildSaveRetries);
                 var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
                 if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
@@ -14903,7 +14729,7 @@ function GetUIRoot() {
                 if (HasWritableBuildCategoryEntry(root) && IsBuildSaveEditModeActive(root)) {
                     State.buildSaveStage = "write";
                     State.buildSaveNextActionMs = nowMs;
-                    SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                     return;
                 }
                 var headerCount = CountBuildCategoryHeaders(selectedBuild);
@@ -14912,7 +14738,7 @@ function GetUIRoot() {
                     var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     if (!initReady) {
-                        SetBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
+                        QOL.setBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
                         if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
                             _TLog("save:Failed", "reason=category_init_unavailable initRetries=" + initRetries);
                             FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
@@ -14922,11 +14748,11 @@ function GetUIRoot() {
                     if (HasWritableBuildCategoryEntry(root)) {
                         State.buildSaveStage = "write";
                         State.buildSaveNextActionMs = nowMs;
-                        SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                        QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                         return;
                     }
                     State.buildSaveRetries += 1;
-                    SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                     if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                         FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
                     }
@@ -14934,7 +14760,7 @@ function GetUIRoot() {
                 } else {
                     State.buildSaveRetries += 1;
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                    SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                 }
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
@@ -14954,13 +14780,13 @@ function GetUIRoot() {
                 State.buildSaveStorageConfirmStartedMs = nowMs;
                 State.buildSaveStage = "confirm_storage_context";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
-                SetBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
                 return;
             }
             if (!SetBuildCategoryNameText(root, payloadText)) {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                 _TLog("save:WriteAttempt", "ok=0 retries=" + State.buildSaveRetries);
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     _TLog("save:Failed", "reason=write_failed retries=" + State.buildSaveRetries);
@@ -14995,7 +14821,7 @@ function GetUIRoot() {
             State.buildSaveStage = "verify";
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "saving", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "saving", requestToken);
             return;
         }
 
@@ -15017,7 +14843,7 @@ function GetUIRoot() {
                 TriggerBuildEditMode(selectedBuild);
                 State.buildSaveStage = "wait_category_focus";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "retrying_write", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "retrying_write", requestToken);
                 return;
             }
 
@@ -15029,7 +14855,7 @@ function GetUIRoot() {
             var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "verifying", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
             return;
         }
 
@@ -15056,11 +14882,11 @@ function GetUIRoot() {
             FinalizeSaveSettingsLoaderSession(endCode, endDetail, nowMs, switchedForFinalize);
         }
         if (State.buildSaveDidSwitchToStorageHero) {
-            var pendingReturnHero = NormalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
+            var pendingReturnHero = QOL.normalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(pendingReturnHero, "build_save_state_exit", BUILD_SAVE_RETURN_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(pendingReturnHero, "build_save_state_exit", BUILD_SAVE_RETURN_DELAY_SEC);
             } else {
-                var switchedBackEarly = SelectHeroForBuildSave(pendingReturnHero);
+                var switchedBackEarly = QOL.selectHeroForBuildSave(pendingReturnHero);
             }
         }
         ResetBuildSaveRuntimeState();
@@ -15096,7 +14922,7 @@ function GetUIRoot() {
 
     function EnsureBuildSaveRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero, payloadText) {
         if (State.buildSaveActiveToken === requestToken) return;
-        var reuseLoaderAirheartSave = CanReuseLoaderConfirmedAirheartContext(root, nowMs);
+        var reuseLoaderAirheartSave = QOL.canReuseLoaderConfirmedAirheartContext(root, nowMs);
         State.buildSaveActiveToken = requestToken;
         State.buildSaveStage = reuseLoaderAirheartSave ? "lock_target_build" : "switch_to_storage";
         State.buildSaveStartedMs = nowMs;
@@ -15128,7 +14954,7 @@ function GetUIRoot() {
         State.buildSaveTargetQuietUntilMs = 0;
         State.buildSaveCaptureStartedMs = nowMs;
         ResetBuildCategoryPayloadProbeInitState();
-        SetBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
+        QOL.setBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
     }
 
     function TickBuildSaveRequestRuntime(root, nowMs, requestToken, payloadText) {

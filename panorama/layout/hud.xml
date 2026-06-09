@@ -17,6 +17,7 @@
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_topbar.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottombar.vjs_c" />
