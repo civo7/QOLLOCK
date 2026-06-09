@@ -15,7 +15,6 @@
         "extractHeroTokenFromText", "isConnectedToHideout",
         "isStartupLoaderInActiveMatchContext",
         "canReuseLoaderConfirmedAirheartContext",
-        "resetBuildCategoryPayloadProbeInitState",
         "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry",
         "beginSettingsLoaderSession", "buildDefaultConfig", "buildDefaultPayloadToken", "buildPayloadFromBase64Url", "collectStorageBuildEntryPanels", "deserializeBuildPayloadCompact", "ensureStorageHeroFavoritesHeaderVisible", "enterStartupCorruptRepairPrompt", "extractLastHeroTokenFromText", "finalizeSettingsLoaderSession", "findBrowseBuildsButton", "getLoaderBaseDefaultHeroId", "getSaveSettingsLoaderDetailForMessage", "hasBuildSaveStorageUiReady", "isBrowseBuildsPopupOpen", "isBuildSaveStorageRuntimeSourceStale", "isHudClassActive", "isStartupCorruptRepairPending", "isStorageBuildListEmpty", "mergeConfig", "normalizeAllyColorWarningConfig", "normalizeAmmoScaleConfig", "normalizeColorWarningConfig", "normalizeCompassSpeedSchemaMigration", "normalizeEnemyColorWarningConfig", "normalizeHealthbarTypeConfig", "normalizeLanguageSchemaMigration", "normalizeNeutralCampTierConfig", "normalizeTopbarAllyHpWarningConfig", "normalizeTopbarEnemyHpWarningConfig", "normalizeVoiceTypeConfig", "queueBuildSaveRequestFromLoader", "readPanelTextDeepMaybe", "resetBuildClearRequestAttributes", "resetBuildClearRuntimeState", "resetBuildLoaderForTempDisable", "resetSettingsLoaderSession", "resetStartupDefaultPayloadBootstrapState", "setSettingsLoaderDebugOverlayLine", "setSettingsLoaderStepState", "setStartupCorruptRepairPending", "settingsLoaderBuildProbeSnapshot", "settingsLoaderDebugLog", "settingsLoaderDebugLogThrottled", "settingsLoaderTraceLogThrottled", "stepCorruptRepairClearStorageBuilds", "suppressStartupLoaderForSession", "traceSettingsLoaderProbeHeartbeat", "tryCloseBrowseBuildsPopupForLoader", "tryDismissBuildDeletePopup", "tryOpenHeroShopForHeroProbe", "tryReadAccountIdFromKnownPartyPath", "trySelectFirstStorageBuildEntry", "trySelectNextStorageBuildEntry", "writeStorageConfigRawToUi"]);
     var S = _deps.state;
@@ -44,8 +43,7 @@
     var IsConnectedToHideout = _deps.isConnectedToHideout;
     var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
     var CanReuseLoaderConfirmedAirheartContext = _deps.canReuseLoaderConfirmedAirheartContext;
-    var ResetBuildCategoryPayloadProbeInitState = _deps.resetBuildCategoryPayloadProbeInitState;
-    var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
+        var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
     var GetBuildSaveCategoryNameEntry = _deps.getBuildSaveCategoryNameEntry;
     var BeginSettingsLoaderSession = _deps.beginSettingsLoaderSession;
     var BuildDefaultConfig = _deps.buildDefaultConfig;

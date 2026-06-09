@@ -20,6 +20,7 @@
 //   §16 Feature registrations (QOL_REGISTER_FEATURE calls)
 //   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
 // ==========================================================================
+var State;
 (function() {
     // Verify ql_utils.js loaded before us — log warning if missing
     // (non-fatal: schema validator sandbox runs ql_core.js in isolation)
@@ -89,7 +90,7 @@
     var RecordFrameTime = QOL_UTILS_LOADED ? QOL_UTILS.RecordFrameTime : function() {};
     var DumpTiming = QOL_UTILS_LOADED ? QOL_UTILS.DumpTiming : function() {};
 
-    var State = {
+    State = {
         lastTime: -1, 
         lastIntervalAlert: 0,
         lastMinimapAlert: 0,
