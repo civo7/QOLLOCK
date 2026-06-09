@@ -13874,6 +13874,7 @@ function GetUIRoot() {
                 " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-")
             );
         }
+        _TLog("bridge:SwitchHero", "hero=" + target + " reason=" + (reason || "-") + " ok=" + (ok ? "1" : "0"));
         return ok;
     }
 
