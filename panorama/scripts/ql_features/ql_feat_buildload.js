@@ -47,7 +47,7 @@
     function SetBuildCategoryPayloadProbeReturnHeroFromConfig(configObj, sourceLabel) {
         var heroFromConfig = "";
         if (configObj && typeof configObj === "object" && configObj.hasOwnProperty("DEFAULT_HERO")) {
-            heroFromConfig = QOL.normalizeHeroId(configObj.DEFAULT_HERO);
+            heroFromConfig = NormalizeHeroId(configObj.DEFAULT_HERO);
         }
         if (heroFromConfig && heroFromConfig !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
             State.buildCategoryPayloadHeroProbeReturnHero = heroFromConfig;
@@ -62,7 +62,7 @@
 
     // ── EnsureBuildCategoryPayloadProbeReturnHeroFallback ──
     function EnsureBuildCategoryPayloadProbeReturnHeroFallback() {
-        var current = QOL.normalizeHeroId(State.buildCategoryPayloadHeroProbeReturnHero || "");
+        var current = NormalizeHeroId(State.buildCategoryPayloadHeroProbeReturnHero || "");
         if (current && current !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
             State.buildCategoryPayloadHeroProbeReturnHero = current;
             if (!State.buildCategoryPayloadHeroProbeReturnHeroSource) {
@@ -191,7 +191,7 @@
                     ? "Build browser already open; selected first build."
                     : "Build browser already open; waiting for build entries.";
                 var selectedBuildBootstrap = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-                var selectedHeaderCountBootstrap = QOL.countBuildCategoryHeaders(selectedBuildBootstrap);
+                var selectedHeaderCountBootstrap = CountBuildCategoryHeaders(selectedBuildBootstrap);
                 var firstReason = String(firstBuildSelect && firstBuildSelect.reason ? firstBuildSelect.reason : "");
                 if (!firstBuildSelect.ok && firstReason.indexOf("entry_count:0") === 0 && selectedHeaderCountBootstrap <= 0) {
                     forceBootstrapExhausted = true;
@@ -239,7 +239,7 @@
 
     // ── IsBuildCategoryPayloadStorageConflictStrong ──
     function IsBuildCategoryPayloadStorageConflictStrong(signal) {
-        var hero = QOL.normalizeHeroId(signal && signal.hero ? signal.hero : "");
+        var hero = NormalizeHeroId(signal && signal.hero ? signal.hero : "");
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return false;
         var source = signal && signal.source ? String(signal.source) : "";
         if (source.indexOf("setting:") === 0) return true;
@@ -263,7 +263,7 @@
             var txt = ReadPanelTextMaybe(label);
             if (!txt || txt.length === 0) continue;
             var low = String(txt).toLowerCase();
-            var parsed = QOL.normalizeHeroId(ExtractHeroTokenFromText(txt) || ExtractLastHeroTokenFromText(txt));
+            var parsed = NormalizeHeroId(ExtractHeroTokenFromText(txt) || ExtractLastHeroTokenFromText(txt));
             if (!parsed) continue;
             if (low.indexOf("recommended mods") !== -1) {
                 return { hero: parsed, source: "shopFavoritesHeader" };
@@ -298,7 +298,7 @@
             };
         }
         var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = QOL.normalizeHeroId(signal.hero);
+        var hero = NormalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         function traceConfirm(confirmed, traceSource, traceHero, traceDetail) {
             SettingsLoaderTraceLogThrottled(
@@ -381,7 +381,7 @@
         var canUseRuntimeFallback = !!allowFallback && !!(sourceReady || IsHudClassActive(root, "gShopOpen"));
         if (canUseRuntimeFallback) {
             var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
-            var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
+            var runtimeHero = NormalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
             var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
             var runtimeSourceTagged = "runtime:" + runtimeSource;
             var runtimeUiReady = !!(HasBuildSaveStorageUiReady(root) || sourceReady);
@@ -461,7 +461,7 @@
                     "active",
                     "Returning to original hero in " + String(Number(BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC).toFixed(1)) + "s."
                 );
-                queuedReturn = QOL.queueDelayedHeroRestore(
+                queuedReturn = QueueDelayedHeroRestore(
                     returnHero,
                     "loader_return_original",
                     BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC
@@ -471,7 +471,7 @@
                 SetSettingsLoaderStepState("return_hero", "done", "Queued return to original hero.");
             } else {
                 SetSettingsLoaderStepState("return_hero", "active", "Returning to original hero.");
-                var switchedBack = QOL.selectHeroForBuildSave(returnHero, "loader_return_original");
+                var switchedBack = SelectHeroForBuildSave(returnHero, "loader_return_original");
                 if (switchedBack) {
                     SetSettingsLoaderStepState("return_hero", "done", "Returned to original hero.");
                 } else {
@@ -646,7 +646,7 @@
             );
 
             SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Airheart.");
-            var switched = QOL.selectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
+            var switched = SelectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
             if (!switched) {
                 // Startup payload load is read-only: never consume payload unless Airheart switch succeeds.
                 SetSettingsLoaderStepState("switch_airheart", "active", "Airheart switch unavailable, retrying.");
@@ -712,7 +712,7 @@
                 var timeoutSignal = ResolveBuildSaveStorageHeroSignal(root);
                 if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
                     var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
-                    var timeoutHero = QOL.normalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
+                    var timeoutHero = NormalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
                     var timeoutSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
                     if (timeoutSignature.confirmed) {
                         SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
@@ -874,7 +874,7 @@
                 State.buildCategoryPayloadDefaultBootstrapPayloadText = bootstrapPayloadToken;
             }
 
-            if (QOL.currentBuildHasPayload(root, bootstrapPayloadToken)) {
+            if (CurrentBuildHasPayload(root, bootstrapPayloadToken)) {
                 SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
                 State.buildCategoryPayloadHeroProbeStage = "scan_storage";
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs;
@@ -940,7 +940,7 @@
             var expectedSaveToken = State.buildCategoryPayloadDefaultBootstrapSaveToken
                 ? String(State.buildCategoryPayloadDefaultBootstrapSaveToken)
                 : "";
-            var payloadDetectedAfterSave = QOL.currentBuildHasPayload(root, verifyPayloadToken);
+            var payloadDetectedAfterSave = CurrentBuildHasPayload(root, verifyPayloadToken);
 
             if (saveStateWait === "pending") {
                 if (expectedSaveToken.length > 0 && saveTokenWait && saveTokenWait !== expectedSaveToken) {
@@ -1441,7 +1441,7 @@
             var probeStartedMs = Number(State.buildCategoryPayloadHeroProbeStartedMs) || nowMs;
             if ((nowMs - probeStartedMs) > BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS) {
                 var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-                var timeoutHeaderCount = QOL.countBuildCategoryHeaders(timeoutSelectedBuild);
+                var timeoutHeaderCount = CountBuildCategoryHeaders(timeoutSelectedBuild);
                 var timeoutScanAdvances = Number(State.buildCategoryPayloadMissingScanAdvances) || 0;
                 var timeoutEntryCount = CollectStorageBuildEntryPanels(root, true).length;
                 var timeoutBrowseOpen = IsBrowseBuildsPopupOpen(root);
@@ -1482,7 +1482,7 @@
                 if (!EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs)) {
                     var sourceBootstrapRetries = Number(State.buildCategoryPayloadSourceBootstrapRetries) || 0;
                     var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-                    var selectedHeaderCountForSource = QOL.countBuildCategoryHeaders(selectedBuildForSource);
+                    var selectedHeaderCountForSource = CountBuildCategoryHeaders(selectedBuildForSource);
                     var sourceEntriesVisible = CollectStorageBuildEntryPanels(root, false).length;
                     var sourceEntriesTotal = CollectStorageBuildEntryPanels(root, true).length;
                     var sourceEmptyByStructure = (selectedHeaderCountForSource <= 0 && sourceEntriesTotal <= 0);

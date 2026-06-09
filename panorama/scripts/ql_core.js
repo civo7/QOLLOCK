@@ -18334,7 +18334,16 @@ function GetUIRoot() {
         ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
         ["tryReadBuildSaveStorageHeroFromSettings", function() { return TryReadBuildSaveStorageHeroFromSettings; }],
         ["tryReadSelectedHeroIncludingStorageFromCommandPanels", function() { return TryReadSelectedHeroIncludingStorageFromCommandPanels; }],
-        ["extractHeroTokenFromText", function() { return ExtractHeroTokenFromText; }]
+        ["extractHeroTokenFromText", function() { return ExtractHeroTokenFromText; }],
+        ["finalizeSaveSettingsLoaderSession", function() { return FinalizeSaveSettingsLoaderSession; }],
+        ["beginSaveSettingsLoaderSession", function() { return BeginSaveSettingsLoaderSession; }],
+        ["updateSaveSettingsLoaderFromBuildSaveState", function() { return UpdateSaveSettingsLoaderFromBuildSaveState; }],
+        ["setSaveSettingsLoaderStepState", function() { return SetSaveSettingsLoaderStepState; }],
+        ["getSaveSettingsLoaderStepState", function() { return GetSaveSettingsLoaderStepState; }],
+        ["beginSettingsLoaderSession", function() { return BeginSettingsLoaderSession; }],
+        ["finalizeSettingsLoaderSession", function() { return FinalizeSettingsLoaderSession; }],
+        ["resetSettingsLoaderSession", function() { return ResetSettingsLoaderSession; }],
+        ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }]
     ];
 
     // Publish to QOL namespace with error logging
