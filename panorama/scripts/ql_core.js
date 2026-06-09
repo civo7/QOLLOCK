@@ -591,8 +591,7 @@
         buildSaveTargetStableHits: 0,
         buildSaveTargetDriftRetries: 0,
         buildSaveTargetQuietUntilMs: 0,
-        buildSaveDebugLastSig: "",
-        buildSaveDebugNextMs: 0,
+        // (debug state fields removed — buildSaveDebugLastSig, buildSaveDebugNextMs)
         buildClearActiveToken: "",
         buildClearStage: "",
         buildClearStartedMs: 0,
@@ -608,9 +607,7 @@
         buildClearStorageSwitchRetries: 0,
         buildClearStorageConfirmStartedMs: 0,
         buildClearUserShopGateSatisfied: false,
-        buildClearDebugLastSig: "",
-        buildClearDebugNextMs: 0,
-        buildClearDebugOverlayLine: "",
+        // (debug state fields removed — buildClearDebugLastSig, buildClearDebugNextMs, buildClearDebugOverlayLine)
         heroReturnDebugLastSig: "",
         heroReturnDebugNextMs: 0,
         heroDetectDebugLastSig: "",
@@ -1320,10 +1317,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
     const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 200; // poll-driven (was 60)
-    const BUILD_CLEAR_DEBUG = false;
-    const BUILD_CLEAR_DEBUG_THROTTLE_MS = 300;
-    const BUILD_SAVE_DEBUG = false;  // set true to enable build-save trace logging
-    const BUILD_SAVE_DEBUG_THROTTLE_MS = 400;
+    // (debug infrastructure removed — BUILD_CLEAR_DEBUG, BUILD_SAVE_DEBUG)
     const ENEMY_ULT_OLD_DEBUG = false;
     const ENEMY_ULT_OLD_DEBUG_THROTTLE_MS = 500;
     const HERO_DETECT_DEBUG = false;
@@ -10272,10 +10266,6 @@ function GetUIRoot() {
             try { imagePanels = slotPanel.FindChildrenWithClassTraverse("image_container"); } catch (e1) { imagePanels = null; }
         }
         if (!imagePanels || imagePanels.length < 1) {
-            if (BUILD_SAVE_DEBUG && State.sigImgLastEmptyLog !== "no_image_panels") {
-                State.sigImgLastEmptyLog = "no_image_panels";
-                BuildSaveDebugLog("ReadAbilityNameFromSlotImage: no .ability_image or .image_container found in slot");
-            }
             return "";
         }
         var srcsTried = [];
@@ -10290,22 +10280,7 @@ function GetUIRoot() {
             srcsTried.push(src);
             var abilityName = ExtractAbilityNameFromImageSrc(src);
             if (abilityName) {
-                if (BUILD_SAVE_DEBUG) {
-                    var logKey = "img:" + abilityName + "|src:" + src;
-                    if (State.sigImgLastSrcLog !== logKey) {
-                        State.sigImgLastSrcLog = logKey;
-                        BuildSaveDebugLog("ReadAbilityNameFromSlotImage: extracted \"" + abilityName + "\" from src=\"" + src + "\"");
-                    }
-                }
                 return abilityName;
-            }
-        }
-        if (BUILD_SAVE_DEBUG) {
-            var srcsSummary = srcsTried.length > 0 ? srcsTried.join(" | ") : "(none)";
-            var failKey = "src_no_match:" + srcsSummary;
-            if (State.sigImgLastEmptyLog !== failKey) {
-                State.sigImgLastEmptyLog = failKey;
-                BuildSaveDebugLog("ReadAbilityNameFromSlotImage: found image panels but could not extract ability name from src. Src values: " + srcsSummary);
             }
         }
         return "";
@@ -10316,20 +10291,9 @@ function GetUIRoot() {
 
         var imageName = ReadAbilityNameFromSlotImage(slotPanel);
         if (imageName) {
-            if (BUILD_SAVE_DEBUG) {
-                var prevSource = State.sigImgLastSource;
-                if (prevSource !== "image") {
-                    State.sigImgLastSource = "image";
-                    BuildSaveDebugLog("ReadStorageHeroSignatureAbilityName: USING IMAGE-BASED name=\"" + imageName + "\" (language-agnostic)");
-                }
-            }
             return imageName;
         }
 
-        if (BUILD_SAVE_DEBUG && State.sigImgLastSource !== "text_fallback") {
-            State.sigImgLastSource = "text_fallback";
-            BuildSaveDebugLog("ReadStorageHeroSignatureAbilityName: FALLBACK to text-based detection (image path not available)");
-        }
 
         var nameLabels = null;
         try { nameLabels = slotPanel.FindChildrenWithClassTraverse("ability_name"); } catch (e0) { nameLabels = null; }
@@ -10339,13 +10303,6 @@ function GetUIRoot() {
             if (!label || !IsPanelValid(label)) continue;
             var text = CleanStorageHeroSignatureText(ReadPanelTextMaybe(label));
             if (text) {
-                if (BUILD_SAVE_DEBUG) {
-                    var prevText = State.sigImgLastText;
-                    if (prevText !== text) {
-                        State.sigImgLastText = text;
-                        BuildSaveDebugLog("ReadStorageHeroSignatureAbilityName: text fallback read \"" + text + "\"");
-                    }
-                }
                 return text;
             }
         }
@@ -11358,11 +11315,6 @@ function GetUIRoot() {
         if (stage === "browse") {
             var browseLookup = FindBrowseBuildsButton(root);
             var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
-            BuildSaveDebugLogThrottled(
-                "init_browse_stage|" + (browseBtn ? "1" : "0"),
-                "initializing_storage_build browseStage browseBtn=" + (browseBtn ? "1" : "0") + " source=" + (browseLookup ? browseLookup.source : "none") + " scanned=" + (browseLookup ? browseLookup.scanned : 0) + "/" + (browseLookup ? browseLookup.roots : 0) + (browseBtn ? " " + DescribeBuildButtonPanel(browseBtn) : "") + " " + BuildSaveDebugSnapshot(root),
-                now
-            );
             if (ActivatePanelSafe(browseBtn)) {
                 activated = true;
                 progressed = true;
@@ -11389,11 +11341,6 @@ function GetUIRoot() {
             var loaderSessionCreateAttempts = Number(State.buildCategoryPayloadLoaderSessionCreateAttempts) || 0;
             var enforceLoaderSessionCap = !!State.settingsLoaderSessionActive;
             if (enforceLoaderSessionCap && loaderSessionCreateAttempts >= BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS) {
-                BuildSaveDebugLogThrottled(
-                    "init_create_loader_session_capped|" + String(loaderSessionCreateAttempts),
-                    "initializing_storage_build create attempts capped for loader session at " + String(loaderSessionCreateAttempts) + "; switching to verify",
-                    now
-                );
                 stage = "verify";
                 State.buildCategoryPayloadHeroProbeInitRetries += 1;
                 State.buildCategoryPayloadHeroProbeInitStage = stage;
@@ -11401,11 +11348,6 @@ function GetUIRoot() {
                 return false;
             }
             if (createAttempts >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS) {
-                BuildSaveDebugLogThrottled(
-                    "init_create_capped|" + String(createAttempts),
-                    "initializing_storage_build create attempts capped at " + String(createAttempts) + "; switching to verify",
-                    now
-                );
                 stage = "verify";
                 State.buildCategoryPayloadHeroProbeInitRetries += 1;
                 State.buildCategoryPayloadHeroProbeInitStage = stage;
@@ -11417,17 +11359,7 @@ function GetUIRoot() {
             // Do not fall back to add-category here; create build must happen first.
             var createLookup = FindCreateBuildButtonStrict(root);
             var createBuildBtn = createLookup && createLookup.panel ? createLookup.panel : null;
-            BuildSaveDebugLogThrottled(
-                "init_create_stage|" + (createBuildBtn ? "1" : "0") + "|" + (createLookup && createLookup.labelMatched ? "1" : "0"),
-                "initializing_storage_build createStage createBtn=" + (createBuildBtn ? "1" : "0") + " labelMatched=" + (createLookup && createLookup.labelMatched ? "1" : "0") + " source=" + (createLookup ? createLookup.source : "none") + " scanned=" + (createLookup ? createLookup.scanned : 0) + "/" + (createLookup ? createLookup.roots : 0) + (createBuildBtn ? " " + DescribeBuildButtonPanel(createBuildBtn) : "") + " " + BuildSaveDebugSnapshot(root),
-                now
-            );
             var createTrigger = TryTriggerCreateBuild(createBuildBtn);
-            BuildSaveDebugLogThrottled(
-                "init_create_trigger|" + (createTrigger.ok ? "1" : "0") + "|" + createTrigger.path,
-                "initializing_storage_build createTrigger ok=" + (createTrigger.ok ? "1" : "0") + " path=" + createTrigger.path,
-                now
-            );
             if (createTrigger.ok) {
                 State.buildCategoryPayloadHeroProbeInitCreateAttempts = createAttempts + 1;
                 if (enforceLoaderSessionCap) {
@@ -11455,11 +11387,6 @@ function GetUIRoot() {
             var createdSignal = !IsStorageBuildListEmpty(root);
             var saveLookupVerify = FindSaveBuildButtonStrict(root, selectedBuild);
             var saveBtnVerify = saveLookupVerify && saveLookupVerify.panel ? saveLookupVerify.panel : null;
-            BuildSaveDebugLogThrottled(
-                "init_create_verify|" + (createdSignal ? "1" : "0") + "|" + (saveBtnVerify ? "1" : "0"),
-                "initializing_storage_build createVerify createdSignal=" + (createdSignal ? "1" : "0") + " saveBtn=" + (saveBtnVerify ? "1" : "0") + " saveLabelMatched=" + (saveLookupVerify && saveLookupVerify.labelMatched ? "1" : "0") + " source=" + (saveLookupVerify ? saveLookupVerify.source : "none") + " " + BuildSaveDebugSnapshot(root),
-                now
-            );
             if (createdSignal) {
                 stage = "save";
                 State.buildCategoryPayloadHeroProbeInitRetries += 1;
@@ -11496,11 +11423,6 @@ function GetUIRoot() {
                 progressed = true;
                 stage = "verify";
             }
-            BuildSaveDebugLogThrottled(
-                "init_save_stage|" + (saveBtn ? "1" : "0") + "|" + (saveLookup && saveLookup.labelMatched ? "1" : "0") + "|" + (activated ? "1" : "0"),
-                "initializing_storage_build saveStage saveBtn=" + (saveBtn ? "1" : "0") + " labelMatched=" + (saveLookup && saveLookup.labelMatched ? "1" : "0") + " source=" + (saveLookup ? saveLookup.source : "none") + " activated=" + (activated ? "1" : "0") + (saveBtn ? " " + DescribeBuildButtonPanel(saveBtn) : "") + " " + BuildSaveDebugSnapshot(root),
-                now
-            );
             if (!progressed && !saveBtn) {
                 stage = "browse";
             }
@@ -12429,77 +12351,7 @@ function GetUIRoot() {
         }
     }
 
-    function BuildSaveDebugLog(msg) {
-        if (!BUILD_SAVE_DEBUG) return;
-        $.Msg("[QOLLock][BuildSaveDbg] " + msg);
-    }
-
-    function BuildSaveDebugLogThrottled(sig, msg, nowMs) {
-        if (!BUILD_SAVE_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.buildSaveDebugLastSig;
-        if (sameSig && now < (State.buildSaveDebugNextMs || 0)) return;
-        State.buildSaveDebugLastSig = sig || "";
-        State.buildSaveDebugNextMs = now + BUILD_SAVE_DEBUG_THROTTLE_MS;
-        BuildSaveDebugLog(msg);
-    }
-
-    function BuildClearDebugLog(msg) {
-        if (!BUILD_CLEAR_DEBUG) return;
-        $.Msg("[QOLLock][BuildClearDbg] " + msg);
-    }
-
-    function BuildClearDebugLogThrottled(sig, msg, nowMs) {
-        if (!BUILD_CLEAR_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.buildClearDebugLastSig;
-        if (sameSig && now < (State.buildClearDebugNextMs || 0)) return;
-        State.buildClearDebugLastSig = sig || "";
-        State.buildClearDebugNextMs = now + BUILD_CLEAR_DEBUG_THROTTLE_MS;
-        BuildClearDebugLog(msg);
-    }
-
-    function SetBuildClearDebugOverlayLine(lineText) {
-        if (!BUILD_CLEAR_DEBUG) return;
-        State.buildClearDebugOverlayLine = lineText ? String(lineText) : "";
-        State.clearSettingsLoaderLastRenderSig = "";
-    }
-
-    function BuildSaveDebugSnapshot(root) {
-        if (!BUILD_SAVE_DEBUG) return "";
-        if (!root) return "root=-";
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        var entry = GetBuildSaveCategoryNameEntry(root);
-        var hudBuilds = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroBuilds") : null;
-        var descEntry = hudBuilds && hudBuilds.FindChildTraverse ? hudBuilds.FindChildTraverse("CategoryDescriptionTextEntry") : null;
-        if (!descEntry && root.FindChildTraverse) descEntry = root.FindChildTraverse("CategoryDescriptionTextEntry");
-        var editBtn = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("EditHeroBuildButton") : null;
-        var saveBtn = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("SaveBuildButton") : null;
-        var editMode = IsBuildSaveEditModeActive(root);
-        var hasFocusedCategory = HasFocusedBuildCategory(selectedBuild);
-        var entryText = entry ? ReadPanelTextMaybe(entry) : "-";
-        var descText = descEntry ? ReadPanelTextMaybe(descEntry) : "-";
-        if (entryText && entryText.length > 64) entryText = entryText.slice(0, 64) + "...";
-        if (descText && descText.length > 64) descText = descText.slice(0, 64) + "...";
-        return [
-            "shop=" + (selectedBuild ? "1" : "0"),
-            "editMode=" + (editMode ? "1" : "0"),
-            "focusedCategory=" + (hasFocusedCategory ? "1" : "0"),
-            "storageHero=" + (State.buildSaveStorageHeroConfirmed ? "1" : "0"),
-            "storageSrc=" + (State.buildSaveStorageHeroConfirmedSource || "-"),
-            "mutClosed=" + (State.buildSaveMutationClosed ? "1" : "0"),
-            "targetSig=" + (State.buildSaveTargetBuildSig || "-"),
-            "targetTitle=" + (State.buildSaveTargetBuildTitle || "-"),
-            "targetStable=" + String(Number(State.buildSaveTargetStableHits) || 0),
-            "targetDrift=" + String(Number(State.buildSaveTargetDriftRetries) || 0),
-            "entry=" + (entry ? "1" : "0"),
-            "descEntry=" + (descEntry ? "1" : "0"),
-            "editBtn=" + (editBtn ? "1" : "0"),
-            "saveBtn=" + (saveBtn ? "1" : "0"),
-            "entryText=" + (entryText || "-"),
-            "descText=" + (descText || "-")
-        ].join(" ");
-    }
+    // (debug infrastructure removed — BuildSaveDebugLog/Throttled/Snapshot, BuildClearDebugLog/Throttled, SetBuildClearDebugOverlayLine)
 
     function GetBuildSaveHudPanel(root) {
         if (!root || !root.FindChildTraverse) return null;
@@ -12642,7 +12494,6 @@ function GetUIRoot() {
         return !!(text && String(text).trim().length > 0);
     }
     function DescribeBuildButtonPanel(panel) {
-        if (!BUILD_SAVE_DEBUG) return "";
         if (!panel) return "panel=-";
         var idText = ReadPanelIdTextMaybe(panel) || "-";
         var classText = ReadPanelClassTextMaybe(panel) || "-";
@@ -13710,10 +13561,6 @@ function GetUIRoot() {
         State.buildSaveTargetDriftRetries = 0;
         State.buildSaveTargetQuietUntilMs = 0;
         State.buildSaveCaptureStartedMs = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        BuildSaveDebugLog(
-            "capture_target sig=" + (State.buildSaveTargetBuildSig || "-") +
-            " title=" + (State.buildSaveTargetBuildTitle || "-")
-        );
         return (State.buildSaveTargetBuildSig || "").length > 0;
     }
 
@@ -13811,13 +13658,6 @@ function GetUIRoot() {
             State.buildSaveStage = "lock_target_build";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
 
-            BuildSaveDebugLogThrottled(
-                "target_drift|" + String(State.buildSaveTargetDriftRetries) + "|" + (reselect && reselect.ok ? "1" : "0"),
-                "target drift retries=" + String(State.buildSaveTargetDriftRetries) +
-                " reselectOk=" + (reselect && reselect.ok ? "1" : "0") +
-                " reason=" + (reselect && reselect.reason ? String(reselect.reason) : "-"),
-                nowMs
-            );
 
             if ((Number(State.buildSaveTargetDriftRetries) || 0) > BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES) {
                 FinishBuildSaveRequest(root, requestToken, "failed", "target_lock_failed");
@@ -14309,17 +14149,11 @@ function GetUIRoot() {
             var directSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
             if (!directSignature.confirmed) {
                 State.buildSaveStorageProvisionalHits = 0;
-                BuildSaveDebugLogThrottled(
-                    "storage_signature_wait|" + (directSignature.signature || "-"),
-                    "storage signature wait detail=" + (directSignature.detail || "-"),
-                    nowMs
-                );
                 return false;
             }
             State.buildSaveStorageHeroConfirmed = true;
             State.buildSaveStorageHeroConfirmedSource = source + "+signature";
             State.buildSaveStorageProvisionalHits = 0;
-            BuildSaveDebugLog("storage hero confirmed hero=" + hero + " source=" + source + " signature=1");
             return true;
         }
         if (hero && hero !== BUILD_SAVE_STORAGE_HERO_ID) {
@@ -14328,15 +14162,9 @@ function GetUIRoot() {
                 State.buildSaveStorageHeroConfirmed = true;
                 State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
                 State.buildSaveStorageProvisionalHits = 0;
-                BuildSaveDebugLog("storage hero confirmed by signature despite stale " + source + " hero=" + hero);
                 return true;
             } else {
                 State.buildSaveStorageProvisionalHits = 0;
-                BuildSaveDebugLogThrottled(
-                    "storage_confirm_conflict|" + hero + "|" + source,
-                    "storage hero conflict current=" + hero + " source=" + source,
-                    nowMs
-                );
                 return false;
             }
         }
@@ -14360,9 +14188,6 @@ function GetUIRoot() {
             State.buildSaveStorageHeroConfirmed = true;
             State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
             State.buildSaveStorageProvisionalHits = 0;
-            BuildSaveDebugLog(
-                "storage hero confirmed by signature runtime=" + (runtimeHero || "-") + "@" + (runtimeSource || "-")
-            );
             return true;
         }
 
@@ -14376,23 +14201,12 @@ function GetUIRoot() {
             if (State.buildSaveStorageProvisionalHits >= BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_REQUIRED_HITS) {
                 State.buildSaveStorageHeroConfirmed = true;
                 State.buildSaveStorageHeroConfirmedSource = "provisional_ui_ready";
-                BuildSaveDebugLog(
-                    "storage hero provisional confirm hits=" + String(State.buildSaveStorageProvisionalHits) +
-                    " retries=" + String(retries) +
-                    " elapsedMs=" + String(elapsedSinceSwitchMs) +
-                    " runtime=" + (runtimeHero || "-") + "@" + (runtimeSource || "-")
-                );
                 return true;
             }
         } else {
             State.buildSaveStorageProvisionalHits = 0;
         }
 
-        BuildSaveDebugLogThrottled(
-            "storage_confirm_wait|" + (hero || "-") + "|" + source,
-            "storage hero wait current=" + (hero || "-") + " source=" + source,
-            nowMs
-        );
         return false;
     }
     function EnsureBuildSaveStorageContextUi(root, nowMs) {
@@ -14426,13 +14240,6 @@ function GetUIRoot() {
         var navActivated = EnsureShopFavoritesNavActive(root, now, "buildSaveFavoritesActionNextMs", 0);
         if (closed || opened || navActivated) acted = true;
 
-        BuildSaveDebugLog(
-            "confirm_storage_context shop_reopen retries=" + retries +
-            " attempt=" + String(State.buildSaveStorageShopReopenAttempts) + "/" + String(BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS) +
-            " closed=" + (closed ? "1" : "0") +
-            " opened=" + (opened ? "1" : "0") +
-            " nav=" + (navActivated ? "1" : "0")
-        );
         return acted;
     }
 
@@ -14486,7 +14293,6 @@ function GetUIRoot() {
         State.heroRestorePendingRetries = 0;
         State.heroRestorePendingContext = contextLabel ? String(contextLabel) : "";
         HeroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
-        BuildSaveDebugLog("hero restore queued target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " initialSwitchOk=" + (switched ? "1" : "0"));
         return switched;
     }
 
@@ -14501,7 +14307,6 @@ function GetUIRoot() {
         var elapsed = now - (Number(State.heroRestorePendingStartedMs) || now);
         if (elapsed >= HERO_RESTORE_BLIND_SUCCESS_MS) {
             HeroReturnDebugLog("restore resolved(blind) target=" + targetHero + " ctx=" + (State.heroRestorePendingContext || "-"));
-            BuildSaveDebugLog("hero restore resolved(blind) target=" + targetHero + " ctx=" + (State.heroRestorePendingContext || "-"));
             QueueShopPulseAfterHeroRestore(now);
             ResetPendingHeroRestoreState();
             return;
@@ -14509,7 +14314,6 @@ function GetUIRoot() {
 
         if (elapsed > HERO_RESTORE_MAX_WAIT_MS) {
             HeroReturnDebugLog("restore timeout target=" + targetHero + " ctx=" + (State.heroRestorePendingContext || "-"));
-            BuildSaveDebugLog("hero restore timeout target=" + targetHero + " ctx=" + (State.heroRestorePendingContext || "-"));
             QueueShopPulseAfterHeroRestore(now);
             ResetPendingHeroRestoreState();
             return;
@@ -14525,7 +14329,6 @@ function GetUIRoot() {
             var retried = SelectHeroForBuildSave(targetHero);
             State.heroRestorePendingRetries = (Number(State.heroRestorePendingRetries) || 0) + 1;
             State.heroRestorePendingNextMs = now + HERO_RESTORE_RETRY_DELAY_MS;
-            BuildSaveDebugLog("hero restore retry target=" + targetHero + " retry=" + State.heroRestorePendingRetries + " ok=" + (retried ? "1" : "0"));
             return;
         }
 
@@ -14539,30 +14342,24 @@ function GetUIRoot() {
         if (!isFinite(delay) || delay < 0) delay = 0;
         if (typeof $.Schedule !== "function") {
             var switchedImmediate = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
-            BuildSaveDebugLog("switch back immediate target=" + hero + " ok=" + (switchedImmediate ? "1" : "0"));
             return switchedImmediate;
         }
-        BuildSaveDebugLog("switch back delayed target=" + hero + " delaySec=" + delay.toFixed(2));
         $.Schedule(delay, function() {
             var switched = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
-            BuildSaveDebugLog("switch back to " + hero + " ok=" + (switched ? "1" : "0") + " delayed=1");
         });
         return true;
     }
 
     function FinishBuildSaveRequest(root, token, state, message) {
         _TLog("save:Finish", state + " " + (message || ""));
-        BuildSaveDebugLog("finish state=" + state + " msg=" + message + " token=" + token + " switched=" + (State.buildSaveDidSwitchToStorageHero ? "1" : "0"));
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var didSwitchToStorageHero = !!State.buildSaveDidSwitchToStorageHero;
         var returnHero = NormalizeHeroId(State.buildSaveReturnHero) || GetConfiguredDefaultHeroId(State.lastConfig);
         if (State.buildSaveDidSwitchToStorageHero) {
             if (typeof QueueDelayedHeroRestore === "function") {
                 QueueDelayedHeroRestore(returnHero, "build_save_finish", BUILD_SAVE_RETURN_DELAY_SEC);
-                BuildSaveDebugLog("switch back delayed target=" + returnHero + " delaySec=" + Number(BUILD_SAVE_RETURN_DELAY_SEC).toFixed(2));
             } else {
                 var switchedBack = SelectHeroForBuildSave(returnHero);
-                BuildSaveDebugLog("switch back to " + returnHero + " ok=" + (switchedBack ? "1" : "0"));
             }
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
@@ -14582,13 +14379,6 @@ function GetUIRoot() {
     }
 
     function FinishBuildClearRequest(root, token, state, message) {
-        BuildClearDebugLog(
-            "finish state=" + String(state || "") +
-            " msg=" + String(message || "") +
-            " token=" + String(token || "") +
-            " switched=" + (State.buildClearDidSwitchToStorageHero ? "1" : "0") +
-            " deleted=" + String(Number(State.buildClearDeletedCount) || 0)
-        );
         var didSwitchToStorageHero = !!State.buildClearDidSwitchToStorageHero;
         var returnHero = NormalizeHeroId(State.buildClearReturnHero) || GetConfiguredDefaultHeroId(State.lastConfig);
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
@@ -14673,22 +14463,8 @@ function GetUIRoot() {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var didSet = false;
         var entry = GetBuildSaveCategoryNameEntry(root);
-        BuildSaveDebugLogThrottled(
-            "write_entry_present|" + (entry ? "1" : "0"),
-            "write attempt entryPresent=" + (entry ? "1" : "0") + " payloadLen=" + payloadText.length + " " + BuildSaveDebugSnapshot(root),
-            nowMs
-        );
         if (entry) {
             var before = ReadPanelTextMaybe(entry);
-            if (BUILD_SAVE_DEBUG) {
-                var methodSig = [
-                    "SetText=" + (typeof entry.SetText),
-                    "Submit=" + (typeof entry.Submit),
-                    "InsertText=" + (typeof entry.InsertText),
-                    "SetCursorOffset=" + (typeof entry.SetCursorOffset)
-                ].join(" ");
-                BuildSaveDebugLog("entry methods " + methodSig);
-            }
             var setViaMethod = false;
             if (typeof entry.SetText === "function") {
                 try {
@@ -14715,7 +14491,6 @@ function GetUIRoot() {
             try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e7) {}
             DefocusBuildSaveCategoryEntry(root, null);
             var after = ReadPanelTextMaybe(entry);
-            BuildSaveDebugLog("write name entry before=" + (before || "-") + " after=" + (after || "-"));
         }
         return didSet;
     }
@@ -14767,7 +14542,6 @@ function GetUIRoot() {
         }
 
         if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
-            BuildSaveDebugLog("verify tokens seen=" + (seen.length > 0 ? seen.join(",") : "-"));
             return false;
         }
 
@@ -14779,7 +14553,6 @@ function GetUIRoot() {
                 if (checkToken(token)) return true;
             }
         }
-        BuildSaveDebugLog("verify tokens seen=" + (seen.length > 0 ? seen.join(",") : "-"));
         return false;
     }
 
@@ -14837,8 +14610,6 @@ function GetUIRoot() {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
             didSwitchFlagKey: "buildClearDidSwitchToStorageHero",
-            debugLog: BuildClearDebugLog,
-            setOverlayLine: SetBuildClearDebugOverlayLine,
             setStatus: function(activeRoot, token) {
                 SetBuildClearStatus(activeRoot, "pending", "switching_to_airheart", token);
             }
@@ -14850,7 +14621,6 @@ function GetUIRoot() {
             stageKey: "buildClearStage",
             nextActionKey: "buildClearNextActionMs",
             nextStage: "await_user_shop_open",
-            debugLog: BuildClearDebugLog,
             debugMessage: "post hero switch delay done; entering await_user_shop_open",
             onEnterNextStage: function(nowValue) {
                 State.buildClearStorageConfirmStartedMs = nowValue;
@@ -14868,8 +14638,6 @@ function GetUIRoot() {
             if (gateReady) {
                 State.buildClearUserShopGateSatisfied = true;
                 _TLog("clear:AdvanceStage", "await_user_shop_open → open_browse");
-                BuildClearDebugLog("await_user_shop_open satisfied shopOpen=1 selectedBuild=1; entering open_browse");
-                SetBuildClearDebugOverlayLine("user gate satisfied; opening builds");
                 State.buildClearStage = "open_browse";
                 State.buildClearRetries = 0;
                 State.buildClearNextActionMs = nowMs;
@@ -14879,7 +14647,6 @@ function GetUIRoot() {
             State.buildClearStorageConfirmRetries = (Number(State.buildClearStorageConfirmRetries) || 0) + 1;
 
             SetBuildClearStatus(root, "pending", "await_user_open_shop", requestToken);
-            SetBuildClearDebugOverlayLine("waiting user to open shop on airheart");
             State.buildClearNextActionMs = nowMs + BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS;
             return;
         }
@@ -14888,11 +14655,6 @@ function GetUIRoot() {
             var browseLookup = FindBrowseBuildsButton(root);
             var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
             var browseOk = ActivatePanelSafe(browseBtn);
-            BuildClearDebugLog(
-                "open_browse browseOk=" + (browseOk ? "1" : "0") +
-                " source=" + (browseLookup ? browseLookup.source : "none") +
-                " scanned=" + (browseLookup ? browseLookup.scanned : 0) + "/" + (browseLookup ? browseLookup.roots : 0)
-            );
             _TLog("clear:AdvanceStage", "open_browse → clear_loop ok=" + (browseOk ? "1" : "0"));
             State.buildClearStage = "clear_loop";
             State.buildClearNextActionMs = nowMs + BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS;
@@ -14920,13 +14682,6 @@ function GetUIRoot() {
             var reselectCurrent = (reselect.currentIndex === undefined || reselect.currentIndex === null) ? "-" : String(reselect.currentIndex);
             var reselectTarget = (reselect.targetIndex === undefined || reselect.targetIndex === null) ? "-" : String(reselect.targetIndex);
             var reselectCount = (reselect.entryCount === undefined || reselect.entryCount === null) ? "-" : String(reselect.entryCount);
-            BuildClearDebugLog(
-                "reselect_after_delete ok=" + (reselect.ok ? "1" : "0") +
-                " reason=" + (reselect.reason || "-") +
-                " current=" + reselectCurrent +
-                " target=" + reselectTarget +
-                " entries=" + reselectCount
-            );
             if (reselect.ok) {
                 State.buildClearRetries = 0;
                 State.buildClearStage = "clear_loop";
@@ -14946,11 +14701,6 @@ function GetUIRoot() {
 
         if (State.buildClearStage === "clear_loop") {
             if (!State.buildClearUserShopGateSatisfied) {
-                BuildClearDebugLogThrottled(
-                    "user_gate_missing|" + State.buildClearRetries,
-                    "clear loop blocked; user shop gate not satisfied",
-                    nowMs
-                );
                 State.buildClearStage = "await_user_shop_open";
                 State.buildClearNextActionMs = nowMs + BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS;
                 SetBuildClearStatus(root, "pending", "await_user_open_shop", requestToken);
@@ -14970,11 +14720,6 @@ function GetUIRoot() {
 
             if (IsStorageBuildListEmpty(root)) {
                 State.buildClearEmptyConfirmHits += 1;
-                BuildClearDebugLogThrottled(
-                    "verify_clear|" + State.buildClearEmptyConfirmHits,
-                    "verify_clear hits=" + State.buildClearEmptyConfirmHits + "/" + BUILD_CLEAR_EMPTY_CONFIRM_HITS,
-                    nowMs
-                );
                 SetBuildClearStatus(root, "pending", "verifying_clear", requestToken);
                 if (State.buildClearEmptyConfirmHits >= BUILD_CLEAR_EMPTY_CONFIRM_HITS) {
                     _TLog("clear:AdvanceStage", "verify_clear done → success");
@@ -14991,11 +14736,6 @@ function GetUIRoot() {
                 if (deleteTrigger.mode !== "confirm") {
                     State.buildClearDeletedCount += 1;
                 }
-                BuildClearDebugLog(
-                    "delete_trigger ok=1 mode=" + deleteTrigger.mode +
-                    " source=" + deleteTrigger.source +
-                    " deleted=" + String(Number(State.buildClearDeletedCount) || 0)
-                );
                 State.buildClearRetries = 0;
                 if (deleteTrigger.mode === "confirm") {
                     State.buildClearStage = "reselect_after_delete";
@@ -15013,11 +14753,6 @@ function GetUIRoot() {
             }
 
             State.buildClearRetries += 1;
-            BuildClearDebugLogThrottled(
-                "delete_retry|" + State.buildClearRetries,
-                "delete_trigger ok=0 retry=" + State.buildClearRetries,
-                nowMs
-            );
             State.buildClearNextActionMs = nowMs + BUILD_CLEAR_ACTION_DELAY_MS;
             SetBuildClearStatus(root, "pending", "deleting_build", requestToken);
             if (State.buildClearRetries > BUILD_CLEAR_MAX_RETRIES) {
@@ -15107,13 +14842,6 @@ function GetUIRoot() {
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = !!reuseGateReady;
         SetBuildClearStatus(root, "pending", reuseLoaderAirheart ? "reuse_airheart_context" : "starting", requestToken);
-        BuildClearDebugLog(
-            "start token=" + requestToken +
-            " returnHero=" + (State.buildClearReturnHero || "-") +
-            " reuseLoaderAirheart=" + (reuseLoaderAirheart ? "1" : "0") +
-            " gateReady=" + (reuseGateReady ? "1" : "0")
-        );
-        SetBuildClearDebugOverlayLine("clear start token=" + requestToken);
     }
 
     function TickBuildClearRequestRuntime(root, nowMs, requestToken) {
@@ -15187,7 +14915,6 @@ function GetUIRoot() {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             didSwitchFlagKey: "buildSaveDidSwitchToStorageHero",
-            debugLog: BuildSaveDebugLog,
             onSwitchSuccess: function(nowValue) {
                 State.buildSaveStorageLastSwitchMs = nowValue;
                 State.buildSaveStorageProvisionalHits = 0;
@@ -15203,7 +14930,6 @@ function GetUIRoot() {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             nextStage: "confirm_storage_context",
-            debugLog: BuildSaveDebugLog,
             debugMessage: "post hero switch delay done; entering confirm_storage_context",
             onEnterNextStage: function(nowValue) {
                 State.buildSaveStorageConfirmStartedMs = nowValue;
@@ -15249,11 +14975,6 @@ function GetUIRoot() {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
             SetBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
-            BuildSaveDebugLogThrottled(
-                "waiting_for_shop|" + State.buildSaveRetries,
-                "waiting_for_shop retry=" + State.buildSaveRetries + " " + BuildSaveDebugSnapshot(root),
-                nowMs
-            );
             if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                 FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
             }
@@ -15285,14 +15006,8 @@ function GetUIRoot() {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                 SetBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
-                BuildSaveDebugLogThrottled(
-                    "wait_editor|" + State.buildSaveRetries,
-                    "opening_edit_mode retry=" + State.buildSaveRetries + " triggerOk=" + (editTriggered ? "1" : "0") + " " + BuildSaveDebugSnapshot(root),
-                    nowMs
-                );
                 var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
                 if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
-                    BuildSaveDebugLog("edit mode class missing; proceeding with entry fallback");
                     State.buildSaveStage = "wait_category_focus";
                     State.buildSaveNextActionMs = nowMs;
                     return;
@@ -15309,7 +15024,6 @@ function GetUIRoot() {
         if (State.buildSaveStage === "wait_category_focus") {
             if (!FocusFirstBuildCategory(selectedBuild)) {
                 if (HasWritableBuildCategoryEntry(root) && IsBuildSaveEditModeActive(root)) {
-                    BuildSaveDebugLog("wait_category_focus fallback: edit mode + writable entry; proceeding to write");
                     State.buildSaveStage = "write";
                     State.buildSaveNextActionMs = nowMs;
                     SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
@@ -15322,18 +15036,12 @@ function GetUIRoot() {
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     if (!initReady) {
                         SetBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
-                        BuildSaveDebugLogThrottled(
-                            "init_storage_build|" + initRetries,
-                            "initializing_storage_build initRetry=" + initRetries + " " + BuildSaveDebugSnapshot(root),
-                            nowMs
-                        );
                         if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
                             FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
                         }
                         return;
                     }
                     if (HasWritableBuildCategoryEntry(root)) {
-                        BuildSaveDebugLog("wait_category_focus fallback: writable category entry detected; proceeding to write");
                         State.buildSaveStage = "write";
                         State.buildSaveNextActionMs = nowMs;
                         SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
@@ -15341,11 +15049,6 @@ function GetUIRoot() {
                     }
                     State.buildSaveRetries += 1;
                     SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
-                    BuildSaveDebugLogThrottled(
-                        "create_category_ready|" + initRetries,
-                        "storage build initialized; retrying category focus initRetry=" + initRetries + " focusRetry=" + State.buildSaveRetries + " " + BuildSaveDebugSnapshot(root),
-                        nowMs
-                    );
                     if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                         FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
                     }
@@ -15355,17 +15058,11 @@ function GetUIRoot() {
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                 }
-                BuildSaveDebugLogThrottled(
-                    "focus_category|" + State.buildSaveRetries,
-                    "focusing_category retry=" + State.buildSaveRetries + " " + BuildSaveDebugSnapshot(root),
-                    nowMs
-                );
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
                 }
                 return;
             }
-            BuildSaveDebugLog("edit mode + category focus ready; proceeding to write");
             State.buildSaveStage = "write";
         }
 
@@ -15378,11 +15075,6 @@ function GetUIRoot() {
                 State.buildSaveStage = "confirm_storage_context";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
                 SetBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
-                BuildSaveDebugLogThrottled(
-                    "write_signature_wait|" + (writeSignature.signature || "-"),
-                    "write blocked until storage signature validates detail=" + (writeSignature.detail || "-"),
-                    nowMs
-                );
                 return;
             }
             if (!SetBuildCategoryNameText(root, payloadText)) {
@@ -15404,19 +15096,15 @@ function GetUIRoot() {
             var saveEditModeActive = IsBuildSaveEditModeActive(root);
             if (!HasFocusedBuildCategory(selectedBuild)) {
                 if (HasWritableBuildCategoryEntry(root)) {
-                    BuildSaveDebugLog("save stage missing focused category; continuing with writable entry fallback");
                 } else {
-                    BuildSaveDebugLog("save stage missing focused category; returning to focus stage");
                     State.buildSaveStage = "wait_category_focus";
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     return;
                 }
             }
             if (!saveEditModeActive) {
-                BuildSaveDebugLog("save stage editMode=0; continuing with entry fallback");
             }
             var committed = CommitCategoryNameEdit(root, selectedBuild, payloadText);
-            BuildSaveDebugLog("pre-save commit ok=" + (committed ? "1" : "0") + " " + BuildSaveDebugSnapshot(root));
             var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
             State.buildSaveMutationClosed = true;
             _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
@@ -15424,16 +15112,10 @@ function GetUIRoot() {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
             SetBuildSaveStatus(root, "pending", "saving", requestToken);
-            BuildSaveDebugLog("save trigger ok=" + (saveTriggered ? "1" : "0") + " retry=" + State.buildSaveRetries + " " + BuildSaveDebugSnapshot(root));
             return;
         }
 
         if (State.buildSaveStage === "verify") {
-            BuildSaveDebugLogThrottled(
-                "verify|" + State.buildSaveRetries,
-                "verify retry=" + State.buildSaveRetries + " " + BuildSaveDebugSnapshot(root),
-                nowMs
-            );
             if (CurrentBuildHasPayload(root, payloadText)) {
                 FinishBuildSaveRequest(root, requestToken, "success", "saved");
                 return;
@@ -15447,7 +15129,6 @@ function GetUIRoot() {
                 State.buildSaveRetries < BUILD_SAVE_MAX_RETRIES &&
                 !State.buildSaveMutationClosed
             ) {
-                BuildSaveDebugLog("verify detected missing entry token; reopening edit/write path");
                 TriggerBuildEditMode(selectedBuild);
                 State.buildSaveStage = "wait_category_focus";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
@@ -15463,7 +15144,6 @@ function GetUIRoot() {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
             SetBuildSaveStatus(root, "pending", "verifying", requestToken);
-            BuildSaveDebugLog("verify retry save trigger ok=" + (saveTriggeredAgain ? "1" : "0") + " nextRetry=" + State.buildSaveRetries);
             return;
         }
 
@@ -15493,10 +15173,8 @@ function GetUIRoot() {
             var pendingReturnHero = NormalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
             if (typeof QueueDelayedHeroRestore === "function") {
                 QueueDelayedHeroRestore(pendingReturnHero, "build_save_state_exit", BUILD_SAVE_RETURN_DELAY_SEC);
-                BuildSaveDebugLog("state left pending; queued delayed restore hero=" + pendingReturnHero);
             } else {
                 var switchedBackEarly = SelectHeroForBuildSave(pendingReturnHero);
-                BuildSaveDebugLog("state left pending; switched back early ok=" + (switchedBackEarly ? "1" : "0"));
             }
         }
         ResetBuildSaveRuntimeState();
@@ -15565,12 +15243,6 @@ function GetUIRoot() {
         State.buildSaveCaptureStartedMs = nowMs;
         ResetBuildCategoryPayloadProbeInitState();
         SetBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
-        BuildSaveDebugLog(
-            "start token=" + requestToken +
-            " payloadLen=" + payloadText.length +
-            " reuseLoaderAirheart=" + (reuseLoaderAirheartSave ? "1" : "0") +
-            " " + BuildSaveDebugSnapshot(root)
-        );
     }
 
     function TickBuildSaveRequestRuntime(root, nowMs, requestToken, payloadText) {
