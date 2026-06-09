@@ -128,7 +128,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
     // ── GetBuildSaveCategoryNameEntry ──
     function GetBuildSaveCategoryNameEntry(root) {
-        var hudBuilds = GetBuildSaveHudPanel(root);
+        var hudBuilds = QOL.getBuildSaveHudPanel(root);
         var entry = hudBuilds && hudBuilds.FindChildTraverse ? hudBuilds.FindChildTraverse("CategoryNameTextEntry") : null;
         if (!entry && root && root.FindChildTraverse) entry = root.FindChildTraverse("CategoryNameTextEntry");
         return entry || null;
@@ -136,7 +136,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
     // ── IsBuildSaveEditModeActive ──
     function IsBuildSaveEditModeActive(root) {
-        var hudBuilds = GetBuildSaveHudPanel(root);
+        var hudBuilds = QOL.getBuildSaveHudPanel(root);
         if (!hudBuilds || !hudBuilds.BHasClass) return false;
         try {
             return !!hudBuilds.BHasClass("gEditingBuilds");
@@ -173,10 +173,10 @@ function ResetBuildSaveRequestAttributes(root) {
                 panelId = "";
             }
             if (panelId !== "BuildCategoryHeader") continue;
-            ActivatePanelSafe(panel);
+            QOL.activatePanelSafe(panel);
             var panelParent = null;
             try { panelParent = panel.GetParent ? panel.GetParent() : null; } catch (e1) { panelParent = null; }
-            ActivatePanelSafe(panelParent);
+            QOL.activatePanelSafe(panelParent);
         }
 
         if (HasFocusedBuildCategory(selectedBuild)) return true;
@@ -190,10 +190,10 @@ function ResetBuildSaveRequestAttributes(root) {
             var nodeId = "";
             try { nodeId = node.id ? String(node.id) : ""; } catch (e2) { nodeId = ""; }
             if (nodeId === "BuildCategoryHeader") {
-                if (ActivatePanelSafe(node)) activatedAny = true;
+                if (QOL.activatePanelSafe(node)) activatedAny = true;
                 var nodeParent = null;
                 try { nodeParent = node.GetParent ? node.GetParent() : null; } catch (e3) { nodeParent = null; }
-                if (ActivatePanelSafe(nodeParent)) activatedAny = true;
+                if (QOL.activatePanelSafe(nodeParent)) activatedAny = true;
             }
             var childCount = 0;
             try { childCount = node.GetChildCount ? node.GetChildCount() : 0; } catch (e4) { childCount = 0; }
@@ -215,14 +215,14 @@ function ResetBuildSaveRequestAttributes(root) {
             host = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         }
         var header = host && host.FindChildTraverse ? host.FindChildTraverse("BuildCategoryHeader") : null;
-        if (header && ActivatePanelSafe(header)) activated = true;
+        if (header && QOL.activatePanelSafe(header)) activated = true;
         var headerParent = null;
         try { headerParent = header && header.GetParent ? header.GetParent() : null; } catch (e0) { headerParent = null; }
-        if (headerParent && ActivatePanelSafe(headerParent)) activated = true;
-        if (!activated && host && ActivatePanelSafe(host)) activated = true;
+        if (headerParent && QOL.activatePanelSafe(headerParent)) activated = true;
+        if (!activated && host && QOL.activatePanelSafe(host)) activated = true;
         if (!activated) {
-            var hudBuilds = GetBuildSaveHudPanel(root);
-            if (hudBuilds && ActivatePanelSafe(hudBuilds)) activated = true;
+            var hudBuilds = QOL.getBuildSaveHudPanel(root);
+            if (hudBuilds && QOL.activatePanelSafe(hudBuilds)) activated = true;
         }
         return activated;
     }
@@ -255,7 +255,7 @@ function ResetBuildSaveRequestAttributes(root) {
     function HasWritableBuildCategoryEntry(root) {
         var entry = GetBuildSaveCategoryNameEntry(root);
         if (!entry || !IsPanelValid(entry)) return false;
-        var text = ReadPanelTextMaybe(entry);
+        var text = QOL.readPanelTextMaybe(entry);
         return !!(text && String(text).trim().length > 0);
     }
 
@@ -269,10 +269,10 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         if (!State.buildSaveTargetBuildSig && !State.buildSaveTargetBuildTitle) {
-            CaptureBuildSaveTargetSelection(root, selectedBuild, nowMs);
+            QOL.captureBuildSaveTargetSelection(root, selectedBuild, nowMs);
         }
 
-        if (!IsBuildSaveTargetSelectionMatch(root, selectedBuild)) {
+        if (!QOL.isBuildSaveTargetSelectionMatch(root, selectedBuild)) {
             if (State.buildSaveMutationClosed) {
                 FinishBuildSaveRequest(root, requestToken, "failed", "target_drift_after_commit");
                 return false;
@@ -283,9 +283,9 @@ function ResetBuildSaveRequestAttributes(root) {
             State.buildSaveTargetDriftRetries = (Number(State.buildSaveTargetDriftRetries) || 0) + 1;
             State.buildSaveMutationClosed = false;
 
-            var reselect = TryReselectBuildSaveTargetByTitle(root, State.buildSaveTargetBuildTitle);
+            var reselect = QOL.tryReselectBuildSaveTargetByTitle(root, State.buildSaveTargetBuildTitle);
             if ((!reselect || !reselect.ok) && IsPanelValid(State.buildSaveTargetBuildPanel)) {
-                ActivatePanelSafe(State.buildSaveTargetBuildPanel);
+                QOL.activatePanelSafe(State.buildSaveTargetBuildPanel);
             }
 
             QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
@@ -331,7 +331,7 @@ function ResetBuildSaveRequestAttributes(root) {
         var hero = QOL.normalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         if (hero === BUILD_SAVE_STORAGE_HERO_ID) {
-            var directSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            var directSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
             if (!directSignature.confirmed) {
                 State.buildSaveStorageProvisionalHits = 0;
                 return false;
@@ -342,8 +342,8 @@ function ResetBuildSaveRequestAttributes(root) {
             return true;
         }
         if (hero && hero !== BUILD_SAVE_STORAGE_HERO_ID) {
-            var conflictSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-            if (conflictSignature.confirmed && (HasBuildSaveStorageUiReady(root) || QOL.isBuildCategoryPayloadSourceReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+            var conflictSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (conflictSignature.confirmed && (QOL.hasBuildSaveStorageUiReady(root) || QOL.isBuildCategoryPayloadSourceReady(root) || QOL.isHudClassActive(root, "gShopOpen"))) {
                 State.buildSaveStorageHeroConfirmed = true;
                 State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
                 State.buildSaveStorageProvisionalHits = 0;
@@ -358,18 +358,18 @@ function ResetBuildSaveRequestAttributes(root) {
         var retries = Number(State.buildSaveStorageConfirmRetries) || 0;
         var switchedAtMs = Number(State.buildSaveStorageLastSwitchMs) || 0;
         var elapsedSinceSwitchMs = switchedAtMs > 0 ? (now - switchedAtMs) : 0;
-        var uiReady = HasBuildSaveStorageUiReady(root);
+        var uiReady = QOL.hasBuildSaveStorageUiReady(root);
         var sourceReady = QOL.isBuildCategoryPayloadSourceReady(root);
-        var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
+        var runtimeSignal = QOL.resolveBuildSaveStorageHeroSignal(root);
         var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
         var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
         var runtimeConflict =
             !!runtimeHero &&
             runtimeHero !== BUILD_SAVE_STORAGE_HERO_ID &&
-            !IsBuildSaveStorageRuntimeSourceStale(runtimeSource);
-        var signatureOnly = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            !QOL.isBuildSaveStorageRuntimeSourceStale(runtimeSource);
+        var signatureOnly = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
 
-        if (signatureOnly.confirmed && uiReady && (IsHudClassActive(root, "gShopOpen") || sourceReady)) {
+        if (signatureOnly.confirmed && uiReady && (QOL.isHudClassActive(root, "gShopOpen") || sourceReady)) {
             State.buildSaveStorageHeroConfirmed = true;
             State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
             State.buildSaveStorageProvisionalHits = 0;
@@ -379,7 +379,7 @@ function ResetBuildSaveRequestAttributes(root) {
         if (!runtimeConflict &&
             signatureOnly.confirmed &&
             uiReady &&
-            (IsHudClassActive(root, "gShopOpen") || sourceReady) &&
+            (QOL.isHudClassActive(root, "gShopOpen") || sourceReady) &&
             retries >= BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES &&
             elapsedSinceSwitchMs >= BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS) {
             State.buildSaveStorageProvisionalHits = (Number(State.buildSaveStorageProvisionalHits) || 0) + 1;
@@ -400,9 +400,9 @@ function ResetBuildSaveRequestAttributes(root) {
         _TLog("save:ContextUi", "nowMs=" + nowMs);
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var acted = false;
-        if (EnsureStorageHeroFavoritesHeaderVisible(root, now)) acted = true;
+        if (QOL.ensureStorageHeroFavoritesHeaderVisible(root, now)) acted = true;
 
-        if (EnsureShopFavoritesNavActive(root, now, "buildSaveFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
+        if (QOL.ensureShopFavoritesNavActive(root, now, "buildSaveFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
             acted = true;
         }
 
@@ -422,9 +422,9 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveStorageShopReopenNextMs = now + BUILD_SAVE_STORAGE_CONFIRM_REOPEN_COOLDOWN_MS;
         State.buildSaveStorageShopReopenAttempts = reopenAttempts + 1;
 
-        var closed = TryCloseHeroShopForLoader(root);
-        var opened = TryOpenHeroShopForHeroProbe(root, now);
-        var navActivated = EnsureShopFavoritesNavActive(root, now, "buildSaveFavoritesActionNextMs", 0);
+        var closed = QOL.tryCloseHeroShopForLoader(root);
+        var opened = QOL.tryOpenHeroShopForHeroProbe(root, now);
+        var navActivated = QOL.ensureShopFavoritesNavActive(root, now, "buildSaveFavoritesActionNextMs", 0);
         if (closed || opened || navActivated) acted = true;
 
         return acted;
@@ -459,12 +459,12 @@ function ResetBuildSaveRequestAttributes(root) {
         if (SAVE_SETTINGS_LOADER_ENABLED) {
             var detail = message ? String(message) : "";
             if (state === "success") {
-                if (GetSaveSettingsLoaderStepState("verify_save") === "active") {
-                    SetSaveSettingsLoaderStepState("verify_save", "done", "Payload verified.");
+                if (QOL.getSaveSettingsLoaderStepState("verify_save") === "active") {
+                    QOL.setSaveSettingsLoaderStepState("verify_save", "done", "Payload verified.");
                 }
-                FinalizeSaveSettingsLoaderSession("success", "Settings saved.", nowMs, didSwitchToStorageHero);
+                QOL.finalizeSaveSettingsLoaderSession("success", "Settings saved.", nowMs, didSwitchToStorageHero);
             } else {
-                FinalizeSaveSettingsLoaderSession("failed", detail || "Save failed.", nowMs, didSwitchToStorageHero);
+                QOL.finalizeSaveSettingsLoaderSession("failed", detail || "Save failed.", nowMs, didSwitchToStorageHero);
             }
         }
         ResetBuildSaveRuntimeState();
@@ -483,7 +483,7 @@ function ResetBuildSaveRequestAttributes(root) {
         } catch (e0) {}
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var editButton = selectedBuild.FindChildTraverse("EditHeroBuildButton");
-            if (ActivatePanelSafe(editButton)) {
+            if (QOL.activatePanelSafe(editButton)) {
                 activated = true;
             }
         }
@@ -501,7 +501,7 @@ function ResetBuildSaveRequestAttributes(root) {
         } catch (e0) {}
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var saveButton = selectedBuild.FindChildTraverse("SaveBuildButton");
-            if (ActivatePanelSafe(saveButton)) {
+            if (QOL.activatePanelSafe(saveButton)) {
                 activated = true;
             }
         }
@@ -515,7 +515,7 @@ function ResetBuildSaveRequestAttributes(root) {
         var didSet = false;
         var entry = GetBuildSaveCategoryNameEntry(root);
         if (entry) {
-            var before = ReadPanelTextMaybe(entry);
+            var before = QOL.readPanelTextMaybe(entry);
             var setViaMethod = false;
             if (typeof entry.SetText === "function") {
                 try {
@@ -541,7 +541,7 @@ function ResetBuildSaveRequestAttributes(root) {
             }
             try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e7) {}
             DefocusBuildSaveCategoryEntry(root, null);
-            var after = ReadPanelTextMaybe(entry);
+            var after = QOL.readPanelTextMaybe(entry);
         }
         return didSet;
     }
@@ -551,7 +551,7 @@ function ResetBuildSaveRequestAttributes(root) {
         var entry = GetBuildSaveCategoryNameEntry(root);
         if (!entry) return false;
         var didCommit = false;
-        var currentText = ReadPanelTextMaybe(entry);
+        var currentText = QOL.readPanelTextMaybe(entry);
         if (currentText !== payloadText) {
             try {
                 entry.text = payloadText;
@@ -563,7 +563,7 @@ function ResetBuildSaveRequestAttributes(root) {
         // Simulate clicking away from the text field before pressing Save.
         var header = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("BuildCategoryHeader") : null;
         if (header) {
-            if (ActivatePanelSafe(header)) {
+            if (QOL.activatePanelSafe(header)) {
                 didCommit = true;
             }
         }
@@ -573,7 +573,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
     // ── CurrentBuildHasPayload ──
     function CurrentBuildHasPayload(root, payloadText) {
-        var expectedToken = ExtractBuildCategoryPayloadToken(payloadText);
+        var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
         var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
@@ -585,13 +585,13 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         var directEntry = GetBuildSaveCategoryNameEntry(root);
-        if (checkToken(ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(directEntry)))) return true;
+        if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntry)))) return true;
 
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
-            if (checkToken(ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(directHeader)))) return true;
+            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directHeader)))) return true;
             var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
-            if (checkToken(ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(directEntryInBuild)))) return true;
+            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntryInBuild)))) return true;
         }
 
         if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
@@ -602,7 +602,7 @@ function ResetBuildSaveRequestAttributes(root) {
         for (var c = 0; c < classNames.length; c++) {
             var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
             for (var i = 0; i < labels.length; i++) {
-                var token = ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(labels[i]));
+                var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(labels[i]));
                 if (checkToken(token)) return true;
             }
         }
@@ -742,7 +742,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 }
                 var headerCount = CountBuildCategoryHeaders(selectedBuild);
                 if (headerCount <= 0) {
-                    var initReady = EnsureStorageBuildInitialized(root, nowMs);
+                    var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
                     var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     if (!initReady) {
@@ -780,7 +780,7 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         if (State.buildSaveStage === "write") {
-            var writeSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            var writeSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
             if (!writeSignature.confirmed) {
                 _TLog("save:WriteCheck", "signature not confirmed — falling back to confirm_storage_context");
                 State.buildSaveStorageHeroConfirmed = false;
@@ -841,8 +841,8 @@ function ResetBuildSaveRequestAttributes(root) {
             }
 
             var verifyEntry = GetBuildSaveCategoryNameEntry(root);
-            var verifyEntryText = ReadPanelTextMaybe(verifyEntry);
-            var verifyEntryToken = ExtractBuildCategoryPayloadToken(verifyEntryText);
+            var verifyEntryText = QOL.readPanelTextMaybe(verifyEntry);
+            var verifyEntryToken = QOL.extractBuildCategoryPayloadToken(verifyEntryText);
             if (
                 (!verifyEntryText || verifyEntryText.length === 0 || !verifyEntryToken) &&
                 State.buildSaveRetries < BUILD_SAVE_MAX_RETRIES &&
@@ -876,7 +876,7 @@ function ResetBuildSaveRequestAttributes(root) {
     function TryHandleBuildSaveUnavailableRoot(root, nowMs) {
         if (root && root.GetAttributeString) return false;
         if (SAVE_SETTINGS_LOADER_ENABLED && State.saveSettingsLoaderSessionActive) {
-            FinalizeSaveSettingsLoaderSession("failed", "Save context unavailable.", nowMs, false);
+            QOL.finalizeSaveSettingsLoaderSession("failed", "Save context unavailable.", nowMs, false);
         }
         ResetBuildSaveRuntimeState();
         return true;
@@ -889,7 +889,7 @@ function ResetBuildSaveRequestAttributes(root) {
             var endCode = requestState === "success" ? "success" : "failed";
             var endDetail = requestMessage ? String(requestMessage) : (requestState === "success" ? "Settings save complete." : "Save ended.");
             var switchedForFinalize = !!State.buildSaveDidSwitchToStorageHero;
-            FinalizeSaveSettingsLoaderSession(endCode, endDetail, nowMs, switchedForFinalize);
+            QOL.finalizeSaveSettingsLoaderSession(endCode, endDetail, nowMs, switchedForFinalize);
         }
         if (State.buildSaveDidSwitchToStorageHero) {
             var pendingReturnHero = QOL.normalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
@@ -912,7 +912,7 @@ function ResetBuildSaveRequestAttributes(root) {
             _TLog("save:EnsureToken", "new token=" + String(requestToken).slice(0, 8));
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
-            BeginSaveSettingsLoaderSession(requestToken, nowMs);
+            QOL.beginSaveSettingsLoaderSession(requestToken, nowMs);
         }
         return requestToken;
     }
@@ -973,7 +973,7 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── TickBuildSaveRequestRuntime ──
     function TickBuildSaveRequestRuntime(root, nowMs, requestToken, payloadText) {
         if (SAVE_SETTINGS_LOADER_ENABLED) {
-            UpdateSaveSettingsLoaderFromBuildSaveState(State.buildSaveStage, root.GetAttributeString(BUILD_SAVE_MSG_ATTR, ""));
+            QOL.updateSaveSettingsLoaderFromBuildSaveState(State.buildSaveStage, root.GetAttributeString(BUILD_SAVE_MSG_ATTR, ""));
         }
         if (nowMs < (State.buildSaveNextActionMs || 0)) return;
         if (nowMs - (State.buildSaveStartedMs || nowMs) > BUILD_SAVE_TIMEOUT_MS) {

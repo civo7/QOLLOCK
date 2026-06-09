@@ -157,7 +157,7 @@
             State.buildCategoryPayloadHeroProbeReturnHeroSource = sourceLabel ? String(sourceLabel) : "payload_default_hero";
             return heroFromConfig;
         }
-        var fallback = GetLoaderBaseDefaultHeroId();
+        var fallback = QOL.getLoaderBaseDefaultHeroId();
         State.buildCategoryPayloadHeroProbeReturnHero = fallback;
         State.buildCategoryPayloadHeroProbeReturnHeroSource = "base_default_hero";
         return fallback;
@@ -233,7 +233,7 @@
         // This is the only confirmed working shop-open path in the current build.
         // CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist in any DLL,
         // and CitadelOpenUpgradeShop is a type-0 notification event (native->JS).
-        if (!IsHudClassActive(root, "gShopOpen") && !IsBrowseBuildsPopupOpen(root)) {
+        if (!QOL.isHudClassActive(root, "gShopOpen") && !QOL.isBrowseBuildsPopupOpen(root)) {
             if ((State.openItemShopLastMs || 0) <= nowMs - 1000 &&
                 ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 State.openItemShopLastMs = nowMs;
@@ -263,12 +263,12 @@
         var stage = State.buildCategoryPayloadSourceBootstrapStage || "open_shop";
         var acted = false;
         var detail = "";
-        var browsePopupOpenNow = IsBrowseBuildsPopupOpen(root);
+        var browsePopupOpenNow = QOL.isBrowseBuildsPopupOpen(root);
         var forceBootstrapExhausted = false;
         if (stage === "open_shop") {
             if (browsePopupOpenNow) {
                 detail = "Build browser already open.";
-            } else if (IsHudClassActive(root, "gShopOpen")) {
+            } else if (QOL.isHudClassActive(root, "gShopOpen")) {
                 // Shop is open but browse popup isn't. Try opening it via
                 // the browse builds button.
                 detail = "Shop open; navigating to browse builds.";
@@ -283,9 +283,9 @@
             }
             State.buildCategoryPayloadSourceBootstrapStage = "browse";
         } else {
-            var browseLookup = FindBrowseBuildsButton(root);
+            var browseLookup = QOL.findBrowseBuildsButton(root);
             var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
-            var browsePopupOpen = IsBrowseBuildsPopupOpen(root);
+            var browsePopupOpen = QOL.isBrowseBuildsPopupOpen(root);
             var browseActed = false;
             var firstBuildSelect = { ok: false, reason: "throttled" };
             if (browsePopupOpen) {
@@ -301,7 +301,7 @@
                     detail = "Build browser open with no entries. Escalating bootstrap.";
                 }
             } else if (ShouldRunBuildCategoryPayloadUiAction(now, "buildCategoryPayloadBrowseActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
-                browseActed = ActivatePanelSafe(browseBtn);
+                browseActed = QOL.activatePanelSafe(browseBtn);
                 firstBuildSelect = TrySelectFirstStorageBuildEntry(root);
             }
             acted = !!(browseActed || firstBuildSelect.ok);
@@ -366,7 +366,7 @@
             var txt = ReadPanelTextMaybe(label);
             if (!txt || txt.length === 0) continue;
             var low = String(txt).toLowerCase();
-            var parsed = QOL.normalizeHeroId(ExtractHeroTokenFromText(txt) || ExtractLastHeroTokenFromText(txt));
+            var parsed = QOL.normalizeHeroId(QOL.extractHeroTokenFromText(txt) || QOL.extractLastHeroTokenFromText(txt));
             if (!parsed) continue;
             if (low.indexOf("recommended mods") !== -1) {
                 return { hero: parsed, source: "shopFavoritesHeader" };
@@ -418,7 +418,7 @@
         }
 
         if (hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            var directSignature = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            var directSignature = QOL.confirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
             var sigDirect = "hero:" + hero + "|src:" + source + "|sig:" + (directSignature.signature || "-");
             State.buildCategoryPayloadStorageConfirmSig = sigDirect;
             State.buildCategoryPayloadStorageConfirmHits = Number(directSignature.hits) || 0;
@@ -440,9 +440,9 @@
             return pendingDirect;
         }
 
-        if (hero && hero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && !IsBuildSaveStorageRuntimeSourceStale(source)) {
-            var conflictSignature = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-            if (conflictSignature.confirmed && (IsBuildCategoryPayloadSourceReady(root) || HasBuildSaveStorageUiReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+        if (hero && hero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && !QOL.isBuildSaveStorageRuntimeSourceStale(source)) {
+            var conflictSignature = QOL.confirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+            if (conflictSignature.confirmed && (IsBuildCategoryPayloadSourceReady(root) || QOL.hasBuildSaveStorageUiReady(root) || QOL.isHudClassActive(root, "gShopOpen"))) {
                 var confirmedByConflictSignature = {
                     confirmed: true,
                     source: "signature_abilities",
@@ -468,8 +468,8 @@
         State.buildCategoryPayloadStorageConfirmSig = "";
         State.buildCategoryPayloadStorageConfirmHits = 0;
         var sourceReady = IsBuildCategoryPayloadSourceReady(root);
-        var signatureOnly = ConfirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-        if (signatureOnly.confirmed && (sourceReady || HasBuildSaveStorageUiReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+        var signatureOnly = QOL.confirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+        if (signatureOnly.confirmed && (sourceReady || QOL.hasBuildSaveStorageUiReady(root) || QOL.isHudClassActive(root, "gShopOpen"))) {
             var confirmedSignatureOnly = {
                 confirmed: true,
                 source: "signature_abilities",
@@ -481,13 +481,13 @@
             return confirmedSignatureOnly;
         }
 
-        var canUseRuntimeFallback = !!allowFallback && !!(sourceReady || IsHudClassActive(root, "gShopOpen"));
+        var canUseRuntimeFallback = !!allowFallback && !!(sourceReady || QOL.isHudClassActive(root, "gShopOpen"));
         if (canUseRuntimeFallback) {
             var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
             var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
             var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
             var runtimeSourceTagged = "runtime:" + runtimeSource;
-            var runtimeUiReady = !!(HasBuildSaveStorageUiReady(root) || sourceReady);
+            var runtimeUiReady = !!(QOL.hasBuildSaveStorageUiReady(root) || sourceReady);
 
             if (runtimeHero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && runtimeUiReady) {
                 var runtimeSignature = signatureOnly;
@@ -512,7 +512,7 @@
                 return pendingRuntime;
             }
 
-            if (runtimeHero && runtimeHero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && !IsBuildSaveStorageRuntimeSourceStale(runtimeSource)) {
+            if (runtimeHero && runtimeHero !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID && !QOL.isBuildSaveStorageRuntimeSourceStale(runtimeSource)) {
                 var conflictRuntime = {
                     confirmed: false,
                     source: runtimeSourceTagged,
@@ -601,7 +601,7 @@
                 State.buildCategoryPayloadDormantReason = resolvedResultCode === "success" ? "load_done" : "load_default";
             }
             State.buildCategoryPayloadHeroProbeDoneAccountId = accountId ? String(accountId) : "";
-            FinalizeSettingsLoaderSession(resolvedResultCode, resolvedResultDetail, now);
+            QOL.finalizeSettingsLoaderSession(resolvedResultCode, resolvedResultDetail, now);
         } else {
             State.buildCategoryPayloadHeroProbeDoneAccountId = "";
         }
@@ -635,7 +635,7 @@
         var sessionResult = State.settingsLoaderResult ? String(State.settingsLoaderResult) : "";
         if (sessionResult && sessionResult !== "success") return false;
 
-        var configuredReturnHero = GetLoaderBaseDefaultHeroId();
+        var configuredReturnHero = QOL.getLoaderBaseDefaultHeroId();
         if (!configuredReturnHero || configuredReturnHero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return false;
 
         if (nowMs < (State.buildCategoryPayloadDoneRearmNextMs || 0)) return false;
@@ -708,7 +708,7 @@
 
         // Keep corruption-repair mode sticky across probe defers/retries so clear+save recovery
         // cannot silently fall back to normal scan path after a timeout/reset.
-        var corruptRepairPending = IsStartupCorruptRepairPending(root);
+        var corruptRepairPending = QOL.isStartupCorruptRepairPending(root);
         if (corruptRepairPending && !State.buildCategoryPayloadCorruptRepairActive) {
             State.buildCategoryPayloadCorruptRepairActive = true;
             State.buildCategoryPayloadCorruptRepairStartedMs = nowMs;
@@ -769,7 +769,7 @@
 
         if (stage === "wait_storage") {
             EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
-            EnsureStorageHeroFavoritesHeaderVisible(root, nowMs);
+            QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
             var storageConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs);
             if (storageConfirm.confirmed) {
                 State.buildCategoryPayloadAirheartHeaderConfirmed = true;
@@ -816,7 +816,7 @@
                 if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
                     var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
                     var timeoutHero = QOL.normalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
-                    var timeoutSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+                    var timeoutSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
                     if (timeoutSignature.confirmed) {
                         SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
                         SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
@@ -869,13 +869,13 @@
             SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context.");
 
             EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
-            EnsureStorageHeroFavoritesHeaderVisible(root, nowMs);
+            QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
             if (!State.buildCategoryPayloadAirheartHeaderConfirmed) {
                 var allowBootstrapFallback = !!State.buildCategoryPayloadCorruptRepairActive;
                 var bootstrapConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowBootstrapFallback);
                 if (!bootstrapConfirm.confirmed) {
                     SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Airheart context for bootstrap.");
-                    if (State.buildCategoryPayloadCorruptRepairActive && !IsHudClassActive(root, "gShopOpen")) {
+                    if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
                         SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
                     }
                     State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
@@ -937,7 +937,7 @@
                 return "wait";
             }
 
-            var initReady = EnsureStorageBuildInitialized(root, nowMs);
+            var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
             if (!initReady) {
                 var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
                 SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Airheart build.");
@@ -961,7 +961,7 @@
                 ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
                 : "";
             if (!bootstrapPayloadToken) {
-                bootstrapPayloadToken = BuildDefaultPayloadToken(cfg);
+                bootstrapPayloadToken = QOL.buildDefaultPayloadToken(cfg);
                 if (!bootstrapPayloadToken) {
                     SetSettingsLoaderStepState("read_payload", "error", "Failed to generate default payload for save bootstrap.");
                     SetSettingsLoaderStepState("decode_payload", "skipped", "Bootstrap payload generation failed.");
@@ -1049,7 +1049,7 @@
                 if (expectedSaveToken.length > 0 && saveTokenWait && saveTokenWait !== expectedSaveToken) {
                     SetSettingsLoaderStepState("read_payload", "active", "Waiting for other save request to finish.");
                 } else {
-                    var pendingDetail = GetSaveSettingsLoaderDetailForMessage(saveMsgWait) || "Running save pipeline.";
+                    var pendingDetail = QOL.getSaveSettingsLoaderDetailForMessage(saveMsgWait) || "Running save pipeline.";
                     SetSettingsLoaderStepState("read_payload", "active", pendingDetail);
                 }
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
@@ -1142,7 +1142,7 @@
             EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
             var postSaveConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, false);
             if (!postSaveConfirm.confirmed) {
-                if (State.buildCategoryPayloadCorruptRepairActive && !IsHudClassActive(root, "gShopOpen")) {
+                if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
                     SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
                 } else {
                     SetSettingsLoaderStepState("read_payload", "active", "Waiting for shop UI after repair save.");
@@ -1201,7 +1201,7 @@
         // so loader transitions into payload-miss/corrupt handling instead of endless shop bootstrap.
         var buildEntries = selectedBuild.FindChildrenWithClassTraverse("FavoriteBuildEntryContainer") || [];
         if (buildEntries.length > 0) return true;
-        if (CollectStorageBuildEntryPanels(root).length > 0) return true;
+        if (QOL.collectStorageBuildEntryPanels(root).length > 0) return true;
         return false;
     }
 
@@ -1216,13 +1216,13 @@
         if (!selectedBuild) return "";
 
         var headerName = selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("BuildCategoryName") : null;
-        var headerToken = ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(headerName));
+        var headerToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextMaybe(headerName));
         if (headerToken && headerToken.length > 0) return headerToken;
 
         if (selectedBuild.FindChildrenWithClassTraverse) {
             var categoryNames = selectedBuild.FindChildrenWithClassTraverse("CategoryName") || [];
             for (var c = 0; c < categoryNames.length; c++) {
-                var token = ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(categoryNames[c]));
+                var token = QOL.extractBuildCategoryPayloadToken(ReadPanelTextMaybe(categoryNames[c]));
                 if (token && token.length > 0) return token;
             }
 
@@ -1232,7 +1232,7 @@
             for (var ec = 0; ec < visibleEntryClasses.length; ec++) {
                 var panels = selectedBuild.FindChildrenWithClassTraverse(visibleEntryClasses[ec]) || [];
                 for (var pi = 0; pi < panels.length; pi++) {
-                    var deepToken = ExtractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(panels[pi], 48));
+                    var deepToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(panels[pi], 48));
                     if (deepToken && deepToken.length > 0) return deepToken;
                 }
             }
@@ -1240,9 +1240,9 @@
 
         // Fallback: when build browser is rendered outside ShopModsSelectedBuild, scan
         // visible build-entry rows from all reachable build UI roots.
-        var entryPanels = CollectStorageBuildEntryPanels(root, true);
+        var entryPanels = QOL.collectStorageBuildEntryPanels(root, true);
         for (var ep = 0; ep < entryPanels.length; ep++) {
-            var entryToken = ExtractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(entryPanels[ep], 56));
+            var entryToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(entryPanels[ep], 56));
             if (entryToken && entryToken.length > 0) return entryToken;
         }
 
@@ -1253,7 +1253,7 @@
             if (!panel) continue;
             scanned++;
 
-            var panelToken = ExtractBuildCategoryPayloadToken(ReadPanelTextMaybe(panel));
+            var panelToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextMaybe(panel));
             if (panelToken && panelToken.length > 0) return panelToken;
 
             var childCount = 0;
@@ -1278,7 +1278,7 @@
 
     // ── TryParseBuildCategoryPayloadConfig ──
     function TryParseBuildCategoryPayloadConfig(rawText) {
-        var payloadToken = ExtractBuildCategoryPayloadToken(rawText);
+        var payloadToken = QOL.extractBuildCategoryPayloadToken(rawText);
         if (!payloadToken || payloadToken.length === 0) {
             return { ok: false, payload: "", error: "missing_payload" };
         }
@@ -1295,8 +1295,8 @@
             return { ok: false, payload: payloadToken, error: "empty_payload" };
         }
         try {
-            var compactBinary = BuildPayloadFromBase64Url(compactCandidate);
-            var parsed = DeserializeBuildPayloadCompact(compactBinary, schemaSemver);
+            var compactBinary = QOL.buildPayloadFromBase64Url(compactCandidate);
+            var parsed = QOL.deserializeBuildPayloadCompact(compactBinary, schemaSemver);
             return { ok: true, payload: payloadToken, parsed: parsed, schemaVersion: schemaSemver };
         } catch (err) {
             var msg = (err && err.message) ? String(err.message) : String(err || "parse_error");
@@ -1306,7 +1306,7 @@
 
     // ── MaybeSuppressBuildCategoryPayloadForActiveMatch ──
     function MaybeSuppressBuildCategoryPayloadForActiveMatch(root, nowMs) {
-        if (!IsStartupLoaderInActiveMatchContext(root)) return false;
+        if (!QOL.isStartupLoaderInActiveMatchContext(root)) return false;
         SettingsLoaderDebugLogThrottled(
             "payload_override_skip_active_match|" + String(State.settingsLoaderSessionActive ? 1 : 0) + "|" + String(State.settingsLoaderSessionCompleted ? 1 : 0) + "|" + (State.buildCategoryPayloadHeroProbeStage || "-"),
             "payload_override skip: active match/reconnect context; startup loader suppressed",
@@ -1342,7 +1342,7 @@
 
         var repairWakePending = false;
         if (ShouldCheckDormantBuildCategoryPayloadWake(nowMs)) {
-            repairWakePending = IsStartupCorruptRepairPending(root);
+            repairWakePending = QOL.isStartupCorruptRepairPending(root);
         }
         var wakeNeeded =
             immediateWakeNeeded ||
@@ -1410,7 +1410,7 @@
             return cfg;
         }
 
-        if (IsStartupLoaderInActiveMatchContext(root)) {
+        if (QOL.isStartupLoaderInActiveMatchContext(root)) {
             var suppressedAccountId = GetAccountIdForBuildCategoryPayload(root);
             SettingsLoaderDebugLogThrottled(
                 "payload_override_skip_active_match|" + String(State.settingsLoaderSessionActive ? 1 : 0) + "|" + String(State.settingsLoaderSessionCompleted ? 1 : 0) + "|" + (State.buildCategoryPayloadHeroProbeStage || "-"),
@@ -1487,7 +1487,7 @@
         );
 
         TryRearmBuildCategoryPayloadProbeIfDoneLocked(root, accountId, nowMs, cfg);
-        BeginSettingsLoaderSession(accountId, nowMs);
+        QOL.beginSettingsLoaderSession(accountId, nowMs);
 
         var probeState = PrepareBuildCategoryPayloadHeroProbe(root, accountId, nowMs, cfg);
         _TLog("load:ProbeState", "state=" + probeState + " stage=" + (State.buildCategoryPayloadHeroProbeStage || "-") + " account=" + String(accountId || "").slice(0, 8));
@@ -1546,8 +1546,8 @@
                 var timeoutSelectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                 var timeoutHeaderCount = QOL.countBuildCategoryHeaders(timeoutSelectedBuild);
                 var timeoutScanAdvances = Number(State.buildCategoryPayloadMissingScanAdvances) || 0;
-                var timeoutEntryCount = CollectStorageBuildEntryPanels(root, true).length;
-                var timeoutBrowseOpen = IsBrowseBuildsPopupOpen(root);
+                var timeoutEntryCount = QOL.collectStorageBuildEntryPanels(root, true).length;
+                var timeoutBrowseOpen = QOL.isBrowseBuildsPopupOpen(root);
                 var timeoutLooksStuckNoPayload =
                     probeStage === "scan_storage" &&
                     timeoutHeaderCount <= 0 &&
@@ -1563,7 +1563,7 @@
                         " browseOpen=" + (timeoutBrowseOpen ? "1" : "0") +
                         " headers=" + String(timeoutHeaderCount)
                     );
-                    EnterStartupCorruptRepairPrompt(root, nowMs, "missing_payload_timeout");
+                    QOL.enterStartupCorruptRepairPrompt(root, nowMs, "missing_payload_timeout");
                     return cfg;
                 }
                 SetSettingsLoaderStepState("read_payload", "error", "Timed out waiting for storage payload. Retrying.");
@@ -1586,13 +1586,13 @@
                     var sourceBootstrapRetries = Number(State.buildCategoryPayloadSourceBootstrapRetries) || 0;
                     var selectedBuildForSource = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
                     var selectedHeaderCountForSource = QOL.countBuildCategoryHeaders(selectedBuildForSource);
-                    var sourceEntriesVisible = CollectStorageBuildEntryPanels(root, false).length;
-                    var sourceEntriesTotal = CollectStorageBuildEntryPanels(root, true).length;
+                    var sourceEntriesVisible = QOL.collectStorageBuildEntryPanels(root, false).length;
+                    var sourceEntriesTotal = QOL.collectStorageBuildEntryPanels(root, true).length;
                     var sourceEmptyByStructure = (selectedHeaderCountForSource <= 0 && sourceEntriesTotal <= 0);
                     if (
                         probeStage === "scan_storage" &&
                         sourceBootstrapRetries >= BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES &&
-                        (IsStorageBuildListEmpty(root) || sourceEmptyByStructure)
+                        (QOL.isStorageBuildListEmpty(root) || sourceEmptyByStructure)
                     ) {
                         SetSettingsLoaderStepState("read_payload", "active", "No Airheart build source found. Running first-time save bootstrap.");
                         SetSettingsLoaderStepState("decode_payload", "skipped", "Waiting for bootstrap save.");
@@ -1644,7 +1644,7 @@
 
         var payloadText = "";
         if (probeStage === "scan_bootstrap_token") {
-            payloadText = ExtractBuildCategoryPayloadToken(State.buildCategoryPayloadDefaultBootstrapPayloadText || "");
+            payloadText = QOL.extractBuildCategoryPayloadToken(State.buildCategoryPayloadDefaultBootstrapPayloadText || "");
         } else {
             payloadText = TryFindBuildCategoryPayloadText(root);
         }
@@ -1688,7 +1688,7 @@
                     "payload_override missing payload max misses reached; entering corrupt repair prompt misses=" +
                         String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
                 );
-                EnterStartupCorruptRepairPrompt(root, nowMs, "missing_payload");
+                QOL.enterStartupCorruptRepairPrompt(root, nowMs, "missing_payload");
                 return cfg;
             }
             SetSettingsLoaderStepState("read_payload", "done", "No payload found in storage build.");
@@ -1744,7 +1744,7 @@
                     String(parsedResult.error || "unknown") +
                     "\" misses=" + String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
                 );
-                EnterStartupCorruptRepairPrompt(root, nowMs, "decode_failed");
+                QOL.enterStartupCorruptRepairPrompt(root, nowMs, "decode_failed");
                 return cfg;
             }
             SetSettingsLoaderStepState("decode_payload", "error", "Payload decode failed.");
@@ -1777,7 +1777,7 @@
             try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
         }
 
-        var defaults = BuildDefaultConfig();
+        var defaults = QOL.buildDefaultConfig();
         var appliedObj = {};
         for (var rawKey in rawObj) {
             appliedObj[rawKey] = rawObj[rawKey];
