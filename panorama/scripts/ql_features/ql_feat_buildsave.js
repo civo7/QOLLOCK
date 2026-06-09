@@ -288,7 +288,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 ActivatePanelSafe(State.buildSaveTargetBuildPanel);
             }
 
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveStage = "lock_target_build";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
 
@@ -304,7 +304,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
         State.buildSaveTargetStableHits = (Number(State.buildSaveTargetStableHits) || 0) + 1;
         if (State.buildSaveTargetStableHits < BUILD_SAVE_TARGET_LOCK_STABLE_HITS) {
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
             return false;
         }
@@ -314,7 +314,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 State.buildSaveTargetQuietUntilMs = nowMs + BUILD_SAVE_TARGET_LOCK_QUIET_MS;
             }
             if (nowMs < State.buildSaveTargetQuietUntilMs) {
-                SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS;
                 return false;
             }
@@ -327,8 +327,8 @@ function ResetBuildSaveRequestAttributes(root) {
     function ConfirmBuildSaveStorageHero(root, nowMs) {
         _TLog("save:ConfirmStorage", "nowMs=" + nowMs);
         if (State.buildSaveStorageHeroConfirmed) return true;
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
-        var hero = NormalizeHeroId(signal.hero);
+        var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
+        var hero = QOL.normalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         if (hero === BUILD_SAVE_STORAGE_HERO_ID) {
             var directSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
@@ -343,7 +343,7 @@ function ResetBuildSaveRequestAttributes(root) {
         }
         if (hero && hero !== BUILD_SAVE_STORAGE_HERO_ID) {
             var conflictSignature = ConfirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-            if (conflictSignature.confirmed && (HasBuildSaveStorageUiReady(root) || IsBuildCategoryPayloadSourceReady(root) || IsHudClassActive(root, "gShopOpen"))) {
+            if (conflictSignature.confirmed && (HasBuildSaveStorageUiReady(root) || QOL.isBuildCategoryPayloadSourceReady(root) || IsHudClassActive(root, "gShopOpen"))) {
                 State.buildSaveStorageHeroConfirmed = true;
                 State.buildSaveStorageHeroConfirmedSource = "signature_abilities";
                 State.buildSaveStorageProvisionalHits = 0;
@@ -359,9 +359,9 @@ function ResetBuildSaveRequestAttributes(root) {
         var switchedAtMs = Number(State.buildSaveStorageLastSwitchMs) || 0;
         var elapsedSinceSwitchMs = switchedAtMs > 0 ? (now - switchedAtMs) : 0;
         var uiReady = HasBuildSaveStorageUiReady(root);
-        var sourceReady = IsBuildCategoryPayloadSourceReady(root);
+        var sourceReady = QOL.isBuildCategoryPayloadSourceReady(root);
         var runtimeSignal = ResolveBuildSaveStorageHeroSignal(root);
-        var runtimeHero = NormalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
+        var runtimeHero = QOL.normalizeHeroId(runtimeSignal && runtimeSignal.hero ? runtimeSignal.hero : "");
         var runtimeSource = runtimeSignal && runtimeSignal.source ? String(runtimeSignal.source) : "none";
         var runtimeConflict =
             !!runtimeHero &&
@@ -406,7 +406,7 @@ function ResetBuildSaveRequestAttributes(root) {
             acted = true;
         }
 
-        var signal = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
+        var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var source = signal && signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         var retries = Number(State.buildSaveStorageConfirmRetries) || 0;
         if (source !== "shopFavoritesHeaderMissing" || retries < BUILD_SAVE_STORAGE_CONFIRM_REOPEN_MIN_RETRIES) {
@@ -448,12 +448,12 @@ function ResetBuildSaveRequestAttributes(root) {
         _TLog("save:Finish", state + " " + (message || ""));
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var didSwitchToStorageHero = !!State.buildSaveDidSwitchToStorageHero;
-        var returnHero = NormalizeHeroId(State.buildSaveReturnHero) || GetConfiguredDefaultHeroId(State.lastConfig);
+        var returnHero = QOL.normalizeHeroId(State.buildSaveReturnHero) || QOL.getConfiguredDefaultHeroId(State.lastConfig);
         if (State.buildSaveDidSwitchToStorageHero) {
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(returnHero, "build_save_finish", BUILD_SAVE_RETURN_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(returnHero, "build_save_finish", BUILD_SAVE_RETURN_DELAY_SEC);
             } else {
-                var switchedBack = SelectHeroForBuildSave(returnHero);
+                var switchedBack = QOL.selectHeroForBuildSave(returnHero);
             }
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
@@ -469,7 +469,7 @@ function ResetBuildSaveRequestAttributes(root) {
         }
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
-        SetBuildSaveStatus(root, state, message, token);
+        QOL.setBuildSaveStatus(root, state, message, token);
     }
 
     // ── TriggerBuildEditMode ──
@@ -615,7 +615,7 @@ function ResetBuildSaveRequestAttributes(root) {
             State.buildSaveLastTraceStage = State.buildSaveStage;
             _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
         }
-        if (TryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
+        if (QOL.tryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             didSwitchFlagKey: "buildSaveDidSwitchToStorageHero",
@@ -624,13 +624,13 @@ function ResetBuildSaveRequestAttributes(root) {
                 State.buildSaveStorageProvisionalHits = 0;
             },
             setStatus: function(activeRoot, token) {
-                SetBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
+                QOL.setBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
             }
         })) {
             return;
         }
 
-        if (TryAdvanceStorageSwitchSettleStage(nowMs, {
+        if (QOL.tryAdvanceStorageSwitchSettleStage(nowMs, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
             nextStage: "confirm_storage_context",
@@ -644,7 +644,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 if (!(Number(State.buildSaveStorageLastSwitchMs) > 0)) {
                     State.buildSaveStorageLastSwitchMs = nowValue;
                 }
-                SetBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
             }
         })) {
             return;
@@ -664,14 +664,14 @@ function ResetBuildSaveRequestAttributes(root) {
                 var confirmMessage = "confirming_airheart";
                 var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
                 if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
-                SetBuildSaveStatus(root, "pending", confirmMessage, requestToken);
+                QOL.setBuildSaveStatus(root, "pending", confirmMessage, requestToken);
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
                 return;
             }
             var confirmSource = State.buildSaveStorageHeroConfirmedSource || "unknown";
             _TLog("save:ConfirmDone", "source=" + confirmSource + " retries=" + (Number(State.buildSaveStorageConfirmRetries) || 0));
             State.buildSaveStage = "lock_target_build";
-            SetBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
             State.buildSaveNextActionMs = nowMs;
             return;
         }
@@ -680,7 +680,7 @@ function ResetBuildSaveRequestAttributes(root) {
         if (!selectedBuild) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
             if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                 _TLog("save:Failed", "reason=shop_not_ready retries=" + State.buildSaveRetries);
                 FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
@@ -694,7 +694,7 @@ function ResetBuildSaveRequestAttributes(root) {
             }
             _TLog("save:AdvanceStage", "lock_target_build done → start token=" + String(requestToken || "").slice(0, 8));
             _TLog("save:TargetLocked", "title=\"" + (State.buildSaveTargetBuildTitle || "") + "\" sig=" + (State.buildSaveTargetBuildSig || "-"));
-            SetBuildSaveStatus(root, "pending", "target_locked", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "target_locked", requestToken);
             State.buildSaveStage = "start";
             State.buildSaveNextActionMs = nowMs;
         } else if (IsBuildSaveMutationStage(State.buildSaveStage)) {
@@ -713,7 +713,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 State.buildSaveStage = "wait_editor";
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
                 _TLog("save:EditMode", "active=0 triggered=" + (editTriggered ? "1" : "0") + " retries=" + State.buildSaveRetries);
                 var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
                 if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
@@ -737,7 +737,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 if (HasWritableBuildCategoryEntry(root) && IsBuildSaveEditModeActive(root)) {
                     State.buildSaveStage = "write";
                     State.buildSaveNextActionMs = nowMs;
-                    SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                     return;
                 }
                 var headerCount = CountBuildCategoryHeaders(selectedBuild);
@@ -746,7 +746,7 @@ function ResetBuildSaveRequestAttributes(root) {
                     var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
                     if (!initReady) {
-                        SetBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
+                        QOL.setBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
                         if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
                             _TLog("save:Failed", "reason=category_init_unavailable initRetries=" + initRetries);
                             FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
@@ -756,11 +756,11 @@ function ResetBuildSaveRequestAttributes(root) {
                     if (HasWritableBuildCategoryEntry(root)) {
                         State.buildSaveStage = "write";
                         State.buildSaveNextActionMs = nowMs;
-                        SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                        QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                         return;
                     }
                     State.buildSaveRetries += 1;
-                    SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                     if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                         FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
                     }
@@ -768,7 +768,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 } else {
                     State.buildSaveRetries += 1;
                     State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                    SetBuildSaveStatus(root, "pending", "focusing_category", requestToken);
+                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                 }
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
@@ -788,13 +788,13 @@ function ResetBuildSaveRequestAttributes(root) {
                 State.buildSaveStorageConfirmStartedMs = nowMs;
                 State.buildSaveStage = "confirm_storage_context";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
-                SetBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
                 return;
             }
             if (!SetBuildCategoryNameText(root, payloadText)) {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
                 _TLog("save:WriteAttempt", "ok=0 retries=" + State.buildSaveRetries);
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     _TLog("save:Failed", "reason=write_failed retries=" + State.buildSaveRetries);
@@ -829,7 +829,7 @@ function ResetBuildSaveRequestAttributes(root) {
             State.buildSaveStage = "verify";
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "saving", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "saving", requestToken);
             return;
         }
 
@@ -851,7 +851,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 TriggerBuildEditMode(selectedBuild);
                 State.buildSaveStage = "wait_category_focus";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                SetBuildSaveStatus(root, "pending", "retrying_write", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "retrying_write", requestToken);
                 return;
             }
 
@@ -863,7 +863,7 @@ function ResetBuildSaveRequestAttributes(root) {
             var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            SetBuildSaveStatus(root, "pending", "verifying", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
             return;
         }
 
@@ -892,11 +892,11 @@ function ResetBuildSaveRequestAttributes(root) {
             FinalizeSaveSettingsLoaderSession(endCode, endDetail, nowMs, switchedForFinalize);
         }
         if (State.buildSaveDidSwitchToStorageHero) {
-            var pendingReturnHero = NormalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
+            var pendingReturnHero = QOL.normalizeHeroId(State.buildSaveReturnHero) || configuredReturnHero;
             if (typeof QueueDelayedHeroRestore === "function") {
-                QueueDelayedHeroRestore(pendingReturnHero, "build_save_state_exit", BUILD_SAVE_RETURN_DELAY_SEC);
+                QOL.queueDelayedHeroRestore(pendingReturnHero, "build_save_state_exit", BUILD_SAVE_RETURN_DELAY_SEC);
             } else {
-                var switchedBackEarly = SelectHeroForBuildSave(pendingReturnHero);
+                var switchedBackEarly = QOL.selectHeroForBuildSave(pendingReturnHero);
             }
         }
         ResetBuildSaveRuntimeState();
@@ -935,7 +935,7 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── EnsureBuildSaveRequestRuntimeInitialized ──
     function EnsureBuildSaveRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero, payloadText) {
         if (State.buildSaveActiveToken === requestToken) return;
-        var reuseLoaderAirheartSave = CanReuseLoaderConfirmedAirheartContext(root, nowMs);
+        var reuseLoaderAirheartSave = QOL.canReuseLoaderConfirmedAirheartContext(root, nowMs);
         State.buildSaveActiveToken = requestToken;
         State.buildSaveStage = reuseLoaderAirheartSave ? "lock_target_build" : "switch_to_storage";
         State.buildSaveStartedMs = nowMs;
@@ -967,7 +967,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveTargetQuietUntilMs = 0;
         State.buildSaveCaptureStartedMs = nowMs;
         QOL.resetBuildCategoryPayloadProbeInitState();
-        SetBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
+        QOL.setBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
     }
 
     // ── TickBuildSaveRequestRuntime ──
