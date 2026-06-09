@@ -21,6 +21,10 @@
 //   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
 // ==========================================================================
 var State;
+var _TLog;
+_TLog = function(label, detail) {
+    try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+};
 (function() {
     // Verify ql_utils.js loaded before us — log warning if missing
     // (non-fatal: schema validator sandbox runs ql_core.js in isolation)
