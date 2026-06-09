@@ -18348,6 +18348,7 @@ function GetUIRoot() {
         ["resetSettingsLoaderSession", function() { return ResetSettingsLoaderSession; }],
         ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }],
         ["createLoaderOverlay", function() { return _CreateLoaderOverlay; }],
+        ["pulseShopAfterBuildPayloadStartupReturn", function() { return PulseShopAfterBuildPayloadStartupReturn; }],
         ["buildDefaultConfig", function() { return BuildDefaultConfig; }],
         ["heroReturnDebugLog", function() { return HeroReturnDebugLog; }],
         ["settingsLoaderDebugLogThrottled", function() { return SettingsLoaderDebugLogThrottled; }],

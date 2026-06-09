@@ -588,7 +588,7 @@
                 State.buildCategoryPayloadPostSwitchShopPulseDone = true;
                 var pulseDelaySec = BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC;
                 if (queuedReturn) pulseDelaySec += BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC;
-                $.Schedule(pulseDelaySec, PulseShopAfterBuildPayloadStartupReturn);
+                $.Schedule(pulseDelaySec, QOL.pulseShopAfterBuildPayloadStartupReturn);
             }
         } else if (markDone) {
             SetSettingsLoaderStepState("return_hero", "skipped", "No hero return needed.");
