@@ -22,6 +22,8 @@
     var State = S;
     var GC = _deps.getCachedPanel;
     var SC = _deps.setCachedPanel;
+    var GetCachedPanel = GC;
+    var SetCachedPanel = SC;
     var NormalizeHeroId = _deps.normalizeHeroId;
     var GetConfiguredDefaultHeroId = _deps.getConfiguredDefaultHeroId;
     var SelectHeroForBuildSave = _deps.selectHeroForBuildSave;
