@@ -262,14 +262,15 @@ function IsIndicatorSmallDamage(panel) {
                         }
                     }
 
+                    // #Desc ("Too Far", "Too Low", etc.) and #Effectiveness are description
+                    // labels, not damage numbers. Scale with user preference but cap at
+                    // 28px to prevent text overflow at high font-size settings.
                     var targetSize = indicatorFontSizeText;
                     try {
                         var panelId = p.id;
                         if (panelId === "Desc" || panelId === "Effectiveness") {
-                            var _dc = PerfStart();
                             var capped = indicatorSize > 28 ? 28 : indicatorSize;
                             targetSize = capped + "px";
-                            PerfEnd("indicators.desc_font_cap", _dc);
                         }
                     } catch (e) {}
                     if (p.style.fontSize !== targetSize) {
