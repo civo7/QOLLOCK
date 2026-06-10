@@ -1022,12 +1022,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	visibility: visible;
 }
 
-.shop_recent_purchases_redux #QuickPurchasesPanel,
-.shop_recent_purchases_redux .QuickPurchasesPanel
-{
-	visibility: collapse;
-}
-
 .gScoreboardOpen #QuickPurchasesPanel,
 .gScoreboardOpen .QuickPurchasesPanel
 {

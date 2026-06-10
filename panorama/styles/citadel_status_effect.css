@@ -12,7 +12,7 @@
 .minimalist_healthbar_active #LowerLeft CitadelStatusEffect
 {
 	margin-bottom: 210px;
-	horizontal-align: right;
+	horizontal-align: left;
 	margin-right: 145px;
 }
 
