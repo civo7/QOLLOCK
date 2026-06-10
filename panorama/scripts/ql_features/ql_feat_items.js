@@ -12,6 +12,7 @@
     var SC = _deps.setCachedPanel;
     var SWC = _deps.setWashColorSafe;
     var U = _deps.utils;
+    var IPV = U.IsPanelValid;
     var NPC = _deps.normalizePaletteColorIndex;
     // ── Gate ──
     function gate(cfg) {

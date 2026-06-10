@@ -10,6 +10,7 @@
     var RWP = _deps.resolveWashColorFromPalette;
     var S = _deps.state;
     var U = _deps.utils;
+    var IPV = U.IsPanelValid;
     var NSA = _deps.normalizeStaminaChargeAngle;
     var RSC = _deps.readStaminaChargeColorIndex;
     // ── Gate ──
