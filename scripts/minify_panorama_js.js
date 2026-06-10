@@ -31,6 +31,10 @@ function tokenStartsRestrictedStatement(nextType, nextValue) {
   return nextType === "word" && /^(?:return|throw|break|continue|yield|await)$/.test(nextValue);
 }
 
+function tokenStartsDeclaration(nextType, nextValue) {
+  return nextType === "word" && /^(?:var|let|const|function|class)$/.test(nextValue);
+}
+
 function newlineNeedsSemicolon(prevTokenType, prevTokenValue, nextType, nextValue) {
   if (!prevTokenType || !nextType) return false;
 
@@ -42,6 +46,8 @@ function newlineNeedsSemicolon(prevTokenType, prevTokenValue, nextType, nextValu
   if (tokenCanEndStatement(prevTokenType, prevTokenValue)) {
     if (nextType === "operator" && /^(?:\(|\[|\+|-|\/)$/.test(nextValue)) return true;
     if (tokenStartsRestrictedStatement(nextType, nextValue)) return true;
+    if (tokenStartsDeclaration(nextType, nextValue)) return true;
+    if (prevTokenType === "operator" && prevTokenValue === "}" && nextType === "word" && !/^(?:else|catch|finally|while)$/.test(nextValue)) return true;
   }
 
   return false;
@@ -358,6 +364,9 @@ function main() {
   try {
     new vm.Script(minified, { filename: resolved });
   } catch (err) {
+    try {
+      fs.writeFileSync(resolved + ".failed.js", minified, "utf8");
+    } catch (_writeErr) {}
     fail(`Minified output failed syntax validation for ${resolved}: ${err.message}`);
   }
 
