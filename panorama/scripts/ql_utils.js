@@ -39,7 +39,7 @@
     function SafeSetAttribute(panel, attrName, value) {
         try {
             if (panel && typeof panel.SetAttributeString === "function") {
-                panel.SetAttributeString(String(attrName || ""), String(value || ""));
+                panel.SetAttributeString(String(attrName || ""), String(value != null ? value : ""));
                 return true;
             }
         } catch (e) {}
