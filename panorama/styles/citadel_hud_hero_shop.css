@@ -448,6 +448,7 @@ CitadelHudHeroShop.shop_recent_purchases_active #HeroScenePanel
 .shop_recent_purchases_active #RecentPurchasesPanel,
 CitadelHudHeroShop.shop_recent_purchases_active #RecentPurchasesPanel
 {
+	visibility: visible;
 	opacity: 1;
 	margin-left: 110px;
 	ui-scale: 130%;

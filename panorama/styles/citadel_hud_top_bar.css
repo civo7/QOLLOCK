@@ -1003,6 +1003,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	width: fit-children;
 	height: fit-children;
 	z-index: 99;
+	visibility: collapse;
 }
 
 #QuickPurchasesPanel
@@ -1013,6 +1014,18 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 #QuickPurchasesPanel.has_rejuv.rp_quick_rejuv_active
 {
 	margin-top: 133px;
+}
+
+.shop_item_notifications_active #QuickPurchasesPanel,
+.shop_item_notifications_active .QuickPurchasesPanel
+{
+	visibility: visible;
+}
+
+.shop_recent_purchases_redux #QuickPurchasesPanel,
+.shop_recent_purchases_redux .QuickPurchasesPanel
+{
+	visibility: collapse;
 }
 
 .gScoreboardOpen #QuickPurchasesPanel,
