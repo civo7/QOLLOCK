@@ -778,29 +778,18 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         var shopEnabled   = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
         var notifyEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS");
 
-        // Early-return when both features are disabled — hide panel once on transition.
+        // Early-return when both features are disabled.
+        // Visibility is handled by CSS via top-level root classes
+        // (shop_recent_purchases_active, shop_item_notifications_active).
         if (!shopEnabled && !notifyEnabled) {
-            if (S.recentPurchasesWasEnabled) {
-                var _rpPanel = GC("recentPurchasesPanel");
-                if (!IsPanelValid(_rpPanel)) {
-                    _rpPanel = root.FindChildTraverse("RecentPurchasesPanel") || null;
-                    SC("recentPurchasesPanel", _rpPanel);
-                }
-                if (_rpPanel) {
-                    _rpPanel.style.visibility = "collapse";
-                }
-                S.recentPurchasesWasEnabled = false;
-            }
             return;
         }
-        S.recentPurchasesWasEnabled = true;
 
         if (!GC("recentPurchasesPanel")) {
             SC("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
         }
         var rpPanel = GC("recentPurchasesPanel");
         if (rpPanel) {
-            rpPanel.style.visibility = shopEnabled ? "visible" : "collapse";
             var panelOffsetX = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
             var panelOffsetY = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
             var panelOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_PANEL_OPACITY, 1.0).toFixed(2);
@@ -842,16 +831,15 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var heroPopupsEnabled = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
             if (heroPopupsEnabled) {
-                // Per-hero popup panels on player cards
+                // Per-hero popup panels on player cards.
+                // Centralized QuickPurchasesPanel is hidden by CSS
+                // (.shop_recent_purchases_redux #QuickPurchasesPanel).
                 S.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
                 UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
-                // Hide the centralized panel since we're using per-hero panels
-                var quickPanel = GC("quickPurchasesPanel");
-                if (IsPanelValid(quickPanel)) {
-                    quickPanel.style.visibility = "collapse";
-                }
             } else {
-                // Default: centralized popup panel
+                // Default: centralized popup panel.
+                // Visibility is handled by CSS via top-level root class
+                // (.shop_item_notifications_active #QuickPurchasesPanel).
                 UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases);
                 var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
                 var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
@@ -860,9 +848,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                 var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
                 var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
                 SyncRejuvClassRP(rejuvEnabled);
-                quickPanel = GC("quickPurchasesPanel");
+                var quickPanel = GC("quickPurchasesPanel");
                 if (IsPanelValid(quickPanel)) {
-                    quickPanel.style.visibility = "visible";
                     quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
                     quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
                     quickPanel.style.x = String(quickOffsetX) + "px";
@@ -879,12 +866,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         configKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS"],
         bucket: 7, phase: -1,
         gate: function(cfg) {
-            return (IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
-                    IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS")) ||
-                   S.recentPurchasesWasEnabled;
+            return IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
+                   IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS");
         },
         update: function(root, cfg) { UpdateRecentPurchases(root, cfg); },
-        stateKeys: ["recentPurchasesWasEnabled", "cachedPanels.recentPurchasesPanel",
+        stateKeys: ["cachedPanels.recentPurchasesPanel",
                     "cachedPanels.recentPurchasesContainer",
                     "cachedPanels.quickPurchasesPanel",
                     "recentPurchaseFiltersCreated", "recentPurchaseLastVisibilitySig",

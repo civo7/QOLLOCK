@@ -71,7 +71,7 @@ _TLog = function(label, detail) {
     };
     var _safeAttrDegradedLogged = false;
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
-    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v || "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
+    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
     var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
@@ -16877,6 +16877,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
             SetPanelClassCached(root, State.rootClassCache, "shop_recent_purchases_redux", shopRecentPurchasesRedux);
+            SetPanelClassCached(root, State.rootClassCache, "shop_item_notifications_active", IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS"));
             State.coreRootStaticSig = staticSig;
         }
 
