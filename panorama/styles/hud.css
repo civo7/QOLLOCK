@@ -2496,3 +2496,8 @@
 	margin-top: -4.5px;
 	margin-left: 0px;
 }
+
+#LowerLeft /* fix for items in lower left disappearing on high positive offset */
+{
+    width: 100%;
+}
