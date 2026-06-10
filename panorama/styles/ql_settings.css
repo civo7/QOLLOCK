@@ -22883,6 +22883,7 @@
 	horizontal-align: center;
 	color: #e8f7ef;
 	text-shadow: none;
+    text-overflow: shrink;
 }
 
 .QOLThemeCream .ArcadeModalContainer.QOLUnifiedModalSurface #ArcadeMinesweeperNewGameBtn,
@@ -23248,6 +23249,7 @@
 	font-weight: semi-bold;
 	letter-spacing: 0.55px;
 	text-shadow: none;
+    text-overflow: shrink;
 }
 
 #SettingsWindow .SettingRow_SETTINGS_THEME .SettingControlRoot,
