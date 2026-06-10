@@ -7,18 +7,21 @@
 	0%
 	{
 		opacity: 1;
+		transform: translateX(0px);
 	}
-	
+
 	72%
 	{
 		opacity: 1;
+		transform: translateX(0px);
 	}
-	
+
 	100%
 	{
 		opacity: 0;
+		transform: translateX(0px);
 	}
-	
+
 }
 
 @keyframes 'qol_clean_damage_fountain'
