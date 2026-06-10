@@ -109,10 +109,8 @@
 
 .simplify_ability_icons_active .ability_image
 {
-	wash-color: white;
-	brightness: 1;
-	saturation: 1;
-	opacity: 1;
+	wash-color: offWhite;
+    contrast: 0;
 }
 
 .simplify_ability_icons_active .ability_icon,.simplify_ability_icons_active #SubAbility #SubAbilityImage,.simplify_ability_icons_active CitadelHudTopBarPlayer #PlayerAbilitiesContainer .ability_image,.simplify_ability_icons_active CitadelHudTopBarPlayer #PlayerAbilitiesContainer #SubAbility #SubAbilityImage
