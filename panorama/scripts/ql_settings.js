@@ -16872,18 +16872,18 @@ function OpenAvailableModal() {
 
 function BuildCommunityPresetEntries() {
     var entries = [];
-    entries.push({ label: "Sneed", preset: "Sneed", presetExport: "[QOL-2-6-1]:AjhwSUcjZMhMbm8lk6kxZCADh4clKBT4R0MG0EehYmRkZIxYQjZiCRlkLmIUxhgggwyAjCAcWFoyAicDy8HjgSWWYImlDQ8yZw54cREZZMiQkSFLouQDA0aGJZkAAChLZJQlMjL6KUtklCUy7lFKeV5FkSEDAAAA0AKIkJGtyMgUyP-PUjI" });
+    entries.push({ label: "Sneed", preset: "Sneed" });
     entries.push({ label: "Basil", preset: "Basil" });
-    entries.push({ label: "Vegas", preset: "Vegas", presetExport: "[QOL-3-1-3]:AjU0SxQjZMhMbk8lk6kBZCADh4clKBT5R0MGkEGhZGRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLZB5kzhwAAAAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkwKOU8ryKIkMGAAAAoAWgIyNbkZEpkP8fpQKQpAEJ" });
+    entries.push({ label: "Vegas", preset: "Vegas" });
     entries.push({ label: "Poshy", preset: "Poshy" });
     entries.push({ label: "Goober", preset: "Goober" });
-    entries.push({ label: "Piggy", preset: "Piggy", presetExport: "[QOL-3-0-1]:Aka0TQwjZMhMDs9hk5khZCADh4clKBSAR48lAIKiUmRkZI5YQjZiCZluAKBQxBgggwyAjCAcWFoyAieDU8TjwRJLZIklQQoyXwEAAIAMMmRMkCGToeSDAUKGJZkAMChLZJQlMjL6KUtklCUy4FFKeV71kGED6AAA0SLQkZGtyMgUyP-PUts" });
+    entries.push({ label: "Piggy", preset: "Piggy" });
     entries.push({ label: "BSQTT", preset: "BSQTT" });
     entries.push({ label: "iKaritzu", preset: "iKaritzu" });
     entries.push({ label: "Scuffed", preset: "Scuffed" });
     entries.push({ label: "Gyzeh", preset: "Gyzeh" });
     entries.push({ label: "Bread", preset: "Bread" });
-    entries.push({ label: "bonclide", preset: "bonclide", presetExport: "[QOL-2-5-6]:AjIySxojZMhMbkrVkqkhZCADh4clKBT8f16FkZZK6mRkZI5YQjZiCZmHoKBQxgAggwyAjCAcWVoygiajy8HjgSWWZCkhIg8ycWsDBSAZZMhQC0njeZQDA2aEL5mBAxVLZI8lMzL4H0tkiiUyIVAIed6kkLkBAAAA0AIAeQ" });
+    entries.push({ label: "bonclide", preset: "bonclide" });
     entries.push({ label: "Saintmxsm", preset: "Saintmxsm" });
     entries.push({ label: "Zer0", preset: "Zer0" });
     entries.push({ label: "Pops", preset: "Pops" });
@@ -16898,61 +16898,61 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Tuna", preset: "Tuna" });
     entries.push({ label: "Hikyo", preset: "Hikyo" });
     entries.push({ label: "Chjcago", preset: "Chjcago" });
-    entries.push({ label: "Starjadian", preset: "Starjadian", presetExport: "[QOL-3-0-3]:AjwUSxQjZMhODk8lk6kBZCADt4clKBT4T0EGEJKi8mRkZI5YQjZiCZlkAqBQxhghgwygjCAcW1oyAiejy8HjAUssyRJLIR5kzkA-AEAyyJApIUMmQ8kHBowMSzIb_lOWyChLZGT0U5bIKEtkzKuU-ryKIkMGAAAAoEWgI_NakZGpkv8_pQKZ" });
-    entries.push({ label: "Synthronix", preset: "Synthronix", presetExport: "[QOL-3-1-3]:Aig0SxQjZMhM7gclk6kBZCADh4clKBT4Q0MGAIKicWRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDy8HjAUsswRJLCh5kzh4wAAAyyJAhI0MmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkzKOU8ryKIkMGAAAAoAWgIyMLkZEpkP8fpRKQpAGW" });
+    entries.push({ label: "Starjadian", preset: "Starjadian" });
+    entries.push({ label: "Synthronix", preset: "Synthronix" });
     entries.push({ label: "Shark", preset: "Shark" });
     entries.push({ label: "Neonvoid", preset: "Neonvoid" });
     entries.push({ label: "Fenmore", preset: "Fenmore" });
     entries.push({ label: "Deethirty", preset: "Deethirty" });
     entries.push({ label: "Jerboa", preset: "Jerboa" });
     entries.push({ label: "RiChew", preset: "RiChew" });
-    entries.push({ label: "Soramikali", preset: "Soramikali", presetExport: "[QOL-2-6-1]:AigUSxQjZMhMbs9zk70HZCADh4clKBT4Q0MGkIKi4WRkZIxYQjZiCRlkAKBQwBgggwygjCAcWVoyAicDy8HjgSWWYImlAQ0yXQ8aAAAZZMiUkSGToeQDA0aGJZksVSlLZJQlMjL6KUtklCUy5lVKeV5FkSEbgAC01gLQkW2tyMgUyP-fUmQ" });
-    entries.push({ label: "Jaundice", preset: "Jaundice", presetExport: "[QOL-2-6-1]:AjM0SxQjZMhMTk_VkqknZCADh4clKBSgRkEGsJWi4GRkZIxYQjZiCRl2AKBQxhgigwyAjCAcWVoyAicDt8HjgSWWiCkoKg8ycWAPACAZZMhAkEUTYeQDA0aGJZkgdyhLZJQlMjL6KUtklCWy_FFKeV5FkSEb5xxwngXXkZGtUFMUKf-PUlw" });
+    entries.push({ label: "Soramikali", preset: "Soramikali" });
+    entries.push({ label: "Jaundice", preset: "Jaundice" });
     entries.push({ label: "Xavier", preset: "Xavier" });
     entries.push({ label: "Spookyy", preset: "Spookyy" });
     entries.push({ label: "Wirdly", preset: "Wirdly" });
     entries.push({ label: "Radiant", preset: "Radiant" });
     entries.push({ label: "Chumba", preset: "Chumba" });
     entries.push({ label: "FakeThread", preset: "FakeThread" });
-    entries.push({ label: "7eventy7", preset: "7eventy7", presetExport: "[QOL-3-0-3]:Aig0SxQjZMjMFA8lk6khZCADh4clKDJAQkEGEIKiAWRkZI5YQqbYEQ1kAKBQxhgggwwgiiAcWFoyAiejycHjAUssxRJLYx5kzgIAAAAyyJAhIUPWQskHBowMSzIBAFCW3ihLZmT0U5bIKEtkwIOQ8ryKIkMG0AUQogWgIyNbkZEpkP8fpQIl" });
+    entries.push({ label: "7eventy7", preset: "7eventy7" });
     entries.push({ label: "XD_HECTICC", preset: "XD_HECTICC" });
     entries.push({ label: "Enova", preset: "Enova" });
     entries.push({ label: "Boredom", preset: "Boredom" });
     entries.push({ label: "PrivateProf", preset: "PrivateProf" });
-    entries.push({ label: "Munfins", preset: "Munfins", presetExport: "[QOL-3-1-3]:Ak80SxQjZMhObk8lk6knZCADh4clKBT5T0MGkHWg6GRkZI5YQjZiCZmGAqxQwBghgwyAjCAcWVoyAicDy8HjAUsswRJLFB5kzhw-AEAyyJAhIUMmQ08HBowMSzJDAFKWyChLZGT0U5bIKEtk2KOU8byKIkNmAAAAoAWgIyNbIU8pkP8fpRqQpAGV", presetTheme: SETTINGS_THEME_MUNFINS });
+    entries.push({ label: "Munfins", preset: "Munfins" });
     entries.push({ label: "Gmanc2", preset: "Gmanc2" });
-    entries.push({ label: "Keta", preset: "Keta", presetExport: "[QOL-3-1-3]:Alo0SxQjZMhMbk8lk6khZCADh4clKBSAQ0MGgEGhYWRkZIxYQjZiCZl2AKBQwBgggwyAjCAcWFoyAicjycHjAUssyRJLSh5kzh4AAAAyyJAhIUMmQ8kHBogMSzIBAFKWyChLZGT0U5bIKEtkxKOU8ryKIkM2AAAAoEWgIyNbkZEpkP8fpQKQpAHS" });
+    entries.push({ label: "Keta", preset: "Keta" });
     entries.push({ label: "Torque", preset: "Torque" });
     entries.push({ label: "iMicro", preset: "iMicro" });
     entries.push({ label: "TW1G", preset: "TW1G" });
-    entries.push({ label: "Veradox", preset: "Veradox", presetExport: "[QOL-2-6-1]:AkoNSxQjZMhMcG8lk6knZCADN0AkKB_4R0MGEJKi5GVkZIxYQgZhCZl2AKBQwhghgwygjCAcWVoyAiejy8HjgSWWYIklEg8yZw8fACAZZMhskCGTWuQDA0aGJZks_ylLZJQlMjL6KUtklCUyT1RKeV5FkSEDAAAA0CLQkZGtyMgUyf-fUkU" });
+    entries.push({ label: "Veradox", preset: "Veradox" });
     entries.push({ label: "Antetheosis", preset: "Antetheosis" });
-    entries.push({ label: "k49", preset: "k49", presetExport: "[QOL-3-0-3]:Ajs0SxQjZMhMck8lk6kBZCADh4clKBT4Q0MGkIOi4WRkZI5YQvZgCRlkAaBQxhgggwygjCAcWVoyAicDy8HjAUssyRJLWh5kzhw-AAAyyJApI0MmQ8kHBowMSzIZ_lOWyChLZGT0U5bIKEtkx6uU8rzKIUNWPjiovAWuIyNbkZEpkJ8fpQJo" });
-    entries.push({ label: "ninjabladejr", preset: "ninjabladeJr", presetExport: "[QOL-3-1-3]:AkY0SxQjZMhM7mwvk8kHZCADh4clKBTAW9wF0ISi4GRk5o5YQjZiCZlkoqxkTB8igwyApWVVWZKxBCcjysfjAUsswRJLpDlkzh42ikUyyJAhI0MmQ10CBowMSzIZAFKWyChLZGT0U5bIKEtkxKsU8LyKIkMGAAAAoAWgIyNbkZEpkP8fpQKQpAHE" });
-    entries.push({ label: "FlintSnow", preset: "FlintSnow", presetExport: "[QOL-3-0-1]:Aig0SxQjZMhODk8lk6khZCADlwIlHhT4Q0MGEIKi6WRkZI5YQjZiCZlkAKBQwBghgwyAjCAcWVoyAicDy8HjwRJLYImlAA8yZwAfAIAMMmSmkCGTcYCDAUKGJZkA_ylLZJQlMjL6KUtklCUy5lVKeV5FkSEbAAAA0CLQkWmtyMjUyP-fUqE" });
-    entries.push({ label: "Steqdyy", preset: "Steqdyy", presetExport: "[QOL-3-0-3]:AjU0SxQjZMhMbk8lk6k_ZCADh4clKBT4Q0MG0EOh4WRkZIxYQjZiCVluAKBQwBgggwyAjCAcWVoyAicDycHjAUsswRJLEB5kzh4SAAAyyJApI0MmQ8kHBowMSzIRAFCWyChLZGT0U5bIKEtk3KPU8byKIkNGAAAAoAWgIyNbkZGpkP8fpQIM" });
+    entries.push({ label: "k49", preset: "k49" });
+    entries.push({ label: "ninjabladejr", preset: "ninjabladeJr" });
+    entries.push({ label: "FlintSnow", preset: "FlintSnow" });
+    entries.push({ label: "Steqdyy", preset: "Steqdyy" });
     entries.push({ label: "Synapses_", preset: "Synapses_" });
     entries.push({ label: "Gerglee", preset: "Gerglee" });
     entries.push({ label: "Dappa", preset: "Dappa" });
-    entries.push({ label: "Seyer", preset: "Seyer", presetExport: "[QOL-3-1-3]:AjU0SxQjZMhMDk8lk6kpZCADh4clKBT4T0MGkEGhYGRkZI5YQjZiCRl2AKBQwBgggwyAjCAcWFoyAicDy8HjAUsswRJLZB5kzgIwAAAyyJAhIUMmQwEHBowMSzIZAVCWyChLZGT0U5bIKEtkwKOU8ryKIkM2AAAAoAWgIyNbkZEpkv8fpQKQpAGD" });
+    entries.push({ label: "Seyer", preset: "Seyer" });
     entries.push({
         label: "T1FF4NNY",
-        presetExport: "[QOL-3-0-3]:AigUSxQjZMhMTkolk6khZCADh4clKBT4Q0MGAIKi4WRkZIxYQjZiCRl2AKBQwBgggwyAjCAcWVoyAicDy8HjAUsswRJLZB5kzgAyAAAyyJAhIUMmQ8kHBowMSzJBAFKWyChLZGT0U5bIKEtk3KOU8ryKIkM2AAAAoAWgIyNbkZEpkP8fpQKF"
+        preset: "T1FF4NNY"
     });
     entries.push({ label: "Joey", preset: "Joey" });
     entries.push({ label: "Zyartic", preset: "Zyartic" });
     entries.push({ label: "billyyy", preset: "billyyy" });
-    entries.push({ label: "mituu", preset: "mituu", presetExport: "[QOL-3-1-3]:AmM0SxQjZMhMbm8lk6khZCADh4clKBTgR0MG0JOiYGRkZIxYQjZiCRlkAKBQwBghgwyAjCAcWFoyAicDy8HjAUsswRJLAh5kzh4wAEAyyJApIUMmQ8kHBowMSzIZAFCWyChLZGT0U5bIKEtkyKOU8ryKIkMGAAAAoEWgIyNbkZEpkP8fpRKQpAF4" });
-    entries.push({ label: "qlt", preset: "qlt", presetExport: "[QOL-2-3-2]:AigUSxQjZMhMDm8lk6khZCADtyejRBQATkMGEIKiKGVkZIxYQjZiCZlkAqBQwBgggwyAjCAcWFoyAicDy8HjgSWWYImlJQ8yZwEAAAAZZMiQkCGToeQDA0aGJZkBgg" });
-    entries.push({ label: "munchkin", preset: "munchkinman", presetExport: "[QOL-3-0-3]:Aig0SxQjZMhMbmUlk6kBZCADh4clKBT4T-dzEZKi6GRkZIxYQjZiCZl2AKBQwBgggwyAjCAcWVoyAiejF8DjAUsswRJLQR5kzh4-AEAyyJAhIUMmQ8kHBowMSzJZ_lOWyChLZGT0U5bIKEtk_qiU8ryKIkM2oCPQoEWgAwBYIfcoAoY-pQKP" });
-    entries.push({ label: "Blank2762", presetExport: "[QOL-3-0-0]:AigUSxQjZMhMDk8lk6khZCADh4clKBT4R0MGAIKi4WVkZIxYQjZiCRl2AKBQwBgggwygjCAcWVoyAicjycHjgSWWYIklLg8yZwAfAAAZZMiUkCGToeQDA0aGJZkM_ylLZJQlMjL6KUtklCUy6FVKeV5FkSEbAAAA0ALQkZGtyMgUyP-PUvU" });
-    entries.push({ label: "Valerie", presetExport: "[QOL-3-0-3]:Aig0SxQjZMhMDm_Fk9E_ZCADl4clKBToT0MGMJWi4GRkZIxYQjZiCZlkAqBkxhgggwyAjCAcWVoyAicDy8HjAUsswRLLHh5kpgI3QEIyyJAhEcuW4MgHBowMSzIBAFKWyChLZGT0U5bIKEtkwKOU8ryKIkM2AAAAoAWgIyNbkZEpkP8fpQIL" });
-    entries.push({ label: "Rosalia", presetExport: "[QOL-2-3-2]:Akw0SxQjZMhMbkAVDKoDZCADh4clKBSYQ0MGUEGhY2VkZI5YQjZiCZlkAKBQzBgggwyAjCAcWFoyAicjycHjgSWWYIklAw9BSQ4AAAAZZMigkCGToYADA0aGJZkA0A" });
-    entries.push({ label: "notah", presetExport: "[QOL-3-0-1]:AmL0TRQjZMhMbk8ok9EnZCADh4clKBT4RxMFUIai4GRkxIxYQjZiCRlkBKFQxhgggwyAjCAcWVoyAicDy8HjgSWWYImlARMyZw85KAkZZMigkSHroeQDA0aGJZkMAClLZPSkNTL6KUtklCUy4FVNeV5FkSEDAAAA0ALQkZGtyMgUyP-PUro" });
-    entries.push({ label: "Anguish", presetExport: "[QOL-3-0-3]:AigUSxQjZMhMDg8lk6khZCADh4clKBQIQkEGAIKiIWRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFp6ACcjy8HjAUsswRJLZB5kzgAAAAAyyJAhIUPWQMkHBowMSzIBAFCWyChLZGT0U5bIKEtkwKOU8ryKIkMGoAEAoAWgIyNbkZEpkP8fpQI4" });
-    entries.push({ label: "_ZODUK_", presetExport: "[QOL-3-1-3]:AihxRRkjZMhMzupDk8EvZSADh4clKAC4N4-pEJOiZGRkyI5YQjZiCZl2AKBQ1iAggwwgGWQwWFqy5GsnycHjAUssyRJLEhpkxgIQAEAyyJAZkUNmRMkHBkwQSzITAFCWyChLZGT0U5bIKEtkxKOU8ryKIkMGAAAAoAWgIyNbkZEpkH8ApQKQpAEe" });
-    entries.push({ label: "nkonin.me", presetExport: "[QOL-3-1-3]:AlA0SxQjZMhMTk8lk6k5ZCADh4clKBT4Q0MGEIKiYWRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLRx5kzgIwAAAyyJApIUMmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkzKOU8ryKIkMGAAAAoAWgIyNDkZEpkP8fpRqQpAED" });
-    entries.push({ label: "ani", presetExport: "[QOL-3-1-3]:AjU0SxQjZMhMbk8lk6lBZCADh4clKBT5R0MGkEGhYGRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLUx5kzh4AAAAyyJAhIUMmQ8kHBowMSzJBAFCWyChLZGT0U5bIKEtkyKOU8ryKIkMGAAAAoAUgICNbkJEpkP8fpRKQpAEK" });
+    entries.push({ label: "mituu", preset: "mituu" });
+    entries.push({ label: "qlt", preset: "qlt" });
+    entries.push({ label: "munchkin", preset: "munchkinman" });
+    entries.push({ label: "Blank2762", preset: "Blank2762" });
+    entries.push({ label: "Valerie", preset: "Valerie" });
+    entries.push({ label: "Rosalia", preset: "Rosalia" });
+    entries.push({ label: "notah", preset: "notah" });
+    entries.push({ label: "Anguish", preset: "Anguish" });
+    entries.push({ label: "_ZODUK_", preset: "_ZODUK_" });
+    entries.push({ label: "nkonin.me", preset: "nkonin.me" });
+    entries.push({ label: "ani", preset: "ani" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
@@ -20511,53 +20511,8 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
                 if (entry.preset && !entry.action) {
                     RegisterPresetButton(entry.preset, btn, lbl, entry.label);
                 }
-                (function(button, labelPanel, originalLabel, presetName, presetExportString, actionName, presetThemeValue) {
+                (function(button, labelPanel, originalLabel, presetName, actionName) {
                     button.SetPanelEvent("onactivate", function() {
-                        if (presetExportString && presetExportString.length > 0) {
-                            var parsedImport = TryApplyImportStringWithDiagnostics(presetExportString);
-                            if (!parsedImport || parsedImport.ok !== true || !parsedImport.parsedConfig || !parsedImport.candidateConfig) return;
-                            if (typeof presetThemeValue === "number") {
-                                parsedImport.parsedConfig.SETTINGS_THEME = presetThemeValue;
-                                parsedImport.candidateConfig.SETTINGS_THEME = presetThemeValue;
-                            }
-
-                            var importDiffRows = BuildConfigDiffRows(MOD_CONFIG, parsedImport.candidateConfig);
-                            var importSchemaText = parsedImport.schemaVersion
-                                ? ("[QOL-" + String(parsedImport.schemaVersion).replace(/\./g, "-") + "]")
-                                : "[unknown]";
-                            var importDetails = IsRussianSettingsLanguage()
-                                ? ("\u0421\u0445\u0435\u043C\u0430 " + importSchemaText + " | clamp=" + String(parsedImport.clampedKeys) + " | unknown=" + String(parsedImport.unknownKeys))
-                                : ("Schema " + importSchemaText + " | clamped=" + String(parsedImport.clampedKeys) + " | unknown=" + String(parsedImport.unknownKeys));
-
-                            OpenConfigDiffPreviewModal({
-                                title: "Settings Changes",
-                                summary: "Changes: " + String(importDiffRows.length),
-                                details: importDetails,
-                                rows: importDiffRows,
-                                applyText: "Confirm",
-                                cancelText: "Cancel",
-                                onApply: function() {
-                                    try {
-                                        var previousLanguage = GetSettingsLanguage();
-                                        ApplyParsedConfigWithDiagnostics(parsedImport.parsedConfig, parsedImport.schemaVersion || LATEST_COMPACT_SEMVER);
-                                        if (typeof presetThemeValue === "number") {
-                                            MOD_CONFIG.SETTINGS_THEME = presetThemeValue;
-                                        }
-                                        gLastAppliedPresetName = String(presetName || "");
-                                        SetRuntimePresetName(presetName);
-                                        SaveAndSync();
-                                        RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
-                                        ShowPresetApplySuccess(button, labelPanel, originalLabel);
-                                        return true;
-                                    } catch (eImportApply) {
-                                        SetLocalizedConfigFeedbackMessage("Preset apply failed.", "error", 2200);
-                                        return false;
-                                    }
-                                }
-                            });
-                            return;
-                        }
-
                         var candidatePresetConfig = BuildPresetCandidateConfigByName(presetName);
                         if (!candidatePresetConfig) return;
                         var presetDiffRows = BuildConfigDiffRows(MOD_CONFIG, candidatePresetConfig);
@@ -20578,7 +20533,7 @@ function CreatePresetGrid(parent, title, entries, columns, variant) {
                             }
                         });
                     });
-                })(btn, lbl, entry.label, entry.preset, entry.presetExport, entry.action, entry.presetTheme);
+                })(btn, lbl, entry.label, entry.preset, entry.action);
             }
         }
 
