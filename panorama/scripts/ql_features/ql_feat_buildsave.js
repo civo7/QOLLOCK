@@ -65,7 +65,7 @@
     var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
-    var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 1;
+    var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
     var BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;
     var BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS = 1000;
     var BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
@@ -885,6 +885,7 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── TryFinalizeBuildSaveWhenNotPending ──
     function TryFinalizeBuildSaveWhenNotPending(root, nowMs, configuredReturnHero, requestState, requestMessage) {
         if (requestState === "pending") return false;
+        _TLog("save:FinalizeNotPending", "state=" + (requestState || "empty") + " msg=" + String(requestMessage || "-").slice(0, 24) + " switchedHero=" + (State.buildSaveDidSwitchToStorageHero ? "1" : "0") + " activeSession=" + (State.saveSettingsLoaderSessionActive ? "1" : "0"));
         if (SAVE_SETTINGS_LOADER_ENABLED && State.saveSettingsLoaderSessionActive) {
             var endCode = requestState === "success" ? "success" : "failed";
             var endDetail = requestMessage ? String(requestMessage) : (requestState === "success" ? "Settings save complete." : "Save ended.");
@@ -907,9 +908,11 @@ function ResetBuildSaveRequestAttributes(root) {
     function EnsureBuildSaveRequestToken(root, nowMs) {
         var requestToken = root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "");
         if (!requestToken || requestToken.length === 0) {
+            var prevState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || "-");
+            var prevReq = String(root.GetAttributeString(BUILD_SAVE_REQUEST_ATTR, "") || "-").slice(0, 30);
             requestToken = String(nowMs);
             root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, requestToken);
-            _TLog("save:EnsureToken", "new token=" + String(requestToken).slice(0, 8));
+            _TLog("save:EnsureToken", "new token=" + String(requestToken).slice(0, 8) + " prevState=" + prevState + " prevReq=" + prevReq);
         }
         if (SAVE_SETTINGS_LOADER_ENABLED) {
             QOL.beginSaveSettingsLoaderSession(requestToken, nowMs);

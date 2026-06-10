@@ -193,6 +193,8 @@
         var st = state ? String(state) : "";
         var msg = message ? String(message) : "";
         var tok = token ? String(token) : "";
+        var prevState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || "-");
+        _TLog("save:SetStatus", "state=" + (st || "empty") + " prevState=" + prevState + " msg=" + String(msg || "-").slice(0, 24) + " tok=" + String(tok || "-").slice(0, 8));
         root.SetAttributeString(BUILD_SAVE_STATE_ATTR, st);
         root.SetAttributeString(BUILD_SAVE_MSG_ATTR, msg);
         if (tok.length > 0) {
