@@ -6,7 +6,7 @@
     var _deps = QOL.import(["state","utils","ensureCachedPanelByIds","ensureMinimapPanelCache","ensurePassiveHudPanelCache","ensureGameTimePanelCache","ensureAbilitiesContainerPanelCache"]);
     var State = _deps.state;
     var Utils = _deps.utils;
-    var IsPanelValid = U ? Utils.IsPanelValid : function() { return false; };
+    var IsPanelValid = Utils ? Utils.IsPanelValid : function() { return false; };
     var EnsureCachedPanelByIds = _deps.ensureCachedPanelByIds || function() {};
     var EnsureMinimapPanelCache = _deps.ensureMinimapPanelCache || function() {};
     var EnsurePassiveHudPanelCache = _deps.ensurePassiveHudPanelCache || function() {};

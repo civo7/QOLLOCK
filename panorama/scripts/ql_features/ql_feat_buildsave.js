@@ -17,7 +17,6 @@
         "captureBuildSaveTargetSelection", "ensureShopFavoritesNavActive", "ensureStorageHeroFavoritesHeaderVisible", "getBuildSaveHudPanel", "hasBuildSaveStorageUiReady", "isBuildSaveStorageRuntimeSourceStale", "isBuildSaveTargetSelectionMatch", "isHudClassActive", "resolveBuildSaveStorageHeroSignal", "tryCloseHeroShopForLoader", "tryOpenHeroShopForHeroProbe", "tryReselectBuildSaveTargetByTitle"]);
     var State = _deps.state;
     var Utils = _deps.utils;
-    var State = S;
     var GetCachedPanel = _deps.getCachedPanel;
     var SetCachedPanel = _deps.setCachedPanel;
     var NormalizeHeroId = _deps.normalizeHeroId;
