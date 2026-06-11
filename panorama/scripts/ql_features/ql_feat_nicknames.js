@@ -65,6 +65,148 @@
         return { label: sourceLabel, text: "" };
     }
 
+    function ResetNicknameSlotState(index) {
+        if (index < 0 || index >= SPM_MAX_PLAYERS) return;
+        State.topbarNicknamePlayers[index] = null;
+        State.topbarNicknameSourceLabels[index] = null;
+        State.topbarNicknameResolvedTexts[index] = "";
+        State.topbarNicknameResolveStates[index] = "unknown";
+        State.topbarNicknameRetryNextMs[index] = 0;
+    }
+
+    function ResetNicknameCache(keepDisplayLabels) {
+        for (var r = 0; r < SPM_MAX_PLAYERS; r++) {
+            ResetNicknameSlotState(r);
+            if (!keepDisplayLabels) State.topbarNicknameFallbackLabels[r] = null;
+        }
+        State.topbarNicknamesNextRefreshMs = 0;
+        State.topbarNicknamesLastClockSec = null;
+    }
+
+    function EnsureNicknameDisplayLabel(playerPanel, index) {
+        var displayLabel = IsPanelValid(State.topbarNicknameFallbackLabels[index]) ? State.topbarNicknameFallbackLabels[index] : null;
+        if (!displayLabel && playerPanel && playerPanel.FindChildrenWithClassTraverse) {
+            var alwaysLabels = playerPanel.FindChildrenWithClassTraverse("AlwaysPlayerName") || [];
+            for (var a = 0; a < alwaysLabels.length; a++) {
+                var candidate = alwaysLabels[a];
+                if (!candidate || !candidate.BHasClass) continue;
+                if (!candidate.BHasClass("QOLNickRuntime")) {
+                    displayLabel = candidate;
+                    break;
+                }
+            }
+            if (!displayLabel && alwaysLabels.length > 0) displayLabel = alwaysLabels[0];
+        }
+        if (!displayLabel && playerPanel && $.CreatePanel) {
+            displayLabel = $.CreatePanel("Label", playerPanel, "QOLNickRuntime_" + String(index));
+            if (displayLabel) {
+                displayLabel.AddClass("AlwaysPlayerName");
+                displayLabel.AddClass("QOLAlwaysPlayerNameFallback");
+                displayLabel.AddClass("QOLNickRuntime");
+            }
+        }
+        State.topbarNicknameFallbackLabels[index] = displayLabel || null;
+        if (!displayLabel) return null;
+        try {
+            if (displayLabel.SetHasClass) displayLabel.SetHasClass("QOLNickRuntime", true);
+        } catch (eRuntimeClass) {}
+        try {
+            if (playerPanel && displayLabel.GetParent && displayLabel.GetParent() !== playerPanel && displayLabel.SetParent) {
+                displayLabel.SetParent(playerPanel);
+            }
+        } catch (eReparent) {}
+        return displayLabel;
+    }
+
+    function RenderNicknameDisplayLabel(displayLabel, showLabel, text) {
+        if (!displayLabel) return;
+        if (displayLabel.text !== String(text || "")) displayLabel.text = String(text || "");
+        if (displayLabel.style) {
+            var newVis = showLabel ? "visible" : "collapse";
+            if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
+            var newZ = showLabel ? "1000" : "0";
+            if (displayLabel.style.zIndex !== newZ) displayLabel.style.zIndex = newZ;
+            var newOp = showLabel ? "1" : "0";
+            if (displayLabel.style.opacity !== newOp) displayLabel.style.opacity = newOp;
+        }
+    }
+
+    // ── Per-slot processing (extracted from UpdateTopBarNicknames loop body)
+
+    function ProcessNicknameSlot(root, now, i, enabled) {
+        var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
+        var playerPanel = cachedPlayerPanel;
+        if (!playerPanel) {
+            playerPanel = IsPanelValid(State.spm.playerPanels && State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
+        }
+        if (!playerPanel) playerPanel = GetTopBarPlayerPanel(root, i, now, false);
+        if (cachedPlayerPanel && playerPanel && cachedPlayerPanel !== playerPanel) {
+            ResetNicknameSlotState(i);
+        }
+        State.topbarNicknamePlayers[i] = playerPanel || null;
+        var displayLabel = playerPanel ? EnsureNicknameDisplayLabel(playerPanel, i) : (IsPanelValid(State.topbarNicknameFallbackLabels[i]) ? State.topbarNicknameFallbackLabels[i] : null);
+        var shouldShow = false;
+        var renderText = "";
+
+        if (!playerPanel || !playerPanel.SetHasClass) {
+            ResetNicknameSlotState(i);
+            RenderNicknameDisplayLabel(displayLabel, false, "");
+            return { sawPlayerPanel: false, allResolved: false };
+        }
+        SetPanelClassIfChanged(playerPanel, "qol_nickname_active", enabled);
+
+        var resolveState = String(State.topbarNicknameResolveStates[i] || "unknown");
+        var retryAt = Number(State.topbarNicknameRetryNextMs[i]) || 0;
+        var sourceLabel = IsPanelValid(State.topbarNicknameSourceLabels[i]) ? State.topbarNicknameSourceLabels[i] : null;
+        if (!sourceLabel && resolveState === "resolved") {
+            resolveState = "unknown";
+            State.topbarNicknameResolveStates[i] = resolveState;
+        }
+        if (enabled && resolveState === "resolved") {
+            var liveSourceText = ReadTopBarNicknameLabelText(sourceLabel);
+            if (liveSourceText) {
+                if (liveSourceText !== String(State.topbarNicknameResolvedTexts[i] || "")) {
+                    State.topbarNicknameResolvedTexts[i] = liveSourceText;
+                }
+            } else {
+                resolveState = "unknown";
+                State.topbarNicknameResolveStates[i] = resolveState;
+                State.topbarNicknameRetryNextMs[i] = 0;
+                retryAt = 0;
+            }
+        }
+        if (enabled && (resolveState !== "resolved") && now >= retryAt) {
+            var resolvedSource = ResolveTopBarNicknameSource(playerPanel, sourceLabel);
+            sourceLabel = resolvedSource.label;
+            State.topbarNicknameSourceLabels[i] = sourceLabel || null;
+            var nextText = resolvedSource.text;
+            if (nextText) {
+                State.topbarNicknameResolvedTexts[i] = String(nextText);
+                State.topbarNicknameResolveStates[i] = "resolved";
+                State.topbarNicknameRetryNextMs[i] = 0;
+            } else {
+                State.topbarNicknameResolvedTexts[i] = "";
+                State.topbarNicknameResolveStates[i] = "missing";
+                State.topbarNicknameRetryNextMs[i] = now + TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS;
+            }
+        }
+
+        var slotResolved = true;
+        if (enabled && String(State.topbarNicknameResolveStates[i] || "unknown") !== "resolved") {
+            slotResolved = false;
+        }
+        if (enabled && !displayLabel) {
+            slotResolved = false;
+        }
+
+        if (enabled) {
+            renderText = String(State.topbarNicknameResolvedTexts[i] || "");
+            shouldShow = renderText.length > 0;
+        }
+        RenderNicknameDisplayLabel(displayLabel, shouldShow, renderText);
+        return { sawPlayerPanel: true, allResolved: slotResolved };
+    }
+
     // ── Update ──
 
     function UpdateTopBarNicknames(root, nowMs, cfg) {
@@ -81,83 +223,17 @@
         if (!State.topbarNicknameRetryNextMs) State.topbarNicknameRetryNextMs = new Array(SPM_MAX_PLAYERS);
         RefreshSpmPanelCache(root, now);
 
-        function resetNicknameSlotState(index) {
-            if (index < 0 || index >= SPM_MAX_PLAYERS) return;
-            State.topbarNicknamePlayers[index] = null;
-            State.topbarNicknameSourceLabels[index] = null;
-            State.topbarNicknameResolvedTexts[index] = "";
-            State.topbarNicknameResolveStates[index] = "unknown";
-            State.topbarNicknameRetryNextMs[index] = 0;
-        }
-
-        function resetNicknameCache(keepDisplayLabels) {
-            for (var r = 0; r < SPM_MAX_PLAYERS; r++) {
-                resetNicknameSlotState(r);
-                if (!keepDisplayLabels) State.topbarNicknameFallbackLabels[r] = null;
-            }
-            State.topbarNicknamesNextRefreshMs = 0;
-            State.topbarNicknamesLastClockSec = null;
-        }
-
-        function ensureDisplayLabel(playerPanel, index) {
-            var displayLabel = IsPanelValid(State.topbarNicknameFallbackLabels[index]) ? State.topbarNicknameFallbackLabels[index] : null;
-            if (!displayLabel && playerPanel && playerPanel.FindChildrenWithClassTraverse) {
-                var alwaysLabels = playerPanel.FindChildrenWithClassTraverse("AlwaysPlayerName") || [];
-                for (var a = 0; a < alwaysLabels.length; a++) {
-                    var candidate = alwaysLabels[a];
-                    if (!candidate || !candidate.BHasClass) continue;
-                    if (!candidate.BHasClass("QOLNickRuntime")) {
-                        displayLabel = candidate;
-                        break;
-                    }
-                }
-                if (!displayLabel && alwaysLabels.length > 0) displayLabel = alwaysLabels[0];
-            }
-            if (!displayLabel && playerPanel && $.CreatePanel) {
-                displayLabel = $.CreatePanel("Label", playerPanel, "QOLNickRuntime_" + String(index));
-                if (displayLabel) {
-                    displayLabel.AddClass("AlwaysPlayerName");
-                    displayLabel.AddClass("QOLAlwaysPlayerNameFallback");
-                    displayLabel.AddClass("QOLNickRuntime");
-                }
-            }
-            State.topbarNicknameFallbackLabels[index] = displayLabel || null;
-            if (!displayLabel) return null;
-            try {
-                if (displayLabel.SetHasClass) displayLabel.SetHasClass("QOLNickRuntime", true);
-            } catch (eRuntimeClass) {}
-            try {
-                if (playerPanel && displayLabel.GetParent && displayLabel.GetParent() !== playerPanel && displayLabel.SetParent) {
-                    displayLabel.SetParent(playerPanel);
-                }
-            } catch (eReparent) {}
-            return displayLabel;
-        }
-
-        function renderDisplayLabel(displayLabel, showLabel, text) {
-            if (!displayLabel) return;
-            if (displayLabel.text !== String(text || "")) displayLabel.text = String(text || "");
-            if (displayLabel.style) {
-                var newVis = showLabel ? "visible" : "collapse";
-                if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
-                var newZ = showLabel ? "1000" : "0";
-                if (displayLabel.style.zIndex !== newZ) displayLabel.style.zIndex = newZ;
-                var newOp = showLabel ? "1" : "0";
-                if (displayLabel.style.opacity !== newOp) displayLabel.style.opacity = newOp;
-            }
-        }
-
         var inHideout = isConnectedToHideout(root);
         if (inHideout) {
             if (!State.topbarNicknamesWasInHideout) {
-                resetNicknameCache(true);
+                ResetNicknameCache(true);
                 State.topbarNicknamesWasInHideout = true;
             }
             for (var h = 0; h < SPM_MAX_PLAYERS; h++) {
                 var hideoutPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[h]) ? State.topbarNicknamePlayers[h] : null;
                 if (hideoutPlayerPanel) SetPanelClassIfChanged(hideoutPlayerPanel, "qol_nickname_active", false);
                 var hiddenLabel = IsPanelValid(State.topbarNicknameFallbackLabels[h]) ? State.topbarNicknameFallbackLabels[h] : null;
-                renderDisplayLabel(hiddenLabel, false, "");
+                RenderNicknameDisplayLabel(hiddenLabel, false, "");
             }
             State.topbarNicknamesWasEnabled = enabled;
             State.topbarNicknamesNextRefreshMs = now + TOPBAR_NICKNAMES_REFRESH_MS;
@@ -166,14 +242,14 @@
 
         if (State.topbarNicknamesWasInHideout) {
             State.topbarNicknamesWasInHideout = false;
-            resetNicknameCache(true);
+            ResetNicknameCache(true);
         }
 
         var clockSec = GetGameSecondsForUrn(root);
         if (State.topbarNicknamesLastClockSec !== null &&
             (clockSec + 5 < State.topbarNicknamesLastClockSec ||
             (State.topbarNicknamesLastClockSec > 30 && clockSec <= 2))) {
-            resetNicknameCache(true);
+            ResetNicknameCache(true);
         }
         State.topbarNicknamesLastClockSec = clockSec;
 
@@ -183,76 +259,9 @@
         var allResolved = enabled;
         var sawPlayerPanel = false;
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
-            var playerPanel = cachedPlayerPanel;
-            if (!playerPanel) {
-                playerPanel = IsPanelValid(State.spm.playerPanels && State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
-            }
-            if (!playerPanel) playerPanel = GetTopBarPlayerPanel(root, i, now, false);
-            if (cachedPlayerPanel && playerPanel && cachedPlayerPanel !== playerPanel) {
-                resetNicknameSlotState(i);
-            }
-            State.topbarNicknamePlayers[i] = playerPanel || null;
-            var displayLabel = playerPanel ? ensureDisplayLabel(playerPanel, i) : (IsPanelValid(State.topbarNicknameFallbackLabels[i]) ? State.topbarNicknameFallbackLabels[i] : null);
-            var shouldShow = false;
-            var renderText = "";
-
-            if (!playerPanel || !playerPanel.SetHasClass) {
-                resetNicknameSlotState(i);
-                renderDisplayLabel(displayLabel, false, "");
-                continue;
-            }
-            sawPlayerPanel = true;
-            SetPanelClassIfChanged(playerPanel, "qol_nickname_active", enabled);
-
-            var resolveState = String(State.topbarNicknameResolveStates[i] || "unknown");
-            var retryAt = Number(State.topbarNicknameRetryNextMs[i]) || 0;
-            var sourceLabel = IsPanelValid(State.topbarNicknameSourceLabels[i]) ? State.topbarNicknameSourceLabels[i] : null;
-            if (!sourceLabel && resolveState === "resolved") {
-                resolveState = "unknown";
-                State.topbarNicknameResolveStates[i] = resolveState;
-            }
-            if (enabled && resolveState === "resolved") {
-                var liveSourceText = ReadTopBarNicknameLabelText(sourceLabel);
-                if (liveSourceText) {
-                    if (liveSourceText !== String(State.topbarNicknameResolvedTexts[i] || "")) {
-                        State.topbarNicknameResolvedTexts[i] = liveSourceText;
-                    }
-                } else {
-                    resolveState = "unknown";
-                    State.topbarNicknameResolveStates[i] = resolveState;
-                    State.topbarNicknameRetryNextMs[i] = 0;
-                    retryAt = 0;
-                }
-            }
-            if (enabled && (resolveState !== "resolved") && now >= retryAt) {
-                var resolvedSource = ResolveTopBarNicknameSource(playerPanel, sourceLabel);
-                sourceLabel = resolvedSource.label;
-                State.topbarNicknameSourceLabels[i] = sourceLabel || null;
-                var nextText = resolvedSource.text;
-                if (nextText) {
-                    State.topbarNicknameResolvedTexts[i] = String(nextText);
-                    State.topbarNicknameResolveStates[i] = "resolved";
-                    State.topbarNicknameRetryNextMs[i] = 0;
-                } else {
-                    State.topbarNicknameResolvedTexts[i] = "";
-                    State.topbarNicknameResolveStates[i] = "missing";
-                    State.topbarNicknameRetryNextMs[i] = now + TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS;
-                }
-            }
-
-            if (enabled && String(State.topbarNicknameResolveStates[i] || "unknown") !== "resolved") {
-                allResolved = false;
-            }
-            if (enabled && !displayLabel) {
-                allResolved = false;
-            }
-
-            if (enabled) {
-                renderText = String(State.topbarNicknameResolvedTexts[i] || "");
-                shouldShow = renderText.length > 0;
-            }
-            renderDisplayLabel(displayLabel, shouldShow, renderText);
+            var result = ProcessNicknameSlot(root, now, i, enabled);
+            if (result.sawPlayerPanel) sawPlayerPanel = true;
+            if (!result.allResolved) allResolved = false;
         }
 
         State.topbarNicknamesWasEnabled = enabled;
