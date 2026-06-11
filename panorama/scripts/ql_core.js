@@ -809,7 +809,7 @@ _TLog = function(label, detail) {
     // Delays allow the game's own HUD panels to initialize before QOLLOCK queries them.
     // Too low: panels not found, bootstrap retries waste CPU.
     // Too high: user sees default HUD before QOLLOCK activates.
-    const CORE_START_DELAY_LOOP_SEC = 0.05;   // poll immediately; isConnectedToHideout defers if not ready
+    const CORE_START_DELAY_LOOP_SEC = 0.05;   // poll immediately; IsConnectedToHideout defers if not ready
     const CORE_START_DELAY_COMPASS_SEC = 0.10; // compass/minimap loop
     const CORE_START_DELAY_BUILD_SEC = 0.10;   // build category payload loop
     // Phase slot assignments (which feature runs in which corePhase % 5)
@@ -5777,7 +5777,7 @@ function GetUIRoot() {
         return true;
     }
 
-    function isConnectedToHideout(root) {
+    function IsConnectedToHideout(root) {
         // Game.GetMapInfo confirmed absent — use HUD panel classes for hideout detection.
         var hud = GetCachedPanel("cachedHudPanel");
         if (!hud && root && root.FindChildTraverse) {
@@ -5792,7 +5792,7 @@ function GetUIRoot() {
         if (!root) return false;
         var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
         var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
-        var hideout = isConnectedToHideout(root);
+        var hideout = IsConnectedToHideout(root);
 
         var hasPanelClass = function(panel, className) {
             return !!(panel && panel.BHasClass && panel.BHasClass(className));
@@ -6084,7 +6084,7 @@ function GetUIRoot() {
         if (!isFinite(enabledVal)) enabledVal = 0;
         var enabled = (enabledVal === 1);
         var urnColorsEnabled = false;
-        var inHideout = isConnectedToHideout(root);
+        var inHideout = IsConnectedToHideout(root);
 
         if (!enabled || inHideout) {
             HideUrnTrackerOverlay(root);
@@ -9228,7 +9228,7 @@ function GetUIRoot() {
 
     function PulseShopAfterBuildPayloadStartupReturn() {
         var root = GetUIRoot();
-        if (!root || !isConnectedToHideout(root)) return false;
+        if (!root || !IsConnectedToHideout(root)) return false;
         var wasOpen = IsHudClassActive(root, "gShopOpen");
         if (wasOpen) {
             var preClosed = false;
@@ -9275,7 +9275,7 @@ function GetUIRoot() {
 
         $.Schedule(BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC, function() {
             var closeRoot = GetUIRoot();
-            if (!closeRoot || !isConnectedToHideout(closeRoot)) return;
+            if (!closeRoot || !IsConnectedToHideout(closeRoot)) return;
             var closed = false;
             try {
                 if (typeof CitadelExitUpgradeShop === "function") {
@@ -9299,7 +9299,7 @@ function GetUIRoot() {
     }
 
     function TryCloseBrowseBuildsPopupForLoader(root) {
-        if (!root || !isConnectedToHideout(root)) return false;
+        if (!root || !IsConnectedToHideout(root)) return false;
         var cancelLookup = FindBrowseBuildsCancelButton(root);
         var cancelBtn = cancelLookup && cancelLookup.panel ? cancelLookup.panel : null;
         if (!cancelBtn || !IsPanelVisibleMaybe(cancelBtn)) return false;
@@ -9307,7 +9307,7 @@ function GetUIRoot() {
     }
 
     function TryCloseHeroShopForLoader(root) {
-        if (!root || !isConnectedToHideout(root)) return false;
+        if (!root || !IsConnectedToHideout(root)) return false;
         var closedBrowsePopup = TryCloseBrowseBuildsPopupForLoader(root);
         var wasOpen = IsHudClassActive(root, "gShopOpen");
         if (!wasOpen) return closedBrowsePopup || true;
@@ -9398,7 +9398,7 @@ function GetUIRoot() {
     }
 
     function TryOpenHeroShopForHeroProbe(root, nowMs) {
-        if (!root || !isConnectedToHideout(root)) return false;
+        if (!root || !IsConnectedToHideout(root)) return false;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (IsHudClassActive(root, "gShopOpen")) {
             EnsureShopFavoritesNavActive(root, now, "buildCategoryPayloadFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS);
@@ -15862,7 +15862,7 @@ function GetUIRoot() {
             return;
         }
 
-        if (isConnectedToHideout(root)) {
+        if (IsConnectedToHideout(root)) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
@@ -17766,7 +17766,7 @@ function GetUIRoot() {
         cfg = applyBuildCategoryOverride(root, cfg, nowMsLoop, raw);
         raw = applyAccountPresetOverride(raw);
         State.lastConfig = cfg;
-        var hideoutConnected = root ? isConnectedToHideout(root) : false;
+        var hideoutConnected = root ? IsConnectedToHideout(root) : false;
         var hasConfigSource = !!(raw && raw.length > 0);
 
         // Hard-gate: when all features are disabled and no pending work exists,
@@ -18028,7 +18028,7 @@ function GetUIRoot() {
         ["injectTopChatImage", function() { return InjectTopChatImage; }],
         ["isColorWarningEnabled", function() { return IsColorWarningEnabled; }],
         ["isCombatSignalActive", function() { return IsCombatSignalActive; }],
-        ["isConnectedToHideout", function() { return isConnectedToHideout; }],
+        ["IsConnectedToHideout", function() { return IsConnectedToHideout; }],
         ["isCustomHudContextActive", function() { return IsCustomHudContextActive; }],
         ["isHudClassActive", function() { return IsHudClassActive; }],
         ["isHudVisibleForTopBarRuntime", function() { return IsHudVisibleForTopBarRuntime; }],

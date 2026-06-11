@@ -138,29 +138,6 @@
      * Perform a basic health check on a config object.
      * Returns an array of issue strings (empty = healthy).
      */
-    function ValidateConfigHealth(cfg) {
-        var issues = [];
-        if (typeof cfg !== "object" || !cfg) {
-            issues.push("config is not an object");
-            return issues;
-        }
-        // Check for known numeric fields with wrong types
-        var numericFields = [
-            "SPM_SAMPLE_INTERVAL", "HEALTHBAR_TYPE", "ENABLE_COLORED_HEALTHBAR",
-            "ENABLE_MINIMAP_ROTATE", "ENABLE_COMPASS", "LOOP_INTERVAL_SEC"
-        ];
-        for (var i = 0; i < numericFields.length; i++) {
-            var key = numericFields[i];
-            if (cfg.hasOwnProperty(key) && cfg[key] !== undefined && cfg[key] !== null) {
-                if (typeof cfg[key] !== "number") {
-                    issues.push(key + " has wrong type: " + (typeof cfg[key]) + " (expected number)");
-                }
-            }
-        }
-        return issues;
-    }
-    exports.ValidateConfigHealth = ValidateConfigHealth;
-
     // ---- Number Normalization ----
 
     /**

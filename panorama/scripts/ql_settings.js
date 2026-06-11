@@ -9534,18 +9534,7 @@ function SetPanelNonInteractive(panel) {
     panel.hittestchildren = false;
 }
 
-function SetPanelOpacitySafe(panel, opacityValue, fallbackValue) {
-    if (!panel || !panel.style) return;
-    var fallback = Number(fallbackValue);
-    if (!isFinite(fallback)) fallback = 1.0;
-    if (fallback < 0) fallback = 0;
-    if (fallback > 1) fallback = 1;
-    var next = Number(opacityValue);
-    if (!isFinite(next)) next = fallback;
-    if (next < 0) next = 0;
-    if (next > 1) next = 1;
-    panel.style.opacity = next.toFixed(2);
-}
+var SetPanelOpacitySafe = QOL_UTILS_LOADED ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { panel.style.opacity = "1.00"; } catch(e) {} } };
 
 function GetPanelRectRelativeToContext(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return null;
