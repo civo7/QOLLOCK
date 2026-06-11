@@ -17592,49 +17592,49 @@ function GetUIRoot() {
         "healthbarRuntimeHelpers": true
     };
 
-    function populateFeatureBuckets(_buckets, _b, _s, gates, root) {
-        FEATURE_DISPATCH_ORDER.forEach(function(_fname) {
-            var _gateKey = FEATURE_GATE_MAP[_fname] || _fname;
+    function populateFeatureBuckets(buckets, staggerEnabled, loopSnapshot, gates, root) {
+        FEATURE_DISPATCH_ORDER.forEach(function(featureName) {
+            var gateKey = FEATURE_GATE_MAP[featureName] || featureName;
 
             // Gate check
-            if (!gates[_gateKey]) return;
+            if (!gates[gateKey]) return;
 
             // Root guard
-            if (FEATURE_REQUIRES_ROOT[_fname] && !root) return;
+            if (FEATURE_REQUIRES_ROOT[featureName] && !root) return;
 
             // Special: healthbarRuntimeHelpers only runs when coreRoot is OFF
-            if (_fname === "healthbarRuntimeHelpers" && gates.coreRoot) return;
+            if (featureName === "healthbarRuntimeHelpers" && gates.coreRoot) return;
 
-            var _feat = QOL_FEATURE_REGISTRY[_fname];
-            if (!_feat) {
-                if (!State._missingFeatureLogged || !State._missingFeatureLogged[_fname]) {
+            var featureEntry = QOL_FEATURE_REGISTRY[featureName];
+            if (!featureEntry) {
+                if (!State._missingFeatureLogged || !State._missingFeatureLogged[featureName]) {
                     if (!State._missingFeatureLogged) State._missingFeatureLogged = {};
-                    State._missingFeatureLogged[_fname] = true;
-                    $.Msg("[QOLLock] ERROR: feature '" + _fname + "' is in dispatch order but not registered — extracted file missing or failed to load?");
+                    State._missingFeatureLogged[featureName] = true;
+                    $.Msg("[QOLLock] ERROR: feature '" + featureName + "' is in dispatch order but not registered — extracted file missing or failed to load?");
                 }
                 return;
             }
 
-            var _bucket = _b ? (_feat.bucket != null ? _feat.bucket : 0) : 0;
-            var _perfName = FEATURE_PERF_MAP[_fname] || ("loop." + _fname);
+            var bucketIndex = staggerEnabled ? (featureEntry.bucket != null ? featureEntry.bucket : 0) : 0;
+            var perfLabel = FEATURE_PERF_MAP[featureName] || ("loop." + featureName);
 
-            _buckets[_bucket].push(function(_s) {
-                ExecuteFeature(_fname, function() {
-                    var _ps = PerfStart();
+            buckets[bucketIndex].push(function(snapshot) {
+                ExecuteFeature(featureName, function() {
+                    var perfStartMs = PerfStart();
                     // minimapRuntime gets raw config as 6th arg
-                    if (_fname === "minimapRuntime") {
-                        QOL_FEATURE_REGISTRY[_fname].update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected, _s.raw);
+                    if (featureName === "minimapRuntime") {
+                        QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
                     } else {
-                        QOL_FEATURE_REGISTRY[_fname].update(_s.root, _s.cfg, _s.nowMs, State, _s.hideoutConnected);
+                        QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected);
                     }
                     // Post-update side effects
-                    if (_fname === "onDeathArcade") {
-                        State.onDeathArcadeRuntimeWasActive = _s.gates.onDeathArcadeActive;
+                    if (featureName === "onDeathArcade") {
+                        State.onDeathArcadeRuntimeWasActive = snapshot.gates.onDeathArcadeActive;
                     }
-                    if (_fname === "coreRoot") {
-                        State.coreRootGateSig = _s.gates.sig;
+                    if (featureName === "coreRoot") {
+                        State.coreRootGateSig = snapshot.gates.sig;
                     }
-                    PerfEnd(_perfName, _ps);
+                    PerfEnd(perfLabel, perfStartMs);
                 });
             });
         });
@@ -17653,32 +17653,32 @@ function GetUIRoot() {
         var loopAccentSigParts = State._cachedAccentSigParts;
         var loopCurrentAccentColor = loopAccentSigParts.length > 1 ? loopAccentSigParts[loopAccentSigParts.length - 1] : "";
         if (root && loopAccentNeedsRefresh && loopCurrentAccentColor !== loopAccentColor) {
-            var _psAccent = PerfStart();
+            var perfStartMs = PerfStart();
             var accentHealthContainer = GetCachedPanel("healthContainer");
             if (!accentHealthContainer && root.FindChildTraverse) {
                 accentHealthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 SetCachedPanel("healthContainer", accentHealthContainer);
             }
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
-            PerfEnd("loop.healthbar_accent_color", _psAccent);
+            PerfEnd("loop.healthbar_accent_color", perfStartMs);
         }
     }
 
-    function dispatchOrExecuteBuckets(_buckets, _s) {
+    function dispatchOrExecuteBuckets(buckets, loopSnapshot) {
         if (FEATURE_STAGGER_ENABLED) {
-            if (_buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, _buckets[0], _s);
-            if (_buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, _buckets[1], _s);
-            if (_buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, _buckets[2], _s);
-            if (_buckets[3].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_3_MS, _buckets[3], _s);
-            if (_buckets[4].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_4_MS, _buckets[4], _s);
-            if (_buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, _buckets[5], _s);
-            if (_buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, _buckets[6], _s);
-            if (_buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, _buckets[7], _s);
+            if (buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, buckets[0], loopSnapshot);
+            if (buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, buckets[1], loopSnapshot);
+            if (buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, buckets[2], loopSnapshot);
+            if (buckets[3].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_3_MS, buckets[3], loopSnapshot);
+            if (buckets[4].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_4_MS, buckets[4], loopSnapshot);
+            if (buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, buckets[5], loopSnapshot);
+            if (buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, buckets[6], loopSnapshot);
+            if (buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, buckets[7], loopSnapshot);
         } else {
-            for (var _bi = 0; _bi < _buckets[0].length; _bi++) {
-                var _fn = _buckets[0][_bi];
-                if (_fn) {
-                    try { _fn(_s); } catch (e) {
+            for (var bucketIdx = 0; bucketIdx < buckets[0].length; bucketIdx++) {
+                var featureFn = buckets[0][bucketIdx];
+                if (featureFn) {
+                    try { featureFn(loopSnapshot); } catch (e) {
                         if (typeof $ !== "undefined" && $.Msg) {
                             $.Msg("[QOLLock] feature error: " + (e && e.message ? e.message : String(e)));
                         }
@@ -17703,18 +17703,18 @@ function GetUIRoot() {
         try {
             if (typeof QOL_FEATURE_REGISTRY !== "undefined" && (!State._diagWriteNextMs || State._diagWriteNextMs <= nowMs)) {
                 State._diagWriteNextMs = nowMs + 5000;
-                var _diag = {
+                var diag = {
                     features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
                     missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
                     errors: (State.featureErrorStreaks) ? State.featureErrorStreaks : {},
                     disabled: (State.featureAutoDisabled) ? Object.keys(State.featureAutoDisabled) : [],
                     logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : []
                 };
-                var _diagRoot = State.rootPanel || root;
-                if (_diagRoot && _diagRoot.FindChildTraverse) {
-                    var _diagHud = _diagRoot.FindChildTraverse("Hud");
-                    if (_diagHud && _diagHud.SetAttributeString) {
-                        _diagHud.SetAttributeString("QOL_Diag", JSON.stringify(_diag));
+                var diagRoot = State.rootPanel || root;
+                if (diagRoot && diagRoot.FindChildTraverse) {
+                    var diagHud = diagRoot.FindChildTraverse("Hud");
+                    if (diagHud && diagHud.SetAttributeString) {
+                        diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
                     }
                 }
             }
@@ -17782,16 +17782,16 @@ function GetUIRoot() {
 
         sweepStalePanelCache(nowMsLoop);
 
-        var _tGates = PerfNowMs();
+        var gateResolveStartMs = PerfNowMs();
         var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
-        TimeFeature("loop.resolve_gates", _tGates);
+        TimeFeature("loop.resolve_gates", gateResolveStartMs);
         State.lastResolvedGates = gates;
 
         // ---- intra-tick feature staggering ----
         // Snapshot shared loop state so deferred $.Schedule callbacks
         // see the correct tick's data even if they fire after the next
         // loop invocation.
-        var _s = {
+        var loopSnapshot = {
             root: root,
             cfg: cfg,
             nowMs: nowMsLoop,
@@ -17801,12 +17801,12 @@ function GetUIRoot() {
             hasConfigSource: hasConfigSource,
             redDiamondEnabled: gates.redDiamondEnabled
         };
-        var _buckets = [[], [], [], [], [], [], [], []];
-        var _b = FEATURE_STAGGER_ENABLED ? _buckets : null; // null = use bucket 0 only
+        var buckets = [[], [], [], [], [], [], [], []];
+        var staggerEnabled = FEATURE_STAGGER_ENABLED ? buckets : null; // null = use bucket 0 only
 
-        populateFeatureBuckets(_buckets, _b, _s, gates, root);
+        populateFeatureBuckets(buckets, staggerEnabled, loopSnapshot, gates, root);
         syncHealthbarAccentColor(root, cfg);
-        dispatchOrExecuteBuckets(_buckets, _s);
+        dispatchOrExecuteBuckets(buckets, loopSnapshot);
 
         if (State.accountPresetTestActive) {
             State.accountPresetTestActive = false;

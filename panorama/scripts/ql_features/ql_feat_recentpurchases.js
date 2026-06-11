@@ -485,8 +485,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (S.heroPopup.mapState !== HERO_MAP_BUILT) return false;
         for (var hero in S.heroPopup.playerCardCache) {
             if (!Object.prototype.hasOwnProperty.call(S.heroPopup.playerCardCache, hero)) continue;
-            var pp = S.heroPopup.playerCardCache[hero];
-            if (!pp || !IsPanelValid(pp)) return true;
+            var parentPanel = S.heroPopup.playerCardCache[hero];
+            if (!parentPanel || !IsPanelValid(parentPanel)) return true;
         }
         return false;
     }
@@ -565,9 +565,9 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
         for (var i = 0; i < active.length; i++) {
             var margin = 125;
-            var pp = active[i].panel.GetParent();
-            if (pp && IsPanelValid(pp) && pp.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
-                if (S.heroPopup.ultCooldownsEnabled && !pp.BHasClass("UltimateCooldownReady")) {
+            var parentPanel = active[i].panel.GetParent();
+            if (parentPanel && IsPanelValid(parentPanel) && parentPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
+                if (S.heroPopup.ultCooldownsEnabled && !parentPanel.BHasClass("UltimateCooldownReady")) {
                     margin = 172; // ult on cooldown — cooldown text pushes popup down
                 } else {
                     margin = 152; // ult ready (or cooldowns disabled) — less space needed

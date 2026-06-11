@@ -985,11 +985,11 @@
         // Uses BHasClass and GetChildCount on cached panels (property reads,
         // no tree walks). Only fires when caches are already populated by a
         // prior full scan.
-        var _mbBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
-        if (_mbBtn) {
-            var _mbSpawned = !!(_mbBtn.BHasClass && _mbBtn.BHasClass("midboss_spawned"));
-            if (_mbSpawned !== state._lastMidBossSpawned) {
-                state._lastMidBossSpawned = _mbSpawned;
+        var midBossBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
+        if (midBossBtn) {
+            var midBossSpawned = !!(midBossBtn.BHasClass && midBossBtn.BHasClass("midboss_spawned"));
+            if (midBossSpawned !== state._lastMidBossSpawned) {
+                state._lastMidBossSpawned = midBossSpawned;
                 state.nextScanMs = 0; // force immediate full scan on change
             }
         }

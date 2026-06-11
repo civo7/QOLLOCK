@@ -8,6 +8,7 @@
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var PerfNowMs = U.PerfNowMs;
