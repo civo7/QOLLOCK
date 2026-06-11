@@ -120,7 +120,7 @@
     var BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 1500;
     var BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;
-    var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;
+    var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 8000;
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
     var BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 6;
@@ -134,7 +134,7 @@
     var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     var BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;
-    var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;
+    var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 12000;
     var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (typeof QOL_COMPACT_SCHEMA_REGISTRY !== "undefined") ? QOL_COMPACT_SCHEMA_REGISTRY : {};
     var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined") ? QOL_LATEST_COMPACT_SEMVER : "3.1.4";
     var BUILD_LOADER_TEMP_DISABLED = false;
@@ -981,6 +981,25 @@
                 SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
                 State.buildCategoryPayloadHeroProbeStage = "scan_storage";
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+                return "ready";
+            }
+
+            // Guard: if the current build already contains ANY valid QOLLOCK payload
+            // (not just the default one we just generated), skip the save bootstrap.
+            // This prevents overwriting an existing user config that was stored in a
+            // build but couldn't be confirmed during wait_storage (e.g., when
+            // persistentStorage is unavailable and the Airheart UI hasn't rendered yet).
+            // The skip counter prevents an infinite bounce if scan_storage somehow
+            // fails to read a payload the guard keeps finding.
+            var anyPayloadSkipCount = Number(State.buildCategoryPayloadAnyPayloadGuardSkips) || 0;
+            if (QOL.currentBuildHasAnyPayload && QOL.currentBuildHasAnyPayload(root)
+                && anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+                State.buildCategoryPayloadAnyPayloadGuardSkips = anyPayloadSkipCount + 1;
+                SetSettingsLoaderStepState("read_payload", "active", "Existing payload found in current build; skipping save bootstrap.");
+                SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context verified via existing payload.");
+                State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+                _TLog("load:ProbeStage", "bootstrap_via_save_enqueue found existing payload → scan_storage skips=" + String(anyPayloadSkipCount + 1));
                 return "ready";
             }
 

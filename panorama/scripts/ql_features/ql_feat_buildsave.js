@@ -609,6 +609,43 @@ function ResetBuildSaveRequestAttributes(root) {
         return false;
     }
 
+    // ── CurrentBuildHasAnyPayload ──
+    // Unlike CurrentBuildHasPayload (which requires an exact token match), this
+    // checks whether the currently selected build contains ANY valid QOLLOCK
+    // payload. Used as a guard in bootstrap_via_save_enqueue to avoid
+    // overwriting an existing user config with a fresh default payload.
+    function CurrentBuildHasAnyPayload(root) {
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
+
+        function hasToken(text) {
+            if (!text || String(text).length === 0) return false;
+            return BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX.test(String(text));
+        }
+
+        var directEntry = GetBuildSaveCategoryNameEntry(root);
+        if (hasToken(QOL.readPanelTextMaybe(directEntry))) return true;
+
+        if (selectedBuild && selectedBuild.FindChildTraverse) {
+            var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
+            if (hasToken(QOL.readPanelTextMaybe(directHeader))) return true;
+            var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
+            if (hasToken(QOL.readPanelTextMaybe(directEntryInBuild))) return true;
+        }
+
+        if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
+            return false;
+        }
+
+        var classNames = ["CategoryName", "CategoryNameTextEntry", "BuildCategoryName"];
+        for (var c = 0; c < classNames.length; c++) {
+            var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
+            for (var i = 0; i < labels.length; i++) {
+                if (hasToken(QOL.readPanelTextMaybe(labels[i]))) return true;
+            }
+        }
+        return false;
+    }
+
     // ── AdvanceBuildSaveRequestStage ──
     function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
         if (State.buildSaveLastTraceStage !== State.buildSaveStage) {
@@ -999,6 +1036,7 @@ function ResetBuildSaveRequestAttributes(root) {
     QOL.ensureBuildSaveRequestRuntimeInitialized = EnsureBuildSaveRequestRuntimeInitialized;
     QOL.countBuildCategoryHeaders = CountBuildCategoryHeaders;
     QOL.currentBuildHasPayload = CurrentBuildHasPayload;
+    QOL.currentBuildHasAnyPayload = CurrentBuildHasAnyPayload;
     QOL.getBuildSaveCategoryNameEntry = GetBuildSaveCategoryNameEntry;
     QOL.isBuildSaveMutationStage = IsBuildSaveMutationStage;
     QOL.isBuildSaveEditModeActive = IsBuildSaveEditModeActive;

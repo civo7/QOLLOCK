@@ -11,3 +11,5 @@ scripts/tmp_*.ps1
 _restore_*/
 backup_*/
 scripts/qollock_pipeline.ps1
+memory
+plans
