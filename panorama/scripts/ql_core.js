@@ -8194,6 +8194,120 @@ function GetUIRoot() {
     function RenderSettingsLoaderStepRows(stepsWrap) {
         return _RenderLoaderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX, "settingsLoaderStepRows", "settingsLoader");
     }
+    // ── Settings loader skip-button subsystem (extracted from EnsureSettingsLoaderOverlay)
+    function EnsureSettingsLoaderSkipSection(overlay) {
+        var skipDock = GetCachedPanel("settingsLoaderSkipDock");
+        if (!skipDock) skipDock = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_DOCK_ID) || null) : null;
+        if (!skipDock) skipDock = $.CreatePanel("Panel", overlay, SETTINGS_LOADER_SKIP_DOCK_ID, { hittest: "false", hittestchildren: "true" });
+        if (skipDock) {
+            skipDock.hittest = false;
+            skipDock.hittestchildren = true;
+            if (skipDock.AddClass) skipDock.AddClass("QOLSettingsLoaderSkipDock");
+            skipDock.style.horizontalAlign = "left";
+            skipDock.style.verticalAlign = "top";
+            skipDock.style.width = "100%";
+            skipDock.style.height = "100%";
+            skipDock.style.marginTop = "0px";
+            skipDock.style.overflow = "noclip";
+            skipDock.style.flowChildren = "none";
+        }
+
+        var skipButton = GetCachedPanel("settingsLoaderSkipButton");
+        if (!skipButton) skipButton = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_BUTTON_ID) || null) : null;
+        var skipLabel = GetCachedPanel("settingsLoaderSkipLabel");
+        if (!skipLabel && skipButton) skipLabel = skipButton.FindChildTraverse ? (skipButton.FindChildTraverse(SETTINGS_LOADER_SKIP_LABEL_ID) || null) : null;
+
+        var skipBacker = GetCachedPanel("settingsLoaderSkipBacker");
+        if (!skipBacker) skipBacker = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_BACKER_ID) || null) : null;
+        if (!skipBacker && skipDock) skipBacker = $.CreatePanel("Panel", skipDock, SETTINGS_LOADER_SKIP_BACKER_ID, { hittest: "false", hittestchildren: "false" });
+        if (skipBacker) {
+            skipBacker.hittest = false;
+            skipBacker.hittestchildren = false;
+            if (skipBacker.AddClass) skipBacker.AddClass("QOLSettingsLoaderSkipBacker");
+            skipBacker.style.horizontalAlign = "left";
+            skipBacker.style.verticalAlign = "top";
+            skipBacker.style.width = "214px";
+            skipBacker.style.minWidth = "214px";
+            skipBacker.style.height = "42px";
+            skipBacker.style.borderRadius = "4px";
+            skipBacker.style.border = "1px solid rgba(210, 224, 216, 0.085)";
+            skipBacker.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) )";
+            skipBacker.style.boxShadow = "fill rgba(0, 0, 0, 0.24) 0px 2px 7px 0px";
+            skipBacker.style.x = "0px";
+            skipBacker.style.y = "0px";
+        }
+
+        try {
+            if (skipButton) {
+                var skipType = "";
+                try { skipType = String(skipButton.paneltype || ""); } catch (eSkipType) { skipType = ""; }
+                if (skipType && skipType.toLowerCase() !== "panel") {
+                    try { skipButton.DeleteAsync(0); } catch (eSkipDelete) {}
+                    skipButton = null;
+                    skipLabel = null;
+                }
+            }
+            if (!skipButton && skipDock) skipButton = $.CreatePanel("Panel", skipDock, SETTINGS_LOADER_SKIP_BUTTON_ID, { hittest: "true", hittestchildren: "false", acceptsfocus: "true" });
+            if (skipButton) {
+                if (skipDock && skipButton.GetParent && skipButton.GetParent() !== skipDock && skipButton.SetParent) {
+                    try { skipButton.SetParent(skipDock); } catch (eMoveSkip) {}
+                }
+                if (skipDock && skipBacker && skipDock.MoveChildBefore) {
+                    try { skipDock.MoveChildBefore(skipBacker, skipButton); } catch (eMoveBacker) {}
+                }
+                skipButton.hittest = true;
+                skipButton.hittestchildren = true;
+                if (skipButton.AddClass) skipButton.AddClass("QOLSettingsLoaderSkipButton");
+                skipButton.style.horizontalAlign = "left";
+                skipButton.style.verticalAlign = "top";
+                skipButton.style.marginLeft = "0px";
+                skipButton.style.marginTop = "0px";
+                skipButton.style.width = "214px";
+                skipButton.style.minWidth = "214px";
+                skipButton.style.height = "42px";
+                skipButton.style.paddingLeft = "14px";
+                skipButton.style.paddingRight = "14px";
+                skipButton.style.borderRadius = "4px";
+                skipButton.style.border = "1px solid rgba(255, 126, 126, 0.18)";
+                skipButton.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 27, 28, 0.90) ), to( rgba(18, 14, 15, 0.86) ) )";
+                skipButton.style.backgroundImage = "none";
+                skipButton.style.boxShadow = "fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(255, 126, 126, 0.10) 0px 1px 0px 0px";
+                if (!skipLabel) skipLabel = $.CreatePanel("Label", skipButton, SETTINGS_LOADER_SKIP_LABEL_ID);
+                if (skipLabel) {
+                    if (skipLabel.AddClass) skipLabel.AddClass("QOLSettingsLoaderSkipButtonLabel");
+                    if (skipLabel.text !== SETTINGS_LOADER_SKIP_TEXT) skipLabel.text = SETTINGS_LOADER_SKIP_TEXT;
+                    skipLabel.style.width = "100%";
+                    skipLabel.style.horizontalAlign = "center";
+                    skipLabel.style.verticalAlign = "center";
+                    skipLabel.style.textAlign = "center";
+                    skipLabel.style.fontFamily = "oracle";
+                    skipLabel.style.fontSize = "12px";
+                    skipLabel.style.fontWeight = "semi-bold";
+                    skipLabel.style.letterSpacing = "0.85px";
+                    skipLabel.style.color = "#ffb3b3";
+                    skipLabel.style.textShadow = "none";
+                    skipLabel.style.textTransform = "uppercase";
+                }
+                skipButton.SetPanelEvent("onactivate", function() {
+                    var clickRoot = GetUIRoot();
+                    if (State.settingsLoaderSessionCompleted && !State.settingsLoaderSessionActive) {
+                        ResetSettingsLoaderSession(true);
+                        return;
+                    }
+                    SkipSettingsLoaderSession(clickRoot, Date.now ? Date.now() : (new Date()).getTime());
+                });
+            }
+        } catch (eSkipPanelInit) {
+            skipButton = null;
+            skipLabel = null;
+        }
+
+        SetCachedPanel("settingsLoaderSkipDock", skipDock);
+        SetCachedPanel("settingsLoaderSkipBacker", skipBacker);
+        SetCachedPanel("settingsLoaderSkipButton", skipButton);
+        SetCachedPanel("settingsLoaderSkipLabel", skipLabel);
+    }
+
     function EnsureSettingsLoaderOverlay(root, nowMs) {
         if (!SETTINGS_LOADER_ENABLED || !root) return null;
         var overlay = GetCachedPanel("settingsLoaderOverlay");
@@ -8321,111 +8435,7 @@ function GetUIRoot() {
             actionsRow.style.visibility = "collapse";
         }
 
-        var skipDock = GetCachedPanel("settingsLoaderSkipDock");
-        if (!skipDock) skipDock = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_DOCK_ID) || null) : null;
-        if (!skipDock) skipDock = $.CreatePanel("Panel", overlay, SETTINGS_LOADER_SKIP_DOCK_ID, { hittest: "false", hittestchildren: "true" });
-        if (skipDock) {
-            skipDock.hittest = false;
-            skipDock.hittestchildren = true;
-            if (skipDock.AddClass) skipDock.AddClass("QOLSettingsLoaderSkipDock");
-            skipDock.style.horizontalAlign = "left";
-            skipDock.style.verticalAlign = "top";
-            skipDock.style.width = "100%";
-            skipDock.style.height = "100%";
-            skipDock.style.marginTop = "0px";
-            skipDock.style.overflow = "noclip";
-            skipDock.style.flowChildren = "none";
-        }
-
-        var skipButton = GetCachedPanel("settingsLoaderSkipButton");
-        if (!skipButton) skipButton = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_BUTTON_ID) || null) : null;
-        var skipLabel = GetCachedPanel("settingsLoaderSkipLabel");
-        if (!skipLabel && skipButton) skipLabel = skipButton.FindChildTraverse ? (skipButton.FindChildTraverse(SETTINGS_LOADER_SKIP_LABEL_ID) || null) : null;
-
-        var skipBacker = GetCachedPanel("settingsLoaderSkipBacker");
-        if (!skipBacker) skipBacker = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_SKIP_BACKER_ID) || null) : null;
-        if (!skipBacker && skipDock) skipBacker = $.CreatePanel("Panel", skipDock, SETTINGS_LOADER_SKIP_BACKER_ID, { hittest: "false", hittestchildren: "false" });
-        if (skipBacker) {
-            skipBacker.hittest = false;
-            skipBacker.hittestchildren = false;
-            if (skipBacker.AddClass) skipBacker.AddClass("QOLSettingsLoaderSkipBacker");
-            skipBacker.style.horizontalAlign = "left";
-            skipBacker.style.verticalAlign = "top";
-            skipBacker.style.width = "214px";
-            skipBacker.style.minWidth = "214px";
-            skipBacker.style.height = "42px";
-            skipBacker.style.borderRadius = "4px";
-            skipBacker.style.border = "1px solid rgba(210, 224, 216, 0.085)";
-            skipBacker.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) )";
-            skipBacker.style.boxShadow = "fill rgba(0, 0, 0, 0.24) 0px 2px 7px 0px";
-            skipBacker.style.x = "0px";
-            skipBacker.style.y = "0px";
-        }
-
-        try {
-            if (skipButton) {
-                var skipType = "";
-                try { skipType = String(skipButton.paneltype || ""); } catch (eSkipType) { skipType = ""; }
-                if (skipType && skipType.toLowerCase() !== "panel") {
-                    try { skipButton.DeleteAsync(0); } catch (eSkipDelete) {}
-                    skipButton = null;
-                    skipLabel = null;
-                }
-            }
-            if (!skipButton && skipDock) skipButton = $.CreatePanel("Panel", skipDock, SETTINGS_LOADER_SKIP_BUTTON_ID, { hittest: "true", hittestchildren: "false", acceptsfocus: "true" });
-            if (skipButton) {
-                if (skipDock && skipButton.GetParent && skipButton.GetParent() !== skipDock && skipButton.SetParent) {
-                    try { skipButton.SetParent(skipDock); } catch (eMoveSkip) {}
-                }
-                if (skipDock && skipBacker && skipDock.MoveChildBefore) {
-                    try { skipDock.MoveChildBefore(skipBacker, skipButton); } catch (eMoveBacker) {}
-                }
-                skipButton.hittest = true;
-                skipButton.hittestchildren = true;
-                if (skipButton.AddClass) skipButton.AddClass("QOLSettingsLoaderSkipButton");
-                skipButton.style.horizontalAlign = "left";
-                skipButton.style.verticalAlign = "top";
-                skipButton.style.marginLeft = "0px";
-                skipButton.style.marginTop = "0px";
-                skipButton.style.width = "214px";
-                skipButton.style.minWidth = "214px";
-                skipButton.style.height = "42px";
-                skipButton.style.paddingLeft = "14px";
-                skipButton.style.paddingRight = "14px";
-                skipButton.style.borderRadius = "4px";
-                skipButton.style.border = "1px solid rgba(255, 126, 126, 0.18)";
-                skipButton.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 27, 28, 0.90) ), to( rgba(18, 14, 15, 0.86) ) )";
-                skipButton.style.backgroundImage = "none";
-                skipButton.style.boxShadow = "fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(255, 126, 126, 0.10) 0px 1px 0px 0px";
-                if (!skipLabel) skipLabel = $.CreatePanel("Label", skipButton, SETTINGS_LOADER_SKIP_LABEL_ID);
-                if (skipLabel) {
-                    if (skipLabel.AddClass) skipLabel.AddClass("QOLSettingsLoaderSkipButtonLabel");
-                    if (skipLabel.text !== SETTINGS_LOADER_SKIP_TEXT) skipLabel.text = SETTINGS_LOADER_SKIP_TEXT;
-                    skipLabel.style.width = "100%";
-                    skipLabel.style.horizontalAlign = "center";
-                    skipLabel.style.verticalAlign = "center";
-                    skipLabel.style.textAlign = "center";
-                    skipLabel.style.fontFamily = "oracle";
-                    skipLabel.style.fontSize = "12px";
-                    skipLabel.style.fontWeight = "semi-bold";
-                    skipLabel.style.letterSpacing = "0.85px";
-                    skipLabel.style.color = "#ffb3b3";
-                    skipLabel.style.textShadow = "none";
-                    skipLabel.style.textTransform = "uppercase";
-                }
-                skipButton.SetPanelEvent("onactivate", function() {
-                    var clickRoot = GetUIRoot();
-                    if (State.settingsLoaderSessionCompleted && !State.settingsLoaderSessionActive) {
-                        ResetSettingsLoaderSession(true);
-                        return;
-                    }
-                    SkipSettingsLoaderSession(clickRoot, Date.now ? Date.now() : (new Date()).getTime());
-                });
-            }
-        } catch (eSkipPanelInit) {
-            skipButton = null;
-            skipLabel = null;
-        }
+        EnsureSettingsLoaderSkipSection(overlay);
 
         SetCachedPanel("settingsLoaderOverlay", overlay);
         SetCachedPanel("settingsLoaderCard", card);
@@ -8434,10 +8444,6 @@ function GetUIRoot() {
         SetCachedPanel("settingsLoaderStepsWrap", stepsWrap);
         SetCachedPanel("settingsLoaderDetail", detailLabel);
         SetCachedPanel("settingsLoaderActionsRow", actionsRow);
-        SetCachedPanel("settingsLoaderSkipDock", skipDock);
-        SetCachedPanel("settingsLoaderSkipBacker", skipBacker);
-        SetCachedPanel("settingsLoaderSkipButton", skipButton);
-        SetCachedPanel("settingsLoaderSkipLabel", skipLabel);
         return overlay;
     }
 
