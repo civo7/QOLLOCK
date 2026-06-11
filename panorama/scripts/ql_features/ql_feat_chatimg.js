@@ -11,6 +11,7 @@
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var PerfNowMs = U.PerfNowMs;
+    var BuildImagesInChatContainerWatermark = _deps.buildImagesInChatContainerWatermark;
     function ResetImagesInChatContainerState(watermarkKey, fullScanKey, cacheKey) {
         S[watermarkKey] = "";
         S[fullScanKey] = 0;
