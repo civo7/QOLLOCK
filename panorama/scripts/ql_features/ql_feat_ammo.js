@@ -27,6 +27,49 @@
         return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
     }
 
+    // ── Apply scaled styles + position to ammo panel children (extracted from update)
+
+    function ApplyAmmoPanelStyles(ammoPanel, ammoCurrentScale, ammoTotalScale, ammoOffsetX, ammoOffsetY, ammoTextColor) {
+        var currentFactor = ammoCurrentScale / 100.0;
+        var scaledCurrentFontPx = Math.max(12, Math.round(16 * currentFactor));
+        var scaledValueWidthPx = Math.max(24, Math.round(32 * currentFactor));
+
+        var totalFactor = ammoTotalScale / 100.0;
+        var scaledTotalFontPx = Math.max(12, Math.round(16 * totalFactor));
+        var scaledMaxWidthPx = Math.max(32, Math.round(50 * totalFactor));
+        var scaledMaxMarginLeftPx = Math.max(0, Math.round(2 * totalFactor));
+
+        var ammoValueLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo") || [];
+        for (var ammoIdx = 0; ammoIdx < ammoValueLabels.length; ammoIdx++) {
+            var ammoValueLabel = ammoValueLabels[ammoIdx];
+            if (!ammoValueLabel) continue;
+            ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
+            ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
+            Utils.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
+        }
+        var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
+        for (var maxIdx = 0; maxIdx < ammoMaxLabels.length; maxIdx++) {
+            var ammoMaxLabel = ammoMaxLabels[maxIdx];
+            if (!ammoMaxLabel) continue;
+            ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
+            ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
+            ammoMaxLabel.style.marginLeft = String(scaledMaxMarginLeftPx) + "px";
+            Utils.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
+        }
+        var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
+        for (var infiniteIdx = 0; infiniteIdx < ammoInfiniteLabels.length; infiniteIdx++) {
+            var ammoInfiniteLabel = ammoInfiniteLabels[infiniteIdx];
+            if (!ammoInfiniteLabel) continue;
+            Utils.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
+        }
+
+        ammoPanel.style.preTransformScale2d = "1.00, 1.00";
+        ammoPanel.style.x = String(ammoOffsetX) + "px";
+        ammoPanel.style.y = String(80 - ammoOffsetY) + "px";
+        ammoPanel.style.visibility = "visible";
+        Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
+    }
+
     // ── Update ──
     function update(root, cfg) {
         if (!State._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); State._debug_ammo = true; }
@@ -70,49 +113,7 @@
             var ammoTextColor = RWP(RAI(cfg));
             var ammoSig = String(ammoCurrentScale) + "|" + String(ammoTotalScale) + "|" + String(ammoOffsetX) + "|" + String(ammoOffsetY) + "|" + (ammoTextColor || "");
             if (State.ammoPanelStyleSig !== ammoSig) {
-                var ammoCurrentScaleFactor = ammoCurrentScale / 100.0;
-                var scaledCurrentFontPx = Math.round(16 * ammoCurrentScaleFactor);
-                if (scaledCurrentFontPx < 12) scaledCurrentFontPx = 12;
-                var scaledValueWidthPx = Math.round(32 * ammoCurrentScaleFactor);
-                if (scaledValueWidthPx < 24) scaledValueWidthPx = 24;
-
-                var ammoTotalScaleFactor = ammoTotalScale / 100.0;
-                var scaledTotalFontPx = Math.round(16 * ammoTotalScaleFactor);
-                if (scaledTotalFontPx < 12) scaledTotalFontPx = 12;
-                var scaledMaxWidthPx = Math.round(50 * ammoTotalScaleFactor);
-                if (scaledMaxWidthPx < 32) scaledMaxWidthPx = 32;
-                var scaledMaxMarginLeftPx = Math.round(2 * ammoTotalScaleFactor);
-                if (scaledMaxMarginLeftPx < 0) scaledMaxMarginLeftPx = 0;
-
-                var ammoValueLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo") || [];
-                for (var ammoIdx = 0; ammoIdx < ammoValueLabels.length; ammoIdx++) {
-                    var ammoValueLabel = ammoValueLabels[ammoIdx];
-                    if (!ammoValueLabel) continue;
-                    ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
-                    ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
-                    Utils.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
-                }
-                var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
-                for (var maxIdx = 0; maxIdx < ammoMaxLabels.length; maxIdx++) {
-                    var ammoMaxLabel = ammoMaxLabels[maxIdx];
-                    if (!ammoMaxLabel) continue;
-                    ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
-                    ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
-                    ammoMaxLabel.style.marginLeft = String(scaledMaxMarginLeftPx) + "px";
-                    Utils.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
-                }
-                var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
-                for (var infiniteIdx = 0; infiniteIdx < ammoInfiniteLabels.length; infiniteIdx++) {
-                    var ammoInfiniteLabel = ammoInfiniteLabels[infiniteIdx];
-                    if (!ammoInfiniteLabel) continue;
-                    Utils.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
-                }
-
-                ammoPanel.style.preTransformScale2d = "1.00, 1.00";
-                ammoPanel.style.x = String(ammoOffsetX) + "px";
-                ammoPanel.style.y = String(80 - ammoOffsetY) + "px";
-                ammoPanel.style.visibility = "visible";
-                Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
+                ApplyAmmoPanelStyles(ammoPanel, ammoCurrentScale, ammoTotalScale, ammoOffsetX, ammoOffsetY, ammoTextColor);
                 State.ammoPanelStyleSig = ammoSig;
             }
         } else {
