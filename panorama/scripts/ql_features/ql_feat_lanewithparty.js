@@ -4,12 +4,12 @@
     'use strict';
     var _featureId = "ql_feat_lanewithparty";
     var _deps = QOL.import(["activatePanelSafe", "getCachedPanel", "isPanelVisibleMaybe", "readPanelIdTextMaybe", "readPanelTextDeepMaybe", "state", "setCachedPanel", "utils"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var ActivatePanelSafe = _deps.activatePanelSafe;
     var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;
     var ReadPanelIdTextMaybe = _deps.readPanelIdTextMaybe;
@@ -38,7 +38,7 @@
     }
 
     function FindLanePreferenceWithPartyOption(root, selector) {
-        var option = GC("lanePreferenceWithPartyOption");
+        var option = GetCachedPanel("lanePreferenceWithPartyOption");
         if (option) return option;
 
         option = selector && selector.FindChildTraverse ? selector.FindChildTraverse(LANE_PREF_WITH_PARTY_OPTION_ID) : null;
@@ -57,47 +57,47 @@
             }
         }
 
-        SC("lanePreferenceWithPartyOption", option);
+        SetCachedPanel("lanePreferenceWithPartyOption", option);
         return option || null;
     }
 
     function UpdateLanePreferenceWithParty(root, cfg, nowMs) {
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"));
         if (!enabled) {
-            S.laneWithPartyNextApplyMs = 0;
-            S.laneWithPartyLastState = "disabled";
+            State.laneWithPartyNextApplyMs = 0;
+            State.laneWithPartyLastState = "disabled";
             return;
         }
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (now < (S.laneWithPartyNextApplyMs || 0)) return;
+        if (now < (State.laneWithPartyNextApplyMs || 0)) return;
 
         if (!root || !root.FindChildTraverse) {
-            S.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
             return;
         }
 
-        var selector = GC("lanePreferenceSelector");
+        var selector = GetCachedPanel("lanePreferenceSelector");
         if (!selector) {
             selector = root.FindChildTraverse(LANE_PREF_SELECTOR_ID);
-            SC("lanePreferenceSelector", selector);
+            SetCachedPanel("lanePreferenceSelector", selector);
         }
         if (!selector || !IsPanelValid(selector)) {
-            SC("lanePreferenceSelector", null);
-            SC("lanePreferenceWithPartyOption", null);
-            S.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
+            SetCachedPanel("lanePreferenceSelector", null);
+            SetCachedPanel("lanePreferenceWithPartyOption", null);
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
             return;
         }
 
         if (!IsPanelVisibleMaybe(selector)) {
-            S.laneWithPartyLastState = "hidden";
-            S.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
+            State.laneWithPartyLastState = "hidden";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_HIDDEN_INTERVAL_MS;
             return;
         }
 
         if (IsLanePreferenceWithPartySelected(selector)) {
-            S.laneWithPartyLastState = "selected";
-            S.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
+            State.laneWithPartyLastState = "selected";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
             return;
         }
 
@@ -123,16 +123,16 @@
             }
             try { $.DispatchEvent("Activated", selector); } catch (e5) {}
         } else {
-            SC("lanePreferenceWithPartyOption", null);
+            SetCachedPanel("lanePreferenceWithPartyOption", null);
         }
 
         if (IsLanePreferenceWithPartySelected(selector)) {
-            S.laneWithPartyLastApplyMs = now;
-            S.laneWithPartyLastState = "applied";
-            S.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
+            State.laneWithPartyLastApplyMs = now;
+            State.laneWithPartyLastState = "applied";
+            State.laneWithPartyNextApplyMs = now + LANE_PREF_SELECTED_INTERVAL_MS;
         } else {
-            S.laneWithPartyLastState = (selectorActivated || optionActivated || setAttempted) ? "pending_retry" : "option_missing";
-            S.laneWithPartyNextApplyMs = now + (option ? LANE_PREF_APPLY_INTERVAL_MS : LANE_PREF_HIDDEN_INTERVAL_MS);
+            State.laneWithPartyLastState = (selectorActivated || optionActivated || setAttempted) ? "pending_retry" : "option_missing";
+            State.laneWithPartyNextApplyMs = now + (option ? LANE_PREF_APPLY_INTERVAL_MS : LANE_PREF_HIDDEN_INTERVAL_MS);
         }
     }
 

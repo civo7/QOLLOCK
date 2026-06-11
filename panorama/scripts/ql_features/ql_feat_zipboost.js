@@ -4,13 +4,13 @@
     'use strict';
     var _featureId = "ql_feat_zipboost";
     var _deps = QOL.import(["findNumericLabelTextInTree","findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var IsCustomHudContextActive = _deps.isCustomHudContextActive;
     var GetGameplayHudPanel = _deps.getGameplayHudPanel;
     var FindZipBoostSource = _deps.findZipBoostSource;
@@ -19,7 +19,7 @@
     var ZIP_BOOST_READY_FLASH_MS = 2000;
     var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
     function EnsureZipBoostOverlay(root) {
-        var overlay = GC("zipBoostOverlay");
+        var overlay = GetCachedPanel("zipBoostOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -40,54 +40,54 @@
             state.text = "Ready";
         }
 
-        SC("zipBoostOverlay", overlay);
-        SC("zipBoostLabel", overlay ? overlay.FindChildTraverse("QOLZipBoostLabel") : null);
-        SC("zipBoostState", overlay ? overlay.FindChildTraverse("QOLZipBoostState") : null);
+        SetCachedPanel("zipBoostOverlay", overlay);
+        SetCachedPanel("zipBoostLabel", overlay ? overlay.FindChildTraverse("QOLZipBoostLabel") : null);
+        SetCachedPanel("zipBoostState", overlay ? overlay.FindChildTraverse("QOLZipBoostState") : null);
         return overlay;
     }
 
     function RemoveZipBoostOverlay(root) {
-        var overlay = GC("zipBoostOverlay");
+        var overlay = GetCachedPanel("zipBoostOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLZipBoostOverlay");
         }
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        SC("zipBoostOverlay", null);
-        SC("zipBoostLabel", null);
-        SC("zipBoostState", null);
-        SC("zipBoostSource", null);
-        SC("zipBoostAbilityName", null);
-        SC("zipBoostCountdown", null);
-        S.zipBoostDisplayMode = "";
-        S.zipBoostLastLayoutSig = "";
-        S.zipBoostLastClassSig = "";
-        S.zipBoostLastTitle = "";
-        S.zipBoostLastStatus = "";
-        S.zipBoostNextSourceSearchMs = 0;
-        S.zipBoostWasInUse = false;
-        S.zipBoostActiveEndMs = 0;
+        SetCachedPanel("zipBoostOverlay", null);
+        SetCachedPanel("zipBoostLabel", null);
+        SetCachedPanel("zipBoostState", null);
+        SetCachedPanel("zipBoostSource", null);
+        SetCachedPanel("zipBoostAbilityName", null);
+        SetCachedPanel("zipBoostCountdown", null);
+        State.zipBoostDisplayMode = "";
+        State.zipBoostLastLayoutSig = "";
+        State.zipBoostLastClassSig = "";
+        State.zipBoostLastTitle = "";
+        State.zipBoostLastStatus = "";
+        State.zipBoostNextSourceSearchMs = 0;
+        State.zipBoostWasInUse = false;
+        State.zipBoostActiveEndMs = 0;
     }
 
     function UpdateZipBoostOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (S.zipBoostDisplayMode !== "context_off") {
+            if (State.zipBoostDisplayMode !== "context_off") {
                 RemoveZipBoostOverlay(root);
-                S.zipBoostDisplayMode = "context_off";
+                State.zipBoostDisplayMode = "context_off";
             }
             return;
         }
 
         var enabled = cfg.ENABLE_ZIP_BOOST === 1;
         if (!enabled) {
-            if (S.zipBoostDisplayMode !== "disabled") {
+            if (State.zipBoostDisplayMode !== "disabled") {
                 RemoveZipBoostOverlay(root);
-                S.zipBoostDisplayMode = "disabled";
+                State.zipBoostDisplayMode = "disabled";
             }
-            S.zipBoostLastState = null;
-            S.zipBoostReadyFlashUntilMs = 0;
+            State.zipBoostLastState = null;
+            State.zipBoostReadyFlashUntilMs = 0;
             return;
         }
 
@@ -96,23 +96,23 @@
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (!enabled || hideout) {
-            if (S.zipBoostDisplayMode !== "hideout") {
+            if (State.zipBoostDisplayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 overlay.SetHasClass("on_cooldown", false);
                 overlay.SetHasClass("in_use", false);
                 overlay.SetHasClass("ready_flash", false);
-                S.zipBoostLastClassSig = "";
+                State.zipBoostLastClassSig = "";
             }
-            S.zipBoostDisplayMode = "hideout";
-            S.zipBoostLastState = null;
-            S.zipBoostReadyFlashUntilMs = 0;
+            State.zipBoostDisplayMode = "hideout";
+            State.zipBoostLastState = null;
+            State.zipBoostReadyFlashUntilMs = 0;
             return;
         }
 
-        if (S.zipBoostDisplayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.zipBoostDisplayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        S.zipBoostDisplayMode = "active";
+        State.zipBoostDisplayMode = "active";
 
         var zipOffsetX = Number(cfg.ZIP_BOOST_X_OFFSET);
         var zipOffsetY = Number(cfg.ZIP_BOOST_Y_OFFSET);
@@ -134,22 +134,22 @@
             String(zipOffsetY),
             String(zipScale)
         ].join("|");
-        if (layoutSig !== S.zipBoostLastLayoutSig) {
+        if (layoutSig !== State.zipBoostLastLayoutSig) {
             overlay.style.marginLeft = (-520 + zipOffsetX) + "px";
             overlay.style.marginBottom = (20 + zipOffsetY) + "px";
             overlay.style.preTransformScale2d = (zipScale / 100).toFixed(2);
-            S.zipBoostLastLayoutSig = layoutSig;
+            State.zipBoostLastLayoutSig = layoutSig;
         }
 
-        var source = GC("zipBoostSource");
+        var source = GetCachedPanel("zipBoostSource");
         if (!IsPanelValid(source)) {
             source = null;
-            if (nowMs >= (S.zipBoostNextSourceSearchMs || 0)) {
+            if (nowMs >= (State.zipBoostNextSourceSearchMs || 0)) {
                 source = FindZipBoostSource(root);
-                S.zipBoostNextSourceSearchMs = source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
-                SC("zipBoostSource", source);
-                SC("zipBoostAbilityName", null);
-                SC("zipBoostCountdown", null);
+                State.zipBoostNextSourceSearchMs = source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
+                SetCachedPanel("zipBoostSource", source);
+                SetCachedPanel("zipBoostAbilityName", null);
+                SetCachedPanel("zipBoostCountdown", null);
             }
         }
 
@@ -162,24 +162,24 @@
             isCooldown = source.BHasClass && source.BHasClass("on_cooldown");
             isInUse = source.BHasClass && source.BHasClass("in_use");
 
-            if (isInUse && !S.zipBoostWasInUse) {
-                S.zipBoostActiveEndMs = nowMs + 32000;
+            if (isInUse && !State.zipBoostWasInUse) {
+                State.zipBoostActiveEndMs = nowMs + 32000;
             }
 
-            var abilityNamePanel = GC("zipBoostAbilityName");
+            var abilityNamePanel = GetCachedPanel("zipBoostAbilityName");
             if (!IsPanelValid(abilityNamePanel) && source.FindChildrenWithClassTraverse) {
                 var abilityNames = source.FindChildrenWithClassTraverse("AbilityName") || [];
                 abilityNamePanel = abilityNames.length > 0 ? abilityNames[0] : null;
-                SC("zipBoostAbilityName", abilityNamePanel);
+                SetCachedPanel("zipBoostAbilityName", abilityNamePanel);
             }
             var abilityName = (abilityNamePanel && typeof abilityNamePanel.text === "string") ? abilityNamePanel.text : "";
             if (abilityName && abilityName.length > 0) title = abilityName;
 
-            var countdownPanel = GC("zipBoostCountdown");
+            var countdownPanel = GetCachedPanel("zipBoostCountdown");
             if (!IsPanelValid(countdownPanel) && source.FindChildrenWithClassTraverse) {
                 var countdowns = source.FindChildrenWithClassTraverse("Countdown") || [];
                 countdownPanel = countdowns.length > 0 ? countdowns[0] : null;
-                SC("zipBoostCountdown", countdownPanel);
+                SetCachedPanel("zipBoostCountdown", countdownPanel);
             }
             var countdown = (countdownPanel && typeof countdownPanel.text === "string") ? countdownPanel.text : "";
 
@@ -189,40 +189,40 @@
             }
 
             if (isInUse) {
-                var timeLeft = Math.ceil((S.zipBoostActiveEndMs - nowMs) / 1000);
+                var timeLeft = Math.ceil((State.zipBoostActiveEndMs - nowMs) / 1000);
                 if (timeLeft < 0) timeLeft = 0;
                 status = "ACTIVE " + timeLeft + "s";
             } else if (isCooldown) {
                 status = countdown && countdown.length > 0 ? ("COOLDOWN " + countdown) : "COOLDOWN";
             }
 
-            S.zipBoostWasInUse = isInUse;
+            State.zipBoostWasInUse = isInUse;
         }
 
         var currentState = isInUse ? "in_use" : (isCooldown ? "cooldown" : "ready");
-        if (currentState === "ready" && S.zipBoostLastState !== "ready") {
-            S.zipBoostReadyFlashUntilMs = nowMs + ZIP_BOOST_READY_FLASH_MS;
+        if (currentState === "ready" && State.zipBoostLastState !== "ready") {
+            State.zipBoostReadyFlashUntilMs = nowMs + ZIP_BOOST_READY_FLASH_MS;
         }
-        S.zipBoostLastState = currentState;
-        var readyFlashActive = (currentState === "ready") && nowMs < S.zipBoostReadyFlashUntilMs;
+        State.zipBoostLastState = currentState;
+        var readyFlashActive = (currentState === "ready") && nowMs < State.zipBoostReadyFlashUntilMs;
 
         var classSig = (isCooldown ? "1" : "0") + "|" + (isInUse ? "1" : "0") + "|" + (readyFlashActive ? "1" : "0");
-        if (classSig !== S.zipBoostLastClassSig) {
+        if (classSig !== State.zipBoostLastClassSig) {
             overlay.SetHasClass("on_cooldown", isCooldown);
             overlay.SetHasClass("in_use", isInUse);
             overlay.SetHasClass("ready_flash", readyFlashActive);
-            S.zipBoostLastClassSig = classSig;
+            State.zipBoostLastClassSig = classSig;
         }
 
-        var label = GC("zipBoostLabel");
-        var state = GC("zipBoostState");
-        if (label && title !== S.zipBoostLastTitle) {
+        var label = GetCachedPanel("zipBoostLabel");
+        var state = GetCachedPanel("zipBoostState");
+        if (label && title !== State.zipBoostLastTitle) {
             label.text = title;
-            S.zipBoostLastTitle = title;
+            State.zipBoostLastTitle = title;
         }
-        if (state && status !== S.zipBoostLastStatus) {
+        if (state && status !== State.zipBoostLastStatus) {
             state.text = status;
-            S.zipBoostLastStatus = status;
+            State.zipBoostLastStatus = status;
         }
     }
 
@@ -231,7 +231,7 @@
         configKeys: ["ENABLE_ZIP_BOOST"],
         bucket: 6, phase: -1,
         gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST") || !!(S.zipBoostDisplayMode && S.zipBoostDisplayMode !== "");
+            return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST") || !!(State.zipBoostDisplayMode && State.zipBoostDisplayMode !== "");
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
                         try {

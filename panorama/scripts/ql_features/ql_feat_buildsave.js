@@ -15,11 +15,11 @@
         "updateSaveSettingsLoaderFromBuildSaveState", "setSaveSettingsLoaderStepState",
         "getSaveSettingsLoaderStepState", "saveSettingsLoaderEnabled",
         "captureBuildSaveTargetSelection", "ensureShopFavoritesNavActive", "ensureStorageHeroFavoritesHeaderVisible", "getBuildSaveHudPanel", "hasBuildSaveStorageUiReady", "isBuildSaveStorageRuntimeSourceStale", "isBuildSaveTargetSelectionMatch", "isHudClassActive", "resolveBuildSaveStorageHeroSignal", "tryCloseHeroShopForLoader", "tryOpenHeroShopForHeroProbe", "tryReselectBuildSaveTargetByTitle"]);
-    var S = _deps.state;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var Utils = _deps.utils;
     var State = S;
-    var GC = _deps.getCachedPanel;
-    var SC = _deps.setCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var SetCachedPanel = _deps.setCachedPanel;
     var NormalizeHeroId = _deps.normalizeHeroId;
     var GetConfiguredDefaultHeroId = _deps.getConfiguredDefaultHeroId;
     var SelectHeroForBuildSave = _deps.selectHeroForBuildSave;
@@ -28,7 +28,7 @@
     var TryAdvanceStorageSwitchSettleStage = _deps.tryAdvanceStorageSwitchSettleStage;
     var SetBuildSaveStatus = _deps.setBuildSaveStatus;
     var CanReuseLoaderConfirmedAirheartContext = _deps.canReuseLoaderConfirmedAirheartContext;
-    var IsPanelValid = U.IsPanelValid;
+    var IsPanelValid = Utils.IsPanelValid;
     var ReadPanelTextMaybe = _deps.readPanelTextMaybe;
     var ExtractBuildCategoryPayloadToken = _deps.extractBuildCategoryPayloadToken;
     var ResolveCachedPanel = _deps.resolveCachedPanel;

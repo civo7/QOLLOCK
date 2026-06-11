@@ -4,13 +4,13 @@
     'use strict';
     var _featureId = "ql_feat_betterunsecuredhud";
     var _deps = QOL.import(["getCachedPanel", "getGameplayHudPanel", "parseUnsecuredSoulsValue", "state", "setCachedPanel", "utils", "panelIdGoldApContainer"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var PANEL_ID_GOLD_AP_CONTAINER = _deps.panelIdGoldApContainer;
     var ParseUnsecuredSoulsValue = QOL.parseUnsecuredSoulsValue || function() { return 0; };
 
@@ -89,7 +89,7 @@ function ParseUnsecuredSoulsValue(valueText) {
     }
 
     function EnsureBetterUnsecuredOverlay(root) {
-        var overlay = GC("betterUnsecuredOverlay");
+        var overlay = GetCachedPanel("betterUnsecuredOverlay");
         if (!overlay) {
             overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
             if (!overlay) {
@@ -117,104 +117,104 @@ function ParseUnsecuredSoulsValue(valueText) {
                     text.text = "UNSECURED";
                 }
             }
-            SC("betterUnsecuredOverlay", overlay);
+            SetCachedPanel("betterUnsecuredOverlay", overlay);
         }
-        var mirrorLabel = IsPanelValid(S.unsecuredSouls.hudMirrorLabel) ? S.unsecuredSouls.hudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(S.unsecuredSouls.hudMirrorIcon) ? S.unsecuredSouls.hudMirrorIcon : null;
-        var mirrorText = IsPanelValid(S.unsecuredSouls.hudMirrorText) ? S.unsecuredSouls.hudMirrorText : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!mirrorLabel && overlay && overlay.FindChildTraverse) {
             mirrorLabel = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
             if (mirrorLabel && mirrorLabel.AddClass && !mirrorLabel.BHasClass("death_penalty_gold")) {
                 mirrorLabel.AddClass("death_penalty_gold");
             }
-            S.unsecuredSouls.hudMirrorLabel = mirrorLabel || null;
+            State.unsecuredSouls.hudMirrorLabel = mirrorLabel || null;
         }
         if (!mirrorIcon && overlay && overlay.FindChildTraverse) {
             mirrorIcon = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorIcon");
-            S.unsecuredSouls.hudMirrorIcon = mirrorIcon || null;
+            State.unsecuredSouls.hudMirrorIcon = mirrorIcon || null;
         }
         if (!mirrorText && overlay && overlay.FindChildTraverse) {
             mirrorText = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorText");
-            S.unsecuredSouls.hudMirrorText = mirrorText || null;
+            State.unsecuredSouls.hudMirrorText = mirrorText || null;
         }
         return overlay;
     }
 
     function RemoveBetterUnsecuredOverlay(root) {
-        var overlay = GC("betterUnsecuredOverlay");
+        var overlay = GetCachedPanel("betterUnsecuredOverlay");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
         }
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        SC("betterUnsecuredOverlay", null);
-        S.unsecuredSouls.hudMirrorLabel = null;
-        S.unsecuredSouls.hudMirrorIcon = null;
-        S.unsecuredSouls.hudMirrorText = null;
+        SetCachedPanel("betterUnsecuredOverlay", null);
+        State.unsecuredSouls.hudMirrorLabel = null;
+        State.unsecuredSouls.hudMirrorIcon = null;
+        State.unsecuredSouls.hudMirrorText = null;
     }
 
         var GetGameplayHudPanel = QOL.getGameplayHudPanel || function() { return null; };
-    // GetPanelPositionRelativeToAncestor — now in ql_utils.js, accessed via U.*
+    // GetPanelPositionRelativeToAncestor — now in ql_utils.js, accessed via Utils.*
 
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
         var enabled = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED");
-        var panel = GC("unsecuredSoulsHudContainer");
-        var label = IsPanelValid(S.unsecuredSouls.hudLabel) ? S.unsecuredSouls.hudLabel : null;
-        var mirrorLabel = IsPanelValid(S.unsecuredSouls.hudMirrorLabel) ? S.unsecuredSouls.hudMirrorLabel : null;
-        var mirrorIcon = IsPanelValid(S.unsecuredSouls.hudMirrorIcon) ? S.unsecuredSouls.hudMirrorIcon : null;
-        var mirrorText = IsPanelValid(S.unsecuredSouls.hudMirrorText) ? S.unsecuredSouls.hudMirrorText : null;
+        var panel = GetCachedPanel("unsecuredSoulsHudContainer");
+        var label = IsPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
+        var mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
+        var mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
+        var mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         if (!enabled) {
             RemoveBetterUnsecuredOverlay(root);
-            S.unsecuredSouls.hudLabel = null;
-            S.unsecuredSouls.hudMirrorLabel = null;
-            S.unsecuredSouls.hudMirrorIcon = null;
-            S.unsecuredSouls.hudMirrorText = null;
-            S.unsecuredSouls.hudBaseX = null;
-            S.unsecuredSouls.hudBaseY = null;
-            S.unsecuredSouls.hudStyleSig = "";
+            State.unsecuredSouls.hudLabel = null;
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudBaseX = null;
+            State.unsecuredSouls.hudBaseY = null;
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!panel) {
-            if (nowMs >= (S.unsecuredSouls.hudNextSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.hudNextSearchMs || 0)) {
                 panel = FindUnsecuredSoulsHudContainer(root);
-                SC("unsecuredSoulsHudContainer", panel);
-                S.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
+                SetCachedPanel("unsecuredSoulsHudContainer", panel);
+                State.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
             }
         }
         if (!panel) {
-            S.unsecuredSouls.hudMirrorLabel = null;
-            S.unsecuredSouls.hudMirrorIcon = null;
-            S.unsecuredSouls.hudMirrorText = null;
-            S.unsecuredSouls.hudStyleSig = "";
+            State.unsecuredSouls.hudMirrorLabel = null;
+            State.unsecuredSouls.hudMirrorIcon = null;
+            State.unsecuredSouls.hudMirrorText = null;
+            State.unsecuredSouls.hudStyleSig = "";
             RemoveBetterUnsecuredOverlay(root);
             return;
         }
         if (!label) {
             label = FindUnsecuredSoulsHudLabel(root, panel);
-            S.unsecuredSouls.hudLabel = label || null;
+            State.unsecuredSouls.hudLabel = label || null;
         }
         var overlay = EnsureBetterUnsecuredOverlay(root);
         if (!overlay) {
-            S.unsecuredSouls.hudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel) {
-            mirrorLabel = IsPanelValid(S.unsecuredSouls.hudMirrorLabel) ? S.unsecuredSouls.hudMirrorLabel : null;
+            mirrorLabel = IsPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
         }
         if (!mirrorIcon) {
-            mirrorIcon = IsPanelValid(S.unsecuredSouls.hudMirrorIcon) ? S.unsecuredSouls.hudMirrorIcon : null;
+            mirrorIcon = IsPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
         }
         if (!mirrorText) {
-            mirrorText = IsPanelValid(S.unsecuredSouls.hudMirrorText) ? S.unsecuredSouls.hudMirrorText : null;
+            mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         }
         if (!label) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            S.unsecuredSouls.hudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
         if (!mirrorLabel || !mirrorIcon || !mirrorText) {
-            S.unsecuredSouls.hudStyleSig = "";
+            State.unsecuredSouls.hudStyleSig = "";
             return;
         }
 
@@ -250,24 +250,24 @@ function ParseUnsecuredSoulsValue(valueText) {
         if (!isFinite(sourceValue)) sourceValue = 0;
         if (sourceValue <= 0) {
             var zeroSig = "hidden_zero|" + sourceText;
-            if (S.unsecuredSouls.hudStyleSig !== zeroSig) {
+            if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
                 if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-                S.unsecuredSouls.hudStyleSig = zeroSig;
+                State.unsecuredSouls.hudStyleSig = zeroSig;
             }
             return;
         }
         var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
-        var sourcePos = U.GetPanelPositionRelativeToAncestor(label, overlayParent);
+        var sourcePos = Utils.GetPanelPositionRelativeToAncestor(label, overlayParent);
         var baseX = null;
         var baseY = null;
         if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
             baseX = Math.round(sourcePos.x);
             baseY = Math.round(sourcePos.y);
-            S.unsecuredSouls.hudBaseX = baseX;
-            S.unsecuredSouls.hudBaseY = baseY;
+            State.unsecuredSouls.hudBaseX = baseX;
+            State.unsecuredSouls.hudBaseY = baseY;
         } else {
-            var cachedBaseX = ReadSafePanelLayoutOffset(S.unsecuredSouls.hudBaseX);
-            var cachedBaseY = ReadSafePanelLayoutOffset(S.unsecuredSouls.hudBaseY);
+            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
+            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
             baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
             baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
         }
@@ -278,11 +278,11 @@ function ParseUnsecuredSoulsValue(valueText) {
         var targetY = baseY + reflectedYOffset;
         if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
             if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            S.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
+            State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
             return;
         }
         var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-        if (sig === S.unsecuredSouls.hudStyleSig) return;
+        if (sig === State.unsecuredSouls.hudStyleSig) return;
 
         if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         overlay.style.x = targetX + "px";
@@ -297,15 +297,15 @@ function ParseUnsecuredSoulsValue(valueText) {
         mirrorLabel.style.fontSize = fontPx + "px";
         mirrorLabel.style.x = "0px";
         mirrorLabel.style.y = "0px";
-        S.unsecuredSouls.hudStyleSig = sig;
+        State.unsecuredSouls.hudStyleSig = sig;
     }
 
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
         if (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED")) return true;
         return !!(
-            S.unsecuredSouls.hudStyleSig ||
-            GC("betterUnsecuredOverlay") ||
-            GC("unsecuredSoulsHudContainer")
+            State.unsecuredSouls.hudStyleSig ||
+            GetCachedPanel("betterUnsecuredOverlay") ||
+            GetCachedPanel("unsecuredSoulsHudContainer")
         );
     }
 

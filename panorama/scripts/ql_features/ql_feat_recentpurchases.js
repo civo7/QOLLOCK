@@ -4,15 +4,15 @@
     'use strict';
     var _featureId = "ql_feat_recentpurchases";
     var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
     var IsHudClassActive = _deps.isHudClassActive;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
-    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
-    var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
+    var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
+    var NormalizeOpacityNumber = Utils.NormalizeOpacityNumber;
     var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
@@ -58,7 +58,7 @@ function GetRecentPurchaseName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
-// HasAncestorClass replaced by U.HasClassInHierarchy (canonical version from ql_utils.js).
+// HasAncestorClass replaced by Utils.HasClassInHierarchy (canonical version from ql_utils.js).
 function GetRecentPurchaseTimeText(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
@@ -88,10 +88,10 @@ function IsPanelVisibleMaybe(panel) {
         return true;
     }
 var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
-        var panel = IsPanelValid(S.cachedPanels[cacheKey]) ? S.cachedPanels[cacheKey] : null;
+        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
         if (!panel && parent && parent.FindChildTraverse) {
             panel = parent.FindChildTraverse(traverseId);
-            S.cachedPanels[cacheKey] = panel || null;
+            State.cachedPanels[cacheKey] = panel || null;
         }
         return panel;
     };
@@ -127,8 +127,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             p = p.GetParent();
         }
         if (!ctx.isSpectator && container && IsPanelValid(container)) {
-            if (U.HasClassInHierarchy(container, "localPlayerTeam1")) ctx.localTeam = 1;
-            else if (U.HasClassInHierarchy(container, "localPlayerTeam2")) ctx.localTeam = 2;
+            if (Utils.HasClassInHierarchy(container, "localPlayerTeam1")) ctx.localTeam = 1;
+            else if (Utils.HasClassInHierarchy(container, "localPlayerTeam2")) ctx.localTeam = 2;
         }
         return ctx;
     }
@@ -140,7 +140,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function CreateFilterCheckboxesRP(root) {
-        if (S.recentPurchaseFiltersCreated) return;
+        if (State.recentPurchaseFiltersCreated) return;
         var panel = root.FindChildTraverse("RecentPurchasesPanel");
         if (!panel) return;
 
@@ -182,13 +182,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (existingLabel) existingLabel.SetParent(panel);
         if (container) container.SetParent(panel);
 
-        S.recentPurchaseFiltersCreated = true;
+        State.recentPurchaseFiltersCreated = true;
     }
 
     function UpdateFilterVisibilityRP(root, ctx) {
         var visSig = ctx.isSpectator ? "1" : "0";
-        if (visSig === S.recentPurchaseLastVisibilitySig) return;
-        S.recentPurchaseLastVisibilitySig = visSig;
+        if (visSig === State.recentPurchaseLastVisibilitySig) return;
+        State.recentPurchaseLastVisibilitySig = visSig;
         for (var i = 0; i < RECENT_PURCHASE_FILTERS.length; i++) {
             var filter = RECENT_PURCHASE_FILTERS[i];
             if (!filter.ShouldShowToggle) continue;
@@ -212,9 +212,9 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (!container || !IsPanelValid(container)) return;
         var sig = GetFilterSigRP(ctx, container);
         var firstChild = container.GetChildCount() > 0 ? container.GetChild(0) : null;
-        if (sig === S.recentPurchaseLastFilterSig && firstChild === S.recentPurchaseLastFirstChild) return;
-        S.recentPurchaseLastFilterSig = sig;
-        S.recentPurchaseLastFirstChild = firstChild;
+        if (sig === State.recentPurchaseLastFilterSig && firstChild === State.recentPurchaseLastFirstChild) return;
+        State.recentPurchaseLastFilterSig = sig;
+        State.recentPurchaseLastFirstChild = firstChild;
 
         if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
         for (var i = 0; i < purchases.length; i++) {
@@ -232,8 +232,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function QuickRemoveEntryRP(entry) {
-        var entries = S.recentPurchaseQuickActiveEntries;
-        S.recentPurchaseQuickActiveEntries = entries.filter(function(e) { return e !== entry; });
+        var entries = State.recentPurchaseQuickActiveEntries;
+        State.recentPurchaseQuickActiveEntries = entries.filter(function(e) { return e !== entry; });
         if (!IsPanelValid(entry)) return;
         entry.AddClass("quickFading");
         $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
@@ -242,14 +242,14 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function QuickEvictEntryRP(entry) {
-        var entries = S.recentPurchaseQuickActiveEntries;
-        S.recentPurchaseQuickActiveEntries = entries.filter(function(e) { return e !== entry; });
+        var entries = State.recentPurchaseQuickActiveEntries;
+        State.recentPurchaseQuickActiveEntries = entries.filter(function(e) { return e !== entry; });
         if (IsPanelValid(entry)) entry.DeleteAsync(0);
     }
 
     function AddQuickEntryRP(sourcePurchase, quickPanel, nameText, quickMax, quickDisplaySec) {
-        while (S.recentPurchaseQuickActiveEntries.length >= quickMax) {
-            QuickEvictEntryRP(S.recentPurchaseQuickActiveEntries[0]);
+        while (State.recentPurchaseQuickActiveEntries.length >= quickMax) {
+            QuickEvictEntryRP(State.recentPurchaseQuickActiveEntries[0]);
         }
 
         var entry = $.CreatePanel("Panel", quickPanel, "");
@@ -297,7 +297,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         nameLabel.AddClass("quickPurchaseName");
         nameLabel.text = nameText;
 
-        S.recentPurchaseQuickActiveEntries.push(entry);
+        State.recentPurchaseQuickActiveEntries.push(entry);
 
         $.Schedule(quickDisplaySec, function() {
             if (IsPanelValid(entry)) QuickRemoveEntryRP(entry);
@@ -305,14 +305,14 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function GetOrCreateQuickPanelRP(root) {
-        if (GC("quickPurchasesPanel")) return GC("quickPurchasesPanel");
-        if (!GC("quickPurchasesHostPanel")) {
-            SC("quickPurchasesHostPanel", root.FindChildTraverse(PANEL_ID_TOP_BAR));
+        if (GetCachedPanel("quickPurchasesPanel")) return GetCachedPanel("quickPurchasesPanel");
+        if (!GetCachedPanel("quickPurchasesHostPanel")) {
+            SetCachedPanel("quickPurchasesHostPanel", root.FindChildTraverse(PANEL_ID_TOP_BAR));
         }
-        var topBar = GC("quickPurchasesHostPanel");
+        var topBar = GetCachedPanel("quickPurchasesHostPanel");
         if (!topBar) return null;
         var qp = $.CreatePanel("Panel", topBar, "QuickPurchasesPanel");
-        SC("quickPurchasesPanel", qp);
+        SetCachedPanel("quickPurchasesPanel", qp);
         return qp;
     }
 
@@ -322,13 +322,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
         if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
-        if (!S.recentPurchaseQuickInitialized) {
+        if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
                 var n = GetRecentPurchaseName(purchases[i]);
                 var t = GetRecentPurchaseTimeText(purchases[i]);
-                if (n && t) S.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
+                if (n && t) State.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
             }
-            S.recentPurchaseQuickInitialized = true;
+            State.recentPurchaseQuickInitialized = true;
             return;
         }
 
@@ -337,8 +337,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var time = GetRecentPurchaseTimeText(purchases[i]);
             if (!name || !time) continue;
             var key = name + "|" + time;
-            if (!S.recentPurchaseQuickSeenKeys[key]) {
-                S.recentPurchaseQuickSeenKeys[key] = true;
+            if (!State.recentPurchaseQuickSeenKeys[key]) {
+                State.recentPurchaseQuickSeenKeys[key] = true;
                 CapRecentPurchaseSeenKeys();
                 if (!purchases[i].BHasClass("filterHidden")) {
                     AddQuickEntryRP(purchases[i], quickPanel, name, quickMax, quickDisplaySec);
@@ -348,26 +348,26 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function CapRecentPurchaseSeenKeys() {
-        var obj = S.recentPurchaseQuickSeenKeys;
+        var obj = State.recentPurchaseQuickSeenKeys;
         var count = 0;
         for (var k in obj) { if (obj.hasOwnProperty(k)) count++; }
         if (count <= 300) return;
         // Exceeded cap — reset the dedup log. Worst case: a purchase
         // flashes twice, which is far better than unbounded memory growth.
-        S.recentPurchaseQuickSeenKeys = {};
+        State.recentPurchaseQuickSeenKeys = {};
     }
 
     function SyncRejuvClassRP(rejuvEnabled) {
-        var quickPanel = GC("quickPurchasesPanel");
+        var quickPanel = GetCachedPanel("quickPurchasesPanel");
         if (!IsPanelValid(quickPanel)) return;
         quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
-        if (!GC("cachedRejuvTimer")) {
+        if (!GetCachedPanel("cachedRejuvTimer")) {
             var _ctxPanel = $.GetContextPanel();
             var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
-            SC("cachedRejuvTimer", _ctxParent ?
+            SetCachedPanel("cachedRejuvTimer", _ctxParent ?
                 _ctxParent.FindChildTraverse("RejuvenatorTimer") : null);
         }
-        var timer = GC("cachedRejuvTimer");
+        var timer = GetCachedPanel("cachedRejuvTimer");
         if (!timer) return;
         if (timer.BHasClass("has_rejuv")) quickPanel.AddClass("has_rejuv");
         else quickPanel.RemoveClass("has_rejuv");
@@ -392,7 +392,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         var marginTop = 90;
         if (isScoreboardOpen) marginTop = 175;
         else {
-            var quickPanel = GC("quickPurchasesPanel");
+            var quickPanel = GetCachedPanel("quickPurchasesPanel");
             var hasRejuv = IsPanelValid(quickPanel) && quickPanel.BHasClass && quickPanel.BHasClass("has_rejuv");
             if (rejuvEnabled && hasRejuv) marginTop = 153;
         }
@@ -414,15 +414,15 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function ClearContainerRP(root) {
-        var container = GC("recentPurchasesContainer")
-            ? GC("recentPurchasesContainer")
+        var container = GetCachedPanel("recentPurchasesContainer")
+            ? GetCachedPanel("recentPurchasesContainer")
             : root.FindChildTraverse("RecentPurchasesContainer");
         if (container && IsPanelValid(container)) {
             var count = container.GetChildCount();
             for (var i = 0; i < count; i++) container.GetChild(i).DeleteAsync(0);
         }
-        S.recentPurchaseQuickSeenKeys = {};
-        S.recentPurchaseQuickInitialized = false;
+        State.recentPurchaseQuickSeenKeys = {};
+        State.recentPurchaseQuickInitialized = false;
         ResetHeroPopupState();
     }
 
@@ -435,20 +435,20 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     var QUICK_OVERLAP_GAP = 0;
 
     function BuildHeroPlayerCardMap(root) {
-        if (S.heroPopup.mapState === HERO_MAP_BUILDING) return;
-        S.heroPopup.mapState = HERO_MAP_BUILDING;
-        S.heroPopup.buildGen++;
-        var myGen = S.heroPopup.buildGen;
+        if (State.heroPopup.mapState === HERO_MAP_BUILDING) return;
+        State.heroPopup.mapState = HERO_MAP_BUILDING;
+        State.heroPopup.buildGen++;
+        var myGen = State.heroPopup.buildGen;
         var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
         if (!labels || labels.length === 0) {
-            S.heroPopup.mapState = HERO_MAP_IDLE;
+            State.heroPopup.mapState = HERO_MAP_IDLE;
             return;
         }
         var pending = labels.length;
         function onDone() {
             pending--;
-            if (pending === 0 && S.heroPopup.buildGen === myGen) {
-                S.heroPopup.mapState = HERO_MAP_BUILT;
+            if (pending === 0 && State.heroPopup.buildGen === myGen) {
+                State.heroPopup.mapState = HERO_MAP_BUILT;
             }
         }
         for (var i = 0; i < labels.length; i++) {
@@ -468,11 +468,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
                 playerPanel.SetDialogVariableInt("hero_id", heroId);
                 $.Schedule(0.3, function() {
-                    if (S.heroPopup.buildGen !== myGen) return;
+                    if (State.heroPopup.buildGen !== myGen) return;
                     if (IsPanelValid(label)) {
                         var name = label.text.trim().toUpperCase();
                         if (name) {
-                            S.heroPopup.playerCardCache[name] = playerPanel;
+                            State.heroPopup.playerCardCache[name] = playerPanel;
                         }
                     }
                     onDone();
@@ -482,35 +482,35 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function IsHeroPlayerCardMapStale() {
-        if (S.heroPopup.mapState !== HERO_MAP_BUILT) return false;
-        for (var hero in S.heroPopup.playerCardCache) {
-            if (!Object.prototype.hasOwnProperty.call(S.heroPopup.playerCardCache, hero)) continue;
-            var parentPanel = S.heroPopup.playerCardCache[hero];
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) return false;
+        for (var hero in State.heroPopup.playerCardCache) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.playerCardCache, hero)) continue;
+            var parentPanel = State.heroPopup.playerCardCache[hero];
             if (!parentPanel || !IsPanelValid(parentPanel)) return true;
         }
         return false;
     }
 
     function GetOrCreateHeroPopupPanel(heroNameUpper) {
-        if (S.heroPopup.panelsByHero[heroNameUpper] &&
-            IsPanelValid(S.heroPopup.panelsByHero[heroNameUpper])) {
-            return S.heroPopup.panelsByHero[heroNameUpper];
+        if (State.heroPopup.panelsByHero[heroNameUpper] &&
+            IsPanelValid(State.heroPopup.panelsByHero[heroNameUpper])) {
+            return State.heroPopup.panelsByHero[heroNameUpper];
         }
-        var playerPanel = S.heroPopup.playerCardCache[heroNameUpper];
+        var playerPanel = State.heroPopup.playerCardCache[heroNameUpper];
         if (!playerPanel || !IsPanelValid(playerPanel)) {
-            if (S.heroPopup.mapState !== HERO_MAP_BUILDING) {
-                S.heroPopup.mapState = HERO_MAP_IDLE;
+            if (State.heroPopup.mapState !== HERO_MAP_BUILDING) {
+                State.heroPopup.mapState = HERO_MAP_IDLE;
             }
             return null;
         }
         var panel = $.CreatePanel("Panel", playerPanel, "");
         panel.AddClass("QuickPurchasesPanel");
-        S.heroPopup.panelsByHero[heroNameUpper] = panel;
+        State.heroPopup.panelsByHero[heroNameUpper] = panel;
         return panel;
     }
 
     function GetPanelLeftInTopBar(panel) {
-        var topBar = GC("topBarPanel");
+        var topBar = GetCachedPanel("topBarPanel");
         if (!topBar) {
             try {
                 var root = $.GetContextPanel();
@@ -536,13 +536,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function ScheduleResolveHeroPopupOverlaps(delay) {
-        if (S.heroPopup.overlapPending) return;
-        S.heroPopup.overlapPending = true;
+        if (State.heroPopup.overlapPending) return;
+        State.heroPopup.overlapPending = true;
         $.Schedule(delay || 0, function() {
             try {
                 ResolveHeroPopupOverlaps();
             } finally {
-                S.heroPopup.overlapPending = false;
+                State.heroPopup.overlapPending = false;
             }
         });
     }
@@ -554,11 +554,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     // left panel's height plus a margin, cascading to avoid stacking issues.
     function ResolveHeroPopupOverlaps() {
         var active = [];
-        for (var hero in S.heroPopup.panelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(S.heroPopup.panelsByHero, hero)) continue;
-            var p = S.heroPopup.panelsByHero[hero];
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var p = State.heroPopup.panelsByHero[hero];
             if (!p || !IsPanelValid(p)) continue;
-            var entries = S.heroPopup.activeEntriesByHero[hero];
+            var entries = State.heroPopup.activeEntriesByHero[hero];
             if (!entries || entries.length === 0) continue;
             active.push({ hero: hero, panel: p });
         }
@@ -567,7 +567,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var margin = 125;
             var parentPanel = active[i].panel.GetParent();
             if (parentPanel && IsPanelValid(parentPanel) && parentPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
-                if (S.heroPopup.ultCooldownsEnabled && !parentPanel.BHasClass("UltimateCooldownReady")) {
+                if (State.heroPopup.ultCooldownsEnabled && !parentPanel.BHasClass("UltimateCooldownReady")) {
                     margin = 172; // ult on cooldown — cooldown text pushes popup down
                 } else {
                     margin = 152; // ult ready (or cooldowns disabled) — less space needed
@@ -590,8 +590,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
         // Sort newest first
         active.sort(function(a, b) {
-            var ta = S.heroPopup.lastEntryTime[a.hero] || 0;
-            var tb = S.heroPopup.lastEntryTime[b.hero] || 0;
+            var ta = State.heroPopup.lastEntryTime[a.hero] || 0;
+            var tb = State.heroPopup.lastEntryTime[b.hero] || 0;
             return tb - ta;
         });
 
@@ -619,11 +619,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function RemoveHeroPurchaseEntry(entry, heroNameUpper) {
-        var arr = S.heroPopup.activeEntriesByHero[heroNameUpper];
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            S.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
         }
         if (!IsPanelValid(entry)) return;
         entry.AddClass("quickFading");
@@ -634,11 +634,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function EvictHeroPurchaseEntry(entry, heroNameUpper) {
-        var arr = S.heroPopup.activeEntriesByHero[heroNameUpper];
+        var arr = State.heroPopup.activeEntriesByHero[heroNameUpper];
         if (arr) {
             var filtered = [];
             for (var fi = 0; fi < arr.length; fi++) { if (arr[fi] !== entry) filtered.push(arr[fi]); }
-            S.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
         }
         if (IsPanelValid(entry)) entry.DeleteAsync(0);
         ScheduleResolveHeroPopupOverlaps(0);
@@ -649,13 +649,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         var quickPanel = GetOrCreateHeroPopupPanel(heroNameUpper);
         if (!quickPanel) return;
 
-        if (!S.heroPopup.activeEntriesByHero[heroNameUpper]) {
-            S.heroPopup.activeEntriesByHero[heroNameUpper] = [];
+        if (!State.heroPopup.activeEntriesByHero[heroNameUpper]) {
+            State.heroPopup.activeEntriesByHero[heroNameUpper] = [];
         }
-        S.heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
+        State.heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
 
-        while (S.heroPopup.activeEntriesByHero[heroNameUpper].length >= quickMax) {
-            EvictHeroPurchaseEntry(S.heroPopup.activeEntriesByHero[heroNameUpper][0], heroNameUpper);
+        while (State.heroPopup.activeEntriesByHero[heroNameUpper].length >= quickMax) {
+            EvictHeroPurchaseEntry(State.heroPopup.activeEntriesByHero[heroNameUpper][0], heroNameUpper);
         }
 
         var entry = $.CreatePanel("Panel", quickPanel, "");
@@ -688,7 +688,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         nameLabel.AddClass("quickPurchaseName");
         nameLabel.text = nameText;
 
-        S.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
+        State.heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
 
         ScheduleResolveHeroPopupOverlaps(0.1);
 
@@ -698,13 +698,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     }
 
     function ResetHeroPopupState() {
-        for (var hero in S.heroPopup.panelsByHero) {
-            if (!Object.prototype.hasOwnProperty.call(S.heroPopup.panelsByHero, hero)) continue;
-            var panel = S.heroPopup.panelsByHero[hero];
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            var panel = State.heroPopup.panelsByHero[hero];
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
-        var ultSetting = S.heroPopup.ultCooldownsEnabled;
-        S.heroPopup = {
+        var ultSetting = State.heroPopup.ultCooldownsEnabled;
+        State.heroPopup = {
             panelsByHero: {},
             activeEntriesByHero: {},
             lastEntryTime: {},
@@ -718,7 +718,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
     function UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases) {
         if (IsHeroPlayerCardMapStale()) ResetHeroPopupState();
-        if (S.heroPopup.mapState !== HERO_MAP_BUILT) {
+        if (State.heroPopup.mapState !== HERO_MAP_BUILT) {
             BuildHeroPlayerCardMap(root);
             return;
         }
@@ -726,13 +726,13 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
         if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
-        if (!S.recentPurchaseQuickInitialized) {
+        if (!State.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
                 var n = GetRecentPurchaseName(purchases[i]);
                 var t = GetRecentPurchaseTimeText(purchases[i]);
-                if (n && t) S.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
+                if (n && t) State.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
             }
-            S.recentPurchaseQuickInitialized = true;
+            State.recentPurchaseQuickInitialized = true;
             return;
         }
 
@@ -743,8 +743,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var time = GetRecentPurchaseTimeText(purchase);
             if (!name || !time) continue;
             var key = name + "|" + time;
-            if (!S.recentPurchaseQuickSeenKeys[key]) {
-                S.recentPurchaseQuickSeenKeys[key] = true;
+            if (!State.recentPurchaseQuickSeenKeys[key]) {
+                State.recentPurchaseQuickSeenKeys[key] = true;
                 CapRecentPurchaseSeenKeys();
                 if (!purchase.BHasClass("filterHidden")) {
                     AddHeroPurchaseEntry(purchase, name, quickMax, quickDisplaySec);
@@ -755,11 +755,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
     function HandleHideoutRP(root) {
         var isInHideout = isConnectedToHideout(root);
-        if (S.recentPurchaseWasInHideout === null || isInHideout !== S.recentPurchaseWasInHideout) {
+        if (State.recentPurchaseWasInHideout === null || isInHideout !== State.recentPurchaseWasInHideout) {
             ClearContainerRP(root);
             $.Schedule(0.5, function() { ClearContainerRP(root); });
         }
-        S.recentPurchaseWasInHideout = isInHideout;
+        State.recentPurchaseWasInHideout = isInHideout;
     }
 
     function UpdateRecentPurchases(root, cfg) {
@@ -773,10 +773,10 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             return;
         }
 
-        if (!GC("recentPurchasesPanel")) {
-            SC("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
+        if (!GetCachedPanel("recentPurchasesPanel")) {
+            SetCachedPanel("recentPurchasesPanel", root.FindChildTraverse("RecentPurchasesPanel"));
         }
-        var rpPanel = GC("recentPurchasesPanel");
+        var rpPanel = GetCachedPanel("recentPurchasesPanel");
         if (rpPanel) {
             var panelOffsetX = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
             var panelOffsetY = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
@@ -793,10 +793,10 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (quickMax < 1 || quickMax > 5) quickMax = RECENT_PURCHASE_QUICK_MAX_DEFAULT;
         if (quickDisplaySec < 3 || quickDisplaySec > 15) quickDisplaySec = RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT;
 
-        if (!GC("recentPurchasesContainer")) {
-            SC("recentPurchasesContainer", root.FindChildTraverse("RecentPurchasesContainer"));
+        if (!GetCachedPanel("recentPurchasesContainer")) {
+            SetCachedPanel("recentPurchasesContainer", root.FindChildTraverse("RecentPurchasesContainer"));
         }
-        var container = GC("recentPurchasesContainer");
+        var container = GetCachedPanel("recentPurchasesContainer");
         if (!container) return;
 
         HandleHideoutRP(root);
@@ -822,7 +822,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                 // Per-hero popup panels on player cards.
                 // Centralized QuickPurchasesPanel is hidden by CSS
                 // (.shop_recent_purchases_redux #QuickPurchasesPanel).
-                S.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+                State.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
                 UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
             } else {
                 // Default: centralized popup panel.
@@ -836,7 +836,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                 var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
                 var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
                 SyncRejuvClassRP(rejuvEnabled);
-                var quickPanel = GC("quickPurchasesPanel");
+                var quickPanel = GetCachedPanel("quickPurchasesPanel");
                 if (IsPanelValid(quickPanel)) {
                     quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
                     quickPanel.style.marginTop = String(ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";

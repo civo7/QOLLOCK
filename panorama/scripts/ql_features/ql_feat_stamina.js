@@ -5,21 +5,21 @@
     $.Msg("[QOL DEBUG] Feature loaded: staminaChargeColorRuntime\n");
         var _featureId = "ql_feat_stamina";
     var _deps = QOL.import(["getCachedPanel","normalizeStaminaChargeAngle","readStaminaChargeColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","utils"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
-    var S = _deps.state;
-    var U = _deps.utils;
-    var IPV = U.IsPanelValid;
+    var State = _deps.state;
+    var Utils = _deps.utils;
+    var IPV = Utils.IsPanelValid;
     var NSA = _deps.normalizeStaminaChargeAngle;
     var RSC = _deps.readStaminaChargeColorIndex;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
-            !!(S.staminaChargeAngleStyleSig && String(S.staminaChargeAngleStyleSig).length > 0) ||
-            !!(S.staminaChargeColorStyleSig && String(S.staminaChargeColorStyleSig).length > 0) ||
-            GC("staminaChargesContainer") ||
-            !!(S.staminaChargeColorPanelCache && S.staminaChargeColorPanelCache.length > 0);
+            !!(State.staminaChargeAngleStyleSig && String(State.staminaChargeAngleStyleSig).length > 0) ||
+            !!(State.staminaChargeColorStyleSig && String(State.staminaChargeColorStyleSig).length > 0) ||
+            GetCachedPanel("staminaChargesContainer") ||
+            !!(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0);
     }
 
     function hasNonDefaultColorConfig(cfg) {
@@ -35,13 +35,13 @@
 
     // ── Panel helpers (inlined from ql_core.js) ──
     function getStaminaChargeColorPanels(root, nowMs) {
-        var cached = S.staminaChargeColorPanelCache || [];
-        if (U.IsPanelListValid(cached) && nowMs < (S.staminaChargeColorPanelCacheNextMs || 0)) {
+        var cached = State.staminaChargeColorPanelCache || [];
+        if (Utils.IsPanelListValid(cached) && nowMs < (State.staminaChargeColorPanelCacheNextMs || 0)) {
             return cached;
         }
 
         var panels = [];
-        var searchRoot = GC("staminaChargesContainer");
+        var searchRoot = GetCachedPanel("staminaChargesContainer");
         if (!searchRoot && root && root.FindChildTraverse) {
             searchRoot = root.FindChildTraverse("charges_container") || root;
         }
@@ -61,8 +61,8 @@
             }
         }
 
-        S.staminaChargeColorPanelCache = panels;
-        S.staminaChargeColorPanelCacheNextMs = nowMs + 500;
+        State.staminaChargeColorPanelCache = panels;
+        State.staminaChargeColorPanelCacheNextMs = nowMs + 500;
         return panels;
     }
 
@@ -72,33 +72,33 @@
 
     // ── Update ──
     function update(root, cfg, nowMs) {
-        if (!S._debug_staminaChargeColorRuntime) { $.Msg("[QOL DEBUG] First update: staminaChargeColorRuntime\n"); S._debug_staminaChargeColorRuntime = true; }
+        if (!State._debug_staminaChargeColorRuntime) { $.Msg("[QOL DEBUG] First update: staminaChargeColorRuntime\n"); State._debug_staminaChargeColorRuntime = true; }
         if (!hasNonDefaultConfig(cfg) &&
-            !GC("staminaChargesContainer") &&
-            !(S.staminaChargeColorPanelCache && S.staminaChargeColorPanelCache.length > 0)) return;
+            !GetCachedPanel("staminaChargesContainer") &&
+            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
 
         var color = RWP(RSC(cfg));
         var angle = NSA(cfg && cfg.STAMINA_CHARGE_ANGLE);
         var angleSig = String(angle);
         var chargesContainer = getStaminaChargesContainer(root);
-        if (chargesContainer && S.staminaChargeAngleStyleSig !== angleSig) {
-            U.SetStyleSafe(chargesContainer, "transform", "rotateZ(" + String(angle) + "deg)");
-            S.staminaChargeAngleStyleSig = angleSig;
+        if (chargesContainer && State.staminaChargeAngleStyleSig !== angleSig) {
+            Utils.SetStyleSafe(chargesContainer, "transform", "rotateZ(" + String(angle) + "deg)");
+            State.staminaChargeAngleStyleSig = angleSig;
         } else if (!chargesContainer) {
-            S.staminaChargeAngleStyleSig = "";
+            State.staminaChargeAngleStyleSig = "";
         }
 
         var styleSig = color || "";
         var panels = getStaminaChargeColorPanels(root, nowMs || 0);
-        if (S.staminaChargeColorStyleSig === styleSig && U.IsPanelListValid(panels)) return;
+        if (State.staminaChargeColorStyleSig === styleSig && Utils.IsPanelListValid(panels)) return;
 
         for (var i = 0; i < panels.length; i++) {
             var panel = panels[i];
             if (!IPV(panel)) continue;
-            U.SetStyleSafe(panel, "borderColor", color || "");
+            Utils.SetStyleSafe(panel, "borderColor", color || "");
         }
 
-        S.staminaChargeColorStyleSig = styleSig;
+        State.staminaChargeColorStyleSig = styleSig;
     }
 
     // ── Register ──

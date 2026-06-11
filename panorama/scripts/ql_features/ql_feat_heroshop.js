@@ -4,13 +4,13 @@
     'use strict';
     var _featureId = "ql_feat_heroshop";
     var _deps = QOL.import(["getCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
-    var NormalizeOpacityNumber = U.NormalizeOpacityNumber;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
+    var NormalizeOpacityNumber = Utils.NormalizeOpacityNumber;
     var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
@@ -36,30 +36,30 @@
             shopOpacityText !== "1.00" ||
             shopScaleText !== "1.00";
 
-        var heroShop = GC("heroShop");
+        var heroShop = GetCachedPanel("heroShop");
         if (heroShop && needsHeroShopFeatures) {
             try {
                 var shopVis = heroShop.style && heroShop.style.visibility;
                 if (shopVis === "collapse") return;
             } catch (eVis) {}
         }
-        if (needsHeroShopFeatures && !heroShop && nowMs >= (S.heroShopNextSearchMs || 0)) {
+        if (needsHeroShopFeatures && !heroShop && nowMs >= (State.heroShopNextSearchMs || 0)) {
             heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
-            SC("heroShop", heroShop);
-            S.heroShopNextSearchMs = heroShop ? 0 : (nowMs + HERO_SHOP_PANEL_SEARCH_MS);
+            SetCachedPanel("heroShop", heroShop);
+            State.heroShopNextSearchMs = heroShop ? 0 : (nowMs + HERO_SHOP_PANEL_SEARCH_MS);
         }
         if (needsHeroShopFeatures) {
             if (heroShop) {
-                SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_shop_stats_active", simplifyShopStats);
-                SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
-                SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
-                SetPanelClassCached(heroShop, S.heroShopClassCache, "disable_shop_blue_active", cfg.DISABLE_SHOP_BLUE === 1);
-                SetPanelClassCached(heroShop, S.heroShopClassCache, "shop_recent_purchases_active", shopRecentPurchases);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_stats_active", simplifyShopStats);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", cfg.DISABLE_SHOP_BLUE === 1);
+                SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", shopRecentPurchases);
 
-                var heroShopMainPanel = GC("heroShopMainPanel");
+                var heroShopMainPanel = GetCachedPanel("heroShopMainPanel");
                 if (!heroShopMainPanel) {
                     heroShopMainPanel = heroShop.FindChildTraverse("MainPanel");
-                    SC("heroShopMainPanel", heroShopMainPanel);
+                    SetCachedPanel("heroShopMainPanel", heroShopMainPanel);
                 }
                 if (heroShopMainPanel) {
                     var marginLeftText = String(shopOffsetXRaw) + "px";
@@ -67,7 +67,7 @@
                     var marginTopText = String(-shopOffsetYRaw) + "px";
                     var marginBottomText = String(shopOffsetYRaw) + "px";
                     var styleSig = marginLeftText + "|" + marginRightText + "|" + marginTopText + "|" + marginBottomText + "|" + shopOpacityText + "|" + shopScaleText + "|" + (shopEnabled ? "1" : "0");
-                    if (S.heroShopMainPanelStyleSig !== styleSig) {
+                    if (State.heroShopMainPanelStyleSig !== styleSig) {
                         heroShopMainPanel.style.marginLeft = marginLeftText;
                         heroShopMainPanel.style.marginRight = marginRightText;
                         heroShopMainPanel.style.marginTop = marginTopText;
@@ -77,28 +77,28 @@
                         heroShopMainPanel.style.preTransformScale2d = shopScaleText + ", " + shopScaleText;
                         heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
                         SetPanelOpacitySafe(heroShopMainPanel, shopOpacityText, 1.0);
-                        S.heroShopMainPanelStyleSig = styleSig;
+                        State.heroShopMainPanelStyleSig = styleSig;
                     }
                 }
             } else {
-                SC("heroShopMainPanel", null);
-                S.heroShopMainPanelStyleSig = "";
+                SetCachedPanel("heroShopMainPanel", null);
+                State.heroShopMainPanelStyleSig = "";
             }
         } else if (heroShop) {
-            SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_shop_stats_active", false);
-            SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_shop_active", false);
-            SetPanelClassCached(heroShop, S.heroShopClassCache, "simplify_items_active", false);
-            SetPanelClassCached(heroShop, S.heroShopClassCache, "disable_shop_blue_active", false);
-            SetPanelClassCached(heroShop, S.heroShopClassCache, "shop_recent_purchases_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_stats_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_shop_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "simplify_items_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "disable_shop_blue_active", false);
+            SetPanelClassCached(heroShop, State.heroShopClassCache, "shop_recent_purchases_active", false);
 
-            var resetMainPanel = GC("heroShopMainPanel");
+            var resetMainPanel = GetCachedPanel("heroShopMainPanel");
             if (!resetMainPanel) {
                 resetMainPanel = heroShop.FindChildTraverse("MainPanel");
-                SC("heroShopMainPanel", resetMainPanel);
+                SetCachedPanel("heroShopMainPanel", resetMainPanel);
             }
             if (resetMainPanel) {
                 var resetSig = "0px|0px|0px|0px|1.00|1.00|1";
-                if (S.heroShopMainPanelStyleSig !== resetSig) {
+                if (State.heroShopMainPanelStyleSig !== resetSig) {
                     resetMainPanel.style.marginLeft = "0px";
                     resetMainPanel.style.marginRight = "0px";
                     resetMainPanel.style.marginTop = "0px";
@@ -110,9 +110,9 @@
                     SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
                 }
             }
-            SC("heroShop", null);
-            SC("heroShopMainPanel", null);
-            S.heroShopMainPanelStyleSig = "";
+            SetCachedPanel("heroShop", null);
+            SetCachedPanel("heroShopMainPanel", null);
+            State.heroShopMainPanelStyleSig = "";
         }
     }
 

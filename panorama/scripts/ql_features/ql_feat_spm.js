@@ -4,12 +4,12 @@
     'use strict';
     var _featureId = "ql_feat_spm";
     var _deps = QOL.import(["detectTopBarPlayerTeam","ensureSpmState","getCachedPanel","getSoulValueFromLabels","parseClockSeconds","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
     var EnsureSpmState = _deps.ensureSpmState;
     var ParseClockSeconds = _deps.parseClockSeconds;
@@ -70,25 +70,25 @@
     function ResetSpmState() {
         var histories = [];
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-        S.spm.playerHistory = histories;
-        S.spm.teamHistory = { friendly: [], enemy: [] };
-        S.spm.warmupActive = true;
-        S.spm.nextSampleMs = 0;
-        S.spm.panelCacheNextMs = 0;
-        S.spm.playerRefreshCursor = 0;
-        S.spm.playerRefreshRemaining = 0;
-        S.spm.needsFullPlayerCache = true;
-        S.topbarSoulSnapshot = null;
-        S.topbarSoulSnapshotUntilMs = 0;
+        State.spm.playerHistory = histories;
+        State.spm.teamHistory = { friendly: [], enemy: [] };
+        State.spm.warmupActive = true;
+        State.spm.nextSampleMs = 0;
+        State.spm.panelCacheNextMs = 0;
+        State.spm.playerRefreshCursor = 0;
+        State.spm.playerRefreshRemaining = 0;
+        State.spm.needsFullPlayerCache = true;
+        State.topbarSoulSnapshot = null;
+        State.topbarSoulSnapshotUntilMs = 0;
     }
 
     function ApplyZeroSpmDisplay(root, nowMs) {
         if (!root) return;
         RefreshSpmPanelCache(root, nowMs || 0);
-        var friendlyScore = IsPanelValid(S.spm.cachedFriendlyScore) ? S.spm.cachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(S.spm.cachedEnemyScore) ? S.spm.cachedEnemyScore : null;
-        var friendlyLabel = IsPanelValid(S.spm.cachedFriendlyLabel) ? S.spm.cachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(S.spm.cachedEnemyLabel) ? S.spm.cachedEnemyLabel : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
         SetSpmLabel(friendlyLabel, 0, friendlyScore);
         SetSpmLabel(enemyLabel, 0, enemyScore);
     }
@@ -96,31 +96,31 @@
     function BuildTopbarSoulSnapshot(root, nowMs) {
         if (!root) return null;
         RefreshSpmPanelCache(root, nowMs || 0);
-        if (!S.spm.playerPanels || !S.spm.playerTeamByIndex) return null;
+        if (!State.spm.playerPanels || !State.spm.playerTeamByIndex) return null;
 
         var players = new Array(SPM_MAX_PLAYERS);
         var friendlyTotal = 0, enemyTotal = 0, friendlyPlayers = 0, enemyPlayers = 0;
 
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var panel = IsPanelValid(S.spm.playerPanels[i]) ? S.spm.playerPanels[i] : null;
+            var panel = IsPanelValid(State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             if (!panel) { players[i] = null; continue; }
 
-            var hiddenGoldLabel = IsPanelValid(S.spm.playerHiddenGoldLabels[i]) ? S.spm.playerHiddenGoldLabels[i] : null;
-            var soulsLabel = IsPanelValid(S.spm.playerSoulsLabels[i]) ? S.spm.playerSoulsLabels[i] : null;
+            var hiddenGoldLabel = IsPanelValid(State.spm.playerHiddenGoldLabels[i]) ? State.spm.playerHiddenGoldLabels[i] : null;
+            var soulsLabel = IsPanelValid(State.spm.playerSoulsLabels[i]) ? State.spm.playerSoulsLabels[i] : null;
             if (!hiddenGoldLabel) {
                 hiddenGoldLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("HiddenGoldValue") || null) : null;
-                S.spm.playerHiddenGoldLabels[i] = hiddenGoldLabel;
+                State.spm.playerHiddenGoldLabels[i] = hiddenGoldLabel;
             }
             if (!soulsLabel) {
                 soulsLabel = panel.FindChildTraverse ? (panel.FindChildTraverse("SoulsValue") || null) : null;
-                S.spm.playerSoulsLabels[i] = soulsLabel;
+                State.spm.playerSoulsLabels[i] = soulsLabel;
             }
 
             var soulValue = GetSoulValueFromLabels(hiddenGoldLabel, soulsLabel);
-            var team = S.spm.playerTeamByIndex[i];
+            var team = State.spm.playerTeamByIndex[i];
             if (team !== "friendly" && team !== "enemy") {
                 team = DetectTopBarPlayerTeam(panel);
-                S.spm.playerTeamByIndex[i] = team;
+                State.spm.playerTeamByIndex[i] = team;
             }
 
             players[i] = { panel: panel, soulValue: soulValue, team: team };
@@ -130,14 +130,14 @@
         }
 
         var snapshot = { players: players, friendlyTotal: friendlyTotal, enemyTotal: enemyTotal, friendlyPlayers: friendlyPlayers, enemyPlayers: enemyPlayers };
-        S.topbarSoulSnapshot = snapshot;
-        S.topbarSoulSnapshotUntilMs = (nowMs || 0) + TOPBAR_SOUL_SNAPSHOT_TTL_MS;
+        State.topbarSoulSnapshot = snapshot;
+        State.topbarSoulSnapshotUntilMs = (nowMs || 0) + TOPBAR_SOUL_SNAPSHOT_TTL_MS;
         return snapshot;
     }
 
     function GetTopbarSoulSnapshot(root, nowMs) {
-        var snapshot = S.topbarSoulSnapshot;
-        if (snapshot && nowMs <= (S.topbarSoulSnapshotUntilMs || 0)) return snapshot;
+        var snapshot = State.topbarSoulSnapshot;
+        if (snapshot && nowMs <= (State.topbarSoulSnapshotUntilMs || 0)) return snapshot;
         return BuildTopbarSoulSnapshot(root, nowMs);
     }
 
@@ -149,43 +149,43 @@
 
         var spmEnabled = !cfg || IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
         if (!spmEnabled) {
-            if (!S.spm.wasDisabled) {
+            if (!State.spm.wasDisabled) {
                 ResetSpmState();
                 ApplyZeroSpmDisplay(root, nowMs);
-                S.spm.lastClockSec = null;
-                S.spm.wasDisabled = true;
+                State.spm.lastClockSec = null;
+                State.spm.wasDisabled = true;
             }
             return;
         }
-        S.spm.wasDisabled = false;
+        State.spm.wasDisabled = false;
 
         if (isConnectedToHideout(root)) {
             ResetSpmState();
             ApplyZeroSpmDisplay(root, nowMs);
-            S.spm.lastClockSec = null;
+            State.spm.lastClockSec = null;
             return;
         }
 
-        var gameTimePanel = GC("gameTime");
+        var gameTimePanel = GetCachedPanel("gameTime");
         if (!gameTimePanel) {
             gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
-            SC("gameTime", gameTimePanel);
+            SetCachedPanel("gameTime", gameTimePanel);
         }
         var clockSec = gameTimePanel && gameTimePanel.text ? ParseClockSeconds(gameTimePanel.text) : 0;
-        if (S.spm.lastClockSec !== null && clockSec < S.spm.lastClockSec) {
+        if (State.spm.lastClockSec !== null && clockSec < State.spm.lastClockSec) {
             ResetSpmState();
         }
-        S.spm.lastClockSec = clockSec;
+        State.spm.lastClockSec = clockSec;
 
         if (!isFinite(nowMs)) {
             nowMs = Date.now ? Date.now() : (new Date()).getTime();
         }
-        if (nowMs < (S.spm.nextSampleMs || 0)) return;
-        S.spm.nextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
+        if (nowMs < (State.spm.nextSampleMs || 0)) return;
+        State.spm.nextSampleMs = nowMs + SPM_SAMPLE_INTERVAL_MS;
 
         RefreshSpmPanelCache(root, nowMs);
-        var friendlyScore = IsPanelValid(S.spm.cachedFriendlyScore) ? S.spm.cachedFriendlyScore : null;
-        var enemyScore = IsPanelValid(S.spm.cachedEnemyScore) ? S.spm.cachedEnemyScore : null;
+        var friendlyScore = IsPanelValid(State.spm.cachedFriendlyScore) ? State.spm.cachedFriendlyScore : null;
+        var enemyScore = IsPanelValid(State.spm.cachedEnemyScore) ? State.spm.cachedEnemyScore : null;
         if (!friendlyScore || !enemyScore) {
             ApplyZeroSpmDisplay(root, nowMs);
             return;
@@ -202,11 +202,11 @@
             var snapshotPlayer = snapshot.players[i];
             if (!snapshotPlayer) continue;
             var soulValue = snapshotPlayer.soulValue;
-            var history = S.spm.playerHistory[i];
+            var history = State.spm.playerHistory[i];
             SpmAddSample(history, soulValue);
             var spm = SpmCalculate(history);
 
-            var playerDisplay = IsPanelValid(S.spm.playerDisplayLabels[i]) ? S.spm.playerDisplayLabels[i] : null;
+            var playerDisplay = IsPanelValid(State.spm.playerDisplayLabels[i]) ? State.spm.playerDisplayLabels[i] : null;
             if (playerDisplay) {
                 var playerText = SpmFormat(spm) + "/m";
                 if (playerDisplay.text !== playerText) playerDisplay.text = playerText;
@@ -214,8 +214,8 @@
                 SetPanelClassIfChanged(playerDisplay, "negative", spm < 0);
             }
 
-            var team = snapshotPlayer.team || S.spm.playerTeamByIndex[i];
-            S.spm.playerTeamByIndex[i] = team;
+            var team = snapshotPlayer.team || State.spm.playerTeamByIndex[i];
+            State.spm.playerTeamByIndex[i] = team;
             if (team === "friendly") { friendlyTotal += soulValue; friendlyPlayers++; }
             else if (team === "enemy") { enemyTotal += soulValue; enemyPlayers++; }
         }
@@ -225,22 +225,22 @@
             return;
         }
 
-        SpmAddSample(S.spm.teamHistory.friendly, friendlyTotal);
-        SpmAddSample(S.spm.teamHistory.enemy, enemyTotal);
+        SpmAddSample(State.spm.teamHistory.friendly, friendlyTotal);
+        SpmAddSample(State.spm.teamHistory.enemy, enemyTotal);
 
-        if (S.spm.warmupActive) {
+        if (State.spm.warmupActive) {
             ApplyZeroSpmDisplay(root, nowMs);
-            if (S.spm.teamHistory.friendly.length >= 2 && S.spm.teamHistory.enemy.length >= 2) {
-                S.spm.warmupActive = false;
+            if (State.spm.teamHistory.friendly.length >= 2 && State.spm.teamHistory.enemy.length >= 2) {
+                State.spm.warmupActive = false;
             }
             return;
         }
 
-        var friendlySpm = SpmCalculate(S.spm.teamHistory.friendly);
-        var enemySpm = SpmCalculate(S.spm.teamHistory.enemy);
+        var friendlySpm = SpmCalculate(State.spm.teamHistory.friendly);
+        var enemySpm = SpmCalculate(State.spm.teamHistory.enemy);
 
-        var friendlyLabel = IsPanelValid(S.spm.cachedFriendlyLabel) ? S.spm.cachedFriendlyLabel : null;
-        var enemyLabel = IsPanelValid(S.spm.cachedEnemyLabel) ? S.spm.cachedEnemyLabel : null;
+        var friendlyLabel = IsPanelValid(State.spm.cachedFriendlyLabel) ? State.spm.cachedFriendlyLabel : null;
+        var enemyLabel = IsPanelValid(State.spm.cachedEnemyLabel) ? State.spm.cachedEnemyLabel : null;
 
         SetSpmLabel(friendlyLabel, friendlySpm, friendlyScore);
         SetSpmLabel(enemyLabel, enemySpm, enemyScore);

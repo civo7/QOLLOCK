@@ -4,10 +4,10 @@
     'use strict';
     var _featureId = "ql_feat_targetshapes";
     var _deps = QOL.import(["applyTargetShapeStyles", "resolveUnitTargetStyleTexts", "state", "utils", "getUnitTargetDefaultStyleTexts"]);
-    var S = _deps.state;
-    var U = _deps.utils;
-    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
-    var IsPanelListValid = U.IsPanelListValid;
+    var State = _deps.state;
+    var Utils = _deps.utils;
+    var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
+    var IsPanelListValid = Utils.IsPanelListValid;
     var ApplyTargetShapeStyles = _deps.applyTargetShapeStyles;
     var ResolveUnitTargetStyleTexts = _deps.resolveUnitTargetStyleTexts;
     var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
@@ -166,12 +166,12 @@
         bucket: 5, phase: -1,
         gate: function(cfg) {
             return NeedsTargetShapeRuntimeWork(cfg,
-                !!(S.lastResolvedGates && S.lastResolvedGates.redDiamondEnabled));
+                !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled));
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             try {
                 var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-                var rdEnabled = !!(S.lastResolvedGates && S.lastResolvedGates.redDiamondEnabled);
+                var rdEnabled = !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled);
                 ApplyTargetShapeStyles(root, unitTargetStyle.scaleText,
                     unitTargetStyle.opacityText, nowMs, rdEnabled,
                     unitTargetStyle.hintScaleText);

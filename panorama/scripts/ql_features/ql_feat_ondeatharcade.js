@@ -4,10 +4,10 @@
     'use strict';
     var _featureId = "ql_feat_ondeatharcade";
     var _deps = QOL.import(["isPanelVisibleMaybe","state","utils"]);
-    var S = _deps.state;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var State = _deps.state;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var PANEL_ID_HUD = QOL_PANEL_ID_HUD;
     function ParseOnDeathArcadeRespawnSeconds(rawText) {
         var raw = String(rawText || "").trim();
@@ -21,13 +21,13 @@
 
     function FindRespawnTimerPanelForOnDeathArcade(root) {
         if (!root || !root.FindChildTraverse) {
-            S.onDeathArcadeRespawnPanel = null;
+            State.onDeathArcadeRespawnPanel = null;
             return null;
         }
 
-        var cached = IsPanelValid(S.onDeathArcadeRespawnPanel) ? S.onDeathArcadeRespawnPanel : null;
+        var cached = IsPanelValid(State.onDeathArcadeRespawnPanel) ? State.onDeathArcadeRespawnPanel : null;
         if (cached && IsPanelVisibleMaybe(cached)) return cached;
-        S.onDeathArcadeRespawnPanel = null;
+        State.onDeathArcadeRespawnPanel = null;
 
         var localRespawnRoot = null;
         try { localRespawnRoot = root.FindChildTraverse("respawn_timer"); } catch (e0) { localRespawnRoot = null; }
@@ -37,7 +37,7 @@
             for (var iLocal = 0; iLocal < localLabels.length; iLocal++) {
                 var localCandidate = localLabels[iLocal];
                 if (!IsPanelValid(localCandidate) || !IsPanelVisibleMaybe(localCandidate)) continue;
-                S.onDeathArcadeRespawnPanel = localCandidate;
+                State.onDeathArcadeRespawnPanel = localCandidate;
                 return localCandidate;
             }
         }
@@ -48,7 +48,7 @@
         for (var i = 0; i < labels.length; i++) {
             var candidate = labels[i];
             if (!IsPanelValid(candidate) || !IsPanelVisibleMaybe(candidate)) continue;
-            S.onDeathArcadeRespawnPanel = candidate;
+            State.onDeathArcadeRespawnPanel = candidate;
             return candidate;
         }
         return null;
@@ -131,25 +131,25 @@
         if (!featureEnabled) {
             var staleActive = "";
             try { staleActive = String(root.GetAttributeString ? root.GetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, "") : ""); } catch (e0) { staleActive = ""; }
-            if (S.onDeathArcadeWasDead || staleActive === "1") {
+            if (State.onDeathArcadeWasDead || staleActive === "1") {
                 SetOnDeathArcadeBridgeAttributes(root, false, "", "");
                 SetOnDeathArcadeEscapeMenuOpen(root, false);
             }
-            S.onDeathArcadeWasDead = false;
-            S.onDeathArcadeRespawnPanel = null;
+            State.onDeathArcadeWasDead = false;
+            State.onDeathArcadeRespawnPanel = null;
             return;
         }
 
         var timerSeconds = GetRespawnTimerSecondsForOnDeathArcade(root);
         var isDead = isFinite(timerSeconds) && timerSeconds > 0;
-        var wasDead = S.onDeathArcadeWasDead === true;
+        var wasDead = State.onDeathArcadeWasDead === true;
 
         if (isDead && !wasDead) {
-            if ((nowMsLoop - S.onDeathArcadeLastTriggerMs) >= ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS) {
-                S.onDeathArcadeLastTriggerMs = nowMsLoop;
-                S.onDeathArcadeRequestSerial = Number(S.onDeathArcadeRequestSerial || 0) + 1;
+            if ((nowMsLoop - State.onDeathArcadeLastTriggerMs) >= ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS) {
+                State.onDeathArcadeLastTriggerMs = nowMsLoop;
+                State.onDeathArcadeRequestSerial = Number(State.onDeathArcadeRequestSerial || 0) + 1;
                 var gameId = pool[Math.floor(Math.random() * pool.length)] || "";
-                var requestToken = String(S.onDeathArcadeRequestSerial);
+                var requestToken = String(State.onDeathArcadeRequestSerial);
                 SetOnDeathArcadeBridgeAttributes(root, true, gameId, requestToken);
                 SetOnDeathArcadeEscapeMenuOpen(root, true);
             }
@@ -160,7 +160,7 @@
             SetOnDeathArcadeBridgeAttributes(root, false, "", "");
         }
 
-        S.onDeathArcadeWasDead = isDead;
+        State.onDeathArcadeWasDead = isDead;
     }
 
     // ── Registration ──

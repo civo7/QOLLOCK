@@ -4,12 +4,12 @@
     'use strict';
     var _featureId = "ql_feat_unspent";
     var _deps = QOL.import(["getCachedPanel","getSoulValueFromLabels","getTopBarPlayerPanel","state","setCachedPanel","utils","isConnectedToHideout"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var GetSoulValueFromLabels = _deps.getSoulValueFromLabels;
     var GetTopBarPlayerPanel = _deps.getTopBarPlayerPanel;
     var isConnectedToHideout = _deps.isConnectedToHideout;
@@ -30,57 +30,57 @@
     // ── Private helpers ──
 
     function EnsureUnspentState() {
-        if (!S.unspentPlayerPanels) S.unspentPlayerPanels = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentModsContainers) S.unspentModsContainers = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentDisplayLabels) S.unspentDisplayLabels = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentSoulValueLabelsPrimary) S.unspentSoulValueLabelsPrimary = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentSoulValueLabelsFallback) S.unspentSoulValueLabelsFallback = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentCachedSpentSouls) S.unspentCachedSpentSouls = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentModsChildCount) S.unspentModsChildCount = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentModsStructureSig) S.unspentModsStructureSig = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentNextTierScanMs) S.unspentNextTierScanMs = new Array(UNSPENT_MAX_PLAYERS);
-        if (!S.unspentLastDisplayText) S.unspentLastDisplayText = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentPlayerPanels) State.unspentPlayerPanels = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentModsContainers) State.unspentModsContainers = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentDisplayLabels) State.unspentDisplayLabels = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentSoulValueLabelsPrimary) State.unspentSoulValueLabelsPrimary = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentSoulValueLabelsFallback) State.unspentSoulValueLabelsFallback = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentCachedSpentSouls) State.unspentCachedSpentSouls = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentModsChildCount) State.unspentModsChildCount = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentModsStructureSig) State.unspentModsStructureSig = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentNextTierScanMs) State.unspentNextTierScanMs = new Array(UNSPENT_MAX_PLAYERS);
+        if (!State.unspentLastDisplayText) State.unspentLastDisplayText = new Array(UNSPENT_MAX_PLAYERS);
     }
 
     function IsUnspentPanelCacheValid() {
-        if (!S.unspentPlayerPanels || !S.unspentModsContainers || !S.unspentDisplayLabels) return false;
+        if (!State.unspentPlayerPanels || !State.unspentModsContainers || !State.unspentDisplayLabels) return false;
         return true;
     }
 
     function RefreshUnspentPanelCache(root, nowMs, createDisplays) {
         if (!root) return;
         EnsureUnspentState();
-        var shouldRefresh = !IsUnspentPanelCacheValid() || nowMs >= (S.unspentPanelCacheNextMs || 0);
+        var shouldRefresh = !IsUnspentPanelCacheValid() || nowMs >= (State.unspentPanelCacheNextMs || 0);
         if (!shouldRefresh) return;
 
         for (var i = 0; i < UNSPENT_MAX_PLAYERS; i++) {
             var playerPanel = GetTopBarPlayerPanel(root, i, nowMs, true);
-            var panelChanged = (S.unspentPlayerPanels[i] !== (playerPanel || null));
-            S.unspentPlayerPanels[i] = playerPanel || null;
+            var panelChanged = (State.unspentPlayerPanels[i] !== (playerPanel || null));
+            State.unspentPlayerPanels[i] = playerPanel || null;
 
             var modsContainer = playerPanel && playerPanel.FindChildTraverse ? playerPanel.FindChildTraverse("PlayerModsContainer") : null;
-            var modsChanged = (S.unspentModsContainers[i] !== (modsContainer || null));
-            S.unspentModsContainers[i] = modsContainer || null;
-            S.unspentSoulValueLabelsPrimary[i] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
-            S.unspentSoulValueLabelsFallback[i] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
+            var modsChanged = (State.unspentModsContainers[i] !== (modsContainer || null));
+            State.unspentModsContainers[i] = modsContainer || null;
+            State.unspentSoulValueLabelsPrimary[i] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
+            State.unspentSoulValueLabelsFallback[i] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
 
             var display = playerPanel && playerPanel.FindChildTraverse ? playerPanel.FindChildTraverse("SpentSoulDisplay") : null;
             if (!display && createDisplays && playerPanel) {
                 display = $.CreatePanel("Label", playerPanel, "SpentSoulDisplay");
                 if (display) display.AddClass("SpentSoulDisplay");
             }
-            S.unspentDisplayLabels[i] = display || null;
+            State.unspentDisplayLabels[i] = display || null;
 
             if (panelChanged || modsChanged) {
-                S.unspentCachedSpentSouls[i] = 0;
-                S.unspentModsChildCount[i] = -1;
-                S.unspentModsStructureSig[i] = "";
-                S.unspentLastDisplayText[i] = "";
-                S.unspentNextTierScanMs[i] = nowMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
+                State.unspentCachedSpentSouls[i] = 0;
+                State.unspentModsChildCount[i] = -1;
+                State.unspentModsStructureSig[i] = "";
+                State.unspentLastDisplayText[i] = "";
+                State.unspentNextTierScanMs[i] = nowMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
             }
         }
 
-        S.unspentPanelCacheNextMs = nowMs + UNSPENT_PANEL_CACHE_REFRESH_MS + 311;
+        State.unspentPanelCacheNextMs = nowMs + UNSPENT_PANEL_CACHE_REFRESH_MS + 311;
     }
 
     function ScanTierCountsOnModsContainer(modsContainer) {
@@ -149,10 +149,10 @@
         if (!root) return;
         RefreshUnspentPanelCache(root, nowMs, false);
         for (var i = 0; i < UNSPENT_MAX_PLAYERS; i++) {
-            var display = IsPanelValid(S.unspentDisplayLabels[i]) ? S.unspentDisplayLabels[i] : null;
+            var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display) continue;
             if (display.text !== "") display.text = "";
-            S.unspentLastDisplayText[i] = "";
+            State.unspentLastDisplayText[i] = "";
         }
     }
 
@@ -167,58 +167,58 @@
         }
         var enabled = !cfg || IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS");
         if (!enabled || isConnectedToHideout(root)) {
-            if (!S.unspentWasDisabled) {
+            if (!State.unspentWasDisabled) {
                 ClearUnspentDisplayValues(root, nowMs);
-                S.unspentWasDisabled = true;
+                State.unspentWasDisabled = true;
             }
-            S.unspentNextSampleMs = 0;
+            State.unspentNextSampleMs = 0;
             return;
         }
-        S.unspentWasDisabled = false;
+        State.unspentWasDisabled = false;
 
-        if (nowMs < (S.unspentNextSampleMs || 0)) return;
-        S.unspentNextSampleMs = nowMs + UNSPENT_SAMPLE_INTERVAL_MS;
+        if (nowMs < (State.unspentNextSampleMs || 0)) return;
+        State.unspentNextSampleMs = nowMs + UNSPENT_SAMPLE_INTERVAL_MS;
         RefreshUnspentPanelCache(root, nowMs, true);
 
         // Stagger per-player work: process a batch each sample, rotate cursor.
-        var cursor = Number(S.unspentPlayerCursor);
+        var cursor = Number(State.unspentPlayerCursor);
         if (!isFinite(cursor) || cursor < 0 || cursor >= UNSPENT_MAX_PLAYERS) cursor = 0;
         var batchEnd = Math.min(cursor + UNSPENT_PLAYER_BATCH_SIZE, UNSPENT_MAX_PLAYERS);
         for (var i = cursor; i < batchEnd; i++) {
-            var playerPanel = IsPanelValid(S.unspentPlayerPanels[i]) ? S.unspentPlayerPanels[i] : null;
+            var playerPanel = IsPanelValid(State.unspentPlayerPanels[i]) ? State.unspentPlayerPanels[i] : null;
             if (!playerPanel) continue;
 
             var totalNetWorth = GetSoulValueFromLabels(
-                S.unspentSoulValueLabelsPrimary ? S.unspentSoulValueLabelsPrimary[i] : null,
-                S.unspentSoulValueLabelsFallback ? S.unspentSoulValueLabelsFallback[i] : null
+                State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[i] : null,
+                State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[i] : null
             );
             if (!isFinite(totalNetWorth)) totalNetWorth = 0;
 
-            var modsContainer = IsPanelValid(S.unspentModsContainers[i]) ? S.unspentModsContainers[i] : null;
+            var modsContainer = IsPanelValid(State.unspentModsContainers[i]) ? State.unspentModsContainers[i] : null;
             if (!modsContainer && playerPanel && playerPanel.FindChildTraverse) {
                 modsContainer = playerPanel.FindChildTraverse("PlayerModsContainer");
-                S.unspentModsContainers[i] = modsContainer || null;
+                State.unspentModsContainers[i] = modsContainer || null;
             }
 
-            var spentSouls = Number(S.unspentCachedSpentSouls[i]) || 0;
+            var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
             var needsTierScan = false;
             if (modsContainer && modsContainer.GetChildCount) {
                 var childCount = -1;
                 try { childCount = modsContainer.GetChildCount(); } catch (e2) { childCount = -1; }
-                var prevChildCount = Number(S.unspentModsChildCount[i]);
+                var prevChildCount = Number(State.unspentModsChildCount[i]);
                 if (!isFinite(prevChildCount)) prevChildCount = -1;
                 if (childCount !== prevChildCount) {
-                    S.unspentModsChildCount[i] = childCount;
+                    State.unspentModsChildCount[i] = childCount;
                     needsTierScan = true;
                 }
                 var structureSig = BuildUnspentModsStructureSignature(modsContainer);
-                var prevStructureSig = String(S.unspentModsStructureSig[i] || "");
+                var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
                 var structureChanged = (structureSig !== prevStructureSig);
                 if (structureChanged) {
-                    S.unspentModsStructureSig[i] = structureSig;
+                    State.unspentModsStructureSig[i] = structureSig;
                     needsTierScan = true;
                 }
-                if (nowMs >= (S.unspentNextTierScanMs[i] || 0)) {
+                if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
                     needsTierScan = true;
                 }
                 if (needsTierScan) {
@@ -228,24 +228,24 @@
                         (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
                         (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
                         (tierCounts.t4 * UNSPENT_TIER_COST[4]);
-                    S.unspentCachedSpentSouls[i] = spentSouls;
+                    State.unspentCachedSpentSouls[i] = spentSouls;
                     var nextTierDelayMs = ((childCount !== prevChildCount) || structureChanged)
                         ? UNSPENT_TIER_SCAN_INTERVAL_MS
                         : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
-                    S.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
+                    State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
                 }
             } else {
                 spentSouls = 0;
-                S.unspentCachedSpentSouls[i] = 0;
-                S.unspentModsChildCount[i] = -1;
-                S.unspentModsStructureSig[i] = "";
-                S.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
+                State.unspentCachedSpentSouls[i] = 0;
+                State.unspentModsChildCount[i] = -1;
+                State.unspentModsStructureSig[i] = "";
+                State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
             }
 
             var unspentSouls = totalNetWorth - spentSouls;
             if (!isFinite(unspentSouls)) unspentSouls = 0;
 
-            var display = IsPanelValid(S.unspentDisplayLabels[i]) ? S.unspentDisplayLabels[i] : null;
+            var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
             if (!display && playerPanel && playerPanel.FindChildTraverse) {
                 display = playerPanel.FindChildTraverse("SpentSoulDisplay");
             }
@@ -253,14 +253,14 @@
                 display = $.CreatePanel("Label", playerPanel, "SpentSoulDisplay");
                 if (display) display.AddClass("SpentSoulDisplay");
             }
-            S.unspentDisplayLabels[i] = display || null;
+            State.unspentDisplayLabels[i] = display || null;
             if (!display) continue;
 
             var nextText = unspentSouls >= 1000 ? (unspentSouls / 1000).toFixed(1) + "k" : String(Math.round(unspentSouls));
-            var prevText = String(S.unspentLastDisplayText[i] || "");
+            var prevText = String(State.unspentLastDisplayText[i] || "");
             if (nextText !== prevText) {
                 display.text = nextText;
-                S.unspentLastDisplayText[i] = nextText;
+                State.unspentLastDisplayText[i] = nextText;
             }
             var hasSpent = unspentSouls > 0;
             if (display.BHasClass("hasSpent") !== hasSpent) {
@@ -274,7 +274,7 @@
 
         var nextCursor = cursor + UNSPENT_PLAYER_BATCH_SIZE;
         if (nextCursor >= UNSPENT_MAX_PLAYERS) nextCursor = 0;
-        S.unspentPlayerCursor = nextCursor;
+        State.unspentPlayerCursor = nextCursor;
     }
 
     // ── Registration ──

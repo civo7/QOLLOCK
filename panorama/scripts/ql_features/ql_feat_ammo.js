@@ -5,31 +5,31 @@
     $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
         var _featureId = "ql_feat_ammo";
     var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
-    // S = State, U = Utils, GC/SC = panel cache get/set (project-wide convention).
-    var GC = _deps.getCachedPanel;
+    // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
+    var GetCachedPanel = _deps.getCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
     var RAI = _deps.readAmmoTextColorIndex;
     // ── Gate ──
     function gate(cfg) {
         if (!cfg) return false;
-        if (U.IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
-        if (U.IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
-        if (U.IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
+        if (Utils.IsCfgEnabled(cfg, "ENABLE_AMMO_STATUS")) return true;
+        if (Utils.IsCfgEnabled(cfg, "ENABLE_HIDE_MAGAZINE")) return true;
+        if (Utils.IsCfgEnabled(cfg, "ENABLE_HIDE_AMMO_ALL")) return true;
         if (Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
         if (Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
         if (RAI(cfg) !== 0) return true;
-        return !!(S.ammoPanelStyleSig && String(S.ammoPanelStyleSig).length > 0);
+        return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
     }
 
     // ── Update ──
     function update(root, cfg) {
-        if (!S._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); S._debug_ammo = true; }
+        if (!State._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); State._debug_ammo = true; }
         if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&
             Number(cfg.ENABLE_HIDE_MAGAZINE) !== 1 &&
             Number(cfg.ENABLE_HIDE_AMMO_ALL) !== 1 &&
@@ -38,12 +38,12 @@
             Number(cfg.AMMO_TOTAL_SCALE) === 100 &&
             Number(cfg.AMMO_PANEL_X_OFFSET) === 0 &&
             Number(cfg.AMMO_PANEL_Y_OFFSET) === 0 &&
-            !GC("ammoPanel")) return;
+            !GetCachedPanel("ammoPanel")) return;
 
-        var ammoPanel = GC("ammoPanel");
+        var ammoPanel = GetCachedPanel("ammoPanel");
         if (!ammoPanel) {
             ammoPanel = root.FindChildTraverse("ammo_panel");
-            SC("ammoPanel", ammoPanel);
+            SetCachedPanel("ammoPanel", ammoPanel);
         }
         if (ammoPanel) {
             var ammoCurrentScale = (cfg.AMMO_CURRENT_SCALE === undefined || cfg.AMMO_CURRENT_SCALE === null) ? cfg.AMMO_PANEL_SCALE : cfg.AMMO_CURRENT_SCALE;
@@ -69,7 +69,7 @@
 
             var ammoTextColor = RWP(RAI(cfg));
             var ammoSig = String(ammoCurrentScale) + "|" + String(ammoTotalScale) + "|" + String(ammoOffsetX) + "|" + String(ammoOffsetY) + "|" + (ammoTextColor || "");
-            if (S.ammoPanelStyleSig !== ammoSig) {
+            if (State.ammoPanelStyleSig !== ammoSig) {
                 var ammoCurrentScaleFactor = ammoCurrentScale / 100.0;
                 var scaledCurrentFontPx = Math.round(16 * ammoCurrentScaleFactor);
                 if (scaledCurrentFontPx < 12) scaledCurrentFontPx = 12;
@@ -90,7 +90,7 @@
                     if (!ammoValueLabel) continue;
                     ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
                     ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
-                    U.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
+                    Utils.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
                 }
                 var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
                 for (var maxIdx = 0; maxIdx < ammoMaxLabels.length; maxIdx++) {
@@ -99,24 +99,24 @@
                     ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
                     ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
                     ammoMaxLabel.style.marginLeft = String(scaledMaxMarginLeftPx) + "px";
-                    U.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
+                    Utils.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
                 }
                 var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
                 for (var infiniteIdx = 0; infiniteIdx < ammoInfiniteLabels.length; infiniteIdx++) {
                     var ammoInfiniteLabel = ammoInfiniteLabels[infiniteIdx];
                     if (!ammoInfiniteLabel) continue;
-                    U.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
+                    Utils.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
                 }
 
                 ammoPanel.style.preTransformScale2d = "1.00, 1.00";
                 ammoPanel.style.x = String(ammoOffsetX) + "px";
                 ammoPanel.style.y = String(80 - ammoOffsetY) + "px";
                 ammoPanel.style.visibility = "visible";
-                U.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
-                S.ammoPanelStyleSig = ammoSig;
+                Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
+                State.ammoPanelStyleSig = ammoSig;
             }
         } else {
-            S.ammoPanelStyleSig = "";
+            State.ammoPanelStyleSig = "";
         }
     }
 

@@ -4,12 +4,12 @@
     'use strict';
     var _featureId = "ql_feat_nicknames";
     var _deps = QOL.import(["getCachedPanel","getGameSecondsForUrn","getTopBarPlayerPanel","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
     var RefreshSpmPanelCache = _deps.refreshSpmPanelCache;
     var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
@@ -70,37 +70,37 @@
     function UpdateTopBarNicknames(root, nowMs, cfg) {
         if (!root) return;
         var enabled = IsCfgEnabled(cfg, "ENABLE_NICKNAMES");
-        if (!enabled && !S.topbarNicknamesWasEnabled) return;
+        if (!enabled && !State.topbarNicknamesWasEnabled) return;
 
         var now = isFinite(Number(nowMs)) ? Number(nowMs) : (Date.now ? Date.now() : (new Date()).getTime());
-        if (!S.topbarNicknamePlayers) S.topbarNicknamePlayers = new Array(SPM_MAX_PLAYERS);
-        if (!S.topbarNicknameSourceLabels) S.topbarNicknameSourceLabels = new Array(SPM_MAX_PLAYERS);
-        if (!S.topbarNicknameFallbackLabels) S.topbarNicknameFallbackLabels = new Array(SPM_MAX_PLAYERS);
-        if (!S.topbarNicknameResolvedTexts) S.topbarNicknameResolvedTexts = new Array(SPM_MAX_PLAYERS);
-        if (!S.topbarNicknameResolveStates) S.topbarNicknameResolveStates = new Array(SPM_MAX_PLAYERS);
-        if (!S.topbarNicknameRetryNextMs) S.topbarNicknameRetryNextMs = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknamePlayers) State.topbarNicknamePlayers = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknameSourceLabels) State.topbarNicknameSourceLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknameFallbackLabels) State.topbarNicknameFallbackLabels = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknameResolvedTexts) State.topbarNicknameResolvedTexts = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknameResolveStates) State.topbarNicknameResolveStates = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarNicknameRetryNextMs) State.topbarNicknameRetryNextMs = new Array(SPM_MAX_PLAYERS);
         RefreshSpmPanelCache(root, now);
 
         function resetNicknameSlotState(index) {
             if (index < 0 || index >= SPM_MAX_PLAYERS) return;
-            S.topbarNicknamePlayers[index] = null;
-            S.topbarNicknameSourceLabels[index] = null;
-            S.topbarNicknameResolvedTexts[index] = "";
-            S.topbarNicknameResolveStates[index] = "unknown";
-            S.topbarNicknameRetryNextMs[index] = 0;
+            State.topbarNicknamePlayers[index] = null;
+            State.topbarNicknameSourceLabels[index] = null;
+            State.topbarNicknameResolvedTexts[index] = "";
+            State.topbarNicknameResolveStates[index] = "unknown";
+            State.topbarNicknameRetryNextMs[index] = 0;
         }
 
         function resetNicknameCache(keepDisplayLabels) {
             for (var r = 0; r < SPM_MAX_PLAYERS; r++) {
                 resetNicknameSlotState(r);
-                if (!keepDisplayLabels) S.topbarNicknameFallbackLabels[r] = null;
+                if (!keepDisplayLabels) State.topbarNicknameFallbackLabels[r] = null;
             }
-            S.topbarNicknamesNextRefreshMs = 0;
-            S.topbarNicknamesLastClockSec = null;
+            State.topbarNicknamesNextRefreshMs = 0;
+            State.topbarNicknamesLastClockSec = null;
         }
 
         function ensureDisplayLabel(playerPanel, index) {
-            var displayLabel = IsPanelValid(S.topbarNicknameFallbackLabels[index]) ? S.topbarNicknameFallbackLabels[index] : null;
+            var displayLabel = IsPanelValid(State.topbarNicknameFallbackLabels[index]) ? State.topbarNicknameFallbackLabels[index] : null;
             if (!displayLabel && playerPanel && playerPanel.FindChildrenWithClassTraverse) {
                 var alwaysLabels = playerPanel.FindChildrenWithClassTraverse("AlwaysPlayerName") || [];
                 for (var a = 0; a < alwaysLabels.length; a++) {
@@ -121,7 +121,7 @@
                     displayLabel.AddClass("QOLNickRuntime");
                 }
             }
-            S.topbarNicknameFallbackLabels[index] = displayLabel || null;
+            State.topbarNicknameFallbackLabels[index] = displayLabel || null;
             if (!displayLabel) return null;
             try {
                 if (displayLabel.SetHasClass) displayLabel.SetHasClass("QOLNickRuntime", true);
@@ -149,51 +149,51 @@
 
         var inHideout = isConnectedToHideout(root);
         if (inHideout) {
-            if (!S.topbarNicknamesWasInHideout) {
+            if (!State.topbarNicknamesWasInHideout) {
                 resetNicknameCache(true);
-                S.topbarNicknamesWasInHideout = true;
+                State.topbarNicknamesWasInHideout = true;
             }
             for (var h = 0; h < SPM_MAX_PLAYERS; h++) {
-                var hideoutPlayerPanel = IsPanelValid(S.topbarNicknamePlayers[h]) ? S.topbarNicknamePlayers[h] : null;
+                var hideoutPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[h]) ? State.topbarNicknamePlayers[h] : null;
                 if (hideoutPlayerPanel) SetPanelClassIfChanged(hideoutPlayerPanel, "qol_nickname_active", false);
-                var hiddenLabel = IsPanelValid(S.topbarNicknameFallbackLabels[h]) ? S.topbarNicknameFallbackLabels[h] : null;
+                var hiddenLabel = IsPanelValid(State.topbarNicknameFallbackLabels[h]) ? State.topbarNicknameFallbackLabels[h] : null;
                 renderDisplayLabel(hiddenLabel, false, "");
             }
-            S.topbarNicknamesWasEnabled = enabled;
-            S.topbarNicknamesNextRefreshMs = now + TOPBAR_NICKNAMES_REFRESH_MS;
+            State.topbarNicknamesWasEnabled = enabled;
+            State.topbarNicknamesNextRefreshMs = now + TOPBAR_NICKNAMES_REFRESH_MS;
             return;
         }
 
-        if (S.topbarNicknamesWasInHideout) {
-            S.topbarNicknamesWasInHideout = false;
+        if (State.topbarNicknamesWasInHideout) {
+            State.topbarNicknamesWasInHideout = false;
             resetNicknameCache(true);
         }
 
         var clockSec = GetGameSecondsForUrn(root);
-        if (S.topbarNicknamesLastClockSec !== null &&
-            (clockSec + 5 < S.topbarNicknamesLastClockSec ||
-            (S.topbarNicknamesLastClockSec > 30 && clockSec <= 2))) {
+        if (State.topbarNicknamesLastClockSec !== null &&
+            (clockSec + 5 < State.topbarNicknamesLastClockSec ||
+            (State.topbarNicknamesLastClockSec > 30 && clockSec <= 2))) {
             resetNicknameCache(true);
         }
-        S.topbarNicknamesLastClockSec = clockSec;
+        State.topbarNicknamesLastClockSec = clockSec;
 
-        var forceRefresh = (enabled !== S.topbarNicknamesWasEnabled);
-        if (!forceRefresh && now < (S.topbarNicknamesNextRefreshMs || 0)) return;
+        var forceRefresh = (enabled !== State.topbarNicknamesWasEnabled);
+        if (!forceRefresh && now < (State.topbarNicknamesNextRefreshMs || 0)) return;
 
         var allResolved = enabled;
         var sawPlayerPanel = false;
         for (var i = 0; i < SPM_MAX_PLAYERS; i++) {
-            var cachedPlayerPanel = IsPanelValid(S.topbarNicknamePlayers[i]) ? S.topbarNicknamePlayers[i] : null;
+            var cachedPlayerPanel = IsPanelValid(State.topbarNicknamePlayers[i]) ? State.topbarNicknamePlayers[i] : null;
             var playerPanel = cachedPlayerPanel;
             if (!playerPanel) {
-                playerPanel = IsPanelValid(S.spm.playerPanels && S.spm.playerPanels[i]) ? S.spm.playerPanels[i] : null;
+                playerPanel = IsPanelValid(State.spm.playerPanels && State.spm.playerPanels[i]) ? State.spm.playerPanels[i] : null;
             }
             if (!playerPanel) playerPanel = GetTopBarPlayerPanel(root, i, now, false);
             if (cachedPlayerPanel && playerPanel && cachedPlayerPanel !== playerPanel) {
                 resetNicknameSlotState(i);
             }
-            S.topbarNicknamePlayers[i] = playerPanel || null;
-            var displayLabel = playerPanel ? ensureDisplayLabel(playerPanel, i) : (IsPanelValid(S.topbarNicknameFallbackLabels[i]) ? S.topbarNicknameFallbackLabels[i] : null);
+            State.topbarNicknamePlayers[i] = playerPanel || null;
+            var displayLabel = playerPanel ? ensureDisplayLabel(playerPanel, i) : (IsPanelValid(State.topbarNicknameFallbackLabels[i]) ? State.topbarNicknameFallbackLabels[i] : null);
             var shouldShow = false;
             var renderText = "";
 
@@ -205,43 +205,43 @@
             sawPlayerPanel = true;
             SetPanelClassIfChanged(playerPanel, "qol_nickname_active", enabled);
 
-            var resolveState = String(S.topbarNicknameResolveStates[i] || "unknown");
-            var retryAt = Number(S.topbarNicknameRetryNextMs[i]) || 0;
-            var sourceLabel = IsPanelValid(S.topbarNicknameSourceLabels[i]) ? S.topbarNicknameSourceLabels[i] : null;
+            var resolveState = String(State.topbarNicknameResolveStates[i] || "unknown");
+            var retryAt = Number(State.topbarNicknameRetryNextMs[i]) || 0;
+            var sourceLabel = IsPanelValid(State.topbarNicknameSourceLabels[i]) ? State.topbarNicknameSourceLabels[i] : null;
             if (!sourceLabel && resolveState === "resolved") {
                 resolveState = "unknown";
-                S.topbarNicknameResolveStates[i] = resolveState;
+                State.topbarNicknameResolveStates[i] = resolveState;
             }
             if (enabled && resolveState === "resolved") {
                 var liveSourceText = ReadTopBarNicknameLabelText(sourceLabel);
                 if (liveSourceText) {
-                    if (liveSourceText !== String(S.topbarNicknameResolvedTexts[i] || "")) {
-                        S.topbarNicknameResolvedTexts[i] = liveSourceText;
+                    if (liveSourceText !== String(State.topbarNicknameResolvedTexts[i] || "")) {
+                        State.topbarNicknameResolvedTexts[i] = liveSourceText;
                     }
                 } else {
                     resolveState = "unknown";
-                    S.topbarNicknameResolveStates[i] = resolveState;
-                    S.topbarNicknameRetryNextMs[i] = 0;
+                    State.topbarNicknameResolveStates[i] = resolveState;
+                    State.topbarNicknameRetryNextMs[i] = 0;
                     retryAt = 0;
                 }
             }
             if (enabled && (resolveState !== "resolved") && now >= retryAt) {
                 var resolvedSource = ResolveTopBarNicknameSource(playerPanel, sourceLabel);
                 sourceLabel = resolvedSource.label;
-                S.topbarNicknameSourceLabels[i] = sourceLabel || null;
+                State.topbarNicknameSourceLabels[i] = sourceLabel || null;
                 var nextText = resolvedSource.text;
                 if (nextText) {
-                    S.topbarNicknameResolvedTexts[i] = String(nextText);
-                    S.topbarNicknameResolveStates[i] = "resolved";
-                    S.topbarNicknameRetryNextMs[i] = 0;
+                    State.topbarNicknameResolvedTexts[i] = String(nextText);
+                    State.topbarNicknameResolveStates[i] = "resolved";
+                    State.topbarNicknameRetryNextMs[i] = 0;
                 } else {
-                    S.topbarNicknameResolvedTexts[i] = "";
-                    S.topbarNicknameResolveStates[i] = "missing";
-                    S.topbarNicknameRetryNextMs[i] = now + TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS;
+                    State.topbarNicknameResolvedTexts[i] = "";
+                    State.topbarNicknameResolveStates[i] = "missing";
+                    State.topbarNicknameRetryNextMs[i] = now + TOPBAR_NICKNAMES_UNRESOLVED_RETRY_MS;
                 }
             }
 
-            if (enabled && String(S.topbarNicknameResolveStates[i] || "unknown") !== "resolved") {
+            if (enabled && String(State.topbarNicknameResolveStates[i] || "unknown") !== "resolved") {
                 allResolved = false;
             }
             if (enabled && !displayLabel) {
@@ -249,18 +249,18 @@
             }
 
             if (enabled) {
-                renderText = String(S.topbarNicknameResolvedTexts[i] || "");
+                renderText = String(State.topbarNicknameResolvedTexts[i] || "");
                 shouldShow = renderText.length > 0;
             }
             renderDisplayLabel(displayLabel, shouldShow, renderText);
         }
 
-        S.topbarNicknamesWasEnabled = enabled;
+        State.topbarNicknamesWasEnabled = enabled;
         var nextRefreshMs = TOPBAR_NICKNAMES_REFRESH_MS;
         if (enabled && sawPlayerPanel && allResolved && !forceRefresh) {
             nextRefreshMs = TOPBAR_NICKNAMES_REFRESH_MS_STABLE;
         }
-        S.topbarNicknamesNextRefreshMs = now + nextRefreshMs;
+        State.topbarNicknamesNextRefreshMs = now + nextRefreshMs;
     }
 
     // ── Registration ──

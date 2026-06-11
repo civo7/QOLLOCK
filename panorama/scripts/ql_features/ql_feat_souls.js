@@ -5,15 +5,15 @@
     $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
         var _featureId = "ql_feat_souls";
     var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
-    var S = _deps.state;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var Utils = _deps.utils;
     var PID = _deps.panelIdGoldApContainer;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
-            !!(S.soulsRuntimeStyleSig && String(S.soulsRuntimeStyleSig).length > 0) ||
+            !!(State.soulsRuntimeStyleSig && String(State.soulsRuntimeStyleSig).length > 0) ||
             QOL.getCachedPanel("soulsContainer");
     }
 
@@ -21,31 +21,31 @@
         if (!cfg) return false;
         return (
             Number(cfg.HUD_SOULS_ENABLED) !== 1 ||
-            U.NormalizeOpacityNumber(cfg.SOULS_OPACITY, 1.0) !== 1.0 ||
-            U.NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) !== 0 ||
-            U.NormalizeHudOffsetNumber(cfg.SOULS_Y_OFFSET, 0) !== 0
+            Utils.NormalizeOpacityNumber(cfg.SOULS_OPACITY, 1.0) !== 1.0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) !== 0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.SOULS_Y_OFFSET, 0) !== 0
         );
     }
 
     // ── Update ──
     function update(root, cfg) {
-        if (!S._debug_soulsRuntime) { $.Msg("[QOL DEBUG] First update: soulsRuntime\n"); S._debug_soulsRuntime = true; }
+        if (!State._debug_soulsRuntime) { $.Msg("[QOL DEBUG] First update: soulsRuntime\n"); State._debug_soulsRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
-        var enabled = U.IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
+        var enabled = Utils.IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = RC(root, "soulsContainer", PID);
         if (!soulsPanel) return;
 
-        var offsetX = active ? U.NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) : 0;
-        var offsetY = active ? U.NormalizeHudOffsetNumber(cfg.SOULS_Y_OFFSET, 0) : 0;
-        var opacityText = active ? U.NormalizeOpacityNumber(cfg.SOULS_OPACITY, 1.0).toFixed(2) : "1.00";
+        var offsetX = active ? Utils.NormalizeHudOffsetNumber(cfg.SOULS_X_OFFSET, 0) : 0;
+        var offsetY = active ? Utils.NormalizeHudOffsetNumber(cfg.SOULS_Y_OFFSET, 0) : 0;
+        var opacityText = active ? Utils.NormalizeOpacityNumber(cfg.SOULS_OPACITY, 1.0).toFixed(2) : "1.00";
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + (enabled ? "1" : "0");
-        if (S.soulsRuntimeStyleSig === styleSig) return;
+        if (State.soulsRuntimeStyleSig === styleSig) return;
 
         soulsPanel.style.x = String(offsetX) + "px";
         soulsPanel.style.y = String(-offsetY) + "px";
         soulsPanel.style.visibility = enabled ? "visible" : "collapse";
-        U.SetPanelOpacitySafe(soulsPanel, opacityText, 1.0);
-        S.soulsRuntimeStyleSig = styleSig;
+        Utils.SetPanelOpacitySafe(soulsPanel, opacityText, 1.0);
+        State.soulsRuntimeStyleSig = styleSig;
     }
 
     // ── Register ──

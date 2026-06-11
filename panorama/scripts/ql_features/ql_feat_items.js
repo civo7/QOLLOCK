@@ -5,39 +5,39 @@
     $.Msg("[QOL DEBUG] Feature loaded: itemsRuntime\n");
         var _featureId = "ql_feat_items";
     var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
     var SWC = _deps.setWashColorSafe;
-    var U = _deps.utils;
-    var IPV = U.IsPanelValid;
+    var Utils = _deps.utils;
+    var IPV = Utils.IsPanelValid;
     var NPC = _deps.normalizePaletteColorIndex;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
-            !!(S.itemsRuntimeStyleSig && String(S.itemsRuntimeStyleSig).length > 0) ||
-            GC("itemsModsContainer");
+            !!(State.itemsRuntimeStyleSig && String(State.itemsRuntimeStyleSig).length > 0) ||
+            GetCachedPanel("itemsModsContainer");
     }
 
     function hasNonDefaultConfig(cfg) {
         if (!cfg) return false;
         return (
             Number(cfg.HUD_ITEMS_ENABLED) !== 1 ||
-            U.NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0) !== 1.0 ||
-            U.NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) !== 0 ||
-            U.NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) !== 0 ||
+            Utils.NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0) !== 1.0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) !== 0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) !== 0 ||
             NPC(cfg.ITEMS_WASH_COLOR) !== 0
         );
     }
 
     // ── Update ──
     function update(root, cfg) {
-        if (!S._debug_itemsRuntime) { $.Msg("[QOL DEBUG] First update: itemsRuntime\n"); S._debug_itemsRuntime = true; }
+        if (!State._debug_itemsRuntime) { $.Msg("[QOL DEBUG] First update: itemsRuntime\n"); State._debug_itemsRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
-        var enabled = U.IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
-        var modsContainer = GC("itemsModsContainer");
+        var enabled = Utils.IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
+        var modsContainer = GetCachedPanel("itemsModsContainer");
         if (!modsContainer) {
             var statsAndMods = RC(root, "statsAndModsContainer", "StatsAndModsContainer");
             if (statsAndMods && statsAndMods.FindChildrenWithClassTraverse) {
@@ -49,38 +49,38 @@
                     }
                 }
             }
-            SC("itemsModsContainer", modsContainer);
+            SetCachedPanel("itemsModsContainer", modsContainer);
         }
         if (!modsContainer) return;
 
-        var offsetX = active ? U.NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) : 0;
-        var offsetY = active ? U.NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) : 0;
-        var opacityText = active ? U.NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0).toFixed(2) : "1.00";
+        var offsetX = active ? Utils.NormalizeHudOffsetNumber(cfg.ITEMS_X_OFFSET, 0) : 0;
+        var offsetY = active ? Utils.NormalizeHudOffsetNumber(cfg.ITEMS_Y_OFFSET, 0) : 0;
+        var opacityText = active ? Utils.NormalizeOpacityNumber(cfg.ITEMS_OPACITY, 1.0).toFixed(2) : "1.00";
         var washColor = active ? RWP(cfg.ITEMS_WASH_COLOR) : "";
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + washColor + "|" + (enabled ? "1" : "0");
-        if (S.itemsRuntimeStyleSig === styleSig) return;
+        if (State.itemsRuntimeStyleSig === styleSig) return;
 
         modsContainer.style.x = String(offsetX) + "px";
         modsContainer.style.y = String(-offsetY) + "px";
         modsContainer.style.visibility = enabled ? "visible" : "collapse";
         SWC(modsContainer, washColor);
-        U.ClearStyleSafe(modsContainer, "opacity");
+        Utils.ClearStyleSafe(modsContainer, "opacity");
         var barGraphContainer = modsContainer.FindChildTraverse ? modsContainer.FindChildTraverse("BarGraphContainer") : null;
         if (IPV(barGraphContainer)) {
-            if (opacityText === "1.00") U.ClearStyleSafe(barGraphContainer, "opacity");
-            else U.SetPanelOpacitySafe(barGraphContainer, opacityText, 1.0);
+            if (opacityText === "1.00") Utils.ClearStyleSafe(barGraphContainer, "opacity");
+            else Utils.SetPanelOpacitySafe(barGraphContainer, opacityText, 1.0);
         }
         var modSections = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("ModSection") || []) : [];
         for (var sectionIndex = 0; sectionIndex < modSections.length; sectionIndex++) {
-            if (IPV(modSections[sectionIndex])) U.ClearStyleSafe(modSections[sectionIndex], "opacity");
+            if (IPV(modSections[sectionIndex])) Utils.ClearStyleSafe(modSections[sectionIndex], "opacity");
         }
         var modIconContainers = modsContainer.FindChildrenWithClassTraverse ? (modsContainer.FindChildrenWithClassTraverse("mod_icon_single_container") || []) : [];
         for (var iconIndex = 0; iconIndex < modIconContainers.length; iconIndex++) {
             if (!IPV(modIconContainers[iconIndex])) continue;
-            if (opacityText === "1.00") U.ClearStyleSafe(modIconContainers[iconIndex], "opacity");
-            else U.SetPanelOpacitySafe(modIconContainers[iconIndex], opacityText, 1.0);
+            if (opacityText === "1.00") Utils.ClearStyleSafe(modIconContainers[iconIndex], "opacity");
+            else Utils.SetPanelOpacitySafe(modIconContainers[iconIndex], opacityText, 1.0);
         }
-        S.itemsRuntimeStyleSig = styleSig;
+        State.itemsRuntimeStyleSig = styleSig;
     }
 
     // ── Register ──

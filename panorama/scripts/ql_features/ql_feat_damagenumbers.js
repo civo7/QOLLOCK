@@ -4,15 +4,15 @@
     'use strict';
     var _featureId = "ql_feat_damagenumbers";
     var _deps = QOL.import(["findAncestorWithClass","getCachedPanel","isPanelListValid","perfEnd","perfStart","resolveDamageNumbersRuntimeSig","runtimeTaskIsDue","runtimeTaskSetDelay","state","setCachedPanel","utils"]);
-    var GC = _deps.getCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
-    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
-    var IsPanelListValid = U.IsPanelListValid;
-    var PerfNowMs = U.PerfNowMs;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
+    var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
+    var IsPanelListValid = Utils.IsPanelListValid;
+    var PerfNowMs = Utils.PerfNowMs;
     var FindAncestorWithClass = QOL.findAncestorWithClass || function() { return null; };
 
     var DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
@@ -66,7 +66,7 @@ function PerfRecord(name, elapsedMs) {
         if (!name) return;
         var ms = Number(elapsedMs);
         if (!isFinite(ms) || ms < 0) return;
-        var stats = S.perfStats || {};
+        var stats = State.perfStats || {};
         var entry = stats[name];
         if (!entry) {
             entry = { count: 0, total: 0, max: 0, slow: 0 };
@@ -76,17 +76,17 @@ function PerfRecord(name, elapsedMs) {
         entry.total += ms;
         if (ms > entry.max) entry.max = ms;
         if (ms >= PERF_DEBUG_SLOW_MS) entry.slow += 1;
-        S.perfStats = stats;
+        State.perfStats = stats;
     }
 function PerfStart() {
         if (!_perfTrackingActive) return 0;
         return PerfNowMs();
     }
 function RuntimeSchedulerGetStore() {
-        var store = S.runtimeTaskNextMs;
+        var store = State.runtimeTaskNextMs;
         if (!store || typeof store !== "object") {
             store = {};
-            S.runtimeTaskNextMs = store;
+            State.runtimeTaskNextMs = store;
         }
         return store;
     }
@@ -175,17 +175,17 @@ function IsIndicatorSmallDamage(panel) {
         var sig = ResolveDamageNumbersRuntimeSig(cfg);
         var defaultSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
         if (sig !== defaultSig) return true;
-        if (S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
-        if (S.accountPresetTestActive) return true;
-        if (raw !== S.lastRawConfig && S.lastIndicatorConfigSig && S.lastIndicatorConfigSig !== defaultSig) return true;
+        if (State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
+        if (State.accountPresetTestActive) return true;
+        if (raw !== State.lastRawConfig && State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== defaultSig) return true;
         return false;
     }
 
     function UpdateDamageNumbersRuntime(root, cfg, raw, nowMs) {
         // Bail early when indicator config is at default and no cached panel work to clean up.
         if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
-            !IsPanelListValid(S.indicatorPanelsCache) &&
-            !S.accountPresetTestActive) return;
+            !IsPanelListValid(State.indicatorPanelsCache) &&
+            !State.accountPresetTestActive) return;
 
         var indicatorOpacity = (cfg.DAMAGE_NUMBER_OPACITY === undefined || cfg.DAMAGE_NUMBER_OPACITY === null) ? 1.0 : parseFloat(cfg.DAMAGE_NUMBER_OPACITY);
         if (!isFinite(indicatorOpacity)) indicatorOpacity = 1.0;
@@ -196,7 +196,7 @@ function IsIndicatorSmallDamage(panel) {
         if (!isFinite(indicatorSize)) indicatorSize = 18;
         var hideSmallNumbers = (cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
         var hideModesSig = (hideSmallNumbers ? "1" : "0");
-        var hideModesChanged = (hideModesSig !== S.lastIndicatorHideModesSig);
+        var hideModesChanged = (hideModesSig !== State.lastIndicatorHideModesSig);
         var cleanIndicators = (IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS"));
         var indicatorConfigSig = String(indicatorSize) + "|" + indicatorOpacityText + "|" + (hideSmallNumbers ? "1" : "0") + "|" + (cleanIndicators ? "1" : "0");
         var indicatorDefaultsSig = DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG;
@@ -205,41 +205,41 @@ function IsIndicatorSmallDamage(panel) {
         var indicatorPanelCacheRefreshMs = hideSmallNumbers ? HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE;
         var indicatorRefreshDue = RuntimeTaskIsDue("hud_indicator_refresh", nowMs);
         var shouldRefreshIndicators =
-            raw !== S.lastRawConfig ||
-            S.accountPresetTestActive ||
-            indicatorConfigSig !== S.lastIndicatorConfigSig ||
+            raw !== State.lastRawConfig ||
+            State.accountPresetTestActive ||
+            indicatorConfigSig !== State.lastIndicatorConfigSig ||
             indicatorRefreshDue;
 
         if (shouldRefreshIndicators) {
             var shouldSkipDefaultPass =
                 indicatorIsDefault &&
-                indicatorConfigSig === S.lastIndicatorConfigSig &&
-                !S.accountPresetTestActive &&
-                raw === S.lastRawConfig;
+                indicatorConfigSig === State.lastIndicatorConfigSig &&
+                !State.accountPresetTestActive &&
+                raw === State.lastRawConfig;
             if (shouldSkipDefaultPass) {
                 RuntimeTaskSetDelay("hud_indicator_refresh", nowMs, indicatorRefreshIntervalMs);
             } else {
-                var indicatorCacheValid = IsPanelListValid(S.indicatorPanelsCache);
+                var indicatorCacheValid = IsPanelListValid(State.indicatorPanelsCache);
                 var indicatorPanelCacheDue = RuntimeTaskIsDue("hud_indicator_panel_cache", nowMs);
                 var shouldRefreshIndicatorPanels =
                     !indicatorCacheValid ||
                     indicatorPanelCacheDue ||
-                    indicatorConfigSig !== S.lastIndicatorConfigSig;
+                    indicatorConfigSig !== State.lastIndicatorConfigSig;
                 if (shouldRefreshIndicatorPanels) {
-                    var dmgContainer = GC("dmgIndicators");
+                    var dmgContainer = GetCachedPanel("dmgIndicators");
                     if (!dmgContainer && root.FindChildTraverse) {
                         dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
-                        SC("dmgIndicators", dmgContainer);
+                        SetCachedPanel("dmgIndicators", dmgContainer);
                     }
                     var searchRoot = dmgContainer ? dmgContainer : root;
-                    S.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                    State.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
                     RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMs, indicatorPanelCacheRefreshMs);
                 }
-                var indicatorMeta = S.indicatorMetaCache || [];
-                if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (S.indicatorPanelsCache || []).length) {
-                    indicatorMeta = BuildIndicatorMetaCache(S.indicatorPanelsCache, indicatorMeta, hideSmallNumbers);
-                    S.indicatorMetaCache = indicatorMeta;
-                    S._descDebugLogged = false;
+                var indicatorMeta = State.indicatorMetaCache || [];
+                if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (State.indicatorPanelsCache || []).length) {
+                    indicatorMeta = BuildIndicatorMetaCache(State.indicatorPanelsCache, indicatorMeta, hideSmallNumbers);
+                    State.indicatorMetaCache = indicatorMeta;
+                    State._descDebugLogged = false;
                 }
 
                 var indicatorFontSizeText = indicatorSize + "px";
@@ -284,15 +284,15 @@ function IsIndicatorSmallDamage(panel) {
                     }
                     SetPanelOpacitySafe(p, indicatorOpacityText, 1.0);
                 }
-                S.lastIndicatorCount = indicatorMeta.length;
-                if (indicatorIsDefault && !S.accountPresetTestActive) {
-                    S.indicatorPanelsCache = [];
-                    S.indicatorMetaCache = [];
-                    S.lastIndicatorCount = 0;
+                State.lastIndicatorCount = indicatorMeta.length;
+                if (indicatorIsDefault && !State.accountPresetTestActive) {
+                    State.indicatorPanelsCache = [];
+                    State.indicatorMetaCache = [];
+                    State.lastIndicatorCount = 0;
                 }
             }
-            S.lastIndicatorConfigSig = indicatorConfigSig;
-            S.lastIndicatorHideModesSig = hideModesSig;
+            State.lastIndicatorConfigSig = indicatorConfigSig;
+            State.lastIndicatorHideModesSig = hideModesSig;
             RuntimeTaskSetDelay("hud_indicator_refresh", nowMs, indicatorRefreshIntervalMs);
         }
     }
@@ -308,7 +308,7 @@ function IsIndicatorSmallDamage(panel) {
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             try {
-                UpdateDamageNumbersRuntime(root, cfg, S.lastRawConfig, nowMs);
+                UpdateDamageNumbersRuntime(root, cfg, State.lastRawConfig, nowMs);
             } catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;

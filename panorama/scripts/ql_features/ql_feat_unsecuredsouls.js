@@ -4,13 +4,13 @@
     'use strict';
     var _featureId = "ql_feat_unsecuredsouls";
     var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
     var IsCustomHudContextActive = _deps.isCustomHudContextActive;
     var EstimateUnsecuredSoulsEtaFallbackSec = _deps.estimateUnsecuredSoulsEtaFallbackSec;
     var FindUnsecuredSoulsSource = _deps.findUnsecuredSoulsSource;
@@ -28,7 +28,7 @@
     var UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
     var UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
     function EnsureUnsecuredSoulsOverlay(root) {
-        var overlay = GC("unsecuredSoulsOverlay");
+        var overlay = GetCachedPanel("unsecuredSoulsOverlay");
         if (IsPanelValid(overlay)) {
             return overlay;
         }
@@ -49,48 +49,48 @@
             state.text = "";
         }
 
-        SC("unsecuredSoulsOverlay", overlay);
-        SC("unsecuredSoulsLabel", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsLabel") : null);
-        SC("unsecuredSoulsState", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsState") : null);
+        SetCachedPanel("unsecuredSoulsOverlay", overlay);
+        SetCachedPanel("unsecuredSoulsLabel", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsLabel") : null);
+        SetCachedPanel("unsecuredSoulsState", overlay ? overlay.FindChildTraverse("QOLUnsecuredSoulsState") : null);
         return overlay;
     }
 
     function RemoveUnsecuredSoulsOverlay(root) {
-        var overlay = GC("unsecuredSoulsOverlay");
+        var overlay = GetCachedPanel("unsecuredSoulsOverlay");
         if (!IsPanelValid(overlay)) {
             overlay = root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
         }
         if (IsPanelValid(overlay)) {
             overlay.DeleteAsync(0);
         }
-        SC("unsecuredSoulsOverlay", null);
-        SC("unsecuredSoulsLabel", null);
-        SC("unsecuredSoulsState", null);
-        SC("unsecuredSoulsSource", null);
-        S.unsecuredSouls.displayMode = "";
-        S.unsecuredSouls.lastLayoutSig = "";
-        S.unsecuredSouls.lastClassSig = "";
-        S.unsecuredSouls.lastTitle = "";
-        S.unsecuredSouls.lastStatus = "";
-        S.unsecuredSouls.nextSourceSearchMs = 0;
+        SetCachedPanel("unsecuredSoulsOverlay", null);
+        SetCachedPanel("unsecuredSoulsLabel", null);
+        SetCachedPanel("unsecuredSoulsState", null);
+        SetCachedPanel("unsecuredSoulsSource", null);
+        State.unsecuredSouls.displayMode = "";
+        State.unsecuredSouls.lastLayoutSig = "";
+        State.unsecuredSouls.lastClassSig = "";
+        State.unsecuredSouls.lastTitle = "";
+        State.unsecuredSouls.lastStatus = "";
+        State.unsecuredSouls.nextSourceSearchMs = 0;
         ResetUnsecuredSoulsTracking();
     }
 
     function UpdateUnsecuredSoulsOverlay(root, cfg, hideoutOverride) {
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         if (!IsCustomHudContextActive(root)) {
-            if (S.unsecuredSouls.displayMode !== "context_off") {
+            if (State.unsecuredSouls.displayMode !== "context_off") {
                 RemoveUnsecuredSoulsOverlay(root);
-                S.unsecuredSouls.displayMode = "context_off";
+                State.unsecuredSouls.displayMode = "context_off";
             }
             return;
         }
 
         var enabled = IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER");
         if (!enabled) {
-            if (S.unsecuredSouls.displayMode !== "disabled") {
+            if (State.unsecuredSouls.displayMode !== "disabled") {
                 RemoveUnsecuredSoulsOverlay(root);
-                S.unsecuredSouls.displayMode = "disabled";
+                State.unsecuredSouls.displayMode = "disabled";
             }
             return;
         }
@@ -100,7 +100,7 @@
 
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
-            if (S.unsecuredSouls.displayMode !== "hideout") {
+            if (State.unsecuredSouls.displayMode !== "hideout") {
                 overlay.style.visibility = "collapse";
                 overlay.SetHasClass("danger_1", false);
                 overlay.SetHasClass("danger_2", false);
@@ -109,17 +109,17 @@
                 overlay.SetHasClass("has_souls", false);
                 overlay.SetHasClass("is_safe", true);
                 overlay.SetHasClass("is_syncing", false);
-                S.unsecuredSouls.lastClassSig = "";
+                State.unsecuredSouls.lastClassSig = "";
             }
-            S.unsecuredSouls.displayMode = "hideout";
+            State.unsecuredSouls.displayMode = "hideout";
             ResetUnsecuredSoulsTracking();
             return;
         }
 
-        if (S.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
+        if (State.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
             overlay.style.visibility = "visible";
         }
-        S.unsecuredSouls.displayMode = "active";
+        State.unsecuredSouls.displayMode = "active";
 
         var timerOffsetX = Number(cfg.UNSECURED_SOUL_TIMER_X_OFFSET);
         var timerOffsetY = Number(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET);
@@ -136,7 +136,7 @@
         if (timerOffsetY > 1000) timerOffsetY = 1000;
         if (timerScale < 50) timerScale = 50;
         if (timerScale > 200) timerScale = 200;
-        var stateLabel = GC("unsecuredSoulsState");
+        var stateLabel = GetCachedPanel("unsecuredSoulsState");
         var timerFontPx = Math.round(16 * (timerScale / 100));
         if (timerFontPx < 8) timerFontPx = 8;
         if (timerFontPx > 72) timerFontPx = 72;
@@ -148,19 +148,19 @@
             stateLabel.style.fontSize = timerFontSize;
         }
         var layoutSig = [String(timerOffsetX), String(timerOffsetY), String(timerScale)].join("|");
-        if (layoutSig !== S.unsecuredSouls.lastLayoutSig) {
+        if (layoutSig !== State.unsecuredSouls.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + timerOffsetX) + "px";
             overlay.style.marginBottom = (110 + timerOffsetY) + "px";
-            S.unsecuredSouls.lastLayoutSig = layoutSig;
+            State.unsecuredSouls.lastLayoutSig = layoutSig;
         }
 
-        var source = GC("unsecuredSoulsSource");
+        var source = GetCachedPanel("unsecuredSoulsSource");
         if (!IsPanelValid(source)) {
             source = null;
-            if (nowMs >= (S.unsecuredSouls.nextSourceSearchMs || 0)) {
+            if (nowMs >= (State.unsecuredSouls.nextSourceSearchMs || 0)) {
                 source = FindUnsecuredSoulsSource(root);
-                S.unsecuredSouls.nextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
-                SC("unsecuredSoulsSource", source);
+                State.unsecuredSouls.nextSourceSearchMs = source ? 0 : (nowMs + UNSECURED_SOULS_SOURCE_SEARCH_MS);
+                SetCachedPanel("unsecuredSoulsSource", source);
             }
         }
 
@@ -169,27 +169,27 @@
         var souls = isUnresolved ? 0 : ParseUnsecuredSoulsValue(rawText);
 
         if (!isUnresolved) {
-            if (S.unsecuredSouls.lastSouls >= 0 && S.unsecuredSouls.lastSampleMs > 0) {
-                var dtSec = (nowMs - S.unsecuredSouls.lastSampleMs) / 1000.0;
-                var delta = S.unsecuredSouls.lastSouls - souls;
+            if (State.unsecuredSouls.lastSouls >= 0 && State.unsecuredSouls.lastSampleMs > 0) {
+                var dtSec = (nowMs - State.unsecuredSouls.lastSampleMs) / 1000.0;
+                var delta = State.unsecuredSouls.lastSouls - souls;
                 if (dtSec >= (UNSECURED_SOULS_MIN_SAMPLE_MS / 1000.0) && delta > 0) {
                     var instRate = delta / dtSec;
                     if (isFinite(instRate) && instRate > UNSECURED_SOULS_RATE_MIN) {
-                        if (!isFinite(S.unsecuredSouls.rateEma) || S.unsecuredSouls.rateEma <= 0) {
-                            S.unsecuredSouls.rateEma = instRate;
+                        if (!isFinite(State.unsecuredSouls.rateEma) || State.unsecuredSouls.rateEma <= 0) {
+                            State.unsecuredSouls.rateEma = instRate;
                         } else {
-                            S.unsecuredSouls.rateEma = S.unsecuredSouls.rateEma + ((instRate - S.unsecuredSouls.rateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
+                            State.unsecuredSouls.rateEma = State.unsecuredSouls.rateEma + ((instRate - State.unsecuredSouls.rateEma) * UNSECURED_SOULS_RATE_EMA_ALPHA);
                         }
-                        S.unsecuredSouls.rateLastUpdateMs = nowMs;
+                        State.unsecuredSouls.rateLastUpdateMs = nowMs;
                     }
                 } else if (delta < 0) {
                     // Soul gains are not a valid decay-rate signal; reset to fallback mode until we observe new spend.
-                    S.unsecuredSouls.rateEma = 0;
-                    S.unsecuredSouls.rateLastUpdateMs = 0;
+                    State.unsecuredSouls.rateEma = 0;
+                    State.unsecuredSouls.rateLastUpdateMs = 0;
                 }
             }
-            S.unsecuredSouls.lastSouls = souls;
-            S.unsecuredSouls.lastSampleMs = nowMs;
+            State.unsecuredSouls.lastSouls = souls;
+            State.unsecuredSouls.lastSampleMs = nowMs;
         }
 
         var etaSec = 0;
@@ -198,10 +198,10 @@
             var gameMin = GetGameSecondsForUrn(root) / 60.0;
             fallbackEtaSec = EstimateUnsecuredSoulsEtaFallbackSec(souls, gameMin);
 
-            var rateAgeMs = nowMs - (S.unsecuredSouls.rateLastUpdateMs || 0);
-            var rateFresh = (S.unsecuredSouls.rateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
-            if (rateFresh && isFinite(S.unsecuredSouls.rateEma) && S.unsecuredSouls.rateEma > UNSECURED_SOULS_RATE_MIN) {
-                etaSec = souls / S.unsecuredSouls.rateEma;
+            var rateAgeMs = nowMs - (State.unsecuredSouls.rateLastUpdateMs || 0);
+            var rateFresh = (State.unsecuredSouls.rateLastUpdateMs > 0) && rateAgeMs <= UNSECURED_SOULS_RATE_STALE_MS;
+            if (rateFresh && isFinite(State.unsecuredSouls.rateEma) && State.unsecuredSouls.rateEma > UNSECURED_SOULS_RATE_MIN) {
+                etaSec = souls / State.unsecuredSouls.rateEma;
             }
             if (!isFinite(etaSec) || etaSec <= 0) {
                 etaSec = fallbackEtaSec;
@@ -212,17 +212,17 @@
                 etaSec = UNSECURED_SOULS_ETA_MAX_SEC;
             }
             if (isFinite(etaSec) && etaSec > 0) {
-                S.unsecuredSouls.etaEndMs = nowMs + Math.round(etaSec * 1000);
+                State.unsecuredSouls.etaEndMs = nowMs + Math.round(etaSec * 1000);
             }
         } else if (souls <= 0) {
-            S.unsecuredSouls.etaEndMs = 0;
-            S.unsecuredSouls.rateEma = 0;
-            S.unsecuredSouls.rateLastUpdateMs = 0;
+            State.unsecuredSouls.etaEndMs = 0;
+            State.unsecuredSouls.rateEma = 0;
+            State.unsecuredSouls.rateLastUpdateMs = 0;
         }
 
         var etaRemainingSec = 0;
-        if (S.unsecuredSouls.etaEndMs > nowMs) {
-            etaRemainingSec = (S.unsecuredSouls.etaEndMs - nowMs) / 1000.0;
+        if (State.unsecuredSouls.etaEndMs > nowMs) {
+            etaRemainingSec = (State.unsecuredSouls.etaEndMs - nowMs) / 1000.0;
         }
 
         var statusText = "--";
@@ -243,7 +243,7 @@
             souls > 0 ? "1" : "0",
             isUnresolved ? "1" : "0"
         ].join("|");
-        if (classSig !== S.unsecuredSouls.lastClassSig) {
+        if (classSig !== State.unsecuredSouls.lastClassSig) {
             overlay.SetHasClass("danger_1", dangerLevel === 1);
             overlay.SetHasClass("danger_2", dangerLevel === 2);
             overlay.SetHasClass("danger_3", dangerLevel === 3);
@@ -251,13 +251,13 @@
             overlay.SetHasClass("has_souls", souls > 0);
             overlay.SetHasClass("is_safe", souls <= 0 && !isUnresolved);
             overlay.SetHasClass("is_syncing", isUnresolved);
-            S.unsecuredSouls.lastClassSig = classSig;
+            State.unsecuredSouls.lastClassSig = classSig;
         }
 
-        S.unsecuredSouls.lastTitle = "";
-        if (stateLabel && statusText !== S.unsecuredSouls.lastStatus) {
+        State.unsecuredSouls.lastTitle = "";
+        if (stateLabel && statusText !== State.unsecuredSouls.lastStatus) {
             stateLabel.text = statusText;
-            S.unsecuredSouls.lastStatus = statusText;
+            State.unsecuredSouls.lastStatus = statusText;
         }
     }
 
@@ -265,7 +265,7 @@
     QOL.register("unsecuredSoulsTimer", {
         configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
         bucket: 6, phase: 3,
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(S.unsecuredSouls && S.unsecuredSouls.displayMode && S.unsecuredSouls.displayMode !== ""); },
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(State.unsecuredSouls && State.unsecuredSouls.displayMode && State.unsecuredSouls.displayMode !== ""); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
         },

@@ -96,10 +96,10 @@ The new pattern uses `QOL.import()` — defined in `ql_shared_presets.js`:
 ```js
 // (all 34 feature files use this):
 var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel", ...]);
-var S = _deps.state;
-var U = _deps.utils;
-var GC = _deps.getCachedPanel;
-var SC = _deps.setCachedPanel;
+var State = _deps.state;
+var Utils = _deps.utils;
+var GetCachedPanel = _deps.getCachedPanel;
+var SetCachedPanel = _deps.setCachedPanel;
 ```
 
 **QOL.import()** resolves named symbols from the `QOL` namespace. If symbols are missing, it logs a single consolidated `[BRIDGE] missing N dependency(s)` message.
@@ -137,8 +137,8 @@ Every feature file follows this structure:
     'use strict';
     var _featureId = "ql_feat_X";
     var _deps = QOL.import(["state", "utils", ...]);
-    var S = _deps.state;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var Utils = _deps.utils;
     // ... destructure other deps ...
 
     // ── Constants ──
@@ -169,10 +169,10 @@ Every feature file follows this structure:
 ```
 
 **Naming conventions in feature files:**
-- `S.` = `State` (via `_deps.state`)
-- `GC()` = `GetCachedPanel` (via `_deps.getCachedPanel`)
-- `SC()` = `SetCachedPanel` (via `_deps.setCachedPanel`)
-- `U.` = `QOL_UTILS` (via `_deps.utils`)
+- `State` = `_deps.state` (via `_deps.state`)
+- `GetCachedPanel()` = `_deps.getCachedPanel` (via `_deps.getCachedPanel`)
+- `SetCachedPanel()` = `_deps.setCachedPanel` (via `_deps.setCachedPanel`)
+- `Utils.` = `_deps.utils` (via `_deps.utils`)
 
 ### Feature Dispatch Loop (in ql_core.js)
 
@@ -199,7 +199,7 @@ Only 2 features remain unextracted (both are core infrastructure):
 Key state fields:
 - `State.spm.*` — Souls Per Minute tracking
 - `State.rejuvState` — Rejuvenator timer state
-- `State.cachedPanels.*` — Panel cache (used by all features via GC/SC)
+- `State.cachedPanels.*` — Panel cache (used by all features via GetCachedPanel/SetCachedPanel)
 - `State.lastResolvedGates` — Gate resolution from BuildRuntimeFeatureConfigState
 - `State.rootClassCache` — Root panel class state
 - Per-feature state arrays (topbarNicknamePlayers, unspentPlayerPanels, etc.)
@@ -255,9 +255,9 @@ Key state fields:
 
 1. **Missing bridge export:** Feature file calls a function that's not in QOL.import() → `ReferenceError: X is not defined`. Fix: add the symbol to `_qolExportDefs` array in ql_core.js, then add it to the feature file's QOL.import() list.
 
-2. **State. vs S.:** Feature files must use `S.` for State access. ql_core.js uses `State.`. Converting between them is a common error during extraction.
+2. **State. vs S.:** Feature files use `State.` for State access. ql_core.js uses `State.`. Converting between them is a common error during extraction.
 
-3. **GC()/SC() vs GetCachedPanel()/SetCachedPanel():** Same pattern — feature files use GC/SC, core uses full names.
+3. **GC()/SC() vs GetCachedPanel()/SetCachedPanel():** Same pattern — feature files and core both use full names (GetCachedPanel/SetCachedPanel).
 
 4. **Bare-global vs window property:** Feature files check `typeof QOL_X !== "undefined"` (bare global), but exports may only set `window.QOL_X`. Both are needed.
 

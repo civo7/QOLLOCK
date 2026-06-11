@@ -5,15 +5,15 @@
     $.Msg("[QOL DEBUG] Feature loaded: damageImpactRuntime\n");
         var _featureId = "ql_feat_damageimpact";
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
-    var GC = _deps.getCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
-    var S = _deps.state;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var Utils = _deps.utils;
     var NDS = _deps.normalizeDamageImpactScaleNumber;
     // ── Gate ──
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
-            !!(S.damageImpactRuntimeStyleSig && String(S.damageImpactRuntimeStyleSig).length > 0) ||
+            !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
             QOL.getCachedPanel("damageImpactPanel");
     }
 
@@ -22,33 +22,33 @@
         return (
             Number(cfg.ENABLE_DAMAGE_IMPACT) !== 1 ||
             NDS(cfg.DAMAGE_IMPACT_SCALE, 1.0) !== 1.0 ||
-            U.NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0) !== 1.0 ||
-            U.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) !== 0 ||
-            U.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) !== 0
+            Utils.NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0) !== 1.0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) !== 0 ||
+            Utils.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) !== 0
         );
     }
 
     // ── Update ──
     function update(root, cfg) {
-        if (!S._debug_damageImpactRuntime) { $.Msg("[QOL DEBUG] First update: damageImpactRuntime\n"); S._debug_damageImpactRuntime = true; }
+        if (!State._debug_damageImpactRuntime) { $.Msg("[QOL DEBUG] First update: damageImpactRuntime\n"); State._debug_damageImpactRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
-        var enabled = U.IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
+        var enabled = Utils.IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
         var panel = RC(root, "damageImpactPanel", "damage_impact");
         if (!panel) return;
 
-        var offsetX = active ? U.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
-        var offsetY = active ? U.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) : 0;
-        var opacityText = active ? U.NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0).toFixed(2) : "1.00";
+        var offsetX = active ? Utils.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_X_OFFSET, 0) : 0;
+        var offsetY = active ? Utils.NormalizeHudOffsetNumber(cfg.DAMAGE_IMPACT_Y_OFFSET, 0) : 0;
+        var opacityText = active ? Utils.NormalizeOpacityNumber(cfg.DAMAGE_IMPACT_OPACITY, 1.0).toFixed(2) : "1.00";
         var scaleText = active ? NDS(cfg.DAMAGE_IMPACT_SCALE, 1.0).toFixed(2) : "1.00";
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0");
-        if (S.damageImpactRuntimeStyleSig === styleSig) return;
+        if (State.damageImpactRuntimeStyleSig === styleSig) return;
 
         panel.style.x = String(offsetX) + "px";
         panel.style.y = String(-offsetY) + "px";
         panel.style.opacity = opacityText;
         panel.style.preTransformScale2d = scaleText + ", " + scaleText;
         panel.style.visibility = enabled ? "visible" : "collapse";
-        S.damageImpactRuntimeStyleSig = styleSig;
+        State.damageImpactRuntimeStyleSig = styleSig;
     }
 
     // ── Register ──

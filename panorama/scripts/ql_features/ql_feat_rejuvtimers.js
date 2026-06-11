@@ -4,18 +4,18 @@
     'use strict';
     var _featureId = "ql_feat_rejuvtimers";
     var _deps = QOL.import(["ensureMinimapOverlayAnchor","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
-    // S = State, U = Utils, GC/SC = panel cache get/set (project-wide convention).
-    var GC = _deps.getCachedPanel;
+    // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
+    var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
-    var S = _deps.state;
-    var SC = _deps.setCachedPanel;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var SetCachedPanel = _deps.setCachedPanel;
+    var Utils = _deps.utils;
     var BRIDGE_DURATION_SEC = 300;
     var BUFF_LOCKOUT_SEC = 120;
-    var IsCfgEnabled = U.IsCfgEnabled;
-    var IsPanelValid = U.IsPanelValid;
-    var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
+    var IsCfgEnabled = Utils.IsCfgEnabled;
+    var IsPanelValid = Utils.IsPanelValid;
+    var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
     var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
     var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
     var IsHudClassActive = _deps.isHudClassActive;
@@ -56,7 +56,7 @@
         var anchor = EnsureMinimapOverlayAnchor(root);
         if (!anchor) return null;
 
-        var overlay = GC("minimapObjectiveTimersRoot");
+        var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
         if (!overlay) {
             overlay = anchor.FindChildTraverse("QOLMinimapTimersRoot");
             if (!overlay) {
@@ -187,19 +187,19 @@
         rejuvTime.hittest = false;
         rejuvTime.hittestchildren = false;
 
-        SC("minimapObjectiveTimersRoot", overlay);
-        SC("minimapObjectiveBuffPanel", buffPanel);
-        SC("minimapObjectiveBuffTime", buffTime);
-        SC("minimapObjectiveBuffIcon", buffIcon);
-        SC("minimapObjectiveBuffBridgeLeftPanel", buffBridgeLeftPanel);
-        SC("minimapObjectiveBuffBridgeLeftTime", buffBridgeLeftTime);
-        SC("minimapObjectiveBuffBridgeLeftIcon", buffBridgeLeftIcon);
-        SC("minimapObjectiveBuffBridgeRightPanel", buffBridgeRightPanel);
-        SC("minimapObjectiveBuffBridgeRightTime", buffBridgeRightTime);
-        SC("minimapObjectiveBuffBridgeRightIcon", buffBridgeRightIcon);
-        SC("minimapObjectiveRejuvPanel", rejuvPanel);
-        SC("minimapObjectiveRejuvTime", rejuvTime);
-        SC("minimapObjectiveRejuvIcon", rejuvIcon);
+        SetCachedPanel("minimapObjectiveTimersRoot", overlay);
+        SetCachedPanel("minimapObjectiveBuffPanel", buffPanel);
+        SetCachedPanel("minimapObjectiveBuffTime", buffTime);
+        SetCachedPanel("minimapObjectiveBuffIcon", buffIcon);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", buffBridgeLeftPanel);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", buffBridgeLeftTime);
+        SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", buffBridgeLeftIcon);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", buffBridgeRightPanel);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightTime", buffBridgeRightTime);
+        SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", buffBridgeRightIcon);
+        SetCachedPanel("minimapObjectiveRejuvPanel", rejuvPanel);
+        SetCachedPanel("minimapObjectiveRejuvTime", rejuvTime);
+        SetCachedPanel("minimapObjectiveRejuvIcon", rejuvIcon);
         if (overlay.MoveChildBefore && rejuvPanel && buffPanel) {
             overlay.MoveChildBefore(rejuvPanel, buffPanel);
         }
@@ -218,36 +218,36 @@
     }
 
     function HideMinimapObjectiveTimers(root) {
-        var overlay = GC("minimapObjectiveTimersRoot");
+        var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
         if (!overlay && root && root.FindChildTraverse) {
             overlay = root.FindChildTraverse("QOLMinimapTimersRoot");
-            if (overlay) SC("minimapObjectiveTimersRoot", overlay);
+            if (overlay) SetCachedPanel("minimapObjectiveTimersRoot", overlay);
         }
         if (!overlay) return;
         if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-        S.minimapObjectiveScaleSig = "";
+        State.minimapObjectiveScaleSig = "";
         if (overlay.style.preTransformScale2d !== "1.00, 1.00") {
             overlay.style.preTransformScale2d = "1.00, 1.00";
         }
-        var buffPanel = GC("minimapObjectiveBuffPanel");
-        var buffBridgeLeftPanel = GC("minimapObjectiveBuffBridgeLeftPanel");
-        var buffBridgeRightPanel = GC("minimapObjectiveBuffBridgeRightPanel");
-        var rejuvPanel = GC("minimapObjectiveRejuvPanel");
+        var buffPanel = GetCachedPanel("minimapObjectiveBuffPanel");
+        var buffBridgeLeftPanel = GetCachedPanel("minimapObjectiveBuffBridgeLeftPanel");
+        var buffBridgeRightPanel = GetCachedPanel("minimapObjectiveBuffBridgeRightPanel");
+        var rejuvPanel = GetCachedPanel("minimapObjectiveRejuvPanel");
         if (buffPanel) {
-            SetPanelClassCached(buffPanel, S.minimapObjectiveBuffClassCache, "yellow", false);
-            SetPanelClassCached(buffPanel, S.minimapObjectiveBuffClassCache, "red", false);
+            SetPanelClassCached(buffPanel, State.minimapObjectiveBuffClassCache, "yellow", false);
+            SetPanelClassCached(buffPanel, State.minimapObjectiveBuffClassCache, "red", false);
         }
         if (buffBridgeLeftPanel) {
-            SetPanelClassCached(buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
-            SetPanelClassCached(buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
+            SetPanelClassCached(buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
+            SetPanelClassCached(buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
         }
         if (buffBridgeRightPanel) {
-            SetPanelClassCached(buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
-            SetPanelClassCached(buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "red", false);
+            SetPanelClassCached(buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
+            SetPanelClassCached(buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", false);
         }
         if (rejuvPanel) {
-            SetPanelClassCached(rejuvPanel, S.minimapObjectiveRejuvClassCache, "yellow", false);
-            SetPanelClassCached(rejuvPanel, S.minimapObjectiveRejuvClassCache, "red", false);
+            SetPanelClassCached(rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", false);
+            SetPanelClassCached(rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", false);
         }
     }
 
@@ -313,10 +313,10 @@
         var rejuvWarnEligible = rejuvEnabled && !spawnWaiting;
         var rejuvRed = rejuvEnabled && (spawnWaiting || (rejuvWarnEligible && rejuvRemain < 10 && (rejuvRemain % 2) === 1));
         var rejuvYellow = rejuvWarnEligible && !rejuvRed && rejuvRemain < 20 && (rejuvRemain % 2) === 1;
-        var buffIcon = GC("minimapObjectiveBuffIcon");
-        var buffBridgeLeftIcon = GC("minimapObjectiveBuffBridgeLeftIcon");
-        var buffBridgeRightIcon = GC("minimapObjectiveBuffBridgeRightIcon");
-        var rejuvIcon = GC("minimapObjectiveRejuvIcon");
+        var buffIcon = GetCachedPanel("minimapObjectiveBuffIcon");
+        var buffBridgeLeftIcon = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon");
+        var buffBridgeRightIcon = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon");
+        var rejuvIcon = GetCachedPanel("minimapObjectiveRejuvIcon");
 
         if (!buffOnBridgeEnabled && !rejuvOnBridgeEnabled) {
             var minimapScaleTextDefault = [
@@ -329,7 +329,7 @@
                 timerIcon,
                 bottomOffset
             ].join("|");
-            if (S.minimapObjectiveScaleSig !== minimapScaleTextDefault) {
+            if (State.minimapObjectiveScaleSig !== minimapScaleTextDefault) {
                 if (overlay.style.preTransformScale2d !== "1.00, 1.00") {
                     overlay.style.preTransformScale2d = "1.00, 1.00";
                 }
@@ -374,7 +374,7 @@
                 }
                 if (panels.buffTime) panels.buffTime.style.fontSize = timerFont + "px";
                 if (panels.rejuvTime) panels.rejuvTime.style.fontSize = timerFont + "px";
-                S.minimapObjectiveScaleSig = minimapScaleTextDefault;
+                State.minimapObjectiveScaleSig = minimapScaleTextDefault;
             }
 
             var singleSlotOffset = Math.round(timerWidth + (timerGap * 2));
@@ -408,20 +408,20 @@
             }
 
             if (panels.buffPanel) {
-                SetPanelClassCached(panels.buffPanel, S.minimapObjectiveBuffClassCache, "yellow", buffYellow);
-                SetPanelClassCached(panels.buffPanel, S.minimapObjectiveBuffClassCache, "red", buffRed);
+                SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", buffYellow);
+                SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", buffRed);
             }
             if (panels.buffBridgeLeftPanel) {
-                SetPanelClassCached(panels.buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
-                SetPanelClassCached(panels.buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
+                SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
+                SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
             }
             if (panels.buffBridgeRightPanel) {
-                SetPanelClassCached(panels.buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
-                SetPanelClassCached(panels.buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "red", false);
+                SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
+                SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", false);
             }
             if (panels.rejuvPanel) {
-                SetPanelClassCached(panels.rejuvPanel, S.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
-                SetPanelClassCached(panels.rejuvPanel, S.minimapObjectiveRejuvClassCache, "red", rejuvRed);
+                SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
+                SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rejuvRed);
             }
             return;
         }
@@ -452,7 +452,7 @@
             buffOnBridgeEnabled ? 1 : 0,
             rejuvOnBridgeEnabled ? 1 : 0
         ].join("|");
-        if (S.minimapObjectiveScaleSig !== minimapScaleText) {
+        if (State.minimapObjectiveScaleSig !== minimapScaleText) {
             overlay.style.width = minimapSize + "px";
             overlay.style.height = minimapSize + "px";
             overlay.style.horizontalAlign = "center";
@@ -529,7 +529,7 @@
             if (panels.buffBridgeLeftTime) panels.buffBridgeLeftTime.style.fontSize = bridgeTimerFont + "px";
             if (panels.buffBridgeRightTime) panels.buffBridgeRightTime.style.fontSize = bridgeTimerFont + "px";
             if (panels.rejuvTime) panels.rejuvTime.style.fontSize = timerFont + "px";
-            S.minimapObjectiveScaleSig = minimapScaleText;
+            State.minimapObjectiveScaleSig = minimapScaleText;
         }
 
         if (overlay.style.marginLeft !== "0px") {
@@ -583,26 +583,26 @@
             panels.rejuvTime.text = rejuvText;
         }
         if (panels.buffBridgeLeftPanel) {
-            SetPanelClassCached(panels.buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "yellow", buffYellow);
-            SetPanelClassCached(panels.buffBridgeLeftPanel, S.minimapObjectiveBuffBridgeLeftClassCache, "red", buffRed);
+            SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", buffYellow);
+            SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", buffRed);
         }
         if (panels.buffBridgeRightPanel) {
-            SetPanelClassCached(panels.buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "yellow", buffYellow);
-            SetPanelClassCached(panels.buffBridgeRightPanel, S.minimapObjectiveBuffBridgeRightClassCache, "red", buffRed);
+            SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", buffYellow);
+            SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", buffRed);
         }
         if (panels.buffPanel) {
-            SetPanelClassCached(panels.buffPanel, S.minimapObjectiveBuffClassCache, "yellow", false);
-            SetPanelClassCached(panels.buffPanel, S.minimapObjectiveBuffClassCache, "red", false);
+            SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", false);
+            SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", false);
         }
         if (panels.rejuvPanel) {
-            SetPanelClassCached(panels.rejuvPanel, S.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
-            SetPanelClassCached(panels.rejuvPanel, S.minimapObjectiveRejuvClassCache, "red", rejuvRed);
+            SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
+            SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rejuvRed);
         }
     }
 
     function EnsureRejuvState() {
-        if (S.rejuvState) return S.rejuvState;
-        S.rejuvState = {
+        if (State.rejuvState) return State.rejuvState;
+        State.rejuvState = {
             running: false,
             wasInHideout: false,
             idx: 0,
@@ -636,7 +636,7 @@
             cacheMidBossButton: null,
             panels: {}
         };
-        return S.rejuvState;
+        return State.rejuvState;
     }
 
     function GetRejuvPanel(state, root, key, id) {
@@ -915,25 +915,25 @@
         var anyObjectiveTimerEnabled = rejuvHudEnabled || buffHudEnabled || minimapRejuvEnabled || minimapBuffEnabled;
         if (!anyObjectiveTimerEnabled) {
             HideMinimapObjectiveTimers(root);
-            if (!S.rejuvWasDisabled) {
+            if (!State.rejuvWasDisabled) {
                 var disabledState = EnsureRejuvState();
                 RejuvResetState(disabledState, root, nowMs);
-                S.rejuvWasDisabled = true;
+                State.rejuvWasDisabled = true;
             }
             return;
         }
 
         if (IsStreetBrawlModeActive(root)) {
             HideMinimapObjectiveTimers(root);
-            if (!S.rejuvWasDisabled) {
+            if (!State.rejuvWasDisabled) {
                 var streetBrawlState = EnsureRejuvState();
                 RejuvResetState(streetBrawlState, root, nowMs);
-                S.rejuvWasDisabled = true;
+                State.rejuvWasDisabled = true;
             }
             return;
         }
 
-        S.rejuvWasDisabled = false;
+        State.rejuvWasDisabled = false;
 
         var state = EnsureRejuvState();
         var nowSec = GetGameSecondsForUrn(root);
@@ -960,7 +960,7 @@
         }
 
         // Cache runtime feature sig — only rebuild when config changes
-        if (S.lastConfig !== state._cachedConfigRef) {
+        if (State.lastConfig !== state._cachedConfigRef) {
             var activeMinimapObjectiveSize = ResolveActiveMinimapObjectiveSize(root, cfg);
             var minimapPerspForObjectiveSig = ResolveCachedPanel(root, "minimapPersp", "minimap_persp");
             var activeObjectiveZoomSig =
@@ -977,7 +977,7 @@
                 String(activeMinimapObjectiveSize),
                 activeObjectiveZoomSig
             ].join("|");
-            state._cachedConfigRef = S.lastConfig;
+            state._cachedConfigRef = State.lastConfig;
         }
 
         // Per-tick cheap change detection — catches mid-boss kills and rejuv
@@ -1132,7 +1132,7 @@
         ].join("|");
         if (
             minimapRenderSig !== String(state.lastMinimapRenderSig || "") ||
-            !GC("minimapObjectiveTimersRoot")
+            !GetCachedPanel("minimapObjectiveTimersRoot")
         ) {
             UpdateMinimapObjectiveTimers(
                 root,

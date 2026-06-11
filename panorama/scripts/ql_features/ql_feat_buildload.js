@@ -17,11 +17,11 @@
         "canReuseLoaderConfirmedAirheartContext",
         "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry",
         "beginSettingsLoaderSession", "buildDefaultConfig", "buildDefaultPayloadToken", "buildPayloadFromBase64Url", "collectStorageBuildEntryPanels", "deserializeBuildPayloadCompact", "ensureStorageHeroFavoritesHeaderVisible", "enterStartupCorruptRepairPrompt", "extractLastHeroTokenFromText", "finalizeSettingsLoaderSession", "findBrowseBuildsButton", "getLoaderBaseDefaultHeroId", "getSaveSettingsLoaderDetailForMessage", "hasBuildSaveStorageUiReady", "isBrowseBuildsPopupOpen", "isBuildSaveStorageRuntimeSourceStale", "isHudClassActive", "isStartupCorruptRepairPending", "isStorageBuildListEmpty", "mergeConfig", "normalizeAllyColorWarningConfig", "normalizeAmmoScaleConfig", "normalizeColorWarningConfig", "normalizeCompassSpeedSchemaMigration", "normalizeEnemyColorWarningConfig", "normalizeHealthbarTypeConfig", "normalizeLanguageSchemaMigration", "normalizeNeutralCampTierConfig", "normalizeTopbarAllyHpWarningConfig", "normalizeTopbarEnemyHpWarningConfig", "normalizeVoiceTypeConfig", "queueBuildSaveRequestFromLoader", "readPanelTextDeepMaybe", "resetBuildClearRequestAttributes", "resetBuildClearRuntimeState", "resetBuildLoaderForTempDisable", "resetSettingsLoaderSession", "resetStartupDefaultPayloadBootstrapState", "setSettingsLoaderDebugOverlayLine", "setSettingsLoaderStepState", "setStartupCorruptRepairPending", "settingsLoaderBuildProbeSnapshot", "settingsLoaderDebugLog", "settingsLoaderDebugLogThrottled", "settingsLoaderTraceLogThrottled", "stepCorruptRepairClearStorageBuilds", "suppressStartupLoaderForSession", "traceSettingsLoaderProbeHeartbeat", "tryCloseBrowseBuildsPopupForLoader", "tryDismissBuildDeletePopup", "tryOpenHeroShopForHeroProbe", "tryReadAccountIdFromKnownPartyPath", "trySelectFirstStorageBuildEntry", "trySelectNextStorageBuildEntry", "writeStorageConfigRawToUi"]);
-    var S = _deps.state;
-    var U = _deps.utils;
+    var State = _deps.state;
+    var Utils = _deps.utils;
     var State = S;
-    var GC = _deps.getCachedPanel;
-    var SC = _deps.setCachedPanel;
+    var GetCachedPanel = _deps.getCachedPanel;
+    var SetCachedPanel = _deps.setCachedPanel;
     var GetCachedPanel = GC;
     var SetCachedPanel = SC;
     var NormalizeHeroId = _deps.normalizeHeroId;
@@ -31,7 +31,7 @@
     var SetBuildSaveStatus = _deps.setBuildSaveStatus;
     var DispatchCitadelConCommand = _deps.dispatchCitadelConCommand;
     var ResetBuildSaveRequestAttributes = _deps.resetBuildSaveRequestAttributes;
-    var IsPanelValid = U.IsPanelValid;
+    var IsPanelValid = Utils.IsPanelValid;
     var ReadPanelTextMaybe = _deps.readPanelTextMaybe;
     var ExtractBuildCategoryPayloadToken = _deps.extractBuildCategoryPayloadToken;
     var ConfirmStorageHeroSignatureAbilities = _deps.confirmStorageHeroSignatureAbilities;

@@ -4,9 +4,9 @@
     'use strict';
     var _featureId = "ql_feat_panelcache";
     var _deps = QOL.import(["state","utils","ensureCachedPanelByIds","ensureMinimapPanelCache","ensurePassiveHudPanelCache","ensureGameTimePanelCache","ensureAbilitiesContainerPanelCache"]);
-    var S = _deps.state;
-    var U = _deps.utils;
-    var IsPanelValid = U ? U.IsPanelValid : function() { return false; };
+    var State = _deps.state;
+    var Utils = _deps.utils;
+    var IsPanelValid = U ? Utils.IsPanelValid : function() { return false; };
     var EnsureCachedPanelByIds = _deps.ensureCachedPanelByIds || function() {};
     var EnsureMinimapPanelCache = _deps.ensureMinimapPanelCache || function() {};
     var EnsurePassiveHudPanelCache = _deps.ensurePassiveHudPanelCache || function() {};
@@ -21,8 +21,8 @@
     // ── Update ──
 
     function EnsureCoreLoopPanelCaches(root) {
-        if (S.lastResolvedGates) {
-            var gates = S.lastResolvedGates;
+        if (State.lastResolvedGates) {
+            var gates = State.lastResolvedGates;
             if (gates.minimapRuntime) EnsureMinimapPanelCache(root);
             if (gates.legacyAudioPassive) EnsurePassiveHudPanelCache(root);
             if (gates.rejuvTimers) EnsureGameTimePanelCache(root);
