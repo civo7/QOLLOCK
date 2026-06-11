@@ -8194,6 +8194,162 @@ function GetUIRoot() {
     function RenderSettingsLoaderStepRows(stepsWrap) {
         return _RenderLoaderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX, "settingsLoaderStepRows", "settingsLoader");
     }
+    // ── Overlay core factory — shared by all three settings loader overlays
+    // Config fields: enabled, cachePrefix, overlayId, cardId, warningId, titleId,
+    // stepsWrapId, detailId, zIndex, overlayHittestChildren, cardHittestChildren,
+    // reassertMs, reassertStateKey, ensureStepRows
+    // Note: configs reference step-rows functions defined later in the file;
+    // those function declarations are hoisted so the references are valid.
+
+    var SETTINGS_OVERLAY_CFG = {
+        enabled: SETTINGS_LOADER_ENABLED,
+        cachePrefix: "settingsLoader",
+        overlayId: SETTINGS_LOADER_OVERLAY_ID,
+        cardId: SETTINGS_LOADER_CARD_ID,
+        warningId: SETTINGS_LOADER_WARNING_ID,
+        titleId: SETTINGS_LOADER_TITLE_ID,
+        stepsWrapId: SETTINGS_LOADER_STEPS_WRAP_ID,
+        detailId: SETTINGS_LOADER_DETAIL_ID,
+        zIndex: "2147483647",
+        overlayHittestChildren: true,
+        cardHittestChildren: true,
+        reassertMs: SETTINGS_LOADER_REASSERT_MS,
+        reassertStateKey: "settingsLoaderNextReassertMs",
+        ensureStepRows: EnsureSettingsLoaderStepRows
+    };
+
+    var SAVE_OVERLAY_CFG = {
+        enabled: SAVE_SETTINGS_LOADER_ENABLED,
+        cachePrefix: "saveSettingsLoader",
+        overlayId: SAVE_SETTINGS_LOADER_OVERLAY_ID,
+        cardId: SAVE_SETTINGS_LOADER_CARD_ID,
+        warningId: SAVE_SETTINGS_LOADER_WARNING_ID,
+        titleId: SAVE_SETTINGS_LOADER_TITLE_ID,
+        stepsWrapId: SAVE_SETTINGS_LOADER_STEPS_WRAP_ID,
+        detailId: SAVE_SETTINGS_LOADER_DETAIL_ID,
+        zIndex: "2147483646",
+        overlayHittestChildren: false,
+        cardHittestChildren: false,
+        reassertMs: SAVE_SETTINGS_LOADER_REASSERT_MS,
+        reassertStateKey: "saveSettingsLoaderNextReassertMs",
+        ensureStepRows: EnsureSaveSettingsLoaderStepRows
+    };
+
+    var CLEAR_OVERLAY_CFG = {
+        enabled: CLEAR_SETTINGS_LOADER_ENABLED,
+        cachePrefix: "clearSettingsLoader",
+        overlayId: CLEAR_SETTINGS_LOADER_OVERLAY_ID,
+        cardId: CLEAR_SETTINGS_LOADER_CARD_ID,
+        warningId: CLEAR_SETTINGS_LOADER_WARNING_ID,
+        titleId: CLEAR_SETTINGS_LOADER_TITLE_ID,
+        stepsWrapId: CLEAR_SETTINGS_LOADER_STEPS_WRAP_ID,
+        detailId: CLEAR_SETTINGS_LOADER_DETAIL_ID,
+        zIndex: "2147483645",
+        overlayHittestChildren: false,
+        cardHittestChildren: false,
+        reassertMs: CLEAR_SETTINGS_LOADER_REASSERT_MS,
+        reassertStateKey: "clearSettingsLoaderNextReassertMs",
+        ensureStepRows: EnsureClearSettingsLoaderStepRows
+    };
+
+    function EnsureLoaderOverlayCore(root, nowMs, cfg) {
+        if (!cfg.enabled || !root) return null;
+
+        var overlay = GetCachedPanel(cfg.cachePrefix + "Overlay");
+        if (!overlay) overlay = root.FindChildTraverse ? (root.FindChildTraverse(cfg.overlayId) || null) : null;
+        if (!overlay) overlay = $.CreatePanel("Panel", root, cfg.overlayId, {
+            hittest: "false",
+            hittestchildren: cfg.overlayHittestChildren ? "true" : "false"
+        });
+        if (!overlay) return null;
+        overlay.hittest = false;
+        overlay.hittestchildren = cfg.overlayHittestChildren;
+        if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
+        overlay.style.horizontalAlign = "left";
+        overlay.style.verticalAlign = "top";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.overflow = "noclip";
+        overlay.style.visibility = "visible";
+        overlay.style.zIndex = cfg.zIndex;
+        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
+        SetPanelOpacitySafe(overlay, 1.0, 1.0);
+
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        if (
+            now >= (State[cfg.reassertStateKey] || 0) &&
+            root.GetChildCount && root.GetChild && root.MoveChildAfter
+        ) {
+            var count = root.GetChildCount();
+            if (count > 0) {
+                var last = root.GetChild(count - 1);
+                if (last && last !== overlay) {
+                    root.MoveChildAfter(overlay, last);
+                }
+            }
+            State[cfg.reassertStateKey] = now + cfg.reassertMs;
+        }
+
+        var card = GetCachedPanel(cfg.cachePrefix + "Card");
+        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(cfg.cardId) || null) : null;
+        if (!card) card = $.CreatePanel("Panel", overlay, cfg.cardId, {
+            hittest: "false",
+            hittestchildren: cfg.cardHittestChildren ? "true" : "false"
+        });
+        if (!card) return overlay;
+        card.hittest = false;
+        card.hittestchildren = cfg.cardHittestChildren;
+        if (card.AddClass) card.AddClass("QOLSettingsLoaderCard");
+        ApplyLoaderCardTheme(card);
+
+        var warning = GetCachedPanel(cfg.cachePrefix + "Warning");
+        if (!warning) warning = card.FindChildTraverse ? (card.FindChildTraverse(cfg.warningId) || null) : null;
+        if (!warning) warning = $.CreatePanel("Label", card, cfg.warningId);
+        if (warning) {
+            warning.hittest = false;
+            warning.hittestchildren = false;
+            if (warning.AddClass) warning.AddClass("QOLSettingsLoaderWarning");
+            ApplyLoaderWarningTheme(warning);
+            if (warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
+        }
+
+        var title = GetCachedPanel(cfg.cachePrefix + "Title");
+        if (!title) title = card.FindChildTraverse ? (card.FindChildTraverse(cfg.titleId) || null) : null;
+        if (!title) title = $.CreatePanel("Label", card, cfg.titleId);
+        if (title) {
+            title.hittest = false;
+            title.hittestchildren = false;
+            if (title.AddClass) title.AddClass("QOLSettingsLoaderTitle");
+            ApplyLoaderTitleTheme(title);
+        }
+        if (warning && title && card && card.MoveChildAfter) {
+            try { card.MoveChildAfter(warning, title); } catch (e0w) {}
+        }
+
+        var stepsWrap = GetCachedPanel(cfg.cachePrefix + "StepsWrap");
+        if (!stepsWrap) stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(cfg.stepsWrapId) || null) : null;
+        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, cfg.stepsWrapId, { hittest: "false", hittestchildren: "false" });
+        if (stepsWrap) {
+            stepsWrap.hittest = false;
+            stepsWrap.hittestchildren = false;
+            if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
+            ApplyLoaderStepsWrapTheme(stepsWrap);
+            cfg.ensureStepRows(stepsWrap);
+        }
+
+        var detailLabel = GetCachedPanel(cfg.cachePrefix + "Detail");
+        if (!detailLabel) detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(cfg.detailId) || null) : null;
+        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, cfg.detailId);
+        if (detailLabel) {
+            detailLabel.hittest = false;
+            detailLabel.hittestchildren = false;
+            if (detailLabel.AddClass) detailLabel.AddClass("QOLSettingsLoaderDetail");
+            ApplyLoaderDetailTheme(detailLabel);
+        }
+
+        return { overlay: overlay, card: card, warning: warning, title: title, stepsWrap: stepsWrap, detailLabel: detailLabel };
+    }
+
     // ── Settings loader skip-button subsystem (extracted from EnsureSettingsLoaderOverlay)
     function EnsureSettingsLoaderSkipSection(overlay) {
         var skipDock = GetCachedPanel("settingsLoaderSkipDock");
@@ -8309,81 +8465,12 @@ function GetUIRoot() {
     }
 
     function EnsureSettingsLoaderOverlay(root, nowMs) {
-        if (!SETTINGS_LOADER_ENABLED || !root) return null;
-        var overlay = GetCachedPanel("settingsLoaderOverlay");
-        if (!overlay) {
-            overlay = root.FindChildTraverse ? (root.FindChildTraverse(SETTINGS_LOADER_OVERLAY_ID) || null) : null;
-        }
-        if (!overlay) {
-            overlay = $.CreatePanel("Panel", root, SETTINGS_LOADER_OVERLAY_ID, {
-                hittest: "false",
-                hittestchildren: "true"
-            });
-        }
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = true;
-        if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
-        overlay.style.horizontalAlign = "left";
-        overlay.style.verticalAlign = "top";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.overflow = "noclip";
-        overlay.style.visibility = "visible";
-        overlay.style.zIndex = "2147483647";
-        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        var panels = EnsureLoaderOverlayCore(root, nowMs, SETTINGS_OVERLAY_CFG);
+        if (!panels) return null;
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (
-            now >= (State.settingsLoaderNextReassertMs || 0) &&
-            root.GetChildCount && root.GetChild && root.MoveChildAfter
-        ) {
-            var count = root.GetChildCount();
-            if (count > 0) {
-                var last = root.GetChild(count - 1);
-                if (last && last !== overlay) {
-                    root.MoveChildAfter(overlay, last);
-                }
-            }
-            State.settingsLoaderNextReassertMs = now + SETTINGS_LOADER_REASSERT_MS;
-        }
-
-        var card = GetCachedPanel("settingsLoaderCard");
-        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SETTINGS_LOADER_CARD_ID) || null) : null;
-        if (!card) card = $.CreatePanel("Panel", overlay, SETTINGS_LOADER_CARD_ID, { hittest: "false", hittestchildren: "true" });
-        if (!card) return overlay;
-        card.hittest = false;
-        card.hittestchildren = true;
-        if (card.AddClass) card.AddClass("QOLSettingsLoaderCard");
-        ApplyLoaderCardTheme(card);
-
-        var warning = GetCachedPanel("settingsLoaderWarning");
-        if (!warning) warning = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_WARNING_ID) || null) : null;
-        if (!warning) warning = $.CreatePanel("Label", card, SETTINGS_LOADER_WARNING_ID);
-        if (warning) {
-            warning.hittest = false;
-            warning.hittestchildren = false;
-            if (warning.AddClass) warning.AddClass("QOLSettingsLoaderWarning");
-            ApplyLoaderWarningTheme(warning);
-            if (warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        }
-
-        var title = GetCachedPanel("settingsLoaderTitle");
-        if (!title) title = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_TITLE_ID) || null) : null;
-        if (!title) title = $.CreatePanel("Label", card, SETTINGS_LOADER_TITLE_ID);
-        if (title) {
-            title.hittest = false;
-            title.hittestchildren = false;
-            if (title.AddClass) title.AddClass("QOLSettingsLoaderTitle");
-            ApplyLoaderTitleTheme(title);
-        }
-        if (warning && title && card && card.MoveChildAfter) {
-            try { card.MoveChildAfter(warning, title); } catch (e0w) {}
-        }
-
+        // ── Settings-specific: subtitle cleanup ──
         var subtitle = GetCachedPanel("settingsLoaderSubtitle");
-        if (!subtitle) subtitle = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_SUBTITLE_ID) || null) : null;
+        if (!subtitle) subtitle = panels.card.FindChildTraverse ? (panels.card.FindChildTraverse(SETTINGS_LOADER_SUBTITLE_ID) || null) : null;
         if (subtitle) {
             try {
                 if (subtitle.DeleteAsync) subtitle.DeleteAsync(0);
@@ -8392,7 +8479,8 @@ function GetUIRoot() {
         }
         SetCachedPanel("settingsLoaderSubtitle", null);
 
-        var legacySteps = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_LEGACY_STEPS_ID) || null) : null;
+        // ── Settings-specific: legacy steps cleanup ──
+        var legacySteps = panels.card.FindChildTraverse ? (panels.card.FindChildTraverse(SETTINGS_LOADER_LEGACY_STEPS_ID) || null) : null;
         if (legacySteps) {
             try {
                 if (legacySteps.DeleteAsync) legacySteps.DeleteAsync(0);
@@ -8400,30 +8488,10 @@ function GetUIRoot() {
             } catch (e1) {}
         }
 
-        var stepsWrap = GetCachedPanel("settingsLoaderStepsWrap");
-        if (!stepsWrap) stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_STEPS_WRAP_ID) || null) : null;
-        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, SETTINGS_LOADER_STEPS_WRAP_ID, { hittest: "false", hittestchildren: "false" });
-        if (stepsWrap) {
-            stepsWrap.hittest = false;
-            stepsWrap.hittestchildren = false;
-            if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            ApplyLoaderStepsWrapTheme(stepsWrap);
-            EnsureSettingsLoaderStepRows(stepsWrap);
-        }
-
-        var detailLabel = GetCachedPanel("settingsLoaderDetail");
-        if (!detailLabel) detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_DETAIL_ID) || null) : null;
-        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, SETTINGS_LOADER_DETAIL_ID);
-        if (detailLabel) {
-            detailLabel.hittest = false;
-            detailLabel.hittestchildren = false;
-            if (detailLabel.AddClass) detailLabel.AddClass("QOLSettingsLoaderDetail");
-            ApplyLoaderDetailTheme(detailLabel);
-        }
-
+        // ── Settings-specific: actions row ──
         var actionsRow = GetCachedPanel("settingsLoaderActionsRow");
-        if (!actionsRow) actionsRow = card.FindChildTraverse ? (card.FindChildTraverse(SETTINGS_LOADER_ACTIONS_ID) || null) : null;
-        if (!actionsRow) actionsRow = $.CreatePanel("Panel", card, SETTINGS_LOADER_ACTIONS_ID, { hittest: "false", hittestchildren: "true" });
+        if (!actionsRow) actionsRow = panels.card.FindChildTraverse ? (panels.card.FindChildTraverse(SETTINGS_LOADER_ACTIONS_ID) || null) : null;
+        if (!actionsRow) actionsRow = $.CreatePanel("Panel", panels.card, SETTINGS_LOADER_ACTIONS_ID, { hittest: "false", hittestchildren: "true" });
         if (actionsRow) {
             actionsRow.hittest = false;
             actionsRow.hittestchildren = true;
@@ -8435,16 +8503,17 @@ function GetUIRoot() {
             actionsRow.style.visibility = "collapse";
         }
 
-        EnsureSettingsLoaderSkipSection(overlay);
+        // ── Settings-specific: skip section ──
+        EnsureSettingsLoaderSkipSection(panels.overlay);
 
-        SetCachedPanel("settingsLoaderOverlay", overlay);
-        SetCachedPanel("settingsLoaderCard", card);
-        SetCachedPanel("settingsLoaderWarning", warning);
-        SetCachedPanel("settingsLoaderTitle", title);
-        SetCachedPanel("settingsLoaderStepsWrap", stepsWrap);
-        SetCachedPanel("settingsLoaderDetail", detailLabel);
+        SetCachedPanel("settingsLoaderOverlay", panels.overlay);
+        SetCachedPanel("settingsLoaderCard", panels.card);
+        SetCachedPanel("settingsLoaderWarning", panels.warning);
+        SetCachedPanel("settingsLoaderTitle", panels.title);
+        SetCachedPanel("settingsLoaderStepsWrap", panels.stepsWrap);
+        SetCachedPanel("settingsLoaderDetail", panels.detailLabel);
         SetCachedPanel("settingsLoaderActionsRow", actionsRow);
-        return overlay;
+        return panels.overlay;
     }
 
     function UpdateSettingsLoaderOverlay(root, nowMs) {
@@ -8727,103 +8796,13 @@ function GetUIRoot() {
         return _saveLoader.renderStepRows(stepsWrap);
     }
     function EnsureSaveSettingsLoaderOverlay(root, nowMs) {
-        if (!SAVE_SETTINGS_LOADER_ENABLED || !root) return null;
-        var overlay = GetCachedPanel("saveSettingsLoaderOverlay");
-        if (!overlay) {
-            overlay = root.FindChildTraverse ? (root.FindChildTraverse(SAVE_SETTINGS_LOADER_OVERLAY_ID) || null) : null;
-        }
-        if (!overlay) {
-            overlay = $.CreatePanel("Panel", root, SAVE_SETTINGS_LOADER_OVERLAY_ID, {
-                hittest: "false",
-                hittestchildren: "false"
-            });
-        }
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = false;
-        if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
-        overlay.style.horizontalAlign = "left";
-        overlay.style.verticalAlign = "top";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.overflow = "noclip";
-        overlay.style.visibility = "visible";
-        overlay.style.zIndex = "2147483646";
-        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        var panels = EnsureLoaderOverlayCore(root, nowMs, SAVE_OVERLAY_CFG);
+        if (!panels) return null;
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (
-            now >= (State.saveSettingsLoaderNextReassertMs || 0) &&
-            root.GetChildCount && root.GetChild && root.MoveChildAfter
-        ) {
-            var count = root.GetChildCount();
-            if (count > 0) {
-                var last = root.GetChild(count - 1);
-                if (last && last !== overlay) {
-                    root.MoveChildAfter(overlay, last);
-                }
-            }
-            State.saveSettingsLoaderNextReassertMs = now + SAVE_SETTINGS_LOADER_REASSERT_MS;
-        }
-
-        var card = GetCachedPanel("saveSettingsLoaderCard");
-        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(SAVE_SETTINGS_LOADER_CARD_ID) || null) : null;
-        if (!card) card = $.CreatePanel("Panel", overlay, SAVE_SETTINGS_LOADER_CARD_ID, { hittest: "false", hittestchildren: "false" });
-        if (!card) return overlay;
-        card.hittest = false;
-        card.hittestchildren = false;
-        if (card.AddClass) card.AddClass("QOLSettingsLoaderCard");
-        ApplyLoaderCardTheme(card);
-
-        var warning = GetCachedPanel("saveSettingsLoaderWarning");
-        if (!warning) warning = card.FindChildTraverse ? (card.FindChildTraverse(SAVE_SETTINGS_LOADER_WARNING_ID) || null) : null;
-        if (!warning) warning = $.CreatePanel("Label", card, SAVE_SETTINGS_LOADER_WARNING_ID);
-        if (warning) {
-            warning.hittest = false;
-            warning.hittestchildren = false;
-            if (warning.AddClass) warning.AddClass("QOLSettingsLoaderWarning");
-            ApplyLoaderWarningTheme(warning);
-            if (warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        }
-
-        var title = GetCachedPanel("saveSettingsLoaderTitle");
-        if (!title) title = card.FindChildTraverse ? (card.FindChildTraverse(SAVE_SETTINGS_LOADER_TITLE_ID) || null) : null;
-        if (!title) title = $.CreatePanel("Label", card, SAVE_SETTINGS_LOADER_TITLE_ID);
-        if (title) {
-            title.hittest = false;
-            title.hittestchildren = false;
-            if (title.AddClass) title.AddClass("QOLSettingsLoaderTitle");
-            ApplyLoaderTitleTheme(title);
-        }
-        if (warning && title && card && card.MoveChildAfter) {
-            try { card.MoveChildAfter(warning, title); } catch (e0w) {}
-        }
-
-        var stepsWrap = GetCachedPanel("saveSettingsLoaderStepsWrap");
-        if (!stepsWrap) stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(SAVE_SETTINGS_LOADER_STEPS_WRAP_ID) || null) : null;
-        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, SAVE_SETTINGS_LOADER_STEPS_WRAP_ID, { hittest: "false", hittestchildren: "false" });
-        if (stepsWrap) {
-            stepsWrap.hittest = false;
-            stepsWrap.hittestchildren = false;
-            if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            ApplyLoaderStepsWrapTheme(stepsWrap);
-            EnsureSaveSettingsLoaderStepRows(stepsWrap);
-        }
-
-        var detailLabel = GetCachedPanel("saveSettingsLoaderDetail");
-        if (!detailLabel) detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(SAVE_SETTINGS_LOADER_DETAIL_ID) || null) : null;
-        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, SAVE_SETTINGS_LOADER_DETAIL_ID);
-        if (detailLabel) {
-            detailLabel.hittest = false;
-            detailLabel.hittestchildren = false;
-            if (detailLabel.AddClass) detailLabel.AddClass("QOLSettingsLoaderDetail");
-            ApplyLoaderDetailTheme(detailLabel);
-        }
-
+        // ── Save-specific: stall hint ──
         var stallHint = GetCachedPanel("saveSettingsLoaderStallHint");
-        if (!stallHint) stallHint = card.FindChildTraverse ? (card.FindChildTraverse(SAVE_SETTINGS_LOADER_STALL_HINT_ID) || null) : null;
-        if (!stallHint) stallHint = $.CreatePanel("Label", card, SAVE_SETTINGS_LOADER_STALL_HINT_ID);
+        if (!stallHint) stallHint = panels.card.FindChildTraverse ? (panels.card.FindChildTraverse(SAVE_SETTINGS_LOADER_STALL_HINT_ID) || null) : null;
+        if (!stallHint) stallHint = $.CreatePanel("Label", panels.card, SAVE_SETTINGS_LOADER_STALL_HINT_ID);
         if (stallHint) {
             stallHint.hittest = false;
             stallHint.hittestchildren = false;
@@ -8839,14 +8818,14 @@ function GetUIRoot() {
             if (stallHint.text !== SAVE_SETTINGS_LOADER_STALL_HINT_TEXT) stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
         }
 
-        SetCachedPanel("saveSettingsLoaderOverlay", overlay);
-        SetCachedPanel("saveSettingsLoaderCard", card);
-        SetCachedPanel("saveSettingsLoaderWarning", warning);
-        SetCachedPanel("saveSettingsLoaderTitle", title);
-        SetCachedPanel("saveSettingsLoaderStepsWrap", stepsWrap);
-        SetCachedPanel("saveSettingsLoaderDetail", detailLabel);
+        SetCachedPanel("saveSettingsLoaderOverlay", panels.overlay);
+        SetCachedPanel("saveSettingsLoaderCard", panels.card);
+        SetCachedPanel("saveSettingsLoaderWarning", panels.warning);
+        SetCachedPanel("saveSettingsLoaderTitle", panels.title);
+        SetCachedPanel("saveSettingsLoaderStepsWrap", panels.stepsWrap);
+        SetCachedPanel("saveSettingsLoaderDetail", panels.detailLabel);
         SetCachedPanel("saveSettingsLoaderStallHint", stallHint);
-        return overlay;
+        return panels.overlay;
     }
 
     function UpdateSaveSettingsLoaderOverlay(root, nowMs) {
@@ -9069,103 +9048,16 @@ function GetUIRoot() {
         return _clearLoader.renderStepRows(stepsWrap);
     }
     function EnsureClearSettingsLoaderOverlay(root, nowMs) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED || !root) return null;
-        var overlay = GetCachedPanel("clearSettingsLoaderOverlay");
-        if (!overlay) overlay = root.FindChildTraverse ? (root.FindChildTraverse(CLEAR_SETTINGS_LOADER_OVERLAY_ID) || null) : null;
-        if (!overlay) {
-            overlay = $.CreatePanel("Panel", root, CLEAR_SETTINGS_LOADER_OVERLAY_ID, {
-                hittest: "false",
-                hittestchildren: "false"
-            });
-        }
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = false;
-        if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
-        overlay.style.horizontalAlign = "left";
-        overlay.style.verticalAlign = "top";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.overflow = "noclip";
-        overlay.style.visibility = "visible";
-        overlay.style.zIndex = "2147483645";
-        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        var panels = EnsureLoaderOverlayCore(root, nowMs, CLEAR_OVERLAY_CFG);
+        if (!panels) return null;
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (
-            now >= (State.clearSettingsLoaderNextReassertMs || 0) &&
-            root.GetChildCount && root.GetChild && root.MoveChildAfter
-        ) {
-            var count = root.GetChildCount();
-            if (count > 0) {
-                var last = root.GetChild(count - 1);
-                if (last && last !== overlay) root.MoveChildAfter(overlay, last);
-            }
-            State.clearSettingsLoaderNextReassertMs = now + CLEAR_SETTINGS_LOADER_REASSERT_MS;
-        }
-
-        var card = GetCachedPanel("clearSettingsLoaderCard");
-        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(CLEAR_SETTINGS_LOADER_CARD_ID) || null) : null;
-        if (!card) card = $.CreatePanel("Panel", overlay, CLEAR_SETTINGS_LOADER_CARD_ID, { hittest: "false", hittestchildren: "false" });
-        if (!card) return overlay;
-        card.hittest = false;
-        card.hittestchildren = false;
-        if (card.AddClass) card.AddClass("QOLSettingsLoaderCard");
-        ApplyLoaderCardTheme(card);
-
-        var warning = GetCachedPanel("clearSettingsLoaderWarning");
-        if (!warning) warning = card.FindChildTraverse ? (card.FindChildTraverse(CLEAR_SETTINGS_LOADER_WARNING_ID) || null) : null;
-        if (!warning) warning = $.CreatePanel("Label", card, CLEAR_SETTINGS_LOADER_WARNING_ID);
-        if (warning) {
-            warning.hittest = false;
-            warning.hittestchildren = false;
-            if (warning.AddClass) warning.AddClass("QOLSettingsLoaderWarning");
-            ApplyLoaderWarningTheme(warning);
-            if (warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        }
-
-        var title = GetCachedPanel("clearSettingsLoaderTitle");
-        if (!title) title = card.FindChildTraverse ? (card.FindChildTraverse(CLEAR_SETTINGS_LOADER_TITLE_ID) || null) : null;
-        if (!title) title = $.CreatePanel("Label", card, CLEAR_SETTINGS_LOADER_TITLE_ID);
-        if (title) {
-            title.hittest = false;
-            title.hittestchildren = false;
-            if (title.AddClass) title.AddClass("QOLSettingsLoaderTitle");
-            ApplyLoaderTitleTheme(title);
-        }
-        if (warning && title && card && card.MoveChildAfter) {
-            try { card.MoveChildAfter(warning, title); } catch (e0w) {}
-        }
-
-        var stepsWrap = GetCachedPanel("clearSettingsLoaderStepsWrap");
-        if (!stepsWrap) stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(CLEAR_SETTINGS_LOADER_STEPS_WRAP_ID) || null) : null;
-        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, CLEAR_SETTINGS_LOADER_STEPS_WRAP_ID, { hittest: "false", hittestchildren: "false" });
-        if (stepsWrap) {
-            stepsWrap.hittest = false;
-            stepsWrap.hittestchildren = false;
-            if (stepsWrap.AddClass) stepsWrap.AddClass("QOLSettingsLoaderStepsWrap");
-            ApplyLoaderStepsWrapTheme(stepsWrap);
-            EnsureClearSettingsLoaderStepRows(stepsWrap);
-        }
-
-        var detailLabel = GetCachedPanel("clearSettingsLoaderDetail");
-        if (!detailLabel) detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(CLEAR_SETTINGS_LOADER_DETAIL_ID) || null) : null;
-        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, CLEAR_SETTINGS_LOADER_DETAIL_ID);
-        if (detailLabel) {
-            detailLabel.hittest = false;
-            detailLabel.hittestchildren = false;
-            if (detailLabel.AddClass) detailLabel.AddClass("QOLSettingsLoaderDetail");
-            ApplyLoaderDetailTheme(detailLabel);
-        }
-
-        SetCachedPanel("clearSettingsLoaderOverlay", overlay);
-        SetCachedPanel("clearSettingsLoaderCard", card);
-        SetCachedPanel("clearSettingsLoaderWarning", warning);
-        SetCachedPanel("clearSettingsLoaderTitle", title);
-        SetCachedPanel("clearSettingsLoaderStepsWrap", stepsWrap);
-        SetCachedPanel("clearSettingsLoaderDetail", detailLabel);
-        return overlay;
+        SetCachedPanel("clearSettingsLoaderOverlay", panels.overlay);
+        SetCachedPanel("clearSettingsLoaderCard", panels.card);
+        SetCachedPanel("clearSettingsLoaderWarning", panels.warning);
+        SetCachedPanel("clearSettingsLoaderTitle", panels.title);
+        SetCachedPanel("clearSettingsLoaderStepsWrap", panels.stepsWrap);
+        SetCachedPanel("clearSettingsLoaderDetail", panels.detailLabel);
+        return panels.overlay;
     }
 
     function UpdateClearSettingsLoaderOverlay(root, nowMs) {
