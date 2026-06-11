@@ -674,6 +674,461 @@
     //   scan_storage miss + shop open → corrupt repair (genuine data loss)
     //   decode failed + non-schema error → corrupt repair after MAX_MISSES (3)
     //   decode failed + schema/registry error → apply defaults, keep builds
+    // ── Stage helpers extracted from PrepareBuildCategoryPayloadHeroProbe ──
+
+    function detectProbeAccountChange(accountId) {
+        if (State.buildCategoryPayloadHeroProbeAccountId === accountId) return false;
+        if (State.buildCategoryPayloadHeroProbeDidSwitch) {
+            CompleteBuildCategoryPayloadHeroProbe(State.buildCategoryPayloadHeroProbeAccountId, false);
+        }
+        SettingsLoaderDebugLog(
+            "probe_account_change from=" + (State.buildCategoryPayloadHeroProbeAccountId || "-") +
+            " to=" + accountId +
+            " didSwitch=" + (State.buildCategoryPayloadHeroProbeDidSwitch ? "1" : "0")
+        );
+        SetSettingsLoaderDebugOverlayLine("acct_change " + (State.buildCategoryPayloadHeroProbeAccountId || "-") + " -> " + accountId);
+        State.buildCategoryPayloadHeroProbeAccountId = accountId;
+        State.buildCategoryPayloadHeroProbeDoneAccountId = "";
+        State.buildCategoryPayloadHeroProbeRetryAfterMs = 0;
+        State.buildCategoryPayloadHeroProbeMisses = 0;
+        State.buildCategoryPayloadDoneRearmNextMs = 0;
+        State.buildCategoryPayloadDoneRearmAttempts = 0;
+        State.buildCategoryPayloadPostSwitchShopPulseDone = false;
+        ResetBuildCategoryPayloadHeroProbeState();
+        return true;
+    }
+
+    function handleProbeDoneCheck(accountId, nowMs) {
+        if (State.buildCategoryPayloadHeroProbeDoneAccountId === accountId) return "wait";
+        if (nowMs < (State.buildCategoryPayloadHeroProbeRetryAfterMs || 0)) return "wait";
+        return null;
+    }
+
+    function handleCorruptRepairInit(root, nowMs) {
+        var corruptRepairPending = QOL.isStartupCorruptRepairPending(root);
+        if (!corruptRepairPending || State.buildCategoryPayloadCorruptRepairActive) return false;
+        State.buildCategoryPayloadCorruptRepairActive = true;
+        State.buildCategoryPayloadCorruptRepairStartedMs = nowMs;
+        State.buildCategoryPayloadCorruptRepairCleared = false;
+        State.buildCategoryPayloadCorruptRepairClearRetries = 0;
+        State.buildCategoryPayloadCorruptRepairClearNextMs = nowMs;
+        State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
+        State.buildCategoryPayloadCorruptRepairBrowseReady = false;
+        State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
+        State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
+        State.buildCategoryPayloadCorruptRepairPostClearUntilMs = 0;
+        State.buildCategoryPayloadAirheartHeaderConfirmed = false;
+        State.buildCategoryPayloadAirheartHeaderConfirmedMs = 0;
+        State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
+        State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+        SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
+        return true;
+    }
+
+    function handleBootstrapViaSaveEnqueue(root, accountId, nowMs, cfg) {
+        if (State.buildCategoryPayloadHeroProbeStage !== "bootstrap_via_save_enqueue") return null;
+        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context.");
+
+        EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
+        QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
+        if (!State.buildCategoryPayloadAirheartHeaderConfirmed) {
+            var allowBootstrapFallback = !!State.buildCategoryPayloadCorruptRepairActive;
+            var bootstrapConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowBootstrapFallback);
+            if (!bootstrapConfirm.confirmed) {
+                SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Airheart context for bootstrap.");
+                if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
+                    SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
+                }
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+                return "wait";
+            }
+            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
+            State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
+        }
+        SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+
+        if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
+            var clearStep = StepCorruptRepairClearStorageBuilds(root, nowMs);
+            if (clearStep.state === "failed") {
+                finalizeProbeFailure(accountId, clearStep.detail || "Corrupt-save clear failed.");
+                return "wait";
+            }
+            if (clearStep.state !== "done") {
+                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Airheart builds before repair save.");
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs + (Number(clearStep.waitMs) || BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS);
+                return "wait";
+            }
+            State.buildCategoryPayloadCorruptRepairCleared = true;
+            State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS;
+            ResetBuildClearRequestAttributes(root);
+            ResetBuildClearRuntimeState();
+            QOL.resetBuildSaveRequestAttributes(root);
+            State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
+            TryDismissBuildDeletePopup(root);
+            TryCloseBrowseBuildsPopupForLoader(root);
+            SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Airheart builds cleared. Finalizing clear UI.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if (State.buildCategoryPayloadCorruptRepairCleared) {
+            var postClearUntil = Number(State.buildCategoryPayloadCorruptRepairPostClearUntilMs) || 0;
+            if (nowMs < postClearUntil) {
+                TryDismissBuildDeletePopup(root);
+                TryCloseBrowseBuildsPopupForLoader(root);
+                SetSettingsLoaderStepState("read_payload", "active", "Finalizing clear UI before save bootstrap.");
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+                return "wait";
+            }
+        }
+
+        if (TryCloseBrowseBuildsPopupForLoader(root)) {
+            SetSettingsLoaderStepState("read_payload", "active", "Closing build browser before save bootstrap.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
+        if (!initReady) {
+            var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
+            SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Airheart build.");
+            if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
+                finalizeProbeFailure(accountId, "No Airheart build found; auto-initialize failed.");
+                return "wait";
+            }
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        var bootstrapPayloadToken = State.buildCategoryPayloadDefaultBootstrapPayloadText
+            ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
+            : "";
+        if (!bootstrapPayloadToken) {
+            bootstrapPayloadToken = QOL.buildDefaultPayloadToken(cfg);
+            if (!bootstrapPayloadToken) {
+                finalizeProbeFailure(accountId, "Failed to generate default payload for save bootstrap.");
+                return "wait";
+            }
+            State.buildCategoryPayloadDefaultBootstrapPayloadText = bootstrapPayloadToken;
+        }
+
+        if (QOL.currentBuildHasPayload(root, bootstrapPayloadToken)) {
+            SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
+            State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+            return "ready";
+        }
+
+        var anyPayloadSkipCount = Number(State.buildCategoryPayloadAnyPayloadGuardSkips) || 0;
+        if (QOL.currentBuildHasAnyPayload && QOL.currentBuildHasAnyPayload(root)
+            && anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+            State.buildCategoryPayloadAnyPayloadGuardSkips = anyPayloadSkipCount + 1;
+            SetSettingsLoaderStepState("read_payload", "active", "Existing payload found in current build; skipping save bootstrap.");
+            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context verified via existing payload.");
+            State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+            _TLog("load:ProbeStage", "bootstrap_via_save_enqueue found existing payload → scan_storage skips=" + String(anyPayloadSkipCount + 1));
+            return "ready";
+        }
+
+        var saveStateEnqueue = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "")) : "";
+        if (saveStateEnqueue === "pending") {
+            SetSettingsLoaderStepState("read_payload", "active", "Waiting for active save pipeline.");
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_wait";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+            finalizeProbeFailure(accountId, "Save bootstrap retry limit reached.");
+            return "wait";
+        }
+
+        var bootstrapSaveToken = QueueBuildSaveRequestFromLoader(root, bootstrapPayloadToken, nowMs);
+        if (!bootstrapSaveToken) {
+            State.buildCategoryPayloadDefaultBootstrapRetries = (Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) + 1;
+            SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap queue failed; retrying.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+        State.buildCategoryPayloadDefaultBootstrapSaveToken = bootstrapSaveToken;
+        State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
+        State.buildCategoryPayloadDefaultBootstrapRetries = (Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) + 1;
+        SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap queued.");
+        State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_wait";
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+        return "wait";
+    }
+
+    function handleBootstrapViaSaveWait(root, accountId, nowMs) {
+        if (State.buildCategoryPayloadHeroProbeStage !== "bootstrap_via_save_wait") return null;
+        if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
+            SetSettingsLoaderStepState("read_payload", "active", "Waiting for clear phase before save bootstrap.");
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+        var verifyPayloadToken = State.buildCategoryPayloadDefaultBootstrapPayloadText
+            ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
+            : "";
+        if (!verifyPayloadToken) {
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+            return "wait";
+        }
+
+        var saveStateWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "")) : "";
+        var saveMsgWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_MSG_ATTR, "")) : "";
+        var saveTokenWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "")) : "";
+        var expectedSaveToken = State.buildCategoryPayloadDefaultBootstrapSaveToken
+            ? String(State.buildCategoryPayloadDefaultBootstrapSaveToken)
+            : "";
+        var payloadDetectedAfterSave = QOL.currentBuildHasPayload(root, verifyPayloadToken);
+
+        if (saveStateWait === "pending") {
+            if (expectedSaveToken.length > 0 && saveTokenWait && saveTokenWait !== expectedSaveToken) {
+                SetSettingsLoaderStepState("read_payload", "active", "Waiting for other save request to finish.");
+            } else {
+                var pendingDetail = QOL.getSaveSettingsLoaderDetailForMessage(saveMsgWait) || "Running save pipeline.";
+                SetSettingsLoaderStepState("read_payload", "active", pendingDetail);
+            }
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        var hasTokenMatch = (expectedSaveToken.length === 0) || (saveTokenWait === expectedSaveToken);
+        if (saveStateWait === "success" && hasTokenMatch) {
+            if (!payloadDetectedAfterSave) {
+                var saveVerifyHits = (Number(State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits) || 0) + 1;
+                State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = saveVerifyHits;
+                TryCloseBrowseBuildsPopupForLoader(root);
+                if (saveVerifyHits < 20) {
+                    SetSettingsLoaderStepState("read_payload", "active", "Save reported success. Waiting for payload visibility.");
+                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+                    return "wait";
+                }
+                SetSettingsLoaderStepState("read_payload", "active", "Save success did not expose payload. Retrying bootstrap save.");
+                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+                return "wait";
+            }
+            State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
+            TryDismissBuildDeletePopup(root);
+            TryCloseBrowseBuildsPopupForLoader(root);
+            SetSettingsLoaderStepState("read_payload", "active", "Repair save complete. Waiting for shop UI.");
+            State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
+            State.buildCategoryPayloadHeroProbeMisses = 0;
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_post_save_shop_prompt";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if (saveStateWait === "failed" && hasTokenMatch) {
+            if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+                finalizeProbeFailure(accountId, "Save bootstrap failed.");
+                return "wait";
+            }
+            SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap failed; retrying.");
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if (saveStateWait === "success" && !hasTokenMatch) {
+            SetSettingsLoaderStepState("read_payload", "active", "Waiting for matching save result token.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if (payloadDetectedAfterSave && saveStateWait !== "pending") {
+            SetSettingsLoaderStepState("read_payload", "active", "Repair payload detected. Waiting for shop UI.");
+            State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
+            State.buildCategoryPayloadHeroProbeMisses = 0;
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_post_save_shop_prompt";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+
+        if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+            finalizeProbeFailure(accountId, "Save bootstrap timed out.");
+            return "wait";
+        }
+        SetSettingsLoaderStepState("read_payload", "active", "Waiting for save bootstrap result.");
+        State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+        return "wait";
+    }
+
+    function handleBootstrapPostSaveShopPrompt(root, nowMs) {
+        if (State.buildCategoryPayloadHeroProbeStage !== "bootstrap_post_save_shop_prompt") return null;
+        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+        EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
+        var postSaveConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, false);
+        if (!postSaveConfirm.confirmed) {
+            if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
+                SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
+            } else {
+                SetSettingsLoaderStepState("read_payload", "active", "Waiting for shop UI after repair save.");
+            }
+            SetSettingsLoaderStepState("confirm_airheart", "active", postSaveConfirm.detail || "Verifying Airheart context.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+        if (!IsBuildCategoryPayloadSourceReady(root)) {
+            SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmed. Waiting for build source.");
+            SetSettingsLoaderStepState("read_payload", "active", "Waiting for build source after repair save.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
+            return "wait";
+        }
+        SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+        SetSettingsLoaderStepState("read_payload", "active", "Applying bootstrap payload.");
+        State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
+        State.buildCategoryPayloadHeroProbeMisses = 0;
+        State.buildCategoryPayloadHeroProbeStage = "scan_bootstrap_token";
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+        return "ready";
+    }
+
+    function finalizeProbeFailure(accountId, detail) {
+        SetSettingsLoaderStepState("decode_payload", "skipped", detail || "Bootstrap unavailable.");
+        SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
+        CompleteBuildCategoryPayloadHeroProbe(accountId, true, "failed", detail || "Bootstrap failed.");
+    }
+
+    function handleWaitStorage(root, accountId, nowMs) {
+        if (State.buildCategoryPayloadHeroProbeStage !== "wait_storage") return null;
+        EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
+        QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
+        var storageConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs);
+        if (storageConfirm.confirmed) {
+            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
+            State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
+            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
+            State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+            _TLog("load:ProbeStage", "wait_storage confirmed → scan_storage");
+            return "ready";
+        }
+        SetSettingsLoaderStepState("confirm_airheart", "active", storageConfirm.detail || "Waiting for Airheart context.");
+        SettingsLoaderDebugLogThrottled(
+            "probe_wait_storage|" + (storageConfirm.source || "-") + "|" + (storageConfirm.confirmed ? "1" : "0") + "|" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0),
+            "probe_wait_storage confirmed=" + (storageConfirm.confirmed ? "1" : "0") +
+                " source=" + (storageConfirm.source || "-") +
+                " detail=\"" + (storageConfirm.detail || "") + "\"" +
+                " hits=" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0) +
+                " " + SettingsLoaderBuildProbeSnapshot(root),
+            nowMs
+        );
+        var switchStartMs = Number(State.buildCategoryPayloadHeroProbeSwitchStartMs) || nowMs;
+        var waitElapsedMs = nowMs - switchStartMs;
+        if (waitElapsedMs >= BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) {
+            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+            SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmation delayed. Running save bootstrap.");
+            SetSettingsLoaderStepState("read_payload", "active", "Running save pipeline to create first-time payload.");
+            State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+            _TLog("load:ProbeStage", "wait_storage timeout → bootstrap_via_save_enqueue elapsed=" + String(waitElapsedMs));
+            SettingsLoaderDebugLog(
+                "probe_wait_storage_bootstrap_save account=" + accountId +
+                    " elapsedMs=" + String(waitElapsedMs)
+            );
+            SetSettingsLoaderDebugOverlayLine("bootstrap_save elapsedMs=" + String(waitElapsedMs));
+            return "wait";
+        }
+        if (waitElapsedMs <= BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS) {
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS;
+            return "wait";
+        }
+        if (State.buildCategoryPayloadHeroProbeDidSwitch && IsBuildCategoryPayloadSourceReady(root)) {
+            var timeoutSignal = ResolveBuildSaveStorageHeroSignal(root);
+            if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
+                var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
+                var timeoutHero = QOL.normalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
+                var timeoutSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+                if (timeoutSignature.confirmed) {
+                    SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
+                    SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
+                    SettingsLoaderDebugLog(
+                        "probe_wait_storage_timeout_degraded_scan account=" + accountId +
+                        " hero=" + (timeoutHero || "-") +
+                        " source=" + timeoutSource +
+                        " signature=1"
+                    );
+                    SetSettingsLoaderDebugOverlayLine(
+                        "wait_storage_degraded_scan hero=" + (timeoutHero || "-") +
+                        " source=" + timeoutSource +
+                        " signature=1"
+                    );
+                    State.buildCategoryPayloadHeroProbeStage = "scan_storage";
+                    _TLog("load:ProbeStage", "wait_storage timeout+signature → scan_storage (degraded)");
+                    return "ready";
+                }
+                SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Airheart signature abilities.");
+            }
+        }
+        // Timed out confirming Airheart. Retry later; do not read from non-storage hero context.
+        SetSettingsLoaderStepState("confirm_airheart", "error", "Airheart confirmation timed out, retrying.");
+        SettingsLoaderDebugLog(
+            "probe_wait_storage_timeout account=" + accountId +
+            " switchStartMs=" + String(switchStartMs) +
+            " nowMs=" + String(nowMs) +
+            " retries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0)
+        );
+        SetSettingsLoaderDebugOverlayLine(
+            "wait_storage_timeout retries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0)
+        );
+        ResetBuildCategoryPayloadHeroProbeState();
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
+        return "wait";
+    }
+
+    function handleRepairCorruptShopPrompt(nowMs) {
+        if (State.buildCategoryPayloadHeroProbeStage !== "repair_corrupt_shop_prompt") return false;
+        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context for repair.");
+        SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
+        State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
+        State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+        return true;
+    }
+
+    function handleColdStartHeroSwitch(root, accountId, nowMs, cfg) {
+        State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
+        SetSettingsLoaderStepState("start", "done", "Launch protocol started.");
+        var returnHero = EnsureBuildCategoryPayloadProbeReturnHeroFallback();
+        SettingsLoaderDebugLog(
+            "probe_start account=" + accountId +
+            " returnHero=" + (returnHero || "-") +
+            " storageHero=" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID
+        );
+        SetSettingsLoaderDebugOverlayLine(
+            "start account=" + accountId +
+            " return=" + (returnHero || "-") +
+            " storage=" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID
+        );
+
+        SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Airheart.");
+        var switched = QOL.selectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
+        if (!switched) {
+            SetSettingsLoaderStepState("switch_airheart", "active", "Airheart switch unavailable, retrying.");
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
+            return "wait";
+        }
+
+        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Waiting for Airheart confirmation.");
+        State.buildCategoryPayloadHeroProbeDidSwitch = true;
+        State.buildCategoryPayloadHeroProbeStage = "wait_storage";
+        State.buildCategoryPayloadHeroProbeSwitchStartMs = nowMs;
+        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS;
+        _TLog("load:ProbeStage", "hero switch done → wait_storage");
+        return "wait";
+    }
+
     function PrepareBuildCategoryPayloadHeroProbe(root, accountId, nowMs, cfg) {
         if (!accountId || accountId.length === 0) return "ready";
         TraceSettingsLoaderProbeHeartbeat(root, accountId, nowMs, "prepare");
@@ -686,55 +1141,12 @@
             nowMs
         );
 
-        if (State.buildCategoryPayloadHeroProbeAccountId !== accountId) {
-            if (State.buildCategoryPayloadHeroProbeDidSwitch) {
-                CompleteBuildCategoryPayloadHeroProbe(State.buildCategoryPayloadHeroProbeAccountId, false);
-            }
-            SettingsLoaderDebugLog(
-                "probe_account_change from=" + (State.buildCategoryPayloadHeroProbeAccountId || "-") +
-                " to=" + accountId +
-                " didSwitch=" + (State.buildCategoryPayloadHeroProbeDidSwitch ? "1" : "0")
-            );
-            SetSettingsLoaderDebugOverlayLine("acct_change " + (State.buildCategoryPayloadHeroProbeAccountId || "-") + " -> " + accountId);
-            State.buildCategoryPayloadHeroProbeAccountId = accountId;
-            State.buildCategoryPayloadHeroProbeDoneAccountId = "";
-            State.buildCategoryPayloadHeroProbeRetryAfterMs = 0;
-            State.buildCategoryPayloadHeroProbeMisses = 0;
-            State.buildCategoryPayloadDoneRearmNextMs = 0;
-            State.buildCategoryPayloadDoneRearmAttempts = 0;
-            State.buildCategoryPayloadPostSwitchShopPulseDone = false;
-            ResetBuildCategoryPayloadHeroProbeState();
-        }
+        detectProbeAccountChange(accountId);
 
-        if (State.buildCategoryPayloadHeroProbeDoneAccountId === accountId) {
-            return "wait";
-        }
+        var doneResult = handleProbeDoneCheck(accountId, nowMs);
+        if (doneResult !== null) return doneResult;
 
-        if (nowMs < (State.buildCategoryPayloadHeroProbeRetryAfterMs || 0)) {
-            return "wait";
-        }
-
-        // Keep corruption-repair mode sticky across probe defers/retries so clear+save recovery
-        // cannot silently fall back to normal scan path after a timeout/reset.
-        var corruptRepairPending = QOL.isStartupCorruptRepairPending(root);
-        if (corruptRepairPending && !State.buildCategoryPayloadCorruptRepairActive) {
-            State.buildCategoryPayloadCorruptRepairActive = true;
-            State.buildCategoryPayloadCorruptRepairStartedMs = nowMs;
-            State.buildCategoryPayloadCorruptRepairCleared = false;
-            State.buildCategoryPayloadCorruptRepairClearRetries = 0;
-            State.buildCategoryPayloadCorruptRepairClearNextMs = nowMs;
-            State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
-            State.buildCategoryPayloadCorruptRepairBrowseReady = false;
-            State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
-            State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
-            State.buildCategoryPayloadCorruptRepairPostClearUntilMs = 0;
-            State.buildCategoryPayloadAirheartHeaderConfirmed = false;
-            State.buildCategoryPayloadAirheartHeaderConfirmedMs = 0;
-            State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
-            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-            SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
-        }
+        if (handleCorruptRepairInit(root, nowMs)) {}
 
         if (nowMs < (State.buildCategoryPayloadHeroProbeNextMs || 0)) {
             return "wait";
@@ -742,458 +1154,19 @@
 
         var stage = State.buildCategoryPayloadHeroProbeStage || "";
         if (stage.length === 0) {
-            State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
-            SetSettingsLoaderStepState("start", "done", "Launch protocol started.");
-            var returnHero = EnsureBuildCategoryPayloadProbeReturnHeroFallback();
-            SettingsLoaderDebugLog(
-                "probe_start account=" + accountId +
-                " returnHero=" + (returnHero || "-") +
-                " storageHero=" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID
-            );
-            SetSettingsLoaderDebugOverlayLine(
-                "start account=" + accountId +
-                " return=" + (returnHero || "-") +
-                " storage=" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID
-            );
-
-            SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Airheart.");
-            var switched = QOL.selectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
-            if (!switched) {
-                // Startup payload load is read-only: never consume payload unless Airheart switch succeeds.
-                SetSettingsLoaderStepState("switch_airheart", "active", "Airheart switch unavailable, retrying.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
-                return "wait";
-            }
-
-            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetSettingsLoaderStepState("confirm_airheart", "active", "Waiting for Airheart confirmation.");
-            State.buildCategoryPayloadHeroProbeDidSwitch = true;
-            State.buildCategoryPayloadHeroProbeStage = "wait_storage";
-            State.buildCategoryPayloadHeroProbeSwitchStartMs = nowMs;
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS;
-            _TLog("load:ProbeStage", "hero switch done → wait_storage");
-            return "wait";
+            return handleColdStartHeroSwitch(root, accountId, nowMs, cfg);
         }
 
-        if (stage === "wait_storage") {
-            EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
-            QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
-            var storageConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs);
-            if (storageConfirm.confirmed) {
-                State.buildCategoryPayloadAirheartHeaderConfirmed = true;
-                State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
-                SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
-                SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
-                State.buildCategoryPayloadHeroProbeStage = "scan_storage";
-                _TLog("load:ProbeStage", "wait_storage confirmed → scan_storage");
-                return "ready";
-            }
-            SetSettingsLoaderStepState("confirm_airheart", "active", storageConfirm.detail || "Waiting for Airheart context.");
-            SettingsLoaderDebugLogThrottled(
-                "probe_wait_storage|" + (storageConfirm.source || "-") + "|" + (storageConfirm.confirmed ? "1" : "0") + "|" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0),
-                "probe_wait_storage confirmed=" + (storageConfirm.confirmed ? "1" : "0") +
-                    " source=" + (storageConfirm.source || "-") +
-                    " detail=\"" + (storageConfirm.detail || "") + "\"" +
-                    " hits=" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0) +
-                    " " + SettingsLoaderBuildProbeSnapshot(root),
-                nowMs
-            );
-            var switchStartMs = Number(State.buildCategoryPayloadHeroProbeSwitchStartMs) || nowMs;
-            var waitElapsedMs = nowMs - switchStartMs;
-            if (waitElapsedMs >= BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) {
-                SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-                SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmation delayed. Running save bootstrap.");
-                SetSettingsLoaderStepState("read_payload", "active", "Running save pipeline to create first-time payload.");
-                State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-                _TLog("load:ProbeStage", "wait_storage timeout → bootstrap_via_save_enqueue elapsed=" + String(waitElapsedMs));
-                SettingsLoaderDebugLog(
-                    "probe_wait_storage_bootstrap_save account=" + accountId +
-                        " elapsedMs=" + String(waitElapsedMs)
-                );
-                SetSettingsLoaderDebugOverlayLine("bootstrap_save elapsedMs=" + String(waitElapsedMs));
-                return "wait";
-            }
-            if (waitElapsedMs <= BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS) {
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS;
-                return "wait";
-            }
-            if (State.buildCategoryPayloadHeroProbeDidSwitch && IsBuildCategoryPayloadSourceReady(root)) {
-                var timeoutSignal = ResolveBuildSaveStorageHeroSignal(root);
-                if (!IsBuildCategoryPayloadStorageConflictStrong(timeoutSignal)) {
-                    var timeoutSource = timeoutSignal && timeoutSignal.source ? String(timeoutSignal.source) : "none";
-                    var timeoutHero = QOL.normalizeHeroId(timeoutSignal && timeoutSignal.hero ? timeoutSignal.hero : "");
-                    var timeoutSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-                    if (timeoutSignature.confirmed) {
-                        SetSettingsLoaderStepState("confirm_airheart", "done", "Proceeding with signature-confirmed storage context.");
-                        SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
-                        SettingsLoaderDebugLog(
-                            "probe_wait_storage_timeout_degraded_scan account=" + accountId +
-                            " hero=" + (timeoutHero || "-") +
-                            " source=" + timeoutSource +
-                            " signature=1"
-                        );
-                        SetSettingsLoaderDebugOverlayLine(
-                            "wait_storage_degraded_scan hero=" + (timeoutHero || "-") +
-                            " source=" + timeoutSource +
-                            " signature=1"
-                        );
-                        State.buildCategoryPayloadHeroProbeStage = "scan_storage";
-                        _TLog("load:ProbeStage", "wait_storage timeout+signature → scan_storage (degraded)");
-                        return "ready";
-                    }
-                    SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Airheart signature abilities.");
-                }
-            }
-            // Timed out confirming Airheart. Retry later; do not read from non-storage hero context.
-            SetSettingsLoaderStepState("confirm_airheart", "error", "Airheart confirmation timed out, retrying.");
-            SettingsLoaderDebugLog(
-                "probe_wait_storage_timeout account=" + accountId +
-                " switchStartMs=" + String(switchStartMs) +
-                " nowMs=" + String(nowMs) +
-                " retries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0)
-            );
-            SetSettingsLoaderDebugOverlayLine(
-                "wait_storage_timeout retries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0)
-            );
-            ResetBuildCategoryPayloadHeroProbeState();
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
-            return "wait";
-        }
+        var waitResult = handleWaitStorage(root, accountId, nowMs);
+        if (waitResult !== null) return waitResult;
+        if (handleRepairCorruptShopPrompt(nowMs)) return "wait";
 
-        if (stage === "repair_corrupt_shop_prompt") {
-            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context for repair.");
-            SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
-            State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
-            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-            return "wait";
-        }
-
-        if (stage === "bootstrap_via_save_enqueue") {
-            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context.");
-
-            EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
-            QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
-            if (!State.buildCategoryPayloadAirheartHeaderConfirmed) {
-                var allowBootstrapFallback = !!State.buildCategoryPayloadCorruptRepairActive;
-                var bootstrapConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowBootstrapFallback);
-                if (!bootstrapConfirm.confirmed) {
-                    SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Airheart context for bootstrap.");
-                    if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
-                        SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
-                    }
-                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                    return "wait";
-                }
-                State.buildCategoryPayloadAirheartHeaderConfirmed = true;
-                State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
-            }
-            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
-
-            if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
-                var clearStep = StepCorruptRepairClearStorageBuilds(root, nowMs);
-                if (clearStep.state === "failed") {
-                    SetSettingsLoaderStepState("read_payload", "error", clearStep.detail || "Corrupt-save clear failed.");
-                    SetSettingsLoaderStepState("decode_payload", "skipped", "Repair bootstrap unavailable.");
-                    SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                    CompleteBuildCategoryPayloadHeroProbe(
-                        accountId,
-                        true,
-                        "failed",
-                        clearStep.detail || "Corrupt-save clear failed."
-                    );
-                    return "wait";
-                }
-                if (clearStep.state !== "done") {
-                    SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Airheart builds before repair save.");
-                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + (Number(clearStep.waitMs) || BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS);
-                    return "wait";
-                }
-                State.buildCategoryPayloadCorruptRepairCleared = true;
-                State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS;
-                ResetBuildClearRequestAttributes(root);
-                ResetBuildClearRuntimeState();
-                QOL.resetBuildSaveRequestAttributes(root);
-                State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
-                TryDismissBuildDeletePopup(root);
-                TryCloseBrowseBuildsPopupForLoader(root);
-                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Airheart builds cleared. Finalizing clear UI.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if (State.buildCategoryPayloadCorruptRepairCleared) {
-                var postClearUntil = Number(State.buildCategoryPayloadCorruptRepairPostClearUntilMs) || 0;
-                if (nowMs < postClearUntil) {
-                    TryDismissBuildDeletePopup(root);
-                    TryCloseBrowseBuildsPopupForLoader(root);
-                    SetSettingsLoaderStepState("read_payload", "active", "Finalizing clear UI before save bootstrap.");
-                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                    return "wait";
-                }
-            }
-
-            // Guard save bootstrap from stale clear/browse UI. If we successfully close
-            // a leftover build browser popup, wait one tick before save initialization.
-            if (TryCloseBrowseBuildsPopupForLoader(root)) {
-                SetSettingsLoaderStepState("read_payload", "active", "Closing build browser before save bootstrap.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
-            if (!initReady) {
-                var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
-                SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Airheart build.");
-                if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
-                    SetSettingsLoaderStepState("read_payload", "error", "No Airheart build found. Auto-initialize failed.");
-                    SetSettingsLoaderStepState("decode_payload", "skipped", "Repair bootstrap unavailable.");
-                    SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                    CompleteBuildCategoryPayloadHeroProbe(
-                        accountId,
-                        true,
-                        "failed",
-                        "No Airheart build found; auto-initialize failed."
-                    );
-                    return "wait";
-                }
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            var bootstrapPayloadToken = State.buildCategoryPayloadDefaultBootstrapPayloadText
-                ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
-                : "";
-            if (!bootstrapPayloadToken) {
-                bootstrapPayloadToken = QOL.buildDefaultPayloadToken(cfg);
-                if (!bootstrapPayloadToken) {
-                    SetSettingsLoaderStepState("read_payload", "error", "Failed to generate default payload for save bootstrap.");
-                    SetSettingsLoaderStepState("decode_payload", "skipped", "Bootstrap payload generation failed.");
-                    SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                    CompleteBuildCategoryPayloadHeroProbe(
-                        accountId,
-                        true,
-                        "failed",
-                        "Failed to generate default payload for save bootstrap."
-                    );
-                    return "wait";
-                }
-                State.buildCategoryPayloadDefaultBootstrapPayloadText = bootstrapPayloadToken;
-            }
-
-            if (QOL.currentBuildHasPayload(root, bootstrapPayloadToken)) {
-                SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
-                State.buildCategoryPayloadHeroProbeStage = "scan_storage";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-                return "ready";
-            }
-
-            // Guard: if the current build already contains ANY valid QOLLOCK payload
-            // (not just the default one we just generated), skip the save bootstrap.
-            // This prevents overwriting an existing user config that was stored in a
-            // build but couldn't be confirmed during wait_storage (e.g., when
-            // persistentStorage is unavailable and the Airheart UI hasn't rendered yet).
-            // The skip counter prevents an infinite bounce if scan_storage somehow
-            // fails to read a payload the guard keeps finding.
-            var anyPayloadSkipCount = Number(State.buildCategoryPayloadAnyPayloadGuardSkips) || 0;
-            if (QOL.currentBuildHasAnyPayload && QOL.currentBuildHasAnyPayload(root)
-                && anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
-                State.buildCategoryPayloadAnyPayloadGuardSkips = anyPayloadSkipCount + 1;
-                SetSettingsLoaderStepState("read_payload", "active", "Existing payload found in current build; skipping save bootstrap.");
-                SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context verified via existing payload.");
-                State.buildCategoryPayloadHeroProbeStage = "scan_storage";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-                _TLog("load:ProbeStage", "bootstrap_via_save_enqueue found existing payload → scan_storage skips=" + String(anyPayloadSkipCount + 1));
-                return "ready";
-            }
-
-            var saveStateEnqueue = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "")) : "";
-            if (saveStateEnqueue === "pending") {
-                SetSettingsLoaderStepState("read_payload", "active", "Waiting for active save pipeline.");
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_wait";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
-                SetSettingsLoaderStepState("read_payload", "error", "Save bootstrap retry limit reached.");
-                SetSettingsLoaderStepState("decode_payload", "skipped", "Bootstrap retries exhausted.");
-                SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                CompleteBuildCategoryPayloadHeroProbe(
-                    accountId,
-                    true,
-                    "failed",
-                    "Save bootstrap retry limit reached."
-                );
-                return "wait";
-            }
-
-            var bootstrapSaveToken = QueueBuildSaveRequestFromLoader(root, bootstrapPayloadToken, nowMs);
-            if (!bootstrapSaveToken) {
-                State.buildCategoryPayloadDefaultBootstrapRetries = (Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) + 1;
-                SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap queue failed; retrying.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-            State.buildCategoryPayloadDefaultBootstrapSaveToken = bootstrapSaveToken;
-            State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
-            State.buildCategoryPayloadDefaultBootstrapRetries = (Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) + 1;
-            SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap queued.");
-            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_wait";
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-            return "wait";
-        }
-
-        if (stage === "bootstrap_via_save_wait") {
-            if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
-                SetSettingsLoaderStepState("read_payload", "active", "Waiting for clear phase before save bootstrap.");
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-            var verifyPayloadToken = State.buildCategoryPayloadDefaultBootstrapPayloadText
-                ? String(State.buildCategoryPayloadDefaultBootstrapPayloadText)
-                : "";
-            if (!verifyPayloadToken) {
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-                return "wait";
-            }
-
-            var saveStateWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "")) : "";
-            var saveMsgWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_MSG_ATTR, "")) : "";
-            var saveTokenWait = root.GetAttributeString ? String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "")) : "";
-            var expectedSaveToken = State.buildCategoryPayloadDefaultBootstrapSaveToken
-                ? String(State.buildCategoryPayloadDefaultBootstrapSaveToken)
-                : "";
-            var payloadDetectedAfterSave = QOL.currentBuildHasPayload(root, verifyPayloadToken);
-
-            if (saveStateWait === "pending") {
-                if (expectedSaveToken.length > 0 && saveTokenWait && saveTokenWait !== expectedSaveToken) {
-                    SetSettingsLoaderStepState("read_payload", "active", "Waiting for other save request to finish.");
-                } else {
-                    var pendingDetail = QOL.getSaveSettingsLoaderDetailForMessage(saveMsgWait) || "Running save pipeline.";
-                    SetSettingsLoaderStepState("read_payload", "active", pendingDetail);
-                }
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            var hasTokenMatch = (expectedSaveToken.length === 0) || (saveTokenWait === expectedSaveToken);
-            if (saveStateWait === "success" && hasTokenMatch) {
-                if (!payloadDetectedAfterSave) {
-                    var saveVerifyHits = (Number(State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits) || 0) + 1;
-                    State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = saveVerifyHits;
-                    TryCloseBrowseBuildsPopupForLoader(root);
-                    if (saveVerifyHits < 20) {
-                        SetSettingsLoaderStepState("read_payload", "active", "Save reported success. Waiting for payload visibility.");
-                        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                        return "wait";
-                    }
-                    SetSettingsLoaderStepState("read_payload", "active", "Save success did not expose payload. Retrying bootstrap save.");
-                    State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                    return "wait";
-                }
-                State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
-                TryDismissBuildDeletePopup(root);
-                TryCloseBrowseBuildsPopupForLoader(root);
-                SetSettingsLoaderStepState("read_payload", "active", "Repair save complete. Waiting for shop UI.");
-                // Start a fresh timeout window for post-save payload scan phases.
-                State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
-                State.buildCategoryPayloadHeroProbeMisses = 0;
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_post_save_shop_prompt";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if (saveStateWait === "failed" && hasTokenMatch) {
-                if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
-                    SetSettingsLoaderStepState("read_payload", "error", "Save bootstrap failed.");
-                    SetSettingsLoaderStepState("decode_payload", "skipped", "Bootstrap retries exhausted.");
-                    SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                    CompleteBuildCategoryPayloadHeroProbe(
-                        accountId,
-                        true,
-                        "failed",
-                        "Save bootstrap failed."
-                    );
-                    return "wait";
-                }
-                SetSettingsLoaderStepState("read_payload", "active", "Save bootstrap failed; retrying.");
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if (saveStateWait === "success" && !hasTokenMatch) {
-                SetSettingsLoaderStepState("read_payload", "active", "Waiting for matching save result token.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if (payloadDetectedAfterSave && saveStateWait !== "pending") {
-                SetSettingsLoaderStepState("read_payload", "active", "Repair payload detected. Waiting for shop UI.");
-                // Start a fresh timeout window for post-save payload scan phases.
-                State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
-                State.buildCategoryPayloadHeroProbeMisses = 0;
-                State.buildCategoryPayloadHeroProbeStage = "bootstrap_post_save_shop_prompt";
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-
-            if ((Number(State.buildCategoryPayloadDefaultBootstrapRetries) || 0) >= BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
-                SetSettingsLoaderStepState("read_payload", "error", "Save bootstrap timed out.");
-                SetSettingsLoaderStepState("decode_payload", "skipped", "Bootstrap retries exhausted.");
-                SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
-                CompleteBuildCategoryPayloadHeroProbe(
-                    accountId,
-                    true,
-                    "failed",
-                    "Save bootstrap timed out."
-                );
-                return "wait";
-            }
-            SetSettingsLoaderStepState("read_payload", "active", "Waiting for save bootstrap result.");
-            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-            return "wait";
-        }
-
-        if (stage === "bootstrap_post_save_shop_prompt") {
-            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
-            var postSaveConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, false);
-            if (!postSaveConfirm.confirmed) {
-                if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
-                    SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
-                } else {
-                    SetSettingsLoaderStepState("read_payload", "active", "Waiting for shop UI after repair save.");
-                }
-                SetSettingsLoaderStepState("confirm_airheart", "active", postSaveConfirm.detail || "Verifying Airheart context.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-            if (!IsBuildCategoryPayloadSourceReady(root)) {
-                SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmed. Waiting for build source.");
-                SetSettingsLoaderStepState("read_payload", "active", "Waiting for build source after repair save.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-                return "wait";
-            }
-            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
-            SetSettingsLoaderStepState("read_payload", "active", "Applying bootstrap payload.");
-            // Reset probe timeout before scan_bootstrap_token so long clear/save phases
-            // cannot trigger an immediate timeout + re-bootstrap loop.
-            State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
-            State.buildCategoryPayloadHeroProbeMisses = 0;
-            State.buildCategoryPayloadHeroProbeStage = "scan_bootstrap_token";
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
-            return "ready";
-        }
+        var bootstrapResult = handleBootstrapViaSaveEnqueue(root, accountId, nowMs, cfg);
+        if (bootstrapResult !== null) return bootstrapResult;
+        var saveWaitResult = handleBootstrapViaSaveWait(root, accountId, nowMs);
+        if (saveWaitResult !== null) return saveWaitResult;
+        var postSaveResult = handleBootstrapPostSaveShopPrompt(root, nowMs);
+        if (postSaveResult !== null) return postSaveResult;
 
         if (stage === "scan_storage") {
             SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
