@@ -519,7 +519,7 @@ var SetCachedPanel = function(k, p) {
         if (scale < 0.20) scale = 0.20;
         if (scale > 2.00) scale = 2.00;
         var scaleText = scale.toFixed(3) + ", " + scale.toFixed(3);
-        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
+        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP);
         var rangePanels = [];
         if (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse) {
             var mapButtons = hudMinimapPanel.FindChildrenWithClassTraverse("map_button") || [];
@@ -624,7 +624,7 @@ var SetCachedPanel = function(k, p) {
                 }
             });
 
-            var mapRenderPanel = ResolveCachedPanel(root, "minimapMapRender", "map_render")
+            var mapRenderPanel = ResolveCachedPanel(root, "minimapMapRender", "map_render");
             if (mapRenderPanel) {
                 var minimalistEnabled = (!zoomAlt && !zoomTab && IsCfgEnabled(cfg, "MINIMAL_MINIMAP"));
                 if (minimalistEnabled) {
@@ -635,7 +635,7 @@ var SetCachedPanel = function(k, p) {
                     SetPanelOpacitySafe(mapRenderPanel, minimalistOpacity, 1.0);
                     mapRenderPanel.style.brightness = "1.0";
                     mapRenderPanel.style.washColor = "none";
-                    var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP)
+                    var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP);
                     if (hudMinimapPanel) {
                         if (hudMinimapPanel.AddClass) hudMinimapPanel.AddClass("minimalist_minimap_active");
                         hudMinimapPanel.style.backgroundColor = "rgba(0, 0, 0, 0)";

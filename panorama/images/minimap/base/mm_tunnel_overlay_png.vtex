@@ -6,7 +6,7 @@
         "CDmeInputTexture"
         {
             "m_name" "string" "InputTexture0"
-            "m_fileName" "string" "panorama/images/minimap/base/mm_tunnel_overlay.png"
+            "m_fileName" "string" "panorama/images/minimap/base/mm_tunnel_overlay_png.png"
             "m_colorSpace" "string" "srgb"
             "m_typeString" "string" "2D"
             "m_imageProcessorArray" "element_array"
