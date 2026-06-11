@@ -7,6 +7,7 @@
     // S = State, U = Utils, GC/SC = panel cache get/set (project-wide convention).
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
+    var ResolveCachedPanel = _deps.resolveCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
