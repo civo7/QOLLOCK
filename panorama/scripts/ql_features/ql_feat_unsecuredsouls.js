@@ -121,21 +121,9 @@
         }
         State.unsecuredSouls.displayMode = "active";
 
-        var timerOffsetX = Number(cfg.UNSECURED_SOUL_TIMER_X_OFFSET);
-        var timerOffsetY = Number(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET);
-        var timerScale = Number(cfg.UNSECURED_SOUL_TIMER_SCALE);
-        if (!isFinite(timerOffsetX)) timerOffsetX = 0;
-        if (!isFinite(timerOffsetY)) timerOffsetY = 0;
-        if (!isFinite(timerScale)) timerScale = 100;
-        timerOffsetX = Math.round(timerOffsetX);
-        timerOffsetY = Math.round(timerOffsetY);
-        timerScale = Math.round(timerScale);
-        if (timerOffsetX < -1500) timerOffsetX = -1500;
-        if (timerOffsetX > 1500) timerOffsetX = 1500;
-        if (timerOffsetY < -100) timerOffsetY = -100;
-        if (timerOffsetY > 1000) timerOffsetY = 1000;
-        if (timerScale < 50) timerScale = 50;
-        if (timerScale > 200) timerScale = 200;
+        var timerOffsetX = Utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_X_OFFSET, 0, -1500, 1500, true);
+        var timerOffsetY = Utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET, 0, -100, 1000, true);
+        var timerScale = Utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_SCALE, 100, 50, 200, true);
         var stateLabel = GetCachedPanel("unsecuredSoulsState");
         var timerFontPx = Math.round(16 * (timerScale / 100));
         if (timerFontPx < 8) timerFontPx = 8;

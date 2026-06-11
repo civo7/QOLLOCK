@@ -258,31 +258,15 @@
                 var oldModeInShop = abilitiesContainerForOldMode && abilitiesContainerForOldMode.BHasClass && abilitiesContainerForOldMode.BHasClass("gShopOpen");
                 passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
 
-                var passiveSize = Number(cfg.PASSIVE_COOLDOWN_SIZE);
-                if (!isFinite(passiveSize)) passiveSize = 40;
-                if (passiveSize < 30) passiveSize = 30;
-                if (passiveSize > 60) passiveSize = 60;
-                var oldScale = Math.round((passiveSize / 40) * 110);
-                if (!isFinite(oldScale)) oldScale = 110;
-                if (oldScale < 50) oldScale = 50;
-                if (oldScale > 200) oldScale = 200;
+                var passiveSize = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
+                var oldScale = Utils.ClampConfigNumber((passiveSize / 40) * 110, 110, 50, 200, true);
 
-                var passiveOffsetX = Number(cfg.PASSIVE_COOLDOWN_X);
-                if (!isFinite(passiveOffsetX)) passiveOffsetX = 0;
-                if (passiveOffsetX < -50) passiveOffsetX = -50;
-                if (passiveOffsetX > 50) passiveOffsetX = 50;
-
-                var passiveOffsetY = Number(cfg.PASSIVE_COOLDOWN_Y);
-                if (!isFinite(passiveOffsetY)) passiveOffsetY = 0;
-                if (passiveOffsetY < -50) passiveOffsetY = -50;
-                if (passiveOffsetY > 50) passiveOffsetY = 50;
+                var passiveOffsetX = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50, false);
+                var passiveOffsetY = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50, false);
                 var oldOffsetXPercent = passiveOffsetX;
                 var oldOffsetYPercent = -6 - passiveOffsetY;
 
-                var sharedOpacity = Number(cfg.PASSIVE_COOLDOWN_OPACITY);
-                if (!isFinite(sharedOpacity)) sharedOpacity = 0.5;
-                if (sharedOpacity < 0) sharedOpacity = 0;
-                if (sharedOpacity > 1) sharedOpacity = 1;
+                var sharedOpacity = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1, false);
                 SetPanelOpacitySafe(passiveHud, sharedOpacity, 1.0);
 
                 var oldStyleSig =

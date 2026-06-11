@@ -114,21 +114,9 @@
         }
         State.zipBoostDisplayMode = "active";
 
-        var zipOffsetX = Number(cfg.ZIP_BOOST_X_OFFSET);
-        var zipOffsetY = Number(cfg.ZIP_BOOST_Y_OFFSET);
-        var zipScale = Number(cfg.ZIP_BOOST_SCALE);
-        if (!isFinite(zipOffsetX)) zipOffsetX = 0;
-        if (!isFinite(zipOffsetY)) zipOffsetY = 0;
-        if (!isFinite(zipScale)) zipScale = 100;
-        zipOffsetX = Math.round(zipOffsetX);
-        zipOffsetY = Math.round(zipOffsetY);
-        zipScale = Math.round(zipScale);
-        if (zipOffsetX < -2000) zipOffsetX = -2000;
-        if (zipOffsetX > 2000) zipOffsetX = 2000;
-        if (zipOffsetY < 0) zipOffsetY = 0;
-        if (zipOffsetY > 1000) zipOffsetY = 1000;
-        if (zipScale < 50) zipScale = 50;
-        if (zipScale > 200) zipScale = 200;
+        var zipOffsetX = Utils.ClampConfigNumber(cfg.ZIP_BOOST_X_OFFSET, 0, -2000, 2000, true);
+        var zipOffsetY = Utils.ClampConfigNumber(cfg.ZIP_BOOST_Y_OFFSET, 0, 0, 1000, true);
+        var zipScale = Utils.ClampConfigNumber(cfg.ZIP_BOOST_SCALE, 100, 50, 200, true);
         var layoutSig = [
             String(zipOffsetX),
             String(zipOffsetY),

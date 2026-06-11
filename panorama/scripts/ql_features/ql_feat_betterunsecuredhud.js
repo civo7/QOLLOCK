@@ -218,21 +218,9 @@ function ParseUnsecuredSoulsValue(valueText) {
             return;
         }
 
-        var scale = Number(cfg.UNSECURED_SOULS_HUD_SCALE);
-        var xOffset = Number(cfg.UNSECURED_SOULS_HUD_X_OFFSET);
-        var yOffset = Number(cfg.UNSECURED_SOULS_HUD_Y_OFFSET);
-        if (!isFinite(scale)) scale = 100;
-        if (!isFinite(xOffset)) xOffset = 0;
-        if (!isFinite(yOffset)) yOffset = 0;
-        scale = Math.round(scale);
-        xOffset = Math.round(xOffset);
-        yOffset = Math.round(yOffset);
-        if (scale < 50) scale = 50;
-        if (scale > 200) scale = 200;
-        if (xOffset < -1000) xOffset = -1000;
-        if (xOffset > 2000) xOffset = 2000;
-        if (yOffset < 800) yOffset = 800;
-        if (yOffset > 2000) yOffset = 2000;
+        var scale = Utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200, true);
+        var xOffset = Utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 0, -1000, 2000, true);
+        var yOffset = Utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 0, 800, 2000, true);
         var fontPx = Math.round(14 * (scale / 100));
         if (fontPx < 8) fontPx = 8;
         if (fontPx > 72) fontPx = 72;

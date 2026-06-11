@@ -175,21 +175,9 @@
         State.statBonuses.displayMode = "active";
 
         // ── Layout config ──
-        var statOffsetX = Number(cfg.STAT_BONUSES_X_OFFSET);
-        var statOffsetY = Number(cfg.STAT_BONUSES_Y_OFFSET);
-        var statScale = Number(cfg.STAT_BONUSES_SCALE);
-        if (!isFinite(statOffsetX)) statOffsetX = 0;
-        if (!isFinite(statOffsetY)) statOffsetY = 0;
-        if (!isFinite(statScale)) statScale = 100;
-        statOffsetX = Math.round(statOffsetX);
-        statOffsetY = Math.round(statOffsetY);
-        statScale = Math.round(statScale);
-        if (statOffsetX < -1000) statOffsetX = -1000;
-        if (statOffsetX > 1000) statOffsetX = 1000;
-        if (statOffsetY < 0) statOffsetY = 0;
-        if (statOffsetY > 1000) statOffsetY = 1000;
-        if (statScale < 50) statScale = 50;
-        if (statScale > 200) statScale = 200;
+        var statOffsetX = Utils.ClampConfigNumber(cfg.STAT_BONUSES_X_OFFSET, 0, -1000, 1000, true);
+        var statOffsetY = Utils.ClampConfigNumber(cfg.STAT_BONUSES_Y_OFFSET, 0, 0, 1000, true);
+        var statScale = Utils.ClampConfigNumber(cfg.STAT_BONUSES_SCALE, 100, 50, 200, true);
         var layoutSig = [
             String(statOffsetX),
             String(statOffsetY),

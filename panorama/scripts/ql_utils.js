@@ -132,6 +132,23 @@
     }
     exports.IsCfgEnabled = IsCfgEnabled;
 
+    /**
+     * Clamp a numeric value (typically from a config key) to [min, max],
+     * with a fallback used when value is NaN or non-finite.
+     * Pass shouldRound=true to Math.round the result before clamping.
+     */
+    function ClampConfigNumber(value, fallback, min, max, shouldRound) {
+        var n = Number(value);
+        if (!isFinite(n)) n = Number(fallback);
+        if (!isFinite(n)) n = 0;
+        if (shouldRound) n = Math.round(n);
+        if (!isFinite(n)) return n;
+        if (n < min) n = min;
+        if (n > max) n = max;
+        return n;
+    }
+    exports.ClampConfigNumber = ClampConfigNumber;
+
     // ---- Config Validation ----
 
     /**
