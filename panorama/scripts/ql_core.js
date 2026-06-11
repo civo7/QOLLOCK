@@ -18028,7 +18028,7 @@ function GetUIRoot() {
         ["injectTopChatImage", function() { return InjectTopChatImage; }],
         ["isColorWarningEnabled", function() { return IsColorWarningEnabled; }],
         ["isCombatSignalActive", function() { return IsCombatSignalActive; }],
-        ["IsConnectedToHideout", function() { return IsConnectedToHideout; }],
+        ["isConnectedToHideout", function() { return IsConnectedToHideout; }],
         ["isCustomHudContextActive", function() { return IsCustomHudContextActive; }],
         ["isHudClassActive", function() { return IsHudClassActive; }],
         ["isHudVisibleForTopBarRuntime", function() { return IsHudVisibleForTopBarRuntime; }],

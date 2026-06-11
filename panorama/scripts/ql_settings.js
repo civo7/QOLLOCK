@@ -9534,7 +9534,7 @@ function SetPanelNonInteractive(panel) {
     panel.hittestchildren = false;
 }
 
-var SetPanelOpacitySafe = QOL_UTILS_LOADED ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { panel.style.opacity = "1.00"; } catch(e) {} } };
+var SetPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { panel.style.opacity = "1.00"; } catch(e) {} } };
 
 function GetPanelRectRelativeToContext(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return null;
