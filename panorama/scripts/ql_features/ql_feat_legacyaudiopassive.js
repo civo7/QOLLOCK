@@ -231,6 +231,54 @@
 
     // ── Update + Gate ──
 
+    // ── Passive cooldown HUD layout/styles (extracted from UpdateLegacyAudioAndPassiveHudRuntime)
+    function ApplyPassiveCooldownRuntimeStyles(root, cfg, passiveHud, basicModeActive) {
+        if (!basicModeActive) {
+            ResetPassiveCooldownRuntimeStyles(passiveHud);
+            State.oldItemCooldownStylePanel = null;
+        } else if (State.oldItemCooldownStylePanel !== passiveHud) {
+            if (State.oldItemCooldownStylePanel && State.oldItemCooldownStylePanel !== passiveHud) {
+                ResetPassiveCooldownRuntimeStyles(State.oldItemCooldownStylePanel);
+            }
+            State.oldItemCooldownStylePanel = passiveHud;
+            State.oldItemCooldownStyleSig = "";
+        }
+        if (basicModeActive) {
+            var abilitiesContainerForOldMode = EnsureAbilitiesContainerPanelCache(root);
+            var oldModeInShop = abilitiesContainerForOldMode && abilitiesContainerForOldMode.BHasClass && abilitiesContainerForOldMode.BHasClass("gShopOpen");
+            passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
+
+            var passiveSize = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
+            var oldScale = Utils.ClampConfigNumber((passiveSize / 40) * 110, 110, 50, 200, true);
+
+            var passiveOffsetX = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50, false);
+            var passiveOffsetY = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50, false);
+            var oldOffsetXPercent = passiveOffsetX;
+            var oldOffsetYPercent = -6 - passiveOffsetY;
+
+            var sharedOpacity = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1, false);
+            SetPanelOpacitySafe(passiveHud, sharedOpacity, 1.0);
+
+            var oldStyleSig =
+                String(oldScale) + "|" +
+                oldOffsetXPercent.toFixed(2) + "|" +
+                oldOffsetYPercent.toFixed(2) + "|" +
+                sharedOpacity.toFixed(2) + "|" +
+                (oldModeInShop ? "1" : "0");
+            if (State.oldItemCooldownStyleSig !== oldStyleSig) {
+                passiveHud.style.uiScale = String(oldScale) + "%";
+                passiveHud.style.x = "11px";
+                passiveHud.style.y = "30px";
+                passiveHud.style.marginLeft = oldOffsetXPercent.toFixed(2) + "%";
+                passiveHud.style.marginTop = oldOffsetYPercent.toFixed(2) + "%";
+                State.oldItemCooldownStyleSig = oldStyleSig;
+            }
+        } else {
+            ResetPassiveCooldownRuntimeStyles(passiveHud);
+            State.oldItemCooldownStylePanel = null;
+        }
+    }
+
     function UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected) {
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
         var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
@@ -243,50 +291,7 @@
 
         var passiveHud = needsPassiveRuntime ? EnsurePassiveHudPanelCache(root) : GetCachedPanel("passiveHud");
         if (needsPassiveRuntime && passiveHud) {
-            if (!basicModeActive) {
-                ResetPassiveCooldownRuntimeStyles(passiveHud);
-                State.oldItemCooldownStylePanel = null;
-            } else if (State.oldItemCooldownStylePanel !== passiveHud) {
-                if (State.oldItemCooldownStylePanel && State.oldItemCooldownStylePanel !== passiveHud) {
-                    ResetPassiveCooldownRuntimeStyles(State.oldItemCooldownStylePanel);
-                }
-                State.oldItemCooldownStylePanel = passiveHud;
-                State.oldItemCooldownStyleSig = "";
-            }
-            if (basicModeActive) {
-                var abilitiesContainerForOldMode = EnsureAbilitiesContainerPanelCache(root);
-                var oldModeInShop = abilitiesContainerForOldMode && abilitiesContainerForOldMode.BHasClass && abilitiesContainerForOldMode.BHasClass("gShopOpen");
-                passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
-
-                var passiveSize = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
-                var oldScale = Utils.ClampConfigNumber((passiveSize / 40) * 110, 110, 50, 200, true);
-
-                var passiveOffsetX = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50, false);
-                var passiveOffsetY = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50, false);
-                var oldOffsetXPercent = passiveOffsetX;
-                var oldOffsetYPercent = -6 - passiveOffsetY;
-
-                var sharedOpacity = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1, false);
-                SetPanelOpacitySafe(passiveHud, sharedOpacity, 1.0);
-
-                var oldStyleSig =
-                    String(oldScale) + "|" +
-                    oldOffsetXPercent.toFixed(2) + "|" +
-                    oldOffsetYPercent.toFixed(2) + "|" +
-                    sharedOpacity.toFixed(2) + "|" +
-                    (oldModeInShop ? "1" : "0");
-                if (State.oldItemCooldownStyleSig !== oldStyleSig) {
-                    passiveHud.style.uiScale = String(oldScale) + "%";
-                    passiveHud.style.x = "11px";
-                    passiveHud.style.y = "30px";
-                    passiveHud.style.marginLeft = oldOffsetXPercent.toFixed(2) + "%";
-                    passiveHud.style.marginTop = oldOffsetYPercent.toFixed(2) + "%";
-                    State.oldItemCooldownStyleSig = oldStyleSig;
-                }
-            } else {
-                ResetPassiveCooldownRuntimeStyles(passiveHud);
-                State.oldItemCooldownStylePanel = null;
-            }
+            ApplyPassiveCooldownRuntimeStyles(root, cfg, passiveHud, basicModeActive);
         } else if (!basicModeActive && State.oldItemCooldownStylePanel) {
             ResetPassiveCooldownRuntimeStyles(State.oldItemCooldownStylePanel);
             State.oldItemCooldownStylePanel = null;
