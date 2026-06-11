@@ -1011,6 +1011,11 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	margin-top: 90px;
 }
 
+.QuickPurchasesPanel
+{
+	margin-top: 125px;
+}
+
 #QuickPurchasesPanel.has_rejuv.rp_quick_rejuv_active
 {
 	margin-top: 133px;
