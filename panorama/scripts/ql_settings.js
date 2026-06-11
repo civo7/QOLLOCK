@@ -16834,6 +16834,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "_ZODUK_", preset: "_ZODUK_" });
     entries.push({ label: "nkonin.me", preset: "nkonin.me" });
     entries.push({ label: "ani", preset: "ani" });
+    entries.push({ label: "leah", preset: "leah" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
