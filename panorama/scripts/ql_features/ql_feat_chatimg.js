@@ -13,6 +13,13 @@
     var IsPanelValid = Utils.IsPanelValid;
     var PerfNowMs = Utils.PerfNowMs;
     var BuildImagesInChatContainerWatermark = _deps.buildImagesInChatContainerWatermark;
+    var GetImagesInChatMessageCache = _deps.getImagesInChatMessageCache;
+    var FindImagesInChatMessageCacheEntry = _deps.findImagesInChatMessageCacheEntry;
+    var PruneImagesInChatMessageCache = _deps.pruneImagesInChatMessageCache;
+    var ClearInjectedChatImagesForMessage = _deps.clearInjectedChatImagesForMessage;
+    var FindChatMessageLabel = _deps.findChatMessageLabel;
+    var InjectTopChatImage = _deps.injectTopChatImage;
+    var InjectBottomChatImage = _deps.injectBottomChatImage;
     function ResetImagesInChatContainerState(watermarkKey, fullScanKey, cacheKey) {
         State[watermarkKey] = "";
         State[fullScanKey] = 0;
