@@ -3000,64 +3000,29 @@ function SplitConvarStorageProbeParts(rawValue) {
     return parts;
 }
 function ReadConvarStorageProbeValue() {
-    if (typeof GameInterfaceAPI === "undefined" || !GameInterfaceAPI || typeof GameInterfaceAPI.GetSettingString !== "function") return "";
-    try {
-        return String(GameInterfaceAPI.GetSettingString(QOL_CONVAR_STORAGE_PROBE_CONVAR) || "");
-    } catch (e0) {
-        return "";
-    }
+    // GameInterfaceAPI confirmed absent — cannot read convar values from Panorama.
+    return "";
 }
 
 function CanReadConvarStorageProbeValue() {
-    return typeof GameInterfaceAPI !== "undefined" && !!GameInterfaceAPI && typeof GameInterfaceAPI.GetSettingString === "function";
+    // GameInterfaceAPI confirmed absent.
+    return false;
 }
 
 function DispatchConvarStorageProbeCommand(commandText) {
     var command = String(commandText || "").trim();
-    var dispatched = false;
     if (!command) return false;
-    try {
-        $.DispatchEvent("CitadelConCommand", command);
-        dispatched = true;
-    } catch (e0) {}
-    try {
-        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
-            GameInterfaceAPI.ConsoleCommand(command);
-            dispatched = true;
-        }
-    } catch (e1) {}
-    try {
-        $.DispatchEvent("ConsoleCommand", command);
-        dispatched = true;
-    } catch (e2) {}
-    try {
-        $.DispatchEvent("GameUIRunCommand", command);
-        dispatched = true;
-    } catch (e3) {}
-    return dispatched;
+    // GameInterfaceAPI.ConsoleCommand confirmed absent.
+    // CitadelConCommand is the only dispatch path.
+    try { $.DispatchEvent("CitadelConCommand", command); return true; } catch (e0) {}
+    return false;
 }
 
 function WriteConvarStorageProbeValue(value) {
     var text = String(value || "");
-    var wrote = false;
-    try {
-        if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.SetSettingString === "function") {
-            GameInterfaceAPI.SetSettingString(QOL_CONVAR_STORAGE_PROBE_CONVAR, text);
-            wrote = true;
-        }
-    } catch (e0) {}
-    if (!wrote) {
-        try {
-            if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
-                GameInterfaceAPI.ConsoleCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
-                wrote = true;
-            }
-        } catch (e1) {}
-    }
-    if (!wrote) {
-        wrote = DispatchConvarStorageProbeCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
-    }
-    return wrote;
+    // GameInterfaceAPI.SetSettingString/ConsoleCommand confirmed absent.
+    // CitadelConCommand dispatch is the only write path.
+    return DispatchConvarStorageProbeCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
 }
 
 function RunConvarStorageProbe() {
@@ -3186,26 +3151,14 @@ function GetUIRoot() {
         return p || null;
     }
 
-    var _readEnemyV2BridgeBoolDegradedLogged = false;
     var _readStorageDiagLogged = false;
     var _writeStorageDiagLogged = false;
     var _startupConfigLoadDiagLogged = false;
     var _startupConfigDefaultDiagLogged = false;
     function ReadEnemyV2BridgeBool(storageKey, fallbackValue) {
-        var fallback = !!fallbackValue;
-        try {
-            if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
-                var raw = String($.persistentStorage.getItem(String(storageKey || "")) || "");
-                if (raw === "1") return true;
-                if (raw === "0") return false;
-            }
-        } catch (e0) {
-            if (!_readEnemyV2BridgeBoolDegradedLogged) {
-                _readEnemyV2BridgeBoolDegradedLogged = true;
-                $.Msg("[QOLLock][WARN][storage] ReadEnemyV2BridgeBool persistentStorage read failed: " + (e0 && e0.message ? e0.message : String(e0 || "")));
-            }
-        }
-        return fallback;
+        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
+        // Panel attributes are the only persistence mechanism.
+        return !!fallbackValue;
     }
 
     // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
@@ -3252,26 +3205,11 @@ function GetUIRoot() {
                 }
             }
         }
-        // Fallback: if panel attrs are empty (e.g. after game restart), recover from
-        // persistentStorage which IS disk-backed and survives restarts.
-        var psLen = 0;
-        if (!result || result.length === 0) {
-            try {
-                if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
-                    var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
-                    psLen = psRaw.length;
-                    if (psRaw && psRaw.length > 0) { result = psRaw; source = "persistentStorage"; }
-                } else {
-                    source = "no_persistentStorage_api";
-                }
-            } catch (ePs) {
-                source = "persistentStorage_error";
-                $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || "")));
-            }
-        }
+        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
+        // Panel attributes are the only persistence mechanism.
         if (!_readStorageDiagLogged) {
             _readStorageDiagLogged = true;
-            $.Msg("[QOLLock][DIAG][storage] ReadStorageConfig: source=" + source + " resultLen=" + result.length + " rootAttrLen=" + rootLen + " hudAttrLen=" + hudLen + " psLen=" + psLen);
+            $.Msg("[QOLLock][DIAG][storage] ReadStorageConfig: source=" + source + " resultLen=" + result.length + " rootAttrLen=" + rootLen + " hudAttrLen=" + hudLen);
         }
         return result;
     }
@@ -3302,18 +3240,11 @@ function GetUIRoot() {
             try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) { QOL_ERROR("persist", "hud.SetAttributeString(STORAGE_KEY) failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
             try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
-        var psWriteOk = false;
-        try {
-            if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                $.persistentStorage.setItem("qol_settings_raw_v1", nextRaw);
-                psWriteOk = true;
-            }
-        } catch (ePersistWrite) { QOL_ERROR("persist", "persistentStorage.setItem failed: " + (ePersistWrite && ePersistWrite.message ? ePersistWrite.message : String(ePersistWrite || ""))); }
+        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
 
         if (!_writeStorageDiagLogged) {
             _writeStorageDiagLogged = true;
-            var psAvail = !!($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function");
-            $.Msg("[QOLLock][DIAG][storage] WriteStorageConfig: len=" + nextRaw.length + " rev=" + nextRevision + " hud=" + (hud && hud.SetAttributeString ? "yes" : "no") + " psAvail=" + (psAvail ? "yes" : "no") + " psWriteOk=" + (psWriteOk ? "yes" : "no"));
+            $.Msg("[QOLLock][DIAG][storage] WriteStorageConfig: len=" + nextRaw.length + " rev=" + nextRevision + " hud=" + (hud && hud.SetAttributeString ? "yes" : "no"));
         }
 
         return {
@@ -3333,27 +3264,11 @@ function GetUIRoot() {
             return MergeConfig(unwrapped.config);
         } catch (parseErr) {
             QOL_ERROR("config", "JSON parse or merge failed: " + String(parseErr.message || parseErr));
-            // Save corrupt config for debugging
-            var backupKey = "";
-            try {
-                backupKey = "qol_settings_corrupt_" + PerfNowMs();
-                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                    $.persistentStorage.setItem(backupKey, String(raw || "").substring(0, 5000));
-                    QOL_INFO("config", "corrupt config saved to: " + backupKey);
-                }
-            } catch (eBackup) {
-                QOL_ERROR("config", "FAILED to save corrupt config backup");
-            }
-            // User-visible notification: flag for settings UI + prominent console message
-            try {
-                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                    $.persistentStorage.setItem("qol_config_corruption_detected", String(PerfNowMs()));
-                    $.persistentStorage.setItem("qol_last_corruption_key", backupKey);
-                }
-            } catch (eCorruptFlag) { $.Msg("[QOLLock][WARN][storage] Failed to write corruption flag to persistentStorage: " + (eCorruptFlag && eCorruptFlag.message ? eCorruptFlag.message : String(eCorruptFlag || ""))); }
+            // $.persistentStorage confirmed absent — corrupt config backup unavailable.
+            // The Airheart build payload is the recovery path.
+            QOL_INFO("config", "config parse failed — Airheart build payload is recovery path");
             $.Msg("\n====================================================================\n");
             $.Msg("[QOLLOCK] WARNING: Your settings were corrupted and have been reset to defaults.\n");
-            $.Msg("[QOLLOCK] A backup of the corrupt data has been saved for recovery.\n");
             $.Msg("[QOLLOCK] Open Qollock Settings to check for recovery options.\n");
             $.Msg("====================================================================\n");
             // Clear corrupt config so this doesn't repeat every tick
@@ -3363,10 +3278,7 @@ function GetUIRoot() {
                 if (root && root.SetAttributeString) {
                     root.SetAttributeString(STORAGE_KEY, "");
                 }
-                if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                    $.persistentStorage.setItem("qol_settings_raw_v1", "");
-                }
-            } catch (eClear) { $.Msg("[QOLLock][WARN][storage] Failed to clear corrupt config from persistentStorage: " + (eClear && eClear.message ? eClear.message : String(eClear || ""))); }
+            } catch (eClear) { $.Msg("[QOLLock][WARN][storage] Failed to clear corrupt config from panel attrs: " + (eClear && eClear.message ? eClear.message : String(eClear || ""))); }
             QOL_WARN("config", "corrupt config cleared, using defaults");
             return null;
         }
@@ -3505,7 +3417,8 @@ function GetUIRoot() {
         return color ? String(color) : "";
     }
 
-    function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName, persistentStorageKey) {
+    function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
+        // $.persistentStorage confirmed absent — panel attrs are the only persistence.
         var fromConfig = NormalizePaletteColorIndex(cfg && cfg[key]);
         var root = GetUIRoot();
         try {
@@ -3521,23 +3434,15 @@ function GetUIRoot() {
                 if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
             }
         } catch (eAttrHud) {}
-        try {
-            if (persistentStorageKey && $ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
-                var raw = String($.persistentStorage.getItem(persistentStorageKey) || "");
-                if (raw !== "") return NormalizePaletteColorIndex(raw);
-            }
-        } catch (e0) {
-            QOL_WARN("storage", "ReadPaletteColorIndexWithPanelAttr persistentStorage read failed for key=" + String(persistentStorageKey || "") + ": " + (e0 && e0.message ? e0.message : String(e0 || "")));
-        }
         return fromConfig;
     }
 
     function ReadPlayerHealthbarAccentColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR", PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR, PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY);
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR", PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR);
     }
 
     function ReadBottomBarWashColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR", BOTTOM_BAR_WASH_COLOR_ATTR, "");
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR", BOTTOM_BAR_WASH_COLOR_ATTR);
     }
 
     function ReadKeyboardOverlayWashColorIndex(cfg) {
@@ -5086,36 +4991,9 @@ function GetUIRoot() {
     }
 
     function TryReadFgHeroSignalFromLocalApis() {
-        var hero = "";
-        try {
-            if (typeof Game !== "undefined" && Game && typeof Game.GetLocalPlayerInfo === "function") {
-                hero = TryReadFgHeroSignalFromObject(Game.GetLocalPlayerInfo());
-            }
-        } catch (e0) { hero = ""; }
-        if (hero) return hero;
-
-        var localPlayer = null;
-        try {
-            if (typeof Players !== "undefined" && Players && typeof Players.GetLocalPlayer === "function") {
-                localPlayer = Players.GetLocalPlayer();
-            }
-        } catch (e1) { localPlayer = null; }
-
-        if (localPlayer === undefined || localPlayer === null) return "";
-
-        try {
-            if (typeof Players.GetPlayerData === "function") {
-                hero = TryReadFgHeroSignalFromObject(Players.GetPlayerData(localPlayer));
-            }
-        } catch (e2) { hero = ""; }
-        if (hero) return hero;
-
-        try {
-            if (typeof Players.GetPlayerInfo === "function") {
-                hero = TryReadFgHeroSignalFromObject(Players.GetPlayerInfo(localPlayer));
-            }
-        } catch (e3) { hero = ""; }
-        return hero || "";
+        // Game.GetLocalPlayerInfo and Players.* confirmed absent (panorama_api_test, 2026-06-11).
+        // Hero detection relies on UI panel scanning instead.
+        return "";
     }
 
     function ResolveFgHeroRefreshSignal(root, cfg, levelAmount) {
@@ -5368,12 +5246,7 @@ function GetUIRoot() {
         var normalized = enabled ? 1 : 0;
         if (State.legacyCooldownsUiFlag === normalized) return;
         State.legacyCooldownsUiFlag = normalized;
-        try {
-            if (typeof GameUI === "object" && GameUI && typeof GameUI.CustomUIConfig === "function") {
-                var customUiConfig = GameUI.CustomUIConfig();
-                if (customUiConfig) customUiConfig.qolLegacyCooldownsEnabled = normalized;
-            }
-        } catch (legacyCooldownsUiFlagErr) {}
+        // GameUI.CustomUIConfig confirmed absent — flag tracked in State only.
     }
 
     function HasNonDefaultChatRuntimeConfig(cfg) {
@@ -5896,12 +5769,7 @@ function GetUIRoot() {
     }
 
     function isConnectedToHideout(root) {
-        try {
-            if (typeof Game !== "undefined" && Game.GetMapInfo) {
-                var mapName = Game.GetMapInfo().map_display_name;
-                if (["hero_testing_hideout", "hideout", "dl_hideout"].indexOf(mapName) !== -1) return true;
-            }
-        } catch (e) {}
+        // Game.GetMapInfo confirmed absent — use HUD panel classes for hideout detection.
         var hud = GetCachedPanel("cachedHudPanel");
         if (!hud && root && root.FindChildTraverse) {
             hud = root.FindChildTraverse(PANEL_ID_HUD);
@@ -5971,21 +5839,8 @@ function GetUIRoot() {
     }
 
     function GetGameSecondsForUrn(root) {
-        try {
-            if (typeof Game !== "undefined") {
-                if (typeof Game.GetGameTime === "function") {
-                    var t = Game.GetGameTime();
-                    if (isFinite(t)) return Math.max(0, Math.round(t));
-                }
-                if (isFinite(Game.Time)) return Math.max(0, Math.round(Game.Time));
-                if (isFinite(Game.GameTime)) return Math.max(0, Math.round(Game.GameTime));
-            }
-            if (typeof GameUI !== "undefined" && typeof GameUI.GetGameTime === "function") {
-                var t2 = GameUI.GetGameTime();
-                if (isFinite(t2)) return Math.max(0, Math.round(t2));
-            }
-        } catch (e) {}
-
+        // Game.GetGameTime/Game.Time and GameUI.GetGameTime confirmed absent.
+        // Fall back to UI panel text parsing.
         var gameTimePanel = GetCachedPanel("gameTime");
         if (!gameTimePanel && root) {
             gameTimePanel = root.FindChildTraverse("HudGameTime") || root.FindChildTraverse("GameTime");
@@ -6589,41 +6444,7 @@ function GetUIRoot() {
         State.topbarSoulSnapshotUntilMs = 0;
     }
     function ResolveMinimapCrateOverlayMapKey() {
-        try {
-            if (typeof Game !== "undefined" && Game.GetMapInfo) {
-                var mapInfo = Game.GetMapInfo();
-                if (mapInfo) {
-                    var candidates = [];
-                    if (mapInfo.map_name !== undefined && mapInfo.map_name !== null) {
-                        candidates.push(String(mapInfo.map_name));
-                    }
-                    if (mapInfo.map_display_name !== undefined && mapInfo.map_display_name !== null) {
-                        candidates.push(String(mapInfo.map_display_name));
-                    }
-                    for (var i = 0; i < candidates.length; i++) {
-                        var raw = String(candidates[i] || "");
-                        var normalized = raw.toLowerCase();
-                        if (
-                            normalized === "dl_midtown" ||
-                            normalized === "midtown" ||
-                            normalized.indexOf("midtown") !== -1
-                        ) {
-                            MinimapCrateOverlayDebugLogThrottled(
-                                "mapkey|" + normalized,
-                                "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=dl_midtown from=" + raw,
-                                PerfNowMs()
-                            );
-                            return "dl_midtown";
-                        }
-                    }
-                    MinimapCrateOverlayDebugLogThrottled(
-                        "mapkey|none|" + candidates.join("|"),
-                        "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=<none>",
-                        PerfNowMs()
-                    );
-                }
-            }
-        } catch (eCrateMapKey) {}
+        // Game.GetMapInfo confirmed absent — minimap crate overlay map detection disabled.
         return "";
     }
 
@@ -6970,31 +6791,8 @@ function GetUIRoot() {
             State.enemyV2EnhancedBridgeLastValue !== nextEnhanced ||
             State.enemyV2UltBridgeLastValue !== nextUlt ||
             State.enemyV2LevelBridgeLastValue !== nextLevel;
-        try {
-            if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                if (State.enemyV2EnhancedBridgeLastValue !== nextEnhanced) {
-                    $.persistentStorage.setItem("qol_enemy_v2_enhanced", nextEnhanced);
-                }
-                if (State.enemyV2UltBridgeLastValue !== nextUlt) {
-                    $.persistentStorage.setItem("qol_enemy_v2_ult_indicator", nextUlt);
-                }
-                if (State.enemyV2LevelBridgeLastValue !== nextLevel) {
-                    $.persistentStorage.setItem("qol_enemy_v2_level", nextLevel);
-                }
-            }
-        } catch (e0) {}
-        try {
-            if (typeof GameUI !== "undefined" &&
-                GameUI &&
-                typeof GameUI.CustomUIConfig === "function") {
-                var uiCfg = GameUI.CustomUIConfig();
-                if (uiCfg) {
-                    uiCfg.qol_enemy_v2_enhanced = (nextEnhanced === "1") ? 1 : 0;
-                    uiCfg.qol_enemy_v2_ult_indicator = (nextUlt === "1") ? 1 : 0;
-                    uiCfg.qol_enemy_v2_level = (nextLevel === "1") ? 1 : 0;
-                }
-            }
-        } catch (e1) {}
+        // $.persistentStorage and GameUI.CustomUIConfig confirmed absent.
+        // Panel attributes are the only persistence.
         if (hasChanged) {
             try {
                 $.DispatchEvent("QOLLockEnemyV2Bridge", nextEnhanced, nextUlt, nextLevel);
@@ -7763,72 +7561,14 @@ function GetUIRoot() {
             }
         }
 
-        try { logObjectHints("Game", (typeof Game !== "undefined") ? Game : null); } catch (e1) {}
-        try { logObjectHints("Players", (typeof Players !== "undefined") ? Players : null); } catch (e2) {}
-        try { logObjectHints("GameInterfaceAPI", (typeof GameInterfaceAPI !== "undefined") ? GameInterfaceAPI : null); } catch (e3) {}
+        // Game, Players, GameInterfaceAPI confirmed absent — account probing via panel tree only.
     }
 
     function TryReadLocalAccountId(root, nowMs) {
         if (!root) return { id: "", source: "", detail: "", panelsScanned: 0 };
 
-        try {
-            if (typeof Game !== "undefined" && Game && typeof Game.GetLocalPlayerInfo === "function") {
-                var localInfo = Game.GetLocalPlayerInfo();
-                if (localInfo) {
-                    var gFields = [localInfo.account_id, localInfo.accountid, localInfo.steamid32];
-                    for (var gf = 0; gf < gFields.length; gf++) {
-                        if (IsLikelyAccountId(gFields[gf])) {
-                            return {
-                                id: String(gFields[gf]).trim(),
-                                source: "api_game_localinfo",
-                                detail: "Game.GetLocalPlayerInfo",
-                                panelsScanned: 0
-                            };
-                        }
-                    }
-                }
-            }
-        } catch (e0) {}
-
-        try {
-            if (typeof Players !== "undefined" && Players && typeof Players.GetLocalPlayer === "function") {
-                var localPlayer = Players.GetLocalPlayer();
-                if (localPlayer !== undefined && localPlayer !== null) {
-                    if (typeof Players.GetPlayerData === "function") {
-                        var pdata = Players.GetPlayerData(localPlayer);
-                        if (pdata) {
-                            var pdFields = [pdata.account_id, pdata.accountid, pdata.steamid32];
-                            for (var pf = 0; pf < pdFields.length; pf++) {
-                                if (IsLikelyAccountId(pdFields[pf])) {
-                                    return {
-                                        id: String(pdFields[pf]).trim(),
-                                        source: "api_players_data",
-                                        detail: "Players.GetPlayerData(local)",
-                                        panelsScanned: 0
-                                    };
-                                }
-                            }
-                        }
-                    }
-                    if (typeof Players.GetPlayerInfo === "function") {
-                        var pinfo = Players.GetPlayerInfo(localPlayer);
-                        if (pinfo) {
-                            var piFields = [pinfo.account_id, pinfo.accountid, pinfo.steamid32];
-                            for (var inf = 0; inf < piFields.length; inf++) {
-                                if (IsLikelyAccountId(piFields[inf])) {
-                                    return {
-                                        id: String(piFields[inf]).trim(),
-                                        source: "api_players_info",
-                                        detail: "Players.GetPlayerInfo(local)",
-                                        panelsScanned: 0
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e1) {}
+        // Game.GetLocalPlayerInfo and Players.* confirmed absent (panorama_api_test, 2026-06-11).
+        // Account ID detection relies on panel tree scanning.
 
         if (nowMs >= (State.accountProbeDeepScanNextMs || 0)) {
             State.accountProbeDeepScanNextMs = nowMs + ACCOUNT_PROBE_DEEP_SCAN_INTERVAL_MS;
@@ -11892,26 +11632,7 @@ function GetUIRoot() {
     }
 
     function TryReadBuildSaveStorageHeroFromSettings() {
-        if (typeof GameInterfaceAPI === "undefined" || !GameInterfaceAPI || typeof GameInterfaceAPI.GetSettingString !== "function") {
-            return { hero: "", source: "" };
-        }
-
-        var settingKeys = [
-            "citadel_selected_hero",
-            "citadel_selected_hero_name",
-            "citadel_hero",
-            "citadel_dev_hero"
-        ];
-        for (var i = 0; i < settingKeys.length; i++) {
-            var key = settingKeys[i];
-            var raw = "";
-            try { raw = String(GameInterfaceAPI.GetSettingString(key) || ""); } catch (e0) { raw = ""; }
-            if (!raw || raw.length === 0) continue;
-            var parsed = QOL.normalizeHeroId(ExtractLastHeroTokenFromText(raw) || ExtractHeroTokenFromText(raw));
-            if (parsed) {
-                return { hero: parsed, source: "setting:" + key };
-            }
-        }
+        // GameInterfaceAPI confirmed absent — hero detection via settings API unavailable.
         return { hero: "", source: "" };
     }
 
@@ -16669,20 +16390,8 @@ function GetUIRoot() {
 
 
     function TryGetGameplayMouseCursorPosition() {
-        var cursor = null;
-        try {
-            if (typeof GameUI !== "undefined" && GameUI && typeof GameUI.GetCursorPosition === "function") {
-                cursor = GameUI.GetCursorPosition();
-            }
-        } catch (e0) {
-            cursor = null;
-        }
-        if (!cursor || cursor.length < 2) return null;
-        var x = Number(cursor[0]);
-        var y = Number(cursor[1]);
-        if (!isFinite(x) || !isFinite(y)) return null;
-        if (Math.abs(x) > 1000000000 || Math.abs(y) > 1000000000) return null;
-        return { x: x, y: y };
+        // GameUI.GetCursorPosition confirmed absent — custom gameplay cursor disabled.
+        return null;
     }
 
     function ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
