@@ -17481,16 +17481,9 @@ function GetUIRoot() {
         return parts.join("|");
     }
 
-    function loop() {
-        var nextDelaySec = LOOP_INTERVAL_SEC;
-        try {
-        ProfileHit("loop");
-        var perfLoopStartMs = PerfNowMs();
-        var perfConfigStartMs = perfLoopStartMs;
-        var root = GetUIRoot();
-        var raw = ReadStorageConfigRawFromUi(root);
-        TimeFeature("loop.config_read", perfLoopStartMs);
+    // ── Loop helpers extracted from loop() ──
 
+    function loadLoopConfig(raw, perfLoopStartMs, perfConfigStartMs) {
         var cfg = null;
         if (raw === State.lastRawConfig && State.lastConfig) {
             cfg = State.lastConfig;
@@ -17507,43 +17500,42 @@ function GetUIRoot() {
             State.perfLastLoopStartMs = perfLoopStartMs;
             PerfRecord("loop.config_load", PerfNowMs() - perfConfigStartMs);
         }
-        var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
-        var corePhase = NextCoreSchedulerPhase();
-        if (State.heroRestorePendingTarget) ProcessPendingHeroRestore(nowMsLoop);
-        var perfSection = 0;
+        return cfg;
+    }
 
-        if (QOL.shouldRunBuildCategoryPayloadOverride(root, nowMsLoop)) {
-            perfSection = PerfStart();
-            cfg = QOL.applyBuildCategoryPayloadOverride(root, cfg, nowMsLoop, raw);
+    function applyBuildCategoryOverride(root, cfg, nowMs, raw) {
+        if (QOL.shouldRunBuildCategoryPayloadOverride(root, nowMs)) {
+            var perfSection = PerfStart();
+            cfg = QOL.applyBuildCategoryPayloadOverride(root, cfg, nowMs, raw);
             cfg = ApplyForcedFeatureDisables(cfg);
             PerfEnd("loop.build_category_payload_override", perfSection);
         }
+        return cfg;
+    }
+
+    function applyAccountPresetOverride(raw) {
         if (State.accountPresetRawOverride && State.accountPresetRawOverride.length > 0) {
             raw = State.accountPresetRawOverride;
             State.accountPresetRawOverride = "";
         }
-        State.lastConfig = cfg;
-        var hideoutConnected = root ? isConnectedToHideout(root) : false;
-        var hasConfigSource = !!(raw && raw.length > 0);
+        return raw;
+    }
 
-        // Hard-gate: when all features are disabled and no pending work exists,
-        // skip gate computation and feature execution entirely.
-        // This saves ~0.05-0.1ms per tick in the common "nothing to do" case.
+    function shouldHardGateEarlyReturn(root, raw) {
+        // Skips gate computation and feature execution when nothing is enabled
+        // and no pending work exists. Saves ~0.05-0.1ms per tick.
         if (State.allFeaturesDisabled && raw === State.lastRawConfig &&
             !State.heroRestorePendingTarget &&
             !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
             !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted &&
             !State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) {
-            if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
-                QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
-            }
-            State.lastRawConfig = raw;
-            nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
-            return;
+            return true;
         }
+        return false;
+    }
 
-        // Sweep stale cached panels once per second (Fix 1)
-        var nowSec = Math.floor(nowMsLoop / 1000);
+    function sweepStalePanelCache(nowMs) {
+        var nowSec = Math.floor(nowMs / 1000);
         if (nowSec !== (State.lastCacheSweepSec || 0)) {
             State.lastCacheSweepSec = nowSec;
             var swept = SweepStalePanelCache();
@@ -17551,80 +17543,56 @@ function GetUIRoot() {
                 QOL_DEBUG("cache", "swept " + swept + " stale panel refs");
             }
         }
+    }
 
-        var _tGates = PerfNowMs();
-        var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
-        TimeFeature("loop.resolve_gates", _tGates);
-        State.lastResolvedGates = gates;
+    // ── Feature dispatch constants (hoisted from loop() to avoid per-tick allocation) ──
+    var FEATURE_DISPATCH_ORDER = [
+        "rejuvTimers",
+        "spm", "nicknames",
+        "unspent", "statlocker",
+        "panelCache",
+        "onDeathArcade",
+        "coreRoot",
+        "healthbarRuntimeHelpers",
+        "laneWithParty",
+        "gameplayMouseCursor",
+        "betterUnsecuredHud",
+        "colorWarning", "enemyColorWarning", "allyColorWarning",
+        "ammo", "topBarRuntime",
+        "bottomBarRuntime", "itemsRuntime", "soulsRuntime",
+        "heroShop",
+        "recentPurchases",
+        "keyboardRuntime", "zipBoost", "unsecuredSoulsTimer", "statBonuses",
+        "combatStatus",
+        "signatureFlash",
+        "targetShapes",
+        "damageImpactRuntime", "staminaChargeColorRuntime",
+        "damageNumbers",
+        "minimapRuntime", "legacyAudioPassive", "imagesInChat"
+    ];
 
-        // ---- intra-tick feature staggering ----
-        // Snapshot shared loop state so deferred $.Schedule callbacks
-        // see the correct tick's data even if they fire after the next
-        // loop invocation.
-        var _s = {
-            root: root,
-            cfg: cfg,
-            nowMs: nowMsLoop,
-            gates: gates,
-            raw: raw,
-            hideoutConnected: hideoutConnected,
-            hasConfigSource: hasConfigSource,
-            redDiamondEnabled: gates.redDiamondEnabled
-        };
-        var _buckets = [[], [], [], [], [], [], [], []];
-        var _b = FEATURE_STAGGER_ENABLED ? _buckets : null; // null = use bucket 0 only
+    var FEATURE_PERF_MAP = {
+        "spm": "loop.souls_per_min",
+        "coreRoot": "loop.root_classes",
+        "nicknames": "loop.topbar_nicknames",
+        "betterUnsecuredHud": "loop.unsecured_souls_hud",
+        "keyboardRuntime": "loop.keyboard_overlay",
+        "unsecuredSoulsTimer": "loop.unsecured_souls_overlay",
+        "gameplayMouseCursor": "loop.gameplay_mouse_cursor",
+        "legacyAudioPassive": "loop.legacy_audio_and_passivehud",
+        "imagesInChat": "loop.images_in_chat"
+    };
 
-        // ── Data-driven feature dispatch (Step 1: iterate registry instead of hardcoded if-blocks) ──
-        // Feature dispatch order — preserves original scheduling order within each bucket
-        var FEATURE_DISPATCH_ORDER = [
-            "rejuvTimers",
-            "spm", "nicknames",
-            "unspent", "statlocker",
-            "panelCache",
-            "onDeathArcade",
-            "coreRoot",
-            "healthbarRuntimeHelpers",
-            "laneWithParty",
-            "gameplayMouseCursor",
-            "betterUnsecuredHud",
-            "colorWarning", "enemyColorWarning", "allyColorWarning",
-            "ammo", "topBarRuntime",
-            "bottomBarRuntime", "itemsRuntime", "soulsRuntime",
-            "heroShop",
-            "recentPurchases",
-            "keyboardRuntime", "zipBoost", "unsecuredSoulsTimer", "statBonuses",
-            "combatStatus",
-            "signatureFlash",
-            "targetShapes",
-            "damageImpactRuntime", "staminaChargeColorRuntime",
-            "damageNumbers",
-            "minimapRuntime", "legacyAudioPassive", "imagesInChat"
-        ];
+    var FEATURE_GATE_MAP = {
+        "unsecuredSoulsTimer": "unsecuredSouls"
+    };
 
-        // Perf trace labels that differ from the feature key
-        var FEATURE_PERF_MAP = {
-            "spm": "loop.souls_per_min",
-            "coreRoot": "loop.root_classes",
-            "nicknames": "loop.topbar_nicknames",
-            "betterUnsecuredHud": "loop.unsecured_souls_hud",
-            "keyboardRuntime": "loop.keyboard_overlay",
-            "unsecuredSoulsTimer": "loop.unsecured_souls_overlay",
-            "gameplayMouseCursor": "loop.gameplay_mouse_cursor",
-            "legacyAudioPassive": "loop.legacy_audio_and_passivehud",
-            "imagesInChat": "loop.images_in_chat"
-        };
+    var FEATURE_REQUIRES_ROOT = {
+        "coreRoot": true,
+        "healthbarRuntimeHelpers": true
+    };
 
-        // Gate name overrides (when the gates key differs from the feature key)
-        var FEATURE_GATE_MAP = {
-            "unsecuredSoulsTimer": "unsecuredSouls"
-        };
-
-        // Features that require a valid root panel reference
-        var FEATURE_REQUIRES_ROOT = {
-            "coreRoot": true,
-            "healthbarRuntimeHelpers": true
-        };
-
+    function populateFeatureBuckets(_buckets, _b, _s, gates, root) {
         FEATURE_DISPATCH_ORDER.forEach(function(_fname) {
             var _gateKey = FEATURE_GATE_MAP[_fname] || _fname;
 
@@ -17670,8 +17638,9 @@ function GetUIRoot() {
                 });
             });
         });
+    }
 
-        // Healthbar accent color — runs synchronously (reads from State, not gates)
+    function syncHealthbarAccentColor(root, cfg) {
         var loopAccentColor = ResolveWashColorFromPalette(ReadPlayerHealthbarAccentColorIndex(cfg));
         var loopAccentNeedsRefresh = (
             loopAccentColor !== "" ||
@@ -17693,10 +17662,10 @@ function GetUIRoot() {
             ApplyPlayerHealthbarAccentColor(root, cfg, accentHealthContainer);
             PerfEnd("loop.healthbar_accent_color", _psAccent);
         }
+    }
 
-        // ---- dispatch or execute buckets ----
+    function dispatchOrExecuteBuckets(_buckets, _s) {
         if (FEATURE_STAGGER_ENABLED) {
-            // Staggered mode: dispatch each bucket at its frame-aligned offset
             if (_buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, _buckets[0], _s);
             if (_buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, _buckets[1], _s);
             if (_buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, _buckets[2], _s);
@@ -17706,7 +17675,6 @@ function GetUIRoot() {
             if (_buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, _buckets[6], _s);
             if (_buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, _buckets[7], _s);
         } else {
-            // Rollback mode: execute all features synchronously from bucket 0
             for (var _bi = 0; _bi < _buckets[0].length; _bi++) {
                 var _fn = _buckets[0][_bi];
                 if (_fn) {
@@ -17718,25 +17686,23 @@ function GetUIRoot() {
                 }
             }
         }
+    }
 
-        // accountPresetTestActive is a one-loop refresh pulse after bootstrap apply.
-        if (State.accountPresetTestActive) {
-            State.accountPresetTestActive = false;
-        }
+    function updateLoaderOverlays(root, nowMs) {
         var _settingsLoaderShowing = State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted;
         if (_settingsLoaderShowing ||
             State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
             State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
-            if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMsLoop);
-            if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMsLoop);
-            if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMsLoop);
+            if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMs);
+            if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMs);
+            if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMs);
         }
-        State.lastRawConfig = raw;
+    }
 
-        // Sync diagnostic state to Hud panel attribute (same cross-context path as config)
+    function syncDiagnosticState(root, nowMs) {
         try {
-            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && (!State._diagWriteNextMs || State._diagWriteNextMs <= nowMsLoop)) {
-                State._diagWriteNextMs = nowMsLoop + 5000;
+            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && (!State._diagWriteNextMs || State._diagWriteNextMs <= nowMs)) {
+                State._diagWriteNextMs = nowMs + 5000;
                 var _diag = {
                     features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
                     missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
@@ -17753,7 +17719,9 @@ function GetUIRoot() {
                 }
             }
         } catch(e) {}
+    }
 
+    function recordLoopPerf(root, cfg, perfLoopStartMs) {
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
             if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
@@ -17762,14 +17730,12 @@ function GetUIRoot() {
             FlushPerfIfNeeded(false);
         }
         RecordFrameTime(PerfNowMs() - perfLoopStartMs);
+    }
 
-        // ---- Adaptive Polling Degradation (Fix 9) ----
-        // Track frame time for low-FPS detection
+    function computeDynamicInterval(root, perfLoopStartMs) {
         if (State.perfLastLoopStartMs > 0) {
             State.perfLastFrameTimeMs = perfLoopStartMs - State.perfLastLoopStartMs;
         }
-
-        // Compute dynamic interval based on game idle state
         var idleState = DetectGlobalIdleState(root);
         var dynamicInterval = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, idleState);
         if (idleState.level !== State.lastIdleLevel) {
@@ -17779,7 +17745,77 @@ function GetUIRoot() {
             }
             State.lastIdleLevel = idleState.level;
         }
-        nextDelaySec = dynamicInterval;
+        return dynamicInterval;
+    }
+
+    function loop() {
+        var nextDelaySec = LOOP_INTERVAL_SEC;
+        try {
+        ProfileHit("loop");
+        var perfLoopStartMs = PerfNowMs();
+        var perfConfigStartMs = perfLoopStartMs;
+        var root = GetUIRoot();
+        var raw = ReadStorageConfigRawFromUi(root);
+        TimeFeature("loop.config_read", perfLoopStartMs);
+
+        var cfg = loadLoopConfig(raw, perfLoopStartMs, perfConfigStartMs);
+        var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
+        var corePhase = NextCoreSchedulerPhase();
+        if (State.heroRestorePendingTarget) ProcessPendingHeroRestore(nowMsLoop);
+
+        cfg = applyBuildCategoryOverride(root, cfg, nowMsLoop, raw);
+        raw = applyAccountPresetOverride(raw);
+        State.lastConfig = cfg;
+        var hideoutConnected = root ? isConnectedToHideout(root) : false;
+        var hasConfigSource = !!(raw && raw.length > 0);
+
+        // Hard-gate: when all features are disabled and no pending work exists,
+        // skip gate computation and feature execution entirely.
+        if (shouldHardGateEarlyReturn(root, raw)) {
+            if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
+                QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
+            }
+            State.lastRawConfig = raw;
+            nextDelaySec = GetDynamicLoopInterval(LOOP_INTERVAL_SEC, DetectGlobalIdleState(root));
+            return;
+        }
+
+        sweepStalePanelCache(nowMsLoop);
+
+        var _tGates = PerfNowMs();
+        var gates = ResolveRuntimeGates(root, cfg, raw, hideoutConnected, hasConfigSource, corePhase);
+        TimeFeature("loop.resolve_gates", _tGates);
+        State.lastResolvedGates = gates;
+
+        // ---- intra-tick feature staggering ----
+        // Snapshot shared loop state so deferred $.Schedule callbacks
+        // see the correct tick's data even if they fire after the next
+        // loop invocation.
+        var _s = {
+            root: root,
+            cfg: cfg,
+            nowMs: nowMsLoop,
+            gates: gates,
+            raw: raw,
+            hideoutConnected: hideoutConnected,
+            hasConfigSource: hasConfigSource,
+            redDiamondEnabled: gates.redDiamondEnabled
+        };
+        var _buckets = [[], [], [], [], [], [], [], []];
+        var _b = FEATURE_STAGGER_ENABLED ? _buckets : null; // null = use bucket 0 only
+
+        populateFeatureBuckets(_buckets, _b, _s, gates, root);
+        syncHealthbarAccentColor(root, cfg);
+        dispatchOrExecuteBuckets(_buckets, _s);
+
+        if (State.accountPresetTestActive) {
+            State.accountPresetTestActive = false;
+        }
+        updateLoaderOverlays(root, nowMsLoop);
+        State.lastRawConfig = raw;
+        syncDiagnosticState(root, nowMsLoop);
+        recordLoopPerf(root, cfg, perfLoopStartMs);
+        nextDelaySec = computeDynamicInterval(root, perfLoopStartMs);
 
         } catch (err) {
             LogLoopException("loop", err, "loopErrorNextLogMs", PerfNowMs());
