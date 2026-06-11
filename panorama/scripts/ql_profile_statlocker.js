@@ -121,45 +121,8 @@
     }
 
     function ReadLocalPlayerAccountIdFromApi() {
-        try {
-            if (typeof Game !== "undefined" && Game && typeof Game.GetLocalPlayerInfo === "function") {
-                var localInfo = Game.GetLocalPlayerInfo();
-                if (localInfo) {
-                    var gFields = [localInfo.account_id, localInfo.accountid, localInfo.steamid32];
-                    for (var gi = 0; gi < gFields.length; gi++) {
-                        var gId = ParseAccountId(gFields[gi]);
-                        if (gId) return gId;
-                    }
-                }
-            }
-        } catch (e0) {}
-        try {
-            if (typeof Players !== "undefined" && Players && typeof Players.GetLocalPlayer === "function") {
-                var localPlayer = Players.GetLocalPlayer();
-                if (localPlayer !== undefined && localPlayer !== null) {
-                    if (typeof Players.GetPlayerData === "function") {
-                        var pdata = Players.GetPlayerData(localPlayer);
-                        if (pdata) {
-                            var pFields = [pdata.account_id, pdata.accountid, pdata.steamid32];
-                            for (var pi = 0; pi < pFields.length; pi++) {
-                                var pId = ParseAccountId(pFields[pi]);
-                                if (pId) return pId;
-                            }
-                        }
-                    }
-                    if (typeof Players.GetPlayerInfo === "function") {
-                        var pinfo = Players.GetPlayerInfo(localPlayer);
-                        if (pinfo) {
-                            var iFields = [pinfo.account_id, pinfo.accountid, pinfo.steamid32];
-                            for (var ii = 0; ii < iFields.length; ii++) {
-                                var iId = ParseAccountId(iFields[ii]);
-                                if (iId) return iId;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e1) {}
+        // Game.GetLocalPlayerInfo and Players.* confirmed absent.
+        // Account ID detection relies on panel tree scanning instead.
         return "";
     }
 

@@ -10,13 +10,8 @@
     var STEADY_POLL_SEC_MAX = 3.60;
 
     function LegacyCooldownsEnabled() {
-        try {
-            if (typeof GameUI !== "object" || !GameUI || typeof GameUI.CustomUIConfig !== "function") return false;
-            var customUiConfig = GameUI.CustomUIConfig();
-            return !!(customUiConfig && Number(customUiConfig.qolLegacyCooldownsEnabled) === 1);
-        } catch (e) {
-            return false;
-        }
+        // GameUI.CustomUIConfig confirmed absent.
+        return false;
     }
 
     function DebugLegacyCooldowns(panel, enabled) {

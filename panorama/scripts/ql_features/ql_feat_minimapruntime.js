@@ -72,41 +72,7 @@ function HideMinimapCrateOverlay(root) {
         MinimapCrateOverlayDebugLogThrottled("hide|" + (overlay ? "1" : "0"), "overlay=" + (overlay ? "1" : "0") + " visibility=collapse", PerfNowMs());
     }
 function ResolveMinimapCrateOverlayMapKey() {
-        try {
-            if (typeof Game !== "undefined" && Game.GetMapInfo) {
-                var mapInfo = Game.GetMapInfo();
-                if (mapInfo) {
-                    var candidates = [];
-                    if (mapInfo.map_name !== undefined && mapInfo.map_name !== null) {
-                        candidates.push(String(mapInfo.map_name));
-                    }
-                    if (mapInfo.map_display_name !== undefined && mapInfo.map_display_name !== null) {
-                        candidates.push(String(mapInfo.map_display_name));
-                    }
-                    for (var i = 0; i < candidates.length; i++) {
-                        var raw = String(candidates[i] || "");
-                        var normalized = raw.toLowerCase();
-                        if (
-                            normalized === "dl_midtown" ||
-                            normalized === "midtown" ||
-                            normalized.indexOf("midtown") !== -1
-                        ) {
-                            MinimapCrateOverlayDebugLogThrottled(
-                                "mapkey|" + normalized,
-                                "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=dl_midtown from=" + raw,
-                                PerfNowMs()
-                            );
-                            return "dl_midtown";
-                        }
-                    }
-                    MinimapCrateOverlayDebugLogThrottled(
-                        "mapkey|none|" + candidates.join("|"),
-                        "map_name=" + String(mapInfo.map_name) + " map_display_name=" + String(mapInfo.map_display_name) + " resolved=<none>",
-                        PerfNowMs()
-                    );
-                }
-            }
-        } catch (eCrateMapKey) {}
+        // Game.GetMapInfo confirmed absent — minimap crate map detection disabled.
         return "";
     }
 function MinimapCrateOverlayDebugLogThrottled(sig, msg, nowMs) {
@@ -183,7 +149,7 @@ function BuildMinimapCrateOverlay(root, mapName) {
         return overlay;
     }
 function ReadMinimapIconColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR", MINIMAP_ICON_COLOR_ATTR, "");
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR", MINIMAP_ICON_COLOR_ATTR);
     }
 function CaptureMinimapOriginalParent(minimapPersp) {
         if (!minimapPersp || S.minimapDrawOverUiOriginalParent) {
@@ -405,7 +371,8 @@ function MinimapCrateOverlayDebugLog(msg) {
         if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
         $.Msg("[QOLLock][MinimapCrateDbg] " + msg);
     }
-function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName, persistentStorageKey) {
+function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
+        // $.persistentStorage confirmed absent — panel attrs are the only persistence.
         var fromConfig = NormalizePaletteColorIndex(cfg && cfg[key]);
         var root = GetUIRoot();
         try {
@@ -421,12 +388,6 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName, persistentStorag
                 if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
             }
         } catch (eAttrHud) {}
-        try {
-            if (persistentStorageKey && $ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
-                var raw = String($.persistentStorage.getItem(persistentStorageKey) || "");
-                if (raw !== "") return NormalizePaletteColorIndex(raw);
-            }
-        } catch (e0) {}
         return fromConfig;
     }
 var SetCachedPanel = function(k, p) {

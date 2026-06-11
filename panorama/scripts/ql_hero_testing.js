@@ -697,13 +697,7 @@ function ReadQolSettingsRaw() {
             if (root && root.GetAttributeString) raw = String(root.GetAttributeString(key, "") || "");
         } catch (e1) { raw = ""; }
     }
-    if (!raw) {
-        try {
-            if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.GetSettingString === "function") {
-                raw = String(GameInterfaceAPI.GetSettingString(key) || "");
-            }
-        } catch (e2) { raw = ""; }
-    }
+    // GameInterfaceAPI confirmed absent — settings read via panel attrs only.
     return String(raw || "");
 }
 
@@ -756,24 +750,14 @@ function ReadLoadTestingEnvironmentPendingToken() {
     const fromAttr = ReadAttributeFromPanels(HTPP_LOAD_TEST_ENV_ATTR);
     if (fromAttr) return String(fromAttr);
 
-    if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.GetSettingString === "function") {
-        try {
-            const fromSetting = String(GameInterfaceAPI.GetSettingString(HTPP_LOAD_TEST_ENV_SETTING_KEY) || "");
-            if (fromSetting) return fromSetting;
-        } catch (e0) {}
-    }
-
+    // GameInterfaceAPI confirmed absent — load test env via panel attrs only.
     return "";
 }
 
 function WriteLoadTestingEnvironmentPendingToken(value) {
     const safeValue = String(value || "");
+    // GameInterfaceAPI confirmed absent — load test env via panel attrs only.
     WriteAttributeToPanels(HTPP_LOAD_TEST_ENV_ATTR, safeValue);
-    if (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.SetSettingString === "function") {
-        try {
-            GameInterfaceAPI.SetSettingString(HTPP_LOAD_TEST_ENV_SETTING_KEY, safeValue);
-        } catch (e0) {}
-    }
 }
 
 function MaybeRunPendingLoadTestingEnvironment() {
@@ -1140,36 +1124,8 @@ function CollectLocalPlayerEntityCandidates() {
     const candidates = [];
     const seen = {};
 
-    try {
-        if (typeof Players !== "undefined" && Players && typeof Players.GetLocalPlayer === "function") {
-            const localPlayer = Players.GetLocalPlayer();
-            if (localPlayer !== undefined && localPlayer !== null && localPlayer >= 0) {
-                if (typeof Players.GetPlayerHeroEntityIndex === "function") {
-                    PushUniqueEntityCandidate(candidates, seen, Players.GetPlayerHeroEntityIndex(localPlayer));
-                }
-                if (typeof Players.GetPlayerControlledUnit === "function") {
-                    PushUniqueEntityCandidate(candidates, seen, Players.GetPlayerControlledUnit(localPlayer));
-                }
-                if (typeof Players.GetPlayerPortraitUnit === "function") {
-                    PushUniqueEntityCandidate(candidates, seen, Players.GetPlayerPortraitUnit(localPlayer));
-                    PushUniqueEntityCandidate(candidates, seen, Players.GetPlayerPortraitUnit());
-                }
-            }
-        }
-    } catch (e0) {}
-
-    try {
-        if (typeof Game !== "undefined" && Game && typeof Game.GetLocalPlayerInfo === "function") {
-            const info = Game.GetLocalPlayerInfo();
-            if (info) {
-                PushUniqueEntityCandidate(candidates, seen, info.hero_entindex);
-                PushUniqueEntityCandidate(candidates, seen, info.hero_entity_index);
-                PushUniqueEntityCandidate(candidates, seen, info.controlled_unit_entindex);
-                PushUniqueEntityCandidate(candidates, seen, info.entityindex);
-                PushUniqueEntityCandidate(candidates, seen, info.entindex);
-            }
-        }
-    } catch (e1) {}
+    // Players.* and Game.GetLocalPlayerInfo confirmed absent — entity discovery
+    // via panel tree scanning and Entities API only.
 
     return candidates;
 }
@@ -1252,49 +1208,12 @@ function NormalizePosCandidate(candidate) {
 }
 
 function TryReadPositionFromLocalPlayerInfo() {
-    try {
-        if (typeof Game === "undefined" || !Game || typeof Game.GetLocalPlayerInfo !== "function") return null;
-        const info = Game.GetLocalPlayerInfo();
-        if (!info) return null;
-
-        const directKeys = [
-            "position",
-            "origin",
-            "abs_origin",
-            "m_vecOrigin",
-            "hero_origin",
-            "hero_position"
-        ];
-        for (let i = 0; i < directKeys.length; i++) {
-            const candidate = NormalizePosCandidate(info[directKeys[i]]);
-            if (candidate) return candidate;
-        }
-
-        const scalarSets = [
-            ["x", "y", "z"],
-            ["origin_x", "origin_y", "origin_z"],
-            ["pos_x", "pos_y", "pos_z"],
-            ["hero_x", "hero_y", "hero_z"]
-        ];
-        for (let s = 0; s < scalarSets.length; s++) {
-            const set = scalarSets[s];
-            const x = Number(info[set[0]]);
-            const y = Number(info[set[1]]);
-            const z = Number(info[set[2]]);
-            if (isFinite(x) && isFinite(y) && isFinite(z)) {
-                return { x: x, y: y, z: z };
-            }
-        }
-    } catch (e0) {}
+    // Game.GetLocalPlayerInfo confirmed absent — position via Entities API only.
     return null;
 }
 
 function ReadFallbackCameraPositionSnapshot() {
-    try {
-        if (typeof GameUI !== "undefined" && GameUI && typeof GameUI.GetCameraLookAtPosition === "function") {
-            return NormalizePosCandidate(GameUI.GetCameraLookAtPosition());
-        }
-    } catch (e0) {}
+    // GameUI.GetCameraLookAtPosition confirmed absent.
     return null;
 }
 

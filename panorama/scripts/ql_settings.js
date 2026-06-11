@@ -11571,34 +11571,9 @@ function ExtractLastHeroTokenFromText(rawText) {
     return last;
 }
 
-var _heroHintApiDegradedLogged = false;
 function PublishHeroHintFromSettings() {
-    var root = FindRootPanel();
-    if (!root || !root.SetAttributeString) return;
-    if (typeof GameInterfaceAPI === "undefined" || !GameInterfaceAPI || typeof GameInterfaceAPI.GetSettingString !== "function") return;
-
-    var settingKeys = [
-        "citadel_last_used_hero_builds",
-        "citadel_last_used_hero",
-        "citadel_selected_hero",
-        "citadel_selected_hero_name",
-        "citadel_dev_hero",
-        "citadel_hero"
-    ];
-
-    var heroHint = "";
-    for (var i = 0; i < settingKeys.length; i++) {
-        var key = settingKeys[i];
-        var val = "";
-        try { val = String(GameInterfaceAPI.GetSettingString(key) || ""); } catch (e0) { if (!_heroHintApiDegradedLogged) { _heroHintApiDegradedLogged = true; $.Msg("[QOLLock][WARN][settings] GameInterfaceAPI.GetSettingString unavailable — hero hint detection degraded"); } val = ""; }
-        if (!val || val.length === 0) continue;
-        heroHint = ExtractLastHeroTokenFromText(val) || ExtractHeroTokenFromText(val);
-        if (heroHint) break;
-    }
-
-    if (heroHint) {
-        root.SetAttributeString(HERO_HINT_ATTR, heroHint);
-    }
+    // GameInterfaceAPI confirmed absent — hero hint publishing from settings unavailable.
+    // Hero detection relies on HUD-side UI panel scanning.
 }
 
 function StartHeroHintPublisher() {
@@ -11614,19 +11589,7 @@ function StartHeroHintPublisher() {
 }
 
 function IsInHideoutForBuildSave() {
-    try {
-        if (typeof Game !== "undefined" && Game && typeof Game.GetMapInfo === "function") {
-            var mapInfo = Game.GetMapInfo();
-            if (mapInfo) {
-                var names = [mapInfo.map_display_name, mapInfo.map_name, mapInfo.map];
-                for (var i = 0; i < names.length; i++) {
-                    var n = names[i] ? String(names[i]).toLowerCase() : "";
-                    if (n.indexOf("hideout") !== -1) return true;
-                }
-            }
-        }
-    } catch (e0) { $.Msg("[QOLLock][WARN][settings] IsInHideoutForBuildSave failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-
+    // Game.GetMapInfo confirmed absent — use panel class detection for hideout detection.
     var root = FindRootPanel();
     if (root && root.BHasClass) {
         try {
@@ -11697,21 +11660,7 @@ function IsSettingsInActiveMatchContext() {
         return true;
     }
 
-    try {
-        if (typeof Game !== "undefined" && Game && typeof Game.GetMapInfo === "function") {
-            var mapInfo = Game.GetMapInfo();
-            if (mapInfo) {
-                var mapNames = [mapInfo.map_display_name, mapInfo.map_name, mapInfo.map];
-                for (var i = 0; i < mapNames.length; i++) {
-                    var mapName = mapNames[i] ? String(mapNames[i]).trim().toLowerCase() : "";
-                    if (!mapName) continue;
-                    if (mapName.indexOf("hideout") !== -1) return false;
-                    return true;
-                }
-            }
-        }
-    } catch (e1) {}
-
+    // Game.GetMapInfo confirmed absent — match detection via panel classes only.
     return false;
 }
 
@@ -12170,16 +12119,7 @@ function NormalizeConfig(config, parsed) {
 
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
-    // Fallback: if panel attrs are empty (e.g. after game restart), recover from
-    // persistentStorage which IS disk-backed and survives restarts.
-    if (!raw || raw.length === 0) {
-        try {
-            if ($ && $.persistentStorage && typeof $.persistentStorage.getItem === "function") {
-                var psRaw = String($.persistentStorage.getItem("qol_settings_raw_v1") || "");
-                if (psRaw && psRaw.length > 0) raw = psRaw;
-            }
-        } catch (ePs) { $.Msg("[QOLLock][WARN][storage] persistentStorage.getItem fallback failed: " + (ePs && ePs.message ? ePs.message : String(ePs || ""))); }
-    }
+    // $.persistentStorage confirmed absent — panel attrs are the only persistence.
     var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
         ? Object.assign({}, QOL_DEFAULT_CONFIG)
         : {};
@@ -12197,25 +12137,12 @@ function SyncConfigFromStorage() {
     }
     MOD_CONFIG = nextConfig;
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
-    // Pass the raw string we actually loaded from so the persistentStorage
-    // mirror stays in sync (not empty, which would overwrite with defaults).
-    PersistStatlockerProfileState(raw, nextConfig);
+    // $.persistentStorage confirmed absent — statlocker state persists via panel attrs only.
     UpdateOnDeathArcadeBridgePollerState();
 }
 
-var _psUnavailableLogged = false;
 function PersistStatlockerProfileState(rawConfig, configObj) {
-    if (!$ || !$.persistentStorage || typeof $.persistentStorage.setItem !== "function") {
-        if (!_psUnavailableLogged) { _psUnavailableLogged = true; $.Msg("[QOLLock][WARN][storage] persistentStorage unavailable in settings context — config will not survive restart"); }
-        return;
-    }
-    var enabled = Number(configObj && configObj.ENABLE_STATLOCKER) === 1 ? "1" : "0";
-    try { $.persistentStorage.setItem("qol_statlocker_enabled", enabled); } catch (e0) { $.Msg("[QOLLock][WARN][storage] Failed to persist qol_statlocker_enabled: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    try {
-        var raw = String(rawConfig || "");
-        if (!raw || raw.length <= 0) raw = WrapConfigForStorage(configObj || {});
-        $.persistentStorage.setItem("qol_settings_raw_v1", raw);
-    } catch (e1) { $.Msg("[QOLLock][WARN][storage] Failed to persist qol_settings_raw_v1: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+    // $.persistentStorage confirmed absent — config persistence is via Airheart builds.
 }
 
 function GetRuntimePresetName() {
@@ -12279,13 +12206,7 @@ function PublishPaletteColorBridge(configId, value) {
     try { if (panel && panel.SetAttributeString) panel.SetAttributeString(attrName, bridgeValue); } catch (ePanel) {}
     try { if (root && root.SetAttributeString) root.SetAttributeString(attrName, bridgeValue); } catch (eRoot) {}
     try { if (hud && hud.SetAttributeString) hud.SetAttributeString(attrName, bridgeValue); } catch (eHudSet) {}
-    if (configId === "PLAYER_HEALTHBAR_ACCENT_COLOR") {
-        try {
-            if ($ && $.persistentStorage && typeof $.persistentStorage.setItem === "function") {
-                $.persistentStorage.setItem(PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY, bridgeValue);
-            }
-        } catch (ePersist) { $.Msg("[QOLLock][WARN][storage] Failed to persist player healthbar accent color: " + (ePersist && ePersist.message ? ePersist.message : String(ePersist || ""))); }
-    }
+    // $.persistentStorage confirmed absent — accent color persisted via panel attrs only.
     return bridgeValue;
 }
 
@@ -13110,37 +13031,8 @@ function GetCurrentExportSettingsString() {
 }
 
 function RunJoyNameStorageReadProbe() {
-    $.Schedule(1.8, function() {
-        var canRead = (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.GetSettingString === "function");
-        var canWrite = (typeof GameInterfaceAPI !== "undefined" && GameInterfaceAPI && typeof GameInterfaceAPI.SetSettingString === "function");
-        var value = "";
-        if (canRead) {
-            try { value = String(GameInterfaceAPI.GetSettingString("joy_name") || ""); } catch (eReadJoyName) { value = ""; }
-        }
-        if (value.indexOf("QOLJOY_") === 0) {
-            var marker = "QOLJOYREAD_" + value.length + "_" + value.slice(0, 12);
-            try {
-                if (canWrite) {
-                    GameInterfaceAPI.SetSettingString("joy_name", marker);
-                } else if (GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
-                    GameInterfaceAPI.ConsoleCommand('joy_name "' + marker + '"');
-                }
-            } catch (eWriteJoyNameMarker) {}
-            try {
-                if (GameInterfaceAPI && typeof GameInterfaceAPI.ConsoleCommand === "function") {
-                    GameInterfaceAPI.ConsoleCommand("host_writeconfig");
-                }
-            } catch (eFlushJoyNameMarker) {}
-        }
-        $.Msg(
-            "[QOLLock][JoyNameStorageReadProbe]" +
-            " readApi=" + (canRead ? "1" : "0") +
-            " writeApi=" + (canWrite ? "1" : "0") +
-            " len=" + value.length +
-            " isProbe=" + (value.indexOf("QOLJOY_") === 0 ? "1" : "0") +
-            " prefix=" + value.slice(0, 24)
-        );
-    });
+    // GameInterfaceAPI confirmed absent — joy_name storage probe skipped.
+    $.Msg("[QOLLock][JoyNameStorageReadProbe] skipped — GameInterfaceAPI absent");
 }
 
 function FormatExportSettingsDisplayString(rawExport) {
@@ -17526,19 +17418,8 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
 }
 
 function TryGetCursorScreenPosition() {
-    var cursor = null;
-    try {
-        if (typeof GameUI !== "undefined" && GameUI && typeof GameUI.GetCursorPosition === "function") {
-            cursor = GameUI.GetCursorPosition();
-        }
-    } catch (eCursor0) {
-        cursor = null;
-    }
-    if (!cursor || cursor.length < 2) return null;
-    var x = Number(cursor[0]);
-    var y = Number(cursor[1]);
-    if (!isFinite(x) || !isFinite(y)) return null;
-    return { x: x, y: y };
+    // GameUI.GetCursorPosition confirmed absent.
+    return null;
 }
 
 function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options) {
