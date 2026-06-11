@@ -662,7 +662,11 @@ function ResetBuildSaveRequestAttributes(root) {
     //
     // Timeout: 12s overall (BUILD_SAVE_TIMEOUT_MS). Per-stage retry budgets
     // reset on stage transition (buildSaveRetriesStage tracking).
-    function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
+    // ── Stage helpers extracted from AdvanceBuildSaveRequestStage ──
+    // Each stage handler checks State.buildSaveStage and returns true if it
+    // handled the tick (caller should return), false/nothing if not its stage.
+
+    function resetBuildSaveRetryBudget(requestToken) {
         if (State.buildSaveLastTraceStage !== State.buildSaveStage) {
             State.buildSaveLastTraceStage = State.buildSaveStage;
             _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
@@ -675,6 +679,9 @@ function ResetBuildSaveRequestAttributes(root) {
             State.buildSaveRetriesStage = currentStage;
             State.buildSaveRetries = 0;
         }
+    }
+
+    function tryAdvanceStorageSwitch(root, nowMs, requestToken) {
         if (QOL.tryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
@@ -687,9 +694,12 @@ function ResetBuildSaveRequestAttributes(root) {
                 QOL.setBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
             }
         })) {
-            return;
+            return true;
         }
+        return false;
+    }
 
+    function tryAdvanceStorageSwitchSettle(root, nowMs, requestToken) {
         if (QOL.tryAdvanceStorageSwitchSettleStage(nowMs, {
             stageKey: "buildSaveStage",
             nextActionKey: "buildSaveNextActionMs",
@@ -707,225 +717,253 @@ function ResetBuildSaveRequestAttributes(root) {
                 QOL.setBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
             }
         })) {
-            return;
+            return true;
         }
+        return false;
+    }
 
-        if (State.buildSaveStage === "confirm_storage_context") {
-            if (!ConfirmBuildSaveStorageHero(root, nowMs)) {
-                EnsureBuildSaveStorageContextUi(root, nowMs);
-                State.buildSaveStorageConfirmRetries = (Number(State.buildSaveStorageConfirmRetries) || 0) + 1;
-                var confirmStartedMs = Number(State.buildSaveStorageConfirmStartedMs) || nowMs;
-                if (!(confirmStartedMs > 0)) confirmStartedMs = nowMs;
-                State.buildSaveStorageConfirmStartedMs = confirmStartedMs;
-                if ((nowMs - confirmStartedMs) > BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS) {
-                    FinishBuildSaveRequest(root, requestToken, "failed", "storage_not_confirmed");
-                    return;
-                }
-                var confirmMessage = "confirming_airheart";
-                var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
-                if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
-                QOL.setBuildSaveStatus(root, "pending", confirmMessage, requestToken);
-                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
-                return;
+    function handleConfirmStorageContext(root, nowMs, requestToken) {
+        if (State.buildSaveStage !== "confirm_storage_context") return false;
+        if (!ConfirmBuildSaveStorageHero(root, nowMs)) {
+            EnsureBuildSaveStorageContextUi(root, nowMs);
+            State.buildSaveStorageConfirmRetries = (Number(State.buildSaveStorageConfirmRetries) || 0) + 1;
+            var confirmStartedMs = Number(State.buildSaveStorageConfirmStartedMs) || nowMs;
+            if (!(confirmStartedMs > 0)) confirmStartedMs = nowMs;
+            State.buildSaveStorageConfirmStartedMs = confirmStartedMs;
+            if ((nowMs - confirmStartedMs) > BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS) {
+                FinishBuildSaveRequest(root, requestToken, "failed", "storage_not_confirmed");
+                return true;
             }
-            var confirmSource = State.buildSaveStorageHeroConfirmedSource || "unknown";
-            _TLog("save:ConfirmDone", "source=" + confirmSource + " retries=" + (Number(State.buildSaveStorageConfirmRetries) || 0));
-            State.buildSaveStage = "lock_target_build";
-            QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
-            State.buildSaveNextActionMs = nowMs;
-            return;
+            var confirmMessage = "confirming_airheart";
+            var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
+            if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
+            QOL.setBuildSaveStatus(root, "pending", confirmMessage, requestToken);
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
+            return true;
         }
+        var confirmSource = State.buildSaveStorageHeroConfirmedSource || "unknown";
+        _TLog("save:ConfirmDone", "source=" + confirmSource + " retries=" + (Number(State.buildSaveStorageConfirmRetries) || 0));
+        State.buildSaveStage = "lock_target_build";
+        QOL.setBuildSaveStatus(root, "pending", "locking_target_build", requestToken);
+        State.buildSaveNextActionMs = nowMs;
+        return true;
+    }
 
-        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        if (!selectedBuild) {
-            State.buildSaveRetries += 1;
-            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-            QOL.setBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
-            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-                _TLog("save:Failed", "reason=shop_not_ready retries=" + State.buildSaveRetries);
-                FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
-            }
-            return;
+    function handleShopNotReady(root, nowMs, requestToken, selectedBuild) {
+        if (selectedBuild) return false;
+        State.buildSaveRetries += 1;
+        State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+        QOL.setBuildSaveStatus(root, "pending", "waiting_for_shop", requestToken);
+        if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+            _TLog("save:Failed", "reason=shop_not_ready retries=" + State.buildSaveRetries);
+            FinishBuildSaveRequest(root, requestToken, "failed", "shop_not_ready");
         }
+        return true;
+    }
 
+    function handleLockTargetBuild(root, nowMs, requestToken, selectedBuild) {
         if (State.buildSaveStage === "lock_target_build") {
             if (!EnsureBuildSaveTargetSelectionLocked(root, nowMs, requestToken, selectedBuild, true)) {
-                return;
+                return true;
             }
             _TLog("save:AdvanceStage", "lock_target_build done → start token=" + String(requestToken || "").slice(0, 8));
             _TLog("save:TargetLocked", "title=\"" + (State.buildSaveTargetBuildTitle || "") + "\" sig=" + (State.buildSaveTargetBuildSig || "-"));
             QOL.setBuildSaveStatus(root, "pending", "target_locked", requestToken);
             State.buildSaveStage = "start";
             State.buildSaveNextActionMs = nowMs;
-        } else if (IsBuildSaveMutationStage(State.buildSaveStage)) {
+            return true;
+        }
+        if (IsBuildSaveMutationStage(State.buildSaveStage)) {
             if (!EnsureBuildSaveTargetSelectionLocked(root, nowMs, requestToken, selectedBuild, false)) {
-                return;
+                return true;
             }
             if (State.buildSaveStage === "start" || State.buildSaveStage === "wait_editor" || State.buildSaveStage === "wait_category_focus") {
                 DefocusBuildSaveCategoryEntry(root, selectedBuild);
             }
         }
+        return false;
+    }
 
-        if (State.buildSaveStage === "start" || State.buildSaveStage === "wait_editor") {
-            var editModeActive = IsBuildSaveEditModeActive(root);
-            if (!editModeActive) {
-                var editTriggered = TriggerBuildEditMode(selectedBuild);
-                State.buildSaveStage = "wait_editor";
-                State.buildSaveRetries += 1;
-                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
-                _TLog("save:EditMode", "active=0 triggered=" + (editTriggered ? "1" : "0") + " retries=" + State.buildSaveRetries);
-                var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
-                if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
-                    _TLog("save:EditMode", "skipping to wait_category_focus — category entry visible at retries=" + State.buildSaveRetries);
-                    State.buildSaveStage = "wait_category_focus";
-                    State.buildSaveNextActionMs = nowMs;
-                    return;
-                }
-                if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-                    _TLog("save:Failed", "reason=edit_mode_unavailable retries=" + State.buildSaveRetries);
-                    FinishBuildSaveRequest(root, requestToken, "failed", "edit_mode_unavailable");
-                }
-                return;
+    function handleStartWaitEditor(root, nowMs, requestToken, selectedBuild) {
+        if (State.buildSaveStage !== "start" && State.buildSaveStage !== "wait_editor") return false;
+        var editModeActive = IsBuildSaveEditModeActive(root);
+        if (!editModeActive) {
+            var editTriggered = TriggerBuildEditMode(selectedBuild);
+            State.buildSaveStage = "wait_editor";
+            State.buildSaveRetries += 1;
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+            _TLog("save:EditMode", "active=0 triggered=" + (editTriggered ? "1" : "0") + " retries=" + State.buildSaveRetries);
+            var categoryNameEntry = GetBuildSaveCategoryNameEntry(root);
+            if (categoryNameEntry && editTriggered && State.buildSaveRetries >= 2) {
+                _TLog("save:EditMode", "skipping to wait_category_focus — category entry visible at retries=" + State.buildSaveRetries);
+                State.buildSaveStage = "wait_category_focus";
+                State.buildSaveNextActionMs = nowMs;
+                return true;
             }
-            State.buildSaveStage = "wait_category_focus";
-            _TLog("save:AdvanceStage", "edit_mode ok → wait_category_focus");
+            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                _TLog("save:Failed", "reason=edit_mode_unavailable retries=" + State.buildSaveRetries);
+                FinishBuildSaveRequest(root, requestToken, "failed", "edit_mode_unavailable");
+            }
+            return true;
         }
+        State.buildSaveStage = "wait_category_focus";
+        _TLog("save:AdvanceStage", "edit_mode ok → wait_category_focus");
+        return true;
+    }
 
-        if (State.buildSaveStage === "wait_category_focus") {
-            if (!FocusFirstBuildCategory(selectedBuild)) {
-                if (HasWritableBuildCategoryEntry(root) && IsBuildSaveEditModeActive(root)) {
+    function handleWaitCategoryFocus(root, nowMs, requestToken, selectedBuild) {
+        if (State.buildSaveStage !== "wait_category_focus") return false;
+        if (!FocusFirstBuildCategory(selectedBuild)) {
+            if (HasWritableBuildCategoryEntry(root) && IsBuildSaveEditModeActive(root)) {
+                State.buildSaveStage = "write";
+                State.buildSaveNextActionMs = nowMs;
+                QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+                return true;
+            }
+            var headerCount = CountBuildCategoryHeaders(selectedBuild);
+            if (headerCount <= 0) {
+                var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
+                var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
+                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+                if (!initReady) {
+                    QOL.setBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
+                    if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
+                        _TLog("save:Failed", "reason=category_init_unavailable initRetries=" + initRetries);
+                        FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
+                    }
+                    return true;
+                }
+                if (HasWritableBuildCategoryEntry(root)) {
                     State.buildSaveStage = "write";
                     State.buildSaveNextActionMs = nowMs;
                     QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
-                    return;
+                    return true;
                 }
-                var headerCount = CountBuildCategoryHeaders(selectedBuild);
-                if (headerCount <= 0) {
-                    var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
-                    var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
-                    State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                    if (!initReady) {
-                        QOL.setBuildSaveStatus(root, "pending", "initializing_storage_build", requestToken);
-                        if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
-                            _TLog("save:Failed", "reason=category_init_unavailable initRetries=" + initRetries);
-                            FinishBuildSaveRequest(root, requestToken, "failed", "category_init_unavailable");
-                        }
-                        return;
-                    }
-                    if (HasWritableBuildCategoryEntry(root)) {
-                        State.buildSaveStage = "write";
-                        State.buildSaveNextActionMs = nowMs;
-                        QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
-                        return;
-                    }
-                    State.buildSaveRetries += 1;
-                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
-                    if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-                        FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
-                    }
-                    return;
-                } else {
-                    State.buildSaveRetries += 1;
-                    State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                    QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
-                }
+                State.buildSaveRetries += 1;
+                QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
                 if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
                     FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
                 }
-                return;
-            }
-            State.buildSaveStage = "write";
-            _TLog("save:CategoryFocus", "ok=1");
-        }
-
-        if (State.buildSaveStage === "write") {
-            var writeSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-            if (!writeSignature.confirmed) {
-                _TLog("save:WriteCheck", "signature not confirmed — falling back to confirm_storage_context");
-                State.buildSaveStorageHeroConfirmed = false;
-                State.buildSaveStorageHeroConfirmedSource = "";
-                State.buildSaveStorageConfirmStartedMs = nowMs;
-                State.buildSaveStage = "confirm_storage_context";
-                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
-                QOL.setBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
-                return;
-            }
-            if (!SetBuildCategoryNameText(root, payloadText)) {
+                return true;
+            } else {
                 State.buildSaveRetries += 1;
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
-                _TLog("save:WriteAttempt", "ok=0 retries=" + State.buildSaveRetries);
-                if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-                    _TLog("save:Failed", "reason=write_failed retries=" + State.buildSaveRetries);
-                    FinishBuildSaveRequest(root, requestToken, "failed", "write_failed");
-                }
-                return;
+                QOL.setBuildSaveStatus(root, "pending", "focusing_category", requestToken);
             }
-            _TLog("save:AdvanceStage", "write done → save");
-            _TLog("save:WriteDone", "textLen=" + String(payloadText ? payloadText.length : 0));
-            State.buildSaveStage = "save";
-            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_AFTER_WRITE_DELAY_MS;
-            return;
+            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                FinishBuildSaveRequest(root, requestToken, "failed", "category_focus_unavailable");
+            }
+            return true;
         }
+        State.buildSaveStage = "write";
+        _TLog("save:CategoryFocus", "ok=1");
+        return true;
+    }
 
-        if (State.buildSaveStage === "save") {
-            var saveEditModeActive = IsBuildSaveEditModeActive(root);
-            if (!HasFocusedBuildCategory(selectedBuild)) {
-                if (HasWritableBuildCategoryEntry(root)) {
-                } else {
-                    State.buildSaveStage = "wait_category_focus";
-                    State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                    return;
-                }
-            }
-            if (!saveEditModeActive) {
-            }
-            var committed = CommitCategoryNameEdit(root, selectedBuild, payloadText);
-            var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
-            State.buildSaveMutationClosed = true;
-            _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
-            _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0"));
-            State.buildSaveStage = "verify";
+    function handleWrite(root, nowMs, requestToken, selectedBuild, payloadText) {
+        if (State.buildSaveStage !== "write") return false;
+        var writeSignature = QOL.confirmStorageHeroSignatureAbilities(root, nowMs, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
+        if (!writeSignature.confirmed) {
+            _TLog("save:WriteCheck", "signature not confirmed — falling back to confirm_storage_context");
+            State.buildSaveStorageHeroConfirmed = false;
+            State.buildSaveStorageHeroConfirmedSource = "";
+            State.buildSaveStorageConfirmStartedMs = nowMs;
+            State.buildSaveStage = "confirm_storage_context";
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
+            QOL.setBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
+            return true;
+        }
+        if (!SetBuildCategoryNameText(root, payloadText)) {
             State.buildSaveRetries += 1;
-            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            QOL.setBuildSaveStatus(root, "pending", "saving", requestToken);
-            return;
-        }
-
-        if (State.buildSaveStage === "verify") {
-            if (CurrentBuildHasPayload(root, payloadText)) {
-                _TLog("save:VerifyOk", "payload confirmed in build");
-                FinishBuildSaveRequest(root, requestToken, "success", "saved");
-                return;
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "writing_category_name", requestToken);
+            _TLog("save:WriteAttempt", "ok=0 retries=" + State.buildSaveRetries);
+            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                _TLog("save:Failed", "reason=write_failed retries=" + State.buildSaveRetries);
+                FinishBuildSaveRequest(root, requestToken, "failed", "write_failed");
             }
+            return true;
+        }
+        _TLog("save:AdvanceStage", "write done → save");
+        _TLog("save:WriteDone", "textLen=" + String(payloadText ? payloadText.length : 0));
+        State.buildSaveStage = "save";
+        State.buildSaveNextActionMs = nowMs + BUILD_SAVE_AFTER_WRITE_DELAY_MS;
+        return true;
+    }
 
-            var verifyEntry = GetBuildSaveCategoryNameEntry(root);
-            var verifyEntryText = QOL.readPanelTextMaybe(verifyEntry);
-            var verifyEntryToken = QOL.extractBuildCategoryPayloadToken(verifyEntryText);
-            if (
-                (!verifyEntryText || verifyEntryText.length === 0 || !verifyEntryToken) &&
-                State.buildSaveRetries < BUILD_SAVE_MAX_RETRIES &&
-                !State.buildSaveMutationClosed
-            ) {
-                TriggerBuildEditMode(selectedBuild);
+    function handleSave(root, nowMs, requestToken, selectedBuild, payloadText) {
+        if (State.buildSaveStage !== "save") return false;
+        if (!HasFocusedBuildCategory(selectedBuild)) {
+            if (!HasWritableBuildCategoryEntry(root)) {
                 State.buildSaveStage = "wait_category_focus";
                 State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
-                QOL.setBuildSaveStatus(root, "pending", "retrying_write", requestToken);
-                return;
+                return true;
             }
-
-            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-                _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries);
-                FinishBuildSaveRequest(root, requestToken, "failed", "verify_failed");
-                return;
-            }
-            var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
-            State.buildSaveRetries += 1;
-            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
-            QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
-            return;
         }
+        var committed = CommitCategoryNameEdit(root, selectedBuild, payloadText);
+        var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
+        State.buildSaveMutationClosed = true;
+        _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
+        _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0"));
+        State.buildSaveStage = "verify";
+        State.buildSaveRetries += 1;
+        State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+        QOL.setBuildSaveStatus(root, "pending", "saving", requestToken);
+        return true;
+    }
+
+    function handleVerify(root, nowMs, requestToken, selectedBuild, payloadText) {
+        if (State.buildSaveStage !== "verify") return false;
+        if (CurrentBuildHasPayload(root, payloadText)) {
+            _TLog("save:VerifyOk", "payload confirmed in build");
+            FinishBuildSaveRequest(root, requestToken, "success", "saved");
+            return true;
+        }
+
+        var verifyEntry = GetBuildSaveCategoryNameEntry(root);
+        var verifyEntryText = QOL.readPanelTextMaybe(verifyEntry);
+        var verifyEntryToken = QOL.extractBuildCategoryPayloadToken(verifyEntryText);
+        if (
+            (!verifyEntryText || verifyEntryText.length === 0 || !verifyEntryToken) &&
+            State.buildSaveRetries < BUILD_SAVE_MAX_RETRIES &&
+            !State.buildSaveMutationClosed
+        ) {
+            TriggerBuildEditMode(selectedBuild);
+            State.buildSaveStage = "wait_category_focus";
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "retrying_write", requestToken);
+            return true;
+        }
+
+        if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+            _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries);
+            FinishBuildSaveRequest(root, requestToken, "failed", "verify_failed");
+            return true;
+        }
+        var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
+        State.buildSaveRetries += 1;
+        State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+        QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
+        return true;
+    }
+
+    function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
+        resetBuildSaveRetryBudget(requestToken);
+        if (tryAdvanceStorageSwitch(root, nowMs, requestToken)) return;
+        if (tryAdvanceStorageSwitchSettle(root, nowMs, requestToken)) return;
+
+        if (handleConfirmStorageContext(root, nowMs, requestToken)) return;
+
+        var selectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
+        if (handleShopNotReady(root, nowMs, requestToken, selectedBuild)) return;
+        if (handleLockTargetBuild(root, nowMs, requestToken, selectedBuild)) return;
+
+        if (handleStartWaitEditor(root, nowMs, requestToken, selectedBuild)) return;
+        if (handleWaitCategoryFocus(root, nowMs, requestToken, selectedBuild)) return;
+        if (handleWrite(root, nowMs, requestToken, selectedBuild, payloadText)) return;
+        if (handleSave(root, nowMs, requestToken, selectedBuild, payloadText)) return;
+        if (handleVerify(root, nowMs, requestToken, selectedBuild, payloadText)) return;
 
         $.Msg("[QOLLock][WARN][save] unrecognized stage \"" + (State.buildSaveStage || "") + "\" — falling back to switch_to_storage");
         State.buildSaveStage = "switch_to_storage";
