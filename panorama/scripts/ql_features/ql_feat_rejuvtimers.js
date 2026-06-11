@@ -277,161 +277,162 @@
         return smallSize;
     }
 
-    function UpdateMinimapObjectiveTimers(root, cfg, bridgeText, remainingBridge, rejuvText, remainingRejuv, spawnWaiting) {
-        var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
-        var buffOnBridgeEnabled = !!(buffEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE"));
-        var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
-        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"));
-        if (!buffEnabled && !rejuvEnabled) {
-            HideMinimapObjectiveTimers(root);
-            return;
-        }
-        var panels = EnsureMinimapObjectiveTimers(root);
-        if (!panels || !panels.root) return;
-        var overlay = panels.root;
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-        var minimapSize = ResolveActiveMinimapObjectiveSize(root, cfg);
-        if (!isFinite(minimapSize)) minimapSize = 400;
-        if (minimapSize < 200) minimapSize = 200;
-        if (minimapSize > 1200) minimapSize = 1200;
-        var minimapScale = minimapSize / 400.0;
-        if (!isFinite(minimapScale)) minimapScale = 1.0;
-        if (minimapScale < 0.5) minimapScale = 0.5;
-        if (minimapScale > 2.5) minimapScale = 2.5;
-        var timerWidth = Math.max(58, Math.round(72 * minimapScale));
-        var timerHeight = Math.max(22, Math.round(28 * minimapScale));
-        var timerGap = Math.max(24, Math.round(40 * minimapScale));
-        var timerPaddingX = Math.max(3, Math.round(5 * minimapScale));
-        var timerRadius = Math.max(4, Math.round(5 * minimapScale));
-        var timerFont = Math.max(11, Math.round(14 * minimapScale));
-        var timerIcon = Math.max(12, Math.round(16 * minimapScale));
-        var bottomOffset = Math.max(4, Math.round(minimapSize * 0.10));
-        var bridgeRemain = Math.max(0, Math.floor(Number(remainingBridge) || 0));
-        var rejuvRemain = Math.max(0, Math.floor(Number(remainingRejuv) || 0));
-        var buffRed = buffEnabled && bridgeRemain < 10 && (bridgeRemain % 2) === 1;
-        var buffYellow = buffEnabled && !buffRed && bridgeRemain < 20 && (bridgeRemain % 2) === 1;
-        var rejuvWarnEligible = rejuvEnabled && !spawnWaiting;
-        var rejuvRed = rejuvEnabled && (spawnWaiting || (rejuvWarnEligible && rejuvRemain < 10 && (rejuvRemain % 2) === 1));
-        var rejuvYellow = rejuvWarnEligible && !rejuvRed && rejuvRemain < 20 && (rejuvRemain % 2) === 1;
-        var buffIcon = GetCachedPanel("minimapObjectiveBuffIcon");
-        var buffBridgeLeftIcon = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon");
-        var buffBridgeRightIcon = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon");
-        var rejuvIcon = GetCachedPanel("minimapObjectiveRejuvIcon");
-
-        if (!buffOnBridgeEnabled && !rejuvOnBridgeEnabled) {
-            var minimapScaleTextDefault = [
-                timerWidth,
-                timerHeight,
-                timerGap,
-                timerPaddingX,
-                timerRadius,
-                timerFont,
-                timerIcon,
-                bottomOffset
-            ].join("|");
-            if (State.minimapObjectiveScaleSig !== minimapScaleTextDefault) {
-                if (overlay.style.preTransformScale2d !== "1.00, 1.00") {
-                    overlay.style.preTransformScale2d = "1.00, 1.00";
-                }
-                overlay.style.width = "fit-children";
-                overlay.style.height = "fit-children";
-                overlay.style.horizontalAlign = "center";
-                overlay.style.verticalAlign = "bottom";
-                overlay.style.marginTop = "0px";
-                overlay.style.marginRight = "0px";
-                overlay.style.marginBottom = bottomOffset + "px";
-                if (panels.buffPanel) {
-                    panels.buffPanel.style.width = timerWidth + "px";
-                    panels.buffPanel.style.height = timerHeight + "px";
-                    panels.buffPanel.style.margin = "0px " + timerGap + "px";
-                    panels.buffPanel.style.padding = "0px " + timerPaddingX + "px";
-                    panels.buffPanel.style.borderRadius = timerRadius + "px";
-                    panels.buffPanel.style.ignoreParentFlow = "false";
-                    panels.buffPanel.style.horizontalAlign = "center";
-                    panels.buffPanel.style.verticalAlign = "center";
-                }
-                if (panels.rejuvPanel) {
-                    panels.rejuvPanel.style.width = timerWidth + "px";
-                    panels.rejuvPanel.style.height = timerHeight + "px";
-                    panels.rejuvPanel.style.margin = "0px " + timerGap + "px";
-                    panels.rejuvPanel.style.padding = "0px " + timerPaddingX + "px";
-                    panels.rejuvPanel.style.borderRadius = timerRadius + "px";
-                    panels.rejuvPanel.style.ignoreParentFlow = "false";
-                    panels.rejuvPanel.style.horizontalAlign = "center";
-                    panels.rejuvPanel.style.verticalAlign = "center";
-                }
-                if (buffIcon) {
-                    buffIcon.style.width = timerIcon + "px";
-                    buffIcon.style.height = timerIcon + "px";
-                    buffIcon.style.visibility = "visible";
-                }
-                if (buffBridgeLeftIcon) buffBridgeLeftIcon.style.visibility = "collapse";
-                if (buffBridgeRightIcon) buffBridgeRightIcon.style.visibility = "collapse";
-                if (rejuvIcon) {
-                    rejuvIcon.style.width = timerIcon + "px";
-                    rejuvIcon.style.height = timerIcon + "px";
-                    rejuvIcon.style.visibility = "visible";
-                }
-                if (panels.buffTime) panels.buffTime.style.fontSize = timerFont + "px";
-                if (panels.rejuvTime) panels.rejuvTime.style.fontSize = timerFont + "px";
-                State.minimapObjectiveScaleSig = minimapScaleTextDefault;
+    // ── Standard minimap layout: timers stacked horizontally at bottom of minimap
+    function ApplyMinimapObjectiveTimersStandardMode(panels, overlay, dims, flags, icons, bridgeText, rejuvText) {
+        var timerWidth = dims.timerWidth;
+        var timerHeight = dims.timerHeight;
+        var timerGap = dims.timerGap;
+        var timerPaddingX = dims.timerPaddingX;
+        var timerRadius = dims.timerRadius;
+        var timerFont = dims.timerFont;
+        var timerIcon = dims.timerIcon;
+        var bottomOffset = dims.bottomOffset;
+        var buffEnabled = flags.buffEnabled;
+        var rejuvEnabled = flags.rejuvEnabled;
+        var buffRed = flags.buffRed;
+        var buffYellow = flags.buffYellow;
+        var rejuvRed = flags.rejuvRed;
+        var rejuvYellow = flags.rejuvYellow;
+        var buffIcon = icons.buffIcon;
+        var buffBridgeLeftIcon = icons.buffBridgeLeftIcon;
+        var buffBridgeRightIcon = icons.buffBridgeRightIcon;
+        var rejuvIcon = icons.rejuvIcon;
+        var minimapScaleTextDefault = [
+            timerWidth,
+            timerHeight,
+            timerGap,
+            timerPaddingX,
+            timerRadius,
+            timerFont,
+            timerIcon,
+            bottomOffset
+        ].join("|");
+        if (State.minimapObjectiveScaleSig !== minimapScaleTextDefault) {
+            if (overlay.style.preTransformScale2d !== "1.00, 1.00") {
+                overlay.style.preTransformScale2d = "1.00, 1.00";
             }
-
-            var singleSlotOffset = Math.round(timerWidth + (timerGap * 2));
-            var overlayMarginLeft = "0px";
-            if (buffEnabled && !rejuvEnabled) {
-                overlayMarginLeft = singleSlotOffset + "px";
-            } else if (rejuvEnabled && !buffEnabled) {
-                overlayMarginLeft = (-singleSlotOffset) + "px";
-            }
-            if (overlay.style.marginLeft !== overlayMarginLeft) {
-                overlay.style.marginLeft = overlayMarginLeft;
-            }
-
-            if (panels.buffPanel && panels.buffPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) {
-                panels.buffPanel.style.visibility = buffEnabled ? "visible" : "collapse";
-            }
-            if (panels.rejuvPanel && panels.rejuvPanel.style.visibility !== (rejuvEnabled ? "visible" : "collapse")) {
-                panels.rejuvPanel.style.visibility = rejuvEnabled ? "visible" : "collapse";
-            }
-            if (panels.buffBridgeLeftPanel && panels.buffBridgeLeftPanel.style.visibility !== "collapse") {
-                panels.buffBridgeLeftPanel.style.visibility = "collapse";
-            }
-            if (panels.buffBridgeRightPanel && panels.buffBridgeRightPanel.style.visibility !== "collapse") {
-                panels.buffBridgeRightPanel.style.visibility = "collapse";
-            }
-            if (buffEnabled && panels.buffTime && panels.buffTime.text !== bridgeText) {
-                panels.buffTime.text = bridgeText;
-            }
-            if (rejuvEnabled && panels.rejuvTime && panels.rejuvTime.text !== rejuvText) {
-                panels.rejuvTime.text = rejuvText;
-            }
-
+            overlay.style.width = "fit-children";
+            overlay.style.height = "fit-children";
+            overlay.style.horizontalAlign = "center";
+            overlay.style.verticalAlign = "bottom";
+            overlay.style.marginTop = "0px";
+            overlay.style.marginRight = "0px";
+            overlay.style.marginBottom = bottomOffset + "px";
             if (panels.buffPanel) {
-                SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", buffYellow);
-                SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", buffRed);
-            }
-            if (panels.buffBridgeLeftPanel) {
-                SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
-                SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
-            }
-            if (panels.buffBridgeRightPanel) {
-                SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
-                SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", false);
+                panels.buffPanel.style.width = timerWidth + "px";
+                panels.buffPanel.style.height = timerHeight + "px";
+                panels.buffPanel.style.margin = "0px " + timerGap + "px";
+                panels.buffPanel.style.padding = "0px " + timerPaddingX + "px";
+                panels.buffPanel.style.borderRadius = timerRadius + "px";
+                panels.buffPanel.style.ignoreParentFlow = "false";
+                panels.buffPanel.style.horizontalAlign = "center";
+                panels.buffPanel.style.verticalAlign = "center";
             }
             if (panels.rejuvPanel) {
-                SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
-                SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rejuvRed);
+                panels.rejuvPanel.style.width = timerWidth + "px";
+                panels.rejuvPanel.style.height = timerHeight + "px";
+                panels.rejuvPanel.style.margin = "0px " + timerGap + "px";
+                panels.rejuvPanel.style.padding = "0px " + timerPaddingX + "px";
+                panels.rejuvPanel.style.borderRadius = timerRadius + "px";
+                panels.rejuvPanel.style.ignoreParentFlow = "false";
+                panels.rejuvPanel.style.horizontalAlign = "center";
+                panels.rejuvPanel.style.verticalAlign = "center";
             }
-            return;
+            if (buffIcon) {
+                buffIcon.style.width = timerIcon + "px";
+                buffIcon.style.height = timerIcon + "px";
+                buffIcon.style.visibility = "visible";
+            }
+            if (buffBridgeLeftIcon) buffBridgeLeftIcon.style.visibility = "collapse";
+            if (buffBridgeRightIcon) buffBridgeRightIcon.style.visibility = "collapse";
+            if (rejuvIcon) {
+                rejuvIcon.style.width = timerIcon + "px";
+                rejuvIcon.style.height = timerIcon + "px";
+                rejuvIcon.style.visibility = "visible";
+            }
+            if (panels.buffTime) panels.buffTime.style.fontSize = timerFont + "px";
+            if (panels.rejuvTime) panels.rejuvTime.style.fontSize = timerFont + "px";
+            State.minimapObjectiveScaleSig = minimapScaleTextDefault;
         }
 
-        var bridgeTimerWidth = Math.max(29, Math.round(timerWidth * 0.5));
-        var bridgeTimerHeight = Math.max(11, Math.round(timerHeight * 0.5));
-        var bridgeTimerPaddingX = Math.max(2, Math.round(timerPaddingX * 0.5));
-        var bridgeTimerRadius = Math.max(2, Math.round(timerRadius * 0.5));
-        var bridgeTimerFont = Math.max(8, Math.round(timerFont * 0.5));
-        var bridgeHorizontalOffset = Math.round(minimapSize * 0.35);
+        var singleSlotOffset = Math.round(timerWidth + (timerGap * 2));
+        var overlayMarginLeft = "0px";
+        if (buffEnabled && !rejuvEnabled) {
+            overlayMarginLeft = singleSlotOffset + "px";
+        } else if (rejuvEnabled && !buffEnabled) {
+            overlayMarginLeft = (-singleSlotOffset) + "px";
+        }
+        if (overlay.style.marginLeft !== overlayMarginLeft) {
+            overlay.style.marginLeft = overlayMarginLeft;
+        }
+
+        if (panels.buffPanel && panels.buffPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) {
+            panels.buffPanel.style.visibility = buffEnabled ? "visible" : "collapse";
+        }
+        if (panels.rejuvPanel && panels.rejuvPanel.style.visibility !== (rejuvEnabled ? "visible" : "collapse")) {
+            panels.rejuvPanel.style.visibility = rejuvEnabled ? "visible" : "collapse";
+        }
+        if (panels.buffBridgeLeftPanel && panels.buffBridgeLeftPanel.style.visibility !== "collapse") {
+            panels.buffBridgeLeftPanel.style.visibility = "collapse";
+        }
+        if (panels.buffBridgeRightPanel && panels.buffBridgeRightPanel.style.visibility !== "collapse") {
+            panels.buffBridgeRightPanel.style.visibility = "collapse";
+        }
+        if (buffEnabled && panels.buffTime && panels.buffTime.text !== bridgeText) {
+            panels.buffTime.text = bridgeText;
+        }
+        if (rejuvEnabled && panels.rejuvTime && panels.rejuvTime.text !== rejuvText) {
+            panels.rejuvTime.text = rejuvText;
+        }
+
+        if (panels.buffPanel) {
+            SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", buffYellow);
+            SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", buffRed);
+        }
+        if (panels.buffBridgeLeftPanel) {
+            SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", false);
+            SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", false);
+        }
+        if (panels.buffBridgeRightPanel) {
+            SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", false);
+            SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", false);
+        }
+        if (panels.rejuvPanel) {
+            SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
+            SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rejuvRed);
+        }
+    }
+
+
+    // ── Bridge overlay layout: timers positioned as overlay elements on the minimap
+    function ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, dims, bridgeDims, flags, icons, bridgeText, rejuvText) {
+        var timerWidth = dims.timerWidth;
+        var timerHeight = dims.timerHeight;
+        var timerGap = dims.timerGap;
+        var timerPaddingX = dims.timerPaddingX;
+        var timerRadius = dims.timerRadius;
+        var timerFont = dims.timerFont;
+        var timerIcon = dims.timerIcon;
+        var bottomOffset = dims.bottomOffset;
+        var minimapSize = bridgeDims.minimapSize;
+        var bridgeTimerWidth = bridgeDims.bridgeTimerWidth;
+        var bridgeTimerHeight = bridgeDims.bridgeTimerHeight;
+        var bridgeTimerPaddingX = bridgeDims.bridgeTimerPaddingX;
+        var bridgeTimerRadius = bridgeDims.bridgeTimerRadius;
+        var bridgeTimerFont = bridgeDims.bridgeTimerFont;
+        var bridgeHorizontalOffset = bridgeDims.bridgeHorizontalOffset;
+        var buffEnabled = flags.buffEnabled;
+        var buffOnBridgeEnabled = flags.buffOnBridgeEnabled;
+        var rejuvEnabled = flags.rejuvEnabled;
+        var rejuvOnBridgeEnabled = flags.rejuvOnBridgeEnabled;
+        var buffRed = flags.buffRed;
+        var buffYellow = flags.buffYellow;
+        var rejuvRed = flags.rejuvRed;
+        var rejuvYellow = flags.rejuvYellow;
+        var buffIcon = icons.buffIcon;
+        var buffBridgeLeftIcon = icons.buffBridgeLeftIcon;
+        var buffBridgeRightIcon = icons.buffBridgeRightIcon;
+        var rejuvIcon = icons.rejuvIcon;
         var singleSlotOffset = Math.round(timerWidth + (timerGap * 2));
         var minimapScaleText = [
             timerWidth,
@@ -598,6 +599,76 @@
             SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", rejuvYellow);
             SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rejuvRed);
         }
+    }
+
+
+    function UpdateMinimapObjectiveTimers(root, cfg, bridgeText, remainingBridge, rejuvText, remainingRejuv, spawnWaiting) {
+        var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
+        var buffOnBridgeEnabled = !!(buffEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE"));
+        var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+        var rejuvOnBridgeEnabled = !!(rejuvEnabled && cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"));
+        if (!buffEnabled && !rejuvEnabled) {
+            HideMinimapObjectiveTimers(root);
+            return;
+        }
+        var panels = EnsureMinimapObjectiveTimers(root);
+        if (!panels || !panels.root) return;
+        var overlay = panels.root;
+        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        var minimapSize = ResolveActiveMinimapObjectiveSize(root, cfg);
+        if (!isFinite(minimapSize)) minimapSize = 400;
+        if (minimapSize < 200) minimapSize = 200;
+        if (minimapSize > 1200) minimapSize = 1200;
+        var minimapScale = minimapSize / 400.0;
+        if (!isFinite(minimapScale)) minimapScale = 1.0;
+        if (minimapScale < 0.5) minimapScale = 0.5;
+        if (minimapScale > 2.5) minimapScale = 2.5;
+        var timerWidth = Math.max(58, Math.round(72 * minimapScale));
+        var timerHeight = Math.max(22, Math.round(28 * minimapScale));
+        var timerGap = Math.max(24, Math.round(40 * minimapScale));
+        var timerPaddingX = Math.max(3, Math.round(5 * minimapScale));
+        var timerRadius = Math.max(4, Math.round(5 * minimapScale));
+        var timerFont = Math.max(11, Math.round(14 * minimapScale));
+        var timerIcon = Math.max(12, Math.round(16 * minimapScale));
+        var bottomOffset = Math.max(4, Math.round(minimapSize * 0.10));
+        var bridgeRemain = Math.max(0, Math.floor(Number(remainingBridge) || 0));
+        var rejuvRemain = Math.max(0, Math.floor(Number(remainingRejuv) || 0));
+        var buffRed = buffEnabled && bridgeRemain < 10 && (bridgeRemain % 2) === 1;
+        var buffYellow = buffEnabled && !buffRed && bridgeRemain < 20 && (bridgeRemain % 2) === 1;
+        var rejuvWarnEligible = rejuvEnabled && !spawnWaiting;
+        var rejuvRed = rejuvEnabled && (spawnWaiting || (rejuvWarnEligible && rejuvRemain < 10 && (rejuvRemain % 2) === 1));
+        var rejuvYellow = rejuvWarnEligible && !rejuvRed && rejuvRemain < 20 && (rejuvRemain % 2) === 1;
+        var buffIcon = GetCachedPanel("minimapObjectiveBuffIcon");
+        var buffBridgeLeftIcon = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon");
+        var buffBridgeRightIcon = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon");
+        var rejuvIcon = GetCachedPanel("minimapObjectiveRejuvIcon");
+
+        var bridgeTimerWidth = Math.max(29, Math.round(timerWidth * 0.5));
+        var bridgeTimerHeight = Math.max(11, Math.round(timerHeight * 0.5));
+        var bridgeTimerPaddingX = Math.max(2, Math.round(timerPaddingX * 0.5));
+        var bridgeTimerRadius = Math.max(2, Math.round(timerRadius * 0.5));
+        var bridgeTimerFont = Math.max(8, Math.round(timerFont * 0.5));
+        var bridgeHorizontalOffset = Math.round(minimapSize * 0.35);
+
+        if (!buffOnBridgeEnabled && !rejuvOnBridgeEnabled) {
+            ApplyMinimapObjectiveTimersStandardMode(
+                panels, overlay,
+                {timerWidth: timerWidth, timerHeight: timerHeight, timerGap: timerGap, timerPaddingX: timerPaddingX, timerRadius: timerRadius, timerFont: timerFont, timerIcon: timerIcon, bottomOffset: bottomOffset},
+                {buffEnabled: buffEnabled, rejuvEnabled: rejuvEnabled, buffRed: buffRed, buffYellow: buffYellow, rejuvRed: rejuvRed, rejuvYellow: rejuvYellow},
+                {buffIcon: buffIcon, buffBridgeLeftIcon: buffBridgeLeftIcon, buffBridgeRightIcon: buffBridgeRightIcon, rejuvIcon: rejuvIcon},
+                bridgeText, rejuvText
+            );
+            return;
+        }
+
+        ApplyMinimapObjectiveTimersBridgeMode(
+            panels, overlay,
+            {timerWidth: timerWidth, timerHeight: timerHeight, timerGap: timerGap, timerPaddingX: timerPaddingX, timerRadius: timerRadius, timerFont: timerFont, timerIcon: timerIcon, bottomOffset: bottomOffset},
+            {minimapSize: minimapSize, bridgeTimerWidth: bridgeTimerWidth, bridgeTimerHeight: bridgeTimerHeight, bridgeTimerPaddingX: bridgeTimerPaddingX, bridgeTimerRadius: bridgeTimerRadius, bridgeTimerFont: bridgeTimerFont, bridgeHorizontalOffset: bridgeHorizontalOffset},
+            {buffEnabled: buffEnabled, buffOnBridgeEnabled: buffOnBridgeEnabled, rejuvEnabled: rejuvEnabled, rejuvOnBridgeEnabled: rejuvOnBridgeEnabled, buffRed: buffRed, buffYellow: buffYellow, rejuvRed: rejuvRed, rejuvYellow: rejuvYellow},
+            {buffIcon: buffIcon, buffBridgeLeftIcon: buffBridgeLeftIcon, buffBridgeRightIcon: buffBridgeRightIcon, rejuvIcon: rejuvIcon},
+            bridgeText, rejuvText
+        );
     }
 
     function EnsureRejuvState() {

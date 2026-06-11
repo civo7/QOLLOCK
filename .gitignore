@@ -13,3 +13,4 @@ backup_*/
 scripts/qollock_pipeline.ps1
 memory
 plans
+.fallow/

@@ -736,168 +736,53 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeHealthbarTypeConfig !== "function") {
     };
 }
 
-if (typeof QOL_SCHEMA_UTILS.NormalizeColorWarningConfig !== "function") {
-    QOL_SCHEMA_UTILS.NormalizeColorWarningConfig = function(configTarget, sourceConfig) {
-        if (!configTarget) return;
-        var source = sourceConfig || configTarget || {};
-        var hasOwn = Object.prototype.hasOwnProperty;
-        var thresholdKeys = ["ENABLE_COLOR_WARNING_25", "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"];
-        var hasAnyThresholdInSource = false;
-        for (var i = 0; i < thresholdKeys.length; i++) {
-            if (source && hasOwn.call(source, thresholdKeys[i])) {
-                hasAnyThresholdInSource = true;
-                break;
+// ── Healthbar warning threshold normalizer factory (deduplicates 5 near-identical functions)
+(function() {
+    function _make(thresholdPrefix, legacyKey) {
+        return function(configTarget, sourceConfig) {
+            if (!configTarget) return;
+            var source = sourceConfig || configTarget || {};
+            var hasOwn = Object.prototype.hasOwnProperty;
+            var thresholdKeys = [thresholdPrefix + "25", thresholdPrefix + "65", thresholdPrefix + "75"];
+            var hasAnyThresholdInSource = false;
+            for (var i = 0; i < thresholdKeys.length; i++) {
+                if (source && hasOwn.call(source, thresholdKeys[i])) {
+                    hasAnyThresholdInSource = true;
+                    break;
+                }
             }
-        }
-
-        var legacyEnabled = Number(configTarget.ENABLE_COLORED_HEALTHBAR) === 1 ? 1 : 0;
-        for (var j = 0; j < thresholdKeys.length; j++) {
-            var key = thresholdKeys[j];
-            if (hasAnyThresholdInSource) {
-                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
-            } else {
-                configTarget[key] = legacyEnabled;
+            var legacyEnabled = Number(configTarget[legacyKey]) === 1 ? 1 : 0;
+            for (var j = 0; j < thresholdKeys.length; j++) {
+                var key = thresholdKeys[j];
+                if (hasAnyThresholdInSource) {
+                    configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
+                } else {
+                    configTarget[key] = legacyEnabled;
+                }
             }
-        }
+            configTarget[legacyKey] =
+                (configTarget[thresholdKeys[0]] === 1 ||
+                 configTarget[thresholdKeys[1]] === 1 ||
+                 configTarget[thresholdKeys[2]] === 1) ? 1 : 0;
+        };
+    }
 
-        configTarget.ENABLE_COLORED_HEALTHBAR =
-            (configTarget.ENABLE_COLOR_WARNING_25 === 1 ||
-             configTarget.ENABLE_COLOR_WARNING_65 === 1 ||
-             configTarget.ENABLE_COLOR_WARNING_75 === 1) ? 1 : 0;
-    };
-}
-
-if (typeof QOL_SCHEMA_UTILS.NormalizeEnemyColorWarningConfig !== "function") {
-    QOL_SCHEMA_UTILS.NormalizeEnemyColorWarningConfig = function(configTarget, sourceConfig) {
-        if (!configTarget) return;
-        var source = sourceConfig || configTarget || {};
-        var hasOwn = Object.prototype.hasOwnProperty;
-        var thresholdKeys = ["ENABLE_ENEMY_COLOR_WARNING_25", "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"];
-        var hasAnyThresholdInSource = false;
-        for (var i = 0; i < thresholdKeys.length; i++) {
-            if (source && hasOwn.call(source, thresholdKeys[i])) {
-                hasAnyThresholdInSource = true;
-                break;
-            }
-        }
-
-        var legacyEnabled = Number(configTarget.ENABLE_ENEMY_COLORED_HEALTHBAR) === 1 ? 1 : 0;
-        for (var j = 0; j < thresholdKeys.length; j++) {
-            var key = thresholdKeys[j];
-            if (hasAnyThresholdInSource) {
-                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
-            } else {
-                configTarget[key] = legacyEnabled;
-            }
-        }
-
-        configTarget.ENABLE_ENEMY_COLORED_HEALTHBAR =
-            (configTarget.ENABLE_ENEMY_COLOR_WARNING_25 === 1 ||
-             configTarget.ENABLE_ENEMY_COLOR_WARNING_65 === 1 ||
-             configTarget.ENABLE_ENEMY_COLOR_WARNING_75 === 1) ? 1 : 0;
-    };
-}
-
-if (typeof QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig !== "function") {
-    QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig = function(configTarget, sourceConfig) {
-        if (!configTarget) return;
-        var source = sourceConfig || configTarget || {};
-        var hasOwn = Object.prototype.hasOwnProperty;
-        var thresholdKeys = ["ENABLE_ALLY_COLOR_WARNING_25", "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"];
-        var hasAnyThresholdInSource = false;
-        for (var i = 0; i < thresholdKeys.length; i++) {
-            if (source && hasOwn.call(source, thresholdKeys[i])) {
-                hasAnyThresholdInSource = true;
-                break;
-            }
-        }
-
-        var legacyEnabled = Number(configTarget.ENABLE_ALLY_COLORED_HEALTHBAR) === 1 ? 1 : 0;
-        for (var j = 0; j < thresholdKeys.length; j++) {
-            var key = thresholdKeys[j];
-            if (hasAnyThresholdInSource) {
-                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
-            } else {
-                configTarget[key] = legacyEnabled;
-            }
-        }
-
-        configTarget.ENABLE_ALLY_COLORED_HEALTHBAR =
-            (configTarget.ENABLE_ALLY_COLOR_WARNING_25 === 1 ||
-             configTarget.ENABLE_ALLY_COLOR_WARNING_65 === 1 ||
-             configTarget.ENABLE_ALLY_COLOR_WARNING_75 === 1) ? 1 : 0;
-    };
-}
-
-if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig !== "function") {
-    QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig = function(configTarget, sourceConfig) {
-        if (!configTarget) return;
-        var source = sourceConfig || configTarget || {};
-        var hasOwn = Object.prototype.hasOwnProperty;
-        var thresholdKeys = [
-            "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
-            "ENABLE_TOPBAR_ENEMY_HP_WARNING_65",
-            "ENABLE_TOPBAR_ENEMY_HP_WARNING_75"
-        ];
-        var hasAnyThresholdInSource = false;
-        for (var i = 0; i < thresholdKeys.length; i++) {
-            if (source && hasOwn.call(source, thresholdKeys[i])) {
-                hasAnyThresholdInSource = true;
-                break;
-            }
-        }
-
-        var legacyEnabled = Number(configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING) === 1 ? 1 : 0;
-        for (var j = 0; j < thresholdKeys.length; j++) {
-            var key = thresholdKeys[j];
-            if (hasAnyThresholdInSource) {
-                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
-            } else {
-                configTarget[key] = legacyEnabled;
-            }
-        }
-
-        configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING =
-            (configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_25 === 1 ||
-             configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_65 === 1 ||
-             configTarget.ENABLE_TOPBAR_ENEMY_HP_WARNING_75 === 1) ? 1 : 0;
-    };
-}
-
-if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig !== "function") {
-    QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig = function(configTarget, sourceConfig) {
-        if (!configTarget) return;
-        var source = sourceConfig || configTarget || {};
-        var hasOwn = Object.prototype.hasOwnProperty;
-        var thresholdKeys = [
-            "ENABLE_TOPBAR_ALLY_HP_WARNING_25",
-            "ENABLE_TOPBAR_ALLY_HP_WARNING_65",
-            "ENABLE_TOPBAR_ALLY_HP_WARNING_75"
-        ];
-        var hasAnyThresholdInSource = false;
-        for (var i = 0; i < thresholdKeys.length; i++) {
-            if (source && hasOwn.call(source, thresholdKeys[i])) {
-                hasAnyThresholdInSource = true;
-                break;
-            }
-        }
-
-        var legacyEnabled = Number(configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING) === 1 ? 1 : 0;
-        for (var j = 0; j < thresholdKeys.length; j++) {
-            var key = thresholdKeys[j];
-            if (hasAnyThresholdInSource) {
-                configTarget[key] = Number(configTarget[key]) === 1 ? 1 : 0;
-            } else {
-                configTarget[key] = legacyEnabled;
-            }
-        }
-
-        configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING =
-            (configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_25 === 1 ||
-             configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_65 === 1 ||
-             configTarget.ENABLE_TOPBAR_ALLY_HP_WARNING_75 === 1) ? 1 : 0;
-    };
-}
+    if (typeof QOL_SCHEMA_UTILS.NormalizeColorWarningConfig !== "function") {
+        QOL_SCHEMA_UTILS.NormalizeColorWarningConfig = _make("ENABLE_COLOR_WARNING_", "ENABLE_COLORED_HEALTHBAR");
+    }
+    if (typeof QOL_SCHEMA_UTILS.NormalizeEnemyColorWarningConfig !== "function") {
+        QOL_SCHEMA_UTILS.NormalizeEnemyColorWarningConfig = _make("ENABLE_ENEMY_COLOR_WARNING_", "ENABLE_ENEMY_COLORED_HEALTHBAR");
+    }
+    if (typeof QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig !== "function") {
+        QOL_SCHEMA_UTILS.NormalizeAllyColorWarningConfig = _make("ENABLE_ALLY_COLOR_WARNING_", "ENABLE_ALLY_COLORED_HEALTHBAR");
+    }
+    if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig !== "function") {
+        QOL_SCHEMA_UTILS.NormalizeTopbarEnemyHpWarningConfig = _make("ENABLE_TOPBAR_ENEMY_HP_WARNING_", "ENABLE_TOPBAR_ENEMY_HP_WARNING");
+    }
+    if (typeof QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig !== "function") {
+        QOL_SCHEMA_UTILS.NormalizeTopbarAllyHpWarningConfig = _make("ENABLE_TOPBAR_ALLY_HP_WARNING_", "ENABLE_TOPBAR_ALLY_HP_WARNING");
+    }
+})();
 
 if (typeof QOL_SCHEMA_UTILS.MigrateSplitZoomKeys !== "function") {
     QOL_SCHEMA_UTILS.MigrateSplitZoomKeys = function(configTarget, sourceConfig) {

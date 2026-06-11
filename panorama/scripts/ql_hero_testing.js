@@ -473,15 +473,23 @@ function ParseCommandParts(command) {
     };
 }
 
-function IsCommandScriptDependent(command) {
-    const commandParts = String(command || "")
+// ── Shared helper: parses a semicolon-delimited command string into an array of parsed segments
+function ParseCommandSegments(command) {
+    const segments = String(command || "")
         .split(";")
         .map(segment => segment.trim())
         .filter(segment => segment.length > 0);
-
-    for (const segment of commandParts) {
+    const result = [];
+    for (const segment of segments) {
         const parsed = ParseCommandParts(segment);
-        if (!parsed) continue;
+        if (parsed) result.push(parsed);
+    }
+    return result;
+}
+
+function IsCommandScriptDependent(command) {
+    const parsedSegments = ParseCommandSegments(command);
+    for (const parsed of parsedSegments) {
 
         if (parsed.cmd === "selecthero") {
             const heroId = parsed.args[0] || "";
@@ -624,13 +632,9 @@ function Cmd(command) {
     }
 
     try {
-        const segments = String(command || "")
-            .split(";")
-            .map(segment => segment.trim())
-            .filter(segment => segment.length > 0);
-        for (const segment of segments) {
-            const parsed = ParseCommandParts(segment);
-            if (!parsed || parsed.cmd !== "selecthero") continue;
+        const parsedSegments = ParseCommandSegments(command);
+        for (const parsed of parsedSegments) {
+            if (parsed.cmd !== "selecthero") continue;
             const heroId = String((parsed.args && parsed.args[0]) || "").trim().toLowerCase();
             if (!/^hero_[a-z0-9_]+$/.test(heroId)) continue;
             const root = FindRootPanel();
