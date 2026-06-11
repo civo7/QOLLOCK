@@ -1296,6 +1296,16 @@
             return { ok: false, payload: payloadToken, error: "invalid_prefix" };
         }
         var schemaSemver = String(tokenMatch[1] || "").replace(/-/g, ".");
+        // Guard: if the schema registry is empty (e.g. QOL_COMPACT_SCHEMA_REGISTRY
+        // global was not set), we cannot decode ANY payload. Apply defaults without
+        // triggering corrupt repair — the stored data is valid, we just can't read it.
+        var registryKeys = 0;
+        for (var _rk in BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY) {
+            if (BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY.hasOwnProperty(_rk)) registryKeys++;
+        }
+        if (registryKeys === 0) {
+            return { ok: false, payload: payloadToken, error: "empty_registry" };
+        }
         if (!schemaSemver || !BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY.hasOwnProperty(schemaSemver)) {
             return { ok: false, payload: payloadToken, error: "unsupported_schema" };
         }
@@ -1673,6 +1683,16 @@
                     State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS;
                     return cfg;
                 }
+                // Guard: before triggering destructive corrupt repair, check if the
+                // shop UI is actually ready. If the shop hasn't opened yet, the payload
+                // may simply not be visible — this is a UI timing issue, not data
+                // corruption. Deleting all Airheart builds would destroy valid config.
+                if (!QOL.isHudClassActive(root, "gShopOpen")) {
+                    SetSettingsLoaderStepState("read_payload", "active", "Shop not open yet; waiting before scanning for payload.");
+                    State.buildCategoryPayloadHeroProbeMisses = 0;
+                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS;
+                    return cfg;
+                }
                 SettingsLoaderDebugLog(
                     "payload_override missing payload max misses reached; entering corrupt repair prompt misses=" +
                         String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
@@ -1721,7 +1741,11 @@
         if (!parsedResult.ok || !parsedResult.parsed) {
             var errorKey = accountId + "|" + payloadText + "|" + (parsedResult.error || "parse_error");
             State.buildCategoryPayloadLastParseErrorKey = errorKey;
-            if (shouldFinalizeStorageProbe) {
+            // Schema/registry errors are NOT data corruption — the stored payload
+            // is valid but this code version can't decode it. Apply defaults without
+            // deleting Airheart builds (which would destroy the user's config).
+            var isNonCorruptError = (parsedResult.error === "unsupported_schema" || parsedResult.error === "empty_registry");
+            if (shouldFinalizeStorageProbe && !isNonCorruptError) {
                 State.buildCategoryPayloadHeroProbeMisses += 1;
                 if (State.buildCategoryPayloadHeroProbeMisses < BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES) {
                     SetSettingsLoaderStepState("decode_payload", "active", "Decode failed, retrying.");

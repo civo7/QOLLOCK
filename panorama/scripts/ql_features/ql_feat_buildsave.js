@@ -83,7 +83,7 @@
     var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
     var BUILD_SAVE_VERIFY_DELAY_MS = 200;
     var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
-    var SAVE_SETTINGS_LOADER_ENABLED = true;
+    // SAVE_SETTINGS_LOADER_ENABLED is imported via _deps (line 43).
 
     // ── ResetBuildSaveRequestAttributes ──
 function ResetBuildSaveRequestAttributes(root) {
@@ -183,6 +183,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
         var stack = [selectedBuild];
         var scanned = 0;
+        var activatedAny = false;
         while (stack.length > 0 && scanned < 1200) {
             var node = stack.pop();
             if (!node) continue;
@@ -619,7 +620,7 @@ function ResetBuildSaveRequestAttributes(root) {
 
         function hasToken(text) {
             if (!text || String(text).length === 0) return false;
-            return BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX.test(String(text));
+            return !!QOL.extractBuildCategoryPayloadToken(String(text));
         }
 
         var directEntry = GetBuildSaveCategoryNameEntry(root);
@@ -651,6 +652,14 @@ function ResetBuildSaveRequestAttributes(root) {
         if (State.buildSaveLastTraceStage !== State.buildSaveStage) {
             State.buildSaveLastTraceStage = State.buildSaveStage;
             _TLog("save:AdvanceStage", (State.buildSaveStage || "-") + " token=" + String(requestToken || "").slice(0, 8));
+        }
+        // Per-stage retry budget: reset counter when entering a new stage so
+        // that an early stage (e.g. shop-wait) consuming many retries doesn't
+        // starve later stages (e.g. write, verify) of their retry budget.
+        var currentStage = State.buildSaveStage || "";
+        if (State.buildSaveRetriesStage !== currentStage) {
+            State.buildSaveRetriesStage = currentStage;
+            State.buildSaveRetries = 0;
         }
         if (QOL.tryAdvanceStorageSwitchStage(root, nowMs, requestToken, {
             stageKey: "buildSaveStage",
@@ -1062,7 +1071,7 @@ function ResetBuildSaveRequestAttributes(root) {
         },
         stateKeys: [
             "buildSaveActiveToken", "buildSaveStage", "buildSaveStartedMs",
-            "buildSaveNextActionMs", "buildSaveRetries", "buildSaveDidSwitchToStorageHero",
+            "buildSaveNextActionMs", "buildSaveRetries", "buildSaveRetriesStage", "buildSaveDidSwitchToStorageHero",
             "buildSaveCaptureStartedMs", "buildSaveReturnHero",
             "buildSaveStorageHeroConfirmed", "buildSaveStorageHeroConfirmedSource",
             "buildSaveStorageConfirmRetries", "buildSaveStorageSwitchRetries",

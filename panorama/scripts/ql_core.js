@@ -3061,6 +3061,15 @@ function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
     if (!root || !root.SetAttributeString) return "";
     var payload = payloadText ? String(payloadText).replace(/\s+/g, "") : "";
     if (!payload || !BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX.test(payload)) return "";
+    // Guard: if a save is already in-flight, don't overwrite its attributes.
+    // Return the existing token so the caller can wait for it to complete.
+    var existingState = "";
+    try { existingState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || ""); } catch (e0) {}
+    if (existingState === "pending") {
+        var existingToken = "";
+        try { existingToken = String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "") || ""); } catch (e1) {}
+        return existingToken;
+    }
     var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
     var token = "startup_" + String(now) + "_" + String(Math.floor(Math.random() * 1000000));
     root.SetAttributeString(BUILD_SAVE_REQUEST_ATTR, payload);
