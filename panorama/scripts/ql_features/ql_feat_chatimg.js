@@ -9,6 +9,7 @@
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
+    var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var PerfNowMs = Utils.PerfNowMs;
