@@ -1378,33 +1378,77 @@
     }
 
     // ── ApplyBuildCategoryPayloadOverride ──
+    // ── Helpers extracted from ApplyBuildCategoryPayloadOverride ──
+
+    function handlePayloadDisabled() {
+        if (BUILD_CATEGORY_PAYLOAD_ENABLED) return false;
+        State.buildCategoryPayloadNextScanMs = 0;
+        State.buildCategoryPayloadLastAppliedAccountId = "";
+        State.buildCategoryPayloadLastAppliedText = "";
+        State.buildCategoryPayloadLastParseErrorKey = "";
+        State.buildCategoryPayloadHeroProbeAccountId = "";
+        State.buildCategoryPayloadHeroProbeDoneAccountId = "";
+        State.buildCategoryPayloadHeroProbeRetryAfterMs = 0;
+        State.buildCategoryPayloadHeroProbeMisses = 0;
+        State.buildCategoryPayloadDoneRearmNextMs = 0;
+        State.buildCategoryPayloadDoneRearmAttempts = 0;
+        State.buildCategoryPayloadStartupConsumedAccountId = "";
+        State.buildCategoryPayloadStartupConsumedResult = "";
+        State.buildCategoryPayloadDormant = false;
+        State.buildCategoryPayloadDormantReason = "";
+        State.buildCategoryPayloadDormantWakeCheckNextMs = 0;
+        State.buildCategoryPayloadPostSwitchShopPulseDone = false;
+        ResetBuildCategoryPayloadProbeInitState();
+        ResetBuildCategoryPayloadHeroProbeState();
+        ResetSettingsLoaderSession(true);
+        SettingsLoaderDebugLog("payload_override_disabled");
+        return true;
+    }
+
+    function buildAppliedConfig(rawCfg, parsedResult) {
+        var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
+        var rawObj = {};
+        if (rawNow && rawNow.length > 0) {
+            try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
+        }
+
+        var defaults = QOL.buildDefaultConfig();
+        var appliedObj = {};
+        for (var rawKey in rawObj) {
+            appliedObj[rawKey] = rawObj[rawKey];
+        }
+        for (var defKey in defaults) {
+            appliedObj[defKey] = defaults[defKey];
+        }
+        for (var parsedKey in parsedResult.parsed) {
+            appliedObj[parsedKey] = parsedResult.parsed[parsedKey];
+        }
+
+        if (rawObj.hasOwnProperty("DRAG_ENABLED")) {
+            appliedObj.DRAG_ENABLED = rawObj.DRAG_ENABLED;
+        }
+        if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
+            appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
+        }
+        NormalizeNeutralCampTierConfig(appliedObj, parsedResult.parsed);
+        NormalizeAmmoScaleConfig(appliedObj, parsedResult.parsed);
+        NormalizeVoiceTypeConfig(appliedObj);
+        NormalizeHealthbarTypeConfig(appliedObj, parsedResult.parsed);
+        NormalizeColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeEnemyColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeAllyColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeTopbarEnemyHpWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeTopbarAllyHpWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+        NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+        return appliedObj;
+    }
+
     function ApplyBuildCategoryPayloadOverride(root, cfg, nowMs, rawCfg) {
         if (!cfg) return cfg;
         State.buildCategoryPayloadDormant = false;
         State.buildCategoryPayloadDormantReason = "";
-        if (!BUILD_CATEGORY_PAYLOAD_ENABLED) {
-            State.buildCategoryPayloadNextScanMs = 0;
-            State.buildCategoryPayloadLastAppliedAccountId = "";
-            State.buildCategoryPayloadLastAppliedText = "";
-            State.buildCategoryPayloadLastParseErrorKey = "";
-            State.buildCategoryPayloadHeroProbeAccountId = "";
-            State.buildCategoryPayloadHeroProbeDoneAccountId = "";
-            State.buildCategoryPayloadHeroProbeRetryAfterMs = 0;
-            State.buildCategoryPayloadHeroProbeMisses = 0;
-            State.buildCategoryPayloadDoneRearmNextMs = 0;
-            State.buildCategoryPayloadDoneRearmAttempts = 0;
-            State.buildCategoryPayloadStartupConsumedAccountId = "";
-            State.buildCategoryPayloadStartupConsumedResult = "";
-            State.buildCategoryPayloadDormant = false;
-            State.buildCategoryPayloadDormantReason = "";
-            State.buildCategoryPayloadDormantWakeCheckNextMs = 0;
-            State.buildCategoryPayloadPostSwitchShopPulseDone = false;
-            ResetBuildCategoryPayloadProbeInitState();
-            ResetBuildCategoryPayloadHeroProbeState();
-            ResetSettingsLoaderSession(true);
-            SettingsLoaderDebugLog("payload_override_disabled");
-            return cfg;
-        }
+        if (handlePayloadDisabled()) return cfg;
 
         if (State.buildCategoryPayloadStartupSuppressedForSession) {
             SettingsLoaderDebugLogThrottled(
@@ -1775,43 +1819,7 @@
         SetSettingsLoaderStepState("decode_payload", "done", "Payload decoded.");
         SetSettingsLoaderStepState("apply_config", "active", "Applying decoded config.");
 
-        var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
-        var rawObj = {};
-        if (rawNow && rawNow.length > 0) {
-            try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
-        }
-
-        var defaults = QOL.buildDefaultConfig();
-        var appliedObj = {};
-        for (var rawKey in rawObj) {
-            appliedObj[rawKey] = rawObj[rawKey];
-        }
-        for (var defKey in defaults) {
-            appliedObj[defKey] = defaults[defKey];
-        }
-        for (var parsedKey in parsedResult.parsed) {
-            appliedObj[parsedKey] = parsedResult.parsed[parsedKey];
-        }
-
-        if (rawObj.hasOwnProperty("DRAG_ENABLED")) {
-            appliedObj.DRAG_ENABLED = rawObj.DRAG_ENABLED;
-        }
-        if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
-            appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
-        }
-        // DEFAULT_HERO should come from decoded payload when present.
-        NormalizeNeutralCampTierConfig(appliedObj, parsedResult.parsed);
-        NormalizeAmmoScaleConfig(appliedObj, parsedResult.parsed);
-        NormalizeVoiceTypeConfig(appliedObj);
-        NormalizeHealthbarTypeConfig(appliedObj, parsedResult.parsed);
-        NormalizeColorWarningConfig(appliedObj, parsedResult.parsed);
-        NormalizeEnemyColorWarningConfig(appliedObj, parsedResult.parsed);
-        NormalizeAllyColorWarningConfig(appliedObj, parsedResult.parsed);
-        NormalizeTopbarEnemyHpWarningConfig(appliedObj, parsedResult.parsed);
-        NormalizeTopbarAllyHpWarningConfig(appliedObj, parsedResult.parsed);
-        NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
-        NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
-
+        var appliedObj = buildAppliedConfig(rawCfg, parsedResult);
         var appliedRaw = WrapConfigForStorage(appliedObj);
         var appliedWrite = WriteStorageConfigRawToUi(root, appliedRaw);
         var appliedRevision = Number(appliedWrite && appliedWrite.revision) || 0;
