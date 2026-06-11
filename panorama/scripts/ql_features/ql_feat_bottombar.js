@@ -6,15 +6,14 @@
         var _dk = "ql_feat_bottombar";
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","panelIdGoldApContainer","panelIdSignature","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
-    var GGHP = _deps.getGameplayHudPanel;
-    var GUIR = _deps.getUIRoot;
-    var RBW = _deps.readBottomBarWashColorIndex;
+    var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var GetUIRoot = _deps.getUIRoot;
+    var ReadBottomBarWashColor = _deps.readBottomBarWashColorIndex;
     var RC = _deps.resolveCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
     var S = _deps.state;
-    var SWC = _deps.setWashColorSafe;
+    var SetWashColor = _deps.setWashColorSafe;
     var U = _deps.utils;
-    var IPV = U.IsPanelValid;
     var PID_GOLD_AP = _deps.panelIdGoldApContainer;
     var PID_SIGNATURE = _deps.panelIdSignature;
     // ── Gate ──
@@ -32,52 +31,52 @@
             U.NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0) !== 1.0 ||
             U.NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) !== 0 ||
             U.NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) !== 0 ||
-            RBW(cfg) !== 0
+            ReadBottomBarWashColor(cfg) !== 0
         );
     }
 
     // ── Currency color helper (inlined from ql_core.js) ──
     function applyCurrencyColor(root, washColor) {
         var color = washColor || "";
-        var searchRoot = GGHP(root) || root;
+        var searchRoot = GetGameplayHudPanel(root) || root;
         var apContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("APContainer") : null;
         var goldApContainer = searchRoot && searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse(PID_GOLD_AP) : null;
         var contextPanel = null;
         try { contextPanel = $.GetContextPanel ? $.GetContextPanel() : null; } catch (eContext) { contextPanel = null; }
-        var uiRoot = GUIR();
+        var uiRoot = GetUIRoot();
         var containers = [];
-        if (IPV(contextPanel)) containers.push(contextPanel);
-        if (IPV(uiRoot)) containers.push(uiRoot);
-        if (IPV(searchRoot)) containers.push(searchRoot);
-        if (IPV(apContainer)) containers.push(apContainer);
-        if (IPV(goldApContainer)) containers.push(goldApContainer);
+        if (U.IsPanelValid(contextPanel)) containers.push(contextPanel);
+        if (U.IsPanelValid(uiRoot)) containers.push(uiRoot);
+        if (U.IsPanelValid(searchRoot)) containers.push(searchRoot);
+        if (U.IsPanelValid(apContainer)) containers.push(apContainer);
+        if (U.IsPanelValid(goldApContainer)) containers.push(goldApContainer);
 
         var icons = [];
         var amounts = [];
         var infiniteIcons = [];
         for (var c = 0; c < containers.length; c++) {
             var container = containers[c];
-            if (!IPV(container)) continue;
+            if (!U.IsPanelValid(container)) continue;
             if (container.FindChildrenWithClassTraverse) {
                 icons = icons.concat(container.FindChildrenWithClassTraverse("APCurrencyIcon") || []);
                 amounts = amounts.concat(container.FindChildrenWithClassTraverse("APCurrencyAmount") || []);
             }
             if (container.FindChildTraverse) {
                 var infiniteIcon = container.FindChildTraverse("hudAPInfinite");
-                if (IPV(infiniteIcon)) infiniteIcons.push(infiniteIcon);
+                if (U.IsPanelValid(infiniteIcon)) infiniteIcons.push(infiniteIcon);
             }
         }
 
         for (var i = 0; i < icons.length; i++) {
-            if (IPV(icons[i])) SWC(icons[i], color);
+            if (U.IsPanelValid(icons[i])) SetWashColor(icons[i], color);
         }
 
         for (var k = 0; k < infiniteIcons.length; k++) {
-            if (IPV(infiniteIcons[k])) SWC(infiniteIcons[k], color);
+            if (U.IsPanelValid(infiniteIcons[k])) SetWashColor(infiniteIcons[k], color);
         }
 
         for (var j = 0; j < amounts.length; j++) {
-            if (IPV(amounts[j])) U.SetStyleSafe(amounts[j], "color", color);
+            if (U.IsPanelValid(amounts[j])) U.SetStyleSafe(amounts[j], "color", color);
         }
 
         S.bottomBarCurrencyColorStyleSig = color;
@@ -90,7 +89,7 @@
         var enabled = U.IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = RC(root, "bottomBarPanel", PID_SIGNATURE);
 
-        var washColor = active ? RWP(RBW(cfg)) : "";
+        var washColor = active ? RWP(ReadBottomBarWashColor(cfg)) : "";
         applyCurrencyColor(root, washColor);
         if (!hudSignature) return;
 
@@ -105,7 +104,7 @@
         hudSignature.style.y = String(-offsetY) + "px";
         hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
         hudSignature.style.visibility = enabled ? "visible" : "collapse";
-        SWC(hudSignature, washColor);
+        SetWashColor(hudSignature, washColor);
         U.SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         S.bottomBarRuntimeStyleSig = styleSig;
     }

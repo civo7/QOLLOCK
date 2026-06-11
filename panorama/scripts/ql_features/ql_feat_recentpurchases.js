@@ -3,11 +3,12 @@
 (function() {
     'use strict';
     var _dk = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
+    var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
     var SC = _deps.setCachedPanel;
     var U = _deps.utils;
+    var IsHudClassActive = _deps.isHudClassActive;
     var IsCfgEnabled = U.IsCfgEnabled;
     var IsPanelValid = U.IsPanelValid;
     var SetPanelOpacitySafe = U.SetPanelOpacitySafe;
@@ -57,15 +58,8 @@ function GetRecentPurchaseName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
-function HasAncestorClass(panel, className) {
-        var p = panel;
-        while (p) {
-            if (p.BHasClass(className)) return true;
-            p = p.GetParent();
-        }
-        return false;
-    }
-function GetRecentPurchaseTime(panel) {
+// HasAncestorClass replaced by U.HasClassInHierarchy (canonical version from ql_utils.js).
+function GetRecentPurchaseTimeText(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
     }
@@ -76,18 +70,7 @@ function GetRecentPurchaseTime(panel) {
         "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
         "isTeam1Purchase", "isTeam2Purchase"
     ];
-function IsHudClassActive(root, className) {
-        if (!className) return false;
-        if (root && root.BHasClass && root.BHasClass(className)) return true;
-
-        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
-        if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
-
-        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
-        if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
-
-        return false;
-    }
+// IsHudClassActive imported via _deps.isHudClassActive (canonical version from ql_core.js).
 function IsPanelVisibleMaybe(panel) {
         if (!panel || !IsPanelValid(panel)) return false;
         try {
@@ -144,8 +127,8 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             p = p.GetParent();
         }
         if (!ctx.isSpectator && container && IsPanelValid(container)) {
-            if (HasAncestorClass(container, "localPlayerTeam1")) ctx.localTeam = 1;
-            else if (HasAncestorClass(container, "localPlayerTeam2")) ctx.localTeam = 2;
+            if (U.HasClassInHierarchy(container, "localPlayerTeam1")) ctx.localTeam = 1;
+            else if (U.HasClassInHierarchy(container, "localPlayerTeam2")) ctx.localTeam = 2;
         }
         return ctx;
     }
@@ -342,7 +325,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (!S.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
                 var n = GetRecentPurchaseName(purchases[i]);
-                var t = GetRecentPurchaseTime(purchases[i]);
+                var t = GetRecentPurchaseTimeText(purchases[i]);
                 if (n && t) S.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
             }
             S.recentPurchaseQuickInitialized = true;
@@ -351,7 +334,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
 
         for (var i = 0; i < purchases.length; i++) {
             var name = GetRecentPurchaseName(purchases[i]);
-            var time = GetRecentPurchaseTime(purchases[i]);
+            var time = GetRecentPurchaseTimeText(purchases[i]);
             if (!name || !time) continue;
             var key = name + "|" + time;
             if (!S.recentPurchaseQuickSeenKeys[key]) {
@@ -564,6 +547,11 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         });
     }
 
+    // ResolveHeroPopupOverlaps — prevent hero purchase popups from overlapping.
+    // Sorts panels newest-first (by purchase time text), then pairwise checks
+    // for horizontal overlap (aLeft < bRight && aRight > bLeft). When overlap
+    // is detected, the older (right-side) panel is offset downward by the
+    // left panel's height plus a margin, cascading to avoid stacking issues.
     function ResolveHeroPopupOverlaps() {
         var active = [];
         for (var hero in S.heroPopup.panelsByHero) {
@@ -741,7 +729,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         if (!S.recentPurchaseQuickInitialized) {
             for (var i = 0; i < purchases.length; i++) {
                 var n = GetRecentPurchaseName(purchases[i]);
-                var t = GetRecentPurchaseTime(purchases[i]);
+                var t = GetRecentPurchaseTimeText(purchases[i]);
                 if (n && t) S.recentPurchaseQuickSeenKeys[n + "|" + t] = true;
             }
             S.recentPurchaseQuickInitialized = true;
@@ -752,7 +740,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var purchase = purchases[i];
             if (!purchase || !IsPanelValid(purchase)) continue;
             var name = GetRecentPurchaseName(purchase);
-            var time = GetRecentPurchaseTime(purchase);
+            var time = GetRecentPurchaseTimeText(purchase);
             if (!name || !time) continue;
             var key = name + "|" + time;
             if (!S.recentPurchaseQuickSeenKeys[key]) {

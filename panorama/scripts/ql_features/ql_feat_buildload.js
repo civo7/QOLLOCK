@@ -656,6 +656,24 @@
     }
 
     // ── PrepareBuildCategoryPayloadHeroProbe ──
+    // State machine for the config load/bootstrap probe. Discovers and decodes
+    // the QOLLOCK config payload stored in an Airheart build category.
+    //
+    //   "" (initial) → wait_storage → scan_storage → decode → apply → (done)
+    //
+    // Timeout / degraded paths:
+    //   wait_storage (12s timeout) → bootstrap_via_save_enqueue
+    //     Only fires if Airheart UI hasn't rendered. Guarded by
+    //     currentBuildHasAnyPayload check — won't overwrite existing config.
+    //   wait_storage (8-12s degraded) → scan_storage (signature confirmed)
+    //     UI header didn't confirm, but signature abilities are visible.
+    //
+    // Error escalation:
+    //   scan_storage miss → retry up to MAX_SCAN_ADVANCES (6) build entries
+    //   scan_storage miss + shop NOT open → reset, wait (UI timing, not corruption)
+    //   scan_storage miss + shop open → corrupt repair (genuine data loss)
+    //   decode failed + non-schema error → corrupt repair after MAX_MISSES (3)
+    //   decode failed + schema/registry error → apply defaults, keep builds
     function PrepareBuildCategoryPayloadHeroProbe(root, accountId, nowMs, cfg) {
         if (!accountId || accountId.length === 0) return "ready";
         TraceSettingsLoaderProbeHeartbeat(root, accountId, nowMs, "prepare");

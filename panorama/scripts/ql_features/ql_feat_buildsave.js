@@ -648,6 +648,20 @@ function ResetBuildSaveRequestAttributes(root) {
     }
 
     // ── AdvanceBuildSaveRequestStage ──
+    // State machine for the save pipeline. Stages flow forward with regression
+    // paths when external UI state (signature abilities, edit mode, category
+    // focus) is lost mid-operation.
+    //
+    //   switch_to_storage → confirm_storage_context → lock_target_build → start
+    //     → wait_editor → wait_category_focus → write → save → verify → (done)
+    //
+    // Regressions:
+    //   write → confirm_storage_context  (Airheart signature abilities lost)
+    //   save  → wait_category_focus      (focused category entry lost)
+    //   verify → wait_category_focus     (entry empty, retry before giving up)
+    //
+    // Timeout: 12s overall (BUILD_SAVE_TIMEOUT_MS). Per-stage retry budgets
+    // reset on stage transition (buildSaveRetriesStage tracking).
     function AdvanceBuildSaveRequestStage(root, nowMs, requestToken, payloadText) {
         if (State.buildSaveLastTraceStage !== State.buildSaveStage) {
             State.buildSaveLastTraceStage = State.buildSaveStage;

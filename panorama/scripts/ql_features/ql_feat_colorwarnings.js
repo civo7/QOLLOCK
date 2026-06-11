@@ -474,9 +474,9 @@ function ToRgbString(rgb) {
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
         var enabled = IsColorWarningEnabled(cfg);
-        if (State.coloredHealthbarEnabledPrev === null) {
-            State.coloredHealthbarEnabledPrev = enabled;
-        } else if (State.coloredHealthbarEnabledPrev !== enabled) {
+        if (S.coloredHealthbarEnabledPrev === null) {
+            S.coloredHealthbarEnabledPrev = enabled;
+        } else if (S.coloredHealthbarEnabledPrev !== enabled) {
             if (!enabled) {
                 ResetColoredHealthbarRuntimeStyles();
             } else {

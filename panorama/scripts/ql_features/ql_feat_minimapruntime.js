@@ -19,6 +19,7 @@
     var IsPanelListValid = U.IsPanelListValid;
     var ResolveWashColorFromPalette = QOL.resolveWashColorFromPalette || function() { return ""; };
     var ReadMinimapIconColorIndex = QOL.readMinimapIconColorIndex || function() { return 0; };
+    var IsHudClassActive = _deps.isHudClassActive;
 
     var PANEL_ID_MINIMAP = "hud_minimap";
     var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
@@ -84,6 +85,11 @@ function MinimapCrateOverlayDebugLogThrottled(sig, msg, nowMs) {
         S.minimapCrateOverlayDebugNextMs = now + MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS;
         MinimapCrateOverlayDebugLog(msg);
     }
+// BuildMinimapCrateOverlay — creates minimap markers for item crate spawns.
+// Uses UV coordinate mapping from crate data to position markers on the
+// minimap image. Incremental rebuild via buildSig comparison: markers are
+// only recreated when the map name or crate data changes (cached at
+// S._cachedMinimapCrateSig).
 function BuildMinimapCrateOverlay(root, mapName) {
         var panels = EnsureMinimapCrateOverlay(root);
         if (!panels || !panels.root || !panels.markers) {
@@ -240,18 +246,7 @@ function EnsureMinimapPanelCache(root) {
         S.cachedPanels.minimap = panels;
         return panels;
     }
-function IsHudClassActive(root, className) {
-        if (!className) return false;
-        if (root && root.BHasClass && root.BHasClass(className)) return true;
-
-        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
-        if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
-
-        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
-        if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
-
-        return false;
-    }
+// IsHudClassActive imported via _deps.isHudClassActive (canonical version from ql_core.js).
 function IsPanelListValid(list) {
         return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
             if (!list || list.length === 0) return false;

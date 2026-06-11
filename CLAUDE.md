@@ -8,9 +8,9 @@ and communicates between them via panel attribute bridges.
 
 **Version:** 3.1.4  
 **Schema:** 3.1.4  
-**Features:** 35 loaded, zero auto-disabled, 79 presets available  
+**Features:** 36 loaded, zero auto-disabled, 79 presets available  
 **Branch:** `backend-overhaul-commits`  
-**Primary File:** `panorama/scripts/ql_core.js` (~23K lines → target ~21K after cleanup)
+**Primary File:** `panorama/scripts/ql_core.js` (~18K lines after Phase 9 extraction)
 
 ## File Map
 
@@ -27,7 +27,7 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 30 extracted feature files
+    ├── ql_features/                        # 34 extracted feature files
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -72,7 +72,7 @@ panorama/
 ```
 ql_utils.js → ql_shared_presets.js → ql_recent_purchases_data.js →
 ql_minimap_crate_data.js → ql_perf_overlay.js → ql_core.js →
-ql_features/*.js (30 files, order within features/ doesn't matter)
+ql_features/*.js (34 files; buildbridge must load BEFORE ql_core.js — others order-independent)
 ```
 
 ### Context Architecture (Source 2 Panorama)
@@ -94,7 +94,7 @@ var IsCfgEnabled = U ? U.IsCfgEnabled : function() { return false; };
 
 The new pattern uses `QOL.import()` — defined in `ql_shared_presets.js`:
 ```js
-// NEW (all 31 feature files use this):
+// (all 34 feature files use this):
 var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel", ...]);
 var S = _deps.state;
 var U = _deps.utils;
@@ -225,12 +225,12 @@ Key state fields:
 ## Phase 9: Backend Overhaul — Status
 
 ### Completed
-- **28 features extracted** from ql_core.js into ql_features/ over multiple sessions
+- **34 features extracted** from ql_core.js into ql_features/ over multiple sessions
 - **~6,400 lines removed** from ql_core.js
-- **All 31 feature files migrated** to `QOL.import()` and `QOL.register()` API
+- **All 34 feature files migrated** to `QOL.import()` and `QOL.register()` API
 - **QOL namespace system** implemented (data-driven lazy-getter bridge exports)
 - **Bridge export system** refactored from ~168 individual try/catch blocks to data-driven arrays
-- **35/35 features loaded**, zero auto-disabled, 79/79 presets cycle completes
+- **36/36 features loaded**, zero auto-disabled, 79/79 presets cycle completes
 - **SafeLog utility** added to ql_utils.js
 
 ### Known Bugs Fixed
@@ -241,7 +241,7 @@ Key state fields:
 5. SafeSetAttribute fallback not logging degradation
 6. 14 silent catch sites now log at WARN level
 
-### Remaining: Phase 10 Cleanup (see tools/AUDIT_PLAN.md)
+### Remaining: Phase 10 Cleanup (see plans/AUDIT_PLAN.md)
 
 | Phase | Work | Impact |
 |-------|------|--------|
@@ -277,4 +277,4 @@ Key state fields:
 2. `panorama/scripts/ql_core.js` lines 23585-23702 — QOL namespace population (the bridge)
 3. `panorama/scripts/ql_core.js` lines 24500-24750 — Feature registration and dispatch loop
 4. Any `ql_features/ql_feat_*.js` — Example of the current feature file pattern
-5. `panorama/scripts/tools/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap
+5. `plans/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap

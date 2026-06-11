@@ -5,6 +5,7 @@
     $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
         var _dk = "ql_feat_ammo";
     var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    // S = State, U = Utils, GC/SC = panel cache get/set (project-wide convention).
     var GC = _deps.getCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
     var S = _deps.state;
