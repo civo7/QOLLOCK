@@ -1117,7 +1117,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const PERF_DEBUG_SLOW_MS = 8;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
-    const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
     const USER_EDIT_REV_ATTR = QOL_USER_EDIT_REV_ATTR;
     // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
     const PANEL_ID_HUD = QOL_PANEL_ID_HUD;
@@ -2046,62 +2045,6 @@ function ExpressShotLog(msg) {
         }
         return comparable;
     }
-
-    function BuildComparableStorageConfigRaw(rawText) {
-        var raw = String(rawText || "");
-        if (!raw || raw.length === 0) return "";
-        try {
-            var unwrapped = UnwrapConfigFromStorage(raw);
-            var parsed = (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
-            var comparable = BuildComparableStorageConfigObject(parsed);
-            return JSON.stringify(comparable);
-        } catch (e0) {
-            return raw;
-        }
-    }
-
-    function ReadPersistedPlayableHero(root) {
-        var raw = ReadStorageConfigRawFromUi(root);
-        if (!raw || raw.length === 0) return "";
-        var obj = TryParseStorageConfigRaw(raw);
-        var hero = QOL.normalizeHeroId(obj[HERO_PERSISTED_KEY]);
-        if (!IsPlayableHeroId(hero)) return "";
-        return hero;
-    }
-
-    function PersistPlayableHeroToStorage(root, heroId, nowMs) {
-        if (!root) return false;
-        var hero = QOL.normalizeHeroId(heroId);
-        if (!IsPlayableHeroId(hero)) return false;
-
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (
-            hero === State.heroPersistLastWrittenHero &&
-            now < ((Number(State.heroPersistLastWriteMs) || 0) + HERO_PERSIST_MIN_INTERVAL_MS)
-        ) {
-            return false;
-        }
-
-        var raw = ReadStorageConfigRawFromUi(root);
-        var obj = TryParseStorageConfigRaw(raw);
-        var existing = QOL.normalizeHeroId(obj[HERO_PERSISTED_KEY]);
-        if (existing === hero) {
-            State.heroPersistLastWrittenHero = hero;
-            State.heroPersistLastWriteMs = now;
-            return false;
-        }
-
-        obj[HERO_PERSISTED_KEY] = hero;
-        var nextRaw = "";
-        try { nextRaw = WrapConfigForStorage(obj); } catch (e1) { nextRaw = ""; }
-        if (!nextRaw || nextRaw.length === 0) return false;
-
-        var writeResult = WriteStorageConfigRawToUi(root, nextRaw);
-        if (!writeResult || Number(writeResult.count) <= 0) return false;
-        State.heroPersistLastWrittenHero = hero;
-        State.heroPersistLastWriteMs = now;
-        return true;
-    }
     function ReadPanelClassTextMaybe(panel) {
         if (!panel) return "";
         var classText = "";
@@ -2138,33 +2081,6 @@ function ExpressShotLog(msg) {
         var idText = "";
         try { idText = panel.id ? String(panel.id) : ""; } catch (e0) { idText = ""; }
         return idText || "";
-    }
-
-    function BuildPanelDebugSignature(panel, maxDepth) {
-        if (!panel) return "panel=-";
-        var idText = ReadPanelIdTextMaybe(panel) || "-";
-        var typeText = ReadPanelTypeTextMaybe(panel) || "-";
-        var classText = ReadPanelClassTextMaybe(panel) || "-";
-        if (classText.length > 100) classText = classText.slice(0, 100) + "...";
-
-        var depthLimit = Number(maxDepth);
-        if (!isFinite(depthLimit) || depthLimit <= 0) depthLimit = 8;
-        var pathParts = [];
-        var p = panel;
-        var depth = 0;
-        while (p && depth < depthLimit) {
-            var seg = ReadPanelIdTextMaybe(p);
-            if (!seg || seg.length === 0) seg = ReadPanelTypeTextMaybe(p);
-            if (!seg || seg.length === 0) seg = "Panel";
-            pathParts.push(seg);
-            try {
-                p = p.GetParent ? p.GetParent() : null;
-            } catch (e0) {
-                p = null;
-            }
-            depth++;
-        }
-        return "id=" + idText + " type=" + typeText + " class=" + classText + " path=" + pathParts.join(" <- ");
     }
 
     function TryReadHeroFromPanelDetails(panel) {
@@ -2538,20 +2454,6 @@ function ExpressShotLog(msg) {
         }
 
         return null;
-    }
-
-    function ResolveAccountPresetConfig(accountId) {
-        if (!accountId) return null;
-        var presetName = ACCOUNT_PRESET_BINDINGS[String(accountId)];
-        if (!presetName) return null;
-
-        var presetConfig = ResolvePresetConfigByName(presetName);
-        if (!presetConfig) return null;
-
-        return {
-            name: presetName,
-            config: presetConfig
-        };
     }
 
     const ACCOUNT_PRESET_BINDINGS = (typeof QOL_ACCOUNT_PRESET_BINDINGS === "object" && QOL_ACCOUNT_PRESET_BINDINGS)
@@ -2980,25 +2882,6 @@ function RepeatConvarStorageProbeChars(length) {
     }
     return out;
 }
-
-function SplitConvarStorageProbeParts(rawValue) {
-    var raw = String(rawValue || "");
-    var parts = [];
-    var current = "";
-    for (var i = 0; i < raw.length; i++) {
-        var ch = raw.charAt(i);
-        if (ch === "," || ch === ";" || ch === "|" || ch === " " || ch === "\t" || ch === "\n" || ch === "\r") {
-            if (current.length > 0) {
-                parts.push(current);
-                current = "";
-            }
-        } else {
-            current += ch;
-        }
-    }
-    if (current.length > 0) parts.push(current);
-    return parts;
-}
 function ReadConvarStorageProbeValue() {
     // GameInterfaceAPI confirmed absent — cannot read convar values from Panorama.
     return "";
@@ -3164,11 +3047,6 @@ function GetUIRoot() {
     var _writeStorageDiagLogged = false;
     var _startupConfigLoadDiagLogged = false;
     var _startupConfigDefaultDiagLogged = false;
-    function ReadEnemyV2BridgeBool(storageKey, fallbackValue) {
-        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
-        // Panel attributes are the only persistence mechanism.
-        return !!fallbackValue;
-    }
 
     // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
     // panel attributes, picking the version with the highest user-edit revision number.
@@ -4956,47 +4834,6 @@ function GetUIRoot() {
             NormalizeHeroAliasToken(text) ||
             ExtractHeroFromLooseAliasTokens(text)
         );
-    }
-
-    function TryReadFgHeroSignalFromObject(obj) {
-        if (!obj || typeof obj !== "object") return "";
-        var keyCandidates = [
-            "hero_name",
-            "hero_internal_name",
-            "hero",
-            "selected_hero",
-            "current_hero",
-            "m_sHeroInternalName",
-            "m_sSelectedHero",
-            "heroName",
-            "unit_name",
-            "character_name",
-            "class",
-            "text",
-            "value",
-            "src"
-        ];
-        for (var i = 0; i < keyCandidates.length; i++) {
-            var key = keyCandidates[i];
-            var val = null;
-            try { val = obj[key]; } catch (e0) { val = null; }
-            var parsed = ParseFgHeroSignalValue(val);
-            if (parsed) return parsed;
-        }
-
-        var scanned = 0;
-        for (var k in obj) {
-            if (!obj.hasOwnProperty(k)) continue;
-            if (!/(hero|character|unit|selected|current)/i.test(String(k))) continue;
-            scanned++;
-            if (scanned > 48) break;
-            var v = null;
-            try { v = obj[k]; } catch (e1) { v = null; }
-            var parsedLoose = ParseFgHeroSignalValue(v);
-            if (parsedLoose) return parsedLoose;
-        }
-
-        return "";
     }
 
     function TryReadFgHeroSignalFromLocalApis() {
@@ -6791,27 +6628,6 @@ function GetUIRoot() {
         );
     }
 
-    function SyncEnemyV2RuntimeBridge(enhancedEnabled, ultIndicatorEnabled, levelEnabled, allowWrite) {
-        if (allowWrite === false) return;
-        var nextEnhanced = enhancedEnabled ? "1" : "0";
-        var nextUlt = ultIndicatorEnabled ? "1" : "0";
-        var nextLevel = levelEnabled ? "1" : "0";
-        var hasChanged =
-            State.enemyV2EnhancedBridgeLastValue !== nextEnhanced ||
-            State.enemyV2UltBridgeLastValue !== nextUlt ||
-            State.enemyV2LevelBridgeLastValue !== nextLevel;
-        // $.persistentStorage and GameUI.CustomUIConfig confirmed absent.
-        // Panel attributes are the only persistence.
-        if (hasChanged) {
-            try {
-                $.DispatchEvent("QOLLockEnemyV2Bridge", nextEnhanced, nextUlt, nextLevel);
-            } catch (e2) {}
-        }
-        State.enemyV2EnhancedBridgeLastValue = nextEnhanced;
-        State.enemyV2UltBridgeLastValue = nextUlt;
-        State.enemyV2LevelBridgeLastValue = nextLevel;
-    }
-
     function ParseEnemyV2BridgeBool(rawValue) {
         if (rawValue === true || rawValue === 1 || rawValue === "1") return true;
         if (rawValue === false || rawValue === 0 || rawValue === "0") return false;
@@ -6821,14 +6637,6 @@ function GetUIRoot() {
             if (s === "false") return false;
         }
         return null;
-    }
-
-    function ReadEnemyV2BoolAttr(panel, attrName) {
-        if (!panel || !panel.GetAttributeString || !attrName) return null;
-        var raw = "";
-        try { raw = String(panel.GetAttributeString(String(attrName), "") || ""); } catch (e0) { raw = ""; }
-        if (!raw) return null;
-        return ParseEnemyV2BridgeBool(raw);
     }
 
     function GetFirstPanelTextByClass(panel, className) {
@@ -7545,88 +7353,6 @@ function GetUIRoot() {
 
         return { id: "", source: "panel_tree", detail: "", panelsScanned: panelsScanned };
     }
-
-    function LogAccountProbeApiHintsOnce() {
-        if (State.accountProbeApiHintLogged) return;
-        State.accountProbeApiHintLogged = true;
-
-        function logObjectHints(name, obj) {
-            if (!obj) {
-                AccountProbeLog("API " + name + ": <not available>");
-                return;
-            }
-            var keys = [];
-            try {
-                for (var k in obj) {
-                    if (!k) continue;
-                    if (/(account|steam|player|local)/i.test(k)) keys.push(k);
-                }
-            } catch (e0) {}
-            keys.sort();
-            if (keys.length > 0) {
-                AccountProbeLog("API " + name + " hints: " + keys.slice(0, 24).join(", "));
-            } else {
-                AccountProbeLog("API " + name + ": no account/steam/player hints");
-            }
-        }
-
-        // Game, Players, GameInterfaceAPI confirmed absent — account probing via panel tree only.
-    }
-
-    function TryReadLocalAccountId(root, nowMs) {
-        if (!root) return { id: "", source: "", detail: "", panelsScanned: 0 };
-
-        // Game.GetLocalPlayerInfo and Players.* confirmed absent (panorama_api_test, 2026-06-11).
-        // Account ID detection relies on panel tree scanning.
-
-        if (nowMs >= (State.accountProbeDeepScanNextMs || 0)) {
-            State.accountProbeDeepScanNextMs = nowMs + ACCOUNT_PROBE_DEEP_SCAN_INTERVAL_MS;
-            return ScanPanelTreeForAccountId(root);
-        }
-
-        return { id: "", source: "", detail: "", panelsScanned: 0 };
-    }
-
-    function ConfirmAccountProbeResult(probeResult, nowMs, requiredHits) {
-        if (!probeResult || !probeResult.id) return false;
-        var idText = String(probeResult.id);
-        var neededHits = Number(requiredHits) || 1;
-        if (neededHits < 1) neededHits = 1;
-
-        if (State.accountProbeCandidateId !== idText) {
-            State.accountProbeCandidateId = idText;
-            State.accountProbeCandidateHits = 1;
-        } else {
-            State.accountProbeCandidateHits = (Number(State.accountProbeCandidateHits) || 0) + 1;
-        }
-
-        if (State.accountProbeCandidateHits < neededHits) return false;
-
-        State.accountProbeFoundId = idText;
-        State.accountProbeFoundSource = (probeResult.source || "") + (probeResult.detail ? (" (" + probeResult.detail + ")") : "");
-        State.accountProbeReportNextMs = nowMs + ACCOUNT_PROBE_REPORT_INTERVAL_MS;
-        State.accountProbeDone = true;
-        return true;
-    }
-
-    function GetUserEditRevision(root) {
-        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
-        var hud = null;
-        if (root && root.GetAttributeString) {
-            var rootVal = root.GetAttributeString(USER_EDIT_REV_ATTR, "");
-            var rootRev = (rootVal && rootVal.length > 0) ? parseRev(rootVal) : 0;
-            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
-            var hudRev = 0;
-            if (hud && hud.GetAttributeString) {
-                try {
-                    var hudVal = hud.GetAttributeString(USER_EDIT_REV_ATTR, "");
-                    hudRev = (hudVal && hudVal.length > 0) ? parseRev(hudVal) : 0;
-                } catch (e1) { hudRev = 0; }
-            }
-            return Math.max(rootRev, hudRev);
-        }
-        return 0;
-    }
     function TryReadAccountIdFromKnownPartyPath(root) {
         if (!root) return "";
         var partyContainer = root.FindChildTraverse("CitadelPartyContainer");
@@ -7638,23 +7364,6 @@ function GetUIRoot() {
         var avatar = localPlayer.FindChildTraverse("AvatarImage");
         if (!avatar) return "";
         return ReadAccountIdFromPanel(avatar);
-    }
-
-    function SetRuntimePresetMarker(root, presetName) {
-        var next = presetName ? String(presetName) : "";
-        if (State.accountPresetUiMarker === next) return;
-        State.accountPresetUiMarker = next;
-        var hud = null;
-        try { hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
-        if (hud && hud.SetAttributeString) {
-            try { hud.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e1) {}
-        }
-        if (root && root.SetAttributeString) {
-            try { root.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e2) {}
-        }
-    }
-    function FindSettingsLoaderStepIndex(stepKey) {
-        return _GetLoaderStepIndex(stepKey, SETTINGS_LOADER_STEPS);
     }
     // ── Generic Loader Overlay Helpers ──
     // Replaces 3 near-identical copies of step-row creation, state management,
@@ -7852,79 +7561,6 @@ function GetUIRoot() {
 
     // ── Generic Overlay Panel Builder ──
     // Used by save + clear overlays (load overlay has too many unique extras for a generic)
-
-    function _EnsureLoaderOverlaySimple(root, nowMs, cfg) {
-        // cfg: { enabledCheck, overlayId, cardId, warningId, titleId, titleText,
-        //        stepsWrapId, steps, stepRowIdPrefix, iconSuffix, labelSuffix,
-        //        cachedOverlayKey, cachedCardKey, cachedStepRowsKey,
-        //        detailId, detailTextFn, reassertMs, holdMs, statePrefix,
-        //        optionalExtras: { stallHintId, stallHintText } }
-        if (!cfg.enabledCheck || !root) return null;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var overlay = GetCachedPanel(cfg.cachedOverlayKey);
-        if (overlay && !IsPanelValid(overlay)) { SetCachedPanel(cfg.cachedOverlayKey, null); overlay = null; }
-        if (!overlay) overlay = root.FindChildTraverse ? (root.FindChildTraverse(cfg.overlayId) || null) : null;
-        if (!overlay) overlay = $.CreatePanel("Panel", root, cfg.overlayId);
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = false;
-        SetCachedPanel(cfg.cachedOverlayKey, overlay);
-
-        var card = GetCachedPanel(cfg.cachedCardKey);
-        if (card && !IsPanelValid(card)) { SetCachedPanel(cfg.cachedCardKey, null); card = null; }
-        if (!card) card = overlay.FindChildTraverse ? (overlay.FindChildTraverse(cfg.cardId) || null) : null;
-        if (!card) card = $.CreatePanel("Panel", overlay, cfg.cardId);
-        if (!card) return overlay;
-        SetCachedPanel(cfg.cachedCardKey, card);
-
-        var warning = card.FindChildTraverse ? (card.FindChildTraverse(cfg.warningId) || null) : null;
-        if (!warning) warning = $.CreatePanel("Label", card, cfg.warningId);
-        var title = card.FindChildTraverse ? (card.FindChildTraverse(cfg.titleId) || null) : null;
-        if (!title) title = $.CreatePanel("Label", card, cfg.titleId);
-        var stepsWrap = card.FindChildTraverse ? (card.FindChildTraverse(cfg.stepsWrapId) || null) : null;
-        if (!stepsWrap) stepsWrap = $.CreatePanel("Panel", card, cfg.stepsWrapId, { hittest: "false", hittestchildren: "false" });
-        var detailLabel = card.FindChildTraverse ? (card.FindChildTraverse(cfg.detailId) || null) : null;
-        if (!detailLabel) detailLabel = $.CreatePanel("Label", card, cfg.detailId);
-
-        var isDone = State[cfg.statePrefix + "SessionCompleted"];
-        var isActive = !isDone && State[cfg.statePrefix + "SessionActive"];
-        var showUntilMs = Number(State[cfg.statePrefix + "ShowUntilMs"]) || 0;
-        var doShow = isActive || (isDone && now < showUntilMs);
-        if (doShow && State[cfg.statePrefix + "LastRenderSig"]) {
-            var prevReassert = Number(State[cfg.statePrefix + "NextReassertMs"]) || 0;
-            if (now < prevReassert) return overlay;
-        }
-        try {
-            overlay.style.visibility = doShow ? "visible" : "collapse";
-        } catch (eOv) {}
-
-        if (!doShow) return overlay;
-
-        var renderDetail = cfg.detailTextFn ? cfg.detailTextFn() : String(State[cfg.statePrefix + "Detail"] || "");
-        var isPromptDetail = false;
-
-        if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== cfg.titleText) title.text = cfg.titleText;
-        if (detailLabel) {
-            ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
-            if (detailLabel.text !== renderDetail) detailLabel.text = renderDetail;
-        }
-
-        // Optional stall hint (save overlay)
-        if (cfg.optionalExtras && cfg.optionalExtras.stallHintId) {
-            var stallHint = card.FindChildTraverse ? (card.FindChildTraverse(cfg.optionalExtras.stallHintId) || null) : null;
-            if (!stallHint) stallHint = $.CreatePanel("Label", card, cfg.optionalExtras.stallHintId);
-            if (stallHint && stallHint.text !== cfg.optionalExtras.stallHintText) {
-                stallHint.text = cfg.optionalExtras.stallHintText;
-            }
-        }
-
-        _EnsureLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey);
-        _RenderLoaderStepRows(stepsWrap, cfg.steps, cfg.stepRowIdPrefix, cfg.iconSuffix, cfg.labelSuffix, cfg.cachedStepRowsKey, cfg.statePrefix);
-
-        State[cfg.statePrefix + "NextReassertMs"] = now + (cfg.reassertMs || 250);
-        return overlay;
-    }
 
     // ── Loader overlay factory (bundles state management + panel helpers) ──
     // Returns an object with methods bound to one overlay's config.
@@ -8129,13 +7765,6 @@ function GetUIRoot() {
             " probeActive=" + (probeWasActive ? "1" : "0")
         );
         return true;
-    }
-
-    function GetSettingsLoaderStepState(stepKey) {
-        return _GetLoaderStepState("settingsLoader", stepKey);
-    }
-    function BuildSettingsLoaderStepStateSignature() {
-        return _BuildLoaderStepStateSignature("settingsLoader", SETTINGS_LOADER_STEPS);
     }
     function GetSettingsLoaderIconForState(status) {
         var st = status ? String(status) : "pending";
@@ -8665,14 +8294,6 @@ function GetUIRoot() {
         cachedStepRowsKey: "saveSettingsLoaderStepRows",
     });
 
-    function FindSaveSettingsLoaderStepIndex(stepKey) {
-        return _saveLoader.getStepIndex(stepKey);
-    }
-
-    function ResetSaveSettingsLoaderStepStates() {
-        _saveLoader.resetStepStates();
-    }
-
     function ResetSaveSettingsLoaderSession(hideOverlay) {
         _saveLoader.resetSession(hideOverlay);
     }
@@ -8715,10 +8336,6 @@ function GetUIRoot() {
         State.saveSettingsLoaderShowUntilMs = now + SAVE_SETTINGS_LOADER_HOLD_MS;
         SetSaveSettingsLoaderStepState("complete", code === "failed" ? "error" : "done", info || "");
         State.saveSettingsLoaderCurrentStep = "complete";
-    }
-
-    function BuildSaveSettingsLoaderStepStateSignature() {
-        return _saveLoader.buildSignature();
     }
 
     function GetSaveSettingsLoaderDetailForMessage(statusMessage) {
@@ -8924,13 +8541,6 @@ function GetUIRoot() {
         cachedStepRowsKey: "clearSettingsLoaderStepRows",
     });
 
-
-    function FindClearSettingsLoaderStepIndex(stepKey) {
-        return _clearLoader.getStepIndex(stepKey);
-    }
-    function ResetClearSettingsLoaderStepStates() {
-        _clearLoader.resetStepStates();
-    }
     function ResetClearSettingsLoaderSession(hideOverlay) {
         _clearLoader.resetSession(hideOverlay);
     }
@@ -8968,10 +8578,6 @@ function GetUIRoot() {
         State.clearSettingsLoaderShowUntilMs = now + CLEAR_SETTINGS_LOADER_HOLD_MS;
         SetClearSettingsLoaderStepState("complete", code === "failed" ? "error" : "done", info || "");
         State.clearSettingsLoaderCurrentStep = "complete";
-    }
-
-    function BuildClearSettingsLoaderStepStateSignature() {
-        return _clearLoader.buildSignature();
     }
     function GetClearSettingsLoaderDetailForMessage(statusMessage) {
         var msg = statusMessage ? String(statusMessage) : "";
@@ -10082,15 +9688,6 @@ function GetUIRoot() {
         hudBuilds = root.FindChildTraverse("CitadelHudHeroBuilds");
         SetCachedPanel("buildSaveHudPanel", hudBuilds);
         return hudBuilds || null;
-    }
-    function DescribeBuildButtonPanel(panel) {
-        if (!panel) return "panel=-";
-        var idText = ReadPanelIdTextMaybe(panel) || "-";
-        var classText = ReadPanelClassTextMaybe(panel) || "-";
-        var typeText = ReadPanelTypeTextMaybe(panel) || "-";
-        var text = ReadPanelTextMaybe(panel) || "-";
-        if (text.length > 48) text = text.slice(0, 48) + "...";
-        return "id=" + idText + " type=" + typeText + " class=" + classText + " text=" + text;
     }
 
     function CollectBuildUiSearchRoots(root) {
@@ -12576,60 +12173,6 @@ function GetUIRoot() {
         return String(namePanel.text || "");
     }
 
-    function RefreshEnemyUltTopBarNameCache(root, nowMs) {
-        if (!root) return;
-        if (nowMs < (State.enemyUltOldTopBarNameNextMs || 0) && State.enemyUltOldTopBarNameByIndex && State.enemyUltOldTopBarNameToIndex) {
-            return;
-        }
-        var byIndex = {};
-        var byName = {};
-        var byNameList = {};
-        var enemyIndices = [];
-        for (var i = ULT_CD_SLOT_MIN_INDEX; i <= ULT_CD_SLOT_MAX_INDEX; i++) {
-            var playerPanel = GetTopBarPlayerPanel(root, i, nowMs, true);
-            if (!playerPanel || !IsPanelValid(playerPanel)) continue;
-            var isEnemySlot = false;
-            try { isEnemySlot = !!(playerPanel.BHasClass && playerPanel.BHasClass("enemy")); } catch (eE0) { isEnemySlot = false; }
-            if (!isEnemySlot) {
-                try { isEnemySlot = hasClassInHierarchy(playerPanel, "enemy"); } catch (eE1) { isEnemySlot = false; }
-            }
-            if (isEnemySlot) enemyIndices.push(i);
-            var labels = playerPanel.FindChildrenWithClassTraverse ? (playerPanel.FindChildrenWithClassTraverse("PlayerName") || []) : [];
-            var nameText = "";
-            for (var li = 0; li < labels.length; li++) {
-                var lbl = labels[li];
-                if (!lbl || !IsPanelValid(lbl) || typeof lbl.text !== "string") continue;
-                var t = String(lbl.text || "").trim();
-                if (!t) continue;
-                nameText = t;
-                break;
-            }
-            byIndex[i] = nameText;
-            var key = NormalizeEnemyUltNameKey(nameText);
-            if (key) {
-                byName[key] = i;
-                if (!byNameList[key]) byNameList[key] = [];
-                byNameList[key].push(i);
-            }
-        }
-        State.enemyUltOldTopBarNameByIndex = byIndex;
-        State.enemyUltOldTopBarNameToIndex = byName;
-        State.enemyUltOldTopBarNameToIndices = byNameList;
-        State.enemyUltOldTopBarEnemyIndices = enemyIndices;
-        State.enemyUltOldTopBarNameNextMs = nowMs + ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS;
-        var nameSamples = [];
-        for (var si = 0; si < enemyIndices.length && si < 8; si++) {
-            var idx = enemyIndices[si];
-            var nm = byIndex.hasOwnProperty(idx) ? String(byIndex[idx] || "") : "";
-            nameSamples.push(String(idx) + ":" + (nm ? nm : "-"));
-        }
-        EnemyUltOldDebugLogThrottled(
-            "topbar|" + String(enemyIndices.length) + "|" + enemyIndices.join(","),
-            "topbar_cache enemies=" + String(enemyIndices.length) + " slots=[" + enemyIndices.join(",") + "] names=[" + nameSamples.join(" | ") + "]",
-            nowMs
-        );
-    }
-
     function ParseUltTrackedIndexFromText(rawText) {
         if (rawText === undefined || rawText === null) return -1;
         var text = String(rawText || "");
@@ -12725,97 +12268,6 @@ function GetUIRoot() {
         return -1;
     }
 
-    function IsTopBarUltReadyByIndex(root, index, entry) {
-        if (!IsUltCooldownTrackedIndex(index)) return null;
-        var playerPanel = (entry && entry.cachedTopBarPlayerPanel && IsPanelValid(entry.cachedTopBarPlayerPanel))
-            ? entry.cachedTopBarPlayerPanel
-            : GetTopBarPlayerPanel(root, index, PerfNowMs(), false);
-        if (!playerPanel || !IsPanelValid(playerPanel)) return null;
-        var statusPanel = null;
-        if (entry && entry.cachedTopBarStatusPanel && IsPanelValid(entry.cachedTopBarStatusPanel)) {
-            statusPanel = entry.cachedTopBarStatusPanel;
-        } else {
-            var rp = playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("StatusRow") || null) : null;
-            statusPanel = rp && rp.FindChildTraverse ? (rp.FindChildTraverse("UltimateStatus") || null) : null;
-        }
-        if (!statusPanel || !IsPanelValid(statusPanel)) return null;
-        var unlocked = !!(statusPanel.BHasClass && statusPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED))
-            || !!(playerPanel.BHasClass && playerPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED));
-        var ready = !!(statusPanel.BHasClass && statusPanel.BHasClass("UltimateCooldownReady"))
-            || !!(playerPanel.BHasClass && playerPanel.BHasClass("UltimateCooldownReady"));
-        return !!(unlocked && ready);
-    }
-
-    function IsOldEnemyUltReadyFromPanelSignals(unitStatusPanel, windowRoot, entry) {
-        var ultIcon = (entry && entry.cachedUltIcon && IsPanelValid(entry.cachedUltIcon))
-            ? entry.cachedUltIcon
-            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_ult_ready_icon") : null) ||
-               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_ult_ready_icon") : null) || null);
-        if (ultIcon && IsPanelValid(ultIcon)) {
-            if (IsPanelVisibleMaybe(ultIcon)) return true;
-            var vis = "";
-            try { vis = ultIcon.style && ultIcon.style.visibility ? String(ultIcon.style.visibility) : ""; } catch (eV0) { vis = ""; }
-            if (vis && vis !== "collapse") return true;
-        }
-        var stateIcon = (entry && entry.cachedStateIcon && IsPanelValid(entry.cachedStateIcon))
-            ? entry.cachedStateIcon
-            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("state_icon") : null) ||
-               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("state_icon") : null) || null);
-        if (stateIcon && IsPanelValid(stateIcon) && stateIcon.GetAttributeString) {
-            var src = "";
-            try { src = String(stateIcon.GetAttributeString("src", "") || ""); } catch (eS0) { src = ""; }
-            var srcLower = src.toLowerCase();
-            if (srcLower.indexOf("ultready") !== -1 || srcLower.indexOf("ultimate") !== -1) return true;
-        }
-        var scanRoots = [windowRoot, unitStatusPanel];
-        for (var sri = 0; sri < scanRoots.length; sri++) {
-            var scanRoot = scanRoots[sri];
-            if (!scanRoot || !IsPanelValid(scanRoot)) continue;
-            var classText = (ReadPanelClassTextMaybe(scanRoot) || "").toLowerCase();
-            if (
-                classText.indexOf("ultready") !== -1 ||
-                classText.indexOf("ult_ready") !== -1 ||
-                classText.indexOf("ultimate_ready") !== -1 ||
-                classText.indexOf("ultimatecooldownready") !== -1
-            ) {
-                return true;
-            }
-        }
-        var healthbarBg = (entry && entry.cachedHealthbarBg && IsPanelValid(entry.cachedHealthbarBg))
-            ? entry.cachedHealthbarBg
-            : ((windowRoot && windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_healthbar_bg") : null) ||
-               (unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_healthbar_bg") : null) || null);
-        if (healthbarBg && IsPanelValid(healthbarBg)) {
-            var bgClass = (ReadPanelClassTextMaybe(healthbarBg) || "").toLowerCase();
-            if (
-                bgClass.indexOf("ultready") !== -1 ||
-                bgClass.indexOf("ult_ready") !== -1 ||
-                bgClass.indexOf("ultimate_ready") !== -1 ||
-                bgClass.indexOf("ultimatecooldownready") !== -1
-            ) {
-                return true;
-            }
-            if (healthbarBg.GetAttributeString) {
-                var attrKeys = ["class", "style", "onactivate", "data", "state", "status", "src"];
-                for (var ai = 0; ai < attrKeys.length; ai++) {
-                    var attrVal = "";
-                    try { attrVal = String(healthbarBg.GetAttributeString(attrKeys[ai], "") || ""); } catch (eA0) { attrVal = ""; }
-                    if (!attrVal) continue;
-                    var attrLower = attrVal.toLowerCase();
-                    if (
-                        attrLower.indexOf("ultready") !== -1 ||
-                        attrLower.indexOf("ult_ready") !== -1 ||
-                        attrLower.indexOf("ultimate_ready") !== -1 ||
-                        attrLower.indexOf("ultimatecooldownready") !== -1
-                    ) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     function CollectEnemyUltOldScanRoots(root) {
         var roots = [];
         function addRoot(panel, label) {
@@ -12885,222 +12337,6 @@ function GetUIRoot() {
 
     function CollectUnitStatusOldPanelsForEnemyUlt(root, nowMs) {
         return GetSharedUnitStatusOldPanels(root, nowMs, false);
-    }
-
-    function RefreshEnemyUltOldPanelCache(root, nowMs) {
-        if (!root) return;
-        if (nowMs < (State.enemyUltOldPanelCacheNextMs || 0) && Array.isArray(State.enemyUltOldPanelCache)) return;
-        var next = [];
-        var panels = CollectUnitStatusOldPanelsForEnemyUlt(root, nowMs);
-        var skippedNoWindow = 0;
-        var skippedEnemy = 0;
-        var classEnemyHits = 0;
-        var nameEnemyHits = 0;
-        var fallbackFromGeneralCache = 0;
-        var enemyIndices = Array.isArray(State.enemyUltOldTopBarEnemyIndices) ? State.enemyUltOldTopBarEnemyIndices : [];
-        for (var i = 0; i < panels.length; i++) {
-            var unitStatusPanel = panels[i];
-            if (!unitStatusPanel || !IsPanelValid(unitStatusPanel)) continue;
-            var windowRoot = unitStatusPanel.GetParent ? unitStatusPanel.GetParent() : null;
-            if (!windowRoot || !IsPanelValid(windowRoot)) {
-                skippedNoWindow += 1;
-                continue;
-            }
-            var isEnemy = false;
-            try { isEnemy = !!(windowRoot.BHasClass && windowRoot.BHasClass("enemy")); } catch (e0) { isEnemy = false; }
-            if (!isEnemy) {
-                try { isEnemy = hasClassInHierarchy(unitStatusPanel, "enemy"); } catch (e2) { isEnemy = false; }
-            }
-            if (isEnemy) {
-                classEnemyHits += 1;
-            } else {
-                var nKey = NormalizeEnemyUltNameKey(ReadEnemyUltOldNameText(unitStatusPanel));
-                if (nKey && State.enemyUltOldTopBarNameToIndices) {
-                    var nCandidates = State.enemyUltOldTopBarNameToIndices[nKey];
-                    if (Array.isArray(nCandidates) && nCandidates.length > 0) {
-                        for (var nci = 0; nci < nCandidates.length; nci++) {
-                            var nIdx = parseInt(nCandidates[nci], 10);
-                            if (!IsUltCooldownTrackedIndex(nIdx)) continue;
-                            if (enemyIndices.indexOf(nIdx) !== -1) {
-                                isEnemy = true;
-                                nameEnemyHits += 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (!isEnemy) {
-                skippedEnemy += 1;
-                continue;
-            }
-            var _cUltIcon = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_ult_ready_icon") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_ult_ready_icon") : null) || null;
-            var _cStateIcon = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("state_icon") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("state_icon") : null) || null;
-            var _cHealthbarBg = (windowRoot.FindChildTraverse ? windowRoot.FindChildTraverse("unit_healthbar_bg") : null) || (unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("unit_healthbar_bg") : null) || null;
-            next.push({
-                unitStatusPanel: unitStatusPanel,
-                windowRoot: windowRoot,
-                resolvedTopBarIndex: -1,
-                fallbackTopBarIndex: -1,
-                sortY: GetPanelActualOffsetSafe(windowRoot, "y"),
-                sortX: GetPanelActualOffsetSafe(windowRoot, "x"),
-                cachedUltIcon: _cUltIcon,
-                cachedStateIcon: _cStateIcon,
-                cachedHealthbarBg: _cHealthbarBg
-            });
-        }
-        if (next.length === 0) {
-            RefreshEnemyColoredHealthPanelCache(root, nowMs);
-            var generalEntries = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
-            var seenGeneral = [];
-            for (var gi = 0; gi < generalEntries.length; gi++) {
-                var ge = generalEntries[gi];
-                var gWindow = ge && ge.windowRoot ? ge.windowRoot : null;
-                if (!gWindow || !IsPanelValid(gWindow)) continue;
-                var already = false;
-                for (var sj = 0; sj < seenGeneral.length; sj++) {
-                    if (seenGeneral[sj] === gWindow) { already = true; break; }
-                }
-                if (already) continue;
-                seenGeneral.push(gWindow);
-                var gUnitStatus = ge && ge.unitStatusPanel ? ge.unitStatusPanel : null;
-                if (!gUnitStatus || !IsPanelValid(gUnitStatus)) {
-                    gUnitStatus = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("UnitStatusOld") || gWindow.FindChildTraverse("UnitStatus") || gWindow) : gWindow;
-                }
-                var _gcUltIcon = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("unit_ult_ready_icon") || null) : null;
-                var _gcStateIcon = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("state_icon") || null) : null;
-                var _gcHealthbarBg = gWindow.FindChildTraverse ? (gWindow.FindChildTraverse("unit_healthbar_bg") || null) : null;
-                next.push({
-                    unitStatusPanel: gUnitStatus,
-                    windowRoot: gWindow,
-                    resolvedTopBarIndex: -1,
-                    fallbackTopBarIndex: -1,
-                    sortY: GetPanelActualOffsetSafe(gWindow, "y"),
-                    sortX: GetPanelActualOffsetSafe(gWindow, "x"),
-                    cachedUltIcon: _gcUltIcon,
-                    cachedStateIcon: _gcStateIcon,
-                    cachedHealthbarBg: _gcHealthbarBg
-                });
-                fallbackFromGeneralCache += 1;
-            }
-            if (fallbackFromGeneralCache === 0) {
-                var scanRoots = CollectEnemyUltOldScanRoots(root);
-                for (var sri = 0; sri < scanRoots.length; sri++) {
-                    var scanRoot = scanRoots[sri] && scanRoots[sri].panel ? scanRoots[sri].panel : null;
-                    if (!scanRoot || !scanRoot.FindChildrenWithClassTraverse) continue;
-                    var windows = scanRoot.FindChildrenWithClassTraverse("WindowRoot") || [];
-                    for (var wi = 0; wi < windows.length; wi++) {
-                        var w = windows[wi];
-                        if (!w || !IsPanelValid(w)) continue;
-                        var seen = false;
-                        for (var sj2 = 0; sj2 < seenGeneral.length; sj2++) {
-                            if (seenGeneral[sj2] === w) { seen = true; break; }
-                        }
-                        if (seen) continue;
-                        var _wHealthbarBg = w.FindChildTraverse ? (w.FindChildTraverse("unit_healthbar_bg") || null) : null;
-                        var hasStateProgress = w.FindChildTraverse ? !!w.FindChildTraverse("state_progressbar") : false;
-                        var hasLaggingBar = w.FindChildTraverse ? !!w.FindChildTraverse("unit_healthbar_lagging") : false;
-                        if (!_wHealthbarBg && !hasStateProgress && !hasLaggingBar) continue;
-                        seenGeneral.push(w);
-                        var wUnitStatus = w.FindChildTraverse ? (w.FindChildTraverse("UnitStatusOld") || w.FindChildTraverse("UnitStatus") || w) : w;
-                        var _wUltIcon = w.FindChildTraverse ? (w.FindChildTraverse("unit_ult_ready_icon") || null) : null;
-                        var _wStateIcon = w.FindChildTraverse ? (w.FindChildTraverse("state_icon") || null) : null;
-                        next.push({
-                            unitStatusPanel: wUnitStatus,
-                            windowRoot: w,
-                            resolvedTopBarIndex: -1,
-                            fallbackTopBarIndex: -1,
-                            sortY: GetPanelActualOffsetSafe(w, "y"),
-                            sortX: GetPanelActualOffsetSafe(w, "x"),
-                            cachedUltIcon: _wUltIcon,
-                            cachedStateIcon: _wStateIcon,
-                            cachedHealthbarBg: _wHealthbarBg
-                        });
-                        fallbackFromGeneralCache += 1;
-                    }
-                }
-            }
-        }
-        if (next.length > 1) {
-            next.sort(function(a, b) {
-                var ay = Number(a && a.sortY) || 0;
-                var by = Number(b && b.sortY) || 0;
-                if (ay !== by) return ay - by;
-                var ax = Number(a && a.sortX) || 0;
-                var bx = Number(b && b.sortX) || 0;
-                return ax - bx;
-            });
-        }
-        var usedTopBarIndices = {};
-        for (var hi = 0; hi < next.length; hi++) {
-            var hinted = ExtractEnemyUltIndexFromHints(next[hi].unitStatusPanel, next[hi].windowRoot, root);
-            if (!IsUltCooldownTrackedIndex(hinted)) continue;
-            next[hi].resolvedTopBarIndex = hinted;
-            usedTopBarIndices[hinted] = true;
-        }
-        if (State.enemyUltOldTopBarNameToIndices) {
-            for (var ni = 0; ni < next.length; ni++) {
-                if (IsUltCooldownTrackedIndex(next[ni].resolvedTopBarIndex)) continue;
-                var nameKey = NormalizeEnemyUltNameKey(ReadEnemyUltOldNameText(next[ni].unitStatusPanel));
-                if (!nameKey) continue;
-                var candidates = State.enemyUltOldTopBarNameToIndices[nameKey];
-                if (!Array.isArray(candidates) || candidates.length === 0) continue;
-                for (var ci = 0; ci < candidates.length; ci++) {
-                    var candidate = parseInt(candidates[ci], 10);
-                    if (!IsUltCooldownTrackedIndex(candidate) || usedTopBarIndices[candidate]) continue;
-                    next[ni].resolvedTopBarIndex = candidate;
-                    usedTopBarIndices[candidate] = true;
-                    break;
-                }
-            }
-        }
-        if (enemyIndices.length > 0) {
-            for (var ei = 0; ei < next.length; ei++) {
-                if (ei < enemyIndices.length && IsUltCooldownTrackedIndex(enemyIndices[ei])) {
-                    next[ei].fallbackTopBarIndex = enemyIndices[ei];
-                    if (!IsUltCooldownTrackedIndex(next[ei].resolvedTopBarIndex) && !usedTopBarIndices[enemyIndices[ei]]) {
-                        next[ei].resolvedTopBarIndex = enemyIndices[ei];
-                        usedTopBarIndices[enemyIndices[ei]] = true;
-                    }
-                }
-            }
-        }
-        for (var tbi = 0; tbi < next.length; tbi++) {
-            var tbEntry = next[tbi];
-            var tbIndex = IsUltCooldownTrackedIndex(tbEntry.resolvedTopBarIndex) ? tbEntry.resolvedTopBarIndex : -1;
-            if (!IsUltCooldownTrackedIndex(tbIndex)) { tbEntry.cachedTopBarPlayerPanel = null; tbEntry.cachedTopBarStatusPanel = null; continue; }
-            var tbPlayerPanel = GetTopBarPlayerPanel(root, tbIndex, nowMs, true);
-            var tbRowPanel = tbPlayerPanel && tbPlayerPanel.FindChildTraverse ? (tbPlayerPanel.FindChildTraverse("StatusRow") || null) : null;
-            var tbStatusPanel = tbRowPanel && tbRowPanel.FindChildTraverse ? (tbRowPanel.FindChildTraverse("UltimateStatus") || null) : null;
-            tbEntry.cachedTopBarPlayerPanel = tbPlayerPanel;
-            tbEntry.cachedTopBarStatusPanel = tbStatusPanel;
-        }
-        State.enemyUltOldPanelCache = next;
-        State.enemyUltOldPanelCacheNextMs = nowMs + ENEMY_ULT_OLD_PANEL_SCAN_MS;
-        var mapParts = [];
-        for (var mi = 0; mi < next.length && mi < 10; mi++) {
-            var e = next[mi];
-            var eName = NormalizeEnemyUltNameKey(ReadEnemyUltOldNameText(e && e.unitStatusPanel ? e.unitStatusPanel : null));
-            mapParts.push(
-                "#" + String(mi) +
-                " rk=" + String(e && IsUltCooldownTrackedIndex(e.resolvedTopBarIndex) ? e.resolvedTopBarIndex : -1) +
-                " fk=" + String(e && IsUltCooldownTrackedIndex(e.fallbackTopBarIndex) ? e.fallbackTopBarIndex : -1) +
-                " key=" + (eName || "-")
-            );
-        }
-        EnemyUltOldDebugLogThrottled(
-            "cache|" + String(next.length) + "|" + String(enemyIndices.length),
-            "panel_cache entries=" + String(next.length) +
-            " enemySlots=" + String(enemyIndices.length) +
-            " raw=" + String(panels.length) +
-            " skipNoWindow=" + String(skippedNoWindow) +
-            " skipEnemy=" + String(skippedEnemy) +
-            " classEnemyHits=" + String(classEnemyHits) +
-            " nameEnemyHits=" + String(nameEnemyHits) +
-            " fallbackGeneral=" + String(fallbackFromGeneralCache) +
-            " map=[" + mapParts.join(" || ") + "]",
-            nowMs
-        );
     }
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
