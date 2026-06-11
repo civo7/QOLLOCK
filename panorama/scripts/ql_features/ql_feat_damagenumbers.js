@@ -181,6 +181,45 @@ function IsIndicatorSmallDamage(panel) {
         return false;
     }
 
+    // ── Apply styles to a single damage indicator panel (extracted from update loop)
+    function ApplyDamageIndicatorStyle(meta, indicatorFontSizeText, indicatorSize, hideModesChanged, hideSmallNumbers, indicatorOpacityText) {
+        if (!meta || !meta.panel) return;
+        var p = meta.panel;
+        if (!IsPanelValid(p)) return;
+
+        if (hideModesChanged) {
+            var indicatorContainer = IsPanelValid(meta.container) ? meta.container : FindAncestorWithClass(p, "HudIndicatorContainer");
+            if (indicatorContainer && indicatorContainer !== meta.container) {
+                meta.container = indicatorContainer;
+            }
+            if (p.style.opacity === "0" || p.style.opacity === "0.00") {
+                SetPanelOpacitySafe(p, 1.0, 1.0);
+            }
+            if (indicatorContainer && (indicatorContainer.style.opacity === "0" || indicatorContainer.style.opacity === "0.00")) {
+                SetPanelOpacitySafe(indicatorContainer, 1.0, 1.0);
+            }
+        }
+
+        var targetSize = indicatorFontSizeText;
+        try {
+            var panelId = p.id;
+            if (panelId === "Desc" || panelId === "Effectiveness") {
+                var capped = indicatorSize > 28 ? 28 : indicatorSize;
+                targetSize = capped + "px";
+            }
+        } catch (e) {}
+        if (p.style.fontSize !== targetSize) {
+            p.style.fontSize = targetSize;
+        }
+        if (meta.isCumulativeOrBatched) return;
+
+        if (hideSmallNumbers && meta.isSmallDamage) {
+            SetPanelOpacitySafe(p, 0, 0);
+            return;
+        }
+        SetPanelOpacitySafe(p, indicatorOpacityText, 1.0);
+    }
+
     function UpdateDamageNumbersRuntime(root, cfg, raw, nowMs) {
         // Bail early when indicator config is at default and no cached panel work to clean up.
         if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
@@ -244,45 +283,7 @@ function IsIndicatorSmallDamage(panel) {
 
                 var indicatorFontSizeText = indicatorSize + "px";
                 for (var im = 0; im < indicatorMeta.length; im++) {
-                    var meta = indicatorMeta[im];
-                    if (!meta || !meta.panel) continue;
-                    var p = meta.panel;
-                    if (!IsPanelValid(p)) continue;
-
-                    if (hideModesChanged) {
-                        var indicatorContainer = IsPanelValid(meta.container) ? meta.container : FindAncestorWithClass(p, "HudIndicatorContainer");
-                        if (indicatorContainer && indicatorContainer !== meta.container) {
-                            meta.container = indicatorContainer;
-                        }
-                        if (p.style.opacity === "0" || p.style.opacity === "0.00") {
-                            SetPanelOpacitySafe(p, 1.0, 1.0);
-                        }
-                        if (indicatorContainer && (indicatorContainer.style.opacity === "0" || indicatorContainer.style.opacity === "0.00")) {
-                            SetPanelOpacitySafe(indicatorContainer, 1.0, 1.0);
-                        }
-                    }
-
-                    // #Desc ("Too Far", "Too Low", etc.) and #Effectiveness are description
-                    // labels, not damage numbers. Scale with user preference but cap at
-                    // 28px to prevent text overflow at high font-size settings.
-                    var targetSize = indicatorFontSizeText;
-                    try {
-                        var panelId = p.id;
-                        if (panelId === "Desc" || panelId === "Effectiveness") {
-                            var capped = indicatorSize > 28 ? 28 : indicatorSize;
-                            targetSize = capped + "px";
-                        }
-                    } catch (e) {}
-                    if (p.style.fontSize !== targetSize) {
-                        p.style.fontSize = targetSize;
-                    }
-                    if (meta.isCumulativeOrBatched) continue;
-
-                    if (hideSmallNumbers && meta.isSmallDamage) {
-                        SetPanelOpacitySafe(p, 0, 0);
-                        continue;
-                    }
-                    SetPanelOpacitySafe(p, indicatorOpacityText, 1.0);
+                    ApplyDamageIndicatorStyle(indicatorMeta[im], indicatorFontSizeText, indicatorSize, hideModesChanged, hideSmallNumbers, indicatorOpacityText);
                 }
                 State.lastIndicatorCount = indicatorMeta.length;
                 if (indicatorIsDefault && !State.accountPresetTestActive) {
