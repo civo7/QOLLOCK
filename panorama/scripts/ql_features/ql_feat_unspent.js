@@ -156,6 +156,93 @@
         }
     }
 
+    // ── Per-player slot processing (extracted from UpdateUnspentSouls loop body)
+
+    function ProcessUnspentPlayerSlot(nowMs, i, playerPanel) {
+        var totalNetWorth = GetSoulValueFromLabels(
+            State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[i] : null,
+            State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[i] : null
+        );
+        if (!isFinite(totalNetWorth)) totalNetWorth = 0;
+
+        var modsContainer = IsPanelValid(State.unspentModsContainers[i]) ? State.unspentModsContainers[i] : null;
+        if (!modsContainer && playerPanel && playerPanel.FindChildTraverse) {
+            modsContainer = playerPanel.FindChildTraverse("PlayerModsContainer");
+            State.unspentModsContainers[i] = modsContainer || null;
+        }
+
+        var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
+        var needsTierScan = false;
+        if (modsContainer && modsContainer.GetChildCount) {
+            var childCount = -1;
+            try { childCount = modsContainer.GetChildCount(); } catch (e2) { childCount = -1; }
+            var prevChildCount = Number(State.unspentModsChildCount[i]);
+            if (!isFinite(prevChildCount)) prevChildCount = -1;
+            if (childCount !== prevChildCount) {
+                State.unspentModsChildCount[i] = childCount;
+                needsTierScan = true;
+            }
+            var structureSig = BuildUnspentModsStructureSignature(modsContainer);
+            var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
+            var structureChanged = (structureSig !== prevStructureSig);
+            if (structureChanged) {
+                State.unspentModsStructureSig[i] = structureSig;
+                needsTierScan = true;
+            }
+            if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
+                needsTierScan = true;
+            }
+            if (needsTierScan) {
+                var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
+                spentSouls =
+                    (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
+                    (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
+                    (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
+                    (tierCounts.t4 * UNSPENT_TIER_COST[4]);
+                State.unspentCachedSpentSouls[i] = spentSouls;
+                var nextTierDelayMs = ((childCount !== prevChildCount) || structureChanged)
+                    ? UNSPENT_TIER_SCAN_INTERVAL_MS
+                    : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
+                State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
+            }
+        } else {
+            spentSouls = 0;
+            State.unspentCachedSpentSouls[i] = 0;
+            State.unspentModsChildCount[i] = -1;
+            State.unspentModsStructureSig[i] = "";
+            State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
+        }
+
+        var unspentSouls = totalNetWorth - spentSouls;
+        if (!isFinite(unspentSouls)) unspentSouls = 0;
+
+        var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
+        if (!display && playerPanel && playerPanel.FindChildTraverse) {
+            display = playerPanel.FindChildTraverse("SpentSoulDisplay");
+        }
+        if (!display && playerPanel) {
+            display = $.CreatePanel("Label", playerPanel, "SpentSoulDisplay");
+            if (display) display.AddClass("SpentSoulDisplay");
+        }
+        State.unspentDisplayLabels[i] = display || null;
+        if (!display) return;
+
+        var nextText = unspentSouls >= 1000 ? (unspentSouls / 1000).toFixed(1) + "k" : String(Math.round(unspentSouls));
+        var prevText = String(State.unspentLastDisplayText[i] || "");
+        if (nextText !== prevText) {
+            display.text = nextText;
+            State.unspentLastDisplayText[i] = nextText;
+        }
+        var hasSpent = unspentSouls > 0;
+        if (display.BHasClass("hasSpent") !== hasSpent) {
+            if (hasSpent) display.AddClass("hasSpent"); else display.RemoveClass("hasSpent");
+        }
+        var hasNegative = unspentSouls < 0;
+        if (display.BHasClass("negative") !== hasNegative) {
+            if (hasNegative) display.AddClass("negative"); else display.RemoveClass("negative");
+        }
+    }
+
     // ── Update ──
 
     function UpdateUnspentSouls(root, nowMs, cfg) {
@@ -187,89 +274,7 @@
         for (var i = cursor; i < batchEnd; i++) {
             var playerPanel = IsPanelValid(State.unspentPlayerPanels[i]) ? State.unspentPlayerPanels[i] : null;
             if (!playerPanel) continue;
-
-            var totalNetWorth = GetSoulValueFromLabels(
-                State.unspentSoulValueLabelsPrimary ? State.unspentSoulValueLabelsPrimary[i] : null,
-                State.unspentSoulValueLabelsFallback ? State.unspentSoulValueLabelsFallback[i] : null
-            );
-            if (!isFinite(totalNetWorth)) totalNetWorth = 0;
-
-            var modsContainer = IsPanelValid(State.unspentModsContainers[i]) ? State.unspentModsContainers[i] : null;
-            if (!modsContainer && playerPanel && playerPanel.FindChildTraverse) {
-                modsContainer = playerPanel.FindChildTraverse("PlayerModsContainer");
-                State.unspentModsContainers[i] = modsContainer || null;
-            }
-
-            var spentSouls = Number(State.unspentCachedSpentSouls[i]) || 0;
-            var needsTierScan = false;
-            if (modsContainer && modsContainer.GetChildCount) {
-                var childCount = -1;
-                try { childCount = modsContainer.GetChildCount(); } catch (e2) { childCount = -1; }
-                var prevChildCount = Number(State.unspentModsChildCount[i]);
-                if (!isFinite(prevChildCount)) prevChildCount = -1;
-                if (childCount !== prevChildCount) {
-                    State.unspentModsChildCount[i] = childCount;
-                    needsTierScan = true;
-                }
-                var structureSig = BuildUnspentModsStructureSignature(modsContainer);
-                var prevStructureSig = String(State.unspentModsStructureSig[i] || "");
-                var structureChanged = (structureSig !== prevStructureSig);
-                if (structureChanged) {
-                    State.unspentModsStructureSig[i] = structureSig;
-                    needsTierScan = true;
-                }
-                if (nowMs >= (State.unspentNextTierScanMs[i] || 0)) {
-                    needsTierScan = true;
-                }
-                if (needsTierScan) {
-                    var tierCounts = ScanTierCountsOnModsContainer(modsContainer);
-                    spentSouls =
-                        (tierCounts.t1 * UNSPENT_TIER_COST[1]) +
-                        (tierCounts.t2 * UNSPENT_TIER_COST[2]) +
-                        (tierCounts.t3 * UNSPENT_TIER_COST[3]) +
-                        (tierCounts.t4 * UNSPENT_TIER_COST[4]);
-                    State.unspentCachedSpentSouls[i] = spentSouls;
-                    var nextTierDelayMs = ((childCount !== prevChildCount) || structureChanged)
-                        ? UNSPENT_TIER_SCAN_INTERVAL_MS
-                        : UNSPENT_TIER_SCAN_STABLE_INTERVAL_MS;
-                    State.unspentNextTierScanMs[i] = nowMs + nextTierDelayMs + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
-                }
-            } else {
-                spentSouls = 0;
-                State.unspentCachedSpentSouls[i] = 0;
-                State.unspentModsChildCount[i] = -1;
-                State.unspentModsStructureSig[i] = "";
-                State.unspentNextTierScanMs[i] = nowMs + UNSPENT_TIER_SCAN_INTERVAL_MS + (i * UNSPENT_TIER_SCAN_STAGGER_MS);
-            }
-
-            var unspentSouls = totalNetWorth - spentSouls;
-            if (!isFinite(unspentSouls)) unspentSouls = 0;
-
-            var display = IsPanelValid(State.unspentDisplayLabels[i]) ? State.unspentDisplayLabels[i] : null;
-            if (!display && playerPanel && playerPanel.FindChildTraverse) {
-                display = playerPanel.FindChildTraverse("SpentSoulDisplay");
-            }
-            if (!display && playerPanel) {
-                display = $.CreatePanel("Label", playerPanel, "SpentSoulDisplay");
-                if (display) display.AddClass("SpentSoulDisplay");
-            }
-            State.unspentDisplayLabels[i] = display || null;
-            if (!display) continue;
-
-            var nextText = unspentSouls >= 1000 ? (unspentSouls / 1000).toFixed(1) + "k" : String(Math.round(unspentSouls));
-            var prevText = String(State.unspentLastDisplayText[i] || "");
-            if (nextText !== prevText) {
-                display.text = nextText;
-                State.unspentLastDisplayText[i] = nextText;
-            }
-            var hasSpent = unspentSouls > 0;
-            if (display.BHasClass("hasSpent") !== hasSpent) {
-                if (hasSpent) display.AddClass("hasSpent"); else display.RemoveClass("hasSpent");
-            }
-            var hasNegative = unspentSouls < 0;
-            if (display.BHasClass("negative") !== hasNegative) {
-                if (hasNegative) display.AddClass("negative"); else display.RemoveClass("negative");
-            }
+            ProcessUnspentPlayerSlot(nowMs, i, playerPanel);
         }
 
         var nextCursor = cursor + UNSPENT_PLAYER_BATCH_SIZE;
