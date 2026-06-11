@@ -533,5 +533,5 @@ var CRATE_DATA = {
 
 
 // Backward compatibility alias for newer references.
-var MINIMAP_DATA = CRATE_DATA;
+var MINIMAP_CRATE_DATA = CRATE_DATA;
 

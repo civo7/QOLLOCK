@@ -1221,18 +1221,18 @@
 
         if (selectedBuild.FindChildrenWithClassTraverse) {
             var categoryNames = selectedBuild.FindChildrenWithClassTraverse("CategoryName") || [];
-            for (var c = 0; c < categoryNames.length; c++) {
-                var token = QOL.extractBuildCategoryPayloadToken(ReadPanelTextMaybe(categoryNames[c]));
+            for (var classIdx = 0; classIdx < categoryNames.length; classIdx++) {
+                var token = QOL.extractBuildCategoryPayloadToken(ReadPanelTextMaybe(categoryNames[classIdx]));
                 if (token && token.length > 0) return token;
             }
 
             // Scan visible build-entry rows/titles as a fallback so payloads can be discovered
             // even when the selected build panel is stale or not the entry that contains token text.
             var visibleEntryClasses = ["FavoriteBuildEntryContainer", "SelectedBuildName", "BuildName"];
-            for (var ec = 0; ec < visibleEntryClasses.length; ec++) {
-                var panels = selectedBuild.FindChildrenWithClassTraverse(visibleEntryClasses[ec]) || [];
-                for (var pi = 0; pi < panels.length; pi++) {
-                    var deepToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(panels[pi], 48));
+            for (var entryClassIdx = 0; entryClassIdx < visibleEntryClasses.length; entryClassIdx++) {
+                var panels = selectedBuild.FindChildrenWithClassTraverse(visibleEntryClasses[entryClassIdx]) || [];
+                for (var panelIdx = 0; panelIdx < panels.length; panelIdx++) {
+                    var deepToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(panels[panelIdx], 48));
                     if (deepToken && deepToken.length > 0) return deepToken;
                 }
             }
@@ -1241,8 +1241,8 @@
         // Fallback: when build browser is rendered outside ShopModsSelectedBuild, scan
         // visible build-entry rows from all reachable build UI roots.
         var entryPanels = QOL.collectStorageBuildEntryPanels(root, true);
-        for (var ep = 0; ep < entryPanels.length; ep++) {
-            var entryToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(entryPanels[ep], 56));
+        for (var entryPanelIdx = 0; entryPanelIdx < entryPanels.length; entryPanelIdx++) {
+            var entryToken = QOL.extractBuildCategoryPayloadToken(ReadPanelTextDeepMaybe(entryPanels[entryPanelIdx], 56));
             if (entryToken && entryToken.length > 0) return entryToken;
         }
 

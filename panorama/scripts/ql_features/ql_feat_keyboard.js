@@ -86,8 +86,8 @@
         allBindingsBox.style.width = "fit-children";
 
         var keyPanels = GetKeyboardCachedPanels(cache, allBindingsBox, "keyPanels", "Key");
-        for (var kp = 0; kp < keyPanels.length; kp++) {
-            var keyPanel = keyPanels[kp];
+        for (var keyIdx = 0; keyIdx < keyPanels.length; keyIdx++) {
+            var keyPanel = keyPanels[keyIdx];
             if (!keyPanel) continue;
 
             var baseKeyWidth = 40;
@@ -109,16 +109,16 @@
         }
 
         var keyboardGlyphLabels = GetKeyboardCachedPanels(cache, allBindingsBox, "glyphLabels", "Label");
-        for (var kl = 0; kl < keyboardGlyphLabels.length; kl++) {
-            var glyphLabel = keyboardGlyphLabels[kl];
+        for (var glyphIdx = 0; glyphIdx < keyboardGlyphLabels.length; glyphIdx++) {
+            var glyphLabel = keyboardGlyphLabels[glyphIdx];
             if (!glyphLabel) continue;
             glyphLabel.style.fontSize = scaledLabelSize + "px";
             glyphLabel.style.lineHeight = "0px";
         }
 
         var mouseGlyphs = GetKeyboardCachedPanels(cache, allBindingsBox, "mouseGlyphs", "MouseButtonGlyph");
-        for (var mg = 0; mg < mouseGlyphs.length; mg++) {
-            var mouseGlyph = mouseGlyphs[mg];
+        for (var mouseIdx = 0; mouseIdx < mouseGlyphs.length; mouseIdx++) {
+            var mouseGlyph = mouseGlyphs[mouseIdx];
             if (!mouseGlyph) continue;
             mouseGlyph.style.width = scaledMouseGlyphSize + "px";
             mouseGlyph.style.height = scaledMouseGlyphSize + "px";
@@ -180,8 +180,8 @@
         if (cfg && cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
             var allBindingsBoxes = S.allBindingsBoxes || [];
             var validBoxes = [];
-            for (var bi = 0; bi < allBindingsBoxes.length; bi++) {
-                var candidate = allBindingsBoxes[bi];
+            for (var boxIdx = 0; boxIdx < allBindingsBoxes.length; boxIdx++) {
+                var candidate = allBindingsBoxes[boxIdx];
                 if (IsPanelValid(candidate)) validBoxes.push(candidate);
             }
             if (validBoxes.length === 0) {

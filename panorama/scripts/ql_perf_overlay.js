@@ -137,7 +137,7 @@
      * Used to detect 5s window resets: within a window counts only increase,
      * so a drop means a new window started.
      */
-    function _totalCount(stats) {
+    function _sumFeatureCallCounts(stats) {
         if (!stats) return 0;
         var keys = Object.keys(stats);
         var total = 0;
@@ -172,7 +172,7 @@
      * previous window's completed snapshot into the ring buffer.
      */
     function _captureWindowSnapshots(stats, nowMs) {
-        var curTotal = _totalCount(stats);
+        var curTotal = _sumFeatureCallCounts(stats);
         var curEntries = _copyEntries(stats);
 
         // Detect reset: total count dropped → previous window is complete

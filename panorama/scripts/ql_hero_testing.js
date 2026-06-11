@@ -473,7 +473,7 @@ function ParseCommandParts(command) {
     };
 }
 
-function CommandReliesOnScripts(command) {
+function IsCommandScriptDependent(command) {
     const commandParts = String(command || "")
         .split(";")
         .map(segment => segment.trim())
@@ -525,7 +525,7 @@ function OnActivateReliesOnScripts(onActivate) {
     const cmdRegex = /Cmd\(`([^`]*)`\)/g;
     let cmdMatch = cmdRegex.exec(onActivate);
     while (cmdMatch !== null) {
-        if (CommandReliesOnScripts(cmdMatch[1])) {
+        if (IsCommandScriptDependent(cmdMatch[1])) {
             return true;
         }
         cmdMatch = cmdRegex.exec(onActivate);
@@ -606,7 +606,7 @@ function giveImbueItem(item) {
     Cmd(`giveitem ${item} ${imbuedSkill}`);
 }
 
-function WalkToAncestor(id) {
+function FindAncestorById(id) {
     const ctx = $.GetContextPanel();
     let panel = ctx.GetParent();
     while (true) {
@@ -618,7 +618,7 @@ function WalkToAncestor(id) {
 }
 
 function Cmd(command) {
-    if (CommandReliesOnScripts(command)) {
+    if (IsCommandScriptDependent(command)) {
         HeroTestingDebugLog(`blocked script-dependent command: ${command}`);
         return;
     }
@@ -950,7 +950,7 @@ function ParsePxLikeValue(value) {
 }
 
 function GetDragTargetPanel() {
-    const hudPanel = WalkToAncestor("hud_hero_testing");
+    const hudPanel = FindAncestorById("hud_hero_testing");
     if (hudPanel && (!hudPanel.IsValid || hudPanel.IsValid())) {
         return hudPanel;
     }
@@ -1775,7 +1775,7 @@ function ToggleVisibility(panel) {
 }
 
 
-const Hud = WalkToAncestor("Hud");
+const Hud = FindAncestorById("Hud");
 
 function ToggleTopBar() {
     ToggleVisibility(Hud.FindChildInLayoutFile("TopBar"));
@@ -2142,7 +2142,7 @@ function LoadDefaultHeroFromSettings() {
     $.DispatchEvent("PlaySoundEffect", "Stinger.LevelUp");
 }
 
-function ToggleModdifier(name) {
+function ToggleModifier(name) {
     const enabled = $.FindChildInContext(`#HTPP_${name}`).IsSelected();
     if (enabled) {
         Cmd(`modifier_create ${name} player`);

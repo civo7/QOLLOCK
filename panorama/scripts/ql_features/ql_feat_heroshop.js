@@ -16,7 +16,7 @@
     var SetPanelClassCached = _deps.setPanelClassCached;
     var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
 
-    function UpdateHeroShopRuntime(root, cfg, nowMsClass) {
+    function UpdateHeroShopRuntime(root, cfg, nowMs) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
         var shopOffsetYRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0);
         var shopOpacityText = NormalizeOpacityNumber(cfg.SHOP_OPACITY, 1.0).toFixed(2);
@@ -43,10 +43,10 @@
                 if (shopVis === "collapse") return;
             } catch (eVis) {}
         }
-        if (needsHeroShopFeatures && !heroShop && nowMsClass >= (S.heroShopNextSearchMs || 0)) {
+        if (needsHeroShopFeatures && !heroShop && nowMs >= (S.heroShopNextSearchMs || 0)) {
             heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
             SC("heroShop", heroShop);
-            S.heroShopNextSearchMs = heroShop ? 0 : (nowMsClass + HERO_SHOP_PANEL_SEARCH_MS);
+            S.heroShopNextSearchMs = heroShop ? 0 : (nowMs + HERO_SHOP_PANEL_SEARCH_MS);
         }
         if (needsHeroShopFeatures) {
             if (heroShop) {

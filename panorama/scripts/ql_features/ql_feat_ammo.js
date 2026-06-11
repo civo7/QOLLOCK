@@ -85,16 +85,16 @@
                 if (scaledMaxMarginLeftPx < 0) scaledMaxMarginLeftPx = 0;
 
                 var ammoValueLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo") || [];
-                for (var av = 0; av < ammoValueLabels.length; av++) {
-                    var ammoValueLabel = ammoValueLabels[av];
+                for (var ammoIdx = 0; ammoIdx < ammoValueLabels.length; ammoIdx++) {
+                    var ammoValueLabel = ammoValueLabels[ammoIdx];
                     if (!ammoValueLabel) continue;
                     ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
                     ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
                     U.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
                 }
                 var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
-                for (var am = 0; am < ammoMaxLabels.length; am++) {
-                    var ammoMaxLabel = ammoMaxLabels[am];
+                for (var maxIdx = 0; maxIdx < ammoMaxLabels.length; maxIdx++) {
+                    var ammoMaxLabel = ammoMaxLabels[maxIdx];
                     if (!ammoMaxLabel) continue;
                     ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
                     ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
@@ -102,8 +102,8 @@
                     U.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
                 }
                 var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
-                for (var ai = 0; ai < ammoInfiniteLabels.length; ai++) {
-                    var ammoInfiniteLabel = ammoInfiniteLabels[ai];
+                for (var infiniteIdx = 0; infiniteIdx < ammoInfiniteLabels.length; infiniteIdx++) {
+                    var ammoInfiniteLabel = ammoInfiniteLabels[infiniteIdx];
                     if (!ammoInfiniteLabel) continue;
                     U.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
                 }

@@ -242,7 +242,7 @@ function EnemyColoredHealthDebugLogThrottled(sig, msg, nowMs) {
         S.enemyColoredHealthDebugNextMs = now + ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS;
         EnemyColoredHealthDebugLog(msg);
     }
-function ResolveTopBarHealthPct(entry) {
+function EstimateHealthPercentFromBarHeight(entry) {
         if (!entry) return NaN;
         var fillPanel = entry.healthBar || null;
         var fillSize = fillPanel && IsPanelValid(fillPanel) ? Number(fillPanel.actuallayoutheight) : NaN;
@@ -615,7 +615,7 @@ function ToRgbString(rgb) {
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var pct = ResolveTopBarHealthPct(entry);
+            var pct = EstimateHealthPercentFromBarHeight(entry);
             if (!isFinite(pct)) continue;
 
             if (!pulseAdvanced && use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
@@ -699,7 +699,7 @@ function ToRgbString(rgb) {
             if (!entry || !entry.healthBar || !entry.healthBarParent) continue;
             if (!IsPanelValid(entry.healthBar) || !IsPanelValid(entry.healthBarParent)) continue;
 
-            var pct = ResolveTopBarHealthPct(entry);
+            var pct = EstimateHealthPercentFromBarHeight(entry);
             if (!isFinite(pct)) continue;
 
             if (!pulseAdvanced && use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {

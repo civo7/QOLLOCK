@@ -181,7 +181,7 @@ function IsIndicatorSmallDamage(panel) {
         return false;
     }
 
-    function UpdateDamageNumbersRuntime(root, cfg, raw, nowMsLoop) {
+    function UpdateDamageNumbersRuntime(root, cfg, raw, nowMs) {
         // Bail early when indicator config is at default and no cached panel work to clean up.
         if (ResolveDamageNumbersRuntimeSig(cfg) === DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG &&
             !IsPanelListValid(S.indicatorPanelsCache) &&
@@ -203,7 +203,7 @@ function IsIndicatorSmallDamage(panel) {
         var indicatorIsDefault = (indicatorConfigSig === indicatorDefaultsSig);
         var indicatorRefreshIntervalMs = hideSmallNumbers ? HUD_INDICATOR_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_REFRESH_MS_IDLE;
         var indicatorPanelCacheRefreshMs = hideSmallNumbers ? HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL : HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE;
-        var indicatorRefreshDue = RuntimeTaskIsDue("hud_indicator_refresh", nowMsLoop);
+        var indicatorRefreshDue = RuntimeTaskIsDue("hud_indicator_refresh", nowMs);
         var shouldRefreshIndicators =
             raw !== S.lastRawConfig ||
             S.accountPresetTestActive ||
@@ -217,10 +217,10 @@ function IsIndicatorSmallDamage(panel) {
                 !S.accountPresetTestActive &&
                 raw === S.lastRawConfig;
             if (shouldSkipDefaultPass) {
-                RuntimeTaskSetDelay("hud_indicator_refresh", nowMsLoop, indicatorRefreshIntervalMs);
+                RuntimeTaskSetDelay("hud_indicator_refresh", nowMs, indicatorRefreshIntervalMs);
             } else {
                 var indicatorCacheValid = IsPanelListValid(S.indicatorPanelsCache);
-                var indicatorPanelCacheDue = RuntimeTaskIsDue("hud_indicator_panel_cache", nowMsLoop);
+                var indicatorPanelCacheDue = RuntimeTaskIsDue("hud_indicator_panel_cache", nowMs);
                 var shouldRefreshIndicatorPanels =
                     !indicatorCacheValid ||
                     indicatorPanelCacheDue ||
@@ -233,7 +233,7 @@ function IsIndicatorSmallDamage(panel) {
                     }
                     var searchRoot = dmgContainer ? dmgContainer : root;
                     S.indicatorPanelsCache = searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [];
-                    RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMsLoop, indicatorPanelCacheRefreshMs);
+                    RuntimeTaskSetDelay("hud_indicator_panel_cache", nowMs, indicatorPanelCacheRefreshMs);
                 }
                 var indicatorMeta = S.indicatorMetaCache || [];
                 if (shouldRefreshIndicatorPanels || indicatorMeta.length !== (S.indicatorPanelsCache || []).length) {
@@ -293,7 +293,7 @@ function IsIndicatorSmallDamage(panel) {
             }
             S.lastIndicatorConfigSig = indicatorConfigSig;
             S.lastIndicatorHideModesSig = hideModesSig;
-            RuntimeTaskSetDelay("hud_indicator_refresh", nowMsLoop, indicatorRefreshIntervalMs);
+            RuntimeTaskSetDelay("hud_indicator_refresh", nowMs, indicatorRefreshIntervalMs);
         }
     }
 

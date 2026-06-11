@@ -7653,7 +7653,7 @@ function GetUIRoot() {
             try { root.SetAttributeString(RUNTIME_PRESET_ATTR, next); } catch (e2) {}
         }
     }
-    function GetSettingsLoaderStepIndex(stepKey) {
+    function FindSettingsLoaderStepIndex(stepKey) {
         return _GetLoaderStepIndex(stepKey, SETTINGS_LOADER_STEPS);
     }
     // ── Generic Loader Overlay Helpers ──
@@ -8590,7 +8590,7 @@ function GetUIRoot() {
         cachedStepRowsKey: "saveSettingsLoaderStepRows",
     });
 
-    function GetSaveSettingsLoaderStepIndex(stepKey) {
+    function FindSaveSettingsLoaderStepIndex(stepKey) {
         return _saveLoader.getStepIndex(stepKey);
     }
 
@@ -8940,7 +8940,7 @@ function GetUIRoot() {
     });
 
 
-    function GetClearSettingsLoaderStepIndex(stepKey) {
+    function FindClearSettingsLoaderStepIndex(stepKey) {
         return _clearLoader.getStepIndex(stepKey);
     }
     function ResetClearSettingsLoaderStepStates() {
@@ -13247,7 +13247,7 @@ function GetUIRoot() {
         State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
         return friendlyTeamClass;
     }
-    function ResolveTopBarHealthPct(entry) {
+    function EstimateHealthPercentFromBarHeight(entry) {
         if (!entry) return NaN;
         var fillPanel = entry.healthBar || null;
         var fillSize = fillPanel && IsPanelValid(fillPanel) ? Number(fillPanel.actuallayoutheight) : NaN;
