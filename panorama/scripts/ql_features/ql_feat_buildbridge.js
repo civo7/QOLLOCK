@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 2
 (function() {
     'use strict';
-    var _dk = "ql_feat_buildbridge";
+    var _featureId = "ql_feat_buildbridge";
     // Note: this file loads before ql_core.js populates the QOL namespace,
     // so we access State and other globals at call time, not via QOL.import().
     // Functions that need QOL symbols should use direct global access.
@@ -241,6 +241,6 @@
         if (typeof SetBuildSaveStatus !== "function") throw new Error("SetBuildSaveStatus missing");
         if (typeof CanReuseLoaderConfirmedAirheartContext !== "function") throw new Error("CanReuseLoaderConfirmedAirheartContext missing");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test: " + e.message);
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + e.message);
     }
 })();

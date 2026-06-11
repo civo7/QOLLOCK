@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 3
 (function() {
     'use strict';
-    var _dk = "ql_feat_buildsave";
+    var _featureId = "ql_feat_buildsave";
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
         "normalizeHeroId", "getConfiguredDefaultHeroId", "selectHeroForBuildSave",
         "queueDelayedHeroRestore", "tryAdvanceStorageSwitchStage",
@@ -1144,6 +1144,6 @@ function ResetBuildSaveRequestAttributes(root) {
         if (typeof FinishBuildSaveRequest !== "function") throw new Error("FinishBuildSaveRequest missing");
         if (typeof ResetBuildSaveRuntimeState !== "function") throw new Error("ResetBuildSaveRuntimeState missing");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test: " + e.message);
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + e.message);
     }
 })();

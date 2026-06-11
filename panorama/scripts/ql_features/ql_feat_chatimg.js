@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_chatimg";
+    var _featureId = "ql_feat_chatimg";
     var _deps = QOL.import(["buildImagesInChatContainerWatermark","clearInjectedChatImagesForMessage","findChatMessageLabel","findImagesInChatMessageCacheEntry","getCachedPanel","getImagesInChatMessageCache","injectBottomChatImage","injectTopChatImage","perfNowMs","pruneImagesInChatMessageCache","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;

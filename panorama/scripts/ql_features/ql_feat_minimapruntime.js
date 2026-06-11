@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_minimapruntime";
+    var _featureId = "ql_feat_minimapruntime";
     var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
@@ -758,7 +758,7 @@ var SetCachedPanel = function(k, p) {
             try {
                 UpdateMinimapRuntime(root, cfg, raw);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -774,7 +774,7 @@ var SetCachedPanel = function(k, p) {
     try {
         if (typeof UpdateMinimapRuntime !== "function") throw new Error("UpdateMinimapRuntime is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 
 })();

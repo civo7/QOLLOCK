@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_combatstatus";
+    var _featureId = "ql_feat_combatstatus";
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","isCombatSignalActive","isCustomHudContextActive","perfEnd","perfStart","state","setCachedPanel","setPanelClassIfChanged","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_sigflash";
+    var _featureId = "ql_feat_sigflash";
     var _deps = QOL.import(["getCachedPanel","panelIdSignature","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;

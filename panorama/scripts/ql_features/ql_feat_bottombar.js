@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: bottomBarRuntime\n");
-        var _dk = "ql_feat_bottombar";
+        var _featureId = "ql_feat_bottombar";
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","panelIdGoldApContainer","panelIdSignature","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
     var GetGameplayHudPanel = _deps.getGameplayHudPanel;

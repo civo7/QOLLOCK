@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: topBarRuntime\n");
-        var _dk = "ql_feat_topbar";
+        var _featureId = "ql_feat_topbar";
     var _deps = QOL.import(["getCachedPanel", "isHudVisibleForTopBarRuntime", "resolveCachedPanel", "state", "setCachedPanel", "utils", "panelIdTopBar"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_damagenumbers";
+    var _featureId = "ql_feat_damagenumbers";
     var _deps = QOL.import(["findAncestorWithClass","getCachedPanel","isPanelListValid","perfEnd","perfStart","resolveDamageNumbersRuntimeSig","runtimeTaskIsDue","runtimeTaskSetDelay","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
@@ -310,7 +310,7 @@ function IsIndicatorSmallDamage(panel) {
             try {
                 UpdateDamageNumbersRuntime(root, cfg, S.lastRawConfig, nowMs);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -323,7 +323,7 @@ function IsIndicatorSmallDamage(panel) {
     try {
         if (typeof UpdateDamageNumbersRuntime !== "function") throw new Error("UpdateDamageNumbersRuntime is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 
 })();

@@ -70,8 +70,8 @@ _TLog = function(label, detail) {
         return panel;
     };
     var _safeAttrDegradedLogged = false;
-    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
-    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][degraded] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
+    var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
+    var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
     var QOL_DEBUG = QOL_UTILS_LOADED ? QOL_UTILS.DebugLog : function() {};
     var QOL_INFO = QOL_UTILS_LOADED ? QOL_UTILS.InfoLog : function() {};
     var QOL_WARN = QOL_UTILS_LOADED ? QOL_UTILS.WarnLog : function() {};
@@ -1400,7 +1400,7 @@ function ItemMirrorCooldownDebugLogThrottled(sig, msg, nowMs) {
 
 function ExpressShotLog(msg) {
     if (!ITEM_MIRROR_EXPRESS_DEBUG) return;
-    $.Msg("[QOLLock][ExpressShot] " + msg);
+    $.Msg("[QOLLock][ItemExpressShot] " + msg);
     }
 
     function ItemMirrorExceptionLog(msg) {
@@ -1415,7 +1415,7 @@ function ExpressShotLog(msg) {
 
     function StatBonusesDebugLog(msg) {
         if (!STAT_BONUSES_DEBUG) return;
-        $.Msg("[QOLLock][StatBonusesDbg] " + msg);
+        $.Msg("[QOLLock][StatBonusesDebug] " + msg);
     }
 
     function StatBonusesDebugLogThrottled(sig, msg, nowMs) {
@@ -1430,7 +1430,7 @@ function ExpressShotLog(msg) {
 
     function HeroReturnDebugLog(msg) {
         if (!HERO_RETURN_DEBUG) return;
-        $.Msg("[QOLLock][HeroReturnDbg] " + msg);
+        $.Msg("[QOLLock][HeroReturnDebug] " + msg);
     }
 
     function HeroReturnDebugLogThrottled(sig, msg, nowMs) {
@@ -1445,7 +1445,7 @@ function ExpressShotLog(msg) {
 
     function EnemyColoredHealthDebugLog(msg) {
         if (!ENEMY_COLORED_HEALTH_DEBUG) return;
-        $.Msg("[QOLLock][EnemyColoredHealthDbg] " + msg);
+        $.Msg("[QOLLock][EnemyColoredHealthDebug] " + msg);
     }
 
     function EnemyColoredHealthDebugLogThrottled(sig, msg, nowMs) {
@@ -1460,7 +1460,7 @@ function ExpressShotLog(msg) {
 
     function MinimapCrateOverlayDebugLog(msg) {
         if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
-        $.Msg("[QOLLock][MinimapCrateDbg] " + msg);
+        $.Msg("[QOLLock][MinimapCrateDebug] " + msg);
     }
 
     function MinimapCrateOverlayDebugLogThrottled(sig, msg, nowMs) {
@@ -1476,7 +1476,7 @@ function ExpressShotLog(msg) {
 
     function EnemyUltOldDebugLog(msg) {
         if (!ENEMY_ULT_OLD_DEBUG) return;
-        $.Msg("[QOLLock][EnemyUltOldDbg] " + msg);
+        $.Msg("[QOLLock][EnemyUltOldDebug] " + msg);
     }
 
     function EnemyUltOldDebugLogThrottled(sig, msg, nowMs) {
@@ -1495,7 +1495,7 @@ function ExpressShotLog(msg) {
 
     function SettingsLoaderDebugLog(msg) {
         if (!SETTINGS_LOADER_DEBUG) return;
-        $.Msg("[QOLLock][SettingsLoaderDbg] " + msg);
+        $.Msg("[QOLLock][SettingsLoaderDebug] " + msg);
     }
 
     function SettingsLoaderTraceLog(msg) {
@@ -6384,7 +6384,7 @@ function GetUIRoot() {
         if (ULT_CD_DEBUG_ENABLED && fnMs >= ULT_CD_DEBUG_SPIKE_MS) {
             if (nowMs - ultCdDebugLastLogMs >= ULT_CD_DEBUG_THROTTLE_MS) {
                 ultCdDebugLastLogMs = nowMs;
-                $.Msg("[QOLLock][UltCdDbg] spike total=" + fnMs.toFixed(2) + "ms slots=[" + (debugParts.length ? debugParts.join(" ") : "none") + "]");
+                $.Msg("[QOLLock][UltimateCooldownDebug] spike total=" + fnMs.toFixed(2) + "ms slots=[" + (debugParts.length ? debugParts.join(" ") : "none") + "]");
             }
         }
     }
@@ -15050,7 +15050,7 @@ function GetUIRoot() {
                 return;
             }
             if (ITEM_MIRROR_PROBE_DEBUG && State.itemMirror.probeWasEnabled && State.itemMirror.displayMode !== "disabled") {
-                $.Msg("[QOLLock][ItemProbe] disabled");
+                $.Msg("[QOLLock][ItemMirrorProbe] disabled");
             }
             State.itemMirror.probeWasEnabled = false;
             State.itemMirror.probeLastScanMs = 0;
@@ -15124,11 +15124,11 @@ function GetUIRoot() {
                 State.itemMirror.probeLastSignature = signature;
                 if (ITEM_MIRROR_PROBE_DEBUG) {
                     if (scan.modsContainersCount === 0) {
-                        $.Msg("[QOLLock][ItemProbe] ModsContainer not found");
+                        $.Msg("[QOLLock][ItemMirrorProbe] ModsContainer not found");
                     } else if (scan.matches.length === 0) {
-                        $.Msg("[QOLLock][ItemProbe] no configured mirror items found in owned slots (modsContainers=" + scan.modsContainersCount + ", scanned=" + scan.scannedCount + ")");
+                        $.Msg("[QOLLock][ItemMirrorProbe] no configured mirror items found in owned slots (modsContainers=" + scan.modsContainersCount + ", scanned=" + scan.scannedCount + ")");
                     } else {
-                        $.Msg("[QOLLock][ItemProbe] total matches=" + scan.matches.length + " (modsContainers=" + scan.modsContainersCount + ") -> " + scan.summary.join(" || "));
+                        $.Msg("[QOLLock][ItemMirrorProbe] total matches=" + scan.matches.length + " (modsContainers=" + scan.modsContainersCount + ") -> " + scan.summary.join(" || "));
                     }
                 }
             }

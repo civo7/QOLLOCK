@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: staminaChargeColorRuntime\n");
-        var _dk = "ql_feat_stamina";
+        var _featureId = "ql_feat_stamina";
     var _deps = QOL.import(["getCachedPanel","normalizeStaminaChargeAngle","readStaminaChargeColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

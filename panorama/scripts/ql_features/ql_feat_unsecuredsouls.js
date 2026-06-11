@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_unsecuredsouls";
+    var _featureId = "ql_feat_unsecuredsouls";
     var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

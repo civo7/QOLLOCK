@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: itemsRuntime\n");
-        var _dk = "ql_feat_items";
+        var _featureId = "ql_feat_items";
     var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

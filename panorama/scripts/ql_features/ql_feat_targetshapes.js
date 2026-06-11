@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_targetshapes";
+    var _featureId = "ql_feat_targetshapes";
     var _deps = QOL.import(["applyTargetShapeStyles", "resolveUnitTargetStyleTexts", "state", "utils", "getUnitTargetDefaultStyleTexts"]);
     var S = _deps.state;
     var U = _deps.utils;
@@ -176,7 +176,7 @@
                     unitTargetStyle.opacityText, nowMs, rdEnabled,
                     unitTargetStyle.hintScaleText);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -190,7 +190,7 @@
         if (typeof NeedsTargetShapeRuntimeWork !== "function") throw new Error("NeedsTargetShapeRuntimeWork is not a function");
         if (typeof ResolveUnitTargetStyleTexts !== "function") throw new Error("ResolveUnitTargetStyleTexts is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 
 })();

@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
-        var _dk = "ql_feat_souls";
+        var _featureId = "ql_feat_souls";
     var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_unspent";
+    var _featureId = "ql_feat_unspent";
     var _deps = QOL.import(["getCachedPanel","getSoulValueFromLabels","getTopBarPlayerPanel","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
@@ -289,7 +289,7 @@
             try {
                 UpdateUnspentSouls(root, nowMs, cfg);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -304,6 +304,6 @@
     try {
         if (typeof UpdateUnspentSouls !== "function") throw new Error("UpdateUnspentSouls is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 })();

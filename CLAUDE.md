@@ -135,7 +135,7 @@ Every feature file follows this structure:
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_X";
+    var _featureId = "ql_feat_X";
     var _deps = QOL.import(["state", "utils", ...]);
     var S = _deps.state;
     var U = _deps.utils;
@@ -157,14 +157,14 @@ Every feature file follows this structure:
         gate: function(cfg) { return U.IsCfgEnabled(cfg, "KEY"); },
         update: function(root, cfg, nowMs) {
             try { UpdateX(root, ...); }
-            catch(e) { $.Msg("[QOLLock][ERROR][" + _dk + "] " + e.message + "\n" + e.stack); throw e; }
+            catch(e) { $.Msg("[QOLLock][ERROR][" + _featureId + "] " + e.message + "\n" + e.stack); throw e; }
         },
         stateKeys: [...]
     });
 
     // ── Self-test ──
     try { if (typeof UpdateX !== "function") throw ...; }
-    catch(e) { $.Msg("[QOLLock][ERROR][" + _dk + "] self-test: " + e.message); }
+    catch(e) { $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + e.message); }
 })();
 ```
 

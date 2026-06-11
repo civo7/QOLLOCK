@@ -3,7 +3,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: damageImpactRuntime\n");
-        var _dk = "ql_feat_damageimpact";
+        var _featureId = "ql_feat_damageimpact";
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
     var GC = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

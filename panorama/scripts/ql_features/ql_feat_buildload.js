@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 4
 (function() {
     'use strict';
-    var _dk = "ql_feat_buildload";
+    var _featureId = "ql_feat_buildload";
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
         "normalizeHeroId", "getConfiguredDefaultHeroId", "selectHeroForBuildSave",
         "queueDelayedHeroRestore", "setBuildSaveStatus", "dispatchCitadelConCommand",
@@ -1979,6 +1979,6 @@
         if (typeof PrepareBuildCategoryPayloadHeroProbe !== "function") throw new Error("PrepareBuildCategoryPayloadHeroProbe missing");
         if (typeof CompleteBuildCategoryPayloadHeroProbe !== "function") throw new Error("CompleteBuildCategoryPayloadHeroProbe missing");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test: " + e.message);
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + e.message);
     }
 })();

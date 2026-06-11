@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_panelcache";
+    var _featureId = "ql_feat_panelcache";
     var _deps = QOL.import(["state","utils","ensureCachedPanelByIds","ensureMinimapPanelCache","ensurePassiveHudPanelCache","ensureGameTimePanelCache","ensureAbilitiesContainerPanelCache"]);
     var S = _deps.state;
     var U = _deps.utils;
@@ -49,7 +49,7 @@
             try {
                 EnsureCoreLoopPanelCaches(root);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -60,6 +60,6 @@
     try {
         if (typeof EnsureCoreLoopPanelCaches !== "function") throw new Error("EnsureCoreLoopPanelCaches is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 })();

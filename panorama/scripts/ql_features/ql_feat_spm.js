@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_spm";
+    var _featureId = "ql_feat_spm";
     var _deps = QOL.import(["detectTopBarPlayerTeam","ensureSpmState","getCachedPanel","getSoulValueFromLabels","parseClockSeconds","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
@@ -258,7 +258,7 @@
             try {
                 UpdateSoulsPerMinute(root, nowMs, cfg);
             } catch(e) {
-                $.Msg("[QOLLock][ERROR][" + _dk + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }
         },
@@ -269,6 +269,6 @@
     try {
         if (typeof UpdateSoulsPerMinute !== "function") throw new Error("UpdateSoulsPerMinute is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 })();

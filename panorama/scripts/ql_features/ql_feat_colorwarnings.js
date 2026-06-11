@@ -4,7 +4,7 @@
 (function() {
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
-        var _dk = "ql_feat_colorwarnings";
+        var _featureId = "ql_feat_colorwarnings";
     var _deps = QOL.import(["getCachedPanel","isColorWarningEnabled","state","setCachedPanel","utils"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
@@ -799,7 +799,7 @@ function ToRgbString(rgb) {
     try {
         if (typeof UpdateColoredHealthbarRuntime !== "function") throw new Error("UpdateColoredHealthbarRuntime is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 
 })();

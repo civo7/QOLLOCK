@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_statbonuses";
+    var _featureId = "ql_feat_statbonuses";
     var _deps = QOL.import(["extractStatDisplayText","getCachedPanel","getGameplayHudPanel","harvestGoldenStatuesTooltipValue","isCustomHudContextActive","isStatBonusTokenZero","resolveGoldenStatBonusesValue","resolveStatBonusesSource","state","setCachedPanel","statBonusesDebugLogThrottled","utils","isConnectedToHideout"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

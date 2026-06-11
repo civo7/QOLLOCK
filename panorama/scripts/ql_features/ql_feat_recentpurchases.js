@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    var _dk = "ql_feat_recentpurchases";
+    var _featureId = "ql_feat_recentpurchases";
     var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GC = _deps.getCachedPanel;
     var S = _deps.state;
@@ -869,7 +869,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     try {
         if (typeof UpdateRecentPurchases !== "function") throw new Error("UpdateRecentPurchases is not a function");
     } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _dk + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }
 
 })();

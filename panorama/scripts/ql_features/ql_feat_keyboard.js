@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2b
 (function() {
     'use strict';
-    var _dk = "ql_feat_keyboard";
+    var _featureId = "ql_feat_keyboard";
     var _deps = QOL.import(["buildKeyboardOverlayLayouts","getCachedPanel","getGameplayHudPanel","getKeyboardCachedPanels","readKeyboardOverlayWashColorIndex","resetKeyboardOverlayCaches","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GC = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
