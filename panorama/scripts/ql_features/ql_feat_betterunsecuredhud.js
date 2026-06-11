@@ -157,6 +157,67 @@ function ParseUnsecuredSoulsValue(valueText) {
         var GetGameplayHudPanel = QOL.getGameplayHudPanel || function() { return null; };
     // GetPanelPositionRelativeToAncestor — now in ql_utils.js, accessed via Utils.*
 
+    // ── Apply position and styles to the better-unsecured HUD overlay (extracted from update)
+    function ApplyBetterUnsecuredHudLayout(overlay, mirrorLabel, mirrorIcon, mirrorText, label, panel, root, cfg, scale, xOffset, yOffset, fontPx, showIcon, showText) {
+        var sourceText = (typeof label.text === "string") ? label.text : "";
+        var sourceTextLabel = FindUnsecuredSoulsHudTextLabel(root, panel);
+        var unsecuredText = (sourceTextLabel && typeof sourceTextLabel.text === "string" && sourceTextLabel.text.length > 0)
+            ? sourceTextLabel.text
+            : "UNSECURED";
+        var sourceValue = ParseUnsecuredSoulsValue(sourceText);
+        if (!isFinite(sourceValue)) sourceValue = 0;
+        if (sourceValue <= 0) {
+            var zeroSig = "hidden_zero|" + sourceText;
+            if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
+                if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+                State.unsecuredSouls.hudStyleSig = zeroSig;
+            }
+            return;
+        }
+        var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
+        var sourcePos = Utils.GetPanelPositionRelativeToAncestor(label, overlayParent);
+        var baseX = null;
+        var baseY = null;
+        if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
+            baseX = Math.round(sourcePos.x);
+            baseY = Math.round(sourcePos.y);
+            State.unsecuredSouls.hudBaseX = baseX;
+            State.unsecuredSouls.hudBaseY = baseY;
+        } else {
+            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
+            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
+            baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
+            baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
+        }
+        var targetX = baseX + xOffset;
+        var unsecuredHudBaselineY = Number(DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET);
+        if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
+        var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
+        var targetY = baseY + reflectedYOffset;
+        if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
+            if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+            State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
+            return;
+        }
+        var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
+        if (sig === State.unsecuredSouls.hudStyleSig) return;
+
+        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        overlay.style.x = targetX + "px";
+        overlay.style.y = targetY + "px";
+
+        mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
+        mirrorText.style.visibility = showText ? "visible" : "collapse";
+        if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
+
+        if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
+        if (mirrorLabel.style.visibility !== "visible") mirrorLabel.style.visibility = "visible";
+        mirrorLabel.style.fontSize = fontPx + "px";
+        mirrorLabel.style.x = "0px";
+        mirrorLabel.style.y = "0px";
+        State.unsecuredSouls.hudStyleSig = sig;
+    }
+
     function UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs) {
         var enabled = IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED");
         var panel = GetCachedPanel("unsecuredSoulsHudContainer");
@@ -229,63 +290,7 @@ function ParseUnsecuredSoulsValue(valueText) {
         var showIcon = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON"));
         var showText = legacyShowBoth || (IsCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_TEXT"));
 
-        var sourceText = (typeof label.text === "string") ? label.text : "";
-        var sourceTextLabel = FindUnsecuredSoulsHudTextLabel(root, panel);
-        var unsecuredText = (sourceTextLabel && typeof sourceTextLabel.text === "string" && sourceTextLabel.text.length > 0)
-            ? sourceTextLabel.text
-            : "UNSECURED";
-        var sourceValue = ParseUnsecuredSoulsValue(sourceText);
-        if (!isFinite(sourceValue)) sourceValue = 0;
-        if (sourceValue <= 0) {
-            var zeroSig = "hidden_zero|" + sourceText;
-            if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
-                if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-                State.unsecuredSouls.hudStyleSig = zeroSig;
-            }
-            return;
-        }
-        var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
-        var sourcePos = Utils.GetPanelPositionRelativeToAncestor(label, overlayParent);
-        var baseX = null;
-        var baseY = null;
-        if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
-            baseX = Math.round(sourcePos.x);
-            baseY = Math.round(sourcePos.y);
-            State.unsecuredSouls.hudBaseX = baseX;
-            State.unsecuredSouls.hudBaseY = baseY;
-        } else {
-            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
-            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
-            baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
-            baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
-        }
-        var targetX = baseX + xOffset;
-        var unsecuredHudBaselineY = Number(DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET);
-        if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
-        var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
-        var targetY = baseY + reflectedYOffset;
-        if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
-            if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
-            State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
-            return;
-        }
-        var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-        if (sig === State.unsecuredSouls.hudStyleSig) return;
-
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-        overlay.style.x = targetX + "px";
-        overlay.style.y = targetY + "px";
-
-        mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
-        mirrorText.style.visibility = showText ? "visible" : "collapse";
-        if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
-
-        if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
-        if (mirrorLabel.style.visibility !== "visible") mirrorLabel.style.visibility = "visible";
-        mirrorLabel.style.fontSize = fontPx + "px";
-        mirrorLabel.style.x = "0px";
-        mirrorLabel.style.y = "0px";
-        State.unsecuredSouls.hudStyleSig = sig;
+        ApplyBetterUnsecuredHudLayout(overlay, mirrorLabel, mirrorIcon, mirrorText, label, panel, root, cfg, scale, xOffset, yOffset, fontPx, showIcon, showText);
     }
 
     function NeedsBetterUnsecuredHudLayoutWork(cfg) {
