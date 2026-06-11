@@ -51,17 +51,18 @@
         };
     }
 
-    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
-        function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
-            if (!TARGET_SHAPE_DEBUG) return;
-            var nowDbg = Number(nowMsDbg) || (Date.now ? Date.now() : (new Date()).getTime());
-            var sameSig = sig && sig === State.targetShapeDebugLastSig;
-            if (sameSig && nowDbg < (State.targetShapeDebugNextMs || 0)) return;
-            State.targetShapeDebugLastSig = sig || "";
-            State.targetShapeDebugNextMs = nowDbg + TARGET_SHAPE_DEBUG_THROTTLE_MS;
-            $.Msg("[QOLLock][TargetShape] " + String(msg || ""));
-        }
+    // ── Debug logging (throttled per-signature; extracted to module scope)
+    function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
+        if (!TARGET_SHAPE_DEBUG) return;
+        var nowDbg = Number(nowMsDbg) || (Date.now ? Date.now() : (new Date()).getTime());
+        var sameSig = sig && sig === State.targetShapeDebugLastSig;
+        if (sameSig && nowDbg < (State.targetShapeDebugNextMs || 0)) return;
+        State.targetShapeDebugLastSig = sig || "";
+        State.targetShapeDebugNextMs = nowDbg + TARGET_SHAPE_DEBUG_THROTTLE_MS;
+        $.Msg("[QOLLock][TargetShape] " + String(msg || ""));
+    }
 
+    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
         var redDiamondActive = !!redDiamondEnabledHint;
         if (!redDiamondActive && root && root.BHasClass) {
             try {
