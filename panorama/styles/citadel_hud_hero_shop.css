@@ -613,3 +613,11 @@ CitadelHudHeroShop.shop_recent_purchases_active .PurchaseFilterToggle Label
 	margin-left: 4px;
 }
 
+/* 4:3 support overrides for simplified shop stats */
+.support_4_3_active .simplify_shop_stats_active #TestPanel,
+.support_4_3_active CitadelHudHeroShop.simplify_shop_stats_active #TestPanel
+{
+	margin-left: -35px;
+	width: 285px;
+}
+

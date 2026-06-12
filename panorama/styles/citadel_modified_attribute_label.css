@@ -5,3 +5,9 @@
 	ui-scale: 150%;
 	margin-top: 2px;
 }
+
+/* 4:3 support overrides */
+.support_4_3_active #BaseLabel
+{
+	max-height: 25px;
+}

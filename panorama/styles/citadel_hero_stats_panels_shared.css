@@ -147,7 +147,14 @@ CitadelHudHeroShop.simplify_shop_stats_active #BaseLabel
 	text-align: center;
 }
 
-.simplify_shop_stats_active #WeaponOtherStatsDisplay 
+.simplify_shop_stats_active #WeaponOtherStatsDisplay
 {
     visibility: collapse;
+}
+
+/* 4:3 support overrides for simplified shop stats */
+.support_4_3_active .simplify_shop_stats_active .displayStatsContainer .statAttributeContainer,
+.support_4_3_active CitadelHudHeroShop.simplify_shop_stats_active .displayStatsContainer .statAttributeContainer
+{
+	width: 32%;
 }
