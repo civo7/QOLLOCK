@@ -158,8 +158,6 @@ _TLog = function(label, detail) {
         minimapCrateOverlayBuildSig: "",
         showBuildIdStyleSig: "",
         showBuildIdLastLabel: null,
-        quickbuyRuntimeStyleSig: "",
-        quickbuyRuntimeHostOffsetApplied: false,
         compass: {
             enabled: false,
             showSpeed: true,
@@ -15747,11 +15745,7 @@ function GetUIRoot() {
             SetCachedPanel("quickbuy", quickbuyPanel);
         }
         if (quickbuyPanel) {
-            var quickbuyFeatureActive = enhancedQuickbuyEnabled || quickbuyClickToNotifyEnabled;
             var enhancedQuickbuyCount = enhancedQuickbuyEnabled ? NormalizeEnhancedQuickbuyCount(cfg.ENHANCED_QUICKBUY_COUNT) : 3;
-            var quickbuyOffsetX = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0) : 0;
-            var quickbuyOffsetY = quickbuyFeatureActive ? NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_Y, 0) : 0;
-            var quickbuyStyleSig = String(quickbuyOffsetX) + "|" + String(quickbuyOffsetY) + "|" + (quickbuyFeatureActive ? "1" : "0") + "|" + (enhancedQuickbuyEnabled ? "1" : "0");
 
             SetPanelClassCached(
                 quickbuyPanel,
@@ -15769,22 +15763,8 @@ function GetUIRoot() {
                 quickbuyPanel.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
                 root.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
             } catch (_quickbuyCountAttrErr) {}
-            if (State.quickbuyRuntimeStyleSig !== quickbuyStyleSig) {
-                if (quickbuyOffsetX !== 0 || quickbuyOffsetY !== 0) {
-                    quickbuyPanel.style.x = FormatHudPx(quickbuyOffsetX, 0);
-                    quickbuyPanel.style.y = FormatHudPx(-quickbuyOffsetY, 0);
-                    State.quickbuyRuntimeHostOffsetApplied = true;
-                } else if (State.quickbuyRuntimeHostOffsetApplied) {
-                    quickbuyPanel.style.x = "0px";
-                    quickbuyPanel.style.y = "0px";
-                    State.quickbuyRuntimeHostOffsetApplied = false;
-                }
-                State.quickbuyRuntimeStyleSig = quickbuyStyleSig;
-            }
         } else {
             State.quickbuyClassCache = null;
-            State.quickbuyRuntimeStyleSig = "";
-            State.quickbuyRuntimeHostOffsetApplied = false;
         }
 
         if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) {
