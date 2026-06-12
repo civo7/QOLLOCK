@@ -71,13 +71,37 @@
     }
 
     // ── Update ──
+    var _dbgTick = 0;
+    var _dbgLastLogTick = 0;
+    var _dbgLogEveryN = 60; // log every 60 ticks (~3s at 20Hz)
+
     function update(root, cfg, nowMs) {
-        if (!State._debug_staminaChargeColorRuntime) { $.Msg("[QOL DEBUG] First update: staminaChargeColorRuntime\n"); State._debug_staminaChargeColorRuntime = true; }
+        _dbgTick++;
+        var rawIndex = RSC(cfg);
+        var color = RWP(rawIndex);
+        var styleSig = color || "";
+
+        // Log on sig change or every N ticks
+        var sigChanged = State.staminaChargeColorStyleSig !== styleSig;
+        var forceLog = sigChanged || (_dbgTick - _dbgLastLogTick >= _dbgLogEveryN);
+        if (forceLog) {
+            _dbgLastLogTick = _dbgTick;
+            $.Msg("[STAMINA DBG] tick=" + _dbgTick +
+                  " rawIndex=" + rawIndex +
+                  " color='" + color + "'" +
+                  " styleSig='" + styleSig + "'" +
+                  " prevSig='" + (State.staminaChargeColorStyleSig || "") + "'" +
+                  " sigChanged=" + sigChanged +
+                  " cfg.STAMINA_CHARGE_COLOR=" + (cfg && cfg.STAMINA_CHARGE_COLOR));
+        }
+
         if (!hasNonDefaultConfig(cfg) &&
             !GetCachedPanel("staminaChargesContainer") &&
-            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) return;
+            !(State.staminaChargeColorPanelCache && State.staminaChargeColorPanelCache.length > 0)) {
+            if (forceLog) $.Msg("[STAMINA DBG] early exit: no non-default config, no cached container/panels");
+            return;
+        }
 
-        var color = RWP(RSC(cfg));
         var angle = NSA(cfg && cfg.STAMINA_CHARGE_ANGLE);
         var angleSig = String(angle);
         var chargesContainer = getStaminaChargesContainer(root);
@@ -88,17 +112,52 @@
             State.staminaChargeAngleStyleSig = "";
         }
 
-        var styleSig = color || "";
         var panels = getStaminaChargeColorPanels(root, nowMs || 0);
-        if (State.staminaChargeColorStyleSig === styleSig && Utils.IsPanelListValid(panels)) return;
+        if (State.staminaChargeColorStyleSig === styleSig && Utils.IsPanelListValid(panels)) {
+            if (forceLog) $.Msg("[STAMINA DBG] debounce: sig unchanged, panels valid, skipping. panelCount=" + panels.length);
+            return;
+        }
+
+        // Use wash-color instead of border/borderColor. When clearing,
+        // set to "transparent" (alpha=0) which effectively disables the wash.
+        // "none" sets it to white (#FFFFFFFF) which is still visible.
+        var targetValue = color || "transparent";
+
+        if (forceLog) {
+            $.Msg("[STAMINA DBG] applying: targetValue=" + targetValue +
+                  " panelCount=" + panels.length +
+                  " typeof=" + typeof targetValue);
+            for (var pi = 0; pi < panels.length; pi++) {
+                var pp = panels[pi];
+                if (IPV(pp)) {
+                    var curVal = "?";
+                    try { curVal = pp.style.washColor; } catch(e) { curVal = "<error:" + e.message + ">"; }
+                    $.Msg("[STAMINA DBG]   panel[" + pi + "] id=" + (pp.id || "?") +
+                          " curWashColor='" + curVal + "'" +
+                          " -> setting to '" + targetValue + "'");
+                } else {
+                    $.Msg("[STAMINA DBG]   panel[" + pi + "] INVALID");
+                }
+            }
+        }
 
         for (var i = 0; i < panels.length; i++) {
             var panel = panels[i];
             if (!IPV(panel)) continue;
-            Utils.SetStyleSafe(panel, "borderColor", color || "");
+            try {
+                panel.style.washColor = targetValue;
+            } catch(e) {
+                $.Msg("[STAMINA DBG] EXCEPTION panel[" + i + "] washColor=" + targetValue + ": " + e.message);
+            }
+            if (forceLog) {
+                var after = "?";
+                try { after = panel.style.washColor; } catch(e2) { after = "<err>"; }
+                $.Msg("[STAMINA DBG]   after: panel[" + i + "] washColor='" + after + "' typeof=" + typeof after);
+            }
         }
 
         State.staminaChargeColorStyleSig = styleSig;
+        if (forceLog) $.Msg("[STAMINA DBG] saved sig='" + styleSig + "'");
     }
 
     // ── Register ──
@@ -111,4 +170,30 @@
                     "staminaChargeColorPanelCache", "staminaChargeColorPanelCacheNextMs",
                     "cachedPanels.staminaChargesContainer"]
     });
+    // ── Debug console hook ──
+    // Run from Panorama console: QOL_DUMP_STAMINA_DEBUG()
+    var _global = typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this);
+    _global.QOL_DUMP_STAMINA_DEBUG = function() {
+        $.Msg("[STAMINA DUMP] === State ===");
+        $.Msg("[STAMINA DUMP] sig='" + (State.staminaChargeColorStyleSig || "") + "'");
+        $.Msg("[STAMINA DUMP] angleSig='" + (State.staminaChargeAngleStyleSig || "") + "'");
+        $.Msg("[STAMINA DUMP] panelCache.length=" + (State.staminaChargeColorPanelCache ? State.staminaChargeColorPanelCache.length : 0));
+        $.Msg("[STAMINA DUMP] panelCacheNextMs=" + (State.staminaChargeColorPanelCacheNextMs || 0));
+        $.Msg("[STAMINA DUMP] cachedPanels.staminaChargesContainer=" + !!GetCachedPanel("staminaChargesContainer"));
+        $.Msg("[STAMINA DUMP] dbgTick=" + _dbgTick);
+        $.Msg("[STAMINA DUMP] === Cache panels ===");
+        var cache = State.staminaChargeColorPanelCache || [];
+        for (var i = 0; i < cache.length; i++) {
+            var p = cache[i];
+            if (IPV(p)) {
+                var cur = "?";
+                try { cur = p.style.washColor; } catch(e) { cur = "<err>"; }
+                $.Msg("[STAMINA DUMP] cache[" + i + "] id=" + (p.id || "?") + " curWashColor='" + cur + "'");
+            } else {
+                $.Msg("[STAMINA DUMP] cache[" + i + "] INVALID");
+            }
+        }
+        $.Msg("[STAMINA DUMP] === End ===");
+    };
+
 })();
