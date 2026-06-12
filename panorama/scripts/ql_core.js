@@ -3305,23 +3305,11 @@ function GetUIRoot() {
     }
 
     function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
-        // $.persistentStorage confirmed absent — panel attrs are the only persistence.
-        var fromConfig = NormalizePaletteColorIndex(cfg && cfg[key]);
-        var root = GetUIRoot();
-        try {
-            if (root && root.GetAttributeString) {
-                var rootAttr = String(root.GetAttributeString(attrName, "") || "");
-                if (rootAttr !== "") return NormalizePaletteColorIndex(rootAttr);
-            }
-        } catch (eAttrRoot) {}
-        try {
-            var hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
-            if (hud && hud.GetAttributeString) {
-                var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
-                if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
-            }
-        } catch (eAttrHud) {}
-        return fromConfig;
+        // Config is the canonical source. Panel attributes are a secondary
+        // bridge that can go stale when config is updated via preset import,
+        // build payload override, or migration — none of which update the
+        // per-color bridge attributes. Always trust config.
+        return NormalizePaletteColorIndex(cfg && cfg[key]);
     }
 
     function ReadPlayerHealthbarAccentColorIndex(cfg) {
