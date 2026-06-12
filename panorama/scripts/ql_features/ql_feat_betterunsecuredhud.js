@@ -184,13 +184,13 @@ function ParseUnsecuredSoulsValue(valueText) {
             State.unsecuredSouls.hudBaseX = baseX;
             State.unsecuredSouls.hudBaseY = baseY;
         } else {
-            var cachedBaseX = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
-            var cachedBaseY = ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
+            var cachedBaseX = Utils.ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
+            var cachedBaseY = Utils.ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
             baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
             baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
         }
         var targetX = baseX + xOffset;
-        var unsecuredHudBaselineY = Number(DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET);
+        var unsecuredHudBaselineY = Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET);
         if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
         var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
         var targetY = baseY + reflectedYOffset;
