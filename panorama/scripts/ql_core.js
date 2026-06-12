@@ -16858,10 +16858,10 @@ function GetUIRoot() {
     function recordLoopPerf(root, cfg, perfLoopStartMs) {
         if (State.perfEnabled) {
             PerfRecord("loop.total", PerfNowMs() - perfLoopStartMs);
-            if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
-                QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
-            }
             FlushPerfIfNeeded(false);
+        }
+        if (typeof QOL_PERF_OVERLAY !== "undefined" && QOL_PERF_OVERLAY.UpdateOverlay) {
+            QOL_PERF_OVERLAY.UpdateOverlay(root, cfg, State.perfStats);
         }
         RecordFrameTime(PerfNowMs() - perfLoopStartMs);
     }
