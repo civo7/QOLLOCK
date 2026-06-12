@@ -57,7 +57,6 @@
 .budhud_healthbar_active #LowerLeft CitadelStatusEffect
 {
 	margin-bottom: 210px;
-	horizontal-align: right;
 	margin-right: 145px;
 }
 
@@ -69,7 +68,6 @@
 
 .budhud_healthbar_active CitadelHud CitadelStatusEffect
 {
-	ui-scale: 40%;
 	horizontal-align: right;
 	width: 630px;
 	margin-left: 405px;
