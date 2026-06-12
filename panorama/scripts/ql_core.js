@@ -15710,7 +15710,8 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "hide_small_numbers_active", cfg.ENABLE_HIDE_SMALL_NUMBERS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hide_trooper_damage_active", cfg.ENABLE_HIDE_TROOPER_DAMAGE === 1);
             SetPanelClassCached(root, State.rootClassCache, "shop_stats_disabled", cfg.ENABLE_SHOP_STATS === 0);
-            SetPanelClassCached(root, State.rootClassCache, "simplify_shop_stats_active", IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") && IsCfgEnabled(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"));
+            // simplify_shop_stats_active is scoped to the heroShop panel in ql_feat_heroshop.js
+            // (not set on root) to prevent CSS leakage into Tab/scoreboard detail views.
             SetPanelClassCached(root, State.rootClassCache, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
             SetPanelClassCached(root, State.rootClassCache, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
             SetPanelClassCached(root, State.rootClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
