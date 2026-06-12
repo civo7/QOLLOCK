@@ -15692,6 +15692,10 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", IsCfgEnabled(cfg, "ENABLE_MINIMAP_ELEVATION_MARKERS"));
             SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
+            // Aspect ratio support is mutually exclusive — only one layout at a time.
+            if (cfg.ENABLE_HUD_SHIFT === 1) { cfg.SUPPORT_16_10 = 0; cfg.SUPPORT_4_3 = 0; }
+            else if (cfg.SUPPORT_16_10 === 1) { cfg.ENABLE_HUD_SHIFT = 0; cfg.SUPPORT_4_3 = 0; }
+            else if (cfg.SUPPORT_4_3 === 1) { cfg.ENABLE_HUD_SHIFT = 0; cfg.SUPPORT_16_10 = 0; }
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_16_10_active", cfg.SUPPORT_16_10 === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_4_3_active", cfg.SUPPORT_4_3 === 1);
