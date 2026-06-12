@@ -21140,15 +21140,15 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the keyboard overlay.");
         });
         CreateSeparator(list);
-        CreateSectionTitle(list, "Compass & Speed", "ENABLE_COMPASS");
-        CreateRow(list, "Show Compass", "ENABLE_COMPASS", "toggle", null, null, null, null, "Shows the angle degrees and ticks.");
-        CreateRow(list, "Show Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "Speed number tracker.");
-        CreateRow(list, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
-        CreateSliderRow(list, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
-        CreateSliderRow(list, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
-        CreateSliderRow(list, "Size", "COMPASS_SCALE", "size_50_200");
-        CreateSliderRow(list, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
-        CreateSliderRow(list, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
+        CreateAnimatedInlineToggleSection(list, "Compass & Speed", "ENABLE_COMPASS", "See your view angle and speed.", function(sectionParent) {
+            CreateRow(sectionParent, "Show Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "Speed number tracker.");
+            CreateRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
+            CreateSliderRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
+            CreateSliderRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
+            CreateSliderRow(sectionParent, "Size", "COMPASS_SCALE", "size_50_200");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
+            CreateSliderRow(sectionParent, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
+        });
     } else if (currentTab === "Dev") {
         CreateSectionTitle(list, "Performance", "ENABLE_PERF_DEBUG");
         CreateRow(list, "Perf Debug", "ENABLE_PERF_DEBUG", "toggle", null, null, null, null,
