@@ -95,6 +95,11 @@ CitadelHudHeroShop.disable_shop_blue_active
 	visibility: collapse;
 }
 
+/* 4:3 minimalist stats — use 2-per-row layout in narrower viewport */
+.support_4_3_active .simplify_shop_stats_active .displayStatsContainer .statAttributeContainer {
+	width: 48%;
+}
+
 .support_4_3_active #AbilityPanelsContainer
 {
 	horizontal-align: right !important;
