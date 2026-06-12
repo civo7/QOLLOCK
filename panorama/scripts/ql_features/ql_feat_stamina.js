@@ -120,7 +120,6 @@
 
         // Use wash-color instead of border/borderColor. When clearing,
         // set to "transparent" (alpha=0) which effectively disables the wash.
-        // "none" sets it to white (#FFFFFFFF) which is still visible.
         var targetValue = color || "transparent";
 
         if (forceLog) {
