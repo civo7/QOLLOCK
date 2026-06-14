@@ -13056,7 +13056,7 @@ function GetUIRoot() {
         SetCachedPanel("itemMirrorSourceContainer", null);
         SetCachedPanel("itemMirrorSourceItemClass", null);
         SetCachedPanel("itemMirrorRow", null);
-        SetCachedPanel("itemMirrorSlots", []);
+        State.cachedPanels.itemMirrorSlots = [];
         State.itemMirror = {
             probeLastScanMs: 0,
             probeLastSignature: "",
@@ -13145,14 +13145,14 @@ function GetUIRoot() {
             legacyIcon.DeleteAsync(0);
         }
 
-        if (!State.cachedPanels.itemMirrorSlots) SetCachedPanel("itemMirrorSlots", []);
+        if (!State.cachedPanels.itemMirrorSlots) State.cachedPanels.itemMirrorSlots = [];
         return overlay;
     }
 
     function EnsureItemMirrorSlotMulti(slotIndex) {
         var row = GetCachedPanel("itemMirrorRow");
         if (!IsPanelValid(row)) return null;
-        if (!State.cachedPanels.itemMirrorSlots) SetCachedPanel("itemMirrorSlots", []);
+        if (!State.cachedPanels.itemMirrorSlots) State.cachedPanels.itemMirrorSlots = [];
 
         var slots = State.cachedPanels.itemMirrorSlots;
         var slotObj = slots[slotIndex];
