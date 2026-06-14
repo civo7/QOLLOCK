@@ -226,4 +226,10 @@
                     "keyboardBoxCaches"]
     });
 
+    // ── Self-test ──
+    try {
+        if (typeof UpdateKeyboardOverlayRuntime !== "function") throw new Error("UpdateKeyboardOverlayRuntime is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 })();

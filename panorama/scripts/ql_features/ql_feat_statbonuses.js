@@ -324,4 +324,10 @@
         stateKeys: ["statBonuses"]
     });
 
+    // ── Self-test ──
+    try {
+        if (typeof UpdateStatBonusesOverlay !== "function") throw new Error("UpdateStatBonusesOverlay is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 })();

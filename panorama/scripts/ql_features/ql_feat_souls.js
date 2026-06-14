@@ -56,4 +56,11 @@
         update: function(root, cfg) { update(root, cfg); },
         stateKeys: ["soulsRuntimeStyleSig", "cachedPanels.soulsContainer"]
     });
+
+    // ── Self-test ──
+    try {
+        if (typeof update !== "function") throw new Error("update is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 })();

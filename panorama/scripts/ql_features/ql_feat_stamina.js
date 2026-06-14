@@ -169,6 +169,14 @@
                     "staminaChargeColorPanelCache", "staminaChargeColorPanelCacheNextMs",
                     "cachedPanels.staminaChargesContainer"]
     });
+
+    // ── Self-test ──
+    try {
+        if (typeof update !== "function") throw new Error("update is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
+
     // ── Debug console hook ──
     // Run from Panorama console: QOL_DUMP_STAMINA_DEBUG()
     var _global = typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this);

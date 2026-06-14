@@ -140,4 +140,10 @@
                     "signatureCooldownFlashNextScanMs"]
     });
 
+    // ── Self-test ──
+    try {
+        if (typeof UpdateSignatureCooldownPressFlashRuntime !== "function") throw new Error("UpdateSignatureCooldownPressFlashRuntime is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 })();
