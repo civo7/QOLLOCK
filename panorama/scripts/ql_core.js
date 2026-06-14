@@ -13154,7 +13154,7 @@ function GetUIRoot() {
         if (!IsPanelValid(row)) return null;
         if (!State.cachedPanels.itemMirrorSlots) State.cachedPanels.itemMirrorSlots = [];
 
-        var slots = State.cachedPanels.itemMirrorSlots;
+        var slots = State.cachedPanels.itemMirrorSlots || [];
         var slotObj = slots[slotIndex];
         if (slotObj && IsPanelValid(slotObj.icon) && IsPanelValid(slotObj.modContainer)) {
             return slotObj;
