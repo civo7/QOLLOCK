@@ -154,4 +154,10 @@
                     "imagesInChatBottomMessageCache"]
     });
 
+    // ── Self-test ──
+    try {
+        if (typeof UpdateImagesInChat !== "function") throw new Error("UpdateImagesInChat is not a function");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
+    }
 })();
