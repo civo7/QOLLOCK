@@ -45,7 +45,10 @@ _TLog = function(label, detail) {
         return null;
     };
     var SetCachedPanel = function(k, p) {
-        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
+        if (p !== null && p !== undefined && !IsPanelValid(p) && !Array.isArray(p)) {
+            $.Msg("[QOLLock][WARN] SetCachedPanel('" + String(k) + "') called with non-panel value (type=" + typeof p + "). Use direct State.cachedPanels assignment for non-panel data.");
+        }
+        State.cachedPanels[k] = (p === null || p === undefined || IsPanelValid(p) || Array.isArray(p)) ? p : null;
     };
     var ClearPanelCache = function() {
         State.cachedPanels = {};
