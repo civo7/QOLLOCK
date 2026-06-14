@@ -121,7 +121,9 @@
             if (selector.SetSelected) {
                 try { selector.SetSelected(optionId); setAttempted = true; } catch (e3) {}
             }
-            try { $.DispatchEvent("Activated", selector); } catch (e5) {}
+            try { $.DispatchEvent("Activated", selector); } catch (e5) {
+                $.Msg("[QOLLock][WARN][" + _featureId + "] DispatchEvent Activated on lane selector failed: " + (e5 && e5.message ? String(e5.message) : String(e5)));
+            }
         } else {
             SetCachedPanel("lanePreferenceWithPartyOption", null);
         }
