@@ -72,8 +72,6 @@
 
     // ── Update ──
     var _dbgTick = 0;
-    var _dbgLastLogTick = 0;
-    var _dbgLogEveryN = 60; // log every 60 ticks (~3s at 20Hz)
 
     function update(root, cfg, nowMs) {
         _dbgTick++;
@@ -81,11 +79,10 @@
         var color = RWP(rawIndex);
         var styleSig = color || "";
 
-        // Log on sig change or every N ticks
+        // Log only on signature change (not periodic — avoids 20Hz console spam)
         var sigChanged = State.staminaChargeColorStyleSig !== styleSig;
-        var forceLog = sigChanged || (_dbgTick - _dbgLastLogTick >= _dbgLogEveryN);
+        var forceLog = sigChanged;
         if (forceLog) {
-            _dbgLastLogTick = _dbgTick;
             $.Msg("[STAMINA DBG] tick=" + _dbgTick +
                   " rawIndex=" + rawIndex +
                   " color='" + color + "'" +

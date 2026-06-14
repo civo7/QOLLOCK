@@ -7462,7 +7462,7 @@ function GetUIRoot() {
 
     function _EnsureLoaderStepRows(stepsWrap, steps, stepRowIdPrefix, iconSuffix, labelSuffix, cachedRowsKey) {
         if (!stepsWrap) return null;
-        var rows = GetCachedPanel(cachedRowsKey);
+        var rows = State.cachedPanels[cachedRowsKey];
         if (!rows || typeof rows !== "object") rows = {};
         for (var i = 0; i < steps.length; i++) {
             var step = steps[i];
@@ -7511,7 +7511,7 @@ function GetUIRoot() {
                 lastLabel: reuseLabel && existing ? String(existing.lastLabel || "") : ""
             };
         }
-        SetCachedPanel(cachedRowsKey, rows);
+        State.cachedPanels[cachedRowsKey] = rows;
         return rows;
     }
 
