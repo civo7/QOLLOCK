@@ -16727,12 +16727,7 @@ function GetUIRoot() {
             buckets[bucketIndex].push(function(snapshot) {
                 ExecuteFeature(featureName, function() {
                     var perfStartMs = PerfStart();
-                    // minimapRuntime gets raw config as 6th arg
-                    if (featureName === "minimapRuntime") {
-                        QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
-                    } else {
-                        QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected);
-                    }
+                    QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
                     // Post-update side effects
                     if (featureName === "onDeathArcade") {
                         State.onDeathArcadeRuntimeWasActive = snapshot.gates.onDeathArcadeActive;
