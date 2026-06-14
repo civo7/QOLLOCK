@@ -480,7 +480,9 @@ function ResetBuildSaveRequestAttributes(root) {
                 CitadelHudHeroBuildsEditSelectedBuild();
                 activated = true;
             }
-        } catch (e0) {}
+        } catch (e0) {
+            $.Msg("[QOLLock][WARN][" + _featureId + "] CitadelHudHeroBuildsEditSelectedBuild failed: " + (e0 && e0.message ? String(e0.message) : String(e0)));
+        }
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var editButton = selectedBuild.FindChildTraverse("EditHeroBuildButton");
             if (QOL.activatePanelSafe(editButton)) {
@@ -498,7 +500,9 @@ function ResetBuildSaveRequestAttributes(root) {
                 CitadelHudHeroBuildsSaveEdits();
                 activated = true;
             }
-        } catch (e0) {}
+        } catch (e0) {
+            $.Msg("[QOLLock][WARN][" + _featureId + "] CitadelHudHeroBuildsSaveEdits failed: " + (e0 && e0.message ? String(e0.message) : String(e0)));
+        }
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var saveButton = selectedBuild.FindChildTraverse("SaveBuildButton");
             if (QOL.activatePanelSafe(saveButton)) {

@@ -53,7 +53,9 @@
         try {
             $.DispatchEvent("CitadelConCommand", String(command));
             return true;
-        } catch (e) {}
+        } catch (e) {
+            $.Msg("[QOLLock][WARN][" + _featureId + "] DispatchCitadelConCommand failed: " + (e && e.message ? String(e.message) : String(e)));
+        }
         return false;
     }
 
@@ -150,7 +152,9 @@
             State[options.didSwitchFlagKey] = true;
         }
         if (switchedToStorage && typeof options.onSwitchSuccess === "function") {
-            try { options.onSwitchSuccess(nowMs); } catch (e0) {}
+            try { options.onSwitchSuccess(nowMs); } catch (e0) {
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] onSwitchSuccess callback failed: " + (e0 && e0.message ? String(e0.message) : String(e0)));
+            }
         }
 
         if (typeof options.debugLog === "function") {
@@ -178,7 +182,9 @@
             options.debugLog(String(options.debugMessage || ""));
         }
         if (typeof options.onEnterNextStage === "function") {
-            try { options.onEnterNextStage(nowMs); } catch (e0) {}
+            try { options.onEnterNextStage(nowMs); } catch (e0) {
+                $.Msg("[QOLLock][ERROR][" + _featureId + "] onEnterNextStage callback failed: " + (e0 && e0.message ? String(e0.message) : String(e0)));
+            }
         }
 
         var nextStage = options.nextStage;
