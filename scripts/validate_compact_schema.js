@@ -4,6 +4,7 @@ const vm = require("vm");
 
 const projectRoot = path.resolve(__dirname, "..");
 const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_presets.js");
+const bridgePath = path.join(projectRoot, "panorama", "scripts", "ql_bridge.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
 
@@ -549,7 +550,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [sharedPath, settingsPath],
+        [sharedPath, bridgePath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
@@ -565,7 +566,7 @@ function main() {
         false
     );
     const coreContext = loadContext(
-        [sharedPath, corePath],
+        [sharedPath, bridgePath, corePath],
         `globalThis.__schemaGuardExports = {
             latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
             registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,
