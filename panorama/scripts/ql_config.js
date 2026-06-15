@@ -246,9 +246,7 @@ function NormalizeLanguageSchemaMigration(configTarget, sourceConfig, schemaVers
 function SafeParseConfig(raw) {
     if (!raw || raw === "") return null;
     try {
-        var unwrapped = (typeof UnwrapConfigFromStorage === "function")
-            ? UnwrapConfigFromStorage(raw)
-            : null;
+        var unwrapped = UnwrapConfigFromStorage(raw);
         if (!unwrapped || !unwrapped.config) return null;
         return MergeConfig(unwrapped.config);
     } catch (parseErr) {
