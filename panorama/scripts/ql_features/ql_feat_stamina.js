@@ -72,6 +72,7 @@
 
     // ── Update ──
     var _dbgTick = 0;
+    var STAMINA_DEBUG = false; // Toggle true only during diagnosis
 
     function update(root, cfg, nowMs) {
         _dbgTick++;
@@ -81,7 +82,7 @@
 
         // Log only on signature change (not periodic — avoids 20Hz console spam)
         var sigChanged = State.staminaChargeColorStyleSig !== styleSig;
-        var forceLog = sigChanged;
+        var forceLog = STAMINA_DEBUG && sigChanged;
         if (forceLog) {
             $.Msg("[STAMINA DBG] tick=" + _dbgTick +
                   " rawIndex=" + rawIndex +
@@ -143,7 +144,7 @@
             try {
                 panel.style.washColor = targetValue;
             } catch(e) {
-                $.Msg("[STAMINA DBG] EXCEPTION panel[" + i + "] washColor=" + targetValue + ": " + e.message);
+                if (STAMINA_DEBUG) $.Msg("[STAMINA DBG] EXCEPTION panel[" + i + "] washColor=" + targetValue + ": " + e.message);
             }
             if (forceLog) {
                 var after = "?";
