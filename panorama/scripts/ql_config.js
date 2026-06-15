@@ -15,16 +15,10 @@
 
 "use strict";
 
-// ── Default config alias ──
-
-var DEFAULT_CONFIG = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-    ? QOL_DEFAULT_CONFIG
-    : {};
-
 // ── BuildDefaultConfig ──
 
 function BuildDefaultConfig() {
-    var sharedDefault = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? QOL_DEFAULT_CONFIG : DEFAULT_CONFIG;
+    var sharedDefault = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? QOL_DEFAULT_CONFIG : {};
     return Object.assign({}, sharedDefault);
 }
 
