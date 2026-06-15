@@ -45,6 +45,9 @@ _TLog = function(label, detail) {
     var ClearPanelCache = (typeof QOL !== "undefined" && QOL.clearPanelCache) || function() { State.cachedPanels = {}; };
     var SweepStalePanelCache = (typeof QOL !== "undefined" && QOL.sweepStalePanelCache) || function() { var swept = 0; var cache = State.cachedPanels; for (var k in cache) { if (cache.hasOwnProperty(k) && cache[k] && typeof cache[k].IsValid === "function" && !IsPanelValid(cache[k])) { cache[k] = null; swept++; } } return swept; };
     var ResolveCachedPanel = (typeof QOL !== "undefined" && QOL.resolveCachedPanel) || function(parent, cacheKey, traverseId) { var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null; if (!panel && parent && parent.FindChildTraverse) { panel = parent.FindChildTraverse(traverseId); State.cachedPanels[cacheKey] = panel || null; } return panel; };
+    // Typed cache sandbox fallbacks (Phase 3 — ql_panelcache.js may not be loaded in sandbox)
+    var PanelCacheSweep = (typeof QOL !== "undefined" && QOL.panelCacheSweep) || SweepStalePanelCache;
+    var PanelCacheResolve = (typeof QOL !== "undefined" && QOL.panelCacheResolve) || ResolveCachedPanel;
     // Config function sandbox fallbacks — provided by ql_config.js when loaded normally.
     // Schema validator sandbox loads ql_core.js in isolation without ql_config.js.
     // NOTE: QOL namespace may not exist at IIFE init time — these check QOL.* at call time.
@@ -15718,6 +15721,10 @@ function GetUIRoot() {
         if (nowSec !== (State.lastCacheSweepSec || 0)) {
             State.lastCacheSweepSec = nowSec;
             var swept = SweepStalePanelCache();
+            // Also sweep typed caches (Phase 3 — ql_panelcache.js)
+            if (typeof PanelCache !== "undefined" && PanelCache && PanelCache.sweep) {
+                swept += PanelCache.sweep();
+            }
             if (swept > 0 && State.perfEnabled) {
                 QOL_DEBUG("cache", "swept " + swept + " stale panel refs");
             }
@@ -16334,7 +16341,18 @@ function GetUIRoot() {
         ["tryReselectBuildSaveTargetByTitle", function() { return TryReselectBuildSaveTargetByTitle; }],
         ["trySelectFirstStorageBuildEntry", function() { return TrySelectFirstStorageBuildEntry; }],
         ["trySelectNextStorageBuildEntry", function() { return TrySelectNextStorageBuildEntry; }],
-        ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }]
+        ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
+        // Typed panel cache accessors (Phase 3 — ql_panelcache.js)
+        ["panelCache", function() { return (typeof PanelCache !== "undefined") ? PanelCache : null; }],
+        ["getPanel", function() { return (typeof PanelCache !== "undefined" && PanelCache.getPanel) ? PanelCache.getPanel : GetCachedPanel; }],
+        ["setPanel", function() { return (typeof PanelCache !== "undefined" && PanelCache.setPanel) ? PanelCache.setPanel : SetCachedPanel; }],
+        ["getList", function() { return (typeof PanelCache !== "undefined" && PanelCache.getList) ? PanelCache.getList : function() { return null; }; }],
+        ["setList", function() { return (typeof PanelCache !== "undefined" && PanelCache.setList) ? PanelCache.setList : function() {}; }],
+        ["getData", function() { return (typeof PanelCache !== "undefined" && PanelCache.getData) ? PanelCache.getData : function() { return undefined; }; }],
+        ["setData", function() { return (typeof PanelCache !== "undefined" && PanelCache.setData) ? PanelCache.setData : function() {}; }],
+        ["panelCacheSweep", function() { return (typeof PanelCache !== "undefined" && PanelCache.sweep) ? PanelCache.sweep : SweepStalePanelCache; }],
+        ["panelCacheClear", function() { return (typeof PanelCache !== "undefined" && PanelCache.clear) ? PanelCache.clear : ClearPanelCache; }],
+        ["panelCacheResolve", function() { return (typeof PanelCache !== "undefined" && PanelCache.resolve) ? PanelCache.resolve : ResolveCachedPanel; }]
     ];
 
     // Publish to QOL namespace with error logging

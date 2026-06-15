@@ -26,9 +26,26 @@ var State;
             $.Msg("[QOLLock][WARN] SetCachedPanel('" + String(k) + "') called with non-panel value (type=" + typeof p + "). Use direct State.cachedPanels assignment for non-panel data.");
         }
         State.cachedPanels[k] = (p === null || p === undefined || IsPanelValid(p) || Array.isArray(p)) ? p : null;
+        // Dual-write to typed cache (Phase 3 — ql_panelcache.js)
+        if (typeof PanelCache !== "undefined" && PanelCache) {
+            if (p === null || p === undefined) {
+                PanelCache._clearKey(k);
+            } else if (Array.isArray(p)) {
+                PanelCache.setList(k, p);
+            } else if (IsPanelValid(p)) {
+                PanelCache.setPanel(k, p);
+            } else {
+                // Non-panel, non-array value — store as data
+                PanelCache.setData(k, p);
+            }
+        }
     };
     var ClearPanelCache = function() {
         State.cachedPanels = {};
+        // Clear typed caches (Phase 3 — ql_panelcache.js)
+        if (typeof PanelCache !== "undefined" && PanelCache) {
+            PanelCache.clear();
+        }
     };
     var SweepStalePanelCache = function() {
         var swept = 0;
