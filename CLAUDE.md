@@ -83,8 +83,9 @@ ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (33 files; order-inde
 ```
 
 ### Context Architecture (Source 2 Panorama)
-- **HUD context:** Has access to `$.Msg`, `State`, panel APIs, `GameUI`, `$.CreatePanel`, etc.
-- **Settings context:** Has access to `$.GetContextPanel()`, `GameInterfaceAPI`, `$.persistentStorage`
+- **HUD context:** Has access to `$.Msg`, `State`, panel APIs (`FindChildTraverse`, `$.CreatePanel`), `GameUI`, etc.
+- **Settings context:** Has access to `$.Msg`, `$.GetContextPanel()`, `$.Schedule()`, panel attribute APIs (`GetAttributeString`/`SetAttributeString`)
+- **NOT available in either context:** `GameInterfaceAPI`, `$.persistentStorage` (confirmed absent, 2026-06-11)
 - **Cross-context bridge:** Panel attributes (SetAttributeString/GetAttributeString) on the Hud root panel
 - **ql_shared_presets.js** runs in BOTH contexts — defines `QOL` namespace, `QOL.import()`, `QOL.register()`, presets, diagnostics
 - **ql_config.js** runs in BOTH contexts — config merge, normalize, parse, schema migration (shared by HUD + Settings)
