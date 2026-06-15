@@ -15669,7 +15669,6 @@ function GetUIRoot() {
         } else {
             cfg = _SPC(raw);
             if (!cfg) {
-                $.Msg("[QOLLock][WARN][loadLoopConfig] _SPC returned null! rawLen=" + (raw ? raw.length : 0) + " — falling back to defaults (all features disabled)");
                 cfg = _BDC();
             }
         }
