@@ -11927,11 +11927,8 @@ function ReadConfigRawFromStorage() {
 // Returns the merged config (new object — does not mutate input).
 function NormalizeConfig(config, parsed) {
     if (typeof QOL !== "undefined" && QOL.mergeConfig) {
-        var _result = QOL.mergeConfig(config);
-        $.Msg("[QOLLock][DBG][NormalizeConfig] QOL.mergeConfig called, inputKeys=" + Object.keys(config).length + " resultKeys=" + Object.keys(_result).length + " healthbarType=" + _result.HEALTHBAR_TYPE);
-        return _result;
+        return QOL.mergeConfig(config);
     }
-    $.Msg("[QOLLock][DBG][NormalizeConfig] QOL.mergeConfig NOT available, returning config unchanged");
     // Fallback: ql_config.js not loaded (should not happen in normal operation).
     // Return config unchanged — caller must handle.
     return config;
@@ -12074,15 +12071,9 @@ function SaveAndSync() {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    // DEBUG: trace NormalizeConfig behavior — HEALTHBAR_TYPE is commonly changed by presets
-    var _dbgBefore = MOD_CONFIG.HEALTHBAR_TYPE;
     MOD_CONFIG = NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
-    var _dbgAfter = MOD_CONFIG.HEALTHBAR_TYPE;
     var data = WrapConfigForStorage(MOD_CONFIG);
-    var _dbgSame = (data === gLastSavedConfigRaw);
-    $.Msg("[QOLLock][DBG][SaveAndSync] mergeConfig=" + (typeof QOL !== "undefined" && typeof QOL.mergeConfig) + " before=" + _dbgBefore + " after=" + _dbgAfter + " keys=" + Object.keys(MOD_CONFIG).length + " skipSameData=" + _dbgSame + " dataLen=" + data.length);
-    if (_dbgSame) {
-        $.Msg("[QOLLock][DBG][SaveAndSync] SKIP: data unchanged");
+    if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
         return;
     }
