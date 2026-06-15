@@ -51,6 +51,7 @@ _TLog = function(label, detail) {
     var _BDC = (typeof QOL !== "undefined" && QOL.buildDefaultConfig) || function() { return (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}; };
     var _MC = (typeof QOL !== "undefined" && QOL.mergeConfig) || function(c) { return c || {}; };
     var _SPC = (typeof QOL !== "undefined" && QOL.safeParseConfig) || function(r) { return null; };
+    $.Msg("[QOLLock][DBG][init] _SPC isReal=" + (typeof QOL !== "undefined" && typeof QOL.safeParseConfig === "function") + " _BDC isReal=" + (typeof QOL !== "undefined" && typeof QOL.buildDefaultConfig === "function") + " QOLexists=" + (typeof QOL !== "undefined"));
     var _NHV = (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeValue) || function(v) { return Math.round(Number(v)) || 0; };
     var _safeAttrDegradedLogged = false;
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
