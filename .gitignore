@@ -14,3 +14,4 @@ scripts/qollock_pipeline.ps1
 memory
 plans
 .fallow/
+mostrecentlogs.txt
