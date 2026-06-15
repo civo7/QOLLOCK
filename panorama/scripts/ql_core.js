@@ -2242,6 +2242,8 @@ function GetUIRoot() {
             count: hud && hud.SetAttributeString ? 2 : 1
         };
 
+    }
+
     var FindFirstPanelByClass = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function(root, className) {
         if (!root || !root.FindChildrenWithClassTraverse || !className) return null;
         var panels = root.FindChildrenWithClassTraverse(className) || [];
