@@ -1,6 +1,6 @@
 # QOLLOCK Architecture
 
-Version 3.1.4 — Schema 3.1.4 — 36 features — 0 auto-disabled
+Version 3.1.4 — Schema 3.1.4 — 38 features — 0 auto-disabled
 
 ## Overview
 
@@ -33,6 +33,8 @@ The mod follows a **feature plugin architecture**: a thin core runtime dispatche
 │  ┌──────────┴─────────────────────────┐  │
 │  │  Shared Infrastructure             │  │
 │  │  ql_utils.js — panel safety, log   │  │
+│  │  ql_bridge.js — cross-context      │  │
+│  │    channel descriptors, read/write │  │
 │  │  ql_state.js — State singleton,    │  │
 │  │    panel cache accessors           │  │
 │  │  ql_config.js — config merge,      │  │
@@ -120,6 +122,7 @@ panorama/
     ├── ql_utils.js                ← Pure utilities (panel safety, logging, timing, config helpers)
     ├── ql_shared_presets.js       ← QOL namespace, QOL.import(), QOL.register(),
     │                                  presets, diagnostics, shared constants
+    ├── ql_bridge.js               ← Typed cross-context channel descriptors (~150 lines)
     ├── ql_state.js                ← State singleton, panel cache accessors
     ├── ql_panelcache.js           ← Typed panel caches (panels/lists/data)
     ├── ql_config.js               ← Config merge, normalize, parse, schema migration
@@ -180,6 +183,7 @@ panorama/
 ```
 ql_utils.js                          ← Must be first (IsPanelValid, SafeGetAttribute, logging)
 ql_shared_presets.js                 ← QOL namespace, import/register, presets, defaults
+ql_bridge.js                         ← Cross-context channel descriptors, safe read/write
 ql_state.js                          ← State singleton, panel cache accessors
 ql_panelcache.js                     ← Typed panel caches (panels/lists/data)
 ql_config.js                         ← Config merge, normalize, parse, migration
@@ -195,6 +199,7 @@ ql_features/*.js (33 files)          ← After core — register via QOL.registe
 
 ```
 ql_shared_presets.js                 ← QOL namespace, presets, defaults, diagnostics
+ql_bridge.js                         ← Cross-context channel descriptors (shared with HUD)
 ql_config.js                         ← Config merge, normalize, parse (shared with HUD)
 ql_custom_announcer_slot*_pack_meta  ← Announcer pack metadata (5 files)
 ql_settings.js                       ← Settings UI
@@ -595,7 +600,7 @@ The architecture is evolving toward a cleaner separation under the `architecture
 1. **~~ql_state.js~~** — ✅ Done. State object and cache accessors extracted from ql_core.js (757 lines).
 2. **~~ql_config.js~~** — ✅ Done. Config merge/normalize/parse/migration extracted (328 lines).
 3. **~~ql_panelcache.js~~** — ✅ Done. Three typed caches (panels/lists/data) with backward-compat dual-write (~170 lines).
-4. **ql_bridge.js** — Typed cross-context channel descriptors
+4. **~~ql_bridge.js~~** — ✅ Done. 18 duplicated constants unified, typed channel descriptor map, safe read/write helpers (~150 lines).
 5. **Registry-driven dispatch** — Replace hardcoded FEATURE_DISPATCH_ORDER
 6. **Extract remaining inline features** — coreRoot (~350 lines) and healthbarRuntimeHelpers (~1,200 lines)
 7. **Schema-driven settings UI** — Reduce ql_settings.js from 23K to ~10K lines

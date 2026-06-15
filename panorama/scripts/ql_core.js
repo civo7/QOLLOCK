@@ -52,8 +52,8 @@ _TLog = function(label, detail) {
     // Schema validator sandbox loads ql_core.js in isolation without ql_config.js.
     // NOTE: QOL namespace may not exist at IIFE init time — these check QOL.* at call time.
     var _defCfg = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) || {};
-    function _BDC() { return (typeof QOL !== "undefined" && QOL.buildDefaultConfig) ? QOL.buildDefaultConfig() : ((typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}); }
-    function _MC(c) { return (typeof QOL !== "undefined" && QOL.mergeConfig) ? QOL.mergeConfig(c) : (c || {}); }
+    function _BDC() { var _f = (typeof QOL !== "undefined" && QOL.buildDefaultConfig); return (_f && _f !== _BDC) ? _f() : ((typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}); }
+    function _MC(c) { var _f = (typeof QOL !== "undefined" && QOL.mergeConfig); return (_f && _f !== _MC) ? _f(c) : (c || {}); }
     function _SPC(r) { return (typeof QOL !== "undefined" && QOL.safeParseConfig) ? QOL.safeParseConfig(r) : null; }
     function _NHV(v) { return (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeValue) ? QOL.normalizeHealthbarTypeValue(v) : (Math.round(Number(v)) || 0); }
     var _safeAttrDegradedLogged = false;
@@ -87,7 +87,6 @@ _TLog = function(label, detail) {
 
 
 
-    const STORAGE_KEY = QOL_STORAGE_KEY;
     // WHY: probes the `joy_name` convar as a persistent key-value store that survives
     // game restarts — used as an additional config persistence channel alongside panel attrs.
     const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
@@ -96,13 +95,7 @@ _TLog = function(label, detail) {
     // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
     // and as standalone panel attributes (for synchronous bridging into CSS without
     // waiting for the next loop tick).
-    const PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY = "qol_player_healthbar_accent_color";
-    const PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR = "QOL_PLAYER_HEALTHBAR_ACCENT_COLOR";
-    const BOTTOM_BAR_WASH_COLOR_ATTR = "QOL_BOTTOM_BAR_WASH_COLOR";
-    const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
-    const STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
-    const AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
-    const MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
+    // (Color/storage bridge constants now live in ql_bridge.js — Phase 4)
     // WHY: V2 enemy healthbar toggles are bridged through panel attributes so the
     // native CitadelHealthBarV2 panel can read them without JS polling.
     // ==========================================================================
@@ -426,7 +419,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const PERF_DEBUG_SLOW_MS = 8;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
-    const USER_EDIT_REV_ATTR = QOL_USER_EDIT_REV_ATTR;
+    // (USER_EDIT_REV_ATTR now lives in ql_bridge.js — Phase 4)
     // Panel IDs used with FindChildTraverse / FindChildrenWithClassTraverse
     const PANEL_ID_HUD = QOL_PANEL_ID_HUD;
     const PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
@@ -572,16 +565,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         { key: "return_hero", label: "Returning To Selected Hero" },
         { key: "complete", label: "Complete" }
     ];
-    const BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
-    const BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
-    const BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
-    const BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
-    const BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
-    const BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
-    const BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
-    const BUILD_CLEAR_TOKEN_ATTR = "QOL_BUILD_CLEAR_TOKEN";
+    // (Build save/clear + hero hint bridge constants now live in ql_bridge.js — Phase 4)
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
-    const HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
     const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
     const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
     const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 30;   // poll-driven

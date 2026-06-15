@@ -7,6 +7,7 @@
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_custom_announcer_slot1_pack_meta.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_custom_announcer_slot2_pack_meta.vjs_c" />

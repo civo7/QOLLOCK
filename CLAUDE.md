@@ -21,6 +21,7 @@ panorama/
 └── scripts/
     ├── ql_utils.js                         # Pure utilities, logging, panel safety wrappers
     ├── ql_shared_presets.js                # QOL namespace, QOL.import(), 79 presets, diagnostics
+    ├── ql_bridge.js                        # Typed cross-context channel descriptors, safe read/write (~150 lines)
     ├── ql_state.js                         # State singleton, panel cache accessors (~770 lines)
     ├── ql_panelcache.js                    # Typed panel caches (panels/lists/data), backward-compat dual-write (~170 lines)
     ├── ql_config.js                        # Config merge, normalize, parse, migration (328 lines)
@@ -76,7 +77,7 @@ panorama/
 
 ### Load Order (from hud.xml)
 ```
-ql_utils.js → ql_shared_presets.js → ql_state.js → ql_panelcache.js → ql_config.js →
+ql_utils.js → ql_shared_presets.js → ql_bridge.js → ql_state.js → ql_panelcache.js → ql_config.js →
 ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
 ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (33 files; order-independent)
 ```
@@ -113,8 +114,9 @@ var SetCachedPanel = _deps.setCachedPanel;
 
 **QOL namespace** is populated from multiple sources:
 - `ql_state.js` — publishes `getCachedPanel`, `setCachedPanel`, `clearPanelCache`, `sweepStalePanelCache`, `resolveCachedPanel`
+- `ql_bridge.js` — publishes 18 bare-global bridge constants, `QOL_BRIDGE_CHANNELS` descriptor map, `QOL.bridge` namespace with `read`/`write`/`readAttr`/`writeAttr`
 - `ql_config.js` — publishes `buildDefaultConfig`, `mergeConfig`, `safeParseConfig`, and ~15 normalize helpers
-- `ql_core.js` — publishes ~160 HUD-only symbols via a data-driven lazy-getter array. Each entry is `[camelCaseKey, function() { return ActualFunction; }]`. The lazy getter defers identifier resolution so a single missing symbol doesn't crash the script.
+- `ql_core.js` — publishes ~160 HUD-only symbols via a data-driven eager-eval array. Each entry is `[camelCaseKey, function() { return ActualFunction; }]`. The lazy getter defers identifier resolution so a single missing symbol doesn't crash the script.
 
 Key QOL namespace entries:
 - `state` → `State` (the global state object)
@@ -232,16 +234,28 @@ Key state fields:
 | `PerfNowMs()` | High-resolution timestamp |
 | `NormalizeOpacityNumber/FormatHudPx/...` | Number normalization helpers |
 
-## Phase 9: Backend Overhaul — Status
+## Architecture Overhaul — Status
 
-### Completed
-- **34 features extracted** from ql_core.js into ql_features/ over multiple sessions
+### Phase 1–4: ✅ Complete
+
+| Phase | File | Status |
+|-------|------|--------|
+| 1 | `ql_state.js` | ✅ State singleton, cache accessors (~770 lines) |
+| 2 | `ql_config.js` | ✅ Config merge/normalize/parse/migration (328 lines) |
+| 3 | `ql_panelcache.js` | ✅ Typed caches (panels/lists/data), dual-write (~170 lines) |
+| 4 | `ql_bridge.js` | ✅ Cross-context channel descriptors, safe read/write (~150 lines) |
+
+### Previous Phases (9–10)
+
+- **34 features extracted** from ql_core.js into ql_features/
 - **~6,400 lines removed** from ql_core.js
 - **All 34 feature files migrated** to `QOL.import()` and `QOL.register()` API
-- **QOL namespace system** implemented (data-driven lazy-getter bridge exports)
+- **QOL namespace system** implemented (data-driven bridge exports)
 - **Bridge export system** refactored from ~168 individual try/catch blocks to data-driven arrays
-- **36/36 features loaded**, zero auto-disabled, 79/79 presets cycle completes
+- **38/38 features loaded**, zero auto-disabled, 92/92 presets cycle completes
 - **SafeLog utility** added to ql_utils.js
+- **18 duplicated bridge constants** moved to ql_bridge.js (eliminated from ql_core.js + ql_settings.js)
+- **_BDC/_MC recursion bug** fixed (sandbox validator now passes)
 
 ### Known Bugs Fixed
 1. `CLASS_IS_ZERO_VALUE` missing from statBonuses feature file
