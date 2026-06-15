@@ -253,6 +253,8 @@
     QOL.register("unsecuredSoulsTimer", {
         configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
         bucket: 6, phase: 3,
+        gateKey: "unsecuredSouls",
+        perfLabel: "loop.unsecured_souls_overlay",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(State.unsecuredSouls && State.unsecuredSouls.displayMode && State.unsecuredSouls.displayMode !== ""); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);

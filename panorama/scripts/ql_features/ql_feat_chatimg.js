@@ -138,6 +138,7 @@
     QOL.register("imagesInChat", {
         configKeys: ["ENABLE_IMAGES_IN_CHAT"],
         bucket: 7, phase: -1,
+        perfLabel: "loop.images_in_chat",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateImagesInChat(root, cfg);

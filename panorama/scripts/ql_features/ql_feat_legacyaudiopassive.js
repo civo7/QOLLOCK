@@ -397,6 +397,7 @@
                      "ENABLE_ONE_TIME_TIER2", "ENABLE_ONE_TIME_TIER3", "ENABLE_INTERVAL",
                      "VOICE_TYPE", "BRIDGE_BUFF_START"],
         bucket: 7, phase: -1,
+        perfLabel: "loop.legacy_audio_and_passivehud",
         gate: function(cfg, hideoutConnected) {
             try {
                 return NeedsLegacyAudioPassiveRuntimeWork(cfg, hideoutConnected);
