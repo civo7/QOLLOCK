@@ -47,12 +47,12 @@ _TLog = function(label, detail) {
     var ResolveCachedPanel = (typeof QOL !== "undefined" && QOL.resolveCachedPanel) || function(parent, cacheKey, traverseId) { var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null; if (!panel && parent && parent.FindChildTraverse) { panel = parent.FindChildTraverse(traverseId); State.cachedPanels[cacheKey] = panel || null; } return panel; };
     // Config function sandbox fallbacks — provided by ql_config.js when loaded normally.
     // Schema validator sandbox loads ql_core.js in isolation without ql_config.js.
+    // NOTE: QOL namespace may not exist at IIFE init time — these check QOL.* at call time.
     var _defCfg = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) || {};
-    var _BDC = (typeof QOL !== "undefined" && QOL.buildDefaultConfig) || function() { return (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}; };
-    var _MC = (typeof QOL !== "undefined" && QOL.mergeConfig) || function(c) { return c || {}; };
-    var _SPC = (typeof QOL !== "undefined" && QOL.safeParseConfig) || function(r) { return null; };
-    $.Msg("[QOLLock][DBG][init] _SPC isReal=" + (typeof QOL !== "undefined" && typeof QOL.safeParseConfig === "function") + " _BDC isReal=" + (typeof QOL !== "undefined" && typeof QOL.buildDefaultConfig === "function") + " QOLexists=" + (typeof QOL !== "undefined"));
-    var _NHV = (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeValue) || function(v) { return Math.round(Number(v)) || 0; };
+    function _BDC() { return (typeof QOL !== "undefined" && QOL.buildDefaultConfig) ? QOL.buildDefaultConfig() : ((typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}); }
+    function _MC(c) { return (typeof QOL !== "undefined" && QOL.mergeConfig) ? QOL.mergeConfig(c) : (c || {}); }
+    function _SPC(r) { return (typeof QOL !== "undefined" && QOL.safeParseConfig) ? QOL.safeParseConfig(r) : null; }
+    function _NHV(v) { return (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeValue) ? QOL.normalizeHealthbarTypeValue(v) : (Math.round(Number(v)) || 0); }
     var _safeAttrDegradedLogged = false;
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
