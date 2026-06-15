@@ -11922,41 +11922,40 @@ function ReadConfigRawFromStorage() {
     return chosenRaw;
 }
 
-// NormalizeConfig — delegates to ql_config.js (shared between HUD and Settings).
-// mergeConfig does BuildDefaultConfig + overlay + all 12 normalize steps.
-// Returns the merged config (new object — does not mutate input).
+// NormalizeConfig — canonical normalization / migration chain.
+// Called from both SyncConfigFromStorage (on load) and SaveAndSync (on save).
+// Normalize functions are provided by ql_config.js as file-scope globals.
 function NormalizeConfig(config, parsed) {
-    if (typeof QOL !== "undefined" && QOL.mergeConfig) {
-        return QOL.mergeConfig(config);
-    }
-    // Fallback: ql_config.js not loaded (should not happen in normal operation).
-    // Return config unchanged — caller must handle.
-    return config;
+    MigrateSplitZoomKeys(config, parsed);
+    NormalizeNeutralCampFlags(config, parsed);
+    NormalizeItemCooldownModeConfig(config, parsed);
+    NormalizeAmmoScaleConfig(config, parsed);
+    NormalizeVoiceTypeConfig(config);
+    NormalizeHealthbarTypeConfig(config, parsed);
+    NormalizeColorWarningConfig(config, parsed);
+    NormalizeEnemyColorWarningConfig(config, parsed);
+    NormalizeAllyColorWarningConfig(config, parsed);
+    NormalizeTopbarEnemyHpWarningConfig(config, parsed);
+    NormalizeTopbarAllyHpWarningConfig(config, parsed);
+    NormalizeShopItemNotificationsConfig(config, parsed);
 }
 
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
     // $.persistentStorage confirmed absent — panel attrs are the only persistence.
-    var nextConfig = (typeof QOL !== "undefined" && QOL.buildDefaultConfig)
-        ? QOL.buildDefaultConfig()
-        : (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-            ? Object.assign({}, QOL_DEFAULT_CONFIG)
-            : {};
+    var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
+        ? Object.assign({}, QOL_DEFAULT_CONFIG)
+        : {};
     if (raw && raw.length > 0) {
         try {
             var unwrapped = UnwrapConfigFromStorage(raw);
             var parsed = (unwrapped && unwrapped.config) ? unwrapped.config : {};
-            if (typeof QOL !== "undefined" && QOL.mergeConfig) {
-                nextConfig = QOL.mergeConfig(parsed);
-            } else {
-                // Fallback: ql_config.js not loaded
-                for (var key in parsed) {
-                    if (nextConfig.hasOwnProperty(key)) {
-                        nextConfig[key] = parsed[key];
-                    }
+            for (var key in parsed) {
+                if (nextConfig.hasOwnProperty(key)) {
+                    nextConfig[key] = parsed[key];
                 }
-                nextConfig = NormalizeConfig(nextConfig, parsed);
             }
+            NormalizeConfig(nextConfig, parsed);
         } catch (e) { $.Msg("[QOLLock][WARN][config] SyncConfigFromStorage parse/merge failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     MOD_CONFIG = nextConfig;
@@ -12071,7 +12070,7 @@ function SaveAndSync() {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    MOD_CONFIG = NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
+    NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
