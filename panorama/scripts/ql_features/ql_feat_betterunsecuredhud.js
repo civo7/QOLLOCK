@@ -306,6 +306,7 @@ function ParseUnsecuredSoulsValue(valueText) {
     QOL.register("betterUnsecuredHud", {
         configKeys: ["ENABLE_BETTER_UNSECURED"],
         bucket: 7, phase: -1,
+        perfLabel: "loop.unsecured_souls_hud",
         gate: function(cfg) { return NeedsBetterUnsecuredHudLayoutWork(cfg); },
         update: function(root, cfg, nowMs) {
             try {

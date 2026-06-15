@@ -2019,7 +2019,11 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
         gate: (typeof descriptor.gate === "function") ? descriptor.gate : function() { return true; },
         update: descriptor.update,
         cleanup: (typeof descriptor.cleanup === "function") ? descriptor.cleanup : null,
-        stateKeys: Array.isArray(descriptor.stateKeys) ? descriptor.stateKeys.slice() : []
+        stateKeys: Array.isArray(descriptor.stateKeys) ? descriptor.stateKeys.slice() : [],
+        requiresRoot: descriptor.requiresRoot === true,
+        gateKey: (typeof descriptor.gateKey === "string" && descriptor.gateKey.length > 0) ? descriptor.gateKey : name,
+        perfLabel: (typeof descriptor.perfLabel === "string" && descriptor.perfLabel.length > 0) ? descriptor.perfLabel : ("loop." + name),
+        postUpdate: (typeof descriptor.postUpdate === "function") ? descriptor.postUpdate : null
     };
 };
 

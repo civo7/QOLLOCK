@@ -277,6 +277,7 @@
     QOL.register("nicknames", {
         configKeys: ["ENABLE_NICKNAMES"],
         bucket: 1, phase: 0,
+        perfLabel: "loop.topbar_nicknames",
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_NICKNAMES");
         },

@@ -15446,8 +15446,10 @@ function GetUIRoot() {
         // minimapRuntime gate resolved via feature registry (extracted to ql_feat_minimapruntime.js)
         var _mmFeat = QOL_FEATURE_REGISTRY["minimapRuntime"];
         gates.minimapRuntime = _mmFeat && _mmFeat.gate ? _mmFeat.gate(cfg, raw) : false;
-        gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled);
-        gates.coreRoot = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
+        // coreRoot is computed first — healthbarRuntimeHelpers is blocked when coreRoot is active
+        var _coreRootActive = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
+        gates.coreRoot = _coreRootActive;
+        gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled) && !_coreRootActive;
         gates.panelCache = false;
 
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
@@ -15716,94 +15718,48 @@ function GetUIRoot() {
         }
     }
 
-    // ── Feature dispatch constants (hoisted from loop() to avoid per-tick allocation) ──
-    var FEATURE_DISPATCH_ORDER = [
-        "rejuvTimers",
-        "spm", "nicknames",
-        "unspent", "statlocker",
-        "panelCache",
-        "onDeathArcade",
-        "coreRoot",
-        "healthbarRuntimeHelpers",
-        "laneWithParty",
-        "gameplayMouseCursor",
-        "betterUnsecuredHud",
-        "colorWarning", "enemyColorWarning", "allyColorWarning",
-        "ammo", "topBarRuntime",
-        "bottomBarRuntime", "itemsRuntime", "soulsRuntime",
-        "heroShop",
-        "recentPurchases",
-        "keyboardRuntime", "zipBoost", "unsecuredSoulsTimer", "statBonuses",
-        "combatStatus",
-        "signatureFlash",
-        "targetShapes",
-        "damageImpactRuntime", "staminaChargeColorRuntime",
-        "damageNumbers",
-        "minimapRuntime", "legacyAudioPassive", "imagesInChat"
-    ];
+    // ── Feature dispatch: order is now derived from the registry (Phase 5) ──
+    // Each feature declares its own bucket, phase, gateKey, requiresRoot,
+    // perfLabel, and postUpdate via QOL.register(). The dispatch loop
+    // iterates QOL_FEATURE_REGISTRY directly — no hardcoded lists.
 
-    var FEATURE_PERF_MAP = {
-        "spm": "loop.souls_per_min",
-        "coreRoot": "loop.root_classes",
-        "nicknames": "loop.topbar_nicknames",
-        "betterUnsecuredHud": "loop.unsecured_souls_hud",
-        "keyboardRuntime": "loop.keyboard_overlay",
-        "unsecuredSoulsTimer": "loop.unsecured_souls_overlay",
-        "gameplayMouseCursor": "loop.gameplay_mouse_cursor",
-        "legacyAudioPassive": "loop.legacy_audio_and_passivehud",
-        "imagesInChat": "loop.images_in_chat"
-    };
-
-    var FEATURE_GATE_MAP = {
-        "unsecuredSoulsTimer": "unsecuredSouls"
-    };
-
-    var FEATURE_REQUIRES_ROOT = {
-        "coreRoot": true,
-        "healthbarRuntimeHelpers": true
-    };
+    // ── Registry-driven feature bucket population (Phase 5) ──
+    // Pre-compute sorted registry key list once to avoid per-tick allocation
+    var _REGISTRY_KEYS = null;
+    function _getRegistryKeys() {
+        if (!_REGISTRY_KEYS) _REGISTRY_KEYS = Object.keys(QOL_FEATURE_REGISTRY).sort();
+        return _REGISTRY_KEYS;
+    }
 
     function populateFeatureBuckets(buckets, staggerEnabled, loopSnapshot, gates, root) {
-        FEATURE_DISPATCH_ORDER.forEach(function(featureName) {
-            var gateKey = FEATURE_GATE_MAP[featureName] || featureName;
+        var featureNames = _getRegistryKeys();
+        for (var i = 0; i < featureNames.length; i++) {
+            var featureName = featureNames[i];
+            var featureEntry = QOL_FEATURE_REGISTRY[featureName];
+            if (!featureEntry) continue;
 
-            // Gate check
-            if (!gates[gateKey]) return;
+            // Gate check — use declared gateKey or fall back to feature name
+            var gateKey = featureEntry.gateKey;
+            if (!gates[gateKey]) continue;
 
             // Root guard
-            if (FEATURE_REQUIRES_ROOT[featureName] && !root) return;
+            if (featureEntry.requiresRoot && !root) continue;
 
-            // Special: healthbarRuntimeHelpers only runs when coreRoot is OFF
-            if (featureName === "healthbarRuntimeHelpers" && gates.coreRoot) return;
+            var bucketIndex = staggerEnabled ? featureEntry.bucket : 0;
+            var perfLabel = featureEntry.perfLabel;
 
-            var featureEntry = QOL_FEATURE_REGISTRY[featureName];
-            if (!featureEntry) {
-                if (!State._missingFeatureLogged || !State._missingFeatureLogged[featureName]) {
-                    if (!State._missingFeatureLogged) State._missingFeatureLogged = {};
-                    State._missingFeatureLogged[featureName] = true;
-                    $.Msg("[QOLLock] ERROR: feature '" + featureName + "' is in dispatch order but not registered — extracted file missing or failed to load?");
-                }
-                return;
-            }
-
-            var bucketIndex = staggerEnabled ? (featureEntry.bucket != null ? featureEntry.bucket : 0) : 0;
-            var perfLabel = FEATURE_PERF_MAP[featureName] || ("loop." + featureName);
-
-            buckets[bucketIndex].push(function(snapshot) {
-                ExecuteFeature(featureName, function() {
-                    var perfStartMs = PerfStart();
-                    QOL_FEATURE_REGISTRY[featureName].update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
-                    // Post-update side effects
-                    if (featureName === "onDeathArcade") {
-                        State.onDeathArcadeRuntimeWasActive = snapshot.gates.onDeathArcadeActive;
-                    }
-                    if (featureName === "coreRoot") {
-                        State.coreRootGateSig = snapshot.gates.sig;
-                    }
-                    PerfEnd(perfLabel, perfStartMs);
-                });
-            });
-        });
+            // IIFE captures per-iteration values (ES5.1: var is function-scoped, not block-scoped)
+            buckets[bucketIndex].push((function(fn, entry, label) {
+                return function(snapshot) {
+                    ExecuteFeature(fn, function() {
+                        var perfStartMs = PerfStart();
+                        entry.update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
+                        if (entry.postUpdate) entry.postUpdate(snapshot, State);
+                        PerfEnd(label, perfStartMs);
+                    });
+                };
+            })(featureName, featureEntry, perfLabel));
+        }
     }
 
     function syncHealthbarAccentColor(root, cfg) {
@@ -16060,10 +16016,15 @@ function GetUIRoot() {
                      "ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_HERO_PURCHASE_POPUPS",
                      "ENABLE_SHOW_BUILD_ID", "ENABLE_HUD_SHIFT"],
         bucket: 0, phase: 0,
+        requiresRoot: true,
+        perfLabel: "loop.root_classes",
         gate: function(cfg) { return true; },  // coreRoot always evaluates
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             ApplyCoreLoopRootClassesAndState(root, cfg, nowMs, hideoutConnected,
                 !!(State.lastRawConfig && State.lastRawConfig.length > 0));
+        },
+        postUpdate: function(snapshot, State) {
+            State.coreRootGateSig = snapshot.gates.sig;
         },
         stateKeys: ["rootClassCache", "coreRootStaticSig", "coreRootGateSig"]
     });
@@ -16072,6 +16033,7 @@ function GetUIRoot() {
         configKeys: ["HEALTHBAR_TYPE", "ENABLE_MINIMALIST_HEALTHBAR",
                      "ENABLE_FG_HEALTHBAR"],
         bucket: 1, phase: 0,
+        requiresRoot: true,
         gate: function(cfg) {
             var ht = Number(cfg.HEALTHBAR_TYPE);
             return ht === 1 || ht === 2 || ht === 3 || ht === 4 || ht === 5;

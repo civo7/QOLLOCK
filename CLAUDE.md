@@ -133,7 +133,12 @@ QOL.register("featureName", {
     bucket: 0, phase: 0,
     gate: function(cfg) { ... },
     update: function(root, cfg, nowMs) { ... },
-    stateKeys: [...]
+    stateKeys: [...],
+    // Optional (Phase 5):
+    requiresRoot: true/false,       // skip when root panel is null
+    gateKey: "alternateGateName",   // check gates[gateKey] instead of gates[featureName]
+    perfLabel: "loop.custom_label", // perf tracking label (default: "loop." + name)
+    postUpdate: function(snapshot, State) { ... }  // side-effect hook after update
 });
 ```
 
@@ -188,11 +193,17 @@ Every feature file follows this structure:
 
 ### Feature Dispatch Loop (in ql_core.js)
 
-The main loop runs at ~20Hz. `BuildRuntimeFeatureConfigState()` resolves which features are active.
-Features are assigned to buckets and phases for staggered execution:
-- `bucket`: execution priority group
-- `phase`: scheduler phase within the bucket
-- `phase: -1`: always runs (not gated by 5-phase scheduler)
+The main loop runs at ~20Hz. `ResolveRuntimeGates()` computes which features are active.
+`populateFeatureBuckets()` iterates `QOL_FEATURE_REGISTRY` directly (registry-driven since Phase 5)
+and assigns each active feature to a staggered bucket for intra-frame scheduling.
+
+Features are assigned to buckets and phases via their descriptor:
+- `bucket`: time-offset group (0-7, mapped to 0-117ms offsets)
+- `phase`: scheduler phase (0-4), or -1 for always-run
+- `requiresRoot`: when true, feature is skipped if root panel is null
+- `gateKey`: optional override for which `gates[key]` to check (defaults to feature name)
+- `perfLabel`: performance tracking label (defaults to `"loop." + name`)
+- `postUpdate`: optional callback run after `update()` for side effects
 
 `ExecuteFeature()` runs each feature's update callback in a try/catch, tracks consecutive errors, and auto-disables features after 10 consecutive failures.
 
@@ -244,6 +255,7 @@ Key state fields:
 | 2 | `ql_config.js` | ✅ Config merge/normalize/parse/migration (328 lines) |
 | 3 | `ql_panelcache.js` | ✅ Typed caches (panels/lists/data), dual-write (~170 lines) |
 | 4 | `ql_bridge.js` | ✅ Cross-context channel descriptors, safe read/write (~150 lines) |
+| 5 | Registry dispatch | ✅ Registry-driven feature bucket population, removed hardcoded dispatch order |
 
 ### Previous Phases (9–10)
 

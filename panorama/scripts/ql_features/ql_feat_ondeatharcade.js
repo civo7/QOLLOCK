@@ -179,6 +179,9 @@
                    IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
                    IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM");
         },
+        postUpdate: function(snapshot, State) {
+            State.onDeathArcadeRuntimeWasActive = snapshot.gates.onDeathArcadeActive;
+        },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
                         try {
                 UpdateOnDeathArcadeBridge(root, cfg, nowMs);

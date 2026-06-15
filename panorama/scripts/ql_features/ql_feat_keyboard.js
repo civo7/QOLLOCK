@@ -215,6 +215,7 @@
     QOL.register("keyboardRuntime", {
         configKeys: ["ENABLE_KEYBOARD_OVERLAY"],
         bucket: 6, phase: -1,
+        perfLabel: "loop.keyboard_overlay",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_KEYBOARD_OVERLAY") || GetCachedPanel("keyboardOverlayRoot") || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateKeyboardOverlayRuntime(root, cfg);

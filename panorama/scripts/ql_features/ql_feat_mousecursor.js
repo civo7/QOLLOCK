@@ -131,6 +131,7 @@
     QOL.register("gameplayMouseCursor", {
         configKeys: [],
         bucket: 7, phase: -1,
+        perfLabel: "loop.gameplay_mouse_cursor",
         gate: function(cfg) { return true; },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateGameplayMouseCursor(root, nowMs, hideoutConnected);

@@ -251,6 +251,7 @@
     QOL.register("spm", {
         configKeys: ["ENABLE_MIN_SOULS"],
         bucket: 1, phase: 1,
+        perfLabel: "loop.souls_per_min",
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
         },
