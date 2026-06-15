@@ -15668,6 +15668,7 @@ function GetUIRoot() {
         } else {
             cfg = _SPC(raw);
             if (!cfg) {
+                $.Msg("[QOLLock][DBG][loadLoopConfig] _SPC returned null! rawLen=" + (raw ? raw.length : 0) + " lastRawLen=" + (State.lastRawConfig ? State.lastRawConfig.length : 0) + " rawSameAsLast=" + (raw === State.lastRawConfig) + " usingDefaults");
                 cfg = _BDC();
             }
         }
