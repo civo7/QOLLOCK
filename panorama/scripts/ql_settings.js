@@ -11928,7 +11928,7 @@ function ReadConfigRawFromStorage() {
 function NormalizeConfig(config, parsed) {
     if (typeof QOL !== "undefined" && QOL.mergeConfig) {
         var _result = QOL.mergeConfig(config);
-        $.Msg("[QOLLock][DBG][NormalizeConfig] QOL.mergeConfig called, inputKeys=" + Object.keys(config).length + " resultKeys=" + Object.keys(_result).length + " sampleKey=" + _result.ENABLE_AMMO_STATUS);
+        $.Msg("[QOLLock][DBG][NormalizeConfig] QOL.mergeConfig called, inputKeys=" + Object.keys(config).length + " resultKeys=" + Object.keys(_result).length + " healthbarType=" + _result.HEALTHBAR_TYPE);
         return _result;
     }
     $.Msg("[QOLLock][DBG][NormalizeConfig] QOL.mergeConfig NOT available, returning config unchanged");
@@ -12074,14 +12074,15 @@ function SaveAndSync() {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    // DEBUG: trace NormalizeConfig behavior
-    var _dbgBefore = MOD_CONFIG.ENABLE_AMMO_STATUS;
+    // DEBUG: trace NormalizeConfig behavior — HEALTHBAR_TYPE is commonly changed by presets
+    var _dbgBefore = MOD_CONFIG.HEALTHBAR_TYPE;
     MOD_CONFIG = NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
-    var _dbgAfter = MOD_CONFIG.ENABLE_AMMO_STATUS;
-    $.Msg("[QOLLock][DBG][SaveAndSync] mergeConfig=" + (typeof QOL !== "undefined" && typeof QOL.mergeConfig) + " before=" + _dbgBefore + " after=" + _dbgAfter + " keys=" + Object.keys(MOD_CONFIG).length);
+    var _dbgAfter = MOD_CONFIG.HEALTHBAR_TYPE;
     var data = WrapConfigForStorage(MOD_CONFIG);
-    if (data === gLastSavedConfigRaw) {
-        $.Msg("[QOLLock][DBG][SaveAndSync] SKIP: data === gLastSavedConfigRaw (len=" + data.length + ")");
+    var _dbgSame = (data === gLastSavedConfigRaw);
+    $.Msg("[QOLLock][DBG][SaveAndSync] mergeConfig=" + (typeof QOL !== "undefined" && typeof QOL.mergeConfig) + " before=" + _dbgBefore + " after=" + _dbgAfter + " keys=" + Object.keys(MOD_CONFIG).length + " skipSameData=" + _dbgSame + " dataLen=" + data.length);
+    if (_dbgSame) {
+        $.Msg("[QOLLock][DBG][SaveAndSync] SKIP: data unchanged");
         PublishPaletteColorBridges();
         return;
     }

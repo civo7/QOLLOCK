@@ -41,7 +41,7 @@ function MergeConfig(config) {
     for (var key in merged) {
         if (config.hasOwnProperty(key)) { merged[key] = config[key]; _copyCount++; }
     }
-    $.Msg("[QOLLock][DBG][MergeConfig] input=" + _dbgConfigKeys + " keys, merged=" + _dbgMergedKeysBefore + " keys, copied=" + _copyCount + " sampleKey=" + merged.ENABLE_AMMO_STATUS);
+    $.Msg("[QOLLock][DBG][MergeConfig] input=" + _dbgConfigKeys + " keys, merged=" + _dbgMergedKeysBefore + " keys, copied=" + _copyCount + " healthbarType=" + merged.HEALTHBAR_TYPE);
     MigrateSplitZoomKeys(merged, config);
     NormalizeNeutralCampTierConfig(merged, config);
     NormalizeItemCooldownModeConfig(merged, config);
