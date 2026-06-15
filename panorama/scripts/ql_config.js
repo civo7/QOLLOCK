@@ -32,16 +32,11 @@ function GetSharedSchemaUtils() {
 // ── MergeConfig — canonical merge + normalize chain ──
 
 function MergeConfig(config) {
-    var _dbgHasConfig = !!config;
-    var _dbgConfigKeys = config ? Object.keys(config).length : 0;
     var merged = BuildDefaultConfig();
-    var _dbgMergedKeysBefore = Object.keys(merged).length;
-    if (!config) { $.Msg("[QOLLock][DBG][MergeConfig] null config, returning defaults (" + _dbgMergedKeysBefore + " keys)"); return merged; }
-    var _copyCount = 0;
+    if (!config) return merged;
     for (var key in merged) {
-        if (config.hasOwnProperty(key)) { merged[key] = config[key]; _copyCount++; }
+        if (config.hasOwnProperty(key)) merged[key] = config[key];
     }
-    $.Msg("[QOLLock][DBG][MergeConfig] input=" + _dbgConfigKeys + " keys, merged=" + _dbgMergedKeysBefore + " keys, copied=" + _copyCount + " healthbarType=" + merged.HEALTHBAR_TYPE);
     MigrateSplitZoomKeys(merged, config);
     NormalizeNeutralCampTierConfig(merged, config);
     NormalizeItemCooldownModeConfig(merged, config);
