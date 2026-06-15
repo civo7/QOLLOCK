@@ -247,7 +247,8 @@ function SafeParseConfig(raw) {
     if (!raw || raw === "") return null;
     try {
         var unwrapped = UnwrapConfigFromStorage(raw);
-        if (!unwrapped || !unwrapped.config) return null;
+        if (!unwrapped) { $.Msg("[QOLLock][DBG][SafeParseConfig] UnwrapConfigFromStorage returned " + JSON.stringify(unwrapped) + " for raw len=" + (raw ? raw.length : 0)); return null; }
+        if (!unwrapped.config) { $.Msg("[QOLLock][DBG][SafeParseConfig] unwrapped.config is falsy: " + JSON.stringify(unwrapped.config) + " keys=" + (unwrapped ? Object.keys(unwrapped).join(",") : "null")); return null; }
         return MergeConfig(unwrapped.config);
     } catch (parseErr) {
         $.Msg("[QOLLock][ERROR][config] JSON parse or merge failed: " + String(parseErr.message || parseErr));
