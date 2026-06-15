@@ -1,6 +1,6 @@
 # QOLLOCK Architecture
 
-Version 3.1.4 — Schema 3.1.4 — 38 features — 0 auto-disabled
+Version 3.1.4 — Schema 3.1.4 — 36 features — 0 auto-disabled
 
 ## Overview
 
@@ -33,10 +33,13 @@ The mod follows a **feature plugin architecture**: a thin core runtime dispatche
 │  ┌──────────┴─────────────────────────┐  │
 │  │  Shared Infrastructure             │  │
 │  │  ql_utils.js — panel safety, log   │  │
+│  │  ql_state.js — State singleton,    │  │
+│  │    panel cache accessors           │  │
+│  │  ql_config.js — config merge,      │  │
+│  │    normalize, parse, migration     │  │
 │  │  ql_shared_presets.js — QOL ns,    │  │
 │  │    QOL.import(), QOL.register(),    │  │
 │  │    presets, diagnostics, schema     │  │
-│  │  Build output: Reduced_CSDK content │  │
 │  └────────────────────────────────────┘  │
 └──────────────────────────────────────────┘
 ```
@@ -117,13 +120,16 @@ panorama/
     ├── ql_utils.js                ← Pure utilities (panel safety, logging, timing, config helpers)
     ├── ql_shared_presets.js       ← QOL namespace, QOL.import(), QOL.register(),
     │                                  presets, diagnostics, shared constants
+    ├── ql_state.js                ← State singleton, panel cache accessors
+    ├── ql_panelcache.js           ← Typed panel caches (panels/lists/data)
+    ├── ql_config.js               ← Config merge, normalize, parse, schema migration
     ├── ql_recent_purchases_data.js ← Static data: recent purchases
     ├── ql_minimap_crate_data.js   ← Static data: minimap crates
     ├── ql_perf_overlay.js         ← Performance overlay (HUD-only)
-    ├── ql_core.js                 ← Main runtime: boot, State, dispatch, bridge exports
+    ├── ql_core.js                 ← Main runtime: boot, dispatch, bridge exports
     ├── ql_settings.js             ← Settings UI (Settings context only)
     ├── ql_hero_testing.js         ← Hero testing tools (HUD-only)
-    ├── ql_features/               ← 35 extracted feature files
+    ├── ql_features/               ← 34 extracted feature files
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -174,23 +180,27 @@ panorama/
 ```
 ql_utils.js                          ← Must be first (IsPanelValid, SafeGetAttribute, logging)
 ql_shared_presets.js                 ← QOL namespace, import/register, presets, defaults
+ql_state.js                          ← State singleton, panel cache accessors
+ql_panelcache.js                     ← Typed panel caches (panels/lists/data)
+ql_config.js                         ← Config merge, normalize, parse, migration
 ql_recent_purchases_data.js          ← Static data
 ql_minimap_crate_data.js             ← Static data
 ql_perf_overlay.js                   ← Perf overlay (uses QOL_UTILS directly)
 ql_features/ql_feat_buildbridge.js   ← BEFORE core — exports bridge helpers onto QOL.*
 ql_core.js                           ← Main runtime
-ql_features/*.js (34 files)          ← After core — register via QOL.register()
+ql_features/*.js (33 files)          ← After core — register via QOL.register()
 ```
 
 ### Settings Context (hud_escape_menu.xml)
 
 ```
 ql_shared_presets.js                 ← QOL namespace, presets, defaults, diagnostics
+ql_config.js                         ← Config merge, normalize, parse (shared with HUD)
 ql_custom_announcer_slot*_pack_meta  ← Announcer pack metadata (5 files)
 ql_settings.js                       ← Settings UI
 ```
 
-**Critical:** `ql_utils.js` is NOT available in the Settings context. Settings code uses `typeof QOL_UTILS !== "undefined"` guards with inline fallbacks.
+**Critical:** `ql_utils.js` is NOT available in the Settings context. Settings code uses `typeof QOL_UTILS !== "undefined"` guards with inline fallbacks. `ql_config.js` provides its own inline fallbacks for normalize functions when `QOL_SCHEMA_UTILS` is absent.
 
 ### Cross-Context Communication
 
@@ -269,7 +279,7 @@ function gate(cfg) {
 
 ### State Object
 
-`State` is a global singleton initialized at boot in `ql_core.js`. Key categories:
+`State` is a global singleton defined in `ql_state.js` and populated at boot in `ql_core.js`. Panel cache accessors (`GetCachedPanel`, `SetCachedPanel`, `ClearPanelCache`, `SweepStalePanelCache`, `ResolveCachedPanel`) are also defined in `ql_state.js` and published to the `QOL` namespace. Key categories:
 
 | Category | Examples | Owner |
 |----------|----------|-------|
@@ -343,6 +353,8 @@ var panel = ResolveCachedPanel(root, "cacheKey", "DOM_ID");
 ---
 
 ## Config System
+
+Config functions live in `ql_config.js` — shared between HUD and Settings contexts. This includes `BuildDefaultConfig`, `MergeConfig`, `SafeParseConfig`, and the full normalize chain (~15 functions). All functions are published to the `QOL` namespace for feature files via `QOL.import()`.
 
 ### Storage Flow
 
@@ -580,9 +592,9 @@ Features with `phase: -1` (the majority) run every tick. Features with `phase: 0
 
 The architecture is evolving toward a cleaner separation under the `architecture-overhaul` branch:
 
-1. **ql_state.js** — Extract State object and cache accessors from ql_core.js
-2. **ql_config.js** — Typed config schema replacing flat QOL_DEFAULT_CONFIG
-3. **ql_panelcache.js** — Three typed caches (panels/lists/data) replacing mixed cachedPanels
+1. **~~ql_state.js~~** — ✅ Done. State object and cache accessors extracted from ql_core.js (757 lines).
+2. **~~ql_config.js~~** — ✅ Done. Config merge/normalize/parse/migration extracted (328 lines).
+3. **~~ql_panelcache.js~~** — ✅ Done. Three typed caches (panels/lists/data) with backward-compat dual-write (~170 lines).
 4. **ql_bridge.js** — Typed cross-context channel descriptors
 5. **Registry-driven dispatch** — Replace hardcoded FEATURE_DISPATCH_ORDER
 6. **Extract remaining inline features** — coreRoot (~350 lines) and healthbarRuntimeHelpers (~1,200 lines)

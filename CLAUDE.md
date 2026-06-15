@@ -8,9 +8,9 @@ and communicates between them via panel attribute bridges.
 
 **Version:** 3.1.4  
 **Schema:** 3.1.4  
-**Features:** 36 loaded, zero auto-disabled, 79 presets available  
-**Branch:** `backend-overhaul-commits`  
-**Primary File:** `panorama/scripts/ql_core.js` (~18K lines after Phase 9 extraction)
+**Features:** 36 loaded, zero auto-disabled, 92 presets available  
+**Branch:** `architecture-overhaul`  
+**Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
 
 ## File Map
 
@@ -21,6 +21,9 @@ panorama/
 └── scripts/
     ├── ql_utils.js                         # Pure utilities, logging, panel safety wrappers
     ├── ql_shared_presets.js                # QOL namespace, QOL.import(), 79 presets, diagnostics
+    ├── ql_state.js                         # State singleton, panel cache accessors (~770 lines)
+    ├── ql_panelcache.js                    # Typed panel caches (panels/lists/data), backward-compat dual-write (~170 lines)
+    ├── ql_config.js                        # Config merge, normalize, parse, migration (328 lines)
     ├── ql_core.js                          # Main runtime — boot sequence, dispatch loop, non-extracted code
     ├── ql_settings.js                      # Settings UI (not yet using QOL.import())
     ├── ql_perf_overlay.js                  # Performance overlay (not yet using QOL.import())
@@ -31,6 +34,9 @@ panorama/
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
+    │   ├── ql_feat_buildbridge.js          # Build bridge helpers (loads BEFORE ql_core.js)
+    │   ├── ql_feat_buildload.js            # Build category payload load (config restore)
+    │   ├── ql_feat_buildsave.js            # Build category payload save (config persist)
     │   ├── ql_feat_chatimg.js
     │   ├── ql_feat_colorwarnings.js       # Registers 3 features (colorWarning, enemyColorWarning, allyColorWarning)
     │   ├── ql_feat_combatstatus.js
@@ -70,9 +76,9 @@ panorama/
 
 ### Load Order (from hud.xml)
 ```
-ql_utils.js → ql_shared_presets.js → ql_recent_purchases_data.js →
-ql_minimap_crate_data.js → ql_perf_overlay.js → ql_core.js →
-ql_features/*.js (34 files; buildbridge must load BEFORE ql_core.js — others order-independent)
+ql_utils.js → ql_shared_presets.js → ql_state.js → ql_panelcache.js → ql_config.js →
+ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
+ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (33 files; order-independent)
 ```
 
 ### Context Architecture (Source 2 Panorama)
@@ -80,6 +86,7 @@ ql_features/*.js (34 files; buildbridge must load BEFORE ql_core.js — others o
 - **Settings context:** Has access to `$.GetContextPanel()`, `GameInterfaceAPI`, `$.persistentStorage`
 - **Cross-context bridge:** Panel attributes (SetAttributeString/GetAttributeString) on the Hud root panel
 - **ql_shared_presets.js** runs in BOTH contexts — defines `QOL` namespace, `QOL.import()`, `QOL.register()`, presets, diagnostics
+- **ql_config.js** runs in BOTH contexts — config merge, normalize, parse, schema migration (shared by HUD + Settings)
 
 ### Module System (new — post-Phase-9)
 
@@ -104,7 +111,10 @@ var SetCachedPanel = _deps.setCachedPanel;
 
 **QOL.import()** resolves named symbols from the `QOL` namespace. If symbols are missing, it logs a single consolidated `[BRIDGE] missing N dependency(s)` message.
 
-**QOL namespace** is populated by `ql_core.js` lines 23598-23683 via a data-driven lazy-getter array. Each entry is `[camelCaseKey, function() { return ActualFunction; }]`. The lazy getter defers identifier resolution so a single missing symbol doesn't crash the script.
+**QOL namespace** is populated from multiple sources:
+- `ql_state.js` — publishes `getCachedPanel`, `setCachedPanel`, `clearPanelCache`, `sweepStalePanelCache`, `resolveCachedPanel`
+- `ql_config.js` — publishes `buildDefaultConfig`, `mergeConfig`, `safeParseConfig`, and ~15 normalize helpers
+- `ql_core.js` — publishes ~160 HUD-only symbols via a data-driven lazy-getter array. Each entry is `[camelCaseKey, function() { return ActualFunction; }]`. The lazy getter defers identifier resolution so a single missing symbol doesn't crash the script.
 
 Key QOL namespace entries:
 - `state` → `State` (the global state object)
