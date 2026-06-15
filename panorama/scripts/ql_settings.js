@@ -8,10 +8,6 @@ const DEFAULT_CONFIG = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CO
     ? QOL_DEFAULT_CONFIG
     : {};
 
-function GetSharedSchemaUtils() {
-    if (typeof QOL_SCHEMA_UTILS === "object" && QOL_SCHEMA_UTILS) return QOL_SCHEMA_UTILS;
-    return null;
-}
 
 const HITMARKERS_RUNTIME_OPTIONS = [
     { label: "Off", command: "citadel_crosshair_hit_marker_duration 0.000000" },
@@ -10130,43 +10126,6 @@ function GetZoomConfigKeysForMode(mode) {
     };
 }
 
-function MigrateSplitZoomKeys(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
-        utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeNeutralCampFlags(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeNeutralCampTierConfig === "function") {
-        utils.NormalizeNeutralCampTierConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeItemCooldownModeConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeItemCooldownModeConfig === "function") {
-        utils.NormalizeItemCooldownModeConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeAmmoScaleConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeAmmoScaleConfig === "function") {
-        utils.NormalizeAmmoScaleConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeVoiceTypeValue(rawValue) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeVoiceTypeValue === "function") {
-        return utils.NormalizeVoiceTypeValue(rawValue);
-    }
-    var asInt = Math.round(Number(rawValue));
-    if (asInt === 4 || asInt === 0 || asInt === 5 || asInt === 6 || asInt === 7 || asInt === 8) return asInt;
-    return 0;
-}
 
 function ResolveCustomAnnouncerMetaField(source, keyList) {
     if (!source || !keyList || !keyList.length) return "";
@@ -10294,131 +10253,6 @@ function BuildVoiceDropdownOptions() {
     ];
 }
 
-function NormalizeVoiceVolumeValue(rawValue) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeVoiceVolumeValue === "function") {
-        return utils.NormalizeVoiceVolumeValue(rawValue);
-    }
-    var asInt = Math.round(Number(rawValue));
-    if (!isFinite(asInt)) asInt = 100;
-    if (asInt < 0) asInt = 0;
-    if (asInt > 100) asInt = 100;
-    return asInt;
-}
-
-function NormalizeBridgeBuffFilterConfig(configTarget) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeBridgeBuffFilterConfig === "function") {
-        utils.NormalizeBridgeBuffFilterConfig(configTarget);
-    }
-}
-
-function NormalizeVoiceTypeConfig(configTarget) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeVoiceTypeConfig === "function") {
-        utils.NormalizeVoiceTypeConfig(configTarget);
-        return;
-    }
-    if (!configTarget) return;
-    configTarget.VOICE_TYPE = NormalizeVoiceTypeValue(configTarget.VOICE_TYPE);
-}
-
-function NormalizeHealthbarTypeValue(rawValue) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeHealthbarTypeValue === "function") {
-        return utils.NormalizeHealthbarTypeValue(rawValue);
-    }
-    return Math.round(Number(rawValue)) || 0;
-}
-
-function NormalizeHealthbarTypeConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeHealthbarTypeConfig === "function") {
-        utils.NormalizeHealthbarTypeConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeColorWarningConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeColorWarningConfig === "function") {
-        utils.NormalizeColorWarningConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeEnemyColorWarningConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeEnemyColorWarningConfig === "function") {
-        utils.NormalizeEnemyColorWarningConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeAllyColorWarningConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeAllyColorWarningConfig === "function") {
-        utils.NormalizeAllyColorWarningConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeTopbarEnemyHpWarningConfig === "function") {
-        utils.NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeTopbarAllyHpWarningConfig === "function") {
-        utils.NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig);
-    }
-}
-
-function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
-        utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
-    }
-}
-
-function CompareSchemaSemver(a, b) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.CompareSchemaSemver === "function") {
-        return utils.CompareSchemaSemver(a, b);
-    }
-    var aa = String(a || "").split(".");
-    var bb = String(b || "").split(".");
-    for (var i = 0; i < 3; i++) {
-        var av = Math.max(0, Math.round(Number(aa[i]) || 0));
-        var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
-        if (av < bv) return -1;
-        if (av > bv) return 1;
-    }
-    return 0;
-}
-
-function NormalizeCompassSpeedSchemaMigration(configTarget, sourceConfig, schemaVersion) {
-    if (!configTarget || !sourceConfig) return;
-    if (CompareSchemaSemver(schemaVersion || LATEST_COMPACT_SEMVER, "2.5.0") >= 0) return;
-    if (!sourceConfig.hasOwnProperty("ENABLE_COMPASS_SPEED")) return;
-    if (Number(sourceConfig.ENABLE_COMPASS_SPEED) !== 1) return;
-    if (Number(sourceConfig.ENABLE_COMPASS) === 1) return;
-
-    // Before 2.5.0, speed was only reachable through Compass itself.
-    configTarget.ENABLE_COMPASS_SPEED = 0;
-}
-
-function NormalizeLanguageSchemaMigration(configTarget, sourceConfig, schemaVersion) {
-    if (!configTarget || !sourceConfig) return;
-    if (CompareSchemaSemver(schemaVersion || LATEST_COMPACT_SEMVER, "3.0.2") >= 0) return;
-    if (!sourceConfig.hasOwnProperty("LANGUAGE")) return;
-    var legacyLanguage = Math.round(Number(sourceConfig.LANGUAGE));
-    if (!isFinite(legacyLanguage)) return;
-    if (legacyLanguage === 2) configTarget.LANGUAGE = SETTINGS_LANGUAGE_CHINESE;
-    else if (legacyLanguage === 3) configTarget.LANGUAGE = SETTINGS_LANGUAGE_FRENCH;
-    else if (legacyLanguage === 4) configTarget.LANGUAGE = SETTINGS_LANGUAGE_PORTUGUESE;
-    else if (legacyLanguage === 5) configTarget.LANGUAGE = SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE;
-    else if (legacyLanguage === 6) configTarget.LANGUAGE = SETTINGS_LANGUAGE_SPANISH;
-}
 
 function IsZipBoostPreviewConfig(configId) {
     return configId === "ZIP_BOOST_X_OFFSET" ||
@@ -12088,40 +11922,41 @@ function ReadConfigRawFromStorage() {
     return chosenRaw;
 }
 
-// NormalizeConfig — single canonical normalization / migration chain.
-// Called from both SyncConfigFromStorage (on load) and SaveAndSync (on save).
-// When config === parsed (the save path), migration checks on hasOwn are safe no-ops.
+// NormalizeConfig — delegates to ql_config.js (shared between HUD and Settings).
+// mergeConfig does BuildDefaultConfig + overlay + all 12 normalize steps.
+// Returns the merged config (new object — does not mutate input).
 function NormalizeConfig(config, parsed) {
-    MigrateSplitZoomKeys(config, parsed);
-    NormalizeNeutralCampFlags(config, parsed);
-    NormalizeItemCooldownModeConfig(config, parsed);
-    NormalizeAmmoScaleConfig(config, parsed);
-    NormalizeVoiceTypeConfig(config);
-    NormalizeHealthbarTypeConfig(config, parsed);
-    NormalizeColorWarningConfig(config, parsed);
-    NormalizeEnemyColorWarningConfig(config, parsed);
-    NormalizeAllyColorWarningConfig(config, parsed);
-    NormalizeTopbarEnemyHpWarningConfig(config, parsed);
-    NormalizeTopbarAllyHpWarningConfig(config, parsed);
-    NormalizeShopItemNotificationsConfig(config, parsed);
+    if (typeof QOL !== "undefined" && QOL.mergeConfig) {
+        return QOL.mergeConfig(config);
+    }
+    // Fallback: ql_config.js not loaded (should not happen in normal operation).
+    // Return config unchanged — caller must handle.
+    return config;
 }
 
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
     // $.persistentStorage confirmed absent — panel attrs are the only persistence.
-    var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-        ? Object.assign({}, QOL_DEFAULT_CONFIG)
-        : {};
+    var nextConfig = (typeof QOL !== "undefined" && QOL.buildDefaultConfig)
+        ? QOL.buildDefaultConfig()
+        : (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
+            ? Object.assign({}, QOL_DEFAULT_CONFIG)
+            : {};
     if (raw && raw.length > 0) {
         try {
             var unwrapped = UnwrapConfigFromStorage(raw);
             var parsed = (unwrapped && unwrapped.config) ? unwrapped.config : {};
-            for (var key in parsed) {
-                if (nextConfig.hasOwnProperty(key)) {
-                    nextConfig[key] = parsed[key];
+            if (typeof QOL !== "undefined" && QOL.mergeConfig) {
+                nextConfig = QOL.mergeConfig(parsed);
+            } else {
+                // Fallback: ql_config.js not loaded
+                for (var key in parsed) {
+                    if (nextConfig.hasOwnProperty(key)) {
+                        nextConfig[key] = parsed[key];
+                    }
                 }
+                nextConfig = NormalizeConfig(nextConfig, parsed);
             }
-            NormalizeConfig(nextConfig, parsed);
         } catch (e) { $.Msg("[QOLLock][WARN][config] SyncConfigFromStorage parse/merge failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     MOD_CONFIG = nextConfig;
@@ -12236,7 +12071,7 @@ function SaveAndSync() {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
+    MOD_CONFIG = NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();

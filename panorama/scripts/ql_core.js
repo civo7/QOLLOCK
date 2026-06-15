@@ -45,6 +45,13 @@ _TLog = function(label, detail) {
     var ClearPanelCache = (typeof QOL !== "undefined" && QOL.clearPanelCache) || function() { State.cachedPanels = {}; };
     var SweepStalePanelCache = (typeof QOL !== "undefined" && QOL.sweepStalePanelCache) || function() { var swept = 0; var cache = State.cachedPanels; for (var k in cache) { if (cache.hasOwnProperty(k) && cache[k] && typeof cache[k].IsValid === "function" && !IsPanelValid(cache[k])) { cache[k] = null; swept++; } } return swept; };
     var ResolveCachedPanel = (typeof QOL !== "undefined" && QOL.resolveCachedPanel) || function(parent, cacheKey, traverseId) { var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null; if (!panel && parent && parent.FindChildTraverse) { panel = parent.FindChildTraverse(traverseId); State.cachedPanels[cacheKey] = panel || null; } return panel; };
+    // Config function sandbox fallbacks — provided by ql_config.js when loaded normally.
+    // Schema validator sandbox loads ql_core.js in isolation without ql_config.js.
+    var _defCfg = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) || {};
+    var _BDC = (typeof QOL !== "undefined" && QOL.buildDefaultConfig) || function() { return (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? Object.assign({}, QOL_DEFAULT_CONFIG) : {}; };
+    var _MC = (typeof QOL !== "undefined" && QOL.mergeConfig) || function(c) { return c || {}; };
+    var _SPC = (typeof QOL !== "undefined" && QOL.safeParseConfig) || function(r) { return null; };
+    var _NHV = (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeValue) || function(v) { return Math.round(Number(v)) || 0; };
     var _safeAttrDegradedLogged = false;
     var SafeGetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } return d || ""; } };
     var SafeSetAttribute = QOL_UTILS_LOADED ? QOL_UTILS.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { if (!_safeAttrDegradedLogged) { _safeAttrDegradedLogged = true; $.Msg("[QOLLock][WARN][fallback] SafeGetAttribute/SafeSetAttribute fallback active — ql_utils.js not loaded"); } } return false; };
@@ -845,7 +852,7 @@ function ExpressShotLog(msg) {
     }
 
     function GetSettingsUiThemePalette() {
-        var theme = ResolveSettingsThemeId(State.lastConfig || DEFAULT_CONFIG);
+        var theme = ResolveSettingsThemeId(State.lastConfig || _defCfg);
         if (theme === 1) {
             return {
                 overlay: "rgba(246, 229, 194, 0.76)",
@@ -1313,7 +1320,7 @@ function ExpressShotLog(msg) {
     }
 
     function GetLoaderBaseDefaultHeroId() {
-        var defaults = BuildDefaultConfig();
+        var defaults = _BDC();
         var rawHero = (defaults && defaults.hasOwnProperty("DEFAULT_HERO"))
             ? String(defaults.DEFAULT_HERO || "")
             : "";
@@ -1862,209 +1869,6 @@ function ExpressShotLog(msg) {
         fireRatePlus: "file://{images}/items/spirit/quicksilver_reload.psd"
     };
 
-    const DEFAULT_CONFIG = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-        ? QOL_DEFAULT_CONFIG
-        : {};
-
-    function BuildDefaultConfig() {
-        var sharedDefault = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG) ? QOL_DEFAULT_CONFIG : DEFAULT_CONFIG;
-        return Object.assign({}, sharedDefault);
-    }
-
-    function GetSharedSchemaUtils() {
-        if (typeof QOL_SCHEMA_UTILS === "object" && QOL_SCHEMA_UTILS) return QOL_SCHEMA_UTILS;
-        return null;
-    }
-
-    function MergeConfig(config) {
-        var merged = BuildDefaultConfig();
-        if (!config) return merged;
-        for (var key in merged) {
-            if (config.hasOwnProperty(key)) merged[key] = config[key];
-        }
-        MigrateSplitZoomKeys(merged, config);
-        NormalizeNeutralCampTierConfig(merged, config);
-        NormalizeItemCooldownModeConfig(merged, config);
-        NormalizeAmmoScaleConfig(merged, config);
-        NormalizeVoiceTypeConfig(merged);
-        NormalizeHealthbarTypeConfig(merged, config);
-        NormalizeColorWarningConfig(merged, config);
-        NormalizeEnemyColorWarningConfig(merged, config);
-        NormalizeAllyColorWarningConfig(merged, config);
-        NormalizeTopbarEnemyHpWarningConfig(merged, config);
-        NormalizeTopbarAllyHpWarningConfig(merged, config);
-        NormalizeShopItemNotificationsConfig(merged, config);
-        return merged;
-    }
-
-    function NormalizeAmmoScaleConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeAmmoScaleConfig === "function") {
-            utils.NormalizeAmmoScaleConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function MigrateSplitZoomKeys(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.MigrateSplitZoomKeys === "function") {
-            utils.MigrateSplitZoomKeys(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeNeutralCampTierConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeNeutralCampTierConfig === "function") {
-            utils.NormalizeNeutralCampTierConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeVoiceTypeValue(rawValue) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeVoiceTypeValue === "function") {
-            return utils.NormalizeVoiceTypeValue(rawValue);
-        }
-        var asInt = Math.round(Number(rawValue));
-        if (asInt === 4 || asInt === 0 || asInt === 5 || asInt === 6 || asInt === 7 || asInt === 8) return asInt;
-        return 0;
-    }
-
-    function NormalizeVoiceVolumeValue(rawValue) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeVoiceVolumeValue === "function") {
-            return utils.NormalizeVoiceVolumeValue(rawValue);
-        }
-        var asInt = Math.round(Number(rawValue));
-        if (!isFinite(asInt)) asInt = 100;
-        if (asInt < 0) asInt = 0;
-        if (asInt > 100) asInt = 100;
-        return asInt;
-    }
-
-    function NormalizeBridgeBuffFilterConfig(configTarget) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeBridgeBuffFilterConfig === "function") {
-            utils.NormalizeBridgeBuffFilterConfig(configTarget);
-        }
-    }
-
-    function NormalizeVoiceTypeConfig(configTarget) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeVoiceTypeConfig === "function") {
-            utils.NormalizeVoiceTypeConfig(configTarget);
-            return;
-        }
-        if (!configTarget) return;
-        configTarget.VOICE_TYPE = NormalizeVoiceTypeValue(configTarget.VOICE_TYPE);
-        configTarget.VOICE_VOLUME = NormalizeVoiceVolumeValue(configTarget.VOICE_VOLUME);
-        NormalizeBridgeBuffFilterConfig(configTarget);
-    }
-
-    function NormalizeHealthbarTypeValue(rawValue) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeHealthbarTypeValue === "function") {
-            return utils.NormalizeHealthbarTypeValue(rawValue);
-        }
-        return Math.round(Number(rawValue)) || 0;
-    }
-
-    function NormalizeHealthbarTypeConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeHealthbarTypeConfig === "function") {
-            utils.NormalizeHealthbarTypeConfig(configTarget, sourceConfig);
-            return;
-        }
-        if (!configTarget) return;
-        configTarget.HEALTHBAR_TYPE = NormalizeHealthbarTypeValue(configTarget.HEALTHBAR_TYPE);
-    }
-
-    function NormalizeColorWarningConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeColorWarningConfig === "function") {
-            utils.NormalizeColorWarningConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeEnemyColorWarningConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeEnemyColorWarningConfig === "function") {
-            utils.NormalizeEnemyColorWarningConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeAllyColorWarningConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeAllyColorWarningConfig === "function") {
-            utils.NormalizeAllyColorWarningConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeTopbarEnemyHpWarningConfig === "function") {
-            utils.NormalizeTopbarEnemyHpWarningConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeTopbarAllyHpWarningConfig === "function") {
-            utils.NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeShopItemNotificationsConfig === "function") {
-            utils.NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
-        }
-    }
-
-    function CompareSchemaSemver(a, b) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.CompareSchemaSemver === "function") {
-            return utils.CompareSchemaSemver(a, b);
-        }
-        var aa = String(a || "").split(".");
-        var bb = String(b || "").split(".");
-        for (var i = 0; i < 3; i++) {
-            var av = Math.max(0, Math.round(Number(aa[i]) || 0));
-            var bv = Math.max(0, Math.round(Number(bb[i]) || 0));
-            if (av < bv) return -1;
-            if (av > bv) return 1;
-        }
-        return 0;
-    }
-
-    function NormalizeCompassSpeedSchemaMigration(configTarget, sourceConfig, schemaVersion) {
-        if (!configTarget || !sourceConfig) return;
-        if (CompareSchemaSemver(schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER, "2.5.0") >= 0) return;
-        if (!sourceConfig.hasOwnProperty("ENABLE_COMPASS_SPEED")) return;
-        if (Number(sourceConfig.ENABLE_COMPASS_SPEED) !== 1) return;
-        if (Number(sourceConfig.ENABLE_COMPASS) === 1) return;
-
-        // Before 2.5.0, speed was only reachable through Compass itself.
-        configTarget.ENABLE_COMPASS_SPEED = 0;
-    }
-
-    function NormalizeLanguageSchemaMigration(configTarget, sourceConfig, schemaVersion) {
-        if (!configTarget || !sourceConfig) return;
-        if (CompareSchemaSemver(schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER, "3.0.2") >= 0) return;
-        if (!sourceConfig.hasOwnProperty("LANGUAGE")) return;
-        var legacyLanguage = Math.round(Number(sourceConfig.LANGUAGE));
-        if (!isFinite(legacyLanguage)) return;
-        if (legacyLanguage === 2) configTarget.LANGUAGE = 6;
-        else if (legacyLanguage === 3) configTarget.LANGUAGE = 7;
-        else if (legacyLanguage === 4) configTarget.LANGUAGE = 8;
-        else if (legacyLanguage === 5) configTarget.LANGUAGE = 9;
-        else if (legacyLanguage === 6) configTarget.LANGUAGE = 10;
-    }
-
-    function NormalizeItemCooldownModeConfig(configTarget, sourceConfig) {
-        var utils = GetSharedSchemaUtils();
-        if (utils && typeof utils.NormalizeItemCooldownModeConfig === "function") {
-            utils.NormalizeItemCooldownModeConfig(configTarget, sourceConfig);
-        }
-    }
 
     function BuildPayloadDecodeBase64(str) {
         if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.DecodeBase64 === "function") {
@@ -2110,7 +1914,7 @@ function SerializeBuildPayloadCompact(config, semverOverride) {
     var semver = String(semverOverride || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
     var wireVersion = GetBuildPayloadCompactWireVersion(semver);
     var schema = GetBuildPayloadCompactSchema(semver);
-    var defaults = BuildDefaultConfig();
+    var defaults = _BDC();
     if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.SerializeCompactBinary === "function") {
         return QOL_CODEC.SerializeCompactBinary(config, schema, wireVersion, function(field, cfg) {
             var val = cfg && cfg.hasOwnProperty(field.key) ? cfg[field.key] : field.min;
@@ -2134,7 +1938,7 @@ function SerializeBuildPayloadCompact(config, semverOverride) {
 }
 
 function BuildDefaultPayloadToken(cfg) {
-    var defaults = BuildDefaultConfig();
+    var defaults = _BDC();
     var payloadConfig = {};
     for (var key in defaults) {
         payloadConfig[key] = defaults[key];
@@ -2150,7 +1954,7 @@ function BuildDefaultPayloadToken(cfg) {
 }
 
 function BuildMaxPayloadTokenForConvarStorageProbe() {
-    var maxConfig = BuildDefaultConfig();
+    var maxConfig = _BDC();
     var schema = GetBuildPayloadCompactSchema(BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
     for (var i = 0; i < schema.length; i++) {
         var field = schema[i];
@@ -2211,7 +2015,7 @@ function RunConvarStorageProbe() {
     $.Schedule(1.0, function() {
         try {
             var canRead = CanReadConvarStorageProbeValue();
-            var defaultExport = BuildDefaultPayloadToken(BuildDefaultConfig());
+            var defaultExport = BuildDefaultPayloadToken(_BDC());
             var maxExport = BuildMaxPayloadTokenForConvarStorageProbe();
             var targetLen = Math.max(1, Math.floor(maxExport.length * 2));
             var fillerLen = Math.max(1, targetLen - QOL_CONVAR_STORAGE_PROBE_PREFIX.length);
@@ -2303,7 +2107,7 @@ function DeserializeBuildPayloadCompact(binaryStr, expectedSemver) {
                 if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
                     var heroIndex = Math.round(value);
                     if (heroIndex < 0 || heroIndex >= BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length) heroIndex = 0;
-                    var defaults = BuildDefaultConfig();
+                    var defaults = _BDC();
                     var fallbackHeroId = defaults && defaults.DEFAULT_HERO ? String(defaults.DEFAULT_HERO) : "";
                     var resolvedHeroId = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS[heroIndex] || fallbackHeroId || "hero_werewolf";
                     parsed.DEFAULT_HERO = resolvedHeroId;
@@ -2313,7 +2117,7 @@ function DeserializeBuildPayloadCompact(binaryStr, expectedSemver) {
             },
             function(missingField, parsed) {
                 if (!missingField || !missingField.key) return;
-                var defaults = BuildDefaultConfig();
+                var defaults = _BDC();
                 if (missingField.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
                     var fallbackHero = (defaults && defaults.DEFAULT_HERO) ? String(defaults.DEFAULT_HERO) : "hero_werewolf";
                     parsed.DEFAULT_HERO = fallbackHero;
@@ -2437,37 +2241,6 @@ function GetUIRoot() {
             revision: nextRevision,
             count: hud && hud.SetAttributeString ? 2 : 1
         };
-    }
-
-    // ---- Config Corruption Recovery (Fix 7) ----
-
-    function SafeParseConfig(raw) {
-        if (!raw || raw === "") return null;
-        try {
-            var unwrapped = UnwrapConfigFromStorage(raw);
-            if (!unwrapped || !unwrapped.config) return null;
-            return MergeConfig(unwrapped.config);
-        } catch (parseErr) {
-            QOL_ERROR("config", "JSON parse or merge failed: " + String(parseErr.message || parseErr));
-            // $.persistentStorage confirmed absent — corrupt config backup unavailable.
-            // The Airheart build payload is the recovery path.
-            QOL_INFO("config", "config parse failed — Airheart build payload is recovery path");
-            $.Msg("\n====================================================================\n");
-            $.Msg("[QOLLOCK] WARNING: Your settings were corrupted and have been reset to defaults.\n");
-            $.Msg("[QOLLOCK] Open Qollock Settings to check for recovery options.\n");
-            $.Msg("====================================================================\n");
-            // Clear corrupt config so this doesn't repeat every tick
-            State.lastRawConfig = "";
-            try {
-                var root = GetUIRoot();
-                if (root && root.SetAttributeString) {
-                    root.SetAttributeString(STORAGE_KEY, "");
-                }
-            } catch (eClear) { $.Msg("[QOLLock][WARN][storage] Failed to clear corrupt config from panel attrs: " + (eClear && eClear.message ? eClear.message : String(eClear || ""))); }
-            QOL_WARN("config", "corrupt config cleared, using defaults");
-            return null;
-        }
-    }
 
     var FindFirstPanelByClass = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function(root, className) {
         if (!root || !root.FindChildrenWithClassTraverse || !className) return null;
@@ -4153,7 +3926,7 @@ function GetUIRoot() {
 
     function SyncFgHeroImageMotionState(root, cfg) {
         if (!root || !root.FindChildTraverse) return;
-        var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
+        var healthbarType = _NHV(cfg && cfg.HEALTHBAR_TYPE);
         var fgEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var nowMs = Date.now ? Date.now() : (new Date()).getTime();
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, false, false);
@@ -5865,7 +5638,7 @@ function GetUIRoot() {
         var abilitiesSupp = abilities ? (IsPanelSuppressedMaybe(abilities) ? 1 : 0) : -1;
         var gameplaySupp = gameplayHud ? (IsPanelSuppressedMaybe(gameplayHud) ? 1 : 0) : -1;
 
-        var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
+        var healthbarType = _NHV(cfg && cfg.HEALTHBAR_TYPE);
         var playerOpacity = Number(cfg && cfg.PLAYER_HEALTHBAR_OPACITY);
         if (!isFinite(playerOpacity)) playerOpacity = -1;
         var playerScale = Number(cfg && cfg.PLAYER_HEALTHBAR_SCALE);
@@ -6513,7 +6286,7 @@ function GetUIRoot() {
 
     function GetUnitTargetDefaultStyleTexts() {
         if (UnitTargetDefaultStyleTexts) return UnitTargetDefaultStyleTexts;
-        var result = ResolveUnitTargetStyleTexts(BuildDefaultConfig());
+        var result = ResolveUnitTargetStyleTexts(_BDC());
         // Clone to avoid aliasing when ResolveUnitTargetStyleTexts reuses internal scratch objects.
         UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText, hintScaleText: result.hintScaleText };
         return UnitTargetDefaultStyleTexts;
@@ -14315,7 +14088,7 @@ function GetUIRoot() {
         if (offsetY < -1000) offsetY = -1000;
         if (offsetY > 300) offsetY = 300;
 
-        var compassBaselineY = Number(DEFAULT_CONFIG.COMPASS_Y_OFFSET);
+        var compassBaselineY = Number(_defCfg.COMPASS_Y_OFFSET);
         if (!isFinite(compassBaselineY)) compassBaselineY = 120;
         var appliedCompassOffsetY = (2 * compassBaselineY) - offsetY;
         var marginTopText = Math.round(appliedCompassOffsetY) + "px";
@@ -14483,7 +14256,7 @@ function GetUIRoot() {
         var perfLoopStartMs = PerfNowMs();
         try {
             var root = GetUIRoot();
-            var cfg = State.lastConfig || BuildDefaultConfig();
+            var cfg = State.lastConfig || _BDC();
 
             // Use precomputed gates from main loop (5Hz) to avoid redundant
             // Number() config checks and sticky-state evaluations at 20Hz.
@@ -14751,8 +14524,8 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                cfg = SafeParseConfig(raw);
-                if (!cfg) cfg = BuildDefaultConfig();
+                cfg = _SPC(raw);
+                if (!cfg) cfg = _BDC();
             }
             cfg = ApplyForcedFeatureDisables(cfg);
             var nowMsLoop = Date.now ? Date.now() : (new Date()).getTime();
@@ -14827,7 +14600,7 @@ function GetUIRoot() {
         var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
         var hideTestingTools = (cfg.ENABLE_HIDE_TESTING_TOOLS === 1);
         var forceShowTestingTools = (cfg.ENABLE_FORCE_TESTING_TOOLS === 1) && !hideTestingTools;
-        var healthbarType = NormalizeHealthbarTypeValue(cfg.HEALTHBAR_TYPE);
+        var healthbarType = _NHV(cfg.HEALTHBAR_TYPE);
         var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
         var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var klutzHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_KLUTZ);
@@ -15314,7 +15087,7 @@ function GetUIRoot() {
     }
 
     function BuildRuntimeFeatureConfigState(cfg, hideoutConnected) {
-        var healthbarType = NormalizeHealthbarTypeValue(cfg && cfg.HEALTHBAR_TYPE);
+        var healthbarType = _NHV(cfg && cfg.HEALTHBAR_TYPE);
         var minimalistHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_MINIMALIST);
         var fgHealthbarEnabled = (healthbarType === HEALTHBAR_TYPE_FG);
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
@@ -15891,9 +15664,9 @@ function GetUIRoot() {
         if (raw === State.lastRawConfig && State.lastConfig) {
             cfg = State.lastConfig;
         } else {
-            cfg = SafeParseConfig(raw);
+            cfg = _SPC(raw);
             if (!cfg) {
-                cfg = BuildDefaultConfig();
+                cfg = _BDC();
             }
         }
         cfg = ApplyForcedFeatureDisables(cfg);
@@ -16236,8 +16009,8 @@ function GetUIRoot() {
             if (raw === State.lastRawConfig && State.lastConfig) {
                 cfg = State.lastConfig;
             } else {
-                cfg = SafeParseConfig(raw);
-                if (!cfg) cfg = BuildDefaultConfig();
+                cfg = _SPC(raw);
+                if (!cfg) cfg = _BDC();
             }
 
             // Lazy-init: skip if neither target shapes nor red diamond is enabled (Fix 8)
@@ -16416,7 +16189,7 @@ function GetUIRoot() {
         ["hasClassInHierarchy", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.HasClassInHierarchy : function() { return false; }; }],
         ["getImagesInChatMessageCache", function() { return GetImagesInChatMessageCache; }],
         ["getKeyboardCachedPanels", function() { return GetKeyboardCachedPanels; }],
-        ["getSharedSchemaUtils", function() { return GetSharedSchemaUtils; }],
+        ["getSharedSchemaUtils", function() { return (typeof QOL !== "undefined" && QOL.getSharedSchemaUtils) || (function() { return null; }); }],
         ["getSoulValueFromLabels", function() { return GetSoulValueFromLabels; }],
         ["getTopBarPlayerPanel", function() { return GetTopBarPlayerPanel; }],
         ["getUIRoot", function() { return GetUIRoot; }],
@@ -16441,8 +16214,8 @@ function GetUIRoot() {
         ["normalizeHudScaleNumber", function() { return NormalizeHudScaleNumber; }],
         ["normalizePaletteColorIndex", function() { return NormalizePaletteColorIndex; }],
         ["normalizeStaminaChargeAngle", function() { return NormalizeStaminaChargeAngle; }],
-        ["normalizeVoiceTypeValue", function() { return NormalizeVoiceTypeValue; }],
-        ["normalizeVoiceVolumeValue", function() { return NormalizeVoiceVolumeValue; }],
+        ["normalizeVoiceTypeValue", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceTypeValue) || (function(v) { var asInt = Math.round(Number(v)); if (asInt === 4 || asInt === 0 || asInt === 5 || asInt === 6 || asInt === 7 || asInt === 8) return asInt; return 0; }); }],
+        ["normalizeVoiceVolumeValue", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceVolumeValue) || (function(v) { var asInt = Math.round(Number(v)); if (!isFinite(asInt)) asInt = 100; if (asInt < 0) asInt = 0; if (asInt > 100) asInt = 100; return asInt; }); }],
         ["parseClockSeconds", function() { return ParseClockSeconds; }],
         ["parseUnsecuredSoulsValue", function() { return ParseUnsecuredSoulsValue; }],
         ["perfEnd", function() { return PerfEnd; }],
@@ -16502,7 +16275,7 @@ function GetUIRoot() {
         ["saveSettingsLoaderEnabled", function() { return SAVE_SETTINGS_LOADER_ENABLED; }],
         ["createLoaderOverlay", function() { return _CreateLoaderOverlay; }],
         ["pulseShopAfterBuildPayloadStartupReturn", function() { return PulseShopAfterBuildPayloadStartupReturn; }],
-        ["buildDefaultConfig", function() { return BuildDefaultConfig; }],
+        ["buildDefaultConfig", function() { return (typeof QOL !== "undefined" && QOL.buildDefaultConfig) || _BDC; }],
         ["heroReturnDebugLog", function() { return HeroReturnDebugLog; }],
         ["settingsLoaderDebugLogThrottled", function() { return SettingsLoaderDebugLogThrottled; }],
         ["setSettingsLoaderDebugOverlayLine", function() { return SetSettingsLoaderDebugOverlayLine; }],
@@ -16525,18 +16298,18 @@ function GetUIRoot() {
         ["isBuildSaveTargetSelectionMatch", function() { return IsBuildSaveTargetSelectionMatch; }],
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],
         ["isStorageBuildListEmpty", function() { return IsStorageBuildListEmpty; }],
-        ["mergeConfig", function() { return MergeConfig; }],
-        ["normalizeAllyColorWarningConfig", function() { return NormalizeAllyColorWarningConfig; }],
-        ["normalizeAmmoScaleConfig", function() { return NormalizeAmmoScaleConfig; }],
-        ["normalizeColorWarningConfig", function() { return NormalizeColorWarningConfig; }],
-        ["normalizeCompassSpeedSchemaMigration", function() { return NormalizeCompassSpeedSchemaMigration; }],
-        ["normalizeEnemyColorWarningConfig", function() { return NormalizeEnemyColorWarningConfig; }],
-        ["normalizeHealthbarTypeConfig", function() { return NormalizeHealthbarTypeConfig; }],
-        ["normalizeLanguageSchemaMigration", function() { return NormalizeLanguageSchemaMigration; }],
-        ["normalizeNeutralCampTierConfig", function() { return NormalizeNeutralCampTierConfig; }],
-        ["normalizeTopbarAllyHpWarningConfig", function() { return NormalizeTopbarAllyHpWarningConfig; }],
-        ["normalizeTopbarEnemyHpWarningConfig", function() { return NormalizeTopbarEnemyHpWarningConfig; }],
-        ["normalizeVoiceTypeConfig", function() { return NormalizeVoiceTypeConfig; }],
+        ["mergeConfig", function() { return (typeof QOL !== "undefined" && QOL.mergeConfig) || _MC; }],
+        ["normalizeAllyColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeAllyColorWarningConfig) || (function() {}); }],
+        ["normalizeAmmoScaleConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeAmmoScaleConfig) || (function() {}); }],
+        ["normalizeColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeColorWarningConfig) || (function() {}); }],
+        ["normalizeCompassSpeedSchemaMigration", function() { return (typeof QOL !== "undefined" && QOL.normalizeCompassSpeedSchemaMigration) || (function() {}); }],
+        ["normalizeEnemyColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeEnemyColorWarningConfig) || (function() {}); }],
+        ["normalizeHealthbarTypeConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeConfig) || (function() {}); }],
+        ["normalizeLanguageSchemaMigration", function() { return (typeof QOL !== "undefined" && QOL.normalizeLanguageSchemaMigration) || (function() {}); }],
+        ["normalizeNeutralCampTierConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeNeutralCampTierConfig) || (function() {}); }],
+        ["normalizeTopbarAllyHpWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeTopbarAllyHpWarningConfig) || (function() {}); }],
+        ["normalizeTopbarEnemyHpWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeTopbarEnemyHpWarningConfig) || (function() {}); }],
+        ["normalizeVoiceTypeConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceTypeConfig) || (function() {}); }],
         ["queueBuildSaveRequestFromLoader", function() { return QueueBuildSaveRequestFromLoader; }],
         ["resetBuildClearRequestAttributes", function() { return ResetBuildClearRequestAttributes; }],
         ["resetBuildClearRuntimeState", function() { return ResetBuildClearRuntimeState; }],
