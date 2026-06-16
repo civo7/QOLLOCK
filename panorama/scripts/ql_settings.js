@@ -1,12 +1,8 @@
 "use strict";
 
-var MOD_CONFIG = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-    ? Object.assign({}, QOL_DEFAULT_CONFIG)
-    : {};
-
-const DEFAULT_CONFIG = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-    ? QOL_DEFAULT_CONFIG
-    : {};
+// QOL_DEFAULT_CONFIG always available — ql_shared_presets.js loads first in settings context
+var MOD_CONFIG = Object.assign({}, QOL_DEFAULT_CONFIG);
+const DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
 
 
 const HITMARKERS_RUNTIME_OPTIONS = [
@@ -964,9 +960,8 @@ function GetLanguageIconPath(languageValue) {
 }
 const COMPACT_DEFAULT_HERO_FIELD = "DEFAULT_HERO_INDEX";
 
-const PRESETS = (typeof QOL_PRESETS === "object" && QOL_PRESETS)
-    ? QOL_PRESETS
-    : {};
+// QOL_PRESETS always available — ql_shared_presets.js loads first
+const PRESETS = QOL_PRESETS;
 
 // (Storage/color bridge constants now live in ql_bridge.js — Phase 4)
 const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
@@ -982,9 +977,8 @@ const SETTING_ROW_RESET_KEYS_ATTR = "QOL_ROW_RESET_KEYS";
 const RUNTIME_ROW_KIND_ATTR = "QOL_RUNTIME_ROW_KIND";
 const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
 const MOD_VERSION = 31;
-const MOD_DISPLAY_VERSION = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
-    ? QOL_SCHEMA_SEMVER
-    : "3.1.0";
+// QOL_SCHEMA_SEMVER always available — ql_shared_presets.js loads first
+const MOD_DISPLAY_VERSION = QOL_SCHEMA_SEMVER;
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
 const COMPACT_WIRE_VERSION_2_0_0 = 1;
 const COMPACT_WIRE_VERSION_2_0_1 = 2;
@@ -11928,9 +11922,8 @@ function NormalizeConfig(config, parsed) {
 function SyncConfigFromStorage() {
     var raw = ReadConfigRawFromStorage();
     // $.persistentStorage confirmed absent — panel attrs are the only persistence.
-    var nextConfig = (typeof QOL_DEFAULT_CONFIG === "object" && QOL_DEFAULT_CONFIG)
-        ? Object.assign({}, QOL_DEFAULT_CONFIG)
-        : {};
+    // QOL_DEFAULT_CONFIG always available — same context as ql_shared_presets.js
+    var nextConfig = Object.assign({}, QOL_DEFAULT_CONFIG);
     if (raw && raw.length > 0) {
         try {
             var unwrapped = UnwrapConfigFromStorage(raw);
@@ -21060,11 +21053,7 @@ function RenderCurrentTabContent(list) {
             copyLogsBtn.SetPanelEvent("onactivate", function() {
                 var diagText = "";
                 try {
-                    if (typeof QOL_DumpDiagnostics === "function") {
-                        diagText = QOL_DumpDiagnostics();
-                    } else {
-                        diagText = "=== QOLLOCK Diagnostics ===\nQOL_DumpDiagnostics not available.\n(typeof = " + typeof QOL_DumpDiagnostics + ")\n";
-                    }
+                    diagText = QOL_DumpDiagnostics();
                 } catch(e) {
                     diagText = "=== QOLLOCK Diagnostics ===\nError: " + String(e && e.message ? e.message : String(e)) + "\n";
                 }
