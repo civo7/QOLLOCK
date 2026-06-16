@@ -5,11 +5,14 @@
 
     // ---- dependency guards ----
     if (typeof $ === "undefined" || typeof $.CreatePanel !== "function") return;
-    if (typeof QOL_UTILS === "undefined" || typeof QOL_UTILS.IsPanelValid !== "function") return;
     if (typeof Date === "undefined" || typeof Date.now !== "function") return;
 
-    var IsPanelValid = QOL_UTILS.IsPanelValid;
-    var SetPanelVisibility = QOL_UTILS.SetPanelVisibility;
+    // QOL.import() available — ql_shared_presets.js loads before us in hud.xml
+    var _deps = QOL.import(["utils"]);
+    if (!_deps.utils || typeof _deps.utils.IsPanelValid !== "function") return;
+
+    var IsPanelValid = _deps.utils.IsPanelValid;
+    var SetPanelVisibility = _deps.utils.SetPanelVisibility;
 
     // ---- module-scoped state ----
     var _overlayPanel = null;
