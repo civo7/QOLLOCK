@@ -15037,17 +15037,7 @@ function GetUIRoot() {
             !!(State.allyColoredHealthPanelCache && State.allyColoredHealthPanelCache.length > 0);
     }
 
-    function IsOnDeathArcadeConfigActive(cfg) {
-        if (!cfg || Number(cfg.ENABLE_ON_DEATH_GAMES) !== 1) return false;
-        return (
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_MINESWEEPER") ||
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_BLACKJACK") ||
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_FLAPPY_BAT") ||
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_GRAVES_TRAINER") ||
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_ZERGGY_MANIA") ||
-            IsCfgEnabled(cfg, "ON_DEATH_GAME_WHACK_A_REM")
-        );
-    }
+    // IsOnDeathArcadeConfigActive removed (Phase 8) — replaced by feature's gate() via registry loop
 
     function NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected) {
         if (!GAMEPLAY_MOUSE_CURSOR_ENABLED || !root) return false;
@@ -15355,45 +15345,43 @@ function GetUIRoot() {
             gates = {
                 sig: sig,
                 featureState: featureState,
-                redDiamondEnabled: featureState.redDiamondEnabled,
-                rejuvTimersActive: (
-                    IsCfgEnabled(cfg, "ENABLE_REJUV_HUD") ||
-                    IsCfgEnabled(cfg, "ENABLE_BUFF_HUD") ||
-                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER") ||
-                    IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER")
-                ),
-                spmActive: IsCfgEnabled(cfg, "ENABLE_MIN_SOULS"),
-                unspentActive: IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS"),
-                nicknamesActive: IsCfgEnabled(cfg, "ENABLE_NICKNAMES"),
-                statlockerActive: IsCfgEnabled(cfg, "ENABLE_STATLOCKER"),
-                laneWithPartyActive: IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"),
-                onDeathArcadeActive: IsOnDeathArcadeConfigActive(cfg),
-                zipBoostActive: IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST"),
-                unsecuredSoulsActive: IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER"),
-                statBonusesActive: IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES"),
-                combatStatusActive: IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS"),
-                combatIndicatorActive: featureState.combatIndicatorActive,
-                signatureFlashActive: IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"),
-                imagesInChatActive: IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"),
-                recentPurchasesActive: featureState.recentPurchasesActive,
-                keyboardRuntimeActive: featureState.keyboardRuntimeActive,
-                legacyAudioPassiveActive: featureState.legacyAudioPassiveActive,
-                betterUnsecuredHudActive: featureState.betterUnsecuredHudActive,
-                colorWarningActive: featureState.colorWarningActive,
-                enemyColorWarningActive: featureState.enemyColorWarningActive,
-                allyColorWarningActive: featureState.allyColorWarningActive,
-                ammoActive: featureState.ammoActive,
-                heroShopActive: featureState.heroShopActive,
-                topBarRuntimeActive: featureState.topBarRuntimeActive,
-                bottomBarRuntimeActive: featureState.bottomBarRuntimeActive,
-                itemsRuntimeActive: featureState.itemsRuntimeActive,
-                soulsRuntimeActive: featureState.soulsRuntimeActive,
-                targetShapesActive: featureState.targetShapesActive,
-                damageImpactRuntimeActive: featureState.damageImpactRuntimeActive,
-                staminaChargeColorRuntimeActive: featureState.staminaChargeColorRuntimeActive,
-                damageNumbersActive: featureState.damageNumbersActive,
-                minimapRuntimeActive: featureState.minimapRuntimeActive
+                redDiamondEnabled: featureState.redDiamondEnabled
             };
+            // ── Phase 8: registry-driven base gate computation ──
+            // Call each feature's registered gate() for the base config check,
+            // then apply cross-cutting sticky-state and phase-gating overrides below.
+            var _fn = _getRegistryKeys();
+            for (var _gi = 0; _gi < _fn.length; _gi++) {
+                var _fname = _fn[_gi];
+                var _fentry = QOL_FEATURE_REGISTRY[_fname];
+                if (!_fentry || !_fentry.gate) continue;
+                var _gk = _fentry.gateKey || _fname;
+                try {
+                    gates[_gk + "Active"] = _fentry.gate(cfg, raw, hideoutConnected);
+                } catch(_ge) {
+                    gates[_gk + "Active"] = false;
+                }
+            }
+            // FeatureState passthroughs — pre-computed once for shared values
+            gates.combatIndicatorActive = featureState.combatIndicatorActive;
+            gates.recentPurchasesActive = featureState.recentPurchasesActive;
+            gates.keyboardRuntimeActive = featureState.keyboardRuntimeActive;
+            gates.legacyAudioPassiveActive = featureState.legacyAudioPassiveActive;
+            gates.betterUnsecuredHudActive = featureState.betterUnsecuredHudActive;
+            gates.colorWarningActive = featureState.colorWarningActive;
+            gates.enemyColorWarningActive = featureState.enemyColorWarningActive;
+            gates.allyColorWarningActive = featureState.allyColorWarningActive;
+            gates.ammoActive = featureState.ammoActive;
+            gates.heroShopActive = featureState.heroShopActive;
+            gates.topBarRuntimeActive = featureState.topBarRuntimeActive;
+            gates.bottomBarRuntimeActive = featureState.bottomBarRuntimeActive;
+            gates.itemsRuntimeActive = featureState.itemsRuntimeActive;
+            gates.soulsRuntimeActive = featureState.soulsRuntimeActive;
+            gates.targetShapesActive = featureState.targetShapesActive;
+            gates.damageImpactRuntimeActive = featureState.damageImpactRuntimeActive;
+            gates.staminaChargeColorRuntimeActive = featureState.staminaChargeColorRuntimeActive;
+            gates.damageNumbersActive = featureState.damageNumbersActive;
+            gates.minimapRuntimeActive = featureState.minimapRuntimeActive;
             State.runtimeGateSig = sig;
             State.runtimeGates = gates;
         }
