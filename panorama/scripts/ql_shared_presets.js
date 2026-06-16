@@ -2045,6 +2045,16 @@ if (typeof QOL_UTILS !== "undefined") {
     QOL.utils = QOL_UTILS;
 }
 
+// ── Publish same-context symbols for QOL.import() access (Phase 6c) ──
+// These bare vars live in the same compilation unit as ql_settings.js
+// but are not yet on the QOL namespace. Publishing them enables
+// ql_settings.js to use QOL.import() instead of typeof guards.
+if (typeof QOL_DEFAULT_CONFIG === "object") QOL.defaultConfig = QOL_DEFAULT_CONFIG;
+if (typeof QOL_PRESETS === "object") QOL.presets = QOL_PRESETS;
+if (typeof QOL_SCHEMA_SEMVER === "string") QOL.schemaSemver = QOL_SCHEMA_SEMVER;
+if (typeof QOL_CODEC === "object") QOL.codec = QOL_CODEC;
+if (typeof QOL_DumpDiagnostics === "function") QOL.dumpDiagnostics = QOL_DumpDiagnostics;
+
 // Keep bare var globals for backward compat during migration
 // (removed in cleanup step)
 
