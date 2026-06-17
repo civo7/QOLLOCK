@@ -21921,13 +21921,11 @@ function RenderCurrentTabContent(list) {
         var supportThanksRule = $.CreatePanel("Panel", supportThanksBlock, "");
         supportThanksRule.AddClass("SupportThanksRule");
 
-        var supportThanksCreatorEntries = [
-            { label: "Civo", role: "Creator", url: "https://ko-fi.com/civocivocivo" }
-        ];
         var supportThanksContributorEntries = [
-            { label: "Bonclide", role: "Contributor", url: "https://gamebanana.com/members/2408486" },
-            { label: "BreadRollius", role: "Contributor", url: "https://gamebanana.com/members/4296197" },
+            { label: "Civo", role: "Contributor", url: "https://ko-fi.com/civocivocivo" },
             { label: "Bytenode", role: "Contributor", url: "https://gamebanana.com/members/5222690" },
+            { label: "BreadRollius", role: "Contributor", url: "https://gamebanana.com/members/4296197" },
+            { label: "Bonclide", role: "Contributor", url: "https://gamebanana.com/members/2408486" },
             { label: "Hanturaya", role: "Contributor", url: "https://gamebanana.com/members/4577138" },
             { label: "Predi_i", role: "Contributor", url: "https://gamebanana.com/members/5107678" },
             { label: "RizoBoy", role: "Contributor", url: "https://gamebanana.com/members/4436032" },
@@ -21958,21 +21956,6 @@ function RenderCurrentTabContent(list) {
             { label: "Данон", role: "Translator", iconSrc: "s2r://panorama/images/qollock/belarus.vtex" },
             { label: "Cactus330", role: "Translator", iconSrc: "s2r://panorama/images/qollock/poland.vtex" }
         ];
-        var supportCreatorGroup = CreateSupportThanksGroup(supportThanksBlock, "Created By", supportThanksCreatorEntries, 1, "SupportThanksGroupCreator");
-        if (supportCreatorGroup) {
-            var creatorPlaque = supportCreatorGroup.FindChildrenWithClassTraverse
-                ? ((supportCreatorGroup.FindChildrenWithClassTraverse("SupportThanksPlaqueRole_Creator") || [])[0] || null)
-                : null;
-            var creatorPlaqueContent = creatorPlaque && creatorPlaque.FindChildrenWithClassTraverse
-                ? ((creatorPlaque.FindChildrenWithClassTraverse("SupportThanksPlaqueContent") || [])[0] || null)
-                : null;
-            if (creatorPlaqueContent) {
-                var creatorFooter = $.CreatePanel("Label", creatorPlaqueContent, "");
-                creatorFooter.AddClass("SupportYoshiFooterText");
-                creatorFooter.AddClass("SupportCreatorFooterText");
-                creatorFooter.text = LocalizeSettingsText("yoshii pls hire me", true);
-            }
-        }
         CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 6, "SupportThanksGroupContributor");
         CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 6, "SupportThanksGroupTranslator");
     }
