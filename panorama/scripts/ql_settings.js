@@ -20516,7 +20516,7 @@ function NormalizeSearchText(value) {
 }
 
 function GetSettingsTabOrder() {
-    return ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "MOG", "Console"];
+    return ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "Console"];
 }
 
 function GetSettingsTabDisplayName(tabName) {
@@ -20530,7 +20530,7 @@ function GetSettingsTabGroups() {
     return [
         {
             title: "General",
-            tabs: ["Support", "Config", "Presets", "Console", "MOG", "Arcade"]
+            tabs: ["Support", "Config", "Presets", "Console", "Arcade"]
         },
         {
             title: "Gameplay",
@@ -22831,25 +22831,7 @@ $.BuildUI = function() {
             try { headerVer.DeleteAsync(0); } catch (eDeleteHeaderVer) {}
             headerVer = null;
         }
-        headerVer = $.CreatePanel("Button", header, "ModVersionLabelTop");
-        headerVer.AddClass("HeaderMoglockLinkButton");
-        headerVer.visible = GetSettingsTheme() !== SETTINGS_THEME_MUNFINS;
-        headerVer.style.visibility = GetSettingsTheme() === SETTINGS_THEME_MUNFINS ? "collapse" : "visible";
-        headerVer.hittest = true;
-        headerVer.hittestchildren = true;
-        headerVer.style.zIndex = "7";
-        try { headerVer.SetPanelEvent("onactivate", function () {
-            try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (eHeaderMoglockClick1) {}
-        }); } catch (eHeaderMoglockClick) {}
-        var headerVerPrefix = $.CreatePanel("Label", headerVer, "ModVersionLabelTopPrefix");
-    headerVerPrefix.text = LocalizeSettingsText("by", true);
-        var headerVerDomain = $.CreatePanel("Label", headerVer, "ModVersionLabelTopDomain");
-    headerVerDomain.text = LocalizeSettingsText("moglock.gg", true);
         ApplySettingsHeaderLogoTheme(GetSettingsTheme());
-        var closeBtn = header.FindChildTraverse("CloseBtn");
-        if (closeBtn) {
-            header.MoveChildBefore(headerVer, closeBtn);
-        }
         var closeBtnHeader = header.FindChildTraverse("CloseBtn");
         if (closeBtnHeader) {
             var headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
@@ -22864,9 +22846,6 @@ $.BuildUI = function() {
             }
             headerCenterHost.style.zIndex = "4";
             header.MoveChildBefore(headerCenterHost, closeBtnHeader);
-            if (header.MoveChildBefore) {
-                try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (eMoveHeaderVerBack) {}
-            }
 
             if (searchWrapExisting && searchWrapExisting.IsValid && searchWrapExisting.IsValid()) {
                 if (searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {

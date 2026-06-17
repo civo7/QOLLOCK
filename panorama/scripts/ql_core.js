@@ -15669,7 +15669,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "rejuv_hud_disabled", cfg.ENABLE_REJUV_HUD === 0);
             SetPanelClassCached(root, State.rootClassCache, "minimap_buff_timer_disabled", Number(cfg.ENABLE_MINIMAP_BUFF_TIMER) !== 1);
             SetPanelClassCached(root, State.rootClassCache, "minimap_rejuv_timer_disabled", Number(cfg.ENABLE_MINIMAP_REJUV_TIMER) !== 1);
-            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", IsCfgEnabled(cfg, "ENABLE_BHOP"));
+            SetPanelClassCached(root, State.rootClassCache, "bhop_gamemode_active", false);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_healthbar_active", minimalistHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "fg_healthbar_active", fgHealthbarEnabled);
             SetPanelClassCached(root, State.rootClassCache, "klutz_healthbar_active", klutzHealthbarEnabled);
