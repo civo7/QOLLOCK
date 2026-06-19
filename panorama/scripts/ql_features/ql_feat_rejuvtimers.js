@@ -32,8 +32,9 @@
     // ── Constants ──
     const REJUV_DURATION_SEC = 240;
     const REJUV_SCAN_INTERVAL_MS = 3000;
-    const REJUV_SCAN_INTERVAL_FAST_MS = 500;
-    const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 2000;
+    const REJUV_SCAN_INTERVAL_FAST_MS = 1000;
+    const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 10000;
+    const REJUV_CHARGES_LOOKUP_INTERVAL_MS = 5000;
     const REJUV_ROTATE_ANIM_MS = 800;
     const REJUV_HIDE_POPIN_MS = 500;
     const REJUV_SEQ = [
@@ -869,19 +870,23 @@
         if (state.lastChargeCountReadMs === nowMs) {
             return Number(state.lastChargeCountValue) || 0;
         }
-        var needLookup =
+        var anyInvalid =
             !IsPanelValid(state.cacheTopBar) ||
             !IsPanelValid(state.cacheCharges) ||
             !IsPanelValid(state.cacheFriendly) ||
-            !IsPanelValid(state.cacheEnemy) ||
-            (nowMs - state.lastChargesLookupMs) > 1000;
-        if (needLookup) {
-            state.lastChargesLookupMs = nowMs;
-            state.cacheTopBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || root.FindChildTraverse("CitadelHudTopBar");
-            state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
-            state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
-            state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
-            state.cacheRejuvTimer = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorTimer") : null;
+            !IsPanelValid(state.cacheEnemy);
+        if (anyInvalid) {
+            // Only re-walk the tree when a cached panel actually died
+            // (rare — these are top-bar children that persist all match).
+            // Backoff prevents hammering if the panels genuinely don't exist yet.
+            if (nowMs - state.lastChargesLookupMs > REJUV_CHARGES_LOOKUP_INTERVAL_MS) {
+                state.lastChargesLookupMs = nowMs;
+                state.cacheTopBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || root.FindChildTraverse("CitadelHudTopBar");
+                state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null;
+                state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null;
+                state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null;
+                state.cacheRejuvTimer = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorTimer") : null;
+            }
         }
 
         var chargeCount = Math.max(
@@ -916,10 +921,16 @@
     function RejuvIsMidBossSpawned(state, root, nowMs) {
         if (!state || !root) return false;
         var button = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
-        if (!button || nowMs >= (state.nextMidBossLookupMs || 0)) {
-            button = RejuvFindMidBossButton(root);
-            state.cacheMidBossButton = button || null;
-            state.nextMidBossLookupMs = nowMs + REJUV_MIDBOSS_LOOKUP_INTERVAL_MS;
+        if (!button) {
+            // Only re-walk the tree when the cached button isn't valid.
+            // Once found, it persists for the entire match (the mid_boss
+            // map_button is a permanent child of the minimap). Backoff
+            // prevents hammering when the button genuinely doesn't exist.
+            if (nowMs >= (state.nextMidBossLookupMs || 0)) {
+                button = RejuvFindMidBossButton(root);
+                state.cacheMidBossButton = button || null;
+                state.nextMidBossLookupMs = nowMs + REJUV_MIDBOSS_LOOKUP_INTERVAL_MS;
+            }
         }
         if (!button) return false;
         if (button.BHasClass && button.BHasClass("midboss_spawned")) return true;
