@@ -21029,23 +21029,49 @@ function RenderCurrentTabContent(list) {
                     _fitSetBtnActive(false);
                     return;
                 }
-                // Start: collect features that have config keys we can toggle
-                var registry = (typeof QOL_FEATURE_REGISTRY !== "undefined") ? QOL_FEATURE_REGISTRY : null;
-                if (!registry) {
-                    _fitSetStatus("No registry available", "#cc4444");
-                    return;
+                // Build test queue from DEFAULT_CONFIG + PRESETS (available in Settings
+                // context), NOT from QOL_FEATURE_REGISTRY (which is empty here because
+                // feature files aren't loaded in the settings page — hud_escape_menu.xml
+                // only includes ql_shared_presets, ql_bridge, ql_config, and ql_settings).
+                // We collect every boolean toggle key (ENABLE_*, HUD_*, SHOW_*), deduplicate,
+                // and test each one individually. The diagnostic output tells us which
+                // feature auto-disabled.
+                var toggleKeys = [];
+                var seenKeys = {};
+                // Scan DEFAULT_CONFIG
+                if (typeof DEFAULT_CONFIG !== "undefined" && DEFAULT_CONFIG) {
+                    var dcKeys = Object.keys(DEFAULT_CONFIG);
+                    for (var dci = 0; dci < dcKeys.length; dci++) {
+                        var dk = dcKeys[dci];
+                        if ((dk.indexOf("ENABLE_") === 0 || dk.indexOf("HUD_") === 0 || dk.indexOf("SHOW_") === 0) && !seenKeys[dk]) {
+                            seenKeys[dk] = true;
+                            toggleKeys.push(dk);
+                        }
+                    }
                 }
-                var featNames = Object.keys(registry).sort();
+                // Scan PRESETS
+                if (typeof PRESETS !== "undefined" && PRESETS) {
+                    var presetNames = Object.keys(PRESETS);
+                    for (var pi = 0; pi < presetNames.length; pi++) {
+                        var presetCfg = PRESETS[presetNames[pi]];
+                        if (!presetCfg) continue;
+                        var pkKeys = Object.keys(presetCfg);
+                        for (var pki = 0; pki < pkKeys.length; pki++) {
+                            var pk = pkKeys[pki];
+                            if ((pk.indexOf("ENABLE_") === 0 || pk.indexOf("HUD_") === 0 || pk.indexOf("SHOW_") === 0) && !seenKeys[pk]) {
+                                seenKeys[pk] = true;
+                                toggleKeys.push(pk);
+                            }
+                        }
+                    }
+                }
+                toggleKeys.sort();
                 var testQueue = [];
-                for (var fi = 0; fi < featNames.length; fi++) {
-                    var fn = featNames[fi];
-                    var desc = registry[fn];
-                    // Skip features with no config keys (always-on infrastructure)
-                    if (!desc.configKeys || desc.configKeys.length === 0) continue;
-                    testQueue.push({ name: fn, configKeys: desc.configKeys });
+                for (var ti = 0; ti < toggleKeys.length; ti++) {
+                    testQueue.push({ name: toggleKeys[ti], configKeys: [toggleKeys[ti]] });
                 }
                 if (testQueue.length === 0) {
-                    _fitSetStatus("No testable features", "#cc4444");
+                    _fitSetStatus("No toggle keys found", "#cc4444");
                     return;
                 }
 
@@ -21138,11 +21164,12 @@ function RenderCurrentTabContent(list) {
                                 try {
                                     var diag = JSON.parse(rawDiag);
                                     if (diag.diagToken === forceToken) {
-                                        // Fresh snapshot — check for auto-disable
-                                        var autoDisabled = (diag.disabled && diag.disabled.indexOf(entry.name) >= 0);
-                                        if (autoDisabled) {
+                                        // Fresh snapshot — check for any auto-disabled features.
+                                        // We test by config key, but diagnostics report by feature name.
+                                        var disabledFeatures = (diag.disabled && diag.disabled.length > 0) ? diag.disabled : [];
+                                        if (disabledFeatures.length > 0) {
                                             failed++;
-                                            $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " auto-disabled");
+                                            $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " → auto-disabled: " + disabledFeatures.join(", "));
                                         } else {
                                             passed++;
                                         }
