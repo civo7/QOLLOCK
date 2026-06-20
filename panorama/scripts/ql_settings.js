@@ -2,6 +2,13 @@
 
 // QOL_DEFAULT_CONFIG always available — ql_shared_presets.js loads first in settings context
 var MOD_CONFIG = Object.assign({}, QOL_DEFAULT_CONFIG);
+
+// ── SafeLog stubs for settings context (QOL_UTILS loaded via ql_shared_presets.js) ──
+var _QOLU = (typeof QOL_UTILS !== "undefined") ? QOL_UTILS : null;
+var SafeLog = (_QOLU && _QOLU.SafeLog) ? _QOLU.SafeLog : function(fn, label) { try { return fn(); } catch(e) { return null; } };
+var SafeGetAttribute = (_QOLU && _QOLU.SafeGetAttribute) ? _QOLU.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
+var SafeSetAttribute = (_QOLU && _QOLU.SafeSetAttribute) ? _QOLU.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } return false; };
+var WarnLog = (_QOLU && _QOLU.WarnLog) ? _QOLU.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
 const DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
 
 
@@ -9511,7 +9518,7 @@ function SetPanelNonInteractive(panel) {
     panel.hittestchildren = false;
 }
 
-var SetPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { panel.style.opacity = "1.00"; } catch(e) {} } };
+var SetPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { panel.style.opacity = "1.00"; } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } } };
 
 function GetPanelRectRelativeToContext(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return null;
@@ -20995,10 +21002,10 @@ function RenderCurrentTabContent(list) {
         if (presetCycleBtn) {
             // ── Panel-safe helpers: panels may be destroyed by SaveAndSync() ──
             function _pcSetStatus(text, color) {
-                try { if (presetCycleStatus && presetCycleStatus.IsValid && presetCycleStatus.IsValid()) { presetCycleStatus.text = text; presetCycleStatus.style.color = color; } } catch(e) {}
+                try { if (presetCycleStatus && presetCycleStatus.IsValid && presetCycleStatus.IsValid()) { presetCycleStatus.text = text; presetCycleStatus.style.color = color; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
             }
             function _pcSetBtnActive(active) {
-                try { if (presetCycleBtn && presetCycleBtn.IsValid && presetCycleBtn.IsValid()) { if (active) presetCycleBtn.AddClass("CycleActive"); else presetCycleBtn.RemoveClass("CycleActive"); } } catch(e) {}
+                try { if (presetCycleBtn && presetCycleBtn.IsValid && presetCycleBtn.IsValid()) { if (active) presetCycleBtn.AddClass("CycleActive"); else presetCycleBtn.RemoveClass("CycleActive"); } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
             }
             presetCycleBtn.SetPanelEvent("onactivate", function() {
                 if (_presetCycleRunning) {
@@ -21065,11 +21072,11 @@ function RenderCurrentTabContent(list) {
                 hiddenEntry.multiline = true;
                 hiddenEntry.maxchars = Math.max(diagText.length + 100, 1000);
                 hiddenEntry.SetPanelEvent("onfocus", function() {
-                    try { hiddenEntry.SelectAll(); } catch(e) {}
+                    try { hiddenEntry.SelectAll(); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
                 });
                 var copied = TryCopyTextToClipboard(diagText, hiddenEntry);
                 if (hiddenEntry && hiddenEntry.IsValid && hiddenEntry.IsValid()) {
-                    try { hiddenEntry.DeleteAsync(0); } catch(e) {}
+                    try { hiddenEntry.DeleteAsync(0); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
                 }
                 if (copied) {
                     copyLogsBtn.RemoveClass("FailureState");
