@@ -1,3 +1,9 @@
+// ql_hero_testing.js — Hero testing tools (sandbox mode)
+(function() {
+    'use strict';
+    // Context guard: only run in HUD context
+    if (typeof $ === "undefined" || !$.GetContextPanel) return;
+
 const itemlist = [
   "upgrade_clip_size",
   "upgrade_non_player_bonus",
@@ -689,16 +695,16 @@ function RunLoadTestingEnvironmentSetupCommands(sourceTag) {
 }
 
 function ReadQolSettingsRaw() {
-    const key = "Deadlock_Mod_Settings_v1";
+    var storageKey = (typeof QOL_STORAGE_KEY !== "undefined") ? QOL_STORAGE_KEY : "Deadlock_Mod_Settings_v1";
     let raw = "";
     const panel = $.GetContextPanel();
     const root = FindRootPanel();
     try {
-        if (panel && panel.GetAttributeString) raw = String(panel.GetAttributeString(key, "") || "");
+        if (panel && panel.GetAttributeString) raw = String(panel.GetAttributeString(storageKey, "") || "");
     } catch (e0) { raw = ""; }
     if (!raw) {
         try {
-            if (root && root.GetAttributeString) raw = String(root.GetAttributeString(key, "") || "");
+            if (root && root.GetAttributeString) raw = String(root.GetAttributeString(storageKey, "") || "");
         } catch (e1) { raw = ""; }
     }
     // GameInterfaceAPI confirmed absent — settings read via panel attrs only.
@@ -2167,3 +2173,5 @@ function RandomizeHero() {
 
 $.Schedule(0.2, DisableUnsupportedButtons);
 $.Schedule(0.2, SetupHeroTestingDragging);
+
+})();
