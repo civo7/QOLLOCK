@@ -785,6 +785,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     RECENT_PURCHASES_QUICK_Y_OFFSET: "low",
     TEST_AIRHEART: "none",
     SHOW_RANK: "low",
+    SHOW_RANK_TOPBAR: "low",
 };
 const HEALTHBAR_TYPE_DROPDOWN_OPTIONS = [
     { label: "Default", value: 0 },
@@ -20794,7 +20795,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
-            CreateRow(sectionParent, "Show Player Ranks", "SHOW_RANK", "toggle", null, null, null, null, "Show rank prediction badges on top bar and escape menu player list.");
+            CreateInlineSecondaryCheckboxToggleRow(sectionParent, "Show Player Ranks", "SHOW_RANK", "Top Bar", "SHOW_RANK_TOPBAR", "Show rank prediction badges on top bar and escape menu player list.", "Show rank prediction badges on top bar player panels (requires Show Player Ranks).");
             CreateRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
             CreateRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
             CreateSliderRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "opacity");

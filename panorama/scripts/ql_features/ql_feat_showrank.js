@@ -408,127 +408,6 @@
         });
     }
 
-    $.ShowRank_EscapeOpened = function() {
-        DBG(">>> $.ShowRank_EscapeOpened called");
-        // Gate check: feature must be enabled via config
-        if (!IsShowRankEnabled()) { DBG("ShowRank_EscapeOpened: gate closed"); return; }
-        DBG("ShowRank_EscapeOpened: gate OPEN");
-
-        var ctx = null;
-        try { ctx = $.GetContextPanel(); } catch(e) {}
-        if (!Valid(ctx)) { DBG("ShowRank_EscapeOpened: invalid context panel"); return; }
-
-        var root = DocRoot(ctx);
-        if (!Valid(root)) { DBG("ShowRank_EscapeOpened: invalid root"); return; }
-        DBG("ShowRank_EscapeOpened: root found, id=" + (root.id || "<no-id>"));
-
-        // Bump generation so top bar clears stale data from previous match
-        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
-        SetAttr(root, "qol_sr_generation", String(gen + 1));
-
-        // Clear all qol_sr_rank_* attributes from previous match
-        var clearedAttrs = ClearPublishedRanks(root);
-
-        // Clear escape done latch so fill runs again
-        if (State) State.showRankEscapeDone = "";
-
-        var token = "qol_sr_" + String(NowMs());
-        SetAttr(root, "qol_sr_fill_token", token);
-
-        DBG("ShowRank_EscapeOpened: token=" + token + " gen=" + (gen + 1) + " cleared=" + clearedAttrs);
-        $.Schedule(0.3, function() { FillLoop(root, token); });
-    };
-
-    // ===================================================================
-    // PROFILE CARD — read account ID, correlate via doc-root probe
-    // ===================================================================
-
-    function ReadCardPlayer(card) {
-        var userName = card.FindChildTraverse ? card.FindChildTraverse("UserName") : null;
-        if (!Valid(userName)) return "";
-
-        try { var t = String(userName.text || "").trim(); if (t) return t; } catch(e) {}
-
-        var queue = [];
-        try {
-            var cc = userName.GetChildCount ? userName.GetChildCount() : 0;
-            for (var i = 0; i < cc && i < 30; i++) queue.push(userName.GetChild(i));
-        } catch(e) {}
-
-        var head = 0;
-        while (head < queue.length && head < 100) {
-            var child = queue[head++];
-            try {
-                var text = String(child.text || "").trim();
-                if (text && text.charAt(0) !== "#" && text.indexOf("{") === -1) return text;
-            } catch(e) {}
-            try {
-                var ccc = child.GetChildCount ? child.GetChildCount() : 0;
-                for (var j = 0; j < ccc && queue.length < 100; j++) queue.push(child.GetChild(j));
-            } catch(e) {}
-        }
-        return "";
-    }
-
-    $.ShowRank_ProfileLoaded = function() {
-        DBG(">>> $.ShowRank_ProfileLoaded called");
-        // Profile card reader is un-gated — it only writes to doc-root if the
-        // escape fill loop has an active probe. Harmless no-op otherwise.
-        var card = null;
-        try { card = $.GetContextPanel(); } catch(e) {}
-        if (!card || !card.FindChildrenWithClassTraverse) {
-            DBG("ShowRank_ProfileLoaded: invalid card or no FindChildrenWithClassTraverse");
-            return;
-        }
-        DBG("ShowRank_ProfileLoaded: card paneltype=" + (card.paneltype || "<none>"));
-
-        // Read account_id from HiddenAccountID
-        var accountId = "";
-        var hiddenList = card.FindChildrenWithClassTraverse("HiddenAccountID") || [];
-        if (hiddenList.length > 0) {
-            try {
-                var t = String(hiddenList[0].text || "").replace(/[^0-9]/g, "");
-                if (t.length >= 7 && t.length <= 10) accountId = t;
-            } catch(e) {}
-        }
-        DBG("ShowRank_ProfileLoaded: HiddenAccountID → " + (accountId || "<empty>") + " (found " + hiddenList.length + " labels)");
-
-        // Fallback: AccountID class
-        if (!accountId) {
-            var accList = card.FindChildrenWithClassTraverse("AccountID") || [];
-            for (var i = 0; i < accList.length; i++) {
-                try {
-                    var text = String(accList[i].text || "");
-                    var m = text.match(/\[U:1:(\d+)\]/i);
-                    if (m) { accountId = m[1]; break; }
-                    var digits = text.replace(/[^0-9]/g, "");
-                    if (digits.length >= 7 && digits.length <= 10) { accountId = digits; break; }
-                } catch(e) {}
-            }
-            DBG("ShowRank_ProfileLoaded: AccountID fallback → " + (accountId || "<empty>"));
-        }
-
-        if (!accountId) { DBG("ShowRank_ProfileLoaded: no account ID, bailing"); return; }
-
-        var cardPlayer = ReadCardPlayer(card);
-        var unresolved = !cardPlayer || /^[.\s]+$/.test(cardPlayer) || cardPlayer.indexOf("{") >= 0;
-
-        var root = DocRoot(card);
-        if (!Valid(root)) { DBG("ShowRank_ProfileLoaded: invalid root"); return; }
-
-        var probeName = "";
-        try { probeName = root.GetAttributeString("qol_sr_probe_name", ""); } catch(e) {}
-        DBG("ShowRank_ProfileLoaded: accountId=" + accountId + " cardPlayer=" + (cardPlayer || "<none>") + " probeName=" + (probeName || "<none>") + " unresolved=" + unresolved);
-
-        if (probeName) {
-            var match = unresolved || cardPlayer === probeName;
-            DBG("ShowRank_ProfileLoaded: match=" + match + " → " + (match ? "WRITING accountId" : "skipping"));
-            if (match) {
-                try { root.SetAttributeString("qol_sr_probe_account", accountId); } catch(e) {}
-            }
-        }
-    };
-
     // ===================================================================
     // TOP BAR — poll doc-root for hero→account mappings, load rank images
     // ===================================================================
@@ -644,16 +523,6 @@
         $.Schedule(0.3, TryLoad);
     }
 
-    $.ShowRank_TopBarLoaded = function() {
-        DBG(">>> $.ShowRank_TopBarLoaded called");
-        if (!IsShowRankEnabled()) { DBG("ShowRank_TopBarLoaded: gate closed"); return; }
-        DBG("ShowRank_TopBarLoaded: gate OPEN");
-        var topBarPlayer = null;
-        try { topBarPlayer = $.GetContextPanel(); } catch(e) {}
-        if (!Valid(topBarPlayer)) { DBG("ShowRank_TopBarLoaded: invalid context panel"); return; }
-        _InitTopBarPlayer(topBarPlayer);
-    };
-
     // ===================================================================
     // CONFIG HOT-RELOAD — manage CSS visibility classes + clear state
     // ===================================================================
@@ -661,6 +530,20 @@
     function ApplyConfigHotReload(root, cfg) {
         if (!root || !cfg) return;
         var enabled = IsShowRankEnabled();
+
+        // ── Top-bar-only toggle (SHOW_RANK_TOPBAR) ──
+        var showTopBar = IsCfgEnabled(cfg, "SHOW_RANK_TOPBAR");
+        var topBarVisible = enabled && showTopBar;
+        if (State._showRankTopBarVisible !== topBarVisible) {
+            State._showRankTopBarVisible = topBarVisible;
+            try {
+                if (topBarVisible) {
+                    root.RemoveClass("HideShowRankTopBar");
+                } else {
+                    root.AddClass("HideShowRankTopBar");
+                }
+            } catch(e) {}
+        }
 
         if (State._showRankEnabled === enabled) return;
         var wasEnabled = State._showRankEnabled === true;
@@ -780,6 +663,7 @@
 
     // ── Per-tick topbar scan (driven by update, not XML onload) ──
     function EnsureTopBarPlayersInitialized(root) {
+        if (!Valid(root)) return;
         var topBar = null;
         try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
         if (!Valid(topBar)) { DBG("EnsureTopBarPlayers: no TopBar"); return; }
@@ -816,10 +700,14 @@
     }
 
     // ── Per-tick escape-menu fill trigger (driven by update, not XML onload) ──
+    // Starts FillLoop if not already running. FillLoop handles menu-open/menu-closed
+    // and hideout transitions internally — we just need to ensure it's alive.
     function EnsureFillLoopRunning(root) {
-        if (!IsEscapeMenuOpen(root)) return;
+        if (!Valid(root)) return;
         var token = ReadAttr(root, "qol_sr_fill_token", "");
         if (token) return; // already running
+        // Clear stale hero→account mappings from previous match before starting
+        ClearPublishedRanks(root);
         // Bump generation so the idle latch resets and rows are re-scanned
         var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
         SetAttr(root, "qol_sr_generation", String(gen + 1));
@@ -837,9 +725,10 @@
     if (State) {
     DBG("REGISTERING: showRank (bucket=7, phase=4)");
     QOL.register("showRank", {
-        configKeys: ["SHOW_RANK"],
+        configKeys: ["SHOW_RANK", "SHOW_RANK_TOPBAR"],
         bucket: 7,
         phase: 4,
+        requiresRoot: true,
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "SHOW_RANK");
         },
@@ -857,7 +746,7 @@
                 throw e;
             }
         },
-        stateKeys: ["_showRankEnabled", "showRankEscapeDone"]
+        stateKeys: ["_showRankEnabled", "_showRankTopBarVisible", "showRankEscapeDone"]
     });
     DBG("showRank registered OK");
     } else {
@@ -867,41 +756,16 @@
     // ── Self-test ──
     try {
         DBG("SELF-TEST starting");
-        if (typeof $.ShowRank_EscapeOpened !== "function") throw new Error("ShowRank_EscapeOpened is not installed");
-        if (typeof $.ShowRank_ProfileLoaded !== "function") throw new Error("ShowRank_ProfileLoaded is not installed");
-        if (typeof $.ShowRank_TopBarLoaded !== "function") throw new Error("ShowRank_TopBarLoaded is not installed");
         if (typeof ApplyConfigHotReload !== "function") throw new Error("ApplyConfigHotReload is not a function");
-        DBG("SELF-TEST passed: all 3 handlers + ApplyConfigHotReload installed");
+        if (typeof FillLoop !== "function") throw new Error("FillLoop is not a function");
+        if (typeof FillRow !== "function") throw new Error("FillRow is not a function");
+        if (typeof EnsureFillLoopRunning !== "function") throw new Error("EnsureFillLoopRunning is not a function");
+        if (typeof EnsureTopBarPlayersInitialized !== "function") throw new Error("EnsureTopBarPlayersInitialized is not a function");
+        DBG("SELF-TEST passed: core functions installed");
     } catch(e) {
         DBG("SELF-TEST FAILED: " + (e && e.message ? e.message : String(e)));
         $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " +
               (e && e.message ? e.message : String(e)));
-    }
-
-    // ── Late-init: pick up topbar players created before this script loaded ──
-    if (State) {
-        $.Schedule(1.5, function() {
-            DBG("LateInit: scanning for existing topbar players");
-            try {
-                var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-                if (!Valid(ctx)) { DBG("LateInit: no context panel"); return; }
-                var root = DocRoot(ctx);
-                if (!Valid(root)) { DBG("LateInit: no root"); return; }
-                var topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null;
-                if (!Valid(topBar)) { DBG("LateInit: no TopBar panel"); return; }
-                var players = FindAllTopBarPlayers(topBar);
-                DBG("LateInit: found " + players.length + " player panels");
-                for (var i = 0; i < players.length; i++) {
-                    var heroLabel = FindClass(players[i], "HeroName");
-                    if (!Valid(heroLabel)) continue;
-                    var heroName = "";
-                    try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
-                    if (!heroName) continue;
-                    DBG("LateInit: hero=" + heroName + " — init");
-                    _InitTopBarPlayer(players[i]);
-                }
-            } catch(e) { DBG("LateInit: error — " + (e && e.message ? e.message : String(e))); }
-        });
     }
 
     DBG("=== script loaded OK ===");
