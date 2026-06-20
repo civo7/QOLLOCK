@@ -8,6 +8,7 @@
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
+    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
     var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
     var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
     var IsCfgEnabled = Utils.IsCfgEnabled;
@@ -138,6 +139,7 @@
     QOL.register("imagesInChat", {
         configKeys: ["ENABLE_IMAGES_IN_CHAT"],
         bucket: 7, phase: -1,
+        requiresRoot: true,
         perfLabel: "loop.images_in_chat",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {

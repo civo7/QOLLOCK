@@ -218,6 +218,7 @@
     QOL.register("zipBoost", {
         configKeys: ["ENABLE_ZIP_BOOST"],
         bucket: 6, phase: -1,
+        requiresRoot: true,
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_ZIP_BOOST") || !!(State.zipBoostDisplayMode && State.zipBoostDisplayMode !== "");
         },

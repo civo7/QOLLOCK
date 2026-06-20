@@ -5,7 +5,6 @@
     var _featureId = "ql_feat_unsecuredsouls";
     var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var GGHP = _deps.getGameplayHudPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
@@ -253,6 +252,7 @@
     QOL.register("unsecuredSoulsTimer", {
         configKeys: ["ENABLE_UNSECURED_SOUL_TIMER"],
         bucket: 6, phase: 3,
+        requiresRoot: true,
         gateKey: "unsecuredSouls",
         perfLabel: "loop.unsecured_souls_overlay",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(State.unsecuredSouls && State.unsecuredSouls.displayMode && State.unsecuredSouls.displayMode !== ""); },

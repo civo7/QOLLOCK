@@ -131,6 +131,7 @@
     QOL.register("signatureFlash", {
         configKeys: ["ENABLE_PASSIVE_COOLDOWN"],
         bucket: 2, phase: -1,
+        requiresRoot: true,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN") || !!State.signatureCooldownFlashWasEnabled; },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateSignatureCooldownPressFlashRuntime(root, cfg, nowMs);

@@ -123,6 +123,7 @@
                      "ENABLE_SIMPLIFY_SHOP_STATS", "ENABLE_SHOP_RECENT_PURCHASES",
                      "ENABLE_SIMPLIFY_SHOP", "ENABLE_SIMPLIFY_ITEMS", "DISABLE_SHOP_BLUE"],
         bucket: 4, phase: 4,
+        requiresRoot: true,
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_SHOP_STATS") ||
                    IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||

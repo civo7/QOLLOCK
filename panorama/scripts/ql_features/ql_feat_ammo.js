@@ -2,7 +2,6 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: ammo\n");
         var _featureId = "ql_feat_ammo";
     var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
@@ -127,6 +126,7 @@
                      "AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE",
                      "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET"],
         bucket: 4, phase: -1,
+        requiresRoot: true,
         gate: gate,
         update: function(root, cfg) { update(root, cfg); },
         stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]

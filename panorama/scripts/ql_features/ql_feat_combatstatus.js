@@ -197,6 +197,7 @@
         configKeys: ["ENABLE_COMBAT_STATUS", "ENABLE_COMBAT_INDICATOR"],
         bucket: 7,
         phase: -1,
+        requiresRoot: true,
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS") ||
                    IsCfgEnabled(cfg, "ENABLE_COMBAT_INDICATOR");

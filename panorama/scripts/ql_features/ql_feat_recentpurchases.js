@@ -853,6 +853,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
     QOL.register("recentPurchases", {
         configKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS"],
         bucket: 7, phase: -1,
+        requiresRoot: true,
         gate: function(cfg) {
             return IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES") ||
                    IsCfgEnabled(cfg, "ENABLE_SHOP_ITEM_NOTIFICATIONS");

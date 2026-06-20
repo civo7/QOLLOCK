@@ -2,7 +2,6 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: staminaChargeColorRuntime\n");
         var _featureId = "ql_feat_stamina";
     var _deps = QOL.import(["getCachedPanel","normalizeStaminaChargeAngle","readStaminaChargeColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
@@ -161,6 +160,7 @@
     QOL.register("staminaChargeColorRuntime", {
         configKeys: ["STAMINA_CHARGE_ANGLE", "STAMINA_CHARGE_COLOR"],
         bucket: 7, phase: -1,
+        requiresRoot: true,
         gate: gate,
         update: function(root, cfg, nowMs) { update(root, cfg, nowMs); },
         stateKeys: ["staminaChargeAngleStyleSig", "staminaChargeColorStyleSig",

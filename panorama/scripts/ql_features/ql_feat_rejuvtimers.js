@@ -6,7 +6,6 @@
     var _deps = QOL.import(["ensureMinimapOverlayAnchor","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
-    var RC = _deps.resolveCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;

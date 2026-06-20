@@ -2,7 +2,6 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: damageImpactRuntime\n");
         var _featureId = "ql_feat_damageimpact";
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;

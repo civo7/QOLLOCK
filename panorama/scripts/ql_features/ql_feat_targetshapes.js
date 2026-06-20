@@ -3,14 +3,13 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_targetshapes";
-    var _deps = QOL.import(["applyTargetShapeStyles", "resolveUnitTargetStyleTexts", "state", "utils", "getUnitTargetDefaultStyleTexts"]);
+    var _deps = QOL.import(["state", "utils", "getUnitTargetDefaultStyleTexts"]);
     var State = _deps.state;
     var Utils = _deps.utils;
     var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
     var IsPanelListValid = Utils.IsPanelListValid;
-    var ApplyTargetShapeStyles = _deps.applyTargetShapeStyles;
-    var ResolveUnitTargetStyleTexts = _deps.resolveUnitTargetStyleTexts;
     var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
+    var TARGET_SHAPE_DEBUG = false;
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;
@@ -165,6 +164,7 @@
         configKeys: ["ENABLE_RED_DIAMOND", "UNIT_TARGET_SIZE", "UNIT_TARGET_OPACITY",
                      "UNIT_TARGET_HINT_SIZE"],
         bucket: 5, phase: -1,
+        requiresRoot: true,
         gate: function(cfg) {
             return NeedsTargetShapeRuntimeWork(cfg,
                 !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled));

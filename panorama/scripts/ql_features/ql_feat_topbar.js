@@ -2,11 +2,9 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: topBarRuntime\n");
         var _featureId = "ql_feat_topbar";
     var _deps = QOL.import(["getCachedPanel", "isHudVisibleForTopBarRuntime", "resolveCachedPanel", "state", "setCachedPanel", "utils", "panelIdTopBar"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var RC = _deps.resolveCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
@@ -37,7 +35,7 @@
         if (!State._debug_topBarRuntime) { $.Msg("[QOL DEBUG] First update: topBarRuntime\n"); State._debug_topBarRuntime = true; }
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
-        var topBar = RC(root, "topBarPanel", PID_TOP_BAR);
+        var topBar = ResolveCachedPanel(root, "topBarPanel", PID_TOP_BAR);
         if (!topBar) return;
 
         var hudVisible = IH(root, topBar);

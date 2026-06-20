@@ -304,6 +304,7 @@ function IsIndicatorSmallDamage(panel) {
                      "ENABLE_HIDE_TROOPER_DAMAGE", "DAMAGE_NUMBER_OPACITY",
                      "ENABLE_DAMAGE_FOUNTAIN", "ENABLE_CUMULATIVE_DMG"],
         bucket: 5, phase: -1,
+        requiresRoot: true,
         gate: function(cfg) {
             return NeedsDamageNumbersRuntimeWork(cfg);
         },

@@ -5,7 +5,6 @@
     var _featureId = "ql_feat_statlocker";
     var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isPanelListValid","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var GUIR = _deps.getUIRoot;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;

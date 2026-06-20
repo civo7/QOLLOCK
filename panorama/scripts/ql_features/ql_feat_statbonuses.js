@@ -5,7 +5,6 @@
     var _featureId = "ql_feat_statbonuses";
     var _deps = QOL.import(["extractStatDisplayText","getCachedPanel","getGameplayHudPanel","harvestGoldenStatuesTooltipValue","isCustomHudContextActive","isStatBonusTokenZero","resolveGoldenStatBonusesValue","resolveStatBonusesSource","state","setCachedPanel","statBonusesDebugLogThrottled","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var GGHP = _deps.getGameplayHudPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
@@ -317,6 +316,7 @@
     QOL.register("statBonuses", {
         configKeys: ["ENABLE_STAT_BONUSES"],
         bucket: 6, phase: 4,
+        requiresRoot: true,
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES") || !!(State.statBonuses && State.statBonuses.displayMode && State.statBonuses.displayMode !== ""); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateStatBonusesOverlay(root, cfg, hideoutConnected);

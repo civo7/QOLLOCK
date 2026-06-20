@@ -5,10 +5,8 @@
     'use strict';
     $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
         var _featureId = "ql_feat_colorwarnings";
-    var _deps = QOL.import(["getCachedPanel","isColorWarningEnabled","state","setCachedPanel","utils"]);
-    var GetCachedPanel = _deps.getCachedPanel;
+    var _deps = QOL.import(["state","utils"]);
     var State = _deps.state;
-    var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;

@@ -2,7 +2,6 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: itemsRuntime\n");
         var _featureId = "ql_feat_items";
     var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
