@@ -104,7 +104,7 @@
         for (var depth = 0; depth < 8 && cur; depth++) {
             try {
                 if (cur.BHasClass && (cur.BHasClass("coreRating") || cur.BHasClass("HeroRowBackground"))) return true;
-            } catch(eClass) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (eClass && eClass.message ? eClass.message : String(eClass || ""))); }
+            } catch(eClass) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (eClass && eClass.message ? eClass.message : String(eClass || ""))); }
             var idText = "";
             try { idText = cur.id ? String(cur.id).toLowerCase() : ""; } catch (eId) { idText = ""; }
             if (
@@ -186,7 +186,7 @@
             button.style.border = "1px solid #66cc9930";
             button.style.borderRadius = "4px";
             button.style.boxShadow = "fill #66cc9920 0px 0px 4px 0px";
-        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (!label) return;
         try {
             label.style.horizontalAlign = "center";
@@ -197,7 +197,7 @@
             label.style.color = "#66cc99";
             label.style.letterSpacing = "1px";
             label.style.textShadow = "0px 0px 4px #66cc9930";
-        } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
 
     function EnsureStatlockerButton(corePanel, root) {
@@ -235,7 +235,7 @@
                 if (!accountId) return;
                 $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
             });
-        } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (e2 && e2.message ? e2.message : String(e2 || ""))); }
 
         return button;
     }
@@ -245,7 +245,7 @@
         for (var i = 0; i < knownButtons.length; i++) {
             var button = knownButtons[i];
             if (!IsPanelValid(button)) continue;
-            try { button.DeleteAsync(0); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            try { button.DeleteAsync(0); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
 
         var knownPanels = Array.isArray(State.statlockerCorePanels) ? State.statlockerCorePanels : [];
@@ -262,7 +262,7 @@
             if (!IsPanelValid(panel)) continue;
             var child = FindDirectChildByClassName(panel, "QOLStatlockerButton");
             if (!IsPanelValid(child)) continue;
-            try { child.DeleteAsync(0); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
+            try { child.DeleteAsync(0); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_statlocker", (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         State.statlockerButtons = [];
         State.statlockerCorePanels = [];

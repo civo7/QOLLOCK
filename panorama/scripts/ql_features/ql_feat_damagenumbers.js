@@ -207,7 +207,7 @@ function IsIndicatorSmallDamage(panel) {
                 var capped = indicatorSize > 28 ? 28 : indicatorSize;
                 targetSize = capped + "px";
             }
-        } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_damagenumbers"", (e && e.message ? e.message : String(e || ""))); }
+        } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_damagenumbers", (e && e.message ? e.message : String(e || ""))); }
         if (p.style.fontSize !== targetSize) {
             p.style.fontSize = targetSize;
         }

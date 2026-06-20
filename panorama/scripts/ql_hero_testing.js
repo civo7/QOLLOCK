@@ -1,8 +1,6 @@
 // ql_hero_testing.js — Hero testing tools (sandbox mode)
-(function() {
-    'use strict';
-    // Context guard: only run in HUD context
-    if (typeof $ === "undefined" || !$.GetContextPanel) return;
+// Context guard: only run in HUD context (functions hoist to global for XML access)
+if (typeof $ !== "undefined" && $.GetContextPanel) {
 
 const itemlist = [
   "upgrade_clip_size",
@@ -2174,4 +2172,4 @@ function RandomizeHero() {
 $.Schedule(0.2, DisableUnsupportedButtons);
 $.Schedule(0.2, SetupHeroTestingDragging);
 
-})();
+} // end context guard

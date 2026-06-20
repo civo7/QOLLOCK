@@ -21,7 +21,7 @@
         var on = !!active;
         if (!!State.customMouseCursorClassActive === on) return;
         if (root && root.SetHasClass) {
-            try { root.SetHasClass("qol_custom_cursor_replace_active", on); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            try { root.SetHasClass("qol_custom_cursor_replace_active", on); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         State.customMouseCursorClassActive = on;
     }
@@ -42,8 +42,8 @@
             State.customMouseCursorPanel = panel || null;
         }
         if (!panel) return null;
-        try { panel.hittest = false; } catch(ePanelA) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor"", (ePanelA && ePanelA.message ? ePanelA.message : String(ePanelA || ""))); }
-        try { panel.hittestchildren = false; } catch(ePanelB) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor"", (ePanelB && ePanelB.message ? ePanelB.message : String(ePanelB || ""))); }
+        try { panel.hittest = false; } catch(ePanelA) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor", (ePanelA && ePanelA.message ? ePanelA.message : String(ePanelA || ""))); }
+        try { panel.hittestchildren = false; } catch(ePanelB) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor", (ePanelB && ePanelB.message ? ePanelB.message : String(ePanelB || ""))); }
 
         var image = IsPanelValid(State.customMouseCursorImage) ? State.customMouseCursorImage : null;
         if (!image || (panel && image.GetParent && image.GetParent() !== panel)) {
@@ -81,7 +81,7 @@
         if (panel) {
             try {
                 if (panel.style.visibility !== "collapse") panel.style.visibility = "collapse";
-            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         State.customMouseCursorLastX = null;
         State.customMouseCursorLastY = null;

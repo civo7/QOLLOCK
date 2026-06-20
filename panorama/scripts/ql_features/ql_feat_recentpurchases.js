@@ -75,7 +75,7 @@ function IsPanelVisibleMaybe(panel) {
         if (!panel || !IsPanelValid(panel)) return false;
         try {
             if (panel.visible === false) return false;
-        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         var vis = "";
         try {
             if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
@@ -380,14 +380,14 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             var y = Number(panel.actualyoffset) || 0;
             var h = Number(panel.actuallayoutheight) || 0;
             if (isFinite(y) && isFinite(h) && h > 0) bottom = y + h;
-        } catch(eRecentPurchaseOverlayLayout) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases"", (eRecentPurchaseOverlayLayout && eRecentPurchaseOverlayLayout.message ? eRecentPurchaseOverlayLayout.message : String(eRecentPurchaseOverlayLayout || ""))); }
+        } catch(eRecentPurchaseOverlayLayout) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (eRecentPurchaseOverlayLayout && eRecentPurchaseOverlayLayout.message ? eRecentPurchaseOverlayLayout.message : String(eRecentPurchaseOverlayLayout || ""))); }
         if (bottom > 0) return bottom;
         return Number(fallbackBottom) || 0;
     }
 
     function ComputeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled) {
         var isScoreboardOpen = false;
-        try { isScoreboardOpen = scoreboardEnabled && IsHudClassActive(root, "gScoreboardOpen"); } catch(eRecentPurchaseScoreboard) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases"", (eRecentPurchaseScoreboard && eRecentPurchaseScoreboard.message ? eRecentPurchaseScoreboard.message : String(eRecentPurchaseScoreboard || ""))); }
+        try { isScoreboardOpen = scoreboardEnabled && IsHudClassActive(root, "gScoreboardOpen"); } catch(eRecentPurchaseScoreboard) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (eRecentPurchaseScoreboard && eRecentPurchaseScoreboard.message ? eRecentPurchaseScoreboard.message : String(eRecentPurchaseScoreboard || ""))); }
 
         var marginTop = 90;
         if (isScoreboardOpen) marginTop = 175;
@@ -521,7 +521,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                 }
                 if (rootGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: root walk hit guard limit");
                 if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
-            } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases"", (e && e.message ? e.message : String(e || ""))); }
+            } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (e && e.message ? e.message : String(e || ""))); }
         }
         var x = 0;
         var current = panel;

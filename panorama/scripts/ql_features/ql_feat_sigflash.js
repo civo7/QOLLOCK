@@ -106,7 +106,7 @@
         for (var i = 0; i < slots.length; i++) {
             var entry = slots[i];
             if (!entry || !IsPanelValid(entry.icon) || !entry.icon.SetHasClass) continue;
-            try { entry.icon.SetHasClass(SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS, false); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_sigflash"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            try { entry.icon.SetHasClass(SIGNATURE_COOLDOWN_PRESS_FLASH_CLASS, false); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_sigflash", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         State.signatureCooldownFlashSlots = [];
         State.signatureCooldownFlashNextScanMs = 0;

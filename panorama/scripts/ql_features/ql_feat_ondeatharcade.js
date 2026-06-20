@@ -79,15 +79,15 @@
         var activeText = active ? "1" : "";
         var gameText = active ? String(gameId || "") : "";
         var tokenText = active ? String(token || "") : "";
-        try { root.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { root.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { root.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e2 && e2.message ? e2.message : String(e2 || ""))); }
         var hud = null;
         try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e3) { hud = null; }
         if (hud && hud.SetAttributeString) {
-            try { hud.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch(e4) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e4 && e4.message ? e4.message : String(e4 || ""))); }
-            try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch(e5) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e5 && e5.message ? e5.message : String(e5 || ""))); }
-            try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch(e6) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e6 && e6.message ? e6.message : String(e6 || ""))); }
+            try { hud.SetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, activeText); } catch(e4) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e4 && e4.message ? e4.message : String(e4 || ""))); }
+            try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, gameText); } catch(e5) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e5 && e5.message ? e5.message : String(e5 || ""))); }
+            try { hud.SetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, tokenText); } catch(e6) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
     }
 
@@ -119,7 +119,7 @@
             try {
                 if (shouldOpen && panel.AddClass) panel.AddClass("ShowEscapeMenu");
                 if (!shouldOpen && panel.RemoveClass) panel.RemoveClass("ShowEscapeMenu");
-            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_ondeatharcade", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
     }
 
