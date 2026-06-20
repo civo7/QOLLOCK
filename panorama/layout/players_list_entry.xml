@@ -1,0 +1,25 @@
+<!-- xml reconstructed by Source 2 Viewer - https://valveresourceformat.github.io -->
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
+		<include src="s2r://panorama/styles/players_list_entry.vcss_c" />
+		<include src="s2r://panorama/styles/showrank.vcss_c" />
+	</styles>
+	<CitadelPlayersListEntry>
+		<Panel class="Controls">
+			<Button class="MuteButton ToggleMuteButton" onmouseover="UIShowTextTooltip( #citadel_mute_player )" onmouseout="UIHideTextTooltip()" onactivate="CitadelPlayerListEntrySetMuted( true )" />
+			<Button class="UnmuteButton ToggleMuteButton" onmouseover="UIShowTextTooltip( #citadel_unmute_player )" onmouseout="UIHideTextTooltip()" onactivate="CitadelPlayerListEntrySetMuted( false )" />
+		</Panel>
+		<Panel id="MainContents" hittestchildren="false">
+			<CitadelHeroBadge id="HeroBadge" />
+			<Panel class="Details">
+				<Label class="PlayerName" text="{s:player_name}" />
+				<Label class="PlayerHero" text="#Citadel_Player_Level_HeroLevel" />
+				<Label class="PlayerAccountHidden" text="" />
+				<Label class="PlayerHeroHidden" text="{g:citadel_hero_name:hero_id}" />
+			</Panel>
+			<Image id="RankPredictionBadge" src="s2r://panorama/images/ranked/badges/rank0/badge_sm_psd.vtex" />
+			<Image id="RankPredictionBadgeOverlay" />
+		</Panel>
+	</CitadelPlayersListEntry>
+</root>

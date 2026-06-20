@@ -10,6 +10,7 @@
 		<include src="s2r://panorama/styles/citadel_hud_ability_upgrade_pips.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_ui_binding.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
+	<include src="s2r://panorama/styles/showrank.vcss_c" />
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
@@ -56,6 +57,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_nicknames.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_panelcache.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_rejuvtimers.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">

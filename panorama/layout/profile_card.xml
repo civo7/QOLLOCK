@@ -5,13 +5,15 @@
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_profile_card_statlocker.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
 	</scripts>
-	<CitadelProfileCard>
+	<CitadelProfileCard onload="if($.ShowRank_ProfileLoaded)$.ShowRank_ProfileLoaded();">
 		<Panel id="MiniProfileContainer" class="TopBottomFlow">
 			<Panel id="ContentsMain">
 				<Panel id="ContentsMainBackground" />
 				<Panel id="ContentsMainForeground">
 					<Panel id="AccountID">
+							<Label class="HiddenAccountID" text="{i:r:account_id}" />
 						<Button id="QOLStatlockerProfileCardLink">
 							<Label id="QOLStatlockerProfileCardLabel" class="AccountID" text="Friend ID:" />
 							<Image id="QOLStatlockerProfileCardIcon" src="s2r://panorama/images/qollock/statlocker.vtex" scaling="stretch-to-fit-preserve-aspect" />

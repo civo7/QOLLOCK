@@ -1,0 +1,66 @@
+/* ── Badges hidden by default, visible via .ShowRankVisible class ── */
+
+#RankPredictionBadgeTopBar {
+	horizontal-align: center;
+	height: 30px;
+	width: 42px;
+	margin-top: 66px;
+	ignore-parent-flow: true;
+	z-index: 5;
+	visibility: collapse;
+}
+#RankPredictionBadgeTopBar.ShowRankVisible {
+	visibility: visible;
+}
+
+#RankPredictionBadgeTopBarOverlay {
+	horizontal-align: center;
+	height: 30px;
+	width: 42px;
+	margin-top: 66px;
+	ignore-parent-flow: true;
+	z-index: 10;
+	visibility: collapse;
+}
+#RankPredictionBadgeTopBarOverlay.ShowRankVisible {
+	visibility: visible;
+}
+
+#RankPredictionBadge {
+	horizontal-align: right;
+	height: 40px;
+	width: 54px;
+	margin: 0px 5px;
+	vertical-align: center;
+	ignore-parent-flow: true;
+	z-index: 5;
+	visibility: collapse;
+}
+#RankPredictionBadge.ShowRankVisible {
+	visibility: visible;
+}
+
+#RankPredictionBadgeOverlay {
+	horizontal-align: right;
+	height: 40px;
+	width: 54px;
+	margin: 0px 5px;
+	vertical-align: center;
+	ignore-parent-flow: true;
+	z-index: 10;
+	visibility: collapse;
+}
+#RankPredictionBadgeOverlay.ShowRankVisible {
+	visibility: visible;
+}
+
+/* ── Hidden labels ── */
+.PlayerHeroHidden {
+	visibility: collapse;
+}
+.PlayerAccountHidden {
+	visibility: collapse;
+}
+.PlayerAccountHiddenTopBar {
+	visibility: collapse;
+}

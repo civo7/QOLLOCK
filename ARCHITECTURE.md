@@ -1,12 +1,12 @@
 # QOLLOCK Architecture
 
-Version 3.1.4 — Schema 3.1.4 — 38 features — 0 auto-disabled
+Version 3.1.5 — Schema 3.1.5 — 39 features — 0 auto-disabled
 
 ## Overview
 
 QOLLOCK is a Deadlock HUD mod running in Source 2's Panorama engine. It operates across two JavaScript contexts — HUD (in-game panels) and Settings (settings UI) — which share no variables and communicate exclusively through panel attribute strings.
 
-The mod follows a **feature plugin architecture**: a thin core runtime dispatches 38 self-contained feature files, each declaring its own config keys, state ownership, dependencies, and update logic through a uniform registration interface.
+The mod follows a **feature plugin architecture**: a thin core runtime dispatches 39 self-contained feature files, each declaring its own config keys, state ownership, dependencies, and update logic through a uniform registration interface.
 
 ```
 ┌──────────────────────────────────────────┐
@@ -132,7 +132,7 @@ panorama/
     ├── ql_core.js                 ← Main runtime: boot, dispatch, bridge exports
     ├── ql_settings.js             ← Settings UI (Settings context only)
     ├── ql_hero_testing.js         ← Hero testing tools (HUD-only)
-    ├── ql_features/               ← 34 extracted feature files
+    ├── ql_features/               ← 35 extracted feature files
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -156,6 +156,7 @@ panorama/
     │   ├── ql_feat_panelcache.js
     │   ├── ql_feat_recentpurchases.js
     │   ├── ql_feat_rejuvtimers.js
+    │   ├── ql_feat_showrank.js
     │   ├── ql_feat_sigflash.js
     │   ├── ql_feat_souls.js
     │   ├── ql_feat_spm.js
@@ -524,7 +525,7 @@ A 5-phase scheduler spreads expensive features across ticks to prevent frame dro
 | Rejuv + Nicknames | 1 | `rejuvTimers`, `nicknames` |
 | Unspent + Lane | 2 | `unspent`, `laneWithParty` |
 | Unsecured Souls | 3 | `unsecuredSoulsTimer` |
-| Stat Bonuses | 4 | `statBonuses` |
+| ShowRank + Stat Bonuses | 4 | `showRank`, `statBonuses` |
 
 Features with `phase: -1` (the majority) run every tick. Features with `phase: 0–4` only run when the scheduler reaches their phase. This is separate from the **bucket system** (8 intra-tick offsets at 0–117ms).
 

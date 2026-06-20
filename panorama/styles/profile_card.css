@@ -8,6 +8,11 @@
 	background-color: black;
 }
 
+.HiddenAccountID
+{
+    visibility: collapse;
+}
+
 #QOLStatlockerProfileCardLink
 {
 	width: 100%;
