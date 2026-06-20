@@ -15562,6 +15562,13 @@ function GetUIRoot() {
         return dynamicInterval;
     }
 
+    // Pre-allocated loop state — reused each tick to avoid per-frame GC
+    var _loopSnapshot = {
+        root: null, cfg: null, nowMs: 0, gates: null, raw: null,
+        hideoutConnected: false, hasConfigSource: false, redDiamondEnabled: false
+    };
+    var _loopBuckets = [[], [], [], [], [], [], [], []];
+
     function loop() {
         var nextDelaySec = LOOP_INTERVAL_SEC;
         try {
@@ -15605,17 +15612,19 @@ function GetUIRoot() {
         // Snapshot shared loop state so deferred $.Schedule callbacks
         // see the correct tick's data even if they fire after the next
         // loop invocation.
-        var loopSnapshot = {
-            root: root,
-            cfg: cfg,
-            nowMs: nowMsLoop,
-            gates: gates,
-            raw: raw,
-            hideoutConnected: hideoutConnected,
-            hasConfigSource: hasConfigSource,
-            redDiamondEnabled: gates.redDiamondEnabled
-        };
-        var buckets = [[], [], [], [], [], [], [], []];
+        // Reuse pre-allocated snapshot and buckets (mutate in place to avoid per-tick GC)
+        var loopSnapshot = _loopSnapshot;
+        loopSnapshot.root = root;
+        loopSnapshot.cfg = cfg;
+        loopSnapshot.nowMs = nowMsLoop;
+        loopSnapshot.gates = gates;
+        loopSnapshot.raw = raw;
+        loopSnapshot.hideoutConnected = hideoutConnected;
+        loopSnapshot.hasConfigSource = hasConfigSource;
+        loopSnapshot.redDiamondEnabled = gates.redDiamondEnabled;
+
+        var buckets = _loopBuckets;
+        for (var _bi = 0; _bi < 8; _bi++) buckets[_bi].length = 0;
         var staggerEnabled = FEATURE_STAGGER_ENABLED ? buckets : null; // null = use bucket 0 only
 
         populateFeatureBuckets(buckets, staggerEnabled, loopSnapshot, gates, root);
