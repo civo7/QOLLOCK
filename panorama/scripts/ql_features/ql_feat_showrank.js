@@ -416,7 +416,7 @@
 
             // If no account ID in label, try hero name → doc-root
             if (!accountId) {
-                var heroLabel = FindClass(topBarPlayer, "HeroName");
+                var heroLabel = FindClass(topBarPlayer, "HeroNameHidden");
                 var heroName = "";
                 if (IsPanelValid(heroLabel)) {
                     heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
@@ -646,17 +646,17 @@
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
                 }
-                var heroLabel = FindClass(player, "HeroName");
+                var heroLabel = FindClass(player, "HeroNameHidden");
                 if (!IsPanelValid(heroLabel)) {
                     noHeroCount++;
-                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroName — skip");
+                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroNameHidden — skip");
                     continue;
                 }
                 var heroName = "";
                 heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
                 if (!heroName) {
                     emptyHeroCount++;
-                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
+                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroNameHidden EMPTY — skip");
                     continue;
                 }
                 initCount++;
