@@ -25,7 +25,7 @@
 var State = typeof State !== "undefined" ? State : { cachedPanels: {} };
 var _TLog;
 _TLog = function(label, detail) {
-    try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+    try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
 };
 (function() {
     // Verify ql_utils.js loaded before us — log warning if missing
@@ -71,8 +71,8 @@ _TLog = function(label, detail) {
         QOL_UTILS.SetDebugEnabled(next);
         $.Msg("[QOLLock] debug logging " + (next ? "ENABLED" : "DISABLED"));
     }
-    try { ToggleQollockDebug = ToggleQollockDebug; } catch(e) {}
-    try { if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug; } catch(e) {}
+    try { ToggleQollockDebug = ToggleQollockDebug; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    try { if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
     var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
     var ProfileHit = QOL_UTILS_LOADED ? QOL_UTILS.ProfileHit : function() {};
@@ -783,7 +783,7 @@ function ExpressShotLog(msg) {
     }
 
     function _TLog(label, detail) {
-        try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+        try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
 
     function SettingsLoaderDebugLog(msg) {
@@ -1274,10 +1274,10 @@ function ExpressShotLog(msg) {
             if (!alias) continue;
             try {
                 if (panel.BHasClass("hero_" + alias)) return "hero_" + alias;
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             try {
                 if (panel.BHasClass(alias)) return "hero_" + alias;
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         return "";
     }
@@ -1406,14 +1406,14 @@ function ExpressShotLog(msg) {
                 var parsedStyleImg = parseTextCandidate(styleImg);
                 if (parsedStyleImg) return parsedStyleImg;
             }
-        } catch (e1) {}
+        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         try {
             if (panel.style) {
                 var styleBg = String(panel.style.backgroundImage || "");
                 var parsedStyleBg = parseTextCandidate(styleBg);
                 if (parsedStyleBg) return parsedStyleBg;
             }
-        } catch (e2) {}
+        } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
 
         var parent = panel;
         for (var depth = 0; depth < 4; depth++) {
@@ -1944,7 +1944,7 @@ function DispatchConvarStorageProbeCommand(commandText) {
     if (!command) return false;
     // GameInterfaceAPI.ConsoleCommand confirmed absent.
     // CitadelConCommand is the only dispatch path.
-    try { $.DispatchEvent("CitadelConCommand", command); return true; } catch (e0) {}
+    try { $.DispatchEvent("CitadelConCommand", command); return true; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     return false;
 }
 
@@ -1994,10 +1994,10 @@ function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
     // Guard: if a save is already in-flight, don't overwrite its attributes.
     // Return the existing token so the caller can wait for it to complete.
     var existingState = "";
-    try { existingState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || ""); } catch (e0) {}
+    try { existingState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     if (existingState === "pending") {
         var existingToken = "";
-        try { existingToken = String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "") || ""); } catch (e1) {}
+        try { existingToken = String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "") || ""); } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         return existingToken;
     }
     var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -2026,7 +2026,7 @@ function IsStartupCorruptRepairPending(root) {
 
 function SetStartupCorruptRepairPending(root, pending) {
     if (!root || !root.SetAttributeString) return;
-    try { root.SetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, pending ? "1" : ""); } catch (e0) {}
+    try { root.SetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, pending ? "1" : ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 }
 
 
@@ -2257,14 +2257,14 @@ function GetUIRoot() {
 
     var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
         if (!panel || !panel.style || !prop) return;
-        try { panel.style[prop] = value; } catch (e) {}
+        try { panel.style[prop] = value; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     };
 
     var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
         if (!panel || !panel.style || !prop) return;
-        try { delete panel.style[prop]; } catch (e0) {}
-        try { panel.style[prop] = null; } catch (e1) {}
-        try { panel.style[prop] = ""; } catch (e2) {}
+        try { delete panel.style[prop]; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style[prop] = null; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { panel.style[prop] = ""; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
     };
 
     function SetWashColorSafe(panel, color) {
@@ -2438,19 +2438,19 @@ function GetUIRoot() {
 
     function ResetMinimalistHealthbarOffsetRuntime(panel) {
         if (!panel || !panel.style) return;
-        try { panel.style.x = "0px"; } catch (e0) {}
-        try { panel.style.y = "0px"; } catch (e00) {}
+        try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style.y = "0px"; } catch(e00) { QOL_WARN("core", "op failed: " + (e00 && e00.message ? e00.message : String(e00 || ""))); }
     }
 
     function ResetPlayerHealthbarScaleOpacityRuntime(panel) {
         if (!panel || !panel.style) return;
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (e0) {}
-        try { panel.style.opacity = "1.00"; } catch (e1) {}
+        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style.opacity = "1.00"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
 
     function ResetFgPlayerHealthbarOffsetRuntime(panel) {
         if (!panel || !panel.style) return;
-        try { panel.style.transform = ""; } catch (e0) {}
+        try { panel.style.transform = ""; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
 
     function ResolveFgHeroImagePixelSize(scale) {
@@ -2476,7 +2476,7 @@ function GetUIRoot() {
                     "translateX(" + String(fgOffsetX) + "px) " +
                     "translateY(" + String(fgOffsetY) + "px)";
             } else {
-                try { panel.style.transform = ""; } catch (e0) {}
+                try { panel.style.transform = ""; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
         }
 
@@ -2736,7 +2736,7 @@ function GetUIRoot() {
                 if (!cls) continue;
                 try {
                     if (hasClassInHierarchy(panel, cls)) return true;
-                } catch (e0) {}
+                } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
             return false;
         }
@@ -2933,11 +2933,11 @@ function GetUIRoot() {
                 } else {
                     currentLabel.style.color = "";
                 }
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         if (percentLabel) {
-            try { percentLabel.style.visibility = "collapse"; } catch (e1) {}
-            try { percentLabel.style.color = ""; } catch (e2) {}
+            try { percentLabel.style.visibility = "collapse"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+            try { percentLabel.style.color = ""; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
         }
 
         State.budhudWasEnabled = false;
@@ -2992,14 +2992,14 @@ function GetUIRoot() {
             percentLabel.text = nextPercentText;
             State.budhudLastPercentText = nextPercentText;
         }
-        try { percentLabel.style.visibility = "visible"; } catch (eVis) {}
+        try { percentLabel.style.visibility = "visible"; } catch(eVis) { QOL_WARN("core", "op failed: " + (eVis && eVis.message ? eVis.message : String(eVis || ""))); }
 
         var warningEnabled = IsColorWarningEnabled(cfg);
         if (warningEnabled) {
             var nextColor = ResolveColoredHealthbarColor(percent, cfg);
             if (nextColor !== State.budhudLastColor) {
-                try { currentLabel.style.color = nextColor; } catch (eColor0) {}
-                try { percentLabel.style.color = nextColor; } catch (eColor1) {}
+                try { currentLabel.style.color = nextColor; } catch(eColor0) { QOL_WARN("core", "op failed: " + (eColor0 && eColor0.message ? eColor0.message : String(eColor0 || ""))); }
+                try { percentLabel.style.color = nextColor; } catch(eColor1) { QOL_WARN("core", "op failed: " + (eColor1 && eColor1.message ? eColor1.message : String(eColor1 || ""))); }
                 State.budhudLastColor = nextColor;
             }
         } else {
@@ -3008,8 +3008,8 @@ function GetUIRoot() {
                 : "";
             var baseSig = "__base__:" + baseColor;
             if (State.budhudLastColor !== baseSig) {
-                try { currentLabel.style.color = baseColor; } catch (eBase0) {}
-                try { percentLabel.style.color = baseColor; } catch (eBase1) {}
+                try { currentLabel.style.color = baseColor; } catch(eBase0) { QOL_WARN("core", "op failed: " + (eBase0 && eBase0.message ? eBase0.message : String(eBase0 || ""))); }
+                try { percentLabel.style.color = baseColor; } catch(eBase1) { QOL_WARN("core", "op failed: " + (eBase1 && eBase1.message ? eBase1.message : String(eBase1 || ""))); }
                 State.budhudLastColor = baseSig;
             }
         }
@@ -3879,7 +3879,7 @@ function GetUIRoot() {
 
         var staleProxy = GetCachedPanel("fgHeroImageProxy");
         if (staleProxy) {
-            try { staleProxy.DeleteAsync(0); } catch (eProxyDel) {}
+            try { staleProxy.DeleteAsync(0); } catch(eProxyDel) { QOL_WARN("core", "op failed: " + (eProxyDel && eProxyDel.message ? eProxyDel.message : String(eProxyDel || ""))); }
             SetCachedPanel("fgHeroImageProxy", null);
         }
 
@@ -3890,7 +3890,7 @@ function GetUIRoot() {
                 if (cachedHeroImage.GetParent && cachedHeroImage.GetParent() === fgAnchor && cachedHeroImage.DeleteAsync) {
                     cachedHeroImage.DeleteAsync(0);
                 }
-            } catch (eOldHero) {}
+            } catch(eOldHero) { QOL_WARN("core", "op failed: " + (eOldHero && eOldHero.message ? eOldHero.message : String(eOldHero || ""))); }
             State.fgHeroImageMoved = false;
             State.fgHeroImageRuntimeStyleSig = "";
             State.fgHeroRuntimeLevelPanel = null;
@@ -4059,8 +4059,8 @@ function GetUIRoot() {
 
     function ResetDamageReportOffsetRuntime(panel) {
         if (!IsPanelValid(panel)) return;
-        try { panel.style.x = "0px"; } catch (e0) {}
-        try { panel.style.y = "0px"; } catch (e1) {}
+        try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
 
     function NeedsDamageReportOffsetWork(cfg) {
@@ -4107,10 +4107,10 @@ function GetUIRoot() {
 
     function ResetChatRuntime(panel) {
         if (!IsPanelValid(panel)) return;
-        try { panel.style.x = "0px"; } catch (e0) {}
-        try { panel.style.y = "0px"; } catch (e1) {}
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (e2) {}
-        try { panel.style.visibility = "visible"; } catch (e3) {}
+        try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { panel.style.visibility = "visible"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
     }
 
     function UpdateChatRuntime(root, cfg) {
@@ -4342,20 +4342,20 @@ function GetUIRoot() {
         try {
             if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
             overlayPanel.style.visibility = "visible";
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         ItemMirrorFlashLog(key + " overlay flash trigger");
         $.Schedule(0.01, function() {
             if (!IsPanelValid(overlayPanel)) return;
             try {
                 if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", true);
                 ItemMirrorFlashLog(key + " overlay class=ready_flash ON");
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
             $.Schedule((ITEM_MIRROR_READY_OVERLAY_FLASH_MS + 40) / 1000.0, function() {
                 if (!IsPanelValid(overlayPanel)) return;
                 try {
                     if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
                     ItemMirrorFlashLog(key + " overlay class=ready_flash OFF");
-                } catch (e2) {}
+                } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
             });
         });
     }
@@ -4460,7 +4460,7 @@ function GetUIRoot() {
             if (reloadProgressBar.style && reloadProgressBar.style.clip) {
                 clipText = String(reloadProgressBar.style.clip);
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (!clipText || clipText.length === 0) {
             clipText = GetInlineStyleProperty(reloadProgressBar, "clip");
         }
@@ -4482,7 +4482,7 @@ function GetUIRoot() {
         if (!hasActiveReload) {
             try {
                 hasActiveReload = (String(reloadProgressBar.style.visibility || "").toLowerCase() === "visible");
-            } catch (e0v) {}
+            } catch(e0v) { QOL_WARN("core", "op failed: " + (e0v && e0v.message ? e0v.message : String(e0v || ""))); }
         }
         if (!hasActiveReload || currentDeg === null || !isFinite(currentDeg) || currentDeg <= 0.01) {
             cooldownLabel.style.visibility = "collapse";
@@ -5589,7 +5589,7 @@ function GetUIRoot() {
     function IsItemMirrorCooldownProbeExcludedPanel(panel) {
         if (!panel) return false;
         var panelId = "";
-        try { panelId = String(panel.id || ""); } catch (e0) {}
+        try { panelId = String(panel.id || ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (
             panelId === "UpgradeLevelContainer" ||
             panelId === "UpgradeLevel" ||
@@ -5609,7 +5609,7 @@ function GetUIRoot() {
                 ) {
                     return true;
                 }
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         return false;
     }
@@ -5822,7 +5822,7 @@ function GetUIRoot() {
         try {
             if (panel.style.opacity !== text) panel.style.opacity = text;
         } catch (e0) {
-            try { panel.style.opacity = "1.00"; } catch (e1) {}
+            try { panel.style.opacity = "1.00"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         return text;
     };
@@ -5896,7 +5896,7 @@ function GetUIRoot() {
                 if (!cls) continue;
                 try {
                     if (hasClassInHierarchy(panel, cls)) return true;
-                } catch (e0) {}
+                } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
             return false;
         }
@@ -6159,16 +6159,16 @@ function GetUIRoot() {
     function ReadAccountIdFromPanel(panel) {
         if (!panel) return "";
         var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) {}
-        try { candidates.push(panel.account_id); } catch (e1) {}
-        try { candidates.push(panel.accountID); } catch (e2) {}
+        try { candidates.push(panel.accountid); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { candidates.push(panel.account_id); } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { candidates.push(panel.accountID); } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
         try {
             if (panel.GetAttributeString) {
                 candidates.push(panel.GetAttributeString("accountid", ""));
                 candidates.push(panel.GetAttributeString("account_id", ""));
                 candidates.push(panel.GetAttributeString("accountID", ""));
             }
-        } catch (e3) {}
+        } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
 
         for (var i = 0; i < candidates.length; i++) {
             if (IsLikelyAccountId(candidates[i])) {
@@ -6189,13 +6189,13 @@ function GetUIRoot() {
                 if (cur.id && cur.id.length > 0) {
                     part = "#" + cur.id;
                 }
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             if (!part) {
                 try {
                     if (cur.paneltype && cur.paneltype.length > 0) {
                         part = cur.paneltype;
                     }
-                } catch (e1) {}
+                } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
             }
             if (!part) part = "Panel";
             parts.push(part);
@@ -6274,7 +6274,7 @@ function GetUIRoot() {
         if (hideOverlay) {
             var overlay = GetCachedPanel(cachedOverlayKey);
             if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
         }
     }
@@ -6422,7 +6422,7 @@ function GetUIRoot() {
                     try {
                         if (entry.icon.SetImage) entry.icon.SetImage(iconPath);
                         else entry.icon.style.backgroundImage = "url(\"" + iconPath + "\")";
-                    } catch (e0) {}
+                    } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
                     entry.lastIcon = iconPath;
                 }
             }
@@ -6495,7 +6495,7 @@ function GetUIRoot() {
         if (hideOverlay) {
             var overlay = GetCachedPanel("settingsLoaderOverlay");
             if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
         }
         SettingsLoaderDebugLog("session_reset account=" + (prevAccountId || "-") + " hideOverlay=" + (hideOverlay ? "1" : "0"));
@@ -6825,7 +6825,7 @@ function GetUIRoot() {
             ApplyLoaderTitleTheme(title);
         }
         if (warning && title && card && card.MoveChildAfter) {
-            try { card.MoveChildAfter(warning, title); } catch (e0w) {}
+            try { card.MoveChildAfter(warning, title); } catch(e0w) { QOL_WARN("core", "op failed: " + (e0w && e0w.message ? e0w.message : String(e0w || ""))); }
         }
 
         var stepsWrap = GetCachedPanel(cfg.cachePrefix + "StepsWrap");
@@ -6900,7 +6900,7 @@ function GetUIRoot() {
                 var skipType = "";
                 try { skipType = String(skipButton.paneltype || ""); } catch (eSkipType) { skipType = ""; }
                 if (skipType && skipType.toLowerCase() !== "panel") {
-                    try { skipButton.DeleteAsync(0); } catch (eSkipDelete) {}
+                    try { skipButton.DeleteAsync(0); } catch(eSkipDelete) { QOL_WARN("core", "op failed: " + (eSkipDelete && eSkipDelete.message ? eSkipDelete.message : String(eSkipDelete || ""))); }
                     skipButton = null;
                     skipLabel = null;
                 }
@@ -6908,10 +6908,10 @@ function GetUIRoot() {
             if (!skipButton && skipDock) skipButton = $.CreatePanel("Panel", skipDock, SETTINGS_LOADER_SKIP_BUTTON_ID, { hittest: "true", hittestchildren: "false", acceptsfocus: "true" });
             if (skipButton) {
                 if (skipDock && skipButton.GetParent && skipButton.GetParent() !== skipDock && skipButton.SetParent) {
-                    try { skipButton.SetParent(skipDock); } catch (eMoveSkip) {}
+                    try { skipButton.SetParent(skipDock); } catch(eMoveSkip) { QOL_WARN("core", "op failed: " + (eMoveSkip && eMoveSkip.message ? eMoveSkip.message : String(eMoveSkip || ""))); }
                 }
                 if (skipDock && skipBacker && skipDock.MoveChildBefore) {
-                    try { skipDock.MoveChildBefore(skipBacker, skipButton); } catch (eMoveBacker) {}
+                    try { skipDock.MoveChildBefore(skipBacker, skipButton); } catch(eMoveBacker) { QOL_WARN("core", "op failed: " + (eMoveBacker && eMoveBacker.message ? eMoveBacker.message : String(eMoveBacker || ""))); }
                 }
                 skipButton.hittest = true;
                 skipButton.hittestchildren = true;
@@ -6977,7 +6977,7 @@ function GetUIRoot() {
             try {
                 if (subtitle.DeleteAsync) subtitle.DeleteAsync(0);
                 else subtitle.style.visibility = "collapse";
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         SetCachedPanel("settingsLoaderSubtitle", null);
 
@@ -6987,7 +6987,7 @@ function GetUIRoot() {
             try {
                 if (legacySteps.DeleteAsync) legacySteps.DeleteAsync(0);
                 else legacySteps.style.visibility = "collapse";
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
 
         // ── Settings-specific: actions row ──
@@ -7028,7 +7028,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("settingsLoaderOverlay");
         if (!shouldShow) {
             if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
             if (State.settingsLoaderSessionCompleted) {
                 ResetSettingsLoaderSession(true);
@@ -7054,7 +7054,7 @@ function GetUIRoot() {
         if (skipButton) {
             var skipEnabled = !!(State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted);
             var skipVisible = shouldShow && !State.settingsLoaderSkipRequested;
-            try { skipButton.enabled = skipEnabled; } catch (eSkipEnabled) {}
+            try { skipButton.enabled = skipEnabled; } catch(eSkipEnabled) { QOL_WARN("core", "op failed: " + (eSkipEnabled && eSkipEnabled.message ? eSkipEnabled.message : String(eSkipEnabled || ""))); }
             skipButton.style.visibility = skipVisible ? "visible" : "collapse";
             skipButton.style.opacity = skipEnabled ? "1.0" : "0.55";
             if (skipBacker) skipBacker.style.visibility = skipVisible ? "visible" : "collapse";
@@ -7328,7 +7328,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("saveSettingsLoaderOverlay");
         if (!shouldShow) {
             if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
             return;
         }
@@ -7549,7 +7549,7 @@ function GetUIRoot() {
         var overlay = GetCachedPanel("clearSettingsLoaderOverlay");
         if (!shouldShow) {
             if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch (e0) {}
+                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
             return;
         }
@@ -7614,7 +7614,7 @@ function GetUIRoot() {
                     CitadelExitUpgradeShop();
                     preClosed = true;
                 }
-            } catch (e0c) {}
+            } catch(e0c) { QOL_WARN("core", "op failed: " + (e0c && e0c.message ? e0c.message : String(e0c || ""))); }
             if (!preClosed) {
                 var preShopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var preLeftCommandPanel = preShopPanel && preShopPanel.FindChildTraverse ? preShopPanel.FindChildTraverse("LeftCommandPanel") : null;
@@ -7631,14 +7631,14 @@ function GetUIRoot() {
                 CitadelEnterUpgradeShop();
                 opened = true;
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (!opened) {
             try {
                 if (typeof CitadelToggleUpgradeShop === "function") {
                     CitadelToggleUpgradeShop();
                     opened = true;
                 }
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         if (!opened) {
             var actionUpgrade = FindFirstPanelByClass(root, "action_upgrade");
@@ -7659,7 +7659,7 @@ function GetUIRoot() {
                     CitadelExitUpgradeShop();
                     closed = true;
                 }
-            } catch (e2) {}
+            } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
             if (!closed) {
                 var shopPanel = closeRoot.FindChildTraverse ? closeRoot.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
                 var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
@@ -7695,7 +7695,7 @@ function GetUIRoot() {
                 CitadelExitUpgradeShop();
                 closed = true;
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (!closed) {
             var shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HERO_SHOP) : null;
             var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
@@ -7800,7 +7800,7 @@ function GetUIRoot() {
                     CitadelOpenUpgradeShop();
                     opened = true;
                 }
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         if (!opened) {
             try {
@@ -7808,7 +7808,7 @@ function GetUIRoot() {
                     CitadelEnterUpgradeShop();
                     opened = true;
                 }
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         if (!opened) {
             try {
@@ -7816,7 +7816,7 @@ function GetUIRoot() {
                     CitadelToggleUpgradeShop();
                     opened = true;
                 }
-            } catch (e2) {}
+            } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
         }
         if (!opened) {
             var actionUpgrade = FindFirstPanelByClass(root, "action_upgrade");
@@ -7918,7 +7918,7 @@ function GetUIRoot() {
             }
             if (sigRootGuard >= 64) QOL_WARN("buildPayload", "storage signature root walk hit guard limit");
             AddStorageSignatureScanRoot(roots, top);
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
         for (var i = 0; i < roots.length; i++) {
             var scanRoot = roots[i];
@@ -7928,7 +7928,7 @@ function GetUIRoot() {
             try {
                 var hud = scanRoot.FindChildTraverse(PANEL_ID_SIGNATURE);
                 if (hud && IsPanelValid(hud)) return hud;
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
         return null;
     }
@@ -8318,7 +8318,7 @@ function GetUIRoot() {
             if (panel.text !== undefined && panel.text !== null) {
                 text = String(panel.text);
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (text && text.length > 0) return text;
         if (panel.GetAttributeString) {
             try {
@@ -8336,7 +8336,7 @@ function GetUIRoot() {
         SetStyleSafe(panel, "visibility", "collapse");
         var label = GetCachedPanel("showBuildIdLabel");
         if (label) {
-            try { label.text = ""; } catch (e0) {}
+            try { label.text = ""; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         State.showBuildIdStyleSig = "";
         State.showBuildIdLastLabel = null;
@@ -8425,8 +8425,8 @@ function GetUIRoot() {
         SetStyleSafe(target.panel, "height", "24px");
         SetStyleSafe(target.panel, "flowChildren", "right");
         SetStyleSafe(target.panel, "zIndex", "5");
-        try { target.label.text = displayText; } catch (e2) {}
-        try { target.label.html = true; } catch (e3) {}
+        try { target.label.text = displayText; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { target.label.html = true; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
         SetStyleSafe(target.label, "whiteSpace", "nowrap");
         SetStyleSafe(target.label, "fontSize", "16px");
         SetStyleSafe(target.label, "fontWeight", "bold");
@@ -8472,7 +8472,7 @@ function GetUIRoot() {
         if (root && root.SetAttributeString) {
             try {
                 SetStartupCorruptRepairPending(root, false);
-            } catch (eTempDisable) {}
+            } catch(eTempDisable) { QOL_WARN("core", "op failed: " + (eTempDisable && eTempDisable.message ? eTempDisable.message : String(eTempDisable || ""))); }
         }
     }
 
@@ -8556,7 +8556,7 @@ function GetUIRoot() {
                 if (probeEntry) {
                     return hudBuilds;
                 }
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         hudBuilds = root.FindChildTraverse("CitadelHudHeroBuilds");
         SetCachedPanel("buildSaveHudPanel", hudBuilds);
@@ -8571,7 +8571,7 @@ function GetUIRoot() {
         }
 
         pushUnique(root);
-        try { pushUnique(GetUIRoot()); } catch (e0) {}
+        try { pushUnique(GetUIRoot()); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         pushUnique(GetCachedPanel("buildSaveHudPanel"));
         pushUnique(GetCachedPanel("shopModsSelectedBuild"));
         if (root && root.FindChildTraverse) {
@@ -8601,7 +8601,7 @@ function GetUIRoot() {
                     ctxGuard++;
                 }
             }
-        } catch (e1) {}
+        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
 
         return roots;
     }
@@ -8636,7 +8636,7 @@ function GetUIRoot() {
         if (!panel || !IsPanelValid(panel)) return false;
         try {
             if (panel.visible === false) return false;
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         var vis = "";
         try {
             if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
@@ -8932,7 +8932,7 @@ function GetUIRoot() {
                                 if (childTxt === "cancel" || childTxt.indexOf("cancel") !== -1) break;
                             }
                         }
-                    } catch (e2) {}
+                    } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
                     var combined = (idText + " " + classText + " " + textText + " " + onactivate + " " + childCancelText).toLowerCase();
                     var cancelLike =
                         textText === "cancel" ||
@@ -9105,7 +9105,7 @@ function GetUIRoot() {
                                 if (childTxt === "ok" || childTxt.indexOf("ok") !== -1) break;
                             }
                         }
-                    } catch (eChildOuter) {}
+                    } catch(eChildOuter) { QOL_WARN("core", "op failed: " + (eChildOuter && eChildOuter.message ? eChildOuter.message : String(eChildOuter || ""))); }
                     var isAutoConfirmPopupButton =
                         (idText === "button0") &&
                         (classText.indexOf("popupbutton") !== -1) &&
@@ -9171,25 +9171,25 @@ function GetUIRoot() {
                 CitadelHudHeroBuildsDeleteSelectedBuild();
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteSelectedBuild" };
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         try {
             if (typeof CitadelHudHeroBuildsDeleteBuild === "function") {
                 CitadelHudHeroBuildsDeleteBuild();
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteBuild" };
             }
-        } catch (e1) {}
+        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         try {
             if (typeof CitadelHudHeroBuildsRemoveSelectedBuild === "function") {
                 CitadelHudHeroBuildsRemoveSelectedBuild();
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveSelectedBuild" };
             }
-        } catch (e2) {}
+        } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
         try {
             if (typeof CitadelHudHeroBuildsRemoveBuild === "function") {
                 CitadelHudHeroBuildsRemoveBuild();
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveBuild" };
             }
-        } catch (e3) {}
+        } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
 
         var eventNames = [
             "CitadelHudHeroBuildsDeleteSelectedBuild",
@@ -9201,7 +9201,7 @@ function GetUIRoot() {
             try {
                 $.DispatchEvent(eventNames[j]);
                 return { ok: true, mode: "delete", source: "event:" + eventNames[j] };
-            } catch (e4) {}
+            } catch(e4) { QOL_WARN("core", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
         }
 
         return { ok: false, mode: "", source: "none" };
@@ -9800,7 +9800,7 @@ function GetUIRoot() {
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
                 if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         var createLookupStrict = FindCreateBuildButtonStrict(root);
         var createBtnStrict = createLookupStrict && createLookupStrict.panel ? createLookupStrict.panel : null;
@@ -9945,7 +9945,7 @@ function GetUIRoot() {
             try {
                 CitadelHudHeroBuildsCreateNewBuild();
                 return { ok: true, path: "fn_create_new_build" };
-            } catch (e0) {}
+            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
 
         var eventNames = [
@@ -9957,7 +9957,7 @@ function GetUIRoot() {
             try {
                 $.DispatchEvent(ev);
                 return { ok: true, path: "event:" + ev };
-            } catch (e1) {}
+            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
 
         return { ok: false, path: attempts.join(",") || "none" };
@@ -9985,10 +9985,10 @@ function GetUIRoot() {
                     var idText = panel.id ? String(panel.id).toLowerCase() : "";
                     if (idText.indexOf("selected") !== -1) score += 3;
                     if (idText.indexOf("hero") !== -1) score += 1;
-                } catch (e1) {}
+                } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
                 try {
                     if (panel.visible === true) score += 1;
-                } catch (e2) {}
+                } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
                 if (score > bestScore) {
                     bestScore = score;
                     bestHero = heroFromCmd;
@@ -10163,7 +10163,7 @@ function GetUIRoot() {
                 attempts[i]();
                 activated = true;
                 break;
-            } catch (e) {}
+            } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
         }
         return activated;
     }
@@ -11276,7 +11276,7 @@ function GetUIRoot() {
                 State.combatStatus.signalActive = true;
                 return true;
             }
-        } catch (eHudClass0) {}
+        } catch(eHudClass0) { QOL_WARN("core", "op failed: " + (eHudClass0 && eHudClass0.message ? eHudClass0.message : String(eHudClass0 || ""))); }
         return false;
     }
 
@@ -12654,7 +12654,7 @@ function GetUIRoot() {
                         slotState.lastSrc = srcVal;
                     }
                     hasImageSrc = true;
-                } catch (e) {}
+                } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
             }
         }
 
@@ -12728,14 +12728,14 @@ function GetUIRoot() {
                 try {
                     mirrorMask.style.clip = maskClip;
                     slotState.lastClip = maskClip;
-                } catch (e1) {}
+                } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
             }
         } else if (slotState.lastClip && slotState.lastClip.length > 0) {
             try {
                 if (mirrorMask.style.clip !== slotState.lastClip) {
                     mirrorMask.style.clip = slotState.lastClip;
                 }
-            } catch (e2) {}
+            } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
         }
         if (maskOpacity && maskOpacity.length > 0) {
             SetPanelOpacitySafe(mirrorMask, maskOpacity, 1.0);
@@ -12746,11 +12746,11 @@ function GetUIRoot() {
             try {
                 mirrorMask.style.preTransformScale2d = maskScaleSig;
                 slotState.lastMaskScaleSig = maskScaleSig;
-            } catch (e4) {}
+            } catch(e4) { QOL_WARN("core", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
         }
         var showMask = !!isOnCooldown;
         if (!showMask && maskVisibility) showMask = (maskVisibility === "visible");
-        try { mirrorMask.style.visibility = showMask ? "visible" : "collapse"; } catch (e5) {}
+        try { mirrorMask.style.visibility = showMask ? "visible" : "collapse"; } catch(e5) { QOL_WARN("core", "op failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
 
         var isCooldownTextVisible = false;
         if (mirrorCooldownText) {
@@ -13272,7 +13272,7 @@ function GetUIRoot() {
             if (panel.style && typeof panel.style.preTransformRotate2d === "string") {
                 preRotate = panel.style.preTransformRotate2d;
             }
-        } catch (e0) {}
+        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         var preRotateVal = ParsePlainRotateDegrees(preRotate);
         if (preRotateVal !== null) return NormalizeDegrees360(preRotateVal);
 
@@ -13282,7 +13282,7 @@ function GetUIRoot() {
             if (panel.style && typeof panel.style.transform === "string") {
                 transformText = panel.style.transform;
             }
-        } catch (e1) {}
+        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         var transformVal = ParseRotateTransformDegrees(transformText);
         if (transformVal !== null) return NormalizeDegrees360(transformVal);
 
@@ -14309,7 +14309,7 @@ function GetUIRoot() {
         if (!compassEnabled) {
             var _compassRoot = GetCachedPanel("compassRoot");
             if (IsPanelValid(_compassRoot)) {
-                try { _compassRoot.style.visibility = "collapse"; } catch (_ce) {}
+                try { _compassRoot.style.visibility = "collapse"; } catch(_ce) { QOL_WARN("core", "op failed: " + (_ce && _ce.message ? _ce.message : String(_ce || ""))); }
             }
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
@@ -14525,7 +14525,7 @@ function GetUIRoot() {
             try {
                 quickbuyPanel.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
                 root.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
-            } catch (_quickbuyCountAttrErr) {}
+            } catch(_quickbuyCountAttrErr) { QOL_WARN("core", "op failed: " + (_quickbuyCountAttrErr && _quickbuyCountAttrErr.message ? _quickbuyCountAttrErr.message : String(_quickbuyCountAttrErr || ""))); }
         } else {
             State.quickbuyClassCache = null;
         }
@@ -15251,11 +15251,11 @@ function GetUIRoot() {
         if (!IsPanelValid(msgPanel)) return;
         var msgText = FindChatMessageLabel(msgPanel);
         if (msgText) {
-            try { msgText.style.visibility = "visible"; } catch (eText) {}
+            try { msgText.style.visibility = "visible"; } catch(eText) { QOL_WARN("core", "op failed: " + (eText && eText.message ? eText.message : String(eText || ""))); }
         }
         var msgContainer = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
         if (msgContainer) {
-            try { msgContainer.style.opacity = 1; } catch (eContainer) {}
+            try { msgContainer.style.opacity = 1; } catch(eContainer) { QOL_WARN("core", "op failed: " + (eContainer && eContainer.message ? eContainer.message : String(eContainer || ""))); }
         }
         var textContainer = msgText && msgText.GetParent ? msgText.GetParent() : null;
         if (textContainer && textContainer.Children) {
@@ -15271,7 +15271,7 @@ function GetUIRoot() {
                     isInjected = true;
                 }
                 if (isInjected && child.DeleteAsync) {
-                    try { child.DeleteAsync(0); } catch (eDelete) {}
+                    try { child.DeleteAsync(0); } catch(eDelete) { QOL_WARN("core", "op failed: " + (eDelete && eDelete.message ? eDelete.message : String(eDelete || ""))); }
                 }
             }
         }
@@ -15532,7 +15532,7 @@ function GetUIRoot() {
                     }
                 }
             }
-        } catch(e) {}
+        } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
 
     function recordLoopPerf(root, cfg, perfLoopStartMs) {
@@ -16003,8 +16003,8 @@ function GetUIRoot() {
     }
 
     // Publish namespace to global scope
-    try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) {}
-    try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) {}
+    try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
 
 
