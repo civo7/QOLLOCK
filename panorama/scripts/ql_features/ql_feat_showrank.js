@@ -649,6 +649,20 @@
                 var heroLabel = FindClass(player, "HeroNameHidden");
                 if (!IsPanelValid(heroLabel)) {
                     noHeroCount++;
+                    // ── Diagnostic: dump all class names on player's children ──
+                    var classDump = [];
+                    try {
+                        for (var cd = 0; cd < player.GetChildCount() && cd < 30; cd++) {
+                            var ch = player.GetChild(cd);
+                            if (ch) {
+                                var cid = String(ch.id || "?");
+                                var ccls = "";
+                                try { ccls = String(ch.GetAttributeString ? ch.GetAttributeString("class", "") : ""); } catch(e) {}
+                                classDump.push(cid + ":" + ccls);
+                            }
+                        }
+                    } catch(e) { classDump.push("ERROR:" + (e.message || String(e))); }
+                    $.Msg("[QOLLock][showRank] NO-HERO player[" + i + "] id=" + pid + " children: [" + classDump.join(" | ") + "]");
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroNameHidden — skip");
                     continue;
                 }
