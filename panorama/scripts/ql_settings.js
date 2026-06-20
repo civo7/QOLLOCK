@@ -20983,6 +20983,150 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
         CreateSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         CreateSeparator(list);
+        // ── Feature Isolation Test (FIT) ──
+        // Tests each registered feature individually: enable → verify → disable → next.
+        // Faster and more diagnostic than the preset cycle (tests isolation, not combinations).
+        var fitHeader = CreateSectionTitle(list, "Feature Test");
+        var fitBtn = CreateSectionInlineIconButton(fitHeader, "FeatureTestBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Test each feature individually (enable → verify → disable).");
+        var fitStatus = $.CreatePanel("Label", fitHeader, "FeatureTestStatus");
+        fitStatus.text = "Idle";
+        fitStatus.style.fontSize = "13px";
+        fitStatus.style.color = "#666";
+        fitStatus.style.marginLeft = "6px";
+        fitStatus.style.verticalAlign = "center";
+
+        var _fitRunning = false;
+        var _fitToken = 0;
+
+        function _fitSetStatus(text, color) {
+            try { if (fitStatus && fitStatus.IsValid && fitStatus.IsValid()) { fitStatus.text = text; fitStatus.style.color = color; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+        function _fitSetBtnActive(active) {
+            try { if (fitBtn && fitBtn.IsValid && fitBtn.IsValid()) { if (active) fitBtn.AddClass("CycleActive"); else fitBtn.RemoveClass("CycleActive"); } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+
+        if (fitBtn) {
+            fitBtn.SetPanelEvent("onactivate", function() {
+                if (_fitRunning) {
+                    // Stop
+                    _fitRunning = false;
+                    _fitToken++;
+                    _fitSetStatus("Stopped", "#aa8844");
+                    _fitSetBtnActive(false);
+                    return;
+                }
+                // Start: collect features that have config keys we can toggle
+                var registry = (typeof QOL_FEATURE_REGISTRY !== "undefined") ? QOL_FEATURE_REGISTRY : null;
+                if (!registry) {
+                    _fitSetStatus("No registry available", "#cc4444");
+                    return;
+                }
+                var featNames = Object.keys(registry).sort();
+                var testQueue = [];
+                for (var fi = 0; fi < featNames.length; fi++) {
+                    var fn = featNames[fi];
+                    var desc = registry[fn];
+                    // Skip features with no config keys (always-on infrastructure)
+                    if (!desc.configKeys || desc.configKeys.length === 0) continue;
+                    testQueue.push({ name: fn, configKeys: desc.configKeys });
+                }
+                if (testQueue.length === 0) {
+                    _fitSetStatus("No testable features", "#cc4444");
+                    return;
+                }
+
+                // Save pre-test config snapshot
+                var savedConfig = {};
+                var allKeys = [];
+                for (var ti = 0; ti < testQueue.length; ti++) {
+                    for (var tk = 0; tk < testQueue[ti].configKeys.length; tk++) {
+                        var k = testQueue[ti].configKeys[tk];
+                        if (allKeys.indexOf(k) < 0) allKeys.push(k);
+                    }
+                }
+                for (var ki = 0; ki < allKeys.length; ki++) {
+                    savedConfig[allKeys[ki]] = MOD_CONFIG[allKeys[ki]];
+                }
+
+                var passed = 0;
+                var failed = 0;
+                var skipped = 0;
+                var index = 0;
+                var token = ++_fitToken;
+                _fitRunning = true;
+                _fitSetBtnActive(true);
+                _fitSetStatus("Starting...", "#66cc99");
+
+                function runNext() {
+                    if (!_fitRunning || token !== _fitToken) return;
+                    if (index >= testQueue.length) {
+                        // Done — restore config
+                        _fitRunning = false;
+                        _fitSetBtnActive(false);
+                        for (var rk = 0; rk < allKeys.length; rk++) {
+                            MOD_CONFIG[allKeys[rk]] = savedConfig[allKeys[rk]];
+                        }
+                        SaveAndSync();
+                        var color = (failed > 0) ? "#cc8844" : "#66cc99";
+                        _fitSetStatus("Done: " + passed + " passed, " + failed + " failed, " + skipped + " skipped", color);
+                        $.Msg("[QOLLock][FeatureTest] Complete — " + passed + " passed, " + failed + " failed, " + skipped + " skipped");
+                        return;
+                    }
+
+                    var entry = testQueue[index];
+                    var label = "[" + (index + 1) + "/" + testQueue.length + "] " + entry.name;
+                    _fitSetStatus(label, "#66cc99");
+
+                    try {
+                        // Enable feature's config keys
+                        for (var ek = 0; ek < entry.configKeys.length; ek++) {
+                            var ck = entry.configKeys[ek];
+                            MOD_CONFIG[ck] = (ck.indexOf("ENABLE_") === 0 || ck.indexOf("HUD_") === 0 || ck.indexOf("SHOW_") === 0) ? 1 : MOD_CONFIG[ck];
+                        }
+                        SaveAndSync();
+
+                        // Wait 220ms for HUD dispatch to process, then check
+                        $.Schedule(0.22, function() {
+                            if (!_fitRunning || token !== _fitToken) return;
+                            // Check if feature was auto-disabled (error in dispatch)
+                            var diagText = "";
+                            try { diagText = (typeof QOL_DumpDiagnostics === "function") ? QOL_DumpDiagnostics() : ""; } catch(e) { diagText = ""; }
+                            var autoDisabled = (diagText.indexOf("AUTO-DISABLED: " + entry.name) >= 0);
+
+                            if (autoDisabled) {
+                                failed++;
+                                $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " auto-disabled");
+                            } else {
+                                passed++;
+                            }
+
+                            // Disable feature's keys
+                            for (var dk = 0; dk < entry.configKeys.length; dk++) {
+                                MOD_CONFIG[entry.configKeys[dk]] = savedConfig[entry.configKeys[dk]];
+                            }
+                            SaveAndSync();
+
+                            // Short delay for cleanup, then next
+                            index++;
+                            $.Schedule(0.08, runNext);
+                        });
+                    } catch(e) {
+                        failed++;
+                        $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " threw: " + (e && e.message ? e.message : String(e)));
+                        // Restore keys and continue
+                        for (var rk2 = 0; rk2 < entry.configKeys.length; rk2++) {
+                            MOD_CONFIG[entry.configKeys[rk2]] = savedConfig[entry.configKeys[rk2]];
+                        }
+                        SaveAndSync();
+                        index++;
+                        $.Schedule(0.08, runNext);
+                    }
+                }
+                $.Schedule(0.1, runNext);
+            });
+        }
         // ── Preset Cycle ──
         var presetCycleHeader = CreateSectionTitle(list, "Preset Cycle");
         var presetCycleBtn = CreateSectionInlineIconButton(presetCycleHeader, "PresetCycleBtn",
@@ -22791,21 +22935,12 @@ try {
     $.Msg("[QOLLock][Settings] CitadelGameStateChanged event not available: " + (e && e.message ? e.message : String(e)));
 }
 
-try {
-    $.RegisterForUnhandledEvent("CitadelConnectedToGame", function() {
-        HandleSettingsGameTransitionSignal("CitadelConnectedToGame");
-    });
-} catch(e) {
-    $.Msg("[QOLLock][Settings] CitadelConnectedToGame event not available: " + (e && e.message ? e.message : String(e)));
-}
-
-try {
-    $.RegisterForUnhandledEvent("CitadelMatchStateChanged", function() {
-        HandleSettingsGameTransitionSignal("CitadelMatchStateChanged");
-    });
-} catch(e) {
-    $.Msg("[QOLLock][Settings] CitadelMatchStateChanged event not available: " + (e && e.message ? e.message : String(e)));
-}
+// NOTE: CitadelConnectedToGame + CitadelMatchStateChanged removed —
+// neither event name exists in the engine (verified against decompiled
+// panoramauiclient.dll + dispatch_events.txt, 2026-06-20).
+// The correct event is CitadelConnectedToGameServer but it fires at a
+// different lifecycle point. HandleSettingsGameTransitionSignal is
+// already triggered by CitadelGameStateChanged + CitadelResumePlaying.
 
 SyncConfigFromStorage();
 RunJoyNameStorageReadProbe();
