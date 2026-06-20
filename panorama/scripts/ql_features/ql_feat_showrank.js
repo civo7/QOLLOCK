@@ -689,7 +689,12 @@
         phase: 4,
         requiresRoot: true,
         gate: function(cfg) {
-            return IsCfgEnabled(cfg, "SHOW_RANK");
+            // Keepalive: stay active while _showRankEnabled is still true so
+            // the on→off cleanup in ApplyConfigHotReload runs (bump generation,
+            // clear badges, reset state). Without this, toggling SHOW_RANK off
+            // kills the feature before cleanup, and toggling back on sees
+            // _showRankEnabled === enabled → early return → top bar never re-inits.
+            return IsCfgEnabled(cfg, "SHOW_RANK") || !!(State && State._showRankEnabled);
         },
         update: function(root, cfg) {
             try {
