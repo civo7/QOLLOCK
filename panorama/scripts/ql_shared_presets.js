@@ -965,6 +965,7 @@ var QOL_COMPACT_SCHEMA_V11 = QOL_COMPACT_SCHEMA_V10.concat([
     { key: "AMMO_PANEL_Y_OFFSET", min: -200, max: 200, step: 5 }
 ]);
 
+// V12 reserved for future expansion, currently identical to V11
 var QOL_COMPACT_SCHEMA_V12 = QOL_COMPACT_SCHEMA_V11;
 
 var QOL_COMPACT_SCHEMA_V13 = QOL_COMPACT_SCHEMA_V12.concat([
@@ -1025,6 +1026,7 @@ var QOL_COMPACT_SCHEMA_V24 = QOL_COMPACT_SCHEMA_V23.concat([
     { key: "ENABLE_COLORED_HEALTHBAR", min: 0, max: 1, step: 1 }
 ]);
 
+// V25 reserved, identical to V24
 var QOL_COMPACT_SCHEMA_V25 = QOL_COMPACT_SCHEMA_V24;
 
 var QOL_COMPACT_SCHEMA_V26 = QOL_COMPACT_SCHEMA_V25.concat([
@@ -1095,6 +1097,7 @@ var QOL_COMPACT_SCHEMA_V40 = QOL_COMPACT_SCHEMA_V39.concat([
     { key: "ENABLE_HIDE_AMMO_ALL", min: 0, max: 1, step: 1 }
 ]);
 
+// V41 reserved, identical to V40
 var QOL_COMPACT_SCHEMA_V41 = QOL_COMPACT_SCHEMA_V40;
 
 var QOL_COMPACT_SCHEMA_V42 = QOL_COMPACT_SCHEMA_V41.concat([
@@ -1111,6 +1114,7 @@ var QOL_COMPACT_SCHEMA_V44 = QOL_COMPACT_SCHEMA_V43.concat([
     { key: "OLD_ITEM_COOLDOWNS_Y_OFFSET", min: -1000, max: 1000, step: 5 }
 ]);
 
+// V45 reserved, identical to V44
 var QOL_COMPACT_SCHEMA_V45 = QOL_COMPACT_SCHEMA_V44;
 
 var QOL_COMPACT_SCHEMA_V46 = QOL_COMPACT_SCHEMA_V45.concat([
@@ -1269,31 +1273,6 @@ QOL_COMPACT_SCHEMA_UTILS.CloneSchemaWithFieldOverrides = function(baseSchema, ov
             min: sourceField.min,
             max: sourceField.max,
             step: sourceField.step
-        });
-    }
-    return out;
-}
-
-QOL_COMPACT_SCHEMA_UTILS.CloneSchemaWithoutFields = function(baseSchema, fieldKeys) {
-    var out = [];
-    var blocked = {};
-    var i;
-    if (Array.isArray(fieldKeys)) {
-        for (i = 0; i < fieldKeys.length; i++) {
-            if (fieldKeys[i] === undefined || fieldKeys[i] === null) continue;
-            blocked[String(fieldKeys[i])] = true;
-        }
-    }
-    if (!Array.isArray(baseSchema)) return out;
-    for (i = 0; i < baseSchema.length; i++) {
-        var field = baseSchema[i];
-        if (!field || !field.key) continue;
-        if (blocked[String(field.key)]) continue;
-        out.push({
-            key: field.key,
-            min: field.min,
-            max: field.max,
-            step: field.step
         });
     }
     return out;
@@ -2243,6 +2222,8 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_ULT_COOLDOWNS: 0,
         ULT_COOLDOWN_OPACITY: 0.9,
         ULT_COOLDOWN_SIZE: 13,
+        ULT_COOLDOWN_X_OFFSET: 0,
+        ULT_COOLDOWN_Y_OFFSET: 0,
         ENABLE_PASSIVE_COOLDOWN: 0,
         ENABLE_OLD_ITEM_COOLDOWNS: 1,
         OLD_ITEM_COOLDOWNS_SCALE: 110,
