@@ -12,6 +12,7 @@
     var PerfNowMs = _deps.perfNowMs;
     var SafeGetAttribute = Utils.SafeGetAttribute;
     var SafeSetAttribute = Utils.SafeSetAttribute;
+    var SafeLog = Utils.SafeLog;
     var DebugLog = Utils.DebugLog;
     var IsConnectedToHideout = _deps.isConnectedToHideout;
 
@@ -31,7 +32,7 @@
         var guard = 0;
         while (IsPanelValid(cur) && guard < 80) {
             var parent = null;
-            try { parent = cur.GetParent(); } catch(e) {}
+            try { parent = cur.GetParent(); } catch(e) { DebugLog("showRank", "docRoot.GetParent: " + (e.message || String(e))); }
             if (!IsPanelValid(parent) || parent === cur) break;
             cur = parent;
             guard++;
@@ -42,7 +43,7 @@
     function HasAnyClass(panel, classes) {
         if (!IsPanelValid(panel)) return false;
         for (var i = 0; i < classes.length; i++) {
-            try { if (panel.BHasClass(classes[i])) return true; } catch(e) {}
+            try { if (panel.BHasClass(classes[i])) return true; } catch(e) { DebugLog("showRank", "hasAnyClass.BHasClass: " + (e.message || String(e))); }
         }
         return false;
     }
@@ -64,7 +65,7 @@
         try {
             if (visible) badge.AddClass("ShowRankVisible");
             else badge.RemoveClass("ShowRankVisible");
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "applyTopBarVisibility: " + (e.message || String(e))); }
     }
 
     function ApplyTopBarVisibility(root, visible) {
@@ -81,7 +82,7 @@
                 SetBadgeVisible(overlay, visible);
                 count++;
             }
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "applyTopBarVisibility: " + (e.message || String(e))); }
         DebugLog("showRank", "ApplyTopBarVisibility: done, touched=" + count);
     }
 
@@ -112,7 +113,7 @@
 
     function GetPlayersList(root) {
         var escape = null;
-        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) {}
+        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) { DebugLog("showRank", "getPlayersList.FindChildTraverse: " + (e.message || String(e))); }
         var start = IsPanelValid(escape) ? escape : root;
         try { return start.FindChildTraverse("PlayersList"); } catch(e) { return null; }
     }
@@ -122,13 +123,13 @@
         var playersList = GetPlayersList(root);
         if (!IsPanelValid(playersList)) { DebugLog("showRank", "FindAllEntries: no PlayersList"); return out; }
         var q = [];
-        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) {}
+        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) { DebugLog("showRank", "findAllEntries.GetChildCount: " + (e.message || String(e))); }
         for (var h = 0; h < q.length && h < 2000; h++) {
             var p = q[h];
             try {
                 if (p.paneltype === "CitadelPlayersListEntry") { out.push(p); continue; }
-            } catch(e) {}
-            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) {}
+            } catch(e) { DebugLog("showRank", "findAllEntries.paneltype: " + (e.message || String(e))); }
+            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) { DebugLog("showRank", "findAllEntries.GetChild: " + (e.message || String(e))); }
         }
         return out;
     }
@@ -136,7 +137,7 @@
     function ReadClass(panel, cls) {
         var list = panel.FindChildrenWithClassTraverse ? panel.FindChildrenWithClassTraverse(cls) : [];
         if (list && list.length > 0) {
-            try { return String(list[0].text || "").trim(); } catch(e) {}
+            try { return String(list[0].text || "").trim(); } catch(e) { DebugLog("showRank", "readClass.text: " + (e.message || String(e))); }
         }
         return "";
     }
@@ -178,11 +179,11 @@
         for (var i = 0; i < entries.length; i++) {
             var label = GetAccountIdLabel(entries[i]);
             if (IsPanelValid(label)) {
-                try { label.text = ""; cleared++; } catch(e) {}
+                try { label.text = ""; cleared++; } catch(e) { DebugLog("showRank", "clearAllAccountIds.labelText: " + (e.message || String(e))); }
             }
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
             if (IsPanelValid(overlay)) {
-                try { overlay.SetImage(""); } catch(e) {}
+                try { overlay.SetImage(""); } catch(e) { DebugLog("showRank", "clearAllAccountIds.setImage: " + (e.message || String(e))); }
                 SetBadgeVisible(overlay, false);
             }
         }
@@ -200,9 +201,9 @@
 
     function DismissProfileCard() {
         try { if (typeof DismissAllContextMenus === "function") DismissAllContextMenus();
-              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) {}
+              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) { DebugLog("showRank", "dismissProfileCard.menus: " + (e.message || String(e))); }
         try { if (typeof DropInputFocus === "function") DropInputFocus();
-              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) {}
+              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) { DebugLog("showRank", "dismissProfileCard.focus: " + (e.message || String(e))); }
     }
 
     function ScheduleDismiss(root, delayMs) {
@@ -219,7 +220,7 @@
         try {
             var mc = entry.FindChildTraverse("MainContents");
             if (IsPanelValid(mc)) return mc;
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "findMainContents.traverse: " + (e.message || String(e))); }
         try {
             var cc = entry.GetChildCount ? entry.GetChildCount() : 0;
             for (var i = 0; i < cc && i < 50; i++) {
@@ -231,9 +232,9 @@
                         var g = c.GetChild(j);
                         if (g.id === "MainContents") return g;
                     }
-                } catch(e) {}
+                } catch(e) { DebugLog("showRank", "findMainContents.child: " + (e.message || String(e))); }
             }
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "findMainContents.outer: " + (e.message || String(e))); }
         return null;
     }
 
@@ -250,9 +251,9 @@
 
         var mc = FindMainContents(entry);
         if (mc) {
-            try { $.DispatchEvent("Activated", mc, "mouse"); } catch(e) {}
+            SafeLog(function() { $.DispatchEvent("Activated", mc, "mouse"); }, "showrank.dispatchActivated");
         } else {
-            try { $.DispatchEvent("Activated", entry, "mouse"); } catch(e) {}
+            SafeLog(function() { $.DispatchEvent("Activated", entry, "mouse"); }, "showrank.dispatchActivated");
         }
         DebugLog("showRank", "FillRow: dispatched Activated, mc=" + (mc ? "found" : "not found"));
 
@@ -270,12 +271,12 @@
             if (result) {
                 var label = GetAccountIdLabel(entry);
                 if (IsPanelValid(label)) {
-                    try { label.text = result; } catch(e) {}
+                    try { label.text = result; } catch(e) { DebugLog("showRank", "fillRow.labelText: " + (e.message || String(e))); }
                 }
                 var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
                 if (IsPanelValid(overlay)) {
                     var rankUrl = API_RANK_URL + result + "/rank-predict/image?format=webp&size=small";
-                    try { overlay.SetImage(rankUrl); } catch(e) {}
+                    try { overlay.SetImage(rankUrl); } catch(e) { DebugLog("showRank", "fillRow.setImage: " + (e.message || String(e))); }
                     SetBadgeVisible(overlay, true);
                     DebugLog("showRank", "FillRow: rank image set, url=" + rankUrl);
                 } else {
@@ -298,7 +299,7 @@
                 DebugLog("showRank", "FillRow: TIMEOUT " + name + " [" + elapsed + "ms, " + attempt + " attempts]");
                 var timeoutLabel = GetAccountIdLabel(entry);
                 if (IsPanelValid(timeoutLabel)) {
-                    try { timeoutLabel.text = "-"; } catch(e) {}
+                    try { timeoutLabel.text = "-"; } catch(e) { DebugLog("showRank", "fillRow.timeoutText: " + (e.message || String(e))); }
                 }
                 ClearProbe(root);
                 ScheduleDismiss(root, 0);
@@ -398,9 +399,9 @@
                 DebugLog("showRank", "TopBar.TryLoad: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>"));
                 _lastGen = gen;
                 var overlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (IsPanelValid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+                SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
                 var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
-                if (IsPanelValid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
+                SafeLog(function() { if (IsPanelValid(acctLabel)) acctLabel.text = ""; }, "showrank.clearText");
                 _lastAccountId = "";
                 _idleCount = 0;
                 $.Schedule(2.0, TryLoad);
@@ -411,7 +412,7 @@
             var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
             var accountId = "";
             if (IsPanelValid(acctLabel)) {
-                try { accountId = String(acctLabel.text || "").trim(); } catch(e) {}
+                accountId = String(SafeGetAttribute(acctLabel, "text", "")).trim();
             }
             DebugLog("showRank", "TopBar.TryLoad: labelAccountId=" + (accountId || "<empty>"));
 
@@ -420,14 +421,14 @@
                 var heroLabel = FindClass(topBarPlayer, "HeroName");
                 var heroName = "";
                 if (IsPanelValid(heroLabel)) {
-                    try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
+                    heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
                 }
                 if (heroName) {
                     var key = "qol_sr_rank_" + heroName.toLowerCase();
                     accountId = SafeGetAttribute(root, key, "");
                     DebugLog("showRank", "TopBar.TryLoad: hero=" + heroName + " key=" + key + " → " + (accountId || "<empty>"));
                     if (accountId && IsPanelValid(acctLabel)) {
-                        try { acctLabel.text = accountId; } catch(e) {}
+                        try { acctLabel.text = accountId; } catch(e) { DebugLog("showRank", "tryLoad.acctLabelText: " + (e.message || String(e))); }
                     }
                 } else {
                     DebugLog("showRank", "TopBar.TryLoad: no hero name found (HeroLabel=" + (heroLabel ? "found" : "null") + ")");
@@ -445,8 +446,8 @@
             if (!accountId && _lastAccountId) {
                 DebugLog("showRank", "TopBar.TryLoad: accountId disappeared, was " + _lastAccountId);
                 var clearOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (IsPanelValid(clearOverlay)) { try { clearOverlay.SetImage(""); } catch(e) {} }
-                if (IsPanelValid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
+                SafeLog(function() { if (IsPanelValid(clearOverlay)) clearOverlay.SetImage(""); }, "showrank.clearImage");
+                SafeLog(function() { if (IsPanelValid(acctLabel)) acctLabel.text = ""; }, "showrank.clearText");
                 _lastAccountId = "";
             }
 
@@ -457,7 +458,7 @@
                 var loadOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                 if (IsPanelValid(loadOverlay)) {
                     var url = API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small";
-                    try { loadOverlay.SetImage(url); } catch(e) {}
+                    try { loadOverlay.SetImage(url); } catch(e) { DebugLog("showRank", "tryLoad.setImage: " + (e.message || String(e))); }
                     DebugLog("showRank", "TopBar.TryLoad: SetImage(" + url + ")");
                     if (IsShowRankEnabled()) {
                         var baseBadge = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBar") : null;
@@ -501,7 +502,7 @@
                 } else {
                     root.AddClass("HideShowRankTopBar");
                 }
-            } catch(e) {}
+            } catch(e) { DebugLog("showRank", "clearTopBarBadges: " + (e.message || String(e))); }
         }
 
         if (State._showRankEnabled === enabled) return;
@@ -538,14 +539,14 @@
             DebugLog("showRank", "ClearTopBarBadges: clearing " + players.length + " players");
             for (var i = 0; i < players.length; i++) {
                 var overlay = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (IsPanelValid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+                SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
                 var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
                 SetBadgeVisible(base, false);
                 SetBadgeVisible(overlay, false);
                 var label = FindClass(players[i], "PlayerAccountHiddenTopBar");
-                if (IsPanelValid(label)) { try { label.text = ""; } catch(e) {} }
+                SafeLog(function() { if (IsPanelValid(label)) label.text = ""; }, "showrank.clearText");
             }
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "clearPlayerListBadges: " + (e.message || String(e))); }
     }
 
     function ClearPlayerListBadges(root) {
@@ -553,12 +554,12 @@
         DebugLog("showRank", "ClearPlayerListBadges: clearing " + entries.length + " entries");
         for (var i = 0; i < entries.length; i++) {
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-            if (IsPanelValid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+            SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
             var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
             SetBadgeVisible(base, false);
             SetBadgeVisible(overlay, false);
             var label = GetAccountIdLabel(entries[i]);
-            if (IsPanelValid(label)) { try { label.text = ""; } catch(e) {} }
+            SafeLog(function() { if (IsPanelValid(label)) label.text = ""; }, "showrank.clearText");
         }
     }
 
@@ -582,7 +583,7 @@
         try {
             var gen = SafeGetAttribute(root, "qol_sr_generation", "0");
             player.SetAttributeString("_qol_sr_init", gen || "0");
-        } catch(e) {}
+        } catch(e) { DebugLog("showRank", "ensureTopBarPlayers: " + (e.message || String(e))); }
     }
 
     // ── Find all player panels in the TopBar ──
@@ -598,7 +599,7 @@
             var team = teamsContainer.GetChild(ti);
             if (!IsPanelValid(team)) { DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
             var teamId = "";
-            try { teamId = String(team.id || team.GetAttributeString("id", "")); } catch(e) {}
+            teamId = String(team.id || SafeGetAttribute(team, "id", ""));
             var playerContents = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
             if (!IsPanelValid(playerContents)) { DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
             var playersContainer = playerContents.FindChildTraverse ? playerContents.FindChildTraverse("PlayersContainer") : null;
@@ -609,7 +610,7 @@
                 var player = playersContainer.GetChild(pi);
                 if (IsPanelValid(player)) {
                     var pid = "";
-                    try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
+                    pid = String(player.id || SafeGetAttribute(player, "id", ""));
                     DebugLog("showRank", "FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
                     out.push(player);
                 } else {
@@ -624,7 +625,7 @@
     function EnsureTopBarPlayersInitialized(root) {
         if (!IsPanelValid(root)) return;
         var topBar = null;
-        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
+        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) { DebugLog("showRank", "ensureTopBarPlayers.findTopBar: " + (e.message || String(e))); }
         if (!IsPanelValid(topBar)) { DebugLog("showRank", "EnsureTopBarPlayers: no TopBar"); return; }
         try {
             var currentGen = SafeGetAttribute(root, "qol_sr_generation", "0");
@@ -633,9 +634,9 @@
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
                 var pid = "";
-                try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
+                pid = String(player.id || SafeGetAttribute(player, "id", ""));
                 var storedInit = "";
-                try { storedInit = player.GetAttributeString("_qol_sr_init", ""); } catch(e) {}
+                storedInit = SafeGetAttribute(player, "_qol_sr_init", "");
                 if (IsTopBarPlayerInitialized(player, root)) {
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
@@ -646,7 +647,7 @@
                     continue;
                 }
                 var heroName = "";
-                try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
+                heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
                 if (!heroName) {
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
                     continue;
