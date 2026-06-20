@@ -109,12 +109,12 @@
         if (!displayLabel) return null;
         try {
             if (displayLabel.SetHasClass) displayLabel.SetHasClass("QOLNickRuntime", true);
-        } catch (eRuntimeClass) {}
+        } catch(eRuntimeClass) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_nicknames"", (eRuntimeClass && eRuntimeClass.message ? eRuntimeClass.message : String(eRuntimeClass || ""))); }
         try {
             if (playerPanel && displayLabel.GetParent && displayLabel.GetParent() !== playerPanel && displayLabel.SetParent) {
                 displayLabel.SetParent(playerPanel);
             }
-        } catch (eReparent) {}
+        } catch(eReparent) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_nicknames"", (eReparent && eReparent.message ? eReparent.message : String(eReparent || ""))); }
         return displayLabel;
     }
 

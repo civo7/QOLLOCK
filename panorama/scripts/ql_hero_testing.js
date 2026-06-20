@@ -589,7 +589,7 @@ function HeroTestingDebugLog(msg) {
     if (!HERO_TESTING_DEBUG) return;
     try {
         $.Msg("[HeroTesting++] " + String(msg || ""));
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 }
 
 function giveAllItems() {
@@ -648,7 +648,7 @@ function Cmd(command) {
                 root.SetAttributeString("QOL_LAST_SELECTED_HERO_HINT", heroId);
             }
         }
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     $.DispatchEvent("CitadelConCommand", command);
 }
@@ -664,7 +664,7 @@ function SetCheckboxSelectedSafe(checkboxId, selected) {
     try {
         panel.SetSelected(!!selected);
         return true;
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     return false;
 }
 
@@ -746,14 +746,14 @@ function SetTestingToolsForceVisible(enabled) {
             if (forceOn) context.AddClass("force_testing_tools_active");
             else context.RemoveClass("force_testing_tools_active");
         }
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     try {
         if (root && root.AddClass && root.RemoveClass) {
             if (forceOn) root.AddClass("force_testing_tools_active");
             else root.RemoveClass("force_testing_tools_active");
         }
-    } catch (e1) {}
+    } catch(e1) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
 }
 
 function ReadLoadTestingEnvironmentPendingToken() {
@@ -1090,7 +1090,7 @@ function SetNoclipCheckboxSelected(selected) {
     if (!checkbox || typeof checkbox.SetSelected !== "function") return;
     try {
         checkbox.SetSelected(!!selected);
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 }
 
 function UpdateNoclipToggleLabel() {
@@ -1148,7 +1148,7 @@ function ReadEntityPositionSnapshot(entityIndex) {
         if (typeof Entities.IsValidEntity === "function" && !Entities.IsValidEntity(entityIndex)) {
             return null;
         }
-    } catch (e0) {}
+    } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     const origin = Entities.GetAbsOrigin(entityIndex);
     if (!origin || origin.length < 3) return null;
@@ -1177,20 +1177,20 @@ function ReadEntityPositionSnapshot(entityIndex) {
                 }
             }
         }
-    } catch (e1) {}
+    } catch(e1) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
 
     try {
         if (typeof Entities.GetUnitName === "function") {
             const unitName = String(Entities.GetUnitName(entityIndex) || "");
             if (unitName.indexOf("hero_") === 0) snapshot._score += 20;
         }
-    } catch (e2) {}
+    } catch(e2) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
 
     try {
         if (typeof Entities.IsAlive === "function" && Entities.IsAlive(entityIndex)) {
             snapshot._score += 5;
         }
-    } catch (e3) {}
+    } catch(e3) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
 
     return snapshot;
 }
@@ -1740,7 +1740,7 @@ function MergeCoreSectionsIntoSingleTab() {
                 if (insertionAnchor && targetPanel.MoveChildBefore) {
                     targetPanel.MoveChildBefore(children[c], insertionAnchor);
                 }
-            } catch (e0) {}
+            } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[HeroTesting][WARN] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
     }
 

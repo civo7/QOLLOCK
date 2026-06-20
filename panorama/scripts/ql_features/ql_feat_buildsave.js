@@ -139,7 +139,7 @@ function ResetBuildSaveRequestAttributes(root) {
         if (!hudBuilds || !hudBuilds.BHasClass) return false;
         try {
             return !!hudBuilds.BHasClass("gEditingBuilds");
-        } catch (e0) {}
+        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         return false;
     }
 
@@ -152,7 +152,7 @@ function ResetBuildSaveRequestAttributes(root) {
             if (!panel || !panel.FindChildTraverse) continue;
             try {
                 if (panel.FindChildTraverse("BuildCategoryHeader")) return true;
-            } catch (e0) {}
+            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         return false;
     }
@@ -526,24 +526,24 @@ function ResetBuildSaveRequestAttributes(root) {
                     entry.SetText(payloadText);
                     setViaMethod = true;
                     didSet = true;
-                } catch (e0m) {}
+                } catch(e0m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e0m && e0m.message ? e0m.message : String(e0m || ""))); }
             }
             try {
                 if (!setViaMethod) {
                     entry.text = payloadText;
                     didSet = true;
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e1) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
                 } else {
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch (e3) {}
+                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e3 && e3.message ? e3.message : String(e3 || ""))); }
                 }
-            } catch (e5) {}
+            } catch(e5) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e5 && e5.message ? e5.message : String(e5 || ""))); }
             if (typeof entry.Submit === "function") {
                 try {
                     entry.Submit();
                     didSet = true;
-                } catch (e6m) {}
+                } catch(e6m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e6m && e6m.message ? e6m.message : String(e6m || ""))); }
             }
-            try { $.DispatchEvent("TextEntrySubmit", entry); } catch (e7) {}
+            try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e7) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e7 && e7.message ? e7.message : String(e7 || ""))); }
             DefocusBuildSaveCategoryEntry(root, null);
             var after = QOL.readPanelTextMaybe(entry);
         }
@@ -559,10 +559,10 @@ function ResetBuildSaveRequestAttributes(root) {
         if (currentText !== payloadText) {
             try {
                 entry.text = payloadText;
-            } catch (e1) {}
+            } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
-        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch (e2) {}
-        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch (e3) {}
+        try { $.DispatchEvent("TextEntryChanged", entry); didCommit = true; } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { $.DispatchEvent("TextEntrySubmit", entry); didCommit = true; } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave"", (e3 && e3.message ? e3.message : String(e3 || ""))); }
 
         // Simulate clicking away from the text field before pressing Save.
         var header = selectedBuild && selectedBuild.FindChildTraverse ? selectedBuild.FindChildTraverse("BuildCategoryHeader") : null;

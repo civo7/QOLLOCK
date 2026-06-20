@@ -20,15 +20,15 @@
                         _qolLogBuf.push(_s);
                         if (_qolLogBuf.length > _qolLogMax) _qolLogBuf.shift();
                     }
-                } catch(_ignore) {}
+                } catch(_ignore) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (_ignore && _ignore.message ? _ignore.message : String(_ignore || ""))); }
                 return _qolOrigMsg.apply($, arguments);
             };
         }
     } catch(_e) {
-        try { if (_qolOrigMsg) $.Msg = _qolOrigMsg; } catch(_r) {}
-        try { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock] $.Msg wrapper failed: " + (_e.message || String(_e))); } catch(_x) {}
+        try { if (_qolOrigMsg) $.Msg = _qolOrigMsg; } catch(_r) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (_r && _r.message ? _r.message : String(_r || ""))); }
+        try { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock] $.Msg wrapper failed: " + (_e.message || String(_e))); } catch(_x) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (_x && _x.message ? _x.message : String(_x || ""))); }
     }
-    try { __qolLogBuf = _qolLogBuf; } catch(_e) {}
+    try { __qolLogBuf = _qolLogBuf; } catch(_e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (_e && _e.message ? _e.message : String(_e || ""))); }
 })();
 
 "use strict";
@@ -279,7 +279,7 @@ if (typeof QOL_CODEC.DeserializeCompactBinary !== "function") {
             if (idx === null) {
                 if (typeof onMissingField === "function") {
                     for (var m = f; m < safeSchema.length; m++) {
-                        try { onMissingField(safeSchema[m], parsed); } catch (e1) {}
+                        try { onMissingField(safeSchema[m], parsed); } catch(e1) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
                     }
                 }
                 break;
@@ -444,8 +444,8 @@ if (typeof QOL_SCHEMA_UTILS.WriteConfigStorageRaw !== "function") {
 
         for (var j = 0; j < uniqueTargets.length; j++) {
             var target = uniqueTargets[j];
-            try { target.panel.SetAttributeString(storageKey, nextRaw); } catch (e0) {}
-            try { target.panel.SetAttributeString(revAttr, String(nextRevision)); } catch (e1) {}
+            try { target.panel.SetAttributeString(storageKey, nextRaw); } catch(e0) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            try { target.panel.SetAttributeString(revAttr, String(nextRevision)); } catch(e1) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
             writtenTargets.push(target);
         }
 
@@ -2075,8 +2075,8 @@ QOL.import = function(names) {
 };
 
 // Publish namespace to global scope
-try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) {}
-try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) {}
+try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
+try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
 // ── Diagnostic dump function ──
 // Reads HUD state + captured logs from Hud panel attribute "QOL_Diag"
@@ -2097,7 +2097,7 @@ var QOL_DumpDiagnostics = function() {
             var _raw = _hud.GetAttributeString("QOL_Diag", "");
             if (_raw) { try { _diag = JSON.parse(_raw); } catch(e) { $.Msg("[QOLLock][WARN][diag] Diagnostic JSON parse failed: " + (e && e.message ? e.message : String(e || "")) + " | preview=" + String(_raw || "").substring(0, 100)); } }
         }
-    } catch(e) {}
+    } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
     if (_diag) {
         lines.push("--- Loaded Features (" + (_diag.features ? _diag.features.length : 0) + ") ---");
@@ -2133,7 +2133,7 @@ var QOL_DumpDiagnostics = function() {
                     if (_allLogs.indexOf(_entry) === -1) _allLogs.push(_entry);
                 }
             }
-        } catch(e) {}
+        } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
         lines.push("--- QOL Console Logs (" + _allLogs.length + " messages) ---");
         if (_allLogs.length > 0) {
             for (var _lk = 0; _lk < _allLogs.length; _lk++) {

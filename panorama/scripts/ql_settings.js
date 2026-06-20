@@ -9094,7 +9094,7 @@ function ApplySettingsHeaderLogoTheme(theme) {
         ? SETTINGS_HEADER_MUNFINS_LOGO_SRC
         : (theme === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC);
     if (logo && logo.SetImage) {
-        try { logo.SetImage(src); } catch (eLogoTheme) {}
+        try { logo.SetImage(src); } catch(eLogoTheme) { WarnLog("settings", "op failed: " + (eLogoTheme && eLogoTheme.message ? eLogoTheme.message : String(eLogoTheme || ""))); }
     }
 
     var header = null;
@@ -9251,7 +9251,7 @@ function PlayArcadeGameSoundEffect(eventName) {
     var resolved = String(eventName || "");
     if (!resolved) return;
     if (!IsArcadeGameAudioEnabled()) return;
-    try { $.DispatchEvent("PlaySoundEffect", resolved); } catch (e0) {}
+    try { $.DispatchEvent("PlaySoundEffect", resolved); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 }
 
 function ResolveArcadeDefaultDifficultyId() {
@@ -9508,7 +9508,7 @@ function ApplyAimTrainerTargetImage(state) {
     try {
         state.targetImage.SetImage(nextPath);
     } catch (eSetImage) {
-        try { state.targetImage.SetAttributeString("src", nextPath); } catch (eAttr) {}
+        try { state.targetImage.SetAttributeString("src", nextPath); } catch(eAttr) { WarnLog("settings", "op failed: " + (eAttr && eAttr.message ? eAttr.message : String(eAttr || ""))); }
     }
 }
 
@@ -11392,7 +11392,7 @@ function StartHeroHintPublisher() {
         // Only publish hero hints while the settings window is open.
         // No point running this poll when the player can't see the settings UI.
         if (IsSettingsWindowVisible()) {
-            try { PublishHeroHintFromSettings(); } catch (e0) {}
+            try { PublishHeroHintFromSettings(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         $.Schedule(HERO_HINT_PUBLISH_INTERVAL_SEC, tick);
     }
@@ -11405,13 +11405,13 @@ function IsInHideoutForBuildSave() {
     if (root && root.BHasClass) {
         try {
             if (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout")) return true;
-        } catch (e1) {}
+        } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
     var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
     if (hud && hud.BHasClass) {
         try {
             if (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout")) return true;
-        } catch (e2) {}
+        } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
     }
     return false;
 }
@@ -11681,7 +11681,7 @@ function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
     var cfgFailed = LocalizeSettingsText("FAILED", true);
 
     if (typeof onBeforeQueue === "function") {
-        try { onBeforeQueue(); } catch (e0) {}
+        try { onBeforeQueue(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
 
     var exportRaw = GetCurrentExportSettingsString();
@@ -11988,7 +11988,7 @@ function SetRuntimePresetName(presetName) {
         root.SetAttributeString(RUNTIME_PRESET_ATTR, value);
     }
     if (hud && hud.SetAttributeString) {
-        try { hud.SetAttributeString(RUNTIME_PRESET_ATTR, value); } catch (e1) {}
+        try { hud.SetAttributeString(RUNTIME_PRESET_ATTR, value); } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
 }
 
@@ -12013,9 +12013,9 @@ function PublishPaletteColorBridge(configId, value) {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    try { if (panel && panel.SetAttributeString) panel.SetAttributeString(attrName, bridgeValue); } catch (ePanel) {}
-    try { if (root && root.SetAttributeString) root.SetAttributeString(attrName, bridgeValue); } catch (eRoot) {}
-    try { if (hud && hud.SetAttributeString) hud.SetAttributeString(attrName, bridgeValue); } catch (eHudSet) {}
+    try { if (panel && panel.SetAttributeString) panel.SetAttributeString(attrName, bridgeValue); } catch(ePanel) { WarnLog("settings", "op failed: " + (ePanel && ePanel.message ? ePanel.message : String(ePanel || ""))); }
+    try { if (root && root.SetAttributeString) root.SetAttributeString(attrName, bridgeValue); } catch(eRoot) { WarnLog("settings", "op failed: " + (eRoot && eRoot.message ? eRoot.message : String(eRoot || ""))); }
+    try { if (hud && hud.SetAttributeString) hud.SetAttributeString(attrName, bridgeValue); } catch(eHudSet) { WarnLog("settings", "op failed: " + (eHudSet && eHudSet.message ? eHudSet.message : String(eHudSet || ""))); }
     // $.persistentStorage confirmed absent — accent color persisted via panel attrs only.
     return bridgeValue;
 }
@@ -12081,8 +12081,8 @@ function SaveAndSync() {
         root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
     }
     if (hud && hud.SetAttributeString) {
-        try { hud.SetAttributeString(STORAGE_KEY, data); } catch (eHudStorage) {}
-        try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch (eHudRev) {}
+        try { hud.SetAttributeString(STORAGE_KEY, data); } catch(eHudStorage) { WarnLog("settings", "op failed: " + (eHudStorage && eHudStorage.message ? eHudStorage.message : String(eHudStorage || ""))); }
+        try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch(eHudRev) { WarnLog("settings", "op failed: " + (eHudRev && eHudRev.message ? eHudRev.message : String(eHudRev || ""))); }
     }
     PersistStatlockerProfileState(data, MOD_CONFIG);
     PublishPaletteColorBridges();
@@ -12429,7 +12429,7 @@ function CollectResetKeysFromSectionTitleRow(titleRow) {
                 (sibling.BHasClass && sibling.BHasClass("RowSeparator"))) {
                 isBoundary = true;
             }
-        } catch (e1) {}
+        } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         if (isBoundary) break;
         CollectResetKeysFromPanel(sibling, keys, seen);
     }
@@ -12464,7 +12464,7 @@ function CreateSectionResetButton(titleRow, resolveKeysFn, includeEnableKey, par
     resetIcon.AddClass("SectionTitleActionIcon");
     resetIcon.AddClass("SettingRowResetIcon");
     resetIcon.AddClass("QOLResetIcon");
-    try { resetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch (eIcon) {}
+    try { resetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch(eIcon) { WarnLog("settings", "op failed: " + (eIcon && eIcon.message ? eIcon.message : String(eIcon || ""))); }
 
     var buildResetKeys = function() {
         var keys = resolveKeysFn() || [];
@@ -12566,7 +12566,7 @@ function SetConfigFeedbackMessage(message, tone, holdMs) {
 function PrepareSettingsModalOpen() {
     try {
         ApplySettingsThemeClasses(null);
-    } catch (eModalTheme) {}
+    } catch(eModalTheme) { WarnLog("settings", "op failed: " + (eModalTheme && eModalTheme.message ? eModalTheme.message : String(eModalTheme || ""))); }
 }
 
 function CloseModal(overlay) {
@@ -12589,7 +12589,7 @@ function CloseModal(overlay) {
             if (settingsWin && settingsWin.IsValid && settingsWin.IsValid()) {
                 settingsWin.SetFocus();
             }
-        } catch (eFocusRelease) {}
+        } catch(eFocusRelease) { WarnLog("settings", "op failed: " + (eFocusRelease && eFocusRelease.message ? eFocusRelease.message : String(eFocusRelease || ""))); }
         if (overlay.IsValid()) {
             overlay.DeleteAsync(0);
         }
@@ -12762,19 +12762,19 @@ function CloseOpenSettingsDropdowns(rootPanel, options) {
             try { menuPanel = menuSearchRoot.FindChildTraverse(String(dropdownPanel.id || "") + "DropDownMenu"); } catch (e4) { menuPanel = null; }
         }
         if (menuPanel && menuPanel.IsValid && menuPanel.IsValid()) {
-            try { dropdownWasOpen = dropdownWasOpen || !!menuPanel.visible; } catch (eMenuVisible) {}
-            try { dropdownWasOpen = dropdownWasOpen || (menuPanel.BHasClass && menuPanel.BHasClass("DropDownMenuVisible")); } catch (eMenuClass) {}
+            try { dropdownWasOpen = dropdownWasOpen || !!menuPanel.visible; } catch(eMenuVisible) { WarnLog("settings", "op failed: " + (eMenuVisible && eMenuVisible.message ? eMenuVisible.message : String(eMenuVisible || ""))); }
+            try { dropdownWasOpen = dropdownWasOpen || (menuPanel.BHasClass && menuPanel.BHasClass("DropDownMenuVisible")); } catch(eMenuClass) { WarnLog("settings", "op failed: " + (eMenuClass && eMenuClass.message ? eMenuClass.message : String(eMenuClass || ""))); }
         }
-        try { dropdownPanel.SetHasClass("DropDownMenuVisible", false); } catch (e1) {}
-        try { dropdownPanel.RemoveClass("DropDownMenuVisible"); } catch (e2) {}
-        try { dropdownPanel.visible = true; } catch (e2b) {}
+        try { dropdownPanel.SetHasClass("DropDownMenuVisible", false); } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { dropdownPanel.RemoveClass("DropDownMenuVisible"); } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { dropdownPanel.visible = true; } catch(e2b) { WarnLog("settings", "op failed: " + (e2b && e2b.message ? e2b.message : String(e2b || ""))); }
         if (!skipFocusTransfer && dropdownWasOpen) {
-            try { dropdownPanel.SetFocus(); } catch (e3) {}
+            try { dropdownPanel.SetFocus(); } catch(e3) { WarnLog("settings", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
         }
         if (menuPanel && menuPanel.IsValid && menuPanel.IsValid()) {
-            try { menuPanel.SetHasClass("DropDownMenuVisible", false); } catch (e5) {}
-            try { menuPanel.RemoveClass("DropDownMenuVisible"); } catch (e6) {}
-            try { menuPanel.visible = false; } catch (e7) {}
+            try { menuPanel.SetHasClass("DropDownMenuVisible", false); } catch(e5) { WarnLog("settings", "op failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
+            try { menuPanel.RemoveClass("DropDownMenuVisible"); } catch(e6) { WarnLog("settings", "op failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
+            try { menuPanel.visible = false; } catch(e7) { WarnLog("settings", "op failed: " + (e7 && e7.message ? e7.message : String(e7 || ""))); }
         }
     }
 
@@ -12794,9 +12794,9 @@ function CloseOpenSettingsDropdowns(rootPanel, options) {
     for (var iMenu = 0; iMenu < floatingMenus.length; iMenu++) {
         var floatingMenu = floatingMenus[iMenu];
         if (!floatingMenu || !floatingMenu.IsValid || !floatingMenu.IsValid()) continue;
-        try { floatingMenu.SetHasClass("DropDownMenuVisible", false); } catch (e9) {}
-        try { floatingMenu.RemoveClass("DropDownMenuVisible"); } catch (e10) {}
-        try { floatingMenu.visible = false; } catch (e11) {}
+        try { floatingMenu.SetHasClass("DropDownMenuVisible", false); } catch(e9) { WarnLog("settings", "op failed: " + (e9 && e9.message ? e9.message : String(e9 || ""))); }
+        try { floatingMenu.RemoveClass("DropDownMenuVisible"); } catch(e10) { WarnLog("settings", "op failed: " + (e10 && e10.message ? e10.message : String(e10 || ""))); }
+        try { floatingMenu.visible = false; } catch(e11) { WarnLog("settings", "op failed: " + (e11 && e11.message ? e11.message : String(e11 || ""))); }
     }
 }
 
@@ -12884,7 +12884,7 @@ function TryCopyTextToClipboard(text, textEntryPanel) {
             attempts[i]();
             copied = true;
             break;
-        } catch (e) {}
+        } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     return copied;
 }
@@ -12893,7 +12893,7 @@ function TryPasteTextFromClipboard(textEntryPanel) {
     if (!textEntryPanel || !textEntryPanel.IsValid || !textEntryPanel.IsValid()) return false;
     textEntryPanel.SetFocus();
     if (textEntryPanel.SelectAll) {
-        try { textEntryPanel.SelectAll(); } catch (e) {}
+        try { textEntryPanel.SelectAll(); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     var pasted = false;
     var attempts = [
@@ -12913,7 +12913,7 @@ function TryPasteTextFromClipboard(textEntryPanel) {
             attempts[i]();
             pasted = true;
             break;
-        } catch (e) {}
+        } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     return pasted;
 }
@@ -12952,7 +12952,7 @@ function RenderConfigTabContent(list) {
                 warnHint.AddClass("ConfigFeedbackText");
                 warnHint.text = "Restart your game to re-enable these features.";
             }
-        } catch (eAutoDisableWarn) {}
+        } catch(eAutoDisableWarn) { WarnLog("settings", "op failed: " + (eAutoDisableWarn && eAutoDisableWarn.message ? eAutoDisableWarn.message : String(eAutoDisableWarn || ""))); }
     }
 
     if (gSearchCollectMode && gSearchCollectState) {
@@ -14828,7 +14828,7 @@ function OpenAimTrainerModal() {
     targetBtn.AddClass("ArcadeAimTrainerTarget");
     var targetImage = $.CreatePanel("Image", targetBtn, "ArcadeAimTrainerTargetImage");
     targetImage.AddClass("ArcadeAimTrainerTargetImage");
-    try { targetImage.SetImage(AIM_TRAINER_TARGET_IMAGE_PATHS[0]); } catch (eInitImage) {}
+    try { targetImage.SetImage(AIM_TRAINER_TARGET_IMAGE_PATHS[0]); } catch(eInitImage) { WarnLog("settings", "op failed: " + (eInitImage && eInitImage.message ? eInitImage.message : String(eInitImage || ""))); }
 
     var statusLabel = $.CreatePanel("Label", gameArea, "ArcadeAimTrainerStatusLabel");
     statusLabel.AddClass("ArcadeAimTrainerStatusLabel");
@@ -15239,7 +15239,7 @@ function OpenTrainTrackingModal() {
     targetBtn.AddClass("ArcadeTrainTrackingTarget");
     var targetImage = $.CreatePanel("Image", targetBtn, "ArcadeTrainTrackingTargetImage");
     targetImage.AddClass("ArcadeTrainTrackingTargetImage");
-    try { targetImage.SetImage(TRAIN_TRACKING_TARGET_IMAGE_SRC); } catch (eTrainImg) {}
+    try { targetImage.SetImage(TRAIN_TRACKING_TARGET_IMAGE_SRC); } catch(eTrainImg) { WarnLog("settings", "op failed: " + (eTrainImg && eTrainImg.message ? eTrainImg.message : String(eTrainImg || ""))); }
 
     var statusLabel = $.CreatePanel("Label", gameArea, "ArcadeTrainTrackingStatusLabel");
     statusLabel.AddClass("ArcadeTrainTrackingStatusLabel");
@@ -15813,7 +15813,7 @@ function OpenWhackRemModal() {
         targetBtn.AddClass("ArcadeWhackRemTarget");
         var targetImage = $.CreatePanel("Image", targetBtn, "ArcadeWhackRemTargetImage_" + String(t));
         targetImage.AddClass("ArcadeWhackRemTargetImage");
-        try { targetImage.SetImage(WHACK_A_REM_TARGET_IMAGE_SRC); } catch (eRemImg) {}
+        try { targetImage.SetImage(WHACK_A_REM_TARGET_IMAGE_SRC); } catch(eRemImg) { WarnLog("settings", "op failed: " + (eRemImg && eRemImg.message ? eRemImg.message : String(eRemImg || ""))); }
         targetButtons.push(targetBtn);
         targetImages.push(targetImage);
     }
@@ -16448,7 +16448,7 @@ function ForceCloseEscapeMenuForOnDeathGames() {
     for (var i = 0; i < targets.length; i++) {
         var panel = targets[i];
         if (!panel || !panel.IsValid || !panel.IsValid() || !panel.RemoveClass) continue;
-        try { panel.RemoveClass("ShowEscapeMenu"); } catch (e0) {}
+        try { panel.RemoveClass("ShowEscapeMenu"); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
 }
 
@@ -16765,7 +16765,7 @@ function CreateSectionTitleCheckboxToggle(titleHead, label, configId, toggleOpti
     var update = function() {
         var isActive = getIsActive();
         var isAvailable = getIsAvailable();
-        try { btn.SetSelected(isActive); } catch (eSel) {}
+        try { btn.SetSelected(isActive); } catch(eSel) { WarnLog("settings", "op failed: " + (eSel && eSel.message ? eSel.message : String(eSel || ""))); }
         btn.SetHasClass("selected", isActive);
         btn.SetHasClass("IsSelected", isActive);
         btn.SetHasClass("Active", isActive);
@@ -16857,15 +16857,15 @@ function ReadPanelScrollOffsetY(panel) {
     try {
         var sy0 = Number(panel.scrolloffset_y);
         if (isFinite(sy0)) return sy0;
-    } catch (e0) {}
+    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     try {
         var sy1 = Number(panel.scrolloffsetY);
         if (isFinite(sy1)) return sy1;
-    } catch (e1) {}
+    } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     try {
         var sy2 = Number(panel.ScrollOffsetY);
         if (isFinite(sy2)) return sy2;
-    } catch (e2) {}
+    } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
     try {
         if (typeof panel.GetScrollOffset === "function") {
             var so = panel.GetScrollOffset();
@@ -16874,7 +16874,7 @@ function ReadPanelScrollOffsetY(panel) {
                 if (isFinite(sy3)) return sy3;
             }
         }
-    } catch (e3) {}
+    } catch(e3) { WarnLog("settings", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
     return y;
 }
 
@@ -17023,7 +17023,7 @@ function EnsureSettingsRowFloatingTooltipPanel() {
         gSettingsRowFloatingTooltipPanel &&
         (!gSettingsRowFloatingTooltipPanel.IsValid || !gSettingsRowFloatingTooltipPanel.IsValid() || gSettingsRowFloatingTooltipPanel.GetParent() !== host)
     ) {
-        try { gSettingsRowFloatingTooltipPanel.DeleteAsync(0); } catch (e1) {}
+        try { gSettingsRowFloatingTooltipPanel.DeleteAsync(0); } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         gSettingsRowFloatingTooltipPanel = null;
         gSettingsRowFloatingTooltipPerfPrefixLabel = null;
         gSettingsRowFloatingTooltipPerfValueLabel = null;
@@ -17804,7 +17804,7 @@ function CreateAnimatedInlineEnumSection(parent, title, configId, activeValue, b
 
 function RefreshEnumSections() {
     for (var i = 0; i < gEnumSectionSyncCallbacks.length; i++) {
-        try { gEnumSectionSyncCallbacks[i](); } catch (e) {}
+        try { gEnumSectionSyncCallbacks[i](); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
 }
 
@@ -17932,7 +17932,7 @@ function RunConsoleCommand(commandText) {
     try {
         $.DispatchEvent("CitadelConCommand", commandText);
         return true;
-    } catch (e0) {}
+    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     return false;
 }
 
@@ -17945,7 +17945,7 @@ function RunConsoleCommandBestEffort(commandText) {
     try {
         $.DispatchEvent("CitadelConCommand", cmd);
         didAny = true;
-    } catch (e0) {}
+    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
     if (RunConsoleCommand(cmd)) {
         didAny = true;
@@ -17958,7 +17958,7 @@ function DispatchCitadelConCommand(commandText) {
     try {
         $.DispatchEvent("CitadelConCommand", String(commandText));
         return true;
-    } catch (e0) {}
+    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     return false;
 }
 
@@ -17994,7 +17994,7 @@ function ApplyRuntimeButtonGroupIndex(runtimeGroupKey, nextIndex, runCommand) {
 
     var refreshFn = gRuntimeButtonGroupRefreshers[key];
     if (typeof refreshFn === "function") {
-        try { refreshFn(); } catch (e0) {}
+        try { refreshFn(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
 
     var shouldRunAction = !!runCommand && (changed || !!meta.alwaysRunAction);
@@ -18009,7 +18009,7 @@ function ApplyRuntimeButtonGroupIndex(runtimeGroupKey, nextIndex, runCommand) {
             if (soundEventToPlay.indexOf("BuffReminder.") === 0) {
                 soundEventToPlay = ResolveAnnouncerEventForVolume(soundEventToPlay);
             }
-            try { $.DispatchEvent("PlaySoundEffect", soundEventToPlay); } catch (e0) {}
+            try { $.DispatchEvent("PlaySoundEffect", soundEventToPlay); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
     }
     return changed;
@@ -18051,7 +18051,7 @@ function ResetRuntimeRowsInSectionFromTitleRow(titleRow) {
                 (sibling.BHasClass && sibling.BHasClass("RowSeparator"))) {
                 isBoundary = true;
             }
-        } catch (e1) {}
+        } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         if (isBoundary) break;
         try {
             if (!(sibling.BHasClass && sibling.BHasClass("SettingRow"))) continue;
@@ -18075,7 +18075,7 @@ function ResetRuntimeRowsInSectionFromTitleRow(titleRow) {
             var resetFn = gRuntimeSliderResetters[runtimeKey];
             if (typeof resetFn === "function") {
                 var before = Number(gRuntimeSliderState[runtimeKey]);
-                try { resetFn(); } catch (e4) {}
+                try { resetFn(); } catch(e4) { WarnLog("settings", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
                 var after = Number(gRuntimeSliderState[runtimeKey]);
                 if (!isFinite(before) || !isFinite(after) || Math.abs(before - after) > 0.000001) changed++;
             }
@@ -18113,7 +18113,7 @@ function CreateRuntimeSectionTitle(parent, title) {
     resetIcon.AddClass("SectionTitleActionIcon");
     resetIcon.AddClass("SettingRowResetIcon");
     resetIcon.AddClass("QOLResetIcon");
-    try { resetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch (e5) {}
+    try { resetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch(e5) { WarnLog("settings", "op failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
 
     resetBtn.SetPanelEvent("onmouseover", function() {
         HideSettingsTextTooltip();
@@ -18153,7 +18153,7 @@ function ApplyDefaultHeroSelection(heroId) {
             if (root && root.SetAttributeString) {
                 root.SetAttributeString(HERO_HINT_ATTR, normalizedHeroId);
             }
-        } catch (e1) {}
+        } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
     }
     return didDispatch;
 }
@@ -18170,15 +18170,15 @@ function ForceCenterSliderValueInput(inputPanel) {
 
     var applyCenteredTextStyle = function(panel, insetPx) {
         if (!panel || !panel.IsValid || !panel.IsValid()) return;
-        try { panel.style.padding = "0px"; } catch (e0) {}
-        try { panel.style.paddingLeft = String(insetPx) + "px"; } catch (e1) {}
-        try { panel.style.paddingRight = "0px"; } catch (e2) {}
-        try { panel.style.margin = "0px"; } catch (e3) {}
-        try { panel.style.marginLeft = "0px"; } catch (e4) {}
-        try { panel.style.marginRight = "0px"; } catch (e5) {}
-        try { panel.style.textAlign = "center"; } catch (e6) {}
-        try { panel.style.verticalAlign = "center"; } catch (e7) {}
-        try { panel.style.x = String(insetPx) + "px"; } catch (e8) {}
+        try { panel.style.padding = "0px"; } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        try { panel.style.paddingLeft = String(insetPx) + "px"; } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { panel.style.paddingRight = "0px"; } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        try { panel.style.margin = "0px"; } catch(e3) { WarnLog("settings", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { panel.style.marginLeft = "0px"; } catch(e4) { WarnLog("settings", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
+        try { panel.style.marginRight = "0px"; } catch(e5) { WarnLog("settings", "op failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
+        try { panel.style.textAlign = "center"; } catch(e6) { WarnLog("settings", "op failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
+        try { panel.style.verticalAlign = "center"; } catch(e7) { WarnLog("settings", "op failed: " + (e7 && e7.message ? e7.message : String(e7 || ""))); }
+        try { panel.style.x = String(insetPx) + "px"; } catch(e8) { WarnLog("settings", "op failed: " + (e8 && e8.message ? e8.message : String(e8 || ""))); }
     };
 
     var applyNow = function() {
@@ -18188,28 +18188,28 @@ function ForceCenterSliderValueInput(inputPanel) {
             inputPanel.style.paddingLeft = "3px";
             inputPanel.style.paddingRight = "0px";
             inputPanel.style.textAlign = "center";
-        } catch (e0) {}
+        } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
 
         var textEntry = null;
         try { textEntry = inputPanel.FindChildTraverse("TextEntry"); } catch (e9) { textEntry = null; }
         if (textEntry && textEntry.IsValid && textEntry.IsValid()) {
-            try { textEntry.style.width = "100%"; } catch (e10) {}
+            try { textEntry.style.width = "100%"; } catch(e10) { WarnLog("settings", "op failed: " + (e10 && e10.message ? e10.message : String(e10 || ""))); }
             applyCenteredTextStyle(textEntry, 3);
         }
 
         var contents = null;
         try { contents = inputPanel.FindChildTraverse("Contents"); } catch (e11) { contents = null; }
         if (contents && contents.IsValid && contents.IsValid()) {
-            try { contents.style.width = "100%"; } catch (e12) {}
+            try { contents.style.width = "100%"; } catch(e12) { WarnLog("settings", "op failed: " + (e12 && e12.message ? e12.message : String(e12 || ""))); }
             applyCenteredTextStyle(contents, 0);
-            try { contents.style.horizontalAlign = "left"; } catch (e13) {}
+            try { contents.style.horizontalAlign = "left"; } catch(e13) { WarnLog("settings", "op failed: " + (e13 && e13.message ? e13.message : String(e13 || ""))); }
         }
 
         var textContents = null;
         try { textContents = inputPanel.FindChildTraverse("TextEntryContents"); } catch (e14) { textContents = null; }
         if (textContents && textContents.IsValid && textContents.IsValid()) {
-            try { textContents.style.width = "100%"; } catch (e15) {}
-            try { textContents.style.horizontalAlign = "left"; } catch (e16) {}
+            try { textContents.style.width = "100%"; } catch(e15) { WarnLog("settings", "op failed: " + (e15 && e15.message ? e15.message : String(e15 || ""))); }
+            try { textContents.style.horizontalAlign = "left"; } catch(e16) { WarnLog("settings", "op failed: " + (e16 && e16.message ? e16.message : String(e16 || ""))); }
             applyCenteredTextStyle(textContents, 3);
 
             var childCount = 0;
@@ -18218,8 +18218,8 @@ function ForceCenterSliderValueInput(inputPanel) {
                 var textChild = null;
                 try { textChild = textContents.GetChild(ci); } catch (e18) { textChild = null; }
                 if (!textChild || !textChild.IsValid || !textChild.IsValid()) continue;
-                try { textChild.style.width = "100%"; } catch (e19) {}
-                try { textChild.style.horizontalAlign = "center"; } catch (e20) {}
+                try { textChild.style.width = "100%"; } catch(e19) { WarnLog("settings", "op failed: " + (e19 && e19.message ? e19.message : String(e19 || ""))); }
+                try { textChild.style.horizontalAlign = "center"; } catch(e20) { WarnLog("settings", "op failed: " + (e20 && e20.message ? e20.message : String(e20 || ""))); }
                 applyCenteredTextStyle(textChild, 3);
             }
         }
@@ -18411,7 +18411,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
     lbl.text = localizedLabel;
     var rowConfigKeys = CollectRowConfigKeys(configId, type, options);
     if (row && row.SetAttributeString) {
-        try { row.SetAttributeString(SETTING_ROW_RESET_KEYS_ATTR, rowConfigKeys.join(",")); } catch (e0) {}
+        try { row.SetAttributeString(SETTING_ROW_RESET_KEYS_ATTR, rowConfigKeys.join(",")); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
     var rowResetBtn = null;
     var runtimeSliderResetAction = null;
@@ -18435,7 +18435,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         });
         rowResetIcon.AddClass("SettingRowResetIcon");
         rowResetIcon.AddClass("QOLResetIcon");
-        try { rowResetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch (eImg) {}
+        try { rowResetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch(eImg) { WarnLog("settings", "op failed: " + (eImg && eImg.message ? eImg.message : String(eImg || ""))); }
         rowResetBtn.SetPanelEvent("onmouseover", function() {
             hideCustomRowTooltip();
             HideSettingsTextTooltip();
@@ -18651,8 +18651,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
 
         var runtimeKey = String(configId || runtimeCommand || label || "runtime_slider");
         if (row && row.SetAttributeString) {
-            try { row.SetAttributeString(RUNTIME_ROW_KIND_ATTR, "runtime_slider"); } catch (eKind0) {}
-            try { row.SetAttributeString(RUNTIME_ROW_KEY_ATTR, runtimeKey); } catch (eKey0) {}
+            try { row.SetAttributeString(RUNTIME_ROW_KIND_ATTR, "runtime_slider"); } catch(eKind0) { WarnLog("settings", "op failed: " + (eKind0 && eKind0.message ? eKind0.message : String(eKind0 || ""))); }
+            try { row.SetAttributeString(RUNTIME_ROW_KEY_ATTR, runtimeKey); } catch(eKey0) { WarnLog("settings", "op failed: " + (eKey0 && eKey0.message ? eKey0.message : String(eKey0 || ""))); }
         }
         var initialRuntimeValue = Number(gRuntimeSliderState[runtimeKey]);
         if (!isFinite(initialRuntimeValue)) initialRuntimeValue = runtimeDefault;
@@ -18820,7 +18820,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var updateMultiBtn = function() {
                 var isActive = (MOD_CONFIG[key] === 1);
                 if (useCheckboxStyle) {
-                    try { multiBtn.SetSelected(isActive); } catch (eSel) {}
+                    try { multiBtn.SetSelected(isActive); } catch(eSel) { WarnLog("settings", "op failed: " + (eSel && eSel.message ? eSel.message : String(eSel || ""))); }
                     multiBtn.SetHasClass("selected", isActive);
                     multiBtn.SetHasClass("IsSelected", isActive);
                 }
@@ -18893,7 +18893,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             for (var mr = 0; mr < multiRefreshFns.length; mr++) {
                 var multiRefreshFn = multiRefreshFns[mr];
                 if (typeof multiRefreshFn !== "function") continue;
-                try { multiRefreshFn(); } catch (eMulti) {}
+                try { multiRefreshFn(); } catch(eMulti) { WarnLog("settings", "op failed: " + (eMulti && eMulti.message ? eMulti.message : String(eMulti || ""))); }
             }
             refreshRowChangedState();
             return true;
@@ -18910,8 +18910,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             runtimeGroup.AddClass("RuntimeSoundTestGroup");
         }
         if (row && row.SetAttributeString) {
-            try { row.SetAttributeString(RUNTIME_ROW_KIND_ATTR, "runtime_buttongroup"); } catch (eKind1) {}
-            try { row.SetAttributeString(RUNTIME_ROW_KEY_ATTR, runtimeGroupKey); } catch (eKey1) {}
+            try { row.SetAttributeString(RUNTIME_ROW_KIND_ATTR, "runtime_buttongroup"); } catch(eKind1) { WarnLog("settings", "op failed: " + (eKind1 && eKind1.message ? eKind1.message : String(eKind1 || ""))); }
+            try { row.SetAttributeString(RUNTIME_ROW_KEY_ATTR, runtimeGroupKey); } catch(eKey1) { WarnLog("settings", "op failed: " + (eKey1 && eKey1.message ? eKey1.message : String(eKey1 || ""))); }
         }
         var defaultRuntimeIndex = GetRuntimeButtonGroupDefaultIndex(runtimeGroupKey, null);
         if (defaultRuntimeIndex >= options.length) defaultRuntimeIndex = 0;
@@ -19023,7 +19023,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             btn.SetPanelEvent("onactivate", function() {
                 MOD_CONFIG[configId] = optionConfigValue;
                 for (var i = 0; i < buttonGroupRefreshFns.length; i++) {
-                    try { buttonGroupRefreshFns[i](); } catch (eGroupRefresh) {}
+                    try { buttonGroupRefreshFns[i](); } catch(eGroupRefresh) { WarnLog("settings", "op failed: " + (eGroupRefresh && eGroupRefresh.message ? eGroupRefresh.message : String(eGroupRefresh || ""))); }
                 }
                 SaveAndSync();
                 refreshRowChangedState();
@@ -19047,7 +19047,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             for (var br = 0; br < buttonGroupRefreshFns.length; br++) {
                 var buttonRefreshFn = buttonGroupRefreshFns[br];
                 if (typeof buttonRefreshFn !== "function") continue;
-                try { buttonRefreshFn(); } catch (eBtn) {}
+                try { buttonRefreshFn(); } catch(eBtn) { WarnLog("settings", "op failed: " + (eBtn && eBtn.message ? eBtn.message : String(eBtn || ""))); }
             }
             refreshRowChangedState();
             return true;
@@ -19085,8 +19085,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var colorChip = $.CreatePanel("Panel", swatch, "");
             colorChip.AddClass("PalettePickerSwatchChip");
             if (opt.hex) {
-                try { colorChip.style.backgroundColor = String(opt.hex); } catch (eColor) {}
-                try { colorChip.style.border = "1px solid rgba(255, 255, 255, 0.28)"; } catch (eBorder) {}
+                try { colorChip.style.backgroundColor = String(opt.hex); } catch(eColor) { WarnLog("settings", "op failed: " + (eColor && eColor.message ? eColor.message : String(eColor || ""))); }
+                try { colorChip.style.border = "1px solid rgba(255, 255, 255, 0.28)"; } catch(eBorder) { WarnLog("settings", "op failed: " + (eBorder && eBorder.message ? eBorder.message : String(eBorder || ""))); }
             } else {
                 colorChip.AddClass("PalettePickerSwatchChipDefault");
             }
@@ -19118,7 +19118,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 MOD_CONFIG[configId] = value;
                 PublishPaletteColorBridge(configId, value);
                 for (var pi = 0; pi < paletteRefreshFns.length; pi++) {
-                    try { paletteRefreshFns[pi](); } catch (eRefresh) {}
+                    try { paletteRefreshFns[pi](); } catch(eRefresh) { WarnLog("settings", "op failed: " + (eRefresh && eRefresh.message ? eRefresh.message : String(eRefresh || ""))); }
                 }
                 SaveAndSync();
                 refreshRowChangedState();
@@ -19129,7 +19129,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             if (!row || !row.IsValid || !row.IsValid()) return false;
             MOD_CONFIG[configId] = sanitizePaletteValue(MOD_CONFIG[configId]);
             for (var pr = 0; pr < paletteRefreshFns.length; pr++) {
-                try { paletteRefreshFns[pr](); } catch (ePaletteRefresh) {}
+                try { paletteRefreshFns[pr](); } catch(ePaletteRefresh) { WarnLog("settings", "op failed: " + (ePaletteRefresh && ePaletteRefresh.message ? ePaletteRefresh.message : String(ePaletteRefresh || ""))); }
             }
             refreshRowChangedState();
             return true;
@@ -19175,11 +19175,11 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         }
         var syncDefaultHeroIcon = function(heroValue) {
             if (!defaultHeroIconPanel || !defaultHeroIconPanel.IsValid || !defaultHeroIconPanel.IsValid()) return;
-            try { defaultHeroIconPanel.SetImage(GetDefaultHeroIconPath(heroValue)); } catch (eHeroIcon) {}
+            try { defaultHeroIconPanel.SetImage(GetDefaultHeroIconPath(heroValue)); } catch(eHeroIcon) { WarnLog("settings", "op failed: " + (eHeroIcon && eHeroIcon.message ? eHeroIcon.message : String(eHeroIcon || ""))); }
         };
         var syncLanguageIcon = function(languageValue) {
             if (!languageIconPanel || !languageIconPanel.IsValid || !languageIconPanel.IsValid()) return;
-            try { languageIconPanel.SetImage(GetLanguageIconPath(languageValue)); } catch (eLanguageIcon) {}
+            try { languageIconPanel.SetImage(GetLanguageIconPath(languageValue)); } catch(eLanguageIcon) { WarnLog("settings", "op failed: " + (eLanguageIcon && eLanguageIcon.message ? eLanguageIcon.message : String(eLanguageIcon || ""))); }
         };
 
         var valueByOptionId = {};
@@ -19200,16 +19200,16 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             optionPanel.AddClass("DropDownChild");
             if (configId === "DEFAULT_HERO") {
                 optionPanel.AddClass("DefaultHeroDropDownItem");
-                try { optionPanel.style.backgroundImage = 'url("' + GetDefaultHeroIconPath(optionValueKey) + '")'; } catch (eBgImg) {}
-                try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch (eBgRepeat) {}
-                try { optionPanel.style.backgroundPosition = "10px 50%"; } catch (eBgPos) {}
-                try { optionPanel.style.backgroundSize = "18px 18px"; } catch (eBgSize) {}
+                try { optionPanel.style.backgroundImage = 'url("' + GetDefaultHeroIconPath(optionValueKey) + '")'; } catch(eBgImg) { WarnLog("settings", "op failed: " + (eBgImg && eBgImg.message ? eBgImg.message : String(eBgImg || ""))); }
+                try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch(eBgRepeat) { WarnLog("settings", "op failed: " + (eBgRepeat && eBgRepeat.message ? eBgRepeat.message : String(eBgRepeat || ""))); }
+                try { optionPanel.style.backgroundPosition = "10px 50%"; } catch(eBgPos) { WarnLog("settings", "op failed: " + (eBgPos && eBgPos.message ? eBgPos.message : String(eBgPos || ""))); }
+                try { optionPanel.style.backgroundSize = "18px 18px"; } catch(eBgSize) { WarnLog("settings", "op failed: " + (eBgSize && eBgSize.message ? eBgSize.message : String(eBgSize || ""))); }
             } else if (configId === "LANGUAGE") {
                 optionPanel.AddClass("LanguageDropDownItem");
-                try { optionPanel.style.backgroundImage = 'url("' + GetLanguageIconPath(optionValueKey) + '")'; } catch (eLangBgImg) {}
-                try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch (eLangBgRepeat) {}
-                try { optionPanel.style.backgroundPosition = "10px 50%"; } catch (eLangBgPos) {}
-                try { optionPanel.style.backgroundSize = "18px 18px"; } catch (eLangBgSize) {}
+                try { optionPanel.style.backgroundImage = 'url("' + GetLanguageIconPath(optionValueKey) + '")'; } catch(eLangBgImg) { WarnLog("settings", "op failed: " + (eLangBgImg && eLangBgImg.message ? eLangBgImg.message : String(eLangBgImg || ""))); }
+                try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch(eLangBgRepeat) { WarnLog("settings", "op failed: " + (eLangBgRepeat && eLangBgRepeat.message ? eLangBgRepeat.message : String(eLangBgRepeat || ""))); }
+                try { optionPanel.style.backgroundPosition = "10px 50%"; } catch(eLangBgPos) { WarnLog("settings", "op failed: " + (eLangBgPos && eLangBgPos.message ? eLangBgPos.message : String(eLangBgPos || ""))); }
+                try { optionPanel.style.backgroundSize = "18px 18px"; } catch(eLangBgSize) { WarnLog("settings", "op failed: " + (eLangBgSize && eLangBgSize.message ? eLangBgSize.message : String(eLangBgSize || ""))); }
                 (function(optionIdRef, optionValueRef) {
                     optionPanel.SetPanelEvent("onactivate", function() {
                         suppressNextDropdownSubmit = true;
@@ -19262,7 +19262,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         }
         if (!selectedOptionId) selectedOptionId = firstOptionId;
         if (selectedOptionId) {
-            try { dropdown.SetSelected(selectedOptionId); } catch (e0) {}
+            try { dropdown.SetSelected(selectedOptionId); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             if (MOD_CONFIG[configId] === undefined || MOD_CONFIG[configId] === null || MOD_CONFIG[configId] === "") {
                 MOD_CONFIG[configId] = valueByOptionId[selectedOptionId];
             }
@@ -19404,7 +19404,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             if (targetOptionId) {
                 selectedOptionId = targetOptionId;
                 dropdownSyncMute = true;
-                try { dropdown.SetSelected(targetOptionId); } catch (eSel) {}
+                try { dropdown.SetSelected(targetOptionId); } catch(eSel) { WarnLog("settings", "op failed: " + (eSel && eSel.message ? eSel.message : String(eSel || ""))); }
                 dropdownSyncMute = false;
             }
             if (configId === "DEFAULT_HERO") {
@@ -19499,7 +19499,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             var syncOnDeathToggleVisual = function() {
                 if (!onDeathToggleBtn || !onDeathToggleBtn.IsValid || !onDeathToggleBtn.IsValid()) return false;
                 var enabled = (Number(MOD_CONFIG[onDeathConfigKey]) === 1);
-                try { onDeathToggleBtn.SetSelected(enabled); } catch (eSel0) {}
+                try { onDeathToggleBtn.SetSelected(enabled); } catch(eSel0) { WarnLog("settings", "op failed: " + (eSel0 && eSel0.message ? eSel0.message : String(eSel0 || ""))); }
                 onDeathToggleBtn.SetHasClass("selected", enabled);
                 onDeathToggleBtn.SetHasClass("IsSelected", enabled);
                 onDeathToggleBtn.SetHasClass("Active", enabled);
@@ -19751,7 +19751,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
     if (configId) rowConfigKeys.push(configId);
     if (secondaryConfigId) rowConfigKeys.push(secondaryConfigId);
     if (row && row.SetAttributeString) {
-        try { row.SetAttributeString(SETTING_ROW_RESET_KEYS_ATTR, rowConfigKeys.join(",")); } catch (e0) {}
+        try { row.SetAttributeString(SETTING_ROW_RESET_KEYS_ATTR, rowConfigKeys.join(",")); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
     }
 
     var rowResetBtn = null;
@@ -19765,7 +19765,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
         });
         rowResetIcon.AddClass("SettingRowResetIcon");
         rowResetIcon.AddClass("QOLResetIcon");
-        try { rowResetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch (eImg) {}
+        try { rowResetIcon.SetImage("s2r://panorama/images/icons/icon_refresh.vsvg"); } catch(eImg) { WarnLog("settings", "op failed: " + (eImg && eImg.message ? eImg.message : String(eImg || ""))); }
         rowResetBtn.SetPanelEvent("onmouseover", function() {
             HideSettingsTextTooltip();
             CancelSettingsRowFloatingTooltipHide();
@@ -20292,9 +20292,9 @@ function CreateSupportThanksPlaques(parent, entries, columns) {
                 plaque.AddClass("SupportThanksPlaqueClickable");
                 try { plaque.SetPanelEvent("onactivate", (function (url) {
                     return function () {
-                        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (eSupportPlaqueClick0) {}
+                        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch(eSupportPlaqueClick0) { WarnLog("settings", "op failed: " + (eSupportPlaqueClick0 && eSupportPlaqueClick0.message ? eSupportPlaqueClick0.message : String(eSupportPlaqueClick0 || ""))); }
                     };
-                })(entryData.url)); } catch (eSupportPlaqueClick) {}
+                })(entryData.url)); } catch(eSupportPlaqueClick) { WarnLog("settings", "op failed: " + (eSupportPlaqueClick && eSupportPlaqueClick.message ? eSupportPlaqueClick.message : String(eSupportPlaqueClick || ""))); }
             }
 
             var plaqueContent = $.CreatePanel("Panel", plaque, "");
@@ -20304,7 +20304,7 @@ function CreateSupportThanksPlaques(parent, entries, columns) {
                 var icon = $.CreatePanel("Image", plaqueContent, "");
                 icon.AddClass("SupportThanksPlaqueIcon");
                 if (entryData.role) icon.AddClass("SupportThanksPlaqueIcon_" + entryData.role);
-                try { icon.SetImage(entryData.iconSrc); } catch (eSupportPlaqueIcon) {}
+                try { icon.SetImage(entryData.iconSrc); } catch(eSupportPlaqueIcon) { WarnLog("settings", "op failed: " + (eSupportPlaqueIcon && eSupportPlaqueIcon.message ? eSupportPlaqueIcon.message : String(eSupportPlaqueIcon || ""))); }
             }
 
             var label = $.CreatePanel("Label", plaqueContent, "");
@@ -21710,7 +21710,7 @@ function RenderCurrentTabContent(list) {
                     ctaBtnIcon.AddClass("SupportCtaBtnIcon");
                     if (def.iconClass) ctaBtnIcon.AddClass(def.iconClass);
                     if (def.iconSrc) {
-                        try { ctaBtnIcon.SetImage(def.iconSrc); } catch (eSupportIcon) {}
+                        try { ctaBtnIcon.SetImage(def.iconSrc); } catch(eSupportIcon) { WarnLog("settings", "op failed: " + (eSupportIcon && eSupportIcon.message ? eSupportIcon.message : String(eSupportIcon || ""))); }
                     }
 
                     var ctaText = $.CreatePanel("Panel", ctaContent, "");
@@ -21978,18 +21978,18 @@ function GetPanelXOffsetWithinAncestor(panel, ancestor) {
             try {
                 var sx0 = Number(parentNode.scrolloffset_x);
                 if (isFinite(sx0)) { scrollX = sx0; hasScrollX = true; }
-            } catch (eSx0) {}
+            } catch(eSx0) { WarnLog("settings", "op failed: " + (eSx0 && eSx0.message ? eSx0.message : String(eSx0 || ""))); }
             if (!hasScrollX) {
                 try {
                     var sx1 = Number(parentNode.scrolloffsetX);
                     if (isFinite(sx1)) { scrollX = sx1; hasScrollX = true; }
-                } catch (eSx1) {}
+                } catch(eSx1) { WarnLog("settings", "op failed: " + (eSx1 && eSx1.message ? eSx1.message : String(eSx1 || ""))); }
             }
             if (!hasScrollX) {
                 try {
                     var sx2 = Number(parentNode.ScrollOffsetX);
                     if (isFinite(sx2)) { scrollX = sx2; hasScrollX = true; }
-                } catch (eSx2) {}
+                } catch(eSx2) { WarnLog("settings", "op failed: " + (eSx2 && eSx2.message ? eSx2.message : String(eSx2 || ""))); }
             }
             if (!hasScrollX) {
                 try {
@@ -22000,7 +22000,7 @@ function GetPanelXOffsetWithinAncestor(panel, ancestor) {
                             if (isFinite(sx3)) { scrollX = sx3; hasScrollX = true; }
                         }
                     }
-                } catch (eSx3) {}
+                } catch(eSx3) { WarnLog("settings", "op failed: " + (eSx3 && eSx3.message ? eSx3.message : String(eSx3 || ""))); }
             }
             if (hasScrollX && isFinite(scrollX) && scrollX !== 0) total += scrollX;
         }
@@ -22028,18 +22028,18 @@ function GetPanelYOffsetWithinAncestor(panel, ancestor) {
             try {
                 var sy0 = Number(parentNode.scrolloffset_y);
                 if (isFinite(sy0)) { scrollY = sy0; hasScrollY = true; }
-            } catch (eSy0) {}
+            } catch(eSy0) { WarnLog("settings", "op failed: " + (eSy0 && eSy0.message ? eSy0.message : String(eSy0 || ""))); }
             if (!hasScrollY) {
                 try {
                     var sy1 = Number(parentNode.scrolloffsetY);
                     if (isFinite(sy1)) { scrollY = sy1; hasScrollY = true; }
-                } catch (eSy1) {}
+                } catch(eSy1) { WarnLog("settings", "op failed: " + (eSy1 && eSy1.message ? eSy1.message : String(eSy1 || ""))); }
             }
             if (!hasScrollY) {
                 try {
                     var sy2 = Number(parentNode.ScrollOffsetY);
                     if (isFinite(sy2)) { scrollY = sy2; hasScrollY = true; }
-                } catch (eSy2) {}
+                } catch(eSy2) { WarnLog("settings", "op failed: " + (eSy2 && eSy2.message ? eSy2.message : String(eSy2 || ""))); }
             }
             if (!hasScrollY) {
                 try {
@@ -22050,7 +22050,7 @@ function GetPanelYOffsetWithinAncestor(panel, ancestor) {
                             if (isFinite(sy3)) { scrollY = sy3; hasScrollY = true; }
                         }
                     }
-                } catch (eSy3) {}
+                } catch(eSy3) { WarnLog("settings", "op failed: " + (eSy3 && eSy3.message ? eSy3.message : String(eSy3 || ""))); }
             }
             if (hasScrollY && isFinite(scrollY) && scrollY !== 0) total += scrollY;
         }
@@ -22393,7 +22393,7 @@ $.BuildUI = function() {
     EnsureDiscordTextureLogo(discordFooterBtn, "FooterDiscordLogoTexture", "FooterDiscordLogoTexture");
     var discordFooterIcon = discordFooterBtn.FindChildTraverse("FooterDiscordLogoTexture");
     if (discordFooterIcon && discordFooterBtn.MoveChildBefore) {
-        try { discordFooterBtn.MoveChildBefore(discordFooterIcon, discordFooterLabel); } catch (eMoveDiscordIcon) {}
+        try { discordFooterBtn.MoveChildBefore(discordFooterIcon, discordFooterLabel); } catch(eMoveDiscordIcon) { WarnLog("settings", "op failed: " + (eMoveDiscordIcon && eMoveDiscordIcon.message ? eMoveDiscordIcon.message : String(eMoveDiscordIcon || ""))); }
     }
 
     if (!saveFooterBtn) {
@@ -22416,7 +22416,7 @@ $.BuildUI = function() {
         saveFooterIcon.AddClass("TabIcon");
         saveFooterIcon.AddClass("FooterSaveBuildIcon");
         if (saveFooterBtn.MoveChildBefore) {
-            try { saveFooterBtn.MoveChildBefore(saveFooterIcon, saveFooterLabel); } catch (eMoveSaveIcon) {}
+            try { saveFooterBtn.MoveChildBefore(saveFooterIcon, saveFooterLabel); } catch(eMoveSaveIcon) { WarnLog("settings", "op failed: " + (eMoveSaveIcon && eMoveSaveIcon.message ? eMoveSaveIcon.message : String(eMoveSaveIcon || ""))); }
         }
         var footerSaveDefaultText = LocalizeSettingsText("SAVE", true);
         saveFooterLabel.text = footerSaveDefaultText;
@@ -22441,7 +22441,7 @@ $.BuildUI = function() {
             ActivateBuildSaveFromUi(saveFooterBtn, saveFooterLabel);
         });
         if (tabFooter.MoveChildBefore) {
-            try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch (eMoveDiscordFooter) {}
+            try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch(eMoveDiscordFooter) { WarnLog("settings", "op failed: " + (eMoveDiscordFooter && eMoveDiscordFooter.message ? eMoveDiscordFooter.message : String(eMoveDiscordFooter || ""))); }
         }
 
     var footerVersionLabel = tabFooter.FindChildTraverse("FooterVersionLabel");
@@ -22608,7 +22608,7 @@ $.BuildUI = function() {
         }
         headerLogo.hittest = false;
         headerLogo.hittestchildren = false;
-        try { headerLogo.SetImage(GetSettingsTheme() === SETTINGS_THEME_MUNFINS ? SETTINGS_HEADER_MUNFINS_LOGO_SRC : (GetSettingsTheme() === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC)); } catch (eHeaderLogo) {}
+        try { headerLogo.SetImage(GetSettingsTheme() === SETTINGS_THEME_MUNFINS ? SETTINGS_HEADER_MUNFINS_LOGO_SRC : (GetSettingsTheme() === SETTINGS_THEME_DEFAULT ? SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC : SETTINGS_HEADER_MOG_LOGO_THEME_SRC)); } catch(eHeaderLogo) { WarnLog("settings", "op failed: " + (eHeaderLogo && eHeaderLogo.message ? eHeaderLogo.message : String(eHeaderLogo || ""))); }
         if (headerTitle) {
     headerTitle.text = LocalizeSettingsText("LOCK", true);
             headerTitle.AddClass("SettingsHeaderTitleWordmark");
@@ -22623,15 +22623,29 @@ $.BuildUI = function() {
             headerTitleAccent.hittest = false;
             headerTitleAccent.hittestchildren = false;
             if (header.MoveChildBefore) {
-                try { header.MoveChildBefore(headerLogo, headerTitle); } catch (eMoveHeaderLogo) {}
-                try { header.MoveChildBefore(headerTitleAccent, headerTitle); } catch (eMoveHeaderAccent) {}
+                try { header.MoveChildBefore(headerLogo, headerTitle); } catch(eMoveHeaderLogo) { WarnLog("settings", "op failed: " + (eMoveHeaderLogo && eMoveHeaderLogo.message ? eMoveHeaderLogo.message : String(eMoveHeaderLogo || ""))); }
+                try { header.MoveChildBefore(headerTitleAccent, headerTitle); } catch(eMoveHeaderAccent) { WarnLog("settings", "op failed: " + (eMoveHeaderAccent && eMoveHeaderAccent.message ? eMoveHeaderAccent.message : String(eMoveHeaderAccent || ""))); }
             }
         }
         var headerVer = header.FindChildTraverse("ModVersionLabelTop");
         if (headerVer) {
-            try { headerVer.DeleteAsync(0); } catch (eDeleteHeaderVer) {}
+            try { headerVer.DeleteAsync(0); } catch(eDeleteHeaderVer) { WarnLog("settings", "op failed: " + (eDeleteHeaderVer && eDeleteHeaderVer.message ? eDeleteHeaderVer.message : String(eDeleteHeaderVer || ""))); }
             headerVer = null;
         }
+        headerVer = $.CreatePanel("Button", header, "ModVersionLabelTop");
+        headerVer.AddClass("HeaderMoglockLinkButton");
+        headerVer.visible = GetSettingsTheme() !== SETTINGS_THEME_MUNFINS;
+        headerVer.style.visibility = GetSettingsTheme() === SETTINGS_THEME_MUNFINS ? "collapse" : "visible";
+        headerVer.hittest = true;
+        headerVer.hittestchildren = true;
+        headerVer.style.zIndex = "7";
+        try { headerVer.SetPanelEvent("onactivate", function () {
+            try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch(eHeaderMoglockClick1) { WarnLog("settings", "op failed: " + (eHeaderMoglockClick1 && eHeaderMoglockClick1.message ? eHeaderMoglockClick1.message : String(eHeaderMoglockClick1 || ""))); }
+        }); } catch(eHeaderMoglockClick) { WarnLog("settings", "op failed: " + (eHeaderMoglockClick && eHeaderMoglockClick.message ? eHeaderMoglockClick.message : String(eHeaderMoglockClick || ""))); }
+        var headerVerPrefix = $.CreatePanel("Label", headerVer, "ModVersionLabelTopPrefix");
+    headerVerPrefix.text = LocalizeSettingsText("by", true);
+        var headerVerDomain = $.CreatePanel("Label", headerVer, "ModVersionLabelTopDomain");
+    headerVerDomain.text = LocalizeSettingsText("moglock.gg", true);
         ApplySettingsHeaderLogoTheme(GetSettingsTheme());
         var closeBtnHeader = header.FindChildTraverse("CloseBtn");
         if (closeBtnHeader) {
@@ -22647,6 +22661,9 @@ $.BuildUI = function() {
             }
             headerCenterHost.style.zIndex = "4";
             header.MoveChildBefore(headerCenterHost, closeBtnHeader);
+            if (header.MoveChildBefore) {
+                try { header.MoveChildBefore(headerVer, headerCenterHost); } catch(eMoveHeaderVerBack) { WarnLog("settings", "op failed: " + (eMoveHeaderVerBack && eMoveHeaderVerBack.message ? eMoveHeaderVerBack.message : String(eMoveHeaderVerBack || ""))); }
+            }
 
             if (searchWrapExisting && searchWrapExisting.IsValid && searchWrapExisting.IsValid()) {
                 if (searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {
@@ -22682,7 +22699,7 @@ $.ToggleSettingsWindow = function() {
         if (win.BHasClass("Visible")) {
             gSettingsOpenGuardUntilMs = GetNowMs() + 350;
             gSettingsOpenedInHideout = IsInHideoutForBuildSave();
-            try { SetSettingsTooltipThemeActive(true); } catch (eTooltipOpen) {}
+            try { SetSettingsTooltipThemeActive(true); } catch(eTooltipOpen) { WarnLog("settings", "op failed: " + (eTooltipOpen && eTooltipOpen.message ? eTooltipOpen.message : String(eTooltipOpen || ""))); }
             try {
                 if (!gSettingsUiBuilt) {
                     $.BuildUI();
@@ -22696,7 +22713,7 @@ $.ToggleSettingsWindow = function() {
                 }
             } catch (eBuildOpen) {
             }
-            try { win.SetFocus(); } catch (eFocusOpen) {}
+            try { win.SetFocus(); } catch(eFocusOpen) { WarnLog("settings", "op failed: " + (eFocusOpen && eFocusOpen.message ? eFocusOpen.message : String(eFocusOpen || ""))); }
             if (gSettingsOpenedInHideout) {
                 StartSettingsGameTransitionWatch();
             }

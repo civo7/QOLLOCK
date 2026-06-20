@@ -375,14 +375,14 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
                 var rootAttr = String(root.GetAttributeString(attrName, "") || "");
                 if (rootAttr !== "") return NormalizePaletteColorIndex(rootAttr);
             }
-        } catch (eAttrRoot) {}
+        } catch(eAttrRoot) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime"", (eAttrRoot && eAttrRoot.message ? eAttrRoot.message : String(eAttrRoot || ""))); }
         try {
             var hud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
             if (hud && hud.GetAttributeString) {
                 var hudAttr = String(hud.GetAttributeString(attrName, "") || "");
                 if (hudAttr !== "") return NormalizePaletteColorIndex(hudAttr);
             }
-        } catch (eAttrHud) {}
+        } catch(eAttrHud) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime"", (eAttrHud && eAttrHud.message ? eAttrHud.message : String(eAttrHud || ""))); }
         return fromConfig;
     }
 var SetCachedPanel = function(k, p) {
@@ -597,7 +597,7 @@ var SetCachedPanel = function(k, p) {
                     }
                     try {
                         p.style.transformOrigin = shouldZoom ? "50% 50%" : "100% 100%";
-                    } catch (eOrigin) {}
+                    } catch(eOrigin) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime"", (eOrigin && eOrigin.message ? eOrigin.message : String(eOrigin || ""))); }
                     p.style.align = shouldZoom ? "center center" : "right bottom";
                     if (shouldZoom) {
                         p.style.margin = (-zoomOffsetY) + "px 0px 0px " + zoomOffsetX + "px";

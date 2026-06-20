@@ -106,7 +106,7 @@
             try {
                 selector.SetSelected(LANE_PREF_WITH_PARTY_OPTION_ID);
                 setAttempted = true;
-            } catch (e1) {}
+            } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_lanewithparty"", (e1 && e1.message ? e1.message : String(e1 || ""))); }
         }
 
         var selectorActivated = ActivatePanelSafe(selector);
@@ -115,11 +115,11 @@
         if (option && IsPanelValid(option)) {
             var optionId = ReadPanelIdTextMaybe(option) || LANE_PREF_WITH_PARTY_OPTION_ID;
             if (selector.SetSelected) {
-                try { selector.SetSelected(optionId); setAttempted = true; } catch (e2) {}
+                try { selector.SetSelected(optionId); setAttempted = true; } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_lanewithparty"", (e2 && e2.message ? e2.message : String(e2 || ""))); }
             }
             optionActivated = ActivatePanelSafe(option);
             if (selector.SetSelected) {
-                try { selector.SetSelected(optionId); setAttempted = true; } catch (e3) {}
+                try { selector.SetSelected(optionId); setAttempted = true; } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_lanewithparty"", (e3 && e3.message ? e3.message : String(e3 || ""))); }
             }
             try { $.DispatchEvent("Activated", selector); } catch (e5) {
                 $.Msg("[QOLLock][WARN][" + _featureId + "] DispatchEvent Activated on lane selector failed: " + (e5 && e5.message ? String(e5.message) : String(e5)));

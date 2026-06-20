@@ -41,7 +41,7 @@
             try {
                 var shopVis = heroShop.style && heroShop.style.visibility;
                 if (shopVis === "collapse") return;
-            } catch (eVis) {}
+            } catch(eVis) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_heroshop"", (eVis && eVis.message ? eVis.message : String(eVis || ""))); }
         }
         if (needsHeroShopFeatures && !heroShop && nowMs >= (State.heroShopNextSearchMs || 0)) {
             heroShop = root.FindChildTraverse(PANEL_ID_HERO_SHOP);
