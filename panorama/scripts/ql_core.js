@@ -15523,6 +15523,7 @@ function GetUIRoot() {
                 if (forceToken && forceToken !== State._lastDiagForceToken) {
                     State._lastDiagForceToken = forceToken;
                     forceSync = true;
+                    QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));
                 }
             }
             if (!forceSync && State._diagWriteNextMs && State._diagWriteNextMs > nowMs) return;
@@ -15537,6 +15538,9 @@ function GetUIRoot() {
             };
             if (diagHud && diagHud.SetAttributeString) {
                 diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
+                if (forceSync) {
+                    QOL_WARN("core", "diag force-sync written, token=" + String(forceToken).substring(0, 12) + " features=" + diag.features.length + " disabled=" + diag.disabled.length);
+                }
             }
         } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }

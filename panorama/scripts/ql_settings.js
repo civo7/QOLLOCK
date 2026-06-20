@@ -21130,6 +21130,9 @@ function RenderCurrentTabContent(list) {
                         var hudPanel = _findHudPanel();
                         if (hudPanel && hudPanel.SetAttributeString) {
                             try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+                            $.Msg("[QOLLock][FeatureTest] force-sync token written: " + forceToken + " → polling for diag echo");
+                        } else {
+                            WarnLog("settings", "FeatureTest cannot write force-sync token — Hud panel not found (will poll stale data and likely timeout)");
                         }
 
                         // ── Poll for fresh diagnostic (eliminates 5s write interval race) ──
@@ -21338,6 +21341,9 @@ function RenderCurrentTabContent(list) {
                     var hudPanel = _findHudPanel();
                     if (hudPanel && hudPanel.SetAttributeString) {
                         try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+                        $.Msg("[QOLLock][presetCycle] force-sync token written: " + forceToken + " → polling for diag echo");
+                    } else {
+                        WarnLog("settings", "presetCycle cannot write force-sync token — Hud panel not found (will poll stale data and likely timeout)");
                     }
 
                     // ── Phase 3: Poll for fresh diagnostic snapshot ──
