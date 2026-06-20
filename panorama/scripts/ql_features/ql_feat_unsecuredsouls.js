@@ -255,7 +255,7 @@
         requiresRoot: true,
         gateKey: "unsecuredSouls",
         perfLabel: "loop.unsecured_souls_overlay",
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(State.unsecuredSouls && State.unsecuredSouls.displayMode && State.unsecuredSouls.displayMode !== ""); },
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_UNSECURED_SOUL_TIMER") || !!(State.unsecuredSouls && State.unsecuredSouls.displayMode && State.unsecuredSouls.displayMode !== "" && State.unsecuredSouls.displayMode !== "disabled" && State.unsecuredSouls.displayMode !== "context_off"); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateUnsecuredSoulsOverlay(root, cfg, hideoutConnected);
         },

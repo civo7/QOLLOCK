@@ -1400,13 +1400,8 @@ function ExpressShotLog(msg) {
             }
         }
 
-        try {
-            if (panel.style) {
-                var styleImg = String(panel.style.image || "");
-                var parsedStyleImg = parseTextCandidate(styleImg);
-                if (parsedStyleImg) return parsedStyleImg;
-            }
-        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        // NOTE: panel.style.image is NOT queried — Panorama doesn't support
+        // "image" as a CSS property, so it always throws. Skipped intentionally.
         try {
             if (panel.style) {
                 var styleBg = String(panel.style.backgroundImage || "");

@@ -11109,6 +11109,7 @@ function ShowUnsecuredPlusPreview() {
 
     var baseX = fallbackX;
     var baseY = fallbackY;
+    var anchoredToLive = false;
     var root = FindRootPanel();
     var liveOverlay = root && root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
     var liveRect = GetPanelRectRelativeToContext(liveOverlay);

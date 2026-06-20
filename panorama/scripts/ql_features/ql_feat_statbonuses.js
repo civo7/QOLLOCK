@@ -317,7 +317,7 @@
         configKeys: ["ENABLE_STAT_BONUSES"],
         bucket: 6, phase: 4,
         requiresRoot: true,
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES") || !!(State.statBonuses && State.statBonuses.displayMode && State.statBonuses.displayMode !== ""); },
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_STAT_BONUSES") || !!(State.statBonuses && State.statBonuses.displayMode && State.statBonuses.displayMode !== "" && State.statBonuses.displayMode !== "disabled" && State.statBonuses.displayMode !== "context_off"); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             UpdateStatBonusesOverlay(root, cfg, hideoutConnected);
         },
