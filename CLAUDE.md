@@ -6,9 +6,9 @@ QOLLOCK is a Deadlock (Source 2 Panorama engine) mod that customizes the in-game
 It runs in two JavaScript contexts — HUD (in-game panels) and Settings (settings UI) —
 and communicates between them via panel attribute bridges.
 
-**Version:** 3.1.4  
-**Schema:** 3.1.4  
-**Features:** 36 loaded, zero auto-disabled, 92 presets available  
+**Version:** 3.1.5  
+**Schema:** 3.1.5  
+**Features:** 39 loaded, zero auto-disabled, 92 presets available  
 **Branch:** `architecture-overhaul`  
 **Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
 
@@ -31,7 +31,7 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 34 extracted feature files
+    ├── ql_features/                        # 36 extracted feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -55,6 +55,8 @@ panorama/
     │   ├── ql_feat_panelcache.js          # Panel cache lazy priming (always-gated, on-demand)
     │   ├── ql_feat_recentpurchases.js
     │   ├── ql_feat_rejuvtimers.js         # Rejuvenator/Buff HUD + minimap objective timers (~1400 lines)
+    │   ├── ql_feat_showrank.js             # ShowRank HUD — top bar, escape menu, profile (via profile_card.xml)
+    │   ├── ql_feat_showrank_card.js         # ShowRank profile card bridge (also loaded by profile_card.xml)
     │   ├── ql_feat_sigflash.js
     │   ├── ql_feat_souls.js
     │   ├── ql_feat_spm.js                 # Souls Per Minute display
@@ -79,7 +81,7 @@ panorama/
 ```
 ql_utils.js → ql_shared_presets.js → ql_bridge.js → ql_state.js → ql_panelcache.js → ql_config.js →
 ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
-ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (33 files; order-independent)
+ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (36 files; order-independent)
 ```
 
 ### Context Architecture (Source 2 Panorama)
@@ -265,7 +267,7 @@ Key state fields:
 - **All 34 feature files migrated** to `QOL.import()` and `QOL.register()` API
 - **QOL namespace system** implemented (data-driven bridge exports)
 - **Bridge export system** refactored from ~168 individual try/catch blocks to data-driven arrays
-- **38/38 features loaded**, zero auto-disabled, 92/92 presets cycle completes
+- **39/39 features loaded**, zero auto-disabled, 92/92 presets cycle completes
 - **SafeLog utility** added to ql_utils.js
 - **18 duplicated bridge constants** moved to ql_bridge.js (eliminated from ql_core.js + ql_settings.js)
 - **_BDC/_MC recursion bug** fixed (sandbox validator now passes)

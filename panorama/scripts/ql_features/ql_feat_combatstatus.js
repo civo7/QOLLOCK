@@ -5,8 +5,6 @@
     var _featureId = "ql_feat_combatstatus";
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","isCombatSignalActive","isCustomHudContextActive","perfEnd","perfStart","state","setCachedPanel","setPanelClassIfChanged","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var GGHP = _deps.getGameplayHudPanel;
-    var GUIR = _deps.getUIRoot;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var SWC = _deps.setWashColorSafe;

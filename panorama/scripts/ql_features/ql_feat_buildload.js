@@ -39,7 +39,6 @@
     var TryReadBuildSaveStorageHeroFromSettings = _deps.tryReadBuildSaveStorageHeroFromSettings;
     var TryReadSelectedHeroIncludingStorageFromCommandPanels = _deps.tryReadSelectedHeroIncludingStorageFromCommandPanels;
     var ExtractHeroTokenFromText = _deps.extractHeroTokenFromText;
-    var IsConnectedToHideout = _deps.isConnectedToHideout;
     var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
     var CanReuseLoaderConfirmedAirheartContext = _deps.canReuseLoaderConfirmedAirheartContext;
         var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
