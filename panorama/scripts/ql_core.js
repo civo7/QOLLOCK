@@ -1303,11 +1303,6 @@ function ExpressShotLog(msg) {
         return false;
     }
 
-    function IsPlayableHeroId(heroId) {
-        var normalized = QOL.normalizeHeroId(heroId);
-        return !!(normalized && normalized !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID);
-    }
-
     function GetLoaderBaseDefaultHeroId() {
         var defaults = _BDC();
         var rawHero = (defaults && defaults.hasOwnProperty("DEFAULT_HERO"))
@@ -1318,26 +1313,6 @@ function ExpressShotLog(msg) {
         var fallback = QOL.normalizeHeroId(BUILD_SAVE_RETURN_HERO_ID);
         if (fallback && fallback !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return fallback;
         return "hero_werewolf";
-    }
-    function TryParseStorageConfigRaw(rawText) {
-        if (!rawText || rawText.length === 0) return {};
-        try {
-            var unwrapped = UnwrapConfigFromStorage(String(rawText));
-            return (unwrapped && unwrapped.config && typeof unwrapped.config === "object") ? unwrapped.config : {};
-        } catch (e0) {
-            return {};
-        }
-    }
-
-    function BuildComparableStorageConfigObject(sourceObj) {
-        var comparable = {};
-        if (!sourceObj || typeof sourceObj !== "object") return comparable;
-        for (var key in sourceObj) {
-            if (!sourceObj.hasOwnProperty(key)) continue;
-            if (key === HERO_PERSISTED_KEY) continue;
-            comparable[key] = sourceObj[key];
-        }
-        return comparable;
     }
     function ReadPanelClassTextMaybe(panel) {
         if (!panel) return "";
@@ -1729,25 +1704,6 @@ function ExpressShotLog(msg) {
         }
 
         ResetPerfWindow(nowMs);
-    }
-
-    function ResolvePresetConfigByName(presetName) {
-        if (!presetName) return null;
-        var presets = (typeof QOL_PRESETS === "object" && QOL_PRESETS) ? QOL_PRESETS : null;
-        if (!presets) return null;
-
-        if (presets.hasOwnProperty(presetName)) {
-            return presets[presetName];
-        }
-
-        var target = String(presetName).toLowerCase();
-        for (var key in presets) {
-            if (String(key).toLowerCase() === target) {
-                return presets[key];
-            }
-        }
-
-        return null;
     }
 
     const ACCOUNT_PRESET_BINDINGS = (typeof QOL_ACCOUNT_PRESET_BINDINGS === "object" && QOL_ACCOUNT_PRESET_BINDINGS)
@@ -2440,11 +2396,6 @@ function GetUIRoot() {
             SetPanelClassCached(passiveHud, State.passiveHudClassCache, "old_item_cooldowns_active", false);
         }
         State.passiveCooldownModeApplied = passiveCooldownMode;
-    }
-    function ResetColoredHealthbarPanelCache() {
-        SetCachedPanel("coloredHealthbarHealthBar", null);
-        SetCachedPanel("coloredHealthbarProgressLeft", null);
-        SetCachedPanel("coloredHealthbarCurrentHealth", null);
     }
 
     function IsDescendantOf(panel, ancestor) {
@@ -3872,18 +3823,6 @@ function GetUIRoot() {
         if (sig) return sig;
         try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(levelAmount)); } catch (e1) { sig = ""; }
         return sig || "";
-    }
-
-    function ParseFgHeroSignalValue(rawValue) {
-        if (rawValue === undefined || rawValue === null) return "";
-        var text = String(rawValue);
-        if (!text || text.length === 0) return "";
-        return QOL.normalizeHeroId(
-            ExtractHeroTokenFromText(text) ||
-            ExtractLastHeroTokenFromText(text) ||
-            NormalizeHeroAliasToken(text) ||
-            ExtractHeroFromLooseAliasTokens(text)
-        );
     }
 
     function TryReadFgHeroSignalFromLocalApis() {
@@ -5339,11 +5278,6 @@ function GetUIRoot() {
         State.topbarSoulSnapshot = null;
         State.topbarSoulSnapshotUntilMs = 0;
     }
-    function ResolveMinimapCrateOverlayMapKey() {
-        // Game.GetMapInfo confirmed absent — minimap crate overlay map detection disabled.
-        return "";
-    }
-
     function EnsureMinimapOverlayAnchor(root) {
         if (!root || !root.FindChildTraverse) return null;
         var anchor = GetCachedPanel("minimapObjectiveTimersAnchor");
@@ -5356,60 +5290,6 @@ function GetUIRoot() {
     }
 
 
-
-    function EnsureMinimapCrateOverlay(root) {
-        var anchor = EnsureMinimapOverlayAnchor(root);
-        if (!anchor) {
-            MinimapCrateOverlayDebugLogThrottled("ensure|noanchor", "anchor=<null>", PerfNowMs());
-            return null;
-        }
-        var overlay = GetCachedPanel("minimapCrateOverlayRoot");
-        var markers = GetCachedPanel("minimapCrateMarkersRoot");
-        if (!overlay) {
-            overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("minimap_overlay_root") || null) : null;
-            if (!overlay) {
-                overlay = $.CreatePanel("Panel", anchor, "minimap_overlay_root", {
-                    hittest: "false",
-                    hittestchildren: "false"
-                });
-            }
-        } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
-            overlay.SetParent(anchor);
-        }
-        if (!overlay) return null;
-        overlay.hittest = false;
-        overlay.hittestchildren = false;
-        if (!markers) {
-            markers = overlay.FindChildTraverse ? (overlay.FindChildTraverse("minimap_markers") || null) : null;
-            if (!markers) {
-                markers = $.CreatePanel("Panel", overlay, "minimap_markers", {
-                    hittest: "false",
-                    hittestchildren: "false"
-                });
-            }
-        }
-        if (!markers) return null;
-        markers.hittest = false;
-        markers.hittestchildren = false;
-        MinimapCrateOverlayDebugLogThrottled(
-            "ensure|" + (anchor.id || anchor.paneltype || "anchor") + "|" + (overlay ? "1" : "0") + "|" + (markers ? "1" : "0"),
-            "anchor=" + (anchor.id || anchor.paneltype || "<anon>") +
-            " overlay=" + (overlay ? (overlay.id || overlay.paneltype || "<anon>") : "<null>") +
-            " markers=" + (markers ? (markers.id || markers.paneltype || "<anon>") : "<null>"),
-            PerfNowMs()
-        );
-        SetCachedPanel("minimapCrateOverlayRoot", overlay);
-        SetCachedPanel("minimapCrateMarkersRoot", markers);
-        return {
-            root: overlay,
-            markers: markers
-        };
-    }
-    function ClearMinimapCrateOverlayMarkers(markers) {
-        if (markers && markers.RemoveAndDeleteChildren) {
-            markers.RemoveAndDeleteChildren();
-        }
-    }
 
 
 
@@ -5676,17 +5556,6 @@ function GetUIRoot() {
             " cfg[type,op,scale,x,y]=" + healthbarType + "," + playerOpacity.toFixed(2) + "," + playerScale + "," + playerX + "," + playerY +
             " panel[op,vis,rt,geo]=" + (isFinite(styleOpacity) ? styleOpacity.toFixed(2) : "nan") + "," + styleVisibility + "," + (runtimeVisible ? 1 : 0) + "," + geomW + "x" + geomH + "@" + posX + "," + posY
         );
-    }
-
-    function ParseEnemyV2BridgeBool(rawValue) {
-        if (rawValue === true || rawValue === 1 || rawValue === "1") return true;
-        if (rawValue === false || rawValue === 0 || rawValue === "0") return false;
-        if (typeof rawValue === "string") {
-            var s = String(rawValue).toLowerCase();
-            if (s === "true") return true;
-            if (s === "false") return false;
-        }
-        return null;
     }
 
     function GetFirstPanelTextByClass(panel, className) {
@@ -6125,21 +5994,6 @@ function GetUIRoot() {
         );
     }
 
-    function IsIndicatorSmallDamage(panel) {
-        if (!panel) return false;
-        return (
-            hasClassInHierarchy(panel, "bullet_damage_new") ||
-            hasClassInHierarchy(panel, "ability_damage_new") ||
-            hasClassInHierarchy(panel, "melee_damage_new") ||
-            hasClassInHierarchy(panel, "pure_damage_new") ||
-            hasClassInHierarchy(panel, "damage_type_gun") ||
-            hasClassInHierarchy(panel, "damage_type_melee") ||
-            hasClassInHierarchy(panel, "damage_type_ability") ||
-            hasClassInHierarchy(panel, "damage_type_pure") ||
-            hasClassInHierarchy(panel, "damage_type_poison")
-        );
-    }
-
     function EnsurePanelClassCache(cacheObj, panel) {
         if (!cacheObj) return;
         if (cacheObj.panel !== panel) {
@@ -6372,37 +6226,6 @@ function GetUIRoot() {
         return false;
     }
 
-    function ScanPanelTreeForAccountId(root) {
-        if (!root) return { id: "", source: "", detail: "", panelsScanned: 0 };
-        var stack = [root];
-        var panelsScanned = 0;
-
-        while (stack.length > 0 && panelsScanned < ACCOUNT_PROBE_MAX_PANELS) {
-            var panel = stack.pop();
-            if (!panel) continue;
-            panelsScanned++;
-
-            var accountId = ReadAccountIdFromPanel(panel);
-            if (accountId && IsLikelyLocalAccountCarrier(panel)) {
-                return {
-                    id: accountId,
-                    source: "panel_tree",
-                    detail: GetPanelDebugPath(panel, 8),
-                    panelsScanned: panelsScanned
-                };
-            }
-
-            try {
-                var childCount = panel.GetChildCount ? panel.GetChildCount() : 0;
-                for (var i = 0; i < childCount; i++) {
-                    var child = panel.GetChild(i);
-                    if (child) stack.push(child);
-                }
-            } catch (e0) {}
-        }
-
-        return { id: "", source: "panel_tree", detail: "", panelsScanned: panelsScanned };
-    }
     function TryReadAccountIdFromKnownPartyPath(root) {
         if (!root) return "";
         var partyContainer = root.FindChildTraverse("CitadelPartyContainer");
@@ -11282,19 +11105,6 @@ function GetUIRoot() {
         return -1;
     }
 
-    function GetPanelActualOffsetSafe(panel, axis) {
-        if (!panel) return 0;
-        var value = 0;
-        try {
-            if (axis === "x") value = Number(panel.actualxoffset) || 0;
-            else value = Number(panel.actualyoffset) || 0;
-        } catch (e0) {
-            value = 0;
-        }
-        if (!isFinite(value)) value = 0;
-        return value;
-    }
-
     function ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root) {
         var nodes = [unitStatusPanel, windowRoot];
         var current = unitStatusPanel;
@@ -11394,20 +11204,6 @@ function GetUIRoot() {
             IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
     }
 
-    function ResolveEnemyColoredHealthTeamColor(entry) {
-        if (entry && entry.baseColorRgb && entry.baseColorRgb.length === 3) {
-            return entry.baseColorRgb;
-        }
-        var panel = entry && entry.windowRoot ? entry.windowRoot : (entry && entry.healthBar ? entry.healthBar : null);
-        if (!panel) return ENEMY_COLORED_HEALTH_TEAM1_COLOR;
-        if (hasClassInHierarchy(panel, "team_neutral") || hasClassInHierarchy(panel, "neutral")) {
-            return ENEMY_COLORED_HEALTH_NEUTRAL_COLOR;
-        }
-        if (hasClassInHierarchy(panel, "team2")) return ENEMY_COLORED_HEALTH_TEAM2_COLOR;
-        if (hasClassInHierarchy(panel, "team1")) return ENEMY_COLORED_HEALTH_TEAM1_COLOR;
-        return ENEMY_COLORED_HEALTH_TEAM1_COLOR;
-    }
-
     function ResolveEnemyColoredHealthTeamClass(panel) {
         if (!panel) return "";
         if (hasClassInHierarchy(panel, "team1")) return "team1";
@@ -11431,103 +11227,6 @@ function GetUIRoot() {
         State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
         return friendlyTeamClass;
     }
-    function EstimateHealthPercentFromBarHeight(entry) {
-        if (!entry) return NaN;
-        var fillPanel = entry.healthBar || null;
-        var fillSize = fillPanel && IsPanelValid(fillPanel) ? Number(fillPanel.actuallayoutheight) : NaN;
-        if (!isFinite(fillSize) || fillSize < 0) return NaN;
-        var pct = (fillSize / 60) * 100;
-        if (!isFinite(pct)) return NaN;
-        if (pct < 0) pct = 0;
-        if (pct > 100) pct = 100;
-        return pct;
-    }
-    function RefreshEnemyColoredHealthPanelCache(root, nowMs) {
-        if (!root) return;
-        if (nowMs < (State.enemyColoredHealthPanelCacheNextMs || 0)) {
-            return;
-        }
-
-        var previous = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
-        var next = [];
-        var stats = {
-            roots: 0,
-            unitStatus: 0,
-            unitStatusOld: 0,
-            candidates: 0,
-            foundLagging: 0,
-            foundState: 0,
-            skippedNoEnemy: 0,
-            inferredByTeam: 0,
-            friendlyTeamClass: "",
-            topbarFound: 0,
-            entries: 0
-        };
-        var friendlyTeamClass = ResolveFriendlyTopBarTeamClass(root, nowMs);
-        stats.friendlyTeamClass = friendlyTeamClass || "";
-
-        function findPrevious(windowRoot, healthBar) {
-            for (var pi = 0; pi < previous.length; pi++) {
-                var prev = previous[pi];
-                if (prev && (prev.windowRoot === windowRoot || prev.healthBar === healthBar)) return prev;
-            }
-            return null;
-        }
-
-        var teamEnemy = root.FindChildTraverse ? (root.FindChildTraverse("TeamEnemy") || null) : null;
-        stats.roots = teamEnemy && IsPanelValid(teamEnemy) ? 1 : 0;
-        var progressLeftPanels = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("ProgressBarLeft") || []) : [];
-        stats.candidates = progressLeftPanels.length;
-        for (var pli = 0; pli < progressLeftPanels.length; pli++) {
-            var progressLeft = progressLeftPanels[pli];
-            if (!progressLeft || !IsPanelValid(progressLeft)) continue;
-
-            var progressLeftId = progressLeft.id ? String(progressLeft.id) : "";
-            if (progressLeftId !== "HeroHealth_Left") continue;
-            if (!hasClassInHierarchy(progressLeft, "enemy")) continue;
-
-            var heroHealthParent = progressLeft.GetParent ? progressLeft.GetParent() : null;
-            if (!heroHealthParent || !IsPanelValid(heroHealthParent)) continue;
-            var heroHealthId = heroHealthParent.id ? String(heroHealthParent.id) : "";
-            if (heroHealthId !== "HeroHealth") continue;
-
-            var healthBarRoot = heroHealthParent.GetParent ? heroHealthParent.GetParent() : null;
-            if (!healthBarRoot || !IsPanelValid(healthBarRoot)) continue;
-            var healthBarId = healthBarRoot.id ? String(healthBarRoot.id) : "";
-            if (healthBarId !== "HealthBar") continue;
-
-            var prevEntry = findPrevious(healthBarRoot, progressLeft);
-            next.push({
-                windowRoot: healthBarRoot,
-                unitStatusPanel: null,
-                healthBar: progressLeft,
-                healthBarParent: heroHealthParent,
-                ultIcon: null,
-                barId: "HeroHealth_Left",
-                teamClass: ResolveEnemyColoredHealthTeamClass(progressLeft) || "enemy",
-                baseColorRgb: ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR,
-                lastColor: prevEntry ? String(prevEntry.lastColor || "") : ""
-            });
-        }
-        stats.topbarFound = next.length;
-        if (next.length > 0) stats.foundLagging = next.length;
-
-        EnemyColoredHealthDebugLogThrottled(
-            "cache|" + String(stats.topbarFound) + "|" + String(stats.entries),
-            "cache teamEnemy=" + (teamEnemy ? "1" : "0") +
-                " progressLeftPanels=" + String(progressLeftPanels.length) +
-                " enemyHeroHealthLefts=" + String(next.length) +
-                " entries=" + String(next.length),
-            nowMs
-        );
-
-        State.enemyColoredHealthPanelCache = next;
-        State.enemyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
-        stats.entries = next.length;
-        State.enemyColoredHealthLastScanStats = stats;
-    }
-
-
     function IsAllyColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsColorWarningEnabled(cfg) ||
@@ -16056,12 +15755,9 @@ function GetUIRoot() {
                     "playerHealthbarAccentColorPanels", "playerHealthbarAccentColorToken"]
     });
 
-    // ── Batch D: style-runtime features (simple root+cfg dispatch) ──
 
 
-    // ── Batch E: features needing nowMs ──
 
-    // ── Batch F: features with complex state ──
 
     // =========================================================================
     // §18 Global bridge — exported for per-feature files in ql_features/
@@ -16280,16 +15976,6 @@ function GetUIRoot() {
         ["trySelectFirstStorageBuildEntry", function() { return TrySelectFirstStorageBuildEntry; }],
         ["trySelectNextStorageBuildEntry", function() { return TrySelectNextStorageBuildEntry; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
-        ["panelCache", function() { return (typeof PanelCache !== "undefined") ? PanelCache : null; }],
-        ["getPanel", function() { return (typeof PanelCache !== "undefined" && PanelCache.getPanel) ? PanelCache.getPanel : GetCachedPanel; }],
-        ["setPanel", function() { return (typeof PanelCache !== "undefined" && PanelCache.setPanel) ? PanelCache.setPanel : SetCachedPanel; }],
-        ["getList", function() { return (typeof PanelCache !== "undefined" && PanelCache.getList) ? PanelCache.getList : function() { return null; }; }],
-        ["setList", function() { return (typeof PanelCache !== "undefined" && PanelCache.setList) ? PanelCache.setList : function() {}; }],
-        ["getData", function() { return (typeof PanelCache !== "undefined" && PanelCache.getData) ? PanelCache.getData : function() { return undefined; }; }],
-        ["setData", function() { return (typeof PanelCache !== "undefined" && PanelCache.setData) ? PanelCache.setData : function() {}; }],
-        ["panelCacheSweep", function() { return (typeof PanelCache !== "undefined" && PanelCache.sweep) ? PanelCache.sweep : SweepStalePanelCache; }],
-        ["panelCacheClear", function() { return (typeof PanelCache !== "undefined" && PanelCache.clear) ? PanelCache.clear : ClearPanelCache; }],
-        ["panelCacheResolve", function() { return (typeof PanelCache !== "undefined" && PanelCache.resolve) ? PanelCache.resolve : ResolveCachedPanel; }]
     ];
 
     // Publish to QOL namespace with error logging
