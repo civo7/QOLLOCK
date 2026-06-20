@@ -315,7 +315,7 @@
 
     function FillLoop(root, token) {
         if (!IsPanelValid(root) || SafeGetAttribute(root, "qol_sr_fill_token", "") !== token) {
-            DebugLog("showRank", "FillLoop: bail — invalid root or token mismatch");
+            $.Msg("[QOLLock][showRank] FILLLOOP: bail — root invalid or token mismatch");
             return;
         }
 
@@ -324,14 +324,14 @@
 
         if (hideoutNow) {
             if (hideoutCached !== "1") {
-                DebugLog("showRank", "FillLoop: entered hideout");
+                $.Msg("[QOLLock][showRank] FILLLOOP: entered hideout");
                 ClearAllAccountIds(root);
             }
             SafeSetAttribute(root, "qol_sr_hideout", "1");
             $.Schedule(1.0, function() { FillLoop(root, token); });
             return;
         }
-        if (hideoutCached === "1") DebugLog("showRank", "FillLoop: exited hideout");
+        if (hideoutCached === "1") $.Msg("[QOLLock][showRank] FILLLOOP: exited hideout");
         SafeSetAttribute(root, "qol_sr_hideout", "0");
 
         if (!IsEscapeMenuOpen(root)) {
@@ -354,15 +354,13 @@
         var row = FindUnfilledRow(root);
         if (!row) {
             if (State) State.showRankEscapeDone = genNow;
-            DebugLog("showRank", "FillLoop: all rows filled, latch set");
-            // Dismiss the last profile card — match reference's
-            // ScheduleCleanupProfileContext / CONTEXT_CLEANUP_DELAY_SECONDS (0.5s)
+            $.Msg("[QOLLock][showRank] FILLLOOP: all rows filled — latch set (gen=" + genNow + "), dismissing profile card");
             $.Schedule(0.5, DismissProfileCard);
             $.Schedule(2.0, function() { FillLoop(root, token); });
             return;
         }
 
-        DebugLog("showRank", "FillLoop: found unfilled row, dispatching FillRow");
+        $.Msg("[QOLLock][showRank] FILLLOOP: dispatching FillRow for unfilled row (" + entries.length + " entries)");
         FillRow(root, row, function() {
             $.Schedule(0.1, function() { FillLoop(root, token); });
         });
@@ -391,12 +389,12 @@
 
         function TryLoad() {
             // Panel destroyed (hideout transition, etc.)
-            if (!IsPanelValid(topBarPlayer)) { DebugLog("showRank", "TopBar.TryLoad: panel destroyed"); return; }
+            if (!IsPanelValid(topBarPlayer)) { $.Msg("[QOLLock][showRank] TRYLOAD: panel destroyed, stopping loop"); return; }
 
             // Generation check — escape script bumps this on hideout/new-game
             var gen = SafeGetAttribute(root, "qol_sr_generation", "");
             if (gen !== _lastGen) {
-                DebugLog("showRank", "TopBar.TryLoad: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>"));
+                $.Msg("[QOLLock][showRank] TRYLOAD: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>") + " — resetting");
                 _lastGen = gen;
                 var overlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                 SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
@@ -453,21 +451,23 @@
 
             // Load image if account ID changed
             if (accountId && accountId !== _lastAccountId) {
-                DebugLog("showRank", "TopBar.TryLoad: loading rank image for " + accountId);
+                $.Msg("[QOLLock][showRank] TRYLOAD: accountId found — " + accountId + " (was " + (_lastAccountId || "none") + ")");
                 _lastAccountId = accountId;
                 var loadOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                 if (IsPanelValid(loadOverlay)) {
                     var url = API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small";
                     try { loadOverlay.SetImage(url); } catch(e) { DebugLog("showRank", "tryLoad.setImage: " + (e.message || String(e))); }
-                    DebugLog("showRank", "TopBar.TryLoad: SetImage(" + url + ")");
+                    $.Msg("[QOLLock][showRank] TRYLOAD: SetImage(" + url + ")");
                     if (IsShowRankEnabled()) {
                         var baseBadge = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                         SetBadgeVisible(baseBadge, true);
                         SetBadgeVisible(loadOverlay, true);
-                        DebugLog("showRank", "TopBar.TryLoad: badges set visible");
+                        $.Msg("[QOLLock][showRank] TRYLOAD: badges set VISIBLE (ShowRank enabled)");
+                    } else {
+                        $.Msg("[QOLLock][showRank] TRYLOAD: ShowRank DISABLED — badges left hidden");
                     }
                 } else {
-                    DebugLog("showRank", "TopBar.TryLoad: RankPredictionBadgeTopBarOverlay NOT FOUND");
+                    $.Msg("[QOLLock][showRank] TRYLOAD: RankPredictionBadgeTopBarOverlay NOT FOUND");
                 }
             }
 
@@ -496,6 +496,7 @@
         var topBarVisible = enabled && showTopBar;
         if (State._showRankTopBarVisible !== topBarVisible) {
             State._showRankTopBarVisible = topBarVisible;
+            $.Msg("[QOLLock][showRank] TOPBAR CSS: " + (topBarVisible ? "SHOW (RemoveClass HideShowRankTopBar)" : "HIDE (AddClass HideShowRankTopBar)"));
             try {
                 if (topBarVisible) {
                     root.RemoveClass("HideShowRankTopBar");
@@ -509,10 +510,11 @@
         var wasEnabled = State._showRankEnabled === true;
         State._showRankEnabled = enabled;
 
-        DebugLog("showRank", "ApplyConfigHotReload: " + wasEnabled + " → " + enabled);
+        $.Msg("[QOLLock][showRank] CONFIG CHANGE: " + wasEnabled + " → " + enabled);
 
         if (wasEnabled && !enabled) {
             // on→off: clear everything
+            $.Msg("[QOLLock][showRank] CLEANUP: on→off — clearing topbar + playerlist badges, bumping generation");
             ApplyTopBarVisibility(root, false);
             ClearTopBarBadges(root);
             ApplyPlayerListVisibility(root, false);
@@ -521,10 +523,12 @@
             State.showRankEscapeDone = "";
             var gen = parseInt(SafeGetAttribute(root, "qol_sr_generation", "0")) || 0;
             SafeSetAttribute(root, "qol_sr_generation", String(gen + 1));
+            $.Msg("[QOLLock][showRank] CLEANUP: generation bumped to " + String(gen + 1));
         }
 
         if (!wasEnabled && enabled) {
             // off→on: show badges (data will be filled by FillLoop)
+            $.Msg("[QOLLock][showRank] INIT: off→on — showing badges, resetting escapeDone");
             ApplyTopBarVisibility(root, true);
             ApplyPlayerListVisibility(root, true);
             State.showRankEscapeDone = "";
@@ -630,7 +634,7 @@
         try {
             var currentGen = SafeGetAttribute(root, "qol_sr_generation", "0");
             var players = FindAllTopBarPlayers(topBar);
-            DebugLog("showRank", "EnsureTopBarPlayers: found " + players.length + " total players, currentGen=" + currentGen);
+            var skippedCount = 0, noHeroCount = 0, emptyHeroCount = 0, initCount = 0;
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
                 var pid = "";
@@ -638,24 +642,29 @@
                 var storedInit = "";
                 storedInit = SafeGetAttribute(player, "_qol_sr_init", "");
                 if (IsTopBarPlayerInitialized(player, root)) {
+                    skippedCount++;
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
                 }
                 var heroLabel = FindClass(player, "HeroName");
                 if (!IsPanelValid(heroLabel)) {
+                    noHeroCount++;
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroName — skip");
                     continue;
                 }
                 var heroName = "";
                 heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
                 if (!heroName) {
+                    emptyHeroCount++;
                     DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
                     continue;
                 }
+                initCount++;
                 DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " hero=" + heroName + " storedInit=" + (storedInit || "<empty>") + " — INITIALIZING");
                 MarkTopBarPlayerInitialized(player, root);
                 _InitTopBarPlayer(player);
             }
+            $.Msg("[QOLLock][showRank] TOPBAR INIT: " + players.length + " players — " + initCount + " new, " + skippedCount + " already-init, " + noHeroCount + " no-hero, " + emptyHeroCount + " empty-hero (gen=" + currentGen + ")");
         } catch(e) { DebugLog("showRank", "EnsureTopBarPlayers: ERROR " + (e && e.message ? e.message : String(e))); }
     }
 
@@ -665,7 +674,8 @@
     function EnsureFillLoopRunning(root) {
         if (!IsPanelValid(root)) return;
         var token = SafeGetAttribute(root, "qol_sr_fill_token", "");
-        if (token) return; // already running
+        if (token) { DebugLog("showRank", "EnsureFillLoop: already running (token=" + String(token).substring(0, 12) + "…)"); return; }
+        $.Msg("[QOLLock][showRank] FILLLOOP: starting new loop — clearing ranks, bumping generation");
         // Clear stale hero→account mappings from previous match before starting
         ClearPublishedRanks(root);
         // Bump generation so the idle latch resets and rows are re-scanned
@@ -674,7 +684,7 @@
         if (State) State.showRankEscapeDone = "";
         var newToken = "qol_sr_" + String(PerfNowMs());
         SafeSetAttribute(root, "qol_sr_fill_token", newToken);
-        DebugLog("showRank", "update: starting FillLoop token=" + newToken + " gen=" + (gen + 1));
+        $.Msg("[QOLLock][showRank] FILLLOOP: token=" + newToken + " gen=" + (gen + 1));
         FillLoop(root, newToken);
     }
 
@@ -694,12 +704,25 @@
             // clear badges, reset state). Without this, toggling SHOW_RANK off
             // kills the feature before cleanup, and toggling back on sees
             // _showRankEnabled === enabled → early return → top bar never re-inits.
-            return IsCfgEnabled(cfg, "SHOW_RANK") || !!(State && State._showRankEnabled);
+            var cfgOn = IsCfgEnabled(cfg, "SHOW_RANK");
+            var keepalive = !!(State && State._showRankEnabled);
+            var result = cfgOn || keepalive;
+            if (!cfgOn && keepalive) {
+                $.Msg("[QOLLock][showRank] GATE: keepalive active — cfg=OFF but _showRankEnabled still set, holding gate open for cleanup");
+            }
+            if (!result) {
+                $.Msg("[QOLLock][showRank] GATE: closed — cfg=OFF, _showRankEnabled=" + (State ? String(State._showRankEnabled) : "no-state"));
+            }
+            return result;
         },
         update: function(root, cfg) {
             try {
+                var _updShowRank = IsShowRankEnabled();
+                var _updTopBar = IsCfgEnabled(cfg, "SHOW_RANK_TOPBAR");
+                var _updFillToken = SafeGetAttribute(root, "qol_sr_fill_token", "");
+                $.Msg("[QOLLock][showRank] UPDATE: showRank=" + _updShowRank + " topBar=" + _updTopBar + " _showRankEnabled=" + String(State._showRankEnabled) + " _topBarVisible=" + String(State._showRankTopBarVisible) + " fillToken=" + (_updFillToken ? "SET" : "empty") + " gen=" + SafeGetAttribute(root, "qol_sr_generation", "0"));
                 ApplyConfigHotReload(root, cfg);
-                if (IsShowRankEnabled()) {
+                if (_updShowRank) {
                     EnsureFillLoopRunning(root);
                     EnsureTopBarPlayersInitialized(root);
                 }
