@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.1.4";
+var QOL_SCHEMA_SEMVER = "3.1.5";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1674,6 +1674,15 @@ var QOL_COMPACT_SCHEMA_3_1_4= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_3,
     QOL_COMPACT_SCHEMA_3_1_4_EXTRA_FIELDS
 );
+
+// 3.1.5: Add ShowRank feature key (SHOW_RANK).
+var SHOWRANK_SCHEMA_FIELDS = [
+    { key: "SHOW_RANK", min: 0, max: 1, step: 1 }
+];
+var QOL_COMPACT_SCHEMA_3_1_5= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_3_1_4,
+    SHOWRANK_SCHEMA_FIELDS
+);
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
 // ==========================================================================
@@ -1912,6 +1921,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "3.1.4": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_3_1_4
+    },
+    "3.1.5": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_3_1_5
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2157,6 +2170,7 @@ var QOL_DumpDiagnostics = function() {
 };
 
 var QOL_DEFAULT_CONFIG = {
+    SHOW_RANK: 0,
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,
         MINIMAP_BASE_OPACITY: 1.0,

@@ -527,7 +527,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
         var current = panel;
         var walkGuard = 0;
         while (current && IsPanelValid(current) && current !== topBar && walkGuard < 64) {
-            x += ReadSafePanelLayoutOffset(current.actualxoffset) || 0;
+            x += Utils.ReadSafePanelLayoutOffset(current.actualxoffset) || 0;
             current = current.GetParent();
             walkGuard++;
         }

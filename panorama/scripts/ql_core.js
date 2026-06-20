@@ -15361,6 +15361,10 @@ function GetUIRoot() {
                 } catch(_ge) {
                     gates[_gk + "Active"] = false;
                 }
+                // Phase 10 safety: default non-suffixed gate for populateFeatureBuckets.
+                // Post-processing below may override this for features that need
+                // staggered-disable cleanup or phase gating.
+                gates[_gk] = gates[_gk + "Active"];
             }
             // FeatureState passthroughs — pre-computed once for shared values
             gates.combatIndicatorActive = featureState.combatIndicatorActive;
@@ -15403,6 +15407,7 @@ function GetUIRoot() {
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
         gates.legacyAudioPassive = gates.legacyAudioPassiveActive;
         gates.imagesInChat = gates.imagesInChatActive;
+        gates.showRank = gates.showRankActive;
         gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
