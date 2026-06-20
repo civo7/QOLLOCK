@@ -2220,6 +2220,7 @@ $.Schedule(0.2, SetupHeroTestingDragging);
     global.UpdateSavedPositionStatus = UpdateSavedPositionStatus;
     global.ToggleModifier = ToggleModifier;
     global.ToggleStreeBrawlMode = ToggleStreeBrawlMode;
+    global.Cmd = Cmd;            // shadowed built-in — used by all HUD XML buttons
     global.giveImbueItem = giveImbueItem;
     global.imbuedSkill = 0;   // mutable by XML onactivate handlers
     global.TeamNumber = 4;     // mutable by XML onactivate handlers
