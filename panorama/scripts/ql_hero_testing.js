@@ -1,6 +1,8 @@
 // ql_hero_testing.js — Hero testing tools (sandbox mode)
-// Context guard: only run in HUD context (functions hoist to global for XML access)
-if (typeof $ !== "undefined" && $.GetContextPanel) {
+(function(global) {
+    'use strict';
+    // Context guard: only run in HUD context
+    if (typeof $ === "undefined" || !$.GetContextPanel) return;
 
 const itemlist = [
   "upgrade_clip_size",
@@ -612,10 +614,8 @@ function giveAllItems() {
     giveBatch();
 }
 
-var imbuedSkill = 0;
-
 function giveImbueItem(item) {
-    Cmd(`giveitem ${item} ${imbuedSkill}`);
+    Cmd(`giveitem ${item} ${Number(global.imbuedSkill) || 0}`);
 }
 
 function FindAncestorById(id) {
@@ -1902,7 +1902,7 @@ function UpdateEnhancedItems() {
     }
 }
 
-var TeamNumber = 4;
+// TeamNumber initialized on global object (mutable by XML onactivate handlers)
 
 var PropScale = 1;
 const PropScaleLabel = $.GetContextPanel().FindChildTraverse("prop_scale_label");
@@ -1936,18 +1936,18 @@ function SetPropScale(step) {
 }
 
 function SpawnTeamEntity(name) {
-    Cmd(`ent_create ${name} {"teamnumber" "${TeamNumber}"}`);
+    Cmd(`ent_create ${name} {"teamnumber" "${global.TeamNumber}"}`);
 }
 
 function SpawnProp(model) {
     let skinName = "Nano";
-    if  (TeamNumber == 0)
+    if  (global.TeamNumber == 0)
         skinName = "Sapphire";
-    else if (TeamNumber == 1)
+    else if (global.TeamNumber == 1)
         skinName = "Amber";
-    else if (TeamNumber == 2)
+    else if (global.TeamNumber == 2)
         skinName = "Friendly";
-    else if (TeamNumber == 3)
+    else if (global.TeamNumber == 3)
         skinName = "Enemy";
 
     Cmd(`ent_create citadel_prop_dynamic { DefaultSkin ${skinName} model ${model} scale ${PropScale} ${PropScale} ${PropScale} }`);
@@ -1958,7 +1958,7 @@ function SpawnRandomProp(root, names) {
 }
 
 function ApplyTeam() {
-    Cmd(`changeteam ${TeamNumber}`);
+    Cmd(`changeteam ${global.TeamNumber}`);
 }
 
 function SelectSkybox(name) {
@@ -2172,4 +2172,56 @@ function RandomizeHero() {
 $.Schedule(0.2, DisableUnsupportedButtons);
 $.Schedule(0.2, SetupHeroTestingDragging);
 
-} // end context guard
+    // ── Export to global scope for XML onload/onactivate handlers ──
+    // (function declarations inside strict-mode IIFE aren't global-visible,
+    // but hud_hero_testing.xml calls these as bare function names.)
+    global.InitializeTestingToolsLayout = InitializeTestingToolsLayout;
+    global.PrimaryTabSelect = PrimaryTabSelect;
+    global.TabSelect = TabSelect;
+    global.LoadTestingEnvironment = LoadTestingEnvironment;
+    global.SetNoclipModeFromCheckbox = SetNoclipModeFromCheckbox;
+    global.AdjustNoclipSpeed = AdjustNoclipSpeed;
+    global.LoadMidtownMap = LoadMidtownMap;
+    global.giveAllItems = giveAllItems;
+    global.UpdateNoDeathToggle = UpdateNoDeathToggle;
+    global.UpdateEnableActuallyNoCooldowns = UpdateEnableActuallyNoCooldowns;
+    global.UpdateDisableAI = UpdateDisableAI;
+    global.ToggleSubsection = ToggleSubsection;
+    global.UpdateEnhancedItems = UpdateEnhancedItems;
+    global.AdjustSpeed = AdjustSpeed;
+    global.AdjustSprint = AdjustSprint;
+    global.AdjustGravity = AdjustGravity;
+    global.AdjustDamage = AdjustDamage;
+    global.ToggleHeroTestingStub = ToggleHeroTestingStub;
+    global.ToggleTopBar = ToggleTopBar;
+    global.ToggleHealth = ToggleHealth;
+    global.UpdateToggleDamageReport = UpdateToggleDamageReport;
+    global.ToggleObjectivesHealth = ToggleObjectivesHealth;
+    global.ToggleAbilities = ToggleAbilities;
+    global.ToggleCrosshair = ToggleCrosshair;
+    global.UpdateToggleItems = UpdateToggleItems;
+    global.ToggleModifiers = ToggleModifiers;
+    global.ToggleMinimap = ToggleMinimap;
+    global.RemoveAllObjectives = RemoveAllObjectives;
+    global.SpawnTeamEntity = SpawnTeamEntity;
+    global.ChangePropScale = ChangePropScale;
+    global.SetPropScale = SetPropScale;
+    global.SpawnProp = SpawnProp;
+    global.SpawnRandomProp = SpawnRandomProp;
+    global.SelectSkybox = SelectSkybox;
+    global.RandomizeHero = RandomizeHero;
+    global.LoadDefaultHeroFromSettings = LoadDefaultHeroFromSettings;
+    global.TeleportToSavedPosition = TeleportToSavedPosition;
+    global.SaveCurrentPlayerPosition = SaveCurrentPlayerPosition;
+    global.HeroTestingUpdateDisableDeath = HeroTestingUpdateDisableDeath;
+    global.ToggleNoclipMode = ToggleNoclipMode;
+    global.UpdateNoclipToggleLabel = UpdateNoclipToggleLabel;
+    global.UpdateNoclipSpeedLabel = UpdateNoclipSpeedLabel;
+    global.UpdateSavedPositionStatus = UpdateSavedPositionStatus;
+    global.ToggleModifier = ToggleModifier;
+    global.ToggleStreeBrawlMode = ToggleStreeBrawlMode;
+    global.giveImbueItem = giveImbueItem;
+    global.imbuedSkill = 0;   // mutable by XML onactivate handlers
+    global.TeamNumber = 4;     // mutable by XML onactivate handlers
+
+})(this);
