@@ -1677,7 +1677,8 @@ var QOL_COMPACT_SCHEMA_3_1_4= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
 
 // 3.1.5: Add ShowRank feature key (SHOW_RANK).
 var SHOWRANK_SCHEMA_FIELDS = [
-    { key: "SHOW_RANK", min: 0, max: 1, step: 1 }
+    { key: "SHOW_RANK", min: 0, max: 1, step: 1 },
+    { key: "SHOW_RANK_TOPBAR", min: 0, max: 1, step: 1 }
 ];
 var QOL_COMPACT_SCHEMA_3_1_5= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_4,
@@ -2171,6 +2172,7 @@ var QOL_DumpDiagnostics = function() {
 
 var QOL_DEFAULT_CONFIG = {
     SHOW_RANK: 0,
+    SHOW_RANK_TOPBAR: 1,
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,
         MINIMAP_BASE_OPACITY: 1.0,

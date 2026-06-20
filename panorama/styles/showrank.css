@@ -54,6 +54,12 @@
 	visibility: visible;
 }
 
+/* ── Top-bar-only hide (toggled via SHOW_RANK_TOPBAR config) ── */
+.HideShowRankTopBar #RankPredictionBadgeTopBar.ShowRankVisible,
+.HideShowRankTopBar #RankPredictionBadgeTopBarOverlay.ShowRankVisible {
+	visibility: collapse;
+}
+
 /* ── Hidden labels ── */
 .PlayerHeroHidden {
 	visibility: collapse;

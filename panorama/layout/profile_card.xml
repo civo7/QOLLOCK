@@ -5,9 +5,9 @@
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_profile_card_statlocker.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank_card.vjs_c" />
 	</scripts>
-	<CitadelProfileCard onload="if($.ShowRank_ProfileLoaded)$.ShowRank_ProfileLoaded();">
+	<CitadelProfileCard onload="if($.ShowRankCardLoaded)$.ShowRankCardLoaded();">
 		<Panel id="MiniProfileContainer" class="TopBottomFlow">
 			<Panel id="ContentsMain">
 				<Panel id="ContentsMainBackground" />

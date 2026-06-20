@@ -8,7 +8,7 @@
 		</styles>
 		<scripts>
 		</scripts>
-		<CitadelHudTopBarPlayer onload="if($.ShowRank_TopBarLoaded)$.ShowRank_TopBarLoaded();">
+		<CitadelHudTopBarPlayer>
 			<GlobalClassListener classes="gDetailView" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />
