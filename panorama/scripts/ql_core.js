@@ -15510,22 +15510,33 @@ function GetUIRoot() {
 
     function syncDiagnosticState(root, nowMs) {
         try {
-            if (typeof QOL_FEATURE_REGISTRY !== "undefined" && (!State._diagWriteNextMs || State._diagWriteNextMs <= nowMs)) {
-                State._diagWriteNextMs = nowMs + 5000;
-                var diag = {
-                    features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
-                    missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
-                    errors: (State.featureErrorStreaks) ? State.featureErrorStreaks : {},
-                    disabled: (State.featureAutoDisabled) ? Object.keys(State.featureAutoDisabled) : [],
-                    logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : []
-                };
-                var diagRoot = State.rootPanel || root;
-                if (diagRoot && diagRoot.FindChildTraverse) {
-                    var diagHud = diagRoot.FindChildTraverse("Hud");
-                    if (diagHud && diagHud.SetAttributeString) {
-                        diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
-                    }
+            if (typeof QOL_FEATURE_REGISTRY === "undefined") return;
+            var diagRoot = State.rootPanel || root;
+            var diagHud = (diagRoot && diagRoot.FindChildTraverse) ? diagRoot.FindChildTraverse("Hud") : null;
+            // ── Force-sync: Settings context writes a token to QOL_DiagRequest when it
+            //     needs an immediate diagnostic snapshot (e.g. after a preset change).
+            //     Echo the token in the response so the caller can match it. ──
+            var forceSync = false;
+            var forceToken = "";
+            if (diagHud && diagHud.GetAttributeString) {
+                forceToken = diagHud.GetAttributeString("QOL_DiagRequest", "");
+                if (forceToken && forceToken !== State._lastDiagForceToken) {
+                    State._lastDiagForceToken = forceToken;
+                    forceSync = true;
                 }
+            }
+            if (!forceSync && State._diagWriteNextMs && State._diagWriteNextMs > nowMs) return;
+            State._diagWriteNextMs = nowMs + 5000;
+            var diag = {
+                features: Object.keys(QOL_FEATURE_REGISTRY).sort(),
+                missing: (State._missingFeatureLogged) ? State._missingFeatureLogged : {},
+                errors: (State.featureErrorStreaks) ? State.featureErrorStreaks : {},
+                disabled: (State.featureAutoDisabled) ? Object.keys(State.featureAutoDisabled) : [],
+                logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : [],
+                diagToken: forceToken
+            };
+            if (diagHud && diagHud.SetAttributeString) {
+                diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
             }
         } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     }

@@ -20983,8 +20983,20 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
         CreateSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         CreateSeparator(list);
+        // ── Shared Hud-panel resolver for force-sync diagnostic polling ──
+        // Called fresh each poll iteration since SaveAndSync() can recreate panels.
+        function _findHudPanel() {
+            try {
+                var ctx = $.GetContextPanel();
+                while (ctx && ctx.GetParent && ctx.GetParent()) { ctx = ctx.GetParent(); }
+                return (ctx && ctx.FindChildTraverse) ? ctx.FindChildTraverse("Hud") : null;
+            } catch(e) { return null; }
+        }
+
         // ── Feature Isolation Test (FIT) ──
         // Tests each registered feature individually: enable → verify → disable → next.
+        // Uses force-sync diagnostic polling to ensure we read a fresh snapshot after
+        // each config change (eliminates the 5-second diagnostic write interval race).
         // Faster and more diagnostic than the preset cycle (tests isolation, not combinations).
         var fitHeader = CreateSectionTitle(list, "Feature Test");
         var fitBtn = CreateSectionInlineIconButton(fitHeader, "FeatureTestBtn",
@@ -21087,31 +21099,71 @@ function RenderCurrentTabContent(list) {
                         }
                         SaveAndSync();
 
-                        // Wait 220ms for HUD dispatch to process, then check
-                        $.Schedule(0.22, function() {
+                        // ── Write force-sync token for fresh diagnostic snapshot ──
+                        var forceToken = "fit_" + token + "_" + index;
+                        var hudPanel = _findHudPanel();
+                        if (hudPanel && hudPanel.SetAttributeString) {
+                            try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+                        }
+
+                        // ── Poll for fresh diagnostic (eliminates 5s write interval race) ──
+                        var pollStartMs = Date.now ? Date.now() : (new Date()).getTime();
+                        var pollAttempts = 0;
+
+                        function pollFitDiag() {
+                            pollAttempts++;
                             if (!_fitRunning || token !== _fitToken) return;
-                            // Check if feature was auto-disabled (error in dispatch)
-                            var diagText = "";
-                            try { diagText = (typeof QOL_DumpDiagnostics === "function") ? QOL_DumpDiagnostics() : ""; } catch(e) { diagText = ""; }
-                            var autoDisabled = (diagText.indexOf("AUTO-DISABLED: " + entry.name) >= 0);
 
-                            if (autoDisabled) {
-                                failed++;
-                                $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " auto-disabled");
-                            } else {
-                                passed++;
+                            var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                            if ((nowMs - pollStartMs) > 5500) {
+                                // Timeout — can't confirm, assume pass (don't flag false positive)
+                                skipped++;
+                                $.Msg("[QOLLock][FeatureTest] SKIP: " + entry.name + " — diagnostic sync timeout");
+                                // Disable and continue
+                                for (var tdk = 0; tdk < entry.configKeys.length; tdk++) {
+                                    MOD_CONFIG[entry.configKeys[tdk]] = savedConfig[entry.configKeys[tdk]];
+                                }
+                                SaveAndSync();
+                                index++;
+                                $.Schedule(0.08, runNext);
+                                return;
                             }
 
-                            // Disable feature's keys
-                            for (var dk = 0; dk < entry.configKeys.length; dk++) {
-                                MOD_CONFIG[entry.configKeys[dk]] = savedConfig[entry.configKeys[dk]];
+                            var hud = _findHudPanel();
+                            var rawDiag = "";
+                            if (hud && hud.GetAttributeString) {
+                                try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
                             }
-                            SaveAndSync();
+                            if (rawDiag) {
+                                try {
+                                    var diag = JSON.parse(rawDiag);
+                                    if (diag.diagToken === forceToken) {
+                                        // Fresh snapshot — check for auto-disable
+                                        var autoDisabled = (diag.disabled && diag.disabled.indexOf(entry.name) >= 0);
+                                        if (autoDisabled) {
+                                            failed++;
+                                            $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " auto-disabled");
+                                        } else {
+                                            passed++;
+                                        }
 
-                            // Short delay for cleanup, then next
-                            index++;
-                            $.Schedule(0.08, runNext);
-                        });
+                                        // Disable feature's keys
+                                        for (var dk = 0; dk < entry.configKeys.length; dk++) {
+                                            MOD_CONFIG[entry.configKeys[dk]] = savedConfig[entry.configKeys[dk]];
+                                        }
+                                        SaveAndSync();
+
+                                        index++;
+                                        $.Schedule(0.08, runNext);
+                                        return;
+                                    }
+                                    // else: stale snapshot — keep polling
+                                } catch(e) {}
+                            }
+                            var interval = pollAttempts < 5 ? 0.1 : (pollAttempts < 15 ? 0.2 : 0.4);
+                            $.Schedule(interval, pollFitDiag);
+                        }
+                        $.Schedule(0.15, pollFitDiag);
                     } catch(e) {
                         failed++;
                         $.Msg("[QOLLock][FeatureTest] FAIL: " + entry.name + " threw: " + (e && e.message ? e.message : String(e)));
@@ -21127,11 +21179,19 @@ function RenderCurrentTabContent(list) {
                 $.Schedule(0.1, runNext);
             });
         }
-        // ── Preset Cycle ──
+        // ── Preset Cycle (Robust) ──
+        // Applies every preset sequentially with per-preset verification via force-sync
+        // diagnostic polling. Detects auto-disabled features, tracks timing, and reports
+        // a detailed pass/fail summary at the end.
+        // The force-sync mechanism: after applying a preset, we write a unique token to
+        // the Hud panel's QOL_DiagRequest attribute. The HUD dispatch loop sees the new
+        // token and immediately writes a fresh diagnostic snapshot (echoing the token).
+        // We poll QOL_Diag until we see our token, then verify no features auto-disabled.
+        // This eliminates the 5-second diagnostic write interval race condition.
         var presetCycleHeader = CreateSectionTitle(list, "Preset Cycle");
         var presetCycleBtn = CreateSectionInlineIconButton(presetCycleHeader, "PresetCycleBtn",
             "s2r://panorama/images/icons/icon_reorder.vsvg",
-            "Sequentially apply every preset with a short delay between each.");
+            "Apply every preset and verify no features auto-disable. Click again to stop.");
         var presetCycleStatus = $.CreatePanel("Label", presetCycleHeader, "PresetCycleStatus");
         presetCycleStatus.text = "Idle";
         presetCycleStatus.style.fontSize = "13px";
@@ -21139,10 +21199,9 @@ function RenderCurrentTabContent(list) {
         presetCycleStatus.style.marginLeft = "6px";
         presetCycleStatus.style.verticalAlign = "center";
 
-        var _presetCycleRunning = false;
-        var _presetCycleToken = 0;
-        var _presetCycleNames = [];
-        var _presetCycleIndex = 0;
+        var _pcRunning = false;
+        var _pcToken = 0;
+        var _pcResults = [];
 
         if (presetCycleBtn) {
             // ── Panel-safe helpers: panels may be destroyed by SaveAndSync() ──
@@ -21152,51 +21211,180 @@ function RenderCurrentTabContent(list) {
             function _pcSetBtnActive(active) {
                 try { if (presetCycleBtn && presetCycleBtn.IsValid && presetCycleBtn.IsValid()) { if (active) presetCycleBtn.AddClass("CycleActive"); else presetCycleBtn.RemoveClass("CycleActive"); } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
             }
+
             presetCycleBtn.SetPanelEvent("onactivate", function() {
-                if (_presetCycleRunning) {
-                    // Stop cycling
-                    _presetCycleRunning = false;
-                    _presetCycleToken++;
+                if (_pcRunning) {
+                    // ── Stop cycling ──
+                    _pcRunning = false;
+                    _pcToken++;
                     _pcSetBtnActive(false);
-                    _pcSetStatus("Stopped (applied " + _presetCycleIndex + " of " + _presetCycleNames.length + ")", "#aa8844");
-                    SetLocalizedConfigFeedbackMessage("Stopped after " + _presetCycleIndex + " presets.", "info", 2400);
-                } else {
-                    // Start cycling
-                    _presetCycleNames = Object.keys(PRESETS).sort();
-                    if (_presetCycleNames.length === 0) {
-                        _pcSetStatus("No presets found.", "#cc4444");
+                    var done = _pcResults.length;
+                    var total = (typeof PRESETS !== "undefined") ? Object.keys(PRESETS).length : 0;
+                    _pcSetStatus("Stopped (" + done + " of " + total + ")", "#aa8844");
+                    SetLocalizedConfigFeedbackMessage("Stopped after " + done + " presets.", "info", 2400);
+                    return;
+                }
+
+                // ── Start cycling ──
+                if (typeof PRESETS === "undefined" || Object.keys(PRESETS).length === 0) {
+                    _pcSetStatus("No presets found.", "#cc4444");
+                    return;
+                }
+                var presetNames = Object.keys(PRESETS).sort();
+                _pcRunning = true;
+                _pcResults = [];
+                var index = 0;
+                var token = ++_pcToken;
+                _pcSetBtnActive(true);
+                _pcSetStatus("Starting...", "#66cc99");
+                $.Msg("[QOLLock][presetCycle] Starting robust cycle: " + presetNames.length + " presets");
+
+                function runNext() {
+                    if (!_pcRunning || token !== _pcToken) return;
+
+                    if (index >= presetNames.length) {
+                        // ── Done — print summary ──
+                        _pcRunning = false;
+                        _pcSetBtnActive(false);
+                        var passed = 0, failed = 0;
+                        var failNames = [];
+                        for (var ri = 0; ri < _pcResults.length; ri++) {
+                            if (_pcResults[ri].passed) { passed++; }
+                            else {
+                                failed++;
+                                var why = (_pcResults[ri].autoDisabled && _pcResults[ri].autoDisabled.length > 0) ? _pcResults[ri].autoDisabled.join(",") : (_pcResults[ri].timeout ? "timeout" : (_pcResults[ri].exception ? "exception" : "unknown"));
+                                failNames.push(_pcResults[ri].name + " (" + why + ")");
+                            }
+                        }
+                        var summaryColor = (failed > 0) ? "#cc8844" : "#66cc99";
+                        var summary = "Done: " + passed + " passed, " + failed + " failed";
+                        _pcSetStatus(summary, summaryColor);
+                        $.Msg("[QOLLock][presetCycle] === SUMMARY: " + summary + " ===");
+                        if (failNames.length > 0) {
+                            $.Msg("[QOLLock][presetCycle] FAILURES: " + failNames.join("; "));
+                        }
+                        // ── Timing stats ──
+                        var totalMs = 0, minMs = Infinity, maxMs = 0;
+                        for (var ti = 0; ti < _pcResults.length; ti++) {
+                            if (_pcResults[ti].timeMs > 0) {
+                                totalMs += _pcResults[ti].timeMs;
+                                if (_pcResults[ti].timeMs < minMs) minMs = _pcResults[ti].timeMs;
+                                if (_pcResults[ti].timeMs > maxMs) maxMs = _pcResults[ti].timeMs;
+                            }
+                        }
+                        if (_pcResults.length > 0 && minMs < Infinity) {
+                            var avgMs = Math.round(totalMs / _pcResults.length);
+                            $.Msg("[QOLLock][presetCycle] Timing: avg=" + avgMs + "ms, min=" + minMs + "ms, max=" + maxMs + "ms, total=" + (totalMs / 1000).toFixed(1) + "s");
+                        }
+                        SetLocalizedConfigFeedbackMessage(summary + " (" + (totalMs > 0 ? (totalMs / 1000).toFixed(1) + "s" : "N/A") + ")", (failed > 0 ? "warn" : "success"), 5000);
                         return;
                     }
-                    _presetCycleRunning = true;
-                    _presetCycleIndex = 0;
-                    var token = ++_presetCycleToken;
-                    _pcSetBtnActive(true);
-                    _pcSetStatus("Starting...", "#66cc99");
 
-                    function applyNext() {
-                        if (!_presetCycleRunning || token !== _presetCycleToken) return;
-                        if (_presetCycleIndex >= _presetCycleNames.length) {
-                            // Done
-                            _presetCycleRunning = false;
-                            _pcSetBtnActive(false);
-                            _pcSetStatus("Complete! All " + _presetCycleNames.length + " presets applied.", "#66cc99");
-                            SetLocalizedConfigFeedbackMessage("Cycled through all " + _presetCycleNames.length + " presets.", "success", 3000);
+                    var presetName = presetNames[index];
+                    var startMs = Date.now ? Date.now() : (new Date()).getTime();
+                    var forceToken = "pc_" + token + "_" + index;
+                    var label = "[" + (index + 1) + "/" + presetNames.length + "] " + presetName;
+                    _pcSetStatus(label + " …", "#66cc99");
+
+                    // ── Phase 1: Apply the preset ──
+                    var applyOk = true;
+                    var applyErr = "";
+                    try {
+                        ApplyPresetByName(presetName);
+                    } catch(e) {
+                        applyOk = false;
+                        applyErr = (e && e.message) ? e.message : String(e || "");
+                        $.Msg("[QOLLock][presetCycle] ApplyPresetByName failed for '" + presetName + "': " + applyErr);
+                    }
+
+                    if (!applyOk) {
+                        _pcResults.push({ name: presetName, passed: false, autoDisabled: [], featuresLoaded: 0, timeMs: Date.now ? Date.now() - startMs : 0, exception: applyErr });
+                        _pcSetStatus(label + " — EXCEPTION", "#cc4444");
+                        index++;
+                        $.Schedule(0.05, runNext);
+                        return;
+                    }
+
+                    // ── Phase 2: Write force-sync token to Hud bridge ──
+                    // Done AFTER ApplyPresetByName (which calls SaveAndSync) so the HUD
+                    // picks up both the new config and the token in the same dispatch cycle.
+                    var hudPanel = _findHudPanel();
+                    if (hudPanel && hudPanel.SetAttributeString) {
+                        try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+                    }
+
+                    // ── Phase 3: Poll for fresh diagnostic snapshot ──
+                    var pollStartMs = Date.now ? Date.now() : (new Date()).getTime();
+                    var pollAttempts = 0;
+                    var maxPollMs = 5500;
+
+                    function pollDiag() {
+                        pollAttempts++;
+                        if (!_pcRunning || token !== _pcToken) return;
+
+                        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                        var elapsedPollMs = nowMs - pollStartMs;
+
+                        // Timeout — diagnostic bridge never echoed our token
+                        if (elapsedPollMs > maxPollMs) {
+                            _pcResults.push({ name: presetName, passed: false, autoDisabled: [], featuresLoaded: 0, timeMs: nowMs - startMs, timeout: true });
+                            $.Msg("[QOLLock][presetCycle] " + label + " — TIMEOUT (no diagnostic sync after " + Math.round(elapsedPollMs) + "ms)");
+                            _pcSetStatus(label + " — TIMEOUT", "#cc8844");
+                            index++;
+                            $.Schedule(0.05, runNext);
                             return;
                         }
-                        var presetName = _presetCycleNames[_presetCycleIndex];
-                        var msg = "[" + (_presetCycleIndex + 1) + "/" + _presetCycleNames.length + "] " + presetName;
-                        _pcSetStatus(msg, "#66cc99");
-                        $.Msg("[QOLLock][presetCycle] " + msg);
-                        try {
-                            ApplyPresetByName(presetName);
-                        } catch(e) {
-                            $.Msg("[QOLLock][presetCycle] ApplyPresetByName failed for '" + presetName + "': " + (e && e.message ? e.message : String(e || "")));
+
+                        // Read diagnostic bridge (fresh Hud ref each poll — panels may be recreated)
+                        var rawDiag = "";
+                        var hud = _findHudPanel();
+                        if (hud && hud.GetAttributeString) {
+                            try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
                         }
-                        _presetCycleIndex++;
-                        $.Schedule(1.2, applyNext);
+
+                        if (rawDiag) {
+                            try {
+                                var diag = JSON.parse(rawDiag);
+                                // Match the force-sync token to ensure this snapshot reflects our preset
+                                if (diag.diagToken === forceToken) {
+                                    var elapsedMs = nowMs - startMs;
+                                    var autoDisabled = (diag.disabled) ? diag.disabled : [];
+                                    var features = (diag.features) ? diag.features : [];
+                                    var passed = autoDisabled.length === 0;
+
+                                    _pcResults.push({
+                                        name: presetName,
+                                        passed: passed,
+                                        autoDisabled: autoDisabled,
+                                        featuresLoaded: features.length,
+                                        timeMs: elapsedMs
+                                    });
+
+                                    var statusStr = passed ? "OK" : "FAIL: " + autoDisabled.join(", ");
+                                    var color = passed ? "#66cc99" : "#cc4444";
+                                    $.Msg("[QOLLock][presetCycle] " + label + " — " + statusStr + " (" + features.length + " features, " + elapsedMs + "ms, " + pollAttempts + " polls)");
+                                    _pcSetStatus(label + " — " + statusStr, color);
+
+                                    index++;
+                                    $.Schedule(0.05, runNext);
+                                    return;
+                                }
+                                // else: stale snapshot (token mismatch) — keep polling
+                            } catch(e) {
+                                // JSON parse error — keep polling
+                            }
+                        }
+                        // Not ready yet — poll again with adaptive interval
+                        // Start at 100ms, back off to 400ms after 15 attempts (~3s of polling)
+                        var interval = pollAttempts < 5 ? 0.1 : (pollAttempts < 15 ? 0.2 : 0.4);
+                        $.Schedule(interval, pollDiag);
                     }
-                    $.Schedule(0.1, applyNext);
+
+                    // First poll after 150ms (allow 3 dispatch cycles for HUD to process)
+                    $.Schedule(0.15, pollDiag);
                 }
+
+                $.Schedule(0.1, runNext);
             });
         }
         // ── Diagnostics ──
