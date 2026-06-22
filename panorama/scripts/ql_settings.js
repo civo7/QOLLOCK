@@ -20963,8 +20963,12 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset color wash for the keyboard overlay.");
         });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Compass & Speed", "ENABLE_COMPASS", "See your view angle and speed.", function(sectionParent) {
-            CreateRow(sectionParent, "Show Speed", "ENABLE_COMPASS_SPEED", "toggle", null, null, null, null, "Speed number tracker.");
+        CreateAnimatedInlineToggleSection(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", function(sectionParent) {
+            CreateSliderRow(sectionParent, "Horizontal Offset", "COMPASS_SPEED_X_OFFSET", "offset_n2000_2000");
+            CreateSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n1000_300");
+        });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Compass", "ENABLE_COMPASS", "See your view angle.", function(sectionParent) {
             CreateRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
             CreateSliderRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
             CreateSliderRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");

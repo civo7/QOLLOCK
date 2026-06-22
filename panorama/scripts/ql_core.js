@@ -13704,7 +13704,9 @@ function GetUIRoot() {
     function ResetCompassRuntimeState() {
         State.compass.lastDegreeText = "";
         State.compass.layoutSig = "";
+        State.compass.speedOffsetSig = "";
         State.compass.nextSpeedSampleMs = 0;
+
         State.compass.lastSpeedValueText = "--";
         State.compass.lastPosX = null;
         State.compass.lastPosY = null;
@@ -13842,8 +13844,23 @@ function GetUIRoot() {
             speedLabel.style.textAlign = showCompass ? "right" : "center";
             speedLabel.style.horizontalAlign = "right";
             speedLabel.style.verticalAlign = "center";
+            var speedOffsetX = Number(State.compass.speedOffsetX);
+            if (!isFinite(speedOffsetX)) speedOffsetX = 0;
+            if (speedOffsetX < -2000) speedOffsetX = -2000;
+            if (speedOffsetX > 2000) speedOffsetX = 2000;
+            var speedOffsetY = Number(State.compass.speedOffsetY);
+            if (!isFinite(speedOffsetY)) speedOffsetY = 0;
+            if (speedOffsetY < -1000) speedOffsetY = -1000;
+            if (speedOffsetY > 300) speedOffsetY = 300;
+            var speedOffsetSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY);
+            if (State.compass.speedOffsetSig !== speedOffsetSig) {
+                speedLabel.style.x = String(Math.round(speedOffsetX)) + "px";
+                speedLabel.style.y = String(-Math.round(speedOffsetY)) + "px";
+                State.compass.speedOffsetSig = speedOffsetSig;
+            }
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
+
 
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
@@ -14590,6 +14607,9 @@ function GetUIRoot() {
         State.compass.stretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
         State.compass.offsetX = (cfg.COMPASS_X_OFFSET === undefined || cfg.COMPASS_X_OFFSET === null) ? 0 : cfg.COMPASS_X_OFFSET;
         State.compass.offsetY = (cfg.COMPASS_Y_OFFSET === undefined || cfg.COMPASS_Y_OFFSET === null) ? 120 : cfg.COMPASS_Y_OFFSET;
+        State.compass.speedOffsetX = (cfg.COMPASS_SPEED_X_OFFSET === undefined || cfg.COMPASS_SPEED_X_OFFSET === null) ? 0 : cfg.COMPASS_SPEED_X_OFFSET;
+        State.compass.speedOffsetY = (cfg.COMPASS_SPEED_Y_OFFSET === undefined || cfg.COMPASS_SPEED_Y_OFFSET === null) ? 0 : cfg.COMPASS_SPEED_Y_OFFSET;
+
         if (
             shouldApplyStaticClasses ||
             State.passiveCooldownModeApplied !== passiveCooldownMode ||
