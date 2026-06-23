@@ -1665,7 +1665,7 @@ var QOL_COMPACT_SCHEMA_3_1_5= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
 );
 var COMPASS_SPEED_OFFSET_SCHEMA_FIELDS = [
     { key: "COMPASS_SPEED_X_OFFSET", min: -2000, max: 2000, step: 5 },
-    { key: "COMPASS_SPEED_Y_OFFSET", min: -1000, max: 300, step: 5 }
+    { key: "COMPASS_SPEED_Y_OFFSET", min: -2000, max: 2000, step: 5 }
 ];
 var QOL_COMPACT_SCHEMA_3_1_6= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_5,

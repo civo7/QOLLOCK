@@ -1070,6 +1070,7 @@ var gUnsecuredSoulsPreviewBaseY = 110;
 var gCompassPreviewPanel = null;
 var gCompassPreviewBox = null;
 var gCompassPreviewLabel = null;
+var gCompassPreviewSpeed = null;
 var gCompassPreviewHideToken = 0;
 var gCompassPreviewBaseX = 0;
 var gCompassPreviewBaseY = 120;
@@ -9718,6 +9719,7 @@ function EnsureCompassPreviewPanel() {
         SetPanelNonInteractive(gCompassPreviewPanel);
         SetPanelNonInteractive(gCompassPreviewBox);
         SetPanelNonInteractive(gCompassPreviewLabel);
+        SetPanelNonInteractive(gCompassPreviewSpeed);
         return gCompassPreviewPanel;
     }
     var root = $.GetContextPanel();
@@ -9738,13 +9740,21 @@ function EnsureCompassPreviewPanel() {
     if (!label) {
         label = $.CreatePanel("Label", panel, "CompassPreviewLabel");
     }
+
+    var speed = panel.FindChildTraverse("CompassPreviewSpeed");
+    if (!speed) {
+        speed = $.CreatePanel("Label", panel, "CompassPreviewSpeed");
+    }
+
     SetPanelNonInteractive(panel);
     SetPanelNonInteractive(box);
     SetPanelNonInteractive(label);
+    SetPanelNonInteractive(speed);
 
     gCompassPreviewPanel = panel;
     gCompassPreviewBox = box;
     gCompassPreviewLabel = label;
+    gCompassPreviewSpeed = speed;
     return panel;
 }
 
@@ -10260,7 +10270,9 @@ function IsCompassPreviewConfig(configId) {
         configId === "COMPASS_X_OFFSET" ||
         configId === "COMPASS_Y_OFFSET" ||
         configId === "COMPASS_STRETCH_X" ||
-        configId === "COMPASS_STRETCH_Y";
+        configId === "COMPASS_STRETCH_Y" ||
+        configId === "COMPASS_SPEED_X_OFFSET" ||
+        configId === "COMPASS_SPEED_Y_OFFSET";
 }
 
 function IsKeyboardOverlayPreviewConfig(configId) {
@@ -10674,6 +10686,27 @@ function ShowCompassPreview() {
     if (gCompassPreviewLabel) {
         var speedText = showSpeed ? " SPD" : "";
         gCompassPreviewLabel.text = boxWidth + "x" + boxHeight + speedText;
+    }
+
+    // Speed marker — mirrors the standalone speed readout so its offset
+    // sliders get the same live preview the compass offsets have. Positioned
+    // relative to the compass box anchor: +X moves right, +Y moves up (the
+    // core applies style.y = -offsetY, so we negate here too).
+    if (gCompassPreviewSpeed) {
+        if (showSpeed) {
+            var speedOffsetX = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_X_OFFSET) || 0);
+            var speedOffsetY = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_Y_OFFSET) || 0);
+            if (speedOffsetX < -2000) speedOffsetX = -2000;
+            if (speedOffsetX > 2000) speedOffsetX = 2000;
+            if (speedOffsetY < -2000) speedOffsetY = -2000;
+            if (speedOffsetY > 2000) speedOffsetY = 2000;
+            gCompassPreviewSpeed.text = "SPD";
+            gCompassPreviewSpeed.style.x = speedOffsetX + "px";
+            gCompassPreviewSpeed.style.y = (-speedOffsetY) + "px";
+            gCompassPreviewSpeed.style.visibility = "visible";
+        } else {
+            gCompassPreviewSpeed.style.visibility = "collapse";
+        }
     }
 
     panel.AddClass("Visible");
@@ -20965,7 +20998,7 @@ function RenderCurrentTabContent(list) {
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", function(sectionParent) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "COMPASS_SPEED_X_OFFSET", "offset_n2000_2000");
-            CreateSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n1000_300");
+            CreateSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n2000_2000");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Compass", "ENABLE_COMPASS", "See your view angle.", function(sectionParent) {

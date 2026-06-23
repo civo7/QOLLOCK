@@ -13831,33 +13831,37 @@ function GetUIRoot() {
             SetCachedPanel("compassSpeed", speedLabel);
         }
         if (degreeLabel) {
-            // Compass heading owns the full row and stays centered. Speed is a
-            // decoupled overlay positioned by its own offset sliders, so the
-            // degree label no longer shrinks to half-width when speed is on.
-            degreeLabel.style.width = "100%";
-            degreeLabel.style.textAlign = "center";
-            degreeLabel.style.horizontalAlign = "center";
+            // Degrees take the LEFT half of the readout when speed shares the
+            // row, and the full centered width when the compass owns the row
+            // alone. (Both labels use ignore-parent-flow, so equal full widths
+            // would stack on top of each other — hence the 50% split.)
+            degreeLabel.style.width = showSpeed ? "50%" : "100%";
+            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
+            degreeLabel.style.horizontalAlign = "left";
             degreeLabel.style.verticalAlign = "center";
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
-            // Speed is independent of the compass: always centered in its own
-            // full-width label and moved by COMPASS_SPEED_{X,Y}_OFFSET. It must
-            // NOT re-align right when the compass turns on.
-            speedLabel.style.width = "100%";
-            speedLabel.style.textAlign = "center";
-            speedLabel.style.horizontalAlign = "center";
+            // With the compass on, speed sits in the RIGHT half (degrees left,
+            // speed right). Speed-only → full-width centered. The speed offset
+            // sliders then nudge it freely from whichever anchor applies.
+            speedLabel.style.width = showCompass ? "50%" : "100%";
+            speedLabel.style.textAlign = showCompass ? "right" : "center";
+            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
             speedLabel.style.verticalAlign = "center";
             var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
             if (speedOffsetX < -2000) speedOffsetX = -2000;
             if (speedOffsetX > 2000) speedOffsetX = 2000;
+            // Symmetric wide range so the standalone speed can be parked
+            // anywhere on screen — the old [-1000, 300] cap was the "invisible
+            // barrier" that stopped it from moving up more than 300px.
             var speedOffsetY = Number(State.compass.speedOffsetY);
             if (!isFinite(speedOffsetY)) speedOffsetY = 0;
-            if (speedOffsetY < -1000) speedOffsetY = -1000;
-            if (speedOffsetY > 300) speedOffsetY = 300;
+            if (speedOffsetY < -2000) speedOffsetY = -2000;
+            if (speedOffsetY > 2000) speedOffsetY = 2000;
             var speedOffsetSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY);
             if (State.compass.speedOffsetSig !== speedOffsetSig) {
                 speedLabel.style.x = String(Math.round(speedOffsetX)) + "px";
