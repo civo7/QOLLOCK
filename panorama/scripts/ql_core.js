@@ -13171,13 +13171,29 @@ function GetUIRoot() {
             SetCachedPanel("compassDegree", degree);
         }
 
-        var speed = GetCachedPanel("compassSpeed");
-        if (!IsPanelValid(speed)) {
-            speed = compassRoot.FindChildTraverse("QOLCompassSpeed");
-            if (!speed && readout) {
-                speed = $.CreatePanel("Label", readout, "QOLCompassSpeed");
+        // Speed overlay — own root panel under the gameplay HUD so it isn't
+        // trapped inside the 200px-wide compassRoot. Mirrors the zipBoost
+        // pattern: independent panel, positioned by margins.
+        var speedRoot = GetCachedPanel("speedRoot");
+        if (!IsPanelValid(speedRoot)) {
+            speedRoot = root.FindChildTraverse("QOLSpeedRoot");
+            if (!speedRoot) {
+                var parent = GetGameplayHudPanel(root);
+                if (parent) {
+                    speedRoot = $.CreatePanel("Panel", parent, "QOLSpeedRoot");
+                }
             }
-            SetCachedPanel("compassSpeed", speed);
+            SetCachedPanel("speedRoot", speedRoot);
+        }
+        if (speedRoot) {
+            var speed = GetCachedPanel("compassSpeed");
+            if (!IsPanelValid(speed)) {
+                speed = speedRoot.FindChildTraverse("QOLSpeedLabel");
+                if (!speed) {
+                    speed = $.CreatePanel("Label", speedRoot, "QOLSpeedLabel");
+                }
+                SetCachedPanel("compassSpeed", speed);
+            }
         }
 
         var ticks = State.cachedPanels.compassTicks || [];
@@ -13727,6 +13743,8 @@ function GetUIRoot() {
             if (IsPanelValid(existing)) {
                 if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
             }
+            var _srNoCtx = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_srNoCtx) && _srNoCtx.style.visibility !== "collapse") _srNoCtx.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
@@ -13738,17 +13756,21 @@ function GetUIRoot() {
 
         if (!showCompass && !showSpeed) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
+            var _sr0 = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_sr0) && _sr0.style.visibility !== "collapse") _sr0.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
         if (IsConnectedToHideout(root)) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
+            var _sr1 = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_sr1) && _sr1.style.visibility !== "collapse") _sr1.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
-        if (compassRoot.style.visibility !== "visible") compassRoot.style.visibility = "visible";
+        if (compassRoot.style.visibility !== (showCompass ? "visible" : "collapse")) compassRoot.style.visibility = (showCompass ? "visible" : "collapse");
         
         var compassBox = GetCachedPanel("compassBox");
         if (compassBox) {
@@ -13842,11 +13864,12 @@ function GetUIRoot() {
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
+            var speedRoot = GetCachedPanel("speedRoot");
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
-            // With the compass on, speed sits in the RIGHT half (degrees left,
-            // speed right). Speed-only → full-width centered. The speed offset
-            // sliders then nudge it freely from whichever anchor applies.
+            // Speed sits in the RIGHT half when the compass shares the screen
+            // (degrees left, speed right below the compass box), and full-width
+            // centered when speed is alone.
             speedLabel.style.width = showCompass ? "50%" : "100%";
             speedLabel.style.textAlign = showCompass ? "right" : "center";
             speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
@@ -13855,18 +13878,28 @@ function GetUIRoot() {
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
             if (speedOffsetX < -2000) speedOffsetX = -2000;
             if (speedOffsetX > 2000) speedOffsetX = 2000;
-            // Symmetric wide range so the standalone speed can be parked
-            // anywhere on screen — the old [-1000, 300] cap was the "invisible
-            // barrier" that stopped it from moving up more than 300px.
             var speedOffsetY = Number(State.compass.speedOffsetY);
             if (!isFinite(speedOffsetY)) speedOffsetY = 0;
             if (speedOffsetY < -2000) speedOffsetY = -2000;
             if (speedOffsetY > 2000) speedOffsetY = 2000;
-            var speedOffsetSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY);
-            if (State.compass.speedOffsetSig !== speedOffsetSig) {
-                speedLabel.style.x = String(Math.round(speedOffsetX)) + "px";
-                speedLabel.style.y = String(-Math.round(speedOffsetY)) + "px";
-                State.compass.speedOffsetSig = speedOffsetSig;
+            if (speedRoot) {
+                // Speed root is a standalone panel under the gameplay HUD
+                // (sibling of compassRoot), positioned by margins so it can
+                // roam the entire screen — no 200px parent clip box.
+                if (speedRoot.style.visibility !== speedVisibility) speedRoot.style.visibility = speedVisibility;
+                // Base anchor: same as the compass (centered, 120px from top
+                // when offsets are zero). When the compass box is visible the
+                // speed sits to its right and below it.
+                var speedBaseX = offsetX + (showCompass ? Math.round(boxWidth / 2) : 0);
+                var speedBaseY = appliedCompassOffsetY + (showCompass ? (boxHeight + 4) : 0);
+                var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
+                var speedMarginTop  = Math.round(speedBaseY - speedOffsetY) + "px";
+                var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" + (showCompass ? "1" : "0");
+                if (State.compass.speedOffsetSig !== speedLayoutSig) {
+                    if (speedRoot.style.marginLeft !== speedMarginLeft) speedRoot.style.marginLeft = speedMarginLeft;
+                    if (speedRoot.style.marginTop !== speedMarginTop) speedRoot.style.marginTop = speedMarginTop;
+                    State.compass.speedOffsetSig = speedLayoutSig;
+                }
             }
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
@@ -14336,6 +14369,10 @@ function GetUIRoot() {
             var _compassRoot = GetCachedPanel("compassRoot");
             if (IsPanelValid(_compassRoot)) {
                 try { _compassRoot.style.visibility = "collapse"; } catch(_ce) { QOL_WARN("core", "op failed: " + (_ce && _ce.message ? _ce.message : String(_ce || ""))); }
+            }
+            var _speedRoot = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_speedRoot)) {
+                try { _speedRoot.style.visibility = "collapse"; } catch(_se) { QOL_WARN("core", "op failed: " + (_se && _se.message ? _se.message : String(_se || ""))); }
             }
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
