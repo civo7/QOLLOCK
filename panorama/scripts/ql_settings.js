@@ -10682,6 +10682,10 @@ function ShowCompassPreview() {
 
     gCompassPreviewBox.style.width = boxWidth + "px";
     gCompassPreviewBox.style.height = boxHeight + "px";
+    // When the user is dragging speed-offset sliders and the compass itself
+    // is off, don't draw the boundary box — the speed marker floats freely.
+    var showCompass = (MOD_CONFIG.ENABLE_COMPASS !== 0);
+    gCompassPreviewBox.style.visibility = showCompass ? "visible" : "collapse";
 
     if (gCompassPreviewLabel) {
         var speedText = showSpeed ? " SPD" : "";
@@ -10689,9 +10693,11 @@ function ShowCompassPreview() {
     }
 
     // Speed marker — mirrors the standalone speed readout so its offset
-    // sliders get the same live preview the compass offsets have. Positioned
-    // relative to the compass box anchor: +X moves right, +Y moves up (the
-    // core applies style.y = -offsetY, so we negate here too).
+    // sliders get the same live preview the compass offsets have. When the
+    // compass box is also visible, the in-game readout sits below the box
+    // (CSS has readout margin-top: 4px), so the speed anchor is shifted
+    // down by boxHeight+4 and right by boxWidth/2 (the right-half slot).
+    // Speed-only mode: centered at the CompassPreview anchor (0, 0).
     if (gCompassPreviewSpeed) {
         if (showSpeed) {
             var speedOffsetX = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_X_OFFSET) || 0);
@@ -10701,8 +10707,11 @@ function ShowCompassPreview() {
             if (speedOffsetY < -2000) speedOffsetY = -2000;
             if (speedOffsetY > 2000) speedOffsetY = 2000;
             gCompassPreviewSpeed.text = "SPD";
-            gCompassPreviewSpeed.style.x = speedOffsetX + "px";
-            gCompassPreviewSpeed.style.y = (-speedOffsetY) + "px";
+            // Match in-game anchor: readout is below the compass box
+            var baseSpeedX = showCompass ? Math.round(boxWidth / 2) : 0;
+            var baseSpeedY = showCompass ? (boxHeight + 4) : 0;
+            gCompassPreviewSpeed.style.x = (baseSpeedX + speedOffsetX) + "px";
+            gCompassPreviewSpeed.style.y = (baseSpeedY - speedOffsetY) + "px";
             gCompassPreviewSpeed.style.visibility = "visible";
         } else {
             gCompassPreviewSpeed.style.visibility = "collapse";
