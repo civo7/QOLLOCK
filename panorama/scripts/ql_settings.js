@@ -1070,10 +1070,14 @@ var gUnsecuredSoulsPreviewBaseY = 110;
 var gCompassPreviewPanel = null;
 var gCompassPreviewBox = null;
 var gCompassPreviewLabel = null;
-var gCompassPreviewSpeed = null;
 var gCompassPreviewHideToken = 0;
 var gCompassPreviewBaseX = 0;
 var gCompassPreviewBaseY = 120;
+// Speed has its own independent preview panel (mirrors the in-game QOLSpeedRoot,
+// a sibling of the compass root — not a child of it).
+var gSpeedPreviewPanel = null;
+var gSpeedPreviewLabel = null;
+var gSpeedPreviewHideToken = 0;
 var gKeyboardOverlayPreviewPanel = null;
 var gKeyboardOverlayPreviewBox = null;
 var gKeyboardOverlayPreviewLabel = null;
@@ -9719,7 +9723,6 @@ function EnsureCompassPreviewPanel() {
         SetPanelNonInteractive(gCompassPreviewPanel);
         SetPanelNonInteractive(gCompassPreviewBox);
         SetPanelNonInteractive(gCompassPreviewLabel);
-        SetPanelNonInteractive(gCompassPreviewSpeed);
         return gCompassPreviewPanel;
     }
     var root = $.GetContextPanel();
@@ -9741,20 +9744,45 @@ function EnsureCompassPreviewPanel() {
         label = $.CreatePanel("Label", panel, "CompassPreviewLabel");
     }
 
-    var speed = panel.FindChildTraverse("CompassPreviewSpeed");
-    if (!speed) {
-        speed = $.CreatePanel("Label", panel, "CompassPreviewSpeed");
-    }
-
     SetPanelNonInteractive(panel);
     SetPanelNonInteractive(box);
     SetPanelNonInteractive(label);
-    SetPanelNonInteractive(speed);
 
     gCompassPreviewPanel = panel;
     gCompassPreviewBox = box;
     gCompassPreviewLabel = label;
-    gCompassPreviewSpeed = speed;
+    return panel;
+}
+
+// Speed preview — an independent panel (sibling of the compass preview),
+// mirroring the in-game QOLSpeedRoot which is its own root panel under the
+// gameplay HUD, NOT a child of the compass. Keeping the two previews separate
+// is what makes the speed offset behave consistently with the compass offset.
+function EnsureSpeedPreviewPanel() {
+    if (gSpeedPreviewPanel && gSpeedPreviewPanel.IsValid && gSpeedPreviewPanel.IsValid()) {
+        SetPanelNonInteractive(gSpeedPreviewPanel);
+        SetPanelNonInteractive(gSpeedPreviewLabel);
+        return gSpeedPreviewPanel;
+    }
+    var root = $.GetContextPanel();
+    if (!root) return null;
+
+    var panel = root.FindChildTraverse("SpeedPreview");
+    if (!panel) {
+        panel = $.CreatePanel("Panel", root, "SpeedPreview");
+    }
+    if (!panel) return null;
+
+    var label = panel.FindChildTraverse("SpeedPreviewLabel");
+    if (!label) {
+        label = $.CreatePanel("Label", panel, "SpeedPreviewLabel");
+    }
+
+    SetPanelNonInteractive(panel);
+    SetPanelNonInteractive(label);
+
+    gSpeedPreviewPanel = panel;
+    gSpeedPreviewLabel = label;
     return panel;
 }
 
@@ -10270,8 +10298,11 @@ function IsCompassPreviewConfig(configId) {
         configId === "COMPASS_X_OFFSET" ||
         configId === "COMPASS_Y_OFFSET" ||
         configId === "COMPASS_STRETCH_X" ||
-        configId === "COMPASS_STRETCH_Y" ||
-        configId === "COMPASS_SPEED_X_OFFSET" ||
+        configId === "COMPASS_STRETCH_Y";
+}
+
+function IsSpeedPreviewConfig(configId) {
+    return configId === "COMPASS_SPEED_X_OFFSET" ||
         configId === "COMPASS_SPEED_Y_OFFSET";
 }
 
@@ -10353,6 +10384,9 @@ function HideMinimapSizePreview() {
     if (gCompassPreviewPanel && gCompassPreviewPanel.IsValid && gCompassPreviewPanel.IsValid()) {
         gCompassPreviewPanel.RemoveClass("Visible");
     }
+    if (gSpeedPreviewPanel && gSpeedPreviewPanel.IsValid && gSpeedPreviewPanel.IsValid()) {
+        gSpeedPreviewPanel.RemoveClass("Visible");
+    }
     if (gKeyboardOverlayPreviewPanel && gKeyboardOverlayPreviewPanel.IsValid && gKeyboardOverlayPreviewPanel.IsValid()) {
         gKeyboardOverlayPreviewPanel.RemoveClass("Visible");
     }
@@ -10428,6 +10462,17 @@ function ScheduleHideCompassPreview(delaySec) {
         if (token !== gCompassPreviewHideToken) return;
         if (gCompassPreviewPanel && gCompassPreviewPanel.IsValid && gCompassPreviewPanel.IsValid()) {
             gCompassPreviewPanel.RemoveClass("Visible");
+        }
+    });
+}
+
+function ScheduleHideSpeedPreview(delaySec) {
+    gSpeedPreviewHideToken++;
+    var token = gSpeedPreviewHideToken;
+    $.Schedule(delaySec, function() {
+        if (token !== gSpeedPreviewHideToken) return;
+        if (gSpeedPreviewPanel && gSpeedPreviewPanel.IsValid && gSpeedPreviewPanel.IsValid()) {
+            gSpeedPreviewPanel.RemoveClass("Visible");
         }
     });
 }
@@ -10615,6 +10660,9 @@ function ShowConfigPreviewForConfigId(configId) {
     if (IsCompassPreviewConfig(configId)) {
         ShowCompassPreview();
     }
+    if (IsSpeedPreviewConfig(configId)) {
+        ShowSpeedPreview();
+    }
     if (IsKeyboardOverlayPreviewConfig(configId)) {
         ShowKeyboardOverlayPreview();
     }
@@ -10682,52 +10730,71 @@ function ShowCompassPreview() {
 
     gCompassPreviewBox.style.width = boxWidth + "px";
     gCompassPreviewBox.style.height = boxHeight + "px";
-    // When the user is dragging speed-offset sliders and the compass itself
-    // is off, don't draw the boundary box — the speed marker floats freely.
-    var showCompass = (MOD_CONFIG.ENABLE_COMPASS !== 0);
-    gCompassPreviewBox.style.visibility = showCompass ? "visible" : "collapse";
+    gCompassPreviewBox.style.visibility = "visible";
 
     if (gCompassPreviewLabel) {
-        // When the compass box is visible, show its dimensions with an
-        // optional "+SPD" tag. Speed-only mode shows just "SPD" — the
-        // box is collapsed, so its dimensions are irrelevant.
-        if (showCompass) {
-            gCompassPreviewLabel.text = showSpeed ? boxWidth + "x" + boxHeight + " +SPD" : boxWidth + "x" + boxHeight;
-        } else if (showSpeed) {
-            gCompassPreviewLabel.text = "SPD";
-        } else {
-            gCompassPreviewLabel.text = "";
-        }
+        gCompassPreviewLabel.text = boxWidth + "x" + boxHeight;
     }
 
-    // Speed marker — mirrors the standalone speed readout so its offset
-    // sliders get the same live preview the compass offsets have. When the
-    // compass box is also visible, the in-game readout sits below the box
-    // (CSS has readout margin-top: 4px), so the speed anchor is shifted
-    // down by boxHeight+4 and right by boxWidth/2 (the right-half slot).
-    // Speed-only mode: centered at the CompassPreview anchor (0, 0).
-    if (gCompassPreviewSpeed) {
-        if (showSpeed) {
-            var speedOffsetX = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_X_OFFSET) || 0);
-            var speedOffsetY = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_Y_OFFSET) || 0);
-            if (speedOffsetX < -2000) speedOffsetX = -2000;
-            if (speedOffsetX > 2000) speedOffsetX = 2000;
-            if (speedOffsetY < -2000) speedOffsetY = -2000;
-            if (speedOffsetY > 2000) speedOffsetY = 2000;
-            gCompassPreviewSpeed.text = "SPD";
-            // Match in-game anchor: readout is below the compass box
-            var baseSpeedX = showCompass ? Math.round(boxWidth / 2) : 0;
-            var baseSpeedY = showCompass ? (boxHeight + 4) : 0;
-            gCompassPreviewSpeed.style.x = (baseSpeedX + speedOffsetX) + "px";
-            gCompassPreviewSpeed.style.y = (baseSpeedY - speedOffsetY) + "px";
-            gCompassPreviewSpeed.style.visibility = "visible";
-        } else {
-            gCompassPreviewSpeed.style.visibility = "collapse";
-        }
-    }
+    // Speed gets its own preview panel (ShowSpeedPreview) so it isn't trapped in
+    // the compass box — mirroring the in-game split. When the compass shares the
+    // screen we show that speed preview alongside this one for reference.
+    if (showSpeed) ShowSpeedPreview();
 
     panel.AddClass("Visible");
     ScheduleHideCompassPreview(1.2);
+}
+
+// Independent speed preview — same anchor math as core's UpdateCompassOverlay:
+// centered under the compass box when the compass is on, screen-centered at the
+// compass baseline when speed is alone, then nudged by the speed offset sliders.
+function ShowSpeedPreview() {
+    if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
+        HideMinimapSizePreview();
+        return;
+    }
+    var panel = EnsureSpeedPreviewPanel();
+    if (!panel || !gSpeedPreviewLabel) return;
+
+    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
+    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
+
+    var showCompass = (MOD_CONFIG.ENABLE_COMPASS !== 0);
+
+    // Compass geometry needed to anchor the speed below the box (mirrors core).
+    var stretchY = Math.round(Number(MOD_CONFIG.COMPASS_STRETCH_Y) || 100);
+    if (stretchY < 50) stretchY = 50;
+    if (stretchY > 200) stretchY = 200;
+    var compassOffsetX = Math.round(Number(MOD_CONFIG.COMPASS_X_OFFSET) || 0);
+    if (compassOffsetX < -2000) compassOffsetX = -2000;
+    if (compassOffsetX > 2000) compassOffsetX = 2000;
+    var compassOffsetY = Math.round(Number(MOD_CONFIG.COMPASS_Y_OFFSET) || 120);
+    if (compassOffsetY < -1000) compassOffsetY = -1000;
+    if (compassOffsetY > 300) compassOffsetY = 300;
+
+    var compassBaselineY = Number(DEFAULT_CONFIG.COMPASS_Y_OFFSET);
+    if (!isFinite(compassBaselineY)) compassBaselineY = 120;
+    var appliedCompassOffsetY = (2 * compassBaselineY) - compassOffsetY;
+    var boxHeight = Math.round(50 * (stretchY / 100));
+    if (boxHeight < 25) boxHeight = 25;
+
+    var speedOffsetX = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_X_OFFSET) || 0);
+    var speedOffsetY = Math.round(Number(MOD_CONFIG.COMPASS_SPEED_Y_OFFSET) || 0);
+    if (speedOffsetX < -2000) speedOffsetX = -2000;
+    if (speedOffsetX > 2000) speedOffsetX = 2000;
+    if (speedOffsetY < -2000) speedOffsetY = -2000;
+    if (speedOffsetY > 2000) speedOffsetY = 2000;
+
+    // Identical to core: +Y moves up (core sets marginTop = base - offsetY).
+    var speedBaseX = showCompass ? compassOffsetX : 0;
+    var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 4) : compassBaselineY;
+
+    panel.style.marginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
+    panel.style.marginTop = Math.round(speedBaseY - speedOffsetY) + "px";
+    gSpeedPreviewLabel.text = "SPD";
+
+    panel.AddClass("Visible");
+    ScheduleHideSpeedPreview(1.2);
 }
 
 function ShowKeyboardOverlayPreview() {

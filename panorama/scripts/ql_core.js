@@ -13867,12 +13867,14 @@ function GetUIRoot() {
             var speedRoot = GetCachedPanel("speedRoot");
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
-            // Speed sits in the RIGHT half when the compass shares the screen
-            // (degrees left, speed right below the compass box), and full-width
-            // centered when speed is alone.
-            speedLabel.style.width = showCompass ? "50%" : "100%";
-            speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
+            // Speed lives in its own centered root panel (QOLSpeedRoot), so the
+            // label is always full-width centered — the root's margins do all the
+            // positioning. (The old width:50%/right-align was a leftover from when
+            // degrees + speed shared one readout row; it double-shifted the speed
+            // to the right of where it should sit.)
+            speedLabel.style.width = "100%";
+            speedLabel.style.textAlign = "center";
+            speedLabel.style.horizontalAlign = "center";
             speedLabel.style.verticalAlign = "center";
             var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
@@ -13887,14 +13889,18 @@ function GetUIRoot() {
                 // (sibling of compassRoot), positioned by margins so it can
                 // roam the entire screen — no 200px parent clip box.
                 if (speedRoot.style.visibility !== speedVisibility) speedRoot.style.visibility = speedVisibility;
-                // Base anchor: same as the compass (centered, 120px from top
-                // when offsets are zero). When the compass box is visible the
-                // speed sits to its right and below it.
-                var speedBaseX = offsetX + (showCompass ? Math.round(boxWidth / 2) : 0);
-                var speedBaseY = appliedCompassOffsetY + (showCompass ? (boxHeight + 4) : 0);
+                // Anchor: centered under the compass. When the compass is on the
+                // speed sits directly below its box (screen-centered like the
+                // box, NOT pushed into the right half); when speed is alone it
+                // sits screen-centered at the compass baseline. The X/Y offset
+                // sliders then nudge it freely from there.
+                var speedBaseX = showCompass ? offsetX : 0;
+                var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 4) : compassBaselineY;
                 var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
                 var speedMarginTop  = Math.round(speedBaseY - speedOffsetY) + "px";
-                var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" + (showCompass ? "1" : "0");
+                // Base anchor is in the sig so the speed re-follows the compass
+                // when the compass offset/stretch changes (not just speed sliders).
+                var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" + (showCompass ? "1" : "0") + "|" + Math.round(speedBaseX) + "|" + Math.round(speedBaseY);
                 if (State.compass.speedOffsetSig !== speedLayoutSig) {
                     if (speedRoot.style.marginLeft !== speedMarginLeft) speedRoot.style.marginLeft = speedMarginLeft;
                     if (speedRoot.style.marginTop !== speedMarginTop) speedRoot.style.marginTop = speedMarginTop;
