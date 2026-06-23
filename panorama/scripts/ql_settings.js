@@ -10745,9 +10745,10 @@ function ShowCompassPreview() {
     ScheduleHideCompassPreview(1.2);
 }
 
-// Independent speed preview — same anchor math as core's UpdateCompassOverlay:
-// centered under the compass box when the compass is on, screen-centered at the
-// compass baseline when speed is alone, then nudged by the speed offset sliders.
+// Independent speed preview — mirrors core's UpdateCompassOverlay exactly:
+// with the compass on, the speed sits in the RIGHT half of the box, a touch
+// below the degree readout; alone, it's screen-centered at the compass
+// baseline. Then the speed offset sliders nudge it from there.
 function ShowSpeedPreview() {
     if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
         HideMinimapSizePreview();
@@ -10761,7 +10762,11 @@ function ShowSpeedPreview() {
 
     var showCompass = (MOD_CONFIG.ENABLE_COMPASS !== 0);
 
-    // Compass geometry needed to anchor the speed below the box (mirrors core).
+    // Compass geometry — unscaled box dims, matching how core anchors the speed
+    // (the speed root isn't scaled, so it uses the unscaled box width/height).
+    var stretchX = Math.round(Number(MOD_CONFIG.COMPASS_STRETCH_X) || 100);
+    if (stretchX < 50) stretchX = 50;
+    if (stretchX > 200) stretchX = 200;
     var stretchY = Math.round(Number(MOD_CONFIG.COMPASS_STRETCH_Y) || 100);
     if (stretchY < 50) stretchY = 50;
     if (stretchY > 200) stretchY = 200;
@@ -10775,6 +10780,8 @@ function ShowSpeedPreview() {
     var compassBaselineY = Number(DEFAULT_CONFIG.COMPASS_Y_OFFSET);
     if (!isFinite(compassBaselineY)) compassBaselineY = 120;
     var appliedCompassOffsetY = (2 * compassBaselineY) - compassOffsetY;
+    var boxWidth = Math.round(200 * (stretchX / 100));
+    if (boxWidth < 100) boxWidth = 100;
     var boxHeight = Math.round(50 * (stretchY / 100));
     if (boxHeight < 25) boxHeight = 25;
 
@@ -10785,10 +10792,19 @@ function ShowSpeedPreview() {
     if (speedOffsetY < -2000) speedOffsetY = -2000;
     if (speedOffsetY > 2000) speedOffsetY = 2000;
 
-    // Identical to core: +Y moves up (core sets marginTop = base - offsetY).
-    var speedBaseX = showCompass ? compassOffsetX : 0;
-    var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 4) : compassBaselineY;
+    // Right half / right-aligned when the compass shares the screen; full-width
+    // centered when alone. Same as core's speedLabel layout.
+    gSpeedPreviewLabel.style.width = showCompass ? "50%" : "100%";
+    gSpeedPreviewLabel.style.textAlign = showCompass ? "right" : "center";
+    gSpeedPreviewLabel.style.horizontalAlign = showCompass ? "right" : "center";
 
+    // Root spans the box width and centers on it, so "right half" maps to the
+    // box's right half — no boxWidth/2 shift. +Y moves up (marginTop = base - y).
+    var rootWidth = (showCompass ? boxWidth : 200) + "px";
+    var speedBaseX = showCompass ? compassOffsetX : 0;
+    var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 14) : compassBaselineY;
+
+    panel.style.width = rootWidth;
     panel.style.marginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
     panel.style.marginTop = Math.round(speedBaseY - speedOffsetY) + "px";
     gSpeedPreviewLabel.text = "SPD";
