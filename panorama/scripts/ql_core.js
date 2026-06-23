@@ -230,11 +230,26 @@ _TLog = function(label, detail) {
     // ==========================================================================
     // COMPASS — SPEED DISPLAY
     // ==========================================================================
-    // display = raw_speed * SCALE + OFFSET, clamped to MAX_STEP, quantized by QUANT.
+    // display = raw_speed * SCALE, quantized by QUANT.
     // Empirically tuned so a hero at normal speed shows ~5-7 on the readout.
+    //
+    // Speed is derived from the local player's minimap-panel position, which is
+    // low-resolution (pixel/percent quantized) and refreshes at the game's tick
+    // rate — slower and more irregularly than our sample loop. A naive
+    // single-step finite difference (dist/dt) over one 50ms window amplifies
+    // that quantization into tens-of-units spikes and aliases against the
+    // minimap's own update cadence (phantom 0s followed by double-jumps). We
+    // instead keep a short sliding window of position samples and fit velocity
+    // by least squares over the whole window: every sample contributes, so
+    // per-sample quantization noise averages out and intermittent updates are
+    // handled gracefully. A light EMA then smooths display flicker.
     const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
     const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
-    const COMPASS_SPEED_SAMPLE_MS = 50;     // speed sample window in milliseconds
+    const COMPASS_SPEED_SAMPLE_MS = 40;     // position sample cadence (ms); ~6-7 points per window
+    const COMPASS_SPEED_WINDOW_MS = 260;    // least-squares velocity window (ms)
+    const COMPASS_SPEED_MIN_SPAN_MS = 90;   // need at least this much spanned time before trusting a fit
+    const COMPASS_SPEED_EMA_TAU_SEC = 0.11; // light display smoothing on top of the LSQ velocity
+    const COMPASS_SPEED_DEADBAND_FRAC = 0.07; // hold steady when change is within this fraction of current
 
     // ==========================================================================
     // MINIMAP — ROTATION SMOOTHING
@@ -13729,6 +13744,7 @@ function GetUIRoot() {
         State.compass.lastPosTimeMs = 0;
         State.compass.speedSmoothed = null;
         State.compass.speedDisplay = null;
+        State.compass.speedSamples = null;
         State.compass.tickClassSigs = [];
         State.compass.tickXTexts = [];
     }
@@ -13951,27 +13967,58 @@ function GetUIRoot() {
                 }
                 var pos = ParsePositionXYPercent(positionText);
                 if (pos) {
-                    if (State.compass.lastPosX !== null && State.compass.lastPosY !== null && State.compass.lastPosTimeMs > 0) {
-                        var dtSec = (nowMs - State.compass.lastPosTimeMs) / 1000.0;
-                        if (dtSec > 0.01 && dtSec < 1.0) {
-                            var dx = pos.x - State.compass.lastPosX;
-                            var dy = pos.y - State.compass.lastPosY;
-                            var dist = Math.sqrt((dx * dx) + (dy * dy));
-                            var speedInstant = (dist / dtSec) * 100.0;
-                            if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                        if (State.compass.speedSmoothed === null || !isFinite(State.compass.speedSmoothed)) {
-                            State.compass.speedSmoothed = speedInstant;
-                        } else {
-                            var isDecelerating = speedInstant < State.compass.speedSmoothed;
-                            var tau = isDecelerating ? 0.25 : 0.02;
-                            var alpha = 1.0 - Math.exp(-dtSec / tau);
-                            if (Math.abs(speedInstant - State.compass.speedSmoothed) < State.compass.speedSmoothed * 0.10) {
-                                alpha *= 0.2;
-                            }
-                            if (speedInstant < 0.5) alpha = 1.0;
-                            State.compass.speedSmoothed = State.compass.speedSmoothed + (alpha * (speedInstant - State.compass.speedSmoothed));
+                    // Push (t, x, y) into a flat ring buffer and evict samples
+                    // older than the window. A long teleport/respawn jump is
+                    // rejected later by the < 10000 sanity clamp on the fitted
+                    // speed, so it never corrupts more than one stale window.
+                    var samples = State.compass.speedSamples;
+                    if (!samples) { samples = []; State.compass.speedSamples = samples; }
+                    samples.push(nowMs, pos.x, pos.y);
+                    var cutoff = nowMs - COMPASS_SPEED_WINDOW_MS;
+                    var drop = 0;
+                    while (drop + 3 < samples.length && samples[drop] < cutoff) drop += 3;
+                    if (drop > 0) samples.splice(0, drop);
+
+                    // Least-squares fit of x(t) and y(t) over the window. The
+                    // slope (vx, vy) in %/sec is the noise-rejecting velocity;
+                    // identical-position points from intermittent minimap
+                    // updates just pull the average toward the true rate.
+                    var n = samples.length / 3;
+                    if (n >= 2) {
+                        var t0 = samples[0];
+                        var sumT = 0, sumX = 0, sumY = 0, sumTT = 0, sumTX = 0, sumTY = 0;
+                        for (var si = 0; si < samples.length; si += 3) {
+                            var tt = (samples[si] - t0) / 1000.0; // seconds, window-relative
+                            var xx = samples[si + 1];
+                            var yy = samples[si + 2];
+                            sumT += tt; sumX += xx; sumY += yy;
+                            sumTT += tt * tt; sumTX += tt * xx; sumTY += tt * yy;
                         }
-                    }
+                        var spanSec = (samples[samples.length - 3] - t0) / 1000.0;
+                        var denom = (n * sumTT) - (sumT * sumT);
+                        if (spanSec >= (COMPASS_SPEED_MIN_SPAN_MS / 1000.0) && denom > 1e-9) {
+                            var vx = ((n * sumTX) - (sumT * sumX)) / denom; // %/sec
+                            var vy = ((n * sumTY) - (sumT * sumY)) / denom; // %/sec
+                            var speedInstant = Math.sqrt((vx * vx) + (vy * vy)) * 100.0;
+                            if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
+                                var dtSmoothSec = (State.compass.lastPosTimeMs > 0)
+                                    ? (nowMs - State.compass.lastPosTimeMs) / 1000.0
+                                    : (COMPASS_SPEED_SAMPLE_MS / 1000.0);
+                                if (!(dtSmoothSec > 0) || dtSmoothSec > 1.0) dtSmoothSec = COMPASS_SPEED_SAMPLE_MS / 1000.0;
+                                if (State.compass.speedSmoothed === null || !isFinite(State.compass.speedSmoothed)) {
+                                    State.compass.speedSmoothed = speedInstant;
+                                } else {
+                                    var alpha = 1.0 - Math.exp(-dtSmoothSec / COMPASS_SPEED_EMA_TAU_SEC);
+                                    var sdelta = speedInstant - State.compass.speedSmoothed;
+                                    // Within the deadband, ease off so a steady
+                                    // speed reads as a steady number, not a wobble.
+                                    if (Math.abs(sdelta) < State.compass.speedSmoothed * COMPASS_SPEED_DEADBAND_FRAC) {
+                                        alpha *= 0.25;
+                                    }
+                                    if (speedInstant < 0.5) alpha = 1.0; // snap to rest
+                                    State.compass.speedSmoothed = State.compass.speedSmoothed + (alpha * sdelta);
+                                }
+                            }
                         }
                     }
                     State.compass.lastPosX = pos.x;
