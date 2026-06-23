@@ -13831,18 +13831,24 @@ function GetUIRoot() {
             SetCachedPanel("compassSpeed", speedLabel);
         }
         if (degreeLabel) {
-            degreeLabel.style.width = showSpeed ? "50%" : "100%";
-            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
-            degreeLabel.style.horizontalAlign = "left";
+            // Compass heading owns the full row and stays centered. Speed is a
+            // decoupled overlay positioned by its own offset sliders, so the
+            // degree label no longer shrinks to half-width when speed is on.
+            degreeLabel.style.width = "100%";
+            degreeLabel.style.textAlign = "center";
+            degreeLabel.style.horizontalAlign = "center";
             degreeLabel.style.verticalAlign = "center";
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
-            speedLabel.style.width = showCompass ? "50%" : "100%";
-            speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = "right";
+            // Speed is independent of the compass: always centered in its own
+            // full-width label and moved by COMPASS_SPEED_{X,Y}_OFFSET. It must
+            // NOT re-align right when the compass turns on.
+            speedLabel.style.width = "100%";
+            speedLabel.style.textAlign = "center";
+            speedLabel.style.horizontalAlign = "center";
             speedLabel.style.verticalAlign = "center";
             var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
@@ -14311,14 +14317,18 @@ function GetUIRoot() {
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
-        // WHY: compass_active class controls the entire compass panel visibility.
-        // Speed display is a child of the compass panel — when the compass is off,
-        // the speed readout is meaningless. Only ENABLE_COMPASS gates the panel.
+        // WHY: compass_active class controls the compass dial visibility, gated
+        // on ENABLE_COMPASS alone. The host panel, however, is shared with the
+        // standalone speed readout, so it must stay alive whenever EITHER the
+        // compass or the speed feature is on.
         var compassEnabled = (cfg.ENABLE_COMPASS === 1);
-        // When compass is disabled, collapse the panel via inline style.
-        // CSS class removal alone isn't sufficient — UpdateCompassOverlay
-        // sets visibility:visible as an inline style which overrides CSS.
-        if (!compassEnabled) {
+        var compassSpeedEnabled = (cfg.ENABLE_COMPASS_SPEED === 1);
+        // When BOTH compass and speed are disabled, collapse the panel via
+        // inline style. CSS class removal alone isn't sufficient — the compass
+        // loop sets visibility:visible as an inline style which overrides CSS.
+        // Collapsing on !compassEnabled alone would fight the compass loop in
+        // speed-only mode (5Hz collapse vs 20Hz show) and flicker the speed.
+        if (!compassEnabled && !compassSpeedEnabled) {
             var _compassRoot = GetCachedPanel("compassRoot");
             if (IsPanelValid(_compassRoot)) {
                 try { _compassRoot.style.visibility = "collapse"; } catch(_ce) { QOL_WARN("core", "op failed: " + (_ce && _ce.message ? _ce.message : String(_ce || ""))); }
@@ -15162,10 +15172,13 @@ function GetUIRoot() {
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
-        // WHY: compass panel visibility is gated solely by ENABLE_COMPASS.
-        // ENABLE_COMPASS_SPEED controls the speed readout inside the panel —
-        // when the compass itself is off, there's nothing to display speed on.
-        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS");
+        // WHY: the compass overlay panel hosts BOTH the heading readout and the
+        // standalone speed readout. Either feature on its own is enough work to
+        // run UpdateCompassOverlay, so the gate must mirror the fallback path
+        // (compass OR speed). The root `compass_active` class is still gated on
+        // ENABLE_COMPASS alone, so enabling speed never shows the compass dial.
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
