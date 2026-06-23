@@ -10688,8 +10688,16 @@ function ShowCompassPreview() {
     gCompassPreviewBox.style.visibility = showCompass ? "visible" : "collapse";
 
     if (gCompassPreviewLabel) {
-        var speedText = showSpeed ? " SPD" : "";
-        gCompassPreviewLabel.text = boxWidth + "x" + boxHeight + speedText;
+        // When the compass box is visible, show its dimensions with an
+        // optional "+SPD" tag. Speed-only mode shows just "SPD" — the
+        // box is collapsed, so its dimensions are irrelevant.
+        if (showCompass) {
+            gCompassPreviewLabel.text = showSpeed ? boxWidth + "x" + boxHeight + " +SPD" : boxWidth + "x" + boxHeight;
+        } else if (showSpeed) {
+            gCompassPreviewLabel.text = "SPD";
+        } else {
+            gCompassPreviewLabel.text = "";
+        }
     }
 
     // Speed marker — mirrors the standalone speed readout so its offset
