@@ -40,9 +40,16 @@
 	visibility: collapse;
 }
 
+/* Match the original minimalistic glyph: crisp white block font, not the
+ * translucent grey of the default .PausedText labels. */
 .minimal_pause_active #QLMinimalPauseLabel
 {
 	visibility: visible;
+	font-family: block;
+	color: offWhite;
+	text-transform: uppercase;
+	line-height: 32px;
+	max-width: 300px;
 	transition-property: none;
 	transition-duration: 0s;
 	font-size: 58px;
