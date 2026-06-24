@@ -70,6 +70,7 @@
 {
 	visibility: visible;
 	font-size: 58px;
+	margin-top: 4px;
 	transition-property: none;
 	transition-duration: 0s;
 }
