@@ -8,11 +8,13 @@
 		<Panel id="PausedGameContainer" class="Hidden">
 			<Panel id="PausedContainer" hittest="false" hittestchildren="false">
 				<Panel class="PausedTextContainer LeftRightFlow align_center">
-					<Label id="PausedLabel" class="PausedText" text="{s:paused_text}" />
+					<!-- QOLLOCK: compact pause glyph (minimalistic mode). Kept in #PausedLabel so the
+					     engine's .PausedTextMoved class auto-hides it when the unpause countdown begins. -->
+					<Label id="PausedLabel" class="PausedText" text="II" />
+					<!-- Default-mode pause text (engine fills {s:paused_text}). -->
+					<Label id="QLPausedText" class="PausedText" text="{s:paused_text}" />
 					<Label id="PauserLabel" class="PausedText" text="#Citadel_Hud_Pauser" />
 					<Label id="UnpauseButtonLabel" class="PausedText" text="#Citadel_PauseMsg_UnpauseButton" html="true" />
-					<!-- QOLLOCK: compact pause glyph, shown only when .minimal_pause_active is set -->
-					<Label id="QLMinimalPauseLabel" class="PausedText" text="II" />
 				</Panel>
 			</Panel>
 			<Label id="PausedCountdownLabel" hittest="false" hittestchildren="false" />
