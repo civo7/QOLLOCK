@@ -88,7 +88,8 @@
         var clipStatus = getAmmoClipStatus(root);
         if (clipStatus) {
             if (State.ammoClipAngleStyleSig !== angleSig) {
-                Utils.SetStyleSafe(clipStatus, "transform", "rotateZ(" + angleSig + "deg)");
+                // Negative rotateZ → counter-clockwise rotation.
+                Utils.SetStyleSafe(clipStatus, "transform", "rotateZ(-" + angleSig + "deg)");
                 State.ammoClipAngleStyleSig = angleSig;
             }
         } else {

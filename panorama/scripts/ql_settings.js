@@ -151,7 +151,6 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_HIDE_TROOPER_DAMAGE: "ninjabladejr",
     ENABLE_DAMAGE_FOUNTAIN: "ArkanoidVFX",
     ENABLE_AMMO_STATUS: "mikoboy",
-    AMMO_CLIP_ANGLE: "Predi",
     ENABLE_RED_DIAMOND: "Hanturaya",
     ENABLE_OBJ_MAP: "bonclide",
     ENABLE_REJUV_HUD: "BreadRollius",
