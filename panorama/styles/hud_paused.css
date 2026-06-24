@@ -4,11 +4,18 @@
 
 /*
  * Minimalistic Pause (QOLLOCK)
- * The compact 80x80 pause overlay is gated behind the `.minimal_pause_active`
- * root class, applied by ql_core when ENABLE_MINIMALISTIC_PAUSE is on. When the
- * class is absent (default), the imported base/hud_paused styles render the
- * full-size default pause screen instead.
+ * Off by default: the imported base/hud_paused styles render the full default
+ * pause screen (paused text, who paused, unpause prompt). When ql_core applies
+ * the `.minimal_pause_active` root class (ENABLE_MINIMALISTIC_PAUSE on), the
+ * pause collapses to a compact 80x80 box showing only the "II" pause glyph.
  */
+
+/* The compact glyph exists only for minimalistic mode — hidden otherwise. */
+#QLMinimalPauseLabel
+{
+	visibility: collapse;
+}
+
 .minimal_pause_active CitadelPaused
 {
 	width: 80px;
@@ -18,11 +25,6 @@
 	z-index: -1;
 }
 
-.connectedToLaneTraining #PausedGameContainer
-{
-	visibility: collapse;
-}
-
 .minimal_pause_active #PausedCountdownLabel
 {
 	margin-right: 0px;
@@ -30,13 +32,17 @@
 	margin-bottom: 0px;
 }
 
-.gShopOpen #PausedContainer
+/* Minimalistic mode hides the verbose default labels, leaving only the glyph. */
+.minimal_pause_active #PausedLabel,
+.minimal_pause_active #PauserLabel,
+.minimal_pause_active #UnpauseButtonLabel
 {
 	visibility: collapse;
 }
 
-.minimal_pause_active #PausedLabel
+.minimal_pause_active #QLMinimalPauseLabel
 {
+	visibility: visible;
 	transition-property: none;
 	transition-duration: 0s;
 	font-size: 58px;

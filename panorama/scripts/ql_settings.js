@@ -21057,7 +21057,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
         });
         CreateSeparator(list);
-        CreateRow(list, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "toggle", null, null, null, null, "Use the compact minimalistic pause screen instead of the default large one.");
+        CreateAnimatedInlineToggleSection(list, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "Use the compact minimalistic pause screen instead of the default large one.", null);
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", function(sectionParent) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
