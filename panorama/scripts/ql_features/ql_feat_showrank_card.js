@@ -10,7 +10,7 @@
 
     function ShowRankCardLoaded() {
         var card = null;
-        try { card = $.GetContextPanel(); } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_showrank_card", (e && e.message ? e.message : String(e || ""))); }
+        try { card = $.GetContextPanel(); } catch(e) {}
         if (!card || !card.FindChildrenWithClassTraverse) return;
 
         // Read account_id from HiddenAccountID (populated by {i:r:account_id})
@@ -20,7 +20,7 @@
             try {
                 var t = String(hiddenList[0].text || "").replace(/[^0-9]/g, "");
                 if (t.length >= 7 && t.length <= 10) accountId = t;
-            } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_showrank_card", (e && e.message ? e.message : String(e || ""))); }
+            } catch(e) {}
         }
 
         // Fallback: AccountID class (may contain [U:1:XXXX] Steam ID format)
@@ -33,7 +33,7 @@
                     if (m) { accountId = m[1]; break; }
                     var digits = text.replace(/[^0-9]/g, "");
                     if (digits.length >= 7 && digits.length <= 10) { accountId = digits; break; }
-                } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_showrank_card", (e && e.message ? e.message : String(e || ""))); }
+                } catch(e) {}
             }
         }
 
@@ -48,7 +48,7 @@
         }
 
         if (root && root.SetAttributeString) {
-            try { root.SetAttributeString("qol_sr_probe_account", accountId); } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_showrank_card", (e && e.message ? e.message : String(e || ""))); }
+            try { root.SetAttributeString("qol_sr_probe_account", accountId); } catch(e) {}
         }
     }
 

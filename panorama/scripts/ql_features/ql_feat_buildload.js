@@ -120,6 +120,7 @@
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
     var BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 6;
+    var BUILD_CATEGORY_PAYLOAD_SHOP_NOT_OPEN_MAX_RESETS = 30;
     var BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;
     var BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 0.20;
     var BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
@@ -353,6 +354,10 @@
         if (!shopPanel || !shopPanel.FindChildrenWithClassTraverse) {
             return { hero: "", source: "shopFavoritesHeaderMissing" };
         }
+        // Primary: extract hero from Favorites header label text.
+        // This works in English (text contains the hero name) but may fail in
+        // non-English locales where {s:hero_name} resolves to a localized name
+        // that doesn't contain the internal hero_* ID.
         var labels = [];
         try { labels = shopPanel.FindChildrenWithClassTraverse("HeroFavoritesHeaderLabel") || []; } catch (e0) { labels = []; }
         var fallbackHero = "";
@@ -361,15 +366,21 @@
             if (!label) continue;
             var txt = ReadPanelTextMaybe(label);
             if (!txt || txt.length === 0) continue;
-            var low = String(txt).toLowerCase();
             var parsed = QOL.normalizeHeroId(QOL.extractHeroTokenFromText(txt) || QOL.extractLastHeroTokenFromText(txt));
             if (!parsed) continue;
-            if (low.indexOf("recommended mods") !== -1) {
-                return { hero: parsed, source: "shopFavoritesHeader" };
-            }
+            // Language-agnostic: the HeroFavoritesHeaderLabel class already identifies
+            // the correct label. "recommended mods" is English-only — accept any hero
+            // found in a HeroFavoritesHeaderLabel for the primary source.
             if (!fallbackHero) fallbackHero = parsed;
         }
-        if (fallbackHero) return { hero: fallbackHero, source: "shopFavoritesHeaderAny" };
+        if (fallbackHero) return { hero: fallbackHero, source: "shopFavoritesHeader" };
+
+        // Fallback: text parsing failed (likely non-English locale).
+        // Use onactivate attribute scanning which contains internal hero IDs
+        // like "selecthero hero_airheart" — these are language-agnostic.
+        var cmdHero = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
+        if (cmdHero) return { hero: cmdHero, source: "shopCommands" };
+
         return { hero: "", source: "shopFavoritesHeaderMissing" };
     }
 
@@ -454,12 +465,18 @@
         State.buildCategoryPayloadStorageConfirmSig = "";
         State.buildCategoryPayloadStorageConfirmHits = 0;
         var sourceReady = IsBuildCategoryPayloadSourceReady(root);
-        var signatureOnly = QOL.confirmStorageHeroSignatureAbilities(root, traceNow, BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS);
-        if (signatureOnly.confirmed && (sourceReady || QOL.hasBuildSaveStorageUiReady(root) || QOL.isHudClassActive(root, "gShopOpen"))) {
+        // When header-based hero detection failed (empty hero, likely non-English locale),
+        // relax the signature confirmation: only require 1 hit instead of 2, and skip
+        // the UI-ready gate. The image-based signature check is language-agnostic and is
+        // the most reliable signal when text parsing can't identify the hero.
+        var relaxedSigHits = (signal.source === "shopCommands" || signal.source === "shopFavoritesHeaderMissing") ? 1 : BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS;
+        var signatureOnly = QOL.confirmStorageHeroSignatureAbilities(root, traceNow, relaxedSigHits);
+        var uiReadyForSig = sourceReady || QOL.hasBuildSaveStorageUiReady(root) || QOL.isHudClassActive(root, "gShopOpen");
+        if (signatureOnly.confirmed && (uiReadyForSig || relaxedSigHits === 1)) {
             var confirmedSignatureOnly = {
                 confirmed: true,
                 source: "signature_abilities",
-                detail: "storage hero confirmed by signature abilities"
+                detail: "storage hero confirmed by signature abilities" + (relaxedSigHits === 1 ? " (relaxed)" : "")
             };
             State.buildCategoryPayloadStorageConfirmSig = "hero:" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID + "|src:signature_abilities|sig:" + (signatureOnly.signature || "-");
             State.buildCategoryPayloadStorageConfirmHits = Number(signatureOnly.hits) || 0;
@@ -687,6 +704,7 @@
         State.buildCategoryPayloadHeroProbeDoneAccountId = "";
         State.buildCategoryPayloadHeroProbeRetryAfterMs = 0;
         State.buildCategoryPayloadHeroProbeMisses = 0;
+        State.buildCategoryPayloadShopNotOpenResets = 0;
         State.buildCategoryPayloadDoneRearmNextMs = 0;
         State.buildCategoryPayloadDoneRearmAttempts = 0;
         State.buildCategoryPayloadPostSwitchShopPulseDone = false;
@@ -1667,6 +1685,7 @@
             State.buildCategoryPayloadLastAppliedText = "";
             State.buildCategoryPayloadLastParseErrorKey = "";
             State.buildCategoryPayloadHeroProbeMisses = 0;
+            State.buildCategoryPayloadShopNotOpenResets = 0;
             State.buildCategoryPayloadDoneRearmAttempts = 0;
             ResetBuildCategoryPayloadReadOnlySourceBootstrapState();
             ResetBuildCategoryPayloadProbeInitState();
@@ -1718,18 +1737,40 @@
                 // shop UI is actually ready. If the shop hasn't opened yet, the payload
                 // may simply not be visible — this is a UI timing issue, not data
                 // corruption. Deleting all Airheart builds would destroy valid config.
-                if (!QOL.isHudClassActive(root, "gShopOpen")) {
-                    SetSettingsLoaderStepState("read_payload", "active", "Shop not open yet; waiting before scanning for payload.");
-                    State.buildCategoryPayloadHeroProbeMisses = 0;
-                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS;
+                // Cap shop-not-open resets to prevent infinite probe defer loops when
+                // gShopOpen class is never detected (e.g. during game state transitions).
+                var shopNotOpenResets = Number(State.buildCategoryPayloadShopNotOpenResets) || 0;
+                var shopIsOpen = QOL.isHudClassActive(root, "gShopOpen");
+                if (!shopIsOpen) {
+                    shopNotOpenResets += 1;
+                    State.buildCategoryPayloadShopNotOpenResets = shopNotOpenResets;
+                    if (shopNotOpenResets <= BUILD_CATEGORY_PAYLOAD_SHOP_NOT_OPEN_MAX_RESETS) {
+                        SetSettingsLoaderStepState("read_payload", "active", "Shop not open yet; waiting before scanning for payload. (" + String(shopNotOpenResets) + "/" + String(BUILD_CATEGORY_PAYLOAD_SHOP_NOT_OPEN_MAX_RESETS) + ")");
+                        State.buildCategoryPayloadHeroProbeMisses = 0;
+                        State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS;
+                        return cfg;
+                    }
+                    // Max resets exceeded — the shop is either already open (gShopOpen class
+                    // not detected on checked panels) or will never open. Skip corrupt repair
+                    // and apply defaults instead of looping forever.
+                    SettingsLoaderDebugLog(
+                        "payload_override shop_not_open max resets reached (" + String(shopNotOpenResets) + "); giving up and applying defaults"
+                    );
+                    SetSettingsLoaderDebugOverlayLine("shop guard exhausted; applying defaults");
+                } else {
+                    State.buildCategoryPayloadShopNotOpenResets = 0;
+                }
+                // Only enter corrupt repair if the shop is actually open (payload is
+                // genuinely missing, not just invisible due to UI timing).
+                if (shopIsOpen) {
+                    SettingsLoaderDebugLog(
+                        "payload_override missing payload max misses reached; entering corrupt repair prompt misses=" +
+                            String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
+                    );
+                    QOL.enterStartupCorruptRepairPrompt(root, nowMs, "missing_payload");
                     return cfg;
                 }
-                SettingsLoaderDebugLog(
-                    "payload_override missing payload max misses reached; entering corrupt repair prompt misses=" +
-                        String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)
-                );
-                QOL.enterStartupCorruptRepairPrompt(root, nowMs, "missing_payload");
-                return cfg;
+                // Shop guard exhausted — fall through to the "no payload" default path.
             }
             SetSettingsLoaderStepState("read_payload", "done", "No payload found in storage build.");
             SetSettingsLoaderStepState("decode_payload", "skipped", "Nothing to decode.");
@@ -1827,6 +1868,7 @@
         State.buildCategoryPayloadLastAppliedAccountId = accountId;
         State.buildCategoryPayloadLastAppliedText = payloadText;
         State.buildCategoryPayloadHeroProbeMisses = 0;
+        State.buildCategoryPayloadShopNotOpenResets = 0;
         State.buildCategoryPayloadDoneRearmAttempts = 0;
         var payloadReturnHero = SetBuildCategoryPayloadProbeReturnHeroFromConfig(appliedObj, "payload_default_hero");
         SettingsLoaderDebugLog(

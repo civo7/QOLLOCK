@@ -1,22 +1,45 @@
 // ql_feat_showrank.js — ShowRank: rank prediction images on top bar + player list
+// Merged from poc_hello reference, QOLLOCK-wrapped.
 (function() {
     'use strict';
     var _featureId = "ql_feat_showrank";
 
-    // ── QOL imports ──
-    var _deps = QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var IsCfgEnabled = Utils.IsCfgEnabled;
-    var IsPanelValid = Utils.IsPanelValid;
-    var PerfNowMs = _deps.perfNowMs;
-    var SafeGetAttribute = Utils.SafeGetAttribute;
-    var SafeSetAttribute = Utils.SafeSetAttribute;
-    var SafeLog = Utils.SafeLog;
-    var DebugLog = Utils.DebugLog;
-    var IsConnectedToHideout = _deps.isConnectedToHideout;
+    // ── Debug logging toggle ──
+    var _DBG = false;
+    function DBG(msg) { if (_DBG) { try { $.Msg("[ShowRank] " + msg); } catch(e) {} } }
 
+    DBG("=== script loading ===");
+
+    // ── Inline utility (no QOL deps — safe in all contexts) ──
+    function IsCfgEnabled(cfg, key) {
+        if (!cfg || !key) return false;
+        return Number(cfg[key]) === 1;
+    }
+
+    // ── QOL imports (only available in HUD context; guarded) ──
+    // Check that QOL has the required namespace entries BEFORE calling
+    // QOL.import() — avoids BRIDGE missing-dep errors in Settings context.
+    var _deps = null;
+    var State = null;
+    (function() {
+        DBG("QOL check: typeof QOL=" + (typeof QOL) + " hasImport=" + (typeof QOL !== "undefined" && typeof QOL.import === "function") + " hasState=" + (typeof QOL !== "undefined" && typeof QOL.state !== "undefined"));
+        if (typeof QOL === "undefined" || typeof QOL.import !== "function") return;
+        // Verify at least one HUD-only dep exists before importing
+        if (typeof QOL.state === "undefined") { DBG("QOL.state undefined — skipping imports (Settings context?)"); return; }
+        try {
+            _deps = QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
+            if (_deps && _deps.state) State = _deps.state;
+            DBG("QOL imports OK: state=" + (State ? "yes" : "no") + " utils=" + (_deps && _deps.utils ? "yes" : "no") + " hideout=" + (_deps && _deps.isConnectedToHideout ? "yes" : "no") + " perf=" + (_deps && _deps.perfNowMs ? "yes" : "no"));
+        } catch(e) { _deps = null; State = null; DBG("QOL imports FAILED: " + (e && e.message ? e.message : String(e))); }
+    })();
+
+    // Safe accessors that work even without QOL (Settings context fallback)
     function HaveState() { return State && State.lastConfig; }
+    function ReadStateConfig(key, fb) {
+        if (!HaveState()) return fb;
+        var cfg = State.lastConfig;
+        return cfg && cfg[key] !== undefined ? cfg[key] : fb;
+    }
 
     // ── Constants ──
     var RANK0 = "s2r://panorama/images/ranked/badges/rank0/badge_sm_psd.vtex";
@@ -27,23 +50,40 @@
     ];
 
     // ── Shared utilities ──
+    function NowMs() {
+        try { return Date.now ? Date.now() : 0; } catch(e) { return 0; }
+    }
+
+    function Valid(p) {
+        if (!p) return false;
+        try { return p.IsValid ? p.IsValid() : true; } catch(e) { return false; }
+    }
+
     function DocRoot(panel) {
         var cur = panel;
         var guard = 0;
-        while (IsPanelValid(cur) && guard < 80) {
+        while (Valid(cur) && guard < 80) {
             var parent = null;
-            try { parent = cur.GetParent(); } catch(e) { DebugLog("showRank", "docRoot.GetParent: " + (e.message || String(e))); }
-            if (!IsPanelValid(parent) || parent === cur) break;
+            try { parent = cur.GetParent(); } catch(e) {}
+            if (!Valid(parent) || parent === cur) break;
             cur = parent;
             guard++;
         }
         return cur;
     }
 
+    function ReadAttr(root, key, fb) {
+        try { return root.GetAttributeString(key, fb); } catch(e) { return fb; }
+    }
+
+    function SetAttr(root, key, value) {
+        try { root.SetAttributeString(key, String(value)); } catch(e) {}
+    }
+
     function HasAnyClass(panel, classes) {
-        if (!IsPanelValid(panel)) return false;
+        if (!Valid(panel)) return false;
         for (var i = 0; i < classes.length; i++) {
-            try { if (panel.BHasClass(classes[i])) return true; } catch(e) { DebugLog("showRank", "hasAnyClass.BHasClass: " + (e.message || String(e))); }
+            try { if (panel.BHasClass(classes[i])) return true; } catch(e) {}
         }
         return false;
     }
@@ -61,20 +101,20 @@
 
     // Apply/remove visibility class directly on badge panels.
     function SetBadgeVisible(badge, visible) {
-        if (!IsPanelValid(badge)) return;
+        if (!Valid(badge)) return;
         try {
             if (visible) badge.AddClass("ShowRankVisible");
             else badge.RemoveClass("ShowRankVisible");
-        } catch(e) { DebugLog("showRank", "applyTopBarVisibility: " + (e.message || String(e))); }
+        } catch(e) {}
     }
 
     function ApplyTopBarVisibility(root, visible) {
         var count = 0;
         try {
             var topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null;
-            if (!IsPanelValid(topBar)) { DebugLog("showRank", "ApplyTopBarVisibility: no TopBar panel"); return; }
+            if (!Valid(topBar)) { DBG("ApplyTopBarVisibility: no TopBar panel"); return; }
             var players = FindAllTopBarPlayers(topBar);
-            DebugLog("showRank", "ApplyTopBarVisibility: visible=" + visible + " players=" + players.length);
+            DBG("ApplyTopBarVisibility: visible=" + visible + " players=" + players.length);
             for (var i = 0; i < players.length; i++) {
                 var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
                 var overlay = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
@@ -82,13 +122,13 @@
                 SetBadgeVisible(overlay, visible);
                 count++;
             }
-        } catch(e) { DebugLog("showRank", "applyTopBarVisibility: " + (e.message || String(e))); }
-        DebugLog("showRank", "ApplyTopBarVisibility: done, touched=" + count);
+        } catch(e) {}
+        DBG("ApplyTopBarVisibility: done, touched=" + count);
     }
 
     function ApplyPlayerListVisibility(root, visible) {
         var entries = FindAllEntries(root);
-        DebugLog("showRank", "ApplyPlayerListVisibility: visible=" + visible + " entries=" + entries.length);
+        DBG("ApplyPlayerListVisibility: visible=" + visible + " entries=" + entries.length);
         for (var i = 0; i < entries.length; i++) {
             var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
@@ -113,23 +153,23 @@
 
     function GetPlayersList(root) {
         var escape = null;
-        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) { DebugLog("showRank", "getPlayersList.FindChildTraverse: " + (e.message || String(e))); }
-        var start = IsPanelValid(escape) ? escape : root;
+        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) {}
+        var start = Valid(escape) ? escape : root;
         try { return start.FindChildTraverse("PlayersList"); } catch(e) { return null; }
     }
 
     function FindAllEntries(root) {
         var out = [];
         var playersList = GetPlayersList(root);
-        if (!IsPanelValid(playersList)) { DebugLog("showRank", "FindAllEntries: no PlayersList"); return out; }
+        if (!Valid(playersList)) { DBG("FindAllEntries: no PlayersList"); return out; }
         var q = [];
-        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) { DebugLog("showRank", "findAllEntries.GetChildCount: " + (e.message || String(e))); }
+        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) {}
         for (var h = 0; h < q.length && h < 2000; h++) {
             var p = q[h];
             try {
                 if (p.paneltype === "CitadelPlayersListEntry") { out.push(p); continue; }
-            } catch(e) { DebugLog("showRank", "findAllEntries.paneltype: " + (e.message || String(e))); }
-            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) { DebugLog("showRank", "findAllEntries.GetChild: " + (e.message || String(e))); }
+            } catch(e) {}
+            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) {}
         }
         return out;
     }
@@ -137,7 +177,7 @@
     function ReadClass(panel, cls) {
         var list = panel.FindChildrenWithClassTraverse ? panel.FindChildrenWithClassTraverse(cls) : [];
         if (list && list.length > 0) {
-            try { return String(list[0].text || "").trim(); } catch(e) { DebugLog("showRank", "readClass.text: " + (e.message || String(e))); }
+            try { return String(list[0].text || "").trim(); } catch(e) {}
         }
         return "";
     }
@@ -150,7 +190,7 @@
 
     function HasAccountId(entry) {
         var label = GetAccountIdLabel(entry);
-        if (!IsPanelValid(label)) return true;
+        if (!Valid(label)) return true;
         try { return String(label.text || "").trim().length > 0; } catch(e) { return true; }
     }
 
@@ -163,13 +203,13 @@
     }
 
     function ClearPublishedRanks(root) {
-        var published = SafeGetAttribute(root, "qol_sr_ranked_heroes", "");
+        var published = ReadAttr(root, "qol_sr_ranked_heroes", "");
         if (!published) return 0;
         var heroes = published.split("|");
         for (var i = 0; i < heroes.length; i++) {
-            if (heroes[i]) { SafeSetAttribute(root, "qol_sr_rank_" + heroes[i], ""); }
+            if (heroes[i]) { SetAttr(root, "qol_sr_rank_" + heroes[i], ""); }
         }
-        SafeSetAttribute(root, "qol_sr_ranked_heroes", "");
+        SetAttr(root, "qol_sr_ranked_heroes", "");
         return heroes.length;
     }
 
@@ -178,40 +218,40 @@
         var cleared = 0;
         for (var i = 0; i < entries.length; i++) {
             var label = GetAccountIdLabel(entries[i]);
-            if (IsPanelValid(label)) {
-                try { label.text = ""; cleared++; } catch(e) { DebugLog("showRank", "clearAllAccountIds.labelText: " + (e.message || String(e))); }
+            if (Valid(label)) {
+                try { label.text = ""; cleared++; } catch(e) {}
             }
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-            if (IsPanelValid(overlay)) {
-                try { overlay.SetImage(""); } catch(e) { DebugLog("showRank", "clearAllAccountIds.setImage: " + (e.message || String(e))); }
+            if (Valid(overlay)) {
+                try { overlay.SetImage(""); } catch(e) {}
                 SetBadgeVisible(overlay, false);
             }
         }
         ClearPublishedRanks(root);
-        var gen = parseInt(SafeGetAttribute(root, "qol_sr_generation", "0")) || 0;
-        SafeSetAttribute(root, "qol_sr_generation", String(gen + 1));
-        DebugLog("showRank", "ClearAllAccountIds: cleared=" + cleared + " gen=" + (gen + 1));
+        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+        SetAttr(root, "qol_sr_generation", String(gen + 1));
+        DBG("ClearAllAccountIds: cleared=" + cleared + " gen=" + (gen + 1));
     }
 
     function ClearProbe(root) {
-        SafeSetAttribute(root, "qol_sr_probe_name", "");
-        SafeSetAttribute(root, "qol_sr_probe_hero", "");
-        SafeSetAttribute(root, "qol_sr_probe_account", "");
+        SetAttr(root, "qol_sr_probe_name", "");
+        SetAttr(root, "qol_sr_probe_hero", "");
+        SetAttr(root, "qol_sr_probe_account", "");
     }
 
     function DismissProfileCard() {
         try { if (typeof DismissAllContextMenus === "function") DismissAllContextMenus();
-              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) { DebugLog("showRank", "dismissProfileCard.menus: " + (e.message || String(e))); }
+              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) {}
         try { if (typeof DropInputFocus === "function") DropInputFocus();
-              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) { DebugLog("showRank", "dismissProfileCard.focus: " + (e.message || String(e))); }
+              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) {}
     }
 
     function ScheduleDismiss(root, delayMs) {
         var wait = (delayMs > 0 ? delayMs : 500) / 1000;
         $.Schedule(wait, function() {
-            if (SafeGetAttribute(root, "qol_sr_auto_dismiss", "") !== "1") return;
-            if (SafeGetAttribute(root, "qol_sr_probe_name", "") !== "") return;
-            SafeSetAttribute(root, "qol_sr_auto_dismiss", "");
+            if (ReadAttr(root, "qol_sr_auto_dismiss", "") !== "1") return;
+            if (ReadAttr(root, "qol_sr_probe_name", "") !== "") return;
+            SetAttr(root, "qol_sr_auto_dismiss", "");
             DismissProfileCard();
         });
     }
@@ -219,8 +259,8 @@
     function FindMainContents(entry) {
         try {
             var mc = entry.FindChildTraverse("MainContents");
-            if (IsPanelValid(mc)) return mc;
-        } catch(e) { DebugLog("showRank", "findMainContents.traverse: " + (e.message || String(e))); }
+            if (Valid(mc)) return mc;
+        } catch(e) {}
         try {
             var cc = entry.GetChildCount ? entry.GetChildCount() : 0;
             for (var i = 0; i < cc && i < 50; i++) {
@@ -232,63 +272,63 @@
                         var g = c.GetChild(j);
                         if (g.id === "MainContents") return g;
                     }
-                } catch(e) { DebugLog("showRank", "findMainContents.child: " + (e.message || String(e))); }
+                } catch(e) {}
             }
-        } catch(e) { DebugLog("showRank", "findMainContents.outer: " + (e.message || String(e))); }
+        } catch(e) {}
         return null;
     }
 
     function FillRow(root, entry, done) {
         var name = ReadClass(entry, "PlayerName");
         var hero = ReadClass(entry, "PlayerHeroHidden");
-        DebugLog("showRank", "FillRow: name=" + (name || "<none>") + " hero=" + (hero || "<none>"));
-        if (!name) { DebugLog("showRank", "FillRow: no name, skipping"); done(); return; }
+        DBG("FillRow: name=" + (name || "<none>") + " hero=" + (hero || "<none>"));
+        if (!name) { DBG("FillRow: no name, skipping"); done(); return; }
 
-        SafeSetAttribute(root, "qol_sr_probe_name", name);
-        SafeSetAttribute(root, "qol_sr_probe_hero", hero);
-        SafeSetAttribute(root, "qol_sr_probe_account", "");
-        SafeSetAttribute(root, "qol_sr_auto_dismiss", "1");
+        SetAttr(root, "qol_sr_probe_name", name);
+        SetAttr(root, "qol_sr_probe_hero", hero);
+        SetAttr(root, "qol_sr_probe_account", "");
+        SetAttr(root, "qol_sr_auto_dismiss", "1");
 
         var mc = FindMainContents(entry);
         if (mc) {
-            SafeLog(function() { $.DispatchEvent("Activated", mc, "mouse"); }, "showrank.dispatchActivated");
+            try { $.DispatchEvent("Activated", mc, "mouse"); } catch(e) {}
         } else {
-            SafeLog(function() { $.DispatchEvent("Activated", entry, "mouse"); }, "showrank.dispatchActivated");
+            try { $.DispatchEvent("Activated", entry, "mouse"); } catch(e) {}
         }
-        DebugLog("showRank", "FillRow: dispatched Activated, mc=" + (mc ? "found" : "not found"));
+        DBG("FillRow: dispatched Activated, mc=" + (mc ? "found" : "not found"));
 
-        var started = PerfNowMs();
+        var started = NowMs();
 
         function PollForResult(attempt) {
-            if (SafeGetAttribute(root, "qol_sr_probe_name", "") !== name) {
-                DebugLog("showRank", "FillRow: poll aborted — probe name changed");
+            if (ReadAttr(root, "qol_sr_probe_name", "") !== name) {
+                DBG("FillRow: poll aborted — probe name changed");
                 return;
             }
 
-            var elapsed = PerfNowMs() - started;
-            var result = SafeGetAttribute(root, "qol_sr_probe_account", "");
+            var elapsed = NowMs() - started;
+            var result = ReadAttr(root, "qol_sr_probe_account", "");
 
             if (result) {
                 var label = GetAccountIdLabel(entry);
-                if (IsPanelValid(label)) {
-                    try { label.text = result; } catch(e) { DebugLog("showRank", "fillRow.labelText: " + (e.message || String(e))); }
+                if (Valid(label)) {
+                    try { label.text = result; } catch(e) {}
                 }
                 var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
-                if (IsPanelValid(overlay)) {
+                if (Valid(overlay)) {
                     var rankUrl = API_RANK_URL + result + "/rank-predict/image?format=webp&size=small";
-                    try { overlay.SetImage(rankUrl); } catch(e) { DebugLog("showRank", "fillRow.setImage: " + (e.message || String(e))); }
+                    try { overlay.SetImage(rankUrl); } catch(e) {}
                     SetBadgeVisible(overlay, true);
-                    DebugLog("showRank", "FillRow: rank image set, url=" + rankUrl);
+                    DBG("FillRow: rank image set, url=" + rankUrl);
                 } else {
-                    DebugLog("showRank", "FillRow: RankPredictionBadgeOverlay NOT FOUND");
+                    DBG("FillRow: RankPredictionBadgeOverlay NOT FOUND");
                 }
                 if (hero) {
-                    SafeSetAttribute(root, "qol_sr_rank_" + hero.toLowerCase(), result);
-                    var prev = SafeGetAttribute(root, "qol_sr_ranked_heroes", "");
-                    SafeSetAttribute(root, "qol_sr_ranked_heroes", prev ? prev + "|" + hero.toLowerCase() : hero.toLowerCase());
-                    DebugLog("showRank", "FillRow: published sr_rank_" + hero.toLowerCase() + "=" + result);
+                    SetAttr(root, "qol_sr_rank_" + hero.toLowerCase(), result);
+                    var prev = ReadAttr(root, "qol_sr_ranked_heroes", "");
+                    SetAttr(root, "qol_sr_ranked_heroes", prev ? prev + "|" + hero.toLowerCase() : hero.toLowerCase());
+                    DBG("FillRow: published sr_rank_" + hero.toLowerCase() + "=" + result);
                 }
-                DebugLog("showRank", "FillRow: SUCCESS " + name + " -> " + result + " [" + elapsed + "ms]");
+                DBG("FillRow: SUCCESS " + name + " -> " + result + " [" + elapsed + "ms]");
                 ClearProbe(root);
                 ScheduleDismiss(root, 0);
                 done();
@@ -296,10 +336,10 @@
             }
 
             if (elapsed > 3000 || attempt > 21) {
-                DebugLog("showRank", "FillRow: TIMEOUT " + name + " [" + elapsed + "ms, " + attempt + " attempts]");
+                DBG("FillRow: TIMEOUT " + name + " [" + elapsed + "ms, " + attempt + " attempts]");
                 var timeoutLabel = GetAccountIdLabel(entry);
-                if (IsPanelValid(timeoutLabel)) {
-                    try { timeoutLabel.text = "-"; } catch(e) { DebugLog("showRank", "fillRow.timeoutText: " + (e.message || String(e))); }
+                if (Valid(timeoutLabel)) {
+                    try { timeoutLabel.text = "-"; } catch(e) {}
                 }
                 ClearProbe(root);
                 ScheduleDismiss(root, 0);
@@ -314,53 +354,55 @@
     }
 
     function FillLoop(root, token) {
-        if (!IsPanelValid(root) || SafeGetAttribute(root, "qol_sr_fill_token", "") !== token) {
-            $.Msg("[QOLLock][showRank] FILLLOOP: bail — root invalid or token mismatch");
+        if (!Valid(root) || ReadAttr(root, "qol_sr_fill_token", "") !== token) {
+            DBG("FillLoop: bail — invalid root or token mismatch");
             return;
         }
 
         var hideoutNow = IsInHideout(root);
-        var hideoutCached = SafeGetAttribute(root, "qol_sr_hideout", "");
+        var hideoutCached = ReadAttr(root, "qol_sr_hideout", "");
 
         if (hideoutNow) {
             if (hideoutCached !== "1") {
-                $.Msg("[QOLLock][showRank] FILLLOOP: entered hideout");
+                DBG("FillLoop: entered hideout");
                 ClearAllAccountIds(root);
             }
-            SafeSetAttribute(root, "qol_sr_hideout", "1");
+            SetAttr(root, "qol_sr_hideout", "1");
             $.Schedule(1.0, function() { FillLoop(root, token); });
             return;
         }
-        if (hideoutCached === "1") $.Msg("[QOLLock][showRank] FILLLOOP: exited hideout");
-        SafeSetAttribute(root, "qol_sr_hideout", "0");
+        if (hideoutCached === "1") DBG("FillLoop: exited hideout");
+        SetAttr(root, "qol_sr_hideout", "0");
 
         if (!IsEscapeMenuOpen(root)) {
-            DebugLog("showRank", "FillLoop: menu closed, slow poll");
+            DBG("FillLoop: menu closed, slow poll");
             $.Schedule(2.0, function() { FillLoop(root, token); });
             return;
         }
 
         // Idle latch: if all rows filled this match, stop polling.
-        var genNow = String(SafeGetAttribute(root, "qol_sr_generation", ""));
+        var genNow = String(ReadAttr(root, "qol_sr_generation", ""));
         if (State && State.showRankEscapeDone === genNow) {
-            DebugLog("showRank", "FillLoop: idle latch — all rows done for gen=" + genNow);
+            DBG("FillLoop: idle latch — all rows done for gen=" + genNow);
             $.Schedule(2.0, function() { FillLoop(root, token); });
             return;
         }
 
         var entries = FindAllEntries(root);
-        DebugLog("showRank", "FillLoop: entries=" + entries.length + " gen=" + genNow + " escapeDone=" + (State ? String(State.showRankEscapeDone || "") : "no-state"));
+        DBG("FillLoop: entries=" + entries.length + " gen=" + genNow + " escapeDone=" + (State ? String(State.showRankEscapeDone || "") : "no-state"));
 
         var row = FindUnfilledRow(root);
         if (!row) {
             if (State) State.showRankEscapeDone = genNow;
-            $.Msg("[QOLLock][showRank] FILLLOOP: all rows filled — latch set (gen=" + genNow + "), dismissing profile card");
+            DBG("FillLoop: all rows filled, latch set");
+            // Dismiss the last profile card — match reference's
+            // ScheduleCleanupProfileContext / CONTEXT_CLEANUP_DELAY_SECONDS (0.5s)
             $.Schedule(0.5, DismissProfileCard);
             $.Schedule(2.0, function() { FillLoop(root, token); });
             return;
         }
 
-        $.Msg("[QOLLock][showRank] FILLLOOP: dispatching FillRow for unfilled row (" + entries.length + " entries)");
+        DBG("FillLoop: found unfilled row, dispatching FillRow");
         FillRow(root, row, function() {
             $.Schedule(0.1, function() { FillLoop(root, token); });
         });
@@ -378,8 +420,8 @@
     // Shared topbar init logic — called from onload hook AND late-init scan.
     function _InitTopBarPlayer(topBarPlayer) {
         var root = DocRoot(topBarPlayer);
-        if (!IsPanelValid(root)) { DebugLog("showRank", "_InitTopBarPlayer: invalid root"); return; }
-        DebugLog("showRank", "_InitTopBarPlayer: panel=" + (topBarPlayer.id || "<no-id>") + " root=" + (root.id || "<no-id>"));
+        if (!Valid(root)) { DBG("_InitTopBarPlayer: invalid root"); return; }
+        DBG("_InitTopBarPlayer: panel=" + (topBarPlayer.id || "<no-id>") + " root=" + (root.id || "<no-id>"));
         // Mark initialized so the per-tick scan in update() skips this player
         MarkTopBarPlayerInitialized(topBarPlayer, root);
 
@@ -389,17 +431,17 @@
 
         function TryLoad() {
             // Panel destroyed (hideout transition, etc.)
-            if (!IsPanelValid(topBarPlayer)) { $.Msg("[QOLLock][showRank] TRYLOAD: panel destroyed, stopping loop"); return; }
+            if (!Valid(topBarPlayer)) { DBG("TopBar.TryLoad: panel destroyed"); return; }
 
             // Generation check — escape script bumps this on hideout/new-game
-            var gen = SafeGetAttribute(root, "qol_sr_generation", "");
+            var gen = ReadAttr(root, "qol_sr_generation", "");
             if (gen !== _lastGen) {
-                $.Msg("[QOLLock][showRank] TRYLOAD: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>") + " — resetting");
+                DBG("TopBar.TryLoad: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>"));
                 _lastGen = gen;
                 var overlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
+                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
                 var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
-                SafeLog(function() { if (IsPanelValid(acctLabel)) acctLabel.text = ""; }, "showrank.clearText");
+                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
                 _lastAccountId = "";
                 _idleCount = 0;
                 $.Schedule(2.0, TryLoad);
@@ -409,27 +451,27 @@
             // Check PlayerAccountHiddenTopBar first
             var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
             var accountId = "";
-            if (IsPanelValid(acctLabel)) {
-                accountId = String(SafeGetAttribute(acctLabel, "text", "")).trim();
+            if (Valid(acctLabel)) {
+                try { accountId = String(acctLabel.text || "").trim(); } catch(e) {}
             }
-            DebugLog("showRank", "TopBar.TryLoad: labelAccountId=" + (accountId || "<empty>"));
+            DBG("TopBar.TryLoad: labelAccountId=" + (accountId || "<empty>"));
 
             // If no account ID in label, try hero name → doc-root
             if (!accountId) {
-                var heroLabel = FindClass(topBarPlayer, "HeroNameHidden");
+                var heroLabel = FindClass(topBarPlayer, "HeroName");
                 var heroName = "";
-                if (IsPanelValid(heroLabel)) {
-                    heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
+                if (Valid(heroLabel)) {
+                    try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
                 }
                 if (heroName) {
                     var key = "qol_sr_rank_" + heroName.toLowerCase();
-                    accountId = SafeGetAttribute(root, key, "");
-                    DebugLog("showRank", "TopBar.TryLoad: hero=" + heroName + " key=" + key + " → " + (accountId || "<empty>"));
-                    if (accountId && IsPanelValid(acctLabel)) {
-                        try { acctLabel.text = accountId; } catch(e) { DebugLog("showRank", "tryLoad.acctLabelText: " + (e.message || String(e))); }
+                    accountId = ReadAttr(root, key, "");
+                    DBG("TopBar.TryLoad: hero=" + heroName + " key=" + key + " → " + (accountId || "<empty>"));
+                    if (accountId && Valid(acctLabel)) {
+                        try { acctLabel.text = accountId; } catch(e) {}
                     }
                 } else {
-                    DebugLog("showRank", "TopBar.TryLoad: no hero name found (HeroLabel=" + (heroLabel ? "found" : "null") + ")");
+                    DBG("TopBar.TryLoad: no hero name found (HeroLabel=" + (heroLabel ? "found" : "null") + ")");
                 }
             }
 
@@ -442,38 +484,36 @@
 
             // Clear if account ID disappeared
             if (!accountId && _lastAccountId) {
-                DebugLog("showRank", "TopBar.TryLoad: accountId disappeared, was " + _lastAccountId);
+                DBG("TopBar.TryLoad: accountId disappeared, was " + _lastAccountId);
                 var clearOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                SafeLog(function() { if (IsPanelValid(clearOverlay)) clearOverlay.SetImage(""); }, "showrank.clearImage");
-                SafeLog(function() { if (IsPanelValid(acctLabel)) acctLabel.text = ""; }, "showrank.clearText");
+                if (Valid(clearOverlay)) { try { clearOverlay.SetImage(""); } catch(e) {} }
+                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
                 _lastAccountId = "";
             }
 
             // Load image if account ID changed
             if (accountId && accountId !== _lastAccountId) {
-                $.Msg("[QOLLock][showRank] TRYLOAD: accountId found — " + accountId + " (was " + (_lastAccountId || "none") + ")");
+                DBG("TopBar.TryLoad: loading rank image for " + accountId);
                 _lastAccountId = accountId;
                 var loadOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (IsPanelValid(loadOverlay)) {
+                if (Valid(loadOverlay)) {
                     var url = API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small";
-                    try { loadOverlay.SetImage(url); } catch(e) { DebugLog("showRank", "tryLoad.setImage: " + (e.message || String(e))); }
-                    $.Msg("[QOLLock][showRank] TRYLOAD: SetImage(" + url + ")");
+                    try { loadOverlay.SetImage(url); } catch(e) {}
+                    DBG("TopBar.TryLoad: SetImage(" + url + ")");
                     if (IsShowRankEnabled()) {
                         var baseBadge = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                         SetBadgeVisible(baseBadge, true);
                         SetBadgeVisible(loadOverlay, true);
-                        $.Msg("[QOLLock][showRank] TRYLOAD: badges set VISIBLE (ShowRank enabled)");
-                    } else {
-                        $.Msg("[QOLLock][showRank] TRYLOAD: ShowRank DISABLED — badges left hidden");
+                        DBG("TopBar.TryLoad: badges set visible");
                     }
                 } else {
-                    $.Msg("[QOLLock][showRank] TRYLOAD: RankPredictionBadgeTopBarOverlay NOT FOUND");
+                    DBG("TopBar.TryLoad: RankPredictionBadgeTopBarOverlay NOT FOUND");
                 }
             }
 
             // Per-player idle: slow down when stable for 3+ cycles
             if (_idleCount >= 3) {
-                DebugLog("showRank", "TopBar.TryLoad: per-player IDLE, slow poll (10s)");
+                DBG("TopBar.TryLoad: per-player IDLE, slow poll (10s)");
                 $.Schedule(10.0, TryLoad);
             } else {
                 $.Schedule(3.0, TryLoad);
@@ -496,39 +536,35 @@
         var topBarVisible = enabled && showTopBar;
         if (State._showRankTopBarVisible !== topBarVisible) {
             State._showRankTopBarVisible = topBarVisible;
-            $.Msg("[QOLLock][showRank] TOPBAR CSS: " + (topBarVisible ? "SHOW (RemoveClass HideShowRankTopBar)" : "HIDE (AddClass HideShowRankTopBar)"));
             try {
                 if (topBarVisible) {
                     root.RemoveClass("HideShowRankTopBar");
                 } else {
                     root.AddClass("HideShowRankTopBar");
                 }
-            } catch(e) { DebugLog("showRank", "clearTopBarBadges: " + (e.message || String(e))); }
+            } catch(e) {}
         }
 
         if (State._showRankEnabled === enabled) return;
         var wasEnabled = State._showRankEnabled === true;
         State._showRankEnabled = enabled;
 
-        $.Msg("[QOLLock][showRank] CONFIG CHANGE: " + wasEnabled + " → " + enabled);
+        DBG("ApplyConfigHotReload: " + wasEnabled + " → " + enabled);
 
         if (wasEnabled && !enabled) {
             // on→off: clear everything
-            $.Msg("[QOLLock][showRank] CLEANUP: on→off — clearing topbar + playerlist badges, bumping generation");
             ApplyTopBarVisibility(root, false);
             ClearTopBarBadges(root);
             ApplyPlayerListVisibility(root, false);
             ClearPlayerListBadges(root);
             ClearPublishedRanks(root);
             State.showRankEscapeDone = "";
-            var gen = parseInt(SafeGetAttribute(root, "qol_sr_generation", "0")) || 0;
-            SafeSetAttribute(root, "qol_sr_generation", String(gen + 1));
-            $.Msg("[QOLLock][showRank] CLEANUP: generation bumped to " + String(gen + 1));
+            var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+            SetAttr(root, "qol_sr_generation", String(gen + 1));
         }
 
         if (!wasEnabled && enabled) {
             // off→on: show badges (data will be filled by FillLoop)
-            $.Msg("[QOLLock][showRank] INIT: off→on — showing badges, resetting escapeDone");
             ApplyTopBarVisibility(root, true);
             ApplyPlayerListVisibility(root, true);
             State.showRankEscapeDone = "";
@@ -538,32 +574,32 @@
     function ClearTopBarBadges(root) {
         try {
             var topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null;
-            if (!IsPanelValid(topBar)) { DebugLog("showRank", "ClearTopBarBadges: no TopBar"); return; }
+            if (!Valid(topBar)) { DBG("ClearTopBarBadges: no TopBar"); return; }
             var players = FindAllTopBarPlayers(topBar);
-            DebugLog("showRank", "ClearTopBarBadges: clearing " + players.length + " players");
+            DBG("ClearTopBarBadges: clearing " + players.length + " players");
             for (var i = 0; i < players.length; i++) {
                 var overlay = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
+                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
                 var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
                 SetBadgeVisible(base, false);
                 SetBadgeVisible(overlay, false);
                 var label = FindClass(players[i], "PlayerAccountHiddenTopBar");
-                SafeLog(function() { if (IsPanelValid(label)) label.text = ""; }, "showrank.clearText");
+                if (Valid(label)) { try { label.text = ""; } catch(e) {} }
             }
-        } catch(e) { DebugLog("showRank", "clearPlayerListBadges: " + (e.message || String(e))); }
+        } catch(e) {}
     }
 
     function ClearPlayerListBadges(root) {
         var entries = FindAllEntries(root);
-        DebugLog("showRank", "ClearPlayerListBadges: clearing " + entries.length + " entries");
+        DBG("ClearPlayerListBadges: clearing " + entries.length + " entries");
         for (var i = 0; i < entries.length; i++) {
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-            SafeLog(function() { if (IsPanelValid(overlay)) overlay.SetImage(""); }, "showrank.clearImage");
+            if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
             var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
             SetBadgeVisible(base, false);
             SetBadgeVisible(overlay, false);
             var label = GetAccountIdLabel(entries[i]);
-            SafeLog(function() { if (IsPanelValid(label)) label.text = ""; }, "showrank.clearText");
+            if (Valid(label)) { try { label.text = ""; } catch(e) {} }
         }
     }
 
@@ -579,15 +615,15 @@
         try {
             var stored = player.GetAttributeString("_qol_sr_init", "");
             if (!stored) return false;
-            var currentGen = SafeGetAttribute(root, "qol_sr_generation", "0");
+            var currentGen = ReadAttr(root, "qol_sr_generation", "0");
             return stored === currentGen;
         } catch(e) { return false; }
     }
     function MarkTopBarPlayerInitialized(player, root) {
         try {
-            var gen = SafeGetAttribute(root, "qol_sr_generation", "0");
+            var gen = ReadAttr(root, "qol_sr_generation", "0");
             player.SetAttributeString("_qol_sr_init", gen || "0");
-        } catch(e) { DebugLog("showRank", "ensureTopBarPlayers: " + (e.message || String(e))); }
+        } catch(e) {}
     }
 
     // ── Find all player panels in the TopBar ──
@@ -596,29 +632,29 @@
     function FindAllTopBarPlayers(topBar) {
         var out = [];
         var teamsContainer = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
-        if (!IsPanelValid(teamsContainer)) { DebugLog("showRank", "FindAllTopBarPlayers: TeamsContainer NOT FOUND"); return out; }
+        if (!Valid(teamsContainer)) { DBG("FindAllTopBarPlayers: TeamsContainer NOT FOUND"); return out; }
         var tc = teamsContainer.GetChildCount ? teamsContainer.GetChildCount() : 0;
-        DebugLog("showRank", "FindAllTopBarPlayers: TeamsContainer has " + tc + " children");
+        DBG("FindAllTopBarPlayers: TeamsContainer has " + tc + " children");
         for (var ti = 0; ti < tc && ti < 4; ti++) {
             var team = teamsContainer.GetChild(ti);
-            if (!IsPanelValid(team)) { DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
+            if (!Valid(team)) { DBG("FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
             var teamId = "";
-            teamId = String(team.id || SafeGetAttribute(team, "id", ""));
+            try { teamId = String(team.id || team.GetAttributeString("id", "")); } catch(e) {}
             var playerContents = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
-            if (!IsPanelValid(playerContents)) { DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
+            if (!Valid(playerContents)) { DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
             var playersContainer = playerContents.FindChildTraverse ? playerContents.FindChildTraverse("PlayersContainer") : null;
-            if (!IsPanelValid(playersContainer)) { DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayerContents has NO PlayersContainer"); continue; }
+            if (!Valid(playersContainer)) { DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayerContents has NO PlayersContainer"); continue; }
             var pc = playersContainer.GetChildCount ? playersContainer.GetChildCount() : 0;
-            DebugLog("showRank", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayersContainer has " + pc + " children");
+            DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayersContainer has " + pc + " children");
             for (var pi = 0; pi < pc && pi < 12; pi++) {
                 var player = playersContainer.GetChild(pi);
-                if (IsPanelValid(player)) {
+                if (Valid(player)) {
                     var pid = "";
-                    pid = String(player.id || SafeGetAttribute(player, "id", ""));
-                    DebugLog("showRank", "FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
+                    try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
+                    DBG("FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
                     out.push(player);
                 } else {
-                    DebugLog("showRank", "FindAllTopBarPlayers:   player[" + pi + "] INVALID, skip");
+                    DBG("FindAllTopBarPlayers:   player[" + pi + "] INVALID, skip");
                 }
             }
         }
@@ -627,116 +663,79 @@
 
     // ── Per-tick topbar scan (driven by update, not XML onload) ──
     function EnsureTopBarPlayersInitialized(root) {
-        if (!IsPanelValid(root)) return;
+        if (!Valid(root)) return;
         var topBar = null;
-        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) { DebugLog("showRank", "ensureTopBarPlayers.findTopBar: " + (e.message || String(e))); }
-        if (!IsPanelValid(topBar)) { DebugLog("showRank", "EnsureTopBarPlayers: no TopBar"); return; }
+        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
+        if (!Valid(topBar)) { DBG("EnsureTopBarPlayers: no TopBar"); return; }
         try {
-            var currentGen = SafeGetAttribute(root, "qol_sr_generation", "0");
+            var currentGen = ReadAttr(root, "qol_sr_generation", "0");
             var players = FindAllTopBarPlayers(topBar);
-            var skippedCount = 0, noHeroCount = 0, emptyHeroCount = 0, initCount = 0;
+            DBG("EnsureTopBarPlayers: found " + players.length + " total players, currentGen=" + currentGen);
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
                 var pid = "";
-                pid = String(player.id || SafeGetAttribute(player, "id", ""));
+                try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
                 var storedInit = "";
-                storedInit = SafeGetAttribute(player, "_qol_sr_init", "");
+                try { storedInit = player.GetAttributeString("_qol_sr_init", ""); } catch(e) {}
                 if (IsTopBarPlayerInitialized(player, root)) {
-                    skippedCount++;
-                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
+                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
                 }
-                var heroLabel = FindClass(player, "HeroNameHidden");
-                if (!IsPanelValid(heroLabel)) {
-                    noHeroCount++;
-                    // ── Diagnostic: dump all class names on player's children ──
-                    var classDump = [];
-                    try {
-                        for (var cd = 0; cd < player.GetChildCount() && cd < 30; cd++) {
-                            var ch = player.GetChild(cd);
-                            if (ch) {
-                                var cid = String(ch.id || "?");
-                                var ccls = "";
-                                try { ccls = String(ch.GetAttributeString ? ch.GetAttributeString("class", "") : ""); } catch(e) {}
-                                classDump.push(cid + ":" + ccls);
-                            }
-                        }
-                    } catch(e) { classDump.push("ERROR:" + (e.message || String(e))); }
-                    $.Msg("[QOLLock][showRank] NO-HERO player[" + i + "] id=" + pid + " children: [" + classDump.join(" | ") + "]");
-                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroNameHidden — skip");
+                var heroLabel = FindClass(player, "HeroName");
+                if (!Valid(heroLabel)) {
+                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroName — skip");
                     continue;
                 }
                 var heroName = "";
-                heroName = String(SafeGetAttribute(heroLabel, "text", "")).trim();
+                try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
                 if (!heroName) {
-                    emptyHeroCount++;
-                    DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroNameHidden EMPTY — skip");
+                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
                     continue;
                 }
-                initCount++;
-                DebugLog("showRank", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " hero=" + heroName + " storedInit=" + (storedInit || "<empty>") + " — INITIALIZING");
+                DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " hero=" + heroName + " storedInit=" + (storedInit || "<empty>") + " — INITIALIZING");
                 MarkTopBarPlayerInitialized(player, root);
                 _InitTopBarPlayer(player);
             }
-            $.Msg("[QOLLock][showRank] TOPBAR INIT: " + players.length + " players — " + initCount + " new, " + skippedCount + " already-init, " + noHeroCount + " no-hero, " + emptyHeroCount + " empty-hero (gen=" + currentGen + ")");
-        } catch(e) { DebugLog("showRank", "EnsureTopBarPlayers: ERROR " + (e && e.message ? e.message : String(e))); }
+        } catch(e) { DBG("EnsureTopBarPlayers: ERROR " + (e && e.message ? e.message : String(e))); }
     }
 
     // ── Per-tick escape-menu fill trigger (driven by update, not XML onload) ──
     // Starts FillLoop if not already running. FillLoop handles menu-open/menu-closed
     // and hideout transitions internally — we just need to ensure it's alive.
     function EnsureFillLoopRunning(root) {
-        if (!IsPanelValid(root)) return;
-        var token = SafeGetAttribute(root, "qol_sr_fill_token", "");
-        if (token) { DebugLog("showRank", "EnsureFillLoop: already running (token=" + String(token).substring(0, 12) + "…)"); return; }
-        $.Msg("[QOLLock][showRank] FILLLOOP: starting new loop — clearing ranks, bumping generation");
+        if (!Valid(root)) return;
+        var token = ReadAttr(root, "qol_sr_fill_token", "");
+        if (token) return; // already running
         // Clear stale hero→account mappings from previous match before starting
         ClearPublishedRanks(root);
         // Bump generation so the idle latch resets and rows are re-scanned
-        var gen = parseInt(SafeGetAttribute(root, "qol_sr_generation", "0")) || 0;
-        SafeSetAttribute(root, "qol_sr_generation", String(gen + 1));
+        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+        SetAttr(root, "qol_sr_generation", String(gen + 1));
         if (State) State.showRankEscapeDone = "";
-        var newToken = "qol_sr_" + String(PerfNowMs());
-        SafeSetAttribute(root, "qol_sr_fill_token", newToken);
-        $.Msg("[QOLLock][showRank] FILLLOOP: token=" + newToken + " gen=" + (gen + 1));
+        var newToken = "qol_sr_" + String(NowMs());
+        SetAttr(root, "qol_sr_fill_token", newToken);
+        DBG("update: starting FillLoop token=" + newToken + " gen=" + (gen + 1));
         FillLoop(root, newToken);
     }
 
     // ===================================================================
-    // REGISTRATION
+    // REGISTRATION (HUD context only — guarded by State availability)
     // ===================================================================
 
-    DebugLog("showRank", "REGISTERING: showRank (bucket=7, phase=4)");
+    if (State) {
+    DBG("REGISTERING: showRank (bucket=7, phase=4)");
     QOL.register("showRank", {
         configKeys: ["SHOW_RANK", "SHOW_RANK_TOPBAR"],
         bucket: 7,
         phase: 4,
         requiresRoot: true,
         gate: function(cfg) {
-            // Keepalive: stay active while _showRankEnabled is still true so
-            // the on→off cleanup in ApplyConfigHotReload runs (bump generation,
-            // clear badges, reset state). Without this, toggling SHOW_RANK off
-            // kills the feature before cleanup, and toggling back on sees
-            // _showRankEnabled === enabled → early return → top bar never re-inits.
-            var cfgOn = IsCfgEnabled(cfg, "SHOW_RANK");
-            var keepalive = !!(State && State._showRankEnabled);
-            var result = cfgOn || keepalive;
-            if (!cfgOn && keepalive) {
-                $.Msg("[QOLLock][showRank] GATE: keepalive active — cfg=OFF but _showRankEnabled still set, holding gate open for cleanup");
-            }
-            if (!result) {
-                $.Msg("[QOLLock][showRank] GATE: closed — cfg=OFF, _showRankEnabled=" + (State ? String(State._showRankEnabled) : "no-state"));
-            }
-            return result;
+            return IsCfgEnabled(cfg, "SHOW_RANK");
         },
         update: function(root, cfg) {
             try {
-                var _updShowRank = IsShowRankEnabled();
-                var _updTopBar = IsCfgEnabled(cfg, "SHOW_RANK_TOPBAR");
-                var _updFillToken = SafeGetAttribute(root, "qol_sr_fill_token", "");
-                $.Msg("[QOLLock][showRank] UPDATE: showRank=" + _updShowRank + " topBar=" + _updTopBar + " _showRankEnabled=" + String(State._showRankEnabled) + " _topBarVisible=" + String(State._showRankTopBarVisible) + " fillToken=" + (_updFillToken ? "SET" : "empty") + " gen=" + SafeGetAttribute(root, "qol_sr_generation", "0"));
                 ApplyConfigHotReload(root, cfg);
-                if (_updShowRank) {
+                if (IsShowRankEnabled()) {
                     EnsureFillLoopRunning(root);
                     EnsureTopBarPlayersInitialized(root);
                 }
@@ -749,22 +748,25 @@
         },
         stateKeys: ["_showRankEnabled", "_showRankTopBarVisible", "showRankEscapeDone"]
     });
-    DebugLog("showRank", "showRank registered OK");
+    DBG("showRank registered OK");
+    } else {
+        DBG("SKIPPING registration: State is null (Settings context or not yet loaded)");
+    } // if (State) — HUD context guard
 
     // ── Self-test ──
     try {
-        DebugLog("showRank", "SELF-TEST starting");
+        DBG("SELF-TEST starting");
         if (typeof ApplyConfigHotReload !== "function") throw new Error("ApplyConfigHotReload is not a function");
         if (typeof FillLoop !== "function") throw new Error("FillLoop is not a function");
         if (typeof FillRow !== "function") throw new Error("FillRow is not a function");
         if (typeof EnsureFillLoopRunning !== "function") throw new Error("EnsureFillLoopRunning is not a function");
         if (typeof EnsureTopBarPlayersInitialized !== "function") throw new Error("EnsureTopBarPlayersInitialized is not a function");
-        DebugLog("showRank", "SELF-TEST passed: core functions installed");
+        DBG("SELF-TEST passed: core functions installed");
     } catch(e) {
-        DebugLog("showRank", "SELF-TEST FAILED: " + (e && e.message ? e.message : String(e)));
+        DBG("SELF-TEST FAILED: " + (e && e.message ? e.message : String(e)));
         $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " +
               (e && e.message ? e.message : String(e)));
     }
 
-    DebugLog("showRank", "=== script loaded OK ===");
+    DBG("=== script loaded OK ===");
 })();
