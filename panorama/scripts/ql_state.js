@@ -342,6 +342,8 @@ var State;
         urnTrackerNextSampleMs: 0,
         urnTrackerNextPanelSearchMs: 0,
         urnTrackerCachedState: null,
+        urnTimerDisplayMode: "",
+        urnTimerLastText: "",
         spm: {
             nextSampleMs: 0,
             panelCacheNextMs: 0,

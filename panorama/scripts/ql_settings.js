@@ -156,6 +156,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_REJUV_HUD: "BreadRollius",
     ENABLE_BUFF_HUD: "BreadRollius",
     ENABLE_URN_DIFF: "BreadRollius, bytenode",
+    ENABLE_URN_TIMER: "bytenode",
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
@@ -315,6 +316,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_SIMPLIFY_SHOP": "Cleans up visuals of the shop menu significantly to reduce clutter.",
     "ENABLE_UNSPENT_SOULS": "Shows the individual player's unspent souls in the top bar.",
     "ENABLE_URN_DIFF": "Shows a visual indicator in the top bar of the percentage difference of souls between teams.",
+    "ENABLE_URN_TIMER": "Shows a countdown timer in the top bar for the next urn spawn or relocation.",
     "ENABLE_URN_COLORS": "Changes urn color to know which side is favored, green for your team, red for the enemy.",
     "ENABLE_ENEMY_V2_ENHANCED": "Enhanced V2 enemy healthbar visuals and readability.",
     "ENABLE_ENEMY_V2_ULT_INDICATOR": "Show the UnitInfo panel on V2 enemy healthbars.",
@@ -667,6 +669,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
     ENABLE_UNSPENT_SOULS: "medium",
     ENABLE_URN_DIFF: "low",
+    ENABLE_URN_TIMER: "low",
     ENABLE_URN_COLORS: "low",
     ENABLE_ZIP_BOOST: "low",
     HEALTHBAR_TYPE: "medium",
@@ -20934,6 +20937,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Urn Timer", "ENABLE_URN_TIMER", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Souls Per Minute", "ENABLE_MIN_SOULS", "toggle", null, null, null, null, "");

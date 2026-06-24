@@ -59,6 +59,7 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_rejuvtimers.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank_card.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_urntimer.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">

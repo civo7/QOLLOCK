@@ -49,7 +49,7 @@
         var s = Math.max(0, Math.floor(Number(totalSec) || 0));
         var mm = Math.floor(s / 60);
         var ss = s % 60;
-        return (mm < 10 ? "0" + mm : String(mm)) + ":" + (ss < 10 ? "0" + ss : String(ss));
+        return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss));
     }
 
     function EnsureMinimapObjectiveTimers(root) {

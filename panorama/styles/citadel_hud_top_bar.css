@@ -540,6 +540,78 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	color: black;
 }
 
+#UrnTimer
+{
+	width: 145px !important;
+	height: 55%;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#FFFFFFFF), color-stop(0.70, #FFFFFFFF), color-stop(0.85, #FFFFFF08), to(#FFFFFF00));
+	wash-color: #00FF7F;
+	border-radius: 0px;
+	border-bottom-left-radius: 10px;
+	horizontal-align: center;
+	margin-left: -40px !important;
+	y: 41px;
+	x: 58px;
+	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
+}
+
+.missing_hero_disabled #UrnTimer
+{
+	background-color: #FFFFFFFF;
+}
+
+.obj_map_disabled #UrnTimer,.min_souls_disabled #UrnTimer,.obj_map_disabled.min_souls_disabled #UrnTimer
+{
+	width: 145px !important;
+	margin-left: 40px !important;
+	border-bottom-left-radius: 0px;
+}
+
+.min_souls_disabled #UrnTimer
+{
+	y: 32px;
+}
+
+#UrnTimer.show
+{
+	opacity: 1;
+}
+
+#UrnTimerLabel
+{
+	horizontal-align: center;
+	font-size: 18px;
+	font-weight: bold;
+	vertical-align: center;
+	text-align: center;
+	color: black;
+	text-overflow: shrink;
+	font-family: oracle;
+	padding-right: 20px;
+}
+
+.min_souls_disabled:not(.obj_map_disabled) #UrnTimerLabel
+{
+	padding-right: 50px;
+	margin-top: 1.3px;
+}
+
+.min_souls_disabled.obj_map_disabled #UrnTimerLabel
+{
+	padding-right: 75px;
+}
+
+#UrnTimer[visible="false"]
+{
+	opacity: 0 !important;
+	pointer-events: none;
+}
+
+.urn_timer_disabled #UrnTimer.show
+{
+	opacity: 0;
+}
+
 #Buff
 {
 	background-color: rgba(12, 12, 12, 0.6);
