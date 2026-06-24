@@ -1667,9 +1667,16 @@ var COMPASS_SPEED_OFFSET_SCHEMA_FIELDS = [
     { key: "COMPASS_SPEED_X_OFFSET", min: -2000, max: 2000, step: 5 },
     { key: "COMPASS_SPEED_Y_OFFSET", min: -2000, max: 2000, step: 5 }
 ];
+// 3.1.6 (in development): minimalistic pause toggle.
+var MINIMALISTIC_PAUSE_SCHEMA_FIELDS = [
+    { key: "ENABLE_MINIMALISTIC_PAUSE", min: 0, max: 1, step: 1 }
+];
 var QOL_COMPACT_SCHEMA_3_1_6= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_5,
-    COMPASS_SPEED_OFFSET_SCHEMA_FIELDS
+    QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+        COMPASS_SPEED_OFFSET_SCHEMA_FIELDS,
+        MINIMALISTIC_PAUSE_SCHEMA_FIELDS
+    )
 );
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
@@ -1698,7 +1705,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              (ally healthbar, perf debug, specials, drag, previews).
 // 3.1.0-3.1.4  Hero purchase popups, shop item notifications fix, 12-field
 //              reconstruction, UNIT_TARGET_HINT_SIZE.
-// 3.1.5-3.1.6  ShowRank + standalone compass speed offsets.
+// 3.1.5-3.1.6  ShowRank + standalone compass speed offsets + minimalistic pause.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2309,6 +2316,7 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_HERO_PURCHASE_POPUPS: 0,
         ENABLE_SHOW_BUILD_ID: 0,
         ENABLE_SHOW_BUILD_ID_TITLE: 0,
+        ENABLE_MINIMALISTIC_PAUSE: 0,
         ENABLE_HUD_SHIFT: 0,
         ENABLE_LANE_WITH_PARTY: 0,
         SUPPORT_16_10: 0,

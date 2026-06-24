@@ -14447,6 +14447,7 @@ function GetUIRoot() {
             cfg.ENABLE_CENTER_ESC,
             cfg.ENABLE_CENTER_FRIENDS_LIST,
             cfg.ENABLE_LEGACY_COOLDOWNS,
+            cfg.ENABLE_MINIMALISTIC_PAUSE,
             hideTestingTools ? 1 : 0,
             forceShowTestingTools ? 1 : 0,
             cfg.ENABLE_SPECIALS,
@@ -14538,6 +14539,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "center_esc_active", cfg.ENABLE_CENTER_ESC === 1);
             SetPanelClassCached(root, State.rootClassCache, "center_friends_list_active", IsCfgEnabled(cfg, "ENABLE_CENTER_FRIENDS_LIST"));
             SetPanelClassCached(root, State.rootClassCache, "legacy_cooldowns_active", legacyCooldownsEnabled);
+            SetPanelClassCached(root, State.rootClassCache, "minimal_pause_active", IsCfgEnabled(cfg, "ENABLE_MINIMALISTIC_PAUSE"));
             SetPanelClassCached(root, State.rootClassCache, "force_testing_tools_active", forceShowTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "hide_testing_tools_active", hideTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "specials_active", cfg.ENABLE_SPECIALS === 1);
@@ -15855,7 +15857,8 @@ function GetUIRoot() {
                      "ENABLE_ZIP_BOOST", "ENABLE_STAT_BONUSES", "ENABLE_COMPASS",
                      "ENABLE_ENHANCED_QUICKBUY", "ENABLE_SHOP_ITEM_NOTIFICATIONS",
                      "ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_HERO_PURCHASE_POPUPS",
-                     "ENABLE_SHOW_BUILD_ID", "ENABLE_HUD_SHIFT"],
+                     "ENABLE_SHOW_BUILD_ID", "ENABLE_HUD_SHIFT",
+                     "ENABLE_MINIMALISTIC_PAUSE"],
         bucket: 0, phase: 0,
         requiresRoot: true,
         perfLabel: "loop.root_classes",

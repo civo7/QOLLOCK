@@ -1,7 +1,40 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_paused.vcss_c");
-CitadelPaused
+
+/*
+ * Minimalistic Pause (QOLLOCK)
+ * Off by default: the imported base/hud_paused styles + #QLPausedText render the
+ * full default pause screen (paused text, who paused, unpause prompt). When
+ * ql_core applies the `.minimal_pause_active` root class (ENABLE_MINIMALISTIC_PAUSE
+ * on), the pause collapses to a compact 80x80 box showing only the "II" glyph in
+ * #PausedLabel. The engine adds .PausedTextMoved to #PausedLabel during the unpause
+ * countdown, which hides the glyph so the countdown number shows alone (as in 3.1.5).
+ */
+
+/* #PausedLabel holds the compact "II" glyph — only shown in minimalistic mode. */
+#PausedLabel
+{
+	visibility: collapse;
+}
+
+/* Default-mode pause text label — mirrors the engine's #PausedLabel styling. */
+#QLPausedText
+{
+	text-transform: uppercase;
+	font-family: block;
+	font-size: 28px;
+	line-height: 32px;
+	color: offWhite;
+	max-width: 300px;
+}
+
+.gameIsPaused #QLPausedText
+{
+	max-width: 600px;
+}
+
+.minimal_pause_active CitadelPaused
 {
 	width: 80px;
 	height: 80px;
@@ -10,33 +43,42 @@ CitadelPaused
 	z-index: -1;
 }
 
-.connectedToLaneTraining #PausedGameContainer
+/* Center the glyph box within the compact 80x80 frame (base is top-aligned, 120px tall). */
+.minimal_pause_active #PausedContainer
 {
-	visibility: collapse;
+	height: 80px;
+	vertical-align: middle;
 }
 
-#PausedCountdownLabel
+.minimal_pause_active #PausedCountdownLabel
 {
 	margin-right: 0px;
 	font-size: 100px;
 	margin-bottom: 0px;
 }
 
-.gShopOpen #PausedContainer
+/* Minimalistic mode hides the verbose default labels, leaving only the glyph. */
+.minimal_pause_active #QLPausedText,
+.minimal_pause_active #PauserLabel,
+.minimal_pause_active #UnpauseButtonLabel
 {
 	visibility: collapse;
 }
 
-#PausedLabel
+/* Show the compact glyph: crisp white block font (as in 3.1.5). */
+.minimal_pause_active #PausedLabel
 {
+	visibility: visible;
+	font-size: 58px;
+	margin-top: 4px;
 	transition-property: none;
 	transition-duration: 0s;
-	font-size: 58px;
 }
 
-.PausedTextMoved
+/* During the unpause countdown the engine adds .PausedTextMoved to #PausedLabel;
+   collapse it so the countdown number shows on its own. */
+.minimal_pause_active #PausedLabel.PausedTextMoved
 {
 	transform: none;
 	visibility: collapse;
 }
-

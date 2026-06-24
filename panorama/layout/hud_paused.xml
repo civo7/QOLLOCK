@@ -1,4 +1,4 @@
-<!-- xml reconstructed by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io -->
+<!-- xml reconstructed by Source 2 Viewer - https://valveresourceformat.github.io -->
 <root>
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
@@ -8,7 +8,15 @@
 		<Panel id="PausedGameContainer" class="Hidden">
 			<Panel id="PausedContainer" hittest="false" hittestchildren="false">
 				<Panel class="PausedTextContainer LeftRightFlow align_center">
+					<!-- QOLLOCK: compact pause glyph (minimalistic mode). Kept in #PausedLabel so the
+					     engine's .PausedTextMoved class auto-hides it when the unpause countdown begins. -->
 					<Label id="PausedLabel" class="PausedText" text="II" />
+					<!-- Default-mode pause text. Uses the static loc token (resolves on any
+					     label) since {s:paused_text} is a panel-scoped dialog var bound only to
+					     #PausedLabel and would render blank here. -->
+					<Label id="QLPausedText" class="PausedText" text="#Citadel_Hud_Paused" />
+					<Label id="PauserLabel" class="PausedText" text="#Citadel_Hud_Pauser" />
+					<Label id="UnpauseButtonLabel" class="PausedText" text="#Citadel_PauseMsg_UnpauseButton" html="true" />
 				</Panel>
 			</Panel>
 			<Label id="PausedCountdownLabel" hittest="false" hittestchildren="false" />
