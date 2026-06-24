@@ -43,6 +43,13 @@
 	z-index: -1;
 }
 
+/* Center the glyph box within the compact 80x80 frame (base is top-aligned, 120px tall). */
+.minimal_pause_active #PausedContainer
+{
+	height: 80px;
+	vertical-align: middle;
+}
+
 .minimal_pause_active #PausedCountdownLabel
 {
 	margin-right: 0px;

@@ -11,8 +11,10 @@
 					<!-- QOLLOCK: compact pause glyph (minimalistic mode). Kept in #PausedLabel so the
 					     engine's .PausedTextMoved class auto-hides it when the unpause countdown begins. -->
 					<Label id="PausedLabel" class="PausedText" text="II" />
-					<!-- Default-mode pause text (engine fills {s:paused_text}). -->
-					<Label id="QLPausedText" class="PausedText" text="{s:paused_text}" />
+					<!-- Default-mode pause text. Uses the static loc token (resolves on any
+					     label) since {s:paused_text} is a panel-scoped dialog var bound only to
+					     #PausedLabel and would render blank here. -->
+					<Label id="QLPausedText" class="PausedText" text="#Citadel_Hud_Paused" />
 					<Label id="PauserLabel" class="PausedText" text="#Citadel_Hud_Pauser" />
 					<Label id="UnpauseButtonLabel" class="PausedText" text="#Citadel_PauseMsg_UnpauseButton" html="true" />
 				</Panel>
