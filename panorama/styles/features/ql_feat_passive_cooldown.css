@@ -1,0 +1,44 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Passive Cooldown (basic + advanced) */
+
+.passive_cooldown_basic_active #hud_passive_items
+{
+    height: 60px;
+    width: 600px;
+    margin: 20px;
+    margin-top: -6%;
+    visibility: visible;
+    horizontal-align: center;
+    vertical-align: top;
+    ui-scale: 110%;
+    overflow: noclip;
+}
+
+.passive_cooldown_basic_active #hud_passive_items .ability_container
+{
+    overflow: noclip;
+}
+
+.passive_cooldown_basic_active #hud_passive_items .button_container
+{
+    height: 100%;
+    overflow: noclip;
+}
+
+.passive_cooldown_basic_active #hud_passive_items #cooldown_mask
+{
+    height: 100%;
+    margin-top: 0px;
+    overflow: noclip;
+}
+
+.passive_cooldown_basic_active #AbilitiesContainer.gShopOpen #hud_passive_items,
+.passive_cooldown_basic_active #gameplay_hud.gShopOpen #hud_passive_items
+{
+    visibility: collapse;
+}
+
+.passive_cooldown_advanced_active #hud_passive_items
+{
+    visibility: collapse;
+}

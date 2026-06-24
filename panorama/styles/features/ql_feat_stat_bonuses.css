@@ -1,0 +1,43 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Stat Bonuses Overlay */
+
+#QOLStatBonusesOverlay
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: bottom;
+    margin-bottom: 70px;
+    margin-left: -520px;
+    flow-children: down;
+    padding: 8px 12px;
+    background-color: #0f141ccc;
+    border: 1px solid #2d3f54bb;
+    border-radius: 6px;
+}
+
+.stat_bonuses_overlay_active #QOLStatBonusesOverlay
+{
+    visibility: visible;
+}
+
+#QOLStatBonusesTitle
+{
+    font-size: 14px;
+    font-weight: semi-bold;
+    color: offWhite;
+    text-overflow: shrink;
+}
+
+#QOLStatBonusesOverlay .QOLStatBonusesLine
+{
+    font-size: 13px;
+    font-weight: bold;
+    color: #8ff19b;
+    text-overflow: shrink;
+}
+
+#QOLStatBonusesOverlay .QOLStatBonusesLine.is_zero
+{
+    color: #c7ced4;
+    opacity: 0.7;
+}

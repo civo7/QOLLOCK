@@ -1,0 +1,12 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Ability Icons (simplify + hide cosmetic) */
+
+.simplify_ability_icons_active #CosmeticAbilitiesMenu
+{
+    visibility: collapse;
+}
+
+.hide_cosmetic_ability_active #CosmeticAbilitiesMenu
+{
+    visibility: collapse;
+}

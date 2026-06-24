@@ -1,0 +1,85 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Zip Boost Overlay */
+
+#QOLZipBoostOverlay
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: bottom;
+    margin-bottom: 20px;
+    margin-left: -520px;
+    flow-children: right;
+    padding: 8px 12px;
+    background-color: none;
+    border: 0px solid #00000000;
+    animation-name: none;
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+}
+
+.zip_boost_overlay_active #QOLZipBoostOverlay
+{
+    visibility: visible;
+}
+
+#QOLZipBoostIcon
+{
+    width: 24px;
+    height: 24px;
+    vertical-align: center;
+    margin-right: 8px;
+    background-image: url("s2r://panorama/images/upgrades/mods_utility/zipline_mastery_psd.vtex");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    wash-color: offWhite;
+}
+
+#QOLZipBoostTextContainer
+{
+    flow-children: down;
+    vertical-align: center;
+    min-width: 70px;
+}
+
+#QOLZipBoostLabel
+{
+    font-size: 14px;
+    font-weight: semi-bold;
+    color: offWhite;
+    text-overflow: shrink;
+}
+
+#QOLZipBoostState
+{
+    font-size: 12px;
+    font-weight: bold;
+    color: #8ff19b;
+    text-overflow: shrink;
+}
+
+#QOLZipBoostOverlay.on_cooldown #QOLZipBoostState
+{
+    color: #fc6a6a;
+}
+
+#QOLZipBoostOverlay.in_use #QOLZipBoostState
+{
+    color: #a3d8ff;
+}
+
+#QOLZipBoostOverlay.ready_flash
+{
+    animation-name: zip_boost_ready_flash;
+    animation-duration: 2s;
+    animation-iteration-count: 1;
+}
+
+#QOLZipBoostOverlay.in_use
+{
+    border-radius: 6px;
+    background-color: #163a6d66;
+    animation-name: zip_boost_active_pulse;
+    animation-duration: 1.2s;
+    animation-iteration-count: infinite;
+}

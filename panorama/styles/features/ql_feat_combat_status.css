@@ -1,0 +1,84 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Combat Status Overlay */
+
+#QOLCombatStatusOverlay
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: bottom;
+    margin-bottom: 165px;
+    margin-left: 0px;
+    flow-children: down;
+    padding: 5px 12px 4px 12px;
+    background-color: #0f141ccc;
+    border: 1px solid #2d3f54bb;
+    border-radius: 6px;
+    box-shadow: 0px 0px 10px #00000088;
+}
+
+#QOLCombatStatusState
+{
+    horizontal-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: #d9e0e7;
+}
+
+#QOLCombatStatusTimer
+{
+    horizontal-align: center;
+    margin-top: -2px;
+    font-size: 18px;
+    font-weight: semi-bold;
+    color: #8ff19b;
+}
+
+#QOLCombatStatusOverlay.phase_combat
+{
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( #2b1212dd ), to( #170f0fdd ) );
+    border: 1px solid #7f3d3dbb;
+}
+
+#QOLCombatStatusOverlay.phase_combat #QOLCombatStatusState
+{
+    color: #ffb4b4;
+}
+
+#QOLCombatStatusOverlay.phase_combat #QOLCombatStatusTimer
+{
+    color: #ff7f7f;
+}
+
+#QOLCombatStatusOverlay.phase_recover
+{
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( #16251edd ), to( #101710dd ) );
+    border: 1px solid #3f6b57bb;
+}
+
+#QOLCombatStatusOverlay.phase_recover #QOLCombatStatusState
+{
+    color: #b8d9c8;
+}
+
+#QOLCombatStatusOverlay.phase_recover #QOLCombatStatusTimer
+{
+    color: #8ff1b7;
+}
+
+#QOLCombatStatusOverlay.phase_idle
+{
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( #1a1f27dd ), to( #10141add ) );
+    border: 1px solid #46586ebb;
+}
+
+#QOLCombatStatusOverlay.phase_idle #QOLCombatStatusState
+{
+    color: #d1dae4;
+}
+
+#QOLCombatStatusOverlay.phase_idle #QOLCombatStatusTimer
+{
+    color: #b4c0cc;
+}

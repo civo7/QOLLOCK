@@ -1,0 +1,245 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK features: Minimap (minimalist minimap, minimap timers, tunnel overlay) */
+
+/* ── Minimap: ModEnabled base ── */
+
+#minimap_persp.ModEnabled,
+#minimap_container.ModEnabled,
+#minimap_frame.ModEnabled
+{
+    horizontal-align: center !important;
+    vertical-align: center !important;
+}
+
+/* ── Minimalist Minimap ── */
+
+.minimalist_minimap_active #hud_minimap
+{
+    background-color: rgba(0, 0, 0, 0) !important;
+}
+
+.minimalist_minimap_active #map_render
+{
+    opacity: .9;
+}
+
+.minimalist_minimap_active .client_cone_fov.active
+{
+    opacity: 0;
+}
+
+.minimalist_minimap_active #minimap_blur
+{
+    width: 0%;
+    height: 0%;
+    opacity: 0;
+    visibility: collapse;
+}
+
+.minimalist_minimap_active #minimap_frame,
+.minimalist_minimap_active #minimap_frame_lanes
+{
+    visibility: collapse;
+}
+
+.minimalist_minimap_active #HudMinimapContainer
+{
+    background-color: rgba(0, 0, 0, 0) !important;
+    world-blur: none !important;
+}
+
+.minimalist_minimap_active #map_render
+{
+    opacity: 1 !important;
+}
+
+.minimalist_minimap_active .client_cone_fov
+{
+    opacity: 0 !important;
+    visibility: collapse;
+}
+
+.minimalist_minimap_active .map_button.shop_tunnel
+{
+    background-image: url("s2r://panorama/images/qollock/minimap_midtown_mid_tunnels_qollock_psd.vtex");
+}
+
+/* ── Minimap base layout ── */
+
+#minimap_persp
+{
+    width: 400px;
+    height: 400px;
+    transform: none;
+    transform-origin: 100% 100%;
+    transition-property: opacity, margin, pre-transform-scale2d;
+}
+
+#minimap_persp.gDetailView,
+#minimap_persp.gScoreboardOpen
+{
+    transform-origin: 50% 50%;
+}
+
+#minimap_container
+{
+    width: 400px;
+    height: 400px;
+    margin-right: 15px;
+}
+
+#HudMinimapContainer
+{
+    width: 100%;
+    height: 100%;
+}
+
+#minimap_frame
+{
+    width: 400px;
+    height: 400px;
+}
+
+/* ── Minimap Timers ── */
+
+#QOLMinimapTimersRoot
+{
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: bottom;
+    ignore-parent-flow: true;
+    margin-top: 0px;
+    margin-bottom: 8px;
+    width: fit-children;
+    height: fit-children;
+    z-index: 9999;
+    transition-property: width, height, margin, margin-left, margin-top, margin-bottom, pre-transform-scale2d;
+    transition-duration: 0.12s;
+    transition-timing-function: ease-out;
+}
+
+#minimap_overlay_root
+{
+    width: 100%;
+    height: 100%;
+    ignore-parent-flow: true;
+    horizontal-align: center;
+    vertical-align: center;
+    z-index: 9998;
+    hittest: false;
+}
+
+#minimap_markers
+{
+    width: 100%;
+    height: 100%;
+    ignore-parent-flow: true;
+    hittest: false;
+}
+
+#tunnel_overlay
+{
+    width: 100%;
+    height: 100%;
+    ignore-parent-flow: true;
+    horizontal-align: center;
+    vertical-align: center;
+    visibility: collapse;
+    opacity: 0.75;
+    z-index: 1;
+    hittest: false;
+}
+
+#tunnel_overlay.tunnel_locked_on
+{
+    visibility: visible;
+}
+
+.localPlayerTeam2 #tunnel_overlay
+{
+    transform: scaleY(-1) scaleX(-1);
+}
+
+.minimap_marker
+{
+    width: 2px;
+    height: 2px;
+    transform: translateX(-1px) translateY(-1px);
+    background-color: rgba(255, 213, 74, 0.75);
+    box-shadow: fill rgba(42, 33, 0, 0.45) 0px 0px 0px 1px;
+}
+
+.QOLMinimapTimer
+{
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: center;
+    width: 84px;
+    height: 28px;
+    margin: 0px 6px;
+    padding: 0px 8px;
+    background-color: rgba(18, 18, 18, 0.3);
+    border-radius: 5px;
+    transition-property: width, height, margin, margin-left, margin-top, margin-bottom, padding, border-radius;
+    transition-duration: 0.12s;
+    transition-timing-function: ease-out;
+}
+
+#QOLMinimapBuffIcon,
+#QOLMinimapRejuvIcon
+{
+    width: 16px;
+    height: 16px;
+    vertical-align: center;
+    opacity: 0.55;
+    wash-color: #c7c3bd;
+}
+
+.QOLMinimapTimerLabel
+{
+    width: fill-parent-flow(1.0);
+    height: fit-children;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 14px;
+    font-weight: semi-bold;
+    color: offWhite&90;
+    font-family: block;
+    text-overflow: shrink;
+}
+
+.QOLMinimapTimer.yellow
+{
+    background-color: #FFFF0030;
+}
+
+.QOLMinimapTimer.red
+{
+    background-color: #FF000030;
+}
+
+.minimap_buff_timer_disabled #QOLMinimapBuffTimer
+{
+    visibility: collapse;
+}
+
+.minimap_rejuv_timer_disabled #QOLMinimapRejuvTimer
+{
+    visibility: collapse;
+}
+
+.connectedToHideout #QOLMinimapTimersRoot,
+.gamemode_streetbrawl #QOLMinimapTimersRoot,
+#minimap_persp.gDetailView #QOLMinimapTimersRoot,
+#minimap_persp.gScoreboardOpen #QOLMinimapTimersRoot,
+#minimap_persp.gAbilityUpgradeMenu #QOLMinimapTimersRoot
+{
+    visibility: collapse;
+}
+
+.connectedToHideout #minimap_overlay_root,
+.gamemode_streetbrawl #minimap_overlay_root
+{
+    visibility: collapse;
+}

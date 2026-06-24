@@ -1,0 +1,205 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Aspect Ratio Support (4:3, 16:10, hud_shift) */
+
+/* ── HUD Shift ── */
+
+.hud_shift_active .ModsContainer
+{
+    margin-left: 40px !important;
+}
+
+.hud_shift_active .player_selected #hudPlayerStats
+{
+    margin-left: 40px !important;
+}
+
+/* ── 4:3 Aspect Ratio ── */
+
+.support_4_3_active #Shop
+{
+    width: 1350px !important;
+    horizontal-align: center !important;
+}
+
+.support_4_3_active #NavPanel
+{
+    margin-right: 0px !important;
+    margin-left: 40px !important;
+    width: 500px !important;
+    horizontal-align: left !important;
+}
+
+.support_4_3_active #ShopNav
+{
+    width: 100% !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+}
+
+.support_4_3_active .ShopNavigationTab
+{
+    width: 75px !important;
+}
+
+.support_4_3_active #health_and_abilities_container
+{
+    margin-left: 150px !important;
+    margin-bottom: 0px !important;
+    margin-right: 0px !important;
+    horizontal-align: left !important;
+}
+
+.support_4_3_active .action_binding,
+.support_4_3_active .context_action
+{
+    height: unset !important;
+    text-overflow: unset !important;
+}
+
+.support_4_3_active .gShopOpen #respawn_timer
+{
+    margin-left: 192px !important;
+    margin-top: 22px !important;
+}
+
+.support_4_3_active #status_bars
+{
+    width: 550px !important;
+}
+
+.support_4_3_active #hud_modifiers
+{
+    width: 850px !important;
+}
+
+.support_4_3_active #StatsAndModsContainer.gShopOpen #LowerLeft
+{
+    transform: translateX(10px) translateY(-10px) !important;
+}
+
+.support_4_3_active #BarGraphContainer
+{
+    width: 60px !important;
+    border-radius: 4px !important;
+}
+
+.support_4_3_active .gShopOpen #BarGraphContainer
+{
+    visibility: visible;
+}
+
+.support_4_3_active #NavPanel
+{
+    margin-right: -345px !important;
+}
+
+.support_4_3_active #HeroScenePanel
+{
+    height: 70% !important;
+    margin-left: -250px !important;
+    margin-bottom: 200px !important;
+}
+
+.support_4_3_active #AbilityPanelsContainer
+{
+    horizontal-align: right !important;
+    vertical-align: middle !important;
+    margin-right: 35px !important;
+    visibility: collapse;
+}
+
+.support_4_3_active .AspectRatio16x10 #AbilityPanelsContainer
+{
+    margin-right: 15px !important;
+}
+
+.support_4_3_active .shopStateAbilities #AbilityPanelsContainer
+{
+    visibility: visible;
+}
+
+.support_4_3_active .commandPanel
+{
+    padding-top: 10px !important;
+    vertical-align: middle !important;
+}
+
+.support_4_3_active CitadelHeroBuildsPage #BackButton,
+.support_4_3_active CitadelHeroBuildsPage .APHeader,
+.support_4_3_active CitadelHeroBuildsPage .ModsPurchasedContainer,
+.support_4_3_active CitadelHeroBuildsPage .HeroStatsContainer,
+.support_4_3_active CitadelHeroBuildsPage .InnerAbilitiesRow,
+.support_4_3_active CitadelHeroBuildsPage #RecentPurchasesPanel
+{
+    visibility: collapse;
+}
+
+.support_4_3_active #BackButton
+{
+    padding-left: 20px !important;
+    vertical-align: top !important;
+}
+
+.support_4_3_active #BackButton .FooterCommand
+{
+    vertical-align: bottom !important;
+}
+
+/* ── 16:10 Aspect Ratio ── */
+
+.support_16_10_active .ModsContainer
+{
+    horizontal-align: left;
+    vertical-align: bottom;
+    height: 102px;
+    width: 380px;
+    margin-bottom: 16px;
+    margin-left: 16px;
+    flow-children: right;
+    visibility: visible;
+    ui-scale: 90%;
+}
+
+.support_16_10_active #BarGraphContainer
+{
+    height: 100%;
+    width: 70px;
+    margin: 2px;
+    visibility: visible;
+}
+
+.support_16_10_active .AspectRatio16x10 #health_and_abilities_container
+{
+    horizontal-align: center;
+    margin-right: 1030px;
+    margin-left: 0px;
+    transform: translateX(6%) translateY(7%);
+}
+
+.support_16_10_active #health_and_abilities_container
+{
+    ui-scale: 104%;
+}
+
+.support_16_10_active #hudPlayerStats
+{
+    vertical-align: bottom;
+    horizontal-align: left;
+    flow-children: down;
+    margin-bottom: 270px;
+    width: 280px;
+    transform: translateY(7%) translateX(-1.1%);
+    visibility: visible;
+}
+
+.support_16_10_active #APContainer .unlock_availabl:not(.ability_radial_keybind_found) #UnlockBinding_Scoreboard.APUnlockBinding,
+.support_16_10_active #APContainer .upgrade_reminder:not(.ability_radial_keybind_found) #UnlockBinding_Scoreboard.APUnlockBinding
+{
+    visibility: collapse;
+}
+
+.support_16_10_active .unlock_availabl:not(.ability_radial_keybind_found) #APContainer #UnlockBinding_Scoreboard.APUnlockBinding,
+.support_16_10_active .upgrade_reminder:not(.ability_radial_keybind_found) #APContainer #UnlockBinding_Scoreboard.APUnlockBinding
+{
+    visibility: collapse;
+}

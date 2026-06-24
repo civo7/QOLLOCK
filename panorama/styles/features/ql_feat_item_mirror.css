@@ -1,0 +1,237 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Item Mirror */
+
+#QOLItemMirrorRoot
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: center;
+    flow-children: down;
+    overflow: noclip;
+}
+
+#QOLItemMirrorRow
+{
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: center;
+    width: fit-children;
+    height: fit-children;
+    opacity: 0.5;
+    overflow: noclip;
+}
+
+#QOLItemMirrorRoot #QOLItemMirrorIcon,
+#QOLItemMirrorRoot .QOLItemMirrorIcon
+{
+    width: 45px;
+    height: 45px;
+    wash-color: #FFFFFF00;
+    box-shadow: none;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: noclip;
+}
+
+#QOLItemMirrorRoot #modIconContainer.mod_icon_single_container
+{
+    background-color: none;
+    opacity: 1.0;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: noclip;
+    opacity-mask: none;
+    border: 0px solid transparent;
+    box-shadow: none;
+}
+
+#QOLItemMirrorRoot .QOLItemMirrorViewport
+{
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 50%;
+    overflow: clip clip;
+}
+
+#QOLItemMirrorRoot #modIconContainer .mod_icon_background_container
+{
+    background-color: none;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: clip clip;
+    visibility: collapse;
+    opacity: 0;
+    width: 0px;
+    height: 0px;
+}
+
+#QOLItemMirrorRoot #modIconContainer
+{
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: noclip;
+}
+
+#QOLItemMirrorRoot #modIconContainer .mod_icon
+{
+    width: 100%;
+    height: 100%;
+    visibility: visible;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: clip clip;
+    background-size: 100% 100%;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+}
+
+#QOLItemMirrorRoot #modIconContainer #ModIconImage
+{
+    width: 100%;
+    height: 100%;
+    visibility: visible;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    border-radius: 0px;
+    overflow: clip clip;
+}
+
+#QOLItemMirrorRoot .QOLItemMirrorImage
+{
+    opacity: 1;
+}
+
+#QOLItemMirrorRoot #modIconContainer #CooldownMask
+{
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    margin: 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    background-color: offBlack&ee;
+    visibility: collapse;
+    transform: scaleX(-1);
+    border-radius: 0px;
+    clip: radial(50% 50%, 0deg, 0deg);
+    opacity-mask: none;
+    overflow: clip clip;
+    z-index: 10;
+}
+
+#QOLItemMirrorRoot #modIconContainer.VerticalCooldown #CooldownMask
+{
+    transform: scaleX(1);
+    vertical-align: bottom;
+}
+
+#QOLItemMirrorRoot #modIconContainer.isWeapon.VerticalCooldown #CooldownMask
+{
+    background-color: courageBrightColor&55;
+}
+
+#QOLItemMirrorRoot #modIconContainer.isArmor.VerticalCooldown #CooldownMask
+{
+    background-color: fortitudeBrightColor&55;
+}
+
+#QOLItemMirrorRoot #modIconContainer.isTech.VerticalCooldown #CooldownMask
+{
+    background-color: spiritBrightColor&55;
+}
+
+#QOLItemMirrorRoot #modIconContainer.OnCooldown #CooldownMask
+{
+    visibility: visible;
+}
+
+#QOLItemMirrorRoot #TierContainer,
+#QOLItemMirrorRoot #ActiveTagContainer,
+#QOLItemMirrorRoot #embedded_active_tag,
+#QOLItemMirrorRoot #mod_tier_label
+{
+    visibility: collapse;
+    opacity: 0;
+}
+
+#QOLItemMirrorRoot #ActiveTagContainer
+{
+    width: 0px;
+    height: 0px;
+}
+
+#QOLItemMirrorCooldownText,
+#QOLItemMirrorRoot .QOLItemMirrorCooldownText
+{
+    ignore-parent-flow: true;
+    width: fit-children;
+    height: fit-children;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    color: #f6fbffff;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 0.2px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(#00000000), to(#00000030));
+    visibility: collapse;
+    z-index: 20;
+}
+
+#QOLItemMirrorRoot .QOLItemMirrorReadyOverlay
+{
+    ignore-parent-flow: true;
+    background-color: #cfc3b800;
+    box-shadow: fill #cfc3b800 0px 0px 0px 0px;
+    border: 0px solid #cfc3b800;
+    border-radius: 50%;
+    overflow: clip clip;
+    clip: radial(50% 50%, 0deg, 360deg);
+    opacity: 0;
+    brightness: 1.0;
+    visibility: visible;
+    z-index: 30;
+    transition-property: opacity, background-color, box-shadow, border, brightness;
+    transition-duration: 0.20s, 0.24s, 0.24s, 0.24s, 0.20s;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#QOLItemMirrorRoot .QOLItemMirrorReadyOverlay.ready_flash
+{
+    opacity: 1;
+    brightness: 1.05;
+    background-color: #cfc3b820;
+    box-shadow: fill #cfc3b866 0px 0px 6px 1px;
+    border: 1px solid #cfc3b855;
+}
+
+#QOLItemMirrorRoot .QOLItemMirrorModContainer.just_ready
+{
+    animation-name: qollock_item_mirror_ready_flash;
+    animation-duration: 0.34s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1;
+}

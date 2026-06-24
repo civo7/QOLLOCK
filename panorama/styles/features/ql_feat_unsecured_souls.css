@@ -1,0 +1,134 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Unsecured Souls + Better Unsecured HUD */
+
+#QOLUnsecuredSoulsOverlay
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: bottom;
+    margin-bottom: 110px;
+    margin-left: -520px;
+    flow-children: right;
+    padding: 0px;
+    background-color: none;
+    border: 0px;
+    border-radius: 0px;
+    box-shadow: none;
+}
+
+.unsecured_souls_overlay_active #QOLUnsecuredSoulsOverlay
+{
+    visibility: visible;
+}
+
+#QOLUnsecuredSoulsIcon
+{
+    visibility: collapse;
+    width: 22px;
+    height: 22px;
+    vertical-align: center;
+    margin-right: 8px;
+    background-image: url("s2r://panorama/images/hud/icons/icon_unsecured_png.vtex");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    wash-color: #f2e2d6;
+    opacity: 0.95;
+}
+
+#QOLUnsecuredSoulsTextContainer
+{
+    flow-children: down;
+    vertical-align: center;
+}
+
+#QOLUnsecuredSoulsLabel
+{
+    visibility: collapse;
+    font-size: 14px;
+    font-weight: semi-bold;
+    color: offWhite;
+    text-overflow: shrink;
+}
+
+#QOLUnsecuredSoulsState
+{
+    font-size: 16px;
+    font-weight: bold;
+    color: #9ad0ff;
+    text-overflow: shrink;
+}
+
+#QOLUnsecuredSoulsOverlay.is_safe #QOLUnsecuredSoulsState
+{
+    color: #8ff19b;
+}
+
+#QOLUnsecuredSoulsOverlay.is_syncing #QOLUnsecuredSoulsState
+{
+    color: #c7ced4;
+}
+
+#QOLUnsecuredSoulsOverlay.danger_1 #QOLUnsecuredSoulsState
+{
+    color: #cbd5e1;
+}
+
+#QOLUnsecuredSoulsOverlay.danger_2 #QOLUnsecuredSoulsState
+{
+    color: #fbbf24;
+}
+
+#QOLUnsecuredSoulsOverlay.danger_3 #QOLUnsecuredSoulsState,
+#QOLUnsecuredSoulsOverlay.danger_4 #QOLUnsecuredSoulsState
+{
+    color: #f87171;
+}
+
+/* ── Better Unsecured Overlay ── */
+
+#QOLBetterUnsecuredOverlay
+{
+    visibility: collapse;
+    horizontal-align: left;
+    vertical-align: top;
+    flow-children: right;
+    padding: 0px;
+    background-color: none;
+    border: 0px;
+    box-shadow: none;
+}
+
+#QOLBetterUnsecuredMirrorIcon
+{
+    visibility: collapse;
+    width: 18px;
+    height: 18px;
+    vertical-align: center;
+    margin-right: 4px;
+    background-image: url("s2r://panorama/images/hud/icons/icon_unsecured_png.vtex");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    wash-color: #e83e38;
+    opacity: 0.95;
+}
+
+#QOLBetterUnsecuredMirrorLabel
+{
+    color: #e83e38;
+    font-size: 14px;
+    font-weight: semi-bold;
+    text-align: right;
+}
+
+#QOLBetterUnsecuredMirrorText
+{
+    visibility: collapse;
+    font-size: 12px;
+    font-weight: semi-bold;
+    color: #e83e38;
+    text-transform: uppercase;
+    vertical-align: center;
+    margin-left: 4px;
+}
