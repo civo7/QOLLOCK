@@ -3,7 +3,7 @@
 (function() {
     'use strict';
         var _featureId = "ql_feat_ammo";
-    var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel","normalizeAmmoClipAngle","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
@@ -11,6 +11,7 @@
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var RAI = _deps.readAmmoTextColorIndex;
+    var NAC = _deps.normalizeAmmoClipAngle;
     // ── Gate ──
     function gate(cfg) {
         if (!cfg) return false;
@@ -22,8 +23,10 @@
         if (Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
         if (Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
         if (Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
+        if (NAC(cfg.AMMO_CLIP_ANGLE) !== 0) return true;
         if (RAI(cfg) !== 0) return true;
-        return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
+        return !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0) ||
+            !!(State.ammoClipAngleStyleSig && String(State.ammoClipAngleStyleSig).length > 0);
     }
 
     // ── Apply scaled styles + position to ammo panel children (extracted from update)
@@ -69,9 +72,35 @@
         Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
     }
 
+    // ── Magazine visualiser rotation (#clip_status — circular clip indicator) ──
+    function getAmmoClipStatus(root) {
+        var panel = GetCachedPanel("ammoClipStatus");
+        if (!panel) {
+            panel = root.FindChildTraverse("clip_status");
+            SetCachedPanel("ammoClipStatus", panel);
+        }
+        return panel;
+    }
+
+    function ApplyAmmoClipAngle(root, cfg) {
+        var angle = NAC(cfg && cfg.AMMO_CLIP_ANGLE);
+        var angleSig = String(angle);
+        var clipStatus = getAmmoClipStatus(root);
+        if (clipStatus) {
+            if (State.ammoClipAngleStyleSig !== angleSig) {
+                Utils.SetStyleSafe(clipStatus, "transform", "rotateZ(" + angleSig + "deg)");
+                State.ammoClipAngleStyleSig = angleSig;
+            }
+        } else {
+            State.ammoClipAngleStyleSig = "";
+        }
+    }
+
     // ── Update ──
     function update(root, cfg) {
         if (!State._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); State._debug_ammo = true; }
+        // Magazine rotation is independent of the ammo-text scale/position/color path.
+        ApplyAmmoClipAngle(root, cfg);
         if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&
             Number(cfg.ENABLE_HIDE_MAGAZINE) !== 1 &&
             Number(cfg.ENABLE_HIDE_AMMO_ALL) !== 1 &&
@@ -124,12 +153,13 @@
     QOL.register("ammo", {
         configKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL",
                      "AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE",
-                     "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET"],
+                     "AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "AMMO_CLIP_ANGLE"],
         bucket: 4, phase: -1,
         requiresRoot: true,
         gate: gate,
         update: function(root, cfg) { update(root, cfg); },
-        stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig"]
+        stateKeys: ["cachedPanels.ammoPanel", "ammoPanelStyleSig",
+                    "cachedPanels.ammoClipStatus", "ammoClipAngleStyleSig"]
     });
 
     // ── Self-test ──

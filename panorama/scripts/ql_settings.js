@@ -151,6 +151,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_HIDE_TROOPER_DAMAGE: "ninjabladejr",
     ENABLE_DAMAGE_FOUNTAIN: "ArkanoidVFX",
     ENABLE_AMMO_STATUS: "mikoboy",
+    AMMO_CLIP_ANGLE: "Predi",
     ENABLE_RED_DIAMOND: "Hanturaya",
     ENABLE_OBJ_MAP: "bonclide",
     ENABLE_REJUV_HUD: "BreadRollius",
@@ -330,6 +331,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "KEYBOARD_OVERLAY_WASH_COLOR": "Choose a preset color wash for the keyboard overlay.",
     "STAMINA_CHARGE_COLOR": "Choose a preset border color for stamina charge indicators.",
     "STAMINA_CHARGE_ANGLE": "Rotate the stamina charge indicator.",
+    "AMMO_CLIP_ANGLE": "Rotate the ammo magazine visualiser.",
     "AMMO_TEXT_COLOR": "Choose a preset text color for the ammo display.",
     "CHAT_SCALE": "Adjust size of the in-game chat.",
     "CHAT_X_OFFSET": "Adjust horizontal position of the in-game chat.",
@@ -680,6 +682,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     KEYBOARD_OVERLAY_WASH_COLOR: "low",
     STAMINA_CHARGE_COLOR: "low",
     STAMINA_CHARGE_ANGLE: "low",
+    AMMO_CLIP_ANGLE: "low",
     AMMO_TEXT_COLOR: "low",
     CHAT_SCALE: "low",
     CHAT_X_OFFSET: "low",
@@ -20909,6 +20912,7 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Total Size", "AMMO_TOTAL_SCALE", "size_100_300");
         CreateSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n200_200");
         CreateSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n200_200");
+        CreateSliderRow(list, "Rotate Magazine", "AMMO_CLIP_ANGLE", "angle_0_360", "Rotate the ammo magazine visualiser.", true);
         CreateRow(list, "Color", "AMMO_TEXT_COLOR", "palette", null, null, null, QOL_COLOR_PALETTE_OPTIONS, "Choose a preset text color for the ammo display.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Reload Cooldown", "ENABLE_RELOAD_COOLDOWN", "Estimated Active Reload Timer", function(sectionParent) {
