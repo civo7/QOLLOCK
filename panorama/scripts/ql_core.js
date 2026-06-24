@@ -230,11 +230,26 @@ _TLog = function(label, detail) {
     // ==========================================================================
     // COMPASS — SPEED DISPLAY
     // ==========================================================================
-    // display = raw_speed * SCALE + OFFSET, clamped to MAX_STEP, quantized by QUANT.
+    // display = raw_speed * SCALE, quantized by QUANT.
     // Empirically tuned so a hero at normal speed shows ~5-7 on the readout.
+    //
+    // Speed is derived from the local player's minimap-panel position, which is
+    // low-resolution (pixel/percent quantized) and refreshes at the game's tick
+    // rate — slower and more irregularly than our sample loop. A naive
+    // single-step finite difference (dist/dt) over one 50ms window amplifies
+    // that quantization into tens-of-units spikes and aliases against the
+    // minimap's own update cadence (phantom 0s followed by double-jumps). We
+    // instead keep a short sliding window of position samples and fit velocity
+    // by least squares over the whole window: every sample contributes, so
+    // per-sample quantization noise averages out and intermittent updates are
+    // handled gracefully. A light EMA then smooths display flicker.
     const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
     const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
-    const COMPASS_SPEED_SAMPLE_MS = 50;     // speed sample window in milliseconds
+    const COMPASS_SPEED_SAMPLE_MS = 40;     // position sample cadence (ms); ~6-7 points per window
+    const COMPASS_SPEED_WINDOW_MS = 260;    // least-squares velocity window (ms)
+    const COMPASS_SPEED_MIN_SPAN_MS = 90;   // need at least this much spanned time before trusting a fit
+    const COMPASS_SPEED_EMA_TAU_SEC = 0.11; // light display smoothing on top of the LSQ velocity
+    const COMPASS_SPEED_DEADBAND_FRAC = 0.07; // hold steady when change is within this fraction of current
 
     // ==========================================================================
     // MINIMAP — ROTATION SMOOTHING
@@ -13171,13 +13186,29 @@ function GetUIRoot() {
             SetCachedPanel("compassDegree", degree);
         }
 
-        var speed = GetCachedPanel("compassSpeed");
-        if (!IsPanelValid(speed)) {
-            speed = compassRoot.FindChildTraverse("QOLCompassSpeed");
-            if (!speed && readout) {
-                speed = $.CreatePanel("Label", readout, "QOLCompassSpeed");
+        // Speed overlay — own root panel under the gameplay HUD so it isn't
+        // trapped inside the 200px-wide compassRoot. Mirrors the zipBoost
+        // pattern: independent panel, positioned by margins.
+        var speedRoot = GetCachedPanel("speedRoot");
+        if (!IsPanelValid(speedRoot)) {
+            speedRoot = root.FindChildTraverse("QOLSpeedRoot");
+            if (!speedRoot) {
+                var parent = GetGameplayHudPanel(root);
+                if (parent) {
+                    speedRoot = $.CreatePanel("Panel", parent, "QOLSpeedRoot");
+                }
             }
-            SetCachedPanel("compassSpeed", speed);
+            SetCachedPanel("speedRoot", speedRoot);
+        }
+        if (speedRoot) {
+            var speed = GetCachedPanel("compassSpeed");
+            if (!IsPanelValid(speed)) {
+                speed = speedRoot.FindChildTraverse("QOLSpeedLabel");
+                if (!speed) {
+                    speed = $.CreatePanel("Label", speedRoot, "QOLSpeedLabel");
+                }
+                SetCachedPanel("compassSpeed", speed);
+            }
         }
 
         var ticks = State.cachedPanels.compassTicks || [];
@@ -13704,13 +13735,16 @@ function GetUIRoot() {
     function ResetCompassRuntimeState() {
         State.compass.lastDegreeText = "";
         State.compass.layoutSig = "";
+        State.compass.speedOffsetSig = "";
         State.compass.nextSpeedSampleMs = 0;
+
         State.compass.lastSpeedValueText = "--";
         State.compass.lastPosX = null;
         State.compass.lastPosY = null;
         State.compass.lastPosTimeMs = 0;
         State.compass.speedSmoothed = null;
         State.compass.speedDisplay = null;
+        State.compass.speedSamples = null;
         State.compass.tickClassSigs = [];
         State.compass.tickXTexts = [];
     }
@@ -13725,6 +13759,8 @@ function GetUIRoot() {
             if (IsPanelValid(existing)) {
                 if (existing.style.visibility !== "collapse") existing.style.visibility = "collapse";
             }
+            var _srNoCtx = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_srNoCtx) && _srNoCtx.style.visibility !== "collapse") _srNoCtx.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
@@ -13736,17 +13772,21 @@ function GetUIRoot() {
 
         if (!showCompass && !showSpeed) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
+            var _sr0 = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_sr0) && _sr0.style.visibility !== "collapse") _sr0.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
         if (IsConnectedToHideout(root)) {
             if (compassRoot.style.visibility !== "collapse") compassRoot.style.visibility = "collapse";
+            var _sr1 = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_sr1) && _sr1.style.visibility !== "collapse") _sr1.style.visibility = "collapse";
             ResetCompassRuntimeState();
             return;
         }
 
-        if (compassRoot.style.visibility !== "visible") compassRoot.style.visibility = "visible";
+        if (compassRoot.style.visibility !== (showCompass ? "visible" : "collapse")) compassRoot.style.visibility = (showCompass ? "visible" : "collapse");
         
         var compassBox = GetCachedPanel("compassBox");
         if (compassBox) {
@@ -13829,6 +13869,10 @@ function GetUIRoot() {
             SetCachedPanel("compassSpeed", speedLabel);
         }
         if (degreeLabel) {
+            // Degrees take the LEFT half of the readout when speed shares the
+            // row, and the full centered width when the compass owns the row
+            // alone. (Both labels use ignore-parent-flow, so equal full widths
+            // would stack on top of each other — hence the 50% split.)
             degreeLabel.style.width = showSpeed ? "50%" : "100%";
             degreeLabel.style.textAlign = showSpeed ? "left" : "center";
             degreeLabel.style.horizontalAlign = "left";
@@ -13836,14 +13880,55 @@ function GetUIRoot() {
             degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
         }
         if (speedLabel) {
+            var speedRoot = GetCachedPanel("speedRoot");
             var speedVisibility = showSpeed ? "visible" : "collapse";
             if (speedLabel.style.visibility !== speedVisibility) speedLabel.style.visibility = speedVisibility;
+            // With the compass on, speed sits in the RIGHT half of the readout
+            // row (degrees take the left half) and a few px lower; when speed is
+            // alone it's full-width screen-centered. The speed root is sized to
+            // the box width and centered on it, so "right half" lines up with the
+            // box's right half — no boxWidth/2 margin shift needed.
             speedLabel.style.width = showCompass ? "50%" : "100%";
             speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = "right";
+            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
             speedLabel.style.verticalAlign = "center";
+            var speedOffsetX = Number(State.compass.speedOffsetX);
+            if (!isFinite(speedOffsetX)) speedOffsetX = 0;
+            if (speedOffsetX < -2000) speedOffsetX = -2000;
+            if (speedOffsetX > 2000) speedOffsetX = 2000;
+            var speedOffsetY = Number(State.compass.speedOffsetY);
+            if (!isFinite(speedOffsetY)) speedOffsetY = 0;
+            if (speedOffsetY < -2000) speedOffsetY = -2000;
+            if (speedOffsetY > 2000) speedOffsetY = 2000;
+            if (speedRoot) {
+                // Speed root is a standalone panel under the gameplay HUD
+                // (sibling of compassRoot), positioned by margins so it can
+                // roam the entire screen — no 200px parent clip box.
+                if (speedRoot.style.visibility !== speedVisibility) speedRoot.style.visibility = speedVisibility;
+                // Speed root overlaps the compass box horizontally (same width,
+                // centered on it), so its right half maps to the box's right
+                // half. Vertically it sits below the box, a touch under the
+                // degree readout (box bottom + readout margin 4 + 10px nudge) so
+                // the two numbers don't share a baseline. Compass off: screen-
+                // centered at the baseline, decoupled from the compass offset.
+                var speedRootWidth = (showCompass ? boxWidth : 200) + "px";
+                var speedBaseX = showCompass ? offsetX : 0;
+                var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 14) : compassBaselineY;
+                var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
+                var speedMarginTop  = Math.round(speedBaseY - speedOffsetY) + "px";
+                // Base anchor + width in the sig so the speed re-follows the
+                // compass when its offset/stretch changes (not just speed sliders).
+                var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" + (showCompass ? "1" : "0") + "|" + Math.round(speedBaseX) + "|" + Math.round(speedBaseY) + "|" + speedRootWidth;
+                if (State.compass.speedOffsetSig !== speedLayoutSig) {
+                    if (speedRoot.style.width !== speedRootWidth) speedRoot.style.width = speedRootWidth;
+                    if (speedRoot.style.marginLeft !== speedMarginLeft) speedRoot.style.marginLeft = speedMarginLeft;
+                    if (speedRoot.style.marginTop !== speedMarginTop) speedRoot.style.marginTop = speedMarginTop;
+                    State.compass.speedOffsetSig = speedLayoutSig;
+                }
+            }
             if (!showSpeed && speedLabel.text !== "") speedLabel.text = "";
         }
+
 
         var nowMs = Number(nowMsHint);
         if (!isFinite(nowMs) || nowMs <= 0) nowMs = Date.now ? Date.now() : (new Date()).getTime();
@@ -13882,27 +13967,58 @@ function GetUIRoot() {
                 }
                 var pos = ParsePositionXYPercent(positionText);
                 if (pos) {
-                    if (State.compass.lastPosX !== null && State.compass.lastPosY !== null && State.compass.lastPosTimeMs > 0) {
-                        var dtSec = (nowMs - State.compass.lastPosTimeMs) / 1000.0;
-                        if (dtSec > 0.01 && dtSec < 1.0) {
-                            var dx = pos.x - State.compass.lastPosX;
-                            var dy = pos.y - State.compass.lastPosY;
-                            var dist = Math.sqrt((dx * dx) + (dy * dy));
-                            var speedInstant = (dist / dtSec) * 100.0;
-                            if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                        if (State.compass.speedSmoothed === null || !isFinite(State.compass.speedSmoothed)) {
-                            State.compass.speedSmoothed = speedInstant;
-                        } else {
-                            var isDecelerating = speedInstant < State.compass.speedSmoothed;
-                            var tau = isDecelerating ? 0.25 : 0.02;
-                            var alpha = 1.0 - Math.exp(-dtSec / tau);
-                            if (Math.abs(speedInstant - State.compass.speedSmoothed) < State.compass.speedSmoothed * 0.10) {
-                                alpha *= 0.2;
-                            }
-                            if (speedInstant < 0.5) alpha = 1.0;
-                            State.compass.speedSmoothed = State.compass.speedSmoothed + (alpha * (speedInstant - State.compass.speedSmoothed));
+                    // Push (t, x, y) into a flat ring buffer and evict samples
+                    // older than the window. A long teleport/respawn jump is
+                    // rejected later by the < 10000 sanity clamp on the fitted
+                    // speed, so it never corrupts more than one stale window.
+                    var samples = State.compass.speedSamples;
+                    if (!samples) { samples = []; State.compass.speedSamples = samples; }
+                    samples.push(nowMs, pos.x, pos.y);
+                    var cutoff = nowMs - COMPASS_SPEED_WINDOW_MS;
+                    var drop = 0;
+                    while (drop + 3 < samples.length && samples[drop] < cutoff) drop += 3;
+                    if (drop > 0) samples.splice(0, drop);
+
+                    // Least-squares fit of x(t) and y(t) over the window. The
+                    // slope (vx, vy) in %/sec is the noise-rejecting velocity;
+                    // identical-position points from intermittent minimap
+                    // updates just pull the average toward the true rate.
+                    var n = samples.length / 3;
+                    if (n >= 2) {
+                        var t0 = samples[0];
+                        var sumT = 0, sumX = 0, sumY = 0, sumTT = 0, sumTX = 0, sumTY = 0;
+                        for (var si = 0; si < samples.length; si += 3) {
+                            var tt = (samples[si] - t0) / 1000.0; // seconds, window-relative
+                            var xx = samples[si + 1];
+                            var yy = samples[si + 2];
+                            sumT += tt; sumX += xx; sumY += yy;
+                            sumTT += tt * tt; sumTX += tt * xx; sumTY += tt * yy;
                         }
-                    }
+                        var spanSec = (samples[samples.length - 3] - t0) / 1000.0;
+                        var denom = (n * sumTT) - (sumT * sumT);
+                        if (spanSec >= (COMPASS_SPEED_MIN_SPAN_MS / 1000.0) && denom > 1e-9) {
+                            var vx = ((n * sumTX) - (sumT * sumX)) / denom; // %/sec
+                            var vy = ((n * sumTY) - (sumT * sumY)) / denom; // %/sec
+                            var speedInstant = Math.sqrt((vx * vx) + (vy * vy)) * 100.0;
+                            if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
+                                var dtSmoothSec = (State.compass.lastPosTimeMs > 0)
+                                    ? (nowMs - State.compass.lastPosTimeMs) / 1000.0
+                                    : (COMPASS_SPEED_SAMPLE_MS / 1000.0);
+                                if (!(dtSmoothSec > 0) || dtSmoothSec > 1.0) dtSmoothSec = COMPASS_SPEED_SAMPLE_MS / 1000.0;
+                                if (State.compass.speedSmoothed === null || !isFinite(State.compass.speedSmoothed)) {
+                                    State.compass.speedSmoothed = speedInstant;
+                                } else {
+                                    var alpha = 1.0 - Math.exp(-dtSmoothSec / COMPASS_SPEED_EMA_TAU_SEC);
+                                    var sdelta = speedInstant - State.compass.speedSmoothed;
+                                    // Within the deadband, ease off so a steady
+                                    // speed reads as a steady number, not a wobble.
+                                    if (Math.abs(sdelta) < State.compass.speedSmoothed * COMPASS_SPEED_DEADBAND_FRAC) {
+                                        alpha *= 0.25;
+                                    }
+                                    if (speedInstant < 0.5) alpha = 1.0; // snap to rest
+                                    State.compass.speedSmoothed = State.compass.speedSmoothed + (alpha * sdelta);
+                                }
+                            }
                         }
                     }
                     State.compass.lastPosX = pos.x;
@@ -14294,17 +14410,25 @@ function GetUIRoot() {
         var enemyV2EnhancedEnabled = false;
         var colorWarningEnabled = IsColorWarningEnabled(cfg);
         var cleanStacksEnabled = IsCfgEnabled(cfg, "ENABLE_CLEAN_STACKS");
-        // WHY: compass_active class controls the entire compass panel visibility.
-        // Speed display is a child of the compass panel — when the compass is off,
-        // the speed readout is meaningless. Only ENABLE_COMPASS gates the panel.
+        // WHY: compass_active class controls the compass dial visibility, gated
+        // on ENABLE_COMPASS alone. The host panel, however, is shared with the
+        // standalone speed readout, so it must stay alive whenever EITHER the
+        // compass or the speed feature is on.
         var compassEnabled = (cfg.ENABLE_COMPASS === 1);
-        // When compass is disabled, collapse the panel via inline style.
-        // CSS class removal alone isn't sufficient — UpdateCompassOverlay
-        // sets visibility:visible as an inline style which overrides CSS.
-        if (!compassEnabled) {
+        var compassSpeedEnabled = (cfg.ENABLE_COMPASS_SPEED === 1);
+        // When BOTH compass and speed are disabled, collapse the panel via
+        // inline style. CSS class removal alone isn't sufficient — the compass
+        // loop sets visibility:visible as an inline style which overrides CSS.
+        // Collapsing on !compassEnabled alone would fight the compass loop in
+        // speed-only mode (5Hz collapse vs 20Hz show) and flicker the speed.
+        if (!compassEnabled && !compassSpeedEnabled) {
             var _compassRoot = GetCachedPanel("compassRoot");
             if (IsPanelValid(_compassRoot)) {
                 try { _compassRoot.style.visibility = "collapse"; } catch(_ce) { QOL_WARN("core", "op failed: " + (_ce && _ce.message ? _ce.message : String(_ce || ""))); }
+            }
+            var _speedRoot = GetCachedPanel("speedRoot");
+            if (IsPanelValid(_speedRoot)) {
+                try { _speedRoot.style.visibility = "collapse"; } catch(_se) { QOL_WARN("core", "op failed: " + (_se && _se.message ? _se.message : String(_se || ""))); }
             }
         }
         var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
@@ -14590,6 +14714,9 @@ function GetUIRoot() {
         State.compass.stretchY = (cfg.COMPASS_STRETCH_Y === undefined || cfg.COMPASS_STRETCH_Y === null) ? 100 : cfg.COMPASS_STRETCH_Y;
         State.compass.offsetX = (cfg.COMPASS_X_OFFSET === undefined || cfg.COMPASS_X_OFFSET === null) ? 0 : cfg.COMPASS_X_OFFSET;
         State.compass.offsetY = (cfg.COMPASS_Y_OFFSET === undefined || cfg.COMPASS_Y_OFFSET === null) ? 120 : cfg.COMPASS_Y_OFFSET;
+        State.compass.speedOffsetX = (cfg.COMPASS_SPEED_X_OFFSET === undefined || cfg.COMPASS_SPEED_X_OFFSET === null) ? 0 : cfg.COMPASS_SPEED_X_OFFSET;
+        State.compass.speedOffsetY = (cfg.COMPASS_SPEED_Y_OFFSET === undefined || cfg.COMPASS_SPEED_Y_OFFSET === null) ? 0 : cfg.COMPASS_SPEED_Y_OFFSET;
+
         if (
             shouldApplyStaticClasses ||
             State.passiveCooldownModeApplied !== passiveCooldownMode ||
@@ -15142,10 +15269,13 @@ function GetUIRoot() {
         // Compass-loop gates — precomputed once per main-loop tick (5Hz) so
         // compassLoop (20Hz) can read from State.lastResolvedGates instead of
         // recomputing 11+ Number() config checks and sticky-state evaluations.
-        // WHY: compass panel visibility is gated solely by ENABLE_COMPASS.
-        // ENABLE_COMPASS_SPEED controls the speed readout inside the panel —
-        // when the compass itself is off, there's nothing to display speed on.
-        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS");
+        // WHY: the compass overlay panel hosts BOTH the heading readout and the
+        // standalone speed readout. Either feature on its own is enough work to
+        // run UpdateCompassOverlay, so the gate must mirror the fallback path
+        // (compass OR speed). The root `compass_active` class is still gated on
+        // ENABLE_COMPASS alone, so enabling speed never shows the compass dial.
+        gates.compassOverlay = IsCfgEnabled(cfg, "ENABLE_COMPASS") ||
+            IsCfgEnabled(cfg, "ENABLE_COMPASS_SPEED");
         gates.compassMinimapRotate = IsCfgEnabled(cfg, "MINIMAP_ROTATE_WITH_PLAYER") ||
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);

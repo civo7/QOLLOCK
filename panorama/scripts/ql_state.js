@@ -149,6 +149,7 @@ var State;
             lastPosTimeMs: 0,
             speedSmoothed: null,
             speedDisplay: null,
+            speedSamples: null,
             tickClassSigs: [],
             tickXTexts: [],
             errorNextLogMs: 0

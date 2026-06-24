@@ -541,6 +541,50 @@
 	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.30);
 }
 
+/* Speed preview — independent panel, mirrors in-game #QOLSpeedRoot (a sibling
+   of the compass root, NOT a child). Centered, top-anchored at the 120px
+   baseline; ShowSpeedPreview() sets the full margins. */
+#SpeedPreview
+{
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: top;
+	margin-left: 0px;
+	margin-top: 120px;
+	width: 200px;
+	height: 28px;
+	opacity: 0;
+	visibility: collapse;
+	transform: translateY(8px);
+	transition-property: opacity, transform, visibility;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-out;
+	z-index: 5300;
+	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
+}
+
+#SpeedPreview.Visible
+{
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0px);
+}
+
+#SpeedPreviewLabel
+{
+	width: 100%;
+	horizontal-align: center;
+	text-align: center;
+	color: #ffd97a;
+	font-size: 16px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	text-shadow: 0px 0px 8px rgba(255, 200, 90, 0.55);
+}
+
 #KeyboardOverlayPreview
 {
 	ignore-parent-flow: true;
