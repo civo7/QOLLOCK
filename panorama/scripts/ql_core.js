@@ -5977,6 +5977,14 @@ function GetUIRoot() {
         return angle;
     }
 
+    function NormalizeAmmoClipAngle(value) {
+        var angle = Math.round(Number(value));
+        if (!isFinite(angle)) angle = 0;
+        if (angle < 0) angle = 0;
+        if (angle > 360) angle = 360;
+        return angle;
+    }
+
     function HasNonDefaultStaminaChargeRuntimeConfig(cfg) {
         if (!cfg) return false;
         return NormalizeStaminaChargeAngle(cfg.STAMINA_CHARGE_ANGLE) !== 45 ||
@@ -15104,6 +15112,7 @@ function GetUIRoot() {
             cfg.STAMINA_CHARGE_ANGLE,
             cfg.STAMINA_CHARGE_COLOR,
             cfg.AMMO_TEXT_COLOR,
+            cfg.AMMO_CLIP_ANGLE,
             cfg.ENABLE_RED_DIAMOND,
             cfg.ENABLE_COMPASS,
             cfg.ENABLE_COMPASS_SPEED,
@@ -16014,6 +16023,7 @@ function GetUIRoot() {
         ["normalizeHudScaleNumber", function() { return NormalizeHudScaleNumber; }],
         ["normalizePaletteColorIndex", function() { return NormalizePaletteColorIndex; }],
         ["normalizeStaminaChargeAngle", function() { return NormalizeStaminaChargeAngle; }],
+        ["normalizeAmmoClipAngle", function() { return NormalizeAmmoClipAngle; }],
         ["normalizeVoiceTypeValue", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceTypeValue) || (function(v) { var asInt = Math.round(Number(v)); if (asInt === 4 || asInt === 0 || asInt === 5 || asInt === 6 || asInt === 7 || asInt === 8) return asInt; return 0; }); }],
         ["normalizeVoiceVolumeValue", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceVolumeValue) || (function(v) { var asInt = Math.round(Number(v)); if (!isFinite(asInt)) asInt = 100; if (asInt < 0) asInt = 0; if (asInt > 100) asInt = 100; return asInt; }); }],
         ["parseClockSeconds", function() { return ParseClockSeconds; }],

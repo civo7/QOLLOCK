@@ -1674,14 +1674,21 @@ var MINIMALISTIC_PAUSE_SCHEMA_FIELDS = [
 var URN_TIMER_SCHEMA_FIELDS = [
     { key: "ENABLE_URN_TIMER", min: 0, max: 1, step: 1 }
 ];
+// 3.1.6 (in development): rotate the ammo magazine visualiser (#clip_status).
+var AMMO_CLIP_SCHEMA_FIELDS = [
+    { key: "AMMO_CLIP_ANGLE", min: 0, max: 360, step: 1 }
+];
 var QOL_COMPACT_SCHEMA_3_1_6= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_3_1_5,
     QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
-        COMPASS_SPEED_OFFSET_SCHEMA_FIELDS,
         QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
-            MINIMALISTIC_PAUSE_SCHEMA_FIELDS,
-            URN_TIMER_SCHEMA_FIELDS
-        )
+            COMPASS_SPEED_OFFSET_SCHEMA_FIELDS,
+            QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+                MINIMALISTIC_PAUSE_SCHEMA_FIELDS,
+                URN_TIMER_SCHEMA_FIELDS
+            )
+        ),
+        AMMO_CLIP_SCHEMA_FIELDS
     )
 );
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -1711,7 +1718,8 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              (ally healthbar, perf debug, specials, drag, previews).
 // 3.1.0-3.1.4  Hero purchase popups, shop item notifications fix, 12-field
 //              reconstruction, UNIT_TARGET_HINT_SIZE.
-// 3.1.5-3.1.6  ShowRank + standalone compass speed offsets + minimalistic pause + urn spawn timer.
+// 3.1.5-3.1.6  ShowRank + standalone compass speed offsets + minimalistic pause +
+//              urn spawn timer + ammo magazine visualiser rotation.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2233,6 +2241,7 @@ var QOL_DEFAULT_CONFIG = {
         AMMO_TOTAL_SCALE: 100,
         AMMO_PANEL_X_OFFSET: 0,
         AMMO_PANEL_Y_OFFSET: 0,
+        AMMO_CLIP_ANGLE: 0,
         AMMO_TEXT_COLOR: 0,
         ENABLE_RELOAD_COOLDOWN: 0,
         RELOAD_COOLDOWN_OPACITY: 0.6,
