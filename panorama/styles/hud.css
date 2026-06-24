@@ -584,7 +584,6 @@
 	font-size: 20px;
 	font-weight: bold;
 	letter-spacing: 0.2px;
-	text-shadow: 0px 0px 6px #000000ff;
 	background-color: gradient(linear, 0% 0%, 0% 100%, from(#00000000), to(#00000030));
 	visibility: collapse;
 	z-index: 20;
@@ -741,7 +740,6 @@
 	color: #ffffffff;
 	font-size: 20px;
 	text-align: center;
-	text-shadow: 0px 0px 4px 1.0 #000000ff;
 }
 
 #QOLCompassSpeed
@@ -752,7 +750,6 @@
 	color: #ffffffff;
 	font-size: 20px;
 	text-align: right;
-	text-shadow: 0px 0px 4px 1.0 #000000ff;
 }
 
 #QOLSpeedRoot
@@ -774,7 +771,6 @@
 	color: #ffffffff;
 	font-size: 20px;
 	text-align: center;
-	text-shadow: 0px 0px 4px 1.0 #000000ff;
 }
 
 .compass_active #QOLCompassRoot
