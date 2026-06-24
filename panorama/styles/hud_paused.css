@@ -1,7 +1,15 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_paused.vcss_c");
-CitadelPaused
+
+/*
+ * Minimalistic Pause (QOLLOCK)
+ * The compact 80x80 pause overlay is gated behind the `.minimal_pause_active`
+ * root class, applied by ql_core when ENABLE_MINIMALISTIC_PAUSE is on. When the
+ * class is absent (default), the imported base/hud_paused styles render the
+ * full-size default pause screen instead.
+ */
+.minimal_pause_active CitadelPaused
 {
 	width: 80px;
 	height: 80px;
@@ -15,7 +23,7 @@ CitadelPaused
 	visibility: collapse;
 }
 
-#PausedCountdownLabel
+.minimal_pause_active #PausedCountdownLabel
 {
 	margin-right: 0px;
 	font-size: 100px;
@@ -27,16 +35,15 @@ CitadelPaused
 	visibility: collapse;
 }
 
-#PausedLabel
+.minimal_pause_active #PausedLabel
 {
 	transition-property: none;
 	transition-duration: 0s;
 	font-size: 58px;
 }
 
-.PausedTextMoved
+.minimal_pause_active .PausedTextMoved
 {
 	transform: none;
 	visibility: collapse;
 }
-

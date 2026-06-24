@@ -172,6 +172,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     RECENT_PURCHASES_PANEL_OPACITY: "bytenode",
     ENABLE_SHOW_BUILD_ID: "0xluc4s",
     ENABLE_SHOW_BUILD_ID_TITLE: "0xluc4s",
+    ENABLE_MINIMALISTIC_PAUSE: "Predi",
     ENABLE_DL4D_REMINDERS: "oGeorge",
     DL4D_VOLUME: "oGeorge",
     ENABLE_DL4D_CAPTIONS: "oGeorge",
@@ -237,6 +238,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_SHOP_RECENT_PURCHASES": "See the recent purchases made in the game.",
     "ENABLE_SHOW_BUILD_ID": "Shows your build information always for content creators",
     "ENABLE_SHOW_BUILD_ID_TITLE": "Append the selected build title after the build ID.",
+    "ENABLE_MINIMALISTIC_PAUSE": "Use the compact minimalistic pause screen instead of the default large one.",
     "ENABLE_DL4D_REMINDERS": "Timed audio reminders from Deadlock For Dummies.",
     "DL4D_VOLUME": "Volume for Deadlock For Dummies reminder audio.",
     "ENABLE_DL4D_CAPTIONS": "Show a short caption when Deadlock For Dummies reminders play.",
@@ -431,6 +433,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "UI / UI Controls|Show Testing Tools": "Forcibly shows testing tools at all times.",
     "UI / UI Controls|Show Build ID": "Shows your build information always for content creators",
     "UI / UI Controls / Show Build ID|Show Title": "Append the selected build title after the build ID.",
+    "UI / UI Controls|Minimalistic Pause": "Use the compact minimalistic pause screen instead of the default large one.",
     "HUD|Chat": "Adjust the in-game chat position and scale.",
     "UI|Chat": "Adjust the in-game chat position and scale.",
     "HUD / Shop|Blur": "The world background blur effect behind the shop menu.",
@@ -634,6 +637,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     RECENT_PURCHASES_PANEL_OPACITY: "low",
     ENABLE_SHOW_BUILD_ID: "low",
     ENABLE_SHOW_BUILD_ID_TITLE: "low",
+    ENABLE_MINIMALISTIC_PAUSE: "low",
     ENABLE_DL4D_REMINDERS: "low",
     DL4D_VOLUME: "none",
     ENABLE_DL4D_CAPTIONS: "low",
@@ -21052,6 +21056,8 @@ function RenderCurrentTabContent(list) {
         CreateAnimatedInlineToggleSection(list, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "Shows your build information always for content creators", function(sectionParent) {
             CreateRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
         });
+        CreateSeparator(list);
+        CreateRow(list, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "toggle", null, null, null, null, "Use the compact minimalistic pause screen instead of the default large one.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", function(sectionParent) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
