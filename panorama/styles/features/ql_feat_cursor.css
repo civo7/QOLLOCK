@@ -1,0 +1,32 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Custom Gameplay Mouse Cursor */
+
+#QOLGameplayMouseCursor
+{
+    ignore-parent-flow: true;
+    width: 54px;
+    height: 54px;
+    visibility: collapse;
+    horizontal-align: left;
+    vertical-align: top;
+    z-index: 99999;
+    hittest: false;
+    hittestchildren: false;
+    wash-color: white;
+    brightness: 1.05;
+}
+
+#QOLGameplayMouseCursorImage
+{
+    width: 100%;
+    height: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    opacity: 0.95;
+}
+
+.qol_custom_cursor_replace_active,
+.qol_custom_cursor_replace_active *
+{
+    cursor: none;
+}

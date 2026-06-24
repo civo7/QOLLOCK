@@ -1,0 +1,325 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Settings Loader Overlay */
+
+#QOLSettingsLoaderOverlay,#QOLSaveSettingsLoaderOverlay,#QOLClearSettingsLoaderOverlay
+{
+    horizontal-align: left;
+    vertical-align: top;
+    width: 100%;
+    height: 100%;
+    overflow: noclip;
+    z-index: 2147483647;
+    visibility: collapse;
+    background-color: rgba(3, 5, 6, 0.64);
+}
+
+#QOLSettingsLoaderCard,#QOLSaveSettingsLoaderCard,#QOLClearSettingsLoaderCard
+{
+    horizontal-align: center;
+    vertical-align: top;
+    flow-children: down;
+    margin-top: 30px;
+    width: 1040px;
+    max-width: 92%;
+    padding: 18px 20px 18px 20px;
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) );
+    border: 1px solid rgba(210, 224, 216, 0.075);
+    border-radius: 5px;
+    box-shadow: fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px;
+}
+
+.QOLSettingsLoaderTitle
+{
+    horizontal-align: center;
+    font-family: oracle;
+    font-size: 28px;
+    font-weight: semi-bold;
+    letter-spacing: 1.8px;
+    color: #f2faf5;
+    text-shadow: 0px 0px 9px rgba(152, 255, 181, 0.12);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.QOLSettingsLoaderWarning
+{
+    horizontal-align: center;
+    font-family: oracle;
+    font-size: 14px;
+    font-weight: semi-bold;
+    letter-spacing: 1.0px;
+    color: #ff9d9d;
+    text-shadow: 0px 0px 7px rgba(255, 126, 126, 0.14);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.QOLSettingsLoaderStepsWrap
+{
+    width: 100%;
+    flow-children: down;
+    padding: 8px 10px 8px 10px;
+    border: 1px solid rgba(210, 224, 216, 0.045);
+    border-radius: 4px;
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.42) ), to( rgba(12, 14, 15, 0.30) ) );
+    box-shadow: inset rgba(0, 0, 0, 0.26) 0px 1px 5px 0px;
+}
+
+.QOLSettingsLoaderStepRow
+{
+    width: 100%;
+    flow-children: right;
+    min-height: 30px;
+    margin-top: 1px;
+    padding: 2px 4px 2px 4px;
+    border-radius: 3px;
+}
+
+.QOLSettingsLoaderStepIcon
+{
+    width: 19px;
+    height: 19px;
+    margin-right: 9px;
+    vertical-align: center;
+    wash-color: #8f9b96;
+    opacity: 0.90;
+    transition-property: wash-color, opacity, brightness;
+    transition-duration: 0.18s;
+}
+
+.QOLSettingsLoaderStepLabel
+{
+    vertical-align: center;
+    font-family: oracle;
+    font-size: 14px;
+    line-height: 19px;
+    letter-spacing: 0.55px;
+    color: #96a29d;
+    text-shadow: none;
+    transition-property: color, text-shadow;
+    transition-duration: 0.18s;
+}
+
+.QOLSettingsLoaderStepRow.is-pending .QOLSettingsLoaderStepLabel
+{
+    color: #8d9698;
+}
+
+.QOLSettingsLoaderStepRow.is-pending .QOLSettingsLoaderStepIcon
+{
+    wash-color: #8d9698;
+    opacity: 0.75;
+}
+
+.QOLSettingsLoaderStepRow.is-active .QOLSettingsLoaderStepLabel
+{
+    color: #9af0bd;
+    text-shadow: 0px 0px 7px rgba(126, 237, 170, 0.16);
+}
+
+.QOLSettingsLoaderStepRow.is-active
+{
+    background-color: rgba(109, 236, 154, 0.035);
+}
+
+.QOLSettingsLoaderStepRow.is-active .QOLSettingsLoaderStepIcon
+{
+    wash-color: #9af0bd;
+    brightness: 1.18;
+}
+
+.QOLSettingsLoaderStepRow.is-done .QOLSettingsLoaderStepLabel
+{
+    color: #d7e6de;
+}
+
+.QOLSettingsLoaderStepRow.is-done .QOLSettingsLoaderStepIcon
+{
+    wash-color: #7beaab;
+    brightness: 1.08;
+}
+
+.QOLSettingsLoaderStepRow.is-skipped .QOLSettingsLoaderStepLabel
+{
+    color: #6f777a;
+}
+
+.QOLSettingsLoaderStepRow.is-skipped .QOLSettingsLoaderStepIcon
+{
+    wash-color: #6f777a;
+    opacity: 0.45;
+}
+
+.QOLSettingsLoaderStepRow.is-error .QOLSettingsLoaderStepLabel
+{
+    color: #ff8a8a;
+    text-shadow: 0px 0px 7px rgba(255, 105, 105, 0.15);
+}
+
+.QOLSettingsLoaderStepRow.is-error .QOLSettingsLoaderStepIcon
+{
+    wash-color: #ff8a8a;
+    brightness: 1.14;
+}
+
+.QOLSettingsLoaderDetail
+{
+    width: 100%;
+    margin-top: 12px;
+    font-family: oracle;
+    font-size: 13px;
+    line-height: 19px;
+    letter-spacing: 0.18px;
+    color: #bac6c0;
+    text-shadow: none;
+}
+
+.QOLSettingsLoaderDetail.is-shop-prompt
+{
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: semi-bold;
+    color: #ff9d9d;
+    text-shadow: 0px 0px 7px rgba(255, 126, 126, 0.13);
+}
+
+.QOLSettingsLoaderActions
+{
+    width: fit-children;
+    horizontal-align: right;
+    flow-children: right;
+    margin-top: 10px;
+}
+
+#QOLSettingsLoaderSkipDock
+{
+    horizontal-align: left;
+    vertical-align: top;
+    width: 100%;
+    height: 100%;
+    margin-top: 0px;
+    overflow: noclip;
+    flow-children: none;
+}
+
+.QOLSettingsLoaderSkipBacker
+{
+    horizontal-align: left;
+    vertical-align: top;
+    min-width: 214px;
+    height: 42px;
+    border-radius: 4px;
+    border: 1px solid rgba(210, 224, 216, 0.085);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) );
+    box-shadow: fill rgba(0, 0, 0, 0.24) 0px 2px 7px 0px;
+}
+
+#QOLSettingsLoaderSkipBacker
+{
+    border: 1px solid rgba(210, 224, 216, 0.085);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(31, 34, 36, 0.90) ), to( rgba(15, 17, 18, 0.86) ) );
+    box-shadow: fill rgba(0, 0, 0, 0.24) 0px 2px 7px 0px;
+}
+
+.QOLSettingsLoaderSkipButton
+{
+    horizontal-align: left;
+    vertical-align: top;
+    margin-left: 0px;
+    margin-top: 0px;
+    min-width: 214px;
+    height: 42px;
+    padding: 0px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 126, 126, 0.18);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 27, 28, 0.90) ), to( rgba(18, 14, 15, 0.86) ) );
+    background-image: none;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: semi-bold;
+    text-align: center;
+    text-shadow: none;
+    box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(255, 126, 126, 0.10) 0px 1px 0px 0px;
+    transition-property: brightness, box-shadow, border, background-color, transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+}
+
+#QOLSettingsLoaderSkipButton
+{
+    border: 1px solid rgba(255, 126, 126, 0.18);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(39, 27, 28, 0.90) ), to( rgba(18, 14, 15, 0.86) ) );
+    box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 4px 0px, inset rgba(255, 126, 126, 0.10) 0px 1px 0px 0px;
+}
+
+.QOLSettingsLoaderSkipButton Label
+{
+    width: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    color: #ffb3b3;
+    font-family: oracle;
+    font-size: 12px;
+    font-weight: semi-bold;
+    letter-spacing: 0.85px;
+    text-shadow: none;
+    text-transform: uppercase;
+}
+
+#QOLSettingsLoaderSkipButtonLabel,.QOLSettingsLoaderSkipButtonLabel
+{
+    width: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    color: #ffb3b3;
+    font-family: oracle;
+    font-size: 12px;
+    font-weight: semi-bold;
+    letter-spacing: 0.85px;
+    text-shadow: none;
+    text-transform: uppercase;
+}
+
+#QOLSettingsLoaderSkipButton Label
+{
+    color: #ffb3b3;
+    text-shadow: none;
+}
+
+.QOLSettingsLoaderSkipButton:hover
+{
+    brightness: 1.07;
+    transform: translateY(-1px);
+    border: 1px solid rgba(255, 126, 126, 0.32);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(46, 31, 32, 0.94) ), to( rgba(22, 16, 17, 0.90) ) );
+    box-shadow: fill rgba(255, 126, 126, 0.10) 0px 0px 12px 0px, inset rgba(255, 126, 126, 0.18) 0px 1px 0px 0px;
+}
+
+#QOLSettingsLoaderSkipButton:hover
+{
+    brightness: 1.07;
+    transform: translateY(-1px);
+    border: 1px solid rgba(255, 126, 126, 0.32);
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(46, 31, 32, 0.94) ), to( rgba(22, 16, 17, 0.90) ) );
+    box-shadow: fill rgba(255, 126, 126, 0.10) 0px 0px 12px 0px, inset rgba(255, 126, 126, 0.18) 0px 1px 0px 0px;
+}
+
+.QOLSettingsLoaderSkipButton:active
+{
+    brightness: 1.01;
+    transform: translateY(0px);
+}
+
+.QOLSaveSettingsLoaderStallHint
+{
+    width: 100%;
+    margin-top: 8px;
+    font-family: oracle;
+    font-size: 13px;
+    line-height: 18px;
+    text-align: left;
+    color: #ff9d9d;
+    text-shadow: 0px 0px 7px rgba(255, 126, 126, 0.12);
+}

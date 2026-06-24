@@ -1,0 +1,418 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK features: Healthbars (minimalist, FG, BudHUD, Klutz, Minecraft) */
+/* Healthbar modes are kept together because they target the same selectors
+   with mutual exclusion — splitting them would create specificity ordering bugs. */
+
+/* ── Minimalist Healthbar ── */
+
+.minimalist_healthbar_active #health_and_abilities_container
+{
+    width: 974px;
+    transform: translateX(0px) translateY(-15px);
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.minimalist_healthbar_active.AspectRatio21x9 #health_and_abilities_container,
+.minimalist_healthbar_active .AspectRatio21x9 #health_and_abilities_container
+{
+    margin-right: 16px;
+}
+
+.minimalist_healthbar_active.AspectRatio16x10 #health_and_abilities_container,
+.minimalist_healthbar_active .AspectRatio16x10 #health_and_abilities_container
+{
+    margin-right: 14px;
+}
+
+.support_16_10_active.minimalist_healthbar_active.AspectRatio16x10 #health_and_abilities_container,
+.support_16_10_active.minimalist_healthbar_active .AspectRatio16x10 #health_and_abilities_container
+{
+    transform: translateX(5px);
+    ui-scale: 110%;
+}
+
+.minimalist_healthbar_active .replay_playback #health_and_abilities_container,
+.minimalist_healthbar_active.replay_playback #health_and_abilities_container
+{
+    margin-bottom: 60px;
+}
+
+.minimalist_healthbar_active #cast_failed_box
+{
+    margin-bottom: 270px;
+}
+
+.minimalist_healthbar_active #health_and_abilities_container.localPlayerMidHealth
+{
+    animation-name: qol_minimalist_healthMid;
+}
+
+.minimalist_healthbar_active #health_and_abilities_container.localPlayerLowHealth
+{
+    animation-name: qol_minimalist_healthLow;
+}
+
+/* ── FG Healthbar ── */
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #ability_resource
+{
+    margin-bottom: 275px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #health_and_abilities_container
+{
+    width: 400px;
+    height: 300px;
+    vertical-align: bottom !important;
+    horizontal-align: center !important;
+    ui-scale: 120% !important;
+    transform: translateX(0%) translateY(0%) !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    margin-bottom: 0px !important;
+    flow-children: none;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #health_and_abilities_container.localPlayerMidHealth
+{
+    animation-name: none;
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #health_and_abilities_container.localPlayerLowHealth
+{
+    animation-name: none;
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #cast_failed_box
+{
+    margin-bottom: 290px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) .wants_scoreboard #cast_failed_box,
+.fg_healthbar_active:not(.minimalist_healthbar_active) #cast_failed_box.gDetailView
+{
+    margin-bottom: 290px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) .active_abilities
+{
+    horizontal-align: right;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #status_bars
+{
+    width: 850px;
+    margin-bottom: 170px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #hud_modifiers
+{
+    margin-bottom: 10px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) .abilitiesContainer
+{
+    width: 1145px;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #APContainer
+{
+    ui-scale: 70%;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #LowerLeft
+{
+    width: 100%;
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) #StatsAndModsContainer.gShopOpen #LowerLeft
+{
+    transform: translateX(10px) translateY(-10px);
+}
+
+.fg_healthbar_active:not(.minimalist_healthbar_active) .ModsContainer
+{
+    margin-bottom: 15px;
+    margin-left: 20px;
+}
+
+/* ── BudHUD Healthbar ── */
+
+.budhud_healthbar_active #health_and_abilities_container
+{
+    width: 974px;
+    transform: translatey(-15px);
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.budhud_healthbar_active.AspectRatio21x9 #health_and_abilities_container,
+.budhud_healthbar_active .AspectRatio21x9 #health_and_abilities_container
+{
+    margin-right: 16px;
+}
+
+.budhud_healthbar_active.AspectRatio16x10 #health_and_abilities_container,
+.budhud_healthbar_active .AspectRatio16x10 #health_and_abilities_container
+{
+    transform: translateY(0px) translateX(0px);
+}
+
+.budhud_healthbar_active.replay_playback #health_and_abilities_container,
+.budhud_healthbar_active .replay_playback #health_and_abilities_container
+{
+    margin-bottom: 60px;
+}
+
+.budhud_healthbar_active #cast_failed_box
+{
+    margin-bottom: 130px;
+}
+
+.budhud_healthbar_active #ability_resource
+{
+    margin-bottom: 177px;
+    width: 200px;
+}
+
+.budhud_healthbar_active #hud_passive_items
+{
+    margin-top: 210px;
+}
+
+.budhud_healthbar_active #shop_sign
+{
+    visibility: collapse;
+}
+
+.budhud_healthbar_active #zipline_sign
+{
+    visibility: collapse;
+}
+
+.budhud_healthbar_active #context_action_container
+{
+    margin-bottom: 150px;
+}
+
+.budhud_healthbar_active #status_bars
+{
+    margin-bottom: 215px;
+}
+
+.budhud_healthbar_active CitadelModifierMessage
+{
+    margin-bottom: 110px;
+    margin-left: 500px;
+}
+
+/* ── Klutz Healthbar ── */
+
+.klutz_healthbar_active #health_and_abilities_container
+{
+    width: 250px;
+    height: 380px;
+    vertical-align: bottom;
+    horizontal-align: center;
+    margin-left: 30px !important;
+    margin-bottom: 30px !important;
+    margin-right: 0px !important;
+    margin-top: 0px !important;
+    flow-children: none;
+    pre-transform-scale2d: 1.00;
+    transform: translate3d(0px, 0px, 0px);
+    transition-property: margin-left, ui-scale;
+    transition-duration: 0.1s;
+}
+
+.klutz_healthbar_active .shieldNumbersContainer
+{
+    margin-top: 80px;
+    horizontal-align: right;
+    margin-right: 140px;
+    margin-left: 0px;
+    width: 60px;
+}
+
+.klutz_healthbar_active .abilitiesContainer
+{
+    horizontal-align: center;
+    vertical-align: bottom;
+    width: 1140px;
+    height: 465px;
+    overflow: noclip;
+}
+
+.klutz_healthbar_active.wants_scoreboard .abilitiesContainer,
+.klutz_healthbar_active .abilitiesContainer.gDetailView
+{
+    height: 465px;
+}
+
+.klutz_healthbar_active #hud_passive_items
+{
+    height: 60px;
+    width: 600px;
+    margin: 20px;
+    margin-bottom: 150px;
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: top;
+    ui-scale: 85%;
+}
+
+.klutz_healthbar_active #status_bars
+{
+    vertical-align: bottom;
+    horizontal-align: center;
+    height: 240px;
+    margin-bottom: 100px;
+    width: 550px;
+    flow-children: down;
+}
+
+.klutz_healthbar_active.AspectRatio21x9 #health_and_abilities_container
+{
+    margin-right: 0px;
+}
+
+.klutz_healthbar_active.AspectRatio16x10 #health_and_abilities_container
+{
+    margin-right: 0px;
+}
+
+.support_16_10_active.klutz_healthbar_active #health_and_abilities_container
+{
+    transform: translateX(10%) translateY(7%);
+    ui-scale: 125%;
+}
+
+/* ── Minecraft Healthbar ── */
+
+/* Minecraft healthbar HUD layout overrides */
+.minecraft_healthbar_active #ability_resource
+{
+    vertical-align: bottom;
+    horizontal-align: center;
+    margin-bottom: 140px;
+    margin-left: 290px;
+    width: 233px;
+}
+
+.minecraft_healthbar_active #health_and_abilities_container
+{
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-bottom: 20px;
+    ui-scale: 130%;
+    width: 410px;
+    vertical-align: bottom;
+}
+
+.minecraft_healthbar_active #context_action_container
+{
+    width: fit-children;
+    height: fit-children;
+    flow-children: right;
+    vertical-align: bottom;
+    horizontal-align: center;
+    margin-bottom: 280px;
+    visibility: collapse;
+}
+
+.minecraft_healthbar_active #ActiveAbilitiesMenu
+{
+    horizontal-align: center;
+    height: 85px;
+    width: fit-children;
+    vertical-align: bottom;
+    transition-property: transform;
+    transition-duration: 0.1s;
+    z-index: -1;
+    margin-left: 297px;
+    margin-bottom: 1px;
+}
+
+.minecraft_healthbar_active #status_bars
+{
+    width: 550px;
+}
+
+.minecraft_healthbar_active #hud_modifiers
+{
+    width: 550px;
+}
+
+.minecraft_healthbar_active .abilitiesContainer
+{
+    width: 1035px;
+    ui-scale: 130%;
+    margin-bottom: 20px;
+}
+
+.minecraft_healthbar_active #APContainer
+{
+    margin-bottom: 8px;
+    margin-right: 470px;
+}
+
+.minecraft_healthbar_active #hud_signature
+{
+    transform: translateX(-114px);
+}
+
+.minecraft_healthbar_active .gShopOpen #hud_signature
+{
+    ui-scale: 90%;
+}
+
+.minecraft_healthbar_active.AspectRatio21x9 #health_and_abilities_container,
+.minecraft_healthbar_active .AspectRatio21x9 #health_and_abilities_container
+{
+    margin-right: 0px;
+}
+
+.minecraft_healthbar_active.AspectRatio16x10 #health_and_abilities_container,
+.minecraft_healthbar_active .AspectRatio16x10 #health_and_abilities_container
+{
+    margin-right: 0px;
+}
+
+.minecraft_healthbar_active .APCurrencyAmount
+{
+    padding: 3px;
+    font-family: "Mojang Bold";
+    text-shadow: 0px 0px 0px 5.0 offBlack;
+}
+
+.minecraft_healthbar_active .APCurrencyIcon
+{
+    background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    img-shadow: 0px 0px 0px 4.0 offBlack;
+}
+
+.minecraft_healthbar_active #APContainer .APUnlockBinding
+{
+    height: 0px;
+}
+
+.minecraft_healthbar_active .APValues
+{
+    margin-right: 10px;
+    margin-bottom: -3px;
+}
+
+.minecraft_healthbar_active .infiniteMoney #hudAPInfinite
+{
+    margin-top: -4.5px;
+    margin-left: 0px;
+}

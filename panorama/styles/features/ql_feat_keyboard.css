@@ -1,0 +1,293 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Keyboard Overlay */
+
+#QOLKeyboardOverlayRoot
+{
+    width: 100%;
+    height: 100%;
+    horizontal-align: left;
+    vertical-align: top;
+}
+
+#QOLKeyboardOverlayRoot #AllBindingsBox
+{
+    visibility: collapse;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox
+{
+    ignore-parent-flow: true;
+    width: fit-children;
+    vertical-align: bottom;
+    horizontal-align: left;
+    margin-left: 150px;
+    margin-bottom: 300px;
+    visibility: visible;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .KeyboardLayoutFull
+{
+    visibility: collapse;
+}
+
+.keyboard_overlay_active.keyboard_overlay_full_active #QOLKeyboardOverlayRoot #AllBindingsBox .KeyboardLayoutBase
+{
+    visibility: collapse;
+}
+
+.keyboard_overlay_active.keyboard_overlay_full_active #QOLKeyboardOverlayRoot #AllBindingsBox .KeyboardLayoutFull
+{
+    visibility: visible;
+}
+
+.keyboard_overlay_active.keyboard_overlay_full_active #QOLKeyboardOverlayRoot #AllBindingsBox
+{
+    margin-left: 70px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .h4
+{
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 16px;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .KeyboardLayout
+{
+    width: fit-children;
+    flow-children: down;
+    horizontal-align: center;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .KeyboardRow
+{
+    width: fit-children;
+    flow-children: right;
+    horizontal-align: center;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .Key
+{
+    margin: 0px;
+    transition-property: transform, box-shadow;
+    transition-duration: 0.15s;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .NumberKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .TabKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .MouseKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .QWERTYKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .ASDFKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .ZXCVKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .EmptyKey
+{
+    width: 40px;
+    height: 40px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .TabKey
+{
+    width: 53px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .MouseKey
+{
+    width: 40px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .SpaceKey
+{
+    width: 192px;
+    height: 40px;
+}
+
+.keyboard_overlay_active.keyboard_overlay_full_active #QOLKeyboardOverlayRoot #AllBindingsBox .SpaceKey
+{
+    width: 133px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .ShiftKey
+{
+    width: 80px;
+    height: 40px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AltKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .CtrlKey
+{
+    width: 60px;
+    height: 40px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .EmptyKeyWide
+{
+    width: 80px;
+    height: 40px;
+}
+
+.keyboard_overlay_active.keyboard_overlay_full_active #QOLKeyboardOverlayRoot #AllBindingsBox .EmptyKeyWide
+{
+    width: 60px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope .Key
+{
+    padding: 0px;
+    background-color: #00000000;
+    box-shadow: none;
+    transition-property: transform, background-color, brightness, box-shadow, wash-color, border-color;
+    transition-duration: 0.10s;
+    margin: 0px;
+    wash-color: #ffffff00;
+    overflow: noclip;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope .Key.EmptyKey,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope .Key.EmptyKeyWide
+{
+    border: 0px solid transparent;
+    background-color: #00000000;
+    box-shadow: none;
+    brightness: 1.0;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelKeyboardGlyph
+{
+    width: 100%;
+    height: 100%;
+    vertical-align: center;
+    horizontal-align: center;
+    flow-children: none !important;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelKeyboardGlyph .KeyboardKeyGlyphContainer
+{
+    width: 100%;
+    height: 100%;
+    flow-children: none;
+    vertical-align: center;
+    horizontal-align: center;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelKeyboardGlyph .Shim
+{
+    visibility: collapse;
+    width: 0px !important;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelKeyboardGlyph Label
+{
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: center !important;
+    vertical-align: center !important;
+    horizontal-align: center !important;
+    text-transform: uppercase;
+    background-color: #00000000;
+    padding: 0px !important;
+    margin: 0px !important;
+    width: fit-children;
+    height: fit-children;
+    line-height: 18px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox CitadelKeyboardGlyph.light Label
+{
+    color: #ffffff;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .light .KeyboardKeyGlyphContainer
+{
+    background-color: #00000000;
+    background-image: none;
+    border: 0px solid transparent;
+    box-shadow: none;
+    border-radius: 4px;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope CitadelKeyboardGlyph.light .KeyboardKeyGlyphContainer
+{
+    background-color: #00000000;
+    background-image: none;
+    border: 0px solid transparent;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    transition-property: background-color, border-color, brightness, wash-color;
+    transition-duration: 0.08s;
+    wash-color: #ffffff00;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope .Key.DownActivated .KeyboardKeyGlyphContainer,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot .AllBindingsScope .Key.IsPressed .KeyboardKeyGlyphContainer
+{
+    background-color: #00000000;
+    border: 0px solid transparent;
+    wash-color: #ffffff20;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey .MouseButtonGlyphContainer
+{
+    background-color: #00000000 !important;
+    background-image: none !important;
+    border: 0px solid transparent !important;
+    box-shadow: none !important;
+    border-radius: 0px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0px !important;
+    min-height: 0px !important;
+    padding: 0px !important;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey .MouseGlyphBackground
+{
+    wash-color: #00000000 !important;
+    background-color: #00000000 !important;
+    background-image: none !important;
+    opacity: 0 !important;
+    visibility: collapse;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey .MouseButtonGlyph,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey .KeyboardButtonGlyph
+{
+    wash-color: #ffffff;
+    color: #ffffff;
+    background-color: #00000000;
+    padding: 0px;
+    opacity: 1;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey CitadelBinding.HasDownAction.DownActivated:not(.HasUpAction) .MouseWheelUp,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .MouseKey CitadelBinding.HasDownAction.DownActivated:not(.HasUpAction) .MouseWheelDown
+{
+    animation-name: QOLWheelPulse;
+    animation-duration: 0.14s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox .light .MouseGlyphBackground
+{
+    background-color: #00000000 !important;
+    wash-color: #00000000 !important;
+}
+
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #BouncingArrow,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #HoldProgressBG,
+.keyboard_overlay_active #QOLKeyboardOverlayRoot #HoldProgress
+{
+    visibility: collapse;
+}
+
+.keyboard_overlay_active.gShopOpen #QOLKeyboardOverlayRoot #AllBindingsBox,
+.gShopOpen .keyboard_overlay_active #QOLKeyboardOverlayRoot #AllBindingsBox,
+.keyboard_overlay_active .gShopOpen #QOLKeyboardOverlayRoot #AllBindingsBox
+{
+    visibility: collapse;
+}

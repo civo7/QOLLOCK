@@ -1,0 +1,160 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK feature: Compass + Speed Display */
+
+#QOLCompassRoot
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: top;
+    margin-top: 120px;
+    width: 200px;
+    flow-children: down;
+    transform-origin: 50% 0%;
+}
+
+#QOLCompassBox
+{
+    width: 200px;
+    height: 50px;
+    background-color: #000000bb;
+    border: 0px solid #00000000;
+    border-radius: 4px;
+    overflow: clip clip;
+}
+
+#QOLCompassTicks
+{
+    width: 100%;
+    height: 100%;
+}
+
+#QOLCompassBox .QOLCompassTick
+{
+    ignore-parent-flow: true;
+    width: 2px;
+    height: 16px;
+    vertical-align: center;
+    background-color: #ffffffaa;
+}
+
+#QOLCompassBox .QOLCompassTick.Major
+{
+    height: 24px;
+    background-color: #ffffffff;
+}
+
+#QOLCompassBox .QOLCompassTick.Cardinal
+{
+    width: 3px;
+    height: 34px;
+    background-color: #ffffffff;
+}
+
+#QOLCompassNeedle
+{
+    ignore-parent-flow: true;
+    horizontal-align: center;
+    vertical-align: center;
+    width: 2px;
+    height: 100%;
+    background-color: #ff2020ff;
+}
+
+#QOLCompassFadeLeft
+{
+    ignore-parent-flow: true;
+    horizontal-align: left;
+    vertical-align: center;
+    width: 26px;
+    height: 100%;
+    background-color: gradient( linear, 0% 0%, 100% 0%, from( #000000dd ), to( #00000000 ) );
+}
+
+#QOLCompassFadeRight
+{
+    ignore-parent-flow: true;
+    horizontal-align: right;
+    vertical-align: center;
+    width: 26px;
+    height: 100%;
+    background-color: gradient( linear, 0% 0%, 100% 0%, from( #00000000 ), to( #000000dd ) );
+}
+
+#QOLCompassReadout
+{
+    width: 100%;
+    height: 28px;
+    margin-top: 4px;
+}
+
+#QOLCompassDegree
+{
+    ignore-parent-flow: true;
+    horizontal-align: center;
+    vertical-align: center;
+    color: #ffffffff;
+    font-size: 20px;
+    text-align: center;
+}
+
+#QOLCompassSpeed
+{
+    ignore-parent-flow: true;
+    horizontal-align: right;
+    vertical-align: center;
+    color: #ffffffff;
+    font-size: 20px;
+    text-align: right;
+}
+
+#QOLSpeedRoot
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: top;
+    margin-top: 120px;
+    width: 200px;
+    height: 28px;
+    overflow: noclip;
+    z-index: 8100;
+}
+
+#QOLSpeedLabel
+{
+    width: 100%;
+    height: 100%;
+    color: #ffffffff;
+    font-size: 20px;
+    text-align: center;
+}
+
+.compass_active #QOLCompassRoot
+{
+    visibility: visible;
+}
+
+.simplify_compass_active #QOLCompassBox
+{
+    background-color: #00000000;
+    border: 0px solid #00000000;
+}
+
+.simplify_compass_active #QOLCompassBox .QOLCompassTick
+{
+    visibility: collapse;
+}
+
+.simplify_compass_active #QOLCompassBox .QOLCompassTick.Major
+{
+    visibility: visible;
+    width: 3px;
+    height: 30px;
+    background-color: #ffffffff;
+}
+
+.simplify_compass_active #QOLCompassNeedle,
+.simplify_compass_active #QOLCompassFadeLeft,
+.simplify_compass_active #QOLCompassFadeRight
+{
+    visibility: collapse;
+}
