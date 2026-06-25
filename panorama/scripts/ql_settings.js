@@ -12353,6 +12353,39 @@ function IsSettingsSearchActiveQuery() {
     return String(currentSearchQuery || "").trim().length > 0;
 }
 
+// Debounced settings-search render: a full result rebuild tears down and recreates
+// every matched row (CreateRow per match), so firing it on every keystroke makes
+// fast typing/deleting/retyping lag. Coalesce a burst of keystrokes into a single
+// rebuild after a short idle window. Token-counter pattern (same as gSaveDebounceToken):
+// only the last scheduled render actually fires.
+var gSearchRenderDebounceToken = 0;
+var SEARCH_RENDER_DEBOUNCE_SEC = 0.12;
+
+function RunSettingsSearchRenderNow() {
+    var liveList = GetSettingsListPanel();
+    if (liveList) UpdateListContent(liveList, true);
+}
+
+function ScheduleSettingsSearchRender() {
+    var token = ++gSearchRenderDebounceToken;
+    $.Schedule(SEARCH_RENDER_DEBOUNCE_SEC, function() {
+        if (gSearchRenderDebounceToken !== token) return;
+        gSearchRenderDebounceToken = 0;
+        RunSettingsSearchRenderNow();
+    });
+}
+
+// Cancels any pending debounced render (e.g. when another path renders immediately).
+function CancelSettingsSearchRender() {
+    gSearchRenderDebounceToken++;
+}
+
+// Renders immediately and cancels any pending debounce (e.g. on Enter/submit).
+function FlushSettingsSearchRender() {
+    gSearchRenderDebounceToken++;
+    RunSettingsSearchRenderNow();
+}
+
 function RenderSettingsSearchResultsOnly(list) {
     if (!list || !list.IsValid || !list.IsValid()) return false;
     var hosts = EnsureSettingsListHosts(list);
@@ -23048,14 +23081,22 @@ $.BuildUI = function() {
         if (!searchInputExisting) {
             searchInputExisting = $.CreatePanel("TextEntry", searchWrapExisting, "SettingsSearchInput");
         }
-        var applySearchInputQuery = function() {
+        // Keep the query + clear-button state in sync immediately (both cheap), but
+        // debounce the expensive list rebuild so a burst of keystrokes coalesces into
+        // a single render instead of one full teardown+rebuild per character.
+        var syncSearchQueryState = function() {
             currentSearchQuery = searchInputExisting.text || "";
             UpdateSettingsSearchUiState($.GetContextPanel());
-            var liveList = GetSettingsListPanel();
-            if (liveList) UpdateListContent(liveList, true);
         };
-        searchInputExisting.SetPanelEvent("ontextentrychange", applySearchInputQuery);
-        searchInputExisting.SetPanelEvent("oninputsubmit", applySearchInputQuery);
+        searchInputExisting.SetPanelEvent("ontextentrychange", function() {
+            syncSearchQueryState();
+            ScheduleSettingsSearchRender();
+        });
+        // Enter/submit renders immediately (no point waiting out the debounce window).
+        searchInputExisting.SetPanelEvent("oninputsubmit", function() {
+            syncSearchQueryState();
+            FlushSettingsSearchRender();
+        });
         var searchClearExisting = searchWrapExisting.FindChildTraverse("SettingsSearchClear");
         if (!searchClearExisting) {
             searchClearExisting = $.CreatePanel("Button", searchWrapExisting, "SettingsSearchClear");
@@ -23082,6 +23123,7 @@ $.BuildUI = function() {
         searchClearExisting.SetPanelEvent("onactivate", function() {
             var rootPanel = $.GetContextPanel();
             ClearSettingsSearchQuery(rootPanel);
+            CancelSettingsSearchRender();
             var liveList = GetSettingsListPanel();
             if (liveList) UpdateListContent(liveList, true);
         });
