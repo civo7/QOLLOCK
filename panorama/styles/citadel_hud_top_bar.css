@@ -551,7 +551,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	horizontal-align: center;
 	margin-left: -40px !important;
 	y: 41px;
-	x: 58px;
+	x: 57px;
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
 }
 
