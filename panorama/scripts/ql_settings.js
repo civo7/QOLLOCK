@@ -405,7 +405,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
     "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
     "HUD / Player Stats|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
-    "HUD|Player Stats": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
+    "HUD|Player Stats": "Reposition the active player stats panel left/right with X/Y offsets, or hide it — separately for normal play and the scoreboard/TAB view.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
@@ -510,7 +510,7 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
     "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
-    "HUD|Player Stats": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
+    "HUD|Player Stats": "Reposition the active player stats panel left/right with X/Y offsets, or hide it — separately for normal play and the scoreboard/TAB view.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -571,6 +571,8 @@ const SETTING_PERF_IMPACT_TIERS = {
     STATS_POSITION_SIDE: "low",
     STATS_POSITION_X_OFFSET: "low",
     STATS_POSITION_Y_OFFSET: "low",
+    STATS_POSITION_HIDE_NORMAL: "low",
+    STATS_POSITION_HIDE_SCOREBOARD: "low",
     ENABLE_BETTER_UNSECURED: "low",
     ENABLE_BETTER_UNSECURED_SHOW_ICON: "low",
     ENABLE_BETTER_UNSECURED_SHOW_TEXT: "low",
@@ -21284,10 +21286,12 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Player Stats", "ENABLE_STATS_POSITION", "Move the active stats panel (and the detailed TAB view) to the left or right side, with fine X/Y offsets.", function(sectionParent) {
+        CreateAnimatedInlineToggleSection(list, "Player Stats", "ENABLE_STATS_POSITION", "Reposition or hide the active player stats panel (and its detailed TAB view).", function(sectionParent) {
             CreateRow(sectionParent, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
             CreateSliderRow(sectionParent, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
             CreateSliderRow(sectionParent, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+            CreateRow(sectionParent, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
+            CreateRow(sectionParent, "Hide on scoreboard (TAB)", "STATS_POSITION_HIDE_SCOREBOARD", "toggle", null, null, null, null, "Hide the detailed stats list that appears while the scoreboard / TAB is held.");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Chat", "ENABLE_CHAT", "", function(sectionParent) {

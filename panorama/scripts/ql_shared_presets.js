@@ -1701,13 +1701,17 @@ var CROSSHAIR_STATS_SCHEMA_FIELDS = [
     { key: "CROSSHAIR_STATS_SCALE", min: 50, max: 200, step: 1 },
     { key: "CROSSHAIR_STATS_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
-// 3.1.7: Player Stats Position — move the #hudPlayerStats panel (active + TAB-detailed view)
-// left/right with X/Y offsets. STATS_POSITION_SIDE: 0=left (default), 1=right.
+// 3.1.7: Player Stats — move the #hudPlayerStats panel (active + TAB-detailed view)
+// left/right with X/Y offsets, and optionally hide either view. STATS_POSITION_SIDE: 0=left
+// (default), 1=right. HIDE_* keys move the panel offscreen (NOT collapse) so the Crosshair
+// Active Stats mirror keeps reading it; NORMAL = compact view, SCOREBOARD = TAB-detailed view.
 var STATS_POSITION_SCHEMA_FIELDS = [
     { key: "ENABLE_STATS_POSITION", min: 0, max: 1, step: 1 },
     { key: "STATS_POSITION_SIDE", min: 0, max: 1, step: 1 },
     { key: "STATS_POSITION_X_OFFSET", min: -500, max: 500, step: 5 },
-    { key: "STATS_POSITION_Y_OFFSET", min: -500, max: 500, step: 5 }
+    { key: "STATS_POSITION_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "STATS_POSITION_HIDE_NORMAL", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_HIDE_SCOREBOARD", min: 0, max: 1, step: 1 }
 ];
 var QOL_COMPACT_SCHEMA_3_1_7= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
@@ -2294,6 +2298,8 @@ var QOL_DEFAULT_CONFIG = {
         STATS_POSITION_SIDE: 0,
         STATS_POSITION_X_OFFSET: 0,
         STATS_POSITION_Y_OFFSET: 0,
+        STATS_POSITION_HIDE_NORMAL: 0,
+        STATS_POSITION_HIDE_SCOREBOARD: 0,
         ENABLE_COMBAT_STATUS: 0,
         COMBAT_STATUS_SCALE: 100,
         COMBAT_STATUS_X_OFFSET: 0,
