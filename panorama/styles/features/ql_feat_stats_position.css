@@ -1,0 +1,32 @@
+/* QOLLOCK feature: Player Stats Position — dock the active player stats block (#hudPlayerStats,
+   which also shows the detailed TAB list) to the RIGHT instead of vanilla left.
+
+   The runtime (ql_feat_statsposition.js) toggles the .QolStatsRight class on #hudPlayerStats; the
+   X/Y nudge stays inline. The vanilla wrapper is a fixed 280px box, so just docking it right leaves
+   the rows (and their backgrounds/numbers) anchored to the LEFT inside that box — it looks
+   left-handed even though the box sits on the right. The fix: shrink the wrapper to its content
+   (width: fit-children) and dock it right, so the whole block — pills, icons, numbers — hugs the
+   right wall. The rows are also made fit-children to break the circular sizing (a fit-children
+   parent with full-width children would collapse). */
+
+#hudPlayerStats.QolStatsRight
+{
+    horizontal-align: right;
+    width: fit-children;
+}
+
+#hudPlayerStats.QolStatsRight .miniModifier
+{
+    horizontal-align: right;
+    width: fit-children;
+}
+
+#hudPlayerStats.QolStatsRight .miniModifierCore
+{
+    horizontal-align: right;
+}
+
+#hudPlayerStats.QolStatsRight .movementSpeedContainer
+{
+    horizontal-align: right;
+}

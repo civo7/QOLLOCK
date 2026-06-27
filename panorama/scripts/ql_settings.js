@@ -9730,6 +9730,28 @@ function EnsureZipBoostPreviewPanel() {
     return panel;
 }
 
+// Build one preview row that is a structural clone of an in-game crosshair-overlay row, using the
+// overlay's own classes (styled via the ql_feat_crosshair_stats import in ql_settings.css) so it
+// matches pixel-for-pixel: a dark pill with a colored left accent, a property icon, and a value.
+function CreateCrosshairStatsPreviewStatRow(box, idSuffix, iconClass, valueText, isDebuff) {
+    var row = box.FindChildTraverse("CrosshairStatsPreviewRow_" + idSuffix);
+    if (!row) {
+        row = $.CreatePanel("Panel", box, "CrosshairStatsPreviewRow_" + idSuffix);
+        row.AddClass("QOLCrosshairStatRow");
+        row.AddClass(isDebuff ? "isDebuff" : "isBuff");
+        var icon = $.CreatePanel("Panel", row, "CrosshairStatsPreviewIcon_" + idSuffix);
+        icon.AddClass("QOLCrosshairStatIcon");
+        icon.AddClass("statIcon");
+        icon.AddClass("PropertiesIcon");
+        icon.AddClass(iconClass);
+        var value = $.CreatePanel("Label", row, "CrosshairStatsPreviewValue_" + idSuffix);
+        value.AddClass("QOLCrosshairStatValue");
+        value.text = valueText;
+    }
+    SetPanelNonInteractive(row);
+    return row;
+}
+
 function EnsureCrosshairStatsPreviewPanel() {
     if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
         SetPanelNonInteractive(gCrosshairStatsPreviewPanel);
@@ -9755,20 +9777,11 @@ function EnsureCrosshairStatsPreviewPanel() {
         label = $.CreatePanel("Label", box, "CrosshairStatsPreviewLabel");
         label.text = LocalizeSettingsText("ACTIVE STATS", true);
     }
-    var debuffRow = panel.FindChildTraverse("CrosshairStatsPreviewDebuff");
-    if (!debuffRow) {
-        debuffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewDebuff");
-        debuffRow.AddClass("CrosshairStatsPreviewRow");
-        debuffRow.AddClass("debuff");
-        debuffRow.text = "FIRE RATE  −15%";
-    }
-    var buffRow = panel.FindChildTraverse("CrosshairStatsPreviewBuff");
-    if (!buffRow) {
-        buffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewBuff");
-        buffRow.AddClass("CrosshairStatsPreviewRow");
-        buffRow.AddClass("buff");
-        buffRow.text = "BULLET RESIST  +20%";
-    }
+    // Real copy of the in-game overlay rows (ql_feat_crosshairstats.js builds the same structure):
+    //   .QOLCrosshairStatRow[.isDebuff|.isBuff] > .QOLCrosshairStatIcon.statIcon.PropertiesIcon.<Stat> + .QOLCrosshairStatValue
+    CreateCrosshairStatsPreviewStatRow(box, "fireRate",     "FireRate",     "−15%", true);
+    CreateCrosshairStatsPreviewStatRow(box, "moveSpeed",    "MoveSpeed",    "−1.8 m/s", true);
+    CreateCrosshairStatsPreviewStatRow(box, "bulletResist", "ResistBullet", "+20%", false);
     SetPanelNonInteractive(panel);
     SetPanelNonInteractive(box);
     SetPanelNonInteractive(label);

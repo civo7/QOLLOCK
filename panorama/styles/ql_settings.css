@@ -1,5 +1,11 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
+/* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
+   rows are a 1:1 copy of the in-game overlay — same pill, accent border, property icon + value.
+   This pulls in .QOLCrosshairStatRow/.QOLCrosshairStatIcon/.QOLCrosshairStatValue and the property
+   icon backgrounds (ql_feat_crosshair_stats.css itself @imports ability_property_icons). */
+@import url("s2r://panorama/styles/features/ql_feat_crosshair_stats.vcss_c");
+
 @keyframes 'PulseWhiteTitle'
 {
 	0%
