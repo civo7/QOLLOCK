@@ -404,8 +404,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Item Cooldowns|Advanced Filter": "Decide what style of item to display the cooldown of.",
     "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
     "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
-    "HUD / Player Stats|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
-    "HUD|Player Stats": "Reposition the active player stats panel left/right with X/Y offsets, or hide it — separately for normal play and the scoreboard/TAB view.",
+    "UI / Player Stats|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
+    "HUD|Player Stats": "Customize the position of the Player Stats panel, or hide it completely.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
@@ -510,7 +510,7 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
     "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
-    "HUD|Player Stats": "Reposition the active player stats panel left/right with X/Y offsets, or hide it — separately for normal play and the scoreboard/TAB view.",
+    "UI|Player Stats": "Customize the position of the Player Stats panel, or hide it completely.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -21289,7 +21289,7 @@ function RenderCurrentTabContent(list) {
         // No master on/off toggle: the section is always open and driven purely by its controls
         // (Side/offsets default to vanilla, hides default off). ENABLE_STATS_POSITION stays in the
         // schema as a default-on no-op for back-compat but is no longer read or shown.
-        CreateSectionTitle(list, "Player Stats");
+        CreateSectionTitle(list, "Player Stats", "ENABLE_STATS_POSITION");
         CreateRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
         CreateSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
         CreateSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
