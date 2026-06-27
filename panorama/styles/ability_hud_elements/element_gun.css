@@ -6,6 +6,23 @@
 	visibility: visible;
 }
 
+/*
+ * Keep the magazine ring hidden for the whole reload so it doesn't blink.
+ * The base HUD only collapses #clip_status while BOTH `attack_delayed` and
+ * `reloading` are set (.attack_delayed.reloading #clip_status). During a
+ * per-bullet (shotgun) reload `reloading` stays on but `attack_delayed`
+ * cycles once per shell, so between shells the base collapse lifts and our
+ * `#clip_status { visibility: visible }` override pops the ring back — the
+ * rotated ring flickers in and out. Collapsing on `reloading` alone (which is
+ * continuous across the whole reload) keeps it steadily hidden, matching the
+ * vanilla "ring hidden while reloading" behaviour.
+ */
+.reloading #clip_status
+{
+	opacity: 0;
+	visibility: collapse;
+}
+
 .hide_ammo_custom #clip_status
 {
 	opacity: 0 !important;

@@ -41,13 +41,22 @@
         var scaledMaxWidthPx = Math.max(32, Math.round(50 * totalFactor));
         var scaledMaxMarginLeftPx = Math.max(0, Math.round(2 * totalFactor));
 
+        // Empty ammoTextColor means "default": clear the inline override so the
+        // stylesheet color applies again. Assigning "" via SetStyleSafe does NOT
+        // reliably clear an inline color in Panorama — ClearStyleSafe (delete →
+        // null → "" cascade) does. (Fixes: reverting to Default left old color stuck.)
+        function applyAmmoTextColor(label) {
+            if (ammoTextColor) Utils.SetStyleSafe(label, "color", ammoTextColor);
+            else Utils.ClearStyleSafe(label, "color");
+        }
+
         var ammoValueLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo") || [];
         for (var ammoIdx = 0; ammoIdx < ammoValueLabels.length; ammoIdx++) {
             var ammoValueLabel = ammoValueLabels[ammoIdx];
             if (!ammoValueLabel) continue;
             ammoValueLabel.style.fontSize = String(scaledCurrentFontPx) + "px";
             ammoValueLabel.style.width = String(scaledValueWidthPx) + "px";
-            Utils.SetStyleSafe(ammoValueLabel, "color", ammoTextColor || "");
+            applyAmmoTextColor(ammoValueLabel);
         }
         var ammoMaxLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
         for (var maxIdx = 0; maxIdx < ammoMaxLabels.length; maxIdx++) {
@@ -56,13 +65,13 @@
             ammoMaxLabel.style.fontSize = String(scaledTotalFontPx) + "px";
             ammoMaxLabel.style.width = String(scaledMaxWidthPx) + "px";
             ammoMaxLabel.style.marginLeft = String(scaledMaxMarginLeftPx) + "px";
-            Utils.SetStyleSafe(ammoMaxLabel, "color", ammoTextColor || "");
+            applyAmmoTextColor(ammoMaxLabel);
         }
         var ammoInfiniteLabels = ammoPanel.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
         for (var infiniteIdx = 0; infiniteIdx < ammoInfiniteLabels.length; infiniteIdx++) {
             var ammoInfiniteLabel = ammoInfiniteLabels[infiniteIdx];
             if (!ammoInfiniteLabel) continue;
-            Utils.SetStyleSafe(ammoInfiniteLabel, "color", ammoTextColor || "");
+            applyAmmoTextColor(ammoInfiniteLabel);
         }
 
         ammoPanel.style.preTransformScale2d = "1.00, 1.00";
@@ -82,19 +91,59 @@
         return panel;
     }
 
+    // The clip_status container holds the magazine ring (concentric
+    // CircularProgressBar children). Putting a `transform` on the *container*
+    // promotes it to a compositing layer and makes the overlapping ammo-digit
+    // sibling (#ammo_panel) vanish. Rotating the children instead is visually
+    // identical — every ring bar is center-aligned, so rotating each around its
+    // own centre rotates the whole ring — while leaving the container (and the
+    // digits) untouched.
+    function getAmmoClipRingPanels(root) {
+        var clipStatus = getAmmoClipStatus(root);
+        if (!clipStatus) return null;
+        var children = (clipStatus.Children && clipStatus.Children()) || [];
+        var rings = [];
+        for (var i = 0; i < children.length; i++) {
+            if (Utils.IsPanelValid(children[i])) rings.push(children[i]);
+        }
+        return rings.length ? rings : null;
+    }
+
     function ApplyAmmoClipAngle(root, cfg) {
         var angle = NAC(cfg && cfg.AMMO_CLIP_ANGLE);
         var angleSig = String(angle);
-        var clipStatus = getAmmoClipStatus(root);
-        if (clipStatus) {
-            if (State.ammoClipAngleStyleSig !== angleSig) {
-                // Negative rotateZ → counter-clockwise rotation.
-                Utils.SetStyleSafe(clipStatus, "transform", "rotateZ(-" + angleSig + "deg)");
-                State.ammoClipAngleStyleSig = angleSig;
-            }
-        } else {
+        var rings = getAmmoClipRingPanels(root);
+        if (!rings) {
+            // clip_status not resolved yet — drop the sig so we re-apply once it appears.
             State.ammoClipAngleStyleSig = "";
+            return;
         }
+        // Re-apply when the angle changes OR the engine rebuilt/re-showed the ring
+        // children (weapon swap, reload, respawn reset them to the stylesheet's
+        // rotateZ(0deg)). Folding the ring count into the signature forces a
+        // re-apply on a replaced child set instead of silently keeping stale state.
+        var sig = angleSig + "|" + rings.length;
+        if (State.ammoClipAngleStyleSig === sig) return;
+
+        // Defensive: earlier builds wrote the rotation onto the #clip_status
+        // CONTAINER. Any transform there promotes it to a compositing layer and
+        // hides the overlapping #ammo_panel digits, so the ammo counter vanishes
+        // — even at angle 0 (rotateZ(0deg) still promotes). Clear any such
+        // orphaned inline transform so the digits stay visible.
+        var clipStatus = getAmmoClipStatus(root);
+        if (clipStatus) Utils.ClearStyleSafe(clipStatus, "transform");
+
+        for (var i = 0; i < rings.length; i++) {
+            if (angle === 0) {
+                // Default: no rotation. Clear the override rather than write an
+                // identity transform, so no needless compositing layer lingers.
+                Utils.ClearStyleSafe(rings[i], "transform");
+            } else {
+                // Negative rotateZ → counter-clockwise rotation.
+                Utils.SetStyleSafe(rings[i], "transform", "rotateZ(-" + angleSig + "deg)");
+            }
+        }
+        State.ammoClipAngleStyleSig = sig;
     }
 
     // ── Update ──
