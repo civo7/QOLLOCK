@@ -160,7 +160,6 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
-    ENABLE_CROSSHAIR_STATS: "Predi",
     ENABLE_MIN_SOULS: "BreadRollius",
     ENABLE_UNSPENT_SOULS: "BreadRollius",
     ENABLE_OBJ_DMG: "Waltee",
@@ -226,6 +225,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
 const SETTING_CREATED_BY_BY_LABEL = {
 };
 const SECTION_CREATED_BY_BY_TITLE = {
+    "Active Stats": "Predi"
 };
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ALT_ZOOM_DRAW_OVER_UI": "Draws the minimap over all other UI elements for improved visibility.",

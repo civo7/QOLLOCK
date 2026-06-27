@@ -132,6 +132,38 @@
         return 0;
     }
 
+    // Classify by WHO applied the modifier. Each container's #casterList holds caster panels
+    // tagged `.enemy` / `.friend` (game's casterSnippet). Caster identity is set from the
+    // source entity and is correct regardless of the scoreboard/detail-view recompute bug
+    // that flips the displayed value/sign — so an enemy-applied modifier is a debuff even
+    // when the bottom-left panel wrongly paints it green. Returns -1 (enemy/debuff),
+    // +1 (friend/buff), 0 (no caster info).
+    function ClassifyByCaster(container) {
+        if (!IsPanelValid(container)) return 0;
+        var rootNode = null;
+        try { rootNode = container.FindChildTraverse("casterList"); } catch(e) {}
+        if (!IsPanelValid(rootNode)) rootNode = container;
+        var queue = [];
+        try { if (rootNode.Children) queue = (rootNode.Children() || []).slice(); } catch(e) { return 0; }
+        var guard = 0, sawFriend = false;
+        while (queue.length && guard < VALUE_BFS_LIMIT) {
+            var node = queue.shift();
+            guard++;
+            if (!node) continue;
+            try {
+                if (node.BHasClass && node.BHasClass("enemy")) return -1; // enemy caster => debuff
+                if (node.BHasClass && node.BHasClass("friend")) sawFriend = true;
+            } catch(e) {}
+            try {
+                if (node.Children) {
+                    var kids = node.Children() || [];
+                    for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
+                }
+            } catch(e) {}
+        }
+        return sawFriend ? 1 : 0;
+    }
+
     // ── Overlay construction ──
     function EnsureOverlay(root) {
         var st = EnsureState();
@@ -245,10 +277,13 @@
             if (!active) { contentParts.push(""); continue; }
 
             valueText = ReadModifierValueText(container);
-            // Determine buff/debuff. Prefer the value's own sign (scoreboard-bug-proof) for
-            // signed-percentage stats; fall back to the game class for absolute stats; default
-            // to buff when nothing is conclusive.
-            var cls = def.signed ? ClassifyBySign(valueText) : 0;
+            // Determine buff/debuff with scoreboard-bug-proof signals first:
+            //   1) caster identity (enemy => debuff, friend => buff) — semantic, never flips;
+            //   2) the value's own sign for signed-percentage stats;
+            //   3) the game's isNegative/isPositive class (last resort; wrong off-scoreboard);
+            //   4) default to buff when nothing is conclusive.
+            var cls = ClassifyByCaster(container);
+            if (cls === 0 && def.signed) cls = ClassifyBySign(valueText);
             if (cls === 0) cls = ClassifyByGameClass(container);
             if (cls === 0) cls = 1;
             var isNeg = (cls < 0);
