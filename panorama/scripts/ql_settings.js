@@ -400,10 +400,13 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Item Cooldowns|Optimize Filters": "Only download the filter file of the filter you want, nothing else.",
     "Crosshair / Item Cooldowns|Advanced Mode": "Switch to the advanced item cooldown mode with in-menu filters.",
     "Crosshair / Item Cooldowns|Advanced Filter": "Decide what style of item to display the cooldown of.",
+    "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
+    "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
     "Crosshair / Reloading|Icon": "The icon that replaces your crosshair when reloading.",
+    "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -502,6 +505,7 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
 const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
+    "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -551,6 +555,13 @@ const SETTING_PERF_IMPACT_TIERS = {
     DISABLE_SHOP_BLUE: "none",
     ENABLE_ALT_ZOOM: "low",
     ENABLE_AMMO_STATUS: "low",
+    ENABLE_CROSSHAIR_STATS: "medium",
+    CROSSHAIR_STATS_SHOW_DEBUFFS: "low",
+    CROSSHAIR_STATS_SHOW_BUFFS: "low",
+    CROSSHAIR_STATS_X_OFFSET: "low",
+    CROSSHAIR_STATS_Y_OFFSET: "low",
+    CROSSHAIR_STATS_SCALE: "low",
+    CROSSHAIR_STATS_OPACITY: "low",
     ENABLE_BETTER_UNSECURED: "low",
     ENABLE_BETTER_UNSECURED_SHOW_ICON: "low",
     ENABLE_BETTER_UNSECURED_SHOW_TEXT: "low",
@@ -994,7 +1005,7 @@ const ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
 const SETTING_ROW_RESET_KEYS_ATTR = "QOL_ROW_RESET_KEYS";
 const RUNTIME_ROW_KIND_ATTR = "QOL_RUNTIME_ROW_KIND";
 const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
-const MOD_VERSION = 31;
+const MOD_VERSION = 32;
 // QOL_SCHEMA_SEMVER always available — ql_shared_presets.js loads first
 const MOD_DISPLAY_VERSION = QOL_SCHEMA_SEMVER;
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
@@ -1071,6 +1082,12 @@ var gZipBoostPreviewLabel = null;
 var gZipBoostPreviewHideToken = 0;
 var gZipBoostPreviewBaseX = -520;
 var gZipBoostPreviewBaseY = 20;
+var gCrosshairStatsPreviewPanel = null;
+var gCrosshairStatsPreviewBox = null;
+var gCrosshairStatsPreviewLabel = null;
+var gCrosshairStatsPreviewHideToken = 0;
+var gCrosshairStatsPreviewBaseX = 130;
+var gCrosshairStatsPreviewBaseY = 0;
 var gUnsecuredSoulsPreviewPanel = null;
 var gUnsecuredSoulsPreviewLabel = null;
 var gUnsecuredSoulsPreviewHideToken = 0;
@@ -9699,6 +9716,55 @@ function EnsureZipBoostPreviewPanel() {
     return panel;
 }
 
+function EnsureCrosshairStatsPreviewPanel() {
+    if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+        SetPanelNonInteractive(gCrosshairStatsPreviewPanel);
+        SetPanelNonInteractive(gCrosshairStatsPreviewBox);
+        SetPanelNonInteractive(gCrosshairStatsPreviewLabel);
+        return gCrosshairStatsPreviewPanel;
+    }
+    var root = $.GetContextPanel();
+    if (!root) return null;
+
+    var panel = root.FindChildTraverse("CrosshairStatsPreview");
+    if (!panel) {
+        panel = $.CreatePanel("Panel", root, "CrosshairStatsPreview");
+    }
+    if (!panel) return null;
+
+    var box = panel.FindChildTraverse("CrosshairStatsPreviewBox");
+    if (!box) {
+        box = $.CreatePanel("Panel", panel, "CrosshairStatsPreviewBox");
+    }
+    var label = panel.FindChildTraverse("CrosshairStatsPreviewLabel");
+    if (!label) {
+        label = $.CreatePanel("Label", box, "CrosshairStatsPreviewLabel");
+        label.text = LocalizeSettingsText("ACTIVE STATS", true);
+    }
+    var debuffRow = panel.FindChildTraverse("CrosshairStatsPreviewDebuff");
+    if (!debuffRow) {
+        debuffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewDebuff");
+        debuffRow.AddClass("CrosshairStatsPreviewRow");
+        debuffRow.AddClass("debuff");
+        debuffRow.text = "− FIRE RATE";
+    }
+    var buffRow = panel.FindChildTraverse("CrosshairStatsPreviewBuff");
+    if (!buffRow) {
+        buffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewBuff");
+        buffRow.AddClass("CrosshairStatsPreviewRow");
+        buffRow.AddClass("buff");
+        buffRow.text = "+ RESIST";
+    }
+    SetPanelNonInteractive(panel);
+    SetPanelNonInteractive(box);
+    SetPanelNonInteractive(label);
+
+    gCrosshairStatsPreviewPanel = panel;
+    gCrosshairStatsPreviewBox = box;
+    gCrosshairStatsPreviewLabel = label;
+    return panel;
+}
+
 function EnsureUnsecuredSoulsPreviewPanel() {
     if (gUnsecuredSoulsPreviewPanel && gUnsecuredSoulsPreviewPanel.IsValid && gUnsecuredSoulsPreviewPanel.IsValid()) {
         SetPanelNonInteractive(gUnsecuredSoulsPreviewPanel);
@@ -10295,6 +10361,14 @@ function IsZipBoostPreviewConfig(configId) {
         configId === "ZIP_BOOST_SCALE";
 }
 
+function IsCrosshairStatsPreviewConfig(configId) {
+    return configId === "ENABLE_CROSSHAIR_STATS" ||
+        configId === "CROSSHAIR_STATS_X_OFFSET" ||
+        configId === "CROSSHAIR_STATS_Y_OFFSET" ||
+        configId === "CROSSHAIR_STATS_SCALE" ||
+        configId === "CROSSHAIR_STATS_OPACITY";
+}
+
 function IsUnsecuredSoulsPreviewConfig(configId) {
     return configId === "ENABLE_UNSECURED_SOUL_TIMER" ||
         configId === "UNSECURED_SOUL_TIMER_X_OFFSET" ||
@@ -10387,6 +10461,9 @@ function HideMinimapSizePreview() {
     if (gZipBoostPreviewPanel && gZipBoostPreviewPanel.IsValid && gZipBoostPreviewPanel.IsValid()) {
         gZipBoostPreviewPanel.RemoveClass("Visible");
     }
+    if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+        gCrosshairStatsPreviewPanel.RemoveClass("Visible");
+    }
     if (gUnsecuredSoulsPreviewPanel && gUnsecuredSoulsPreviewPanel.IsValid && gUnsecuredSoulsPreviewPanel.IsValid()) {
         gUnsecuredSoulsPreviewPanel.RemoveClass("Visible");
     }
@@ -10449,6 +10526,17 @@ function ScheduleHideZipBoostPreview(delaySec) {
         if (token !== gZipBoostPreviewHideToken) return;
         if (gZipBoostPreviewPanel && gZipBoostPreviewPanel.IsValid && gZipBoostPreviewPanel.IsValid()) {
             gZipBoostPreviewPanel.RemoveClass("Visible");
+        }
+    });
+}
+
+function ScheduleHideCrosshairStatsPreview(delaySec) {
+    gCrosshairStatsPreviewHideToken++;
+    var token = gCrosshairStatsPreviewHideToken;
+    $.Schedule(delaySec, function() {
+        if (token !== gCrosshairStatsPreviewHideToken) return;
+        if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+            gCrosshairStatsPreviewPanel.RemoveClass("Visible");
         }
     });
 }
@@ -10612,6 +10700,41 @@ function ShowZipBoostPreview() {
     ScheduleHideZipBoostPreview(1.2);
 }
 
+function ShowCrosshairStatsPreview() {
+    if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
+        HideMinimapSizePreview();
+        return;
+    }
+    var panel = EnsureCrosshairStatsPreviewPanel();
+    if (!panel || !gCrosshairStatsPreviewBox || !gCrosshairStatsPreviewLabel) return;
+
+    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
+    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
+
+    var xOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_X_OFFSET) || 0);
+    var yOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_Y_OFFSET) || 0);
+    var scale = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_SCALE) || 100);
+    var opacity = Number(MOD_CONFIG.CROSSHAIR_STATS_OPACITY);
+    if (isNaN(opacity)) opacity = 1;
+
+    if (xOffset < -500) xOffset = -500;
+    if (xOffset > 500) xOffset = 500;
+    if (yOffset < -500) yOffset = -500;
+    if (yOffset > 500) yOffset = 500;
+    if (scale < 50) scale = 50;
+    if (scale > 200) scale = 200;
+    if (opacity < 0) opacity = 0;
+    if (opacity > 1) opacity = 1;
+
+    panel.style.marginLeft = (gCrosshairStatsPreviewBaseX + xOffset) + "px";
+    panel.style.marginTop = (gCrosshairStatsPreviewBaseY + yOffset) + "px";
+    gCrosshairStatsPreviewBox.style.preTransformScale2d = (scale / 100).toFixed(2);
+    gCrosshairStatsPreviewBox.style.opacity = opacity.toFixed(2);
+    gCrosshairStatsPreviewLabel.text = LocalizeSettingsText("ACTIVE STATS", true) + " " + scale + "%";
+    panel.AddClass("Visible");
+    ScheduleHideCrosshairStatsPreview(1.2);
+}
+
 function ShowUnsecuredSoulsPreview() {
     if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
         HideMinimapSizePreview();
@@ -10662,6 +10785,9 @@ function ShowConfigPreviewForConfigId(configId) {
     }
     if (IsZipBoostPreviewConfig(configId)) {
         ShowZipBoostPreview();
+    }
+    if (IsCrosshairStatsPreviewConfig(configId)) {
+        ShowCrosshairStatsPreview();
     }
     if (IsUnsecuredSoulsPreviewConfig(configId)) {
         ShowUnsecuredSoulsPreview();
@@ -20917,6 +21043,15 @@ function RenderCurrentTabContent(list) {
                 refreshListOnChange: true,
                 description: "Switch to the advanced item cooldown mode with in-menu filters."
             }
+        });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Active Stats", "ENABLE_CROSSHAIR_STATS", "Show active buffs/debuffs (firerate, slow, antiheal...) vertically next to the crosshair", function(sectionParent) {
+            CreateRow(sectionParent, "Show Debuffs", "CROSSHAIR_STATS_SHOW_DEBUFFS", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Show Buffs", "CROSSHAIR_STATS_SHOW_BUFFS", "toggle", null, null, null, null);
+            CreateSliderRow(sectionParent, "Scale", "CROSSHAIR_STATS_SCALE", "size_50_200");
+            CreateSliderRow(sectionParent, "Opacity", "CROSSHAIR_STATS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "CROSSHAIR_STATS_X_OFFSET", "offset_n500_500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "CROSSHAIR_STATS_Y_OFFSET", "offset_n500_500");
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {

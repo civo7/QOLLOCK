@@ -451,6 +451,80 @@
 	hittestchildren: false;
 }
 
+#CrosshairStatsPreview
+{
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: middle;
+	margin-left: 130px;
+	margin-top: 0px;
+	opacity: 0;
+	visibility: collapse;
+	transform: translateY(8px);
+	transition-property: opacity, transform, visibility;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-out;
+	z-index: 5200;
+	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
+}
+
+#CrosshairStatsPreview.Visible
+{
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0px);
+}
+
+#CrosshairStatsPreviewBox
+{
+	flow-children: down;
+	padding: 8px 12px;
+	min-width: 120px;
+	border: 2px solid rgba(173, 226, 205, 0.82);
+	border-radius: 6px;
+	background-color: gradient( radial, 50% 50%, 0% 0%, 80% 80%, from( rgba(102, 204, 153, 0.18) ), to( rgba(102, 204, 153, 0.04) ) );
+	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
+	hittest: false;
+	hittestchildren: false;
+}
+
+#CrosshairStatsPreviewLabel
+{
+	horizontal-align: center;
+	text-align: center;
+	color: #cde5db;
+	font-size: 13px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	hittest: false;
+	hittestchildren: false;
+}
+
+.CrosshairStatsPreviewRow
+{
+	horizontal-align: center;
+	text-align: center;
+	margin-top: 4px;
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	hittest: false;
+	hittestchildren: false;
+}
+
+.CrosshairStatsPreviewRow.debuff
+{
+	color: #ff8d8d;
+}
+
+.CrosshairStatsPreviewRow.buff
+{
+	color: #8ff19b;
+}
+
 #UnsecuredSoulsPreview
 {
 	ignore-parent-flow: true;
