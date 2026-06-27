@@ -225,7 +225,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
 const SETTING_CREATED_BY_BY_LABEL = {
 };
 const SECTION_CREATED_BY_BY_TITLE = {
-    "Active Stats": "Predi"
+    "Active Stats": "Predi",
+    "Stats Position": "Predi"
 };
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ALT_ZOOM_DRAW_OVER_UI": "Draws the minimap over all other UI elements for improved visibility.",
@@ -403,6 +404,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Item Cooldowns|Advanced Filter": "Decide what style of item to display the cooldown of.",
     "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
     "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
+    "HUD / Stats Position|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
+    "HUD|Stats Position": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
@@ -507,6 +510,7 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
     "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
+    "HUD|Stats Position": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -563,6 +567,10 @@ const SETTING_PERF_IMPACT_TIERS = {
     CROSSHAIR_STATS_Y_OFFSET: "low",
     CROSSHAIR_STATS_SCALE: "low",
     CROSSHAIR_STATS_OPACITY: "low",
+    ENABLE_STATS_POSITION: "low",
+    STATS_POSITION_SIDE: "low",
+    STATS_POSITION_X_OFFSET: "low",
+    STATS_POSITION_Y_OFFSET: "low",
     ENABLE_BETTER_UNSECURED: "low",
     ENABLE_BETTER_UNSECURED_SHOW_ICON: "low",
     ENABLE_BETTER_UNSECURED_SHOW_TEXT: "low",
@@ -852,6 +860,11 @@ const BRIDGE_BUFF_FILTER_OPTIONS = [
 const RECENT_PURCHASE_REPOSITION_OPTIONS = [
     { label: "Rejuvenator", key: "RECENT_PURCHASES_QUICK_REJUV" },
     { label: "Scoreboard", key: "RECENT_PURCHASES_QUICK_SCOREBOARD" }
+];
+// Stats Position side picker — mutually exclusive Left/Right bound to a single config key.
+const STATS_POSITION_SIDE_OPTIONS = [
+    { label: "Left", value: 0 },
+    { label: "Right", value: 1 }
 ];
 const DEFAULT_HERO_OPTIONS = [
     "hero_inferno",
@@ -21241,6 +21254,12 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
             CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
+        CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Stats Position", "ENABLE_STATS_POSITION", "Move the active stats panel (and the detailed TAB view) to the left or right side, with fine X/Y offsets.", function(sectionParent) {
+            CreateRow(sectionParent, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
+            CreateSliderRow(sectionParent, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
+            CreateSliderRow(sectionParent, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+        });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Chat", "ENABLE_CHAT", "", function(sectionParent) {
             CreateSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");

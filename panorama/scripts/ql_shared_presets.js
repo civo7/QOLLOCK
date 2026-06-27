@@ -1701,9 +1701,20 @@ var CROSSHAIR_STATS_SCHEMA_FIELDS = [
     { key: "CROSSHAIR_STATS_SCALE", min: 50, max: 200, step: 1 },
     { key: "CROSSHAIR_STATS_OPACITY", min: 0, max: 1, step: 0.05 }
 ];
+// 3.1.7: Player Stats Position — move the #hudPlayerStats panel (active + TAB-detailed view)
+// left/right with X/Y offsets. STATS_POSITION_SIDE: 0=left (default), 1=right.
+var STATS_POSITION_SCHEMA_FIELDS = [
+    { key: "ENABLE_STATS_POSITION", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_SIDE", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_X_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "STATS_POSITION_Y_OFFSET", min: -500, max: 500, step: 5 }
+];
 var QOL_COMPACT_SCHEMA_3_1_7= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
-    QOL_COMPACT_SCHEMA_3_1_6,
-    CROSSHAIR_STATS_SCHEMA_FIELDS
+    QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+        QOL_COMPACT_SCHEMA_3_1_6,
+        CROSSHAIR_STATS_SCHEMA_FIELDS
+    ),
+    STATS_POSITION_SCHEMA_FIELDS
 );
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
@@ -1736,6 +1747,8 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              urn spawn timer + ammo magazine visualiser rotation.
 // 3.1.7        Crosshair Active Stats: mirror active buffs/debuffs vertically by
 //              the crosshair (master toggle + debuff/buff filters + offset/scale/opacity).
+//              + Player Stats Position: move #hudPlayerStats (active + TAB-detailed view)
+//              left/right with X/Y offsets (master toggle + side + offsets).
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2277,6 +2290,10 @@ var QOL_DEFAULT_CONFIG = {
         CROSSHAIR_STATS_Y_OFFSET: 0,
         CROSSHAIR_STATS_SCALE: 100,
         CROSSHAIR_STATS_OPACITY: 1.0,
+        ENABLE_STATS_POSITION: 1,
+        STATS_POSITION_SIDE: 0,
+        STATS_POSITION_X_OFFSET: 0,
+        STATS_POSITION_Y_OFFSET: 0,
         ENABLE_COMBAT_STATUS: 0,
         COMBAT_STATUS_SCALE: 100,
         COMBAT_STATUS_X_OFFSET: 0,
