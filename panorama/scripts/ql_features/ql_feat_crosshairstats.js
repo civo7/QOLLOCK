@@ -20,24 +20,31 @@
     var BASE_Y = 0;
     var VALUE_BFS_LIMIT = 200;
 
-    // Game container id -> { key, icon } where `icon` is the PropertiesIcon class variant
-    // used by ability_property_icons.vcss_c (spelling mirrors the game XML exactly).
+    // Game container id -> { key, icon, signed } where `icon` is the PropertiesIcon class
+    // variant used by ability_property_icons.vcss_c (spelling mirrors the game XML exactly).
+    //
+    // `signed: true`  -> the value label is a signed percentage delta (e.g. "-15%", "+20%").
+    //                    For these we classify buff/debuff straight from the sign of the value,
+    //                    which is ALWAYS correct regardless of the scoreboard/detail-view bug
+    //                    that flips the game's isNegative/isPositive classes off-scoreboard.
+    // `signed: false` -> the value is an absolute reading (m/s, /sec, raw number) with no usable
+    //                    sign, so we fall back to the game's class (best-effort) for those.
     var STAT_DEFS = [
-        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate" },
-        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed" },
-        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation" },
-        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet" },
-        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit" },
-        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets" },
-        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit" },
-        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon" },
-        { id: "spiritContainer",          key: "spirit",        icon: "Spirit" },
-        { id: "abilityRangeContainer",    key: "range",         icon: "Range" },
-        { id: "abilityDurationContainer", key: "duration",      icon: "Duration" },
-        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification" },
-        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize" },
-        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen" },
-        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge" }
+        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                signed: true },
+        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               signed: false },
+        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation",        signed: true },
+        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet",            signed: true },
+        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit",            signed: true },
+        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets", signed: true },
+        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit",    signed: true },
+        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon",            signed: true },
+        { id: "spiritContainer",          key: "spirit",        icon: "Spirit",                  signed: false },
+        { id: "abilityRangeContainer",    key: "range",         icon: "Range",                   signed: true },
+        { id: "abilityDurationContainer", key: "duration",      icon: "Duration",                signed: true },
+        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification",     signed: true },
+        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize",            signed: false },
+        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen",             signed: false },
+        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge",               signed: true }
     ];
 
     function EnsureState() {
@@ -99,6 +106,30 @@
             } catch(e) {}
         }
         return "";
+    }
+
+    // Classify a value string by its leading sign. Returns -1 (debuff), +1 (buff), 0 (no sign).
+    // Handles both ASCII "-" and the Unicode minus "−" (U+2212) the game can emit.
+    function ClassifyBySign(valueText) {
+        if (!valueText) return 0;
+        for (var i = 0; i < valueText.length; i++) {
+            var ch = valueText.charAt(i);
+            if (ch === "-" || ch === "−") return -1;
+            if (ch === "+") return 1;
+            if (ch >= "0" && ch <= "9") return 0; // first magnitude digit, no explicit sign
+        }
+        return 0;
+    }
+
+    // Fallback classification from the game's own classes. The game uses both `isNegative`/
+    // `isPositive` (generic modifiers) and `IsNegative`/`IsPositive` (speed). This is the
+    // signal that misbehaves off-scoreboard, so we only use it for absolute (unsigned) stats.
+    function ClassifyByGameClass(container) {
+        try {
+            if (container.BHasClass("isNegative") || container.BHasClass("IsNegative")) return -1;
+            if (container.BHasClass("isPositive") || container.BHasClass("IsPositive")) return 1;
+        } catch(e) {}
+        return 0;
     }
 
     // ── Overlay construction ──
@@ -192,7 +223,9 @@
         var layoutSig = offX + "|" + offY + "|" + scale + "|" + opacity;
         if (layoutSig !== st.lastLayoutSig) {
             try { overlay.style.marginLeft = (BASE_X + offX) + "px"; } catch(e) {}
-            try { overlay.style.marginTop = (BASE_Y + offY) + "px"; } catch(e) {}
+            // Subtract offY so a positive "Vertical Offset" raises the overlay (matches the
+            // slider's intuitive up = more direction; previously inverted).
+            try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) {}
             try { overlay.style.preTransformScale2d = (scale / 100).toFixed(2); } catch(e) {}
             Utils.SetPanelOpacitySafe(overlay, opacity, 1);
             st.lastLayoutSig = layoutSig;
@@ -205,20 +238,25 @@
         for (var s = 0; s < STAT_DEFS.length; s++) {
             var def = STAT_DEFS[s];
             var container = source ? GetSourceContainer(source, def) : null;
-            var active = false, isNeg = false, isPos = false, valueText = "";
+            var active = false, valueText = "";
             if (IsPanelValid(container)) {
-                try {
-                    active = container.BHasClass("shouldShow");
-                    isNeg = container.BHasClass("isNegative");
-                    isPos = container.BHasClass("isPositive");
-                } catch(e) { active = false; }
+                try { active = container.BHasClass("shouldShow"); } catch(e) { active = false; }
             }
-            var show = active && ((isNeg && showDebuffs) || (isPos && showBuffs));
-            if (show) {
-                valueText = ReadModifierValueText(container);
-                visibleCount++;
-            }
-            contentParts.push(show ? (def.key + (isNeg ? "-" : "+") + valueText) : "");
+            if (!active) { contentParts.push(""); continue; }
+
+            valueText = ReadModifierValueText(container);
+            // Determine buff/debuff. Prefer the value's own sign (scoreboard-bug-proof) for
+            // signed-percentage stats; fall back to the game class for absolute stats; default
+            // to buff when nothing is conclusive.
+            var cls = def.signed ? ClassifyBySign(valueText) : 0;
+            if (cls === 0) cls = ClassifyByGameClass(container);
+            if (cls === 0) cls = 1;
+            var isNeg = (cls < 0);
+
+            var show = isNeg ? showDebuffs : showBuffs;
+            if (!show) { contentParts.push(""); continue; }
+            visibleCount++;
+            contentParts.push(def.key + (isNeg ? "-" : "+") + valueText);
         }
         var contentSig = contentParts.join("|");
         if (contentSig !== st.lastContentSig) {

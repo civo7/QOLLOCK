@@ -16,28 +16,33 @@
 {
     flow-children: right;
     vertical-align: middle;
+    min-width: 86px;
     margin: 2px 0px;
-    padding: 3px 8px;
+    padding: 3px 9px 3px 7px;
     border-radius: 4px;
-    background-color: #0f141cd2;
-    transition-property: background-color;
+    border-left: 3px solid #ffffff30;
+    background-color: #0f141cdc;
+    box-shadow: fill #00000055 0px 1px 3px 0px;
+    transition-property: background-color, border-left-color;
     transition-duration: 0.15s;
 }
 
 .QOLCrosshairStatRow.isDebuff
 {
-    background-color: #3a1414c8;
+    background-color: #321010d8;
+    border-left-color: #ff5a5a;
 }
 
 .QOLCrosshairStatRow.isBuff
 {
-    background-color: #142a1cc8;
+    background-color: #102614d8;
+    border-left-color: #58e070;
 }
 
 .QOLCrosshairStatIcon
 {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     vertical-align: middle;
     margin-right: 6px;
     background-size: contain;
@@ -57,11 +62,13 @@
 
 .QOLCrosshairStatValue
 {
+    width: fill-parent-flow(1.0);
     font-size: 15px;
     font-weight: bold;
     font-family: sansMono;
     color: offWhite;
     vertical-align: middle;
+    text-align: right;
     text-overflow: shrink;
 }
 

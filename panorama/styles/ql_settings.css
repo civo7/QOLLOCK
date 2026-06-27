@@ -480,12 +480,8 @@
 #CrosshairStatsPreviewBox
 {
 	flow-children: down;
-	padding: 8px 12px;
-	min-width: 120px;
-	border: 2px solid rgba(173, 226, 205, 0.82);
-	border-radius: 6px;
-	background-color: gradient( radial, 50% 50%, 0% 0%, 80% 80%, from( rgba(102, 204, 153, 0.18) ), to( rgba(102, 204, 153, 0.04) ) );
-	box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 20px 0px;
+	width: fit-children;
+	padding: 4px 4px;
 	hittest: false;
 	hittestchildren: false;
 }
@@ -494,23 +490,30 @@
 {
 	horizontal-align: center;
 	text-align: center;
-	color: #cde5db;
-	font-size: 13px;
+	color: #9fb2ab;
+	font-size: 10px;
 	font-weight: bold;
 	letter-spacing: 1px;
 	text-transform: uppercase;
+	margin-bottom: 3px;
+	opacity: 0.7;
 	hittest: false;
 	hittestchildren: false;
 }
 
+/* Rows mirror the real overlay: compact dark pill, red for debuff / green for buff. */
 .CrosshairStatsPreviewRow
 {
 	horizontal-align: center;
 	text-align: center;
-	margin-top: 4px;
-	font-size: 12px;
+	margin-top: 2px;
+	padding: 3px 8px;
+	border-radius: 4px;
+	font-size: 13px;
 	font-weight: bold;
-	letter-spacing: 1px;
+	font-family: sansMono;
+	letter-spacing: 0px;
+	background-color: #0f141cd2;
 	hittest: false;
 	hittestchildren: false;
 }
@@ -518,11 +521,13 @@
 .CrosshairStatsPreviewRow.debuff
 {
 	color: #ff8d8d;
+	background-color: #3a1414c8;
 }
 
 .CrosshairStatsPreviewRow.buff
 {
 	color: #8ff19b;
+	background-color: #142a1cc8;
 }
 
 #UnsecuredSoulsPreview

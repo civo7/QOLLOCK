@@ -160,6 +160,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
+    ENABLE_CROSSHAIR_STATS: "Predi",
     ENABLE_MIN_SOULS: "BreadRollius",
     ENABLE_UNSPENT_SOULS: "BreadRollius",
     ENABLE_OBJ_DMG: "Waltee",
@@ -9746,14 +9747,14 @@ function EnsureCrosshairStatsPreviewPanel() {
         debuffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewDebuff");
         debuffRow.AddClass("CrosshairStatsPreviewRow");
         debuffRow.AddClass("debuff");
-        debuffRow.text = "− FIRE RATE";
+        debuffRow.text = "FIRE RATE  −15%";
     }
     var buffRow = panel.FindChildTraverse("CrosshairStatsPreviewBuff");
     if (!buffRow) {
         buffRow = $.CreatePanel("Label", box, "CrosshairStatsPreviewBuff");
         buffRow.AddClass("CrosshairStatsPreviewRow");
         buffRow.AddClass("buff");
-        buffRow.text = "+ RESIST";
+        buffRow.text = "BULLET RESIST  +20%";
     }
     SetPanelNonInteractive(panel);
     SetPanelNonInteractive(box);
@@ -10727,10 +10728,12 @@ function ShowCrosshairStatsPreview() {
     if (opacity > 1) opacity = 1;
 
     panel.style.marginLeft = (gCrosshairStatsPreviewBaseX + xOffset) + "px";
-    panel.style.marginTop = (gCrosshairStatsPreviewBaseY + yOffset) + "px";
+    // Subtract yOffset so the preview moves the same way the runtime overlay does
+    // (positive Vertical Offset = up). Keeps showcase honest to in-game behaviour.
+    panel.style.marginTop = (gCrosshairStatsPreviewBaseY - yOffset) + "px";
     gCrosshairStatsPreviewBox.style.preTransformScale2d = (scale / 100).toFixed(2);
     gCrosshairStatsPreviewBox.style.opacity = opacity.toFixed(2);
-    gCrosshairStatsPreviewLabel.text = LocalizeSettingsText("ACTIVE STATS", true) + " " + scale + "%";
+    gCrosshairStatsPreviewLabel.text = LocalizeSettingsText("ACTIVE STATS", true);
     panel.AddClass("Visible");
     ScheduleHideCrosshairStatsPreview(1.2);
 }
