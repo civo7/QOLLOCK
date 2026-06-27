@@ -5,12 +5,13 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_crosshairstats";
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel", "getGameplayHudPanel"]);
+    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel", "getGameplayHudPanel", "isHudClassActive"]);
     var State = _deps.state;
     var Utils = _deps.utils;
     var GetCachedPanel = _deps.getCachedPanel;
     var SetCachedPanel = _deps.setCachedPanel;
     var GetGameplayHudPanel = _deps.getGameplayHudPanel;
+    var IsHudClassActive = _deps.isHudClassActive;
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
 
@@ -298,6 +299,16 @@
 
         var overlay = EnsureOverlay(root);
         if (!overlay) return;
+
+        // While the scoreboard is open the game recomputes #hudPlayerStats against BASE values
+        // (base move speed, base fire rate, etc.), flooding it with entries we don't want to
+        // mirror — so hide the overlay entirely until it closes. lastVisibleCount is reset so the
+        // overlay re-shows correctly on the next closed-scoreboard frame.
+        if (IsHudClassActive && IsHudClassActive(root, "gScoreboardOpen")) {
+            try { overlay.style.visibility = "collapse"; } catch(e) {}
+            st.lastVisibleCount = -1;
+            return;
+        }
 
         var showDebuffs = IsCfgEnabled(cfg, "CROSSHAIR_STATS_SHOW_DEBUFFS");
         var showBuffs = IsCfgEnabled(cfg, "CROSSHAIR_STATS_SHOW_BUFFS");
