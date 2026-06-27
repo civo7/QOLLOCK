@@ -51,14 +51,14 @@
         Utils.SetPanelOpacitySafe(panel, 1, 1);
     }
 
-    // True only when the feature has actual work to do: enabled AND not the vanilla default
-    // (left / 0 / 0, both hides off). The default config is a visual no-op, so we treat it like
-    // "off" — that's what keeps the feature OUT of the dispatch loop for the vast majority of
-    // players who never touch it (the gate below returns false), instead of running it ~20Hz for
-    // nothing. A hide toggle being on DOES count as work (and makes the loop run every tick so it
-    // can react to the scoreboard opening/closing).
+    // True only when the feature has actual work to do: NOT the vanilla default (left / 0 / 0,
+    // both hides off). There is no master on/off toggle anymore — the controls drive everything,
+    // and the default config is a visual no-op, so we treat it like "off". That keeps the feature
+    // OUT of the dispatch loop for the vast majority of players who never touch it (the gate below
+    // returns false), instead of running it ~20Hz for nothing. A hide toggle being on DOES count
+    // as work (and makes the loop run every tick so it can react to the scoreboard opening/closing).
+    // ENABLE_STATS_POSITION is intentionally NOT read (deprecated; kept default-on for back-compat).
     function HasStatsPositionWork(cfg) {
-        if (!IsCfgEnabled(cfg, "ENABLE_STATS_POSITION")) return false;
         var side = (Math.round(Number(cfg.STATS_POSITION_SIDE)) === 1) ? 1 : 0;
         var offX = Number(cfg.STATS_POSITION_X_OFFSET) || 0;
         var offY = Number(cfg.STATS_POSITION_Y_OFFSET) || 0;
@@ -129,7 +129,6 @@
     // ── Registration ──
     QOL.register("statsPosition", {
         configKeys: [
-            "ENABLE_STATS_POSITION",
             "STATS_POSITION_SIDE",
             "STATS_POSITION_X_OFFSET",
             "STATS_POSITION_Y_OFFSET",

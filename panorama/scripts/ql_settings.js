@@ -21286,13 +21286,15 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Player Stats", "ENABLE_STATS_POSITION", "Reposition or hide the active player stats panel (and its detailed TAB view).", function(sectionParent) {
-            CreateRow(sectionParent, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
-            CreateSliderRow(sectionParent, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
-            CreateSliderRow(sectionParent, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
-            CreateRow(sectionParent, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
-            CreateRow(sectionParent, "Hide on scoreboard (TAB)", "STATS_POSITION_HIDE_SCOREBOARD", "toggle", null, null, null, null, "Hide the detailed stats list that appears while the scoreboard / TAB is held.");
-        });
+        // No master on/off toggle: the section is always open and driven purely by its controls
+        // (Side/offsets default to vanilla, hides default off). ENABLE_STATS_POSITION stays in the
+        // schema as a default-on no-op for back-compat but is no longer read or shown.
+        CreateSectionTitle(list, "Player Stats");
+        CreateRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
+        CreateSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
+        CreateSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+        CreateRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
+        CreateRow(list, "Hide on scoreboard (TAB)", "STATS_POSITION_HIDE_SCOREBOARD", "toggle", null, null, null, null, "Hide the detailed stats list that appears while the scoreboard / TAB is held.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Chat", "ENABLE_CHAT", "", function(sectionParent) {
             CreateSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
