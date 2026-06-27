@@ -21,31 +21,26 @@
     var BASE_Y = 0;
     var VALUE_BFS_LIMIT = 200;
 
-    // Game container id -> { key, icon, signed } where `icon` is the PropertiesIcon class
-    // variant used by ability_property_icons.vcss_c (spelling mirrors the game XML exactly).
-    //
-    // `signed: true`  -> the value label is a signed percentage delta (e.g. "-15%", "+20%").
-    //                    For these we classify buff/debuff straight from the sign of the value,
-    //                    which is ALWAYS correct regardless of the scoreboard/detail-view bug
-    //                    that flips the game's isNegative/isPositive classes off-scoreboard.
-    // `signed: false` -> the value is an absolute reading (m/s, /sec, raw number) with no usable
-    //                    sign, so we fall back to the game's class (best-effort) for those.
+    // Game container id -> { key, icon } where `icon` is the PropertiesIcon class variant used by
+    // ability_property_icons.vcss_c (spelling mirrors the game XML exactly). Every value label is
+    // a signed delta string ({s:value} / {d:value} — "+1.8 m/s", "-15%", "+5 /sec", etc.), so when
+    // caster consensus tells us the true direction we can correct the sign on any of them.
     var STAT_DEFS = [
-        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                signed: true },
-        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               signed: false },
-        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation",        signed: true },
-        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet",            signed: true },
-        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit",            signed: true },
-        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets", signed: true },
-        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit",    signed: true },
-        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon",            signed: true },
-        { id: "spiritContainer",          key: "spirit",        icon: "Spirit",                  signed: false },
-        { id: "abilityRangeContainer",    key: "range",         icon: "Range",                   signed: true },
-        { id: "abilityDurationContainer", key: "duration",      icon: "Duration",                signed: true },
-        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification",     signed: true },
-        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize",            signed: false },
-        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen",             signed: false },
-        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge",               signed: true }
+        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate" },
+        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed" },
+        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation" },
+        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet" },
+        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit" },
+        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets" },
+        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit" },
+        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon" },
+        { id: "spiritContainer",          key: "spirit",        icon: "Spirit" },
+        { id: "abilityRangeContainer",    key: "range",         icon: "Range" },
+        { id: "abilityDurationContainer", key: "duration",      icon: "Duration" },
+        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification" },
+        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize" },
+        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen" },
+        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge" }
     ];
 
     function EnsureState() {
@@ -354,12 +349,13 @@
             if (cls === 0) cls = ClassifyBySign(valueText);
             var isNeg = (cls < 0);
 
-            // When caster consensus is authoritative AND the value is a signed percentage, correct
-            // the game's off-scoreboard sign flip so the number matches the color (e.g. a lone
-            // enemy debuff the game prints as "+40%" is shown as "−40%"). Mixed/aggregated stats
-            // keep the raw game value untouched (we can't recover the true net from one label).
+            // When caster consensus is authoritative, correct the game's off-scoreboard sign flip
+            // so the number matches the color — for ANY stat, since all values carry a sign
+            // (e.g. a lone enemy slow the game prints as "+1.8 m/s" is shown as "−1.8 m/s", and a
+            // "+40%" enemy fire-rate debuff as "−40%"). Mixed/aggregated stats keep the raw game
+            // value untouched (we can't recover the true net from one label).
             var displayValue = valueText;
-            if (consensus !== 0 && def.signed) displayValue = ApplySign(valueText, isNeg);
+            if (consensus !== 0) displayValue = ApplySign(valueText, isNeg);
 
             var show = isNeg ? showDebuffs : showBuffs;
             if (!show) { contentParts.push(""); continue; }
