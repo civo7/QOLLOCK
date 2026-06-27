@@ -37,6 +37,8 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_zipboost.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_unsecuredsouls.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_statbonuses.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_crosshairstats.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_statsposition.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_keyboard.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_sigflash.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_chatimg.vjs_c" />

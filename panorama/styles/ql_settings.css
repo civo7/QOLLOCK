@@ -1,5 +1,11 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
+/* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
+   rows are a 1:1 copy of the in-game overlay — same pill, accent border, property icon + value.
+   This pulls in .QOLCrosshairStatRow/.QOLCrosshairStatIcon/.QOLCrosshairStatValue and the property
+   icon backgrounds (ql_feat_crosshair_stats.css itself @imports ability_property_icons). */
+@import url("s2r://panorama/styles/features/ql_feat_crosshair_stats.vcss_c");
+
 @keyframes 'PulseWhiteTitle'
 {
 	0%
@@ -449,6 +455,89 @@
 	text-shadow: 0px 0px 8px rgba(102, 204, 153, 0.30);
 	hittest: false;
 	hittestchildren: false;
+}
+
+#CrosshairStatsPreview
+{
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: middle;
+	margin-left: 130px;
+	margin-top: 0px;
+	opacity: 0;
+	visibility: collapse;
+	transform: translateY(8px);
+	transition-property: opacity, transform, visibility;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-out;
+	z-index: 5200;
+	overflow: noclip;
+	hittest: false;
+	hittestchildren: false;
+}
+
+#CrosshairStatsPreview.Visible
+{
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0px);
+}
+
+#CrosshairStatsPreviewBox
+{
+	flow-children: down;
+	width: fit-children;
+	height: fit-children;
+	padding: 2px 0px;
+	hittest: false;
+	hittestchildren: false;
+}
+
+#CrosshairStatsPreviewLabel
+{
+	horizontal-align: center;
+	text-align: center;
+	color: #9fb2ab;
+	font-size: 9px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	margin-bottom: 3px;
+	opacity: 0.55;
+	hittest: false;
+	hittestchildren: false;
+}
+
+/* Rows are a 1:1 mirror of the in-game overlay rows (ql_feat_crosshair_stats.css):
+   compact dark pill with a colored left accent, red for debuff / green for buff. */
+.CrosshairStatsPreviewRow
+{
+	horizontal-align: left;
+	margin-top: 2px;
+	padding: 3px 9px 3px 7px;
+	border-radius: 4px;
+	border-left: 3px solid #ffffff30;
+	font-size: 14px;
+	font-weight: bold;
+	font-family: sansMono;
+	letter-spacing: 0px;
+	background-color: #0f141cdc;
+	hittest: false;
+	hittestchildren: false;
+}
+
+.CrosshairStatsPreviewRow.debuff
+{
+	color: #ff8d8d;
+	background-color: #321010d8;
+	border-left-color: #ff5a5a;
+}
+
+.CrosshairStatsPreviewRow.buff
+{
+	color: #8ff19b;
+	background-color: #102614d8;
+	border-left-color: #58e070;
 }
 
 #UnsecuredSoulsPreview

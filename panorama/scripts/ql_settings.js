@@ -225,6 +225,8 @@ const SETTING_CREATED_BY_BY_CONFIG = {
 const SETTING_CREATED_BY_BY_LABEL = {
 };
 const SECTION_CREATED_BY_BY_TITLE = {
+    "Active Stats": "Predi",
+    "Player Stats": "Predi"
 };
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ALT_ZOOM_DRAW_OVER_UI": "Draws the minimap over all other UI elements for improved visibility.",
@@ -400,10 +402,15 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Item Cooldowns|Optimize Filters": "Only download the filter file of the filter you want, nothing else.",
     "Crosshair / Item Cooldowns|Advanced Mode": "Switch to the advanced item cooldown mode with in-menu filters.",
     "Crosshair / Item Cooldowns|Advanced Filter": "Decide what style of item to display the cooldown of.",
+    "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
+    "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
+    "UI / Player Stats|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
+    "HUD|Player Stats": "Customize the position of the Player Stats panel, or hide it completely.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
     "Crosshair / Reloading|Icon": "The icon that replaces your crosshair when reloading.",
+    "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -502,6 +509,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
 const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
+    "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
+    "UI|Player Stats": "Customize the position of the Player Stats panel, or hide it completely.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -551,6 +560,19 @@ const SETTING_PERF_IMPACT_TIERS = {
     DISABLE_SHOP_BLUE: "none",
     ENABLE_ALT_ZOOM: "low",
     ENABLE_AMMO_STATUS: "low",
+    ENABLE_CROSSHAIR_STATS: "medium",
+    CROSSHAIR_STATS_SHOW_DEBUFFS: "low",
+    CROSSHAIR_STATS_SHOW_BUFFS: "low",
+    CROSSHAIR_STATS_X_OFFSET: "low",
+    CROSSHAIR_STATS_Y_OFFSET: "low",
+    CROSSHAIR_STATS_SCALE: "low",
+    CROSSHAIR_STATS_OPACITY: "low",
+    ENABLE_STATS_POSITION: "low",
+    STATS_POSITION_SIDE: "low",
+    STATS_POSITION_X_OFFSET: "low",
+    STATS_POSITION_Y_OFFSET: "low",
+    STATS_POSITION_HIDE_NORMAL: "low",
+    STATS_POSITION_HIDE_SCOREBOARD: "low",
     ENABLE_BETTER_UNSECURED: "low",
     ENABLE_BETTER_UNSECURED_SHOW_ICON: "low",
     ENABLE_BETTER_UNSECURED_SHOW_TEXT: "low",
@@ -841,6 +863,11 @@ const RECENT_PURCHASE_REPOSITION_OPTIONS = [
     { label: "Rejuvenator", key: "RECENT_PURCHASES_QUICK_REJUV" },
     { label: "Scoreboard", key: "RECENT_PURCHASES_QUICK_SCOREBOARD" }
 ];
+// Player Stats side picker — mutually exclusive Left/Right bound to a single config key.
+const STATS_POSITION_SIDE_OPTIONS = [
+    { label: "Left", value: 0 },
+    { label: "Right", value: 1 }
+];
 const DEFAULT_HERO_OPTIONS = [
     "hero_inferno",
     "hero_gigawatt",
@@ -994,7 +1021,7 @@ const ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
 const SETTING_ROW_RESET_KEYS_ATTR = "QOL_ROW_RESET_KEYS";
 const RUNTIME_ROW_KIND_ATTR = "QOL_RUNTIME_ROW_KIND";
 const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
-const MOD_VERSION = 31;
+const MOD_VERSION = 32;
 // QOL_SCHEMA_SEMVER always available — ql_shared_presets.js loads first
 const MOD_DISPLAY_VERSION = QOL_SCHEMA_SEMVER;
 const EXPORT_SCHEMA_SEMVER = MOD_DISPLAY_VERSION;
@@ -1071,6 +1098,12 @@ var gZipBoostPreviewLabel = null;
 var gZipBoostPreviewHideToken = 0;
 var gZipBoostPreviewBaseX = -520;
 var gZipBoostPreviewBaseY = 20;
+var gCrosshairStatsPreviewPanel = null;
+var gCrosshairStatsPreviewBox = null;
+var gCrosshairStatsPreviewLabel = null;
+var gCrosshairStatsPreviewHideToken = 0;
+var gCrosshairStatsPreviewBaseX = 130;
+var gCrosshairStatsPreviewBaseY = 0;
 var gUnsecuredSoulsPreviewPanel = null;
 var gUnsecuredSoulsPreviewLabel = null;
 var gUnsecuredSoulsPreviewHideToken = 0;
@@ -9699,6 +9732,68 @@ function EnsureZipBoostPreviewPanel() {
     return panel;
 }
 
+// Build one preview row that is a structural clone of an in-game crosshair-overlay row, using the
+// overlay's own classes (styled via the ql_feat_crosshair_stats import in ql_settings.css) so it
+// matches pixel-for-pixel: a dark pill with a colored left accent, a property icon, and a value.
+function CreateCrosshairStatsPreviewStatRow(box, idSuffix, iconClass, valueText, isDebuff) {
+    var row = box.FindChildTraverse("CrosshairStatsPreviewRow_" + idSuffix);
+    if (!row) {
+        row = $.CreatePanel("Panel", box, "CrosshairStatsPreviewRow_" + idSuffix);
+        row.AddClass("QOLCrosshairStatRow");
+        row.AddClass(isDebuff ? "isDebuff" : "isBuff");
+        var icon = $.CreatePanel("Panel", row, "CrosshairStatsPreviewIcon_" + idSuffix);
+        icon.AddClass("QOLCrosshairStatIcon");
+        icon.AddClass("statIcon");
+        icon.AddClass("PropertiesIcon");
+        icon.AddClass(iconClass);
+        var value = $.CreatePanel("Label", row, "CrosshairStatsPreviewValue_" + idSuffix);
+        value.AddClass("QOLCrosshairStatValue");
+        value.text = valueText;
+    }
+    SetPanelNonInteractive(row);
+    return row;
+}
+
+function EnsureCrosshairStatsPreviewPanel() {
+    if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+        SetPanelNonInteractive(gCrosshairStatsPreviewPanel);
+        SetPanelNonInteractive(gCrosshairStatsPreviewBox);
+        SetPanelNonInteractive(gCrosshairStatsPreviewLabel);
+        return gCrosshairStatsPreviewPanel;
+    }
+    var root = $.GetContextPanel();
+    if (!root) return null;
+
+    var panel = root.FindChildTraverse("CrosshairStatsPreview");
+    if (!panel) {
+        panel = $.CreatePanel("Panel", root, "CrosshairStatsPreview");
+    }
+    if (!panel) return null;
+
+    var box = panel.FindChildTraverse("CrosshairStatsPreviewBox");
+    if (!box) {
+        box = $.CreatePanel("Panel", panel, "CrosshairStatsPreviewBox");
+    }
+    var label = panel.FindChildTraverse("CrosshairStatsPreviewLabel");
+    if (!label) {
+        label = $.CreatePanel("Label", box, "CrosshairStatsPreviewLabel");
+        label.text = LocalizeSettingsText("ACTIVE STATS", true);
+    }
+    // Real copy of the in-game overlay rows (ql_feat_crosshairstats.js builds the same structure):
+    //   .QOLCrosshairStatRow[.isDebuff|.isBuff] > .QOLCrosshairStatIcon.statIcon.PropertiesIcon.<Stat> + .QOLCrosshairStatValue
+    CreateCrosshairStatsPreviewStatRow(box, "fireRate",     "FireRate",     "−15%", true);
+    CreateCrosshairStatsPreviewStatRow(box, "moveSpeed",    "MoveSpeed",    "−1.8 m/s", true);
+    CreateCrosshairStatsPreviewStatRow(box, "bulletResist", "ResistBullet", "+20%", false);
+    SetPanelNonInteractive(panel);
+    SetPanelNonInteractive(box);
+    SetPanelNonInteractive(label);
+
+    gCrosshairStatsPreviewPanel = panel;
+    gCrosshairStatsPreviewBox = box;
+    gCrosshairStatsPreviewLabel = label;
+    return panel;
+}
+
 function EnsureUnsecuredSoulsPreviewPanel() {
     if (gUnsecuredSoulsPreviewPanel && gUnsecuredSoulsPreviewPanel.IsValid && gUnsecuredSoulsPreviewPanel.IsValid()) {
         SetPanelNonInteractive(gUnsecuredSoulsPreviewPanel);
@@ -10295,6 +10390,14 @@ function IsZipBoostPreviewConfig(configId) {
         configId === "ZIP_BOOST_SCALE";
 }
 
+function IsCrosshairStatsPreviewConfig(configId) {
+    return configId === "ENABLE_CROSSHAIR_STATS" ||
+        configId === "CROSSHAIR_STATS_X_OFFSET" ||
+        configId === "CROSSHAIR_STATS_Y_OFFSET" ||
+        configId === "CROSSHAIR_STATS_SCALE" ||
+        configId === "CROSSHAIR_STATS_OPACITY";
+}
+
 function IsUnsecuredSoulsPreviewConfig(configId) {
     return configId === "ENABLE_UNSECURED_SOUL_TIMER" ||
         configId === "UNSECURED_SOUL_TIMER_X_OFFSET" ||
@@ -10387,6 +10490,9 @@ function HideMinimapSizePreview() {
     if (gZipBoostPreviewPanel && gZipBoostPreviewPanel.IsValid && gZipBoostPreviewPanel.IsValid()) {
         gZipBoostPreviewPanel.RemoveClass("Visible");
     }
+    if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+        gCrosshairStatsPreviewPanel.RemoveClass("Visible");
+    }
     if (gUnsecuredSoulsPreviewPanel && gUnsecuredSoulsPreviewPanel.IsValid && gUnsecuredSoulsPreviewPanel.IsValid()) {
         gUnsecuredSoulsPreviewPanel.RemoveClass("Visible");
     }
@@ -10449,6 +10555,17 @@ function ScheduleHideZipBoostPreview(delaySec) {
         if (token !== gZipBoostPreviewHideToken) return;
         if (gZipBoostPreviewPanel && gZipBoostPreviewPanel.IsValid && gZipBoostPreviewPanel.IsValid()) {
             gZipBoostPreviewPanel.RemoveClass("Visible");
+        }
+    });
+}
+
+function ScheduleHideCrosshairStatsPreview(delaySec) {
+    gCrosshairStatsPreviewHideToken++;
+    var token = gCrosshairStatsPreviewHideToken;
+    $.Schedule(delaySec, function() {
+        if (token !== gCrosshairStatsPreviewHideToken) return;
+        if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+            gCrosshairStatsPreviewPanel.RemoveClass("Visible");
         }
     });
 }
@@ -10612,6 +10729,43 @@ function ShowZipBoostPreview() {
     ScheduleHideZipBoostPreview(1.2);
 }
 
+function ShowCrosshairStatsPreview() {
+    if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
+        HideMinimapSizePreview();
+        return;
+    }
+    var panel = EnsureCrosshairStatsPreviewPanel();
+    if (!panel || !gCrosshairStatsPreviewBox || !gCrosshairStatsPreviewLabel) return;
+
+    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
+    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
+
+    var xOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_X_OFFSET) || 0);
+    var yOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_Y_OFFSET) || 0);
+    var scale = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_SCALE) || 100);
+    var opacity = Number(MOD_CONFIG.CROSSHAIR_STATS_OPACITY);
+    if (isNaN(opacity)) opacity = 1;
+
+    if (xOffset < -500) xOffset = -500;
+    if (xOffset > 500) xOffset = 500;
+    if (yOffset < -500) yOffset = -500;
+    if (yOffset > 500) yOffset = 500;
+    if (scale < 50) scale = 50;
+    if (scale > 200) scale = 200;
+    if (opacity < 0) opacity = 0;
+    if (opacity > 1) opacity = 1;
+
+    panel.style.marginLeft = (gCrosshairStatsPreviewBaseX + xOffset) + "px";
+    // Subtract yOffset so the preview moves the same way the runtime overlay does
+    // (positive Vertical Offset = up). Keeps showcase honest to in-game behaviour.
+    panel.style.marginTop = (gCrosshairStatsPreviewBaseY - yOffset) + "px";
+    gCrosshairStatsPreviewBox.style.preTransformScale2d = (scale / 100).toFixed(2);
+    gCrosshairStatsPreviewBox.style.opacity = opacity.toFixed(2);
+    gCrosshairStatsPreviewLabel.text = LocalizeSettingsText("ACTIVE STATS", true);
+    panel.AddClass("Visible");
+    ScheduleHideCrosshairStatsPreview(1.2);
+}
+
 function ShowUnsecuredSoulsPreview() {
     if (MOD_CONFIG.PREVIEWS_ENABLED !== 1) {
         HideMinimapSizePreview();
@@ -10662,6 +10816,9 @@ function ShowConfigPreviewForConfigId(configId) {
     }
     if (IsZipBoostPreviewConfig(configId)) {
         ShowZipBoostPreview();
+    }
+    if (IsCrosshairStatsPreviewConfig(configId)) {
+        ShowCrosshairStatsPreview();
     }
     if (IsUnsecuredSoulsPreviewConfig(configId)) {
         ShowUnsecuredSoulsPreview();
@@ -17830,7 +17987,7 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
             seen[sectionOptions.titleCheckbox.configId] = true;
         }
         return keys;
-    }, null, titleHead);
+    }, enableConfigId, titleHead);
 
     var toggleBtn = $.CreatePanel("Panel", titleRow, safeTitleId + "SectionToggle");
     toggleBtn.AddClass("SectionInlineToggleBtn");
@@ -17851,7 +18008,9 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     }
 
     var animToken = 0;
+    var lastAppliedEnabled = null;
     var applyBodyState = function(enabled, animate) {
+        lastAppliedEnabled = enabled;
         animToken++;
         var token = animToken;
         toggleBtn.SetHasClass("Active", enabled);
@@ -17896,6 +18055,20 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
         }
     };
     applyBodyState(getSectionEnabled(), false);
+
+    // Keep the header toggle + body collapse in sync when the config changes WITHOUT a full
+    // rebuild — e.g. the section reset button, config import, or a preset applied via soft-refresh.
+    // Soft refresh only runs the row-sync callbacks; it does not re-create the section, so without
+    // this the switch and the collapsed state would drift from MOD_CONFIG. The lastAppliedEnabled
+    // guard means a manual toggle (which already applied the new state) never re-snaps mid-animation.
+    RegisterSettingsListRowSync(function() {
+        if (!body || !body.IsValid || !body.IsValid()) return false;
+        var currentEnabled = getSectionEnabled();
+        if (currentEnabled !== lastAppliedEnabled) {
+            applyBodyState(currentEnabled, false);
+        }
+        return true;
+    });
 
     toggleSwitchButton.SetPanelEvent("onactivate", function() {
         $.DispatchEvent("UIHideTextTooltip");
@@ -20919,6 +21092,15 @@ function RenderCurrentTabContent(list) {
             }
         });
         CreateSeparator(list);
+        CreateAnimatedInlineToggleSection(list, "Active Stats", "ENABLE_CROSSHAIR_STATS", "Show active buffs/debuffs (firerate, slow, antiheal...) vertically next to the crosshair", function(sectionParent) {
+            CreateRow(sectionParent, "Show Debuffs", "CROSSHAIR_STATS_SHOW_DEBUFFS", "toggle", null, null, null, null);
+            CreateRow(sectionParent, "Show Buffs", "CROSSHAIR_STATS_SHOW_BUFFS", "toggle", null, null, null, null);
+            CreateSliderRow(sectionParent, "Scale", "CROSSHAIR_STATS_SCALE", "size_50_200");
+            CreateSliderRow(sectionParent, "Opacity", "CROSSHAIR_STATS_OPACITY", "opacity");
+            CreateSliderRow(sectionParent, "Horizontal Offset", "CROSSHAIR_STATS_X_OFFSET", "offset_n500_500");
+            CreateSliderRow(sectionParent, "Vertical Offset", "CROSSHAIR_STATS_Y_OFFSET", "offset_n500_500");
+        });
+        CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {
             CreateSliderRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "scale_0_5_2_0");
             CreateSliderRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "opacity");
@@ -21103,6 +21285,16 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
             CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
+        CreateSeparator(list);
+        // No master on/off toggle: the section is always open and driven purely by its controls
+        // (Side/offsets default to vanilla, hides default off). ENABLE_STATS_POSITION stays in the
+        // schema as a default-on no-op for back-compat but is no longer read or shown.
+        CreateSectionTitle(list, "Player Stats", "ENABLE_STATS_POSITION");
+        CreateRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
+        CreateSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
+        CreateSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+        CreateRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
+        CreateRow(list, "Hide on scoreboard (TAB)", "STATS_POSITION_HIDE_SCOREBOARD", "toggle", null, null, null, null, "Hide the detailed stats list that appears while the scoreboard / TAB is held.");
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Chat", "ENABLE_CHAT", "", function(sectionParent) {
             CreateSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");

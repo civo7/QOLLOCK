@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.1.6";
+var QOL_SCHEMA_SEMVER = "3.1.7";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1691,6 +1691,35 @@ var QOL_COMPACT_SCHEMA_3_1_6= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
         AMMO_CLIP_SCHEMA_FIELDS
     )
 );
+// 3.1.7: Crosshair Active Stats — mirror active buffs/debuffs vertically by the crosshair.
+var CROSSHAIR_STATS_SCHEMA_FIELDS = [
+    { key: "ENABLE_CROSSHAIR_STATS", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_DEBUFFS", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_BUFFS", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_X_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "CROSSHAIR_STATS_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "CROSSHAIR_STATS_SCALE", min: 50, max: 200, step: 1 },
+    { key: "CROSSHAIR_STATS_OPACITY", min: 0, max: 1, step: 0.05 }
+];
+// 3.1.7: Player Stats — move the #hudPlayerStats panel (active + TAB-detailed view)
+// left/right with X/Y offsets, and optionally hide either view. STATS_POSITION_SIDE: 0=left
+// (default), 1=right. HIDE_* keys move the panel offscreen (NOT collapse) so the Crosshair
+// Active Stats mirror keeps reading it; NORMAL = compact view, SCOREBOARD = TAB-detailed view.
+var STATS_POSITION_SCHEMA_FIELDS = [
+    { key: "ENABLE_STATS_POSITION", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_SIDE", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_X_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "STATS_POSITION_Y_OFFSET", min: -500, max: 500, step: 5 },
+    { key: "STATS_POSITION_HIDE_NORMAL", min: 0, max: 1, step: 1 },
+    { key: "STATS_POSITION_HIDE_SCOREBOARD", min: 0, max: 1, step: 1 }
+];
+var QOL_COMPACT_SCHEMA_3_1_7= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+        QOL_COMPACT_SCHEMA_3_1_6,
+        CROSSHAIR_STATS_SCHEMA_FIELDS
+    ),
+    STATS_POSITION_SCHEMA_FIELDS
+);
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
 // ==========================================================================
@@ -1720,6 +1749,10 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              reconstruction, UNIT_TARGET_HINT_SIZE.
 // 3.1.5-3.1.6  ShowRank + standalone compass speed offsets + minimalistic pause +
 //              urn spawn timer + ammo magazine visualiser rotation.
+// 3.1.7        Crosshair Active Stats: mirror active buffs/debuffs vertically by
+//              the crosshair (master toggle + debuff/buff filters + offset/scale/opacity).
+//              + Player Stats Position: move #hudPlayerStats (active + TAB-detailed view)
+//              left/right with X/Y offsets (master toggle + side + offsets).
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -1939,6 +1972,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "3.1.6": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_3_1_6
+    },
+    "3.1.7": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_3_1_7
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2250,6 +2287,19 @@ var QOL_DEFAULT_CONFIG = {
         RELOAD_COOLDOWN_Y_OFFSET: 0,
         ENABLE_HIDE_RELOAD_ICON: 0,
         ENABLE_HIDE_RELOAD_CIRCLE: 0,
+        ENABLE_CROSSHAIR_STATS: 0,
+        CROSSHAIR_STATS_SHOW_DEBUFFS: 1,
+        CROSSHAIR_STATS_SHOW_BUFFS: 1,
+        CROSSHAIR_STATS_X_OFFSET: 0,
+        CROSSHAIR_STATS_Y_OFFSET: 0,
+        CROSSHAIR_STATS_SCALE: 100,
+        CROSSHAIR_STATS_OPACITY: 1.0,
+        ENABLE_STATS_POSITION: 1,
+        STATS_POSITION_SIDE: 0,
+        STATS_POSITION_X_OFFSET: 0,
+        STATS_POSITION_Y_OFFSET: 0,
+        STATS_POSITION_HIDE_NORMAL: 0,
+        STATS_POSITION_HIDE_SCOREBOARD: 0,
         ENABLE_COMBAT_STATUS: 0,
         COMBAT_STATUS_SCALE: 100,
         COMBAT_STATUS_X_OFFSET: 0,

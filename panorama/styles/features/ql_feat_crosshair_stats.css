@@ -1,0 +1,81 @@
+/* QOLLOCK feature: Crosshair Active Stats — mirror active buffs/debuffs by the crosshair. */
+/* Import the game property icons so .PropertiesIcon.<Stat> background images resolve here. */
+@import url("s2r://panorama/styles/ability_property_icons.vcss_c");
+
+#QOLCrosshairStatsOverlay
+{
+    visibility: collapse;
+    horizontal-align: center;
+    vertical-align: middle;
+    width: fit-children;
+    height: fit-children;
+    margin-left: 130px;
+    flow-children: down;
+    padding: 2px 0px;
+}
+
+.QOLCrosshairStatRow
+{
+    flow-children: right;
+    vertical-align: middle;
+    width: fit-children;
+    margin: 2px 0px;
+    padding: 3px 9px 3px 7px;
+    border-radius: 4px;
+    border-left: 3px solid #ffffff30;
+    background-color: #0f141cdc;
+    transition-property: background-color, border-left-color;
+    transition-duration: 0.15s;
+}
+
+.QOLCrosshairStatRow.isDebuff
+{
+    background-color: #321010d8;
+    border-left-color: #ff5a5a;
+}
+
+.QOLCrosshairStatRow.isBuff
+{
+    background-color: #102614d8;
+    border-left-color: #58e070;
+}
+
+.QOLCrosshairStatIcon
+{
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 6px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    wash-color: offWhite;
+}
+
+.QOLCrosshairStatRow.isDebuff .QOLCrosshairStatIcon
+{
+    wash-color: #ff7b7b;
+}
+
+.QOLCrosshairStatRow.isBuff .QOLCrosshairStatIcon
+{
+    wash-color: #8ff19b;
+}
+
+.QOLCrosshairStatValue
+{
+    font-size: 15px;
+    font-weight: bold;
+    font-family: sansMono;
+    color: offWhite;
+    vertical-align: middle;
+}
+
+.QOLCrosshairStatRow.isDebuff .QOLCrosshairStatValue
+{
+    color: #ff8d8d;
+}
+
+.QOLCrosshairStatRow.isBuff .QOLCrosshairStatValue
+{
+    color: #8ff19b;
+}
