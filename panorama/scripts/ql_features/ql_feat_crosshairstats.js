@@ -80,18 +80,51 @@
         return c;
     }
 
-    // Read the resolved value text from a modifier container (first non-empty,
-    // non-loc-token descendant Label text). Returns "" if none.
+    // Strip the HTML markup the game's html="true" labels can embed (color spans, entities),
+    // leaving a clean value string like "-25%". Without this, sign detection and the displayed
+    // number can be polluted by tags.
+    function StripHtml(s) {
+        if (!s) return "";
+        var out = "", inTag = false;
+        for (var i = 0; i < s.length; i++) {
+            var ch = s.charAt(i);
+            if (ch === "<") { inTag = true; continue; }
+            if (ch === ">") { inTag = false; continue; }
+            if (!inTag) out += ch;
+        }
+        out = out.split("&nbsp;").join(" ").split("&amp;").join("&");
+        // Collapse runs of whitespace to single spaces and trim.
+        var parts = out.split(/\s+/);
+        var clean = [];
+        for (var p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
+        return clean.join(" ");
+    }
+
+    // Read the resolved value text from a modifier container's CORE label only. We deliberately
+    // skip #casterList (it holds per-caster icons/panels, no net value) and read the first
+    // text-bearing Label under .miniModifierCore. Returns "" if none.
     function ReadModifierValueText(container) {
         if (!IsPanelValid(container)) return "";
+        var core = null;
+        try { core = container.FindChildTraverse("miniModifierCore"); } catch(e) {}
+        if (!IsPanelValid(core)) {
+            // No core child by id (it's class-based in the game XML) — fall back to a guarded
+            // BFS that stops before descending into #casterList.
+            return ReadCoreLabelBfs(container);
+        }
+        return ReadCoreLabelBfs(core);
+    }
+
+    function ReadCoreLabelBfs(root) {
         var queue = [];
-        try { if (container.Children) queue = container.Children() || []; } catch(e) { return ""; }
-        queue = queue.slice();
+        try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
         var guard = 0;
         while (queue.length && guard < VALUE_BFS_LIMIT) {
             var node = queue.shift();
             guard++;
             if (!node) continue;
+            // Never descend into the caster list — only the core net value matters.
+            try { if (node.id === "casterList") continue; } catch(e) {}
             try {
                 if (typeof node.text === "string") {
                     var t = node.text;
@@ -121,9 +154,10 @@
         return 0;
     }
 
-    // Fallback classification from the game's own classes. The game uses both `isNegative`/
-    // `isPositive` (generic modifiers) and `IsNegative`/`IsPositive` (speed). This is the
-    // signal that misbehaves off-scoreboard, so we only use it for absolute (unsigned) stats.
+    // The game sets isNegative/isPositive (IsNegative/IsPositive for speed) on the container from
+    // the NET value of all casters. Off-scoreboard this can be WRONG (the game's known bug: an
+    // enemy debuff shows positive/green until you press TAB). So this is only a last-resort signal.
+    // Returns -1 (debuff), +1 (buff), 0 (unclassified).
     function ClassifyByGameClass(container) {
         try {
             if (container.BHasClass("isNegative") || container.BHasClass("IsNegative")) return -1;
@@ -132,27 +166,32 @@
         return 0;
     }
 
-    // Classify by WHO applied the modifier. Each container's #casterList holds caster panels
-    // tagged `.enemy` / `.friend` (game's casterSnippet). Caster identity is set from the
-    // source entity and is correct regardless of the scoreboard/detail-view recompute bug
-    // that flips the displayed value/sign — so an enemy-applied modifier is a debuff even
-    // when the bottom-left panel wrongly paints it green. Returns -1 (enemy/debuff),
-    // +1 (friend/buff), 0 (no caster info).
-    function ClassifyByCaster(container) {
+    // Classify by the consensus team of the modifier's casters. Each #casterList holds
+    // `.casterAndModifiers` panels tagged `.enemy` / `.friend` by the caster entity's team —
+    // a fact that does NOT depend on scoreboard state, so it stays correct off-scoreboard while
+    // the net value/isNegative class is buggy. Returns:
+    //   -1  all casters are enemies  -> net is a debuff (authoritative)
+    //   +1  all casters are friends  -> net is a buff   (authoritative)
+    //    0  mixed teams OR no caster info -> ambiguous, caller falls back to game class/sign.
+    // We only trust UNANIMOUS teams: a container mixing a friendly buff and an enemy debuff on
+    // the same stat is genuinely ambiguous from a single net value, so we don't guess there.
+    function ClassifyByCasterConsensus(container) {
         if (!IsPanelValid(container)) return 0;
-        var rootNode = null;
-        try { rootNode = container.FindChildTraverse("casterList"); } catch(e) {}
-        if (!IsPanelValid(rootNode)) rootNode = container;
+        var list = null;
+        try { list = container.FindChildTraverse("casterList"); } catch(e) {}
+        if (!IsPanelValid(list)) return 0;
         var queue = [];
-        try { if (rootNode.Children) queue = (rootNode.Children() || []).slice(); } catch(e) { return 0; }
-        var guard = 0, sawFriend = false;
+        try { if (list.Children) queue = (list.Children() || []).slice(); } catch(e) { return 0; }
+        var guard = 0, enemy = 0, friend = 0;
         while (queue.length && guard < VALUE_BFS_LIMIT) {
             var node = queue.shift();
             guard++;
             if (!node) continue;
             try {
-                if (node.BHasClass && node.BHasClass("enemy")) return -1; // enemy caster => debuff
-                if (node.BHasClass && node.BHasClass("friend")) sawFriend = true;
+                if (node.BHasClass && node.BHasClass("casterAndModifiers")) {
+                    if (node.BHasClass("enemy")) enemy++;
+                    else if (node.BHasClass("friend")) friend++;
+                }
             } catch(e) {}
             try {
                 if (node.Children) {
@@ -161,7 +200,23 @@
                 }
             } catch(e) {}
         }
-        return sawFriend ? 1 : 0;
+        if (enemy > 0 && friend === 0) return -1;
+        if (friend > 0 && enemy === 0) return 1;
+        return 0;
+    }
+
+    // Force the leading sign of a signed-percentage value to match the resolved buff/debuff
+    // direction, preserving the magnitude/unit. Used only when caster consensus is authoritative,
+    // to correct the game's off-scoreboard sign flip (e.g. "+40%" enemy debuff -> "−40%").
+    function ApplySign(valueText, isNeg) {
+        if (!valueText) return valueText;
+        var i = 0;
+        while (i < valueText.length) {
+            var ch = valueText.charAt(i);
+            if (ch === " " || ch === "+" || ch === "-" || ch === "−") { i++; continue; }
+            break;
+        }
+        return (isNeg ? "−" : "+") + valueText.substring(i);
     }
 
     // ── Overlay construction ──
@@ -276,22 +331,29 @@
             }
             if (!active) { contentParts.push(""); continue; }
 
-            valueText = ReadModifierValueText(container);
-            // Determine buff/debuff with scoreboard-bug-proof signals first:
-            //   1) caster identity (enemy => debuff, friend => buff) — semantic, never flips;
-            //   2) the value's own sign for signed-percentage stats;
-            //   3) the game's isNegative/isPositive class (last resort; wrong off-scoreboard);
-            //   4) default to buff when nothing is conclusive.
-            var cls = ClassifyByCaster(container);
-            if (cls === 0 && def.signed) cls = ClassifyBySign(valueText);
+            valueText = StripHtml(ReadModifierValueText(container));
+            // Classification priority:
+            //   1) caster consensus (unanimous enemy/friend) — correct off-scoreboard, beats the
+            //      game's buggy net class. Handles the common single-source buff/debuff cleanly.
+            //   2) game's own isNegative/isPositive net class (best-effort; wrong off-scoreboard).
+            //   3) the value's own sign as a final tiebreak.
+            var consensus = ClassifyByCasterConsensus(container);
+            var cls = consensus;
             if (cls === 0) cls = ClassifyByGameClass(container);
-            if (cls === 0) cls = 1;
+            if (cls === 0) cls = ClassifyBySign(valueText);
             var isNeg = (cls < 0);
+
+            // When caster consensus is authoritative AND the value is a signed percentage, correct
+            // the game's off-scoreboard sign flip so the number matches the color (e.g. a lone
+            // enemy debuff the game prints as "+40%" is shown as "−40%"). Mixed/aggregated stats
+            // keep the raw game value untouched (we can't recover the true net from one label).
+            var displayValue = valueText;
+            if (consensus !== 0 && def.signed) displayValue = ApplySign(valueText, isNeg);
 
             var show = isNeg ? showDebuffs : showBuffs;
             if (!show) { contentParts.push(""); continue; }
             visibleCount++;
-            contentParts.push(def.key + (isNeg ? "-" : "+") + valueText);
+            contentParts.push(def.key + (isNeg ? "-" : "+") + displayValue);
         }
         var contentSig = contentParts.join("|");
         if (contentSig !== st.lastContentSig) {
