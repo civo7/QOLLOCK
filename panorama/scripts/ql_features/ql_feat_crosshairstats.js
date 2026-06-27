@@ -166,11 +166,11 @@
     // `.casterAndModifiers` panels tagged `.enemy` / `.friend` by the caster entity's team —
     // a fact that does NOT depend on scoreboard state, so it stays correct off-scoreboard while
     // the net value/isNegative class is buggy. Returns:
-    //   -1  all casters are enemies  -> net is a debuff (authoritative)
-    //   +1  all casters are friends  -> net is a buff   (authoritative)
+    //   -1  all casters are enemies  -> net is a debuff (authoritative; the buggy case we correct)
+    //   +1  all casters are friends  -> only informational; the caller still trusts the game here,
+    //                                    because friendly-applied modifiers (incl. self-debuffs)
+    //                                    compute correctly and must keep their real sign.
     //    0  mixed teams OR no caster info -> ambiguous, caller falls back to game class/sign.
-    // We only trust UNANIMOUS teams: a container mixing a friendly buff and an enemy debuff on
-    // the same stat is genuinely ambiguous from a single net value, so we don't guess there.
     function ClassifyByCasterConsensus(container) {
         if (!IsPanelValid(container)) return 0;
         var list = null;
@@ -338,24 +338,22 @@
             if (!active) { contentParts.push(""); continue; }
 
             valueText = StripHtml(ReadModifierValueText(container));
-            // Classification priority:
-            //   1) caster consensus (unanimous enemy/friend) — correct off-scoreboard, beats the
-            //      game's buggy net class. Handles the common single-source buff/debuff cleanly.
-            //   2) game's own isNegative/isPositive net class (best-effort; wrong off-scoreboard).
-            //   3) the value's own sign as a final tiebreak.
+            // The off-scoreboard miscompute only affects ENEMY-applied modifiers (the game
+            // resolves them from the wrong perspective, printing a debuff as positive/green until
+            // TAB). Friendly-applied modifiers — including self-debuffs like an ability's own slow
+            // — compute correctly, so we must NOT override their sign.
+            //   - all-enemy casters  -> always a debuff; force the sign negative (fixes the bug).
+            //   - otherwise (friend / mixed / none) -> trust the game's own class, then value sign.
             var consensus = ClassifyByCasterConsensus(container);
-            var cls = consensus;
-            if (cls === 0) cls = ClassifyByGameClass(container);
-            if (cls === 0) cls = ClassifyBySign(valueText);
+            var cls, displayValue = valueText;
+            if (consensus < 0) {
+                cls = -1;
+                displayValue = ApplySign(valueText, true); // "+40%" / "+1.8 m/s" -> "−…"
+            } else {
+                cls = ClassifyByGameClass(container);
+                if (cls === 0) cls = ClassifyBySign(valueText);
+            }
             var isNeg = (cls < 0);
-
-            // When caster consensus is authoritative, correct the game's off-scoreboard sign flip
-            // so the number matches the color — for ANY stat, since all values carry a sign
-            // (e.g. a lone enemy slow the game prints as "+1.8 m/s" is shown as "−1.8 m/s", and a
-            // "+40%" enemy fire-rate debuff as "−40%"). Mixed/aggregated stats keep the raw game
-            // value untouched (we can't recover the true net from one label).
-            var displayValue = valueText;
-            if (consensus !== 0) displayValue = ApplySign(valueText, isNeg);
 
             var show = isNeg ? showDebuffs : showBuffs;
             if (!show) { contentParts.push(""); continue; }
