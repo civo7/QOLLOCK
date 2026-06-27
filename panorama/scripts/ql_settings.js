@@ -226,7 +226,7 @@ const SETTING_CREATED_BY_BY_LABEL = {
 };
 const SECTION_CREATED_BY_BY_TITLE = {
     "Active Stats": "Predi",
-    "Stats Position": "Predi"
+    "Player Stats": "Predi"
 };
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ALT_ZOOM_DRAW_OVER_UI": "Draws the minimap over all other UI elements for improved visibility.",
@@ -404,8 +404,8 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "Crosshair / Item Cooldowns|Advanced Filter": "Decide what style of item to display the cooldown of.",
     "Crosshair / Active Stats|Show Debuffs": "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.",
     "Crosshair / Active Stats|Show Buffs": "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.",
-    "HUD / Stats Position|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
-    "HUD|Stats Position": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
+    "HUD / Player Stats|Side": "Pin the stats panel to the left (default, like vanilla) or right side of the screen.",
+    "HUD|Player Stats": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
     "Crosshair / Item Target Reticle|Highlight Mode": "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).",
     "Crosshair / Item Target Reticle|Improved Hint": "Cleans up the styling of reticle hints.",
     "Crosshair / Reloading|Circle": "The circle countdown for when you are reloading.",
@@ -510,7 +510,7 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Audio|Announcer": "You can download custom announcer packs, just download the correct one for the slot you want to replace.",
     "Audio|Minimap Reminder": "Play an audio reminder to remember to look at the minimap.",
     "Crosshair|Active Stats": "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.",
-    "HUD|Stats Position": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
+    "HUD|Player Stats": "Move the active stats panel (and the detailed TAB view) to the left or right side of the screen, with fine X/Y offsets.",
     "Crosshair|Combat Status": "Show if you are in combat or not.",
     "Crosshair|Damage Numbers": "Customize the styling of damage numbers.",
     "Crosshair|Item Cooldowns": "Shows item cooldowns near crosshair for easier readability.",
@@ -861,7 +861,7 @@ const RECENT_PURCHASE_REPOSITION_OPTIONS = [
     { label: "Rejuvenator", key: "RECENT_PURCHASES_QUICK_REJUV" },
     { label: "Scoreboard", key: "RECENT_PURCHASES_QUICK_SCOREBOARD" }
 ];
-// Stats Position side picker — mutually exclusive Left/Right bound to a single config key.
+// Player Stats side picker — mutually exclusive Left/Right bound to a single config key.
 const STATS_POSITION_SIDE_OPTIONS = [
     { label: "Left", value: 0 },
     { label: "Right", value: 1 }
@@ -17985,7 +17985,7 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
             seen[sectionOptions.titleCheckbox.configId] = true;
         }
         return keys;
-    }, null, titleHead);
+    }, enableConfigId, titleHead);
 
     var toggleBtn = $.CreatePanel("Panel", titleRow, safeTitleId + "SectionToggle");
     toggleBtn.AddClass("SectionInlineToggleBtn");
@@ -18006,7 +18006,9 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     }
 
     var animToken = 0;
+    var lastAppliedEnabled = null;
     var applyBodyState = function(enabled, animate) {
+        lastAppliedEnabled = enabled;
         animToken++;
         var token = animToken;
         toggleBtn.SetHasClass("Active", enabled);
@@ -18051,6 +18053,20 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
         }
     };
     applyBodyState(getSectionEnabled(), false);
+
+    // Keep the header toggle + body collapse in sync when the config changes WITHOUT a full
+    // rebuild — e.g. the section reset button, config import, or a preset applied via soft-refresh.
+    // Soft refresh only runs the row-sync callbacks; it does not re-create the section, so without
+    // this the switch and the collapsed state would drift from MOD_CONFIG. The lastAppliedEnabled
+    // guard means a manual toggle (which already applied the new state) never re-snaps mid-animation.
+    RegisterSettingsListRowSync(function() {
+        if (!body || !body.IsValid || !body.IsValid()) return false;
+        var currentEnabled = getSectionEnabled();
+        if (currentEnabled !== lastAppliedEnabled) {
+            applyBodyState(currentEnabled, false);
+        }
+        return true;
+    });
 
     toggleSwitchButton.SetPanelEvent("onactivate", function() {
         $.DispatchEvent("UIHideTextTooltip");
@@ -21268,7 +21284,7 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
         }, { invert: true });
         CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Stats Position", "ENABLE_STATS_POSITION", "Move the active stats panel (and the detailed TAB view) to the left or right side, with fine X/Y offsets.", function(sectionParent) {
+        CreateAnimatedInlineToggleSection(list, "Player Stats", "ENABLE_STATS_POSITION", "Move the active stats panel (and the detailed TAB view) to the left or right side, with fine X/Y offsets.", function(sectionParent) {
             CreateRow(sectionParent, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
             CreateSliderRow(sectionParent, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
             CreateSliderRow(sectionParent, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
