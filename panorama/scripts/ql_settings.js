@@ -567,6 +567,21 @@ const SETTING_PERF_IMPACT_TIERS = {
     CROSSHAIR_STATS_Y_OFFSET: "low",
     CROSSHAIR_STATS_SCALE: "low",
     CROSSHAIR_STATS_OPACITY: "low",
+    CROSSHAIR_STATS_SHOW_FIRERATE: "none",
+    CROSSHAIR_STATS_SHOW_MOVESPEED: "none",
+    CROSSHAIR_STATS_SHOW_HEALAMP: "none",
+    CROSSHAIR_STATS_SHOW_BULLETRESIST: "none",
+    CROSSHAIR_STATS_SHOW_TECHRESIST: "none",
+    CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL: "none",
+    CROSSHAIR_STATS_SHOW_TECHLIFESTEAL: "none",
+    CROSSHAIR_STATS_SHOW_WEAPONPOWER: "none",
+    CROSSHAIR_STATS_SHOW_SPIRIT: "none",
+    CROSSHAIR_STATS_SHOW_RANGE: "none",
+    CROSSHAIR_STATS_SHOW_DURATION: "none",
+    CROSSHAIR_STATS_SHOW_DAMAGEAMP: "none",
+    CROSSHAIR_STATS_SHOW_CLIPSIZE: "none",
+    CROSSHAIR_STATS_SHOW_REGEN: "none",
+    CROSSHAIR_STATS_SHOW_BULLETEVASION: "none",
     ENABLE_STATS_POSITION: "low",
     STATS_POSITION_SIDE: "low",
     STATS_POSITION_X_OFFSET: "low",
@@ -18084,6 +18099,87 @@ function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enable
     return body;
 }
 
+// Collapsed-by-default expander with NO config gate — a pure-visual "dropdown" to tuck a long
+// list of optional rows (e.g. per-stat visibility toggles) out of the way so casual users don't
+// see them by default. Clicking the header expands/collapses the body. The open/closed state is
+// transient (closure var), not persisted; the rows inside are normal CreateRow rows, so a parent
+// section's reset still collects their keys (CollectResetKeysFromPanel recurses through the body).
+function CreateCollapsibleSubSection(parent, title, buildRowsFn) {
+    var localizedTitle = LocalizeSettingsText(title || "");
+    if (gSearchCollectMode && gSearchCollectState) {
+        // Search mode: flatten so the inner rows stay searchable instead of being hidden away.
+        if (buildRowsFn) buildRowsFn(parent);
+        return null;
+    }
+
+    var safeTitleId = String(title || "SubSection").replace(/[^A-Za-z0-9]/g, "");
+
+    var header = $.CreatePanel("Button", parent, safeTitleId + "SubSectionHeader");
+    header.AddClass("QOLCollapsibleSubHeader");
+
+    var chevron = $.CreatePanel("Label", header, safeTitleId + "SubSectionChevron");
+    chevron.AddClass("QOLCollapsibleSubChevron");
+    chevron.text = "▸"; // ▸
+
+    var headLabel = $.CreatePanel("Label", header, safeTitleId + "SubSectionTitle");
+    headLabel.AddClass("QOLCollapsibleSubLabel");
+    headLabel.text = localizedTitle;
+
+    var body = $.CreatePanel("Panel", parent, safeTitleId + "SubSectionBody");
+    body.AddClass("SettingsSectionBody");
+
+    var expanded = false;
+    var animToken = 0;
+    var applyBodyState = function(open, animate) {
+        animToken++;
+        var token = animToken;
+        header.SetHasClass("Expanded", open);
+        chevron.text = open ? "▾" : "▸"; // ▾ / ▸
+        if (!animate) {
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("Collapsed", !open);
+            body.hittest = open;
+            body.hittestchildren = open;
+            return;
+        }
+        if (open) {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("Hiding", false);
+            body.SetHasClass("ShowPrep", true);
+            body.hittest = true;
+            body.hittestchildren = true;
+            $.Schedule(0.01, function() {
+                if (!body || !body.IsValid || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("ShowPrep", false);
+            });
+        } else {
+            body.SetHasClass("Collapsed", false);
+            body.SetHasClass("ShowPrep", false);
+            body.SetHasClass("Hiding", true);
+            body.hittest = false;
+            body.hittestchildren = false;
+            $.Schedule(0.17, function() {
+                if (!body || !body.IsValid || !body.IsValid()) return;
+                if (animToken !== token) return;
+                body.SetHasClass("Hiding", false);
+                body.SetHasClass("Collapsed", true);
+            });
+        }
+    };
+    applyBodyState(false, false);
+
+    header.SetPanelEvent("onactivate", function() {
+        $.DispatchEvent("UIHideTextTooltip");
+        expanded = !expanded;
+        applyBodyState(expanded, true);
+    });
+
+    if (buildRowsFn) buildRowsFn(body);
+    return body;
+}
+
 function CreateAnimatedInlineEnumSection(parent, title, configId, activeValue, buildRowsFn) {
     var getSectionEnabled = function() {
         return MOD_CONFIG[configId] === activeValue;
@@ -21099,6 +21195,25 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Opacity", "CROSSHAIR_STATS_OPACITY", "opacity");
             CreateSliderRow(sectionParent, "Horizontal Offset", "CROSSHAIR_STATS_X_OFFSET", "offset_n500_500");
             CreateSliderRow(sectionParent, "Vertical Offset", "CROSSHAIR_STATS_Y_OFFSET", "offset_n500_500");
+            // Per-stat visibility — collapsed by default so it's out of the way for users who
+            // don't care; all stats are shown unless turned off here.
+            CreateCollapsibleSubSection(sectionParent, "Visible Stats", function(statsParent) {
+                CreateRow(statsParent, "Fire Rate", "CROSSHAIR_STATS_SHOW_FIRERATE", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Move Speed", "CROSSHAIR_STATS_SHOW_MOVESPEED", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Healing Amp", "CROSSHAIR_STATS_SHOW_HEALAMP", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Bullet Resist", "CROSSHAIR_STATS_SHOW_BULLETRESIST", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Spirit Resist", "CROSSHAIR_STATS_SHOW_TECHRESIST", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Bullet Lifesteal", "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Spirit Lifesteal", "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Weapon Power", "CROSSHAIR_STATS_SHOW_WEAPONPOWER", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Spirit Power", "CROSSHAIR_STATS_SHOW_SPIRIT", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Ability Range", "CROSSHAIR_STATS_SHOW_RANGE", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Ability Duration", "CROSSHAIR_STATS_SHOW_DURATION", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Damage Amp", "CROSSHAIR_STATS_SHOW_DAMAGEAMP", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Clip Size", "CROSSHAIR_STATS_SHOW_CLIPSIZE", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Health Regen", "CROSSHAIR_STATS_SHOW_REGEN", "toggle", null, null, null, null);
+                CreateRow(statsParent, "Bullet Evasion", "CROSSHAIR_STATS_SHOW_BULLETEVASION", "toggle", null, null, null, null);
+            });
         });
         CreateSeparator(list);
         CreateAnimatedInlineToggleSection(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", function(sectionParent) {

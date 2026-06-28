@@ -2705,6 +2705,45 @@
 	transform: translateY(-6px);
 }
 
+/* Collapsible sub-section (e.g. Active Stats > Visible Stats) — a pure-visual expander whose
+   clickable header toggles the body below it. Subdued vs a full SectionTitle so it reads as a
+   nested control rather than a top-level section. */
+.QOLCollapsibleSubHeader
+{
+	width: 100%;
+	flow-children: right;
+	vertical-align: center;
+	margin: 6px 0px 4px 0px;
+	padding: 2px 0px;
+}
+
+.QOLCollapsibleSubChevron
+{
+	width: 12px;
+	margin-right: 6px;
+	color: #c8c0b4;
+	font-size: 13px;
+	vertical-align: center;
+}
+
+.QOLCollapsibleSubLabel
+{
+	width: fit-children;
+	color: #d8d0c4;
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	vertical-align: center;
+}
+
+.QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron,
+.QOLCollapsibleSubHeader:hover .QOLCollapsibleSubLabel,
+.QOLCollapsibleSubHeader.Expanded .QOLCollapsibleSubChevron
+{
+	color: #ffffff;
+}
+
 .SearchEmptyLabel
 {
 	color: #a8a094;
