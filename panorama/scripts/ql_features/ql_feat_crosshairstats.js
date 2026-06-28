@@ -37,7 +37,7 @@
         { id: "spiritContainer",          key: "spirit",        icon: "Spirit" },
         { id: "abilityRangeContainer",    key: "range",         icon: "Range" },
         { id: "abilityDurationContainer", key: "duration",      icon: "Duration" },
-        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification" },
+        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageWeapon" },
         { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize" },
         { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen" },
         { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge" }
