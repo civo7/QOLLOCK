@@ -13395,8 +13395,12 @@
 #SettingsHeaderCenterHost #SettingsSearchWrap,
 #SettingsHeaderCenterHost .SettingsHeaderSearchWrap
 {
-	width: 400px;
-	max-width: 400px;
+	/* Widen the search bar by 55px, extending leftward: the +55 width plus the
+	   28px margin-right (shifting the centered box left) push the search icon
+	   ~55px to the left while keeping the right edge in place. */
+	width: 455px;
+	max-width: 455px;
+	margin-right: 28px;
 }
 
 #SettingsTabRailFooter
