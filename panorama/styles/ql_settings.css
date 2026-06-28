@@ -2736,17 +2736,36 @@
 	vertical-align: center;
 }
 
+/* Real glyph image (unicode arrows don't render in the Panorama font). arrow_right.vsvg points
+   right by default = collapsed; rotated 90° to point down when expanded. wash-color tints the
+   white glyph to the muted row tone. */
 .QOLCollapsibleSubChevron
 {
-	width: 16px;
+	width: 14px;
+	height: 14px;
 	margin-right: 14px;
-	color: #627073;
-	font-size: 13px;
-	text-align: center;
 	vertical-align: center;
+	background-image: url("s2r://panorama/images/glyphs/arrow_right.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	wash-color: #627073;
+	transform: rotateZ(0deg);
+	transition-property: transform, wash-color;
+	transition-duration: 0.14s;
+	transition-timing-function: ease-out;
 }
 
-#SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron,
+#SettingsWindow .QOLCollapsibleSubHeader.Expanded .QOLCollapsibleSubChevron
+{
+	transform: rotateZ(90deg);
+}
+
+#SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron
+{
+	wash-color: #c8d0d2;
+}
+
 #SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubLabel
 {
 	color: #c8d0d2;

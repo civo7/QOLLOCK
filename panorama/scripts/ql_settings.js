@@ -18123,9 +18123,11 @@ function CreateCollapsibleSubSection(parent, title, buildRowsFn) {
     headLabel.AddClass("QOLCollapsibleSubLabel");
     headLabel.text = localizedTitle;
 
-    var chevron = $.CreatePanel("Label", header, safeTitleId + "SubSectionChevron");
+    // Arrow icon (a real glyph image so it actually renders — unicode triangles don't show in the
+    // Panorama font). CSS rotates it 90° via the header's .Expanded class: right = collapsed,
+    // down = expanded.
+    var chevron = $.CreatePanel("Panel", header, safeTitleId + "SubSectionChevron");
     chevron.AddClass("QOLCollapsibleSubChevron");
-    chevron.text = "▾"; // set by applyBodyState below (▾ open / ▸ collapsed)
 
     var body = $.CreatePanel("Panel", parent, safeTitleId + "SubSectionBody");
     body.AddClass("SettingsSectionBody");
@@ -18136,7 +18138,6 @@ function CreateCollapsibleSubSection(parent, title, buildRowsFn) {
         animToken++;
         var token = animToken;
         header.SetHasClass("Expanded", open);
-        chevron.text = open ? "▾" : "▸"; // ▾ / ▸
         if (!animate) {
             body.SetHasClass("ShowPrep", false);
             body.SetHasClass("Hiding", false);
