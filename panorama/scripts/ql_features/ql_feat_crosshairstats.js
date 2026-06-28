@@ -25,22 +25,24 @@
     // ability_property_icons.vcss_c (spelling mirrors the game XML exactly). Every value label is
     // a signed delta string ({s:value} / {d:value} — "+1.8 m/s", "-15%", "+5 /sec", etc.), so when
     // caster consensus tells us the true direction we can correct the sign on any of them.
+    // `cfg` is the per-stat visibility config key (3.1.8) — when its value isn't 1 the row is
+    // skipped entirely (never mirrored), letting users hide individual modifiers. All default on.
     var STAT_DEFS = [
-        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate" },
-        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed" },
-        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation" },
-        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet" },
-        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit" },
-        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets" },
-        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit" },
-        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon" },
-        { id: "spiritContainer",          key: "spirit",        icon: "Spirit" },
-        { id: "abilityRangeContainer",    key: "range",         icon: "Range" },
-        { id: "abilityDurationContainer", key: "duration",      icon: "Duration" },
-        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageWeapon" },
-        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize" },
-        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen" },
-        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge" }
+        { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                cfg: "CROSSHAIR_STATS_SHOW_FIRERATE" },
+        { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               cfg: "CROSSHAIR_STATS_SHOW_MOVESPEED" },
+        { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation",        cfg: "CROSSHAIR_STATS_SHOW_HEALAMP" },
+        { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet",            cfg: "CROSSHAIR_STATS_SHOW_BULLETRESIST" },
+        { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit",            cfg: "CROSSHAIR_STATS_SHOW_TECHRESIST" },
+        { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets", cfg: "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL" },
+        { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit",    cfg: "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL" },
+        { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon",            cfg: "CROSSHAIR_STATS_SHOW_WEAPONPOWER" },
+        { id: "spiritContainer",          key: "spirit",        icon: "Spirit",                  cfg: "CROSSHAIR_STATS_SHOW_SPIRIT" },
+        { id: "abilityRangeContainer",    key: "range",         icon: "Range",                   cfg: "CROSSHAIR_STATS_SHOW_RANGE" },
+        { id: "abilityDurationContainer", key: "duration",      icon: "Duration",                cfg: "CROSSHAIR_STATS_SHOW_DURATION" },
+        { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageWeapon",            cfg: "CROSSHAIR_STATS_SHOW_DAMAGEAMP" },
+        { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize",            cfg: "CROSSHAIR_STATS_SHOW_CLIPSIZE" },
+        { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen",             cfg: "CROSSHAIR_STATS_SHOW_REGEN" },
+        { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge",               cfg: "CROSSHAIR_STATS_SHOW_BULLETEVASION" }
     ];
 
     function EnsureState() {
@@ -330,6 +332,9 @@
         var visibleCount = 0;
         for (var s = 0; s < STAT_DEFS.length; s++) {
             var def = STAT_DEFS[s];
+            // Per-stat visibility (3.1.8): skip rows the user turned off. Push "" to keep
+            // contentParts index-aligned with STAT_DEFS (the apply loop below reads it by index).
+            if (def.cfg && !IsCfgEnabled(cfg, def.cfg)) { contentParts.push(""); continue; }
             var container = source ? GetSourceContainer(source, def) : null;
             var active = false, valueText = "";
             if (IsPanelValid(container)) {
@@ -402,7 +407,22 @@
             "CROSSHAIR_STATS_X_OFFSET",
             "CROSSHAIR_STATS_Y_OFFSET",
             "CROSSHAIR_STATS_SCALE",
-            "CROSSHAIR_STATS_OPACITY"
+            "CROSSHAIR_STATS_OPACITY",
+            "CROSSHAIR_STATS_SHOW_FIRERATE",
+            "CROSSHAIR_STATS_SHOW_MOVESPEED",
+            "CROSSHAIR_STATS_SHOW_HEALAMP",
+            "CROSSHAIR_STATS_SHOW_BULLETRESIST",
+            "CROSSHAIR_STATS_SHOW_TECHRESIST",
+            "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL",
+            "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL",
+            "CROSSHAIR_STATS_SHOW_WEAPONPOWER",
+            "CROSSHAIR_STATS_SHOW_SPIRIT",
+            "CROSSHAIR_STATS_SHOW_RANGE",
+            "CROSSHAIR_STATS_SHOW_DURATION",
+            "CROSSHAIR_STATS_SHOW_DAMAGEAMP",
+            "CROSSHAIR_STATS_SHOW_CLIPSIZE",
+            "CROSSHAIR_STATS_SHOW_REGEN",
+            "CROSSHAIR_STATS_SHOW_BULLETEVASION"
         ],
         bucket: 5, phase: -1,
         requiresRoot: true,
