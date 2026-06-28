@@ -18117,17 +18117,17 @@ function CreateCollapsibleSubSection(parent, title, buildRowsFn) {
     var header = $.CreatePanel("Button", parent, safeTitleId + "SubSectionHeader");
     header.AddClass("QOLCollapsibleSubHeader");
 
-    // Label fills the row (left-aligned to match the other rows' text), chevron sits at the far
-    // right like a standard accordion/dropdown affordance so it reads as expandable at a glance.
+    // Arrow icon FIRST so flow-children:right puts it on the far left, leading the label like a
+    // standard accordion/disclosure triangle. A real glyph image (unicode triangles don't render
+    // in the Panorama font); CSS rotates it 90° via the header's .Expanded class: right =
+    // collapsed, down = expanded.
+    var chevron = $.CreatePanel("Panel", header, safeTitleId + "SubSectionChevron");
+    chevron.AddClass("QOLCollapsibleSubChevron");
+
+    // Label follows the arrow and fills the rest of the row.
     var headLabel = $.CreatePanel("Label", header, safeTitleId + "SubSectionTitle");
     headLabel.AddClass("QOLCollapsibleSubLabel");
     headLabel.text = localizedTitle;
-
-    // Arrow icon (a real glyph image so it actually renders — unicode triangles don't show in the
-    // Panorama font). CSS rotates it 90° via the header's .Expanded class: right = collapsed,
-    // down = expanded.
-    var chevron = $.CreatePanel("Panel", header, safeTitleId + "SubSectionChevron");
-    chevron.AddClass("QOLCollapsibleSubChevron");
 
     var body = $.CreatePanel("Panel", parent, safeTitleId + "SubSectionBody");
     body.AddClass("SettingsSectionBody");

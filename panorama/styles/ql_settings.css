@@ -2708,8 +2708,7 @@
 /* Collapsible sub-section (e.g. Active Stats > Visible Stats) — a pure-visual expander whose
    clickable header toggles the body below it. Deliberately tuned to match the surrounding rows
    (same muted label colour, no permanent background, same subtle hover) so it doesn't draw the
-   eye; the right-side arrow is what signals it's expandable. Left-aligned (16px) to line up with
-   the toggle rows it reveals. */
+   eye; the leading left-side arrow is what signals it's expandable. */
 .QOLCollapsibleSubHeader
 {
 	width: 100%;
@@ -2730,20 +2729,22 @@
 .QOLCollapsibleSubLabel
 {
 	width: fill-parent-flow(1.0);
-	padding-left: 16px;
 	color: #a6b1b4;
+	font-family: oracle;
 	font-size: 15px;
 	vertical-align: center;
 }
 
 /* Real glyph image (unicode arrows don't render in the Panorama font). arrow_right.vsvg points
    right by default = collapsed; rotated 90° to point down when expanded. wash-color tints the
-   white glyph to the muted row tone. */
+   white glyph to the muted row tone. Sits at the far left (14px margin, matching the .SettingLabel
+   indent) as the leading disclosure triangle. */
 .QOLCollapsibleSubChevron
 {
 	width: 14px;
 	height: 14px;
-	margin-right: 14px;
+	margin-left: 14px;
+	margin-right: 8px;
 	vertical-align: center;
 	background-image: url("s2r://panorama/images/glyphs/arrow_right.vsvg");
 	background-size: contain;
