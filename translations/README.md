@@ -29,7 +29,10 @@ correctly.
 
 1. Google Sheets → **File → Import → Upload** → pick the CSV → *Replace spreadsheet*.
 2. Share the sheet with the translators (edit/comment access).
-3. They fill the **blank cells** in their language column. Rules for them:
+3. They fill the **blank cells** in their language column. **Untranslated strings are grouped at the
+   bottom of the sheet** (fully-translated rows first, then partially-translated, then brand-new
+   strings blank in every language at the very end) — so a translator just scrolls to the bottom
+   and fills upward. Rules for them:
    - **Do not edit the `English` column** — it's the key that links every translation. Changing it
      orphans the translation.
    - Leave a cell blank if there's no translation yet (blanks are safe — see import).

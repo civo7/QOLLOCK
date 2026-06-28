@@ -163,8 +163,34 @@ function main() {
         for (const k of Object.keys(m)) keySet.add(k);
     }
     for (const s of EXTRA_SOURCE_STRINGS) keySet.add(s);
-    const keys = Array.from(keySet).sort((a, b) =>
-        a.toLowerCase() < b.toLowerCase() ? -1 : (a.toLowerCase() > b.toLowerCase() ? 1 : 0));
+
+    // How many language columns are still blank for a given English key.
+    const langMaps = LANGUAGES.filter(l => l.mapVar);
+    function missingCount(key) {
+        let n = 0;
+        for (const lang of langMaps) {
+            const m = maps[lang.mapVar] || {};
+            const val = Object.prototype.hasOwnProperty.call(m, key) ? m[key] : "";
+            if (val === "") n++;
+        }
+        return n;
+    }
+    const missingByKey = new Map();
+    for (const key of keySet) missingByKey.set(key, missingCount(key));
+
+    // Sort so translators only have to scroll to the end: fully-translated strings come first
+    // (alphabetical), then everything still needing work sinks to the bottom. Within the
+    // needs-work block, the more-complete rows come first and the brand-new strings (blank in
+    // EVERY language) land at the very bottom. CSV row order doesn't affect import — it merges by
+    // the English key — so this is purely a convenience for whoever fills the sheet.
+    const lc = (s) => s.toLowerCase();
+    const keys = Array.from(keySet).sort((a, b) => {
+        const ma = missingByKey.get(a), mb = missingByKey.get(b);
+        const tierA = ma === 0 ? 0 : 1, tierB = mb === 0 ? 0 : 1;
+        if (tierA !== tierB) return tierA - tierB;          // translated block above needs-work block
+        if (tierA === 1 && ma !== mb) return ma - mb;       // fewer-missing first → all-blank at the very bottom
+        return lc(a) < lc(b) ? -1 : (lc(a) > lc(b) ? 1 : 0); // alphabetical within a tier
+    });
 
     const lines = [];
     lines.push(LANGUAGES.map(l => csvCell(l.header)).join(","));
