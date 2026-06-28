@@ -54,7 +54,7 @@ function EnsureMinimapTunnelOverlay(root) {
         if (!overlay) return null;
         overlay.hittest = false;
         overlay.hittestchildren = false;
-        overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png.vtex")';
+        overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")';
         overlay.style.backgroundSize = "100% 100%";
         overlay.style.backgroundRepeat = "no-repeat";
         overlay.style.backgroundPosition = "center";

@@ -16,7 +16,7 @@
 							<Label class="HiddenAccountID" text="{i:r:account_id}" />
 						<Button id="QOLStatlockerProfileCardLink">
 							<Label id="QOLStatlockerProfileCardLabel" class="AccountID" text="Friend ID:" />
-							<Image id="QOLStatlockerProfileCardIcon" src="s2r://panorama/images/qollock/statlocker.vtex" scaling="stretch-to-fit-preserve-aspect" />
+							<Image id="QOLStatlockerProfileCardIcon" src="s2r://panorama/images/qollock/statlocker_png.vtex" scaling="stretch-to-fit-preserve-aspect" />
 						</Button>
 					</Panel>
 					<Panel id="HeroInfo">

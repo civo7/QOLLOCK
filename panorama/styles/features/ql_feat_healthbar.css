@@ -392,7 +392,7 @@
 
 .minecraft_healthbar_active .APCurrencyIcon
 {
-    background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+    background-image: url("s2r://panorama/images/minecraft/xp_orb_ap_png.vtex");
     width: 24px;
     height: 24px;
     margin-right: 4px;

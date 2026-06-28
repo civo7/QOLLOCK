@@ -3253,7 +3253,7 @@ function GetUIRoot() {
             slot.AddClass("HeartSlot");
             var containerImg = $.CreatePanel("Image", slot, "");
             containerImg.AddClass("HeartContainer");
-            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x_png.vtex");
             var healingImg = $.CreatePanel("Image", slot, "");
             healingImg.AddClass("HeartHealing");
             healingImg.style.visibility = "collapse";
@@ -3317,7 +3317,7 @@ function GetUIRoot() {
             slot.AddClass("HeartSlot");
             var containerImg = $.CreatePanel("Image", slot, "");
             containerImg.AddClass("HeartContainer");
-            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x.vtex");
+            containerImg.SetImage("s2r://panorama/images/minecraft/container_8x_png.vtex");
             var fillImg = $.CreatePanel("Image", slot, "");
             fillImg.AddClass("HeartFill");
             fillImg.style.visibility = "collapse";
@@ -3353,8 +3353,8 @@ function GetUIRoot() {
                     if (i >= heartsNeeded) { slot.style.visibility = "collapse"; continue; }
                     slot.style.visibility = "visible";
                     var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
-                    if (isLastSlot) container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_half_8x.vtex" : "s2r://panorama/images/minecraft/container_half_8x.vtex");
-                    else container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                    if (isLastSlot) container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_half_8x_png.vtex" : "s2r://panorama/images/minecraft/container_half_8x_png.vtex");
+                    else container.SetImage(isBlinkOn ? "s2r://panorama/images/minecraft/container_blinking_8x_png.vtex" : "s2r://panorama/images/minecraft/container_8x_png.vtex");
                 }
             }
             if (fullHearts !== State.mcLastFillFullHearts || hasHalfHeart !== State.mcLastFillHasHalf || afflicted !== State.mcLastFillAfflicted) {
@@ -3367,10 +3367,10 @@ function GetUIRoot() {
                     fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
                     if (i < fullHearts) {
                         fill.AddClass("full"); fill.style.visibility = "visible";
-                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "full_8x.vtex");
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "full_8x_png.vtex");
                     } else if (i === fullHearts && hasHalfHeart) {
                         fill.AddClass("half"); fill.style.visibility = "visible";
-                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "half_8x.vtex");
+                        fill.SetImage("s2r://panorama/images/minecraft/" + texturePrefix + "half_8x_png.vtex");
                     } else {
                         fill.AddClass("empty"); fill.style.visibility = "collapse";
                     }
@@ -3402,10 +3402,10 @@ function GetUIRoot() {
                 deferred.RemoveClass("full"); deferred.RemoveClass("half"); deferred.RemoveClass("empty");
                 if (i < fullHearts) {
                     deferred.AddClass("full"); deferred.style.visibility = "visible";
-                    deferred.SetImage("s2r://panorama/images/minecraft/orange_full_8x.vtex");
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_full_8x_png.vtex");
                 } else if (i === fullHearts && hasHalfHeart) {
                     deferred.AddClass("half"); deferred.style.visibility = "visible";
-                    deferred.SetImage("s2r://panorama/images/minecraft/orange_half_8x.vtex");
+                    deferred.SetImage("s2r://panorama/images/minecraft/orange_half_8x_png.vtex");
                 } else {
                     deferred.AddClass("empty"); deferred.style.visibility = "collapse";
                 }
@@ -3433,10 +3433,10 @@ function GetUIRoot() {
                 healing.RemoveClass("full"); healing.RemoveClass("half"); healing.RemoveClass("empty");
                 if (i < fullHearts) {
                     healing.AddClass("full"); healing.style.visibility = "visible";
-                    healing.SetImage("s2r://panorama/images/minecraft/green_full_8x.vtex");
+                    healing.SetImage("s2r://panorama/images/minecraft/green_full_8x_png.vtex");
                 } else if (i === fullHearts && hasHalfHeart) {
                     healing.AddClass("half"); healing.style.visibility = "visible";
-                    healing.SetImage("s2r://panorama/images/minecraft/green_half_8x.vtex");
+                    healing.SetImage("s2r://panorama/images/minecraft/green_half_8x_png.vtex");
                 } else {
                     healing.AddClass("empty"); healing.style.visibility = "collapse";
                 }
@@ -3471,14 +3471,14 @@ function GetUIRoot() {
                 var container = State.mcBarrierHeartContainerImages[i];
                 var fill = State.mcBarrierHeartFillImages[i];
                 var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
-                container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x.vtex" : "s2r://panorama/images/minecraft/container_8x.vtex");
+                container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x_png.vtex" : "s2r://panorama/images/minecraft/container_8x_png.vtex");
                 fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
                 if (i < fullHearts) {
                     fill.AddClass("full"); fill.style.visibility = "visible";
-                    fill.SetImage("s2r://panorama/images/minecraft/absorption_full_8x.vtex");
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_full_8x_png.vtex");
                 } else if (i === fullHearts && hasHalfHeart) {
                     fill.AddClass("half"); fill.style.visibility = "visible";
-                    fill.SetImage("s2r://panorama/images/minecraft/absorption_half_8x.vtex");
+                    fill.SetImage("s2r://panorama/images/minecraft/absorption_half_8x_png.vtex");
                 } else {
                     fill.AddClass("empty"); fill.style.visibility = "collapse";
                 }
@@ -3605,9 +3605,9 @@ function GetUIRoot() {
             var iconCount = State.mcCachedFoodIcons.length;
             for (var i = 0; i < iconCount; i += 1) {
                 var reverseIndex = iconCount - 1 - i;
-                if (reverseIndex < fullIcons) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_8x.vtex");
-                else if (reverseIndex === fullIcons && hasHalfIcon) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_half_8x.vtex");
-                else State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_empty_8x.vtex");
+                if (reverseIndex < fullIcons) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_8x_png.vtex");
+                else if (reverseIndex === fullIcons && hasHalfIcon) State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_half_8x_png.vtex");
+                else State.mcCachedFoodIcons[i].SetImage("s2r://panorama/images/minecraft/food_empty_8x_png.vtex");
             }
         } catch (e) { $.Msg("[QOLLock][MC] Error in McUpdateFood: " + e); }
     }

@@ -63,7 +63,7 @@
 {
 	img-shadow: 0px 0px 0px 2.0 offBlack;
 	margin-right: 3px;
-	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap_png.vtex");
 }
 
 .minecraft_healthbar_active .isUnlocked .canAffordUpgrade .abilityLevelPip,
@@ -71,12 +71,12 @@
 .minecraft_healthbar_active .isReadOnly .canAffordUpgrade .abilityLevelPip,
 .minecraft_healthbar_active .isUnlocked .canUnlock .abilityLevelPip
 {
-	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap_png.vtex");
 }
 
 .minecraft_healthbar_active .isUnlocked .hasAbilityUpgrade .abilityLevelPip
 {
-	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap.vtex");
+	background-image: url("s2r://panorama/images/minecraft/xp_orb_ap_png.vtex");
 }
 
 .minecraft_healthbar_active .abilityUpgradeCostLabel

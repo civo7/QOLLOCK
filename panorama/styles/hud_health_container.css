@@ -1202,7 +1202,7 @@
 {
 	width: 100%;
 	height: 10px;
-	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_background_8x.vtex");
+	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_background_8x_png.vtex");
 	background-size: 100% 100%;
 	background-repeat: no-repeat;
 	background-position: 50% 50%;
@@ -1216,7 +1216,7 @@
 {
 	width: 100%;
 	height: 10px;
-	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_progress_8x.vtex");
+	background-image: url("s2r://panorama/images/minecraft/lvlbar/experience_bar_progress_8x_png.vtex");
 	background-size: 100% 100%;
 	background-repeat: no-repeat;
 	background-position: 0% 50%;
@@ -1240,7 +1240,7 @@
 {
 	width: 410px;
 	height: 49.5px;
-	background-image: url("s2r://panorama/images/minecraft/hotbar_8x.vtex");
+	background-image: url("s2r://panorama/images/minecraft/hotbar_8x_png.vtex");
 	background-size: 100% 100%;
 	background-repeat: no-repeat;
 	background-position: 50% 50%;

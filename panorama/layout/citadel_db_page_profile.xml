@@ -83,7 +83,7 @@
 					<Label class="heroRowName" text="{s:core_rating_rank} {s:core_rating_subrank}" />
 					<Label class="coreRatingLabel" text="#Citadel_core_skill_rating" />
 					<Button class="QOLStatlockerButton">
-						<Image class="QOLStatlockerImage" src="s2r://panorama/images/qollock/statlocker.vtex" scaling="stretch-to-fit-preserve-aspect" />
+						<Image class="QOLStatlockerImage" src="s2r://panorama/images/qollock/statlocker_png.vtex" scaling="stretch-to-fit-preserve-aspect" />
 					</Button>
 				</Panel>
 				<Panel class="infoButton" onactivate="CitadelShowRankedInfo();" onmouseover="UIShowTextTooltip( #Citadel_Profile_Skill_Rating_Tooltip )" onmouseout="UIHideTextTooltip()" />

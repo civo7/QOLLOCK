@@ -1016,7 +1016,7 @@ function GetLanguageIconPath(languageValue) {
     } else if (normalizedValue === String(SETTINGS_LANGUAGE_SPANISH)) {
         languageIconName = "spanish";
     }
-    return "s2r://panorama/images/qollock/" + languageIconName + ".vtex";
+    return "s2r://panorama/images/qollock/" + languageIconName + "_png.vtex";
 }
 const COMPACT_DEFAULT_HERO_FIELD = "DEFAULT_HERO_INDEX";
 
@@ -1276,9 +1276,9 @@ const SETTINGS_THEME_OPTIONS = [
     { label: "Cream", value: SETTINGS_THEME_CREAM },
     { label: "Psycho", value: SETTINGS_THEME_PSYCHO }
 ];
-const SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC = "s2r://panorama/images/qollock/mog_site_logo2.vtex";
-const SETTINGS_HEADER_MOG_LOGO_THEME_SRC = "s2r://panorama/images/qollock/mog_site_logo2_white.vtex";
-const SETTINGS_HEADER_MUNFINS_LOGO_SRC = "s2r://panorama/images/qollock/munfins_logo.vtex";
+const SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC = "s2r://panorama/images/qollock/mog_site_logo2_png.vtex";
+const SETTINGS_HEADER_MOG_LOGO_THEME_SRC = "s2r://panorama/images/qollock/mog_site_logo2_white_png.vtex";
+const SETTINGS_HEADER_MUNFINS_LOGO_SRC = "s2r://panorama/images/qollock/munfins_logo_png.vtex";
 const SETTINGS_RU_TEXT = {
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Бесплатные</font> изменения для новых функций, <font color=\"#66cc99\">$5</font> за произвольные правки",
     "16:10 Support": "Поддержка 16:10",
@@ -10671,7 +10671,7 @@ const MINESWEEPER_DIFFICULTIES = [
     { id: "MEDIUM", label: "Medium", rows: 10, cols: 10, mines: 18 },
     { id: "HARD", label: "Hard", rows: 10, cols: 12, mines: 28 }
 ];
-const FLAPPY_BIRD_IMAGE_SRC = "s2r://panorama/images/qollock/vampirebat_sm_psd.vtex";
+const FLAPPY_BIRD_IMAGE_SRC = "s2r://panorama/images/qollock/vampirebat_sm_psd_png.vtex";
 const AIM_TRAINER_DURATION_SEC = 45;
 const TRAIN_TRACKING_DURATION_SEC = 45;
 const WHACK_A_REM_DURATION_SEC = 45;
@@ -10746,14 +10746,14 @@ const AIM_TRAINER_DIFFICULTIES = [
     { id: "HARD", label: "Hard", durationSec: 45, targetStartSize: 64, targetEndSize: 30, targetLifeStartSec: 0.90, targetLifeEndSec: 0.38 }
 ];
 const AIM_TRAINER_TARGET_IMAGE_PATHS = [
-    "s2r://panorama/images/qollock/digger_sm_psd.vtex",
-    "s2r://panorama/images/qollock/astro_sm_psd.vtex",
-    "s2r://panorama/images/qollock/viscous_sm_psd.vtex",
-    "s2r://panorama/images/qollock/archer_sm_psd.vtex",
-    "s2r://panorama/images/qollock/bull_sm_psd.vtex",
-    "s2r://panorama/images/qollock/tengu_sm_psd.vtex"
+    "s2r://panorama/images/qollock/digger_sm_psd_png.vtex",
+    "s2r://panorama/images/qollock/astro_sm_psd_png.vtex",
+    "s2r://panorama/images/qollock/viscous_sm_psd_png.vtex",
+    "s2r://panorama/images/qollock/archer_sm_psd_png.vtex",
+    "s2r://panorama/images/qollock/bull_sm_psd_png.vtex",
+    "s2r://panorama/images/qollock/tengu_sm_psd_png.vtex"
 ];
-const WHACK_A_REM_TARGET_IMAGE_SRC = "s2r://panorama/images/qollock/familiar_sm_psd.vtex";
+const WHACK_A_REM_TARGET_IMAGE_SRC = "s2r://panorama/images/qollock/familiar_sm_psd_png.vtex";
 const WHACK_A_REM_HIT_FLASH_SEC = 0.075;
 const WHACK_A_REM_HIT_SOUND_EVENTS = [
     "QOL.WhackRem.Hit1",
@@ -10771,8 +10771,8 @@ const WHACK_A_REM_MISS_SOUND_EVENTS = [
     "QOL.WhackRem.Miss2",
     "QOL.WhackRem.Miss3"
 ];
-const TRAIN_TRACKING_TARGET_IMAGE_SRC = "s2r://panorama/images/qollock/vampirebat_sm_psd.vtex";
-const MINESWEEPER_MINE_IMAGE_SRC = "s2r://panorama/images/qollock/bebop_sm_psd.vtex";
+const TRAIN_TRACKING_TARGET_IMAGE_SRC = "s2r://panorama/images/qollock/vampirebat_sm_psd_png.vtex";
+const MINESWEEPER_MINE_IMAGE_SRC = "s2r://panorama/images/qollock/bebop_sm_psd_png.vtex";
 const MINESWEEPER_EXPLODE_SOUND_EVENT = "QOL.BebopSweeper.Explode";
 const MINESWEEPER_WIN_SOUND_EVENT = "QOL.BebopSweeper.Win";
 const MINESWEEPER_STATUS_DEFAULT_TEXT = "Find all safe tiles. Right-click to flag.";
@@ -10909,7 +10909,7 @@ function EnsureDiscordTextureLogo(targetBtn, logoId, logoClass) {
     if (!logoImage) return;
 
     logoImage.AddClass(resolvedLogoClass);
-    logoImage.SetImage("s2r://panorama/images/qollock/discord_logo.vtex");
+    logoImage.SetImage("s2r://panorama/images/qollock/discord_logo_png.vtex");
 }
 
 function EnsureDiscordFooterTextureLogo(discordFooterBtn) {
@@ -18003,7 +18003,7 @@ function OpenBlackjackModal() {
 
     var heroIcon = $.CreatePanel("Image", modalContainer, "ArcadeBlackjackHeroIcon");
     heroIcon.AddClass("ArcadeBlackjackHeroIcon");
-    heroIcon.SetImage("file://{images}/qollock/wraith_sm_psd.vtex");
+    heroIcon.SetImage("file://{images}/qollock/wraith_sm_psd_png.vtex");
 
     var area = $.CreatePanel("Panel", modalContainer, "ArcadeBlackjackArea");
     area.AddClass("ArcadeBlackjackArea");
@@ -23921,7 +23921,7 @@ function RenderCurrentTabContent(list) {
                 id: "SupportCtaDiscordBtn",
                 title: "Discord",
                 hint: "Help, feedback, and community",
-                iconSrc: "s2r://panorama/images/qollock/discord_logo.vtex",
+                iconSrc: "s2r://panorama/images/qollock/discord_logo_png.vtex",
                 iconClass: "SupportCtaBtnIconDiscord",
                 onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
             },
@@ -24023,13 +24023,13 @@ function RenderCurrentTabContent(list) {
             { label: "0xluc4s", role: "Contributor", url: "https://gamebanana.com/members/5229080" }
         ];
         var supportThanksTranslatorEntries = [
-            { label: "QuicklyRemove", role: "Translator", iconSrc: "s2r://panorama/images/qollock/chinese.vtex" },
-            { label: "Gyzeh", role: "Translator", iconSrc: "s2r://panorama/images/qollock/french.vtex" },
-            { label: "Theran", role: "Translator", iconSrc: "s2r://panorama/images/qollock/brazil.vtex" },
-            { label: "Milorime", role: "Translator", iconSrc: "s2r://panorama/images/qollock/spanish.vtex" },
-            { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian.vtex", breakBefore: true },
-            { label: "Данон", role: "Translator", iconSrc: "s2r://panorama/images/qollock/belarus.vtex" },
-            { label: "Cactus330", role: "Translator", iconSrc: "s2r://panorama/images/qollock/poland.vtex" }
+            { label: "QuicklyRemove", role: "Translator", iconSrc: "s2r://panorama/images/qollock/chinese_png.vtex" },
+            { label: "Gyzeh", role: "Translator", iconSrc: "s2r://panorama/images/qollock/french_png.vtex" },
+            { label: "Theran", role: "Translator", iconSrc: "s2r://panorama/images/qollock/brazil_png.vtex" },
+            { label: "Milorime", role: "Translator", iconSrc: "s2r://panorama/images/qollock/spanish_png.vtex" },
+            { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian_png.vtex", breakBefore: true },
+            { label: "Данон", role: "Translator", iconSrc: "s2r://panorama/images/qollock/belarus_png.vtex" },
+            { label: "Cactus330", role: "Translator", iconSrc: "s2r://panorama/images/qollock/poland_png.vtex" }
         ];
         CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 6, "SupportThanksGroupContributor");
         CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 6, "SupportThanksGroupTranslator");

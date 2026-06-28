@@ -37,16 +37,16 @@
 				</Panel>
 				<Panel id="MinecraftHearts" class="MinecraftHearts" />
 				<Panel id="MinecraftFoodContainer" class="MinecraftFoodContainer">
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
 				</Panel>
 			</Panel>
 			<Panel id="MinecraftXPBarContainer" class="MinecraftXPBarContainer">
@@ -55,9 +55,9 @@
 				<Label id="MinecraftXPLevelLabel" class="MinecraftXPLevelLabel" text="" hittest="false" />
 			</Panel>
 			<Panel id="MinecraftHotbarContainer" class="MinecraftHotbarContainer">
-				<Image id="MinecraftHotbar" class="MinecraftHotbar" src="s2r://panorama/images/minecraft/hotbar_8x.vtex" />
+				<Image id="MinecraftHotbar" class="MinecraftHotbar" src="s2r://panorama/images/minecraft/hotbar_8x_png.vtex" />
 				<Panel id="MinecraftTotemContainer" class="MinecraftTotemContainer">
-					<Image id="MinecraftTotem" class="MinecraftTotem" src="s2r://panorama/images/minecraft/totem_of_undying_8x.vtex" />
+					<Image id="MinecraftTotem" class="MinecraftTotem" src="s2r://panorama/images/minecraft/totem_of_undying_8x_png.vtex" />
 				</Panel>
 			</Panel>
 		</Panel>

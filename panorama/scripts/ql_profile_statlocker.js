@@ -9,7 +9,7 @@
     var DEBUG_LOGS = false;
     var gNextHeartbeatLogMs = 0;
     var gLastDeepScanMs = 0;
-    var STATLOCKER_IMAGE_SRC = "s2r://panorama/images/qollock/statlocker.vtex";
+    var STATLOCKER_IMAGE_SRC = "s2r://panorama/images/qollock/statlocker_png.vtex";
 
     function IsPanelValid(panel) {
         if (!panel) return false;

@@ -801,7 +801,7 @@
 	border-radius: 0px;
 	background-color: rgba(0, 0, 0, 0);
 	border: 0px solid transparent;
-	opacity-mask: url("s2r://panorama/images/qollock/qol_fg_healthbar_border.vtex");
+	opacity-mask: url("s2r://panorama/images/qollock/qol_fg_healthbar_border_png.vtex");
 	margin-bottom: 123px;
 }
 
@@ -860,7 +860,7 @@
 	height: 400px;
 	background-size: cover;
 	background-repeat: no-repeat;
-	background-image: url("s2r://panorama/images/qollock/qol_fg_healthbar_border.vtex");
+	background-image: url("s2r://panorama/images/qollock/qol_fg_healthbar_border_png.vtex");
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthLow #health_bar_frame
