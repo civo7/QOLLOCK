@@ -107,6 +107,9 @@
 		</snippet>
 	</snippets>
 	<CitadelHud class="WindowRoot" hittest="false" disallowedstyleflags="hover,descendantfocus">
+		<!-- QOLLOCK: mirror the gShopOpen global class onto the HUD root so CSS can let the
+		     hero shop punch through the match-start / pregame takeover splash. -->
+		<GlobalClassListener classes="gShopOpen" />
 		<Panel class="HudCore" hittest="false" disallowedstyleflags="hover,descendantfocus">
 			<CitadelPingIndicator id="PingIndicator" hittest="false" />
 			<CitadelHudEventIndicatorsPanel id="HudEventIndicatorsPanel" />

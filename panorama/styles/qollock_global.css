@@ -270,3 +270,23 @@
 {
     width: 100%;
 }
+
+/* ── Shop above the match-start / pregame takeover splash ── */
+/* The base HUD fades the whole HudCore (which contains the hero shop) to
+   opacity 0 while a takeover is active (.HudTakeoverEnabled .HudCore), and
+   fades the splash container in on top — so opening the shop during the
+   hero/team intro leaves it invisible behind the splash.
+
+   When the shop is open we mirror the gShopOpen global class onto the HUD
+   root (see hud.xml GlobalClassListener), so here we keep HudCore visible
+   and fade the splash container out, letting the shop show through. Pure
+   class-driven opacity, no JS, no per-frame cost. */
+.gShopOpen.HudTakeoverEnabled .HudCore
+{
+    opacity: 1.0;
+}
+
+.gShopOpen.HudTakeoverEnabled .HudTakeovers
+{
+    opacity: 0.0;
+}
