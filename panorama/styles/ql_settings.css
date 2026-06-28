@@ -2706,40 +2706,57 @@
 }
 
 /* Collapsible sub-section (e.g. Active Stats > Visible Stats) — a pure-visual expander whose
-   clickable header toggles the body below it. Subdued vs a full SectionTitle so it reads as a
-   nested control rather than a top-level section. */
+   clickable header toggles the body below it. Styled as a full-width row with its own background
+   and a right-side chevron so it's unmistakably a dropdown, and left-aligned (16px) to line up
+   with the toggle rows it reveals. */
 .QOLCollapsibleSubHeader
 {
 	width: 100%;
+	height: 30px;
 	flow-children: right;
 	vertical-align: center;
-	margin: 6px 0px 4px 0px;
-	padding: 2px 0px;
+	margin: 8px 0px 2px 0px;
+	border-radius: 6px;
+	background-color: rgba(255, 255, 255, 0.03);
+	transition-property: background-color, brightness;
+	transition-duration: 0.14s;
 }
 
-.QOLCollapsibleSubChevron
+#SettingsWindow .QOLCollapsibleSubHeader:hover
 {
-	width: 12px;
-	margin-right: 6px;
-	color: #c8c0b4;
-	font-size: 13px;
-	vertical-align: center;
+	background-color: gradient( linear, -8% 0%, 100% 0%, from( rgba(102, 204, 153, 0.12) ), to( rgba(102, 204, 153, 0.00) ) );
+}
+
+.QOLCollapsibleSubHeader.Expanded
+{
+	background-color: rgba(102, 204, 153, 0.06);
 }
 
 .QOLCollapsibleSubLabel
 {
-	width: fit-children;
-	color: #d8d0c4;
-	font-size: 14px;
+	width: fill-parent-flow(1.0);
+	padding-left: 16px;
+	color: #9fe0bf;
+	font-size: 13px;
 	font-weight: bold;
 	letter-spacing: 0.6px;
 	text-transform: uppercase;
 	vertical-align: center;
 }
 
-.QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron,
-.QOLCollapsibleSubHeader:hover .QOLCollapsibleSubLabel,
-.QOLCollapsibleSubHeader.Expanded .QOLCollapsibleSubChevron
+.QOLCollapsibleSubChevron
+{
+	width: 16px;
+	margin-right: 12px;
+	color: #9fe0bf;
+	font-size: 15px;
+	font-weight: bold;
+	text-align: center;
+	vertical-align: center;
+}
+
+#SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron,
+#SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubLabel
 {
 	color: #ffffff;
 }

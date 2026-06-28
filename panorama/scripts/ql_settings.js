@@ -18117,13 +18117,15 @@ function CreateCollapsibleSubSection(parent, title, buildRowsFn) {
     var header = $.CreatePanel("Button", parent, safeTitleId + "SubSectionHeader");
     header.AddClass("QOLCollapsibleSubHeader");
 
-    var chevron = $.CreatePanel("Label", header, safeTitleId + "SubSectionChevron");
-    chevron.AddClass("QOLCollapsibleSubChevron");
-    chevron.text = "▸"; // ▸
-
+    // Label fills the row (left-aligned to match the other rows' text), chevron sits at the far
+    // right like a standard accordion/dropdown affordance so it reads as expandable at a glance.
     var headLabel = $.CreatePanel("Label", header, safeTitleId + "SubSectionTitle");
     headLabel.AddClass("QOLCollapsibleSubLabel");
     headLabel.text = localizedTitle;
+
+    var chevron = $.CreatePanel("Label", header, safeTitleId + "SubSectionChevron");
+    chevron.AddClass("QOLCollapsibleSubChevron");
+    chevron.text = "▾"; // set by applyBodyState below (▾ open / ▸ collapsed)
 
     var body = $.CreatePanel("Panel", parent, safeTitleId + "SubSectionBody");
     body.AddClass("SettingsSectionBody");
