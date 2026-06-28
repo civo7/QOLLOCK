@@ -2706,51 +2706,42 @@
 }
 
 /* Collapsible sub-section (e.g. Active Stats > Visible Stats) — a pure-visual expander whose
-   clickable header toggles the body below it. Styled as a full-width row with its own background
-   and a right-side chevron so it's unmistakably a dropdown, and left-aligned (16px) to line up
-   with the toggle rows it reveals. */
+   clickable header toggles the body below it. Deliberately tuned to match the surrounding rows
+   (same muted label colour, no permanent background, same subtle hover) so it doesn't draw the
+   eye; the right-side arrow is what signals it's expandable. Left-aligned (16px) to line up with
+   the toggle rows it reveals. */
 .QOLCollapsibleSubHeader
 {
 	width: 100%;
 	height: 30px;
 	flow-children: right;
 	vertical-align: center;
-	margin: 8px 0px 2px 0px;
+	margin: 6px 0px 2px 0px;
 	border-radius: 6px;
-	background-color: rgba(255, 255, 255, 0.03);
 	transition-property: background-color, brightness;
 	transition-duration: 0.14s;
 }
 
 #SettingsWindow .QOLCollapsibleSubHeader:hover
 {
-	background-color: gradient( linear, -8% 0%, 100% 0%, from( rgba(102, 204, 153, 0.12) ), to( rgba(102, 204, 153, 0.00) ) );
-}
-
-.QOLCollapsibleSubHeader.Expanded
-{
-	background-color: rgba(102, 204, 153, 0.06);
+	background-color: gradient( linear, -8% 0%, 100% 0%, from( rgba(102, 204, 153, 0.05) ), to( rgba(102, 204, 153, 0.00) ) );
 }
 
 .QOLCollapsibleSubLabel
 {
 	width: fill-parent-flow(1.0);
 	padding-left: 16px;
-	color: #9fe0bf;
-	font-size: 13px;
-	font-weight: bold;
-	letter-spacing: 0.6px;
-	text-transform: uppercase;
+	color: #a6b1b4;
+	font-size: 15px;
 	vertical-align: center;
 }
 
 .QOLCollapsibleSubChevron
 {
 	width: 16px;
-	margin-right: 12px;
-	color: #9fe0bf;
-	font-size: 15px;
-	font-weight: bold;
+	margin-right: 14px;
+	color: #627073;
+	font-size: 13px;
 	text-align: center;
 	vertical-align: center;
 }
@@ -2758,7 +2749,7 @@
 #SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubChevron,
 #SettingsWindow .QOLCollapsibleSubHeader:hover .QOLCollapsibleSubLabel
 {
-	color: #ffffff;
+	color: #c8d0d2;
 }
 
 .SearchEmptyLabel
