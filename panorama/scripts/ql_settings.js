@@ -1983,7 +1983,24 @@ const SETTINGS_RU_TEXT = {
     "ZIP BOOST": "Ускорение зиплайна",
     "Zip Boost": "Ускорение зиплайна",
     "Zip Thickness": "Толщина зиплайна",
-    "Zipline Boost": "Ускорение на зиплайне"
+    "Zipline Boost": "Ускорение на зиплайне",
+    "Ability Duration": "Длительность способностей",
+    "Ability Range": "Дальность способностей",
+    "Bullet Evasion": "Уклонение от пуль",
+    "Bullet Lifesteal": "Вампиризм от пуль",
+    "Bullet Resist": "Сопротивление пулям",
+    "Clip Size": "Размер магазина",
+    "Damage Amp": "Усиление урона",
+    "Fire Rate": "Скорострельность",
+    "Healing Amp": "Усиление лечения",
+    "Health Regen": "Восстановление здоровья",
+    "Move Speed": "Скорость передвижения",
+    "Spirit Lifesteal": "Вампиризм от духа",
+    "Spirit Power": "Сила духа",
+    "Spirit Resist": "Сопротивление духу",
+    "Visible Stats": "Видимые характеристики",
+    "Weapon Power": "Сила оружия",
+    "by": "от"
 };
 
 const SETTINGS_UK_TEXT = {
@@ -2691,7 +2708,23 @@ const SETTINGS_UK_TEXT = {
     "ZIP BOOST": "ZIP BOOST",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Товщина блискавки",
-    "Zipline Boost": "Zipline Boost"
+    "Zipline Boost": "Zipline Boost",
+    "Ability Duration": "Тривалість здібностей",
+    "Ability Range": "Дальність здібностей",
+    "Bullet Evasion": "Ухилення від куль",
+    "Bullet Lifesteal": "Вампіризм від куль",
+    "Bullet Resist": "Опір кулям",
+    "Clip Size": "Розмір магазину",
+    "Damage Amp": "Підсилення шкоди",
+    "Fire Rate": "Швидкострільність",
+    "Healing Amp": "Підсилення зцілення",
+    "Health Regen": "Відновлення здоров'я",
+    "Move Speed": "Швидкість руху",
+    "Spirit Lifesteal": "Вампіризм від духу",
+    "Spirit Power": "Сила духу",
+    "Spirit Resist": "Опір духу",
+    "Visible Stats": "Видимі характеристики",
+    "Weapon Power": "Сила зброї"
 };
 
 const SETTINGS_PL_TEXT = {
@@ -3395,7 +3428,27 @@ const SETTINGS_PL_TEXT = {
     "ZIP BOOST": "WZMOCNIENIE TYROLKI",
     "Zip Boost": "Wzmocnienie Tyrolki",
     "Zip Thickness": "Grubość Tyrolki",
-    "Zipline Boost": "Wzmocnienie Tyrolki"
+    "Zipline Boost": "Wzmocnienie Tyrolki",
+    "Ability Duration": "Czas trwania umiejętności",
+    "Ability Range": "Zasięg umiejętności",
+    "Bullet Evasion": "Unik przed pociskami",
+    "Bullet Lifesteal": "Kradzież życia z pocisków",
+    "Bullet Resist": "Odporność na pociski",
+    "Clip Size": "Rozmiar magazynka",
+    "Damage Amp": "Wzmocnienie obrażeń",
+    "Fire Rate": "Szybkostrzelność",
+    "Healing Amp": "Wzmocnienie leczenia",
+    "Health Regen": "Regeneracja zdrowia",
+    "Move Speed": "Prędkość ruchu",
+    "Reset settings:": "Zresetuj ustawienia:",
+    "Spirit Lifesteal": "Kradzież życia ze spirytu",
+    "Spirit Power": "Moc spirytu",
+    "Spirit Resist": "Odporność na spiryt",
+    "The line has been reset (": "Wiersz został zresetowany (",
+    "This line is already on by default.": "Ten wiersz jest już domyślnie włączony.",
+    "This section is already on by default.": "Ta sekcja jest już domyślnie włączona.",
+    "Visible Stats": "Widoczne statystyki",
+    "Weapon Power": "Moc broni"
 };
 
 const SETTINGS_BG_TEXT = {
@@ -4103,7 +4156,23 @@ const SETTINGS_BG_TEXT = {
     "ZIP BOOST": "ZIP BOOST",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Дебелина на ципа",
-    "Zipline Boost": "Zipline Boost"
+    "Zipline Boost": "Zipline Boost",
+    "Ability Duration": "Продължителност на уменията",
+    "Ability Range": "Обхват на уменията",
+    "Bullet Evasion": "Избягване на куршуми",
+    "Bullet Lifesteal": "Вампиризъм от куршуми",
+    "Bullet Resist": "Съпротива срещу куршуми",
+    "Clip Size": "Размер на пълнителя",
+    "Damage Amp": "Усилване на щетите",
+    "Fire Rate": "Скорострелност",
+    "Healing Amp": "Усилване на лекуването",
+    "Health Regen": "Възстановяване на здраве",
+    "Move Speed": "Скорост на движение",
+    "Spirit Lifesteal": "Вампиризъм от дух",
+    "Spirit Power": "Сила на духа",
+    "Spirit Resist": "Съпротива срещу дух",
+    "Visible Stats": "Видими характеристики",
+    "Weapon Power": "Сила на оръжието"
 };
 
 const SETTINGS_BY_TEXT = {
@@ -4811,7 +4880,23 @@ const SETTINGS_BY_TEXT = {
     "ZIP BOOST": "ZIP BOOST",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Zip Thickness",
-    "Zipline Boost": "Zipline Boost"
+    "Zipline Boost": "Zipline Boost",
+    "Ability Duration": "Працягласць здольнасцей",
+    "Ability Range": "Далькасць здольнасцей",
+    "Bullet Evasion": "Ухіленне ад куль",
+    "Bullet Lifesteal": "Вампірызм ад куль",
+    "Bullet Resist": "Супраціў кулям",
+    "Clip Size": "Памер абоймы",
+    "Damage Amp": "Узмацненне ўрону",
+    "Fire Rate": "Скарастрэльнасць",
+    "Healing Amp": "Узмацненне лячэння",
+    "Health Regen": "Аднаўленне здароўя",
+    "Move Speed": "Хуткасць перамяшчэння",
+    "Spirit Lifesteal": "Вампірызм ад духу",
+    "Spirit Power": "Сіла духу",
+    "Spirit Resist": "Супраціў духу",
+    "Visible Stats": "Бачныя характарыстыкі",
+    "Weapon Power": "Сіла зброі"
 };
 
 const SETTINGS_JA_TEXT = {
@@ -5516,7 +5601,26 @@ const SETTINGS_JA_TEXT = {
     "ZIP BOOST": "ジップブースト",
     "Zip Boost": "ジップブースト",
     "Zip Thickness": "ジッパーの厚さ",
-    "Zipline Boost": "ジップラインブースト"
+    "Zipline Boost": "ジップラインブースト",
+    "Ability Duration": "アビリティ持続時間",
+    "Ability Range": "アビリティ範囲",
+    "Bullet Evasion": "弾丸回避",
+    "Bullet Lifesteal": "弾丸ライフスティール",
+    "Bullet Resist": "弾丸耐性",
+    "Clip Size": "マガジンサイズ",
+    "Damage Amp": "ダメージアップ",
+    "Fire Rate": "発射速度",
+    "Healing Amp": "回復量アップ",
+    "Health Regen": "HP回復",
+    "Move Speed": "移動速度",
+    "Spirit Lifesteal": "スピリットライフスティール",
+    "Spirit Power": "スピリットパワー",
+    "Spirit Resist": "スピリット耐性",
+    "The line has been reset (": "ラインをリセットしました（",
+    "This line is already on by default.": "この項目はデフォルトで既に有効です。",
+    "This section is already on by default.": "このセクションはデフォルトで既に有効です。",
+    "Visible Stats": "表示するステータス",
+    "Weapon Power": "武器パワー"
 };
 
 const SETTINGS_ZH_TEXT = {
@@ -6220,7 +6324,27 @@ const SETTINGS_ZH_TEXT = {
     "ZIP BOOST": "拉链提升",
     "Zip Boost": "拉链提升",
     "Zip Thickness": "滑索厚度",
-    "Zipline Boost": "滑索提升"
+    "Zipline Boost": "滑索提升",
+    "Ability Duration": "技能持续时间",
+    "Ability Range": "技能范围",
+    "Bullet Evasion": "子弹闪避",
+    "Bullet Lifesteal": "子弹吸血",
+    "Bullet Resist": "子弹抗性",
+    "Clip Size": "弹匣容量",
+    "Damage Amp": "伤害增幅",
+    "Fire Rate": "射速",
+    "Healing Amp": "治疗增幅",
+    "Health Regen": "生命回复",
+    "Move Speed": "移动速度",
+    "Reset settings:": "重置设置：",
+    "Spirit Lifesteal": "法术吸血",
+    "Spirit Power": "法术强度",
+    "Spirit Resist": "法术抗性",
+    "The line has been reset (": "该行已重置（",
+    "This line is already on by default.": "该行默认已开启。",
+    "This section is already on by default.": "该部分默认已开启。",
+    "Visible Stats": "显示的属性",
+    "Weapon Power": "武器强度"
 };
 const SETTINGS_FR_TEXT = {
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "Mises à  jour <font color=\"#66cc99\">gratuites</font> pour les nouvelles fonctionnalités, <font color=\"#66cc99\">5Â $</font> pour les modifications arbitraires",
@@ -6856,8 +6980,8 @@ const SETTINGS_FR_TEXT = {
     "This is a mod designed to give you complete freedom over your game.": "Il s'agit d'un mod conçu pour vous donner une totale liberté sur votre jeu.",
     "This is a way for me to give something back to the supporters.": "C'est une façon pour moi de donner quelque chose aux supporters.",
     "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Il s'agit de passer au héros Airheart (ressemble à Paradox), vos paramètres sont enregistrés dans les builds de la boutique. Pour résoudre les problèmes, vous pouvez les supprimer et effectuer une nouvelle sauvegarde pour résoudre les problèmes de sauvegarde des paramètres.",
-    "This line is already on by default.": "Cette opération est possible.",
-    "This section is already on by default.": "La sexualité est possible.",
+    "This line is already on by default.": "Cette ligne est déjà activée par défaut.",
+    "This section is already on by default.": "Cette section est déjà activée par défaut.",
     "Tier 1": "Niveau 1",
     "Tier 2": "Niveau 2",
     "Tier 3": "Niveau 3",
@@ -6925,7 +7049,25 @@ const SETTINGS_FR_TEXT = {
     "ZIP BOOST": "ZIP BOOST",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Épaisseur de la tyrolienne",
-    "Zipline Boost": "Boost tyrolienne"
+    "Zipline Boost": "Boost tyrolienne",
+    "Ability Duration": "Durée des capacités",
+    "Ability Range": "Portée des capacités",
+    "Bullet Evasion": "Esquive des balles",
+    "Bullet Lifesteal": "Vol de vie des balles",
+    "Bullet Resist": "Résistance aux balles",
+    "Clip Size": "Taille du chargeur",
+    "Damage Amp": "Amplification des dégâts",
+    "Fire Rate": "Cadence de tir",
+    "Healing Amp": "Amplification des soins",
+    "Health Regen": "Régénération de vie",
+    "Move Speed": "Vitesse de déplacement",
+    "Reset settings:": "Réinitialiser les paramètres :",
+    "Spirit Lifesteal": "Vol de vie d'esprit",
+    "Spirit Power": "Puissance d'esprit",
+    "Spirit Resist": "Résistance à l'esprit",
+    "The line has been reset (": "La ligne a été réinitialisée (",
+    "Visible Stats": "Statistiques visibles",
+    "Weapon Power": "Puissance d'arme"
 };
 
 const SETTINGS_PT_TEXT = {
@@ -7562,8 +7704,8 @@ const SETTINGS_PT_TEXT = {
     "This is a mod designed to give you complete freedom over your game.": "Este é um mod concebido para lhe dar total liberdade no jogo.",
     "This is a way for me to give something back to the supporters.": "Esta é uma forma de retribuir algo aos apoiadores.",
     "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Isto é para mudar para o herói Airheart (parece Paradox), as suas definições são guardadas nas construções da loja. Para solucionar problemas, pode eliminá-los e fazer um novo guardar para corrigir quaisquer problemas de guardar as definições.",
-    "This line is already on by default.": "A garrafa está pronta a usar.",
-    "This section is already on by default.": "Pode usar a secção de segurança.",
+    "This line is already on by default.": "Esta linha já está ativada por predefinição.",
+    "This section is already on by default.": "Esta secção já está ativada por predefinição.",
     "Tier 1": "Camada 1",
     "Tier 2": "Camada 2",
     "Tier 3": "Nível 3",
@@ -7631,7 +7773,25 @@ const SETTINGS_PT_TEXT = {
     "ZIP BOOST": "AUMENTO DE ZIP",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Espessura do zíper",
-    "Zipline Boost": "Impulso de tirolesa"
+    "Zipline Boost": "Impulso de tirolesa",
+    "Ability Duration": "Duração de habilidade",
+    "Ability Range": "Alcance de habilidade",
+    "Bullet Evasion": "Evasão de balas",
+    "Bullet Lifesteal": "Roubo de vida de balas",
+    "Bullet Resist": "Resistência a balas",
+    "Clip Size": "Tamanho do carregador",
+    "Damage Amp": "Amplificação de dano",
+    "Fire Rate": "Cadência de tiro",
+    "Healing Amp": "Amplificação de cura",
+    "Health Regen": "Regeneração de vida",
+    "Move Speed": "Velocidade de movimento",
+    "Reset settings:": "Repor definições:",
+    "Spirit Lifesteal": "Roubo de vida de espírito",
+    "Spirit Power": "Poder de espírito",
+    "Spirit Resist": "Resistência a espírito",
+    "The line has been reset (": "A linha foi reposta (",
+    "Visible Stats": "Estatísticas visíveis",
+    "Weapon Power": "Poder de arma"
 };
 
 const SETTINGS_PT_BR_TEXT = {
@@ -8339,7 +8499,23 @@ const SETTINGS_PT_BR_TEXT = {
     "ZIP BOOST": "ZIP BOOST",
     "Zip Boost": "Zip Boost",
     "Zip Thickness": "Espessura da Zipline",
-    "Zipline Boost": "Impulso da Zipline"
+    "Zipline Boost": "Impulso da Zipline",
+    "Ability Duration": "Duração de habilidade",
+    "Ability Range": "Alcance de habilidade",
+    "Bullet Evasion": "Evasão de balas",
+    "Bullet Lifesteal": "Roubo de vida de balas",
+    "Bullet Resist": "Resistência a balas",
+    "Clip Size": "Tamanho do carregador",
+    "Damage Amp": "Amplificação de dano",
+    "Fire Rate": "Cadência de tiro",
+    "Healing Amp": "Amplificação de cura",
+    "Health Regen": "Regeneração de vida",
+    "Move Speed": "Velocidade de movimento",
+    "Spirit Lifesteal": "Roubo de vida de espírito",
+    "Spirit Power": "Poder de espírito",
+    "Spirit Resist": "Resistência a espírito",
+    "Visible Stats": "Estatísticas visíveis",
+    "Weapon Power": "Poder de arma"
 };
 
 const SETTINGS_ES_TEXT = {
@@ -8976,8 +9152,8 @@ const SETTINGS_ES_TEXT = {
     "This is a mod designed to give you complete freedom over your game.": "Este es un mod diseñado para brindarte total libertad sobre tu juego.",
     "This is a way for me to give something back to the supporters.": "Esta es una forma de agradecer a quienes apoyan el proyecto.",
     "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Esto sirve para cambiar al héroe Airheart (parecido a Paradox). Tu configuración se guarda en las builds de la tienda. Para solucionar problemas, puedes eliminarlas y hacer un guardado nuevo para corregir cualquier problema al guardar la configuración.",
-    "This line is already on by default.": "Строка уже по умолчанию.",
-    "This section is already on by default.": "Секция уже по умолчанию.",
+    "This line is already on by default.": "Esta línea ya está activada por defecto.",
+    "This section is already on by default.": "Esta sección ya está activada por defecto.",
     "Tier 1": "Nivel 1",
     "Tier 2": "Nivel 2",
     "Tier 3": "Nivel 3",
@@ -9045,7 +9221,25 @@ const SETTINGS_ES_TEXT = {
     "ZIP BOOST": "Boost de via rápida",
     "Zip Boost": "Boost de via rápida",
     "Zip Thickness": "Grosor de la via rápida",
-    "Zipline Boost": "Boost de via rápida"
+    "Zipline Boost": "Boost de via rápida",
+    "Ability Duration": "Duración de habilidad",
+    "Ability Range": "Alcance de habilidad",
+    "Bullet Evasion": "Evasión de balas",
+    "Bullet Lifesteal": "Robo de vida de balas",
+    "Bullet Resist": "Resistencia a balas",
+    "Clip Size": "Tamaño del cargador",
+    "Damage Amp": "Amplificación de daño",
+    "Fire Rate": "Cadencia de fuego",
+    "Healing Amp": "Amplificación de curación",
+    "Health Regen": "Regeneración de vida",
+    "Move Speed": "Velocidad de movimiento",
+    "Reset settings:": "Restablecer ajustes:",
+    "Spirit Lifesteal": "Robo de vida de espíritu",
+    "Spirit Power": "Poder de espíritu",
+    "Spirit Resist": "Resistencia a espíritu",
+    "The line has been reset (": "La línea se ha restablecido (",
+    "Visible Stats": "Estadísticas visibles",
+    "Weapon Power": "Poder de arma"
 };
 
 function GetSettingsLanguage() {

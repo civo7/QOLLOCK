@@ -31,23 +31,8 @@ const outPath = path.join(outDir, "qollock_settings_translations.csv");
 // for translators to fill. Append new UI strings here until they've been translated at least once;
 // once a translation lands in a map, the union picks them up automatically and you can prune them.
 const EXTRA_SOURCE_STRINGS = [
-    // 3.1.8 — Active Stats per-stat visibility (ql_settings.js "Visible Stats" dropdown).
-    "Visible Stats",
-    "Fire Rate",
-    "Move Speed",
-    "Healing Amp",
-    "Bullet Resist",
-    "Spirit Resist",
-    "Bullet Lifesteal",
-    "Spirit Lifesteal",
-    "Weapon Power",
-    "Spirit Power",
-    "Ability Range",
-    "Ability Duration",
-    "Damage Amp",
-    "Clip Size",
-    "Health Regen",
-    "Bullet Evasion"
+    // (empty) — the 3.1.8 Active Stats "Visible Stats" labels are now translated in every map, so
+    // the key union picks them up automatically. Add new untranslated UI strings here as they appear.
 ];
 
 // Column order mirrors SETTINGS_LANGUAGE_OPTIONS in ql_settings.js. `header` is the CSV column
