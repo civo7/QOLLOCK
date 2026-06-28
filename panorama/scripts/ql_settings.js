@@ -20632,7 +20632,7 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     });
                 })(optionId, optionValue);
             }
-            optionPanel.text = String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey);
+            optionPanel.text = LocalizeSettingsText(String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey), true);
             if (optionPanel.SetAttributeString) {
                 optionPanel.SetAttributeString("data_value", optionValueKey);
             }
