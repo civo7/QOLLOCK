@@ -7,6 +7,17 @@
     // ── Debug logging toggle ──
     var _DBG = false;
     function DBG(msg) { if (_DBG) { try { $.Msg("[ShowRank] " + msg); } catch(e) {} } }
+    var _srThrottleLogs = {};
+
+    function DBGThrottle(key, value, msg) {
+        if (!_DBG) return;
+        var now = NowMs();
+        var prior = _srThrottleLogs[key];
+        if (!prior || prior.value !== value || (now - prior.at) > 5000) {
+            _srThrottleLogs[key] = { value: value, at: now };
+            DBG(msg);
+        }
+    }
 
     DBG("=== script loading ===");
 
@@ -128,7 +139,7 @@
 
     function ApplyPlayerListVisibility(root, visible) {
         var entries = FindAllEntries(root);
-        DBG("ApplyPlayerListVisibility: visible=" + visible + " entries=" + entries.length);
+        DBGThrottle("ApplyPlayerListVisibility", String(visible) + "|" + entries.length, "ApplyPlayerListVisibility: visible=" + visible + " entries=" + entries.length);
         for (var i = 0; i < entries.length; i++) {
             var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
@@ -247,13 +258,19 @@
     }
 
     function ScheduleDismiss(root, delayMs) {
-        var wait = (delayMs > 0 ? delayMs : 500) / 1000;
-        $.Schedule(wait, function() {
-            if (ReadAttr(root, "qol_sr_auto_dismiss", "") !== "1") return;
-            if (ReadAttr(root, "qol_sr_probe_name", "") !== "") return;
-            SetAttr(root, "qol_sr_auto_dismiss", "");
-            DismissProfileCard();
-        });
+        SetAttr(root, "qol_sr_auto_dismiss", "");
+        DismissProfileCard();
+    }
+
+    function ReadAccountIdSet(root) {
+        var list = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("HiddenAccountID") || []) : [];
+        var out = [];
+        for (var i = 0; i < list.length; i++) {
+            var raw = "";
+            try { raw = String(list[i].text || "").replace(/[^0-9]/g, ""); } catch(e) {}
+            if (raw.length >= 1 && raw.length <= 10) out.push(raw);
+        }
+        return out;
     }
 
     function FindMainContents(entry) {
@@ -284,12 +301,15 @@
         DBG("FillRow: name=" + (name || "<none>") + " hero=" + (hero || "<none>"));
         if (!name) { DBG("FillRow: no name, skipping"); done(); return; }
 
+        DismissProfileCard();
+
         SetAttr(root, "qol_sr_probe_name", name);
         SetAttr(root, "qol_sr_probe_hero", hero);
         SetAttr(root, "qol_sr_probe_account", "");
         SetAttr(root, "qol_sr_auto_dismiss", "1");
 
         var mc = FindMainContents(entry);
+        var beforeIds = ReadAccountIdSet(root);
         if (mc) {
             try { $.DispatchEvent("Activated", mc, "mouse"); } catch(e) {}
         } else {
@@ -298,6 +318,7 @@
         DBG("FillRow: dispatched Activated, mc=" + (mc ? "found" : "not found"));
 
         var started = NowMs();
+        var warnedMultiProfileCards = false;
 
         function PollForResult(attempt) {
             if (ReadAttr(root, "qol_sr_probe_name", "") !== name) {
@@ -306,7 +327,30 @@
             }
 
             var elapsed = NowMs() - started;
-            var result = ReadAttr(root, "qol_sr_probe_account", "");
+            var afterIds = ReadAccountIdSet(root);
+            if (afterIds.length > 1 && !warnedMultiProfileCards) {
+                warnedMultiProfileCards = true;
+                $.Msg("[ShowRank] WARNING: " + afterIds.length + " ProfileCard panels open during read\n");
+            }
+
+            var beforeCopy = beforeIds.slice();
+            var added = [];
+            for (var ai = 0; ai < afterIds.length; ai++) {
+                var idx = beforeCopy.indexOf(afterIds[ai]);
+                if (idx === -1) added.push(afterIds[ai]);
+                else beforeCopy.splice(idx, 1);
+            }
+            var uniqueAdded = [];
+            for (var aj = 0; aj < added.length; aj++) {
+                if (uniqueAdded.indexOf(added[aj]) === -1) uniqueAdded.push(added[aj]);
+            }
+
+            var result = "";
+            var resultPath = "";
+            if (uniqueAdded.length === 1) {
+                result = uniqueAdded[0];
+                resultPath = "direct read";
+            }
 
             if (result) {
                 var label = GetAccountIdLabel(entry);
@@ -328,21 +372,21 @@
                     SetAttr(root, "qol_sr_ranked_heroes", prev ? prev + "|" + hero.toLowerCase() : hero.toLowerCase());
                     DBG("FillRow: published sr_rank_" + hero.toLowerCase() + "=" + result);
                 }
-                DBG("FillRow: SUCCESS " + name + " -> " + result + " [" + elapsed + "ms]");
+                DBG("FillRow: SUCCESS " + name + " -> " + result + " via " + resultPath + " [" + elapsed + "ms]");
                 ClearProbe(root);
-                ScheduleDismiss(root, 0);
+                DismissProfileCard();
                 done();
                 return;
             }
 
-            if (elapsed > 3000 || attempt > 21) {
+            if (elapsed > 2000 || attempt > 66) {
                 DBG("FillRow: TIMEOUT " + name + " [" + elapsed + "ms, " + attempt + " attempts]");
                 var timeoutLabel = GetAccountIdLabel(entry);
                 if (Valid(timeoutLabel)) {
                     try { timeoutLabel.text = "-"; } catch(e) {}
                 }
                 ClearProbe(root);
-                ScheduleDismiss(root, 0);
+                DismissProfileCard();
                 done();
                 return;
             }
@@ -632,29 +676,29 @@
     function FindAllTopBarPlayers(topBar) {
         var out = [];
         var teamsContainer = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
-        if (!Valid(teamsContainer)) { DBG("FindAllTopBarPlayers: TeamsContainer NOT FOUND"); return out; }
+        if (!Valid(teamsContainer)) { DBGThrottle("FindAllTopBarPlayers:TeamsContainer", "missing", "FindAllTopBarPlayers: TeamsContainer NOT FOUND"); return out; }
         var tc = teamsContainer.GetChildCount ? teamsContainer.GetChildCount() : 0;
-        DBG("FindAllTopBarPlayers: TeamsContainer has " + tc + " children");
+        DBGThrottle("FindAllTopBarPlayers:TeamsContainerCount", String(tc), "FindAllTopBarPlayers: TeamsContainer has " + tc + " children");
         for (var ti = 0; ti < tc && ti < 4; ti++) {
             var team = teamsContainer.GetChild(ti);
-            if (!Valid(team)) { DBG("FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
+            if (!Valid(team)) { DBGThrottle("FindAllTopBarPlayers:team:" + ti, "invalid", "FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
             var teamId = "";
             try { teamId = String(team.id || team.GetAttributeString("id", "")); } catch(e) {}
             var playerContents = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
-            if (!Valid(playerContents)) { DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
+            if (!Valid(playerContents)) { DBGThrottle("FindAllTopBarPlayers:PlayerContents:" + ti, teamId + "|missing", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
             var playersContainer = playerContents.FindChildTraverse ? playerContents.FindChildTraverse("PlayersContainer") : null;
-            if (!Valid(playersContainer)) { DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayerContents has NO PlayersContainer"); continue; }
+            if (!Valid(playersContainer)) { DBGThrottle("FindAllTopBarPlayers:PlayersContainer:" + ti, teamId + "|missing", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayerContents has NO PlayersContainer"); continue; }
             var pc = playersContainer.GetChildCount ? playersContainer.GetChildCount() : 0;
-            DBG("FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayersContainer has " + pc + " children");
+            DBGThrottle("FindAllTopBarPlayers:PlayersContainerCount:" + ti, teamId + "|" + pc, "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " PlayersContainer has " + pc + " children");
             for (var pi = 0; pi < pc && pi < 12; pi++) {
                 var player = playersContainer.GetChild(pi);
                 if (Valid(player)) {
                     var pid = "";
                     try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
-                    DBG("FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
+                    DBGThrottle("FindAllTopBarPlayers:player:" + ti + ":" + pi, pid + "|valid", "FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
                     out.push(player);
                 } else {
-                    DBG("FindAllTopBarPlayers:   player[" + pi + "] INVALID, skip");
+                    DBGThrottle("FindAllTopBarPlayers:player:" + ti + ":" + pi, "invalid", "FindAllTopBarPlayers:   player[" + pi + "] INVALID, skip");
                 }
             }
         }
@@ -666,11 +710,11 @@
         if (!Valid(root)) return;
         var topBar = null;
         try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
-        if (!Valid(topBar)) { DBG("EnsureTopBarPlayers: no TopBar"); return; }
+        if (!Valid(topBar)) { DBGThrottle("EnsureTopBarPlayers:noTopBar", "missing", "EnsureTopBarPlayers: no TopBar"); return; }
         try {
             var currentGen = ReadAttr(root, "qol_sr_generation", "0");
             var players = FindAllTopBarPlayers(topBar);
-            DBG("EnsureTopBarPlayers: found " + players.length + " total players, currentGen=" + currentGen);
+            DBGThrottle("EnsureTopBarPlayers:found", players.length + "|" + currentGen, "EnsureTopBarPlayers: found " + players.length + " total players, currentGen=" + currentGen);
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
                 var pid = "";
@@ -678,21 +722,21 @@
                 var storedInit = "";
                 try { storedInit = player.GetAttributeString("_qol_sr_init", ""); } catch(e) {}
                 if (IsTopBarPlayerInitialized(player, root)) {
-                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
+                    DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":already", storedInit + "|" + currentGen, "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
                 }
                 var heroLabel = FindClass(player, "HeroName");
                 if (!Valid(heroLabel)) {
-                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroName — skip");
+                    DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":noHero", "missing", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " has NO HeroName — skip");
                     continue;
                 }
                 var heroName = "";
                 try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
                 if (!heroName) {
-                    DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
+                    DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":emptyHero", "empty", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
                     continue;
                 }
-                DBG("EnsureTopBarPlayers: player[" + i + "] id=" + pid + " hero=" + heroName + " storedInit=" + (storedInit || "<empty>") + " — INITIALIZING");
+                DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":init", heroName + "|" + (storedInit || "<empty>"), "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " hero=" + heroName + " storedInit=" + (storedInit || "<empty>") + " — INITIALIZING");
                 MarkTopBarPlayerInitialized(player, root);
                 _InitTopBarPlayer(player);
             }
@@ -738,6 +782,7 @@
                 if (IsShowRankEnabled()) {
                     EnsureFillLoopRunning(root);
                     EnsureTopBarPlayersInitialized(root);
+                    ApplyPlayerListVisibility(root, true);   // re-apply every tick; AddClass is idempotent
                 }
             } catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " +
