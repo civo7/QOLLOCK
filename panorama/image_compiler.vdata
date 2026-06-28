@@ -1,0 +1,67 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+    generic_data_type = "panorama_image_list"
+    image_list =
+    [
+        // ── Minecraft healthbar ──
+        panorama:"file://{images}/minecraft/absorption_full_8x.png",
+        panorama:"file://{images}/minecraft/absorption_half_8x.png",
+        panorama:"file://{images}/minecraft/container_8x.png",
+        panorama:"file://{images}/minecraft/container_blinking_8x.png",
+        panorama:"file://{images}/minecraft/container_blinking_half_8x.png",
+        panorama:"file://{images}/minecraft/container_half_8x.png",
+        panorama:"file://{images}/minecraft/food_8x.png",
+        panorama:"file://{images}/minecraft/food_empty_8x.png",
+        panorama:"file://{images}/minecraft/food_half_8x.png",
+        panorama:"file://{images}/minecraft/full_8x.png",
+        panorama:"file://{images}/minecraft/green_full_8x.png",
+        panorama:"file://{images}/minecraft/green_half_8x.png",
+        panorama:"file://{images}/minecraft/half_8x.png",
+        panorama:"file://{images}/minecraft/hotbar_8x.png",
+        panorama:"file://{images}/minecraft/lvlbar/experience_bar_background_8x.png",
+        panorama:"file://{images}/minecraft/lvlbar/experience_bar_progress_8x.png",
+        panorama:"file://{images}/minecraft/orange_full_8x.png",
+        panorama:"file://{images}/minecraft/orange_half_8x.png",
+        panorama:"file://{images}/minecraft/poisoned_full_8x.png",
+        panorama:"file://{images}/minecraft/poisoned_half_8x.png",
+        panorama:"file://{images}/minecraft/totem_of_undying_8x.png",
+        panorama:"file://{images}/minecraft/xp_orb_ap.png",
+
+        // ── Qollock UI ──
+        panorama:"file://{images}/qollock/archer_sm_psd.png",
+        panorama:"file://{images}/qollock/astro_sm_psd.png",
+        panorama:"file://{images}/qollock/bebop_sm_psd.png",
+        panorama:"file://{images}/qollock/belarus.png",
+        panorama:"file://{images}/qollock/brazil.png",
+        panorama:"file://{images}/qollock/bulgaria.png",
+        panorama:"file://{images}/qollock/bull_sm_psd.png",
+        panorama:"file://{images}/qollock/chinese.png",
+        panorama:"file://{images}/qollock/digger_sm_psd.png",
+        panorama:"file://{images}/qollock/discord_logo.png",
+        panorama:"file://{images}/qollock/english.png",
+        panorama:"file://{images}/qollock/familiar_sm_psd.png",
+        panorama:"file://{images}/qollock/french.png",
+        panorama:"file://{images}/qollock/japan.png",
+        panorama:"file://{images}/qollock/minimap_midtown_mid_tunnels_qollock_psd.png",
+        panorama:"file://{images}/qollock/mog_site_logo2.png",
+        panorama:"file://{images}/qollock/mog_site_logo2_white.png",
+        panorama:"file://{images}/qollock/munfins_logo.png",
+        panorama:"file://{images}/qollock/poland.png",
+        panorama:"file://{images}/qollock/portuguese.png",
+        panorama:"file://{images}/qollock/priest_potent_vapors_cross.svg",
+        panorama:"file://{images}/qollock/priest_sm_psd.png",
+        panorama:"file://{images}/qollock/qol_fg_healthbar_border.png",
+        panorama:"file://{images}/qollock/qollock_klutz_healthbar_frame_with_regen.svg",
+        panorama:"file://{images}/qollock/russian.png",
+        panorama:"file://{images}/qollock/spanish.png",
+        panorama:"file://{images}/qollock/statlocker.png",
+        panorama:"file://{images}/qollock/tengu_sm_psd.png",
+        panorama:"file://{images}/qollock/ukraine.png",
+        panorama:"file://{images}/qollock/vampirebat_sm_psd.png",
+        panorama:"file://{images}/qollock/viscous_sm_psd.png",
+        panorama:"file://{images}/qollock/wraith_sm_psd.png",
+
+        // ── Minimap overlays ──
+        panorama:"file://{images}/minimap/base/mm_tunnel_overlay_png.png",
+    ]
+}
