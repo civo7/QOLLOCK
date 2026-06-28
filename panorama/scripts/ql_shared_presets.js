@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.1.7";
+var QOL_SCHEMA_SEMVER = "3.1.8";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1720,6 +1720,29 @@ var QOL_COMPACT_SCHEMA_3_1_7= QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     ),
     STATS_POSITION_SCHEMA_FIELDS
 );
+// 3.1.8: per-stat visibility toggles for the Crosshair Active Stats overlay. Each gates one
+// modifier row (firerate, move speed, resists, lifesteal, etc.); all default on (1).
+var CROSSHAIR_STATS_PERSTAT_SCHEMA_FIELDS = [
+    { key: "CROSSHAIR_STATS_SHOW_FIRERATE", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_MOVESPEED", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_HEALAMP", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_BULLETRESIST", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_TECHRESIST", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_WEAPONPOWER", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_SPIRIT", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_RANGE", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_DURATION", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_DAMAGEAMP", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_CLIPSIZE", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_REGEN", min: 0, max: 1, step: 1 },
+    { key: "CROSSHAIR_STATS_SHOW_BULLETEVASION", min: 0, max: 1, step: 1 }
+];
+var QOL_COMPACT_SCHEMA_3_1_8 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_3_1_7,
+    CROSSHAIR_STATS_PERSTAT_SCHEMA_FIELDS
+);
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
 // ==========================================================================
@@ -1753,6 +1776,9 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              the crosshair (master toggle + debuff/buff filters + offset/scale/opacity).
 //              + Player Stats Position: move #hudPlayerStats (active + TAB-detailed view)
 //              left/right with X/Y offsets (master toggle + side + offsets).
+// 3.1.8        Crosshair Active Stats: per-stat visibility toggles (15 fields) so users can
+//              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
+//              All default on.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -1976,6 +2002,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "3.1.7": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_3_1_7
+    },
+    "3.1.8": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_3_1_8
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2294,6 +2324,22 @@ var QOL_DEFAULT_CONFIG = {
         CROSSHAIR_STATS_Y_OFFSET: 0,
         CROSSHAIR_STATS_SCALE: 100,
         CROSSHAIR_STATS_OPACITY: 1.0,
+        // 3.1.8: per-stat visibility for the Active Stats overlay (all shown by default).
+        CROSSHAIR_STATS_SHOW_FIRERATE: 1,
+        CROSSHAIR_STATS_SHOW_MOVESPEED: 1,
+        CROSSHAIR_STATS_SHOW_HEALAMP: 1,
+        CROSSHAIR_STATS_SHOW_BULLETRESIST: 1,
+        CROSSHAIR_STATS_SHOW_TECHRESIST: 1,
+        CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL: 1,
+        CROSSHAIR_STATS_SHOW_TECHLIFESTEAL: 1,
+        CROSSHAIR_STATS_SHOW_WEAPONPOWER: 1,
+        CROSSHAIR_STATS_SHOW_SPIRIT: 1,
+        CROSSHAIR_STATS_SHOW_RANGE: 1,
+        CROSSHAIR_STATS_SHOW_DURATION: 1,
+        CROSSHAIR_STATS_SHOW_DAMAGEAMP: 1,
+        CROSSHAIR_STATS_SHOW_CLIPSIZE: 1,
+        CROSSHAIR_STATS_SHOW_REGEN: 1,
+        CROSSHAIR_STATS_SHOW_BULLETEVASION: 1,
         ENABLE_STATS_POSITION: 1,
         STATS_POSITION_SIDE: 0,
         STATS_POSITION_X_OFFSET: 0,
