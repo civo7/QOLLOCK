@@ -14399,9 +14399,9 @@ function SyncTabActiveStates(tabBar) {
                     if (tabLabel) {
                         var baseTabName = String(tabBtn.id).slice("TabButton_".length);
                         var displayTabName = GetSettingsTabDisplayName(baseTabName);
-                        tabLabel.text = (baseTabName === "Config")
-                            ? displayTabName
-                            : LocalizeSettingsText(displayTabName, true);
+                        // Localize every tab name, including Config ("Settings"). Proper nouns
+                        // not present in the translation map (e.g. MOGLOCK) pass through unchanged.
+                        tabLabel.text = LocalizeSettingsText(displayTabName, true);
                     }
                 }
             }
@@ -21061,7 +21061,12 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                     });
                 })(optionId, optionValue);
             }
-            optionPanel.text = LocalizeSettingsText(String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey), true);
+            // Proper-noun dropdowns (hero names, announcer/voice names, language names) must NOT be
+            // localized — their labels are data, not UI text, and some collide with translated map
+            // keys (e.g. the hero "Silver" vs the palette color "Silver").
+            var _localizeOptionLabel = (configId !== "DEFAULT_HERO" && configId !== "VOICE_TYPE" && configId !== "LANGUAGE");
+            var _optionLabelText = String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey);
+            optionPanel.text = _localizeOptionLabel ? LocalizeSettingsText(_optionLabelText, true) : _optionLabelText;
             if (optionPanel.SetAttributeString) {
                 optionPanel.SetAttributeString("data_value", optionValueKey);
             }
@@ -24593,9 +24598,9 @@ $.BuildUI = function() {
                 }
                 var tabLbl = $.CreatePanel("Label", tab, "TabLabel");
                 var displayName = GetSettingsTabDisplayName(catName);
-                tabLbl.text = (catName === "Config")
-                    ? displayName
-                    : LocalizeSettingsText(displayName, true);
+                // Localize every tab name, including Config ("Settings"). Proper nouns
+                // not present in the translation map (e.g. MOGLOCK) pass through unchanged.
+                tabLbl.text = LocalizeSettingsText(displayName, true);
                 tab.SetHasClass("Active", catName === currentTab);
                 tab.SetPanelEvent("onactivate", function() {
                     SetActiveTabAndRefresh(catName);
