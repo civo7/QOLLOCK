@@ -19,7 +19,7 @@
         if (hiddenList.length > 0) {
             try {
                 var t = String(hiddenList[0].text || "").replace(/[^0-9]/g, "");
-                if (t.length >= 7 && t.length <= 10) accountId = t;
+                if (t.length >= 1 && t.length <= 10) accountId = t;
             } catch(e) {}
         }
 
@@ -32,7 +32,7 @@
                     var m = text.match(/\[U:1:(\d+)\]/i);
                     if (m) { accountId = m[1]; break; }
                     var digits = text.replace(/[^0-9]/g, "");
-                    if (digits.length >= 7 && digits.length <= 10) { accountId = digits; break; }
+                    if (digits.length >= 1 && digits.length <= 10) { accountId = digits; break; }
                 } catch(e) {}
             }
         }
