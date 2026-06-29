@@ -1474,7 +1474,7 @@ const SETTINGS_RU_TEXT = {
     "Ding to Check Minimap": "Звуковое напоминание о миникарте",
     "Disabled": "Неполноценный",
     "Discord": "Discord",
-    "DISCORD": "РАЗНОСЬ",
+    "DISCORD": "DISCORD",
     "Discord: <font color=\"#66cc99\">civocivocivo</font>": "Discord: <font color=\"#66cc99\">civocivocivo</font>",
     "Display Hero": "Показать героя",
     "Display Stats": "Показать статистику героя",
