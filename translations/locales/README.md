@@ -1,7 +1,7 @@
 # QOLLOCK locale catalogs (i18next JSON) — workbench bridge
 
 These JSON files are an **interchange artifact** for the
-[grimoire-translate](https://github.com/Slush97/grimoire-translate) web workbench. They are
+[qollock-translate](https://github.com/Predi-i/qollock-translate) web workbench. They are
 **not** what ships in-game.
 
 ## Source of truth
@@ -11,10 +11,20 @@ The translations that compile into the VPK live as per-language maps in
 English source string. Panorama cannot read JSON at runtime, so **the JS maps stay canonical.**
 These JSON files are generated from those maps and merged back into them.
 
+**Private/public split:** This repo (`civo7/QOLLOCK`) is **private**. The workbench reads/writes
+from the **public mirror** [`Predi-i/QOLLOCK-translations`](https://github.com/Predi-i/QOLLOCK-translations),
+which contains **only** `locales/` (no mod code). A GitHub Actions workflow auto-syncs
+`translations/locales/` here to `locales/` there on every push to `main`.
+
 ```
-ql_settings.js maps  ──export──▶  translations/locales/<lang>/translation.json  ──▶ workbench (D1)
-        ▲                                                                              │
-        └───────────────import───────  GitHub PR  ◀──────────────────────────────────┘
+Private QOLLOCK (this repo)         Public QOLLOCK-translations          Workbench
+  ql_settings.js maps                  locales/*.json                    (D1 database)
+        │  export_locales_json.js         │                                  │
+        ▼                                 ▼  (Actions auto-sync)             │
+  translations/locales/  ──────────────► locales/  ◄────── reads ◄──────────┤
+        ▲                                 │                                  │
+        └── import_locales_json.js ◄──  PR  ◄──────── writes ◄───────────────┘
+             (manual, after PR merge)
 ```
 
 - `en/translation.json` — the **source catalog** the workbench reads (identity map: English → English).
@@ -68,15 +78,34 @@ nested input, but only flat round-trips without the collision risk above.
 
 ## Standing up the workbench
 
+1. **Fork and brand:** Fork [`Slush97/grimoire-translate`](https://github.com/Slush97/grimoire-translate)
+   to `Predi-i/qollock-translate`. Replace branding (name, logo, colors) in `src/site.config.ts`,
+   `wrangler.jsonc`, `package.json`, `public/`, etc.
+
+2. **Point at public repo:** Set `GITHUB_REPO: "Predi-i/QOLLOCK-translations"` in `wrangler.jsonc`
+   (not `civo7/QOLLOCK` — that's private and the workbench can't fork it).
+
+3. **Patch for flat keys:** In `src/lib/catalog.ts`, replace `unflattenValues` to **not** split on dots:
+   ```ts
+   export function unflattenValues(entries: Array<{ key: string; value: string }>): JsonObject {
+     const root: JsonObject = {};
+     for (const entry of entries) root[entry.key] = entry.value;  // verbatim, no split
+     return root;
+   }
+   ```
+   This preserves the 3 collision keys (`"Ready"` / `"Ready."` / `"Ready.."`) without corruption.
+
+4. **Patch localesPath:** In `src/lib/github.ts`, change hardcoded `src/locales` → `SITE.localesPath`
+   (config already has `localesPath: "translations/locales"` → now just `"locales"` in the public repo).
+
+5. **Deploy:** `npm run deploy` (Cloudflare Pages + D1). The workbench reads `locales/en/translation.json`
+   from the public repo as the source catalog, writes PRs back to the same public repo.
+
+6. **Maintainer workflow:** When a PR lands in `Predi-i/QOLLOCK-translations`, pull it locally,
+   run `node scripts/import_locales_json.js` in **this** (private) repo to merge the changes into
+   `ql_settings.js`, commit, push to `main`. The Actions workflow auto-syncs back to public.
+
 The branded fork already exists: **[Predi-i/qollock-translate](https://github.com/Predi-i/qollock-translate)**
-(forked from `Slush97/grimoire-translate`). The flat-keys `catalog.ts` patch above, the QOLLOCK
-branding (`src/site.config.ts`), the `translations/locales` source path, and `wrangler.jsonc`
-(repo → `civo7/QOLLOCK`, Worker/D1 named `qollock-translate`, id placeholders) are all committed
-on its `main`.
-
-What's left is the one-time Cloudflare deploy on **your** account (D1, KV, Access, secrets, domain).
-The full step-by-step guide lives in the fork: **[`DEPLOY.md`](https://github.com/Predi-i/qollock-translate/blob/main/DEPLOY.md)**.
-
-The very first deploy step happens **here**: commit `translations/locales/` to `civo7/QOLLOCK` so the
-website has an English source to read (it fetches `translations/locales/en/translation.json` from the
-branch `GITHUB_BRANCH` points at).
+(forked from `Slush97/grimoire-translate`). All patches (flat `catalog.ts`, branding, `localesPath: "locales"`,
+`GITHUB_REPO: "Predi-i/QOLLOCK-translations"`) are committed on its `main`. What's left: Cloudflare deploy
+(D1, KV, Access, secrets, GitHub token) — full guide: **[`DEPLOY.md`](https://github.com/Predi-i/qollock-translate/blob/main/DEPLOY.md)**.
