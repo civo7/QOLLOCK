@@ -15,3 +15,8 @@ memory
 plans
 .fallow/
 mostrecentlogs.txt
+
+# Self-build tool runtime artifacts (build_mod/build_mod.ps1 stays tracked)
+build_mod/data/
+build_mod/builds/
+build_mod/*.vpk
