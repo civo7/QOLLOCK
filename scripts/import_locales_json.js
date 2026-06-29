@@ -174,7 +174,7 @@ function main() {
         console.log("  " + s.code.padEnd(6) + " total " + String(s.total).padStart(4) +
             "   updated " + String(s.updated).padStart(3) + "   added " + String(s.added).padStart(3));
     }
-    console.log("[locales] now run: node --check panorama/scripts/ql_settings.js  (then repack the VPK)");
+    console.log("Done");
 }
 
 main();

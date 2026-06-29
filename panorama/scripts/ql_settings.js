@@ -1876,7 +1876,7 @@ const SETTINGS_RU_TEXT = {
     "SUPPORT THE MOD": "ПОДДЕРЖАТЬ МОД",
     "Support the mod - donate via Ko-fi (kofi) to help fund continued development": "Поддержите мод — сделайте пожертвование через Ko-fi (kofi), чтобы помочь финансировать дальнейшую разработку.",
     "Supporting and Feature Requests": "Поддержка и запросы фич",
-    "Swap": "Менять",
+    "Swap": "Сменить",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Переключитесь в расширенный режим восстановления предметов с помощью фильтров в меню.",
     "Switching to Airheart...": "Меняем героя на Airheart...",
     "Tab Zoom": "Зум миникарты на TAB",
