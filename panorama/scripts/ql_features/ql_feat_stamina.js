@@ -77,7 +77,8 @@
         _dbgTick++;
         var rawIndex = RSC(cfg);
         var color = RWP(rawIndex);
-        var styleSig = color || "";
+        var panels = getStaminaChargeColorPanels(root, nowMs || 0);
+        var styleSig = (color || "") + "|" + panels.length;
 
         // Log only on signature change (not periodic — avoids 20Hz console spam)
         var sigChanged = State.staminaChargeColorStyleSig !== styleSig;
@@ -109,7 +110,6 @@
             State.staminaChargeAngleStyleSig = "";
         }
 
-        var panels = getStaminaChargeColorPanels(root, nowMs || 0);
         if (State.staminaChargeColorStyleSig === styleSig && Utils.IsPanelListValid(panels)) {
             if (forceLog) $.Msg("[STAMINA DBG] debounce: sig unchanged, panels valid, skipping. panelCount=" + panels.length);
             return;

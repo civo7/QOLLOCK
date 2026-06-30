@@ -159,6 +159,7 @@
             Number(cfg.AMMO_TOTAL_SCALE) === 100 &&
             Number(cfg.AMMO_PANEL_X_OFFSET) === 0 &&
             Number(cfg.AMMO_PANEL_Y_OFFSET) === 0 &&
+            RAI(cfg) === 0 &&
             !GetCachedPanel("ammoPanel")) return;
 
         var ammoPanel = GetCachedPanel("ammoPanel");
