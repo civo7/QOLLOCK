@@ -28,7 +28,7 @@
 				</Panel>
 				<Panel id="ExtraInfo">
 					<Label class="UrnDescription" text="#modifier_citadel_holding_golden_idol" />
-					<Label class="UrnWarning" text="#modifier_citadel_holding_golden_idol_visible" />
+					<Label class="UrnTimeout" text="#modifier_citadel_idol_pickup_disabled_desc" />
 				</Panel>
 			</Panel>
 			<Panel id="basic_progress_container" class="TopBottomFlow">
