@@ -836,7 +836,7 @@ const SETTING_PERF_IMPACT_TIERS = {
     RECENT_PURCHASES_QUICK_SCALE: "low",
     RECENT_PURCHASES_QUICK_X_OFFSET: "low",
     RECENT_PURCHASES_QUICK_Y_OFFSET: "low",
-    TEST_AIRHEART: "none",
+    TEST_SKYRUNNER: "none",
     SHOW_RANK: "low",
     SHOW_RANK_TOPBAR: "low",
 };
@@ -1306,7 +1306,7 @@ const SETTINGS_RU_TEXT = {
     "Advanced": "Расширенный",
     "Advanced Filter": "Расширенный фильтр",
     "Advanced Mode": "Расширенный режим",
-    "Airheart switch sent.": "Запрос на смену героя на Airheart",
+    "Skyrunner switch sent.": "Запрос на смену героя на Skyrunner",
     "All commissioned additions are released publicly and available to everyone.": "Все заказанные изменения добавляются в публичную версию и доступны всем.",
     "Allows you to drag move some menus.": "Позволяет перетаскивать некоторые меню.",
     "Ally HP Warning": "Предупреждение о ХП союзников",
@@ -1426,7 +1426,7 @@ const SETTINGS_RU_TEXT = {
     "Compass & Speed": "Компас и скорость",
     "Config": "Конфиг",
     "Confirm": "Подтвердить",
-    "Confirming Airheart for clear...": "Проверка Airheart для чистки...",
+    "Confirming Skyrunner for clear...": "Проверка Skyrunner для чистки...",
     "Console": "Консоль",
     "Console Notes": "Примечания к консоли",
     "Contact": "Связаться",
@@ -1878,7 +1878,7 @@ const SETTINGS_RU_TEXT = {
     "Supporting and Feature Requests": "Поддержка и запросы фич",
     "Swap": "Сменить",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Переключитесь в расширенный режим восстановления предметов с помощью фильтров в меню.",
-    "Switching to Airheart...": "Меняем героя на Airheart...",
+    "Switching to Skyrunner...": "Меняем героя на Skyrunner...",
     "Tab Zoom": "Зум миникарты на TAB",
     "Test": "Тест",
     "Test Announcer": "Тест озвучки",
@@ -1913,7 +1913,7 @@ const SETTINGS_RU_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Это лёгкая версия с заметно лучшим FPS, но требуется отдельный файл фильтров.",
     "This is a mod designed to give you complete freedom over your game.": "Этот мод создан, чтобы дать вам полную свободу в игре.",
     "This is a way for me to give something back to the supporters.": "Это способ отблагодарить разработчика мода.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Кнопка для переключения на героя Airheart (похож на Парадокс), ваши настройки сохраняются в сборках магазина. Для устранения неполадок вы можете удалить их и выполнить новое сохранение, чтобы исправить любые проблемы с сохранением настроек.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Кнопка для переключения на героя Skyrunner (похож на Парадокс), ваши настройки сохраняются в сборках магазина. Для устранения неполадок вы можете удалить их и выполнить новое сохранение, чтобы исправить любые проблемы с сохранением настроек.",
     "This line is already on by default.": "Строка уже по умолчанию.",
     "This section is already on by default.": "Секция уже по умолчанию.",
     "Tier 1": "Тир 1",
@@ -2139,7 +2139,7 @@ const SETTINGS_UK_TEXT = {
     "Advanced": "Просунутий",
     "Advanced Filter": "Розширений фільтр",
     "Advanced Mode": "Розширений режим",
-    "Airheart switch sent.": "Перемикач Airheart надіслано.",
+    "Skyrunner switch sent.": "Перемикач Skyrunner надіслано.",
     "All commissioned additions are released publicly and available to everyone.": "Усі замовлені доповнення опубліковані та доступні кожному.",
     "Allows you to drag move some menus.": "Дозволяє перетягувати та переміщувати деякі меню.",
     "Ally HP Warning": "Союзник HP Попередження",
@@ -2260,7 +2260,7 @@ const SETTINGS_UK_TEXT = {
     "Compass & Speed": "Компас і швидкість",
     "Config": "Конфіг",
     "Confirm": "Підтвердити",
-    "Confirming Airheart for clear...": "Підтвердження Airheart для очищення...",
+    "Confirming Skyrunner for clear...": "Підтвердження Skyrunner для очищення...",
     "Console": "Консоль",
     "Console Notes": "Примітки до консолі",
     "Contact": "контакт",
@@ -2712,7 +2712,7 @@ const SETTINGS_UK_TEXT = {
     "Supporting and Feature Requests": "Запити на підтримку та функції",
     "Swap": "Обмін",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Перейдіть у розширений режим відновлення предметів за допомогою фільтрів у меню.",
-    "Switching to Airheart...": "Перехід на Airheart...",
+    "Switching to Skyrunner...": "Перехід на Skyrunner...",
     "Tab Zoom": "Масштаб вкладки",
     "Test": "Тест",
     "Test Announcer": "Диктор тесту",
@@ -2747,7 +2747,7 @@ const SETTINGS_UK_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Це полегшена версія зі значними покращеннями FPS, але вимагає окремого файлу для фільтрів.",
     "This is a mod designed to give you complete freedom over your game.": "Цей мод розроблений, щоб дати вам повну свободу над грою.",
     "This is a way for me to give something back to the supporters.": "Це спосіб для мене повернути щось уболівальникам.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Це для переходу на героя Airheart (схоже на Paradox), ваші налаштування зберігаються в збірках магазину. Щоб усунути неполадки, ви можете видалити їх і виконати нове збереження, щоб вирішити будь-які проблеми зі збереженням налаштувань.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Це для переходу на героя Skyrunner (схоже на Paradox), ваші налаштування зберігаються в збірках магазину. Щоб усунути неполадки, ви можете видалити їх і виконати нове збереження, щоб вирішити будь-які проблеми зі збереженням налаштувань.",
     "This line is already on by default.": "Строка вже за умовчанням.",
     "This section is already on by default.": "Розділ уже за умовчанням.",
     "Tier 1": "Рівень 1",
@@ -2972,7 +2972,7 @@ const SETTINGS_PL_TEXT = {
     "Advanced": "Zaawansowany",
     "Advanced Filter": "Zaawansowany Filtr",
     "Advanced Mode": "Tryb Zaawansowany",
-    "Airheart switch sent.": "Przełącznik Airheart wysłany.",
+    "Skyrunner switch sent.": "Przełącznik Skyrunner wysłany.",
     "All commissioned additions are released publicly and available to everyone.": "Wszystkie zlecane dodatki są udostępniane publicznie i dostępne dla każdego.",
     "Allows you to drag move some menus.": "Umożliwia przeciąganie i przesuwanie niektórych menu.",
     "Ally HP Warning": "Ostrzeżenie o HP Sojusznika",
@@ -3093,7 +3093,7 @@ const SETTINGS_PL_TEXT = {
     "Compass & Speed": "Kompas i Prędkość",
     "Config": "Konfiguracja",
     "Confirm": "Potwierdź",
-    "Confirming Airheart for clear...": "Potwierdzanie Airheart w celu wyczyszczenia...",
+    "Confirming Skyrunner for clear...": "Potwierdzanie Skyrunner w celu wyczyszczenia...",
     "Console": "Konsola",
     "Console Notes": "Informacje dot. Konsoli",
     "Contact": "Kontakt",
@@ -3544,7 +3544,7 @@ const SETTINGS_PL_TEXT = {
     "Supporting and Feature Requests": "Wspieranie oraz Prośby o Funkcje",
     "Swap": "Zmień",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Zmień na zaawansowany tryb cooldownów itemów z filtrami",
-    "Switching to Airheart...": "Przełączanie na Airheart...",
+    "Switching to Skyrunner...": "Przełączanie na Skyrunner...",
     "Tab Zoom": "Przybliżenie pod Tabem",
     "Test": "Test",
     "Test Announcer": "Spiker Testowy",
@@ -3578,7 +3578,7 @@ const SETTINGS_PL_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Jest to lekka wersja ze znaczną poprawą FPSów, ale wymaga osobnego pliku dla filtrów.",
     "This is a mod designed to give you complete freedom over your game.": "Jest to mod zaprojektowany tak, aby dać Ci pełną kontrole nad grą.",
     "This is a way for me to give something back to the supporters.": "To dla mnie sposób, aby dać coś od siebie wspierającym.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Ma to na celu przejście na bohatera Airheart (wygląda jak Paradox), twoje ustawienia zostaną zapisane w buildach w sklepie. Aby rozwiązać problem, możesz je usunąć i zrobić świeży zapis, aby rozwiązać problemy z zapisywaniem ustawień.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Ma to na celu przejście na bohatera Skyrunner (wygląda jak Paradox), twoje ustawienia zostaną zapisane w buildach w sklepie. Aby rozwiązać problem, możesz je usunąć i zrobić świeży zapis, aby rozwiązać problemy z zapisywaniem ustawień.",
     "Tier 1": "Tier 1",
     "Tier 2": "Tier 2",
     "Tier 3": "Tier 3",
@@ -3805,7 +3805,7 @@ const SETTINGS_BG_TEXT = {
     "Advanced": "Разширено",
     "Advanced Filter": "Разширен филтър",
     "Advanced Mode": "Разширен режим",
-    "Airheart switch sent.": "Превключвателят Airheart е изпратен.",
+    "Skyrunner switch sent.": "Превключвателят Skyrunner е изпратен.",
     "All commissioned additions are released publicly and available to everyone.": "Всички поръчани допълнения се пускат публично и са достъпни за всички.",
     "Allows you to drag move some menus.": "Позволява ви да плъзгате и премествате някои менюта.",
     "Ally HP Warning": "Съюзник HP Предупреждение",
@@ -3926,7 +3926,7 @@ const SETTINGS_BG_TEXT = {
     "Compass & Speed": "Компас и скорост",
     "Config": "Конфиг",
     "Confirm": "Потвърди",
-    "Confirming Airheart for clear...": "Потвърждава се Airheart за изчистване...",
+    "Confirming Skyrunner for clear...": "Потвърждава се Skyrunner за изчистване...",
     "Console": "Конзола",
     "Console Notes": "Бележки за конзолата",
     "Contact": "Контакт",
@@ -4378,7 +4378,7 @@ const SETTINGS_BG_TEXT = {
     "Supporting and Feature Requests": "Заявки за поддръжка и функции",
     "Swap": "Размяна",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Превключете към разширения режим на охлаждане на предмети с филтри в менюто.",
-    "Switching to Airheart...": "Превключване към Airheart...",
+    "Switching to Skyrunner...": "Превключване към Skyrunner...",
     "Tab Zoom": "Раздел Мащабиране",
     "Test": "Тест",
     "Test Announcer": "Говорител на теста",
@@ -4413,7 +4413,7 @@ const SETTINGS_BG_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Това е олекотена версия със значителни подобрения на FPS, но изисква отделен файл за филтри.",
     "This is a mod designed to give you complete freedom over your game.": "Това е мод, предназначен да ви даде пълна свобода над вашата игра.",
     "This is a way for me to give something back to the supporters.": "Това е начин за мен да върна нещо на привържениците.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Това е, за да превключите към героя Airheart (изглежда като Paradox), вашите настройки се запазват в компилациите на магазина. За да отстраните неизправности, можете да ги изтриете и да направите ново запазване, за да коригирате всички проблеми със запазването на настройките.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Това е, за да превключите към героя Skyrunner (изглежда като Paradox), вашите настройки се запазват в компилациите на магазина. За да отстраните неизправности, можете да ги изтриете и да направите ново запазване, за да коригирате всички проблеми със запазването на настройките.",
     "This line is already on by default.": "Строка вече по подразбиране.",
     "This section is already on by default.": "Секцията вече е по подразбиране.",
     "Tier 1": "Ниво 1",
@@ -4638,7 +4638,7 @@ const SETTINGS_BY_TEXT = {
     "Advanced": "Пашыраны",
     "Advanced Filter": "Пашыраны фільтр",
     "Advanced Mode": "Пашыраны рэжым",
-    "Airheart switch sent.": "Запыт на змену героя на Airheart.",
+    "Skyrunner switch sent.": "Запыт на змену героя на Skyrunner.",
     "All commissioned additions are released publicly and available to everyone.": "Усе замоўленыя змены дадаюцца ў публічную версію і даступныя ўсім.",
     "Allows you to drag move some menus.": "Дазваляе перацягваць некаторыя меню.",
     "Ally HP Warning": "папярэджанне пра АЗ саюзніка",
@@ -4759,7 +4759,7 @@ const SETTINGS_BY_TEXT = {
     "Compass & Speed": "Компас і хуткасць",
     "Config": "Канфіг",
     "Confirm": "Пацвердзіць",
-    "Confirming Airheart for clear...": "Праверка Airheart для ачысткі...",
+    "Confirming Skyrunner for clear...": "Праверка Skyrunner для ачысткі...",
     "Console": "Кансоль",
     "Console Notes": "Нататкі да кансолі",
     "Contact": "Сувязь",
@@ -5211,7 +5211,7 @@ const SETTINGS_BY_TEXT = {
     "Supporting and Feature Requests": "Падтрымка і запыты функцый",
     "Swap": "Замяніць",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Пераключыцца на прасунуты рэжым кулдаунаў прадметаў з фільтрамі ў меню.",
-    "Switching to Airheart...": "Пераключэнне на Airheart...",
+    "Switching to Skyrunner...": "Пераключэнне на Skyrunner...",
     "Tab Zoom": "Tab Zoom",
     "Test": "Тэст",
     "Test Announcer": "Тэставы дыктар",
@@ -5246,7 +5246,7 @@ const SETTINGS_BY_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Гэта лёгкая версія са значным паляпшэннем FPS, але патрабуе асобны файл для фільтраў.",
     "This is a mod designed to give you complete freedom over your game.": "Гэта мод, распрацаваны, каб даць табе поўную свабоду над сваёй гульнёй.",
     "This is a way for me to give something back to the supporters.": "Гэта спосаб аддзячыць прыхільнікам.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Гэта для пераключэння на героя Airheart (выглядае як Paradox), твае налады захаваны ў білдах магазіна. Для ліквідацыі непаладак ты можаш выдаліць іх і зрабіць новае захаванне, каб выправіць любыя праблемы з захаваннем налад.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Гэта для пераключэння на героя Skyrunner (выглядае як Paradox), твае налады захаваны ў білдах магазіна. Для ліквідацыі непаладак ты можаш выдаліць іх і зрабіць новае захаванне, каб выправіць любыя праблемы з захаваннем налад.",
     "This line is already on by default.": "Гэты радок ужо ўключаны па змаўчанні.",
     "This section is already on by default.": "Гэта секцыя ўжо ўключана па змаўчанні.",
     "Tier 1": "Узровень 1",
@@ -5471,7 +5471,7 @@ const SETTINGS_JA_TEXT = {
     "Advanced": "高度な",
     "Advanced Filter": "高度なフィルター",
     "Advanced Mode": "アドバンスモード",
-    "Airheart switch sent.": "Airheart スイッチが送信されました。",
+    "Skyrunner switch sent.": "Skyrunner スイッチが送信されました。",
     "All commissioned additions are released publicly and available to everyone.": "委託された追加内容はすべて公開され、誰でも利用できるようになります。",
     "Allows you to drag move some menus.": "一部のメニューをドラッグして移動できます。",
     "Ally HP Warning": "味方 HP 警告",
@@ -5592,7 +5592,7 @@ const SETTINGS_JA_TEXT = {
     "Compass & Speed": "コンパスとスピード",
     "Config": "設定",
     "Confirm": "確認",
-    "Confirming Airheart for clear...": "Airheart がクリアされていることを確認しています...",
+    "Confirming Skyrunner for clear...": "Skyrunner がクリアされていることを確認しています...",
     "Console": "コンソール",
     "Console Notes": "コンソールノート",
     "Contact": "接触",
@@ -6044,7 +6044,7 @@ const SETTINGS_JA_TEXT = {
     "Supporting and Feature Requests": "サポートおよび機能リクエスト",
     "Swap": "スワップ",
     "Switch to the advanced item cooldown mode with in-menu filters.": "メニュー内フィルターを使用して、高度なアイテムのクールダウン モードに切り替えます。",
-    "Switching to Airheart...": "Airheart に切り替えています...",
+    "Switching to Skyrunner...": "Skyrunner に切り替えています...",
     "Tab Zoom": "タブのズーム",
     "Test": "テスト",
     "Test Announcer": "テストアナウンサー",
@@ -6078,7 +6078,7 @@ const SETTINGS_JA_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "これは FPS が大幅に向上した軽量バージョンですが、フィルター用に別のファイルが必要です。",
     "This is a mod designed to give you complete freedom over your game.": "これは、ゲームを完全に自由にするために設計された MOD です。",
     "This is a way for me to give something back to the supporters.": "これは私がサポーターの皆様に何かをお返しする方法です。",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "これは Airheart ヒーロー (Paradox に似ています) に切り替えるためのもので、設定はショップ ビルドに保存されます。トラブルシューティングを行うには、これらを削除し、新しく保存して、設定保存の問題を修正します。",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "これは Skyrunner ヒーロー (Paradox に似ています) に切り替えるためのもので、設定はショップ ビルドに保存されます。トラブルシューティングを行うには、これらを削除し、新しく保存して、設定保存の問題を修正します。",
     "Tier 1": "ティア1",
     "Tier 2": "階層 2",
     "Tier 3": "ティア3",
@@ -6304,7 +6304,7 @@ const SETTINGS_ZH_TEXT = {
     "Advanced": "先进的",
     "Advanced Filter": "高级过滤",
     "Advanced Mode": "高级模式",
-    "Airheart switch sent.": "已发送切换到 Airheart 的指令。",
+    "Skyrunner switch sent.": "已发送切换到 Skyrunner 的指令。",
     "All commissioned additions are released publicly and available to everyone.": "所有委托添加的内容都会公开发布并提供给所有人。",
     "Allows you to drag move some menus.": "允许您拖动一些菜单。",
     "Ally HP Warning": "友方生命值警告",
@@ -6425,7 +6425,7 @@ const SETTINGS_ZH_TEXT = {
     "Compass & Speed": "指南针和速度",
     "Config": "配置",
     "Confirm": "确认",
-    "Confirming Airheart for clear...": "正在确认用于清除的 Airheart……",
+    "Confirming Skyrunner for clear...": "正在确认用于清除的 Skyrunner……",
     "Console": "安慰",
     "Console Notes": "控制台注释",
     "Contact": "接触",
@@ -6876,7 +6876,7 @@ const SETTINGS_ZH_TEXT = {
     "Supporting and Feature Requests": "支持和功能请求",
     "Swap": "交换",
     "Switch to the advanced item cooldown mode with in-menu filters.": "使用菜单内过滤器切换到高级物品冷却模式。",
-    "Switching to Airheart...": "正在切换到 Airheart……",
+    "Switching to Skyrunner...": "正在切换到 Skyrunner……",
     "Tab Zoom": "Tab 缩放",
     "Test": "测试",
     "Test Announcer": "测试播音员",
@@ -6910,7 +6910,7 @@ const SETTINGS_ZH_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "这是一个轻量版本，FPS 提升显著，但需要单独的滤镜文件",
     "This is a mod designed to give you complete freedom over your game.": "这是一个旨在让您完全自由地玩游戏的模组。",
     "This is a way for me to give something back to the supporters.": "这是我回馈支持者的一种方式。",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "这是切换到Airheart英雄（看起来像Paradox），你的设置保存在商店版本中。要排除故障，您可以删除这些内容并重新保存以解决任何设置保存问题。",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "这是切换到Skyrunner英雄（看起来像Paradox），你的设置保存在商店版本中。要排除故障，您可以删除这些内容并重新保存以解决任何设置保存问题。",
     "Tier 1": "1 级",
     "Tier 2": "2 级",
     "Tier 3": "3 级",
@@ -7136,7 +7136,7 @@ const SETTINGS_FR_TEXT = {
     "Advanced": "Avancé",
     "Advanced Filter": "Filtre avancé",
     "Advanced Mode": "Mode avancé",
-    "Airheart switch sent.": "Changement de perso Airheart",
+    "Skyrunner switch sent.": "Changement de perso Skyrunner",
     "All commissioned additions are released publicly and available to everyone.": "Tous les ajouts commandés sont rendus publics et accessibles à  tous.",
     "Allows you to drag move some menus.": "Vous permet de déplacer certains menus par glisser-déplacer.",
     "Ally HP Warning": "Avertissement HP allié",
@@ -7257,7 +7257,7 @@ const SETTINGS_FR_TEXT = {
     "Compass & Speed": "Boussole et vitesse",
     "Config": "Configuration",
     "Confirm": "Confirmer",
-    "Confirming Airheart for clear...": "Confirmation d'Airheart pour la suppression...",
+    "Confirming Skyrunner for clear...": "Confirmation d'Skyrunner pour la suppression...",
     "Console": "Console",
     "Console Notes": "Remarques sur la console",
     "Contact": "Contact",
@@ -7708,7 +7708,7 @@ const SETTINGS_FR_TEXT = {
     "Supporting and Feature Requests": "Support et demande de fonctionnalités",
     "Swap": "Échanger",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Passez au mode de recharge avancé des éléments avec les filtres dans le menu.",
-    "Switching to Airheart...": "Passer à  Airheart...",
+    "Switching to Skyrunner...": "Passer à  Skyrunner...",
     "Tab Zoom": "Zoom TAB",
     "Test": "Test",
     "Test Announcer": "Teste de l'Annonceur",
@@ -7742,7 +7742,7 @@ const SETTINGS_FR_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Il s'agit d'une version légère avec un net gain de FPS, mais qui nécessite un fichier de filtres séparé.",
     "This is a mod designed to give you complete freedom over your game.": "Il s'agit d'un mod conçu pour vous donner une totale liberté sur votre jeu.",
     "This is a way for me to give something back to the supporters.": "C'est une façon pour moi de donner quelque chose aux supporters.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Il s'agit de passer au héros Airheart (ressemble à Paradox), vos paramètres sont enregistrés dans les builds de la boutique. Pour résoudre les problèmes, vous pouvez les supprimer et effectuer une nouvelle sauvegarde pour résoudre les problèmes de sauvegarde des paramètres.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Il s'agit de passer au héros Skyrunner (ressemble à Paradox), vos paramètres sont enregistrés dans les builds de la boutique. Pour résoudre les problèmes, vous pouvez les supprimer et effectuer une nouvelle sauvegarde pour résoudre les problèmes de sauvegarde des paramètres.",
     "This line is already on by default.": "Cette ligne est déjà activée par défaut.",
     "This section is already on by default.": "Cette section est déjà activée par défaut.",
     "Tier 1": "Niveau 1",
@@ -7969,7 +7969,7 @@ const SETTINGS_PT_TEXT = {
     "Advanced": "Avançado",
     "Advanced Filter": "Filtro avançado",
     "Advanced Mode": "Modo avançado",
-    "Airheart switch sent.": "Interruptor Airheart enviado.",
+    "Skyrunner switch sent.": "Interruptor Skyrunner enviado.",
     "All commissioned additions are released publicly and available to everyone.": "Todas as adições comissionadas são divulgadas publicamente e estão disponíveis para todos.",
     "Allows you to drag move some menus.": "Permite arrastar e mover alguns menus.",
     "Ally HP Warning": "Aviso de HP aliado",
@@ -8090,7 +8090,7 @@ const SETTINGS_PT_TEXT = {
     "Compass & Speed": "Bússola e velocidade",
     "Config": "Configuração",
     "Confirm": "Confirmar",
-    "Confirming Airheart for clear...": "Confirmando Airheart para limpar...",
+    "Confirming Skyrunner for clear...": "Confirmando Skyrunner para limpar...",
     "Console": "Console",
     "Console Notes": "Notas da consola",
     "Contact": "Contato",
@@ -8541,7 +8541,7 @@ const SETTINGS_PT_TEXT = {
     "Supporting and Feature Requests": "Solicitações de suporte e recursos",
     "Swap": "Permuta",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Mude para o modo de arrefecimento de itens avançados com filtros no menu.",
-    "Switching to Airheart...": "Mudando para Airheart...",
+    "Switching to Skyrunner...": "Mudando para Skyrunner...",
     "Tab Zoom": "Zoom da guia",
     "Test": "Teste",
     "Test Announcer": "Locutor de teste",
@@ -8575,7 +8575,7 @@ const SETTINGS_PT_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Esta é uma versão leve com melhorias significativas de FPS, mas requer um arquivo separado para filtros.",
     "This is a mod designed to give you complete freedom over your game.": "Este é um mod concebido para lhe dar total liberdade no jogo.",
     "This is a way for me to give something back to the supporters.": "Esta é uma forma de retribuir algo aos apoiadores.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Isto é para mudar para o herói Airheart (parece Paradox), as suas definições são guardadas nas construções da loja. Para solucionar problemas, pode eliminá-los e fazer um novo guardar para corrigir quaisquer problemas de guardar as definições.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Isto é para mudar para o herói Skyrunner (parece Paradox), as suas definições são guardadas nas construções da loja. Para solucionar problemas, pode eliminá-los e fazer um novo guardar para corrigir quaisquer problemas de guardar as definições.",
     "This line is already on by default.": "Esta linha já está ativada por predefinição.",
     "This section is already on by default.": "Esta secção já está ativada por predefinição.",
     "Tier 1": "Camada 1",
@@ -8802,7 +8802,7 @@ const SETTINGS_PT_BR_TEXT = {
     "Advanced": "Avançado",
     "Advanced Filter": "Filtro avançado",
     "Advanced Mode": "Modo avançado",
-    "Airheart switch sent.": "Interruptor Airheart enviado.",
+    "Skyrunner switch sent.": "Interruptor Skyrunner enviado.",
     "All commissioned additions are released publicly and available to everyone.": "Todas as adições comissionadas são divulgadas publicamente e estão disponíveis para todos.",
     "Allows you to drag move some menus.": "Permite mover alguns menus.",
     "Ally HP Warning": "Aviso de Vida dos aliado",
@@ -8923,7 +8923,7 @@ const SETTINGS_PT_BR_TEXT = {
     "Compass & Speed": "Bússola e velocidade",
     "Config": "Configurações",
     "Confirm": "Confirmar",
-    "Confirming Airheart for clear...": "Confirmando Airheart para limpeza...",
+    "Confirming Skyrunner for clear...": "Confirmando Skyrunner para limpeza...",
     "Console": "Console",
     "Console Notes": "Notas do console",
     "Contact": "Contato",
@@ -9375,7 +9375,7 @@ const SETTINGS_PT_BR_TEXT = {
     "Supporting and Feature Requests": "Solicitações de suporte e recursos",
     "Swap": "Trocar",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Mude para o modo de cooldown de itens avançados com filtros no menu.",
-    "Switching to Airheart...": "Mudando para Airheart...",
+    "Switching to Skyrunner...": "Mudando para Skyrunner...",
     "Tab Zoom": "Tab Zoom",
     "Test": "Teste",
     "Test Announcer": "Teste de Locutor",
@@ -9410,7 +9410,7 @@ const SETTINGS_PT_BR_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Esta é uma versão leve com melhorias significativas de FPS, mas requer um arquivo separado para filtros.",
     "This is a mod designed to give you complete freedom over your game.": "Este é um mod projetado para lhe dar total liberdade no seu jogo.",
     "This is a way for me to give something back to the supporters.": "Esta é uma forma de retribuir algo aos apoiadores.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Isso é para mudar para o herói Airheart (parece Paradox), suas configurações são salvas nas construções da loja. Para solucionar problemas, você pode excluí-los e fazer um novo salvamento para corrigir quaisquer problemas de salvamento de configurações.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Isso é para mudar para o herói Skyrunner (parece Paradox), suas configurações são salvas nas construções da loja. Para solucionar problemas, você pode excluí-los e fazer um novo salvamento para corrigir quaisquer problemas de salvamento de configurações.",
     "This line is already on by default.": "Essa linha já está ligada por padrão.",
     "This section is already on by default.": "Essa seção já está ligada por padrão.",
     "Tier 1": "Nível 1",
@@ -9635,7 +9635,7 @@ const SETTINGS_ES_TEXT = {
     "Advanced": "Avanzado",
     "Advanced Filter": "Filtro avanzado",
     "Advanced Mode": "Modo avanzado",
-    "Airheart switch sent.": "Se envió el interruptor Airheart.",
+    "Skyrunner switch sent.": "Se envió el interruptor Skyrunner.",
     "All commissioned additions are released publicly and available to everyone.": "Todas las funciones por encargo se publican y están disponibles para todos.",
     "Allows you to drag move some menus.": "Le permite arrastrar y mover algunos menús.",
     "Ally HP Warning": "Aviso de vida baja del aliado",
@@ -9756,7 +9756,7 @@ const SETTINGS_ES_TEXT = {
     "Compass & Speed": "Brújula y velocidad",
     "Config": "Configuración",
     "Confirm": "Confirmar",
-    "Confirming Airheart for clear...": "Confirmando Airheart para claro...",
+    "Confirming Skyrunner for clear...": "Confirmando Skyrunner para claro...",
     "Console": "Consola",
     "Console Notes": "Notas de la consola",
     "Contact": "Contacto",
@@ -10207,7 +10207,7 @@ const SETTINGS_ES_TEXT = {
     "Supporting and Feature Requests": "Soporte y solicitudes de funciones",
     "Swap": "Intercambio",
     "Switch to the advanced item cooldown mode with in-menu filters.": "Cambie al modo de recuperación de elementos avanzado con filtros en el menú.",
-    "Switching to Airheart...": "Cambiando a Airheart...",
+    "Switching to Skyrunner...": "Cambiando a Skyrunner...",
     "Tab Zoom": "Zoom TAB",
     "Test": "Prueba",
     "Test Announcer": "Probar locutor",
@@ -10241,7 +10241,7 @@ const SETTINGS_ES_TEXT = {
     "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": "Esta es una versión liviana con importantes mejoras en FPS pero requiere un archivo separado para los filtros.",
     "This is a mod designed to give you complete freedom over your game.": "Este es un mod diseñado para brindarte total libertad sobre tu juego.",
     "This is a way for me to give something back to the supporters.": "Esta es una forma de agradecer a quienes apoyan el proyecto.",
-    "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Esto sirve para cambiar al héroe Airheart (parecido a Paradox). Tu configuración se guarda en las builds de la tienda. Para solucionar problemas, puedes eliminarlas y hacer un guardado nuevo para corregir cualquier problema al guardar la configuración.",
+    "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": "Esto sirve para cambiar al héroe Skyrunner (parecido a Paradox). Tu configuración se guarda en las builds de la tienda. Para solucionar problemas, puedes eliminarlas y hacer un guardado nuevo para corregir cualquier problema al guardar la configuración.",
     "This line is already on by default.": "Esta línea ya está activada por defecto.",
     "This section is already on by default.": "Esta sección ya está activada por defecto.",
     "Tier 1": "Nivel 1",
@@ -13281,7 +13281,7 @@ function ReadBuildSaveStatus() {
 
 function ResolveBuildSavePendingLabel(message) {
     if (message === "starting") return "START";
-    if (message === "switching_to_airheart") return "AIRHEART";
+    if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
     if (message === "waiting_for_shop") return "OPEN SHOP";
     if (message === "initializing_storage_build") return "INIT BUILD";
     if (message === "opening_edit_mode") return "EDITING";
@@ -13305,8 +13305,8 @@ function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
             SetLocalizedConfigFeedbackMessage("Open shop to continue save.", "warning", 0);
             return;
         }
-        if (message === "switching_to_airheart") {
-            SetLocalizedConfigFeedbackMessage("Switching to Airheart...", "info", 0);
+        if (message === "switching_to_skyrunner" || message === "switching_to_airheart") {
+            SetLocalizedConfigFeedbackMessage("Switching to Skyrunner...", "info", 0);
             return;
         }
         if (message === "writing_category_name" || message === "saving") {
@@ -13464,8 +13464,8 @@ function ReadBuildClearStatus() {
 
 function ResolveBuildClearPendingLabel(message) {
     if (message === "starting") return "START";
-    if (message === "switching_to_airheart") return "AIRHEART";
-    if (message === "confirming_airheart") return "AIRHEART";
+    if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
+    if (message === "confirming_skyrunner" || message === "confirming_airheart") return "SKYRUNNER";
     if (message === "await_user_open_shop") return "OPEN SHOP";
     if (message === "waiting_for_shop") return "OPEN SHOP";
     if (message === "opening_builds_list") return "BROWSE";
@@ -13493,8 +13493,13 @@ function WatchBuildClearStatus(clearBtn, clearLbl, expectedToken, defaultLabel) 
             SetLocalizedConfigFeedbackMessage("Open shop to continue clear.", "warning", 0);
             return;
         }
-        if (msg === "switching_to_airheart" || msg === "confirming_airheart") {
-            SetLocalizedConfigFeedbackMessage("Confirming Airheart for clear...", "info", 0);
+        if (
+            msg === "switching_to_skyrunner" ||
+            msg === "switching_to_airheart" ||
+            msg === "confirming_skyrunner" ||
+            msg === "confirming_airheart"
+        ) {
+            SetLocalizedConfigFeedbackMessage("Confirming Skyrunner for clear...", "info", 0);
             return;
         }
         if (msg === "deleting_build" || msg === "confirming_delete") {
@@ -13660,7 +13665,7 @@ function SyncConfigFromStorage() {
 }
 
 function PersistStatlockerProfileState(rawConfig, configObj) {
-    // $.persistentStorage confirmed absent — config persistence is via Airheart builds.
+    // $.persistentStorage confirmed absent — config persistence is via Skyrunner builds.
 }
 
 function GetRuntimePresetName() {
@@ -14701,9 +14706,9 @@ function RenderConfigTabContent(list) {
         CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
         CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, SETTINGS_LANGUAGE_OPTIONS);
         CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
-        CreateRow(list, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
+        CreateRow(list, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
             { label: "Swap" }
-        ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
+        ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
         CreateRow(list, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
 
         CreateSeparator(list);
@@ -14725,9 +14730,9 @@ function RenderConfigTabContent(list) {
     CreateRow(cardGeneral, "Preview Changes", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
     CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, SETTINGS_LANGUAGE_OPTIONS);
     CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
-    CreateRow(cardGeneral, "Troubleshoot", "TEST_AIRHEART", "actionbutton", null, null, null, [
+    CreateRow(cardGeneral, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
         { label: "Swap" }
-    ], "This is to switch to the Airheart hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.");
+    ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
     CreateRow(cardGeneral, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
 
     var dividerAfterGeneral = $.CreatePanel("Panel", list, "ConfigDividerAfterGeneral");
@@ -21309,8 +21314,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
         }
         if (isArcadePlayAction) {
             actionBtn.AddClass("ArcadePlayActionBtn");
-        } else if (configId === "TEST_AIRHEART") {
-            actionBtn.AddClass("TestAirheartActionBtn");
+        } else if (configId === "TEST_SKYRUNNER") {
+            actionBtn.AddClass("TestSkyrunnerActionBtn");
         }
         var actionInner = $.CreatePanel("Panel", actionBtn, "");
         actionInner.AddClass("SettingActionBtnInner");
@@ -21403,10 +21408,10 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             } else if (configId === "OPEN_BLACKJACK") {
                 OpenBlackjackModal();
                 handled = true;
-            } else if (configId === "TEST_AIRHEART") {
-                handled = ApplyDefaultHeroSelection("hero_airheart");
+            } else if (configId === "TEST_SKYRUNNER") {
+                handled = ApplyDefaultHeroSelection("hero_skyrunner");
                 if (handled) {
-        SetLocalizedConfigFeedbackMessage("Airheart switch sent.", "success", 1400);
+        SetLocalizedConfigFeedbackMessage("Skyrunner switch sent.", "success", 1400);
                 } else {
         SetLocalizedConfigFeedbackMessage("Failed to switch hero.", "error", 1800);
                     actionBtn.AddClass("FailureState");

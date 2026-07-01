@@ -8,12 +8,12 @@
     // Functions that need QOL symbols should use direct global access.
 
     // ── Constants (from ql_core.js) ──
-    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
-    var BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
+    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
+    var BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS = 15000;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
-    var BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_SAVE_STORAGE_HERO_ID = "hero_skyrunner";
     var BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 300;
     var BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
     var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
@@ -93,13 +93,13 @@
         return ok;
     }
 
-    function CanReuseLoaderConfirmedAirheartContext(root, nowMs) {
+    function CanReuseLoaderConfirmedSkyrunnerContext(root, nowMs) {
         if (!root) return false;
         if (!State.settingsLoaderSessionActive) return false;
-        if (!State.buildCategoryPayloadAirheartHeaderConfirmed) return false;
+        if (!State.buildCategoryPayloadSkyrunnerHeaderConfirmed) return false;
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var confirmedAtMs = Number(State.buildCategoryPayloadAirheartHeaderConfirmedMs) || 0;
-        if (confirmedAtMs > 0 && (now - confirmedAtMs) > BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS) {
+        var confirmedAtMs = Number(State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs) || 0;
+        if (confirmedAtMs > 0 && (now - confirmedAtMs) > BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS) {
             return false;
         }
         var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
@@ -161,7 +161,7 @@
             options.debugLog("switch to " + BUILD_SAVE_STORAGE_HERO_ID + " ok=" + (switchedToStorage ? "1" : "0"));
         }
         if (typeof options.setOverlayLine === "function") {
-            options.setOverlayLine("switch_airheart ok=" + (switchedToStorage ? "1" : "0"));
+            options.setOverlayLine("switch_skyrunner ok=" + (switchedToStorage ? "1" : "0"));
         }
 
         State[options.stageKey] = "wait_storage_switch";
@@ -218,7 +218,8 @@
     QOL.tryAdvanceStorageSwitchStage = TryAdvanceStorageSwitchStage;
     QOL.tryAdvanceStorageSwitchSettleStage = TryAdvanceStorageSwitchSettleStage;
     QOL.setBuildSaveStatus = SetBuildSaveStatus;
-    QOL.canReuseLoaderConfirmedAirheartContext = CanReuseLoaderConfirmedAirheartContext;
+    QOL.canReuseLoaderConfirmedSkyrunnerContext = CanReuseLoaderConfirmedSkyrunnerContext;
+    QOL.canReuseLoaderConfirmedAirheartContext = CanReuseLoaderConfirmedSkyrunnerContext;
 
     // ── Registration ──
     QOL.register("buildBridge", {
@@ -245,7 +246,7 @@
         if (typeof TryAdvanceStorageSwitchStage !== "function") throw new Error("TryAdvanceStorageSwitchStage missing");
         if (typeof TryAdvanceStorageSwitchSettleStage !== "function") throw new Error("TryAdvanceStorageSwitchSettleStage missing");
         if (typeof SetBuildSaveStatus !== "function") throw new Error("SetBuildSaveStatus missing");
-        if (typeof CanReuseLoaderConfirmedAirheartContext !== "function") throw new Error("CanReuseLoaderConfirmedAirheartContext missing");
+        if (typeof CanReuseLoaderConfirmedSkyrunnerContext !== "function") throw new Error("CanReuseLoaderConfirmedSkyrunnerContext missing");
     } catch(e) {
         $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + e.message);
     }

@@ -450,7 +450,7 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const BUILD_LOADER_TEMP_DISABLED = false;
     const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
-    const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
+    const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;   // poll immediately after switch
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;   // poll interval (was 20 — too tight)
     const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;  // reduced timeout
@@ -525,8 +525,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const LOADER_DETAIL_SPINNER_FRAME_MS = 180;
     const SETTINGS_LOADER_STEPS = [
         { key: "start", label: "Start" },
-        { key: "switch_airheart", label: "Switching to Airheart" },
-        { key: "confirm_airheart", label: "Confirming Airheart Context" },
+        { key: "switch_airheart", label: "Switching to Skyrunner" },
+        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
         { key: "read_payload", label: "Reading Build Payload (Read-Only)" },
         { key: "decode_payload", label: "Decoding Payload" },
         { key: "apply_config", label: "Applying Config" },
@@ -549,8 +549,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SAVE_SETTINGS_LOADER_STALL_HINT_TEXT = "If saving stalls, open your shop.";
     const SAVE_SETTINGS_LOADER_STEPS = [
         { key: "start", label: "Start" },
-        { key: "switch_airheart", label: "Switching to Airheart" },
-        { key: "confirm_airheart", label: "Confirming Airheart Context" },
+        { key: "switch_airheart", label: "Switching to Skyrunner" },
+        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
         { key: "prepare_build", label: "Preparing Build UI" },
         { key: "write_payload", label: "Writing Payload" },
         { key: "commit_save", label: "Saving Build" },
@@ -572,8 +572,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const CLEAR_SETTINGS_LOADER_DETAIL_ID = "QOLClearSettingsLoaderDetail";
     const CLEAR_SETTINGS_LOADER_STEPS = [
         { key: "start", label: "Start" },
-        { key: "switch_airheart", label: "Switching to Airheart" },
-        { key: "confirm_airheart", label: "Confirming Airheart Context" },
+        { key: "switch_airheart", label: "Switching to Skyrunner" },
+        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
         { key: "open_builds", label: "Opening Builds List" },
         { key: "delete_builds", label: "Deleting Builds" },
         { key: "verify_clear", label: "Verifying Clear" },
@@ -588,12 +588,12 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_SAVE_VERIFY_DELAY_MS = 200;   // poll-driven
     const BUILD_SAVE_TIMEOUT_MS = 12000;  // reduced
     const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
-    const BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
+    const BUILD_SAVE_STORAGE_HERO_ID = "hero_skyrunner";
     const BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
     const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 300;   // poll-driven
     const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
     const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
-    const BUILD_SAVE_CLEAR_REUSE_AIRHEART_MAX_AGE_MS = 15000;
+    const BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS = 15000;
     const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;  // poll-driven (was 50)
     const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;   // reduced
     const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
@@ -612,15 +612,15 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "slot_signature_2",
         "slot_signature_3"
     ];
-    // "*" = any ability present (wildcard, language-agnostic)
+    // "*" = any ability present; "" = ignored slot.
     const BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED = [
-        "*",
         "",
+        "ability_skyrunner_magic_beam",
         ""
     ];
     const BUILD_SAVE_STORAGE_SIGNATURE_LABELS = [
-        "Any Ability",
         "Waiting...",
+        "ability_skyrunner_magic_beam",
         "Waiting..."
     ];
     const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
@@ -1118,7 +1118,7 @@ function ExpressShotLog(msg) {
                 " switchRetries=" + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0) +
                 " misses=" + String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0) +
                 " confirmHits=" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0) +
-                " headerConfirmed=" + (State.buildCategoryPayloadAirheartHeaderConfirmed ? "1" : "0") +
+                " headerConfirmed=" + (State.buildCategoryPayloadSkyrunnerHeaderConfirmed ? "1" : "0") +
                 " " + snapshot,
             nowMs
         );
@@ -7232,15 +7232,15 @@ function GetUIRoot() {
     function GetSaveSettingsLoaderDetailForMessage(statusMessage) {
         var msg = statusMessage ? String(statusMessage) : "";
         if (msg === "starting") return "Initializing save request.";
-        if (msg === "switching_to_airheart") return "Switching to Airheart.";
-        if (msg === "confirming_airheart") return "Confirming Airheart context.";
-        if (msg === "storage_not_confirmed") return "Failed to confirm Airheart context.";
-        if (msg === "reuse_airheart_context") return "Reusing confirmed Airheart context.";
+        if (msg === "switching_to_skyrunner" || msg === "switching_to_airheart") return "Switching to Skyrunner.";
+        if (msg === "confirming_skyrunner" || msg === "confirming_airheart") return "Confirming Skyrunner context.";
+        if (msg === "storage_not_confirmed") return "Failed to confirm Skyrunner context.";
+        if (msg === "reuse_skyrunner_context" || msg === "reuse_airheart_context") return "Reusing confirmed Skyrunner context.";
         if (msg === "waiting_for_shop") return "Waiting for build shop panel.";
         if (msg === "locking_target_build") return "Locking target build selection.";
         if (msg === "target_locked") return "Target build selection locked.";
         if (msg === "initializing_storage_build") return "Initializing storage build.";
-        if (msg === "validating_airheart_signature") return "Validating Airheart signature abilities.";
+        if (msg === "validating_skyrunner_signature" || msg === "validating_airheart_signature") return "Validating Skyrunner signature abilities.";
         if (msg === "opening_edit_mode") return "Opening edit mode.";
         if (msg === "focusing_category") return "Selecting build category.";
         if (msg === "writing_category_name") return "Writing payload into category name.";
@@ -7261,17 +7261,17 @@ function GetUIRoot() {
         var detail = GetSaveSettingsLoaderDetailForMessage(statusMessage);
         SetSaveSettingsLoaderStepState("start", "done", detail || "Save request started.");
         if (stage === "switch_to_storage") {
-            SetSaveSettingsLoaderStepState("switch_airheart", "active", detail || "Switching to Airheart.");
+            SetSaveSettingsLoaderStepState("switch_airheart", "active", detail || "Switching to Skyrunner.");
             return;
         }
         if (stage === "wait_storage_switch" || stage === "confirm_storage_context") {
-            SetSaveSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetSaveSettingsLoaderStepState("confirm_airheart", "active", detail || "Confirming Airheart context.");
+            SetSaveSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+            SetSaveSettingsLoaderStepState("confirm_airheart", "active", detail || "Confirming Skyrunner context.");
             return;
         }
         if (stage) {
-            SetSaveSettingsLoaderStepState("switch_airheart", "done", "Switched to Airheart.");
-            SetSaveSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            SetSaveSettingsLoaderStepState("switch_airheart", "done", "Switched to Skyrunner.");
+            SetSaveSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
         }
         if (stage === "lock_target_build" || stage === "start" || stage === "wait_editor" || stage === "wait_category_focus") {
             SetSaveSettingsLoaderStepState("prepare_build", "active", detail || "Preparing build UI.");
@@ -7473,17 +7473,17 @@ function GetUIRoot() {
     function GetClearSettingsLoaderDetailForMessage(statusMessage) {
         var msg = statusMessage ? String(statusMessage) : "";
         if (msg === "starting") return "Initializing clear request.";
-        if (msg === "switching_to_airheart") return "Switching to Airheart.";
-        if (msg === "confirming_airheart") return "Confirming Airheart context.";
-        if (msg === "reuse_airheart_context") return "Reusing confirmed Airheart context.";
-        if (msg === "await_user_open_shop") return "Open shop to continue. This will delete your Airheart builds, if this is another character press ALT+F4! May need to be ran a few times to full clear.";
+        if (msg === "switching_to_skyrunner" || msg === "switching_to_airheart") return "Switching to Skyrunner.";
+        if (msg === "confirming_skyrunner" || msg === "confirming_airheart") return "Confirming Skyrunner context.";
+        if (msg === "reuse_skyrunner_context" || msg === "reuse_airheart_context") return "Reusing confirmed Skyrunner context.";
+        if (msg === "await_user_open_shop") return "Open shop to continue. This will delete your Skyrunner builds, if this is another character press ALT+F4! May need to be ran a few times to full clear.";
         if (msg === "waiting_for_shop") return "Waiting for build shop panel.";
         if (msg === "opening_builds_list") return "Opening builds list.";
         if (msg === "deleting_build") return "Deleting a build.";
         if (msg === "confirming_delete") return "Confirming build deletion.";
         if (msg === "verifying_clear") return "Verifying build list is empty.";
         if (msg === "cleared") return "Clear completed.";
-        if (msg === "storage_not_confirmed") return "Failed to confirm Airheart context.";
+        if (msg === "storage_not_confirmed") return "Failed to confirm Skyrunner context.";
         if (!msg) return "";
         var clean = msg.replace(/_/g, " ");
         if (!clean) return "";
@@ -7497,36 +7497,36 @@ function GetUIRoot() {
         var detail = GetClearSettingsLoaderDetailForMessage(statusMessage);
         SetClearSettingsLoaderStepState("start", "done", detail || "Clear request started.");
         if (stage === "switch_to_storage") {
-            SetClearSettingsLoaderStepState("switch_airheart", "active", detail || "Switching to Airheart.");
+            SetClearSettingsLoaderStepState("switch_airheart", "active", detail || "Switching to Skyrunner.");
             return;
         }
         if (stage === "wait_storage_switch") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Airheart confirmation.");
+            SetClearSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+            SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Skyrunner confirmation.");
             return;
         }
         if (stage === "await_user_shop_open" || stage === "confirm_storage") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_airheart_context") {
-                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            SetClearSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_skyrunner_context" || statusMessage === "reuse_airheart_context") {
+                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
             } else {
-                SetClearSettingsLoaderStepState("confirm_airheart", "active", detail || "Open shop on Airheart.");
+                SetClearSettingsLoaderStepState("confirm_airheart", "active", detail || "Open shop on Skyrunner.");
             }
             return;
         }
         if (stage === "open_browse") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Airheart.");
-            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_airheart_context") {
-                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Skyrunner.");
+            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_skyrunner_context" || statusMessage === "reuse_airheart_context") {
+                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
             } else {
-                SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Airheart confirmation.");
+                SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Skyrunner confirmation.");
             }
             SetClearSettingsLoaderStepState("open_builds", "active", detail || "Opening builds list.");
             return;
         }
         if (stage === "clear_loop") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Airheart.");
-            SetClearSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Skyrunner.");
+            SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
             SetClearSettingsLoaderStepState("open_builds", "done", "Builds list ready.");
             if (statusMessage === "verifying_clear" || statusMessage === "cleared") {
                 SetClearSettingsLoaderStepState("delete_builds", "done", "Build delete actions completed.");
@@ -7866,8 +7866,8 @@ function GetUIRoot() {
         if (CLEAR_SETTINGS_LOADER_ENABLED) {
             ResetClearSettingsLoaderSession(true);
         }
-        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context for repair.");
+        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Skyrunner context for repair.");
         SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
         SetSettingsLoaderStepState("decode_payload", "skipped", "Repair bootstrap in progress.");
         SetSettingsLoaderStepState("apply_config", "skipped", "Waiting for repaired payload.");
@@ -7911,6 +7911,8 @@ function GetUIRoot() {
         if (!normalized) return "";
         if (normalized.indexOf("rutger") !== -1 && normalized.indexOf("rocket") !== -1) return "rutger_rocket";
         if (normalized.indexOf("hyper") !== -1 && normalized.indexOf("beam") !== -1) return "hyper_beam";
+        if (normalized.indexOf("skyrunner") !== -1 && normalized.indexOf("magic") !== -1 && normalized.indexOf("beam") !== -1) return "ability_skyrunner_magic_beam";
+        if (normalized.indexOf("skyrunner") !== -1 && normalized.indexOf("ability02") !== -1) return "ability_skyrunner_magic_beam";
         return normalized;
     }
 
@@ -8066,7 +8068,7 @@ function GetUIRoot() {
 
     function ValidateStorageHeroSignatureScan(scan) {
         if (!scan || (!scan.hudFound && Number(scan.foundSlots) <= 0)) {
-            return { ok: false, detail: "Waiting for Airheart signature HUD." };
+            return { ok: false, detail: "Waiting for Skyrunner signature HUD." };
         }
         for (var i = 0; i < BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED.length; i++) {
             var expected = BUILD_SAVE_STORAGE_SIGNATURE_EXPECTED[i] || "";
@@ -8077,30 +8079,25 @@ function GetUIRoot() {
                 if (!actual) {
                     return {
                         ok: false,
-                        detail: "Waiting for Airheart signature slot " + String(i + 1) + " (any ability)."
+                        detail: "Waiting for Skyrunner signature slot " + String(i + 1) + " (any ability)."
                     };
                 }
             } else if (expected) {
                 if (!actual) {
                     return {
                         ok: false,
-                        detail: "Waiting for Airheart signature slot " + String(i + 1) + " (" + expectedLabel + ")."
+                        detail: "Waiting for Skyrunner signature slot " + String(i + 1) + " (" + expectedLabel + ")."
                     };
                 }
                 if (actual !== expected) {
                     return {
                         ok: false,
-                        detail: "Airheart signature mismatch slot " + String(i + 1) + ": expected " + expectedLabel + ", saw " + actualLabel + "."
+                        detail: "Skyrunner signature mismatch slot " + String(i + 1) + ": expected " + expectedLabel + ", saw " + actualLabel + "."
                     };
                 }
-            } else if (actual) {
-                return {
-                    ok: false,
-                    detail: "Airheart signature mismatch slot " + String(i + 1) + ": expected Waiting..., saw " + actualLabel + "."
-                };
             }
         }
-        return { ok: true, detail: "Airheart signature abilities confirmed." };
+        return { ok: true, detail: "Skyrunner signature abilities confirmed." };
     }
 
     function ConfirmStorageHeroSignatureAbilities(root, nowMs, requiredHits) {
@@ -8114,7 +8111,7 @@ function GetUIRoot() {
                 State.storageHeroSignatureConfirmSig = sig;
             }
             State.storageHeroSignatureConfirmHits = 0;
-            State.storageHeroSignatureLastDetail = validation.detail || "Waiting for Airheart signature abilities.";
+            State.storageHeroSignatureLastDetail = validation.detail || "Waiting for Skyrunner signature abilities.";
             return {
                 confirmed: false,
                 source: "signature_abilities",
@@ -8135,7 +8132,7 @@ function GetUIRoot() {
         var confirmed = hits >= required;
         State.storageHeroSignatureLastDetail = confirmed
             ? validation.detail
-            : "Airheart signature pending hits " + String(hits) + "/" + String(required) + ".";
+            : "Skyrunner signature pending hits " + String(hits) + "/" + String(required) + ".";
         return {
             confirmed: confirmed,
             source: "signature_abilities",
@@ -9399,12 +9396,12 @@ function GetUIRoot() {
                 State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
                 State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
                 State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
-                return { state: "done", detail: "No visible Airheart builds remain. Stopping clear.", waitMs: 0 };
+                return { state: "done", detail: "No visible Skyrunner builds remain. Stopping clear.", waitMs: 0 };
             }
             State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
             return {
                 state: "wait",
-                detail: "Confirming Airheart build list is empty (" + String(visibleEmptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ").",
+                detail: "Confirming Skyrunner build list is empty (" + String(visibleEmptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ").",
                 waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
             };
         }
@@ -9422,8 +9419,8 @@ function GetUIRoot() {
                     state: "wait",
                     detail: (
                         ((firstBuildSelect && firstBuildSelect.ok))
-                            ? "Verifying Airheart build list is empty; refreshing builds view (" + String(emptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ")."
-                            : "Verifying Airheart build list is empty (" + String(emptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ")."
+                            ? "Verifying Skyrunner build list is empty; refreshing builds view (" + String(emptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ")."
+                            : "Verifying Skyrunner build list is empty (" + String(emptyHits) + "/" + String(BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS) + ")."
                     ),
                     waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
                 };
@@ -9432,7 +9429,7 @@ function GetUIRoot() {
             State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
             State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
             State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
-            return { state: "done", detail: "No Airheart builds detected. Skipping clear.", waitMs: 0 };
+            return { state: "done", detail: "No Skyrunner builds detected. Skipping clear.", waitMs: 0 };
         }
         State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
 
@@ -9455,7 +9452,7 @@ function GetUIRoot() {
                 State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
                 return {
                     state: "wait",
-                    detail: "Selecting next Airheart build to clear.",
+                    detail: "Selecting next Skyrunner build to clear.",
                     waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
                 };
             }
@@ -9500,7 +9497,7 @@ function GetUIRoot() {
                 (Number(State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits) || 0) >= (BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_SAME_TITLE_LIMIT + 8) &&
                 browseEntryCount <= 1 &&
                 selectedHeaderCountNow <= 1 &&
-                selectedBuildTitleNow.indexOf("new hero_airheart build") !== -1
+                selectedBuildTitleNow.indexOf("new hero_skyrunner build") !== -1
             ) {
                 // Some contexts retain a terminal default build that won't delete via UI.
                 // Stop clear looping here and continue bootstrap/save sequence.
@@ -9508,7 +9505,7 @@ function GetUIRoot() {
                 State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
                 State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
                 State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
-                return { state: "done", detail: "Reached terminal single Airheart build. Continuing repair.", waitMs: 0 };
+                return { state: "done", detail: "Reached terminal single Skyrunner build. Continuing repair.", waitMs: 0 };
             }
             if (browseEntryCount > 1) {
                 var reselectAfterDelete = TrySelectNextStorageBuildEntry(root, true);
@@ -9519,7 +9516,7 @@ function GetUIRoot() {
                     State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
                     return {
                         state: "wait",
-                        detail: "Selecting next Airheart build to clear.",
+                        detail: "Selecting next Skyrunner build to clear.",
                         waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
                     };
                 }
@@ -9527,7 +9524,7 @@ function GetUIRoot() {
             State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS;
             return {
                 state: "wait",
-                detail: "Clearing existing Airheart builds.",
+                detail: "Clearing existing Skyrunner builds.",
                 waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS
             };
         }
@@ -9541,7 +9538,7 @@ function GetUIRoot() {
             State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
             return {
                 state: "wait",
-                detail: "Selecting next Airheart build to clear.",
+                detail: "Selecting next Skyrunner build to clear.",
                 waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
             };
         }
@@ -9555,7 +9552,7 @@ function GetUIRoot() {
         State.buildCategoryPayloadCorruptRepairClearNextMs = now + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS;
         return {
             state: "wait",
-            detail: "Waiting for delete controls while clearing Airheart builds.",
+            detail: "Waiting for delete controls while clearing Skyrunner builds.",
             waitMs: BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS
         };
     }
@@ -10196,7 +10193,7 @@ function GetUIRoot() {
             nextActionKey: "buildClearNextActionMs",
             didSwitchFlagKey: "buildClearDidSwitchToStorageHero",
             setStatus: function(activeRoot, token) {
-                SetBuildClearStatus(activeRoot, "pending", "switching_to_airheart", token);
+                SetBuildClearStatus(activeRoot, "pending", "switching_to_skyrunner", token);
             }
         })) {
             return;
@@ -10402,15 +10399,15 @@ function GetUIRoot() {
     }
     function EnsureBuildClearRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero) {
         if (State.buildClearActiveToken === requestToken) return;
-        var reuseLoaderAirheart = QOL.canReuseLoaderConfirmedAirheartContext(root, nowMs);
+        var reuseLoaderSkyrunner = QOL.canReuseLoaderConfirmedSkyrunnerContext(root, nowMs);
         var reuseGateReady = false;
-        if (reuseLoaderAirheart) {
+        if (reuseLoaderSkyrunner) {
             var reuseShopOpen = IsHudClassActive(root, "gShopOpen");
             var reuseSelectedBuild = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
             reuseGateReady = !!(reuseShopOpen && reuseSelectedBuild);
         }
         State.buildClearActiveToken = requestToken;
-        State.buildClearStage = reuseLoaderAirheart
+        State.buildClearStage = reuseLoaderSkyrunner
             ? (reuseGateReady ? "open_browse" : "await_user_shop_open")
             : "switch_to_storage";
         State.buildClearStartedMs = nowMs;
@@ -10420,13 +10417,13 @@ function GetUIRoot() {
         State.buildClearEmptyConfirmHits = 0;
         State.buildClearDidSwitchToStorageHero = false;
         State.buildClearReturnHero = configuredReturnHero;
-        State.buildClearStorageHeroConfirmed = !!reuseLoaderAirheart;
-        State.buildClearStorageHeroConfirmedSource = reuseLoaderAirheart ? "startup_loader_reuse" : "";
+        State.buildClearStorageHeroConfirmed = !!reuseLoaderSkyrunner;
+        State.buildClearStorageHeroConfirmedSource = reuseLoaderSkyrunner ? "startup_loader_reuse" : "";
         State.buildClearStorageConfirmRetries = 0;
         State.buildClearStorageSwitchRetries = 0;
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = !!reuseGateReady;
-        SetBuildClearStatus(root, "pending", reuseLoaderAirheart ? "reuse_airheart_context" : "starting", requestToken);
+        SetBuildClearStatus(root, "pending", reuseLoaderSkyrunner ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 
     function TickBuildClearRequestRuntime(root, nowMs, requestToken) {

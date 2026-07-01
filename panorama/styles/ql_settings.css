@@ -5916,7 +5916,7 @@
 	vertical-align: center;
 }
 
-.ConfigBuildActionGroup #ConfigAirheartBtn
+.ConfigBuildActionGroup #ConfigSkyrunnerBtn
 {
 	vertical-align: center;
 	margin-right: 0px;
@@ -5964,7 +5964,7 @@
 	background-color: gradient( radial, 50% 50%, 0% 0%, 80% 80%, from( #66cc99 ), to( #337755 ) );
 }
 
-#ConfigSaveBuildBtn Label,#ConfigAirheartBtn Label,#ConfigApplyBtn Label
+#ConfigSaveBuildBtn Label,#ConfigSkyrunnerBtn Label,#ConfigApplyBtn Label
 {
 	color: #ffffff;
 	text-shadow: 0px 0px 7px rgba(102, 204, 153, 0.4);
@@ -5992,20 +5992,20 @@
 	margin-left: 0px;
 }
 
-#SettingsWindow.SettingsLangRU #ConfigSaveBuildBtn,#SettingsWindow.SettingsLangRU #ConfigAirheartBtn,#SettingsWindow.SettingsLangRU #ConfigClearBuildBtn
+#SettingsWindow.SettingsLangRU #ConfigSaveBuildBtn,#SettingsWindow.SettingsLangRU #ConfigSkyrunnerBtn,#SettingsWindow.SettingsLangRU #ConfigClearBuildBtn
 {
 	width: 158px;
 	min-width: 158px;
 	max-width: 158px;
 }
 
-#ConfigCopyBtn.SuccessState,#ConfigApplyBtn.SuccessState,#ConfigAirheartBtn.SuccessState
+#ConfigCopyBtn.SuccessState,#ConfigApplyBtn.SuccessState,#ConfigSkyrunnerBtn.SuccessState
 {
 	transform: none;
 	brightness: 1.22;
 }
 
-#ConfigCopyBtn.FailureState,#ConfigApplyBtn.FailureState,#ConfigAirheartBtn.FailureState
+#ConfigCopyBtn.FailureState,#ConfigApplyBtn.FailureState,#ConfigSkyrunnerBtn.FailureState
 {
 	transform: none;
 	animation-name: none;
@@ -7160,7 +7160,7 @@
 	text-shadow: 0px 0px 7px rgba(107, 232, 162, 0.26);
 }
 
-#SettingsWindow .TestAirheartActionBtn
+#SettingsWindow .TestSkyrunnerActionBtn
 {
 	width: 58px;
 	min-width: 58px;
@@ -7183,7 +7183,7 @@
 	transition-timing-function: ease-in-out;
 }
 
-#SettingsWindow .TestAirheartActionBtn:hover
+#SettingsWindow .TestSkyrunnerActionBtn:hover
 {
 	brightness: 1.05;
 	border: 1px solid #66cc99;
@@ -7192,19 +7192,19 @@
 	transform: none;
 }
 
-#SettingsWindow .TestAirheartActionBtn:active
+#SettingsWindow .TestSkyrunnerActionBtn:active
 {
 	transform: translateY(1px);
 }
 
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnInner
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnInner
 {
 	width: 100%;
 	height: 100%;
 	flow-children: none;
 }
 
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnLabel
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnLabel
 {
 	visibility: visible;
 	width: 100%;
@@ -7219,14 +7219,14 @@
 	vertical-align: center;
 }
 
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnIcon
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnIcon
 {
 	visibility: collapse;
 	width: 0px;
 	height: 0px;
 }
 
-#SettingsWindow .TestAirheartActionBtn:hover .SettingActionBtnLabel
+#SettingsWindow .TestSkyrunnerActionBtn:hover .SettingActionBtnLabel
 {
 	color: #ffffff;
 	text-shadow: 0px 0px 7px rgba(102, 204, 153, 0.26);
@@ -8815,7 +8815,7 @@
 	margin-right:0px;
 }
 
-#SettingsWindow #ConfigCopyBtn,#SettingsWindow #ConfigApplyBtn,#SettingsWindow #ConfigSaveBuildBtn,#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigCopyBtn,#SettingsWindow #ConfigApplyBtn,#SettingsWindow #ConfigSaveBuildBtn,#SettingsWindow #ConfigSkyrunnerBtn
 {
 	width: 96px;
 	min-width: 96px;
@@ -8859,7 +8859,7 @@
 	animation-iteration-count: infinite;
 }
 
-#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigSkyrunnerBtn
 {
 	border: 1px solid #1c1e2090;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
@@ -8867,7 +8867,7 @@
 	margin-right: 0px;
 }
 
-#SettingsWindow #ConfigCopyBtn Label,#SettingsWindow #ConfigApplyBtn Label,#SettingsWindow #ConfigSaveBuildBtn Label,#SettingsWindow #ConfigAirheartBtn Label
+#SettingsWindow #ConfigCopyBtn Label,#SettingsWindow #ConfigApplyBtn Label,#SettingsWindow #ConfigSaveBuildBtn Label,#SettingsWindow #ConfigSkyrunnerBtn Label
 {
 	color: #ffffff;
 	font-size: 16px;
@@ -8897,13 +8897,13 @@
 	wash-color: #ffffff;
 }
 
-#SettingsWindow #ConfigAirheartBtn Label
+#SettingsWindow #ConfigSkyrunnerBtn Label
 {
 	color: #a39c8e;
 	text-shadow: none;
 }
 
-#SettingsWindow #ConfigCopyBtn:hover,#SettingsWindow #ConfigApplyBtn:hover,#SettingsWindow #ConfigSaveBuildBtn:hover,#SettingsWindow #ConfigAirheartBtn:hover
+#SettingsWindow #ConfigCopyBtn:hover,#SettingsWindow #ConfigApplyBtn:hover,#SettingsWindow #ConfigSaveBuildBtn:hover,#SettingsWindow #ConfigSkyrunnerBtn:hover
 {
 	brightness: 1.14;
 	border: 1px solid #66cc99;
@@ -8919,12 +8919,12 @@
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(25, 30, 27, 0.98) ), to( rgba(15, 18, 16, 0.98) ) );
 }
 
-#SettingsWindow #ConfigCopyBtn:hover,#SettingsWindow #ConfigApplyBtn:hover,#SettingsWindow #ConfigSaveBuildBtn:hover,#SettingsWindow #ConfigAirheartBtn:hover
+#SettingsWindow #ConfigCopyBtn:hover,#SettingsWindow #ConfigApplyBtn:hover,#SettingsWindow #ConfigSaveBuildBtn:hover,#SettingsWindow #ConfigSkyrunnerBtn:hover
 {
 	transform: none;
 }
 
-#SettingsWindow #ConfigCopyBtn:hover Label,#SettingsWindow #ConfigApplyBtn:hover Label,#SettingsWindow #ConfigSaveBuildBtn:hover Label,#SettingsWindow #ConfigAirheartBtn:hover Label
+#SettingsWindow #ConfigCopyBtn:hover Label,#SettingsWindow #ConfigApplyBtn:hover Label,#SettingsWindow #ConfigSaveBuildBtn:hover Label,#SettingsWindow #ConfigSkyrunnerBtn:hover Label
 {
 	text-shadow: 0px 0px 10px rgba(102, 204, 153, 0.55);
 	color: #ffffff;
@@ -8936,7 +8936,7 @@
 	color: #ffffff;
 }
 
-#SettingsWindow #ConfigCopyBtn:active,#SettingsWindow #ConfigApplyBtn:active,#SettingsWindow #ConfigSaveBuildBtn:active,#SettingsWindow #ConfigAirheartBtn:active
+#SettingsWindow #ConfigCopyBtn:active,#SettingsWindow #ConfigApplyBtn:active,#SettingsWindow #ConfigSaveBuildBtn:active,#SettingsWindow #ConfigSkyrunnerBtn:active
 {
 	transform: translateY(1px);
 }
@@ -10733,14 +10733,14 @@
 .SupportTabActionBtn,
 #SettingsWindow .SettingActionBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 #SupportTabCoffeeBtn,
 #SupportTabCoffeBtn,
 #SupportTabChangeLogBtn,
 #SettingsWindow #ConfigCopyBtn,
 #SettingsWindow #ConfigApplyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
-#SettingsWindow #ConfigAirheartBtn,
+#SettingsWindow #ConfigSkyrunnerBtn,
 .PresetGridBtnBuyCustom,
 .SideNavSupportBtn
 {
@@ -10760,7 +10760,7 @@
 #SettingsWindow #ConfigApplyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 .PresetGridBtnBuyCustom,
 .SideNavSupportBtn
 {
@@ -10777,7 +10777,7 @@
 #SettingsWindow #ConfigApplyBtn Label,
 #SettingsWindow #ConfigSaveBuildBtn Label,
 #SettingsWindow .ArcadePlayActionBtn .SettingActionBtnLabel,
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 .PresetGridBtnBuyCustom Label,
 .SideNavSupportBtn Label
 {
@@ -10790,7 +10790,7 @@
 #ConfigDiffModalContainer .ConfigDiffCancelBtn Label,
 #SupportTabChangeLogBtn Label,
 #SettingsWindow #ConfigCopyBtn Label,
-#SettingsWindow #ConfigAirheartBtn Label
+#SettingsWindow #ConfigSkyrunnerBtn Label
 {
 	color: #dbe7eb;
 	text-shadow: none;
@@ -10805,14 +10805,14 @@
 .SupportTabActionBtn:hover,
 #SettingsWindow .SettingActionBtn:hover,
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
 #SupportTabCoffeeBtn:hover,
 #SupportTabCoffeBtn:hover,
 #SupportTabChangeLogBtn:hover,
 #SettingsWindow #ConfigCopyBtn:hover,
 #SettingsWindow #ConfigApplyBtn:hover,
 #SettingsWindow #ConfigSaveBuildBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigSkyrunnerBtn:hover,
 .PresetGridBtnBuyCustom:hover,
 .SideNavSupportBtn:hover
 {
@@ -11619,7 +11619,7 @@
 #SettingsWindow #ConfigApplyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 .PresetGridBtnBuyCustom,
 .SideNavSupportBtn
 {
@@ -11634,7 +11634,7 @@
 #SettingsWindow .SettingActionBtn,
 #SupportTabChangeLogBtn,
 #SettingsWindow #ConfigCopyBtn,
-#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigSkyrunnerBtn
 {
 	border: 0px solid transparent;
 	box-shadow: fill rgba(0, 0, 0, 0.14) 0px 4px 10px 0px;
@@ -11650,14 +11650,14 @@
 .SupportTabActionBtn:hover,
 #SettingsWindow .SettingActionBtn:hover,
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
 #SupportTabCoffeeBtn:hover,
 #SupportTabCoffeBtn:hover,
 #SupportTabChangeLogBtn:hover,
 #SettingsWindow #ConfigCopyBtn:hover,
 #SettingsWindow #ConfigApplyBtn:hover,
 #SettingsWindow #ConfigSaveBuildBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigSkyrunnerBtn:hover,
 .PresetGridBtnBuyCustom:hover,
 .SideNavSupportBtn:hover
 {
@@ -12576,7 +12576,7 @@
 #SettingsWindow .SettingActionBtn,
 #SupportTabChangeLogBtn,
 #SettingsWindow #ConfigCopyBtn,
-#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigSkyrunnerBtn
 {
 	border: 1px solid rgba(255, 252, 244, 0.055);
 }
@@ -12584,7 +12584,7 @@
 #SettingsWindow .SettingActionBtn:hover,
 #SupportTabChangeLogBtn:hover,
 #SettingsWindow #ConfigCopyBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover
+#SettingsWindow #ConfigSkyrunnerBtn:hover
 {
 	border: 1px solid rgba(106, 231, 154, 0.22);
 }
@@ -12594,20 +12594,20 @@
 	border: 1px solid rgba(106, 231, 154, 0.60);
 }
 
-/* --- pass7: ArcadePlayActionBtn / TestAirheartActionBtn — primary green CTAs ---
+/* --- pass7: ArcadePlayActionBtn / TestSkyrunnerActionBtn — primary green CTAs ---
    pass3 zeroed borders. These are the primary action buttons in their
    respective panels so they deserve a clearly green-tinted edge at rest
    (0.22) that strengthens on hover (0.42). They already have green fill
    backgrounds so a green border reinforces rather than fights. */
 
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn
+#SettingsWindow .TestSkyrunnerActionBtn
 {
 	border: 1px solid rgba(106, 231, 154, 0.22);
 }
 
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover
+#SettingsWindow .TestSkyrunnerActionBtn:hover
 {
 	border: 1px solid rgba(106, 231, 154, 0.42);
 }
@@ -12715,14 +12715,14 @@
 /* Arcade primary buttons: keep clear, but lose the loud bright outline */
 
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn
+#SettingsWindow .TestSkyrunnerActionBtn
 {
 	border: 1px solid rgba(227, 232, 228, 0.12);
 	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 2px 8px 0px;
 }
 
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover
+#SettingsWindow .TestSkyrunnerActionBtn:hover
 {
 	border: 1px solid rgba(106, 231, 154, 0.28);
 	box-shadow: fill rgba(106, 231, 154, 0.12) 0px 0px 8px 0px;
@@ -13099,7 +13099,7 @@
 #SettingsWindow .SettingActionBtn,
 #SupportTabChangeLogBtn,
 #SettingsWindow #ConfigCopyBtn,
-#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigSkyrunnerBtn
 {
 	border: 1px solid rgba(220, 225, 220, 0.07);
 }
@@ -13275,7 +13275,7 @@
 #SettingsWindow #ConfigApplyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 .PresetGridBtnBuyCustom,
 .SideNavSupportBtn
 {
@@ -13288,7 +13288,7 @@
 .SupportTabActionBtn,
 #SupportTabChangeLogBtn,
 #SettingsWindow #ConfigCopyBtn,
-#SettingsWindow #ConfigAirheartBtn
+#SettingsWindow #ConfigSkyrunnerBtn
 {
 	border: 1px solid rgba(220, 225, 220, 0.07);
 }
@@ -13304,7 +13304,7 @@
 #SettingsWindow #ConfigApplyBtn:hover,
 #SettingsWindow #ConfigSaveBuildBtn:hover,
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
 .PresetGridBtnBuyCustom:hover,
 .SideNavSupportBtn:hover
 {
@@ -13318,7 +13318,7 @@
 .SupportTabActionBtn:hover,
 #SupportTabChangeLogBtn:hover,
 #SettingsWindow #ConfigCopyBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover
+#SettingsWindow #ConfigSkyrunnerBtn:hover
 {
 	border: 1px solid rgba(106, 231, 154, 0.18);
 	box-shadow: fill rgba(106, 231, 154, 0.05) 0px 0px 8px 0px;
@@ -14138,7 +14138,7 @@
 #SupportTabChangeLogBtn:hover Label,
 #SettingsWindow .SettingActionBtn:hover .SettingActionBtnLabel,
 #SettingsWindow .ArcadePlayActionBtn:hover .SettingActionBtnLabel,
-#SettingsWindow .TestAirheartActionBtn:hover .SettingActionBtnLabel,
+#SettingsWindow .TestSkyrunnerActionBtn:hover .SettingActionBtnLabel,
 .ModalBtnApply:hover Label,
 .ModalBtnClose:hover Label,
 .ModalBtnCloseSingle:hover Label,
@@ -14193,7 +14193,7 @@
 #SettingsWindow .AnnouncerBuffFilterRow .AnnouncerBuffFilterTestBtn:hover .AnnouncerBuffFilterTestIcon,
 #SettingsWindow .SettingActionBtn:hover .SettingActionBtnIcon,
 #SettingsWindow .ArcadePlayActionBtn:hover .ConfigSectionIconBtnIcon,
-#SettingsWindow .TestAirheartActionBtn:hover .ConfigSectionIconBtnIcon,
+#SettingsWindow .TestSkyrunnerActionBtn:hover .ConfigSectionIconBtnIcon,
 #SettingsWindow .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon,
 .FooterDiscordRailBtn:hover .FooterDiscordLogoTexture,
 .FooterSaveBuildTab:hover .FooterSaveBuildIcon
@@ -18707,7 +18707,7 @@
 }
 
 #SettingsWindow.SettingsThemeCream .FooterSaveBuildTab,
-#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeCream .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeCream #ConfigSaveBuildBtn,
 #SettingsWindow.SettingsThemeCream .SettingActionBtn.SuccessState
 {
@@ -18717,7 +18717,7 @@
 }
 
 #SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab,
-#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeKitten .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeKitten #ConfigSaveBuildBtn,
 #SettingsWindow.SettingsThemeKitten .SettingActionBtn.SuccessState
 {
@@ -18727,7 +18727,7 @@
 }
 
 #SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab,
-#SettingsWindow.SettingsThemeEmo .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeEmo .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeEmo #ConfigSaveBuildBtn,
 #SettingsWindow.SettingsThemeEmo .SettingActionBtn.SuccessState
 {
@@ -18737,7 +18737,7 @@
 }
 
 #SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab,
-#SettingsWindow.SettingsThemeOcean .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeOcean .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeOcean #ConfigSaveBuildBtn,
 #SettingsWindow.SettingsThemeOcean .SettingActionBtn.SuccessState
 {
@@ -18747,7 +18747,7 @@
 }
 
 #SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab,
-#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemePsycho .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemePsycho #ConfigSaveBuildBtn,
 #SettingsWindow.SettingsThemePsycho .SettingActionBtn.SuccessState
 {
@@ -18757,11 +18757,11 @@
 }
 
 #SettingsWindow.SettingsThemeCream .FooterSaveBuildTab Label,
-#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeCream .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeCream #ConfigSaveBuildBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeCream .SettingActionBtn.SuccessState .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab Label,
-#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemePsycho .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemePsycho #ConfigSaveBuildBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemePsycho .SettingActionBtn.SuccessState .SettingActionBtnLabel
 {
@@ -18770,15 +18770,15 @@
 }
 
 #SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab Label,
-#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeKitten .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeKitten #ConfigSaveBuildBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeKitten .SettingActionBtn.SuccessState .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab Label,
-#SettingsWindow.SettingsThemeEmo .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeEmo .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeEmo #ConfigSaveBuildBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeEmo .SettingActionBtn.SuccessState .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab Label,
-#SettingsWindow.SettingsThemeOcean .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow.SettingsThemeOcean .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeOcean #ConfigSaveBuildBtn .SettingActionBtnLabel,
 #SettingsWindow.SettingsThemeOcean .SettingActionBtn.SuccessState .SettingActionBtnLabel
 {
@@ -18787,7 +18787,7 @@
 }
 
 #SettingsWindow.SettingsThemeCream .FooterSaveBuildTab .FooterSaveBuildIcon,
-#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn .SettingActionBtnIcon,
+#SettingsWindow.SettingsThemeCream .TestSkyrunnerActionBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeCream #ConfigSaveBuildBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeCream .SettingActionBtn.SuccessState .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon
@@ -18796,7 +18796,7 @@
 }
 
 #SettingsWindow.SettingsThemeKitten .FooterSaveBuildTab .FooterSaveBuildIcon,
-#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn .SettingActionBtnIcon,
+#SettingsWindow.SettingsThemeKitten .TestSkyrunnerActionBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeKitten #ConfigSaveBuildBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeKitten .SettingActionBtn.SuccessState .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon
@@ -18805,7 +18805,7 @@
 }
 
 #SettingsWindow.SettingsThemeEmo .FooterSaveBuildTab .FooterSaveBuildIcon,
-#SettingsWindow.SettingsThemeEmo .TestAirheartActionBtn .SettingActionBtnIcon,
+#SettingsWindow.SettingsThemeEmo .TestSkyrunnerActionBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeEmo #ConfigSaveBuildBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeEmo .SettingActionBtn.SuccessState .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeEmo .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon
@@ -18814,7 +18814,7 @@
 }
 
 #SettingsWindow.SettingsThemeOcean .FooterSaveBuildTab .FooterSaveBuildIcon,
-#SettingsWindow.SettingsThemeOcean .TestAirheartActionBtn .SettingActionBtnIcon,
+#SettingsWindow.SettingsThemeOcean .TestSkyrunnerActionBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeOcean #ConfigSaveBuildBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeOcean .SettingActionBtn.SuccessState .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemeOcean .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon
@@ -18823,7 +18823,7 @@
 }
 
 #SettingsWindow.SettingsThemePsycho .FooterSaveBuildTab .FooterSaveBuildIcon,
-#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn .SettingActionBtnIcon,
+#SettingsWindow.SettingsThemePsycho .TestSkyrunnerActionBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemePsycho #ConfigSaveBuildBtn .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemePsycho .SettingActionBtn.SuccessState .SettingActionBtnIcon,
 #SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon
@@ -19869,7 +19869,7 @@
    shell, with purpose preserved through labels/icons and active states. */
 #SettingsWindow .SettingActionBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 #SettingsWindow .VoiceDropdownTestBtn,
 #SettingsWindow .SectionTitleActionBtn,
 #SettingsWindow .ConfigSectionIconBtn,
@@ -19878,7 +19878,7 @@
 #SettingsWindow .ConfigApplyBtn,
 #SettingsWindow .ConfigCopyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
-#SettingsWindow #ConfigAirheartBtn,
+#SettingsWindow #ConfigSkyrunnerBtn,
 #SettingsWindow #ConfigClearBuildBtn,
 #SettingsWindow .PresetGridBtn,
 #SettingsWindow .CommunityPresetHintLink,
@@ -19919,7 +19919,7 @@
 
 #SettingsWindow .SettingActionBtn:hover,
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
 #SettingsWindow .VoiceDropdownTestBtn:hover,
 #SettingsWindow .SectionTitleActionBtn:hover,
 #SettingsWindow .ConfigSectionIconBtn:hover,
@@ -19928,7 +19928,7 @@
 #SettingsWindow .ConfigApplyBtn:hover,
 #SettingsWindow .ConfigCopyBtn:hover,
 #SettingsWindow #ConfigSaveBuildBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigSkyrunnerBtn:hover,
 #SettingsWindow #ConfigClearBuildBtn:hover,
 #SettingsWindow .PresetGridBtn:hover,
 #SettingsWindow .CommunityPresetHintLink:hover,
@@ -19966,7 +19966,7 @@
 
 #SettingsWindow .SettingActionBtn:active,
 #SettingsWindow .ArcadePlayActionBtn:active,
-#SettingsWindow .TestAirheartActionBtn:active,
+#SettingsWindow .TestSkyrunnerActionBtn:active,
 #SettingsWindow .ConfigPresetBtn:active,
 #SettingsWindow .ConfigApplyBtn:active,
 #SettingsWindow .ConfigCopyBtn:active,
@@ -19986,7 +19986,7 @@
 #SettingsWindow .ConfigPresetBtnGreen,
 #SettingsWindow .ConfigCopyBtn.SuccessState,
 #SettingsWindow .ConfigApplyBtn.SuccessState,
-#SettingsWindow #ConfigAirheartBtn.SuccessState,
+#SettingsWindow #ConfigSkyrunnerBtn.SuccessState,
 #SettingsWindow .PresetGridBtn.SuccessState,
 #SettingsWindow .PresetGridBtn.PresetApplySuccess,
 #SettingsWindow .ModalBtnApply.SuccessState,
@@ -20014,7 +20014,7 @@
 #SettingsWindow .SettingActionBtn Label,
 #SettingsWindow .SettingActionBtn .SettingActionBtnLabel,
 #SettingsWindow .ArcadePlayActionBtn .SettingActionBtnLabel,
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnLabel,
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnLabel,
 #SettingsWindow .VoiceDropdownTestBtn .SectionTitleActionLabel,
 #SettingsWindow .SectionTitleActionBtn .SectionTitleActionLabel,
 #SettingsWindow .ConfigPresetBtn Label,
@@ -20039,7 +20039,7 @@
 
 #SettingsWindow.SettingsThemeCream .SettingActionBtn,
 #SettingsWindow.SettingsThemeCream .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeCream .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeCream .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeCream .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn,
@@ -20063,7 +20063,7 @@
 
 #SettingsWindow.SettingsThemeKitten .SettingActionBtn,
 #SettingsWindow.SettingsThemeKitten .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeKitten .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeKitten .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeKitten .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn,
@@ -20087,7 +20087,7 @@
 
 #SettingsWindow.SettingsThemeEmo .SettingActionBtn,
 #SettingsWindow.SettingsThemeEmo .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeEmo .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeEmo .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeEmo .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeEmo .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeEmo .ConfigSectionIconBtn,
@@ -20111,7 +20111,7 @@
 
 #SettingsWindow.SettingsThemeOcean .SettingActionBtn,
 #SettingsWindow.SettingsThemeOcean .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeOcean .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeOcean .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeOcean .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeOcean .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeOcean .ConfigSectionIconBtn,
@@ -20135,7 +20135,7 @@
 
 #SettingsWindow.SettingsThemePsycho .SettingActionBtn,
 #SettingsWindow.SettingsThemePsycho .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemePsycho .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemePsycho .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemePsycho .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn,
@@ -20212,7 +20212,7 @@
 
 #SettingsWindow .SettingActionBtn,
 #SettingsWindow .ArcadePlayActionBtn,
-#SettingsWindow .TestAirheartActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn,
 #SettingsWindow .VoiceDropdownTestBtn,
 #SettingsWindow .SectionTitleActionBtn,
 #SettingsWindow .ConfigSectionIconBtn,
@@ -20221,7 +20221,7 @@
 #SettingsWindow .ConfigApplyBtn,
 #SettingsWindow .ConfigCopyBtn,
 #SettingsWindow #ConfigSaveBuildBtn,
-#SettingsWindow #ConfigAirheartBtn,
+#SettingsWindow #ConfigSkyrunnerBtn,
 #SettingsWindow #ConfigClearBuildBtn,
 #SettingsWindow .PresetGridBtn,
 #SettingsWindow .CommunityPresetHintLink,
@@ -20271,7 +20271,7 @@
 
 #SettingsWindow .SettingActionBtn:hover,
 #SettingsWindow .ArcadePlayActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
 #SettingsWindow .VoiceDropdownTestBtn:hover,
 #SettingsWindow .SectionTitleActionBtn:hover,
 #SettingsWindow .ConfigSectionIconBtn:hover,
@@ -20280,7 +20280,7 @@
 #SettingsWindow .ConfigApplyBtn:hover,
 #SettingsWindow .ConfigCopyBtn:hover,
 #SettingsWindow #ConfigSaveBuildBtn:hover,
-#SettingsWindow #ConfigAirheartBtn:hover,
+#SettingsWindow #ConfigSkyrunnerBtn:hover,
 #SettingsWindow #ConfigClearBuildBtn:hover,
 #SettingsWindow .PresetGridBtn:hover,
 #SettingsWindow .CommunityPresetHintLink:hover,
@@ -20314,7 +20314,7 @@
 #SettingsWindow .ImportSettingsBtnStyle:active,
 #SettingsWindow .OptimizeFilterModalDownloadBtn:active,
 #SettingsWindow #ConfigSaveBuildBtn:active,
-#SettingsWindow #ConfigAirheartBtn:active,
+#SettingsWindow #ConfigSkyrunnerBtn:active,
 #SettingsWindow #ConfigClearBuildBtn:active,
 #SettingsWindow #ConfigDiffModalContainer .ConfigDiffApplyBtn:active,
 #SettingsWindow #ConfigDiffModalContainer .ConfigDiffCancelBtn:active,
@@ -20349,7 +20349,7 @@
 #SettingsWindow.SettingsThemeCream .MultiToggleBtn,
 #SettingsWindow.SettingsThemeCream .SettingActionBtn,
 #SettingsWindow.SettingsThemeCream .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeCream .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeCream .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeCream .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeCream .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeCream .ConfigSectionIconBtn,
@@ -20375,7 +20375,7 @@
 #SettingsWindow.SettingsThemeKitten .MultiToggleBtn,
 #SettingsWindow.SettingsThemeKitten .SettingActionBtn,
 #SettingsWindow.SettingsThemeKitten .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemeKitten .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemeKitten .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemeKitten .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemeKitten .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemeKitten .ConfigSectionIconBtn,
@@ -20401,7 +20401,7 @@
 #SettingsWindow.SettingsThemePsycho .MultiToggleBtn,
 #SettingsWindow.SettingsThemePsycho .SettingActionBtn,
 #SettingsWindow.SettingsThemePsycho .ArcadePlayActionBtn,
-#SettingsWindow.SettingsThemePsycho .TestAirheartActionBtn,
+#SettingsWindow.SettingsThemePsycho .TestSkyrunnerActionBtn,
 #SettingsWindow.SettingsThemePsycho .VoiceDropdownTestBtn,
 #SettingsWindow.SettingsThemePsycho .SectionTitleActionBtn,
 #SettingsWindow.SettingsThemePsycho .ConfigSectionIconBtn,
@@ -23406,9 +23406,9 @@
 	letter-spacing: 0.35px;
 }
 
-#SettingsWindow .TestAirheartActionBtn,
-#SettingsWindow .TestAirheartActionBtn:hover,
-#SettingsWindow .TestAirheartActionBtn:active
+#SettingsWindow .TestSkyrunnerActionBtn,
+#SettingsWindow .TestSkyrunnerActionBtn:hover,
+#SettingsWindow .TestSkyrunnerActionBtn:active
 {
 	width: 64px;
 	min-width: 64px;
@@ -23424,7 +23424,7 @@
 	animation-name: none;
 }
 
-#SettingsWindow .TestAirheartActionBtn
+#SettingsWindow .TestSkyrunnerActionBtn
 {
 	brightness: 1.0;
 	border: 1px solid rgba(106, 231, 154, 0.18);
@@ -23432,7 +23432,7 @@
 	box-shadow: fill rgba(0, 0, 0, 0.14) 0px 1px 2px 0px, inset rgba(255, 255, 255, 0.018) 0px 1px 0px 0px;
 }
 
-#SettingsWindow .TestAirheartActionBtn:hover
+#SettingsWindow .TestSkyrunnerActionBtn:hover
 {
 	brightness: 1.05;
 	border-color: rgba(106, 231, 154, 0.28);
@@ -23440,13 +23440,13 @@
 	box-shadow: fill rgba(0, 0, 0, 0.15) 0px 1px 3px 0px, inset rgba(106, 231, 154, 0.11) 0px 0px 0px 1px;
 }
 
-#SettingsWindow .TestAirheartActionBtn:active
+#SettingsWindow .TestSkyrunnerActionBtn:active
 {
 	brightness: 0.98;
 }
 
-#SettingsWindow .TestAirheartActionBtn .SettingActionBtnLabel,
-#SettingsWindow .TestAirheartActionBtn:hover .SettingActionBtnLabel
+#SettingsWindow .TestSkyrunnerActionBtn .SettingActionBtnLabel,
+#SettingsWindow .TestSkyrunnerActionBtn:hover .SettingActionBtnLabel
 {
 	color: #eef4f6;
 	font-size: 11px;
@@ -23613,9 +23613,9 @@
 
 /* Final settings polish repairs: remove redundant action/theme wrappers and
    protect theme preview swatches from inheriting the currently active theme. */
-#SettingsWindow .SettingRow_TEST_AIRHEART .SettingActionGroup,
-#SettingsWindow .SettingRow_TEST_AIRHEART .SettingActionGroup:hover,
-#SettingsWindow .SettingRow_TEST_AIRHEART .SettingActionGroup:active
+#SettingsWindow .SettingRow_TEST_SKYRUNNER .SettingActionGroup,
+#SettingsWindow .SettingRow_TEST_SKYRUNNER .SettingActionGroup:hover,
+#SettingsWindow .SettingRow_TEST_SKYRUNNER .SettingActionGroup:active
 {
 	width: fit-children;
 	min-width: 0px;
@@ -25362,7 +25362,7 @@
 	box-shadow: inset rgba(255, 255, 255, 0.22) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.30) 0px 0px 10px 0px;
 }
 
-#SettingsWindow.SettingsThemeMunfins .SettingActionBtn,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn,#SettingsWindow.SettingsThemeMunfins .SectionTitleActionBtn,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn,#SettingsWindow.SettingsThemeMunfins .ConfigPresetBtn,#SettingsWindow.SettingsThemeMunfins .ConfigApplyBtn,#SettingsWindow.SettingsThemeMunfins .ConfigCopyBtn,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtn,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab,#SettingsWindow.SettingsThemeMunfins .ModalBtnApply,#SettingsWindow.SettingsThemeMunfins .ModalBtnClose,#SettingsWindow.SettingsThemeMunfins .ModalBtnCloseSingle,.QOLThemeMunfins .QOLUnifiedModalPrimary
+#SettingsWindow.SettingsThemeMunfins .SettingActionBtn,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn,#SettingsWindow.SettingsThemeMunfins .TestSkyrunnerActionBtn,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn,#SettingsWindow.SettingsThemeMunfins .SectionTitleActionBtn,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn,#SettingsWindow.SettingsThemeMunfins .ConfigPresetBtn,#SettingsWindow.SettingsThemeMunfins .ConfigApplyBtn,#SettingsWindow.SettingsThemeMunfins .ConfigCopyBtn,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtn,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab,#SettingsWindow.SettingsThemeMunfins .ModalBtnApply,#SettingsWindow.SettingsThemeMunfins .ModalBtnClose,#SettingsWindow.SettingsThemeMunfins .ModalBtnCloseSingle,.QOLThemeMunfins .QOLUnifiedModalPrimary
 {
 	background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(21, 16, 34, 0.92) ), to( rgba(5, 4, 8, 0.90) ) );
 	border-color: rgba(97, 19, 253, 0.26);
@@ -25375,7 +25375,7 @@
 	box-shadow: inset rgba(217, 204, 255, 0.16) 0px 1px 0px 0px, fill rgba(97, 19, 253, 0.23) 0px 0px 14px 0px;
 }
 
-#SettingsWindow.SettingsThemeMunfins .SettingActionBtn Label,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn Label,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink Label,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtnTitle,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn Label,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab Label,.QOLThemeMunfins .QOLUnifiedModalPrimary Label
+#SettingsWindow.SettingsThemeMunfins .SettingActionBtn Label,#SettingsWindow.SettingsThemeMunfins .ArcadePlayActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .TestSkyrunnerActionBtn .SettingActionBtnLabel,#SettingsWindow.SettingsThemeMunfins .PresetGridBtn Label,#SettingsWindow.SettingsThemeMunfins .CommunityPresetHintLink Label,#SettingsWindow.SettingsThemeMunfins .SupportCtaBtnTitle,#SettingsWindow.SettingsThemeMunfins .FooterDiscordRailBtn Label,#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab Label,.QOLThemeMunfins .QOLUnifiedModalPrimary Label
 {
 	color: #f2edff;
 }
@@ -25385,7 +25385,7 @@
 	color: rgba(242, 237, 255, 0.68);
 }
 
-#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab .FooterSaveBuildIcon,#SettingsWindow.SettingsThemeMunfins .TestAirheartActionBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins #ConfigSaveBuildBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .SettingActionBtn.SuccessState .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn.SuccessState .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn:hover .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn:hover .DL4DReminderTestIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn.SuccessState .DL4DReminderTestIcon
+#SettingsWindow.SettingsThemeMunfins .FooterSaveBuildTab .FooterSaveBuildIcon,#SettingsWindow.SettingsThemeMunfins .TestSkyrunnerActionBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins #ConfigSaveBuildBtn .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .SettingActionBtn.SuccessState .SettingActionBtnIcon,#SettingsWindow.SettingsThemeMunfins .ConfigSectionIconBtn:hover .ConfigSectionIconBtnIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .VoiceDropdownTestBtn.SuccessState .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SettingRowResetBtn:hover .SettingRowResetIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .SectionResetBtn:hover .SectionTitleActionIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn:hover .DL4DReminderTestIcon,#SettingsWindow.SettingsThemeMunfins .DL4DReminderTestBtn.SuccessState .DL4DReminderTestIcon
 {
 	wash-color: #8e5dff;
 	img-shadow: 0px 0px 8px rgba(97, 19, 253, 0.36);

@@ -14,7 +14,7 @@
         "tryReadSelectedHeroIncludingStorageFromCommandPanels",
         "extractHeroTokenFromText", "isConnectedToHideout",
         "isStartupLoaderInActiveMatchContext",
-        "canReuseLoaderConfirmedAirheartContext",
+        "canReuseLoaderConfirmedSkyrunnerContext",
         "countBuildCategoryHeaders", "getBuildSaveCategoryNameEntry",
         "beginSettingsLoaderSession", "buildDefaultConfig", "buildDefaultPayloadToken", "buildPayloadFromBase64Url", "collectStorageBuildEntryPanels", "deserializeBuildPayloadCompact", "ensureStorageHeroFavoritesHeaderVisible", "enterStartupCorruptRepairPrompt", "extractLastHeroTokenFromText", "finalizeSettingsLoaderSession", "findBrowseBuildsButton", "getLoaderBaseDefaultHeroId", "getSaveSettingsLoaderDetailForMessage", "hasBuildSaveStorageUiReady", "isBrowseBuildsPopupOpen", "isBuildSaveStorageRuntimeSourceStale", "isHudClassActive", "isStartupCorruptRepairPending", "isStorageBuildListEmpty", "mergeConfig", "normalizeAllyColorWarningConfig", "normalizeAmmoScaleConfig", "normalizeColorWarningConfig", "normalizeCompassSpeedSchemaMigration", "normalizeEnemyColorWarningConfig", "normalizeHealthbarTypeConfig", "normalizeLanguageSchemaMigration", "normalizeNeutralCampTierConfig", "normalizeTopbarAllyHpWarningConfig", "normalizeTopbarEnemyHpWarningConfig", "normalizeVoiceTypeConfig", "queueBuildSaveRequestFromLoader", "readPanelTextDeepMaybe", "resetBuildClearRequestAttributes", "resetBuildClearRuntimeState", "resetBuildLoaderForTempDisable", "resetSettingsLoaderSession", "resetStartupDefaultPayloadBootstrapState", "setSettingsLoaderDebugOverlayLine", "setSettingsLoaderStepState", "setStartupCorruptRepairPending", "settingsLoaderBuildProbeSnapshot", "settingsLoaderDebugLog", "settingsLoaderDebugLogThrottled", "settingsLoaderTraceLogThrottled", "stepCorruptRepairClearStorageBuilds", "suppressStartupLoaderForSession", "traceSettingsLoaderProbeHeartbeat", "tryCloseBrowseBuildsPopupForLoader", "tryDismissBuildDeletePopup", "tryOpenHeroShopForHeroProbe", "tryReadAccountIdFromKnownPartyPath", "trySelectFirstStorageBuildEntry", "trySelectNextStorageBuildEntry", "writeStorageConfigRawToUi"]);
     var State = _deps.state;
@@ -40,7 +40,7 @@
     var TryReadSelectedHeroIncludingStorageFromCommandPanels = _deps.tryReadSelectedHeroIncludingStorageFromCommandPanels;
     var ExtractHeroTokenFromText = _deps.extractHeroTokenFromText;
     var IsStartupLoaderInActiveMatchContext = _deps.isStartupLoaderInActiveMatchContext;
-    var CanReuseLoaderConfirmedAirheartContext = _deps.canReuseLoaderConfirmedAirheartContext;
+    var CanReuseLoaderConfirmedSkyrunnerContext = _deps.canReuseLoaderConfirmedSkyrunnerContext;
         var CountBuildCategoryHeaders = _deps.countBuildCategoryHeaders;
     var GetBuildSaveCategoryNameEntry = _deps.getBuildSaveCategoryNameEntry;
     var BeginSettingsLoaderSession = _deps.beginSettingsLoaderSession;
@@ -126,7 +126,7 @@
     var BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
     var BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
     var BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 50;
-    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
     var BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     var BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
@@ -377,7 +377,7 @@
 
         // Fallback: text parsing failed (likely non-English locale).
         // Use onactivate attribute scanning which contains internal hero IDs
-        // like "selecthero hero_airheart" — these are language-agnostic.
+        // like "selecthero hero_skyrunner" — these are language-agnostic.
         var cmdHero = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
         if (cmdHero) return { hero: cmdHero, source: "shopCommands" };
 
@@ -388,12 +388,12 @@
     function ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowUiFallback) {
         var allowFallback = (allowUiFallback !== false);
         var traceNow = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        // Fast path: if Airheart was already confirmed, skip all scanning.
-        if (State.buildCategoryPayloadAirheartHeaderConfirmed) {
+        // Fast path: if Skyrunner was already confirmed, skip all scanning.
+        if (State.buildCategoryPayloadSkyrunnerHeaderConfirmed) {
             return {
                 confirmed: true,
                 source: "cached_confirmation",
-                detail: "Airheart already confirmed this session"
+                detail: "Skyrunner already confirmed this session"
             };
         }
         // GameInterfaceAPI confirmed absent — use UI panel scanning for hero detection.
@@ -402,11 +402,11 @@
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
         function traceConfirm(confirmed, traceSource, traceHero, traceDetail) {
             SettingsLoaderTraceLogThrottled(
-                "confirm_airheart|" +
+                "confirm_skyrunner|" +
                     (confirmed ? "1" : "0") + "|" +
                     (traceSource || "-") + "|" +
                     (traceHero || "-"),
-                "confirm_airheart confirmed=" + (confirmed ? "1" : "0") +
+                "confirm_skyrunner confirmed=" + (confirmed ? "1" : "0") +
                     " source=" + (traceSource || "-") +
                     " hero=" + (traceHero || "-") +
                     " detail=\"" + (traceDetail || "") + "\"",
@@ -431,7 +431,7 @@
             var pendingDirect = {
                 confirmed: false,
                 source: source + "+signature",
-                detail: directSignature.detail || "Waiting for Airheart signature abilities."
+                detail: directSignature.detail || "Waiting for Skyrunner signature abilities."
             };
             traceConfirm(false, pendingDirect.source, hero, pendingDirect.detail);
             return pendingDirect;
@@ -509,7 +509,7 @@
                 var pendingRuntime = {
                     confirmed: false,
                     source: runtimeSourceTagged + "+signature",
-                    detail: runtimeSignature.detail || "Waiting for Airheart signature abilities."
+                    detail: runtimeSignature.detail || "Waiting for Skyrunner signature abilities."
                 };
                 traceConfirm(false, pendingRuntime.source, runtimeHero, pendingRuntime.detail);
                 return pendingRuntime;
@@ -530,7 +530,7 @@
             confirmed: false,
             source: source,
             detail: sourceReady
-                ? "Waiting for Airheart confirmation."
+                ? "Waiting for Skyrunner confirmation."
                 : (allowFallback
                     ? "storage hero unresolved source=" + source + " hero=" + (hero || "-")
                     : "storage hero unresolved (strict) source=" + source + " hero=" + (hero || "-"))
@@ -670,13 +670,13 @@
 
     // ── PrepareBuildCategoryPayloadHeroProbe ──
     // State machine for the config load/bootstrap probe. Discovers and decodes
-    // the QOLLOCK config payload stored in an Airheart build category.
+    // the QOLLOCK config payload stored in a Skyrunner build category.
     //
     //   "" (initial) → wait_storage → scan_storage → decode → apply → (done)
     //
     // Timeout / degraded paths:
     //   wait_storage (12s timeout) → bootstrap_via_save_enqueue
-    //     Only fires if Airheart UI hasn't rendered. Guarded by
+    //     Only fires if Skyrunner UI hasn't rendered. Guarded by
     //     currentBuildHasAnyPayload check — won't overwrite existing config.
     //   wait_storage (8-12s degraded) → scan_storage (signature confirmed)
     //     UI header didn't confirm, but signature abilities are visible.
@@ -731,8 +731,8 @@
         State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
         State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
         State.buildCategoryPayloadCorruptRepairPostClearUntilMs = 0;
-        State.buildCategoryPayloadAirheartHeaderConfirmed = false;
-        State.buildCategoryPayloadAirheartHeaderConfirmedMs = 0;
+        State.buildCategoryPayloadSkyrunnerHeaderConfirmed = false;
+        State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = 0;
         State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
         State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
         State.buildCategoryPayloadHeroProbeNextMs = nowMs;
@@ -742,26 +742,26 @@
 
     function handleBootstrapViaSaveEnqueue(root, accountId, nowMs, cfg) {
         if (State.buildCategoryPayloadHeroProbeStage !== "bootstrap_via_save_enqueue") return null;
-        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context.");
+        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Skyrunner context.");
 
         EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
         QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
-        if (!State.buildCategoryPayloadAirheartHeaderConfirmed) {
+        if (!State.buildCategoryPayloadSkyrunnerHeaderConfirmed) {
             var allowBootstrapFallback = !!State.buildCategoryPayloadCorruptRepairActive;
             var bootstrapConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowBootstrapFallback);
             if (!bootstrapConfirm.confirmed) {
-                SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Airheart context for bootstrap.");
+                SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Skyrunner context for bootstrap.");
                 if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
                     SetSettingsLoaderStepState("read_payload", "active", SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL);
                 }
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
                 return "wait";
             }
-            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
-            State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmed = true;
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = nowMs;
         }
-        SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+        SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
 
         if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
             var clearStep = StepCorruptRepairClearStorageBuilds(root, nowMs);
@@ -770,7 +770,7 @@
                 return "wait";
             }
             if (clearStep.state !== "done") {
-                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Airheart builds before repair save.");
+                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Skyrunner builds before repair save.");
                 State.buildCategoryPayloadHeroProbeNextMs = nowMs + (Number(clearStep.waitMs) || BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS);
                 return "wait";
             }
@@ -782,7 +782,7 @@
             State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
             TryDismissBuildDeletePopup(root);
             TryCloseBrowseBuildsPopupForLoader(root);
-            SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Airheart builds cleared. Finalizing clear UI.");
+            SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Skyrunner builds cleared. Finalizing clear UI.");
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
             return "wait";
         }
@@ -807,9 +807,9 @@
         var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
         if (!initReady) {
             var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
-            SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Airheart build.");
+            SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Skyrunner build.");
             if (initRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) {
-                finalizeProbeFailure(accountId, "No Airheart build found; auto-initialize failed.");
+                finalizeProbeFailure(accountId, "No Skyrunner build found; auto-initialize failed.");
                 return "wait";
             }
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
@@ -840,7 +840,7 @@
             && anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
             State.buildCategoryPayloadAnyPayloadGuardSkips = anyPayloadSkipCount + 1;
             SetSettingsLoaderStepState("read_payload", "active", "Existing payload found in current build; skipping save bootstrap.");
-            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context verified via existing payload.");
+            SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context verified via existing payload.");
             State.buildCategoryPayloadHeroProbeStage = "scan_storage";
             State.buildCategoryPayloadHeroProbeNextMs = nowMs;
             _TLog("load:ProbeStage", "bootstrap_via_save_enqueue found existing payload → scan_storage skips=" + String(anyPayloadSkipCount + 1));
@@ -977,7 +977,7 @@
 
     function handleBootstrapPostSaveShopPrompt(root, nowMs) {
         if (State.buildCategoryPayloadHeroProbeStage !== "bootstrap_post_save_shop_prompt") return null;
-        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
+        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
         EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
         var postSaveConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, false);
         if (!postSaveConfirm.confirmed) {
@@ -986,17 +986,17 @@
             } else {
                 SetSettingsLoaderStepState("read_payload", "active", "Waiting for shop UI after repair save.");
             }
-            SetSettingsLoaderStepState("confirm_airheart", "active", postSaveConfirm.detail || "Verifying Airheart context.");
+            SetSettingsLoaderStepState("confirm_airheart", "active", postSaveConfirm.detail || "Verifying Skyrunner context.");
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
             return "wait";
         }
         if (!IsBuildCategoryPayloadSourceReady(root)) {
-            SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmed. Waiting for build source.");
+            SetSettingsLoaderStepState("confirm_airheart", "active", "Skyrunner confirmed. Waiting for build source.");
             SetSettingsLoaderStepState("read_payload", "active", "Waiting for build source after repair save.");
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
             return "wait";
         }
-        SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+        SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
         SetSettingsLoaderStepState("read_payload", "active", "Applying bootstrap payload.");
         State.buildCategoryPayloadHeroProbeStartedMs = nowMs;
         State.buildCategoryPayloadHeroProbeMisses = 0;
@@ -1017,15 +1017,15 @@
         QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
         var storageConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs);
         if (storageConfirm.confirmed) {
-            State.buildCategoryPayloadAirheartHeaderConfirmed = true;
-            State.buildCategoryPayloadAirheartHeaderConfirmedMs = nowMs;
-            SetSettingsLoaderStepState("confirm_airheart", "done", "Airheart context confirmed.");
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmed = true;
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = nowMs;
+            SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
             SetSettingsLoaderStepState("read_payload", "active", "Reading storage build payload.");
             State.buildCategoryPayloadHeroProbeStage = "scan_storage";
             _TLog("load:ProbeStage", "wait_storage confirmed → scan_storage");
             return "ready";
         }
-        SetSettingsLoaderStepState("confirm_airheart", "active", storageConfirm.detail || "Waiting for Airheart context.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", storageConfirm.detail || "Waiting for Skyrunner context.");
         SettingsLoaderDebugLogThrottled(
             "probe_wait_storage|" + (storageConfirm.source || "-") + "|" + (storageConfirm.confirmed ? "1" : "0") + "|" + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0),
             "probe_wait_storage confirmed=" + (storageConfirm.confirmed ? "1" : "0") +
@@ -1038,8 +1038,8 @@
         var switchStartMs = Number(State.buildCategoryPayloadHeroProbeSwitchStartMs) || nowMs;
         var waitElapsedMs = nowMs - switchStartMs;
         if (waitElapsedMs >= BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) {
-            SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-            SetSettingsLoaderStepState("confirm_airheart", "active", "Airheart confirmation delayed. Running save bootstrap.");
+            SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+            SetSettingsLoaderStepState("confirm_airheart", "active", "Skyrunner confirmation delayed. Running save bootstrap.");
             SetSettingsLoaderStepState("read_payload", "active", "Running save pipeline to create first-time payload.");
             State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
             State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
@@ -1080,11 +1080,11 @@
                     _TLog("load:ProbeStage", "wait_storage timeout+signature → scan_storage (degraded)");
                     return "ready";
                 }
-                SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Airheart signature abilities.");
+                SetSettingsLoaderStepState("confirm_airheart", "active", timeoutSignature.detail || "Waiting for Skyrunner signature abilities.");
             }
         }
-        // Timed out confirming Airheart. Retry later; do not read from non-storage hero context.
-        SetSettingsLoaderStepState("confirm_airheart", "error", "Airheart confirmation timed out, retrying.");
+        // Timed out confirming Skyrunner. Retry later; do not read from non-storage hero context.
+        SetSettingsLoaderStepState("confirm_airheart", "error", "Skyrunner confirmation timed out, retrying.");
         SettingsLoaderDebugLog(
             "probe_wait_storage_timeout account=" + accountId +
             " switchStartMs=" + String(switchStartMs) +
@@ -1101,8 +1101,8 @@
 
     function handleRepairCorruptShopPrompt(nowMs) {
         if (State.buildCategoryPayloadHeroProbeStage !== "repair_corrupt_shop_prompt") return false;
-        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Airheart context for repair.");
+        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Skyrunner context for repair.");
         SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
         State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
         State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
@@ -1125,16 +1125,16 @@
             " storage=" + BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID
         );
 
-        SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Airheart.");
+        SetSettingsLoaderStepState("switch_airheart", "active", "Switching to Skyrunner.");
         var switched = QOL.selectHeroForBuildSave(BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID, "loader_switch_to_storage");
         if (!switched) {
-            SetSettingsLoaderStepState("switch_airheart", "active", "Airheart switch unavailable, retrying.");
+            SetSettingsLoaderStepState("switch_airheart", "active", "Skyrunner switch unavailable, retrying.");
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS;
             return "wait";
         }
 
-        SetSettingsLoaderStepState("switch_airheart", "done", "Airheart switch command sent.");
-        SetSettingsLoaderStepState("confirm_airheart", "active", "Waiting for Airheart confirmation.");
+        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
+        SetSettingsLoaderStepState("confirm_airheart", "active", "Waiting for Skyrunner confirmation.");
         State.buildCategoryPayloadHeroProbeDidSwitch = true;
         State.buildCategoryPayloadHeroProbeStage = "wait_storage";
         State.buildCategoryPayloadHeroProbeSwitchStartMs = nowMs;
@@ -1508,7 +1508,7 @@
         var startupConsumedForAccount =
             String(State.buildCategoryPayloadStartupConsumedAccountId || "") === accountId;
         var probeStageActive = !!(State.buildCategoryPayloadHeroProbeStage && State.buildCategoryPayloadHeroProbeStage.length > 0);
-        // $.persistentStorage confirmed absent — Airheart probe is always needed on startup.
+        // $.persistentStorage confirmed absent — Skyrunner probe is always needed on startup.
         if (
             startupConsumedForAccount &&
             !State.settingsLoaderSessionActive &&
@@ -1642,7 +1642,7 @@
                         sourceBootstrapRetries >= BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES &&
                         (QOL.isStorageBuildListEmpty(root) || sourceEmptyByStructure)
                     ) {
-                        SetSettingsLoaderStepState("read_payload", "active", "No Airheart build source found. Running first-time save bootstrap.");
+                        SetSettingsLoaderStepState("read_payload", "active", "No Skyrunner build source found. Running first-time save bootstrap.");
                         SetSettingsLoaderStepState("decode_payload", "skipped", "Waiting for bootstrap save.");
                         SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged until bootstrap completes.");
                         SettingsLoaderDebugLog(
@@ -1736,7 +1736,7 @@
                 // Guard: before triggering destructive corrupt repair, check if the
                 // shop UI is actually ready. If the shop hasn't opened yet, the payload
                 // may simply not be visible — this is a UI timing issue, not data
-                // corruption. Deleting all Airheart builds would destroy valid config.
+                // corruption. Deleting all Skyrunner builds would destroy valid config.
                 // Cap shop-not-open resets to prevent infinite probe defer loops when
                 // gShopOpen class is never detected (e.g. during game state transitions).
                 var shopNotOpenResets = Number(State.buildCategoryPayloadShopNotOpenResets) || 0;
@@ -1815,7 +1815,7 @@
             State.buildCategoryPayloadLastParseErrorKey = errorKey;
             // Schema/registry errors are NOT data corruption — the stored payload
             // is valid but this code version can't decode it. Apply defaults without
-            // deleting Airheart builds (which would destroy the user's config).
+            // deleting Skyrunner builds (which would destroy the user's config).
             var isNonCorruptError = (parsedResult.error === "unsupported_schema" || parsedResult.error === "empty_registry");
             if (shouldFinalizeStorageProbe && !isNonCorruptError) {
                 State.buildCategoryPayloadHeroProbeMisses += 1;
@@ -1926,8 +1926,8 @@
         State.buildCategoryPayloadBrowseActionNextMs = 0;
         State.buildCategoryPayloadPromptEscClosed = false;
         State.buildCategoryPayloadPostSavePromptFallbackUsed = false;
-        State.buildCategoryPayloadAirheartHeaderConfirmed = false;
-        State.buildCategoryPayloadAirheartHeaderConfirmedMs = 0;
+        State.buildCategoryPayloadSkyrunnerHeaderConfirmed = false;
+        State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = 0;
         ResetStartupDefaultPayloadBootstrapState();
         ResetBuildCategoryPayloadReadOnlySourceBootstrapState();
         ResetBuildCategoryPayloadProbeInitState();
@@ -2007,7 +2007,7 @@
             "buildCategoryPayloadDefaultBootstrapPayloadText", "buildCategoryPayloadDefaultBootstrapRetries",
             "buildCategoryPayloadDefaultBootstrapSaveToken", "buildCategoryPayloadDefaultBootstrapSaveVerifyHits",
             "buildCategoryPayloadDefaultBootstrapPostSavePrompt", "buildCategoryPayloadPostSavePromptFallbackUsed",
-            "buildCategoryPayloadAirheartHeaderConfirmed", "buildCategoryPayloadAirheartHeaderConfirmedMs"
+            "buildCategoryPayloadSkyrunnerHeaderConfirmed", "buildCategoryPayloadSkyrunnerHeaderConfirmedMs"
         ]
     });
 

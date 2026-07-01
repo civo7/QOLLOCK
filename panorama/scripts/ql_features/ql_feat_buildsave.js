@@ -7,7 +7,7 @@
         "normalizeHeroId", "getConfiguredDefaultHeroId", "selectHeroForBuildSave",
         "queueDelayedHeroRestore", "tryAdvanceStorageSwitchStage",
         "tryAdvanceStorageSwitchSettleStage", "setBuildSaveStatus",
-        "canReuseLoaderConfirmedAirheartContext", "readPanelTextMaybe",
+        "canReuseLoaderConfirmedSkyrunnerContext", "readPanelTextMaybe",
         "extractBuildCategoryPayloadToken", "resolveCachedPanel",
         "confirmStorageHeroSignatureAbilities", "ensureStorageBuildInitialized",
         "activatePanelSafe",
@@ -26,7 +26,7 @@
     var TryAdvanceStorageSwitchStage = _deps.tryAdvanceStorageSwitchStage;
     var TryAdvanceStorageSwitchSettleStage = _deps.tryAdvanceStorageSwitchSettleStage;
     var SetBuildSaveStatus = _deps.setBuildSaveStatus;
-    var CanReuseLoaderConfirmedAirheartContext = _deps.canReuseLoaderConfirmedAirheartContext;
+    var CanReuseLoaderConfirmedSkyrunnerContext = _deps.canReuseLoaderConfirmedSkyrunnerContext;
     var IsPanelValid = Utils.IsPanelValid;
     var ReadPanelTextMaybe = _deps.readPanelTextMaybe;
     var ExtractBuildCategoryPayloadToken = _deps.extractBuildCategoryPayloadToken;
@@ -72,7 +72,7 @@
     var BUILD_SAVE_STORAGE_CONFIRM_REOPEN_COOLDOWN_MS = 1200;
     var BUILD_SAVE_STORAGE_CONFIRM_REOPEN_MIN_RETRIES = 6;
     var BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;
-    var BUILD_SAVE_STORAGE_HERO_ID = "hero_airheart";
+    var BUILD_SAVE_STORAGE_HERO_ID = "hero_skyrunner";
     var BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
     var BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
     var BUILD_SAVE_TARGET_LOCK_QUIET_MS = 150;
@@ -659,7 +659,7 @@ function ResetBuildSaveRequestAttributes(root) {
     //     → wait_editor → wait_category_focus → write → save → verify → (done)
     //
     // Regressions:
-    //   write → confirm_storage_context  (Airheart signature abilities lost)
+    //   write → confirm_storage_context  (Skyrunner signature abilities lost)
     //   save  → wait_category_focus      (focused category entry lost)
     //   verify → wait_category_focus     (entry empty, retry before giving up)
     //
@@ -694,7 +694,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 State.buildSaveStorageProvisionalHits = 0;
             },
             setStatus: function(activeRoot, token) {
-                QOL.setBuildSaveStatus(activeRoot, "pending", "switching_to_airheart", token);
+                QOL.setBuildSaveStatus(activeRoot, "pending", "switching_to_skyrunner", token);
             }
         })) {
             return true;
@@ -717,7 +717,7 @@ function ResetBuildSaveRequestAttributes(root) {
                 if (!(Number(State.buildSaveStorageLastSwitchMs) > 0)) {
                     State.buildSaveStorageLastSwitchMs = nowValue;
                 }
-                QOL.setBuildSaveStatus(root, "pending", "confirming_airheart", requestToken);
+                QOL.setBuildSaveStatus(root, "pending", "confirming_skyrunner", requestToken);
             }
         })) {
             return true;
@@ -737,9 +737,9 @@ function ResetBuildSaveRequestAttributes(root) {
                 FinishBuildSaveRequest(root, requestToken, "failed", "storage_not_confirmed");
                 return true;
             }
-            var confirmMessage = "confirming_airheart";
+            var confirmMessage = "confirming_skyrunner";
             var signatureDetail = State.storageHeroSignatureLastDetail ? String(State.storageHeroSignatureLastDetail) : "";
-            if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_airheart_signature";
+            if (signatureDetail.indexOf("signature") !== -1) confirmMessage = "validating_skyrunner_signature";
             QOL.setBuildSaveStatus(root, "pending", confirmMessage, requestToken);
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
             return true;
@@ -874,7 +874,7 @@ function ResetBuildSaveRequestAttributes(root) {
             State.buildSaveStorageConfirmStartedMs = nowMs;
             State.buildSaveStage = "confirm_storage_context";
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_STORAGE_CONFIRM_POLL_MS;
-            QOL.setBuildSaveStatus(root, "pending", "validating_airheart_signature", requestToken);
+            QOL.setBuildSaveStatus(root, "pending", "validating_skyrunner_signature", requestToken);
             return true;
         }
         if (!SetBuildCategoryNameText(root, payloadText)) {
@@ -1039,16 +1039,16 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── EnsureBuildSaveRequestRuntimeInitialized ──
     function EnsureBuildSaveRequestRuntimeInitialized(root, nowMs, requestToken, configuredReturnHero, payloadText) {
         if (State.buildSaveActiveToken === requestToken) return;
-        var reuseLoaderAirheartSave = QOL.canReuseLoaderConfirmedAirheartContext(root, nowMs);
+        var reuseLoaderSkyrunnerSave = QOL.canReuseLoaderConfirmedSkyrunnerContext(root, nowMs);
         State.buildSaveActiveToken = requestToken;
-        State.buildSaveStage = reuseLoaderAirheartSave ? "lock_target_build" : "switch_to_storage";
+        State.buildSaveStage = reuseLoaderSkyrunnerSave ? "lock_target_build" : "switch_to_storage";
         State.buildSaveStartedMs = nowMs;
         State.buildSaveNextActionMs = nowMs;
         State.buildSaveRetries = 0;
         State.buildSaveDidSwitchToStorageHero = false;
         State.buildSaveReturnHero = configuredReturnHero;
-        State.buildSaveStorageHeroConfirmed = !!reuseLoaderAirheartSave;
-        State.buildSaveStorageHeroConfirmedSource = reuseLoaderAirheartSave ? "startup_loader_reuse" : "";
+        State.buildSaveStorageHeroConfirmed = !!reuseLoaderSkyrunnerSave;
+        State.buildSaveStorageHeroConfirmedSource = reuseLoaderSkyrunnerSave ? "startup_loader_reuse" : "";
         State.buildSaveStorageConfirmRetries = 0;
         State.buildSaveStorageSwitchRetries = 0;
         State.buildSaveStorageConfirmStartedMs = 0;
@@ -1057,7 +1057,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveStorageShopReopenAttempts = 0;
         State.buildSaveFavoritesActionNextMs = 0;
         State.buildSaveStorageProvisionalHits = 0;
-        if (!reuseLoaderAirheartSave) {
+        if (!reuseLoaderSkyrunnerSave) {
             State.storageHeroSignatureConfirmSig = "";
             State.storageHeroSignatureConfirmHits = 0;
             State.storageHeroSignatureLastDetail = "";
@@ -1071,7 +1071,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveTargetQuietUntilMs = 0;
         State.buildSaveCaptureStartedMs = nowMs;
         QOL.resetBuildCategoryPayloadProbeInitState();
-        QOL.setBuildSaveStatus(root, "pending", reuseLoaderAirheartSave ? "reuse_airheart_context" : "starting", requestToken);
+        QOL.setBuildSaveStatus(root, "pending", reuseLoaderSkyrunnerSave ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 
     // ── TickBuildSaveRequestRuntime ──
