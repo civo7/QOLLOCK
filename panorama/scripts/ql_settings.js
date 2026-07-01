@@ -160,8 +160,6 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     ENABLE_MISSING_HERO: "bonclide",
     ENABLE_NICKNAMES: "Predi",
     ENABLE_LEGACY_COOLDOWNS: "Predi",
-    ENABLE_MIN_SOULS: "BreadRollius",
-    ENABLE_UNSPENT_SOULS: "BreadRollius",
     ENABLE_OBJ_DMG: "Waltee",
     ENABLE_SHOP_STATS: "Goblin Man Sam",
     ENABLE_QUICKBUY_CLICK_TO_NOTIFY: "Hanturaya",
@@ -302,7 +300,6 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_MINIMAP_ELEVATION_MARKERS": "Shows relative elevation difference between you and players.",
     "MINIMAP_ICON_COLOR": "Choose a preset color wash for minimap icons.",
     "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS": "Moves the Mid Boss timer onto the bridge area of the minimap.",
-    "ENABLE_MIN_SOULS": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
     "ENABLE_MISSING_HERO": "Greys out heros in the top bar when missing on the map.",
     "ENABLE_NICKNAMES": "Shows nicknames of all players in the game within the top bar.",
     "ENABLE_OBJ_DMG": "Shows the individual player's objective damage in the top bar.",
@@ -316,7 +313,6 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "ENABLE_SIMPLIFY_COMPASS": "Simplifies the Compass overlay to its bare elements.",
     "ENABLE_SIMPLIFY_ITEMS": "Cleans up visuals of the item bar significantly to reduce clutter.",
     "ENABLE_SIMPLIFY_SHOP": "Cleans up visuals of the shop menu significantly to reduce clutter.",
-    "ENABLE_UNSPENT_SOULS": "Shows the individual player's unspent souls in the top bar.",
     "ENABLE_URN_DIFF": "Shows a visual indicator in the top bar of the percentage difference of souls between teams.",
     "ENABLE_URN_TIMER": "Shows a countdown timer in the top bar for the next urn spawn or relocation.",
     "ENABLE_URN_COLORS": "Changes urn color to know which side is favored, green for your team, red for the enemy.",
@@ -462,8 +458,6 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW = {
     "HUD / Top Bar|Top Bar Background": "The world blur and backing strip behind player names in the top bar.",
     "HUD / Top Bar|Enemy HP Warning": "Colored enemy top-bar health warnings when at significant thresholds.",
     "HUD / Top Bar|Ally HP Warning": "Colored ally top-bar health warnings when at significant thresholds.",
-    "HUD / Top Bar|Souls Per Minute": "Shows the individual player souls per minute on scoreboard and the team in the top bar.",
-    "HUD / Top Bar|Unspent Souls": "Shows the individual player's unspent souls in the top bar.",
     "HUD / Top Bar|Urn Difference": "Shows a visual indicator in the top bar of the percentage difference of souls between teams.",
     "HUD|Damage Report": "Customize the visuals of the incoming damage panel.",
     "Healthbar / Player|Color Warning": "Colored healthbar warnings when at significant thresholds.",
@@ -655,7 +649,6 @@ const SETTING_PERF_IMPACT_TIERS = {
     MINIMAP_ICON_COLOR: "low",
     ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: "low",
     ENABLE_MINIMAP_REMINDER: "low",
-    ENABLE_MIN_SOULS: "medium",
     ENABLE_MISSING_HERO: "low",
     ENABLE_NICKNAMES: "medium",
     ENABLE_OBJ_DMG: "medium",
@@ -705,7 +698,6 @@ const SETTING_PERF_IMPACT_TIERS = {
     ENABLE_TAB_ZOOM: "low",
     ENABLE_ULT_COOLDOWNS: "none",
     ENABLE_UNSECURED_SOUL_TIMER: "medium",
-    ENABLE_UNSPENT_SOULS: "medium",
     ENABLE_URN_DIFF: "low",
     ENABLE_URN_TIMER: "low",
     ENABLE_URN_COLORS: "low",
@@ -22679,8 +22671,6 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Urn Timer", "ENABLE_URN_TIMER", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Souls Per Minute", "ENABLE_MIN_SOULS", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Unspent Souls", "ENABLE_UNSPENT_SOULS", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
             CreateInlineSecondaryCheckboxToggleRow(sectionParent, "Show Player Ranks", "SHOW_RANK", "Top Bar", "SHOW_RANK_TOPBAR", "Show rank prediction badges on top bar and escape menu player list.", "Show rank prediction badges on top bar player panels (requires Show Player Ranks).");

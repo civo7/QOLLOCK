@@ -253,7 +253,8 @@
         bucket: 1, phase: 1,
         perfLabel: "loop.souls_per_min",
         gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
+            // Disabled — feature no longer permitted
+            return false;
         },
         update: function(root, cfg, nowMs) {
             try {

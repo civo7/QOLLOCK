@@ -288,7 +288,8 @@
         configKeys: ["ENABLE_UNSPENT_SOULS"],
         bucket: 2, phase: -1,
         gate: function(cfg) {
-            return IsCfgEnabled(cfg, "ENABLE_UNSPENT_SOULS");
+            // Disabled — feature no longer permitted
+            return false;
         },
         update: function(root, cfg, nowMs) {
             try {
