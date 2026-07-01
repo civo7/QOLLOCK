@@ -1,11 +1,9 @@
-/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
 
 CitadelHudModifiers_Entry
 {
 	width: fit-children;
 	height: fit-children;
-	margin-bottom: 5px;
-	margin-top: 5px;
 	horizontal-align: middle;
 	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
 	opacity-mask-scale: 100% 200%;
@@ -479,6 +477,7 @@ CitadelHudModifiers_Entry
 	flow-children: down;
 	visibility: collapse;
 	overflow: noclip;
+	margin-top: -20px;
 }
 
 #fancy_progress_container #hero_icon
@@ -497,7 +496,7 @@ CitadelHudModifiers_Entry
 {
 	width: fit-children;
 	flow-children: right;
-	horizontal-align: right;
+	horizontal-align: center;
 }
 
 .BarAndNameContainer
@@ -506,7 +505,9 @@ CitadelHudModifiers_Entry
 	flow-children: down;
 	width: fit-children;
 	vertical-align: top;
-	margin-top: 70px;
+	horizontal-align: middle;
+	margin-top: 60px;
+	ui-scale: 80%;
 }
 
 .AbilityNameIcon
@@ -565,9 +566,9 @@ CitadelHudModifiers_Entry
 .SplitLabelProgressBar .SplitLabelName Label
 {
 	padding: 12px;
-	font-size: 50px;
+	font-size: 44px;
 	font-weight: bold;
-	text-shadow: 0px 0px 0px 7 offBlack;
+	text-shadow: 0px 0px 0px 6 offBlack;
 	font-family: oracle;
 	text-transform: uppercase;
 	text-align: center;

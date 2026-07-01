@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
 
 #BarsContainer
 {
@@ -74,39 +74,6 @@ CitadelHudItemBarGraph.TopBarStyle .progressBarContainer
 	margin-top: 0px;
 }
 
-#CenterProgressBar
-{
-	width: 100%;
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( #ffffff00 ), color-stop( 0.9, #ffffff30 ), color-stop( 1, #ffffff ), to( #ffffff ) );
-	vertical-align: bottom;
-	animation-name: deltaswipe;
-	animation-duration: 1.5s;
-	animation-iteration-count: infinite;
-	animation-timing-function: ease-out;
-}
-
-@keyframes 'deltaswipe'
-{
-	0%
-	{
-		opacity: 1;
-		background-color: gradient( linear, 0% 0%, 0% 100%, from( #ffffff00 ), color-stop( 0.9, #ffffff30 ), color-stop( 1, #ffffff ), to( #ffffff ) );
-	}
-	
-	50%
-	{
-		opacity: 1;
-		background-color: gradient( linear, 0% 0%, 0% 100%, from( #ffffff00 ), color-stop( 0, #ffffff00 ), color-stop( 0.1, #ffffff ), to( #ffffff ) );
-	}
-	
-	100%
-	{
-		opacity: 0.01;
-		background-color: gradient( linear, 0% 0%, 0% 100%, from( #ffffff00 ), color-stop( 0, #ffffff00 ), color-stop( 0.1, #ffffff ), to( #ffffff ) );
-	}
-	
-}
-
 .progressBarImage
 {
 	height: 12px;
@@ -149,32 +116,58 @@ CitadelHudItemBarGraph.TopBarStyle .progressBarContainer
 	background-color: gradient( linear, 0% 100%, 0% 0%, from( #000000 ), to( #222) );
 }
 
-#CenterProgressBar
-{
-	z-index: 2;
-}
-
 .ProgressBarLeft
 {
 	z-index: 3;
 }
 
-#WeaponProgressBar .ProgressBarLeft
+#WeaponProgressBar .ProgressBarLeft,#WeaponProgressBar.previewBuy .ProgressBarPreview
 {
 	background-color: courageBrightColor;
 	background-color: gradient( linear, 0% 0%, 100% 0%, from( courageBrightColor ), to( courageLightColor) );
 }
 
-#ArmorProgressBar .ProgressBarLeft
+#ArmorProgressBar .ProgressBarLeft,#ArmorProgressBar.previewBuy.ProgressBarPreview
 {
 	background-color: fortitudeBrightColor;
 	background-color: gradient( linear, 0% 0%, 100% 0%, from( fortitudeBrightColor ), to( fortitudeLightColor) );
 }
 
-#TechProgressBar .ProgressBarLeft
+#TechProgressBar .ProgressBarLeft,#TechProgressBar.previewBuy .ProgressBarPreview
 {
 	background-color: spiritBrightColor;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( spiritBrightColor ), to( spiritLightColor) );
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( spiritBrightColor ), to( spiritLightColor ) );
+}
+
+@keyframes 'previewBarAnim'
+{
+	0%
+	{
+		opacity: 1;
+	}
+	
+	50%
+	{
+		opacity: 0.01;
+	}
+	
+	100%
+	{
+		opacity: 1;
+	}
+	
+}
+
+.ProgressBarPreview
+{
+	animation-name: previewBarAnim;
+	animation-duration: 1.5s;
+	animation-iteration-count: infinite;
+}
+
+.previewSell .ProgressBarPreview
+{
+	background-color: redFlat;
 }
 
 .weaponStats .techProgressBarContainer,.weaponStats .armorProgressBarContainer,.armorStats .weaponProgressBarContainer,.armorStats .techProgressBarContainer,.spiritStats .weaponProgressBarContainer,.spiritStats .armorProgressBarContainer
@@ -188,6 +181,11 @@ CitadelHudItemBarGraph.TopBarStyle .progressBarContainer
 	width: 100%;
 	background-color: #FFFFFF07;
 	z-index: 2;
+}
+
+.percentBar:nth-child( 5 )
+{
+	background-color: #ffffff20;
 }
 
 .percentBar.tierReached

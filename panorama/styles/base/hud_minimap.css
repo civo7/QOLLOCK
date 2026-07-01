@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
 
 @define ColorEnemy: #ff410d;
 @define ColorEnemyHigh: #FF8D6E;
@@ -1100,11 +1100,75 @@
 
 .map_button.capture_point
 {
-	background-image: url("s2r://panorama/images/minimap/escort_capture_psd.vtex");
-	background-size: 100%;
+	background-image: url("s2r://panorama/images/minimap/minimap_icon_koth_png.vtex");
+	background-color: #000000;
+	width: 32px;
+	height: 32px;
+	border-radius: 50px;
+	background-size: 70%;
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-	img-shadow: 0px 0px 8px 0 #555;
+	border: 2px solid shardColor&50;
+}
+
+.map_button.capture_point.koth_warning
+{
+	opacity: 0.3;
+	saturation: 0.5;
+	animation-name: koth_spawn;
+	animation-duration: 1.5s;
+	animation-timing-function: ease;
+	animation-iteration-count: 3;
+}
+
+@keyframes 'koth_spawn'
+{
+	0%
+	{
+		brightness: 1;
+		pre-transform-scale2d: 1;
+		opacity: 1;
+		saturation: 0.5;
+	}
+	
+	50%
+	{
+		brightness: 3;
+		pre-transform-scale2d: 1.6;
+		saturation: 1;
+		opacity: 1;
+	}
+	
+	100%
+	{
+		brightness: 1;
+		pre-transform-scale2d: 1;
+		opacity: 1;
+		saturation: 0.5;
+	}
+	
+}
+
+.map_button.capture_point #CastRange
+{
+	horizontal-align: center;
+	vertical-align: center;
+	opacity: 1.0;
+	border: 5px solid ColorEnemy&90;
+	border-radius: 50px;
+	box-shadow: inset 0px 0px 60px offWhite&05;
+	visibility: collapse;
+}
+
+.map_button.capture_point.koth_warning #CastRange
+{
+	horizontal-align: center;
+	vertical-align: center;
+	opacity: 1;
+	border: 5px solid ColorEnemy&90;
+	border-radius: 50px;
+	box-shadow: inset 0px 0px 60px offWhite&05;
+	visibility: collapse;
 }
 
 .map_button.escort
@@ -1630,11 +1694,11 @@
 	z-index: 97;
 	img-shadow: 0px 0px 0px 3.0 offBlack;
 	opacity: 1;
+	visibility: collapse;
 }
 
 .favor_player_team .idolFavorPreview
 {
-	visibility: visible;
 	background-image: url("s2r://panorama/images/icons/carat_down.vsvg");
 	margin-top: 4px;
 	wash-color: #63ff8d;
@@ -1642,7 +1706,6 @@
 
 .favor_enemy_team .idolFavorPreview
 {
-	visibility: visible;
 	background-image: url("s2r://panorama/images/icons/carat_up.vsvg");
 	margin-top: 10px;
 	wash-color: ColorEnemy;
