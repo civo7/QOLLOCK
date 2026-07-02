@@ -314,6 +314,7 @@ CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
 .TeamNetworth
 {
 	width: 300px !important;
+    padding-bottom: 2px;
 }
 
 .TeamScore
@@ -446,7 +447,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 #UrnTracker
 {
 	width: 145px !important;
-	height: 55%;
+	height: 18px;
 	background-color: gradient(linear, 100% 0%, 0% 0%, from(#FFFFFFFF), color-stop(0.70, #FFFFFFFF), color-stop(0.85, #FFFFFF08), to(#FFFFFF00));
 	wash-color: #000000;
 	border-radius: 0px;
@@ -456,6 +457,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	y: 41px;
 	x: -58px;
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
+    flow-children: right;
 }
 
 .missing_hero_disabled #UrnTracker
@@ -472,7 +474,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 .min_souls_disabled #UrnTracker
 {
-	y: 32px;
+	y: 34px;
 }
 
 #UrnTracker.show
@@ -488,6 +490,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	vertical-align: center;
 	text-align: center;
 	color: black;
+    height: 18px;
 	text-overflow: shrink;
 	font-family: oracle;
 	padding-left: 20px;
@@ -495,13 +498,12 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 .min_souls_disabled:not(.obj_map_disabled) #UrnTrackerLabel
 {
-	padding-left: 50px;
-	margin-top: 1.3px;
+	padding-left: 60px;
 }
 
 .min_souls_disabled.obj_map_disabled #UrnTrackerLabel
 {
-	padding-left: 75px;
+	padding-left: 85px;
 }
 
 #UrnTracker[visible="false"]
@@ -543,9 +545,9 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 #RiftTimer
 {
 	width: 145px !important;
-	height: 55%;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#FFFFFFFF), color-stop(0.70, #FFFFFFFF), color-stop(0.85, #FFFFFF08), to(#FFFFFF00));
-	wash-color: #00FF7F;
+	height: 18px;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#000000FF), color-stop(0.70, #000000FF), color-stop(0.85, #00000008), to(#00000000))
+	wash-color: #FFFFFF;
 	border-radius: 0px;
 	border-bottom-left-radius: 10px;
 	horizontal-align: center;
@@ -569,7 +571,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 .min_souls_disabled #RiftTimer
 {
-	y: 32px;
+	y: 34px;
 }
 
 #RiftTimer.show
@@ -579,12 +581,14 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 #RiftTimerLabel
 {
-	horizontal-align: center;
+	margin-left: 29px;
+	width: 120px;
 	font-size: 18px;
 	font-weight: bold;
 	vertical-align: center;
-	text-align: center;
-	color: black;
+	text-align: left;
+	color: white;
+	height: 18px;
 	text-overflow: shrink;
 	font-family: oracle;
 	padding-right: 20px;
@@ -592,13 +596,12 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 .min_souls_disabled:not(.obj_map_disabled) #RiftTimerLabel
 {
-	padding-right: 50px;
-	margin-top: 1.3px;
+	padding-right: 0px;
+	margin-top: 1px;
 }
 
 .min_souls_disabled.obj_map_disabled #RiftTimerLabel
 {
-	padding-right: 75px;
 }
 
 #RiftTimer[visible="false"]
@@ -612,10 +615,44 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity: 0;
 }
 
-.rift_idle #RiftTimerLabel,
-.rift_active #RiftTimerLabel
+.RiftTimerRiftIcon
 {
-	transform: translateX(16px);
+	width: 20px;
+	height: 100%;
+	background-image: url("s2r://panorama/images/minimap/minimap_icon_koth_png.vtex");
+	background-size: 75% 90%;
+	background-position: center;
+	background-repeat: no-repeat;
+    x: 9px;
+}
+
+.min_souls_disabled:not(.obj_map_disabled) .RiftTimerRiftIcon
+{
+	x: 29px;
+}
+
+.min_souls_disabled:not(.obj_map_disabled) .rift_idle #RiftTimerLabel,
+.min_souls_disabled:not(.obj_map_disabled) .rift_active #RiftTimerLabel
+{
+	transform: translateX(19px);
+}
+
+.min_souls_disabled:not(.obj_map_disabled) .rift_warning #RiftTimerLabel
+{
+	transform: translateX(20px);
+}
+
+#UrnTracker .UrnTrackerSoulIcon
+{
+	width: 10px;
+	height: 100%;
+	background-image: url("s2r://panorama/images/hud/icons/icon_soul.vsvg");
+	background-size: 65% 65%;
+	background-position: center;
+	background-repeat: no-repeat;
+	img-shadow: 0px 0px 0px 2.0 #ffffff77;
+	contrast: -1;
+	margin-left: 1px;
 }
 
 #Buff

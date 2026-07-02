@@ -4797,6 +4797,13 @@ function GetUIRoot() {
             });
         }
 
+        var soulIcon = panel.FindChildTraverse("UrnTrackerSoulIcon");
+        if (!soulIcon) {
+            soulIcon = $.CreatePanel("Panel", panel, "UrnTrackerSoulIcon", {
+                "class": "UrnTrackerSoulIcon", hittest: "false"
+            });
+        }
+
         SetCachedPanel("urnTrackerPanel", panel);
         SetCachedPanel("urnTrackerLabel", label);
         return panel;

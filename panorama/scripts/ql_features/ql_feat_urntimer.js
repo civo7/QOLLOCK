@@ -155,6 +155,12 @@
             });
         }
         if (!panel) return null;
+        var icon = panel.FindChildTraverse("RiftTimerRiftIcon");
+        if (!icon) {
+            icon = $.CreatePanel("Panel", panel, "RiftTimerRiftIcon", {
+                "class": "RiftTimerRiftIcon", hittest: "false"
+            });
+        }
         label = panel.FindChildTraverse("RiftTimerLabel");
         if (!label) {
             label = $.CreatePanel("Label", panel, "RiftTimerLabel", {
@@ -252,9 +258,9 @@
             var warningSec = State.riftTimerWarningGameSec || gameSec;
             var elapsed = Math.max(0, gameSec - warningSec);
             var remaining = Math.max(0, RIFT_EARLY_WARNING_SEC - elapsed);
-            displayText = remaining > 0 ? FormatClockMmSs(remaining) : "RIFT ACTIVE";
+            displayText = remaining > 0 ? FormatClockMmSs(remaining) : "SPAWN";
         } else if (mode === "active") {
-            displayText = "RIFT ACTIVE";
+            displayText = "SPAWN";
         } else {
             var acc = State.riftTimerRiftAccumulator || RIFT_INITIAL_DELAY_SEC;
             var range = ComputeRiftRangeSeconds(gameSec, acc);
