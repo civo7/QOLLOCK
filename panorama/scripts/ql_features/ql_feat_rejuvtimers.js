@@ -29,7 +29,7 @@
     var PanelHasClassToken = _deps.panelHasClassToken;
 
     // ── Constants ──
-    const REJUV_DURATION_SEC = 240;
+    const REJUV_DURATION_SEC = 180;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 1000;
     const REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 10000;
