@@ -32,7 +32,10 @@ const projectRoot = path.resolve(__dirname, "..");
 const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_presets.js");
 const bridgePath = path.join(projectRoot, "panorama", "scripts", "ql_bridge.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
-const outRoot = path.join(projectRoot, "translations", "locales");
+// When called from export_locales.bat a mirror path (QOLLOCK-translations/locales) is passed as
+// argv[2] so the output lands in the public repo the workbench reads from. Without an argument
+// (direct `node` call) we fall back to the local translations/locales directory.
+const outRoot = process.argv[2] ? path.resolve(process.argv[2]) : path.join(projectRoot, "translations", "locales");
 
 // i18next locale code (the <lang> directory name) -> in-code map variable. The code is just the
 // directory name the workbench uses; what matters is that this mapping is identical in
