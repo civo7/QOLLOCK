@@ -258,9 +258,9 @@
             var warningSec = State.riftTimerWarningGameSec || gameSec;
             var elapsed = Math.max(0, gameSec - warningSec);
             var remaining = Math.max(0, RIFT_EARLY_WARNING_SEC - elapsed);
-            displayText = remaining > 0 ? FormatClockMmSs(remaining) : "SPAWN";
+            displayText = remaining > 0 ? FormatClockMmSs(remaining) : "ACTIVE";
         } else if (mode === "active") {
-            displayText = "SPAWN";
+            displayText = "ACTIVE";
         } else {
             var acc = State.riftTimerRiftAccumulator || RIFT_INITIAL_DELAY_SEC;
             var range = ComputeRiftRangeSeconds(gameSec, acc);
