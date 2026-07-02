@@ -1667,7 +1667,7 @@ var COMPASS_SPEED_OFFSET_SCHEMA_FIELDS = [
     { key: "COMPASS_SPEED_X_OFFSET", min: -2000, max: 2000, step: 5 },
     { key: "COMPASS_SPEED_Y_OFFSET", min: -2000, max: 2000, step: 5 }
 ];
-// 3.1.6 (in development): minimalistic pause toggle + urn spawn timer.
+// 3.1.6 (in development): minimalistic pause toggle + rift spawn timer.
 var MINIMALISTIC_PAUSE_SCHEMA_FIELDS = [
     { key: "ENABLE_MINIMALISTIC_PAUSE", min: 0, max: 1, step: 1 }
 ];

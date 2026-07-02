@@ -22668,7 +22668,7 @@ function RenderCurrentTabContent(list) {
             CreateRow(sectionParent, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Urn Timer", "ENABLE_URN_TIMER", "toggle", null, null, null, null, "");
+            CreateRow(sectionParent, "Rift Timer", "ENABLE_URN_TIMER", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");

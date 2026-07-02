@@ -540,7 +540,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	color: black;
 }
 
-#UrnTimer
+#RiftTimer
 {
 	width: 145px !important;
 	height: 55%;
@@ -555,29 +555,29 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
 }
 
-.missing_hero_disabled #UrnTimer
+.missing_hero_disabled #RiftTimer
 {
 	background-color: #FFFFFFFF;
 }
 
-.obj_map_disabled #UrnTimer,.min_souls_disabled #UrnTimer,.obj_map_disabled.min_souls_disabled #UrnTimer
+.obj_map_disabled #RiftTimer,.min_souls_disabled #RiftTimer,.obj_map_disabled.min_souls_disabled #RiftTimer
 {
 	width: 145px !important;
 	margin-left: 40px !important;
 	border-bottom-left-radius: 0px;
 }
 
-.min_souls_disabled #UrnTimer
+.min_souls_disabled #RiftTimer
 {
 	y: 32px;
 }
 
-#UrnTimer.show
+#RiftTimer.show
 {
 	opacity: 1;
 }
 
-#UrnTimerLabel
+#RiftTimerLabel
 {
 	horizontal-align: center;
 	font-size: 18px;
@@ -590,26 +590,32 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	padding-right: 20px;
 }
 
-.min_souls_disabled:not(.obj_map_disabled) #UrnTimerLabel
+.min_souls_disabled:not(.obj_map_disabled) #RiftTimerLabel
 {
 	padding-right: 50px;
 	margin-top: 1.3px;
 }
 
-.min_souls_disabled.obj_map_disabled #UrnTimerLabel
+.min_souls_disabled.obj_map_disabled #RiftTimerLabel
 {
 	padding-right: 75px;
 }
 
-#UrnTimer[visible="false"]
+#RiftTimer[visible="false"]
 {
 	opacity: 0 !important;
 	pointer-events: none;
 }
 
-.urn_timer_disabled #UrnTimer.show
+.rift_timer_disabled #RiftTimer.show
 {
 	opacity: 0;
+}
+
+.rift_idle #RiftTimerLabel,
+.rift_active #RiftTimerLabel
+{
+	transform: translateX(16px);
 }
 
 #Buff

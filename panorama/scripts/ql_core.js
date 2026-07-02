@@ -14589,7 +14589,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "obj_dmg_disabled", cfg.ENABLE_OBJ_DMG === 0);
             SetPanelClassCached(root, State.rootClassCache, "obj_map_disabled", cfg.ENABLE_OBJ_MAP === 0);
             SetPanelClassCached(root, State.rootClassCache, "urn_diff_disabled", cfg.ENABLE_URN_DIFF === 0);
-            SetPanelClassCached(root, State.rootClassCache, "urn_timer_disabled", cfg.ENABLE_URN_TIMER === 0);
+            SetPanelClassCached(root, State.rootClassCache, "rift_timer_disabled", cfg.ENABLE_URN_TIMER === 0);
             SetPanelClassCached(root, State.rootClassCache, "missing_hero_disabled", cfg.ENABLE_MISSING_HERO === 0);
             SetPanelClassCached(root, State.rootClassCache, "nicknames_active", IsCfgEnabled(cfg, "ENABLE_NICKNAMES"));
             SetPanelClassCached(root, State.rootClassCache, "disable_player_name_blur_active", IsCfgEnabled(cfg, "DISABLE_PLAYER_NAME_BLUR"));
