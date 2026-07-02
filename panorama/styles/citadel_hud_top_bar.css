@@ -488,9 +488,11 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	font-size: 18px;
 	font-weight: bold;
 	vertical-align: center;
-	text-align: center;
+	text-align: right;
 	color: black;
-    height: 18px;
+	width: 120px;
+	height: 18px;
+	padding-right: 2px;
 	text-overflow: shrink;
 	font-family: oracle;
 	padding-left: 20px;
@@ -498,12 +500,13 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 
 .min_souls_disabled:not(.obj_map_disabled) #UrnTrackerLabel
 {
-	padding-left: 60px;
+	padding-left: 30px;
+	width: 100px;
 }
 
 .min_souls_disabled.obj_map_disabled #UrnTrackerLabel
 {
-	padding-left: 80px;
+	padding-left: 50px;
 }
 
 #UrnTracker[visible="false"]
