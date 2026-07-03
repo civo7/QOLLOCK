@@ -1220,6 +1220,8 @@ const SETTINGS_LANGUAGE_PORTUGUESE = 8;
 const SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE = 9;
 const SETTINGS_LANGUAGE_SPANISH = 10;
 const SETTINGS_LANGUAGE_BELARUSIAN = 11;
+const SETTINGS_LANGUAGE_KOREAN = 12;
+const SETTINGS_LANGUAGE_ITALIAN = 13;
 const SETTINGS_LANGUAGE_OPTIONS = [
     { label: "English", value: SETTINGS_LANGUAGE_ENGLISH },
     { label: "Russian", value: SETTINGS_LANGUAGE_RUSSIAN },
@@ -1228,8 +1230,10 @@ const SETTINGS_LANGUAGE_OPTIONS = [
     { label: "Bulgarian", value: SETTINGS_LANGUAGE_BULGARIAN },
     { label: "Belarusian", value: SETTINGS_LANGUAGE_BELARUSIAN },
     { label: "Japanese", value: SETTINGS_LANGUAGE_JAPANESE },
+    { label: "Korean", value: SETTINGS_LANGUAGE_KOREAN },
     { label: "Chinese", value: SETTINGS_LANGUAGE_CHINESE },
     { label: "French", value: SETTINGS_LANGUAGE_FRENCH },
+    { label: "Italian", value: SETTINGS_LANGUAGE_ITALIAN },
     { label: "Portuguese", value: SETTINGS_LANGUAGE_PORTUGUESE },
     { label: "BR Portuguese", value: SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE },
     { label: "Spanish", value: SETTINGS_LANGUAGE_SPANISH }
@@ -1271,6 +1275,13 @@ const SETTINGS_THEME_OPTIONS = [
 const SETTINGS_HEADER_MOG_LOGO_DEFAULT_SRC = "s2r://panorama/images/qollock/mog_site_logo2_png.vtex";
 const SETTINGS_HEADER_MOG_LOGO_THEME_SRC = "s2r://panorama/images/qollock/mog_site_logo2_white_png.vtex";
 const SETTINGS_HEADER_MUNFINS_LOGO_SRC = "s2r://panorama/images/qollock/munfins_logo_png.vtex";
+// Korean and Italian: start empty; translations are merged in from the public mirror by
+// scripts/import_locales_json.js (locales/ko, locales/it). Kept as flat English->translation maps
+// like every other language. import writes entries in sorted order between these braces.
+const SETTINGS_KO_TEXT = {
+};
+const SETTINGS_IT_TEXT = {
+};
 const SETTINGS_RU_TEXT = {
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Бесплатные</font> изменения для новых функций, <font color=\"#66cc99\">$5</font> за произвольные правки",
     "16:10 Support": "Поддержка 16:10",
@@ -10632,17 +10643,22 @@ function LocalizeSettingsText(text, force) {
     else if (lang === SETTINGS_LANGUAGE_BULGARIAN) map = SETTINGS_BG_TEXT;
     else if (lang === SETTINGS_LANGUAGE_BELARUSIAN) map = SETTINGS_BY_TEXT;
     else if (lang === SETTINGS_LANGUAGE_JAPANESE) map = SETTINGS_JA_TEXT;
+    else if (lang === SETTINGS_LANGUAGE_KOREAN) map = SETTINGS_KO_TEXT;
     else if (lang === SETTINGS_LANGUAGE_CHINESE) map = SETTINGS_ZH_TEXT;
     else if (lang === SETTINGS_LANGUAGE_FRENCH) map = SETTINGS_FR_TEXT;
+    else if (lang === SETTINGS_LANGUAGE_ITALIAN) map = SETTINGS_IT_TEXT;
     else if (lang === SETTINGS_LANGUAGE_PORTUGUESE) map = SETTINGS_PT_TEXT;
     else if (lang === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) map = SETTINGS_PT_BR_TEXT;
     else if (lang === SETTINGS_LANGUAGE_SPANISH) map = SETTINGS_ES_TEXT;
     if (map && map.hasOwnProperty(raw)) {
         var translated = map[raw];
         if (lang === SETTINGS_LANGUAGE_FRENCH) return NormalizeLatinSettingsText(translated);
+        if (lang === SETTINGS_LANGUAGE_ITALIAN) return NormalizeLatinSettingsText(translated);
         if (lang === SETTINGS_LANGUAGE_PORTUGUESE) return NormalizeLatinSettingsText(translated);
         if (lang === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) return NormalizeLatinSettingsText(translated);
         if (lang === SETTINGS_LANGUAGE_SPANISH) return NormalizeLatinSettingsText(translated);
+        // Korean (like Japanese/Chinese) is returned as-is; Hangul is outside the Latin-1 range
+        // NormalizeLatinSettingsText strips, so it must not be normalized.
         return translated;
     }
     return raw;
