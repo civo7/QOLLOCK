@@ -118,7 +118,7 @@
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 8000;
     var BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;
-    var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
+    var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 20;
     var BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 6;
     var BUILD_CATEGORY_PAYLOAD_SHOP_NOT_OPEN_MAX_RESETS = 30;
     var BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;
@@ -131,7 +131,7 @@
     var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     var BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;
-    var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 12000;
+    var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;
     var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (typeof QOL_COMPACT_SCHEMA_REGISTRY !== "undefined") ? QOL_COMPACT_SCHEMA_REGISTRY : {};
     var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined") ? QOL_LATEST_COMPACT_SEMVER : "3.1.4";
     var BUILD_LOADER_TEMP_DISABLED = false;
@@ -366,21 +366,41 @@
             if (!label) continue;
             var txt = ReadPanelTextMaybe(label);
             if (!txt || txt.length === 0) continue;
+            // [LANG DIAG] Log raw label text from HeroFavoritesHeaderLabel to diagnose
+            // what non-English clients actually display (localized hero name vs internal ID).
+            $.Msg("[QOLLock][LANG] HeroFavoritesHeaderLabel[" + String(i) + "] text=\"" + String(txt) + "\"");
             var parsed = QOL.normalizeHeroId(QOL.extractHeroTokenFromText(txt) || QOL.extractLastHeroTokenFromText(txt));
+            // Language-agnostic fallback: try locale-based extraction from the
+            // full label text (e.g. "Gök Yürüyen's Recommended Mods" → "hero_skyrunner")
+            if (!parsed && typeof QOL.extractHeroFromLabelText === "function") {
+                parsed = QOL.normalizeHeroId(QOL.extractHeroFromLabelText(txt));
+                if (parsed) {
+                    $.Msg("[QOLLock][LANG] extractHeroFromLabelText (locale lookup) resolved \"" + String(txt) + "\" → \"" + String(parsed) + "\"");
+                }
+            }
+            $.Msg("[QOLLock][LANG] extractHeroTokenFromText result=\"" + String(parsed || "") + "\" from text=\"" + String(txt) + "\"");
             if (!parsed) continue;
             // Language-agnostic: the HeroFavoritesHeaderLabel class already identifies
             // the correct label. "recommended mods" is English-only — accept any hero
             // found in a HeroFavoritesHeaderLabel for the primary source.
             if (!fallbackHero) fallbackHero = parsed;
         }
-        if (fallbackHero) return { hero: fallbackHero, source: "shopFavoritesHeader" };
+        if (fallbackHero) {
+            $.Msg("[QOLLock][LANG] TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader resolved hero=\"" + String(fallbackHero) + "\" source=shopFavoritesHeader");
+            return { hero: fallbackHero, source: "shopFavoritesHeader" };
+        }
 
         // Fallback: text parsing failed (likely non-English locale).
         // Use onactivate attribute scanning which contains internal hero IDs
         // like "selecthero hero_skyrunner" — these are language-agnostic.
         var cmdHero = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
-        if (cmdHero) return { hero: cmdHero, source: "shopCommands" };
+        $.Msg("[QOLLock][LANG] TryReadSelectedHeroIncludingStorageFromCommandPanels result=\"" + String(cmdHero || "") + "\"");
+        if (cmdHero) {
+            $.Msg("[QOLLock][LANG] TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader resolved hero=\"" + String(cmdHero) + "\" source=shopCommands (language-agnostic fallback)");
+            return { hero: cmdHero, source: "shopCommands" };
+        }
 
+        $.Msg("[QOLLock][LANG] TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader FAILED — no hero found in labels or command panels");
         return { hero: "", source: "shopFavoritesHeaderMissing" };
     }
 
@@ -721,6 +741,17 @@
     function handleCorruptRepairInit(root, nowMs) {
         var corruptRepairPending = QOL.isStartupCorruptRepairPending(root);
         if (!corruptRepairPending || State.buildCategoryPayloadCorruptRepairActive) return false;
+        // If no Skyrunner builds exist at all, skip corrupt repair —
+        // there's nothing to repair. Go directly to bootstrap save enqueue.
+        if (QOL.isStorageBuildListEmpty(root)) {
+            $.Msg("[QOLLock][LANG] handleCorruptRepairInit: build list empty, skipping corrupt repair → bootstrap directly");
+            State.buildCategoryPayloadCorruptRepairActive = false;
+            State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
+            State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
+            State.buildCategoryPayloadHeroProbeNextMs = nowMs;
+            SetSettingsLoaderStepState("read_payload", "active", "No existing Skyrunner builds. Creating first-time storage.");
+            return true;
+        }
         State.buildCategoryPayloadCorruptRepairActive = true;
         State.buildCategoryPayloadCorruptRepairStartedMs = nowMs;
         State.buildCategoryPayloadCorruptRepairCleared = false;
@@ -731,8 +762,8 @@
         State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
         State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
         State.buildCategoryPayloadCorruptRepairPostClearUntilMs = 0;
-        State.buildCategoryPayloadSkyrunnerHeaderConfirmed = false;
-        State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = 0;
+        // Preserve SkyrunnerHeaderConfirmed — don't reset it here.
+        // It was set by handleWaitStorage timeout and is still valid.
         State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
         State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
         State.buildCategoryPayloadHeroProbeNextMs = nowMs;
@@ -748,8 +779,13 @@
         EnsureStoragePayloadSourceVisibleReadOnly(root, nowMs);
         QOL.ensureStorageHeroFavoritesHeaderVisible(root, nowMs);
         if (!State.buildCategoryPayloadSkyrunnerHeaderConfirmed) {
+            // [LANG DIAG] Trace the re-confirmation path on non-English clients.
+            // If SkyrunnerHeaderConfirmed was set by handleWaitStorage's TIMEOUT_FIRED,
+            // we skip this block entirely — bypassing locale-dependent text parsing.
+            $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: SkyrunnerHeaderConfirmed is FALSE — re-confirming via ConfirmBuildCategoryPayloadStorageHero (locale-dependent)");
             var allowBootstrapFallback = !!State.buildCategoryPayloadCorruptRepairActive;
             var bootstrapConfirm = ConfirmBuildCategoryPayloadStorageHero(root, nowMs, allowBootstrapFallback);
+            $.Msg("[QOLLock][LANG] ConfirmBuildCategoryPayloadStorageHero result: confirmed=" + (bootstrapConfirm.confirmed ? "1" : "0") + " source=\"" + String(bootstrapConfirm.source || "-") + "\" detail=\"" + String(bootstrapConfirm.detail || "") + "\"");
             if (!bootstrapConfirm.confirmed) {
                 SetSettingsLoaderStepState("confirm_airheart", "active", bootstrapConfirm.detail || "Verifying Skyrunner context for bootstrap.");
                 if (State.buildCategoryPayloadCorruptRepairActive && !QOL.isHudClassActive(root, "gShopOpen")) {
@@ -760,36 +796,52 @@
             }
             State.buildCategoryPayloadSkyrunnerHeaderConfirmed = true;
             State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = nowMs;
+            $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: SkyrunnerHeaderConfirmed set via ConfirmBuildCategoryPayloadStorageHero (source=" + String(bootstrapConfirm.source || "-") + ")");
+        } else {
+            $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: SkyrunnerHeaderConfirmed is TRUE — SKIPPED locale-dependent re-confirmation (bypass working)");
         }
         SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
 
+        // [LANG DIAG] Trace bootstrap progression blockers
+        $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: proceeding past Skyrunner confirmation, corruptRepairActive=" + (State.buildCategoryPayloadCorruptRepairActive ? "1" : "0") + " corruptRepairCleared=" + (State.buildCategoryPayloadCorruptRepairCleared ? "1" : "0"));
+
         if (State.buildCategoryPayloadCorruptRepairActive && !State.buildCategoryPayloadCorruptRepairCleared) {
-            var clearStep = StepCorruptRepairClearStorageBuilds(root, nowMs);
-            if (clearStep.state === "failed") {
-                finalizeProbeFailure(accountId, clearStep.detail || "Corrupt-save clear failed.");
+            // If no Skyrunner builds exist, there's nothing to corrupt-repair.
+            // Skip the clear process entirely and mark repair as done.
+            if (QOL.isStorageBuildListEmpty(root)) {
+                $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: build list empty, skipping corrupt repair clear");
+                State.buildCategoryPayloadCorruptRepairCleared = true;
+                State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs;
+            } else {
+                $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: BLOCKED at corrupt repair clear");
+                var clearStep = StepCorruptRepairClearStorageBuilds(root, nowMs);
+                if (clearStep.state === "failed") {
+                    finalizeProbeFailure(accountId, clearStep.detail || "Corrupt-save clear failed.");
+                    return "wait";
+                }
+                if (clearStep.state !== "done") {
+                    SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Skyrunner builds before repair save.");
+                    State.buildCategoryPayloadHeroProbeNextMs = nowMs + (Number(clearStep.waitMs) || BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS);
+                    return "wait";
+                }
+                State.buildCategoryPayloadCorruptRepairCleared = true;
+                State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS;
+                ResetBuildClearRequestAttributes(root);
+                ResetBuildClearRuntimeState();
+                QOL.resetBuildSaveRequestAttributes(root);
+                State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
+                TryDismissBuildDeletePopup(root);
+                TryCloseBrowseBuildsPopupForLoader(root);
+                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Skyrunner builds cleared. Finalizing clear UI.");
+                State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
                 return "wait";
             }
-            if (clearStep.state !== "done") {
-                SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Clearing Skyrunner builds before repair save.");
-                State.buildCategoryPayloadHeroProbeNextMs = nowMs + (Number(clearStep.waitMs) || BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS);
-                return "wait";
-            }
-            State.buildCategoryPayloadCorruptRepairCleared = true;
-            State.buildCategoryPayloadCorruptRepairPostClearUntilMs = nowMs + BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS;
-            ResetBuildClearRequestAttributes(root);
-            ResetBuildClearRuntimeState();
-            QOL.resetBuildSaveRequestAttributes(root);
-            State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
-            TryDismissBuildDeletePopup(root);
-            TryCloseBrowseBuildsPopupForLoader(root);
-            SetSettingsLoaderStepState("read_payload", "active", clearStep.detail || "Skyrunner builds cleared. Finalizing clear UI.");
-            State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
-            return "wait";
         }
 
         if (State.buildCategoryPayloadCorruptRepairCleared) {
             var postClearUntil = Number(State.buildCategoryPayloadCorruptRepairPostClearUntilMs) || 0;
             if (nowMs < postClearUntil) {
+                $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: BLOCKED at postClear settle, remaining=" + String(postClearUntil - nowMs) + "ms");
                 TryDismissBuildDeletePopup(root);
                 TryCloseBrowseBuildsPopupForLoader(root);
                 SetSettingsLoaderStepState("read_payload", "active", "Finalizing clear UI before save bootstrap.");
@@ -799,12 +851,14 @@
         }
 
         if (TryCloseBrowseBuildsPopupForLoader(root)) {
+            $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: BLOCKED at browse popup close");
             SetSettingsLoaderStepState("read_payload", "active", "Closing build browser before save bootstrap.");
             State.buildCategoryPayloadHeroProbeNextMs = nowMs + BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS;
             return "wait";
         }
 
         var initReady = QOL.ensureStorageBuildInitialized(root, nowMs);
+        $.Msg("[QOLLock][LANG] handleBootstrapViaSaveEnqueue: ensureStorageBuildInitialized=" + (initReady ? "1" : "0") + " initRetries=" + String(Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0));
         if (!initReady) {
             var initRetries = Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0;
             SetSettingsLoaderStepState("read_payload", "active", "Initializing empty Skyrunner build.");
@@ -1038,6 +1092,14 @@
         var switchStartMs = Number(State.buildCategoryPayloadHeroProbeSwitchStartMs) || nowMs;
         var waitElapsedMs = nowMs - switchStartMs;
         if (waitElapsedMs >= BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) {
+            // Language-agnostic: at timeout we have already switched to Skyrunner
+            // (the probe only reaches wait_storage after a successful hero switch).
+            // Set the confirmed flag now so the subsequent bootstrap path skips
+            // locale-dependent text-based hero re-confirmation in
+            // ConfirmBuildCategoryPayloadStorageHero → TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader.
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmed = true;
+            State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = nowMs;
+            $.Msg("[QOLLock][LANG] wait_storage TIMEOUT_FIRED elapsed=" + String(waitElapsedMs) + "ms threshold=" + String(BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS) + "ms — SkyrunnerHeaderConfirmed set, bypassing text-based re-confirmation");
             SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
             SetSettingsLoaderStepState("confirm_airheart", "active", "Skyrunner confirmation delayed. Running save bootstrap.");
             SetSettingsLoaderStepState("read_payload", "active", "Running save pipeline to create first-time payload.");

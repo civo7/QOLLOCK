@@ -484,8 +484,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
     const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 400;  // reduced
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
+    const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 1200;  // extended for non-English UI render latency
+    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 20;  // more attempts for build detection
     const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
     const BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS = 2;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;  // poll-driven
@@ -1247,6 +1247,13 @@ function ExpressShotLog(msg) {
             if (!m || !m[1]) continue;
             var heroToken = NormalizeHeroAliasToken(m[1]);
             if (heroToken) return heroToken;
+        }
+
+        // Language-agnostic fallback: use locale lookup table (generated from
+        // Deadlock's localization files) to resolve translated hero names.
+        if (typeof QOL !== "undefined" && typeof QOL.lookupLocaleHero === "function") {
+            var localeHero = QOL.lookupLocaleHero(rawText);
+            if (localeHero) return localeHero;
         }
 
         return "";
@@ -7907,21 +7914,97 @@ function GetUIRoot() {
         return clean;
     }
 
+        // ── Language-agnostic ASCII folding ──
+    var _sigFoldDiagLogged = false;
+
+    // ── Language-agnostic ASCII folding ──
+// Maps ALL Latin-script accented/diacritic characters (Latin-1 Supplement
+    // U+0080-U+00FF, Latin Extended-A U+0100-U+017F) to their base ASCII
+    // lowercase form in a single universal pass.
+    function FoldToAscii(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/[\u00C0-\u00C5]/g, "a")
+            .replace(/\u00C6/g, "ae")
+            .replace(/\u00C7/g, "c")
+            .replace(/[\u00C8-\u00CB]/g, "e")
+            .replace(/[\u00CC-\u00CF]/g, "i")
+            .replace(/\u00D0/g, "d")
+            .replace(/\u00D1/g, "n")
+            .replace(/[\u00D2-\u00D6\u00D8]/g, "o")
+            .replace(/[\u00D9-\u00DC]/g, "u")
+            .replace(/\u00DD/g, "y")
+            .replace(/\u00DE/g, "th")
+            .replace(/\u00DF/g, "ss")
+            .replace(/[\u00E0-\u00E5]/g, "a")
+            .replace(/\u00E6/g, "ae")
+            .replace(/\u00E7/g, "c")
+            .replace(/[\u00E8-\u00EB]/g, "e")
+            .replace(/[\u00EC-\u00EF]/g, "i")
+            .replace(/\u00F0/g, "d")
+            .replace(/\u00F1/g, "n")
+            .replace(/[\u00F2-\u00F6\u00F8]/g, "o")
+            .replace(/[\u00F9-\u00FC]/g, "u")
+            .replace(/[\u00FD\u00FF]/g, "y")
+            .replace(/\u00FE/g, "th")
+            .replace(/[\u0100\u0102\u0104]/g, "a") .replace(/[\u0101\u0103\u0105]/g, "a")
+            .replace(/[\u0106\u0108\u010A\u010C]/g, "c") .replace(/[\u0107\u0109\u010B\u010D]/g, "c")
+            .replace(/[\u010E\u0110]/g, "d") .replace(/[\u010F\u0111]/g, "d")
+            .replace(/[\u0112\u0114\u0116\u0118\u011A]/g, "e") .replace(/[\u0113\u0115\u0117\u0119\u011B]/g, "e")
+            .replace(/[\u011C\u011E\u0120\u0122]/g, "g") .replace(/[\u011D\u011F\u0121\u0123]/g, "g")
+            .replace(/[\u0124\u0126]/g, "h") .replace(/[\u0125\u0127]/g, "h")
+            .replace(/[\u0128\u012A\u012C\u012E\u0130]/g, "i") .replace(/[\u0129\u012B\u012D\u012F\u0131]/g, "i")
+            .replace(/[\u0132]/g, "ij") .replace(/[\u0133]/g, "ij")
+            .replace(/[\u0134]/g, "j") .replace(/[\u0135]/g, "j")
+            .replace(/[\u0136]/g, "k") .replace(/[\u0137]/g, "k")
+            .replace(/[\u0139\u013B\u013D\u013F\u0141]/g, "l") .replace(/[\u013A\u013C\u013E\u0140\u0142]/g, "l")
+            .replace(/[\u0143\u0145\u0147]/g, "n") .replace(/[\u0144\u0146\u0148]/g, "n")
+            .replace(/[\u014C\u014E\u0150]/g, "o") .replace(/[\u014D\u014F\u0151]/g, "o")
+            .replace(/[\u0152]/g, "oe") .replace(/[\u0153]/g, "oe")
+            .replace(/[\u0154\u0156\u0158]/g, "r") .replace(/[\u0155\u0157\u0159]/g, "r")
+            .replace(/[\u015A\u015C\u015E\u0160]/g, "s") .replace(/[\u015B\u015D\u015F\u0161]/g, "s")
+            .replace(/[\u0162\u0164\u0166]/g, "t") .replace(/[\u0163\u0165\u0167]/g, "t")
+            .replace(/[\u0168\u016A\u016C\u016E\u0170\u0172]/g, "u") .replace(/[\u0169\u016B\u016D\u016F\u0171\u0173]/g, "u")
+            .replace(/[\u0174]/g, "w") .replace(/[\u0175]/g, "w")
+            .replace(/[\u0176\u0178]/g, "y") .replace(/[\u0177]/g, "y")
+            .replace(/[\u0179\u017B\u017D]/g, "z") .replace(/[\u017A\u017C\u017E]/g, "z")
+            .replace(/\u017F/g, "s");
+    }
+
     function NormalizeStorageHeroSignatureAbilityName(text) {
         var clean = CleanStorageHeroSignatureText(text);
         if (!clean) return "";
-        var normalized = clean
-            .toLowerCase()
-            .replace(/&amp;/g, "and")
+        // Language-agnostic ASCII folding replaces .toLowerCase():
+        // FoldToAscii maps ALL Latin-script characters to ASCII base
+        // in a single pass - no per-language branches needed.
+        var folded = FoldToAscii(clean).toLowerCase();
+        var normalized = folded
+            .replace(/&/g, "and")
             .replace(/[^a-z0-9]+/g, "_")
             .replace(/^_+|_+$/g, "");
+        // [LANG DIAG] One-shot diagnostic
+        if (!_sigFoldDiagLogged) {
+            _sigFoldDiagLogged = true;
+            $.Msg('[QOLLock][LANG] NormalizeStorageHeroSignatureAbilityName: raw="' + String(text) + '" clean="' + String(clean) + '" folded="' + String(folded) + '" normalized="' + String(normalized) + '"');
+        }
         if (!normalized) return "";
+        // Language-agnostic fallback: use locale lookup table (generated from
+        // Deadlock's localization files) to resolve translated ability names
+        // like "Hayat İpliği" → "ability_skyrunner_swingline".
+        if (typeof QOL !== "undefined" && typeof QOL.lookupLocaleAbility === "function") {
+            var localeAbility = QOL.lookupLocaleAbility(clean);
+            if (localeAbility) {
+                $.Msg("[QOLLock][LANG] NormalizeStorageHeroSignatureAbilityName: locale lookup resolved \"" + String(clean) + "\" → \"" + String(localeAbility) + "\"");
+                return localeAbility;
+            }
+        }
         if (normalized.indexOf("rutger") !== -1 && normalized.indexOf("rocket") !== -1) return "rutger_rocket";
         if (normalized.indexOf("hyper") !== -1 && normalized.indexOf("beam") !== -1) return "hyper_beam";
         if (normalized.indexOf("skyrunner") !== -1 && normalized.indexOf("magic") !== -1 && normalized.indexOf("beam") !== -1) return "ability_skyrunner_magic_beam";
         if (normalized.indexOf("skyrunner") !== -1 && normalized.indexOf("ability02") !== -1) return "ability_skyrunner_magic_beam";
         return normalized;
     }
+
 
     function AddStorageSignatureScanRoot(roots, panel) {
         if (!panel || !IsPanelValid(panel)) return;
@@ -8195,6 +8278,8 @@ function GetUIRoot() {
         if (State.buildCategoryPayloadHeroProbeInitRetries >= BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES) return false;
 
         var stage = State.buildCategoryPayloadHeroProbeInitStage || "browse";
+        // [LANG DIAG] Trace stage progression
+        $.Msg("[QOLLock][LANG] EnsureStorageBuildInitialized: stage=" + stage + " retries=" + String(Number(State.buildCategoryPayloadHeroProbeInitRetries) || 0) + " createAttempts=" + String(Number(State.buildCategoryPayloadHeroProbeInitCreateAttempts) || 0));
         var activated = false;
         var progressed = false;
         State.buildCategoryPayloadHeroProbeInitAttempted = true;
@@ -8225,6 +8310,15 @@ function GetUIRoot() {
             }
 
             var createAttempts = Number(State.buildCategoryPayloadHeroProbeInitCreateAttempts) || 0;
+            // If we already triggered a build creation and it hasn't appeared
+            // in the list yet, don't create duplicates — skip to create_verify.
+            if (createAttempts > 0) {
+                stage = "create_verify";
+                State.buildCategoryPayloadHeroProbeInitRetries += 1;
+                State.buildCategoryPayloadHeroProbeInitStage = stage;
+                State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
+                return false;
+            }
             var loaderSessionCreateAttempts = Number(State.buildCategoryPayloadLoaderSessionCreateAttempts) || 0;
             var enforceLoaderSessionCap = !!State.settingsLoaderSessionActive;
             if (enforceLoaderSessionCap && loaderSessionCreateAttempts >= BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS) {
@@ -8272,6 +8366,8 @@ function GetUIRoot() {
             SetCachedPanel("shopModsSelectedBuild", selectedBuild);
 
             var createdSignal = !IsStorageBuildListEmpty(root);
+            // [LANG DIAG] Trace build detection after create
+            $.Msg("[QOLLock][LANG] EnsureStorageBuildInitialized: stage=create_verify createdSignal=" + (createdSignal ? "1" : "0") + " heroBuildItems=" + String(CountHeroBuildListItems(root, true)) + " storageEmpty=" + (IsStorageBuildListEmpty(root) ? "1" : "0"));
             var saveLookupVerify = FindSaveBuildButtonStrict(root, selectedBuild);
             var saveBtnVerify = saveLookupVerify && saveLookupVerify.panel ? saveLookupVerify.panel : null;
             if (createdSignal) {
@@ -9821,15 +9917,30 @@ function GetUIRoot() {
         var selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
         if (selectedBuild && IsPanelValid(selectedBuild)) {
             try {
-                if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) return true;
+                if (selectedBuild.BHasClass && selectedBuild.BHasClass("NoBuild")) {
+                    $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning TRUE (NoBuild class)");
+                    return true;
+                }
             } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        }
+        // Check actual build items FIRST — more reliable than create button
+        // visibility (the create button is always visible in Deadlock's UI).
+        var heroBuildItemsTotal = CountHeroBuildListItems(root, true);
+        $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: heroBuildItemsTotal=" + String(heroBuildItemsTotal));
+        if (heroBuildItemsTotal > 0) {
+            $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning FALSE (heroBuildItemsTotal>0)");
+            return false;
+        }
+        if (heroBuildItemsTotal === 0) {
+            $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning TRUE (heroBuildItemsTotal=0)");
+            return true;
         }
         var createLookupStrict = FindCreateBuildButtonStrict(root);
         var createBtnStrict = createLookupStrict && createLookupStrict.panel ? createLookupStrict.panel : null;
-        if (createBtnStrict && IsPanelVisibleMaybe(createBtnStrict)) return true;
-        var heroBuildItemsTotal = CountHeroBuildListItems(root, true);
-        if (heroBuildItemsTotal === 0) return true;
-        if (heroBuildItemsTotal > 0) return false;
+        if (createBtnStrict && IsPanelVisibleMaybe(createBtnStrict)) {
+            $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning TRUE (createBtn visible)");
+            return true;
+        }
         if (CollectStorageBuildEntryPanels(root, true).length > 0) return false;
         if (!selectedBuild || !IsPanelValid(selectedBuild)) {
             var createLookupMissingSelected = FindCreateBuildButton(root);
@@ -9934,16 +10045,24 @@ function GetUIRoot() {
             if (!host || !host.FindChildTraverse) continue;
             var panel = null;
             try { panel = host.FindChildTraverse("HeroBuildList"); } catch (e0) { panel = null; }
-            if (panel && IsPanelValid(panel)) return panel;
+            if (panel && IsPanelValid(panel)) {
+                $.Msg("[QOLLock][LANG] FindHeroBuildListPanel: FOUND at root " + String(i) + "/" + String(roots.length));
+                return panel;
+            }
         }
+        $.Msg("[QOLLock][LANG] FindHeroBuildListPanel: NOT FOUND across " + String(roots.length) + " roots");
         return null;
     }
 
     function CountHeroBuildListItems(root, includeHidden) {
         var listPanel = FindHeroBuildListPanel(root);
-        if (!listPanel || !IsPanelValid(listPanel) || !listPanel.FindChildrenWithClassTraverse) return -1;
+        if (!listPanel || !IsPanelValid(listPanel) || !listPanel.FindChildrenWithClassTraverse) {
+            $.Msg("[QOLLock][LANG] CountHeroBuildListItems: listPanel not found, returning -1");
+            return -1;
+        }
         var items = [];
         try { items = listPanel.FindChildrenWithClassTraverse("HeroBuildListItem") || []; } catch (e0) { items = []; }
+        $.Msg("[QOLLock][LANG] CountHeroBuildListItems: found " + String(items.length) + " HeroBuildListItem(s)");
         if (!items || items.length < 1) return 0;
         if (includeHidden === true) return items.length;
         var visibleCount = 0;

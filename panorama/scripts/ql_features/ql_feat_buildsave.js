@@ -327,6 +327,17 @@ function ResetBuildSaveRequestAttributes(root) {
     function ConfirmBuildSaveStorageHero(root, nowMs) {
         _TLog("save:ConfirmStorage", "nowMs=" + nowMs);
         if (State.buildSaveStorageHeroConfirmed) return true;
+        // Language-agnostic bypass: if the load pipeline (ql_feat_buildload.js)
+        // has already confirmed Skyrunner via switch+timeout, trust that
+        // confirmation and skip text-based hero detection. This prevents the
+        // save pipeline from failing on non-English locales where
+        // tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader cannot
+        // parse localized hero names.
+        if (State.buildCategoryPayloadSkyrunnerHeaderConfirmed) {
+            State.buildSaveStorageHeroConfirmed = true;
+            State.buildSaveStorageHeroConfirmedSource = "loader_bypass";
+            return true;
+        }
         var signal = QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root);
         var hero = QOL.normalizeHeroId(signal.hero);
         var source = signal.source ? String(signal.source) : "shopFavoritesHeaderMissing";
