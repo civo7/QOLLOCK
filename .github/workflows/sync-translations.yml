@@ -1,11 +1,36 @@
 name: Sync translations to public repo
 
+# Regenerates the public mirror (Predi-i/QOLLOCK-translations) from the in-code
+# language maps in panorama/scripts/ql_settings.js and pushes any new strings.
+#
+# This is the private -> public half of the pipeline (the same job the local
+# export_locales.bat does by hand). It runs the overwrite-safe export, so it only
+# ADDS newly-appeared English/translation strings to the mirror and never reverts
+# community work already living there. The public -> private direction (merging
+# finished translations back into the maps) stays a manual step: pull the mirror
+# and run scripts/import_locales_json.js. See locales/WORKFLOW.md in the mirror.
+#
+# Required secret (in this repo, civo7/QOLLOCK):
+#   PUBLIC_REPO_PAT — a fine-grained PAT with Contents: read & write on
+#                     Predi-i/QOLLOCK-translations. See WORKFLOW.md for setup.
+
 on:
+  # Daily, at an off-peak odd minute so it does not pile onto the top of the hour.
+  schedule:
+    - cron: '23 4 * * *'
+  # Manual "Run workflow" button.
+  workflow_dispatch:
+  # Fallback: also run when the maps change on main.
   push:
     branches: [main]
     paths:
-      - 'translations/locales/**'
-  workflow_dispatch:
+      - 'panorama/scripts/ql_settings.js'
+      - 'scripts/export_locales_json.js'
+
+# Prevent overlapping runs from racing on the push to the public repo.
+concurrency:
+  group: sync-translations
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -23,20 +48,28 @@ jobs:
           token: ${{ secrets.PUBLIC_REPO_PAT }}
           path: public
 
-      - name: Sync locales folder
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Export locales into the public mirror (overwrite-safe merge)
+        run: node qollock/scripts/export_locales_json.js public/locales
+
+      - name: Commit and push if changed
         run: |
-          rsync -av --delete qollock/translations/locales/ public/locales/
+          set -euo pipefail
           cd public
-          git config user.name "QOLLOCK Bot"
+          git config user.name  "QOLLOCK Bot"
           git config user.email "noreply@github.com"
           if git diff --quiet; then
-            echo "No changes to sync"
+            echo "No new strings to sync"
             exit 0
           fi
           git add -A
           git commit -m "Sync translations from private QOLLOCK@${{ github.sha }}
 
-          Auto-sync triggered by push to main in private repo.
+          Auto-sync of new source strings from the private repo maps.
 
           Co-Authored-By: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
           git push
