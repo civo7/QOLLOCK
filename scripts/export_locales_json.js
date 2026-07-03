@@ -33,9 +33,19 @@ const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_pres
 const bridgePath = path.join(projectRoot, "panorama", "scripts", "ql_bridge.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 // When called from export_locales.bat a mirror path (QOLLOCK-translations/locales) is passed as
-// argv[2] so the output lands in the public repo the workbench reads from. Without an argument
-// (direct `node` call) we fall back to the local translations/locales directory.
-const outRoot = process.argv[2] ? path.resolve(process.argv[2]) : path.join(projectRoot, "translations", "locales");
+// the first positional arg so the output lands in the public repo the workbench reads from.
+// Without one (direct `node` call) we fall back to the local translations/locales directory.
+//
+// OVERWRITE SAFETY (default): the public <lang>/translation.json is the live baseline that the
+// workbench and merged community PRs write to. It can be *ahead* of the in-code maps (someone
+// translated a string that has not been imported back into ql_settings.js yet). A blind rewrite
+// would silently revert that work. So by default we MERGE: existing public values are kept, and
+// we only ADD keys the public file is missing. Pass --replace to force the old behaviour (emit
+// the maps verbatim, dropping anything not in them). en/ is always a full regenerate (it is the
+// identity source catalog, so it must mirror the current key set exactly).
+const REPLACE = process.argv.includes("--replace");
+const positional = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const outRoot = positional[0] ? path.resolve(positional[0]) : path.join(projectRoot, "translations", "locales");
 
 // i18next locale code (the <lang> directory name) -> in-code map variable. The code is just the
 // directory name the workbench uses; what matters is that this mapping is identical in
@@ -52,7 +62,9 @@ const LANGUAGES = [
     { code: "fr", mapVar: "SETTINGS_FR_TEXT" },
     { code: "pt", mapVar: "SETTINGS_PT_TEXT" },
     { code: "pt-BR", mapVar: "SETTINGS_PT_BR_TEXT" },
-    { code: "es", mapVar: "SETTINGS_ES_TEXT" }
+    { code: "es", mapVar: "SETTINGS_ES_TEXT" },
+    { code: "ko", mapVar: "SETTINGS_KO_TEXT" },
+    { code: "it", mapVar: "SETTINGS_IT_TEXT" }
 ];
 
 // ── Minimal Panorama sandbox (mirrors export_translations.js / validate_compact_schema.js) ──
@@ -141,6 +153,23 @@ function writeFlatJson(file, pairs) {
     fs.writeFileSync(file, JSON.stringify(obj, null, 2) + "\n", "utf8");
 }
 
+// Read the current public <lang>/translation.json as a flat { key: value } map, or {} if it does
+// not exist yet. Used to preserve values already live in the mirror when merging (overwrite-safe).
+function readExistingFlat(file) {
+    if (!fs.existsSync(file)) return {};
+    try {
+        const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+        const out = {};
+        for (const k of Object.keys(parsed)) {
+            if (typeof parsed[k] === "string") out[k] = parsed[k];
+        }
+        return out;
+    } catch (e) {
+        console.error(`[locales] WARNING: could not parse existing ${file} (${e.message}); treating as empty`);
+        return {};
+    }
+}
+
 function main() {
     const maps = loadMaps();
 
@@ -154,19 +183,51 @@ function main() {
     writeFlatJson(path.join(outRoot, "en", "translation.json"), keys.map(k => [k, k]));
     console.log(`[locales] en      ${String(keys.length).padStart(5)} source strings`);
 
+    const keySet2 = new Set(keys); // for orphan detection: which keys the current source still has
     for (const l of LANGUAGES) {
         const m = maps[l.mapVar] || {};
-        // Only emit keys with a non-empty translation. Missing keys stay absent so the workbench
-        // reports them as untranslated rather than as the English string.
-        const pairs = keys
-            .filter(k => Object.prototype.hasOwnProperty.call(m, k) && m[k] !== "")
-            .map(k => [k, m[k]]);
-        writeFlatJson(path.join(outRoot, l.code, "translation.json"), pairs);
-        const pct = keys.length ? Math.round((pairs.length / keys.length) * 100) : 0;
-        console.log(`[locales] ${l.code.padEnd(6)} ${String(pairs.length).padStart(5)} / ${keys.length}  (${pct}%)`);
+        const file = path.join(outRoot, l.code, "translation.json");
+
+        // Translations coming from the in-code maps (non-empty only). Missing keys stay absent so
+        // the workbench reports them as untranslated rather than as the English string.
+        const fromMap = {};
+        for (const k of keys) {
+            if (Object.prototype.hasOwnProperty.call(m, k) && m[k] !== "") fromMap[k] = m[k];
+        }
+
+        let out, added = 0, kept = 0;
+        if (REPLACE) {
+            // Old behaviour: the maps win outright.
+            out = fromMap;
+        } else {
+            // Overwrite-safe merge: start from what is already live in the mirror (community /
+            // workbench work, possibly ahead of the maps), then fill in only the keys it is
+            // missing from the in-code maps. Never overwrite an existing public value.
+            const existing = readExistingFlat(file);
+            out = Object.assign({}, existing);
+            for (const k of Object.keys(fromMap)) {
+                if (!Object.prototype.hasOwnProperty.call(out, k)) { out[k] = fromMap[k]; added++; }
+                else kept++;
+            }
+            // Orphans: keys the mirror carries that the current English source no longer has
+            // (string renamed or deleted in ql_settings.js). We KEEP them here — export must not
+            // destroy translations — but surface them so a human can retire them deliberately.
+            const orphans = Object.keys(existing).filter(k => !keySet2.has(k));
+            if (orphans.length) {
+                console.log(`[locales] ${l.code.padEnd(6)} ${orphans.length} orphaned key(s) (renamed/removed in source, kept):`);
+                for (const k of orphans.slice(0, 12)) console.log(`             · ${JSON.stringify(k)}`);
+                if (orphans.length > 12) console.log(`             … and ${orphans.length - 12} more`);
+            }
+        }
+
+        writeFlatJson(file, Object.keys(out).map(k => [k, out[k]]));
+        const count = Object.keys(out).length;
+        const pct = keys.length ? Math.round((count / keys.length) * 100) : 0;
+        const note = REPLACE ? "" : `  (+${added} new, ${kept} already present)`;
+        console.log(`[locales] ${l.code.padEnd(6)} ${String(count).padStart(5)} / ${keys.length}  (${pct}%)${note}`);
     }
 
-    console.log(`[locales] wrote ${LANGUAGES.length + 1} catalogs -> ${path.relative(projectRoot, outRoot)}`);
+    console.log(`[locales] wrote ${LANGUAGES.length + 1} catalogs -> ${path.relative(projectRoot, outRoot)}${REPLACE ? "  [--replace: maps win]" : "  [merge: mirror preserved]"}`);
 }
 
 main();
