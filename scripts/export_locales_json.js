@@ -64,7 +64,8 @@ const LANGUAGES = [
     { code: "pt-BR", mapVar: "SETTINGS_PT_BR_TEXT" },
     { code: "es", mapVar: "SETTINGS_ES_TEXT" },
     { code: "ko", mapVar: "SETTINGS_KO_TEXT" },
-    { code: "it", mapVar: "SETTINGS_IT_TEXT" }
+    { code: "it", mapVar: "SETTINGS_IT_TEXT" },
+    { code: "tr", mapVar: "SETTINGS_TR_TEXT" }
 ];
 
 // ── Minimal Panorama sandbox (mirrors export_translations.js / validate_compact_schema.js) ──

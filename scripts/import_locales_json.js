@@ -38,7 +38,7 @@ const CODE_TO_MAPVAR = {
     ru: "SETTINGS_RU_TEXT", uk: "SETTINGS_UK_TEXT", pl: "SETTINGS_PL_TEXT", bg: "SETTINGS_BG_TEXT",
     be: "SETTINGS_BY_TEXT", ja: "SETTINGS_JA_TEXT", zh: "SETTINGS_ZH_TEXT", fr: "SETTINGS_FR_TEXT",
     pt: "SETTINGS_PT_TEXT", "pt-BR": "SETTINGS_PT_BR_TEXT", es: "SETTINGS_ES_TEXT",
-    ko: "SETTINGS_KO_TEXT", it: "SETTINGS_IT_TEXT"
+    ko: "SETTINGS_KO_TEXT", it: "SETTINGS_IT_TEXT", tr: "SETTINGS_TR_TEXT"
 };
 
 // ── i18next flatten (identical to grimoire-translate src/lib/catalog.ts) ──
