@@ -1007,6 +1007,12 @@ function GetLanguageIconPath(languageValue) {
         languageIconName = "brazil";
     } else if (normalizedValue === String(SETTINGS_LANGUAGE_SPANISH)) {
         languageIconName = "spanish";
+    } else if (normalizedValue === String(SETTINGS_LANGUAGE_KOREAN)) {
+        languageIconName = "korean";
+    } else if (normalizedValue === String(SETTINGS_LANGUAGE_ITALIAN)) {
+        languageIconName = "italian";
+    } else if (normalizedValue === String(SETTINGS_LANGUAGE_TURKISH)) {
+        languageIconName = "turkish";
     }
     return "s2r://panorama/images/qollock/" + languageIconName + "_png.vtex";
 }
@@ -12176,6 +12182,9 @@ function GetSettingsLanguage() {
     if (raw === SETTINGS_LANGUAGE_PORTUGUESE) return SETTINGS_LANGUAGE_PORTUGUESE;
     if (raw === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) return SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE;
     if (raw === SETTINGS_LANGUAGE_SPANISH) return SETTINGS_LANGUAGE_SPANISH;
+    if (raw === SETTINGS_LANGUAGE_KOREAN) return SETTINGS_LANGUAGE_KOREAN;
+    if (raw === SETTINGS_LANGUAGE_ITALIAN) return SETTINGS_LANGUAGE_ITALIAN;
+    if (raw === SETTINGS_LANGUAGE_TURKISH) return SETTINGS_LANGUAGE_TURKISH;
     return SETTINGS_LANGUAGE_ENGLISH;
 }
 
@@ -12236,6 +12245,9 @@ function GetSettingsLanguageKey() {
     if (lang === SETTINGS_LANGUAGE_PORTUGUESE) return "pt";
     if (lang === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE) return "pt-br";
     if (lang === SETTINGS_LANGUAGE_SPANISH) return "es";
+    if (lang === SETTINGS_LANGUAGE_KOREAN) return "ko";
+    if (lang === SETTINGS_LANGUAGE_ITALIAN) return "it";
+    if (lang === SETTINGS_LANGUAGE_TURKISH) return "tr";
     return "en";
 }
 
@@ -22595,8 +22607,16 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             } else if (configId === "LANGUAGE") {
                 optionConfigValue = Math.round(Number(opt.value));
                 if (!isFinite(optionConfigValue)) optionConfigValue = SETTINGS_LANGUAGE_ENGLISH;
-                if (optionConfigValue < SETTINGS_LANGUAGE_ENGLISH) optionConfigValue = SETTINGS_LANGUAGE_ENGLISH;
-                if (optionConfigValue > SETTINGS_LANGUAGE_BELARUSIAN) optionConfigValue = SETTINGS_LANGUAGE_BELARUSIAN;
+                // Validate against SETTINGS_LANGUAGE_OPTIONS (the list that's already kept
+                // current whenever a language is added) instead of a hardcoded max value -
+                // a hardcoded upper bound here previously went stale and silently clamped
+                // every language added after Belarusian (Korean/Italian/Turkish) back down
+                // to Belarusian whenever their button was clicked.
+                var isValidLanguageValue = false;
+                for (var langOptIdx = 0; langOptIdx < SETTINGS_LANGUAGE_OPTIONS.length; langOptIdx++) {
+                    if (SETTINGS_LANGUAGE_OPTIONS[langOptIdx].value === optionConfigValue) { isValidLanguageValue = true; break; }
+                }
+                if (!isValidLanguageValue) optionConfigValue = SETTINGS_LANGUAGE_ENGLISH;
             }
             var updateBtn = function() {
                 btn.SetHasClass("Active", MOD_CONFIG[configId] === optionConfigValue);
