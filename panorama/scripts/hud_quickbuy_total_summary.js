@@ -161,7 +161,7 @@ function FindQuickbuyHostPanel(startPanel){
 		if(!panel.GetParent)break;
 		panel=panel.GetParent();
 	}
-	return FindChildTraverseInAncestors(startPanel,'CitadelHudQuickbuy');
+	return FindRverseInAncestors(startPanel,'CitadelHudQuickbuy');
 }
 
 function IsEnhancedQuickbuyActive(contextPanel){
