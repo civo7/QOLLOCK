@@ -26,7 +26,7 @@
     // citadel_koth_respawn_interval   = 420s (7 min between spawns)
     var RIFT_INITIAL_DELAY_SEC = 12 * 60 + 25;      // 720 — accumulator + 25
     var RIFT_RESPAWN_INTERVAL_SEC = 7 * 60;    // 420
-    var RIFT_EARLY_WARNING_SEC = 25;           // koth_warning → spawn
+    var RIFT_EARLY_WARNING_SEC = 20;           // koth_warning → spawn
     var RIFT_SPAWN_JITTER_SEC = 60;
     var RIFT_MINIMAP_POLL_INTERVAL_MS = 500;
     var RIFT_DEBUG = false;
