@@ -344,16 +344,6 @@ CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
 	background-color: gradient(linear, 0% 0%, 100% 0%, from(#FFFFFFFF), color-stop(0.70, #FFFFFFFF), color-stop(0.85, #FFFFFF08), to(#FFFFFF00));
 }
 
-.missing_hero_disabled #TeamScoreFriendly .ScoreBG
-{
-	background-color: #FFFFFFFF;
-}
-
-.missing_hero_disabled #TeamScoreEnemy .ScoreBG
-{
-	background-color: #FFFFFFFF;
-}
-
 .ScoreLabel
 {
 	font-size: 22px !important;
@@ -460,12 +450,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
     flow-children: right;
 }
 
-.missing_hero_disabled #UrnTracker
-{
-	background-color: #FFFFFFFF;
-}
-
-.obj_map_disabled #UrnTracker
 {
 	width: 145px !important;
 	margin-right: 40px !important;
@@ -551,12 +535,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
 }
 
-.missing_hero_disabled #RiftTimer
-{
-	background-color: #FFFFFFFF;
-}
-
-.obj_map_disabled #RiftTimer
 {
 	width: 145px !important;
 	margin-left: 40px !important;
@@ -591,7 +569,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	pointer-events: none;
 }
 
-.rift_timer_disabled #RiftTimer.show
+.rift_timer_disabled #RiftTimer
 {
 	opacity: 0;
 }
