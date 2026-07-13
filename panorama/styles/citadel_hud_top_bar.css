@@ -536,6 +536,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
 }
 
+.obj_map_disabled #RiftTimer
 {
 	width: 145px !important;
 	margin-left: 40px !important;
