@@ -1020,6 +1020,8 @@ const COMPACT_DEFAULT_HERO_FIELD = "DEFAULT_HERO_INDEX";
 
 // QOL_PRESETS always available — ql_shared_presets.js loads first
 const PRESETS = QOL_PRESETS;
+const BREAD_PRESET_NAME = "BreadRollius";
+const LEGACY_BREAD_PRESET_NAME = "Bread";
 
 // (Storage/color bridge constants now live in ql_bridge.js — Phase 4)
 const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
@@ -16891,6 +16893,7 @@ function BuildConfigDiffRows(currentConfig, nextConfig) {
 }
 
 function BuildPresetCandidateConfigByName(presetName) {
+    presetName = NormalizeBreadPresetName(presetName);
     var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
     if (!presetData) return null;
 
@@ -20080,7 +20083,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "iKaritzu", preset: "iKaritzu" });
     entries.push({ label: "Scuffed", preset: "Scuffed" });
     entries.push({ label: "Gyzeh", preset: "Gyzeh" });
-    entries.push({ label: "Bread", preset: "Bread" });
+    entries.push({ label: BREAD_PRESET_NAME, preset: BREAD_PRESET_NAME });
     entries.push({ label: "bonclide", preset: "bonclide" });
     entries.push({ label: "Saintmxsm", preset: "Saintmxsm" });
     entries.push({ label: "Zer0", preset: "Zer0" });
@@ -20108,6 +20111,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Jaundice", preset: "Jaundice" });
     entries.push({ label: "Xavier", preset: "Xavier" });
     entries.push({ label: "Spookyy", preset: "Spookyy" });
+    entries.push({ label: "Specty", preset: "Specty" });
     entries.push({ label: "Wirdly", preset: "Wirdly" });
     entries.push({ label: "Radiant", preset: "Radiant" });
     entries.push({ label: "Chumba", preset: "Chumba" });
@@ -20128,6 +20132,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "k49", preset: "k49" });
     entries.push({ label: "ninjabladejr", preset: "ninjabladeJr" });
     entries.push({ label: "FlintSnow", preset: "FlintSnow" });
+    entries.push({ label: "Fiizypopdrinkk", preset: "Fiizypopdrinkk" });
     entries.push({ label: "Steqdyy", preset: "Steqdyy" });
     entries.push({ label: "Synapses_", preset: "Synapses_" });
     entries.push({ label: "Gerglee", preset: "Gerglee" });
@@ -20150,7 +20155,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Anguish", preset: "Anguish" });
     entries.push({ label: "_ZODUK_", preset: "_ZODUK_" });
     entries.push({ label: "nkonin.me", preset: "nkonin.me" });
-    entries.push({ label: "ani", preset: "ani" });
+    entries.push({ label: "loony", preset: "loony" });
     entries.push({ label: "leah", preset: "leah" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
@@ -23525,11 +23530,21 @@ function ApplyPresetConfig(presetData) {
     return true;
 }
 
+function IsBreadPresetName(presetName) {
+    var name = String(presetName || "");
+    return name === BREAD_PRESET_NAME || name === LEGACY_BREAD_PRESET_NAME;
+}
+
+function NormalizeBreadPresetName(presetName) {
+    return IsBreadPresetName(presetName) ? BREAD_PRESET_NAME : String(presetName || "");
+}
+
 function ApplyPresetByName(presetName) {
+    presetName = NormalizeBreadPresetName(presetName);
     var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
     var previousLanguage = GetSettingsLanguage();
     if (!ApplyPresetConfig(presetData)) return false;
-    MOD_CONFIG.ACTIVE_PRESET_NAME = presetName === "Bread" ? "Bread" : "";
+    MOD_CONFIG.ACTIVE_PRESET_NAME = IsBreadPresetName(presetName) ? BREAD_PRESET_NAME : "";
     gLastAppliedPresetName = String(presetName || "");
     SetRuntimePresetName(presetName);
     SaveAndSync();
@@ -23553,10 +23568,13 @@ function RefreshActivePresetConfigMarkerBeforeSave() {
     if (!MOD_CONFIG || !MOD_CONFIG.hasOwnProperty("ACTIVE_PRESET_NAME")) return;
     var activePresetName = String(MOD_CONFIG.ACTIVE_PRESET_NAME || "");
     if (!activePresetName) {
-        if (DoesCurrentConfigMatchPreset("Bread")) MOD_CONFIG.ACTIVE_PRESET_NAME = "Bread";
+        if (DoesCurrentConfigMatchPreset(BREAD_PRESET_NAME)) MOD_CONFIG.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
         return;
     }
-    if (activePresetName === "Bread" && DoesCurrentConfigMatchPreset("Bread")) return;
+    if (IsBreadPresetName(activePresetName) && DoesCurrentConfigMatchPreset(BREAD_PRESET_NAME)) {
+        MOD_CONFIG.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
+        return;
+    }
     MOD_CONFIG.ACTIVE_PRESET_NAME = "";
     if (MOD_CONFIG.hasOwnProperty("ENABLE_UNSPENT_SOULS")) MOD_CONFIG.ENABLE_UNSPENT_SOULS = 0;
 }
@@ -23587,6 +23605,7 @@ function SetExplicitActivePresetButton(button) {
 
 function ResolvePresetConfigByName(presetName) {
     if (!presetName) return null;
+    presetName = NormalizeBreadPresetName(presetName);
     if (presetName !== "Default" && !PRESETS.hasOwnProperty(presetName)) return null;
 
     var resolved = {};

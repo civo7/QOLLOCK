@@ -22480,7 +22480,10 @@
 #SettingsWindow .PresetGridBtnUnavailable Label
 {
 	font-size: 11px;
-	letter-spacing: 0.58px;
+	letter-spacing: 0px;
+	width: 100%;
+	text-align: center;
+	text-overflow: shrink;
 }
 
 /* Preset palette alignment: keep the merged preset grid in QOL's green/charcoal

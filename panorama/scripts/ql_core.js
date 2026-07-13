@@ -5494,6 +5494,14 @@ function GetUIRoot() {
         }
     }
 
+    var BREAD_PRESET_NAME = "BreadRollius";
+    var LEGACY_BREAD_PRESET_NAME = "Bread";
+
+    function IsBreadPresetName(presetName) {
+        var name = String(presetName || "");
+        return name === BREAD_PRESET_NAME || name === LEGACY_BREAD_PRESET_NAME;
+    }
+
     function IsBreadPresetMatchKeyIgnored(key) {
         return key === "ACTIVE_PRESET_NAME" ||
             key === "DRAG_ENABLED" ||
@@ -5510,9 +5518,10 @@ function GetUIRoot() {
     }
 
     function DoesConfigMatchBreadPreset(cfg) {
-        if (!cfg || typeof QOL_PRESETS !== "object" || !QOL_PRESETS || !QOL_PRESETS.Bread) return false;
+        if (!cfg || typeof QOL_PRESETS !== "object" || !QOL_PRESETS) return false;
+        var bread = QOL_PRESETS[BREAD_PRESET_NAME] || QOL_PRESETS[LEGACY_BREAD_PRESET_NAME];
+        if (!bread) return false;
         var defaults = _BDC();
-        var bread = QOL_PRESETS.Bread;
         for (var key in defaults) {
             if (!defaults.hasOwnProperty(key) || IsBreadPresetMatchKeyIgnored(key)) continue;
             var expected = bread.hasOwnProperty(key) ? bread[key] : defaults[key];
@@ -5524,9 +5533,12 @@ function GetUIRoot() {
 
     function IsBreadPresetActive(cfg) {
         if (!cfg) return false;
-        if (String(cfg.ACTIVE_PRESET_NAME || "") === "Bread") return true;
+        if (IsBreadPresetName(cfg.ACTIVE_PRESET_NAME)) {
+            cfg.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
+            return true;
+        }
         if (!DoesConfigMatchBreadPreset(cfg)) return false;
-        cfg.ACTIVE_PRESET_NAME = "Bread";
+        cfg.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
         return true;
     }
 
