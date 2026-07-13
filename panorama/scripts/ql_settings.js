@@ -23552,7 +23552,10 @@ var PRESET_MATCH_EXCLUDED_KEYS = {
 function RefreshActivePresetConfigMarkerBeforeSave() {
     if (!MOD_CONFIG || !MOD_CONFIG.hasOwnProperty("ACTIVE_PRESET_NAME")) return;
     var activePresetName = String(MOD_CONFIG.ACTIVE_PRESET_NAME || "");
-    if (!activePresetName) return;
+    if (!activePresetName) {
+        if (DoesCurrentConfigMatchPreset("Bread")) MOD_CONFIG.ACTIVE_PRESET_NAME = "Bread";
+        return;
+    }
     if (activePresetName === "Bread" && DoesCurrentConfigMatchPreset("Bread")) return;
     MOD_CONFIG.ACTIVE_PRESET_NAME = "";
     if (MOD_CONFIG.hasOwnProperty("ENABLE_UNSPENT_SOULS")) MOD_CONFIG.ENABLE_UNSPENT_SOULS = 0;

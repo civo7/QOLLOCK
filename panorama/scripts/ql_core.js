@@ -5494,8 +5494,40 @@ function GetUIRoot() {
         }
     }
 
+    function IsBreadPresetMatchKeyIgnored(key) {
+        return key === "ACTIVE_PRESET_NAME" ||
+            key === "DRAG_ENABLED" ||
+            key === "PREVIEWS_ENABLED" ||
+            key === "SHOW_RANK" ||
+            key === "SHOW_RANK_TOPBAR";
+    }
+
+    function ArePresetMatchValuesEqual(a, b) {
+        if (typeof a === "number" && typeof b === "number") {
+            return Math.abs(a - b) <= 0.0001;
+        }
+        return a === b;
+    }
+
+    function DoesConfigMatchBreadPreset(cfg) {
+        if (!cfg || typeof QOL_PRESETS !== "object" || !QOL_PRESETS || !QOL_PRESETS.Bread) return false;
+        var defaults = _BDC();
+        var bread = QOL_PRESETS.Bread;
+        for (var key in defaults) {
+            if (!defaults.hasOwnProperty(key) || IsBreadPresetMatchKeyIgnored(key)) continue;
+            var expected = bread.hasOwnProperty(key) ? bread[key] : defaults[key];
+            var actual = cfg.hasOwnProperty(key) ? cfg[key] : defaults[key];
+            if (!ArePresetMatchValuesEqual(actual, expected)) return false;
+        }
+        return true;
+    }
+
     function IsBreadPresetActive(cfg) {
-        return !!(cfg && String(cfg.ACTIVE_PRESET_NAME || "") === "Bread");
+        if (!cfg) return false;
+        if (String(cfg.ACTIVE_PRESET_NAME || "") === "Bread") return true;
+        if (!DoesConfigMatchBreadPreset(cfg)) return false;
+        cfg.ACTIVE_PRESET_NAME = "Bread";
+        return true;
     }
 
     function ApplyForcedFeatureDisables(cfg) {
