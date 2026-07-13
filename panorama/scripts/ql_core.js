@@ -5532,6 +5532,7 @@ function GetUIRoot() {
 
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
+        cfg.ENABLE_MIN_SOULS = 0;
         if (!IsBreadPresetActive(cfg)) cfg.ENABLE_UNSPENT_SOULS = 0;
         // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
         // force-disabled here. Removed because no runtime gate or feature
