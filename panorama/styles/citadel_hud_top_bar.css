@@ -450,6 +450,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
     flow-children: right;
 }
 
+.obj_map_disabled #UrnTracker
 {
 	width: 145px !important;
 	margin-right: 40px !important;
