@@ -15520,6 +15520,7 @@ function SaveAndSync() {
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
+    RefreshActivePresetConfigMarkerBeforeSave();
     var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
@@ -23528,6 +23529,7 @@ function ApplyPresetByName(presetName) {
     var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
     var previousLanguage = GetSettingsLanguage();
     if (!ApplyPresetConfig(presetData)) return false;
+    MOD_CONFIG.ACTIVE_PRESET_NAME = presetName === "Bread" ? "Bread" : "";
     gLastAppliedPresetName = String(presetName || "");
     SetRuntimePresetName(presetName);
     SaveAndSync();
@@ -23543,8 +23545,18 @@ var gPresetHighlightRefreshToken = 0;
 var gLastAppliedPresetName = "";
 var PRESET_MATCH_EXCLUDED_KEYS = {
     DRAG_ENABLED: 1,
-    PREVIEWS_ENABLED: 1
+    PREVIEWS_ENABLED: 1,
+    ACTIVE_PRESET_NAME: 1
 };
+
+function RefreshActivePresetConfigMarkerBeforeSave() {
+    if (!MOD_CONFIG || !MOD_CONFIG.hasOwnProperty("ACTIVE_PRESET_NAME")) return;
+    var activePresetName = String(MOD_CONFIG.ACTIVE_PRESET_NAME || "");
+    if (!activePresetName) return;
+    if (activePresetName === "Bread" && DoesCurrentConfigMatchPreset("Bread")) return;
+    MOD_CONFIG.ACTIVE_PRESET_NAME = "";
+    if (MOD_CONFIG.hasOwnProperty("ENABLE_UNSPENT_SOULS")) MOD_CONFIG.ENABLE_UNSPENT_SOULS = 0;
+}
 
 function ResetPresetButtonRegistry() {
     gPresetButtonRegistry = {};

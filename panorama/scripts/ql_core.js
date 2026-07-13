@@ -5494,8 +5494,13 @@ function GetUIRoot() {
         }
     }
 
+    function IsBreadPresetActive(cfg) {
+        return !!(cfg && String(cfg.ACTIVE_PRESET_NAME || "") === "Bread");
+    }
+
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
+        if (!IsBreadPresetActive(cfg)) cfg.ENABLE_UNSPENT_SOULS = 0;
         // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
         // force-disabled here. Removed because no runtime gate or feature
         // execution path reads these values — they were dead writes.
@@ -14621,6 +14626,7 @@ function GetUIRoot() {
             cfg.ENABLE_HUD_SHIFT,
             cfg.SUPPORT_16_10,
             cfg.SUPPORT_4_3,
+            cfg.ACTIVE_PRESET_NAME,
             cfg.ENABLE_UNSPENT_SOULS,
             cfg.ENABLE_BETTER_UNSECURED,
             cfg.ENABLE_MIN_SOULS,
@@ -15210,6 +15216,7 @@ function GetUIRoot() {
             cfg.ENABLE_MINIMAP_REJUV_TIMER,
             cfg.ENABLE_MINIMAP_BUFF_TIMER,
             cfg.ENABLE_MIN_SOULS,
+            cfg.ACTIVE_PRESET_NAME,
             cfg.ENABLE_UNSPENT_SOULS,
             cfg.ENABLE_NICKNAMES,
             cfg.ENABLE_STATLOCKER,

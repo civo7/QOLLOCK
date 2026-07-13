@@ -2591,7 +2591,8 @@ var QOL_DEFAULT_CONFIG = {
         LANGUAGE: 0,
         DEFAULT_HERO: "hero_werewolf",
         DRAG_ENABLED: 1,
-        PREVIEWS_ENABLED: 1
+        PREVIEWS_ENABLED: 1,
+        ACTIVE_PRESET_NAME: ""
 };
 
 var QOL_PRESETS = {
@@ -2716,6 +2717,8 @@ var QOL_PRESETS = {
         DEFAULT_HERO: "hero_vampirebat"
     },
     "Bread": {
+        SHOW_RANK: 1,
+        SHOW_RANK_TOPBAR: 0,
         MINIMAP_SMALL_SIZE: 460,
         MINIMAL_MINIMAP: 1,
         MINIMAL_MINIMAP_OPACITY: 0.7,
@@ -2725,6 +2728,7 @@ var QOL_PRESETS = {
         VOICE_TYPE: 0,
         DISABLE_QUICK_BUY: 1,
         ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
+        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         RECENT_PURCHASES_QUICK_DISPLAY_SEC: 5,
         RECENT_PURCHASES_QUICK_Y_OFFSET: -20,
@@ -6123,6 +6127,13 @@ QOL_PRESETS["leah"] = {
     ULT_COOLDOWN_X_OFFSET: 0,
     ULT_COOLDOWN_Y_OFFSET: 0
 };
+
+(function() {
+    for (var presetName in QOL_PRESETS) {
+        if (!QOL_PRESETS.hasOwnProperty(presetName) || presetName === "Bread") continue;
+        QOL_PRESETS[presetName].ENABLE_UNSPENT_SOULS = 0;
+    }
+})();
 
 var QOL_ACCOUNT_PRESET_BINDINGS = {};
 
