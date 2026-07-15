@@ -1,0 +1,25 @@
+{
+  // Cloudflare Worker config for the QOLLOCK cloud settings store.
+  // Deploy with:  npx wrangler deploy   (run from this server/ directory)
+  //
+  // This is a SEPARATE worker from the Minigames relay. It stores each user's
+  // QOLLOCK HUD config, keyed by Steam32 account_id, and serves it back over the
+  // image side-channel (intrinsic <Image> dimensions) that Panorama exposes.
+  "name": "qollock-settings",
+  "main": "worker.js",
+  "compatibility_date": "2025-01-01",
+
+  // One strongly-consistent Durable Object per account holds that account's
+  // config blob + monotonic revision + a small write-rate log. Addressed by
+  // idFromName(account_id), so each account is an isolated instance.
+  "durable_objects": {
+    "bindings": [
+      { "name": "STORE", "class_name": "ConfigStore" }
+    ]
+  },
+
+  // SQLite-backed Durable Objects are available on the FREE Workers plan.
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ConfigStore"] }
+  ]
+}
