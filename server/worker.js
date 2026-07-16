@@ -67,18 +67,18 @@ export default {
     const p = url.pathname.replace(/\.png$/, "");
     const q = url.searchParams;
 
-    if (p === "/api/ping") return png(1, 1);
-    if (p === "/api/probe") return png(600, 1000);
+    if (p === "/api/ping") return await png(1, 1);
+    if (p === "/api/probe") return await png(600, 1000);
 
     if (p === "/api/save" || p === "/api/load") {
       const id = normalizeAccountId(q.get("id"));
-      if (!id) return png(9, 1); // bad / missing account id
+      if (!id) return await png(9, 1); // bad / missing account id
       // Each account is an isolated, strongly-consistent Durable Object instance.
       const stub = env.STORE.get(env.STORE.idFromName(id));
       return stub.fetch(request);
     }
 
-    return png(9, 1);
+    return await png(9, 1);
   },
 };
 
@@ -97,19 +97,19 @@ export class ConfigStore {
       if (p === "/api/save") return await this.handleSave(q);
       if (p === "/api/load") return await this.handleLoad(q);
     } catch (e) {
-      return png(9, 9); // internal error
+      return await png(9, 9); // internal error
     }
-    return png(9, 1);
+    return await png(9, 1);
   }
 
   async handleSave(q) {
     const rev = parseInt(q.get("rev"), 10);
     const d = q.get("d"); // base64url of the raw compact-binary config
-    if (!Number.isFinite(rev) || rev < 0 || !d) return png(9, 1);
+    if (!Number.isFinite(rev) || rev < 0 || !d) return await png(9, 1);
 
     // Decode base64url -> raw bytes. Reject anything that isn't clean base64url.
     const bytes = fromBase64Url(d);
-    if (!bytes) return png(9, 1);
+    if (!bytes) return await png(9, 1);
 
     // Sliding-window write rate limit. The only guard on an unauthenticated,
     // account_id-keyed store — keeps a griefer who knows an id from hammering it.
@@ -118,12 +118,12 @@ export class ConfigStore {
     hits = hits.filter((t) => now - t < RATE_WINDOW_MS);
     if (hits.length >= RATE_MAX_WRITES) {
       await this.storage.put("rate", hits);
-      return png(9, 2); // rate-limited
+      return await png(9, 2); // rate-limited
     }
 
     // Monotonic revision guard: never let a stale writer clobber newer config.
     const storedRev = (await this.storage.get("rev")) || 0;
-    if (rev <= storedRev) return png(9, 3); // stale revision
+    if (rev <= storedRev) return await png(9, 3); // stale revision
 
     hits.push(now);
     // Store the raw bytes as a plain array (DO storage serializes it). Keep the
@@ -133,18 +133,18 @@ export class ConfigStore {
       rev: rev,
       data: Array.from(bytes),
     });
-    return png(1, 1); // ok
+    return await png(1, 1); // ok
   }
 
   async handleLoad(q) {
     const chunk = parseInt(q.get("chunk"), 10);
-    if (!Number.isFinite(chunk) || chunk < 0) return png(9, 1);
+    if (!Number.isFinite(chunk) || chunk < 0) return await png(9, 1);
 
     const stored = await this.storage.get("data");
     if (!stored || stored.length === 0) {
       // Nothing saved for this account yet. Manifest (chunk 0) reports T=0 => (1,1);
       // any data chunk also reads (1,1). Client treats this as "use defaults".
-      return png(1, 1);
+      return await png(1, 1);
     }
 
     // Stream = config bytes + crc16(config bytes), big-endian. T = total stream bytes.
@@ -155,15 +155,15 @@ export class ConfigStore {
     if (chunk === 0) {
       // Manifest: dims encode the 16-bit total-byte count T (no +STEP scaling here —
       // T is a count, not a downlink byte, so it uses the full 1..256 range twice).
-      return png(((T >> 8) & 255) + 1, (T & 255) + 1);
+      return await png(((T >> 8) & 255) + 1, (T & 255) + 1);
     }
 
     // Data chunk i>=1 carries stream bytes [2(i-1)] and [2(i-1)+1].
     const base = 2 * (chunk - 1);
-    if (base >= T) return png(1, 1); // past the end
+    if (base >= T) return await png(1, 1); // past the end
     const b0 = stream[base];
     const b1 = base + 1 < T ? stream[base + 1] : 0; // pad final odd byte
-    return png(b0 * STEP + 1, b1 * STEP + 1);
+    return await png(b0 * STEP + 1, b1 * STEP + 1);
   }
 }
 
@@ -206,35 +206,48 @@ function crc16(bytes) {
 }
 
 /* ─────────────────────────── PNG encoder ───────────────────────────
- * Emits an 8-bit grayscale PNG of exactly W x H black pixels, zlib "stored"
- * (uncompressed) — the client only reads the dimensions. Ported verbatim from
- * the Minigames relay's proven encoder.
+ * Emits an 8-bit grayscale PNG of exactly W x H black pixels — the client only
+ * reads the dimensions, never the pixels. The IDAT is REAL deflate (via the
+ * platform CompressionStream), not stored/uncompressed: a field of zeros
+ * collapses to a few hundred bytes regardless of W x H.
+ *
+ * This matters for reachability, not just speed. An uncompressed 600x1000 probe
+ * is ~600 KB on the wire, and Russian ISP DPI throttles large TLS responses from
+ * *.workers.dev to a crawl (observed: tiny replies instant, the big probe stalls
+ * for 30s+ even though the Worker returns 200 immediately). A compressed probe is
+ * sub-KB, so there is nothing large left for DPI to choke — the whole protocol
+ * then rides on uniformly tiny responses. png() is async because CompressionStream
+ * is async; all call sites are in async handlers.
  */
-function png(w, h) {
+async function png(w, h) {
   w = Math.max(1, Math.min(w | 0, 8000));
   h = Math.max(1, Math.min(h | 0, 8000));
 
-  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  const ihdr = u32(w).concat(u32(h), [8, 0, 0, 0, 0]); // 8-bit, grayscale
+  // Raw PNG scanlines: each row = 1 filter byte (0) + w pixel bytes (0). All zero.
+  const raw = new Uint8Array(h * (1 + w));
+  const idat = await deflate(raw); // zlib-wrapped (RFC 1950), exactly what IDAT needs
 
-  const rawLen = h * (1 + w);
-  const zlib = [0x78, 0x01];
-  let off = 0;
-  do {
-    const blockLen = Math.min(65535, rawLen - off);
-    const final = off + blockLen >= rawLen ? 1 : 0;
-    zlib.push(final, blockLen & 255, (blockLen >> 8) & 255, ~blockLen & 255, (~blockLen >> 8) & 255);
-    for (let i = 0; i < blockLen; i++) zlib.push(0);
-    off += blockLen;
-  } while (off < rawLen);
-  zlib.push(...u32(adler32Zeros(rawLen)));
+  const total = 8 + (12 + 13) + (12 + idat.length) + 12;
+  const out = new Uint8Array(total);
+  let o = 0;
+  const put = (v) => { out[o++] = v & 255; };
+  const put4 = (n) => { put(n >>> 24); put(n >>> 16); put(n >>> 8); put(n); };
+  const putStr = (s) => { for (let i = 0; i < s.length; i++) put(s.charCodeAt(i)); };
 
-  const bytes = sig
-    .concat(chunk("IHDR", ihdr))
-    .concat(chunk("IDAT", zlib))
-    .concat(chunk("IEND", []));
+  for (const b of [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) put(b); // signature
 
-  return new Response(new Uint8Array(bytes), {
+  put4(13); let type = o; putStr("IHDR");                  // IHDR
+  put4(w); put4(h); put(8); put(0); put(0); put(0); put(0);
+  put4(crc32(out.subarray(type, o)));
+
+  put4(idat.length); type = o; putStr("IDAT");             // IDAT
+  out.set(idat, o); o += idat.length;
+  put4(crc32(out.subarray(type, o)));
+
+  put4(0); type = o; putStr("IEND");                       // IEND
+  put4(crc32(out.subarray(type, o)));
+
+  return new Response(out, {
     headers: {
       "content-type": "image/png",
       "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -243,21 +256,26 @@ function png(w, h) {
   });
 }
 
-function u32(n) {
-  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
-}
-
-function chunk(type, data) {
-  const t = [type.charCodeAt(0), type.charCodeAt(1), type.charCodeAt(2), type.charCodeAt(3)];
-  const body = t.concat(data);
-  return u32(data.length).concat(body, u32(crc32(body)));
-}
-
-function adler32Zeros(n) {
-  const MOD = 65521;
-  const a = 1;
-  const b = ((n % MOD) * 1) % MOD;
-  return ((b << 16) | a) >>> 0;
+// Deflate (zlib format) via the platform CompressionStream — present in both
+// Cloudflare Workers and Node 18+.
+async function deflate(bytes) {
+  const cs = new CompressionStream("deflate");
+  const writer = cs.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  const chunks = [];
+  let len = 0;
+  const reader = cs.readable.getReader();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    len += value.length;
+  }
+  const out = new Uint8Array(len);
+  let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
 }
 
 let CRC_TABLE = null;
