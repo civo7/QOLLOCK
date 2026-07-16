@@ -24,9 +24,11 @@
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_net.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildsave.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildload.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_cloudconfig.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_topbar.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottombar.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_items.vjs_c" />

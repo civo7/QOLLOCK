@@ -10682,6 +10682,10 @@ function GetUIRoot() {
     }
 
     function ProcessBuildRequestOrchestration(root, nowMs, cfg) {
+        // Cloud config (etap 3, Variant A): when enabled, ql_feat_cloudconfig.js
+        // consumes the BUILD_SAVE_REQUEST bridge and pushes to the cloud. Skip the
+        // old Skyrunner build-name save/clear machine entirely.
+        if (typeof QOL_USE_CLOUD_CONFIG !== "undefined" && QOL_USE_CLOUD_CONFIG === true) return;
         var perfSection = PerfStart();
         ProcessBuildSaveRequest(root, nowMs, cfg);
         PerfEnd("loop.build_save_request", perfSection);
@@ -15678,6 +15682,9 @@ function GetUIRoot() {
     }
 
     function applyBuildCategoryOverride(root, cfg, nowMs, raw) {
+        // Cloud config (etap 3, Variant A): when enabled, ql_feat_cloudconfig.js
+        // owns the boot load. Skip the old Skyrunner build-name probe entirely.
+        if (typeof QOL_USE_CLOUD_CONFIG !== "undefined" && QOL_USE_CLOUD_CONFIG === true) return cfg;
         if (QOL.shouldRunBuildCategoryPayloadOverride(root, nowMs)) {
             var perfSection = PerfStart();
             cfg = QOL.applyBuildCategoryPayloadOverride(root, cfg, nowMs, raw);
@@ -16267,6 +16274,7 @@ function GetUIRoot() {
         ["captureBuildSaveTargetSelection", function() { return CaptureBuildSaveTargetSelection; }],
         ["collectStorageBuildEntryPanels", function() { return CollectStorageBuildEntryPanels; }],
         ["deserializeBuildPayloadCompact", function() { return DeserializeBuildPayloadCompact; }],
+        ["resolveBuildPayloadCompactSemverFromWireVersion", function() { return ResolveBuildPayloadCompactSemverFromWireVersion; }],
         ["ensureShopFavoritesNavActive", function() { return EnsureShopFavoritesNavActive; }],
         ["ensureStorageHeroFavoritesHeaderVisible", function() { return EnsureStorageHeroFavoritesHeaderVisible; }],
         ["enterStartupCorruptRepairPrompt", function() { return EnterStartupCorruptRepairPrompt; }],

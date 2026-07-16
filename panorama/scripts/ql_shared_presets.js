@@ -37,6 +37,14 @@
 var QOL_SCHEMA_SEMVER = "3.1.9";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
+// ── Cloud settings kill-switch (etap 3, Variant A) ─────────────────────────
+// true  → ql_feat_cloudconfig.js handles load (boot) + save (Save button) over
+//         the image side-channel (QOL.net); the old Skyrunner build-name path
+//         is gated to a no-op.
+// false → the old build-name storage runs unchanged; cloud feature no-ops.
+// If cloud misbehaves in-game, flip to false and repack — old path is intact.
+var QOL_USE_CLOUD_CONFIG = true;
+
 // ---- Shared storage keys ----
 // Panel attribute used to persist config across sessions.
 var QOL_STORAGE_KEY = "Deadlock_Mod_Settings_v1";

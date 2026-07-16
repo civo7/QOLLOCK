@@ -2021,6 +2021,7 @@
     QOL.resetBuildCategoryPayloadReadOnlySourceBootstrapState = ResetBuildCategoryPayloadReadOnlySourceBootstrapState;
     QOL.tryFindBuildCategoryPayloadText = TryFindBuildCategoryPayloadText;
     QOL.tryParseBuildCategoryPayloadConfig = TryParseBuildCategoryPayloadConfig;
+    QOL.buildAppliedConfig = buildAppliedConfig;
     QOL.getAccountIdForBuildCategoryPayload = GetAccountIdForBuildCategoryPayload;
     QOL.confirmBuildCategoryPayloadStorageHero = ConfirmBuildCategoryPayloadStorageHero;
     QOL.tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader = TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader;
