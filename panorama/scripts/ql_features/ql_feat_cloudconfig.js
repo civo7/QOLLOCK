@@ -126,20 +126,33 @@
         State.cloudConfigBootDone = false;
 
         BeginSettingsLoaderSession(accountId, nowMs);
-        SetSettingsLoaderStepState("switch_airheart", "skipped", "Cloud store — no hero switch needed.");
-        SetSettingsLoaderStepState("confirm_airheart", "skipped", "Cloud store — no hero switch needed.");
-        SetSettingsLoaderStepState("read_payload", "active", "Fetching settings from cloud.");
+        SetSettingsLoaderStepState("read_payload", "active", "Connecting to cloud.");
         log("boot load start account=" + accountId);
+
+        // Live progress from the transport — updates the read_payload step detail
+        // so the user sees calibration → download %, not a frozen "Fetching".
+        function onProgress(phase, done, total) {
+            if (phase === "calibrate") {
+                SetSettingsLoaderStepState("read_payload", "active", "Calibrating transport.");
+            } else if (phase === "manifest") {
+                SetSettingsLoaderStepState("read_payload", "active", "Reading cloud manifest.");
+            } else if (phase === "chunks") {
+                var pct = total > 0 ? Math.floor((done / total) * 100) : 0;
+                SetSettingsLoaderStepState("read_payload", "active",
+                    "Downloading from cloud: " + pct + "% (" + done + "/" + total + " bytes)");
+            } else if (phase === "verify") {
+                SetSettingsLoaderStepState("read_payload", "active", "Verifying download.");
+            }
+        }
 
         QOL.net.load(accountId, function(bytes, reason) {
             try {
                 if (bytes && bytes.length > 0) {
-                    SetSettingsLoaderStepState("read_payload", "done", "Cloud payload received.");
-                    SetSettingsLoaderStepState("decode_payload", "active", "Decoding cloud payload.");
+                    SetSettingsLoaderStepState("read_payload", "done", "Downloaded " + bytes.length + " bytes.");
+                    SetSettingsLoaderStepState("decode_payload", "active", "Decoding settings.");
                     applyLoadedBytes(root, bytes);
-                    SetSettingsLoaderStepState("decode_payload", "done", "Payload decoded.");
-                    SetSettingsLoaderStepState("apply_config", "done", "Config applied from cloud.");
-                    SetSettingsLoaderStepState("return_hero", "skipped", "No hero return needed.");
+                    SetSettingsLoaderStepState("decode_payload", "done", "Settings decoded.");
+                    SetSettingsLoaderStepState("apply_config", "done", "Settings applied from cloud.");
                     FinalizeSettingsLoaderSession("success", "Loaded settings from cloud.", Date.now());
                     log("boot load ok account=" + accountId);
                 } else if (reason === "empty") {
@@ -148,7 +161,6 @@
                     SetSettingsLoaderStepState("decode_payload", "skipped", "Nothing to decode.");
                     applyDefaults(root);
                     SetSettingsLoaderStepState("apply_config", "done", "Using default settings.");
-                    SetSettingsLoaderStepState("return_hero", "skipped", "No hero return needed.");
                     FinalizeSettingsLoaderSession("success", "No cloud settings — defaults applied.", Date.now());
                     log("boot load empty account=" + accountId);
                 } else {
@@ -157,7 +169,8 @@
                     // "corrupt" is bad data — retrying won't help, so treat it as
                     // terminal (defaults stay, no re-arm loop).
                     var transient = (reason === "net" || reason === "timeout");
-                    SetSettingsLoaderStepState("read_payload", "error", "Cloud load failed (" + String(reason || "net") + ").");
+                    SetSettingsLoaderStepState("read_payload", "error",
+                        "Cloud load failed (" + String(reason || "net") + ")" + (transient ? " — retrying in 5s." : "."));
                     SetSettingsLoaderStepState("decode_payload", "skipped", "No payload decoded.");
                     SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
                     FinalizeSettingsLoaderSession("failed", "Cloud load failed: " + String(reason || "net"), Date.now());
@@ -175,7 +188,7 @@
             State.cloudConfigBootInFlight = false;
             State.cloudConfigBootDone = true;
             State.cloudConfigBootRetryNextMs = 0;
-        });
+        }, onProgress);
     }
 
     // ── Save: consume the settings-queued request and push it to the cloud ──

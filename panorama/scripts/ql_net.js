@@ -236,27 +236,44 @@
     // cb(bytes) with the raw config binary (feed to DeserializeBuildPayloadCompact),
     // or cb(null, reason) — reason: empty|net|corrupt|timeout. "empty" = nothing
     // stored for this account (use defaults), which is a success, not an error.
-    function load(accountId, cb) {
+    //
+    // onProgress(phase, done, total) — OPTIONAL live status hook, called as:
+    //   ("calibrate", 0, 0)         once calibration starts
+    //   ("manifest", 0, 0)          fetching the manifest (chunk 0)
+    //   ("chunks", got, totalBytes) after each data byte lands (got/total bytes)
+    //   ("verify", total, total)    reassembled, verifying crc
+    // Purely cosmetic — a wedge here never blocks the actual load.
+    function load(accountId, cb, onProgress) {
         function done(bytes, reason) { if (cb) { try { cb(bytes, reason); } catch (e) {} } }
+        function prog(phase, d, t) { if (onProgress) { try { onProgress(phase, d, t); } catch (e) {} } }
+        prog("calibrate", 0, 0);
         calibrate(function () {
             // Manifest (chunk 0): dims encode 16-bit total stream length T.
+            prog("manifest", 0, 0);
             rawRequestNow("/api/load", { id: accountId, chunk: 0 }, function (w, hh) {
                 var m = decodeWH(w, hh);
                 var T = (m.w - 1) * 256 + (m.h - 1);
                 if (T === 0) { log("load: nothing stored"); done(null, "empty"); return; }
                 if (T < 3) { log("load: bogus manifest T=" + T); done(null, "corrupt"); return; }
-                fetchStream(accountId, T, done);
+                fetchStream(accountId, T, done, prog);
             }, function (e) { done(null, e === "timeout" ? "timeout" : "net"); });
         }, function () { done(null, "net"); });
     }
 
     // Fetch all T stream bytes across ceil(T/2) data chunks, in self-tuning
     // parallel batches, then verify crc16. Re-request only chunks still missing.
-    function fetchStream(accountId, T, done) {
+    function fetchStream(accountId, T, done, prog) {
+        prog = prog || function () {};
         var nChunks = Math.ceil(T / 2);      // chunk index 1..nChunks
         var stream = new Array(T);
         var got = new Array(T);              // per-byte presence
         var attemptsLeft = 4;                // whole-stream repair passes
+        function reportChunks() {
+            var n = 0;
+            for (var i = 0; i < T; i++) if (got[i]) n++;
+            prog("chunks", n, T);
+        }
+        prog("chunks", 0, T);
 
         function bytesForChunk(i, r) {
             // chunk i (1-based) carries stream[2(i-1)] and stream[2(i-1)+1]
@@ -291,6 +308,7 @@
                 rawRequestNow("/api/load", { id: accountId, chunk: chunkIdx }, function (w, hh) {
                     batchInFlight--; okThisPass++;
                     bytesForChunk(chunkIdx, decodeWH(w, hh));
+                    reportChunks();
                     if (idx < pending.length) pump();
                     else if (batchInFlight === 0) finishPass();
                 }, function () {
@@ -310,6 +328,7 @@
         }
 
         function verify() {
+            prog("verify", T, T);
             var data = stream.slice(0, T - 2);
             var wantCrc = ((stream[T - 2] & 255) << 8) | (stream[T - 1] & 255);
             var gotCrc = crc16(data);

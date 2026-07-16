@@ -523,7 +523,19 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL = "Potential corrupt save detected.\nPlease open your shop to resolve.\nPlease patient and allow the loader to run.";
     const LOADER_DETAIL_SPINNER_FRAMES = ["|", "/", "-", "\\"];
     const LOADER_DETAIL_SPINNER_FRAME_MS = 180;
-    const SETTINGS_LOADER_STEPS = [
+    // Cloud config (etap 3) uses a short, relevant step list — no hero-switching.
+    // The old build path keeps its full Skyrunner sequence. Selected once at load
+    // by the QOL_USE_CLOUD_CONFIG flag; both share the "start"/"complete" bookends
+    // and the "read_payload"/"decode_payload"/"apply_config" keys the loader logic
+    // in ql_feat_cloudconfig.js / ql_feat_buildload.js drive.
+    const SETTINGS_LOADER_STEPS_CLOUD = [
+        { key: "start", label: "Connecting" },
+        { key: "read_payload", label: "Downloading From Cloud" },
+        { key: "decode_payload", label: "Decoding Settings" },
+        { key: "apply_config", label: "Applying Settings" },
+        { key: "complete", label: "Complete" }
+    ];
+    const SETTINGS_LOADER_STEPS_BUILD = [
         { key: "start", label: "Start" },
         { key: "switch_airheart", label: "Switching to Skyrunner" },
         { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
@@ -533,6 +545,10 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         { key: "return_hero", label: "Returning To Original Hero" },
         { key: "complete", label: "Complete" }
     ];
+    const SETTINGS_LOADER_STEPS =
+        (typeof QOL_USE_CLOUD_CONFIG !== "undefined" && QOL_USE_CLOUD_CONFIG === true)
+            ? SETTINGS_LOADER_STEPS_CLOUD
+            : SETTINGS_LOADER_STEPS_BUILD;
     const SAVE_SETTINGS_LOADER_ENABLED = true;
     const SAVE_SETTINGS_LOADER_REASSERT_MS = 250;
     const SAVE_SETTINGS_LOADER_HOLD_MS = 1000;
