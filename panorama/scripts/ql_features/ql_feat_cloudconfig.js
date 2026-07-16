@@ -106,12 +106,20 @@
         WriteStorageConfigRawToUi(root, wrapForStorage(defaults));
     }
 
+    // Retry backoff for transient network failures. Decode/corrupt failures are
+    // NOT retried (bad data won't fix itself) — only net/timeout re-arm this.
+    var BOOT_RETRY_BACKOFF_MS = 5000;
+
     function runBootLoad(root, nowMs) {
         if (State.cloudConfigBootInFlight) return;
         var accountId = GetAccountIdForBuildCategoryPayload(root);
         if (!accountId || accountId.length === 0) return;      // wait for account context
         if (!IsConnectedToHideout(root)) return;               // don't load into an active match
         if (String(State.cloudConfigBootAccountId || "") === accountId && State.cloudConfigBootDone) return;
+        // Transient-failure backoff: after a net/timeout failure we re-arm with a
+        // delay instead of hammering the transport every tick.
+        if (String(State.cloudConfigBootAccountId || "") === accountId &&
+            (Number(State.cloudConfigBootRetryNextMs) || 0) > nowMs) return;
 
         State.cloudConfigBootInFlight = true;
         State.cloudConfigBootAccountId = accountId;
@@ -144,20 +152,29 @@
                     FinalizeSettingsLoaderSession("success", "No cloud settings — defaults applied.", Date.now());
                     log("boot load empty account=" + accountId);
                 } else {
-                    // Network / corrupt failure — keep whatever config is present,
-                    // never corrupt it. Mark the loader failed but non-fatal.
+                    // Network failure — keep whatever config is present, never
+                    // corrupt it. net/timeout are transient: re-arm for retry.
+                    // "corrupt" is bad data — retrying won't help, so treat it as
+                    // terminal (defaults stay, no re-arm loop).
+                    var transient = (reason === "net" || reason === "timeout");
                     SetSettingsLoaderStepState("read_payload", "error", "Cloud load failed (" + String(reason || "net") + ").");
                     SetSettingsLoaderStepState("decode_payload", "skipped", "No payload decoded.");
                     SetSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
                     FinalizeSettingsLoaderSession("failed", "Cloud load failed: " + String(reason || "net"), Date.now());
-                    log("boot load fail account=" + accountId + " reason=" + String(reason));
+                    log("boot load fail account=" + accountId + " reason=" + String(reason) + (transient ? " (will retry)" : ""));
+                    State.cloudConfigBootInFlight = false;
+                    State.cloudConfigBootDone = !transient;
+                    State.cloudConfigBootRetryNextMs = transient ? (Date.now() + BOOT_RETRY_BACKOFF_MS) : 0;
+                    return;
                 }
             } catch (e) {
+                // Decode threw — bad payload bytes. Not retryable; leave current config.
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] load cb: " + (e && e.message ? e.message : e) + "\n" + (e && e.stack ? e.stack : ""));
                 try { FinalizeSettingsLoaderSession("failed", "Cloud load error.", Date.now()); } catch (e2) {}
             }
             State.cloudConfigBootInFlight = false;
             State.cloudConfigBootDone = true;
+            State.cloudConfigBootRetryNextMs = 0;
         });
     }
 
@@ -253,6 +270,7 @@
         },
         stateKeys: [
             "cloudConfigBootInFlight", "cloudConfigBootDone", "cloudConfigBootAccountId",
+            "cloudConfigBootRetryNextMs",
             "cloudConfigSaveInFlight", "cloudConfigLastSaveToken", "cloudConfigLastSaveDone"
         ]
     });
