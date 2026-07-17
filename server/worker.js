@@ -55,6 +55,16 @@ const STEP = 1;
 const RATE_WINDOW_MS = 10000; // sliding window
 const RATE_MAX_WRITES = 8;    // max saves per window per account
 
+// ── Write rate limit (per source IP) ──────────────────────────────────────
+// The per-account limit above stops a griefer from hammering ONE account, but
+// does nothing against a mass attack that writes 8x each to thousands of ids.
+// This second limit caps total writes from a single source IP regardless of
+// which accounts they target, which is what actually kills enumeration. Kept
+// generous (1/sec sustained) so many players behind one CGNAT/household IP are
+// never bothered, while a script firing thousands/sec is stopped cold.
+const RATE_IP_WINDOW_MS = 60000; // 60s sliding window
+const RATE_IP_MAX_WRITES = 60;   // max saves per window per source IP
+
 // ── Save input guards (unauthenticated store, so bound the inputs) ──────────
 // Revision is a client-supplied Date.now(); anyone who knows an account_id could
 // otherwise post a far-future rev and permanently stale-lock the real owner out
@@ -84,6 +94,24 @@ export default {
     if (p === "/api/save" || p === "/api/load") {
       const id = normalizeAccountId(q.get("id"));
       if (!id) return await png(9, 1); // bad / missing account id
+
+      // Writes get a second, per-source-IP gate BEFORE touching the account DO.
+      // This is the guard against mass enumeration (many accounts, few writes
+      // each) that the per-account limit can't see. Loads are read-only and
+      // harmless, so they skip it.
+      if (p === "/api/save") {
+        const ip = String(request.headers.get("CF-Connecting-IP") || "").trim();
+        if (ip) {
+          // A DO instance keyed by the IP holds that IP's sliding write log.
+          // Internal call, not seen by the game — it answers 200 ok / 429 over.
+          const ipStub = env.STORE.get(env.STORE.idFromName("ip:" + ip));
+          const gateUrl = new URL(request.url);
+          gateUrl.pathname = "/api/_ipgate";
+          const gate = await ipStub.fetch(new Request(gateUrl, request));
+          if (gate.status === 429) return await png(9, 2); // IP rate-limited
+        }
+      }
+
       // Each account is an isolated, strongly-consistent Durable Object instance.
       const stub = env.STORE.get(env.STORE.idFromName(id));
       return stub.fetch(request);
@@ -105,12 +133,30 @@ export class ConfigStore {
     const q = url.searchParams;
 
     try {
+      if (p === "/api/_ipgate") return await this.handleIpGate();
       if (p === "/api/save") return await this.handleSave(q);
       if (p === "/api/load") return await this.handleLoad(q);
     } catch (e) {
       return await png(9, 9); // internal error
     }
     return await png(9, 1);
+  }
+
+  // Per-IP sliding-window gate. This DO instance is keyed by "ip:<addr>", so its
+  // storage is that one IP's write log — independent of any account. Returns a
+  // plain 200 (under limit) or 429 (over); the top-level worker maps 429 to the
+  // (9,2) rate-limited PNG. Not an image route: the game never calls this.
+  async handleIpGate() {
+    const now = Date.now();
+    let hits = (await this.storage.get("iprate")) || [];
+    hits = hits.filter((t) => now - t < RATE_IP_WINDOW_MS);
+    if (hits.length >= RATE_IP_MAX_WRITES) {
+      await this.storage.put("iprate", hits);
+      return new Response("over", { status: 429 });
+    }
+    hits.push(now);
+    await this.storage.put("iprate", hits);
+    return new Response("ok", { status: 200 });
   }
 
   async handleSave(q) {

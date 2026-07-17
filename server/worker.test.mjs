@@ -42,6 +42,9 @@ async function dims(resp) {
 }
 
 const call = (path) => worker.fetch(new Request("https://x" + path), env);
+// Same, but with a CF-Connecting-IP header so the per-IP write gate engages.
+const callIp = (path, ip) =>
+  worker.fetch(new Request("https://x" + path, { headers: { "CF-Connecting-IP": ip } }), env);
 
 // ── base64url encode (matches client BuildPayloadToBase64Url output) ──
 function toB64Url(bytes) {
@@ -151,6 +154,29 @@ async function main() {
     if (d.w === 9 && d.h === 2) { limited = true; break; }
   }
   ok(limited, "write rate limit trips (9,2)");
+
+  // per-IP limit: spread writes across MANY distinct accounts from ONE ip, so the
+  // per-account limit never trips — only the per-IP gate (RATE_IP_MAX_WRITES=60)
+  // can stop this. This is the mass-enumeration vector.
+  const IP = "203.0.113.7";
+  let ipLimited = false, ipAcceptedBefore = 0;
+  for (let n = 0; n < 80; n++) {
+    const acct = "5000000" + (n < 10 ? "0" + n : n); // distinct 9-digit id per write
+    const d = await dims(await callIp("/api/save?id=" + acct + "&rev=1&d=" + toB64Url(payload), IP));
+    if (d.w === 9 && d.h === 2) { ipLimited = true; break; }
+    if (d.w === 1 && d.h === 1) ipAcceptedBefore++;
+  }
+  ok(ipLimited, "per-IP write limit trips (9,2) across many accounts");
+  ok(ipAcceptedBefore >= 60, "per-IP limit allows the generous quota first (" + ipAcceptedBefore + " >= 60)");
+
+  // a DIFFERENT ip is unaffected by the first ip's exhausted quota.
+  const other = await dims(await callIp("/api/save?id=700000001&rev=1&d=" + toB64Url(payload), "198.51.100.9"));
+  ok(other.w === 1 && other.h === 1, "a different source IP is not rate-limited");
+
+  // loads are read-only: never blocked by the per-IP write gate, even from a
+  // maxed-out ip (the client must always be able to boot-load its config).
+  const loadFromMaxedIp = await dims(await callIp("/api/load?id=" + ID + "&chunk=0", IP));
+  ok(!(loadFromMaxedIp.w === 9 && loadFromMaxedIp.h === 2), "loads bypass the per-IP write gate");
 
   console.log("\n" + (fail === 0 ? "✓ ALL PASS" : "✗ FAILURES") + " — " + pass + " passed, " + fail + " failed");
   process.exit(fail === 0 ? 0 : 1);
