@@ -1,21 +1,6 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_damage_report.vcss_c");
-.HudDamageReport.Tab
-{
-	border-radius: 0px;
-}
-
-.HudDamageReport.Tab #TextContainer
-{
-	visibility: visible;
-}
-
-.HudDamageReport.Tab #ReportContents
-{
-	opacity: 0.8;
-	background-color: none;
-}
 
 .support_16_10_active .HudDamageReport
 {

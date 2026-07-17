@@ -1,7 +1,7 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/hud_ability_icon.vcss_c");
-.ability_ring,.ability-ring
+.simplify_ability_icons_active .ability_ring,.simplify_ability_icons_active .ability-ring
 {
 	wash-color: none;
 }
@@ -308,11 +308,6 @@
 	
 }
 
-.AbilityCastFailed .button_container
-{
-	wash-color: keybindBGColor;
-	animation-name: QOLAbilityCastFailedAnimation;
-}
 
 #hud_signature CitadelAbilityIcon.signature.qol_signature_cooldown_pressed .button_container
 {
@@ -323,12 +318,6 @@
 	animation-iteration-count: 4;
 }
 
-CitadelHudTopBarPlayer #PlayerAbilitiesContainer .AbilityCastFailed .button_container,CitadelHudTopBarPlayer #PlayerAbilitiesContainer .AbilityUpgradeFailed .button_container
-{
-	animation-name: none;
-	transform: translateX(0px);
-	wash-color: none;
-}
 
 @keyframes 'QOLAbilityCastFailedAnimation'
 {

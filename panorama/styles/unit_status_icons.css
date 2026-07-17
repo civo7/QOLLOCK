@@ -6,7 +6,7 @@
 	font-family: "Mojang";
 }
 
-CitadelHud #StatusEffectContainer
+.minecraft_healthbar_active CitadelHud #StatusEffectContainer
 {
 	height: fit-children;
 }
