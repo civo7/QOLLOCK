@@ -30,13 +30,22 @@
     var STEP = 1;
 
     var REQ_TIMEOUT_MS = 8000;
-    var POLL_STEP = 0.05;   // seconds between dimension checks
+    // Seconds between dimension checks. ~1 frame @60fps — the smallest useful
+    // step, since a ready image can't be observed sooner than the next poll. At
+    // 0.05 every one of the ~13 load waves paid a 50ms floor; 0.016 cuts that to
+    // ~16ms per wave.
+    var POLL_STEP = 0.016;
 
-    // Parallel load batch. Start conservative; grow on clean batches, shrink on any
-    // stall. Panorama's image loader is known to wedge when too many <Image> loads
-    // are in flight at once (mg_net.js runs strictly serial for that reason), so the
-    // ceiling is intentionally low until in-game testing establishes a safe max.
-    var BATCH_WIDTH_START = 6;
+    // Parallel load batch. Grow on clean responses, shrink on any stall. Panorama's
+    // image loader is known to wedge when too many <Image> loads are in flight at
+    // once (mg_net.js runs strictly serial for that reason), so growth is bounded
+    // and any stall halves the width immediately.
+    //
+    // START is the width the FIRST wave launches at; the batch then ramps UP inside
+    // a single pass as clean responses land (see growOnClean below). This matters
+    // because a ~151-byte config reassembles in one pass — the old between-pass
+    // growth never fired on a normal load, pinning it at the start width forever.
+    var BATCH_WIDTH_START = 8;
     var BATCH_WIDTH_MIN = 1;
     var BATCH_WIDTH_MAX = 24;
     var _batchWidth = BATCH_WIDTH_START;
@@ -309,18 +318,23 @@
                     batchInFlight--; okThisPass++;
                     bytesForChunk(chunkIdx, decodeWH(w, hh));
                     reportChunks();
+                    // Ramp WITHIN the pass: a whole stream usually lands in one pass,
+                    // so between-pass growth never fires — the load runs entirely at
+                    // BATCH_WIDTH_START otherwise. Widen on each clean response so
+                    // pump() opens more slots as we go, then let pump refill them.
+                    if (!stalled && _batchWidth < BATCH_WIDTH_MAX) _batchWidth++;
                     if (idx < pending.length) pump();
                     else if (batchInFlight === 0) finishPass();
                 }, function () {
+                    // Any stall: halve the width NOW so the rest of this pass backs
+                    // off immediately, not just on the next pass.
                     batchInFlight--; stalled = true;
+                    _batchWidth = Math.max(BATCH_WIDTH_MIN, (_batchWidth >> 1) || 1);
                     if (idx < pending.length) pump();
                     else if (batchInFlight === 0) finishPass();
                 });
             }
             function finishPass() {
-                // Self-tune: a fully clean pass grows the batch; any stall shrinks it.
-                if (stalled) _batchWidth = Math.max(BATCH_WIDTH_MIN, (_batchWidth >> 1) || 1);
-                else if (okThisPass === launchedThisPass) _batchWidth = Math.min(BATCH_WIDTH_MAX, _batchWidth + 2);
                 log("load pass: +" + okThisPass + "/" + launchedThisPass + " batch=" + _batchWidth);
                 runPass();
             }
