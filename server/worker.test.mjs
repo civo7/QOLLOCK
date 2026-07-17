@@ -126,6 +126,23 @@ async function main() {
   const badB64 = await dims(await call("/api/save?id=" + ID + "&rev=3&d=!!!notb64!!!"));
   ok(badB64.w === 9 && badB64.h === 1, "bad base64 payload -> (9,1)");
 
+  // far-future rev rejected — the permanent stale-lock griefing vector.
+  // A day+ ahead of the server clock must not be accepted; otherwise it would
+  // pin storedRev so high that the owner's real Date.now() saves stale forever.
+  const FID = "111222333";
+  const futureRev = Date.now() + 2 * 86400000; // 2 days ahead
+  const fut = await dims(await call("/api/save?id=" + FID + "&rev=" + futureRev + "&d=" + toB64Url(payload)));
+  ok(fut.w === 9 && fut.h === 1, "far-future rev rejected (9,1)");
+  // ...and a sane rev still lands afterward (guard didn't corrupt state).
+  const futOk = await dims(await call("/api/save?id=" + FID + "&rev=1&d=" + toB64Url(payload)));
+  ok(futOk.w === 1 && futOk.h === 1, "sane rev accepted after future-rev reject");
+
+  // oversized payload rejected before decode — blob-fattening griefing vector.
+  const OID = "444555666";
+  const huge = "A".repeat(2049); // valid base64url chars, over MAX_PAYLOAD_CHARS
+  const big = await dims(await call("/api/save?id=" + OID + "&rev=1&d=" + huge));
+  ok(big.w === 9 && big.h === 1, "oversized payload rejected (9,1)");
+
   // rate limit: hammer a fresh account (RATE_MAX_WRITES=8 per window)
   const RID = "987654321";
   let limited = false;

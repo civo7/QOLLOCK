@@ -55,6 +55,17 @@ const STEP = 1;
 const RATE_WINDOW_MS = 10000; // sliding window
 const RATE_MAX_WRITES = 8;    // max saves per window per account
 
+// ── Save input guards (unauthenticated store, so bound the inputs) ──────────
+// Revision is a client-supplied Date.now(); anyone who knows an account_id could
+// otherwise post a far-future rev and permanently stale-lock the real owner out
+// of their own config. Reject anything more than a day ahead of the server clock
+// (generous slack for client/server clock skew) so a legitimate Date.now() always
+// passes but a griefer's 9e15 does not.
+const MAX_REV_SKEW_MS = 86400000; // 24h
+// The config blob is ~200 base64url chars. Cap it well above that so a griefer
+// can't fatten an arbitrary account's stored blob with megabytes of junk.
+const MAX_PAYLOAD_CHARS = 2048;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -106,6 +117,10 @@ export class ConfigStore {
     const rev = parseInt(q.get("rev"), 10);
     const d = q.get("d"); // base64url of the raw compact-binary config
     if (!Number.isFinite(rev) || rev < 0 || !d) return await png(9, 1);
+    // Reject a far-future rev — it would stale-lock the owner permanently.
+    if (rev > Date.now() + MAX_REV_SKEW_MS) return await png(9, 1);
+    // Reject an oversized blob before we bother decoding it.
+    if (d.length > MAX_PAYLOAD_CHARS) return await png(9, 1);
 
     // Decode base64url -> raw bytes. Reject anything that isn't clean base64url.
     const bytes = fromBase64Url(d);
