@@ -6336,6 +6336,73 @@ function GetUIRoot() {
         if (!avatar) return "";
         return ReadAccountIdFromPanel(avatar);
     }
+
+    // ── Account id + applied-config helpers (re-homed from ql_feat_buildload.js) ──
+    // The old Skyrunner build-name storage was removed (etap 4), but two of its
+    // helpers are still needed by the cloud path (ql_feat_cloudconfig.js) and
+    // ql_feat_statlocker.js, so they live here now and are published on QOL.* below.
+
+    // Resolve the Steam32 account id from whatever context we have. Same priority
+    // order the build system used: live party avatar first, then session/bootstrap/
+    // probe fallbacks captured by the account-preset machinery.
+    function GetAccountIdForBuildCategoryPayload(root) {
+        var knownPathId = TryReadAccountIdFromKnownPartyPath(root);
+        if (knownPathId && knownPathId.length > 0) return String(knownPathId);
+        if (State.accountPresetSessionLockId && String(State.accountPresetSessionLockId).length > 0) {
+            return String(State.accountPresetSessionLockId);
+        }
+        if (State.accountPresetBootstrapAccountId && String(State.accountPresetBootstrapAccountId).length > 0) {
+            return String(State.accountPresetBootstrapAccountId);
+        }
+        if (State.accountProbeFoundId && String(State.accountProbeFoundId).length > 0) {
+            return String(State.accountProbeFoundId);
+        }
+        return "";
+    }
+
+    // Merge a stored raw config envelope + parsed compact payload into a fully
+    // applied config object (defaults filled in, schema migrations run). Mirrors
+    // the old build-load apply path exactly — the cloud loader feeds it a synthetic
+    // parsedResult { parsed, schemaVersion } with an empty raw string.
+    function buildAppliedConfig(rawCfg, parsedResult) {
+        var rawNow = (rawCfg === undefined || rawCfg === null) ? "" : String(rawCfg);
+        var rawObj = {};
+        if (rawNow && rawNow.length > 0) {
+            try { var u4 = UnwrapConfigFromStorage(rawNow); rawObj = (u4 && u4.config) ? u4.config : {}; } catch (e4) { rawObj = {}; }
+        }
+
+        var defaults = QOL.buildDefaultConfig();
+        var appliedObj = {};
+        for (var rawKey in rawObj) {
+            appliedObj[rawKey] = rawObj[rawKey];
+        }
+        for (var defKey in defaults) {
+            appliedObj[defKey] = defaults[defKey];
+        }
+        for (var parsedKey in parsedResult.parsed) {
+            appliedObj[parsedKey] = parsedResult.parsed[parsedKey];
+        }
+
+        if (rawObj.hasOwnProperty("DRAG_ENABLED")) {
+            appliedObj.DRAG_ENABLED = rawObj.DRAG_ENABLED;
+        }
+        if (rawObj.hasOwnProperty("PREVIEWS_ENABLED")) {
+            appliedObj.PREVIEWS_ENABLED = rawObj.PREVIEWS_ENABLED;
+        }
+        NormalizeNeutralCampTierConfig(appliedObj, parsedResult.parsed);
+        NormalizeAmmoScaleConfig(appliedObj, parsedResult.parsed);
+        NormalizeVoiceTypeConfig(appliedObj);
+        NormalizeHealthbarTypeConfig(appliedObj, parsedResult.parsed);
+        NormalizeColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeEnemyColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeAllyColorWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeTopbarEnemyHpWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeTopbarAllyHpWarningConfig(appliedObj, parsedResult.parsed);
+        NormalizeCompassSpeedSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+        NormalizeLanguageSchemaMigration(appliedObj, parsedResult.parsed, parsedResult.schemaVersion || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
+        return appliedObj;
+    }
+
     // ── Generic Loader Overlay Helpers ──
     // Replaces 3 near-identical copies of step-row creation, state management,
     // and overlay rendering. Each existing overlay function delegates to these.
@@ -6693,6 +6760,18 @@ function GetUIRoot() {
 
         State.settingsLoaderSkipRequested = true;
         SetStartupCorruptRepairPending(root, false);
+
+        // Cloud config (etap 3): the boot load runs in ql_feat_cloudconfig.js and
+        // drives this same overlay. Skip only clears the OLD build machine below,
+        // so an in-flight QOL.net.load would keep pushing step-state and re-raise
+        // the (dismissed) overlay — that's the "panel won't disappear / eats hover"
+        // bug. Latch a durable abort the cloud feature honors: it stops touching the
+        // overlay and won't re-arm a retry for this account. Keyed to the account so
+        // a later account switch still loads.
+        if (typeof QOL_USE_CLOUD_CONFIG !== "undefined" && QOL_USE_CLOUD_CONFIG === true) {
+            State.cloudConfigBootAborted = true;
+            State.cloudConfigBootAbortedAccountId = accountId || String(State.cloudConfigBootAccountId || "");
+        }
 
         if (root) {
             QOL.resetBuildSaveRequestAttributes(root);
@@ -16172,6 +16251,8 @@ function GetUIRoot() {
         ["applyTargetShapeStyles", function() { return ApplyTargetShapeStyles; }],
         ["buildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
         ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
+        ["buildAppliedConfig", function() { return buildAppliedConfig; }],
+        ["getAccountIdForBuildCategoryPayload", function() { return GetAccountIdForBuildCategoryPayload; }],
         ["clearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
         ["detectTopBarPlayerTeam", function() { return DetectTopBarPlayerTeam; }],
         ["ensureAbilitiesContainerPanelCache", function() { return EnsureAbilitiesContainerPanelCache; }],

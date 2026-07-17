@@ -115,6 +115,15 @@
         var accountId = GetAccountIdForBuildCategoryPayload(root);
         if (!accountId || accountId.length === 0) return;      // wait for account context
         if (!IsConnectedToHideout(root)) return;               // don't load into an active match
+        // User pressed Skip: honor it for the account it was skipped on. Don't start
+        // a load and don't re-arm a transient-failure retry — "Skip" means "keep the
+        // current config, stop touching the overlay". A genuine account change clears
+        // the abort so the new account still loads (mirrors the old per-account skip).
+        if (State.cloudConfigBootAborted) {
+            if (String(State.cloudConfigBootAbortedAccountId || "") === accountId) return;
+            State.cloudConfigBootAborted = false;
+            State.cloudConfigBootAbortedAccountId = "";
+        }
         if (String(State.cloudConfigBootAccountId || "") === accountId && State.cloudConfigBootDone) return;
         // Transient-failure backoff: after a net/timeout failure we re-arm with a
         // delay instead of hammering the transport every tick.
@@ -132,6 +141,10 @@
         // Live progress from the transport — updates the read_payload step detail
         // so the user sees calibration → download %, not a frozen "Fetching".
         function onProgress(phase, done, total) {
+            // If the user skipped mid-download, stop writing step state — a single
+            // "active" update would otherwise re-raise the (now-dismissed) overlay,
+            // since _SetLoaderStepState("active") flips SessionActive back on.
+            if (State.cloudConfigBootAborted) return;
             if (phase === "calibrate") {
                 SetSettingsLoaderStepState("read_payload", "active", "Calibrating transport.");
             } else if (phase === "manifest") {
@@ -146,6 +159,20 @@
         }
 
         QOL.net.load(accountId, function(bytes, reason) {
+            // User hit Skip while this load was in flight. The loader overlay was
+            // already finalized/hidden by SkipSettingsLoaderSession, so touching
+            // step-state here would re-activate it (a "done"/"active" step flips
+            // SessionActive back on). Apply a completed download SILENTLY so the
+            // work isn't wasted, but never re-arm a retry and never touch the UI.
+            if (State.cloudConfigBootAborted) {
+                try { if (bytes && bytes.length > 0) applyLoadedBytes(root, bytes); }
+                catch (e) { $.Msg("[QOLLock][ERROR][" + _featureId + "] load cb (aborted): " + (e && e.message ? e.message : e) + "\n"); }
+                State.cloudConfigBootInFlight = false;
+                State.cloudConfigBootDone = true;
+                State.cloudConfigBootRetryNextMs = 0;
+                log("boot load resolved after skip account=" + accountId + " reason=" + String(reason || "ok"));
+                return;
+            }
             try {
                 if (bytes && bytes.length > 0) {
                     SetSettingsLoaderStepState("read_payload", "done", "Downloaded " + bytes.length + " bytes.");
@@ -284,6 +311,7 @@
         stateKeys: [
             "cloudConfigBootInFlight", "cloudConfigBootDone", "cloudConfigBootAccountId",
             "cloudConfigBootRetryNextMs",
+            "cloudConfigBootAborted", "cloudConfigBootAbortedAccountId",
             "cloudConfigSaveInFlight", "cloudConfigLastSaveToken", "cloudConfigLastSaveDone"
         ]
     });
