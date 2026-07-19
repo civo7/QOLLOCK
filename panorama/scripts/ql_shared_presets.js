@@ -2259,7 +2259,7 @@ var QOL_DumpDiagnostics = function() {
 
 var QOL_DEFAULT_CONFIG = {
     SHOW_RANK: 0,
-    SHOW_RANK_TOPBAR: 0,
+    SHOW_RANK_TOPBAR: 1,
     SETTINGS_THEME: 0,
     MINIMAP_SMALL_SIZE: 400,
         MINIMAP_BASE_OPACITY: 1.0,

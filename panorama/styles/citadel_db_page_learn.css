@@ -1,3 +1,13 @@
-/* Stock-neutral by default: load Valve's base stylesheet without unconditional overrides. */
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/citadel_db_page_learn.vcss_c");
+#GettingStarted,#HeroSandbox
+{
+	visibility: visible;
+}
+
+.playTime
+{
+	visibility: visible;
+}
+

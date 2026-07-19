@@ -87,8 +87,16 @@
 	border-radius: 4px;
 }
 
-.gShopOpen .gShopOpen .QuickbuyQueueOuter,.gShopOpen .HudQuickbuyElement
-
+/* QOLLOCK: the leading `.gShopOpen .gShopOpen .QuickbuyQueueOuter` fragment is a
+   decompiler artifact that requires TWO nested .gShopOpen ancestors. It never
+   fired in vanilla (only one ancestor carries gShopOpen), but our shop-above-
+   takeover feature mirrors gShopOpen onto the CitadelHud root via a
+   GlobalClassListener (see hud.xml / qollock_global.css), adding a second
+   gShopOpen ancestor. The 3-class selector then out-specifies the intended
+   `.gShopOpen .QuickbuyQueueOuter { margin-left: 127px }` below and shoves the
+   build queue 540px into the middle of the shop. Dropped that fragment so the
+   queue keeps its correct position; the .HudQuickbuyElement rule is unchanged. */
+.gShopOpen .HudQuickbuyElement
 {
 	margin-left: 540px;
 	margin-bottom: 22px;
@@ -126,7 +134,7 @@
 
 #HudMini
 {
-	opacity: 0.2;
+	opacity: 0.35;
 	width: 70px;
 	height: 70px;
 	vertical-align: bottom;
@@ -251,11 +259,6 @@
 #CitadelHudQuickbuy.enhanced_quickbuy_active .HudQuickbuy
 {
 	margin-left: 80px;
-}
-#CitadelHudQuickbuy.enhanced_quickbuy_active #HudMini,
-.enhanced_quickbuy_active #CitadelHudQuickbuy #HudMini
-{
-	opacity: 0.35;
 }
 
 #CitadelHudQuickbuy.enhanced_quickbuy_active #HudMini,.enhanced_quickbuy_active #CitadelHudQuickbuy #HudMini,#CitadelHudQuickbuy.enhanced_quickbuy_active #QuickbuyNextSoulsNeeded,.enhanced_quickbuy_active #CitadelHudQuickbuy #QuickbuyNextSoulsNeeded

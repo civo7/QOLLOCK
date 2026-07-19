@@ -15,7 +15,9 @@
 }
 
 .connectedToHeroTesting.GameStatePreGame #PlayerLevelContainer,
-.connectedToHeroTesting.GameStatePreGameWait #PlayerLevelContainer
+.connectedToHeroTesting.GameStatePreGame #gold_and_ap_container #LevelAmount,
+.connectedToHeroTesting.GameStatePreGameWait #PlayerLevelContainer,
+.connectedToHeroTesting.GameStatePreGameWait #gold_and_ap_container #LevelAmount
 {
 	visibility: visible;
 	opacity: 1;
@@ -189,7 +191,7 @@
 
 .fg_healthbar_active.qol_fg_icon_health_mid #gold_and_ap_container #LevelAmount
 {
-	animation-name: qol_minecraft_healthMid;
+	animation-name: healthMid;
 	animation-duration: 0.8s;
 	animation-iteration-count: 1;
 	animation-timing-function: ease-in;
@@ -197,7 +199,7 @@
 
 .fg_healthbar_active.qol_fg_icon_health_low #gold_and_ap_container #LevelAmount
 {
-	animation-name: qol_minecraft_healthLow;
+	animation-name: healthLow;
 	animation-duration: 0.8s;
 	animation-iteration-count: 1;
 	animation-timing-function: ease-in;

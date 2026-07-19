@@ -167,7 +167,7 @@
 }
 
 /* Minecraft healthbar heart animations */
-@keyframes 'qol_minecraft_healthMid'
+@keyframes 'healthMid'
 {
     0%   { pre-transform-scale2d: 1; }
     20%  { pre-transform-scale2d: 1.25; }
@@ -176,7 +176,7 @@
     100% { pre-transform-scale2d: 1; }
 }
 
-@keyframes 'qol_minecraft_healthLow'
+@keyframes 'healthLow'
 {
     0%   { pre-transform-scale2d: 1; }
     30%  { pre-transform-scale2d: 1.3; }

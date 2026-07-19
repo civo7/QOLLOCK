@@ -85,7 +85,7 @@
 @define fountain_pure_extremelyfar_top: 82px;
 @define fountain_abillity_extremelyfar_top: 17px;
 @define fountain_gun_extremelyfar_top: 27px;
-@keyframes 'qol_fountain_desc_text'
+@keyframes 'desc_text'
 {
 	0%
 	{
@@ -137,7 +137,7 @@
 	
 }
 
-@keyframes 'qol_fountain_healing'
+@keyframes 'healing'
 {
 	0%
 	{
@@ -179,7 +179,7 @@
 	
 }
 
-@keyframes 'qol_fountain_gold_pop'
+@keyframes 'gold_pop'
 {
 	0%
 	{
@@ -250,7 +250,7 @@
 	
 }
 
-@keyframes 'qol_fountain_damage_color'
+@keyframes 'damage_color'
 {
 	0%
 	{
@@ -312,7 +312,7 @@
 	
 }
 
-@keyframes 'qol_fountain_ability_color'
+@keyframes 'ability_color'
 {
 	0%
 	{
@@ -343,7 +343,7 @@
 	
 }
 
-@keyframes 'qol_fountain_crit_color'
+@keyframes 'crit_color'
 {
 	0%
 	{
@@ -395,7 +395,7 @@
 	
 }
 
-@keyframes 'qol_fountain_pure_damage_color'
+@keyframes 'pure_damage_color'
 {
 	0%
 	{
@@ -445,7 +445,7 @@
 	
 }
 
-@keyframes 'qol_fountain_damage_pop_batched'
+@keyframes 'damage_pop_batched'
 {
 	0%
 	{
@@ -474,7 +474,7 @@
 	
 }
 
-@keyframes 'qol_fountain_crit_flash'
+@keyframes 'crit_flash'
 {
 	0%
 	{
@@ -493,7 +493,7 @@
 	
 }
 
-@keyframes 'qol_fountain_crit_color_pure'
+@keyframes 'crit_color_pure'
 {
 	0%
 	{
@@ -507,7 +507,7 @@
 	
 }
 
-@keyframes 'qol_fountain_crit_flash_pure'
+@keyframes 'crit_flash_pure'
 {
 	0%
 	{
@@ -526,7 +526,7 @@
 	
 }
 
-@keyframes 'qol_fountain_buffed_gun_color'
+@keyframes 'buffed_gun_color'
 {
 	0%
 	{
@@ -540,7 +540,7 @@
 	
 }
 
-@keyframes 'qol_fountain_buffed_ability_color'
+@keyframes 'buffed_ability_color'
 {
 	0%
 	{
@@ -554,7 +554,7 @@
 	
 }
 
-@keyframes 'qol_fountain_buffed_pure_color'
+@keyframes 'buffed_pure_color'
 {
 	0%
 	{
@@ -568,7 +568,7 @@
 	
 }
 
-@keyframes 'qol_fountain_buffed_melee_color'
+@keyframes 'buffed_melee_color'
 {
 	0%
 	{
@@ -582,7 +582,7 @@
 	
 }
 
-@keyframes 'qol_fountain_poison_color'
+@keyframes 'poison_color'
 {
 	0%
 	{
@@ -690,7 +690,7 @@
 	
 }
 
-@keyframes 'qol_fountain_status_effect_color'
+@keyframes 'status_effect_color'
 {
 	0%
 	{
@@ -704,7 +704,7 @@
 	
 }
 
-@keyframes 'qol_fountain_crit_pop'
+@keyframes 'crit_pop'
 {
 	0%
 	{
@@ -718,7 +718,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_gun'
+@keyframes 'rise_and_fade_gun'
 {
 	0%
 	{
@@ -739,7 +739,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_gun_batched'
+@keyframes 'rise_and_fade_gun_batched'
 {
 	0%
 	{
@@ -776,7 +776,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_melee'
+@keyframes 'rise_and_fade_melee'
 {
 	0%
 	{
@@ -813,7 +813,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_pure'
+@keyframes 'rise_and_fade_pure'
 {
 	0%
 	{
@@ -856,7 +856,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_tech'
+@keyframes 'rise_and_fade_tech'
 {
 	0%
 	{
@@ -877,7 +877,7 @@
 	
 }
 
-@keyframes 'qol_fountain_rise_and_fade_tech_batched'
+@keyframes 'rise_and_fade_tech_batched'
 {
 	0%
 	{
@@ -994,7 +994,7 @@
 	z-index: -1;
 	margin-left: 70px;
 	animation-timing-function: linear;
-	animation-name: qol_fountain_rise_and_fade_gun;
+	animation-name: rise_and_fade_gun;
 }
 
 .damage_fountain_active .batched.damage_type_gun .HudIndicatorContainer
@@ -1002,7 +1002,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: 1;
-	animation-name: qol_fountain_rise_and_fade_gun_batched;
+	animation-name: rise_and_fade_gun_batched;
 }
 
 .damage_fountain_active .batched.crit .HudIndicatorContainer
@@ -1010,7 +1010,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: 1;
-	animation-name: qol_fountain_rise_and_fade_gun_batched;
+	animation-name: rise_and_fade_gun_batched;
 }
 
 .damage_fountain_active .damage_type_ability .HudIndicatorContainer
@@ -1019,7 +1019,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: -1;
-	animation-name: qol_fountain_rise_and_fade_tech;
+	animation-name: rise_and_fade_tech;
 }
 
 .damage_fountain_active .batched.damage_type_ability .HudIndicatorContainer
@@ -1027,7 +1027,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: -1;
-	animation-name: qol_fountain_rise_and_fade_tech_batched;
+	animation-name: rise_and_fade_tech_batched;
 }
 
 .damage_fountain_active .batched.damage_type_melee .HudIndicatorContainer
@@ -1035,7 +1035,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: -1;
-	animation-name: qol_fountain_rise_and_fade_melee;
+	animation-name: rise_and_fade_melee;
 }
 
 .damage_fountain_active .damage_type_pure .HudIndicatorContainer
@@ -1046,7 +1046,7 @@
 	z-index: -1;
 	margin-left: 70px;
 	animation-timing-function: linear;
-	animation-name: qol_fountain_rise_and_fade_pure;
+	animation-name: rise_and_fade_pure;
 }
 
 .damage_fountain_active .batched.damage_type_pure .HudIndicatorContainer
@@ -1054,7 +1054,7 @@
 	vertical-align: center;
 	flow-children: right;
 	z-index: -1;
-	animation-name: qol_fountain_rise_and_fade_tech_batched;
+	animation-name: rise_and_fade_tech_batched;
 }
 
 .damage_fountain_active .gold .HudIndicatorContainer
@@ -1065,7 +1065,7 @@
 	width: fit-children;
 	flow-children: right;
 	z-index: 10;
-	animation-name: qol_fountain_gold_pop;
+	animation-name: gold_pop;
 	animation-duration: 4s;
 }
 
@@ -1101,7 +1101,7 @@
 	width: fit-children;
 	flow-children: right;
 	z-index: 10;
-	animation-name: qol_fountain_gold_pop;
+	animation-name: gold_pop;
 	animation-duration: 3s;
 }
 
@@ -1113,7 +1113,7 @@
 	width: fit-children;
 	flow-children: right;
 	z-index: 10;
-	animation-name: qol_fountain_gold_pop;
+	animation-name: gold_pop;
 	animation-duration: 3s;
 }
 
@@ -1130,7 +1130,7 @@
 	white-space: nowrap;
 	width: fit-children;
 	text-overflow: shrink;
-	animation-name: qol_fountain_desc_text;
+	animation-name: desc_text;
 	animation-duration: 0.5s;
 	opacity: 0;
 	visibility: visible;
@@ -3759,7 +3759,7 @@
 {
 	opacity: 1;
 	text-align: center;
-	animation-name: qol_fountain_damage_color;
+	animation-name: damage_color;
 	animation-duration: 0.3s;
 }
 
@@ -3768,7 +3768,7 @@
 	opacity: 1;
 	text-align: center;
 	color: buffedGunDamageColor;
-	animation-name: qol_fountain_buffed_gun_color;
+	animation-name: buffed_gun_color;
 	animation-duration: 0.3s;
 }
 
@@ -3777,7 +3777,7 @@
 	opacity: 0.7;
 	text-align: center;
 	color: buffedGunDamageColor;
-	animation-name: qol_fountain_buffed_gun_color;
+	animation-name: buffed_gun_color;
 	animation-duration: 0.3s;
 }
 
@@ -3787,7 +3787,7 @@
 	color: critDamageColor;
 	text-align: center;
 	text-shadow: 0px 0px 2.0 orange;
-	animation-name: qol_fountain_crit_color, qol_fountain_crit_flash;
+	animation-name: crit_color, crit_flash;
 	animation-duration: 0.3s, 1s;
 }
 
@@ -3797,7 +3797,7 @@
 	color: critDamageColor;
 	text-align: center;
 	pre-transform-scale2d: 1.4;
-	animation-name: qol_fountain_crit_color, qol_fountain_crit_flash;
+	animation-name: crit_color, crit_flash;
 	animation-duration: 0.3s, 0.3s;
 }
 
@@ -3817,7 +3817,7 @@
 	text-align: center;
 	text-shadow: 0px 0px 6px 1.5 black;
 	color: buffedMeleeDamageColor;
-	animation-name: qol_fountain_buffed_melee_color;
+	animation-name: buffed_melee_color;
 	animation-duration: 0.3s;
 }
 
@@ -3835,7 +3835,7 @@
 	text-align: center;
 	text-shadow: 2px 2px 10px 5.0 black;
 	color: buffedPureDamageColor;
-	animation-name: qol_fountain_buffed_pure_color;
+	animation-name: buffed_pure_color;
 	animation-duration: 0.3s;
 }
 
@@ -3845,7 +3845,7 @@
 	color: critPureDamageColor;
 	text-align: center;
 	text-shadow: 0px 0px 2.0 aquamarine;
-	animation-name: qol_fountain_crit_color_pure, qol_fountain_crit_flash_pure;
+	animation-name: crit_color_pure, crit_flash_pure;
 	animation-duration: 0.3s, 1s;
 }
 
@@ -3855,7 +3855,7 @@
 	color: critPureDamageColor;
 	text-align: center;
 	pre-transform-scale2d: 1.4;
-	animation-name: qol_fountain_crit_color_pure, qol_fountain_crit_flash_pure;
+	animation-name: crit_color_pure, crit_flash_pure;
 	animation-duration: 0.3s, 0.3s;
 }
 
@@ -3864,7 +3864,7 @@
 	opacity: 0.3;
 	text-align: center;
 	color: abilityDamageColor;
-	animation-name: qol_fountain_ability_color;
+	animation-name: ability_color;
 	animation-duration: 0.3s;
 }
 
@@ -3873,7 +3873,7 @@
 	opacity: 1;
 	text-align: center;
 	color: abilityDamageColor;
-	animation-name: qol_fountain_ability_color;
+	animation-name: ability_color;
 	animation-duration: 0.3s;
 }
 
@@ -3881,7 +3881,7 @@
 {
 	opacity: 1;
 	color: buffedAbilityDamageColor;
-	animation-name: qol_fountain_buffed_ability_color;
+	animation-name: buffed_ability_color;
 	animation-duration: 0.3s;
 	text-align: center;
 	text-shadow: 0px 0px 6px 1.5 blue;
@@ -3890,14 +3890,14 @@
 .damage_fountain_active .damage.damage_type_poison .HudIndicatorText
 {
 	color: poisonDamageColor;
-	animation-name: qol_fountain_poison_color;
+	animation-name: poison_color;
 	animation-duration: 0.3s;
 }
 
 .damage_fountain_active .status_effect .HudIndicatorText
 {
 	color: statusEffectColor;
-	animation-name: qol_fountain_status_effect_color;
+	animation-name: status_effect_color;
 	animation-duration: 0.3s;
 	text-transform: uppercase;
 	text-shadow: 2px 2px 10px rgb(79, 50, 50);
@@ -3928,7 +3928,7 @@
 .damage_fountain_active .mana_burn .HudIndicatorText
 {
 	color: mediumblue;
-	animation-name: qol_fountain_crit_pop;
+	animation-name: crit_pop;
 	animation-duration: 0.6s;
 }
 
@@ -3937,7 +3937,7 @@
 	color: rgb(255, 117, 85);
 	font-weight: bold;
 	font-style: italic;
-	animation-name: qol_fountain_crit_pop;
+	animation-name: crit_pop;
 	animation-duration: 0.6s;
 }
 
@@ -3953,7 +3953,7 @@
 	background-img-opacity: 0.2;
 	background-size: healing_icon_size;
 	padding: 100px 100px 100px 1px;
-	animation-name: qol_fountain_healing;
+	animation-name: healing;
 	animation-duration: 0.35s;
 	animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 	animation-fill-mode: forwards;
@@ -4057,7 +4057,7 @@
 {
 	width: 300px;
 	height: 200px;
-	animation-name: qol_fountain_anim_juggle_increment;
+	animation-name: anim_juggle_increment;
 	animation-timing-function: ease-out;
 	animation-iteration-count: 1;
 	animation-duration: 1s;
@@ -4098,7 +4098,7 @@
 {
 	width: 300px;
 	height: 200px;
-	animation-name: qol_fountain_anim_juggle_floor;
+	animation-name: anim_juggle_floor;
 	animation-timing-function: ease-out;
 	animation-iteration-count: 1;
 	animation-duration: 6s;
@@ -4131,7 +4131,7 @@
 	height: 50px;
 }
 
-@keyframes 'qol_fountain_anim_juggle_increment'
+@keyframes 'anim_juggle_increment'
 {
 	0%
 	{
@@ -4165,7 +4165,7 @@
 	
 }
 
-@keyframes 'qol_fountain_anim_juggle_floor'
+@keyframes 'anim_juggle_floor'
 {
 	0%
 	{
@@ -4205,7 +4205,7 @@
 	
 }
 
-@keyframes 'qol_fountain_cumulative_damage_color'
+@keyframes 'cumulative_damage_color'
 {
 	0%
 	{
@@ -4239,7 +4239,7 @@
 	
 }
 
-@keyframes 'qol_fountain_fade'
+@keyframes 'fade'
 {
 	0%
 	{
@@ -4324,7 +4324,7 @@
 	
 }
 
-@keyframes 'qol_fountain_pop'
+@keyframes 'pop'
 {
 	0%
 	{
@@ -4350,7 +4350,7 @@
 	
 }
 
-@keyframes 'qol_fountain_pop_emphasized'
+@keyframes 'pop_emphasized'
 {
 	0%
 	{
@@ -5321,7 +5321,7 @@
 	margin-left: 77px;
 	vertical-align: center;
 	z-index: 1;
-	animation-name: pop_cumulative, qol_fountain_fade;
+	animation-name: pop_cumulative, fade;
 	animation-duration: cumulative_lifetime, cumulative_lifetime;
 	animation-fill-mode: forwards;
 }
@@ -5331,7 +5331,7 @@
 	margin-left: 77px;
 	vertical-align: center;
 	z-index: 1;
-	animation-name: pop_cumulative, qol_fountain_fade;
+	animation-name: pop_cumulative, fade;
 	animation-duration: cumulative_lifetime, cumulative_lifetime;
 	animation-fill-mode: forwards;
 }
@@ -5340,7 +5340,7 @@
 {
 	font-size: cumulative_font_size;
 	font-weight: bold;
-	animation-name: qol_fountain_cumulative_damage_color;
+	animation-name: cumulative_damage_color;
 	animation-duration: cumulative_lifetime;
 	animation-fill-mode: forwards;
 }
@@ -5349,7 +5349,7 @@
 {
 	font-size: 30px;
 	font-weight: bold;
-	animation-name: qol_fountain_cumulative_damage_color;
+	animation-name: cumulative_damage_color;
 	animation-duration: cumulative_lifetime;
 	animation-fill-mode: forwards;
 }
@@ -5358,14 +5358,14 @@
 {
 	font-weight: bold;
 	font-size: fountain_font_size;
-	animation-name: qol_fountain_damage_color;
+	animation-name: damage_color;
 	animation-duration: fountain_lifetime;
 	animation-fill-mode: forwards;
 }
 
 .damage_fountain_active .bullet_damage_new.crit .HudIndicatorText
 {
-	animation-name: qol_fountain_crit_color;
+	animation-name: crit_color;
 	font-weight: bold;
 	font-size: fountain_font_size;
 	background-image: url("s2r://panorama/images/post_game/starburst_team1.vsvg");
@@ -5421,7 +5421,7 @@
 {
 	font-weight: bold;
 	font-size: fountain_font_size;
-	animation-name: qol_fountain_ability_color;
+	animation-name: ability_color;
 	animation-duration: fountain_lifetime;
 	animation-fill-mode: forwards;
 }
@@ -5490,7 +5490,7 @@
 {
 	font-weight: bold;
 	font-size: fountain_font_size;
-	animation-name: qol_fountain_pure_damage_color;
+	animation-name: pure_damage_color;
 	animation-duration: fountain_lifetime;
 	animation-fill-mode: forwards;
 }

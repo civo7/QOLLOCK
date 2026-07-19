@@ -130,6 +130,10 @@ CitadelHudHeroShop.disable_shop_blue_active
 	vertical-align: top !important;
 }
 
+.hero_scene_panel_visible #HeroScenePanel
+{
+	visibility: visible;
+}
 
 .support_4_3_active #BackButton .FooterCommand
 {
@@ -176,17 +180,17 @@ CitadelHudHeroShop.disable_shop_blue_active
 	transition-property: opacity;
 }
 
-.simplify_shop_active #NavPanel
+#NavPanel
 {
 	width: 750px;
 }
 
-.simplify_shop_active .AspectRatio16x10 #NavPanel
+.AspectRatio16x10 #NavPanel
 {
 	width: 650px;
 }
 
-.hero_scene_panel_hidden #HeroScenePanel
+#HeroScenePanel
 {
 	visibility: collapse;
 }
@@ -196,7 +200,7 @@ CitadelHudHeroShop.disable_shop_blue_active
 	opacity: 1;
 }
 
-.simplify_shop_active #AbilityPanelsContainer
+#AbilityPanelsContainer
 {
 	horizontal-align: right;
 	vertical-align: middle;
@@ -204,12 +208,12 @@ CitadelHudHeroShop.disable_shop_blue_active
 	visibility: collapse;
 }
 
-.simplify_shop_active .AspectRatio16x10 #AbilityPanelsContainer
+.AspectRatio16x10 #AbilityPanelsContainer
 {
 	margin-right: 15px;
 }
 
-.simplify_shop_active .shopStateAbilities #AbilityPanelsContainer
+.shopStateAbilities #AbilityPanelsContainer
 {
 	visibility: visible;
 }

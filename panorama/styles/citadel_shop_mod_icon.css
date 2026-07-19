@@ -1,24 +1,24 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/citadel_shop_mod_icon.vcss_c");
-.simplify_items_active PopupSellMaxItems CitadelModIcon
+PopupSellMaxItems CitadelModIcon
 {
 	ui-scale: 100%;
 }
 
-.simplify_items_active PopupSellMaxItems #ModToPurchaseContainer CitadelModIcon,.simplify_items_active PopupActivatedAbilitiesSelection #ModToPurchaseContainer CitadelModIcon,.simplify_items_active .largeDragIcon.IsBeingDragged CitadelModIcon
+PopupSellMaxItems #ModToPurchaseContainer CitadelModIcon,PopupActivatedAbilitiesSelection #ModToPurchaseContainer CitadelModIcon,.largeDragIcon.IsBeingDragged CitadelModIcon
 {
 	width: 128px;
 	height: 128px;
 }
 
-.simplify_items_active PopupSellMaxItems #ModToPurchaseContainer .mod_icon_single_container,.simplify_items_active PopupActivatedAbilitiesSelection #ModToPurchaseContainer .mod_icon_single_container,.simplify_items_active .largeDragIcon.IsBeingDragged .mod_icon_single_container
+PopupSellMaxItems #ModToPurchaseContainer .mod_icon_single_container,PopupActivatedAbilitiesSelection #ModToPurchaseContainer .mod_icon_single_container,.largeDragIcon.IsBeingDragged .mod_icon_single_container
 {
 	width: 128px;
 	height: 128px;
 }
 
-.simplify_items_active PopupSellMaxItems #ModToPurchaseContainer .mod_icon_background_container,.simplify_items_active PopupActivatedAbilitiesSelection #ModToPurchaseContainer .mod_icon_background_container,.simplify_items_active .largeDragIcon.IsBeingDragged #ModToPurchaseContainer .mod_icon_background_container
+PopupSellMaxItems #ModToPurchaseContainer .mod_icon_background_container,PopupActivatedAbilitiesSelection #ModToPurchaseContainer .mod_icon_background_container,.largeDragIcon.IsBeingDragged #ModToPurchaseContainer .mod_icon_background_container
 {
 	width: 96px;
 	height: 96px;

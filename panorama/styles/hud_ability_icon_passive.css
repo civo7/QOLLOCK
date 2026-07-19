@@ -92,13 +92,13 @@
 .passive_cooldown_basic_active .passiveOffCooldown
 {
 	visibility: visible;
-	animation-name: qol_passivePop;
+	animation-name: passivePop;
 	animation-duration: 1s;
 	opacity: 0.9;
 	overflow: noclip;
 }
 
-@keyframes 'qol_passivePop'
+@keyframes 'passivePop'
 {
 	0%
 	{
