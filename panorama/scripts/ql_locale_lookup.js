@@ -5820,4 +5820,11 @@
         window.LookupLocaleAbility = LookupLocaleAbility;
         window.ExtractHeroFromLabelText = ExtractHeroFromLabelText;
     } } catch(e) {}
+
+    // Phase 4.3: Publish to QOL namespace for QOL.import() access.
+    try { if (typeof QOL !== "undefined") {
+        QOL.localeLookupHero = LookupLocaleHero;
+        QOL.localeLookupAbility = LookupLocaleAbility;
+        QOL.extractHeroFromLabelText = ExtractHeroFromLabelText;
+    } } catch(e) {}
 })();
