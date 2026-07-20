@@ -3,8 +3,7 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
-        var _featureId = "ql_feat_colorwarnings";
+    var _featureId = "ql_feat_colorwarnings";
     var _deps = QOL.import(["state","utils"]);
     var State = _deps.state;
     var Utils = _deps.utils;
