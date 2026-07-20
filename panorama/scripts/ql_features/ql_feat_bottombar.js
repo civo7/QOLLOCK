@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_bottombar";
+    var _featureId = "ql_feat_bottombar";
     // DEPENDS: getCachedPanel, getGameplayHudPanel, getUIRoot, panelIdGoldApContainer, panelIdSignature, readBottomBarWashColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setWashColorSafe, utils
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","panelIdGoldApContainer","panelIdSignature","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
