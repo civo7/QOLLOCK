@@ -36,25 +36,21 @@ function CreateIndicatorMeta(panel, needsSmallDamage) {
             smallDamageKnown: !!needsSmallDamage
         };
     }
-    var hasClassInHierarchy = function(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass(className)) return true;
-            current = current.GetParent();
-        }
-        return false;
-    };
+    // Phase 5.2: Use shared HasClassInHierarchy from Utils (safer — has BHasClass/GetParent guards).
+    // Local fallback retained for Settings context where Utils may be stubbed.
+    var hasClassInHierarchy = (Utils && typeof Utils.HasClassInHierarchy === "function")
+        ? Utils.HasClassInHierarchy
+        : function(panel, className) {
+            var current = panel;
+            while (current) {
+                if (current.BHasClass && current.BHasClass(className)) return true;
+                current = (typeof current.GetParent === "function") ? current.GetParent() : null;
+            }
+            return false;
+        };
+    // Phase 5.2: Removed dead local IsPanelListValid (overwritten by line 15 import).
 
     var PERF_DEBUG_SLOW_MS = 8;
-function IsPanelListValid(list) {
-        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
-            if (!list || list.length === 0) return false;
-            for (var i = 0; i < list.length; i++) {
-                if (!IsPanelValid(list[i])) return false;
-            }
-            return true;
-        })();
-    }
 function PerfEnd(name, startMs) {
         if (!_perfTrackingActive || !startMs) return;
         PerfRecord(name, PerfNowMs() - startMs);
