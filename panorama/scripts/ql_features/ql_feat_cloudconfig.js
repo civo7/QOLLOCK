@@ -195,7 +195,18 @@
                     // corrupt it. net/timeout are transient: re-arm for retry.
                     // "corrupt" is bad data — retrying won't help, so treat it as
                     // terminal (defaults stay, no re-arm loop).
-                    var transient = (reason === "net" || reason === "timeout");
+                    // Transient = worth an automatic retry. Besides net/timeout,
+                    // ANY calibration failure ("calib", "calib:timeout", "calib:noimg",
+                    // "calib:WxH:clamp"…) is transient: the probe couldn't establish the
+                    // transport, most often because the engine was still booting and the
+                    // compositor wasn't up yet (an unrendered host panel makes Panorama
+                    // skip the image load — the boot race). The identical request
+                    // succeeds seconds later, so re-arm the retry rather than giving up
+                    // for the whole session. Only "corrupt" (bad stored data) stays
+                    // terminal — retrying that can't help.
+                    var reasonStr = String(reason || "");
+                    var transient = (reasonStr === "net" || reasonStr === "timeout" ||
+                                     reasonStr === "calib" || reasonStr.indexOf("calib:") === 0);
                     SetSettingsLoaderStepState("read_payload", "error",
                         "Cloud load failed (" + String(reason || "net") + ")" + (transient ? " — retrying in 5s." : "."));
                     SetSettingsLoaderStepState("decode_payload", "skipped", "No payload decoded.");

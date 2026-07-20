@@ -50,6 +50,26 @@
     var BASE = 15;
 
     var REQ_TIMEOUT_MS = 8000;
+
+    // ── Boot-readiness calibration (see IMAGE_SIDECHANNEL boot race) ──
+    // A host panel at 2% opacity only actually gets its <Image> children FETCHED
+    // once the compositor is live (see ensureHost note: an off-screen / occluded /
+    // not-rendered panel makes Panorama skip the image load ENTIRELY). At client
+    // boot the dx11 swap chain isn't created yet, so the probe image never loads
+    // and every dimension read stays 0 until the full REQ_TIMEOUT_MS elapses. The
+    // OLD policy (3 × 8s then give up) burned 24s in exactly the window where the
+    // engine can't answer, then reported a hard "calib:timeout" failure — even
+    // though the identical request succeeds in ~600ms seconds later, once boot
+    // settles. So the boot autoload calibrates PATIENTLY: many short probes with
+    // backoff, outlasting a slow boot instead of racing it. A user-initiated SAVE
+    // (engine already up) fails fast — it never spends the patient budget because
+    // the first probe answers immediately.
+    var PROBE_TIMEOUT_MS = 4000;          // a ready engine answers <1s; 8s just wastes the boot window
+    var PROBE_ATTEMPTS_INTERACTIVE = 3;   // SAVE: user is waiting — fail reasonably fast
+    var PROBE_ATTEMPTS_BOOT = 24;         // boot autoload: outlast a slow client boot (~2 min w/ backoff)
+    var PROBE_BACKOFF_BASE_MS = 1000;     // grows per failed attempt, capped
+    var PROBE_BACKOFF_MAX_MS = 5000;
+
     // Seconds between dimension checks. ~1 frame @60fps — the smallest useful
     // step, since a ready image can't be observed sooner than the next poll. At
     // 0.05 every one of the ~13 load waves paid a 50ms floor; 0.016 cuts that to
@@ -133,8 +153,9 @@
     // Fire one image request; call onDone(rawW, rawH) with the pixel dimensions.
     // Once started a request ALWAYS completes (dims or timeout) — never abort
     // silently, which could latch load state forever.
-    function rawRequestNow(path, params, onDone, onError) {
+    function rawRequestNow(path, params, onDone, onError, timeoutMs) {
         var img;
+        var reqTimeout = (typeof timeoutMs === "number" && timeoutMs > 0) ? timeoutMs : REQ_TIMEOUT_MS;
         inFlight++;
         try {
             var h = ensureHost();
@@ -188,7 +209,7 @@
                 return;
             }
             elapsed += POLL_STEP * 1000;
-            if (elapsed >= REQ_TIMEOUT_MS) {
+            if (elapsed >= reqTimeout) {
                 finished = true;
                 log("req#" + reqId + " TIMEOUT " + path + " after " + Math.round(elapsed) + "ms (never got positive dims)");
                 cleanup();
@@ -208,7 +229,12 @@
     var PROBE_W = 600, PROBE_H = 1000;
     var swap = false, scaleX = 1, scaleY = 1, calibrated = false, calibrating = false;
     var calibWaiters = [];
-    var PROBE_ATTEMPTS = 3;
+    // Attempt budget for the CURRENT calibration run. A boot autoload raises it to
+    // PROBE_ATTEMPTS_BOOT so calibration outlasts a slow client boot; an interactive
+    // SAVE keeps it at PROBE_ATTEMPTS_INTERACTIVE. If a boot request joins a run that
+    // started interactive, the budget is upgraded (max wins) — the patient boot load
+    // must not be cut short by a fast-fail SAVE that happened to start first.
+    var calibAttemptBudget = PROBE_ATTEMPTS_INTERACTIVE;
 
     // Diagnostic breadcrumb from the LAST probe attempt. When calibration fails the
     // three root causes look identical to the user ("calib") but need different
@@ -233,18 +259,33 @@
         var ws = calibWaiters; calibWaiters = [];
         for (var i = 0; i < ws.length; i++) { try { if (ws[i].fail) ws[i].fail(detail); } catch (e) {} }
     }
-    function calibrate(cb, fail) {
+    // calibrate(cb, fail, opts) — opts.patient=true uses the boot budget (many
+    // short probes with backoff) so calibration survives a not-yet-rendering boot.
+    function calibrate(cb, fail, opts) {
+        var wantBudget = (opts && opts.patient) ? PROBE_ATTEMPTS_BOOT : PROBE_ATTEMPTS_INTERACTIVE;
         if (calibrated) { if (cb) cb(); return; }
         if (cb) calibWaiters.push({ go: cb, fail: fail });
+        // Max wins: a patient boot load joining an in-flight interactive run (or vice
+        // versa) must not shorten the patient budget.
+        if (wantBudget > calibAttemptBudget) calibAttemptBudget = wantBudget;
         if (calibrating) return;
         calibrating = true;
+        calibAttemptBudget = wantBudget;   // fresh run: budget reflects THIS caller
         probeOnce(1);
     }
     function probeOnce(attempt) {
-        log("probe attempt " + attempt + "/" + PROBE_ATTEMPTS + " (expect ref " + PROBE_W + "x" + PROBE_H + ")");
+        log("probe attempt " + attempt + "/" + calibAttemptBudget + " (expect ref " + PROBE_W + "x" + PROBE_H + ")");
         function retryOrFail(why) {
-            if (attempt < PROBE_ATTEMPTS) { log("probe " + attempt + " " + why + "; retrying"); probeOnce(attempt + 1); return; }
-            log("probe FAILED all " + PROBE_ATTEMPTS + " attempts; giving up. lastDiag=" + lastProbeDiag); failCalib();
+            if (attempt < calibAttemptBudget) {
+                // Backoff grows with attempt (capped) so a slow boot isn't hammered
+                // and the log isn't flooded, while a ready engine still calibrates
+                // on the first pass with no added latency.
+                var wait = Math.min(PROBE_BACKOFF_MAX_MS, PROBE_BACKOFF_BASE_MS * attempt);
+                log("probe " + attempt + " " + why + "; retrying in " + wait + "ms");
+                $.Schedule(wait / 1000, function () { probeOnce(attempt + 1); });
+                return;
+            }
+            log("probe FAILED all " + calibAttemptBudget + " attempts; giving up. lastDiag=" + lastProbeDiag); failCalib();
         }
         rawRequestNow("/api/probe", null, function (w, hh) {
             var rawW = w, rawH = hh;
@@ -266,16 +307,16 @@
                 else log("probe distorted (wrong aspect, not a plain host clamp).");
                 retryOrFail("distorted " + lastProbeDiag); return;
             }
-            swap = sw; scaleX = sx; scaleY = sy;
+            swap = sw; scaleX = sx; scaleY = sy; calibAttemptBudget = PROBE_ATTEMPTS_INTERACTIVE;
             log("CALIBRATED ok swap=" + swap + " sx=" + scaleX.toFixed(3) + " sy=" + scaleY.toFixed(3));
             finishCalib();
         }, function (e) {
             lastProbeDiag = (e === "timeout" ? "timeout" : "noimg");
             log("probe transport fail: " + e + " -> " + lastProbeDiag +
                 (lastProbeDiag === "noimg" ? " (image never loaded; Proton/ISP/TLS block? host resize won't help)"
-                                           : " (loaded too slow; raise REQ_TIMEOUT_MS or check latency)"));
+                                           : " (dims never went positive — engine likely still booting / compositor not up yet; will keep probing)"));
             retryOrFail("failed");
-        });
+        }, PROBE_TIMEOUT_MS);
     }
 
     // Scale-correct a raw (w,h) image to logical pixels — WITHOUT rounding. The
@@ -368,7 +409,10 @@
                 if (T < 3) { log("LOAD bogus manifest T=" + T + " -> corrupt"); done(null, "corrupt"); return; }
                 fetchStream(accountId, T, done, prog);
             }, function (e) { log("LOAD manifest transport fail: " + e); done(null, e === "timeout" ? "timeout" : "net"); });
-        }, function (detail) { log("LOAD aborted, calibration failed (" + detail + ")"); done(null, detail || "calib"); });
+        // patient: the boot autoload calibrates through a not-yet-rendering client
+        // boot instead of hard-failing after 3 probes. Zero cost once the engine is
+        // up — the first probe answers and the budget is never spent.
+        }, function (detail) { log("LOAD aborted, calibration failed (" + detail + ")"); done(null, detail || "calib"); }, { patient: true });
     }
 
     // Fetch all T stream bytes across T data chunks (one byte per image, carried
