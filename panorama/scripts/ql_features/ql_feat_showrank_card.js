@@ -57,4 +57,12 @@
 
     // Install as global — called by profile_card.xml onload
     $.ShowRankCardLoaded = ShowRankCardLoaded;
+
+    // Phase 5.1: Self-test — verify the function was defined and exported.
+    try {
+        if (typeof ShowRankCardLoaded !== "function") throw new Error("ShowRankCardLoaded is not a function");
+        if (typeof $.ShowRankCardLoaded !== "function") throw new Error("$.ShowRankCardLoaded not exported");
+    } catch(e) {
+        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + (e && e.message ? e.message : String(e)));
+    }
 })();

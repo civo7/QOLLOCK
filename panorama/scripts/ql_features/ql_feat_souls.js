@@ -14,7 +14,7 @@
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(State.soulsRuntimeStyleSig && String(State.soulsRuntimeStyleSig).length > 0) ||
-            QOL.getCachedPanel("soulsContainer");
+            GetCachedPanel("soulsContainer");
     }
 
     function hasNonDefaultConfig(cfg) {

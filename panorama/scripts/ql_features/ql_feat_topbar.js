@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_topbar";
+    var _featureId = "ql_feat_topbar";
     // DEPENDS: getCachedPanel, isHudVisibleForTopBarRuntime, resolveCachedPanel, state, setCachedPanel, utils, panelIdTopBar
     var _deps = QOL.import(["getCachedPanel", "isHudVisibleForTopBarRuntime", "resolveCachedPanel", "state", "setCachedPanel", "utils", "panelIdTopBar"]);
     var GetCachedPanel = _deps.getCachedPanel;

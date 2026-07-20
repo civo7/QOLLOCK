@@ -2,7 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_damageimpact";
+    var _featureId = "ql_feat_damageimpact";
     // DEPENDS: getCachedPanel, normalizeDamageImpactScaleNumber, resolveCachedPanel, state, utils
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
@@ -14,7 +14,7 @@
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
-            QOL.getCachedPanel("damageImpactPanel");
+            GetCachedPanel("damageImpactPanel");
     }
 
     function hasNonDefaultConfig(cfg) {
