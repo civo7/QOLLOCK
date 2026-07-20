@@ -43,7 +43,7 @@
 
         soulsPanel.style.x = String(offsetX) + "px";
         soulsPanel.style.y = String(-offsetY) + "px";
-        soulsPanel.style.visibility = enabled ? "visible" : "collapse";
+        if (soulsPanel.SetHasClass) soulsPanel.SetHasClass("qol-hidden", !enabled); else soulsPanel.style.visibility = enabled ? "visible" : "collapse";
         Utils.SetPanelOpacitySafe(soulsPanel, opacityText, 1.0);
         State.soulsRuntimeStyleSig = styleSig;
     }

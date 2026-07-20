@@ -290,3 +290,9 @@
 {
     opacity: 0.0;
 }
+
+/* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
+.qol-hidden
+{
+    visibility: collapse;
+}

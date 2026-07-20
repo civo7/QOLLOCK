@@ -346,9 +346,17 @@
      * Safely set panel visibility with null guard and no-op on same value.
      */
     function SetPanelVisibility(panel, visible) {
-        if (!panel || !panel.style) return;
-        var value = visible ? "visible" : "collapse";
-        if (panel.style.visibility !== value) panel.style.visibility = value;
+        // Phase 8.6: Use class toggles instead of direct style.visibility mutation.
+        // Class-based state is Panorama's recommended pattern (per knowledge base).
+        if (!panel) return;
+        var shouldHide = !visible;
+        if (panel.SetHasClass) {
+            panel.SetHasClass("qol-hidden", shouldHide);
+        } else if (panel.style) {
+            // Fallback for panels without SetHasClass (rare edge case)
+            var value = visible ? "visible" : "collapse";
+            if (panel.style.visibility !== value) panel.style.visibility = value;
+        }
     }
     exports.SetPanelVisibility = SetPanelVisibility;
 

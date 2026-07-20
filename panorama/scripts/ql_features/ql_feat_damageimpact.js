@@ -47,7 +47,7 @@
         panel.style.y = String(-offsetY) + "px";
         panel.style.opacity = opacityText;
         panel.style.preTransformScale2d = scaleText + ", " + scaleText;
-        panel.style.visibility = enabled ? "visible" : "collapse";
+        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled); else panel.style.visibility = enabled ? "visible" : "collapse";
         State.damageImpactRuntimeStyleSig = styleSig;
     }
 

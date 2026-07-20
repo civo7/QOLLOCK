@@ -37,7 +37,7 @@ function HideMinimapTunnelOverlay(root) {
         }
         if (!overlay) return;
         if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
-        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
         if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
     }
 function EnsureMinimapTunnelOverlay(root) {
@@ -71,8 +71,8 @@ function HideMinimapCrateOverlay(root) {
             overlay = root.FindChildTraverse("minimap_overlay_root");
             if (overlay) SetCachedPanel("minimapCrateOverlayRoot", overlay);
         }
-        if (overlay && overlay.style.visibility !== "collapse") {
-            overlay.style.visibility = "collapse";
+        if (overlay) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
         }
         MinimapCrateOverlayDebugLogThrottled("hide|" + (overlay ? "1" : "0"), "overlay=" + (overlay ? "1" : "0") + " visibility=collapse", PerfNowMs());
     }
@@ -396,7 +396,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         if (opacity > 1) opacity = 1;
         if (overlay.AddClass) overlay.AddClass("tunnel_locked_on");
         overlay.style.opacity = opacity.toFixed(2);
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
     }
 
     function UpdateMinimapCrateOverlay(root, cfg) {
@@ -423,7 +423,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
             MinimapCrateOverlayDebugLogThrottled("update|nooverlay|" + String(renderMapKey), "map=" + String(renderMapKey) + " overlay=<null>", PerfNowMs());
             return;
         }
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         MinimapCrateOverlayDebugLogThrottled(
             "update|visible|" + String(renderMapKey),
             "map=" + String(renderMapKey) + " overlayVisible=1",

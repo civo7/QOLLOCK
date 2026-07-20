@@ -51,7 +51,7 @@
         topBar.style.x = String(offsetX) + "px";
         topBar.style.y = String(-offsetY) + "px";
         topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
-        topBar.style.visibility = shouldShow ? "visible" : "collapse";
+        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !shouldShow); else topBar.style.visibility = shouldShow ? "visible" : "collapse";
         Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
         State.topBarRuntimeStyleSig = styleSig;
     }
