@@ -253,8 +253,9 @@
         bucket: 1, phase: 1,
         perfLabel: "loop.souls_per_min",
         gate: function(cfg) {
-            // Disabled — feature no longer permitted
-            return false;
+            // Phase 1.10: Use config key instead of hardcoded false.
+            // If the feature should remain permanently disabled, set ENABLE_MIN_SOULS default to 0.
+            return IsCfgEnabled(cfg, "ENABLE_MIN_SOULS");
         },
         update: function(root, cfg, nowMs) {
             try {

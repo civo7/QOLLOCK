@@ -9,6 +9,19 @@
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var PANEL_ID_HUD = QOL_PANEL_ID_HUD;
+
+    // Phase 1.2: Missing constants and imports — defined locally.
+    // These are bridge channel attribute names used for cross-context communication
+    // with the competitive mod's arcade system via root panel attributes.
+    var ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
+    var ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
+    var ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
+    var ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 5000;
+    // PushUnique is defined in ql_utils.js — use local fallback if not available.
+    var PushUnique = (typeof QOL !== "undefined" && typeof QOL.utils !== "undefined" && typeof QOL.utils.PushUnique === "function")
+        ? QOL.utils.PushUnique
+        : function(arr, item) { if (arr.indexOf(item) === -1) arr.push(item); };
+
     function ParseOnDeathArcadeRespawnSeconds(rawText) {
         var raw = String(rawText || "").trim();
         if (raw.length <= 0) return -1;

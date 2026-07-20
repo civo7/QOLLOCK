@@ -10,6 +10,8 @@
     var IsPanelListValid = Utils.IsPanelListValid;
     var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
     var TARGET_SHAPE_DEBUG = false;
+    // Phase 1.4: TARGET_SHAPE_DEBUG_THROTTLE_MS was referenced but never defined.
+    var TARGET_SHAPE_DEBUG_THROTTLE_MS = 5000;
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;

@@ -15,6 +15,8 @@
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
     var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    // Phase 1.3: HERO_SHOP_PANEL_SEARCH_MS was referenced but never defined.
+    var HERO_SHOP_PANEL_SEARCH_MS = 2000;
 
     function UpdateHeroShopRuntime(root, cfg, nowMs) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
