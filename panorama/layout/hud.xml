@@ -11,6 +11,7 @@
 		<include src="s2r://panorama/styles/citadel_ui_binding.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
 	<include src="s2r://panorama/styles/showrank.vcss_c" />
+	<include src="s2r://panorama/styles/qollock_global.vcss_c" />
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
