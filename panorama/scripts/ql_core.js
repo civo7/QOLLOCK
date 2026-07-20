@@ -1531,6 +1531,12 @@ function ExpressShotLog(msg) {
         } catch (featureErr) {
             LogLoopException(featureName, featureErr, "featureErr_" + featureName, PerfNowMs());
             var streak = IncrementFeatureErrorStreak(featureName);
+            // Phase 7.4: Escalate warnings before auto-disable.
+            if (streak === 3) {
+                QOL_WARN(featureName, streak + " consecutive errors — will auto-disable at " + FEATURE_ERROR_STREAK_MAX);
+            } else if (streak === 5) {
+                QOL_ERROR(featureName, streak + " consecutive errors — auto-disable imminent at " + FEATURE_ERROR_STREAK_MAX);
+            }
             if (streak >= FEATURE_ERROR_STREAK_MAX) {
                 AutoDisableFeature(featureName);
             }
