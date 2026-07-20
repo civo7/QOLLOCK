@@ -2,8 +2,7 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
-        var _featureId = "ql_feat_souls";
+    var _featureId = "ql_feat_souls";
     var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
