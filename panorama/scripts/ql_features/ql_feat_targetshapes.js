@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_targetshapes";
+    // DEPENDS: state, utils, getUnitTargetDefaultStyleTexts
     var _deps = QOL.import(["state", "utils", "getUnitTargetDefaultStyleTexts"]);
     var State = _deps.state;
     var Utils = _deps.utils;

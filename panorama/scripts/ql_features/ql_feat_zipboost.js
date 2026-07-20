@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_zipboost";
+    // DEPENDS: findNumericLabelTextInTree, findZipBoostSource, getCachedPanel, getGameplayHudPanel, isCustomHudContextActive, state, setCachedPanel, utils, isConnectedToHideout
     var _deps = QOL.import(["findNumericLabelTextInTree","findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_souls";
+    // DEPENDS: getCachedPanel, resolveCachedPanel, state, utils, panelIdGoldApContainer
     var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

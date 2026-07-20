@@ -3,6 +3,7 @@
 (function() {
     'use strict';
         var _featureId = "ql_feat_ammo";
+    // DEPENDS: getCachedPanel, normalizeAmmoClipAngle, readAmmoTextColorIndex, resolveWashColorFromPalette, state, setCachedPanel, utils
     var _deps = QOL.import(["getCachedPanel","normalizeAmmoClipAngle","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;

@@ -4,6 +4,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_colorwarnings";
+    // DEPENDS: state, utils
     var _deps = QOL.import(["state","utils"]);
     var State = _deps.state;
     var Utils = _deps.utils;

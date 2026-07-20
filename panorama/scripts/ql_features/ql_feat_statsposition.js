@@ -10,6 +10,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_statsposition";
+    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, isHudClassActive
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel", "isHudClassActive"]);
     var State = _deps.state;
     var Utils = _deps.utils;

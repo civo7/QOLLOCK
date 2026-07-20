@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_unsecuredsouls";
+    // DEPENDS: estimateUnsecuredSoulsEtaFallbackSec, findUnsecuredSoulsSource, getCachedPanel, getGameSecondsForUrn, getGameplayHudPanel, getUnsecuredSoulsDangerLevel, isCustomHudContextActive, parseUnsecuredSoulsValue, resetUnsecuredSoulsTracking, state, setCachedPanel, utils, isConnectedToHideout
     var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

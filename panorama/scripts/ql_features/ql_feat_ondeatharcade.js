@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_ondeatharcade";
+    // DEPENDS: isPanelVisibleMaybe, state, utils
     var _deps = QOL.import(["isPanelVisibleMaybe","state","utils"]);
     var State = _deps.state;
     var Utils = _deps.utils;

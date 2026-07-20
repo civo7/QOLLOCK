@@ -3,6 +3,7 @@
 (function() {
     'use strict';
         var _featureId = "ql_feat_stamina";
+    // DEPENDS: getCachedPanel, normalizeStaminaChargeAngle, readStaminaChargeColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, utils
     var _deps = QOL.import(["getCachedPanel","normalizeStaminaChargeAngle","readStaminaChargeColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
