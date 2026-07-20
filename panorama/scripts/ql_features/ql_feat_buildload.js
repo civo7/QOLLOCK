@@ -133,8 +133,9 @@
     var BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
     var BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;
     var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;
-    var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (typeof QOL_COMPACT_SCHEMA_REGISTRY !== "undefined") ? QOL_COMPACT_SCHEMA_REGISTRY : {};
-    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined") ? QOL_LATEST_COMPACT_SEMVER : "3.1.4";
+    // Phase 6: Use QOL namespace (published by ql_shared_presets.js lines 2158-2159).
+    var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (QOL && QOL.compactSchemaRegistry) || {};
+    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (QOL && QOL.latestCompactSemver) || "3.1.9";
     var BUILD_LOADER_TEMP_DISABLED = false;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
@@ -1364,7 +1365,7 @@
             return { ok: false, payload: payloadToken, error: "invalid_prefix" };
         }
         var schemaSemver = String(tokenMatch[1] || "").replace(/-/g, ".");
-        // Guard: if the schema registry is empty (e.g. QOL_COMPACT_SCHEMA_REGISTRY
+        // Guard: if the schema registry is empty (e.g. compact schema registry
         // global was not set), we cannot decode ANY payload. Apply defaults without
         // triggering corrupt repair — the stored data is valid, we just can't read it.
         var registryKeys = 0;
