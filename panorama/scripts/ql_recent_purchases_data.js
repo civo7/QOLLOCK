@@ -3738,3 +3738,6 @@
         "헤이즈": "url(\"s2r://panorama/images/heroes/haze_sm_psd.vtex\")",
         "홀리데이": "url(\"s2r://panorama/images/heroes/astro_sm_psd.vtex\")"
     };
+
+// Phase 4.3: Publish to QOL namespace for QOL.import() access.
+if (typeof QOL !== "undefined") QOL.recentPurchasesIcons = MOD_ICONS;
