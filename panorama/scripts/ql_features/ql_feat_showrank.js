@@ -239,7 +239,7 @@
             }
         }
         ClearPublishedRanks(root);
-        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0"), 10) || 0;
         SetAttr(root, "qol_sr_generation", String(gen + 1));
         DBG("ClearAllAccountIds: cleared=" + cleared + " gen=" + (gen + 1));
     }
@@ -603,7 +603,7 @@
             ClearPlayerListBadges(root);
             ClearPublishedRanks(root);
             State.showRankEscapeDone = "";
-            var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+            var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0"), 10) || 0;
             SetAttr(root, "qol_sr_generation", String(gen + 1));
         }
 
@@ -753,7 +753,7 @@
         // Clear stale hero→account mappings from previous match before starting
         ClearPublishedRanks(root);
         // Bump generation so the idle latch resets and rows are re-scanned
-        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0")) || 0;
+        var gen = parseInt(ReadAttr(root, "qol_sr_generation", "0"), 10) || 0;
         SetAttr(root, "qol_sr_generation", String(gen + 1));
         if (State) State.showRankEscapeDone = "";
         var newToken = "qol_sr_" + String(NowMs());

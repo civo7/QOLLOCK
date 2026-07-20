@@ -21,6 +21,9 @@
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
     var RECENT_PURCHASE_MAX_ITEMS = 50;
+    // Phase 1.5: Missing constants — defined locally.
+    var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
+    var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 5;
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     var CLASS_RECENT_PURCHASE = "recentPurchase";
