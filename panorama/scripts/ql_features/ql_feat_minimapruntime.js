@@ -6,7 +6,7 @@
     // DEPENDS: ensureMinimapPanelCache, getCachedPanel, isHudClassActive, readMinimapIconColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, utils
     var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var RC = _deps.resolveCachedPanel;
+    var ResolveCachedPanel = _deps.resolveCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
@@ -267,14 +267,7 @@ function NormalizePaletteColorIndex(value) {
 function PerfNowMs() {
         return Date.now ? Date.now() : (new Date()).getTime();
     }
-var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
-        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-        if (!panel && parent && parent.FindChildTraverse) {
-            panel = parent.FindChildTraverse(traverseId);
-            State.cachedPanels[cacheKey] = panel || null;
-        }
-        return panel;
-    };
+// Phase 5.2: ResolveCachedPanel now imported via _deps.resolveCachedPanel (line 9).
 function ResolveWashColorFromPalette(value) {
         var index = NormalizePaletteColorIndex(value);
         var color = QOL_WASH_COLOR_PALETTE[index] || "";
@@ -357,12 +350,7 @@ function EnsureMinimapOverlayAnchor(root) {
         }
         return anchor || null;
     }
-var GetCachedPanel = function(k) {
-        var p = State.cachedPanels[k];
-        if (IsPanelValid(p)) return p;
-        State.cachedPanels[k] = null;
-        return null;
-    };
+// Phase 5.2: GetCachedPanel already imported via _deps.getCachedPanel (line 8).
 function MinimapCrateOverlayDebugLog(msg) {
         if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
         $.Msg("[QOLLock][MinimapCrateDbg] " + msg);
@@ -386,9 +374,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         } catch(eAttrHud) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime", (eAttrHud && eAttrHud.message ? eAttrHud.message : String(eAttrHud || ""))); }
         return fromConfig;
     }
-var SetCachedPanel = function(k, p) {
-        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
-    };
+// Phase 5.2: SetCachedPanel already imported via _deps.setCachedPanel (line 12).
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
