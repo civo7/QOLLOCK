@@ -2155,6 +2155,9 @@ if (typeof QOL_PRESETS === "object") QOL.presets = QOL_PRESETS;
 if (typeof QOL_SCHEMA_SEMVER === "string") QOL.schemaSemver = QOL_SCHEMA_SEMVER;
 if (typeof QOL_CODEC === "object") QOL.codec = QOL_CODEC;
 if (typeof QOL_DumpDiagnostics === "function") QOL.dumpDiagnostics = QOL_DumpDiagnostics;
+// Phase 6: Publish schema symbols for QOL.import() access by feature files.
+if (typeof QOL_COMPACT_SCHEMA_REGISTRY === "object") QOL.compactSchemaRegistry = QOL_COMPACT_SCHEMA_REGISTRY;
+if (typeof QOL_LATEST_COMPACT_SEMVER === "string") QOL.latestCompactSemver = QOL_LATEST_COMPACT_SEMVER;
 
 // Keep bare var globals for backward compat during migration
 // (removed in cleanup step)

@@ -369,7 +369,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
     }
 // Phase 5.2: All functions below already imported from Utils at lines 14-26.
 // Removed 85 lines of extraction debris that referenced inaccessible bare
-// global QOL_UTILS_LOADED (ReferenceError in strict mode, killed the IIFE).
+// global QOL utils loaded flag (ReferenceError in strict mode, killed the IIFE).
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));

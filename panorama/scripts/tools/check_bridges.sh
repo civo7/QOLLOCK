@@ -23,7 +23,7 @@ DATA_ALLOWLIST="MOD_ICONS CRATE_DATA MINIMAP_CRATE_DATA HERO_IMAGES"
 # Category C: Game API globals (provided by Deadlock client DLL, cannot be imported)
 GAME_API_ALLOWLIST="CitadelHudHeroBuildsEditSelectedBuild CitadelHudHeroBuildsSaveEdits DismissAllContextMenus Game"
 # Category D: Debug/trace globals
-DEBUG_ALLOWLIST="_TLog pushUnique"
+DEBUG_ALLOWLIST="_TLog pushUnique QOL_DUMP_STAMINA_DEBUG"
 # Category E: Panorama built-ins
 PANORAMA_ALLOWLIST="\$ \$.Msg \$ .Schedule \$ .GetContextPanel \$ .DispatchEvent \$ .CreatePanel \$ .Localize \$ .RegisterEventHandler \$ .RegisterForUnhandledEvent \$ .CancelScheduled \$ .FindChildInContext \$ .Language \$ .FrameTime \$ .DbgIsReloadingScript"
 
