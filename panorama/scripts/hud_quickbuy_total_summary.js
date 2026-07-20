@@ -1,5 +1,7 @@
 (function(){'use strict';
 var QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS=0.05;
+// Phase 8.1: Degraded interval when shop closed or feature inactive (was 0.05s = 20Hz).
+var QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS=0.5;
 var quickbuyUpcomingPreviewSlots=[
 	{
 		rootId:'QuickbuyUpcomingPreview2',
@@ -730,13 +732,13 @@ function ResetQuickbuyQueuePanels(contextPanel){
 function UpdateQuickbuyQueueCostPanels(){
 	var contextPanel=$.GetContextPanel();
 	if(!contextPanel){
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
 		return;
 	}
 
 	if(!IsQuickbuyCostFeatureActive(contextPanel)){
 		ResetQuickbuyQueuePanels(contextPanel);
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
 		return;
 	}
 	var clickToNotifyActive=IsClickToNotifyActive(contextPanel);
