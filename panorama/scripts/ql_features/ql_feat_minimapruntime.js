@@ -100,7 +100,7 @@ function BuildMinimapCrateOverlay(root, mapName) {
         var overlay = panels.root;
         var markers = panels.markers;
         var dataRoot = null;
-        if (QOL.minimapCrateData && QOL.minimapCrateData) dataRoot = QOL_MINIMAP_CRATE_DATA;
+        if (QOL.minimapCrateData) dataRoot = QOL.minimapCrateData;
         else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
         else if (typeof MINIMAP_CRATE_DATA === "object" && MINIMAP_CRATE_DATA) dataRoot = MINIMAP_CRATE_DATA;
         var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
