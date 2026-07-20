@@ -724,10 +724,8 @@ function ToRgbString(rgb) {
         State.allyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
     }
 
-    $.Msg("[QOL DEBUG] colorWarnings: all functions defined, starting registrations");
     // ── Registrations (3 features, 1 file) ──
 
-    $.Msg("[QOL DEBUG] Registering colorWarning");
     QOL.register("colorWarning", {
         configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
                      "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
@@ -749,7 +747,6 @@ function ToRgbString(rgb) {
                     "coloredHealthbarZeroHeightStreak"]
     });
 
-    $.Msg("[QOL DEBUG] Registering enemyColorWarning");
     QOL.register("enemyColorWarning", {
         configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
                      "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
@@ -771,7 +768,6 @@ function ToRgbString(rgb) {
                     "enemyColoredHealthPulseDir", "enemyColoredHealthPulseVal"]
     });
 
-    $.Msg("[QOL DEBUG] Registering allyColorWarning");
     QOL.register("allyColorWarning", {
         configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
                      "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],
