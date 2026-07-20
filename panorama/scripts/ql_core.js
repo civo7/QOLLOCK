@@ -582,7 +582,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     // (Build save/clear + hero hint bridge constants now live in ql_bridge.js — Phase 4)
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
-    const ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 1500;
     const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
     const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 30;   // poll-driven
     const BUILD_SAVE_VERIFY_DELAY_MS = 200;   // poll-driven
