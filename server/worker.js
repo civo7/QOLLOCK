@@ -23,33 +23,65 @@
  * The only guard is a per-account write rate limit. That is an accepted trade-off
  * for HUD settings — see the branch design notes. Do NOT store anything sensitive.
  *
+ * ── Encoding ──────────────────────────────────────────────────────────────
+ * Every non-probe response encodes two "levels" as image dims via
+ *   dim = level*STEP + BASE   (STEP=9, BASE=15)  ->  the client inverts it.
+ * Status codes below are those level pairs (decode, then compare), NOT raw pixel
+ * sizes — e.g. "(9,1) bad params" means levels w=9,h=1. See the knobs block for
+ * why one level per dimension (not a full byte): 256 values can't survive the
+ * engine's UI-scale rounding, levels spaced 5px apart can.
+ *
  * ── Routes (all GET, all return a PNG; pass &rnd=<n> to defeat engine caching) ──
  *   /api/ping                                  -> (1,1)                 liveness
- *   /api/probe                                 -> (600,1000)            scale calibration
+ *   /api/probe                                 -> (600,1000) RAW px     scale calibration
  *   /api/save?id=<acct>&rev=<n>&d=<b64url>     -> (1,1) ok
  *                                                 (9,1) bad params
  *                                                 (9,2) rate-limited
  *                                                 (9,3) stale revision (rev <= stored)
  *                                                 (9,9) internal error
- *   /api/load?id=<acct>&chunk=<i>              -> chunk 0 (manifest): dims encode the
- *                                                 16-bit total data-byte count T.
- *                                                   w = ((T>>8)&255)+1, h = (T&255)+1
- *                                                 T = 0  (i.e. (1,1)) => nothing stored.
- *                                                 chunk i>=1 (data): two stream bytes
- *                                                   w = data[2(i-1)]+1, h = data[2(i-1)+1]+1
+ *   /api/load?id=<acct>&chunk=<i>              -> chunk 0 (manifest): two 6-bit levels
+ *                                                 encode the total stream-byte count T
+ *                                                 (<=4095):  w = (T>>6)&63, h = T&63.
+ *                                                 T = 0  (i.e. levels (0,0)) => nothing stored.
+ *                                                 chunk i>=1 (data): one stream byte as
+ *                                                 two nibbles:  w = byte>>4, h = byte&15.
  *
  * The transmitted stream = <raw config binary> concat <crc16(binary), big-endian>.
  * So T = binaryLen + 2, and the client verifies integrity after reassembly and can
  * re-request only the chunks it is still missing. The raw binary feeds QOLLOCK's
  * existing DeserializeBuildPayloadCompact directly — no base64 round-trip on load.
+ * T is capped by the manifest's 4095 ceiling — comfortably above MAX_PAYLOAD_CHARS.
  */
 
 // ── Downlink encoding knobs ───────────────────────────────────────────────
-// One byte per image dimension: dim = byte*STEP + 1, giving dims in 1..256 for
-// STEP=1. Small dims stay well under the UI scale factor so client calibration
-// recovers them exactly. If in-game rounding ever proves flaky, raise STEP (and
-// mirror it on the client) to widen the gap between adjacent byte values.
-const STEP = 1;
+// One image dimension carries ONE small "level", not a full byte:
+//   dim = level*STEP + BASE   (STEP=9, BASE=15)  ->  dims in 15..582.
+//
+// WHY levels, not bytes: a full byte (256 values) cannot be packed into one
+// dimension and survive UI scaling. The client reads actuallayoutwidth/height,
+// which the engine rounds — and on a scaled display it also biases SMALL sizes
+// upward by ~1px. Two rounding steps (scale-correct, then de-quantize) then push
+// adjacent values across a boundary. Field-confirmed on a 1.333x UI: the manifest
+// high byte 0 (a 16px image) came back as level 1, so T decoded as 409 instead of
+// 153 and the whole load reassembled garbage. See github2/IMAGE_SIDECHANNEL_1PX_BUG.md.
+//
+// STEP=9 spaces adjacent levels 9 logical px apart so a ±2px engine error can't
+// cross a boundary even when a sub-1080p display DOWNSCALES (which amplifies an
+// absolute px error by 1/uiScale — the reason a tighter step failed at 720p in
+// scripts/simulate_resolutions.js). BASE=15 keeps level 0 off the rounding floor.
+// A data image encodes one byte as two nibbles (levels 0..15, max 150px); the
+// manifest encodes T as two 6-bit levels (0..63, max 582px). Both stay under the
+// client's 600px probe envelope, so no host-panel change is needed. STEP only
+// affects image pixel size, never throughput (still one byte per image).
+// MUST stay in lockstep with ql_net.js (STEP, BASE, decodeLevel).
+const STEP = 9;
+const BASE = 15;
+// Encode one level (0..63) to its image dimension.
+function enc(level) { return level * STEP + BASE; }
+// PNG carrying two levels (one per dimension). Status codes, nibble pairs and
+// manifest 6-bit halves all go through this — the client recovers each with
+// decodeLevel, so everything shares the one scaling-robust band.
+function penc(levelW, levelH) { return png(enc(levelW), enc(levelH)); }
 
 // ── Write rate limit (per account) ────────────────────────────────────────
 const RATE_WINDOW_MS = 10000; // sliding window
@@ -88,12 +120,12 @@ export default {
     const p = url.pathname.replace(/\.png$/, "");
     const q = url.searchParams;
 
-    if (p === "/api/ping") return await png(1, 1);
+    if (p === "/api/ping") return await penc(1, 1);
     if (p === "/api/probe") return await png(600, 1000);
 
     if (p === "/api/save" || p === "/api/load") {
       const id = normalizeAccountId(q.get("id"));
-      if (!id) return await png(9, 1); // bad / missing account id
+      if (!id) return await penc(9, 1); // bad / missing account id
 
       // Writes get a second, per-source-IP gate BEFORE touching the account DO.
       // This is the guard against mass enumeration (many accounts, few writes
@@ -108,7 +140,7 @@ export default {
           const gateUrl = new URL(request.url);
           gateUrl.pathname = "/api/_ipgate";
           const gate = await ipStub.fetch(new Request(gateUrl, request));
-          if (gate.status === 429) return await png(9, 2); // IP rate-limited
+          if (gate.status === 429) return await penc(9, 2); // IP rate-limited
         }
       }
 
@@ -117,7 +149,7 @@ export default {
       return stub.fetch(request);
     }
 
-    return await png(9, 1);
+    return await penc(9, 1);
   },
 };
 
@@ -137,9 +169,9 @@ export class ConfigStore {
       if (p === "/api/save") return await this.handleSave(q);
       if (p === "/api/load") return await this.handleLoad(q);
     } catch (e) {
-      return await png(9, 9); // internal error
+      return await penc(9, 9); // internal error
     }
-    return await png(9, 1);
+    return await penc(9, 1);
   }
 
   // Per-IP sliding-window gate. This DO instance is keyed by "ip:<addr>", so its
@@ -162,15 +194,15 @@ export class ConfigStore {
   async handleSave(q) {
     const rev = parseInt(q.get("rev"), 10);
     const d = q.get("d"); // base64url of the raw compact-binary config
-    if (!Number.isFinite(rev) || rev < 0 || !d) return await png(9, 1);
+    if (!Number.isFinite(rev) || rev < 0 || !d) return await penc(9, 1);
     // Reject a far-future rev — it would stale-lock the owner permanently.
-    if (rev > Date.now() + MAX_REV_SKEW_MS) return await png(9, 1);
+    if (rev > Date.now() + MAX_REV_SKEW_MS) return await penc(9, 1);
     // Reject an oversized blob before we bother decoding it.
-    if (d.length > MAX_PAYLOAD_CHARS) return await png(9, 1);
+    if (d.length > MAX_PAYLOAD_CHARS) return await penc(9, 1);
 
     // Decode base64url -> raw bytes. Reject anything that isn't clean base64url.
     const bytes = fromBase64Url(d);
-    if (!bytes) return await png(9, 1);
+    if (!bytes) return await penc(9, 1);
 
     // Sliding-window write rate limit. The only guard on an unauthenticated,
     // account_id-keyed store — keeps a griefer who knows an id from hammering it.
@@ -179,12 +211,12 @@ export class ConfigStore {
     hits = hits.filter((t) => now - t < RATE_WINDOW_MS);
     if (hits.length >= RATE_MAX_WRITES) {
       await this.storage.put("rate", hits);
-      return await png(9, 2); // rate-limited
+      return await penc(9, 2); // rate-limited
     }
 
     // Monotonic revision guard: never let a stale writer clobber newer config.
     const storedRev = (await this.storage.get("rev")) || 0;
-    if (rev <= storedRev) return await png(9, 3); // stale revision
+    if (rev <= storedRev) return await penc(9, 3); // stale revision
 
     hits.push(now);
     // Store the raw bytes as a plain array (DO storage serializes it). Keep the
@@ -194,18 +226,19 @@ export class ConfigStore {
       rev: rev,
       data: Array.from(bytes),
     });
-    return await png(1, 1); // ok
+    return await penc(1, 1); // ok
   }
 
   async handleLoad(q) {
     const chunk = parseInt(q.get("chunk"), 10);
-    if (!Number.isFinite(chunk) || chunk < 0) return await png(9, 1);
+    if (!Number.isFinite(chunk) || chunk < 0) return await penc(9, 1);
 
     const stored = await this.storage.get("data");
     if (!stored || stored.length === 0) {
-      // Nothing saved for this account yet. Manifest (chunk 0) reports T=0 => (1,1);
-      // any data chunk also reads (1,1). Client treats this as "use defaults".
-      return await png(1, 1);
+      // Nothing saved for this account yet. Manifest (chunk 0) encodes T=0 as
+      // (enc(0),enc(0)); any data chunk also reads bytes (0,0). Client sees T=0
+      // and treats it as "use defaults".
+      return await penc(0, 0);
     }
 
     // Stream = config bytes + crc16(config bytes), big-endian. T = total stream bytes.
@@ -214,17 +247,15 @@ export class ConfigStore {
     const T = stream.length;
 
     if (chunk === 0) {
-      // Manifest: dims encode the 16-bit total-byte count T (no +STEP scaling here —
-      // T is a count, not a downlink byte, so it uses the full 1..256 range twice).
-      return await png(((T >> 8) & 255) + 1, (T & 255) + 1);
+      // Manifest: T (<= 4095) as two 6-bit levels, hi*64 + lo.
+      return await penc((T >> 6) & 63, T & 63);
     }
 
-    // Data chunk i>=1 carries stream bytes [2(i-1)] and [2(i-1)+1].
-    const base = 2 * (chunk - 1);
-    if (base >= T) return await png(1, 1); // past the end
-    const b0 = stream[base];
-    const b1 = base + 1 < T ? stream[base + 1] : 0; // pad final odd byte
-    return await png(b0 * STEP + 1, b1 * STEP + 1);
+    // Data chunk i>=1 carries stream byte [i-1] as two nibbles (hi, lo).
+    const base = chunk - 1;
+    if (base >= T) return await penc(0, 0); // past the end -> byte 0
+    const b = stream[base] & 255;
+    return await penc((b >> 4) & 15, b & 15);
   }
 }
 

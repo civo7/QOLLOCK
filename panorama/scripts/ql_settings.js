@@ -15042,6 +15042,40 @@ function ResolveBuildSavePendingLabel(message) {
     return "SAVING";
 }
 
+// Map the failure reason the HUD bridges back (QOL_BUILD_SAVE_MSG) into a message
+// the user can actually act on / report. The cloud path writes the raw QOL.net
+// reason here (net|calib|timeout|rate|stale|badparams|bad_payload|error); the old
+// build path writes its own messages. We always append the raw code in brackets so
+// a report is unambiguous even under a non-English locale.
+function ResolveBuildSaveFailureMessage(message) {
+    var reason = String(message || "").trim();
+    // calib may carry a raw-dims detail suffix (e.g. "calib:854x1080:clamp") that
+    // is invaluable in a report but must not break the human-text match.
+    var base = reason.indexOf("calib") === 0 ? "calib" : reason;
+    var human;
+    switch (base) {
+        case "calib":
+            human = "Cloud transport could not calibrate — likely display scaling. Please report."; break;
+        case "net":
+            human = "Network error reaching the cloud."; break;
+        case "timeout":
+            human = "Cloud save timed out."; break;
+        case "rate":
+            human = "Too many saves — wait a moment and try again."; break;
+        case "stale":
+            human = "A newer save already exists on the server."; break;
+        case "badparams":
+        case "bad_payload":
+            human = "Save data was rejected as malformed."; break;
+        case "":
+            human = "Save failed."; break;
+        default:
+            human = "Save failed."; break;
+    }
+    var localized = LocalizeSettingsText(human, true);
+    return reason ? (localized + " [" + reason + "]") : localized;
+}
+
 function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
     var startMs = Date.now ? Date.now() : (new Date()).getTime();
     var timeoutMs = 30000;
@@ -15111,7 +15145,7 @@ function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
             saveBtn.RemoveClass("SuccessState");
             saveBtn.AddClass("FailureState");
             saveLbl.text = LocalizeSettingsText("FAILED", true);
-            SetLocalizedConfigFeedbackMessage("Save failed.", "error", 2600);
+            SetConfigFeedbackMessage(ResolveBuildSaveFailureMessage(status.msg || ""), "error", 3200);
             $.Schedule(0.75, restoreDefault);
             return;
         }
