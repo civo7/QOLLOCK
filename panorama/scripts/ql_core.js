@@ -16314,6 +16314,7 @@ function GetUIRoot() {
         ["trySelectFirstStorageBuildEntry", function() { return TrySelectFirstStorageBuildEntry; }],
         ["trySelectNextStorageBuildEntry", function() { return TrySelectNextStorageBuildEntry; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
+        ["washColorPalette", function() { return QOL_WASH_COLOR_PALETTE; }],
     ];
 
     // Publish to QOL namespace with error logging

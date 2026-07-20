@@ -17,7 +17,7 @@ ISSUES=0
 
 # ── Known globals allowlist ──
 # Category A: QOL namespace symbols (should be resolved via QOL.import())
-QOL_NS_ALLOWLIST="QOL_PANEL_ID_HUD QOL_WASH_COLOR_PALETTE QOL_UTILS_LOADED QOL_DEFAULT_CONFIG QOL_WARN QOL_MINIMAP_CRATE_DATA"
+QOL_NS_ALLOWLIST="QOL_PANEL_ID_HUD QOL_DEFAULT_CONFIG QOL_WARN QOL_MINIMAP_CRATE_DATA"
 # Category B: Data globals (published by data files)
 DATA_ALLOWLIST="MOD_ICONS CRATE_DATA MINIMAP_CRATE_DATA HERO_IMAGES"
 # Category C: Game API globals (provided by Deadlock client DLL, cannot be imported)

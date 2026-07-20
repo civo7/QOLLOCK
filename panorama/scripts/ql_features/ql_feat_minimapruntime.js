@@ -3,16 +3,19 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_minimapruntime";
-    // DEPENDS: ensureMinimapPanelCache, getCachedPanel, isHudClassActive, readMinimapIconColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, utils
-    var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    // DEPENDS: ensureMinimapPanelCache, getCachedPanel, getUIRoot, isHudClassActive, readMinimapIconColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, utils
+    var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","getUIRoot","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
+    var GetUIRoot = _deps.getUIRoot;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
-    var RWP = _deps.resolveWashColorFromPalette;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var PerfNowMs = Utils.PerfNowMs;
     var IsCfgEnabled = Utils.IsCfgEnabled;
+    // Phase 6: WASH_COLOR_PALETTE was a const inside ql_core.js IIFE — not
+    // accessible as a bare global. Published to QOL.washColorPalette (ql_core.js:16317).
+    var WASH_COLOR_PALETTE = QOL.washColorPalette || [];
     var IsPanelValid = Utils.IsPanelValid;
     var SetStyleSafe = Utils.SetStyleSafe;
     var ClearStyleSafe = Utils.ClearStyleSafe;
@@ -247,30 +250,20 @@ function EnsureMinimapPanelCache(root) {
         State.cachedPanels.minimap = panels;
         return panels;
     }
-// IsHudClassActive imported via _deps.isHudClassActive (canonical version from ql_core.js).
-function IsPanelListValid(list) {
-        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
-            if (!list || list.length === 0) return false;
-            for (var i = 0; i < list.length; i++) {
-                if (!IsPanelValid(list[i])) return false;
-            }
-            return true;
-        })();
-    }
+// Phase 5.2: IsPanelListValid imported via Utils.IsPanelListValid (line 23).
+// IsHudClassActive imported via _deps.isHudClassActive.
 function NormalizePaletteColorIndex(value) {
         var numeric = Math.round(Number(value));
         if (!isFinite(numeric)) numeric = 0;
         if (numeric < 0) numeric = 0;
-        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        if (numeric >= WASH_COLOR_PALETTE.length) numeric = 0;
         return numeric;
     }
-function PerfNowMs() {
-        return Date.now ? Date.now() : (new Date()).getTime();
-    }
+// Phase 5.2: PerfNowMs imported via Utils.PerfNowMs (line 14).
 // Phase 5.2: ResolveCachedPanel now imported via _deps.resolveCachedPanel (line 9).
 function ResolveWashColorFromPalette(value) {
         var index = NormalizePaletteColorIndex(value);
-        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        var color = WASH_COLOR_PALETTE[index] || "";
         return color ? String(color) : "";
     }
 function SetWashColorSafe(panel, color) {
@@ -374,7 +367,9 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         } catch(eAttrHud) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime", (eAttrHud && eAttrHud.message ? eAttrHud.message : String(eAttrHud || ""))); }
         return fromConfig;
     }
-// Phase 5.2: SetCachedPanel already imported via _deps.setCachedPanel (line 12).
+// Phase 5.2: All functions below already imported from Utils at lines 14-26.
+// Removed 85 lines of extraction debris that referenced inaccessible bare
+// global QOL_UTILS_LOADED (ReferenceError in strict mode, killed the IIFE).
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
