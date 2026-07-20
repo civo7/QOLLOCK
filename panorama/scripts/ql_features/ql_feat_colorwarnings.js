@@ -4,8 +4,10 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_colorwarnings";
-    // DEPENDS: state, utils
-    var _deps = QOL.import(["state","utils"]);
+    // DEPENDS: getCachedPanel, setCachedPanel, state, utils
+    var _deps = QOL.import(["getCachedPanel","setCachedPanel","state","utils"]);
+    var GetCachedPanel = _deps.getCachedPanel;
+    var SetCachedPanel = _deps.setCachedPanel;
     var State = _deps.state;
     var Utils = _deps.utils;
     var IsCfgEnabled = Utils.IsCfgEnabled;
@@ -404,12 +406,6 @@ function EnemyColoredHealthDebugLog(msg) {
         if (!ENEMY_COLORED_HEALTH_DEBUG) return;
         $.Msg("[QOLLock][EnemyColoredHealthDbg] " + msg);
     }
-var GetCachedPanel = function(k) {
-        var p = State.cachedPanels[k];
-        if (IsPanelValid(p)) return p;
-        State.cachedPanels[k] = null;
-        return null;
-    };
 function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
@@ -447,9 +443,6 @@ function ResolveFriendlyTopBarTeamClass(root, nowMs) {
         State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
         return friendlyTeamClass;
     }
-var SetCachedPanel = function(k, p) {
-        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
-    };
 function SetWashColorSafe(panel, color) {
         if (color) {
             SetStyleSafe(panel, "washColor", String(color));
@@ -460,14 +453,7 @@ function SetWashColorSafe(panel, color) {
 function ToRgbString(rgb) {
         return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
     }
-    var hasClassInHierarchy = function(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass(className)) return true;
-            current = current.GetParent();
-        }
-        return false;
-    };
+    var hasClassInHierarchy = Utils.HasClassInHierarchy;
 
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
