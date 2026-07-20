@@ -145,7 +145,7 @@
         panel.style.borderRadius = "6px";
         panel.style.zIndex = "1000";
         panel.style.opacity = "0";
-        panel.style.visibility = "collapse";
+        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", true); else panel.style.visibility = "collapse";
         return panel;
     }
 
@@ -154,7 +154,7 @@
         if (panel) {
             panel.text = "";
             panel.style.opacity = "0";
-            panel.style.visibility = "collapse";
+            if (panel.SetHasClass) panel.SetHasClass("qol-hidden", true); else panel.style.visibility = "collapse";
         }
         State.dl4dCaptionVisible = false;
         State.dl4dCaptionToken++;
@@ -165,7 +165,7 @@
         var panel = EnsureDl4dCaptionPanel(root);
         if (!panel) return;
         panel.text = String(text || "");
-        panel.style.visibility = "visible";
+        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false); else panel.style.visibility = "visible";
         panel.style.opacity = "0.85";
         State.dl4dCaptionVisible = true;
         State.dl4dCaptionToken++;
@@ -247,7 +247,7 @@
         if (basicModeActive) {
             var abilitiesContainerForOldMode = EnsureAbilitiesContainerPanelCache(root);
             var oldModeInShop = abilitiesContainerForOldMode && abilitiesContainerForOldMode.BHasClass && abilitiesContainerForOldMode.BHasClass("gShopOpen");
-            passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
+            if (passiveHud.SetHasClass) passiveHud.SetHasClass("qol-hidden", oldModeInShop); else passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
 
             var passiveSize = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
             var oldScale = Utils.ClampConfigNumber((passiveSize / 40) * 110, 110, 50, 200, true);

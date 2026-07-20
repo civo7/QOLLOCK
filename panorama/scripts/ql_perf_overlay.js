@@ -96,7 +96,8 @@
             _overlayPanel.style.y = "80px";
             _overlayPanel.style.width = "fit-children";
             _overlayPanel.style.flowChildren = "down";
-            _overlayPanel.style.visibility = "collapse";
+            // Phase 8.6: Use class toggle — inline style would override SetPanelVisibility.
+            if (_overlayPanel.SetHasClass) _overlayPanel.SetHasClass("qol-hidden", true); else _overlayPanel.style.visibility = "collapse";
             _overlayPanel.style.zIndex = "1000";
             _overlayPanel.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
             _overlayPanel.style.padding = "8px 10px 6px 10px";

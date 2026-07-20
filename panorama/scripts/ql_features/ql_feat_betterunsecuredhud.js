@@ -170,7 +170,7 @@ function ParseUnsecuredSoulsValue(valueText) {
         if (sourceValue <= 0) {
             var zeroSig = "hidden_zero|" + sourceText;
             if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
-                if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+                if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
                 State.unsecuredSouls.hudStyleSig = zeroSig;
             }
             return;
@@ -196,23 +196,23 @@ function ParseUnsecuredSoulsValue(valueText) {
         var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
         var targetY = baseY + reflectedYOffset;
         if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
-            if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+            if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
             State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
             return;
         }
         var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
         if (sig === State.unsecuredSouls.hudStyleSig) return;
 
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
         overlay.style.x = targetX + "px";
         overlay.style.y = targetY + "px";
 
-        mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
-        mirrorText.style.visibility = showText ? "visible" : "collapse";
+        if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
+        if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
         if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
 
         if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
-        if (mirrorLabel.style.visibility !== "visible") mirrorLabel.style.visibility = "visible";
+        if (!mirrorLabel.BHasClass || !mirrorLabel.BHasClass("qol-hidden")) { if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible"; }
         mirrorLabel.style.fontSize = fontPx + "px";
         mirrorLabel.style.x = "0px";
         mirrorLabel.style.y = "0px";
@@ -271,7 +271,7 @@ function ParseUnsecuredSoulsValue(valueText) {
             mirrorText = IsPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
         }
         if (!label) {
-            if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+            if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
             State.unsecuredSouls.hudStyleSig = "";
             return;
         }

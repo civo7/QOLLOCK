@@ -101,7 +101,7 @@
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
             if (State.unsecuredSouls.displayMode !== "hideout") {
-                overlay.style.visibility = "collapse";
+                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse";
                 overlay.SetHasClass("danger_1", false);
                 overlay.SetHasClass("danger_2", false);
                 overlay.SetHasClass("danger_3", false);
@@ -116,8 +116,8 @@
             return;
         }
 
-        if (State.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
+        if (State.unsecuredSouls.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
         State.unsecuredSouls.displayMode = "active";
 

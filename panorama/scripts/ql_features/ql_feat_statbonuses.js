@@ -157,7 +157,7 @@
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
             if (State.statBonuses.displayMode !== "hideout") {
-                overlay.style.visibility = "collapse";
+                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse";
                 for (var h = 0; h < STAT_DEFS.length; h++) {
                     var hLabel = GetCachedPanel(STAT_DEFS[h].labelCacheKey);
                     if (hLabel) hLabel.SetHasClass("is_zero", false);
@@ -169,8 +169,8 @@
         }
 
         // ── Activate ──
-        if (State.statBonuses.displayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
+        if (State.statBonuses.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
         State.statBonuses.displayMode = "active";
 

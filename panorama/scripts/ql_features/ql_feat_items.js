@@ -62,7 +62,7 @@
 
         modsContainer.style.x = String(offsetX) + "px";
         modsContainer.style.y = String(-offsetY) + "px";
-        modsContainer.style.visibility = enabled ? "visible" : "collapse";
+        if (modsContainer.SetHasClass) modsContainer.SetHasClass("qol-hidden", !enabled); else modsContainer.style.visibility = enabled ? "visible" : "collapse";
         SWC(modsContainer, washColor);
         Utils.ClearStyleSafe(modsContainer, "opacity");
         var barGraphContainer = modsContainer.FindChildTraverse ? modsContainer.FindChildTraverse("BarGraphContainer") : null;

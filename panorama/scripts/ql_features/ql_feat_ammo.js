@@ -78,7 +78,7 @@
         ammoPanel.style.preTransformScale2d = "1.00, 1.00";
         ammoPanel.style.x = String(ammoOffsetX) + "px";
         ammoPanel.style.y = String(80 - ammoOffsetY) + "px";
-        ammoPanel.style.visibility = "visible";
+        if (ammoPanel.SetHasClass) ammoPanel.SetHasClass("qol-hidden", false); else ammoPanel.style.visibility = "visible";
         Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
     }
 

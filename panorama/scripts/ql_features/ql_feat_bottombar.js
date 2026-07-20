@@ -103,7 +103,7 @@
         hudSignature.style.x = String(offsetX) + "px";
         hudSignature.style.y = String(-offsetY) + "px";
         hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
-        hudSignature.style.visibility = enabled ? "visible" : "collapse";
+        if (hudSignature.SetHasClass) hudSignature.SetHasClass("qol-hidden", !enabled); else hudSignature.style.visibility = enabled ? "visible" : "collapse";
         SetWashColor(hudSignature, washColor);
         Utils.SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         State.bottomBarRuntimeStyleSig = styleSig;

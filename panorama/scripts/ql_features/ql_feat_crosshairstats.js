@@ -252,7 +252,7 @@
                 value.AddClass("QOLCrosshairStatValue");
                 value.text = "";
             }
-            row.style.visibility = "collapse";
+            if (row.SetHasClass) row.SetHasClass("qol-hidden", true); else row.style.visibility = "collapse";
             st.rowPanels[def.key] = row;
             st.rowValues[def.key] = row.FindChildTraverse(rowId + "_value");
         }
@@ -303,7 +303,7 @@
         // mirror — so hide the overlay entirely until it closes. lastVisibleCount is reset so the
         // overlay re-shows correctly on the next closed-scoreboard frame.
         if (IsHudClassActive && IsHudClassActive(root, "gScoreboardOpen")) {
-            try { overlay.style.visibility = "collapse"; } catch(e) {}
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else try { overlay.style.visibility = "collapse"; } catch(e) {}
             st.lastVisibleCount = -1;
             return;
         }
@@ -374,14 +374,14 @@
                 var rowPanel = st.rowPanels[rdef.key];
                 if (!IsPanelValid(rowPanel)) continue;
                 if (!part) {
-                    try { rowPanel.style.visibility = "collapse"; } catch(e) {}
+                    if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", true); else try { rowPanel.style.visibility = "collapse"; } catch(e) {}
                     continue;
                 }
                 var neg = part.indexOf(rdef.key + "-") === 0;
                 try {
                     rowPanel.SetHasClass("isDebuff", neg);
                     rowPanel.SetHasClass("isBuff", !neg);
-                    rowPanel.style.visibility = "visible";
+                    if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", false); else rowPanel.style.visibility = "visible";
                 } catch(e) {}
                 var valueLabel = st.rowValues[rdef.key];
                 if (IsPanelValid(valueLabel)) {
@@ -394,7 +394,7 @@
 
         // Collapse whole overlay when nothing is active (avoids an empty background box).
         if (visibleCount !== st.lastVisibleCount) {
-            try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", visibleCount <= 0); else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
             st.lastVisibleCount = visibleCount;
         }
     }

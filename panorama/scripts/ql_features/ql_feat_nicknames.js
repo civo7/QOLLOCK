@@ -124,7 +124,8 @@
         if (displayLabel.text !== String(text || "")) displayLabel.text = String(text || "");
         if (displayLabel.style) {
             var newVis = showLabel ? "visible" : "collapse";
-            if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
+            if (displayLabel.SetHasClass) displayLabel.SetHasClass("qol-hidden", !showLabel);
+            else if (displayLabel.style.visibility !== newVis) displayLabel.style.visibility = newVis;
             var newZ = showLabel ? "1000" : "0";
             if (displayLabel.style.zIndex !== newZ) displayLabel.style.zIndex = newZ;
             var newOp = showLabel ? "1" : "0";

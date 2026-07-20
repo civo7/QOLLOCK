@@ -115,8 +115,8 @@
 
         var overlay = EnsureCombatStatusOverlay(root);
         if (!overlay) return;
-        if (State.combatStatus.displayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
+        if (State.combatStatus.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
         State.combatStatus.displayMode = "active";
 
