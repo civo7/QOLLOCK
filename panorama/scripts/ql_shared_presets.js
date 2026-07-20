@@ -2186,6 +2186,38 @@ QOL.import = function(names) {
 try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
 try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
+// ── Settings-context stubs (Phase 3.5) ──
+// The Settings context loads only ql_shared_presets, ql_bridge, ql_config,
+// and ql_settings. It does NOT load ql_state, ql_core, ql_utils, or any feature
+// files. Stub HUD-only symbols so QOL.import() returns usable values instead of
+// undefined when called from Settings-context code.
+(function() {
+    if (typeof $ === "undefined" || typeof $.GetContextPanel !== "function") return;
+    var ctxPanel = null;
+    try { ctxPanel = $.GetContextPanel(); } catch(e) { return; }
+    if (!ctxPanel || ctxPanel.id === "Hud") return; // HUD context — skip stubs
+
+    // Settings context detected — stub HUD-only symbols.
+    // These symbols are normally published by ql_state.js, ql_core.js, and
+    // ql_utils.js — none of which load in the Settings context.
+    QOL.state = null;
+    QOL.getCachedPanel = function() { return null; };
+    QOL.setCachedPanel = function() {};
+    QOL.resolveCachedPanel = function() { return null; };
+    QOL.clearPanelCache = function() {};
+    QOL.sweepStalePanelCache = function() { return 0; };
+    QOL.isHudClassActive = function() { return false; };
+    QOL.isPanelVisibleMaybe = function() { return false; };
+    QOL.isPanelListValid = function() { return false; };
+    QOL.getUIRoot = function() { return null; };
+    QOL.getGameplayHudPanel = function() { return null; };
+    QOL.perfNowMs = function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    QOL.perfStart = function() {};
+    QOL.perfEnd = function() {};
+    QOL.isConnectedToHideout = function() { return false; };
+    QOL.settingsTabs = {}; // Phase 3.3: per-feature settings tab registry
+})();
+
 // ── Diagnostic dump function ──
 // Reads HUD state + captured logs from Hud panel attribute "QOL_Diag"
 // (written by ql_core.js each tick via the cross-context panel bridge).
