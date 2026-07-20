@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_legacyaudiopassive";
+    // DEPENDS: ensureAbilitiesContainerPanelCache, ensureGameTimePanelCache, ensurePassiveHudPanelCache, getCachedPanel, getSharedSchemaUtils, isColorWarningEnabled, isPassiveCooldownBasicMode, isStreetBrawlModeActive, normalizeVoiceTypeValue, normalizeVoiceVolumeValue, resolvePassiveCooldownMode, state, setCachedPanel, setPanelClassCached, utils
     var _deps = QOL.import(["ensureAbilitiesContainerPanelCache","ensureGameTimePanelCache","ensurePassiveHudPanelCache","getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","state","setCachedPanel","setPanelClassCached","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

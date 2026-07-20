@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_heroshop";
+    // DEPENDS: getCachedPanel, state, setCachedPanel, setPanelClassCached, utils, normalizeHudOffsetNumber, normalizeHudScaleNumber
     var _deps = QOL.import(["getCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

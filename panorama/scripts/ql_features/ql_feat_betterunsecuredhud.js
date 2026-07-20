@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_betterunsecuredhud";
+    // DEPENDS: getCachedPanel, getGameplayHudPanel, parseUnsecuredSoulsValue, state, setCachedPanel, utils, panelIdGoldApContainer
     var _deps = QOL.import(["getCachedPanel", "getGameplayHudPanel", "parseUnsecuredSoulsValue", "state", "setCachedPanel", "utils", "panelIdGoldApContainer"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

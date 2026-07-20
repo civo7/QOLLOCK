@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_nicknames";
+    // DEPENDS: getCachedPanel, getGameSecondsForUrn, getTopBarPlayerPanel, refreshSpmPanelCache, state, setCachedPanel, setPanelClassIfChanged, utils, isConnectedToHideout
     var _deps = QOL.import(["getCachedPanel","getGameSecondsForUrn","getTopBarPlayerPanel","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

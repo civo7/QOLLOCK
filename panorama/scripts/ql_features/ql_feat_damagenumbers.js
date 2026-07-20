@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_damagenumbers";
+    // DEPENDS: findAncestorWithClass, getCachedPanel, isPanelListValid, perfEnd, perfStart, resolveDamageNumbersRuntimeSig, runtimeTaskIsDue, runtimeTaskSetDelay, state, setCachedPanel, utils
     var _deps = QOL.import(["findAncestorWithClass","getCachedPanel","isPanelListValid","perfEnd","perfStart","resolveDamageNumbersRuntimeSig","runtimeTaskIsDue","runtimeTaskSetDelay","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

@@ -2191,16 +2191,32 @@ try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { 
 // and ql_settings. It does NOT load ql_state, ql_core, ql_utils, or any feature
 // files. Stub HUD-only symbols so QOL.import() returns usable values instead of
 // undefined when called from Settings-context code.
+//
+// Detection: we use a three-layer guard to avoid false positives:
+//   1. QOL.state already exists → HUD context (skip)
+//   2. $.GetContextPanel().id matches QOL_PANEL_ID_HUD → HUD context (skip)
+//   3. Otherwise → Settings or unknown context (apply stubs)
+// Layer 1 protects against future contexts that might load this file.
+// Layer 2 is the primary heuristic. Both use the shared QOL_PANEL_ID_HUD constant.
 (function() {
     if (typeof $ === "undefined" || typeof $.GetContextPanel !== "function") return;
+
+    // Layer 1: if QOL.state already exists (published by ql_state.js), we're in
+    // HUD context or a context that has full HUD API access. Skip stubs.
+    if (QOL.state !== undefined) return;
+
+    // Layer 2: check the context panel id against the known HUD panel id.
     var ctxPanel = null;
     try { ctxPanel = $.GetContextPanel(); } catch(e) { return; }
-    if (!ctxPanel || ctxPanel.id === "Hud") return; // HUD context — skip stubs
+    if (!ctxPanel) return;
+    var hudPanelId = (typeof QOL_PANEL_ID_HUD === "string") ? QOL_PANEL_ID_HUD : "Hud";
+    if (ctxPanel.id === hudPanelId) return; // HUD context — skip stubs
 
-    // Settings context detected — stub HUD-only symbols.
+    // Settings or unknown context detected — stub HUD-only symbols.
+    // Use undefined (void 0) rather than null so typeof guards work correctly.
     // These symbols are normally published by ql_state.js, ql_core.js, and
     // ql_utils.js — none of which load in the Settings context.
-    QOL.state = null;
+    QOL.state = void 0;
     QOL.getCachedPanel = function() { return null; };
     QOL.setCachedPanel = function() {};
     QOL.resolveCachedPanel = function() { return null; };
@@ -2215,7 +2231,9 @@ try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { 
     QOL.perfStart = function() {};
     QOL.perfEnd = function() {};
     QOL.isConnectedToHideout = function() { return false; };
-    QOL.settingsTabs = {}; // Phase 3.3: per-feature settings tab registry
+    // settingsTabs: left undefined until Phase 3.3 creates the settings tab registry.
+    // Setting to undefined (void 0) ensures typeof checks work correctly.
+    QOL.settingsTabs = void 0;
 })();
 
 // ── Diagnostic dump function ──

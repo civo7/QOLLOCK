@@ -3,6 +3,7 @@
 (function() {
     'use strict';
         var _featureId = "ql_feat_items";
+    // DEPENDS: getCachedPanel, normalizePaletteColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, setWashColorSafe, utils
     var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

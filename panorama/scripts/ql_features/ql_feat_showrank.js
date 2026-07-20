@@ -38,7 +38,8 @@
         // Verify at least one HUD-only dep exists before importing
         if (typeof QOL.state === "undefined") { DBG("QOL.state undefined — skipping imports (Settings context?)"); return; }
         try {
-            _deps = QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
+            _deps = // DEPENDS: state, utils, isConnectedToHideout, perfNowMs
+QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             if (_deps && _deps.state) State = _deps.state;
             DBG("QOL imports OK: state=" + (State ? "yes" : "no") + " utils=" + (_deps && _deps.utils ? "yes" : "no") + " hideout=" + (_deps && _deps.isConnectedToHideout ? "yes" : "no") + " perf=" + (_deps && _deps.perfNowMs ? "yes" : "no"));
         } catch(e) { _deps = null; State = null; DBG("QOL imports FAILED: " + (e && e.message ? e.message : String(e))); }

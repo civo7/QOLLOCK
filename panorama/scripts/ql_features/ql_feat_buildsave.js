@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_buildsave";
+    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, normalizeHeroId, getConfiguredDefaultHeroId, selectHeroForBuildSave, queueDelayedHeroRestore, tryAdvanceStorageSwitchStage, tryAdvanceStorageSwitchSettleStage, setBuildSaveStatus, canReuseLoaderConfirmedSkyrunnerContext, readPanelTextMaybe, extractBuildCategoryPayloadToken, resolveCachedPanel, confirmStorageHeroSignatureAbilities, ensureStorageBuildInitialized, activatePanelSafe, finalizeSaveSettingsLoaderSession, beginSaveSettingsLoaderSession, updateSaveSettingsLoaderFromBuildSaveState, setSaveSettingsLoaderStepState, getSaveSettingsLoaderStepState, saveSettingsLoaderEnabled, captureBuildSaveTargetSelection, ensureShopFavoritesNavActive, ensureStorageHeroFavoritesHeaderVisible, getBuildSaveHudPanel, hasBuildSaveStorageUiReady, isBuildSaveStorageRuntimeSourceStale, isBuildSaveTargetSelectionMatch, isHudClassActive, resolveBuildSaveStorageHeroSignal, tryCloseHeroShopForLoader, tryOpenHeroShopForHeroProbe, tryReselectBuildSaveTargetByTitle
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
         "normalizeHeroId", "getConfiguredDefaultHeroId", "selectHeroForBuildSave",
         "queueDelayedHeroRestore", "tryAdvanceStorageSwitchStage",

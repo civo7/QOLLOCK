@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_minimapruntime";
+    // DEPENDS: ensureMinimapPanelCache, getCachedPanel, isHudClassActive, readMinimapIconColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, utils
     var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_keyboard";
+    // DEPENDS: buildKeyboardOverlayLayouts, getCachedPanel, getGameplayHudPanel, getKeyboardCachedPanels, readKeyboardOverlayWashColorIndex, resetKeyboardOverlayCaches, resolveWashColorFromPalette, state, setCachedPanel, setWashColorSafe, utils
     var _deps = QOL.import(["buildKeyboardOverlayLayouts","getCachedPanel","getGameplayHudPanel","getKeyboardCachedPanels","readKeyboardOverlayWashColorIndex","resetKeyboardOverlayCaches","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;

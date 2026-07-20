@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_statbonuses";
+    // DEPENDS: extractStatDisplayText, getCachedPanel, getGameplayHudPanel, harvestGoldenStatuesTooltipValue, isCustomHudContextActive, isStatBonusTokenZero, resolveGoldenStatBonusesValue, resolveStatBonusesSource, state, setCachedPanel, statBonusesDebugLogThrottled, utils, isConnectedToHideout
     var _deps = QOL.import(["extractStatDisplayText","getCachedPanel","getGameplayHudPanel","harvestGoldenStatuesTooltipValue","isCustomHudContextActive","isStatBonusTokenZero","resolveGoldenStatBonusesValue","resolveStatBonusesSource","state","setCachedPanel","statBonusesDebugLogThrottled","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_sigflash";
+    // DEPENDS: getCachedPanel, panelIdSignature, state, setCachedPanel, utils
     var _deps = QOL.import(["getCachedPanel","panelIdSignature","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

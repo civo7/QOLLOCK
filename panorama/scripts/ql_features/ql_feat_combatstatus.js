@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_combatstatus";
+    // DEPENDS: getCachedPanel, getGameplayHudPanel, getUIRoot, isCombatSignalActive, isCustomHudContextActive, perfEnd, perfStart, state, setCachedPanel, setPanelClassIfChanged, setWashColorSafe, utils
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","isCombatSignalActive","isCustomHudContextActive","perfEnd","perfStart","state","setCachedPanel","setPanelClassIfChanged","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

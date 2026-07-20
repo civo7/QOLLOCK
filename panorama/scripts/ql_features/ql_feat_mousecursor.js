@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_mousecursor";
+    // DEPENDS: getCachedPanel, isHudClassActive, isPanelVisibleMaybe, isStartupLoaderInActiveMatchContext, state, setCachedPanel, tryGetGameplayMouseCursorPosition, utils
     var _deps = QOL.import(["getCachedPanel","isHudClassActive","isPanelVisibleMaybe","isStartupLoaderInActiveMatchContext","state","setCachedPanel","tryGetGameplayMouseCursorPosition","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

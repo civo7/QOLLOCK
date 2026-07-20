@@ -3,6 +3,7 @@
 (function() {
     'use strict';
         var _featureId = "ql_feat_damageimpact";
+    // DEPENDS: getCachedPanel, normalizeDamageImpactScaleNumber, resolveCachedPanel, state, utils
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;

@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_recentpurchases";
+    // DEPENDS: getCachedPanel, isHudClassActive, isPanelVisibleMaybe, state, setCachedPanel, setPanelClassCached, utils, isConnectedToHideout, normalizeHudOffsetNumber, normalizeHudScaleNumber
     var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

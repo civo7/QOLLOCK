@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_spm";
+    // DEPENDS: detectTopBarPlayerTeam, ensureSpmState, getCachedPanel, getSoulValueFromLabels, parseClockSeconds, refreshSpmPanelCache, state, setCachedPanel, setPanelClassIfChanged, utils, isConnectedToHideout
     var _deps = QOL.import(["detectTopBarPlayerTeam","ensureSpmState","getCachedPanel","getSoulValueFromLabels","parseClockSeconds","refreshSpmPanelCache","state","setCachedPanel","setPanelClassIfChanged","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
