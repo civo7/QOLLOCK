@@ -292,7 +292,9 @@
 }
 
 /* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
+/* !important prevents CSS specificity overrides (e.g., .connectedToHideout CitadelHudTopBar
+   at (0,1,1) beating .qol-hidden at (0,1,0)). Panels with this class must ALWAYS collapse. */
 .qol-hidden
 {
-    visibility: collapse;
+    visibility: collapse !important;
 }
