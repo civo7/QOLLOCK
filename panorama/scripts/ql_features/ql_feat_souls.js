@@ -29,7 +29,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_soulsRuntime) { $.Msg("[QOL DEBUG] First update: soulsRuntime\n"); State._debug_soulsRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = RC(root, "soulsContainer", PID);

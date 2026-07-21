@@ -34,7 +34,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_itemsRuntime) { $.Msg("[QOL DEBUG] First update: itemsRuntime\n"); State._debug_itemsRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = GetCachedPanel("itemsModsContainer");
