@@ -3,6 +3,11 @@
 // QOL_DEFAULT_CONFIG always available — ql_shared_presets.js loads first in settings context
 var MOD_CONFIG = Object.assign({}, QOL_DEFAULT_CONFIG);
 
+// Phase 0.2: Publish config accessor for extracted modules.
+// Extracted files call QOL.getSettingsConfig() at use time (not load time)
+// to ensure they always see the current config. Read-only from their perspective.
+QOL.getSettingsConfig = function() { return MOD_CONFIG; };
+
 // ── SafeLog stubs for settings context (QOL_UTILS loaded via ql_shared_presets.js) ──
 var _QOLU = (typeof QOL_UTILS !== "undefined") ? QOL_UTILS : null;
 var SafeLog = (_QOLU && _QOLU.SafeLog) ? _QOLU.SafeLog : function(fn, label) { try { return fn(); } catch(e) { return null; } };
