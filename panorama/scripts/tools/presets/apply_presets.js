@@ -21,6 +21,7 @@ function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
 // form: "assign" -> QOL_PRESETS["KEY"] = { ... };   "member" -> indented  "KEY": { ... },
 const TARGETS = [
+    { key: "BreadRollius", form: "member" },
     { key: "Synthronix",   form: "assign" },
     { key: "munchkinman",  form: "assign" },
     { key: "Xavier",       form: "member" },
