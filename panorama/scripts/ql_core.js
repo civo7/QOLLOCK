@@ -89,7 +89,9 @@ _TLog = function(label, detail) {
 
     // WHY: probes the `joy_name` convar as a persistent key-value store that survives
     // game restarts — used as an additional config persistence channel alongside panel attrs.
-    const QOL_CONVAR_STORAGE_PROBE_ENABLED = true;
+    // DISABLED: GameInterfaceAPI confirmed absent — cannot read convar values, so probe
+    // provides zero value while overwriting the user's joystick name on every startup.
+    const QOL_CONVAR_STORAGE_PROBE_ENABLED = false;
     const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
     const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
     // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
