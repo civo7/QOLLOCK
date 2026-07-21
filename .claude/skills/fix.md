@@ -8,11 +8,12 @@ args: bug_description
 
 1. **Understand the bug** — read the relevant code, trace the root cause
 2. **Implement the fix** — minimal, correct change
-3. **Verify** — run `validate-qollock`
-4. **Spawn 2 adversarial reviewers** — one for correctness, one for side effects
-5. **Revise** based on feedback
-6. **Repeat** up to 3 times until zero issues
-7. **Wait for user confirmation** before committing
+3. **Update self-test** — if the fix changes exported functions or dependencies, update the feature's self-test
+4. **Verify** — run `validate-qollock`
+5. **Spawn 2 adversarial reviewers** using the `Agent` tool — one for correctness, one for side effects
+6. **Revise** based on feedback
+7. **Repeat** up to 3 times until zero issues
+8. **Wait for user confirmation** before committing
 
 ## Common Bug Patterns in QOLLOCK
 

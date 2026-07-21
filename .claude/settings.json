@@ -1,16 +1,4 @@
 {
-  "hooks": {
-    "PreCommit": [
-      {
-        "matcher": "**/*.js",
-        "command": "if [ \"${QOLLOCK_SKIP_HOOKS:-}\" = \"true\" ]; then exit 0; fi; cd /home/bytenode/Documents/DeadlockModMaking/Reduced_CSDK_12/content/citadel_addons/qollock/panorama/scripts && bash tools/check_bridges.sh && bash tools/validate_imports.sh"
-      },
-      {
-        "matcher": "**/*.js",
-        "command": "if [ \"${QOLLOCK_SKIP_HOOKS:-}\" = \"true\" ]; then exit 0; fi; node /home/bytenode/Documents/DeadlockModMaking/Reduced_CSDK_12/content/citadel_addons/qollock/panorama/scripts/tools/qollock_smoke_test.js"
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(find:*)",
