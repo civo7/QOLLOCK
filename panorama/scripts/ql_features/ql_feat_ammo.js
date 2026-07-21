@@ -149,7 +149,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); State._debug_ammo = true; }
+        
         // Magazine rotation is independent of the ammo-text scale/position/color path.
         ApplyAmmoClipAngle(root, cfg);
         if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&

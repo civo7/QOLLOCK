@@ -84,7 +84,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_bottomBarRuntime) { $.Msg("[QOL DEBUG] First update: bottomBarRuntime\n"); State._debug_bottomBarRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = RC(root, "bottomBarPanel", PID_SIGNATURE);

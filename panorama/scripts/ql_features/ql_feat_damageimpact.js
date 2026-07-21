@@ -30,7 +30,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_damageImpactRuntime) { $.Msg("[QOL DEBUG] First update: damageImpactRuntime\n"); State._debug_damageImpactRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
         var panel = RC(root, "damageImpactPanel", "damage_impact");

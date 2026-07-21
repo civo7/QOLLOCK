@@ -33,7 +33,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_topBarRuntime) { $.Msg("[QOL DEBUG] First update: topBarRuntime\n"); State._debug_topBarRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
         var topBar = ResolveCachedPanel(root, "topBarPanel", PID_TOP_BAR);
