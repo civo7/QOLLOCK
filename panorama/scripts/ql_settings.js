@@ -16427,10 +16427,10 @@ function RenderConfigTabContent(list) {
     gConfigFeedbackLabel = null;
     gConfigFeedbackClearToken++;
 
-    // Auto-disabled feature warning banner (4.1: reads global set by ql_core.js)
-    if (!gSearchCollectMode && typeof QOL_AUTO_DISABLED_FEATURES !== "undefined" && QOL_AUTO_DISABLED_FEATURES.length > 0) {
+    // Auto-disabled feature warning banner (Phase A.1: reads QOL namespace set by ql_core.js)
+    if (!gSearchCollectMode && QOL.autoDisabledFeatures && QOL.autoDisabledFeatures.length > 0) {
         try {
-            var disabledFeatures = QOL_AUTO_DISABLED_FEATURES;
+            var disabledFeatures = QOL.autoDisabledFeatures;
             var filtered = [];
             for (var di = 0; di < disabledFeatures.length; di++) {
                 var dn = String(disabledFeatures[di]).trim();

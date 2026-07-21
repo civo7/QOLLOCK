@@ -81,7 +81,7 @@
 	transition-duration: 0.15s;
 	z-index: 99999;
 	border-radius: 10px;
-	overflow: hidden;
+	overflow: clip;
 }
 
 #MinimapRejuvBuff
@@ -100,7 +100,7 @@
 	transition-duration: 0.15s;
 	z-index: 9999;
 	border-radius: 8px;
-	overflow: hidden;
+	overflow: clip;
 }
 
 #MinimapRejuvBuff.pop-out

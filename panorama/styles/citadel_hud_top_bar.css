@@ -660,7 +660,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	world-blur: ingameHudBlur;
 	z-index: 99999;
 	border-radius: 10px;
-	overflow: hidden;
+	overflow: clip;
 	visibility: collapse;
 }
 
