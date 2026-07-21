@@ -28,6 +28,7 @@
 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_es.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_arcade_games.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_previews.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_tooltips.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
