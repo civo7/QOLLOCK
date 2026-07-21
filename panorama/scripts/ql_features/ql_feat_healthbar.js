@@ -1086,8 +1086,8 @@
             if (!lbl) return null;
             SetCachedPanel("mcTotalHealthLabel", lbl);
         }
-        var currentHealth = parseInt(GetCachedPanel("mcCurrentHealthLabel").text.replace(/[^0-9]/g, "")) || 0;
-        var totalHealth = parseInt(GetCachedPanel("mcTotalHealthLabel").text.replace(/[^0-9]/g, "")) || 0;
+        var currentHealth = parseInt(GetCachedPanel("mcCurrentHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
+        var totalHealth = parseInt(GetCachedPanel("mcTotalHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
         return { currentHealth: currentHealth, totalHealth: totalHealth };
     }
 
@@ -1190,7 +1190,7 @@
             }
             if (!GetCachedPanel("mcPlayerLevelLabel")) SetCachedPanel("mcPlayerLevelLabel", GetCachedPanel("mcGoldApContainer").FindChildTraverse ? (GetCachedPanel("mcGoldApContainer").FindChildTraverse("PlayerLevelNumber") || null) : null);
             if (GetCachedPanel("mcPlayerLevelLabel")) {
-                var levelValue = parseInt((GetCachedPanel("mcPlayerLevelLabel").text || "").replace(/[^0-9]/g, "")) || 0;
+                var levelValue = parseInt((GetCachedPanel("mcPlayerLevelLabel").text || "").replace(/[^0-9]/g, ""), 10) || 0;
                 if (!GetCachedPanel("mcXpLevelLabel")) SetCachedPanel("mcXpLevelLabel", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPLevelLabel") || null) : null);
                 if (GetCachedPanel("mcXpLevelLabel")) GetCachedPanel("mcXpLevelLabel").text = levelValue.toString();
             }
@@ -1227,8 +1227,8 @@
                     var lbls = GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse ? GetCachedPanel("mcBulletBarrierNumbers").FindChildrenWithClassTraverse("progress_bar_max") : null;
                     if (lbls && lbls.length > 0) SetCachedPanel("mcBulletBarrierMaxLabel", lbls[0]);
                 }
-                if (GetCachedPanel("mcBulletBarrierCurrentLabel")) bulletBarrierCurrent = parseInt(GetCachedPanel("mcBulletBarrierCurrentLabel").text.replace(/[^0-9]/g, "")) || 0;
-                if (GetCachedPanel("mcBulletBarrierMaxLabel")) bulletBarrierMax = parseInt(GetCachedPanel("mcBulletBarrierMaxLabel").text.replace(/[^0-9]/g, "")) || 0;
+                if (GetCachedPanel("mcBulletBarrierCurrentLabel")) bulletBarrierCurrent = parseInt(GetCachedPanel("mcBulletBarrierCurrentLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
+                if (GetCachedPanel("mcBulletBarrierMaxLabel")) bulletBarrierMax = parseInt(GetCachedPanel("mcBulletBarrierMaxLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
                 McUpdateBarrierHearts(bulletBarrierCurrent, bulletBarrierMax, true);
             } else {
                 if (!State.mcLoggedBulletBarrierMiss) { $.Msg("[QOLLock][MC] BulletBarrierNumbers panel not found"); State.mcLoggedBulletBarrierMiss = true; }
