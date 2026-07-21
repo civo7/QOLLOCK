@@ -662,25 +662,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "isTeam1Purchase", "isTeam2Purchase"
     ];
     const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
-    // ── Minecraft healthbar ────────────────────────────────────────────────────
-    const MC_CHARGE_MAX_ANGLES = { 1: 90, 2: 42, 3: 26, 4: 20, 5: 15.5, 6: 13, 7: 10.86 };
-    const MC_HP_PER_HALF_SEGMENT = 50;
-    const MC_LOW_HEALTH_HALF_SEGMENTS = 4;
-    const MC_HEARTS_PER_ROW = 10;
-    const MC_MAX_HEART_ROWS = 5;
-    const MC_HEART_ROW_HEIGHT_PX = 22;
-    const MC_HEALTH_BAR_PIXEL_HEIGHT = 367;
-    const MC_HEALTH_BAR_SCALE = 52 / 30;
-    const MC_SOULS_BAR_MAX_HEIGHT_PX = 52;
-    const MC_FOOD_PERCENT_PER_HALF = 5;
-    const MC_TICK_INTERVAL_MS = 50;
-    const MC_MODIFIER_THROTTLE_MS = 500;
-    const MC_BLINK_INTERVAL_S = 0.1;
-    const MC_BLINK_PHASE_COUNT = 4;
-    const MC_JIGGLE_INTERVAL_S = 0.05;
-    const MC_JIGGLE_CHANCE = 0.5;
-    const MC_HEALING_WAVE_STEP_S = 0.05;
-    const MC_HEALING_WAVE_PAUSE_S = 0.5;
+    // Phase A.2: 16 MC constants removed — already extracted to ql_feat_healthbar.js.
 
     function AccountProbeLog(msg) {
         if (!ACCOUNT_PROBE_LOG) return;
@@ -757,30 +739,8 @@ function ExpressShotLog(msg) {
         $.Msg("[QOLLock][EnemyColoredHealthDebug] " + msg);
     }
 
-    function EnemyColoredHealthDebugLogThrottled(sig, msg, nowMs) {
-        if (!ENEMY_COLORED_HEALTH_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.enemyColoredHealthDebugLastSig;
-        if (sameSig && now < (State.enemyColoredHealthDebugNextMs || 0)) return;
-        State.enemyColoredHealthDebugLastSig = sig || "";
-        State.enemyColoredHealthDebugNextMs = now + ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS;
-        EnemyColoredHealthDebugLog(msg);
-    }
-
-    function MinimapCrateOverlayDebugLog(msg) {
-        if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
-        $.Msg("[QOLLock][MinimapCrateDebug] " + msg);
-    }
-
-    function MinimapCrateOverlayDebugLogThrottled(sig, msg, nowMs) {
-        if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.minimapCrateOverlayDebugLastSig;
-        if (sameSig && now < (State.minimapCrateOverlayDebugNextMs || 0)) return;
-        State.minimapCrateOverlayDebugLastSig = sig || "";
-        State.minimapCrateOverlayDebugNextMs = now + MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS;
-        MinimapCrateOverlayDebugLog(msg);
-    }
+    // Phase A.3: EnemyColoredHealthDebugLogThrottled + MinimapCrateOverlayDebugLogThrottled
+    // removed — dead code (feature files have their own copies).
 
 
     function EnemyUltOldDebugLog(msg) {
@@ -1508,12 +1468,10 @@ function ExpressShotLog(msg) {
         if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
         State.featureAutoDisabled[featureName] = true;
         QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors");
-        // Publish to shared global so settings UI can surface the warning
-        if (typeof QOL_AUTO_DISABLED_FEATURES === "undefined") {
-            QOL_AUTO_DISABLED_FEATURES = [];
-        }
-        if (QOL_AUTO_DISABLED_FEATURES.indexOf(featureName) === -1) {
-            QOL_AUTO_DISABLED_FEATURES.push(featureName);
+        // Phase A.1: Publish to QOL namespace so settings UI can surface warnings.
+        if (!QOL.autoDisabledFeatures) QOL.autoDisabledFeatures = [];
+        if (QOL.autoDisabledFeatures.indexOf(featureName) === -1) {
+            QOL.autoDisabledFeatures.push(featureName);
         }
     }
 
@@ -9891,29 +9849,8 @@ function GetUIRoot() {
             IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75");
     }
 
-    function ResolveEnemyColoredHealthTeamClass(panel) {
-        if (!panel) return "";
-        if (hasClassInHierarchy(panel, "team1")) return "team1";
-        if (hasClassInHierarchy(panel, "team2")) return "team2";
-        if (hasClassInHierarchy(panel, "team_neutral") || hasClassInHierarchy(panel, "neutral")) return "neutral";
-        return "";
-    }
-
-    function ResolveFriendlyTopBarTeamClass(root, nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (State.enemyColoredHealthFriendlyTeamClass && now < (State.enemyColoredHealthFriendlyTeamNextMs || 0)) {
-            return State.enemyColoredHealthFriendlyTeamClass;
-        }
-        var friendlyTeamClass = "";
-        var friendlyPanel = root && root.FindChildTraverse ? (root.FindChildTraverse("TeamFriendly") || null) : null;
-        if (friendlyPanel && IsPanelValid(friendlyPanel)) {
-            if (hasClassInHierarchy(friendlyPanel, "team1")) friendlyTeamClass = "team1";
-            else if (hasClassInHierarchy(friendlyPanel, "team2")) friendlyTeamClass = "team2";
-        }
-        State.enemyColoredHealthFriendlyTeamClass = friendlyTeamClass;
-        State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
-        return friendlyTeamClass;
-    }
+    // Phase A.3: ResolveEnemyColoredHealthTeamClass + ResolveFriendlyTopBarTeamClass
+    // removed — dead code (ql_feat_colorwarnings.js has its own copies).
     function IsAllyColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsColorWarningEnabled(cfg) ||
@@ -14612,7 +14549,7 @@ function GetUIRoot() {
     // Wrapping in a function defers the identifier resolution until the
     // try/catch loop runs, so a single missing symbol doesn't crash the script.
     var _qolExportDefs = [
-        ["applyTargetShapeStyles", function() { return ApplyTargetShapeStyles; }],
+
         ["buildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
         ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
         ["clearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
@@ -14685,7 +14622,7 @@ function GetUIRoot() {
         ["resolveGoldenStatBonusesValue", function() { return ResolveGoldenStatBonusesValue; }],
         ["resolvePassiveCooldownMode", function() { return ResolvePassiveCooldownMode; }],
         ["resolveStatBonusesSource", function() { return ResolveStatBonusesSource; }],
-        ["resolveUnitTargetStyleTexts", function() { return ResolveUnitTargetStyleTexts; }],
+
         ["resolveWashColorFromPalette", function() { return ResolveWashColorFromPalette; }],
         ["runtimeTaskIsDue", function() { return RuntimeTaskIsDue; }],
         ["runtimeTaskSetDelay", function() { return RuntimeTaskSetDelay; }],
