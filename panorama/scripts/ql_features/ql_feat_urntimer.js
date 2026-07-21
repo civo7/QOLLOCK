@@ -6,10 +6,9 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_urntimer";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, getGameSecondsForUrn, isConnectedToHideout, panelIdTopBar, resolveCachedPanel, ensureMinimapPanelCache
+    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, getGameSecondsForUrn, isConnectedToHideout, panelIdTopBar
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "getGameSecondsForUrn", "isConnectedToHideout", "panelIdTopBar",
-        "resolveCachedPanel", "ensureMinimapPanelCache"]);
+        "getGameSecondsForUrn", "isConnectedToHideout", "panelIdTopBar"]);
     var State = _deps.state;
     var Utils = _deps.utils;
     var GetCachedPanel = _deps.getCachedPanel;

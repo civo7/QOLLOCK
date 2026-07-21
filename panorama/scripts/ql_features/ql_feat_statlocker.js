@@ -3,8 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_statlocker";
-    // DEPENDS: getAccountIdForBuildCategoryPayload, getCachedPanel, getUIRoot, isPanelListValid, isStartupLoaderInActiveMatchContext, state, setCachedPanel, utils
-    var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isPanelListValid","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
+    // DEPENDS: getAccountIdForBuildCategoryPayload, getCachedPanel, getUIRoot, isStartupLoaderInActiveMatchContext, state, setCachedPanel, utils
+    var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
