@@ -3,9 +3,9 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, isCfgEnabled, isColorWarningEnabled, isPanelValid, setStyleSafe, setWashColorSafe, normalizePaletteColorIndex, resolveWashColorFromPalette, isHudVisibleForPlayerHealthbarRuntime, hasNonDefaultPlayerHealthbarRuntimeConfig, needsHealthbarRuntimeHelperWork, tryReadHeroFromPanelDetails, getUIRoot
+    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, isCfgEnabled, isColorWarningEnabled, setStyleSafe, setWashColorSafe, normalizePaletteColorIndex, resolveWashColorFromPalette, isHudVisibleForPlayerHealthbarRuntime, hasNonDefaultPlayerHealthbarRuntimeConfig, needsHealthbarRuntimeHelperWork, tryReadHeroFromPanelDetails, getUIRoot
     var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "isCfgEnabled", "isColorWarningEnabled", "isPanelValid",
+        "isCfgEnabled", "isColorWarningEnabled",
         "setStyleSafe", "setWashColorSafe",
         "normalizePaletteColorIndex", "resolveWashColorFromPalette",
         "isHudVisibleForPlayerHealthbarRuntime",
@@ -20,7 +20,7 @@
     var SetCachedPanel = _deps.setCachedPanel;
     var IsCfgEnabled = _deps.isCfgEnabled;
     var IsColorWarningEnabled = _deps.isColorWarningEnabled;
-    var IsPanelValid = _deps.isPanelValid;
+    var IsPanelValid = Utils.IsPanelValid;
     var SetStyleSafe = _deps.setStyleSafe;
     var ClearStyleSafe = _deps.clearStyleSafe;
     var SetWashColorSafe = _deps.setWashColorSafe;
