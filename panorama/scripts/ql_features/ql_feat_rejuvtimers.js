@@ -11,8 +11,9 @@
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
-    var BRIDGE_DURATION_SEC = 300;
-    var BUFF_LOCKOUT_SEC = 120;
+    // GAME_VERSION_DEPENDENT: Bridge buff cycle timing. Last verified: 2026-07-20.
+    var BRIDGE_DURATION_SEC = 300;       // 5 min bridge buff cycle
+    var BUFF_LOCKOUT_SEC = 120;          // 2 min lockout between buffs
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
@@ -30,6 +31,8 @@
     var PanelHasClassToken = _deps.panelHasClassToken;
 
     // ── Constants ──
+    // GAME_VERSION_DEPENDENT: Rejuvenator timing. If mid-boss respawn intervals change
+    // after a game patch, update REJUV_SEQ durations. Last verified: 2026-07-20.
     const REJUV_DURATION_SEC = 180;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 1000;
