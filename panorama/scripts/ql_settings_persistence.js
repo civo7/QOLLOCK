@@ -227,32 +227,6 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     return diagnostics;
 }
 
-function FindRootPanel() {
-    var root = $.GetContextPanel();
-    while (root && root.GetParent && root.GetParent()) {
-        root = root.GetParent();
-    }
-    return root;
-}
-
-function ExtractHeroTokenFromText(rawText) {
-    if (!rawText) return "";
-    var text = String(rawText);
-    var m = text.match(/\b(hero_[a-z0-9_]+)\b/i);
-    return (m && m[1]) ? String(m[1]).toLowerCase() : "";
-}
-
-function ExtractLastHeroTokenFromText(rawText) {
-    if (!rawText) return "";
-    var text = String(rawText);
-    var re = /\b(hero_[a-z0-9_]+)\b/ig;
-    var match = null;
-    var last = "";
-    while ((match = re.exec(text)) !== null) {
-        if (match[1]) last = String(match[1]).toLowerCase();
-    }
-    return last;
-}
 
     // ── Public API ──
     QOL.persistence = {
