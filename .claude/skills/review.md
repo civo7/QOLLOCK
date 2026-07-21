@@ -5,7 +5,14 @@ description: Spawn 2 adversarial subagents to review recent changes, then revise
 
 # Adversarial Review
 
-Review the current uncommitted changes (or the most recent commit) with 2 adversarial subagents.
+Review uncommitted changes or a recent commit. Uses **2 agents** for subphase-level
+review (small changes, single commits). For phase-level review (major extractions,
+multi-commit features), use **4 agents** — add dimensions for Completeness and
+Architecture. Mention "use 4 agents" in your prompt for phase-level review.
+
+## Subphase Review (2 agents — this skill's default)
+
+Review the current uncommitted changes (or the most recent commit).
 
 **Agent 1 — Technical Correctness:**
 Verify every claim in the changes. Check:

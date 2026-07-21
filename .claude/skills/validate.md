@@ -21,6 +21,13 @@ node tools/qollock_smoke_test.js
 
 Expected output: all three should exit 0 with no issues.
 
+**IMPORTANT:** These tools catch syntax errors and import mismatches, but NOT runtime
+bugs (panel deletion, timing, context differences). After validation passes, you MUST
+repack the VPK and test in-game:
+- Run `QOL_DumpDiagnostics()` in the Panorama console → verify 40+ features loaded
+- Run the Preset Cycle (Settings → Dev → "Preset Cycle") → verify 94/94 pass
+- Check for runtime errors in the Panorama console
+
 If any tool fails:
 - **Bridge checker fails:** A feature file imports a symbol not exported anywhere. Check _qolExportDefs or the publishing infrastructure file.
 - **Import validator fails:** A feature file imports a symbol via QOL.import() that isn't on the QOL namespace. The fix is usually to use `Utils.Xxx` instead of `QOL.import("xxx")`.
