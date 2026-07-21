@@ -292,9 +292,11 @@
 }
 
 /* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
-/* !important prevents CSS specificity overrides (e.g., .connectedToHideout CitadelHudTopBar
-   at (0,1,1) beating .qol-hidden at (0,1,0)). Panels with this class must ALWAYS collapse. */
-.qol-hidden
+/* Chained self-selector (.qol-hidden.qol-hidden) gives specificity (0,2,0) which beats
+   rules like .connectedToHideout CitadelHudTopBar at (0,1,1). Panels with this class
+   must ALWAYS collapse regardless of other CSS rules targeting them.
+   Note: Panorama does NOT support !important — raising specificity is the only option. */
+.qol-hidden.qol-hidden
 {
-    visibility: collapse !important;
+    visibility: collapse;
 }
