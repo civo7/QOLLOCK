@@ -2,8 +2,9 @@
 // Extracted from ql_settings.js, Phase 1
 (function() {
     'use strict';
-    if (!window.SETTINGS_LOCALE_TEXT) window.SETTINGS_LOCALE_TEXT = {};
-    window.SETTINGS_LOCALE_TEXT["tr"] = {
+    var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
+    if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
+    _root.SETTINGS_LOCALE_TEXT["tr"] = {
     "16:10 Support": "16:10 Desteği",
     "1st": "1'inci",
     "21:9 Stream Fix": "21:9 Yayın Düzeltmesi",

@@ -2,8 +2,9 @@
 // Extracted from ql_settings.js, Phase 1
 (function() {
     'use strict';
-    if (!window.SETTINGS_LOCALE_TEXT) window.SETTINGS_LOCALE_TEXT = {};
-    window.SETTINGS_LOCALE_TEXT["uk"] = {
+    var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
+    if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
+    _root.SETTINGS_LOCALE_TEXT["uk"] = {
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Безкоштовні</font> оновлення для нових функцій, <font color=\"#66cc99\">$5</font> за довільні зміни",
     "16:10 Support": "16:10 Підтримка",
     "1st": "1-й",

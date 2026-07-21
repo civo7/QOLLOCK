@@ -2,8 +2,9 @@
 // Extracted from ql_settings.js, Phase 1
 (function() {
     'use strict';
-    if (!window.SETTINGS_LOCALE_TEXT) window.SETTINGS_LOCALE_TEXT = {};
-    window.SETTINGS_LOCALE_TEXT["it"] = {
+    var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
+    if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
+    _root.SETTINGS_LOCALE_TEXT["it"] = {
     "Ammo": "munizione",
     "Announcer": "annunciatore",
     "Bebop Sweeper": "Ottone Minato",

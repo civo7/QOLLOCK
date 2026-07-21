@@ -2,8 +2,9 @@
 // Extracted from ql_settings.js, Phase 1
 (function() {
     'use strict';
-    if (!window.SETTINGS_LOCALE_TEXT) window.SETTINGS_LOCALE_TEXT = {};
-    window.SETTINGS_LOCALE_TEXT["es"] = {
+    var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
+    if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
+    _root.SETTINGS_LOCALE_TEXT["es"] = {
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "Actualizaciones <font color=\"#66cc99\">gratuitas</font> para nuevas funciones, <font color=\"#66cc99\">$5 USD</font> por cambios arbitrarios.",
     "16:10 Support": "Soporte para 16:10",
     "1st": "1er",

@@ -16,6 +16,33 @@ var SafeSetAttribute = (_QOLU && _QOLU.SafeSetAttribute) ? _QOLU.SafeSetAttribut
 var WarnLog = (_QOLU && _QOLU.WarnLog) ? _QOLU.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
 
 // Phase 2: Inject arcade dependencies (ql_arcade_games.js loads before ql_settings.js)
+
+function FindRootPanel() {
+    var root = $.GetContextPanel();
+    while (root && root.GetParent && root.GetParent()) {
+        root = root.GetParent();
+    }
+    return root;
+}
+
+function ExtractHeroTokenFromText(rawText) {
+    if (!rawText) return "";
+    var text = String(rawText);
+    var m = text.match(/\b(hero_[a-z0-9_]+)\b/i);
+    return (m && m[1]) ? String(m[1]).toLowerCase() : "";
+}
+
+function ExtractLastHeroTokenFromText(rawText) {
+    if (!rawText) return "";
+    var text = String(rawText);
+    var re = /\b(hero_[a-z0-9_]+)\b/ig;
+    var match = null;
+    var last = "";
+    while ((match = re.exec(text)) !== null) {
+        if (match[1]) last = String(match[1]).toLowerCase();
+    }
+    return last;
+}
 if (QOL.arcade && QOL.arcade.init) QOL.arcade.init({
     localize: LocalizeSettingsText,
     prepareModal: PrepareSettingsModalOpen,
@@ -1379,7 +1406,7 @@ function LocalizeSettingsText(text, force) {
 
     // Phase 1: Look up from external locale maps (ql_settings_loc/*.js).
     var key = GetSettingsLanguageKey();
-    var maps = (typeof window !== "undefined" && window.SETTINGS_LOCALE_TEXT) ? window.SETTINGS_LOCALE_TEXT : {};
+    var maps = (typeof globalThis !== "undefined" && globalThis.SETTINGS_LOCALE_TEXT) ? globalThis.SETTINGS_LOCALE_TEXT : ((typeof window !== "undefined" && window.SETTINGS_LOCALE_TEXT) ? window.SETTINGS_LOCALE_TEXT : {});
     var map = maps[key] || null;
     if (map && map.hasOwnProperty(raw)) {
         var translated = map[raw];
