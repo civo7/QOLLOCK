@@ -4093,19 +4093,19 @@ function CreateSectionResetButton(titleRow, resolveKeysFn, includeEnableKey, par
     };
 
     resetBtn.SetPanelEvent("onmouseover", function() {
-        HideSettingsTextTooltip();
-        CancelSettingsRowFloatingTooltipHide();
-        ShowSettingsRowFloatingTooltip(
+        QOL.tooltip.hideTextTooltip();
+        QOL.tooltip.cancelHide();
+        QOL.tooltip.showRowTooltip(
             resetBtn,
             "",
             _Localize("Reset section to defaults", true),
-            PERF_IMPACT_TIER_NONE,
+            QOL.tooltip.TIER_NONE,
             ""
         );
     });
     resetBtn.SetPanelEvent("onmouseout", function() {
-        HideSettingsTextTooltip();
-        HideSettingsRowFloatingTooltipDeferred("section_reset_btn_mouseout");
+        QOL.tooltip.hideTextTooltip();
+        QOL.tooltip.hideTooltipDeferred("section_reset_btn_mouseout");
     });
     resetBtn.SetPanelEvent("onactivate", function() {
         var keys = buildResetKeys();
