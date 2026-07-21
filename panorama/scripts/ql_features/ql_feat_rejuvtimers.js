@@ -3,8 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_rejuvtimers";
-    // DEPENDS: ensureMinimapOverlayAnchor, ensureMinimapPanelCache, getCachedPanel, getGameSecondsForUrn, getHighestRejuvChargeTokenOnPanel, hasClassInHierarchy, isConnectedToHideout, isHudClassActive, isStreetBrawlModeActive, panelHasClassToken, panelIdTopBar, perfNowMs, resolveCachedPanel, state, setCachedPanel, setPanelClassCached, setPanelClassIfChanged, utils
-    var _deps = QOL.import(["ensureMinimapOverlayAnchor","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
+    // DEPENDS: ensureMinimapOverlayAnchor, getCachedPanel, getGameSecondsForUrn, getHighestRejuvChargeTokenOnPanel, hasClassInHierarchy, isConnectedToHideout, isHudClassActive, isStreetBrawlModeActive, panelHasClassToken, panelIdTopBar, perfNowMs, resolveCachedPanel, state, setCachedPanel, setPanelClassCached, setPanelClassIfChanged, utils
+    var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
