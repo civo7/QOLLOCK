@@ -10,6 +10,22 @@
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_custom_announcer_pack_meta.vjs_c" />
+		<!-- Phase 1: Locale modules (must load before ql_settings.js) -->
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_en.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ko.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_it.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_tr.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ru.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_uk.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pl.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_bg.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_by.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ja.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_zh.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_fr.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pt.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pt_br.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_es.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
