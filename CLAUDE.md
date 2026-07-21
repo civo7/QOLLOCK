@@ -8,7 +8,7 @@ and communicates between them via panel attribute bridges.
 
 **Version:** 3.1.5  
 **Schema:** 3.1.5  
-**Features:** 39 loaded, zero auto-disabled, 92 presets available  
+**Features:** 40 feature files, 39 loaded, zero auto-disabled, 94 presets available  
 **Branch:** `architecture-overhaul`  
 **Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
 
@@ -317,3 +317,42 @@ Key state fields:
 3. `panorama/scripts/ql_core.js` lines 24500-24750 — Feature registration and dispatch loop
 4. Any `ql_features/ql_feat_*.js` — Example of the current feature file pattern
 5. `plans/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap
+
+## Panorama CSS Gotchas (Phase D + F)
+
+These are engine-specific behaviors confirmed via decompiled DLL cross-reference
+(`/home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/`).
+
+### Valid `overflow` values
+Panorama supports ONLY: `squish` (default), `clip`, `scroll`, `noclip`.
+Do NOT use `hidden` or `visible` — these are standard CSS values that
+Panorama ignores, falling back to `squish`.
+
+### Unsupported CSS features
+- Adjacent sibling (`A + B`) and general sibling (`A ~ B`) combinators
+- Pseudo-elements (`::before`, `::after`, `::placeholder`)
+- At-rules: `@media` and `@font-face` are NOT supported
+- `@define`, `@keyframes`, `@import` ARE supported
+- `!important` is NOT supported (use higher-specificity selectors instead)
+- `visibility` only supports: `visible` (default) and `collapse` (not `hidden`)
+
+### Deprecated CSS
+- `align` property is legacy. Prefer `horizontal-align` / `vertical-align`.
+
+### Verified-by-usage APIs (not in decompiled DLL method registration block)
+- `panel.IsValid()` — 337 call sites. Works via prototype inheritance.
+- `panel.SetPanelEvent()` — ~130 call sites. Works empirically.
+- `panel.SetImage()` — 47 call sites. Confirmed Image type-specific method.
+
+### QOL.import() gotchas
+- `QOL.import("isCfgEnabled")` returns undefined — use `Utils.IsCfgEnabled`
+- `QOL.import("isPanelValid")` returns undefined — use `Utils.IsPanelValid`
+- `QOL.import("setStyleSafe")` returns undefined — use `Utils.SetStyleSafe`
+- Rule: anything from `ql_utils.js` is on `Utils.*`, not `QOL.*`
+- Run `tools/validate_imports.sh` before committing to catch mismatches.
+
+## Testing Tools
+
+- `tools/check_bridges.sh` — verifies QOL.import() symbols are exported
+- `tools/validate_imports.sh` — verifies QOL.import() symbols exist on QOL namespace
+- `tools/qollock_smoke_test.js` — loads all files in dependency order (Node.js)
