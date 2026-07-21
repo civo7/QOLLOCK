@@ -4451,7 +4451,11 @@ function GetUIRoot() {
             return false;
         }
 
+        // WHY: connectedToHideout must be here so inline style.opacity is never
+        // set anywhere in the hideout (hero sandbox has connectedToHideout but
+        // NOT InHideout/inHideoutIntro). Inline opacity overrides CSS rules.
         var hiddenContextClasses = [
+            "connectedToHideout",
             "InHideout",
             "inHideout",
             "inHideoutIntro",
@@ -4470,6 +4474,9 @@ function GetUIRoot() {
 
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
+        // IMPORTANT: connectedToHideout is checked first so the top bar never
+        // sets inline style.opacity anywhere in the hideout (inline opacity
+        // overrides CSS opacity rules on .connectedToHideout selectors).
         if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
         if (hasAnyClassInHierarchySafe(topBar, hiddenContextClasses)) return false;
