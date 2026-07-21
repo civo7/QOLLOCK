@@ -16321,6 +16321,9 @@ function GetUIRoot() {
         ["trySelectNextStorageBuildEntry", function() { return TrySelectNextStorageBuildEntry; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
         ["washColorPalette", function() { return QOL_WASH_COLOR_PALETTE; }],
+        // Step 0.3: Bridge exports for syncHealthbarAccentColor (called from main loop).
+        ["resolvePlayerHealthbarAccentColorIndex", function() { return ReadPlayerHealthbarAccentColorIndex; }],
+        ["applyPlayerHealthbarAccentColor", function() { return ApplyPlayerHealthbarAccentColor; }],
     ];
 
     // Publish to QOL namespace with error logging
