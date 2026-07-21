@@ -48,11 +48,16 @@
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
         if (State.topBarRuntimeStyleSig === styleSig) return;
 
-        topBar.style.x = String(offsetX) + "px";
-        topBar.style.y = String(-offsetY) + "px";
-        topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
-        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !shouldShow); else topBar.style.visibility = shouldShow ? "visible" : "collapse";
-        Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
+        // When hidden, only apply the qol-hidden class — don't touch opacity/position.
+        // Inline style.opacity would override CSS opacity rules (e.g., .InHideout #TopBar).
+        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !shouldShow);
+        else topBar.style.visibility = shouldShow ? "visible" : "collapse";
+        if (shouldShow) {
+            topBar.style.x = String(offsetX) + "px";
+            topBar.style.y = String(-offsetY) + "px";
+            topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
+            Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
+        }
         State.topBarRuntimeStyleSig = styleSig;
     }
 
