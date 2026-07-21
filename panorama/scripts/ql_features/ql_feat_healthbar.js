@@ -30,8 +30,7 @@
     var NeedsHealthbarRuntimeHelperWork = _deps.needsHealthbarRuntimeHelperWork;
     var TryReadHeroFromPanelDetails = _deps.tryReadHeroFromPanelDetails;
     var GetUIRoot = _deps.getUIRoot;
-    var PerfStart = _deps.perfStart;
-    var PerfEnd = _deps.perfEnd;
+    // Phase B.3: Removed dead PerfStart/PerfEnd destructuring (not in QOL.import array).
 
     // Use Utils color functions (Step 0.1) instead of local copies
     var ToRgbString = Utils.ToRgbString;
