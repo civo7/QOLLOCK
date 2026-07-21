@@ -1459,15 +1459,37 @@ function ExpressShotLog(msg) {
         return streak;
     }
 
+    // Phase H: Auto-disable recovery — features re-enable after cooldown.
+    var FEATURE_AUTO_DISABLE_COOLDOWN_MS = 30000; // 30 seconds
+
     function IsFeatureAutoDisabled(featureName) {
         if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
-        return !!State.featureAutoDisabled[featureName];
+        if (!State.featureAutoDisabledAt) State.featureAutoDisabledAt = {};
+        if (!State.featureAutoDisabled[featureName]) return false;
+        // Check if cooldown has expired — if so, try re-enabling.
+        var disabledAt = State.featureAutoDisabledAt[featureName] || 0;
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        if (disabledAt > 0 && (nowMs - disabledAt) >= FEATURE_AUTO_DISABLE_COOLDOWN_MS) {
+            State.featureAutoDisabled[featureName] = false;
+            State.featureAutoDisabledAt[featureName] = 0;
+            ResetFeatureErrorStreak(featureName);
+            QOL_WARN(featureName, "re-enabled after auto-disable cooldown (" + (FEATURE_AUTO_DISABLE_COOLDOWN_MS / 1000) + "s)");
+            // Remove from QOL.autoDisabledFeatures list.
+            if (QOL.autoDisabledFeatures) {
+                var idx = QOL.autoDisabledFeatures.indexOf(featureName);
+                if (idx !== -1) QOL.autoDisabledFeatures.splice(idx, 1);
+            }
+            return false;
+        }
+        return true;
     }
 
     function AutoDisableFeature(featureName) {
         if (!State.featureAutoDisabled) State.featureAutoDisabled = {};
+        if (!State.featureAutoDisabledAt) State.featureAutoDisabledAt = {};
         State.featureAutoDisabled[featureName] = true;
-        QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors");
+        State.featureAutoDisabledAt[featureName] = Date.now ? Date.now() : (new Date()).getTime();
+        QOL_WARN(featureName, "auto-disabled after " + FEATURE_ERROR_STREAK_MAX + " consecutive errors (re-enables in " + (FEATURE_AUTO_DISABLE_COOLDOWN_MS / 1000) + "s)");
         // Phase A.1: Publish to QOL namespace so settings UI can surface warnings.
         if (!QOL.autoDisabledFeatures) QOL.autoDisabledFeatures = [];
         if (QOL.autoDisabledFeatures.indexOf(featureName) === -1) {
