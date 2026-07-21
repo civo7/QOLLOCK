@@ -35,8 +35,8 @@ var IsCfgEnabled = Utils.IsCfgEnabled;
 4. **Add DEPENDS comment** matching the array
 5. **Replace all usages** — bare globals → destructured locals
 6. **Remove old typeof guards** and legacy aliases
-7. **Run validate-qollock** — specifically check for import validation errors
-8. **Spawn 2 adversarial reviewers**
+7. **Run validate-qollock** — the bridge checker will validate your DEPENDS comment accuracy and the import validator will confirm all QOL.import() symbols resolve
+8. **Spawn 2 adversarial reviewers** using the `Agent` tool
 
 ## Common Mistakes
 

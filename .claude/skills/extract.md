@@ -52,11 +52,11 @@ Extract a section of code from a large file into a standalone feature file follo
    `grep -rn "State\.fieldName" panorama/scripts/` across ALL feature files
 3. Add QOL.import() for every external symbol used
 4. Add DEPENDS comment matching QOL.import() array exactly (same names, same order)
-5. After extraction, verify DEPENDS didn't drift: run `bash tools/check_bridges.sh`
+5. After extraction, verify DEPENDS didn't drift: `cd panorama/scripts && bash tools/check_bridges.sh`
 6. Add any missing bridge symbols to `_qolExportDefs` in ql_core.js
 7. Add self-test that checks typeof for key functions AND bridge exports
 8. Bucket/phase: start with `bucket: 0, phase: 0` unless the feature depends on
    another feature's update having run first (then use a later bucket/phase)
 9. Add include to hud.xml if HUD context
 10. Run smoke test + bridge checker + import validator
-11. Spawn 2 adversarial reviewers
+11. Spawn 2 adversarial reviewers using the `Agent` tool

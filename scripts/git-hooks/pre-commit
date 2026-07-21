@@ -1,0 +1,29 @@
+#!/bin/bash
+# QOLLOCK pre-commit hook — validates JS imports and runs smoke test
+# Skip with: QOLLOCK_SKIP_HOOKS=true git commit ...
+
+set -e
+
+if [ "${QOLLOCK_SKIP_HOOKS:-}" = "true" ]; then
+    echo "[QOLLOCK] Skipping pre-commit hooks (QOLLOCK_SKIP_HOOKS=true)"
+    exit 0
+fi
+
+# Only run on JS changes
+if ! git diff --cached --name-only | grep -q '\.js$'; then
+    echo "[QOLLOCK] No staged JS changes, skipping hooks"
+    exit 0
+fi
+
+SCRIPTS_DIR="$(git rev-parse --show-toplevel)/panorama/scripts"
+
+echo "[QOLLOCK] Running bridge checks..."
+cd "$SCRIPTS_DIR" && bash tools/check_bridges.sh
+
+echo "[QOLLOCK] Running import validation..."
+cd "$SCRIPTS_DIR" && bash tools/validate_imports.sh
+
+echo "[QOLLOCK] Running smoke test..."
+node "$SCRIPTS_DIR/tools/qollock_smoke_test.js"
+
+echo "[QOLLOCK] All pre-commit checks passed!"

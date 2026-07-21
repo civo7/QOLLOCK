@@ -9,16 +9,18 @@ args: goal
 Create an in-depth multi-phase plan for QOLLOCK. Full process:
 
 ## Phase 1: Study
-1. Read /home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/CLAUDE.md
-2. Read relevant knowledge files (js-api.md, css-properties.md, js-events.md, etc.)
-3. Read the project's CLAUDE.md at panorama/scripts/CLAUDE.md (or root CLAUDE.md)
+1. Read the project's CLAUDE.md at CLAUDE.md (repo root) — understand architecture and load order first
+2. Read /home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/CLAUDE.md
+3. Read relevant knowledge files (js-api.md, css-properties.md, js-events.md, etc.)
 
 ## Phase 2: Fan-Out Audit
-Spawn 4-6 subagents in parallel, each auditing a different dimension:
+Spawn 6 subagents in parallel using `Agent` with `agentType: "Explore"`, each auditing a different dimension:
 - Technical structure (line counts, function analysis, dependency mapping)
 - Code quality (silent catches, bare globals, magic numbers, dead code)
 - Panorama KB compliance (deprecated APIs, unsupported CSS, async patterns)
 - Architecture patterns (QOL.import() consistency, feature registration, bridge usage)
+- Test coverage & validation (smoke test gaps, self-test completeness, bridge checker coverage)
+- Security & edge cases (null guards, timer cancellation, mode-switch cleanup)
 
 ## Phase 3: Synthesize Plan
 Compile findings into a structured plan with:

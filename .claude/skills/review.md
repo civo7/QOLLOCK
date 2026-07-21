@@ -5,7 +5,7 @@ description: Spawn 2 adversarial subagents to review recent changes, then revise
 
 # Adversarial Review
 
-Review uncommitted changes or a recent commit. Uses **2 agents** for subphase-level
+Review uncommitted changes or a recent commit. Uses **2 agents** (via the `Agent` tool) for subphase-level
 review (small changes, single commits). For phase-level review (major extractions,
 multi-commit features), use **4 agents** — add dimensions for Completeness and
 Architecture. Mention "use 4 agents" in your prompt for phase-level review.
@@ -20,6 +20,7 @@ Verify every claim in the changes. Check:
 - Are there any missing null guards?
 - Are there any broken references to moved/deleted functions?
 - Are all QOL.import() symbols actually published?
+- Are `// DEPENDS:` comments present for every `QOL.import()` call? (check_bridges.sh verifies this)
 - Do the changes follow Panorama KB best practices?
 
 **Agent 2 — Side Effects & Edge Cases:**

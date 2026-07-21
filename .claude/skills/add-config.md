@@ -26,14 +26,75 @@ End-to-end workflow for adding a new configurable option to QOLLOCK.
        return IsCfgEnabled(cfg, "ENABLE_NEW_FEATURE") || ...;
    }
    ```
+   **If this key is internal-only** (no user-facing toggle — e.g., schema version, build state,
+   feature sub-options), skip steps 4-5 and go directly to step 6 (presets, if applicable).
 
-4. **Add settings UI row** — in `ql_settings.js` `RenderCurrentTabContent`, add a `CreateRow` call:
+4. **Add settings UI row** — in `ql_settings.js` `RenderCurrentTabContent`, add a `CreateRow` call.
+   Full signature: `CreateRow(parent, label, configId, type, min, max, step, options, description)`.
+   For a simple toggle:
    ```js
    CreateRow(list, "New Feature", "ENABLE_NEW_FEATURE", "toggle");
    ```
-   If it needs a description, add to locale dictionaries in `ql_settings_loc/`.
+   For a slider (0-100, step 5):
+   ```js
+   CreateRow(list, "New Feature", "ENABLE_NEW_FEATURE", "slider", 0, 100, 5);
+   ```
+   For a dropdown:
+   ```js
+   CreateRow(list, "New Feature", "ENABLE_NEW_FEATURE", "dropdown", null, null, null, ["Off", "Mode1", "Mode2"]);
+   ```
 
-5. **Add normalization** (if needed) — in `ql_config.js`, add a `NormalizeNewFeatureConfig` function. Register it in `MergeConfig`.
+   **Locale entries** — if the label or options need translation, add to `ql_settings_loc/ql_settings_loc_en.js`.
+   English is an identity map (key === value):
+   ```js
+   "New Feature": "New Feature",
+   "Off": "Off",
+   "Mode1": "Mode1",
+   ```
+   Also add to non-English locale files (`ql_settings_loc/ql_settings_loc_*.js` — all 14
+   non-English files: `_bg`, `_by`, `_es`, `_fr`, `_it`, `_ja`, `_ko`, `_pl`, `_pt`, `_pt_br`,
+   `_ru`, `_tr`, `_uk`, `_zh`) with translated values. If you can't translate them all,
+   at minimum copy the English entry to every file to prevent missing-key errors.
+
+   **Exception:** `_it.js` has a sparse key set (~50 keys vs ~830 in other files).
+   Match its existing pattern — only add keys that have actual Italian translations.
+   Copying English to `_it.js` for every new key would break its deliberately minimal structure.
+
+   **Batch sync tip** — to copy a key to all full-size locale files at once (skip `_it` and `_en`):
+   ```bash
+   KEY='"New Feature": "New Feature",'
+   for f in ql_settings_loc/ql_settings_loc_{bg,by,es,fr,ja,ko,pl,pt,pt_br,ru,tr,uk,zh}.js; do
+     sed -i "/^    \"Action Button/a    $KEY" "$f"
+   done
+   ```
+   Adjust the anchor line (`"Action Button"`) to insert after the correct alphabetical neighbor.
+
+   **Other row types** available: `palette` (color palette), `Color` (single color picker),
+   `multitoggle` (grouped toggles), `buttongroup` / `runtime_buttongroup` (button groups),
+   `actionbutton` (action button). See existing `CreateRow` calls in `ql_settings.js` for examples.
+
+5. **Add normalization** (if needed) — in `ql_config.js`, add a normalizer function following the established pattern.
+
+   **Most common pattern** (two-arg, void-mutating — used by ~9 normalizers):
+   ```js
+   function NormalizeNewFeatureConfig(configTarget, sourceConfig) {
+       var utils = GetSharedSchemaUtils();
+       if (utils && typeof utils.NormalizeNewFeatureConfig === "function") {
+           utils.NormalizeNewFeatureConfig(configTarget, sourceConfig);
+       }
+   }
+   ```
+   Register in `MergeConfig` after the last existing `Normalize*` call:
+   ```js
+   NormalizeNewFeatureConfig(targetConfig, sourceConfig);
+   ```
+
+   **Other patterns** in `ql_config.js` (lines 84-141):
+   - **Single-arg:** `NormalizeVoiceTypeConfig(configTarget)` — takes only the target config
+   - **Value-returning:** `NormalizeVoiceTypeValue(rawValue)` — returns a normalized value instead of mutating
+   - **Inline fallback:** Some normalizers have fallback code inside the `if (!utils)` branch
+
+   Check `ql_config.js` lines 55-150 for the full set of patterns before writing your normalizer.
 
 6. **Add to presets** (optional) — in `ql_shared_presets.js` `QOL_PRESETS`, add the key to presets that should enable it.
 

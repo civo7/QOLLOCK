@@ -20,6 +20,7 @@ node tools/qollock_smoke_test.js
 ```
 
 Expected output: all three should exit 0 with no issues.
+Smoke test should report 51/51 PASS (12 HUD infrastructure + 39 feature files).
 
 **IMPORTANT:** These tools catch syntax errors and import mismatches, but NOT runtime
 bugs (panel deletion, timing, context differences). After validation passes, you MUST

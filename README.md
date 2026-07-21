@@ -7,29 +7,32 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 1. `AGENTS.md`
 - Project scope, priorities, performance rules, and key architecture notes.
 
-2. `docs/CHANGELOG_MEMORY.md`
-- High-signal timeline of important changes and lessons learned.
-
-3. `docs/KNOWN_GOTCHAS.md`
+2. `docs/KNOWN_GOTCHAS.md`
 - Common pitfalls (Panorama CSS/runtime behavior, exception matching, bindings).
 
-4. `docs/PERF_GUARDRAILS.md`
+3. `docs/PERF_GUARDRAILS.md`
 - Runtime performance constraints and implementation guardrails.
 
-5. `docs/TEST_CHECKLIST.md`
+4. `docs/TEST_CHECKLIST.md`
 - Smoke/regression checklist to run after feature changes.
 
-6. `docs/PRESET_BINDINGS.md`
+5. `docs/PRESET_BINDINGS.md`
 - Preset/binding tracking notes and maintenance flow.
 
-7. `docs/ADDING_SETTINGS.md`
+6. `docs/ADDING_SETTINGS.md`
 - Checklist for adding settings safely, including schema/version rules.
-
-8. `docs/ROLLBACK_POINTS.md`
-- Recent known pack milestones and rollback procedure.
 
 ## Build / Pack / Launch
 
+### First-time setup
+After cloning, run once to install git pre-commit hooks:
+```bash
+bash setup-hooks.sh
+```
+This validates JS imports and runs the smoke test before every commit.
+Skip with: `QOLLOCK_SKIP_HOOKS=true git commit ...`
+
+### Regular workflow
 Use:
 
 `scripts/qollock_pipeline.ps1`

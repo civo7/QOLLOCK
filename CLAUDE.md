@@ -12,6 +12,16 @@ and communicates between them via panel attribute bridges.
 **Branch:** `architecture-overhaul`  
 **Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
 
+## Prerequisites
+
+- **Panorama Knowledge Base:** Clone to `/home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/`.
+  The KB is a separate repo that documents Source 2 Panorama engine behavior (CSS properties, JS APIs,
+  XML panel types). Skills that reference the KB (`audit`, `plan`, `review`, `fix`) use absolute paths
+  to this location.
+- **Node.js:** Required for the smoke test (`tools/qollock_smoke_test.js`).
+- **Git hooks:** Run `bash setup-hooks.sh` once after cloning to install the pre-commit hook
+  (bridge checker → import validator → smoke test).
+
 ## File Map
 
 ```
@@ -31,7 +41,7 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 36 extracted feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
+    ├── ql_features/                        # 39 loaded feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -353,6 +363,8 @@ Panorama ignores, falling back to `squish`.
 
 ## Testing Tools
 
+- `setup-hooks.sh` — run once after cloning to install the git pre-commit hook (bridge checker + import validator + smoke test)
+- `scripts/git-hooks/pre-commit` — version-controlled hook template (installed by setup-hooks.sh)
 - `tools/check_bridges.sh` — verifies QOL.import() symbols are exported
 - `tools/validate_imports.sh` — verifies QOL.import() symbols exist on QOL namespace
 - `tools/qollock_smoke_test.js` — loads all files in dependency order (Node.js)
