@@ -655,6 +655,42 @@
     }
     exports.DumpTiming = DumpTiming;
 
+    // ---- Color utilities (Phase 11 Step 0.1: extracted from ql_core.js) ----
+
+    // HP threshold percentages for colored healthbar warning levels.
+    var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
+    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
+    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
+    var COLORED_HEALTHBAR_PULSE_STEP = 0.1;
+    var COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
+    var COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
+    var COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
+
+    function ToRgbString(rgb) {
+        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
+    }
+    exports.ToRgbString = ToRgbString;
+
+    function BlendRgb(a, b, t) {
+        return [
+            Math.round(a[0] + ((b[0] - a[0]) * t)),
+            Math.round(a[1] + ((b[1] - a[1]) * t)),
+            Math.round(a[2] + ((b[2] - a[2]) * t))
+        ];
+    }
+    exports.BlendRgb = BlendRgb;
+
+    function SetWashColorSafe(panel, color) {
+        if (color) {
+            exports.SetStyleSafe(panel, "washColor", String(color));
+        } else {
+            exports.ClearStyleSafe(panel, "washColor");
+        }
+    }
+    exports.SetWashColorSafe = SetWashColorSafe;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it
