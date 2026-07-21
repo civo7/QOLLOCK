@@ -48,10 +48,15 @@ Extract a section of code from a large file into a standalone feature file follo
 ## Checklist
 
 1. Verify all extracted functions have ZERO remaining callers in the source file
-2. Verify all used State fields are in stateKeys
+2. Verify all used State fields are in stateKeys — AND check for collisions:
+   `grep -rn "State\.fieldName" panorama/scripts/` across ALL feature files
 3. Add QOL.import() for every external symbol used
-4. Add DEPENDS comment matching QOL.import() array
-5. Add self-test that checks typeof for key functions
-6. Add include to hud.xml if HUD context
-7. Run smoke test + bridge checker + import validator
-8. Spawn 2 adversarial reviewers
+4. Add DEPENDS comment matching QOL.import() array exactly (same names, same order)
+5. After extraction, verify DEPENDS didn't drift: run `bash tools/check_bridges.sh`
+6. Add any missing bridge symbols to `_qolExportDefs` in ql_core.js
+7. Add self-test that checks typeof for key functions AND bridge exports
+8. Bucket/phase: start with `bucket: 0, phase: 0` unless the feature depends on
+   another feature's update having run first (then use a later bucket/phase)
+9. Add include to hud.xml if HUD context
+10. Run smoke test + bridge checker + import validator
+11. Spawn 2 adversarial reviewers
