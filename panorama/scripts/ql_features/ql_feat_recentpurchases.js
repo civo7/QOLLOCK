@@ -451,7 +451,7 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
                     playerPanel = playerPanel.GetParent();
                     badgeWalkGuard++;
                 }
-                if (badgeWalkGuard >= 64) QOL_WARN("heroPopup", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
+                if (badgeWalkGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
                 if (!badge || !playerPanel) { onDone(); return; }
                 var heroId = badge.heroid;
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
@@ -508,7 +508,7 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
                     root = root.GetParent();
                     rootGuard++;
                 }
-                if (rootGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: root walk hit guard limit");
+                if (rootGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "GetPanelLeftInTopBar: root walk hit guard limit");
                 if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (e && e.message ? e.message : String(e || ""))); }
         }
@@ -520,7 +520,7 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
             current = current.GetParent();
             walkGuard++;
         }
-        if (walkGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
+        if (walkGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
         return x;
     }
 
