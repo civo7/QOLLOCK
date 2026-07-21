@@ -21,13 +21,16 @@
     var IsPanelValid = Utils.IsPanelValid;
 
     // ── Constants (CVar-driven) ──
+    // GAME_VERSION_DEPENDENT: These must match game server cvars.
+    // Last verified: 2026-07-13 game patch (bzihnali: RIFT_INITIAL_DELAY changed 25s→20s)
     // citadel_koth_spawn_initial_delay = 720s (12 min)
     // citadel_koth_early_warning_time  = 60s  (koth_warning class appears)
     // citadel_koth_spawn_window       = ±60s random jitter per spawn
     // citadel_koth_respawn_interval   = 420s (7 min between spawns)
-    var RIFT_INITIAL_DELAY_SEC = 12 * 60 + 20;      // 720 — accumulator + 20
-    var RIFT_RESPAWN_INTERVAL_SEC = 7 * 60;    // 420
-    var RIFT_EARLY_WARNING_SEC = 20;           // koth_warning → spawn
+    // If timer is consistently wrong after a game patch, check these cvars first.
+    var RIFT_INITIAL_DELAY_SEC = 12 * 60 + 20;      // 740 — accumulator (720) + 20s fudge
+    var RIFT_RESPAWN_INTERVAL_SEC = 7 * 60;          // 420
+    var RIFT_EARLY_WARNING_SEC = 20;                 // koth_warning → spawn
     var RIFT_SPAWN_JITTER_SEC = 60;
     var RIFT_MINIMAP_POLL_INTERVAL_MS = 500;
     var RIFT_DEBUG = false;

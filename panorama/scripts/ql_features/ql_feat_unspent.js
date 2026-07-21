@@ -26,6 +26,8 @@
     var UNSPENT_TIER_SCAN_MAX_PANELS = 300;
     var UNSPENT_TIER_SIG_MAX_DEPTH = 2;
     var UNSPENT_TIER_SIG_MAX_NODES = 48;
+    // GAME_VERSION_DEPENDENT: Item tier costs. If spent-souls calculation is wrong
+    // after a game patch, check if tier costs changed. Last verified: 2026-07-20.
     var UNSPENT_TIER_COST = { 1: 800, 2: 1600, 3: 3200, 4: 6400 };
 
     // ── Private helpers ──
