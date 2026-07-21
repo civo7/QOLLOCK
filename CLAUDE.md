@@ -356,3 +356,22 @@ Panorama ignores, falling back to `squish`.
 - `tools/check_bridges.sh` — verifies QOL.import() symbols are exported
 - `tools/validate_imports.sh` — verifies QOL.import() symbols exist on QOL namespace
 - `tools/qollock_smoke_test.js` — loads all files in dependency order (Node.js)
+
+## Claude Code Skills (slash commands)
+
+- `/audit-qollock` — Fan out agents to audit the codebase against Panorama KB
+- `/validate-qollock` — Run smoke test + bridge checker + import validator
+- `/review-qollock` — Spawn 2 adversarial reviewers, revise, loop up to 3×
+- `/plan-qollock` — Full plan creation with 4-agent adversarial review
+- `/extract-qollock` — Extract code to a standalone feature file
+- `/fix-qollock` — Fix a bug with adversarial review
+
+## Saved Prompts
+
+See `.claude/saved-prompts.md` for reusable prompt templates:
+- Deep audit with fan-out
+- Plan + adversarial review loop
+- Implement phase with subphase review
+- Debug runtime error tracing
+- Deep save/load review
+- CSS/XML Panorama compliance audit

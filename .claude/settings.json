@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreCommit": [
+      {
+        "matcher": "**/*.js",
+        "command": "cd panorama/scripts && bash tools/check_bridges.sh"
+      },
+      {
+        "matcher": "**/*.js",
+        "command": "cd panorama/scripts && bash tools/validate_imports.sh"
+      },
+      {
+        "matcher": "**/*.js",
+        "command": "node panorama/scripts/tools/qollock_smoke_test.js"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(node:*)",
+      "Bash(bash:*)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(sed:*)",
+      "Bash(cat:*)",
+      "Bash(git:*)",
+      "Bash(echo:*)",
+      "Bash(python3:*)",
+      "Bash(chmod:*)",
+      "Bash(mkdir:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)"
+    ]
+  }
+}
