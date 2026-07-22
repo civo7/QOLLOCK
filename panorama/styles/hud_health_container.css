@@ -195,8 +195,12 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthContainer
 {
+	/* margin-top drives the HP number's vertical position. At 41px it floated
+	 * above the bar; pushed down to sit ON the bar (right side), matching the
+	 * reference. TUNE THIS if it's not centered on the bar: higher = lower on
+	 * screen. */
 	horizontal-align: right;
-	margin-top: 41px;
+	margin-top: 100px;
 	z-index: 100;
 	width: 100px;
 	height: 65px;
