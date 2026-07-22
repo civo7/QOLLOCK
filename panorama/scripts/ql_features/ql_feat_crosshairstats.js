@@ -105,7 +105,7 @@
     function ReadModifierValueText(container) {
         if (!IsPanelValid(container)) return "";
         var core = null;
-        try { core = container.FindChildTraverse("miniModifierCore"); } catch(e) {}
+        try { core = container.FindChildTraverse("miniModifierCore"); } catch(e) { /* panel deleted mid-frame */ }
         if (!IsPanelValid(core)) {
             // No core child by id (it's class-based in the game XML) — fall back to a guarded
             // BFS that stops before descending into #casterList.
@@ -123,19 +123,19 @@
             guard++;
             if (!node) continue;
             // Never descend into the caster list — only the core net value matters.
-            try { if (node.id === "casterList") continue; } catch(e) {}
+            try { if (node.id === "casterList") continue; } catch(e) { /* panel deleted mid-frame */ }
             try {
                 if (typeof node.text === "string") {
                     var t = node.text;
                     if (t && t.length && t.charAt(0) !== "#") return t;
                 }
-            } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
             try {
                 if (node.Children) {
                     var kids = node.Children() || [];
                     for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
                 }
-            } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
         }
         return "";
     }
@@ -161,7 +161,7 @@
         try {
             if (container.BHasClass("isNegative") || container.BHasClass("IsNegative")) return -1;
             if (container.BHasClass("isPositive") || container.BHasClass("IsPositive")) return 1;
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
         return 0;
     }
 
@@ -177,7 +177,7 @@
     function ClassifyByCasterConsensus(container) {
         if (!IsPanelValid(container)) return 0;
         var list = null;
-        try { list = container.FindChildTraverse("casterList"); } catch(e) {}
+        try { list = container.FindChildTraverse("casterList"); } catch(e) { /* panel deleted mid-frame */ }
         if (!IsPanelValid(list)) return 0;
         var queue = [];
         try { if (list.Children) queue = (list.Children() || []).slice(); } catch(e) { return 0; }
@@ -191,13 +191,13 @@
                     if (node.BHasClass("enemy")) enemy++;
                     else if (node.BHasClass("friend")) friend++;
                 }
-            } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
             try {
                 if (node.Children) {
                     var kids = node.Children() || [];
                     for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
                 }
-            } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
         }
         if (enemy > 0 && friend === 0) return -1;
         if (friend > 0 && enemy === 0) return 1;
@@ -273,7 +273,7 @@
             overlay = root.FindChildTraverse("QOLCrosshairStatsOverlay");
         }
         if (IsPanelValid(overlay)) {
-            try { overlay.DeleteAsync(0); } catch(e) {}
+            try { overlay.DeleteAsync(0); } catch(e) { /* panel deleted mid-frame */ }
         }
         SetCachedPanel("crosshairStatsOverlay", null);
         SetCachedPanel("crosshairStatsSource", null);
@@ -303,7 +303,7 @@
         // mirror — so hide the overlay entirely until it closes. lastVisibleCount is reset so the
         // overlay re-shows correctly on the next closed-scoreboard frame.
         if (IsHudClassActive && IsHudClassActive(root, "gScoreboardOpen")) {
-            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else try { overlay.style.visibility = "collapse"; } catch(e) {}
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else try { overlay.style.visibility = "collapse"; } catch(e) { /* panel deleted mid-frame */ }
             st.lastVisibleCount = -1;
             return;
         }
@@ -318,11 +318,11 @@
         var opacity = Utils.ClampConfigNumber(cfg.CROSSHAIR_STATS_OPACITY, 1, 0, 1, false);
         var layoutSig = offX + "|" + offY + "|" + scale + "|" + opacity;
         if (layoutSig !== st.lastLayoutSig) {
-            try { overlay.style.marginLeft = (BASE_X + offX) + "px"; } catch(e) {}
+            try { overlay.style.marginLeft = (BASE_X + offX) + "px"; } catch(e) { /* panel deleted mid-frame */ }
             // Subtract offY so a positive "Vertical Offset" raises the overlay (matches the
             // slider's intuitive up = more direction; previously inverted).
-            try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) {}
-            try { overlay.style.preTransformScale2d = (scale / 100).toFixed(2); } catch(e) {}
+            try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) { /* panel deleted mid-frame */ }
+            try { overlay.style.preTransformScale2d = (scale / 100).toFixed(2); } catch(e) { /* panel deleted mid-frame */ }
             Utils.SetPanelOpacitySafe(overlay, opacity, 1);
             st.lastLayoutSig = layoutSig;
         }
@@ -374,7 +374,7 @@
                 var rowPanel = st.rowPanels[rdef.key];
                 if (!IsPanelValid(rowPanel)) continue;
                 if (!part) {
-                    if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", true); else try { rowPanel.style.visibility = "collapse"; } catch(e) {}
+                    if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", true); else try { rowPanel.style.visibility = "collapse"; } catch(e) { /* panel deleted mid-frame */ }
                     continue;
                 }
                 var neg = part.indexOf(rdef.key + "-") === 0;
@@ -382,11 +382,11 @@
                     rowPanel.SetHasClass("isDebuff", neg);
                     rowPanel.SetHasClass("isBuff", !neg);
                     if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", false); else rowPanel.style.visibility = "visible";
-                } catch(e) {}
+                } catch(e) { /* panel deleted mid-frame */ }
                 var valueLabel = st.rowValues[rdef.key];
                 if (IsPanelValid(valueLabel)) {
                     var txt = part.substring((rdef.key + "-").length);
-                    try { valueLabel.text = txt; } catch(e) {}
+                    try { valueLabel.text = txt; } catch(e) { /* panel deleted mid-frame */ }
                 }
             }
             st.lastContentSig = contentSig;
@@ -394,7 +394,7 @@
 
         // Collapse whole overlay when nothing is active (avoids an empty background box).
         if (visibleCount !== st.lastVisibleCount) {
-            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", visibleCount <= 0); else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", visibleCount <= 0); else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) { /* panel deleted mid-frame */ }
             st.lastVisibleCount = visibleCount;
         }
     }

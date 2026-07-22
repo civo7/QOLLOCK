@@ -6,7 +6,7 @@
 
     // ── Debug logging toggle ──
     var _DBG = false;
-    function DBG(msg) { if (_DBG) { try { $.Msg("[ShowRank] " + msg); } catch(e) {} } }
+    function DBG(msg) { if (_DBG) { try { $.Msg("[ShowRank] " + msg); } catch(e) { /* panel deleted mid-frame */ } } }
     var _srThrottleLogs = {};
 
     function DBGThrottle(key, value, msg) {
@@ -76,7 +76,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         var guard = 0;
         while (Valid(cur) && guard < 80) {
             var parent = null;
-            try { parent = cur.GetParent(); } catch(e) {}
+            try { parent = cur.GetParent(); } catch(e) { /* panel deleted mid-frame */ }
             if (!Valid(parent) || parent === cur) break;
             cur = parent;
             guard++;
@@ -89,13 +89,13 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
     }
 
     function SetAttr(root, key, value) {
-        try { root.SetAttributeString(key, String(value)); } catch(e) {}
+        try { root.SetAttributeString(key, String(value)); } catch(e) { /* panel deleted mid-frame */ }
     }
 
     function HasAnyClass(panel, classes) {
         if (!Valid(panel)) return false;
         for (var i = 0; i < classes.length; i++) {
-            try { if (panel.BHasClass(classes[i])) return true; } catch(e) {}
+            try { if (panel.BHasClass(classes[i])) return true; } catch(e) { /* panel deleted mid-frame */ }
         }
         return false;
     }
@@ -117,7 +117,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         try {
             if (visible) badge.AddClass("ShowRankVisible");
             else badge.RemoveClass("ShowRankVisible");
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
     }
 
     function ApplyTopBarVisibility(root, visible) {
@@ -134,7 +134,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 SetBadgeVisible(overlay, visible);
                 count++;
             }
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
         DBG("ApplyTopBarVisibility: done, touched=" + count);
     }
 
@@ -165,7 +165,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
 
     function GetPlayersList(root) {
         var escape = null;
-        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) {}
+        try { escape = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) { /* panel deleted mid-frame */ }
         var start = Valid(escape) ? escape : root;
         try { return start.FindChildTraverse("PlayersList"); } catch(e) { return null; }
     }
@@ -175,13 +175,13 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         var playersList = GetPlayersList(root);
         if (!Valid(playersList)) { DBG("FindAllEntries: no PlayersList"); return out; }
         var q = [];
-        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) {}
+        try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) { /* panel deleted mid-frame */ }
         for (var h = 0; h < q.length && h < 2000; h++) {
             var p = q[h];
             try {
                 if (p.paneltype === "CitadelPlayersListEntry") { out.push(p); continue; }
-            } catch(e) {}
-            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
+            try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) { /* panel deleted mid-frame */ }
         }
         return out;
     }
@@ -189,7 +189,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
     function ReadClass(panel, cls) {
         var list = panel.FindChildrenWithClassTraverse ? panel.FindChildrenWithClassTraverse(cls) : [];
         if (list && list.length > 0) {
-            try { return String(list[0].text || "").trim(); } catch(e) {}
+            try { return String(list[0].text || "").trim(); } catch(e) { /* panel deleted mid-frame */ }
         }
         return "";
     }
@@ -231,11 +231,11 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         for (var i = 0; i < entries.length; i++) {
             var label = GetAccountIdLabel(entries[i]);
             if (Valid(label)) {
-                try { label.text = ""; cleared++; } catch(e) {}
+                try { label.text = ""; cleared++; } catch(e) { /* panel deleted mid-frame */ }
             }
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
             if (Valid(overlay)) {
-                try { overlay.SetImage(""); } catch(e) {}
+                try { overlay.SetImage(""); } catch(e) { /* panel deleted mid-frame */ }
                 SetBadgeVisible(overlay, false);
             }
         }
@@ -253,9 +253,9 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
 
     function DismissProfileCard() {
         try { if (typeof DismissAllContextMenus === "function") DismissAllContextMenus();
-              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) {}
+              else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) { /* panel deleted mid-frame */ }
         try { if (typeof DropInputFocus === "function") DropInputFocus();
-              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) {}
+              else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) { /* panel deleted mid-frame */ }
     }
 
     function ScheduleDismiss(root, delayMs) {
@@ -268,7 +268,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         var out = [];
         for (var i = 0; i < list.length; i++) {
             var raw = "";
-            try { raw = String(list[i].text || "").replace(/[^0-9]/g, ""); } catch(e) {}
+            try { raw = String(list[i].text || "").replace(/[^0-9]/g, ""); } catch(e) { /* panel deleted mid-frame */ }
             if (raw.length >= 1 && raw.length <= 10) out.push(raw);
         }
         return out;
@@ -278,7 +278,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         try {
             var mc = entry.FindChildTraverse("MainContents");
             if (Valid(mc)) return mc;
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
         try {
             var cc = entry.GetChildCount ? entry.GetChildCount() : 0;
             for (var i = 0; i < cc && i < 50; i++) {
@@ -290,9 +290,9 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                         var g = c.GetChild(j);
                         if (g.id === "MainContents") return g;
                     }
-                } catch(e) {}
+                } catch(e) { /* panel deleted mid-frame */ }
             }
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
         return null;
     }
 
@@ -312,9 +312,9 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         var mc = FindMainContents(entry);
         var beforeIds = ReadAccountIdSet(root);
         if (mc) {
-            try { $.DispatchEvent("Activated", mc, "mouse"); } catch(e) {}
+            try { $.DispatchEvent("Activated", mc, "mouse"); } catch(e) { /* panel deleted mid-frame */ }
         } else {
-            try { $.DispatchEvent("Activated", entry, "mouse"); } catch(e) {}
+            try { $.DispatchEvent("Activated", entry, "mouse"); } catch(e) { /* panel deleted mid-frame */ }
         }
         DBG("FillRow: dispatched Activated, mc=" + (mc ? "found" : "not found"));
 
@@ -356,12 +356,12 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             if (result) {
                 var label = GetAccountIdLabel(entry);
                 if (Valid(label)) {
-                    try { label.text = result; } catch(e) {}
+                    try { label.text = result; } catch(e) { /* panel deleted mid-frame */ }
                 }
                 var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
                 if (Valid(overlay)) {
                     var rankUrl = API_RANK_URL + result + "/rank-predict/image?format=webp&size=small";
-                    try { overlay.SetImage(rankUrl); } catch(e) {}
+                    try { overlay.SetImage(rankUrl); } catch(e) { /* panel deleted mid-frame */ }
                     SetBadgeVisible(overlay, true);
                     DBG("FillRow: rank image set, url=" + rankUrl);
                 } else {
@@ -384,7 +384,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 DBG("FillRow: TIMEOUT " + name + " [" + elapsed + "ms, " + attempt + " attempts]");
                 var timeoutLabel = GetAccountIdLabel(entry);
                 if (Valid(timeoutLabel)) {
-                    try { timeoutLabel.text = "-"; } catch(e) {}
+                    try { timeoutLabel.text = "-"; } catch(e) { /* panel deleted mid-frame */ }
                 }
                 ClearProbe(root);
                 DismissProfileCard();
@@ -484,9 +484,9 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 DBG("TopBar.TryLoad: gen changed " + (_lastGen || "<none>") + " → " + (gen || "<none>"));
                 _lastGen = gen;
                 var overlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) { /* panel deleted mid-frame */ } }
                 var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
-                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
+                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) { /* panel deleted mid-frame */ } }
                 _lastAccountId = "";
                 _idleCount = 0;
                 $.Schedule(2.0, TryLoad);
@@ -497,7 +497,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             var acctLabel = FindClass(topBarPlayer, "PlayerAccountHiddenTopBar");
             var accountId = "";
             if (Valid(acctLabel)) {
-                try { accountId = String(acctLabel.text || "").trim(); } catch(e) {}
+                try { accountId = String(acctLabel.text || "").trim(); } catch(e) { /* panel deleted mid-frame */ }
             }
             DBG("TopBar.TryLoad: labelAccountId=" + (accountId || "<empty>"));
 
@@ -506,14 +506,14 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 var heroLabel = FindClass(topBarPlayer, "HeroName");
                 var heroName = "";
                 if (Valid(heroLabel)) {
-                    try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
+                    try { heroName = String(heroLabel.text || "").trim(); } catch(e) { /* panel deleted mid-frame */ }
                 }
                 if (heroName) {
                     var key = "qol_sr_rank_" + heroName.toLowerCase();
                     accountId = ReadAttr(root, key, "");
                     DBG("TopBar.TryLoad: hero=" + heroName + " key=" + key + " → " + (accountId || "<empty>"));
                     if (accountId && Valid(acctLabel)) {
-                        try { acctLabel.text = accountId; } catch(e) {}
+                        try { acctLabel.text = accountId; } catch(e) { /* panel deleted mid-frame */ }
                     }
                 } else {
                     DBG("TopBar.TryLoad: no hero name found (HeroLabel=" + (heroLabel ? "found" : "null") + ")");
@@ -531,8 +531,8 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             if (!accountId && _lastAccountId) {
                 DBG("TopBar.TryLoad: accountId disappeared, was " + _lastAccountId);
                 var clearOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (Valid(clearOverlay)) { try { clearOverlay.SetImage(""); } catch(e) {} }
-                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
+                if (Valid(clearOverlay)) { try { clearOverlay.SetImage(""); } catch(e) { /* panel deleted mid-frame */ } }
+                if (Valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) { /* panel deleted mid-frame */ } }
                 _lastAccountId = "";
             }
 
@@ -543,7 +543,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 var loadOverlay = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                 if (Valid(loadOverlay)) {
                     var url = API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small";
-                    try { loadOverlay.SetImage(url); } catch(e) {}
+                    try { loadOverlay.SetImage(url); } catch(e) { /* panel deleted mid-frame */ }
                     DBG("TopBar.TryLoad: SetImage(" + url + ")");
                     if (IsShowRankEnabled()) {
                         var baseBadge = topBarPlayer.FindChildTraverse ? topBarPlayer.FindChildTraverse("RankPredictionBadgeTopBar") : null;
@@ -587,7 +587,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 } else {
                     root.AddClass("HideShowRankTopBar");
                 }
-            } catch(e) {}
+            } catch(e) { /* panel deleted mid-frame */ }
         }
 
         if (State._showRankEnabled === enabled) return;
@@ -624,14 +624,14 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             DBG("ClearTopBarBadges: clearing " + players.length + " players");
             for (var i = 0; i < players.length; i++) {
                 var overlay = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+                if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) { /* panel deleted mid-frame */ } }
                 var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
                 SetBadgeVisible(base, false);
                 SetBadgeVisible(overlay, false);
                 var label = FindClass(players[i], "PlayerAccountHiddenTopBar");
-                if (Valid(label)) { try { label.text = ""; } catch(e) {} }
+                if (Valid(label)) { try { label.text = ""; } catch(e) { /* panel deleted mid-frame */ } }
             }
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
     }
 
     function ClearPlayerListBadges(root) {
@@ -639,12 +639,12 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         DBG("ClearPlayerListBadges: clearing " + entries.length + " entries");
         for (var i = 0; i < entries.length; i++) {
             var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-            if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} }
+            if (Valid(overlay)) { try { overlay.SetImage(""); } catch(e) { /* panel deleted mid-frame */ } }
             var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
             SetBadgeVisible(base, false);
             SetBadgeVisible(overlay, false);
             var label = GetAccountIdLabel(entries[i]);
-            if (Valid(label)) { try { label.text = ""; } catch(e) {} }
+            if (Valid(label)) { try { label.text = ""; } catch(e) { /* panel deleted mid-frame */ } }
         }
     }
 
@@ -668,7 +668,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
         try {
             var gen = ReadAttr(root, "qol_sr_generation", "0");
             player.SetAttributeString("_qol_sr_init", gen || "0");
-        } catch(e) {}
+        } catch(e) { /* panel deleted mid-frame */ }
     }
 
     // ── Find all player panels in the TopBar ──
@@ -684,7 +684,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             var team = teamsContainer.GetChild(ti);
             if (!Valid(team)) { DBGThrottle("FindAllTopBarPlayers:team:" + ti, "invalid", "FindAllTopBarPlayers: team[" + ti + "] invalid, skip"); continue; }
             var teamId = "";
-            try { teamId = String(team.id || team.GetAttributeString("id", "")); } catch(e) {}
+            try { teamId = String(team.id || team.GetAttributeString("id", "")); } catch(e) { /* panel deleted mid-frame */ }
             var playerContents = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
             if (!Valid(playerContents)) { DBGThrottle("FindAllTopBarPlayers:PlayerContents:" + ti, teamId + "|missing", "FindAllTopBarPlayers: team[" + ti + "] id=" + teamId + " has NO PlayerContents"); continue; }
             var playersContainer = playerContents.FindChildTraverse ? playerContents.FindChildTraverse("PlayersContainer") : null;
@@ -695,7 +695,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                 var player = playersContainer.GetChild(pi);
                 if (Valid(player)) {
                     var pid = "";
-                    try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
+                    try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) { /* panel deleted mid-frame */ }
                     DBGThrottle("FindAllTopBarPlayers:player:" + ti + ":" + pi, pid + "|valid", "FindAllTopBarPlayers:   player[" + pi + "] id=" + pid + " — VALID, adding");
                     out.push(player);
                 } else {
@@ -710,7 +710,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
     function EnsureTopBarPlayersInitialized(root) {
         if (!Valid(root)) return;
         var topBar = null;
-        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
+        try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) { /* panel deleted mid-frame */ }
         if (!Valid(topBar)) { DBGThrottle("EnsureTopBarPlayers:noTopBar", "missing", "EnsureTopBarPlayers: no TopBar"); return; }
         try {
             var currentGen = ReadAttr(root, "qol_sr_generation", "0");
@@ -719,9 +719,9 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
             for (var i = 0; i < players.length; i++) {
                 var player = players[i];
                 var pid = "";
-                try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) {}
+                try { pid = String(player.id || player.GetAttributeString("id", "")); } catch(e) { /* panel deleted mid-frame */ }
                 var storedInit = "";
-                try { storedInit = player.GetAttributeString("_qol_sr_init", ""); } catch(e) {}
+                try { storedInit = player.GetAttributeString("_qol_sr_init", ""); } catch(e) { /* panel deleted mid-frame */ }
                 if (IsTopBarPlayerInitialized(player, root)) {
                     DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":already", storedInit + "|" + currentGen, "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " already init (stored=" + storedInit + " current=" + currentGen + ") — skip");
                     continue;
@@ -732,7 +732,7 @@ QOL.import(["state", "utils", "isConnectedToHideout", "perfNowMs"]);
                     continue;
                 }
                 var heroName = "";
-                try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
+                try { heroName = String(heroLabel.text || "").trim(); } catch(e) { /* panel deleted mid-frame */ }
                 if (!heroName) {
                     DBGThrottle("EnsureTopBarPlayers:player:" + i + ":" + pid + ":emptyHero", "empty", "EnsureTopBarPlayers: player[" + i + "] id=" + pid + " HeroName EMPTY — skip");
                     continue;

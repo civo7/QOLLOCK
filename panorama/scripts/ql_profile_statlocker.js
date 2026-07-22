@@ -26,7 +26,7 @@
 
     function DebugLog(msg) {
         if (!DEBUG_LOGS) return;
-        try { $.Msg("[QOLLock][StatlockerProfile] " + String(msg || "")); } catch (e0) {}
+        try { $.Msg("[QOLLock][StatlockerProfile] " + String(msg || "")); } catch (e0) { /* console unavailable */ }
     }
 
     function HasClassSafe(panel, className) {
@@ -67,16 +67,16 @@
     function ReadAccountIdFromPanel(panel) {
         if (!IsPanelValid(panel)) return "";
         var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) {}
-        try { candidates.push(panel.account_id); } catch (e1) {}
-        try { candidates.push(panel.accountID); } catch (e2) {}
+        try { candidates.push(panel.accountid); } catch (e0) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.account_id); } catch (e1) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.accountID); } catch (e2) { /* property may not exist on this panel */ }
         try {
             if (panel.GetAttributeString) {
                 candidates.push(panel.GetAttributeString("accountid", ""));
                 candidates.push(panel.GetAttributeString("account_id", ""));
                 candidates.push(panel.GetAttributeString("accountID", ""));
             }
-        } catch (e3) {}
+        } catch (e3) { /* panel deleted mid-frame */ }
         for (var i = 0; i < candidates.length; i++) {
             var parsed = ParseAccountId(candidates[i]);
             if (parsed) return parsed;
@@ -115,7 +115,7 @@
                     var child = panel.GetChild ? panel.GetChild(i) : null;
                     if (IsPanelValid(child)) stack.push(child);
                 }
-            } catch (e0) {}
+            } catch (e0) { /* panel deleted mid-frame */ }
         }
         return "";
     }
@@ -164,13 +164,13 @@
             if (IsPanelValid(icon) && icon.AddClass) icon.AddClass("QOLStatlockerImage");
         }
         if (IsPanelValid(icon) && icon.SetImage) {
-            try { icon.SetImage(STATLOCKER_IMAGE_SRC); } catch (eSet) {}
+            try { icon.SetImage(STATLOCKER_IMAGE_SRC); } catch (eSet) { /* panel deleted mid-frame */ }
         }
 
         button.style.visibility = "visible";
-        try { button.enabled = true; } catch (eBtn0) {}
-        try { button.hittest = true; } catch (eBtn1) {}
-        try { button.hittestchildren = true; } catch (eBtn2) {}
+        try { button.enabled = true; } catch (eBtn0) { /* panel deleted mid-frame */ }
+        try { button.hittest = true; } catch (eBtn1) { /* panel deleted mid-frame */ }
+        try { button.hittestchildren = true; } catch (eBtn2) { /* panel deleted mid-frame */ }
         if (accountId) gLastKnownAccountId = accountId;
         try {
             button.SetPanelEvent("onactivate", function () {
@@ -184,7 +184,7 @@
                 DebugLog("click: resolved account=" + currentAccountId + " source=" + ((resolved && resolved.source) ? resolved.source : "cached") + " url=" + url);
                 try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e3) { DebugLog("click: ExternalBrowserGoToURL failed"); }
             });
-        } catch (e2) {}
+        } catch (e2) { /* panel deleted mid-frame */ }
     }
 
     function Update() {

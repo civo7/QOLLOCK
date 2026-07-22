@@ -46,9 +46,9 @@
     // fully opaque).
     function ResetStatsPanel(panel) {
         if (!IsPanelValid(panel)) return;
-        try { panel.RemoveClass(CLASS_RIGHT); } catch(e0) {}
-        try { panel.style.x = "0px"; } catch(e1) {}
-        try { panel.style.y = "0px"; } catch(e2) {}
+        try { panel.RemoveClass(CLASS_RIGHT); } catch(e0) { /* panel deleted mid-frame */ }
+        try { panel.style.x = "0px"; } catch(e1) { /* panel deleted mid-frame */ }
+        try { panel.style.y = "0px"; } catch(e2) { /* panel deleted mid-frame */ }
         Utils.SetPanelOpacitySafe(panel, 1, 1);
     }
 
@@ -117,11 +117,11 @@
             Utils.SetPanelOpacitySafe(panel, 1, 1);
             // Right dock: add the class so CSS right-aligns the wrapper and its inner rows. Left
             // dock (default): remove it and let the vanilla left-align CSS apply.
-            try { panel.SetHasClass(CLASS_RIGHT, side === 1); } catch(e0) {}
+            try { panel.SetHasClass(CLASS_RIGHT, side === 1); } catch(e0) { /* panel deleted mid-frame */ }
             // style.x/style.y translate in screen space regardless of align: +X moves right, +Y
             // raises (negated, matching the Damage Report / Chat offset convention used elsewhere).
-            try { panel.style.x = String(offX) + "px"; } catch(e1) {}
-            try { panel.style.y = String(-offY) + "px"; } catch(e2) {}
+            try { panel.style.x = String(offX) + "px"; } catch(e1) { /* panel deleted mid-frame */ }
+            try { panel.style.y = String(-offY) + "px"; } catch(e2) { /* panel deleted mid-frame */ }
         }
 
         st.sig = sig; st.applied = true; st.panel = panel;
