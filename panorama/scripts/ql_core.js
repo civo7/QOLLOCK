@@ -20,6 +20,9 @@
 //   §16 Feature registrations (QOL_REGISTER_FEATURE calls)
 //   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
 // ==========================================================================
+
+'use strict';
+
 // Sandbox guard: if ql_state.js did not load (schema validator sandbox
 // loads ql_core.js in isolation), provide a minimal State stub.
 var State = typeof State !== "undefined" ? State : { cachedPanels: {} };
@@ -14673,6 +14676,7 @@ function GetUIRoot() {
         ["tryGetGameplayMouseCursorPosition", function() { return TryGetGameplayMouseCursorPosition; }],
         ["readPanelTextMaybe", function() { return ReadPanelTextMaybe; }],
         ["extractBuildCategoryPayloadToken", function() { return ExtractBuildCategoryPayloadToken; }],
+        ["getAccountIdForBuildCategoryPayload", function() { return (typeof QOL !== "undefined" && QOL.getAccountIdForBuildCategoryPayload) || (function() { return ""; }); }],
         ["confirmStorageHeroSignatureAbilities", function() { return ConfirmStorageHeroSignatureAbilities; }],
         ["ensureStorageBuildInitialized", function() { return EnsureStorageBuildInitialized; }],
         ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
@@ -14714,17 +14718,6 @@ function GetUIRoot() {
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],
         ["isStorageBuildListEmpty", function() { return IsStorageBuildListEmpty; }],
         ["mergeConfig", function() { return (typeof QOL !== "undefined" && QOL.mergeConfig) || _MC; }],
-        ["normalizeAllyColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeAllyColorWarningConfig) || (function() {}); }],
-        ["normalizeAmmoScaleConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeAmmoScaleConfig) || (function() {}); }],
-        ["normalizeColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeColorWarningConfig) || (function() {}); }],
-        ["normalizeCompassSpeedSchemaMigration", function() { return (typeof QOL !== "undefined" && QOL.normalizeCompassSpeedSchemaMigration) || (function() {}); }],
-        ["normalizeEnemyColorWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeEnemyColorWarningConfig) || (function() {}); }],
-        ["normalizeHealthbarTypeConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeHealthbarTypeConfig) || (function() {}); }],
-        ["normalizeLanguageSchemaMigration", function() { return (typeof QOL !== "undefined" && QOL.normalizeLanguageSchemaMigration) || (function() {}); }],
-        ["normalizeNeutralCampTierConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeNeutralCampTierConfig) || (function() {}); }],
-        ["normalizeTopbarAllyHpWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeTopbarAllyHpWarningConfig) || (function() {}); }],
-        ["normalizeTopbarEnemyHpWarningConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeTopbarEnemyHpWarningConfig) || (function() {}); }],
-        ["normalizeVoiceTypeConfig", function() { return (typeof QOL !== "undefined" && QOL.normalizeVoiceTypeConfig) || (function() {}); }],
         ["queueBuildSaveRequestFromLoader", function() { return QueueBuildSaveRequestFromLoader; }],
         ["resetBuildClearRequestAttributes", function() { return ResetBuildClearRequestAttributes; }],
         ["resetBuildClearRuntimeState", function() { return ResetBuildClearRuntimeState; }],

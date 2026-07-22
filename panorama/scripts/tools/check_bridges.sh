@@ -41,7 +41,7 @@ INFRA_SYMBOLS=$(grep -ohP "QOL\.\K[a-zA-Z0-9]+" ql_state.js ql_panelcache.js ql_
 
 # Collect all symbols imported by feature files
 for f in ql_features/ql_feat_*.js; do
-    IMPORTS=$(grep -oP 'QOL\.import\(\[(.*?)\]\)' "$f" 2>/dev/null | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
+    IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
     for sym in $IMPORTS; do
         if ! echo "$EXPORTED" | grep -qx "$sym" && ! echo "$INFRA_SYMBOLS" | grep -qx "$sym"; then
             # Check if symbol is published by another feature file (cross-feature)
