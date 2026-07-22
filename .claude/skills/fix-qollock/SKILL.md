@@ -1,7 +1,7 @@
 ---
 name: fix-qollock
 description: Fix a bug with adversarial review. Implements fix, spawns 2 reviewers, revises, loops up to 3 times.
-args: bug_description
+argument-hint: [bug_description]
 ---
 
 # Fix Bug with Adversarial Review

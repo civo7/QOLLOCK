@@ -1,7 +1,7 @@
 ---
 name: audit-qollock
 description: Fan out parallel subagents to audit the QOLLOCK codebase against the Panorama Knowledge Base
-args: scope
+argument-hint: [scope]
 ---
 
 # QOLLOCK Code Audit
