@@ -3,7 +3,11 @@
 // Extracted from ql_settings.js, Phase 2
 (function() {
     'use strict';
-    
+
+    // ── QOL.import() for settings context (ql_utils.js loads before ql_shared_presets.js) ──
+    var _deps = QOL.import(["utils"]);
+    var Utils = _deps.utils;
+
     // Dependencies injected by ql_settings.js at init time
     var _Localize, _PrepareModal, _WarnLog, _FindRoot;
     
@@ -823,7 +827,7 @@ function SetPanelNonInteractive(panel) {
 }
 
 // Phase C.3: Fixed fallback — was always setting "1.00" regardless of opacityValue.
-var SetPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { var v = Number(opacityValue); if (!isFinite(v)) v = Number(fallbackValue); if (!isFinite(v)) v = 1.0; panel.style.opacity = v.toFixed(2); } catch(e) { _WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } } };
+var SetPanelOpacitySafe = (Utils && Utils.SetPanelOpacitySafe) ? Utils.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { var v = Number(opacityValue); if (!isFinite(v)) v = Number(fallbackValue); if (!isFinite(v)) v = 1.0; panel.style.opacity = v.toFixed(2); } catch(e) { _WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } } };
 
 function GetPanelRectRelativeToContext(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return null;
@@ -3447,7 +3451,7 @@ function ReadConfigRawFromStorage() {
         if (!target || !target.GetAttributeString) return "";
         try { return String(target.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { return ""; }
     };
-    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var readRev = function(target) {
         if (!target || !target.GetAttributeString) return 0;
         try { return parseRev(target.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { return 0; }
@@ -3628,7 +3632,7 @@ function SaveAndSync() {
         return;
     }
     gLastSavedConfigRaw = data;
-    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
@@ -3672,8 +3676,8 @@ function BuildSettingsListRenderSignature() {
 }
 
 function IsPanelValidSafe(panel) {
-    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
-        return QOL_UTILS.IsPanelValid(panel);
+    if (Utils && Utils.IsPanelValid) {
+        return Utils.IsPanelValid(panel);
     }
     return !!(panel && panel.IsValid && panel.IsValid());
 }

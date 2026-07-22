@@ -5,6 +5,10 @@
 (function() {
     'use strict';
 
+    var _deps = QOL.import(["utils"]);
+    var Utils = _deps.utils;
+    var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+
     // ── Tooltip globals ──
 
 var SETTINGS_TOOLTIP_THEME_CLASS = "QOLSettingsTooltipThemeActive";

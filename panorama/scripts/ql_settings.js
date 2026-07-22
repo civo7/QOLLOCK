@@ -8,12 +8,13 @@ var MOD_CONFIG = Object.assign({}, QOL_DEFAULT_CONFIG);
 // to ensure they always see the current config. Read-only from their perspective.
 QOL.getSettingsConfig = function() { return MOD_CONFIG; };
 
-// ── SafeLog stubs for settings context (QOL_UTILS loaded via ql_shared_presets.js) ──
-var _QOLU = (typeof QOL_UTILS !== "undefined") ? QOL_UTILS : null;
-var SafeLog = (_QOLU && _QOLU.SafeLog) ? _QOLU.SafeLog : function(fn, label) { try { return fn(); } catch(e) { return null; } };
-var SafeGetAttribute = (_QOLU && _QOLU.SafeGetAttribute) ? _QOLU.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
-var SafeSetAttribute = (_QOLU && _QOLU.SafeSetAttribute) ? _QOLU.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } return false; };
-var WarnLog = (_QOLU && _QOLU.WarnLog) ? _QOLU.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+// ── QOL.import() for settings context (ql_utils.js now loaded via hud_escape_menu.xml) ──
+var _deps = QOL.import(["utils"]);
+var Utils = _deps.utils;
+var SafeLog = (Utils && Utils.SafeLog) ? Utils.SafeLog : function(fn, label) { try { return fn(); } catch(e) { return null; } };
+var SafeGetAttribute = (Utils && Utils.SafeGetAttribute) ? Utils.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
+var SafeSetAttribute = (Utils && Utils.SafeSetAttribute) ? Utils.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } return false; };
+var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
 
 // Phase 2: Inject arcade dependencies (ql_arcade_games.js loads before ql_settings.js)
 
@@ -25,24 +26,6 @@ function FindRootPanel() {
     return root;
 }
 
-function ExtractHeroTokenFromText(rawText) {
-    if (!rawText) return "";
-    var text = String(rawText);
-    var m = text.match(/\b(hero_[a-z0-9_]+)\b/i);
-    return (m && m[1]) ? String(m[1]).toLowerCase() : "";
-}
-
-function ExtractLastHeroTokenFromText(rawText) {
-    if (!rawText) return "";
-    var text = String(rawText);
-    var re = /\b(hero_[a-z0-9_]+)\b/ig;
-    var match = null;
-    var last = "";
-    while ((match = re.exec(text)) !== null) {
-        if (match[1]) last = String(match[1]).toLowerCase();
-    }
-    return last;
-}
 if (QOL.arcade && QOL.arcade.init) QOL.arcade.init({
     localize: LocalizeSettingsText,
     prepareModal: PrepareSettingsModalOpen,
@@ -51,7 +34,6 @@ if (QOL.arcade && QOL.arcade.init) QOL.arcade.init({
 });
 
 const DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
-
 
 const HITMARKERS_RUNTIME_OPTIONS = [
     { label: "Off", command: "citadel_crosshair_hit_marker_duration 0.000000" },
@@ -1423,7 +1405,6 @@ function SetLocalizedConfigFeedbackMessage(text, tone, durationMs) {
     SetConfigFeedbackMessage(LocalizeSettingsText(text, true), tone, durationMs);
 }
 
-
 const HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
 const BILLIARDS_TABLE_WIDTH = 640;
 const BILLIARDS_TABLE_HEIGHT = 380;
@@ -1575,7 +1556,6 @@ function QOLEnsureFriendsSearchHandlers() {
     }
 }
 
-
 function SetPanelNonInteractive(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return;
     panel.hittest = false;
@@ -1583,7 +1563,7 @@ function SetPanelNonInteractive(panel) {
 }
 
 // Phase C.3: Fixed fallback — was always setting "1.00" regardless of opacityValue.
-var SetPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { var v = Number(opacityValue); if (!isFinite(v)) v = Number(fallbackValue); if (!isFinite(v)) v = 1.0; panel.style.opacity = v.toFixed(2); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } } };
+var SetPanelOpacitySafe = (Utils && Utils.SetPanelOpacitySafe) ? Utils.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) { if (panel && panel.style) { try { var v = Number(opacityValue); if (!isFinite(v)) v = Number(fallbackValue); if (!isFinite(v)) v = 1.0; panel.style.opacity = v.toFixed(2); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } } };
 
 function GetPanelRectRelativeToContext(panel) {
     if (!panel || !panel.IsValid || !panel.IsValid()) return null;
@@ -1608,7 +1588,6 @@ function GetPanelRectRelativeToContext(panel) {
 }
 
 var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
-
 
 function IsInHideoutForBuildSave() {
     // Game.GetMapInfo confirmed absent — use panel class detection for hideout detection.
@@ -2100,7 +2079,7 @@ function ReadConfigRawFromStorage() {
         if (!target || !target.GetAttributeString) return "";
         try { return String(target.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { return ""; }
     };
-    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var readRev = function(target) {
         if (!target || !target.GetAttributeString) return 0;
         try { return parseRev(target.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { return 0; }
@@ -2167,8 +2146,11 @@ function SyncConfigFromStorage() {
     if (QOL.arcade) QOL.arcade.updateBridgePollerState();
 }
 
+// PersistStatlockerProfileState — config persistence is via Skyrunner builds.
+// $.persistentStorage confirmed absent (2026-06-11). Exists as a no-op
+// because SaveAndSync() → ApplyPresetConfig() calls it.
 function PersistStatlockerProfileState(rawConfig, configObj) {
-    // $.persistentStorage confirmed absent — config persistence is via Skyrunner builds.
+    // no-op: persistence handled by Skyrunner builds
 }
 
 function GetRuntimePresetName() {
@@ -2281,7 +2263,7 @@ function SaveAndSync() {
         return;
     }
     gLastSavedConfigRaw = data;
-    var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
     var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
@@ -2325,8 +2307,8 @@ function BuildSettingsListRenderSignature() {
 }
 
 function IsPanelValidSafe(panel) {
-    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
-        return QOL_UTILS.IsPanelValid(panel);
+    if (Utils && Utils.IsPanelValid) {
+        return Utils.IsPanelValid(panel);
     }
     return !!(panel && panel.IsValid && panel.IsValid());
 }
@@ -3080,11 +3062,6 @@ function GetCurrentExportSettingsString() {
     var compact = QOL.persistence.serializeCompactV2(MOD_CONFIG);
     var encoded = QOL.persistence.toBase64Url(compact);
     return EXPORT_PREFIX + encoded;
-}
-
-function RunJoyNameStorageReadProbe() {
-    // GameInterfaceAPI confirmed absent — joy_name storage probe skipped.
-    $.Msg("[QOLLock][JoyNameStorageReadProbe] skipped — GameInterfaceAPI absent");
 }
 
 function FormatExportSettingsDisplayString(rawExport) {
@@ -3877,14 +3854,6 @@ function TryApplyImportStringWithDiagnostics(raw) {
     return result;
 }
 
-function TryApplyImportStringToConfig(raw) {
-    var result = TryApplyImportStringWithDiagnostics(raw);
-    if (!result || result.ok !== true || !result.parsedConfig) return false;
-    QOL.persistence.applyParsedConfigWithDiagnostics(result.parsedConfig, result.schemaVersion || LATEST_COMPACT_SEMVER);
-    return true;
-}
-
-
 function OpenAvailableModal() {
     SetActiveTabAndRefresh("Support");
 }
@@ -4127,7 +4096,6 @@ function CreateSectionTitleCheckboxToggle(titleHead, label, configId, toggleOpti
     btn.qolRefreshTitleCheckbox = update;
     return btn;
 }
-
 
 function CreateAnimatedInlineToggleSection(parent, title, enableConfigId, enableDescription, buildRowsFn, enableToggleOptions, sectionOptions) {
     var localizedTitle = LocalizeSettingsText(title || "");
@@ -4444,6 +4412,40 @@ function GetAnnouncerVoiceToken(rawVoiceType) {
     return "Custom_Slot1";
 }
 
+function ResolveCustomAnnouncerMetaField(source, keys) {
+    if (!source || typeof source !== "object") return "";
+    for (var k = 0; k < keys.length; k++) {
+        var val = source[keys[k]];
+        if (val && typeof val === "string" && val.trim().length > 0) return val.trim();
+    }
+    return "";
+}
+
+function ResolveCustomAnnouncerSlotScriptMetadata(slotIndex) {
+    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
+    var source = null;
+    var globalKey = "QOL_CUSTOM_ANNOUNCER_SLOT" + String(safeIndex) + "_META";
+    var registryKey = String(safeIndex);
+    try {
+        if (typeof globalThis === "object" && globalThis) {
+            var registry = globalThis.QOL_CUSTOM_ANNOUNCER_PACK_SLOTS;
+            if (registry && typeof registry === "object") {
+                if (Object.prototype.hasOwnProperty.call(registry, registryKey)) {
+                    source = registry[registryKey];
+                } else if (Object.prototype.hasOwnProperty.call(registry, safeIndex)) {
+                    source = registry[safeIndex];
+                }
+            }
+            if (!source) source = globalThis[globalKey];
+        }
+    } catch (e0) { source = null; }
+    return {
+        name: ResolveCustomAnnouncerMetaField(source, ["name", "Name", "NAME"]),
+        author: ResolveCustomAnnouncerMetaField(source, ["author", "Author", "AUTHOR"]),
+        voiceActor: ResolveCustomAnnouncerMetaField(source, ["voiceActor", "voice_actor", "VoiceActor", "Voice_Actor", "voice actor", "Voice Actor", "VOICE_ACTOR"])
+    };
+}
+
 function ResolveCustomAnnouncerSlotLabel(slotIndex, fallbackLabel) {
     var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
     var scriptMeta = ResolveCustomAnnouncerSlotScriptMetadata(safeIndex);
@@ -4652,14 +4654,6 @@ function RunConsoleCommandBestEffort(commandText) {
     return didAny;
 }
 
-function DispatchCitadelConCommand(commandText) {
-    if (!commandText || commandText.length === 0) return false;
-    try {
-        $.DispatchEvent("CitadelConCommand", String(commandText));
-        return true;
-    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    return false;
-}
 
 function GetRuntimeButtonGroupDefaultIndex(runtimeGroupKey, explicitDefaultIndex) {
     var hasExplicitDefault = (explicitDefaultIndex !== undefined && explicitDefaultIndex !== null && String(explicitDefaultIndex) !== "");
@@ -7944,7 +7938,7 @@ function RenderCurrentTabContent(list) {
                             var hud = _findHudPanel();
                             var rawDiag = "";
                             if (hud && hud.GetAttributeString) {
-                                try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
+                                try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) { /* HUD diagnostic read may fail mid-frame */ }
                             }
                             if (rawDiag) {
                                 try {
@@ -7971,7 +7965,7 @@ function RenderCurrentTabContent(list) {
                                         return;
                                     }
                                     // else: stale snapshot — keep polling
-                                } catch(e) {}
+                                } catch(e) { /* JSON.parse of HUD diagnostic data may fail */ }
                             }
                             var interval = pollAttempts < 5 ? 0.1 : (pollAttempts < 15 ? 0.2 : 0.4);
                             $.Schedule(interval, pollFitDiag);
@@ -8155,7 +8149,7 @@ function RenderCurrentTabContent(list) {
                         var rawDiag = "";
                         var hud = _findHudPanel();
                         if (hud && hud.GetAttributeString) {
-                            try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
+                            try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) { /* HUD diagnostic read may fail mid-frame */ }
                         }
 
                         if (rawDiag) {
@@ -9885,5 +9879,4 @@ try {
 // already triggered by CitadelGameStateChanged + CitadelResumePlaying.
 
 SyncConfigFromStorage();
-RunJoyNameStorageReadProbe();
 QOL.preview.startHeroHintPublisher();
