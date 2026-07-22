@@ -1,7 +1,7 @@
 ---
 name: extract-qollock
 description: Extract a section of code from ql_core.js or ql_settings.js into a standalone feature file
-args: source_file, target_file, section_description
+argument-hint: [source_file] [target_file] [section_description]
 ---
 
 # Extract Feature from Monolith

@@ -1,7 +1,7 @@
 ---
 name: plan-qollock
 description: Make a multi-phase plan with full adversarial review. Study KB, fan out agents, create plan, pass to 4 reviewers, revise up to 5 rounds.
-args: goal
+argument-hint: [goal]
 ---
 
 # Plan with Adversarial Review
