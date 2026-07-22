@@ -6,7 +6,7 @@
 {
     visibility: collapse;
     horizontal-align: center;
-    vertical-align: middle;
+    vertical-align: center;
     width: fit-children;
     height: fit-children;
     margin-left: 130px;
@@ -17,7 +17,7 @@
 .QOLCrosshairStatRow
 {
     flow-children: right;
-    vertical-align: middle;
+    vertical-align: center;
     width: fit-children;
     margin: 2px 0px;
     padding: 3px 9px 3px 7px;
@@ -44,7 +44,7 @@
 {
     width: 18px;
     height: 18px;
-    vertical-align: middle;
+    vertical-align: center;
     margin-right: 6px;
     background-size: contain;
     background-repeat: no-repeat;
@@ -67,7 +67,7 @@
     font-weight: bold;
     font-family: sansMono;
     color: offWhite;
-    vertical-align: middle;
+    vertical-align: center;
 }
 
 .QOLCrosshairStatRow.isDebuff .QOLCrosshairStatValue

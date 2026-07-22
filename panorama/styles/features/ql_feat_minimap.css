@@ -7,15 +7,15 @@
 #minimap_container.ModEnabled,
 #minimap_frame.ModEnabled
 {
-    horizontal-align: center !important;
-    vertical-align: center !important;
+    horizontal-align: center;
+    vertical-align: center;
 }
 
 /* ── Minimalist Minimap ── */
 
 .minimalist_minimap_active #hud_minimap
 {
-    background-color: rgba(0, 0, 0, 0) !important;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .minimalist_minimap_active #map_render
@@ -44,18 +44,18 @@
 
 .minimalist_minimap_active #HudMinimapContainer
 {
-    background-color: rgba(0, 0, 0, 0) !important;
-    world-blur: none !important;
+    background-color: rgba(0, 0, 0, 0);
+    world-blur: none;
 }
 
 .minimalist_minimap_active #map_render
 {
-    opacity: 1 !important;
+    opacity: 1;
 }
 
 .minimalist_minimap_active .client_cone_fov
 {
-    opacity: 0 !important;
+    opacity: 0;
     visibility: collapse;
 }
 
