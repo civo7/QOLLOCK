@@ -65,6 +65,11 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank_card.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_urntimer.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_healthbar.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_accent.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_budhud.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_fg.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_mc.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">

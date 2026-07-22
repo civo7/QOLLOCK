@@ -13307,17 +13307,8 @@ function GetUIRoot() {
         if (needsHealthbarRuntime && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
             QOL.updateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
         }
-        var needsFgHeroRuntime =
-            fgHealthbarEnabled ||
-            State.fgHeroImageMoved ||
-            State.fgHeroImageRuntimeStyleSig !== "" ||
-            State.fgHeroImageCurrentSig !== "";
-        if (needsFgHeroRuntime && typeof QOL.syncFgHeroImageMotionState === "function") {
-            QOL.syncFgHeroImageMotionState(root, cfg);
-        }
         var needsHealthContainerWork =
             needsHealthbarRuntime ||
-            needsFgHeroRuntime ||
             HEALTHBAR_VIS_DEBUG ||
             colorWarningEnabled ||
             State.coloredHealthbarBridgeValue !== "" ||

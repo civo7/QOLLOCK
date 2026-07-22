@@ -70,10 +70,32 @@ var HUD_LOAD_ORDER = [
 
 // ── Feature files (loaded after core) ──
 function getFeatureFiles() {
-    var files = fs.readdirSync(FEATURES_DIR).filter(function(f) {
-        return /^ql_feat_.*\.js$/.test(f) && f !== "ql_feat_buildbridge.js";
-    }).sort();
-    return files.map(function(f) { return path.join("ql_features", f); });
+    function walk(dir) {
+        var entries = fs.readdirSync(dir, { withFileTypes: true });
+        var result = [];
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            var full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                result = result.concat(walk(full));
+            } else if (entry.isFile() && /^ql_feat_.*\.js$/.test(entry.name) && entry.name !== "ql_feat_buildbridge.js") {
+                result.push(full);
+            }
+        }
+        return result;
+    }
+    var files = walk(FEATURES_DIR);
+    // Root files first (alphabetically), then subdirectory files (alphabetically)
+    files.sort(function(a, b) {
+        var aRel = path.relative(FEATURES_DIR, a);
+        var bRel = path.relative(FEATURES_DIR, b);
+        var aIsRoot = aRel.indexOf(path.sep) === -1;
+        var bIsRoot = bRel.indexOf(path.sep) === -1;
+        if (aIsRoot && !bIsRoot) return -1;
+        if (!aIsRoot && bIsRoot) return 1;
+        return aRel.localeCompare(bRel);
+    });
+    return files.map(function(f) { return path.relative(SCRIPTS_DIR, f); });
 }
 
 // ── Run a single file ──
