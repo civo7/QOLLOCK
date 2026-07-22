@@ -24,5 +24,5 @@
                 globalThis[legacyKey] = existing;
             }
         }
-    } catch (e0) {}
+    } catch (e0) { /* globalThis may be unavailable in restricted contexts */ }
 })();

@@ -286,7 +286,7 @@
                 panel.SetHasClass("rift_active", mode === "active");
                 panel.SetHasClass("rift_idle", mode === "idle");
             }
-        } catch(e) {}
+        } catch(e) { /* panel may be deleted mid-frame */ }
     }
 
     QOL.register("urnTimer", {
