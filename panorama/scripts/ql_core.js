@@ -2470,7 +2470,11 @@ function GetUIRoot() {
             return false;
         }
 
+        // WHY: connectedToHideout must be here so inline style.opacity is never
+        // set anywhere in the hideout (hero sandbox has connectedToHideout but
+        // NOT InHideout/inHideoutIntro). Inline opacity overrides CSS rules.
         var hiddenContextClasses = [
+            "connectedToHideout",
             "InHideout",
             "inHideout",
             "inHideoutIntro",
@@ -13303,7 +13307,9 @@ function GetUIRoot() {
         if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
-        var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
+        // WHY: Skip healthbar work in hideout/sandbox — inline style.opacity set
+        // by SetPanelOpacitySafe beats CSS opacity rules on .connectedToHideout.
+        var needsHealthbarRuntime = !hideoutConnected && NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
         if (needsHealthbarRuntime && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
             QOL.updateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
         }
