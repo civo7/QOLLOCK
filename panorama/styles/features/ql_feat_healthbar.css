@@ -64,13 +64,13 @@
 {
     width: 400px;
     height: 300px;
-    vertical-align: bottom !important;
-    horizontal-align: center !important;
-    ui-scale: 120% !important;
-    transform: translateX(0%) translateY(0%) !important;
-    margin-left: 0px !important;
-    margin-right: 0px !important;
-    margin-bottom: 0px !important;
+    vertical-align: bottom;
+    horizontal-align: center;
+    ui-scale: 120%;
+    transform: translateX(0%) translateY(0%);
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-bottom: 0px;
     flow-children: none;
 }
 
@@ -219,10 +219,10 @@
     height: 380px;
     vertical-align: bottom;
     horizontal-align: center;
-    margin-left: 30px !important;
-    margin-bottom: 30px !important;
-    margin-right: 0px !important;
-    margin-top: 0px !important;
+    margin-left: 30px;
+    margin-bottom: 30px;
+    margin-right: 0px;
+    margin-top: 0px;
     flow-children: none;
     pre-transform-scale2d: 1.00;
     transform: translate3d(0px, 0px, 0px);

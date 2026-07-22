@@ -5,82 +5,82 @@
 
 .hud_shift_active .ModsContainer
 {
-    margin-left: 40px !important;
+    margin-left: 40px;
 }
 
 .hud_shift_active .player_selected #hudPlayerStats
 {
-    margin-left: 40px !important;
+    margin-left: 40px;
 }
 
 /* ── 4:3 Aspect Ratio ── */
 
 .support_4_3_active #Shop
 {
-    width: 1350px !important;
-    horizontal-align: center !important;
+    width: 1350px;
+    horizontal-align: center;
 }
 
 .support_4_3_active #NavPanel
 {
-    margin-right: 0px !important;
-    margin-left: 40px !important;
-    width: 500px !important;
-    horizontal-align: left !important;
+    margin-right: 0px;
+    margin-left: 40px;
+    width: 500px;
+    horizontal-align: left;
 }
 
 .support_4_3_active #ShopNav
 {
-    width: 100% !important;
-    margin-left: 0px !important;
-    margin-right: 0px !important;
+    width: 100%;
+    margin-left: 0px;
+    margin-right: 0px;
 }
 
 .support_4_3_active .ShopNavigationTab
 {
-    width: 75px !important;
+    width: 75px;
 }
 
 .support_4_3_active #health_and_abilities_container
 {
-    margin-left: 150px !important;
-    margin-bottom: 0px !important;
-    margin-right: 0px !important;
-    horizontal-align: left !important;
+    margin-left: 150px;
+    margin-bottom: 0px;
+    margin-right: 0px;
+    horizontal-align: left;
 }
 
 .support_4_3_active .action_binding,
 .support_4_3_active .context_action
 {
-    height: unset !important;
-    text-overflow: unset !important;
+    height: auto;
+    text-overflow: clip;
 }
 
 .support_4_3_active .gShopOpen #respawn_timer
 {
-    margin-left: 192px !important;
-    margin-top: 22px !important;
+    margin-left: 192px;
+    margin-top: 22px;
 }
 
 .support_4_3_active #status_bars
 {
-    width: 550px !important;
+    width: 550px;
 }
 
 .support_4_3_active #hud_modifiers
 {
-    width: 850px !important;
+    width: 850px;
 }
 
 .support_4_3_active #StatsAndModsContainer.gShopOpen #LowerLeft
 {
-    transform: translateX(10px) translateY(-10px) !important;
+    transform: translateX(10px) translateY(-10px);
 }
 
 .support_4_3_active #BarGraphContainer
 {
-    width: 60px !important;
-    border-radius: 4px !important;
+    width: 60px;
+    border-radius: 4px;
 }
 
 .support_4_3_active .gShopOpen #BarGraphContainer
@@ -90,27 +90,27 @@
 
 .support_4_3_active #NavPanel
 {
-    margin-right: -345px !important;
+    margin-right: -345px;
 }
 
 .support_4_3_active #HeroScenePanel
 {
-    height: 70% !important;
-    margin-left: -250px !important;
-    margin-bottom: 200px !important;
+    height: 70%;
+    margin-left: -250px;
+    margin-bottom: 200px;
 }
 
 .support_4_3_active #AbilityPanelsContainer
 {
-    horizontal-align: right !important;
-    vertical-align: middle !important;
-    margin-right: 35px !important;
+    horizontal-align: right;
+    vertical-align: center;
+    margin-right: 35px;
     visibility: collapse;
 }
 
 .support_4_3_active .AspectRatio16x10 #AbilityPanelsContainer
 {
-    margin-right: 15px !important;
+    margin-right: 15px;
 }
 
 .support_4_3_active .shopStateAbilities #AbilityPanelsContainer
@@ -120,8 +120,8 @@
 
 .support_4_3_active .commandPanel
 {
-    padding-top: 10px !important;
-    vertical-align: middle !important;
+    padding-top: 10px;
+    vertical-align: center;
 }
 
 .support_4_3_active CitadelHeroBuildsPage #BackButton,
@@ -136,13 +136,13 @@
 
 .support_4_3_active #BackButton
 {
-    padding-left: 20px !important;
-    vertical-align: top !important;
+    padding-left: 20px;
+    vertical-align: top;
 }
 
 .support_4_3_active #BackButton .FooterCommand
 {
-    vertical-align: bottom !important;
+    vertical-align: bottom;
 }
 
 /* ── 16:10 Aspect Ratio ── */
