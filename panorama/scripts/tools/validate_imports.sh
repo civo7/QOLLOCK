@@ -45,7 +45,7 @@ echo "[1/2] Checking QOL.import() symbols exist on QOL namespace..."
 for f in ql_features/ql_feat_*.js; do
     fname=$(basename "$f")
     # Extract all import names from QOL.import([...])
-    IMPORTS=$(grep -oP 'QOL\.import\(\[(.*?)\]\)' "$f" 2>/dev/null | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
+    IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
     for sym in $IMPORTS; do
         # Check if the symbol is published on QOL namespace
         if echo "$ALL_QOL_SYMBOLS" | grep -qw "$sym"; then
@@ -71,7 +71,7 @@ echo "[2/2] Checking for Utils symbols incorrectly imported via QOL.import()..."
 
 for f in ql_features/ql_feat_*.js; do
     fname=$(basename "$f")
-    IMPORTS=$(grep -oP 'QOL\.import\(\[(.*?)\]\)' "$f" 2>/dev/null | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
+    IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
     for sym in $IMPORTS; do
         if echo "$UTILS_SYMBOLS" | grep -qw "$sym"; then
             # Check if the file actually uses Utils.$sym — if so, the QOL.import is dead

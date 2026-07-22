@@ -13,6 +13,8 @@
 //              (all from ql_shared_presets.js)
 // ==========================================================================
 
+'use strict';
+
 // ── Bare-global constants (file scope — visible to both HUD and Settings contexts) ──
 
 var STORAGE_KEY = QOL_STORAGE_KEY;
