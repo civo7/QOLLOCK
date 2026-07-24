@@ -421,7 +421,8 @@
                     "dl4dCaptionNextSearchMs", "cachedPanels.dl4dCaptionPanel",
                     "lastTime", "lastIntervalAlert", "lastMinimapAlert", "triggeredOneTimers",
                     "cachedPanels.passiveHud", "cachedPanels.gameTime",
-                    "cachedPanels.abilitiesContainer"]
+                    "cachedPanels.abilitiesContainer",
+                    "dl4dCaptionToken", "dl4dLastTime", "dl4dTriggeredTimes"]
     });
 
     // ── Self-test ──

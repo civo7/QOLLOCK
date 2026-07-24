@@ -500,6 +500,8 @@ var ToRgbString = Utils.ToRgbString;
         }
         State.coloredHealthbarLastColor = color;
         } catch (e) {
+            $.Msg("[QOLLock][ERROR][" + _featureId + "] UpdateColoredHealthbarRuntime failed: " +
+                  (e && e.message ? e.message : String(e)));
             ResetColoredHealthbarRuntimeStyles();
             ResetColoredHealthbarPanelCache();
             State.coloredHealthbarEnabledPrev = null;

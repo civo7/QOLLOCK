@@ -3,19 +3,15 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_minimapruntime";
-    // DEPENDS: ensureMinimapPanelCache, getCachedPanel, getUIRoot, isHudClassActive, readMinimapIconColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, utils
-    var _deps = QOL.import(["ensureMinimapPanelCache","getCachedPanel","getUIRoot","isHudClassActive","readMinimapIconColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel","isHudClassActive","resolveCachedPanel","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
-    var GetUIRoot = _deps.getUIRoot;
-    var ResolveCachedPanel = _deps.resolveCachedPanel;
+    var RC = _deps.resolveCachedPanel;
+    var RWP = _deps.resolveWashColorFromPalette;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var PerfNowMs = Utils.PerfNowMs;
     var IsCfgEnabled = Utils.IsCfgEnabled;
-    // Phase 6: WASH_COLOR_PALETTE was a const inside ql_core.js IIFE — not
-    // accessible as a bare global. Published to QOL.washColorPalette (ql_core.js:16317).
-    var WASH_COLOR_PALETTE = QOL.washColorPalette || [];
     var IsPanelValid = Utils.IsPanelValid;
     var SetStyleSafe = Utils.SetStyleSafe;
     var ClearStyleSafe = Utils.ClearStyleSafe;
@@ -37,7 +33,7 @@ function HideMinimapTunnelOverlay(root) {
         }
         if (!overlay) return;
         if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
-        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
         if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
     }
 function EnsureMinimapTunnelOverlay(root) {
@@ -71,8 +67,8 @@ function HideMinimapCrateOverlay(root) {
             overlay = root.FindChildTraverse("minimap_overlay_root");
             if (overlay) SetCachedPanel("minimapCrateOverlayRoot", overlay);
         }
-        if (overlay) {
-            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay && overlay.style.visibility !== "collapse") {
+            overlay.style.visibility = "collapse";
         }
         MinimapCrateOverlayDebugLogThrottled("hide|" + (overlay ? "1" : "0"), "overlay=" + (overlay ? "1" : "0") + " visibility=collapse", PerfNowMs());
     }
@@ -103,7 +99,7 @@ function BuildMinimapCrateOverlay(root, mapName) {
         var overlay = panels.root;
         var markers = panels.markers;
         var dataRoot = null;
-        if (QOL.minimapCrateData) dataRoot = QOL.minimapCrateData;
+        if (QOL.minimapCrateData && QOL.minimapCrateData) dataRoot = QOL_MINIMAP_CRATE_DATA;
         else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
         else if (typeof MINIMAP_CRATE_DATA === "object" && MINIMAP_CRATE_DATA) dataRoot = MINIMAP_CRATE_DATA;
         var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
@@ -250,20 +246,37 @@ function EnsureMinimapPanelCache(root) {
         State.cachedPanels.minimap = panels;
         return panels;
     }
-// Phase 5.2: IsPanelListValid imported via Utils.IsPanelListValid (line 23).
-// IsHudClassActive imported via _deps.isHudClassActive.
+// IsHudClassActive imported via _deps.isHudClassActive (canonical version from ql_core.js).
+function IsPanelListValid(list) {
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
+    }
 function NormalizePaletteColorIndex(value) {
         var numeric = Math.round(Number(value));
         if (!isFinite(numeric)) numeric = 0;
         if (numeric < 0) numeric = 0;
-        if (numeric >= WASH_COLOR_PALETTE.length) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
         return numeric;
     }
-// Phase 5.2: PerfNowMs imported via Utils.PerfNowMs (line 14).
-// Phase 5.2: ResolveCachedPanel now imported via _deps.resolveCachedPanel (line 9).
+function PerfNowMs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
+        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+        if (!panel && parent && parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(traverseId);
+            State.cachedPanels[cacheKey] = panel || null;
+        }
+        return panel;
+    };
 function ResolveWashColorFromPalette(value) {
         var index = NormalizePaletteColorIndex(value);
-        var color = WASH_COLOR_PALETTE[index] || "";
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
         return color ? String(color) : "";
     }
 function SetWashColorSafe(panel, color) {
@@ -343,7 +356,12 @@ function EnsureMinimapOverlayAnchor(root) {
         }
         return anchor || null;
     }
-// Phase 5.2: GetCachedPanel already imported via _deps.getCachedPanel (line 8).
+var GetCachedPanel = function(k) {
+        var p = State.cachedPanels[k];
+        if (IsPanelValid(p)) return p;
+        State.cachedPanels[k] = null;
+        return null;
+    };
 function MinimapCrateOverlayDebugLog(msg) {
         if (!MINIMAP_CRATE_OVERLAY_DEBUG) return;
         $.Msg("[QOLLock][MinimapCrateDbg] " + msg);
@@ -367,9 +385,9 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         } catch(eAttrHud) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_minimapruntime", (eAttrHud && eAttrHud.message ? eAttrHud.message : String(eAttrHud || ""))); }
         return fromConfig;
     }
-// Phase 5.2: All functions below already imported from Utils at lines 14-26.
-// Removed 85 lines of extraction debris that referenced inaccessible bare
-// global QOL utils loaded flag (ReferenceError in strict mode, killed the IIFE).
+var SetCachedPanel = function(k, p) {
+        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
+    };
     function UpdateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
         var mode = String(activeZoomMode || "");
         var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REM_TUNNELS"));
@@ -396,7 +414,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         if (opacity > 1) opacity = 1;
         if (overlay.AddClass) overlay.AddClass("tunnel_locked_on");
         overlay.style.opacity = opacity.toFixed(2);
-        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
     }
 
     function UpdateMinimapCrateOverlay(root, cfg) {
@@ -423,7 +441,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
             MinimapCrateOverlayDebugLogThrottled("update|nooverlay|" + String(renderMapKey), "map=" + String(renderMapKey) + " overlay=<null>", PerfNowMs());
             return;
         }
-        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         MinimapCrateOverlayDebugLogThrottled(
             "update|visible|" + String(renderMapKey),
             "map=" + String(renderMapKey) + " overlayVisible=1",

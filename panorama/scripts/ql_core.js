@@ -13830,6 +13830,8 @@ function GetUIRoot() {
                 try {
                     gates[_gk + "Active"] = _fentry.gate(cfg, raw, hideoutConnected);
                 } catch(_ge) {
+                    $.Msg("[QOLLock][WARN][core] gate evaluation failed for '" + _fname +
+                          "': " + (_ge && _ge.message ? _ge.message : String(_ge)));
                     gates[_gk + "Active"] = false;
                 }
                 // Phase 10 safety: default non-suffixed gate for populateFeatureBuckets.

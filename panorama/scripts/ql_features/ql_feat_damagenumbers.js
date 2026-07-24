@@ -3,8 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_damagenumbers";
-    // DEPENDS: findAncestorWithClass, getCachedPanel, isPanelListValid, perfEnd, perfStart, resolveDamageNumbersRuntimeSig, runtimeTaskIsDue, runtimeTaskSetDelay, state, setCachedPanel, utils
-    var _deps = QOL.import(["findAncestorWithClass","getCachedPanel","isPanelListValid","perfEnd","perfStart","resolveDamageNumbersRuntimeSig","runtimeTaskIsDue","runtimeTaskSetDelay","state","setCachedPanel","utils"]);
+    var _deps = QOL.import(["getCachedPanel","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
@@ -15,10 +14,6 @@
     var IsPanelListValid = Utils.IsPanelListValid;
     var PerfNowMs = Utils.PerfNowMs;
     var FindAncestorWithClass = QOL.findAncestorWithClass || function() { return null; };
-    // Phase B.1: Use imported PerfStart/PerfEnd from ql_core.js (_perfTrackingActive is scoped
-    // inside core's IIFE, not accessible here — local copies were broken ReferenceErrors).
-    var PerfStart = _deps.perfStart || function() { return 0; };
-    var PerfEnd = _deps.perfEnd || function() {};
 
     var DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0";
     var HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
@@ -40,24 +35,53 @@ function CreateIndicatorMeta(panel, needsSmallDamage) {
             smallDamageKnown: !!needsSmallDamage
         };
     }
-    // Phase 5.2: Use shared HasClassInHierarchy from Utils (safer — has BHasClass/GetParent guards).
-    // Local fallback retained for Settings context where Utils may be stubbed.
-    var hasClassInHierarchy = (Utils && typeof Utils.HasClassInHierarchy === "function")
-        ? Utils.HasClassInHierarchy
-        : function(panel, className) {
-            var current = panel;
-            while (current) {
-                if (current.BHasClass && current.BHasClass(className)) return true;
-                current = (typeof current.GetParent === "function") ? current.GetParent() : null;
-            }
-            return false;
-        };
-    // Phase 5.2: Removed dead local IsPanelListValid (overwritten by line 15 import).
+    var hasClassInHierarchy = function(panel, className) {
+        var current = panel;
+        while (current) {
+            if (current.BHasClass(className)) return true;
+            current = current.GetParent();
+        }
+        return false;
+    };
 
-    // Phase B.1: PerfNowMs imported from Utils (line 16).
-    // PerfStart/PerfEnd/PerfRecord local functions removed — they referenced
-    // _perfTrackingActive which is scoped inside ql_core.js's IIFE (not accessible here).
-    // Now use imported versions via _deps.perfStart/_deps.perfEnd (destructured above).
+    var PERF_DEBUG_SLOW_MS = 8;
+function IsPanelListValid(list) {
+        return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
+            if (!list || list.length === 0) return false;
+            for (var i = 0; i < list.length; i++) {
+                if (!IsPanelValid(list[i])) return false;
+            }
+            return true;
+        })();
+    }
+function PerfEnd(name, startMs) {
+        if (!_perfTrackingActive || !startMs) return;
+        PerfRecord(name, PerfNowMs() - startMs);
+    }
+function PerfNowMs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+function PerfRecord(name, elapsedMs) {
+        if (!_perfTrackingActive) return;
+        if (!name) return;
+        var ms = Number(elapsedMs);
+        if (!isFinite(ms) || ms < 0) return;
+        var stats = State.perfStats || {};
+        var entry = stats[name];
+        if (!entry) {
+            entry = { count: 0, total: 0, max: 0, slow: 0 };
+            stats[name] = entry;
+        }
+        entry.count += 1;
+        entry.total += ms;
+        if (ms > entry.max) entry.max = ms;
+        if (ms >= PERF_DEBUG_SLOW_MS) entry.slow += 1;
+        State.perfStats = stats;
+    }
+function PerfStart() {
+        if (!_perfTrackingActive) return 0;
+        return PerfNowMs();
+    }
 function RuntimeSchedulerGetStore() {
         var store = State.runtimeTaskNextMs;
         if (!store || typeof store !== "object") {
@@ -295,7 +319,8 @@ function IsIndicatorSmallDamage(panel) {
         stateKeys: ["lastIndicatorConfigSig", "lastIndicatorHideModesSig",
                     "indicatorPanelsCache", "indicatorMetaCache",
                     "lastIndicatorCount", "lastItemCount",
-                    "damageNumbersRuntimeStyleSig"]
+                    "damageNumbersRuntimeStyleSig",
+                    "runtimeTaskNextMs", "_descDebugLogged"]
     });
 
     try {
