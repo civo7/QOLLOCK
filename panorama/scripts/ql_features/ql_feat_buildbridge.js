@@ -8,6 +8,9 @@
     // Note: this file loads before ql_core.js populates the QOL namespace,
     // so we access State and other globals at call time, not via QOL.import().
     // Functions that need QOL symbols should use direct global access.
+    // _TLog is defined in ql_core.js (loads after us). Install a noop on the
+    // global scope so calls don't crash; ql_core.js overwrites it later.
+    if (typeof _TLog === "undefined") { _TLog = function() {}; }
 
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";

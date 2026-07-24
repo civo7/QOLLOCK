@@ -4027,12 +4027,11 @@ function GetUIRoot() {
 
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
-        cfg.ENABLE_MIN_SOULS = 0;
-        if (!IsBreadPresetActive(cfg)) cfg.ENABLE_UNSPENT_SOULS = 0;
-        // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
-        // force-disabled here. Removed because no runtime gate or feature
-        // execution path reads these values — they were dead writes.
-        return cfg;
+        // Clone to avoid corrupting State.lastConfig (shared reference).
+        var result = Object.assign({}, cfg);
+        result.ENABLE_MIN_SOULS = 0;
+        if (!IsBreadPresetActive(result)) result.ENABLE_UNSPENT_SOULS = 0;
+        return result;
     }
 
     function LogHealthbarVisibilityDebug(root, healthContainer, cfg) {
@@ -13420,12 +13419,15 @@ function GetUIRoot() {
      */
     function _scheduleFeatureBucket(offsetSec, features, _s) {
         if (!features || features.length === 0) return;
+        // Clone snapshot so deferred callbacks don't see the next tick's
+        // overwritten data if the $.Schedule fires late due to jitter.
+        var snapshot = Object.assign({}, _s);
         $.Schedule(offsetSec, function() {
             for (var i = 0; i < features.length; i++) {
                 var fn = features[i];
                 if (!fn) continue;
                 try {
-                    fn(_s);
+                    fn(snapshot);
                 } catch (e) {
                     if (typeof $ !== "undefined" && $.Msg) {
                         $.Msg("[QOLLock] bucket feature error: " + (e && e.message ? e.message : String(e)));
