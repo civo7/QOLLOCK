@@ -2155,6 +2155,9 @@ if (typeof QOL_PRESETS === "object") QOL.presets = QOL_PRESETS;
 if (typeof QOL_SCHEMA_SEMVER === "string") QOL.schemaSemver = QOL_SCHEMA_SEMVER;
 if (typeof QOL_CODEC === "object") QOL.codec = QOL_CODEC;
 if (typeof QOL_DumpDiagnostics === "function") QOL.dumpDiagnostics = QOL_DumpDiagnostics;
+// Phase 6: Publish schema symbols for QOL.import() access by feature files.
+if (typeof QOL_COMPACT_SCHEMA_REGISTRY === "object") QOL.compactSchemaRegistry = QOL_COMPACT_SCHEMA_REGISTRY;
+if (typeof QOL_LATEST_COMPACT_SEMVER === "string") QOL.latestCompactSemver = QOL_LATEST_COMPACT_SEMVER;
 
 // Keep bare var globals for backward compat during migration
 // (removed in cleanup step)
@@ -2185,6 +2188,56 @@ QOL.import = function(names) {
 // Publish namespace to global scope
 try { if (typeof window !== "undefined") window.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
 try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { if (typeof $ !== "undefined" && $.Msg) $.Msg("[QOLLock][WARN][presets] op failed: " + (e && e.message ? e.message : String(e || ""))); }
+
+// ── Settings-context stubs (Phase 3.5) ──
+// The Settings context loads only ql_shared_presets, ql_bridge, ql_config,
+// and ql_settings. It does NOT load ql_state, ql_core, ql_utils, or any feature
+// files. Stub HUD-only symbols so QOL.import() returns usable values instead of
+// undefined when called from Settings-context code.
+//
+// Detection: we use a three-layer guard to avoid false positives:
+//   1. QOL.state already exists → HUD context (skip)
+//   2. $.GetContextPanel().id matches QOL_PANEL_ID_HUD → HUD context (skip)
+//   3. Otherwise → Settings or unknown context (apply stubs)
+// Layer 1 protects against future contexts that might load this file.
+// Layer 2 is the primary heuristic. Both use the shared QOL_PANEL_ID_HUD constant.
+(function() {
+    if (typeof $ === "undefined" || typeof $.GetContextPanel !== "function") return;
+
+    // Layer 1: if QOL.state already exists (published by ql_state.js), we're in
+    // HUD context or a context that has full HUD API access. Skip stubs.
+    if (QOL.state !== undefined) return;
+
+    // Layer 2: check the context panel id against the known HUD panel id.
+    var ctxPanel = null;
+    try { ctxPanel = $.GetContextPanel(); } catch(e) { return; }
+    if (!ctxPanel) return;
+    var hudPanelId = (typeof QOL_PANEL_ID_HUD === "string") ? QOL_PANEL_ID_HUD : "Hud";
+    if (ctxPanel.id === hudPanelId) return; // HUD context — skip stubs
+
+    // Settings or unknown context detected — stub HUD-only symbols.
+    // Use undefined (void 0) rather than null so typeof guards work correctly.
+    // These symbols are normally published by ql_state.js, ql_core.js, and
+    // ql_utils.js — none of which load in the Settings context.
+    QOL.state = void 0;
+    QOL.getCachedPanel = function() { return null; };
+    QOL.setCachedPanel = function() {};
+    QOL.resolveCachedPanel = function() { return null; };
+    QOL.clearPanelCache = function() {};
+    QOL.sweepStalePanelCache = function() { return 0; };
+    QOL.isHudClassActive = function() { return false; };
+    QOL.isPanelVisibleMaybe = function() { return false; };
+    QOL.isPanelListValid = function() { return false; };
+    QOL.getUIRoot = function() { return null; };
+    QOL.getGameplayHudPanel = function() { return null; };
+    QOL.perfNowMs = function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    QOL.perfStart = function() {};
+    QOL.perfEnd = function() {};
+    QOL.isConnectedToHideout = function() { return false; };
+    // settingsTabs: left undefined until Phase 3.3 creates the settings tab registry.
+    // Setting to undefined (void 0) ensures typeof checks work correctly.
+    QOL.settingsTabs = void 0;
+})();
 
 // ── Diagnostic dump function ──
 // Reads HUD state + captured logs from Hud panel attribute "QOL_Diag"

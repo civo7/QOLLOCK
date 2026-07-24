@@ -1,6 +1,6 @@
 <root>
 	<scripts>
-		<include src="s2r://panorama/scripts/ql_legacy_cooldowns.vjs_c" />
+
 	</scripts>
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />

@@ -1,6 +1,7 @@
 // ql_utils.js — Shared utilities for QOLLOCK
 // Loaded BEFORE ql_core.js and ql_settings.js via hud.xml
 (function() {
+    'use strict';
     var exports = {};
 
     // ---- Panel Validation ----
@@ -27,7 +28,7 @@
             if (panel && typeof panel.GetAttributeString === "function") {
                 return String(panel.GetAttributeString(String(attrName || ""), def) || def);
             }
-        } catch (e) {}
+        } catch (e) { /* SafeGetAttribute: panel may not support GetAttributeString */ }
         return def;
     }
     exports.SafeGetAttribute = SafeGetAttribute;
@@ -42,7 +43,7 @@
                 panel.SetAttributeString(String(attrName || ""), String(value != null ? value : ""));
                 return true;
             }
-        } catch (e) {}
+        } catch (e) { /* SafeSetAttribute: panel may not support SetAttributeString */ }
         return false;
     }
     exports.SafeSetAttribute = SafeSetAttribute;
@@ -247,7 +248,7 @@
         if (!panel || !panel.style || !prop) return;
         try {
             panel.style[prop] = value;
-        } catch (e) {}
+        } catch (e) { /* SetStyleSafe: panel may be deleted mid-frame */ }
     }
     exports.SetStyleSafe = SetStyleSafe;
 
@@ -256,9 +257,9 @@
      */
     function ClearStyleSafe(panel, prop) {
         if (!panel || !panel.style || !prop) return;
-        try { delete panel.style[prop]; } catch (e0) {}
-        try { panel.style[prop] = null; } catch (e1) {}
-        try { panel.style[prop] = ""; } catch (e2) {}
+        try { delete panel.style[prop]; } catch (e0) { /* delete panel.style[prop] may throw in strict mode */ }
+        try { panel.style[prop] = null; } catch (e1) { /* panel.style[prop] = null may throw on frozen objects */ }
+        try { panel.style[prop] = ""; } catch (e2) { /* panel.style[prop] = "" may throw on frozen objects */ }
     }
     exports.ClearStyleSafe = ClearStyleSafe;
 
@@ -272,7 +273,7 @@
         try {
             if (panel.style.opacity !== text) panel.style.opacity = text;
         } catch (e0) {
-            try { panel.style.opacity = "1.00"; } catch (e1) {}
+            try { panel.style.opacity = "1.00"; } catch (e1) { /* style.opacity may throw if panel deleted mid-frame */ }
         }
         return text;
     }
@@ -346,9 +347,17 @@
      * Safely set panel visibility with null guard and no-op on same value.
      */
     function SetPanelVisibility(panel, visible) {
-        if (!panel || !panel.style) return;
-        var value = visible ? "visible" : "collapse";
-        if (panel.style.visibility !== value) panel.style.visibility = value;
+        // Phase 8.6: Use class toggles instead of direct style.visibility mutation.
+        // Class-based state is Panorama's recommended pattern (per knowledge base).
+        if (!panel) return;
+        var shouldHide = !visible;
+        if (panel.SetHasClass) {
+            panel.SetHasClass("qol-hidden", shouldHide);
+        } else if (panel.style) {
+            // Fallback for panels without SetHasClass (rare edge case)
+            var value = visible ? "visible" : "collapse";
+            if (panel.style.visibility !== value) panel.style.visibility = value;
+        }
     }
     exports.SetPanelVisibility = SetPanelVisibility;
 
@@ -646,6 +655,51 @@
         }
     }
     exports.DumpTiming = DumpTiming;
+
+    // ---- Color utilities (Phase 11 Step 0.1: extracted from ql_core.js) ----
+
+    // HP threshold percentages for colored healthbar warning levels.
+    var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
+    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
+    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
+    var COLORED_HEALTHBAR_PULSE_STEP = 0.1;
+    var COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
+    var COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
+    var COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
+    var COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
+    exports.COLORED_HEALTHBAR_LOW_HP_THRESHOLD = COLORED_HEALTHBAR_LOW_HP_THRESHOLD;
+    exports.COLORED_HEALTHBAR_MID_HP_THRESHOLD = COLORED_HEALTHBAR_MID_HP_THRESHOLD;
+    exports.COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = COLORED_HEALTHBAR_HIGH_HP_THRESHOLD;
+    exports.COLORED_HEALTHBAR_PULSE_STEP = COLORED_HEALTHBAR_PULSE_STEP;
+    exports.COLORED_HEALTHBAR_COLOR_RED = COLORED_HEALTHBAR_COLOR_RED;
+    exports.COLORED_HEALTHBAR_COLOR_DARK_RED = COLORED_HEALTHBAR_COLOR_DARK_RED;
+    exports.COLORED_HEALTHBAR_COLOR_ORANGE = COLORED_HEALTHBAR_COLOR_ORANGE;
+    exports.COLORED_HEALTHBAR_COLOR_YELLOW = COLORED_HEALTHBAR_COLOR_YELLOW;
+    exports.COLORED_HEALTHBAR_COLOR_WHITE = COLORED_HEALTHBAR_COLOR_WHITE;
+
+    function ToRgbString(rgb) {
+        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
+    }
+    exports.ToRgbString = ToRgbString;
+
+    function BlendRgb(a, b, t) {
+        return [
+            Math.round(a[0] + ((b[0] - a[0]) * t)),
+            Math.round(a[1] + ((b[1] - a[1]) * t)),
+            Math.round(a[2] + ((b[2] - a[2]) * t))
+        ];
+    }
+    exports.BlendRgb = BlendRgb;
+
+    function SetWashColorSafe(panel, color) {
+        if (color) {
+            exports.SetStyleSafe(panel, "washColor", String(color));
+        } else {
+            exports.ClearStyleSafe(panel, "washColor");
+        }
+    }
+    exports.SetWashColorSafe = SetWashColorSafe;
 
     // ---- Export ----
 

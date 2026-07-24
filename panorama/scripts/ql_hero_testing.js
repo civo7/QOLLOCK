@@ -693,7 +693,7 @@ function RunLoadTestingEnvironmentSetupCommands(sourceTag) {
 }
 
 function ReadQolSettingsRaw() {
-    var storageKey = (typeof QOL_STORAGE_KEY !== "undefined") ? QOL_STORAGE_KEY : "Deadlock_Mod_Settings_v1";
+    var storageKey = QOL_STORAGE_KEY;
     let raw = "";
     const panel = $.GetContextPanel();
     const root = FindRootPanel();

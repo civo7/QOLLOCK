@@ -8,9 +8,19 @@ and communicates between them via panel attribute bridges.
 
 **Version:** 3.1.5  
 **Schema:** 3.1.5  
-**Features:** 39 loaded, zero auto-disabled, 92 presets available  
+**Features:** 40 feature files, 39 loaded, zero auto-disabled, 94 presets available  
 **Branch:** `architecture-overhaul`  
 **Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
+
+## Prerequisites
+
+- **Panorama Knowledge Base:** Clone to `/home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/`.
+  The KB is a separate repo that documents Source 2 Panorama engine behavior (CSS properties, JS APIs,
+  XML panel types). Skills that reference the KB (`audit`, `plan`, `review`, `fix`) use absolute paths
+  to this location.
+- **Node.js:** Required for the smoke test (`tools/qollock_smoke_test.js`).
+- **Git hooks:** Run `bash setup-hooks.sh` once after cloning to install the pre-commit hook
+  (bridge checker → import validator → smoke test).
 
 ## File Map
 
@@ -31,7 +41,7 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 36 extracted feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
+    ├── ql_features/                        # 39 loaded feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -317,3 +327,63 @@ Key state fields:
 3. `panorama/scripts/ql_core.js` lines 24500-24750 — Feature registration and dispatch loop
 4. Any `ql_features/ql_feat_*.js` — Example of the current feature file pattern
 5. `plans/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap
+
+## Panorama CSS Gotchas (Phase D + F)
+
+These are engine-specific behaviors confirmed via decompiled DLL cross-reference
+(`/home/bytenode/Documents/DeadlockModMaking/panorama-knowledge-base/`).
+
+### Valid `overflow` values
+Panorama supports ONLY: `squish` (default), `clip`, `scroll`, `noclip`.
+Do NOT use `hidden` or `visible` — these are standard CSS values that
+Panorama ignores, falling back to `squish`.
+
+### Unsupported CSS features
+- Adjacent sibling (`A + B`) and general sibling (`A ~ B`) combinators
+- Pseudo-elements (`::before`, `::after`, `::placeholder`)
+- At-rules: `@media` and `@font-face` are NOT supported
+- `@define`, `@keyframes`, `@import` ARE supported
+- `!important` is NOT supported (use higher-specificity selectors instead)
+- `visibility` only supports: `visible` (default) and `collapse` (not `hidden`)
+
+### Deprecated CSS
+- `align` property is legacy. Prefer `horizontal-align` / `vertical-align`.
+
+### Verified-by-usage APIs (not in decompiled DLL method registration block)
+- `panel.IsValid()` — 337 call sites. Works via prototype inheritance.
+- `panel.SetPanelEvent()` — ~130 call sites. Works empirically.
+- `panel.SetImage()` — 47 call sites. Confirmed Image type-specific method.
+
+### QOL.import() gotchas
+- `QOL.import("isCfgEnabled")` returns undefined — use `Utils.IsCfgEnabled`
+- `QOL.import("isPanelValid")` returns undefined — use `Utils.IsPanelValid`
+- `QOL.import("setStyleSafe")` returns undefined — use `Utils.SetStyleSafe`
+- Rule: anything from `ql_utils.js` is on `Utils.*`, not `QOL.*`
+- Run `tools/validate_imports.sh` before committing to catch mismatches.
+
+## Testing Tools
+
+- `setup-hooks.sh` — run once after cloning to install the git pre-commit hook (bridge checker + import validator + smoke test)
+- `scripts/git-hooks/pre-commit` — version-controlled hook template (installed by setup-hooks.sh)
+- `tools/check_bridges.sh` — verifies QOL.import() symbols are exported
+- `tools/validate_imports.sh` — verifies QOL.import() symbols exist on QOL namespace
+- `tools/qollock_smoke_test.js` — loads all files in dependency order (Node.js)
+
+## Claude Code Skills (slash commands)
+
+- `/audit-qollock` — Fan out agents to audit the codebase against Panorama KB
+- `/validate-qollock` — Run smoke test + bridge checker + import validator
+- `/review-qollock` — Spawn 2 adversarial reviewers, revise, loop up to 3×
+- `/plan-qollock` — Full plan creation with 4-agent adversarial review
+- `/extract-qollock` — Extract code to a standalone feature file
+- `/fix-qollock` — Fix a bug with adversarial review
+
+## Saved Prompts
+
+See `.claude/saved-prompts.md` for reusable prompt templates:
+- Deep audit with fan-out
+- Plan + adversarial review loop
+- Implement phase with subphase review
+- Debug runtime error tracing
+- Deep save/load review
+- CSS/XML Panorama compliance audit

@@ -3,7 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_chatimg";
-    var _deps = QOL.import(["buildImagesInChatContainerWatermark","clearInjectedChatImagesForMessage","findChatMessageLabel","findImagesInChatMessageCacheEntry","getCachedPanel","getImagesInChatMessageCache","injectBottomChatImage","injectTopChatImage","perfNowMs","pruneImagesInChatMessageCache","state","setCachedPanel","utils"]);
+    // DEPENDS: buildImagesInChatContainerWatermark, clearInjectedChatImagesForMessage, findChatMessageLabel, findImagesInChatMessageCacheEntry, getCachedPanel, getImagesInChatMessageCache, injectBottomChatImage, injectTopChatImage, pruneImagesInChatMessageCache, state, setCachedPanel, utils
+    var _deps = QOL.import(["buildImagesInChatContainerWatermark","clearInjectedChatImagesForMessage","findChatMessageLabel","findImagesInChatMessageCacheEntry","getCachedPanel","getImagesInChatMessageCache","injectBottomChatImage","injectTopChatImage","pruneImagesInChatMessageCache","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;

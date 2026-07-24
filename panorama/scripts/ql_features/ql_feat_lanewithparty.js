@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_lanewithparty";
+    // DEPENDS: activatePanelSafe, getCachedPanel, isPanelVisibleMaybe, readPanelIdTextMaybe, readPanelTextDeepMaybe, state, setCachedPanel, utils
     var _deps = QOL.import(["activatePanelSafe", "getCachedPanel", "isPanelVisibleMaybe", "readPanelIdTextMaybe", "readPanelTextDeepMaybe", "state", "setCachedPanel", "utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;

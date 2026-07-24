@@ -2,7 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_items";
+    var _featureId = "ql_feat_items";
+    // DEPENDS: getCachedPanel, normalizePaletteColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setCachedPanel, setWashColorSafe, utils
     var _deps = QOL.import(["getCachedPanel","normalizePaletteColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setCachedPanel","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
@@ -33,7 +34,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_itemsRuntime) { $.Msg("[QOL DEBUG] First update: itemsRuntime\n"); State._debug_itemsRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_ITEMS_ENABLED");
         var modsContainer = GetCachedPanel("itemsModsContainer");
@@ -61,7 +62,7 @@
 
         modsContainer.style.x = String(offsetX) + "px";
         modsContainer.style.y = String(-offsetY) + "px";
-        modsContainer.style.visibility = enabled ? "visible" : "collapse";
+        if (modsContainer.SetHasClass) modsContainer.SetHasClass("qol-hidden", !enabled); else modsContainer.style.visibility = enabled ? "visible" : "collapse";
         SWC(modsContainer, washColor);
         Utils.ClearStyleSafe(modsContainer, "opacity");
         var barGraphContainer = modsContainer.FindChildTraverse ? modsContainer.FindChildTraverse("BarGraphContainer") : null;

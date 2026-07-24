@@ -3,9 +3,11 @@
 // Extracted from ql_core.js, Phase 9 Step 2c
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: colorWarnings");
-        var _featureId = "ql_feat_colorwarnings";
-    var _deps = QOL.import(["state","utils"]);
+    var _featureId = "ql_feat_colorwarnings";
+    // DEPENDS: getCachedPanel, setCachedPanel, state, utils
+    var _deps = QOL.import(["getCachedPanel","setCachedPanel","state","utils"]);
+    var GetCachedPanel = _deps.getCachedPanel;
+    var SetCachedPanel = _deps.setCachedPanel;
     var State = _deps.state;
     var Utils = _deps.utils;
     var IsCfgEnabled = Utils.IsCfgEnabled;
@@ -14,9 +16,10 @@
     var ClearStyleSafe = Utils.ClearStyleSafe;
 
     var ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
-    var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
-    var COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
-    var COLORED_HEALTHBAR_PULSE_STEP = 0.1;
+    // Step 0.1: Use shared constants from Utils (extracted from ql_core.js to ql_utils.js).
+    var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = Utils.COLORED_HEALTHBAR_LOW_HP_THRESHOLD;
+    var COLORED_HEALTHBAR_COLOR_WHITE = Utils.COLORED_HEALTHBAR_COLOR_WHITE;
+    var COLORED_HEALTHBAR_PULSE_STEP = Utils.COLORED_HEALTHBAR_PULSE_STEP;
     var ALLY_TOPBAR_HEALTH_DEFAULT_COLOR = COLORED_HEALTHBAR_COLOR_WHITE;
 function ResetColoredHealthbarRuntimeStyles() {
         var healthBar = GetCachedPanel("coloredHealthbarHealthBar");
@@ -376,12 +379,13 @@ function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
         }
         return ToRgbString(teamColorRgb || ALLY_TOPBAR_HEALTH_DEFAULT_COLOR);
     }
-    var COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
-    var COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
-    var COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
-    var COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
-    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
-    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
+    // Step 0.1: Use shared color constants from Utils (deduplicated from ql_core.js).
+    var COLORED_HEALTHBAR_COLOR_DARK_RED = Utils.COLORED_HEALTHBAR_COLOR_DARK_RED;
+    var COLORED_HEALTHBAR_COLOR_ORANGE = Utils.COLORED_HEALTHBAR_COLOR_ORANGE;
+    var COLORED_HEALTHBAR_COLOR_RED = Utils.COLORED_HEALTHBAR_COLOR_RED;
+    var COLORED_HEALTHBAR_COLOR_YELLOW = Utils.COLORED_HEALTHBAR_COLOR_YELLOW;
+    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = Utils.COLORED_HEALTHBAR_HIGH_HP_THRESHOLD;
+    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = Utils.COLORED_HEALTHBAR_MID_HP_THRESHOLD;
     var ENEMY_COLORED_HEALTH_DEBUG = false;
     var ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
     var ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
@@ -393,23 +397,12 @@ function ResolveAllyColoredHealthColor(pct, cfg, teamColorRgb) {
     var ENEMY_COLORED_HEALTH_TEAM2_COLOR = [100, 133, 252];
     var ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR = [255, 86, 86];
     var PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
-function BlendRgb(a, b, t) {
-        return [
-            Math.round(a[0] + ((b[0] - a[0]) * t)),
-            Math.round(a[1] + ((b[1] - a[1]) * t)),
-            Math.round(a[2] + ((b[2] - a[2]) * t))
-        ];
-    }
+// Step 0.1: BlendRgb now from Utils (deduplicated from ql_core.js to ql_utils.js).
+var BlendRgb = Utils.BlendRgb;
 function EnemyColoredHealthDebugLog(msg) {
         if (!ENEMY_COLORED_HEALTH_DEBUG) return;
         $.Msg("[QOLLock][EnemyColoredHealthDbg] " + msg);
     }
-var GetCachedPanel = function(k) {
-        var p = State.cachedPanels[k];
-        if (IsPanelValid(p)) return p;
-        State.cachedPanels[k] = null;
-        return null;
-    };
 function IsColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25") ||
@@ -447,27 +440,10 @@ function ResolveFriendlyTopBarTeamClass(root, nowMs) {
         State.enemyColoredHealthFriendlyTeamNextMs = now + 1500;
         return friendlyTeamClass;
     }
-var SetCachedPanel = function(k, p) {
-        State.cachedPanels[k] = IsPanelValid(p) ? p : null;
-    };
-function SetWashColorSafe(panel, color) {
-        if (color) {
-            SetStyleSafe(panel, "washColor", String(color));
-        } else {
-            ClearStyleSafe(panel, "washColor");
-        }
-    }
-function ToRgbString(rgb) {
-        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
-    }
-    var hasClassInHierarchy = function(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass(className)) return true;
-            current = current.GetParent();
-        }
-        return false;
-    };
+// Step 0.1: SetWashColorSafe and ToRgbString now from Utils (deduplicated).
+var SetWashColorSafe = Utils.SetWashColorSafe;
+var ToRgbString = Utils.ToRgbString;
+    var hasClassInHierarchy = Utils.HasClassInHierarchy;
 
     function UpdateColoredHealthbarRuntime(root, cfg) {
         try {
@@ -725,10 +701,8 @@ function ToRgbString(rgb) {
         State.allyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
     }
 
-    $.Msg("[QOL DEBUG] colorWarnings: all functions defined, starting registrations");
     // ── Registrations (3 features, 1 file) ──
 
-    $.Msg("[QOL DEBUG] Registering colorWarning");
     QOL.register("colorWarning", {
         configKeys: ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25",
                      "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"],
@@ -750,7 +724,6 @@ function ToRgbString(rgb) {
                     "coloredHealthbarZeroHeightStreak"]
     });
 
-    $.Msg("[QOL DEBUG] Registering enemyColorWarning");
     QOL.register("enemyColorWarning", {
         configKeys: ["ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLOR_WARNING_25",
                      "ENABLE_ENEMY_COLOR_WARNING_65", "ENABLE_ENEMY_COLOR_WARNING_75"],
@@ -772,7 +745,6 @@ function ToRgbString(rgb) {
                     "enemyColoredHealthPulseDir", "enemyColoredHealthPulseVal"]
     });
 
-    $.Msg("[QOL DEBUG] Registering allyColorWarning");
     QOL.register("allyColorWarning", {
         configKeys: ["ENABLE_ALLY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLOR_WARNING_25",
                      "ENABLE_ALLY_COLOR_WARNING_65", "ENABLE_ALLY_COLOR_WARNING_75"],

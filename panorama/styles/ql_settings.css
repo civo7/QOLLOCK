@@ -461,7 +461,7 @@
 {
 	ignore-parent-flow: true;
 	horizontal-align: center;
-	vertical-align: middle;
+	vertical-align: center;
 	margin-left: 130px;
 	margin-top: 0px;
 	opacity: 0;
@@ -3351,9 +3351,9 @@
 	font-size: 14px;
 	vertical-align: center;
 	margin-left: 20px;
-	padding: 0px !important;
-	padding-left: 3px !important;
-	text-align: center !important;
+	padding: 0px;
+	padding-left: 3px;
+	text-align: center;
 	transition-property: border, brightness;
 	transition-duration: 0.16s;
 }
@@ -3368,19 +3368,19 @@
 {
 	color: #a39c8e;
 	line-height: 15px;
-	padding: 0px !important;
-	padding-left: 3px !important;
-	margin: 0px !important;
+	padding: 0px;
+	padding-left: 3px;
+	margin: 0px;
 	width: 100%;
-	text-align: center !important;
-	horizontal-align: center !important;
+	text-align: center;
+	horizontal-align: center;
 	vertical-align: center;
 }
 
 #SettingsWindow .ValueInput:focus #TextEntryContents,#SettingsWindow .ValueInput:focus > Label,#SettingsWindow .ValueInput:focus #PlaceholderText
 {
-	text-align: center !important;
-	horizontal-align: center !important;
+	text-align: center;
+	horizontal-align: center;
 }
 
 #SettingsWindow .ValueInput #Contents
@@ -3397,22 +3397,22 @@
 
 #SettingsWindow .SliderContainer .ValueInput,#SettingsWindow .SliderContainer .ValueInput:focus
 {
-	text-align: center !important;
-	padding: 0px !important;
+	text-align: center;
+	padding: 0px;
 }
 
 #SettingsWindow .SliderContainer .ValueInput > Label,#SettingsWindow .SliderContainer .ValueInput #TextEntryContents,#SettingsWindow .SliderContainer .ValueInput #PlaceholderText,#SettingsWindow .SliderContainer .ValueInput:focus > Label,#SettingsWindow .SliderContainer .ValueInput:focus #TextEntryContents,#SettingsWindow .SliderContainer .ValueInput:focus #PlaceholderText
 {
-	text-align: center !important;
-	horizontal-align: center !important;
-	padding: 0px !important;
-	margin: 0px !important;
+	text-align: center;
+	horizontal-align: center;
+	padding: 0px;
+	margin: 0px;
 	width: 100%;
 }
 
 #SettingsWindow .SliderValueGroup .ValueInput,#SettingsWindow .SliderValueGroup .ValueInput:focus
 {
-	text-align: center !important;
+	text-align: center;
 }
 
 #SettingsWindow .SliderValueGroup .ValueInput
@@ -3430,27 +3430,27 @@
 #SettingsWindow .SliderValueGroup .ValueInput #Contents,#SettingsWindow .SliderValueGroup .ValueInput:focus #Contents
 {
 	width: 100%;
-	text-align: center !important;
-	horizontal-align: left !important;
-	padding: 0px !important;
-	margin: 0px !important;
+	text-align: center;
+	horizontal-align: left;
+	padding: 0px;
+	margin: 0px;
 	x: 0px;
 }
 
 #SettingsWindow .SliderValueGroup .ValueInput #TextEntryContents,#SettingsWindow .SliderValueGroup .ValueInput #PlaceholderText,#SettingsWindow .SliderValueGroup .ValueInput > Label,#SettingsWindow .SliderValueGroup .ValueInput:focus #TextEntryContents,#SettingsWindow .SliderValueGroup .ValueInput:focus #PlaceholderText,#SettingsWindow .SliderValueGroup .ValueInput:focus > Label
 {
 	width: 100%;
-	vertical-align: center !important;
+	vertical-align: center;
 	line-height: 15px;
-	horizontal-align: left !important;
-	text-align: center !important;
+	horizontal-align: left;
+	text-align: center;
 	x: 3px;
-	margin: 0px !important;
-	margin-left: 0px !important;
-	margin-right: 0px !important;
-	padding: 0px !important;
-	padding-left: 3px !important;
-	padding-right: 0px !important;
+	margin: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
+	padding: 0px;
+	padding-left: 3px;
+	padding-right: 0px;
 }
 
 #SettingsWindow .SliderValueGroup .ValueInput #TextEntryCursor,#SettingsWindow .SliderValueGroup .ValueInput:focus #TextEntryCursor
@@ -3597,18 +3597,18 @@
 
 #SettingsWindow .SearchResultRow .SettingToggleBtn .SwitchButton
 {
-	transition-property: none !important;
-	transition-duration: 0.0s !important;
-	transition-timing-function: linear !important;
-	animation-name: none !important;
+	transition-property: none;
+	transition-duration: 0.0s;
+	transition-timing-function: linear;
+	animation-name: none;
 }
 
 #SettingsWindow .SearchResultRow .SettingToggleBtn #handle
 {
-	transition-property: none !important;
-	transition-duration: 0.0s !important;
-	transition-timing-function: linear !important;
-	animation-name: none !important;
+	transition-property: none;
+	transition-duration: 0.0s;
+	transition-timing-function: linear;
+	animation-name: none;
 }
 
 #SettingsWindow .SettingsDropDown.QOLSettingsDropDown
@@ -13870,7 +13870,7 @@
 {
 	width: 40px;
 	height: 20px;
-	overflow: visible;
+	overflow: noclip;
 }
 
 #SettingsWindow .SettingToggleBtn .SwitchButton,
@@ -15868,7 +15868,7 @@
 	width: 52px;
 	height: 24px;
 	margin-left: 14px;
-	padding: 0px !important;
+	padding: 0px;
 	border: 1px solid rgba(210, 218, 214, 0.05);
 	border-radius: 3px;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(22, 26, 25, 0.96) ), to( rgba(13, 16, 15, 0.92) ) );
@@ -15888,8 +15888,8 @@
 	letter-spacing: 0.35px;
 	color: #aeb8bc;
 	text-shadow: none;
-	padding: 0px !important;
-	margin: 0px !important;
+	padding: 0px;
+	margin: 0px;
 	x: 0px;
 }
 

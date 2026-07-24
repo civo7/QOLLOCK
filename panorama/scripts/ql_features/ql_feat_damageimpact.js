@@ -2,7 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_damageimpact";
+    var _featureId = "ql_feat_damageimpact";
+    // DEPENDS: getCachedPanel, normalizeDamageImpactScaleNumber, resolveCachedPanel, state, utils
     var _deps = QOL.import(["getCachedPanel","normalizeDamageImpactScaleNumber","resolveCachedPanel","state","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
@@ -13,7 +14,7 @@
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(State.damageImpactRuntimeStyleSig && String(State.damageImpactRuntimeStyleSig).length > 0) ||
-            QOL.getCachedPanel("damageImpactPanel");
+            GetCachedPanel("damageImpactPanel");
     }
 
     function hasNonDefaultConfig(cfg) {
@@ -29,7 +30,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_damageImpactRuntime) { $.Msg("[QOL DEBUG] First update: damageImpactRuntime\n"); State._debug_damageImpactRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "ENABLE_DAMAGE_IMPACT");
         var panel = RC(root, "damageImpactPanel", "damage_impact");
@@ -46,7 +47,7 @@
         panel.style.y = String(-offsetY) + "px";
         panel.style.opacity = opacityText;
         panel.style.preTransformScale2d = scaleText + ", " + scaleText;
-        panel.style.visibility = enabled ? "visible" : "collapse";
+        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled); else panel.style.visibility = enabled ? "visible" : "collapse";
         State.damageImpactRuntimeStyleSig = styleSig;
     }
 

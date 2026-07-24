@@ -11,6 +11,7 @@
 		<include src="s2r://panorama/styles/citadel_ui_binding.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
 	<include src="s2r://panorama/styles/showrank.vcss_c" />
+	<include src="s2r://panorama/styles/qollock_global.vcss_c" />
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
@@ -63,6 +64,12 @@
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank_card.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/ql_feat_urntimer.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/ql_feat_healthbar.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_accent.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_budhud.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_fg.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_mc.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">

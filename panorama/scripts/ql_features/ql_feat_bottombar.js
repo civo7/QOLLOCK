@@ -2,7 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_bottombar";
+    var _featureId = "ql_feat_bottombar";
+    // DEPENDS: getCachedPanel, getGameplayHudPanel, getUIRoot, panelIdGoldApContainer, panelIdSignature, readBottomBarWashColorIndex, resolveCachedPanel, resolveWashColorFromPalette, state, setWashColorSafe, utils
     var _deps = QOL.import(["getCachedPanel","getGameplayHudPanel","getUIRoot","panelIdGoldApContainer","panelIdSignature","readBottomBarWashColorIndex","resolveCachedPanel","resolveWashColorFromPalette","state","setWashColorSafe","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GetGameplayHudPanel = _deps.getGameplayHudPanel;
@@ -83,7 +84,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_bottomBarRuntime) { $.Msg("[QOL DEBUG] First update: bottomBarRuntime\n"); State._debug_bottomBarRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = RC(root, "bottomBarPanel", PID_SIGNATURE);
@@ -102,7 +103,7 @@
         hudSignature.style.x = String(offsetX) + "px";
         hudSignature.style.y = String(-offsetY) + "px";
         hudSignature.style.preTransformScale2d = scaleText + ", " + scaleText;
-        hudSignature.style.visibility = enabled ? "visible" : "collapse";
+        if (hudSignature.SetHasClass) hudSignature.SetHasClass("qol-hidden", !enabled); else hudSignature.style.visibility = enabled ? "visible" : "collapse";
         SetWashColor(hudSignature, washColor);
         Utils.SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
         State.bottomBarRuntimeStyleSig = styleSig;

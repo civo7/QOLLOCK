@@ -3,15 +3,17 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_rejuvtimers";
-    var _deps = QOL.import(["ensureMinimapOverlayAnchor","ensureMinimapPanelCache","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
+    // DEPENDS: ensureMinimapOverlayAnchor, getCachedPanel, getGameSecondsForUrn, getHighestRejuvChargeTokenOnPanel, hasClassInHierarchy, isConnectedToHideout, isHudClassActive, isStreetBrawlModeActive, panelHasClassToken, panelIdTopBar, perfNowMs, resolveCachedPanel, state, setCachedPanel, setPanelClassCached, setPanelClassIfChanged, utils
+    var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","perfNowMs","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
     var ResolveCachedPanel = _deps.resolveCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
-    var BRIDGE_DURATION_SEC = 300;
-    var BUFF_LOCKOUT_SEC = 120;
+    // GAME_VERSION_DEPENDENT: Bridge buff cycle timing. Last verified: 2026-07-20.
+    var BRIDGE_DURATION_SEC = 300;       // 5 min bridge buff cycle
+    var BUFF_LOCKOUT_SEC = 120;          // 2 min lockout between buffs
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
@@ -29,6 +31,8 @@
     var PanelHasClassToken = _deps.panelHasClassToken;
 
     // ── Constants ──
+    // GAME_VERSION_DEPENDENT: Rejuvenator timing. If mid-boss respawn intervals change
+    // after a game patch, update REJUV_SEQ durations. Last verified: 2026-07-20.
     const REJUV_DURATION_SEC = 180;
     const REJUV_SCAN_INTERVAL_MS = 3000;
     const REJUV_SCAN_INTERVAL_FAST_MS = 1000;
@@ -224,7 +228,7 @@
             if (overlay) SetCachedPanel("minimapObjectiveTimersRoot", overlay);
         }
         if (!overlay) return;
-        if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
         State.minimapObjectiveScaleSig = "";
         if (overlay.style.preTransformScale2d !== "1.00, 1.00") {
             overlay.style.preTransformScale2d = "1.00, 1.00";
@@ -341,14 +345,14 @@
             if (buffIcon) {
                 buffIcon.style.width = timerIcon + "px";
                 buffIcon.style.height = timerIcon + "px";
-                buffIcon.style.visibility = "visible";
+                if (buffIcon.SetHasClass) buffIcon.SetHasClass("qol-hidden", false); else buffIcon.style.visibility = "visible";
             }
-            if (buffBridgeLeftIcon) buffBridgeLeftIcon.style.visibility = "collapse";
-            if (buffBridgeRightIcon) buffBridgeRightIcon.style.visibility = "collapse";
+            if (buffBridgeLeftIcon) { if (buffBridgeLeftIcon.SetHasClass) buffBridgeLeftIcon.SetHasClass("qol-hidden", true); else buffBridgeLeftIcon.style.visibility = "collapse"; }
+            if (buffBridgeRightIcon) { if (buffBridgeRightIcon.SetHasClass) buffBridgeRightIcon.SetHasClass("qol-hidden", true); else buffBridgeRightIcon.style.visibility = "collapse"; }
             if (rejuvIcon) {
                 rejuvIcon.style.width = timerIcon + "px";
                 rejuvIcon.style.height = timerIcon + "px";
-                rejuvIcon.style.visibility = "visible";
+                if (rejuvIcon.SetHasClass) rejuvIcon.SetHasClass("qol-hidden", false); else rejuvIcon.style.visibility = "visible";
             }
             if (panels.buffTime) panels.buffTime.style.fontSize = timerFont + "px";
             if (panels.rejuvTime) panels.rejuvTime.style.fontSize = timerFont + "px";
@@ -366,17 +370,19 @@
             overlay.style.marginLeft = overlayMarginLeft;
         }
 
-        if (panels.buffPanel && panels.buffPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) {
-            panels.buffPanel.style.visibility = buffEnabled ? "visible" : "collapse";
+        if (panels.buffPanel) {
+            var bv = buffEnabled;
+            if (panels.buffPanel.SetHasClass) panels.buffPanel.SetHasClass("qol-hidden", !bv); else if (panels.buffPanel.style.visibility !== (bv ? "visible" : "collapse")) panels.buffPanel.style.visibility = bv ? "visible" : "collapse";
         }
-        if (panels.rejuvPanel && panels.rejuvPanel.style.visibility !== (rejuvEnabled ? "visible" : "collapse")) {
-            panels.rejuvPanel.style.visibility = rejuvEnabled ? "visible" : "collapse";
+        if (panels.rejuvPanel) {
+            var rv = rejuvEnabled;
+            if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !rv); else if (panels.rejuvPanel.style.visibility !== (rv ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = rv ? "visible" : "collapse";
         }
-        if (panels.buffBridgeLeftPanel && panels.buffBridgeLeftPanel.style.visibility !== "collapse") {
-            panels.buffBridgeLeftPanel.style.visibility = "collapse";
+        if (panels.buffBridgeLeftPanel) {
+            if (panels.buffBridgeLeftPanel.SetHasClass) panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", true); else if (panels.buffBridgeLeftPanel.style.visibility !== "collapse") panels.buffBridgeLeftPanel.style.visibility = "collapse";
         }
-        if (panels.buffBridgeRightPanel && panels.buffBridgeRightPanel.style.visibility !== "collapse") {
-            panels.buffBridgeRightPanel.style.visibility = "collapse";
+        if (panels.buffBridgeRightPanel) {
+            if (panels.buffBridgeRightPanel.SetHasClass) panels.buffBridgeRightPanel.SetHasClass("qol-hidden", true); else if (panels.buffBridgeRightPanel.style.visibility !== "collapse") panels.buffBridgeRightPanel.style.visibility = "collapse";
         }
         if (buffEnabled && panels.buffTime && panels.buffTime.text !== bridgeText) {
             panels.buffTime.text = bridgeText;
@@ -491,7 +497,7 @@
             if (buffIcon) {
                 buffIcon.style.width = timerIcon + "px";
                 buffIcon.style.height = timerIcon + "px";
-                buffIcon.style.visibility = "collapse";
+                if (buffIcon.SetHasClass) buffIcon.SetHasClass("qol-hidden", true); else buffIcon.style.visibility = "collapse";
             }
             if (panels.buffBridgeLeftPanel) {
                 panels.buffBridgeLeftPanel.style.width = bridgeTimerWidth + "px";
@@ -519,12 +525,12 @@
                 panels.buffBridgeRightPanel.style.marginTop = "0px";
                 panels.buffBridgeRightPanel.style.marginBottom = "0px";
             }
-            if (buffBridgeLeftIcon) buffBridgeLeftIcon.style.visibility = "collapse";
-            if (buffBridgeRightIcon) buffBridgeRightIcon.style.visibility = "collapse";
+            if (buffBridgeLeftIcon) { if (buffBridgeLeftIcon.SetHasClass) buffBridgeLeftIcon.SetHasClass("qol-hidden", true); else buffBridgeLeftIcon.style.visibility = "collapse"; }
+            if (buffBridgeRightIcon) { if (buffBridgeRightIcon.SetHasClass) buffBridgeRightIcon.SetHasClass("qol-hidden", true); else buffBridgeRightIcon.style.visibility = "collapse"; }
             if (rejuvIcon) {
                 rejuvIcon.style.width = timerIcon + "px";
                 rejuvIcon.style.height = timerIcon + "px";
-                rejuvIcon.style.visibility = rejuvOnBridgeEnabled ? "collapse" : "visible";
+                if (rejuvIcon.SetHasClass) rejuvIcon.SetHasClass("qol-hidden", rejuvOnBridgeEnabled); else rejuvIcon.style.visibility = rejuvOnBridgeEnabled ? "collapse" : "visible";
             }
             if (panels.buffTime) panels.buffTime.style.fontSize = timerFont + "px";
             if (panels.buffBridgeLeftTime) panels.buffBridgeLeftTime.style.fontSize = bridgeTimerFont + "px";
@@ -538,17 +544,17 @@
         }
 
         var showBaseBuffPanel = buffEnabled && !buffOnBridgeEnabled;
-        if (panels.buffPanel && panels.buffPanel.style.visibility !== (showBaseBuffPanel ? "visible" : "collapse")) {
-            panels.buffPanel.style.visibility = showBaseBuffPanel ? "visible" : "collapse";
+        if (panels.buffPanel) {
+            if (panels.buffPanel.SetHasClass) panels.buffPanel.SetHasClass("qol-hidden", !showBaseBuffPanel); else if (panels.buffPanel.style.visibility !== (showBaseBuffPanel ? "visible" : "collapse")) panels.buffPanel.style.visibility = showBaseBuffPanel ? "visible" : "collapse";
         }
-        if (panels.buffBridgeLeftPanel && panels.buffBridgeLeftPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) {
-            panels.buffBridgeLeftPanel.style.visibility = buffOnBridgeEnabled ? "visible" : "collapse";
+        if (panels.buffBridgeLeftPanel) {
+            if (panels.buffBridgeLeftPanel.SetHasClass) panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", !buffOnBridgeEnabled); else if (panels.buffBridgeLeftPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) panels.buffBridgeLeftPanel.style.visibility = buffOnBridgeEnabled ? "visible" : "collapse";
         }
-        if (panels.buffBridgeRightPanel && panels.buffBridgeRightPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) {
-            panels.buffBridgeRightPanel.style.visibility = buffOnBridgeEnabled ? "visible" : "collapse";
+        if (panels.buffBridgeRightPanel) {
+            if (panels.buffBridgeRightPanel.SetHasClass) panels.buffBridgeRightPanel.SetHasClass("qol-hidden", !buffOnBridgeEnabled); else if (panels.buffBridgeRightPanel.style.visibility !== (buffEnabled ? "visible" : "collapse")) panels.buffBridgeRightPanel.style.visibility = buffOnBridgeEnabled ? "visible" : "collapse";
         }
-        if (panels.rejuvPanel && panels.rejuvPanel.style.visibility !== (rejuvEnabled ? "visible" : "collapse")) {
-            panels.rejuvPanel.style.visibility = rejuvEnabled ? "visible" : "collapse";
+        if (panels.rejuvPanel) {
+            if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !rejuvEnabled); else if (panels.rejuvPanel.style.visibility !== (rejuvEnabled ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = rejuvEnabled ? "visible" : "collapse";
         }
         if (panels.buffPanel && showBaseBuffPanel) {
             panels.buffPanel.style.ignoreParentFlow = "true";
@@ -572,7 +578,7 @@
             }
         }
         if (rejuvIcon) {
-            rejuvIcon.style.visibility = rejuvOnBridgeEnabled ? "collapse" : "visible";
+            if (rejuvIcon.SetHasClass) rejuvIcon.SetHasClass("qol-hidden", rejuvOnBridgeEnabled); else rejuvIcon.style.visibility = rejuvOnBridgeEnabled ? "collapse" : "visible";
         }
         if (buffEnabled && panels.buffBridgeLeftTime && panels.buffBridgeLeftTime.text !== bridgeText) {
             panels.buffBridgeLeftTime.text = bridgeText;
@@ -614,7 +620,7 @@
         var panels = EnsureMinimapObjectiveTimers(root);
         if (!panels || !panels.root) return;
         var overlay = panels.root;
-        if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
         var minimapSize = ResolveActiveMinimapObjectiveSize(root, cfg);
         if (!isFinite(minimapSize)) minimapSize = 400;
         if (minimapSize < 200) minimapSize = 200;

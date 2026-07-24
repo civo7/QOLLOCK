@@ -3,7 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_statlocker";
-    var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isPanelListValid","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
+    // DEPENDS: getAccountIdForBuildCategoryPayload, getCachedPanel, getUIRoot, isStartupLoaderInActiveMatchContext, state, setCachedPanel, utils
+    var _deps = QOL.import(["getAccountIdForBuildCategoryPayload","getCachedPanel","getUIRoot","isStartupLoaderInActiveMatchContext","state","setCachedPanel","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
@@ -17,6 +18,14 @@
 
     var STATLOCKER_SCAN_INTERVAL_MS = 1200;
     var STATLOCKER_SCAN_IDLE_MAX_MS = 6000;
+
+    // Phase 1.1: IsLikelyAccountId was called but never defined — define locally.
+    // Valid Deadlock account IDs are 7-19 digit numbers.
+    function IsLikelyAccountId(digits) {
+        if (typeof digits !== "string" || digits.length < 7 || digits.length > 19) return false;
+        return /^\d{7,19}$/.test(digits);
+    }
+
     function ParseAccountIdDigitsFromText(rawText) {
         if (rawText === undefined || rawText === null) return "";
         var digits = String(rawText).replace(/[^0-9]/g, "");

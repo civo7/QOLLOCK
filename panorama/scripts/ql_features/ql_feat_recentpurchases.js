@@ -3,7 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_recentpurchases";
-    var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
+    // DEPENDS: getCachedPanel, isHudClassActive, isPanelVisibleMaybe, resolveCachedPanel, state, setCachedPanel, setPanelClassCached, utils, isConnectedToHideout, normalizeHudOffsetNumber, normalizeHudScaleNumber
+    var _deps = QOL.import(["getCachedPanel", "isHudClassActive", "isPanelVisibleMaybe", "resolveCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "isConnectedToHideout", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
     var SetCachedPanel = _deps.setCachedPanel;
@@ -21,6 +22,9 @@
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
     var RECENT_PURCHASE_MAX_ITEMS = 50;
+    // Phase 1.5: Missing constants — defined locally.
+    var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
+    var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 5;
     var PANEL_ID_TOP_BAR = "TopBar";
     var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
     var CLASS_RECENT_PURCHASE = "recentPurchase";
@@ -70,31 +74,16 @@ function GetRecentPurchaseTimeText(panel) {
         "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
         "isTeam1Purchase", "isTeam2Purchase"
     ];
-// IsHudClassActive imported via _deps.isHudClassActive (canonical version from ql_core.js).
-function IsPanelVisibleMaybe(panel) {
-        if (!panel || !IsPanelValid(panel)) return false;
-        try {
-            if (panel.visible === false) return false;
-        } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        var vis = "";
-        try {
-            if (panel.style && panel.style.visibility !== undefined && panel.style.visibility !== null) {
-                vis = String(panel.style.visibility || "").toLowerCase();
-            }
-        } catch (e1) {
-            vis = "";
-        }
-        if (vis === "collapse" || vis === "none" || vis === "hidden") return false;
-        return true;
+// Phase 5.2: Removed dead local IsPanelVisibleMaybe (overwritten by line 21 import).
+// ResolveCachedPanel now uses shared version from QOL.import().
+var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, traverseId) {
+    var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
+    if (!panel && parent && parent.FindChildTraverse) {
+        panel = parent.FindChildTraverse(traverseId);
+        State.cachedPanels[cacheKey] = panel || null;
     }
-var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
-        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-        if (!panel && parent && parent.FindChildTraverse) {
-            panel = parent.FindChildTraverse(traverseId);
-            State.cachedPanels[cacheKey] = panel || null;
-        }
-        return panel;
-    };
+    return panel;
+};
     function GetRecentPurchaseHeroName(panel) {
         var labels = panel.FindChildrenWithClassTraverse("recentModPurchaserHero");
         return (labels && labels.length > 0) ? labels[0].text.trim() : "";
@@ -462,7 +451,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                     playerPanel = playerPanel.GetParent();
                     badgeWalkGuard++;
                 }
-                if (badgeWalkGuard >= 64) QOL_WARN("heroPopup", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
+                if (badgeWalkGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "BuildHeroPlayerCardMap: badge parent walk hit guard limit");
                 if (!badge || !playerPanel) { onDone(); return; }
                 var heroId = badge.heroid;
                 if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
@@ -519,7 +508,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
                     root = root.GetParent();
                     rootGuard++;
                 }
-                if (rootGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: root walk hit guard limit");
+                if (rootGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "GetPanelLeftInTopBar: root walk hit guard limit");
                 if (root) topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
             } catch(e) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_recentpurchases", (e && e.message ? e.message : String(e || ""))); }
         }
@@ -531,7 +520,7 @@ var ResolveCachedPanel = function(parent, cacheKey, traverseId) {
             current = current.GetParent();
             walkGuard++;
         }
-        if (walkGuard >= 64) QOL_WARN("heroPopup", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
+        if (walkGuard >= 64) Utils.WarnLog("ql_feat_recentpurchases", "GetPanelLeftInTopBar: X-offset parent walk hit guard limit");
         return x;
     }
 

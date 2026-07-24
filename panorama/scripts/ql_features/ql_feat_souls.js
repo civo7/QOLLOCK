@@ -2,8 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-    $.Msg("[QOL DEBUG] Feature loaded: soulsRuntime\n");
-        var _featureId = "ql_feat_souls";
+    var _featureId = "ql_feat_souls";
+    // DEPENDS: getCachedPanel, resolveCachedPanel, state, utils, panelIdGoldApContainer
     var _deps = QOL.import(["getCachedPanel","resolveCachedPanel","state","utils","panelIdGoldApContainer"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var RC = _deps.resolveCachedPanel;
@@ -14,7 +14,7 @@
     function gate(cfg) {
         return hasNonDefaultConfig(cfg) ||
             !!(State.soulsRuntimeStyleSig && String(State.soulsRuntimeStyleSig).length > 0) ||
-            QOL.getCachedPanel("soulsContainer");
+            GetCachedPanel("soulsContainer");
     }
 
     function hasNonDefaultConfig(cfg) {
@@ -29,7 +29,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_soulsRuntime) { $.Msg("[QOL DEBUG] First update: soulsRuntime\n"); State._debug_soulsRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_SOULS_ENABLED");
         var soulsPanel = RC(root, "soulsContainer", PID);
@@ -43,7 +43,7 @@
 
         soulsPanel.style.x = String(offsetX) + "px";
         soulsPanel.style.y = String(-offsetY) + "px";
-        soulsPanel.style.visibility = enabled ? "visible" : "collapse";
+        if (soulsPanel.SetHasClass) soulsPanel.SetHasClass("qol-hidden", !enabled); else soulsPanel.style.visibility = enabled ? "visible" : "collapse";
         Utils.SetPanelOpacitySafe(soulsPanel, opacityText, 1.0);
         State.soulsRuntimeStyleSig = styleSig;
     }

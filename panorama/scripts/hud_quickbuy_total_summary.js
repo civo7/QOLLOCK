@@ -1,5 +1,7 @@
 (function(){'use strict';
 var QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS=0.05;
+// Phase 8.1: Degraded interval when shop closed or feature inactive (was 0.05s = 20Hz).
+var QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS=0.5;
 var quickbuyUpcomingPreviewSlots=[
 	{
 		rootId:'QuickbuyUpcomingPreview2',
@@ -265,14 +267,14 @@ function IsQuickbuyTeamChatReady(chatInput,targetLabel){
 
 function CloseQuickbuyChatUi(chatInput){
 	var chatPanel=GetQuickbuyChatPanel();
-	try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e0){}
-	try{$.DispatchEvent('DropInputFocus',chatInput);}catch(e1){}
+	try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e0){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi blur error: " + String(e0));}
+	try{$.DispatchEvent('DropInputFocus',chatInput);}catch(e1){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi focus error: " + String(e1));}
 	if(chatPanel){
-		try{$.DispatchEvent('CitadelChatInputBlur',chatPanel);}catch(e2){}
-		try{$.DispatchEvent('DropInputFocus',chatPanel);}catch(e3){}
+		try{$.DispatchEvent('CitadelChatInputBlur',chatPanel);}catch(e2){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi panel blur error: " + String(e2));}
+		try{$.DispatchEvent('DropInputFocus',chatPanel);}catch(e3){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi panel focus error: " + String(e3));}
 	}
 	$.Schedule(0,function(){
-		try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e4){}
+		try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e4){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi delayed blur error: " + String(e4));}
 	});
 }
 
@@ -296,7 +298,7 @@ function TrySubmitQuickbuyTeamChat(message,delayIndex,targetRetryCount){
 			return;
 		}
 		if(!SubmitQuickbuyTeamChat(chatInput,message)){
-			try{$.DispatchEvent('SetInputFocus',chatInput);}catch(e0){}
+			try{$.DispatchEvent('SetInputFocus',chatInput);}catch(e0){$.Msg("[QOLLock][QuickBuy] SetInputFocus error: " + String(e0));}
 			SubmitQuickbuyTeamChat(chatInput,message);
 		}
 		CloseQuickbuyChatUi(chatInput);
@@ -312,7 +314,7 @@ function SendQuickbuyNeededSoulsChatMessage(message){
 	quickbuyLastChatSubmitMs=now;
 	var cleanMessage=String(message||'').replace(/["\r\n;]/g,' ').replace(/^\s+|\s+$/g,'');
 	if(!cleanMessage)return;
-	try{$.DispatchEvent('CitadelConCommand','say_chat_team');}catch(e0){}
+	try{$.DispatchEvent('CitadelConCommand','say_chat_team');}catch(e0){$.Msg("[QOLLock][QuickBuy] ConCommand('say_chat_team') error: " + String(e0));}
 	$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[0],function(){TrySubmitQuickbuyTeamChat(cleanMessage,0,0);});
 }
 
@@ -361,9 +363,9 @@ function ClearQuickbuyDragState(contextPanel){
 		for(var classIndex=0;classIndex<dragClassNames.length;classIndex++)panel.SetHasClass(dragClassNames[classIndex],false);
 	});
 
-	try{$.DispatchEvent('DropInputFocus',quickbuyHostPanel);}catch(e0){}
-	try{$.DispatchEvent('CitadelUIHideTextTooltip');}catch(e1){}
-	try{CitadelUIHideTextTooltip();}catch(e2){}
+	try{$.DispatchEvent('DropInputFocus',quickbuyHostPanel);}catch(e0){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState DropInputFocus error: " + String(e0));}
+	try{$.DispatchEvent('CitadelUIHideTextTooltip');}catch(e1){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState HideTextTooltip error: " + String(e1));}
+	try{CitadelUIHideTextTooltip();}catch(e2){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState HideTextTooltip fallback error: " + String(e2));}
 }
 
 function ScheduleQuickbuyDragCleanup(contextPanel){
@@ -635,7 +637,7 @@ function GetEnhancedQuickbuyCount(contextPanel){
 				rawCount=panel.GetAttributeInt('qol_enhanced_quickbuy_count',-1);
 				if(rawCount>=1)break;
 			}
-		}catch(_countAttrErr){}
+		}catch(_countAttrErr){ /* panel deleted mid-frame */ }
 		try{
 			panel=(panel&&panel.GetParent)?panel.GetParent():null;
 		}catch(_countParentErr){
@@ -730,13 +732,13 @@ function ResetQuickbuyQueuePanels(contextPanel){
 function UpdateQuickbuyQueueCostPanels(){
 	var contextPanel=$.GetContextPanel();
 	if(!contextPanel){
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
 		return;
 	}
 
 	if(!IsQuickbuyCostFeatureActive(contextPanel)){
 		ResetQuickbuyQueuePanels(contextPanel);
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
 		return;
 	}
 	var clickToNotifyActive=IsClickToNotifyActive(contextPanel);

@@ -2,7 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_ammo";
+    var _featureId = "ql_feat_ammo";
+    // DEPENDS: getCachedPanel, normalizeAmmoClipAngle, readAmmoTextColorIndex, resolveWashColorFromPalette, state, setCachedPanel, utils
     var _deps = QOL.import(["getCachedPanel","normalizeAmmoClipAngle","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
@@ -77,7 +78,7 @@
         ammoPanel.style.preTransformScale2d = "1.00, 1.00";
         ammoPanel.style.x = String(ammoOffsetX) + "px";
         ammoPanel.style.y = String(80 - ammoOffsetY) + "px";
-        ammoPanel.style.visibility = "visible";
+        if (ammoPanel.SetHasClass) ammoPanel.SetHasClass("qol-hidden", false); else ammoPanel.style.visibility = "visible";
         Utils.SetPanelOpacitySafe(ammoPanel, 1.0, 1.0);
     }
 
@@ -148,7 +149,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_ammo) { $.Msg("[QOL DEBUG] First update: ammo\n"); State._debug_ammo = true; }
+        
         // Magazine rotation is independent of the ammo-text scale/position/color path.
         ApplyAmmoClipAngle(root, cfg);
         if (Number(cfg.ENABLE_AMMO_STATUS) !== 1 &&

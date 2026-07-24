@@ -20,10 +20,10 @@
     function ReadAccountIdFromPanel(panel) {
         if (!IsPanelValid(panel)) return "";
         var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) {}
-        try { candidates.push(panel.account_id); } catch (e1) {}
-        try { candidates.push(panel.accountID); } catch (e2) {}
-        try { candidates.push(panel.steamid); } catch (e3) {}
+        try { candidates.push(panel.accountid); } catch (e0) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.account_id); } catch (e1) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.accountID); } catch (e2) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.steamid); } catch (e3) { /* property may not exist on this panel */ }
         try {
             if (panel.GetAttributeString) {
                 candidates.push(panel.GetAttributeString("accountid", ""));
@@ -31,7 +31,7 @@
                 candidates.push(panel.GetAttributeString("accountID", ""));
                 candidates.push(panel.GetAttributeString("steamid", ""));
             }
-        } catch (e4) {}
+        } catch (e4) { /* panel deleted mid-frame */ }
         for (var i = 0; i < candidates.length; i++) {
             var parsed = ParseAccountId(candidates[i]);
             if (parsed) return parsed;
@@ -85,7 +85,7 @@
                     var child = panel.GetChild ? panel.GetChild(i) : null;
                     if (IsPanelValid(child)) stack.push(child);
                 }
-            } catch (e0) {}
+            } catch (e0) { /* panel deleted mid-frame */ }
         }
         return "";
     }
@@ -105,7 +105,7 @@
         var accountId = GetAccountId() || gLastKnownAccountId;
         if (!accountId) return;
         var url = "https://statlocker.gg/profile/" + accountId;
-        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e0) {}
+        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e0) { $.Msg("[QOLLock][ProfileCardStatlocker] Failed to open URL: " + String(e0)); }
     }
 
     function UpdateLabel() {
@@ -117,7 +117,7 @@
         var link = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLStatlockerProfileCardLink") : null;
         var label = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLStatlockerProfileCardLabel") : null;
         if (IsPanelValid(link)) {
-            try { link.SetPanelEvent("onactivate", OpenStatlocker); } catch (e0) {}
+            try { link.SetPanelEvent("onactivate", OpenStatlocker); } catch (e0) { /* panel deleted mid-frame */ }
         }
         var accountId = GetAccountId();
         if (accountId) gLastKnownAccountId = accountId;

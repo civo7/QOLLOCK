@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_zipboost";
+    // DEPENDS: findNumericLabelTextInTree, findZipBoostSource, getCachedPanel, getGameplayHudPanel, isCustomHudContextActive, state, setCachedPanel, utils, isConnectedToHideout
     var _deps = QOL.import(["findNumericLabelTextInTree","findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
@@ -97,7 +98,7 @@
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (!enabled || hideout) {
             if (State.zipBoostDisplayMode !== "hideout") {
-                overlay.style.visibility = "collapse";
+                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse";
                 overlay.SetHasClass("on_cooldown", false);
                 overlay.SetHasClass("in_use", false);
                 overlay.SetHasClass("ready_flash", false);
@@ -109,8 +110,8 @@
             return;
         }
 
-        if (State.zipBoostDisplayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
+        if (State.zipBoostDisplayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
         State.zipBoostDisplayMode = "active";
 

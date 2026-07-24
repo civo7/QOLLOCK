@@ -771,8 +771,8 @@ var State;
     }
 
     // ── Publish to global scope ──
-    try { if (typeof window !== "undefined") window.State = State; } catch(e) {}
-    try { if (typeof globalThis !== "undefined") globalThis.State = State; } catch(e) {}
+    try { if (typeof window !== "undefined") window.State = State; } catch(e) { /* window may not be defined */ }
+    try { if (typeof globalThis !== "undefined") globalThis.State = State; } catch(e) { /* globalThis may not be defined */ }
 
     // ── Self-test ──
     try {

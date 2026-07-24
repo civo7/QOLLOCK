@@ -46,8 +46,8 @@ CitadelHudHeroShop.disable_shop_blue_active
 
 .support_4_3_active .action_binding,.support_4_3_active .context_action
 {
-	height: unset !important;
-	text-overflow: unset !important;
+	height: auto;
+	text-overflow: clip;
 }
 
 .support_4_3_active .gShopOpen #respawn_timer

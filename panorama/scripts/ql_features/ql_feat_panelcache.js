@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_panelcache";
+    // DEPENDS: state, utils, ensureCachedPanelByIds, ensureMinimapPanelCache, ensurePassiveHudPanelCache, ensureGameTimePanelCache, ensureAbilitiesContainerPanelCache
     var _deps = QOL.import(["state","utils","ensureCachedPanelByIds","ensureMinimapPanelCache","ensurePassiveHudPanelCache","ensureGameTimePanelCache","ensureAbilitiesContainerPanelCache"]);
     var State = _deps.state;
     var Utils = _deps.utils;

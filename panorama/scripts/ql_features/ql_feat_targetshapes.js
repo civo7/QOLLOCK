@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_targetshapes";
+    // DEPENDS: state, utils, getUnitTargetDefaultStyleTexts
     var _deps = QOL.import(["state", "utils", "getUnitTargetDefaultStyleTexts"]);
     var State = _deps.state;
     var Utils = _deps.utils;
@@ -10,6 +11,8 @@
     var IsPanelListValid = Utils.IsPanelListValid;
     var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
     var TARGET_SHAPE_DEBUG = false;
+    // Phase 1.4: TARGET_SHAPE_DEBUG_THROTTLE_MS was referenced but never defined.
+    var TARGET_SHAPE_DEBUG_THROTTLE_MS = 5000;
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;

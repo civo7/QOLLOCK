@@ -3,6 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_buildbridge";
+    // DEPENDS: (none — loads before ql_core.js populates QOL namespace;
+    // accesses QOL.* symbols at call time via direct global access.)
     // Note: this file loads before ql_core.js populates the QOL namespace,
     // so we access State and other globals at call time, not via QOL.import().
     // Functions that need QOL symbols should use direct global access.

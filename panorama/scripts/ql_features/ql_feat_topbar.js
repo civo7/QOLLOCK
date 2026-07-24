@@ -2,7 +2,8 @@
 // Extracted from ql_core.js, Step 2a
 (function() {
     'use strict';
-        var _featureId = "ql_feat_topbar";
+    var _featureId = "ql_feat_topbar";
+    // DEPENDS: getCachedPanel, isHudVisibleForTopBarRuntime, resolveCachedPanel, state, setCachedPanel, utils, panelIdTopBar
     var _deps = QOL.import(["getCachedPanel", "isHudVisibleForTopBarRuntime", "resolveCachedPanel", "state", "setCachedPanel", "utils", "panelIdTopBar"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
@@ -32,7 +33,7 @@
 
     // ── Update ──
     function update(root, cfg) {
-        if (!State._debug_topBarRuntime) { $.Msg("[QOL DEBUG] First update: topBarRuntime\n"); State._debug_topBarRuntime = true; }
+        
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_TOP_BAR_ENABLED");
         var topBar = ResolveCachedPanel(root, "topBarPanel", PID_TOP_BAR);
@@ -47,11 +48,20 @@
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
         if (State.topBarRuntimeStyleSig === styleSig) return;
 
-        topBar.style.x = String(offsetX) + "px";
-        topBar.style.y = String(-offsetY) + "px";
-        topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
-        topBar.style.visibility = shouldShow ? "visible" : "collapse";
-        Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
+        // When hidden, clear inline styles so CSS rules (e.g., .InHideout #TopBar
+        // { opacity: 0 }) take effect — inline styles override CSS at any specificity.
+        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !shouldShow);
+        else topBar.style.visibility = shouldShow ? "visible" : "collapse";
+        if (shouldShow) {
+            topBar.style.x = String(offsetX) + "px";
+            topBar.style.y = String(-offsetY) + "px";
+            topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
+            Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
+        } else {
+            // Clear inline style.opacity set during a previous match — otherwise it
+            // persists and beats CSS opacity rules (e.g., .InHideout #TopBar).
+            try { delete topBar.style.opacity; } catch(eClear) { topBar.style.opacity = ""; }
+        }
         State.topBarRuntimeStyleSig = styleSig;
     }
 

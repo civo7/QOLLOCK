@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_heroshop";
+    // DEPENDS: getCachedPanel, state, setCachedPanel, setPanelClassCached, utils, normalizeHudOffsetNumber, normalizeHudScaleNumber
     var _deps = QOL.import(["getCachedPanel", "state", "setCachedPanel", "setPanelClassCached", "utils", "normalizeHudOffsetNumber", "normalizeHudScaleNumber"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
@@ -15,6 +16,8 @@
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
     var SetPanelClassCached = _deps.setPanelClassCached;
     var PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
+    // Phase 1.3: HERO_SHOP_PANEL_SEARCH_MS was referenced but never defined.
+    var HERO_SHOP_PANEL_SEARCH_MS = 2000;
 
     function UpdateHeroShopRuntime(root, cfg, nowMs) {
         var shopOffsetXRaw = NormalizeHudOffsetNumber(cfg.SHOP_OFFSET_X, 0);
@@ -39,8 +42,7 @@
         var heroShop = GetCachedPanel("heroShop");
         if (heroShop && needsHeroShopFeatures) {
             try {
-                var shopVis = heroShop.style && heroShop.style.visibility;
-                if (shopVis === "collapse") return;
+                if (heroShop.BHasClass && heroShop.BHasClass("qol-hidden")) return;
             } catch(eVis) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_heroshop", (eVis && eVis.message ? eVis.message : String(eVis || ""))); }
         }
         if (needsHeroShopFeatures && !heroShop && nowMs >= (State.heroShopNextSearchMs || 0)) {
@@ -75,7 +77,7 @@
                         heroShopMainPanel.style.x = "0px";
                         heroShopMainPanel.style.y = "0px";
                         heroShopMainPanel.style.preTransformScale2d = shopScaleText + ", " + shopScaleText;
-                        heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
+                        if (heroShopMainPanel.SetHasClass) heroShopMainPanel.SetHasClass("qol-hidden", !shopEnabled); else heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
                         SetPanelOpacitySafe(heroShopMainPanel, shopOpacityText, 1.0);
                         State.heroShopMainPanelStyleSig = styleSig;
                     }
@@ -106,7 +108,7 @@
                     resetMainPanel.style.x = "0px";
                     resetMainPanel.style.y = "0px";
                     resetMainPanel.style.preTransformScale2d = "1.00, 1.00";
-                    resetMainPanel.style.visibility = "visible";
+                    if (resetMainPanel.SetHasClass) resetMainPanel.SetHasClass("qol-hidden", false); else resetMainPanel.style.visibility = "visible";
                     SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
                 }
             }

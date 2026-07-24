@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_mousecursor";
+    // DEPENDS: getCachedPanel, isHudClassActive, isPanelVisibleMaybe, isStartupLoaderInActiveMatchContext, state, setCachedPanel, tryGetGameplayMouseCursorPosition, utils
     var _deps = QOL.import(["getCachedPanel","isHudClassActive","isPanelVisibleMaybe","isStartupLoaderInActiveMatchContext","state","setCachedPanel","tryGetGameplayMouseCursorPosition","utils"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
@@ -80,7 +81,7 @@
         var panel = IsPanelValid(State.customMouseCursorPanel) ? State.customMouseCursorPanel : null;
         if (panel) {
             try {
-                if (panel.style.visibility !== "collapse") panel.style.visibility = "collapse";
+                if (!panel.BHasClass || !panel.BHasClass("qol-hidden")) { if (panel.SetHasClass) panel.SetHasClass("qol-hidden", true); else panel.style.visibility = "collapse"; }
             } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_mousecursor", (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         State.customMouseCursorLastX = null;
@@ -123,7 +124,7 @@
             panel.style.y = y + "px";
             State.customMouseCursorLastY = y;
         }
-        if (panel.style.visibility !== "visible") panel.style.visibility = "visible";
+        if (!panel.BHasClass || !panel.BHasClass("qol-hidden")) { if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false); else panel.style.visibility = "visible"; }
         SetGameplayMouseCursorRootClass(root, true);
     }
 

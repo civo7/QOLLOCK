@@ -3,6 +3,7 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_unsecuredsouls";
+    // DEPENDS: estimateUnsecuredSoulsEtaFallbackSec, findUnsecuredSoulsSource, getCachedPanel, getGameSecondsForUrn, getGameplayHudPanel, getUnsecuredSoulsDangerLevel, isCustomHudContextActive, parseUnsecuredSoulsValue, resetUnsecuredSoulsTracking, state, setCachedPanel, utils, isConnectedToHideout
     var _deps = QOL.import(["estimateUnsecuredSoulsEtaFallbackSec","findUnsecuredSoulsSource","getCachedPanel","getGameSecondsForUrn","getGameplayHudPanel","getUnsecuredSoulsDangerLevel","isCustomHudContextActive","parseUnsecuredSoulsValue","resetUnsecuredSoulsTracking","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var State = _deps.state;
@@ -100,7 +101,7 @@
         var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
         if (hideout) {
             if (State.unsecuredSouls.displayMode !== "hideout") {
-                overlay.style.visibility = "collapse";
+                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse";
                 overlay.SetHasClass("danger_1", false);
                 overlay.SetHasClass("danger_2", false);
                 overlay.SetHasClass("danger_3", false);
@@ -115,8 +116,8 @@
             return;
         }
 
-        if (State.unsecuredSouls.displayMode !== "active" || overlay.style.visibility !== "visible") {
-            overlay.style.visibility = "visible";
+        if (State.unsecuredSouls.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
+            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
         State.unsecuredSouls.displayMode = "active";
 
