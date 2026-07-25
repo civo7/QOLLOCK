@@ -16,14 +16,20 @@
 (function () {
     "use strict";
 
-    // Guard against double-initialization (script reload edge case)
-    if (QOL && QOL.core && QOL.core.__initialized) {
+    // Guard against double-initialization (script reload edge case).
+    // Read from globalThis explicitly to avoid var-hoisting shadowing.
+    var _existing = (typeof globalThis !== "undefined") ? globalThis.QOL : QOL;
+    if (_existing && _existing.core && _existing.core.__initialized) {
         $.Msg("[QOLLock] core/ql_namespace: already initialized, skipping.");
         return;
     }
 
-    // Ensure QOL exists (created by ql_shared_presets.js or prior init)
-    var QOL = (typeof QOL !== "undefined") ? QOL : {};
+    // Ensure QOL namespace exists (created by ql_shared_presets.js or prior init)
+    if (typeof globalThis !== "undefined" && globalThis.QOL) {
+        var QOL = globalThis.QOL;
+    } else {
+        var QOL = (typeof QOL !== "undefined") ? QOL : {};
+    }
 
     // Create sub-namespace buckets
     QOL.core = QOL.core || {};

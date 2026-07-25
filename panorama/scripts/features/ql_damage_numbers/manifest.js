@@ -9,7 +9,7 @@
 // PATTERN:     Polling. Self-scheduling via Scheduler.createPollLoop.
 // =============================================================================
 (function(){"use strict";var FR=QOL.core.FeatureRegistry;if(!FR){$.Msg("[QOLLock] FEATURE_ID: FeatureRegistry not found — aborting");return;}
-FR.register({id:"ql-damage-numbers",enabledByDefault:false,settings:[],create:function(ctx){var _loop=null;
+FR.register({id:"ql_damage_numbers",enabledByDefault:false,settings:[],create:function(ctx){var _loop=null;
 function _tick(){var cfg=ctx.config.all();/* polling logic */ }
-return{onEnable:function(){var S=QOL.core.Scheduler;_loop=S&&S.createPollLoop?S.createPollLoop(_tick,0.2,"ql-damage-numbers"):null;},
+return{onEnable:function(){var S=QOL.core.Scheduler;_loop=S&&S.createPollLoop?S.createPollLoop(_tick,0.2,"ql_damage_numbers"):null;},
 onDisable:function(){if(_loop){_loop.stop();_loop=null;}},onSettingsChanged:function(){}};}});})();

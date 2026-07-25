@@ -127,6 +127,15 @@
         return snapshot;
     }
 
+    function exportAll() {
+        var result = {};
+        var ids = Object.keys(_schemas);
+        for (var i = 0; i < ids.length; i++) {
+            result[ids[i]] = all(ids[i]);
+        }
+        return result;
+    }
+
     function hasSchema(featureId) {
         return _schemas.hasOwnProperty(featureId);
     }
@@ -169,7 +178,8 @@
 
     QOL.core.ConfigStore = {
         registerSchema: registerSchema, get: get, set: set, all: all,
-        hasSchema: hasSchema, load: load, syncFromExternal: syncFromExternal
+        exportAll: exportAll, hasSchema: hasSchema, load: load,
+        syncFromExternal: syncFromExternal
     };
 
     $.Msg("[QOLLock] core/ql_config_store: attached to QOL.core.ConfigStore");

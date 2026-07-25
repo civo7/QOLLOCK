@@ -141,8 +141,13 @@
         return true;
     }
 
+    function _stopConfigPolling() {
+        if (_configPollTimer) { $.CancelScheduled(_configPollTimer); _configPollTimer = null; }
+    }
+
     function shutdown() {
         if (!_booted) return;
+        _stopConfigPolling();
         if (FeatureRegistry) FeatureRegistry.shutdown();
         // Save config to Hud panel attribute
         if (ConfigStore) {
@@ -150,7 +155,7 @@
             if (hud && typeof hud.SetAttributeString === "function") {
                 try {
                     hud.SetAttributeString("qollock_config",
-                        JSON.stringify(ConfigStore.all("*") || {}));
+                        JSON.stringify(ConfigStore.exportAll() || {}));
                 } catch (e) {
                     if (Logger) Logger.logWarn("App", "config save failed");
                 }
