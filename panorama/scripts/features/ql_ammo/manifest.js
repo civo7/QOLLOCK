@@ -7,7 +7,8 @@
 // DEPENDS ON:  QOL.core.FeatureRegistry
 // CONFIG KEYS: ENABLE_AMMO_STATUS, ENABLE_HIDE_MAGAZINE, ENABLE_HIDE_AMMO_ALL,
 //              AMMO_PANEL_SCALE, AMMO_CURRENT_SCALE, AMMO_TOTAL_SCALE,
-//              AMMO_PANEL_X_OFFSET, AMMO_PANEL_Y_OFFSET, AMMO_CLIP_ANGLE
+//              AMMO_PANEL_X_OFFSET, AMMO_PANEL_Y_OFFSET, AMMO_CLIP_ANGLE,
+//              AMMO_TEXT_COLOR
 // PATTERN:     Event-driven. Multi-child style apply with signature diffing.
 //              Clip ring rotation via transform on children (not container).
 // =============================================================================

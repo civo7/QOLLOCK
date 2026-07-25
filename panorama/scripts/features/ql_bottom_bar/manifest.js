@@ -35,7 +35,8 @@
                     Number(cfg.BOTTOM_BAR_OPACITY) !== 1.0 ||
                     Number(cfg.BOTTOM_BAR_SCALE) !== 1.0 ||
                     Number(cfg.BOTTOM_BAR_X_OFFSET) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_Y_OFFSET) !== 0;
+                    Number(cfg.BOTTOM_BAR_Y_OFFSET) !== 0 ||
+                    Number(cfg.BOTTOM_BAR_WASH_COLOR) !== 0;
             }
 
             function _applyCurrencyColor(root, washColor) {
