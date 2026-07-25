@@ -18,7 +18,7 @@
 //   §14 Misc: images in chat, on-death arcade, mouse cursor, DL4D, audio
 //   §15 Build category payload, account preset binding, settings loader
 //   §16 Feature registrations (QOL_REGISTER_FEATURE calls)
-//   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
+//   §17 Bootstrap: $.Schedule startup
 // ==========================================================================
 
 'use strict';
@@ -90,13 +90,7 @@ _TLog = function(label, detail) {
 
 
 
-    // WHY: probes the `joy_name` convar as a persistent key-value store that survives
-    // game restarts — used as an additional config persistence channel alongside panel attrs.
-    // DISABLED: GameInterfaceAPI confirmed absent — cannot read convar values, so probe
-    // provides zero value while overwriting the user's joystick name on every startup.
-    const QOL_CONVAR_STORAGE_PROBE_ENABLED = false;
-    const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
-    const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
+    // ConvarStorageProbe removed — GameInterfaceAPI confirmed absent, probe was dead code.
     // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
     // and as standalone panel attributes (for synchronous bridging into CSS without
     // waiting for the next loop tick).
@@ -1903,95 +1897,6 @@ function BuildDefaultPayloadToken(cfg) {
     var encoded = BuildPayloadToBase64Url(compact);
     if (!encoded || encoded.length === 0) return "";
     return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
-}
-
-function BuildMaxPayloadTokenForConvarStorageProbe() {
-    var maxConfig = _BDC();
-    var schema = GetBuildPayloadCompactSchema(BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
-    for (var i = 0; i < schema.length; i++) {
-        var field = schema[i];
-        if (!field || !field.key) continue;
-        if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
-            if (BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length > 0) {
-                maxConfig.DEFAULT_HERO = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS[BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length - 1];
-            }
-            continue;
-        }
-        if (Object.prototype.hasOwnProperty.call(field, "max")) {
-            maxConfig[field.key] = field.max;
-        }
-    }
-
-    var compact = SerializeBuildPayloadCompact(maxConfig);
-    var encoded = BuildPayloadToBase64Url(compact);
-    return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
-}
-
-function RepeatConvarStorageProbeChars(length) {
-    var targetLen = Math.max(0, Math.floor(Number(length) || 0));
-    var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    var out = "";
-    for (var i = 0; i < targetLen; i++) {
-        out += alphabet.charAt(i % alphabet.length);
-    }
-    return out;
-}
-function ReadConvarStorageProbeValue() {
-    // GameInterfaceAPI confirmed absent — cannot read convar values from Panorama.
-    return "";
-}
-
-function CanReadConvarStorageProbeValue() {
-    // GameInterfaceAPI confirmed absent.
-    return false;
-}
-
-function DispatchConvarStorageProbeCommand(commandText) {
-    var command = String(commandText || "").trim();
-    if (!command) return false;
-    // GameInterfaceAPI.ConsoleCommand confirmed absent.
-    // CitadelConCommand is the only dispatch path.
-    try { $.DispatchEvent("CitadelConCommand", command); return true; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    return false;
-}
-
-function WriteConvarStorageProbeValue(value) {
-    var text = String(value || "");
-    // GameInterfaceAPI.SetSettingString/ConsoleCommand confirmed absent.
-    // CitadelConCommand dispatch is the only write path.
-    return DispatchConvarStorageProbeCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
-}
-
-function RunConvarStorageProbe() {
-    if (!QOL_CONVAR_STORAGE_PROBE_ENABLED) return;
-    $.Schedule(1.0, function() {
-        try {
-            var canRead = CanReadConvarStorageProbeValue();
-            var defaultExport = BuildDefaultPayloadToken(_BDC());
-            var maxExport = BuildMaxPayloadTokenForConvarStorageProbe();
-            var targetLen = Math.max(1, Math.floor(maxExport.length * 2));
-            var fillerLen = Math.max(1, targetLen - QOL_CONVAR_STORAGE_PROBE_PREFIX.length);
-            var probeValue = QOL_CONVAR_STORAGE_PROBE_PREFIX + RepeatConvarStorageProbeChars(fillerLen);
-            var beforeRaw = canRead ? ReadConvarStorageProbeValue() : "";
-            var wrote = WriteConvarStorageProbeValue(probeValue);
-            DispatchConvarStorageProbeCommand("host_writeconfig");
-            var afterRaw = canRead ? ReadConvarStorageProbeValue() : "";
-            $.Msg(
-                "[QOLLock][ConvarStorageProbe] target=joy_name" +
-                " readApi=" + (canRead ? "1" : "0") +
-                " wrote=" + (wrote ? "1" : "0") +
-                " beforeLen=" + beforeRaw.length +
-                " afterLen=" + afterRaw.length +
-                " afterMatch=" + (afterRaw === probeValue ? "1" : "0") +
-                " defaultExportLen=" + defaultExport.length +
-                " maxExportLen=" + maxExport.length +
-                " targetProbeLen=" + targetLen +
-                " writeLen=" + probeValue.length
-            );
-        } catch (probeErr) {
-            $.Msg("[QOLLock][ConvarStorageProbe] error=" + String(probeErr && probeErr.message ? probeErr.message : probeErr));
-        }
-    });
 }
 
 function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
@@ -14489,8 +14394,6 @@ function GetUIRoot() {
     }
 
     $.Schedule(0.0, BootstrapUnitTargetStyles);
-
-    RunConvarStorageProbe();
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
     $.Schedule(CORE_START_DELAY_COMPASS_SEC, compassLoop);
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);
