@@ -9,8 +9,9 @@
 //               config (ConfigStore), logging (Logger).
 // DEPENDS ON:  core/ql_namespace.js (QOL.core)
 // USED BY:     Feature manifests (via QOL.core.Scheduler)
-// GOTCHAS:     $.Schedule may return timer ID 0. Always use !== null check.
-//              Raw $.Schedule() is BANNED in feature code — use createPollLoop().
+// GOTCHAS:     $.Schedule returns a number handle. $.CancelScheduled is safe with
+//              already-fired handles (no-throw). Raw $.Schedule() is BANNED
+//              in feature code — use createPollLoop().
 // LOAD ORDER:  4th — after ql_event_bus.js
 //
 // Boundary validation: Checks QOL.core exists. Aborts with message if not.
@@ -29,8 +30,10 @@
     var _timings = {};
     var _MAX_TIMING_SAMPLES = 120;
 
+    // $.FrameTime() is monotonic (seconds since Panorama init).
+    // Date.now() is NOT — system clock changes corrupt timing data.
     function _nowMs() {
-        return (typeof Date !== "undefined" && Date.now) ? Date.now() : $.FrameTime() * 1000;
+        return $.FrameTime() * 1000;
     }
 
     function _recordTiming(featureId, elapsedMs) {
@@ -82,7 +85,7 @@
         _handle = $.Schedule(jitter, tick);
 
         var loop = {
-            stop: function () { _stopped = true; },
+            stop: function () { _stopped = true; if (_handle !== null) { $.CancelScheduled(_handle); _handle = null; } },
             reschedule: function (newRateSec) {
                 if (typeof newRateSec === "number" && newRateSec > 0) { _rate = newRateSec; }
             }

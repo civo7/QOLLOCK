@@ -6,7 +6,8 @@
 // DOES NOT OWN: Config validation (ConfigStore), persistence (ql_app.js),
 //               Feature lifecycle (FeatureRegistry)
 // DEPENDS ON:  core/ql_namespace.js, core/ql_config_store.js,
-//              legacy/ql_config_defaults.js (QOL_DEFAULT_CONFIG)
+//              legacy/ql_config_defaults.js (QOL_DEFAULT_CONFIG),
+//              legacy/ql_core.js (QOL_FEATURE_REGISTRY — old feature key map)
 // USED BY:     ql_app.js (boot: load old config → ConfigStore)
 // LOAD ORDER:  After ql_config_store.js and legacy/ql_config_defaults.js
 //
@@ -35,6 +36,52 @@
         return;
     }
 
+    // Step 0b: Map old QOL.register() feature names to new manifest IDs.
+    // Keys MUST match the actual QOL.register() name from ql_feat_*.js.
+    var OLD_TO_NEW = {
+        "ammo": "ql_ammo",
+        "bottomBarRuntime": "ql_bottom_bar",
+        "damageImpactRuntime": "ql_damage_impact",
+        "itemsRuntime": "ql_items",
+        "soulsRuntime": "ql_souls",
+        "staminaChargeColorRuntime": "ql_stamina",
+        "topBarRuntime": "ql_topbar",
+        "imagesInChat": "ql_chat_images",
+        "colorWarning": "ql_color_warnings",
+        "enemyColorWarning": "ql_color_warnings",
+        "allyColorWarning": "ql_color_warnings",
+        "combatStatus": "ql_combat_status",
+        "crosshairStats": "ql_crosshair_stats",
+        "damageNumbers": "ql_damage_numbers",
+        "heroShop": "ql_heroshop",
+        "keyboardRuntime": "ql_keyboard",
+        "laneWithParty": "ql_lane_with_party",
+        "legacyAudioPassive": "ql_legacy_audio_passive",
+        "minimapRuntime": "ql_minimap_runtime",
+        "gameplayMouseCursor": "ql_mouse_cursor",
+        "nicknames": "ql_nicknames",
+        "onDeathArcade": "ql_on_death_arcade",
+        "recentPurchases": "ql_recent_purchases",
+        "rejuvTimers": "ql_rejuv_timers",
+        "showRank": "ql_showrank",
+        "signatureFlash": "ql_sigflash",
+        "spm": "ql_spm",
+        "statBonuses": "ql_stat_bonuses",
+        "statlocker": "ql_statlocker",
+        "statsPosition": "_legacy",
+        "targetShapes": "ql_target_shapes",
+        "unsecuredSoulsTimer": "ql_unsecured_souls_timer",
+        "unspent": "ql_unspent",
+        "urnTimer": "ql_urn_timer",
+        "zipBoost": "ql_zipboost",
+        "betterUnsecuredHud": "ql_better_unsecured_hud",
+        "healthbarRuntimeHelpers": "ql_healthbar"
+    };
+
+    function _mapToNewId(oldId) {
+        return OLD_TO_NEW[oldId] || oldId;
+    }
+
     // Old flat defaults — populated by legacy/ql_config_defaults.js
     // Type coercion map: for each flat key, what type it should be in new system
     function _coerceType(key, value) {
@@ -54,29 +101,53 @@
         return value;
     }
 
-    // Map each old flat key to the feature(s) that own it.
-    // Built from canonical type mapping (Phase 0).
-    // During migration, the old QOL_FEATURE_REGISTRY is the authoritative source.
+    // Map each old flat key to the NEW feature ID(s) that own it.
+    // Step 0b: Applies OLD_TO_NEW mapping so both loadFromFlat() and exportToFlat()
+    // use correct ConfigStore bucket IDs.
     function _buildKeyToFeatureMap() {
         var map = {};
+        var unmapped = [];
         // Use the old QOL_FEATURE_REGISTRY to find which feature owns each key
         if (typeof QOL_FEATURE_REGISTRY === "object") {
             var names = Object.keys(QOL_FEATURE_REGISTRY);
             for (var i = 0; i < names.length; i++) {
                 var entry = QOL_FEATURE_REGISTRY[names[i]];
                 if (!entry || !entry.configKeys) continue;
+                var newId = _mapToNewId(names[i]);
+                if (newId === names[i] && !OLD_TO_NEW.hasOwnProperty(names[i])) {
+                    unmapped.push(names[i]);
+                }
                 for (var j = 0; j < entry.configKeys.length; j++) {
                     var key = entry.configKeys[j];
                     if (!map[key]) map[key] = [];
-                    map[key].push(names[i]);
+                    map[key].push(newId);
                 }
             }
-        }
-        // Also check the new FeatureRegistry manifests
-        if (ConfigStore) {
-            // FeatureRegistry handles its own key registration
+            // Step 0b validation: warn about unmapped old feature IDs
+            if (unmapped.length > 0) {
+                $.Msg("[QOLLock][WARN][ConfigAdapter] " + unmapped.length +
+                      " unmapped old feature IDs: " + unmapped.join(", "));
+            }
+        } else {
+            $.Msg("[QOLLock][WARN][ConfigAdapter] QOL_FEATURE_REGISTRY not found — " +
+                  "config keys will route to _legacy bucket. Is ql_shared_presets.js loaded?");
         }
         return map;
+    }
+
+    // Step 0e: Normalization stubs — called after loadFromFlat writes flat values.
+    // The full normalization chain from ql_config.js MergeConfig is ~11 functions.
+    // During initial wiring, we normalize in ConfigAdapter. After full migration,
+    // normalization moves to ConfigStore schema-level transforms.
+    function _normalizeBucket(featureId, bucket) {
+        // AMMO_PANEL_SCALE → derive AMMO_CURRENT_SCALE and AMMO_TOTAL_SCALE
+        if (featureId === "ql_ammo" && bucket.hasOwnProperty("AMMO_PANEL_SCALE")) {
+            var ammoScale = Number(bucket.AMMO_PANEL_SCALE) || 100;
+            if (!bucket.hasOwnProperty("AMMO_CURRENT_SCALE")) bucket.AMMO_CURRENT_SCALE = ammoScale;
+            if (!bucket.hasOwnProperty("AMMO_TOTAL_SCALE")) bucket.AMMO_TOTAL_SCALE = ammoScale;
+        }
+        // HEALTHBAR_TYPE: if old boolean-based type flags are present, derive type
+        // (Full normalization deferred — see ql_config.js MergeConfig for the 11 functions)
     }
 
     // -- Public API --
@@ -85,20 +156,22 @@
      * Load a flat config object into ConfigStore.
      * Called during boot after features have registered their schemas.
      *
-     * @param {Object} flatConfig — flat key-value pairs from old storage
+     * @param {Object} flatConfig — flat key-value pairs from old storage (unwrapped from envelope)
      */
     function loadFromFlat(flatConfig) {
         if (!flatConfig || typeof flatConfig !== "object") return;
 
         var keyMap = _buildKeyToFeatureMap();
         var processed = {};
+        var totalKeys = 0;
 
         for (var key in flatConfig) {
             if (!flatConfig.hasOwnProperty(key)) continue;
             var rawValue = flatConfig[key];
             var coerced = _coerceType(key, rawValue);
+            totalKeys++;
 
-            // Find features that own this key
+            // Find features that own this key (now mapped to NEW IDs)
             var featureIds = keyMap[key];
             if (!featureIds || featureIds.length === 0) {
                 // Key not registered to any feature — store under a legacy bucket
@@ -109,22 +182,33 @@
 
             // Write to each feature's ConfigStore bucket
             for (var f = 0; f < featureIds.length; f++) {
-                // Set directly into ConfigStore (bypasses validation for migration)
-                // ConfigStore.set validates and emits events
                 var fid = featureIds[f];
                 if (!processed[fid]) processed[fid] = {};
                 processed[fid][key] = coerced;
             }
         }
 
-        // Load processed data into ConfigStore
+        // Apply normalization BEFORE loading into ConfigStore (Step 0e)
         for (var featureId in processed) {
+            if (processed.hasOwnProperty(featureId)) {
+                _normalizeBucket(featureId, processed[featureId]);
+            }
+        }
+
+        // Load processed data into ConfigStore
+        var bucketCount = 0;
+        for (featureId in processed) {
             if (processed.hasOwnProperty(featureId)) {
                 var bucket = {};
                 bucket[featureId] = processed[featureId];
                 ConfigStore.load(bucket);
+                bucketCount++;
             }
         }
+
+        // Step 0b: runtime report
+        $.Msg("[QOLLock] ConfigAdapter: loaded " + totalKeys + " keys into " +
+              bucketCount + " feature buckets");
     }
 
     /**
