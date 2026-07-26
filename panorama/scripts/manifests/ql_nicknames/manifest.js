@@ -71,14 +71,9 @@
             function _getTopBarPlayerPanel(root, index) {
                 if (!root || !root.FindChildTraverse) return null;
                 try {
-                    var panels = root.FindChildrenWithClassTraverse("player_" + index) || [];
-                    for (var i = 0; i < panels.length; i++) {
-                        if (_alive(panels[i])) {
-                            // Verify it's a top-bar player panel
-                            var parent = panels[i].GetParent ? panels[i].GetParent() : null;
-                            if (parent && parent.id === "PlayerStatus") return panels[i];
-                        }
-                    }
+                    // Match old system: panels are identified by ID "TopBarPlayerN"
+                    var panel = root.FindChildTraverse("TopBarPlayer" + index);
+                    if (_alive(panel)) return panel;
                 } catch(e) {}
                 return null;
             }
@@ -135,6 +130,12 @@
                 if (display && display.SetHasClass) {
                     try { display.SetHasClass("QOLNickRuntime", true); } catch(e) {}
                 }
+                // Reparent label to playerPanel if it was orphaned by a top bar rebuild
+                try {
+                    if (display && playerPanel && display.GetParent && display.GetParent() !== playerPanel && display.SetParent) {
+                        display.SetParent(playerPanel);
+                    }
+                } catch(e) {}
                 return display;
             }
 

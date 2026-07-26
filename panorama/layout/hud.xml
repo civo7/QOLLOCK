@@ -58,7 +58,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" />
+		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_showrank.vjs_c" />

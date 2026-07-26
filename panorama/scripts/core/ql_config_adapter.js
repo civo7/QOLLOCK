@@ -132,7 +132,42 @@
             $.Msg("[QOLLock][WARN][ConfigAdapter] QOL_FEATURE_REGISTRY not found — " +
                   "config keys will route to _legacy bucket. Is ql_shared_presets.js loaded?");
         }
+
+        // Fallback: scan FeatureRegistry manifests for keys not found in old registry.
+        // When old feature files are removed (cut-over), QOL_FEATURE_REGISTRY loses
+        // their entries. This fallback reads keys from the new manifests' settings[]
+        // and enableKey fields so the config bridge continues to route correctly.
+        _mergeManifestKeys(map);
+
         return map;
+    }
+
+    function _mergeManifestKeys(map) {
+        var FR = QOL.core.FeatureRegistry;
+        if (!FR) return;
+        try {
+            var ids = FR.getRegisteredIds();
+            for (var i = 0; i < ids.length; i++) {
+                var m = FR.getManifest(ids[i]);
+                if (!m) continue;
+                // Add enableKey to the map if not already routed
+                if (m.enableKey && !map.hasOwnProperty(m.enableKey)) {
+                    map[m.enableKey] = [ids[i]];
+                }
+                // Add all settings keys to the map if not already routed
+                if (m.settings) {
+                    for (var s = 0; s < m.settings.length; s++) {
+                        var sk = m.settings[s].key;
+                        if (sk && !map.hasOwnProperty(sk)) {
+                            if (!map[sk]) map[sk] = [ids[i]];
+                        }
+                    }
+                }
+            }
+        } catch(e) {
+            $.Msg("[QOLLock][WARN][ConfigAdapter] manifest key scan failed: " +
+                  (e.message || e));
+        }
     }
 
     // Step 0e: Normalization stubs — called after loadFromFlat writes flat values.
