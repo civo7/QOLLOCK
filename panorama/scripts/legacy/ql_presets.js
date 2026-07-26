@@ -1,7 +1,7 @@
 // ==========================================================================
 // ql_presets.js — QOLLOCK Presets
 // ==========================================================================
-// OWNS:        QOL_PRESETS — 68 preset configurations
+// OWNS:        QOL_PRESETS — 94 preset configurations
 // DOES NOT OWN: Config defaults, preset application logic
 // DEPENDS ON:  Nothing beyond JS built-ins
 // USED BY:     ql_shared_presets.js, ql_settings.js

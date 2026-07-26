@@ -29,6 +29,7 @@
         var QOL = globalThis.QOL;
     } else {
         var QOL = (typeof QOL !== "undefined") ? QOL : {};
+        if (typeof globalThis !== "undefined") { globalThis.QOL = QOL; }
     }
 
     // Create sub-namespace buckets

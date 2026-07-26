@@ -61,7 +61,8 @@
         if (_configPollTimer) return;
         try {
             if (typeof hud.GetAttributeString === "function") {
-                _lastConfigRaw = hud.GetAttributeString("qollock_config", "");
+                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
+                                _lastConfigRaw = hud.GetAttributeString("qollock_config", "");
             }
         } catch (e) { /* will poll on next tick */ }
 
@@ -75,7 +76,8 @@
             var raw = "";
             try {
                 if (typeof hudPanel.GetAttributeString === "function") {
-                    raw = hudPanel.GetAttributeString("qollock_config", "");
+                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
+                                    raw = hudPanel.GetAttributeString("qollock_config", "");
                 }
             } catch (e) {
                 _configPollTimer = $.Schedule(0.5, poll);
@@ -120,7 +122,8 @@
         var storedConfig = {};
         try {
             if (typeof hud.GetAttributeString === "function") {
-                var raw = hud.GetAttributeString("qollock_config", "");
+                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
+                                var raw = hud.GetAttributeString("qollock_config", "");
                 if (raw) storedConfig = JSON.parse(raw);
             }
         } catch (e) {
