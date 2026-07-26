@@ -70,6 +70,19 @@
 		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_fg.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_mc.vjs_c" />
+		<!-- Phase 9: New core infrastructure (coexists with old system) -->
+		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_logger.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_event_bus.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_scheduler.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_config_store.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_config_adapter.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_feature_registry.vjs_c" />
+		<!-- Test: first wired manifest -->
+		<include src="s2r://panorama/scripts/features/ql_cast_failed_hint/manifest.vjs_c" />
+		<!-- App: loads LAST, after all feature manifests -->
+		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
