@@ -11,6 +11,36 @@ hit the same traps. This guide documents the patterns that work.
 
 ---
 
+## Lessons Learned — Nicknames Cut-Over (First Proven Migration)
+
+The nicknames manifest took 7 commits and 4 in-game test cycles to get right.
+Every bug was a **port error** — new helper code that didn't exactly match old behavior.
+None were architectural. Here's what broke and how to prevent it next time.
+
+### Bugs found during cut-over
+
+| # | Bug | Root cause | Prevention |
+|---|-----|-----------|------------|
+| 1 | `_inHideout()` returned wrong answer | Checked root panel, not Hud child. Old `IsConnectedToHideout` checks Hud first. | **Side-by-side compare**: when porting any helper function, read the old implementation line by line and verify every branch matches. |
+| 2 | `_getTopBarPlayerPanel()` found nothing | Used `FindChildrenWithClassTraverse("player_N")` (CSS class). Old `GetTopBarPlayerPanel` uses `FindChildTraverse("TopBarPlayerN")` (panel ID). | **API match**: verify every `FindChild`/`FindChildren`/`CreatePanel` call uses the same ID/class/pattern as the old implementation. |
+| 3 | Labels didn't disappear on disable | `onDisable()` called `_loop.stop()` before cleaning up labels. Old dispatch continues calling update with `enabled=false`, which handles cleanup naturally. | **Lifecycle gap**: when porting a polling feature, `onDisable()` must replicate the cleanup that the old `update()` function does when `enabled=false`. |
+| 4 | Config bridge couldn't route keys after old include removed | `_buildKeyToFeatureMap()` only read `QOL_FEATURE_REGISTRY`. No fallback. | **Cut-over dependency**: anything that reads `QOL_FEATURE_REGISTRY` breaks when old includes are removed. The `_mergeManifestKeys` fallback now handles this. |
+| 5 | New system never booted | `ql_app.js` defined `boot()` but never called it. IIFE published `QOL.core.App` and exited. | **Boot check**: after wiring core modules, verify `App: booting QOLLock...` appears in console. If absent, the system is dead. |
+
+### Rules for every port going forward
+
+1. **Side-by-side compare.** When porting any helper function from an old `ql_feat_*.js`, open the old file next to the new manifest and trace every line. Function signatures, API calls, control flow — verify each matches exactly before declaring the port done.
+
+2. **Cut-over test is mandatory.** Manifests running alongside the old system prove nothing — the old system masks all bugs. Before claiming a manifest works, comment out the old include, repack, and verify the feature renders correctly with only the new system running.
+
+3. **Debug logging in `_tick()` during cut-over.** Add a temporary `$.Msg` at every early-return point (hideout check, config gate, panel search, refresh deadline) so you know exactly which path the tick takes. Remove after verification.
+
+4. **onDisable == the old update(enabled=false).** When enabled is false, the old dispatch calls `update()` with `enabled=false`. The new system calls `onDisable()` and stops the loop. `onDisable()` must replicate whatever cleanup the old update did for the disabled case. This is the most frequently missed translation.
+
+5. **Every function that reads `QOL_FEATURE_REGISTRY` breaks at cut-over.** The config bridge's `_buildKeyToFeatureMap()` now has a `_mergeManifestKeys` fallback. Audit any other code that reads the old registry before removing old includes.
+
+---
+
 ## Permanent Exceptions — Features That Will Never Be Manifests
 
 Two features cannot be migrated to the manifest system:
