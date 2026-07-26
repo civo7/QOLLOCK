@@ -233,7 +233,7 @@
                     _wasEnabled = false;
                     return;
                 }
-                $.Msg("[QOLLock][CUTOVER][statlocker] tick: enabled, scanning for coreRating panels");
+                // scanning for coreRating panels
 
                 var now = Date.now ? Date.now() : (new Date()).getTime();
                 var root = $.GetContextPanel();

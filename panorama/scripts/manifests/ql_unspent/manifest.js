@@ -269,14 +269,11 @@
 
                 var enabled = Number(ctx.config.get("ENABLE_UNSPENT_SOULS")) === 1;
                 if (!enabled || _inHideout(root)) {
-                    if (!enabled) { $.Msg("[QOLLock][CUTOVER][unspent] tick: disabled"); }
-                    else { $.Msg("[QOLLock][CUTOVER][unspent] tick: inHideout"); }
                     if (!_wasDisabled) { _clearAll(root, Date.now ? Date.now() : (new Date()).getTime()); _wasDisabled = true; }
                     _nextSampleMs = 0;
                     return;
                 }
                 _wasDisabled = false;
-                $.Msg("[QOLLock][CUTOVER][unspent] tick: running, processing player slots");
 
                 var now = Date.now ? Date.now() : (new Date()).getTime();
                 if (now < _nextSampleMs) return;
