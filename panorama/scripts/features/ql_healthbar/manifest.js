@@ -20,6 +20,44 @@
     FR.register({
         id: "ql_healthbar",
         enabledByDefault: true,
+        stateKeys: [
+            // Dispatcher (35 keys from ql_feat_healthbar.js)
+            "minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
+            "minimalistHealthbarOffsetPanel", "playerHealthbarScaleOpacityRuntimeApplied",
+            "budhudWasEnabled", "budhudNextUpdateMs",
+            "budhudLastColor", "budhudLastPercentText",
+            "budhudCurrentLabelBaseColor", "budhudCurrentLabelBaseColorCaptured",
+            "mcWasEnabled", "mcNextUpdateMs",
+            "mcHeartsBlinkTimer", "mcLowHealthJiggleTimer", "mcHealingWaveTimer",
+            "mcIsAfflicted", "mcCheckModifierNextMs",
+            "mcHeartSlots", "mcHeartContainerImages", "mcHeartHealingImages",
+            "mcHeartDeferredImages", "mcHeartFillImages",
+            "mcHeartsCapacity", "mcHeartsRowCount", "mcLastVisibleHeartsCount",
+            "mcBarrierHeartsPanels", "mcBarrierHeartContainerImages",
+            "mcBarrierHeartFillImages", "mcBarrierHeartsCapacity",
+            "mcCachedFoodIcons", "mcLoggedHealthContainerMiss",
+            "coloredHealthbarBridgeValue", "playerHealthbarAccentColorSig",
+            "playerHealthbarAccentColorPanels", "playerHealthbarAccentColorToken",
+            // Budhud orphans (2)
+            "coloredHealthbarPulseVal", "coloredHealthbarPulseDir",
+            // FG orphans (13)
+            "fgHeroImageOriginalParent", "fgHeroImageOriginalIndex",
+            "fgHeroImageSwapCandidateSig", "fgHeroImageSwapCandidateHits",
+            "fgHeroImageSwapCandidatePanel", "fgHeroImageMoved",
+            "fgHeroImageRuntimeStyleSig", "fgHeroRuntimeLevelPanel",
+            "fgHeroRuntimeHeroPanel", "fgHeroImageCurrentSig",
+            "fgHeroImagePendingAttachMs", "fgHeroImageSourceProbeNextMs",
+            // MC orphans (24)
+            "mcLoggedGoldApMiss", "mcLoggedBulletBarrierMiss",
+            "mcLastModifierResult", "mcLastBlinkHalfSegments", "mcLastIsBlinkOn",
+            "mcLastContainerHeartsNeeded", "mcLastContainerLastSlotIsHalf",
+            "mcLastFillFullHearts", "mcLastFillHasHalf", "mcLastFillAfflicted",
+            "mcLastDeferredFullHearts", "mcLastDeferredHasHalf", "mcLastDeferredStartSlots",
+            "mcLastHealingFullHearts", "mcLastHealingHasHalf", "mcLastHealingStartSlots",
+            "mcLastBarrierFullHearts", "mcLastBarrierHasHalf", "mcLastBarrierLastSlotIsHalf",
+            "mcHeartsBlinking", "mcHeartsBlinkPhase",
+            "mcLowHealthJiggleActive", "mcHealingWaveActive", "mcHealingWaveCurrentIndex"
+        ],
         settings: [
             { key: "HEALTHBAR_TYPE", type: "dropdown", options: [0,1,2,3,4,5], default: 0 },
             { key: "PLAYER_HEALTHBAR_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
