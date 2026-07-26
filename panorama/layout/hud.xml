@@ -44,9 +44,11 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" />
+		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_lanewithparty.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_statlocker.vjs_c" />
+		<!-- CUT-OVER: old statlocker disabled, see manifests/ql_statlocker/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_statlocker.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
@@ -57,7 +59,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" />
+		<!-- CUT-OVER: old unspent disabled, see manifests/ql_unspent/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" /> -->
 		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" />

@@ -19,7 +19,7 @@
 
     FR.register({
         id: "ql_mouse_cursor",
-        enabledByDefault: false,
+        enabledByDefault: true,  // always-on gate, no enableKey
         settings: [],
         create: function(ctx) {
             var _loop = null;
