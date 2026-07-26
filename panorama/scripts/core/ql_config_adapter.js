@@ -38,6 +38,7 @@
 
     // Step 0b: Map old QOL.register() feature names to new manifest IDs.
     // Keys MUST match the actual QOL.register() name from ql_feat_*.js.
+    // "_legacy" means "no new manifest — keep this feature in the old system."
     var OLD_TO_NEW = {
         "ammo": "ql_ammo",
         "bottomBarRuntime": "ql_bottom_bar",
@@ -75,7 +76,13 @@
         "urnTimer": "ql_urn_timer",
         "zipBoost": "ql_zipboost",
         "betterUnsecuredHud": "ql_better_unsecured_hud",
-        "healthbarRuntimeHelpers": "ql_healthbar"
+        "healthbarRuntimeHelpers": "ql_healthbar",
+        // Permanent exceptions — no new manifest, keep in old system
+        "buildBridge": "_legacy",
+        "coreRoot": "_legacy",
+        "buildSave": "_legacy",
+        "buildLoad": "_legacy",
+        "panelCache": "_legacy"
     };
 
     function _mapToNewId(oldId) {
