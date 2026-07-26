@@ -11,8 +11,30 @@
     var IsPanelListValid = Utils.IsPanelListValid;
     var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
     var TARGET_SHAPE_DEBUG = false;
-    // Phase 1.4: TARGET_SHAPE_DEBUG_THROTTLE_MS was referenced but never defined.
     var TARGET_SHAPE_DEBUG_THROTTLE_MS = 5000;
+
+    // Inlined from ql_core.js — was missing after extraction
+    function ResolveUnitTargetStyleTexts(cfg) {
+        var s = (cfg && cfg.UNIT_TARGET_SIZE !== undefined && cfg.UNIT_TARGET_SIZE !== null)
+            ? Math.round(Number(cfg.UNIT_TARGET_SIZE)) : 150;
+        var o = (cfg && cfg.UNIT_TARGET_OPACITY !== undefined && cfg.UNIT_TARGET_OPACITY !== null)
+            ? parseFloat(cfg.UNIT_TARGET_OPACITY) : 1.0;
+        var h = (cfg && cfg.UNIT_TARGET_HINT_SIZE !== undefined && cfg.UNIT_TARGET_HINT_SIZE !== null)
+            ? Math.round(Number(cfg.UNIT_TARGET_HINT_SIZE)) : 100;
+        if (!isFinite(s)) s = 150; if (s < 50) s = 50; if (s > 300) s = 300;
+        if (!isFinite(o)) o = 1.0; if (o < 0) o = 0; if (o > 1) o = 1;
+        if (!isFinite(h)) h = 100; if (h < 50) h = 50; if (h > 200) h = 200;
+        return {
+            scaleText: (s / 100).toFixed(3),
+            opacityText: o.toFixed(2),
+            hintScaleText: (h / 100).toFixed(3)
+        };
+    }
+    function IsUnitTargetStyleCustomized(cfg) {
+        var style = ResolveUnitTargetStyleTexts(cfg);
+        var def = GetUnitTargetDefaultStyleTexts();
+        return style.scaleText !== def.scaleText || style.opacityText !== def.opacityText || style.hintScaleText !== def.hintScaleText;
+    }
 
     function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
         if (!!redDiamondEnabled) return true;
