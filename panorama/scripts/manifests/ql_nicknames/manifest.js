@@ -50,8 +50,18 @@
             }
 
             function _inHideout(root) {
-                if (!root || !root.BHasClass) return false;
-                try { return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"); } catch(e) { return false; }
+                if (!root) return false;
+                try {
+                    var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+                    var hudHideout = hud && hud.BHasClass && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"));
+                    var rootHideout = root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"));
+                    if (hudHideout || rootHideout) {
+                        $.Msg("[QOLLock][DEBUG][nicknames] inHideout: hud=" + !!hudHideout + " root=" + !!rootHideout + " root.id=" + (root.id || "?"));
+                    }
+                    if (hudHideout) return true;
+                    if (rootHideout) return true;
+                } catch(e) {}
+                return false;
             }
 
             function _getGameSeconds(root) {
@@ -241,26 +251,8 @@
 
                 var now = Date.now ? Date.now() : (new Date()).getTime();
 
-                if (_inHideout(root)) {
-                    if (!_wasInHideout) { _resetAll(true); _wasInHideout = true; }
-                    for (var h = 0; h < MAX_PLAYERS; h++) {
-                        var hp = _alive(_players[h]) ? _players[h] : null;
-                        if (hp && hp.SetHasClass) { try { hp.SetHasClass("qol_nickname_active", false); } catch(e) {} }
-                        _renderDisplay(_alive(_fallbackLabels[h]) ? _fallbackLabels[h] : null, false, "");
-                    }
-                    _wasEnabled = enabled; _nextRefreshMs = now + REFRESH_MS;
-                    return;
-                }
-                if (_wasInHideout) { _wasInHideout = false; _resetAll(true); }
-
-                var clockSec = _getGameSeconds(root);
-                if (_lastClockSec !== null && (clockSec + 5 < _lastClockSec || (_lastClockSec > 30 && clockSec <= 2))) {
-                    _resetAll(true);
-                }
-                _lastClockSec = clockSec;
-
                 var forceRefresh = (enabled !== _wasEnabled);
-                if (!forceRefresh && now < _nextRefreshMs) return;
+                if (!forceRefresh && now < _nextRefreshMs) { /* waiting for next refresh window */ return; }
 
                 var allResolved = enabled;
                 var sawAny = false;
@@ -269,6 +261,8 @@
                     if (result.saw) sawAny = true;
                     if (!result.resolved) allResolved = false;
                 }
+                if (!sawAny) { $.Msg("[QOLLock][DEBUG][nicknames] tick: no player panels found (sawAny=false)"); }
+                else { $.Msg("[QOLLock][DEBUG][nicknames] tick: saw " + (allResolved ? "all" : "partial") + " resolved, _wasEnabled=" + _wasEnabled); }
 
                 _wasEnabled = enabled;
                 var nextMs = REFRESH_MS;

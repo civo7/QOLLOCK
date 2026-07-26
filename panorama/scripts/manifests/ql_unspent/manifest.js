@@ -65,7 +65,7 @@
 
             function _inHideout(root) {
                 if (!root || !root.BHasClass) return false;
-                try { return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"); } catch(e) { return false; }
+                try { var _hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true; if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true; } catch(e) { return false; }
             }
 
             function _getSoulValue(primaryLabel, fallbackLabel) {
