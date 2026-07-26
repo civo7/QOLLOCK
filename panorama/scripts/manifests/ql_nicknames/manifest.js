@@ -275,6 +275,12 @@
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_nicknames") : null;
                 },
                 onDisable: function() {
+                    // Hide all existing labels before stopping the loop
+                    for (var h = 0; h < MAX_PLAYERS; h++) {
+                        var hp = _alive(_players[h]) ? _players[h] : null;
+                        if (hp && hp.SetHasClass) { try { hp.SetHasClass("qol_nickname_active", false); } catch(e) {} }
+                        _renderDisplay(_alive(_fallbackLabels[h]) ? _fallbackLabels[h] : null, false, "");
+                    }
                     if (_loop) { _loop.stop(); _loop = null; }
                     _resetAll(false); _wasEnabled = false;
                 },
