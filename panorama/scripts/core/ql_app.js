@@ -228,4 +228,7 @@
     };
 
     $.Msg("[QOLLock] core/ql_app: attached to QOL.core.App");
+
+    // Auto-boot: call boot() immediately after all core modules and manifests load.
+    QOL.core.App.boot();
 })();
