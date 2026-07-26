@@ -5,7 +5,7 @@
 //              500ms config polling bridge (HUD ↔ Settings cross-isolate sync).
 // DOES NOT OWN: Feature logic, config schema, scheduling, logging, panel access
 // DEPENDS ON:  All core modules (namespace, logger, event_bus, config_store,
-//              scheduler, panel_helpers, feature_registry)
+//              scheduler, panel_helpers, feature_registry, config_adapter)
 // USED BY:     hud.xml (loaded LAST in <scripts> block, after all feature manifests)
 // LOAD ORDER:  8th (LAST) — after all core modules and feature manifests
 //
@@ -20,6 +20,7 @@
         return;
     }
     var ConfigStore = QOL.core.ConfigStore;
+    var ConfigAdapter = QOL.core.ConfigAdapter;
     var FeatureRegistry = QOL.core.FeatureRegistry;
     var Logger = QOL.core.Logger;
     var PanelHelpers = QOL.ui.PanelHelpers;
@@ -35,6 +36,8 @@
     var _booted = false;
     var _lastConfigRaw = "";
     var _configPollTimer = null;
+    // Step 0a: during migration, read from old system's attribute
+    var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
 
     function _findHud() {
         if (_hudPanel && PanelHelpers && PanelHelpers.isPanelAlive(_hudPanel)) return _hudPanel;
@@ -57,12 +60,28 @@
         return hud;
     }
 
+    // Step 0a+0d: unwrap the old system's config envelope {schema, data} → flat object
+    function _unwrapEnvelope(raw) {
+        if (!raw) return null;
+        try {
+            var envelope = JSON.parse(raw);
+            // Old system wraps config: { schema: "3.1.9", data: { KEY: value, ... } }
+            if (envelope && envelope.data && typeof envelope.data === "object") {
+                return envelope.data;
+            }
+            // If no envelope wrapper, assume the raw JSON is already flat config
+            if (envelope && typeof envelope === "object" && !envelope.schema) {
+                return envelope;
+            }
+        } catch (e) {}
+        return null;
+    }
+
     function _startConfigPolling(hud) {
         if (_configPollTimer) return;
         try {
             if (typeof hud.GetAttributeString === "function") {
-                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
-                                _lastConfigRaw = hud.GetAttributeString("qollock_config", "");
+                _lastConfigRaw = hud.GetAttributeString(_CONFIG_ATTRIBUTE, "");
             }
         } catch (e) { /* will poll on next tick */ }
 
@@ -76,24 +95,23 @@
             var raw = "";
             try {
                 if (typeof hudPanel.GetAttributeString === "function") {
-                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
-                                    raw = hudPanel.GetAttributeString("qollock_config", "");
+                    raw = hudPanel.GetAttributeString(_CONFIG_ATTRIBUTE, "");
                 }
             } catch (e) {
                 _configPollTimer = $.Schedule(0.5, poll);
                 return;
             }
+            // Step 0d: only reprocess if raw changed (caching guard)
             if (raw !== _lastConfigRaw) {
                 _lastConfigRaw = raw;
-                if (raw && ConfigStore) {
+                var flatConfig = _unwrapEnvelope(raw);
+                if (flatConfig && ConfigAdapter) {
                     try {
-                        var parsed = JSON.parse(raw);
-                        var changed = ConfigStore.syncFromExternal(parsed);
-                        if (changed > 0 && Logger) {
-                            Logger.logInfo("App", "config poll: " + changed + " changed setting(s)");
-                        }
+                        // Step 0d: use loadFromFlat which handles flat→nested mapping
+                        ConfigAdapter.loadFromFlat(flatConfig);
+                        if (Logger) Logger.logDebug("App", "config poll: updated from attribute");
                     } catch (e) {
-                        if (Logger) Logger.logWarn("App", "config poll parse failed");
+                        if (Logger) Logger.logWarn("App", "config poll adapter failed: " + (e.message || e));
                     }
                 }
             }
@@ -118,29 +136,56 @@
             return false;
         }
 
-        // Load persisted config from panel attribute
-        var storedConfig = {};
+        // Step 0a+0c: Load config from old system's attribute, unwrap envelope,
+        // use ConfigAdapter to handle flat→nested mapping
+        var storedConfig = null;
         try {
             if (typeof hud.GetAttributeString === "function") {
-                // Uses "qollock_config" attribute (old system uses "Deadlock_Mod_Settings_v1")
-                                var raw = hud.GetAttributeString("qollock_config", "");
-                if (raw) storedConfig = JSON.parse(raw);
+                var raw = hud.GetAttributeString(_CONFIG_ATTRIBUTE, "");
+                if (raw) {
+                    var flatConfig = _unwrapEnvelope(raw);
+                    if (flatConfig && ConfigAdapter) {
+                        // Step 0c: use loadFromFlat for flat→nested transformation
+                        ConfigAdapter.loadFromFlat(flatConfig);
+                        if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
+                    }
+                    // Store the parsed value for FeatureRegistry.boot()
+                    storedConfig = JSON.parse(raw);
+                }
             }
         } catch (e) {
-            if (Logger) Logger.logWarn("App", "config load failed, using defaults");
+            if (Logger) Logger.logWarn("App", "config load failed, using defaults: " + (e.message || e));
         }
 
-        if (ConfigStore && storedConfig) {
-            ConfigStore.load(storedConfig);
-        }
-
+        // Step 0c: Pass reconstructed per-feature config to FeatureRegistry
+        // (ConfigStore.exportAll() returns {featureId: {key: value}} format)
+        var featureConfig = ConfigStore.exportAll();
         if (FeatureRegistry) {
-            FeatureRegistry.boot(storedConfig);
+            FeatureRegistry.boot(featureConfig);
         }
 
         _startConfigPolling(hud);
         _booted = true;
-        if (Logger) Logger.logInfo("App", "boot complete");
+
+        // Step 0f: Diagnostic canary — verify config bridge is working.
+        // Only test features that have been wired (schema registered).
+        if (Logger) {
+            var canaryFeature = ConfigStore.hasSchema("ql_ammo") ? "ql_ammo" :
+                               ConfigStore.hasSchema("ql_cast_failed_hint") ? "ql_cast_failed_hint" : null;
+            if (canaryFeature) {
+                var canaryVal = ConfigStore.get(canaryFeature, "ENABLE_AMMO_STATUS");
+                var canaryScale = ConfigStore.get(canaryFeature, "AMMO_PANEL_SCALE");
+                Logger.logInfo("App", "ConfigBridge canary (" + canaryFeature + "): ENABLE_AMMO_STATUS=" +
+                    canaryVal + " AMMO_PANEL_SCALE=" + canaryScale +
+                    " (undefined=broken, default=no-user-config)");
+                if (canaryScale !== undefined && (typeof canaryScale !== "number" || canaryScale < 50 || canaryScale > 200)) {
+                    Logger.logWarn("App", "Normalization canary FAIL: AMMO_PANEL_SCALE=" + canaryScale);
+                }
+            } else {
+                Logger.logInfo("App", "ConfigBridge canary: no wired features to test (expected until Step 2)");
+            }
+        }
+
         return true;
     }
 
@@ -152,15 +197,20 @@
         if (!_booted) return;
         _stopConfigPolling();
         if (FeatureRegistry) FeatureRegistry.shutdown();
-        // Save config to Hud panel attribute
+        // Save config to Hud panel attribute (write back to old system's attribute during migration)
         if (ConfigStore) {
             var hud = _findHud();
             if (hud && typeof hud.SetAttributeString === "function") {
                 try {
-                    hud.SetAttributeString("qollock_config",
-                        JSON.stringify(ConfigStore.exportAll() || {}));
+                    var flatExport = ConfigAdapter ? ConfigAdapter.exportToFlat() : {};
+                    // Wrap in old system's envelope format for backward compat
+                    var envelope = JSON.stringify({
+                        schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "3.1.9"),
+                        data: flatExport
+                    });
+                    hud.SetAttributeString(_CONFIG_ATTRIBUTE, envelope);
                 } catch (e) {
-                    if (Logger) Logger.logWarn("App", "config save failed");
+                    if (Logger) Logger.logWarn("App", "config save failed: " + (e.message || e));
                 }
             }
         }

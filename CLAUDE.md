@@ -41,7 +41,24 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 39 loaded feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
+    ├── core/                                  # Phase 1: New infrastructure (8 modules)
+    │   ├── ql_namespace.js                   # QOL.core/ui/features/adapters buckets
+    │   ├── ql_logger.js                      # Structured logging + ring buffer
+    │   ├── ql_event_bus.js                   # Pub/sub with error isolation
+    │   ├── ql_scheduler.js                   # createPollLoop with perf tracking
+    │   ├── ql_panel_helpers.js               # isPanelAlive, findHud, syncStyles
+    │   ├── ql_config_store.js                # Schema-driven typed config
+    │   ├── ql_config_adapter.js              # Old flat ↔ new schema bridge
+    │   ├── ql_feature_registry.js             # FeatureRegistry.register/boot/shutdown
+    │   └── ql_app.js                         # Boot sequence, config polling bridge
+    ├── manifests/                             # Phase 9: New FeatureRegistry manifests
+    │   ├── ql_cast_failed_hint/manifest.js   # (wired + tested in-game)
+    │   ├── ql_mouse_cursor/manifest.js       # (wired)
+    │   ├── ql_statlocker/manifest.js         # (wired)
+    │   ├── ql_nicknames/manifest.js          # (wired)
+    │   ├── ql_unspent/manifest.js            # (wired)
+    │   └── ... (33 more manifest directories)
+    ├── features/                             # Old system: 39 QOL.register() feature files
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -91,7 +108,7 @@ panorama/
 ```
 ql_utils.js → ql_shared_presets.js → ql_bridge.js → ql_state.js → ql_panelcache.js → ql_config.js →
 ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
-ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (36 files; order-independent)
+ql_feat_buildbridge.js → ql_core.js → features/*.js (36 files; order-independent)
 ```
 
 ### Context Architecture (Source 2 Panorama)
@@ -272,7 +289,7 @@ Key state fields:
 
 ### Previous Phases (9–10)
 
-- **34 features extracted** from ql_core.js into ql_features/
+- **34 features extracted** from ql_core.js into features/
 - **~6,400 lines removed** from ql_core.js
 - **All 34 feature files migrated** to `QOL.import()` and `QOL.register()` API
 - **QOL namespace system** implemented (data-driven bridge exports)
@@ -325,7 +342,7 @@ Key state fields:
 1. `panorama/scripts/ql_shared_presets.js` — QOL namespace, QOL.import(), QOL.register(), 79 presets, diagnostics
 2. `panorama/scripts/ql_core.js` lines 23585-23702 — QOL namespace population (the bridge)
 3. `panorama/scripts/ql_core.js` lines 24500-24750 — Feature registration and dispatch loop
-4. Any `ql_features/ql_feat_*.js` — Example of the current feature file pattern
+4. Any `features/ql_feat_*.js` — Example of the current feature file pattern
 5. `plans/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap
 
 ## Panorama CSS Gotchas (Phase D + F)

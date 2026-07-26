@@ -18,7 +18,7 @@ var path = require("path");
 var vm = require("vm");
 
 var SCRIPTS_DIR = path.resolve(__dirname, "..");
-var FEATURES_DIR = path.join(SCRIPTS_DIR, "ql_features");
+var FEATURES_DIR = path.join(SCRIPTS_DIR, "features");
 
 // ── Mock Panorama globals ──
 var mockLog = [];
@@ -63,7 +63,7 @@ var HUD_LOAD_ORDER = [
     "ql_recent_purchases_data.js",
     "ql_minimap_crate_data.js",
     "ql_perf_overlay.js",
-    path.join("ql_features", "ql_feat_buildbridge.js"),
+    path.join("features", "ql_feat_buildbridge.js"),
     "ql_locale_lookup.js",
     "ql_core.js"
 ];

@@ -14437,13 +14437,13 @@ function GetUIRoot() {
 
 
     // =========================================================================
-    // §18 Global bridge — exported for per-feature files in ql_features/
+    // §18 Global bridge — exported for per-feature files in features/
     // =========================================================================
     // Features extracted to separate files lose IIFE closure access to State,
     // cache helpers, and perf tools. This bridge publishes them on window so
     // feature files can use the same APIs without being inline in ql_core.js.
     //
-    // Load order: ql_utils.js → ql_shared_presets.js → ql_core.js → ql_features/*.js
+    // Load order: ql_utils.js → ql_shared_presets.js → ql_core.js → features/*.js
     //
     // Feature files should use:
     //   QOL_STATE.*                  (was: State.*)

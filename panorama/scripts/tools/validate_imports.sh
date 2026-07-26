@@ -28,7 +28,7 @@ CORE_EXPORTS=$(grep -oP '\["\K[a-zA-Z0-9]+(?=")' ql_core.js | sort -u)
 QOL_PUBLICATIONS=$(grep -ohP 'QOL\.\K[a-zA-Z0-9]+(?=\s*=)' ql_shared_presets.js ql_state.js ql_panelcache.js ql_bridge.js ql_config.js 2>/dev/null | sort -u)
 
 # From feature file publications (cross-feature)
-FEATURE_PUBLICATIONS=$(grep -ohP 'QOL\.\K[a-zA-Z0-9]+(?=\s*=)' ql_features/ql_feat_*.js 2>/dev/null | sort -u)
+FEATURE_PUBLICATIONS=$(grep -ohP 'QOL\.\K[a-zA-Z0-9]+(?=\s*=)' features/ql_feat_*.js 2>/dev/null | sort -u)
 
 # Utils namespace symbols (accessible via Utils.Xxx, not QOL.xxx)
 UTILS_SYMBOLS="IsCfgEnabled IsPanelValid IsPanelListValid SetStyleSafe ClearStyleSafe SetPanelOpacitySafe NormalizeOpacityNumber NormalizeHudOffsetNumber NormalizeHudScaleNumber FormatHudPx PerfNowMs PushUnique FindFirstPanelByClass FindAncestorWithClass HasClassInHierarchy SetPanelVisibility SafeGetAttribute SafeSetAttribute SafeLog DebugLog InfoLog WarnLog ErrorLog ToRgbString BlendRgb SetWashColorSafe ClampConfigNumber"
@@ -42,7 +42,7 @@ ALL_QOL_SYMBOLS="$CORE_ALWAYS $CORE_EXPORTS $QOL_PUBLICATIONS $FEATURE_PUBLICATI
 echo ""
 echo "[1/2] Checking QOL.import() symbols exist on QOL namespace..."
 
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     fname=$(basename "$f")
     # Extract all import names from QOL.import([...])
     IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
@@ -69,7 +69,7 @@ fi
 echo ""
 echo "[2/2] Checking for Utils symbols incorrectly imported via QOL.import()..."
 
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     fname=$(basename "$f")
     IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
     for sym in $IMPORTS; do
