@@ -4,7 +4,7 @@
 // contexts. Logs its own failure (no silent catch).
 (function() {
     var _qolLogBuf = [];
-    var _qolLogMax = 500;
+    var _qolLogMax = 1000;
     var _qolOrigMsg = null;
     try {
         if (typeof $ !== "undefined" && $.Msg) {
