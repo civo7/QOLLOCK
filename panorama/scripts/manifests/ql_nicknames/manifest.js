@@ -261,8 +261,7 @@
                     if (result.saw) sawAny = true;
                     if (!result.resolved) allResolved = false;
                 }
-                if (!sawAny) { $.Msg("[QOLLock][DEBUG][nicknames] tick: no player panels found (sawAny=false)"); }
-                else { $.Msg("[QOLLock][DEBUG][nicknames] tick: saw " + (allResolved ? "all" : "partial") + " resolved, _wasEnabled=" + _wasEnabled); }
+                // sawAny: at least one player panel found. allResolved: all names resolved.
 
                 _wasEnabled = enabled;
                 var nextMs = REFRESH_MS;
