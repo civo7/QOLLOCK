@@ -21,6 +21,7 @@
 
     FR.register({
         id: "ql_nicknames",
+        enableKey: "ENABLE_NICKNAMES",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_NICKNAMES", type: "toggle", default: false }

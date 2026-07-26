@@ -202,12 +202,15 @@
     function isRegistered(featureId) { return _manifests.hasOwnProperty(featureId); }
     function getRegisteredIds() { return Object.keys(_manifests); }
     function getManifest(featureId) { return _manifests[featureId] || null; }
+    function enableFeature(id) { _safeEnableFeature(id); }
+    function disableFeature(id) { _safeDisableFeature(id); }
 
     QOL.core.FeatureRegistry = {
         register: register, boot: boot, shutdown: shutdown,
         createContext: createContext, isEnabled: isEnabled,
         isRegistered: isRegistered, getRegisteredIds: getRegisteredIds,
-        getManifest: getManifest
+        getManifest: getManifest, enable: enableFeature,
+        disable: disableFeature
     };
 
     $.Msg("[QOLLock] core/ql_feature_registry: attached to QOL.core.FeatureRegistry");

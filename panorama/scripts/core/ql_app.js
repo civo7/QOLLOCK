@@ -36,8 +36,40 @@
     var _booted = false;
     var _lastConfigRaw = "";
     var _configPollTimer = null;
+    var _enableKeyMap = null;
     // Step 0a: during migration, read from old system's attribute
     var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
+
+    // Build featureId → enableKey map from registered manifests
+    function _buildEnableKeyMap() {
+        var map = {};
+        if (!FeatureRegistry) return map;
+        var ids = FeatureRegistry.getRegisteredIds();
+        for (var i = 0; i < ids.length; i++) {
+            var m = FeatureRegistry.getManifest(ids[i]);
+            if (m && m.enableKey) map[ids[i]] = m.enableKey;
+        }
+        return map;
+    }
+
+    // Sync FeatureRegistry enabled state with ConfigStore after config changes.
+    // Detects runtime toggles of legacy ENABLE_X keys and calls
+    // FeatureRegistry.enable()/disable() to match old system's real-time responsiveness.
+    function _syncFeatureEnabledState() {
+        if (!FeatureRegistry || !ConfigStore || !_enableKeyMap) return;
+        for (var id in _enableKeyMap) {
+            if (!_enableKeyMap.hasOwnProperty(id)) continue;
+            var nowEnabled = ConfigStore.get(id, "enabled");
+            var wasEnabled = FeatureRegistry.isEnabled(id);
+            if (nowEnabled && !wasEnabled) {
+                FeatureRegistry.enable(id);
+                if (Logger) Logger.logInfo("App", "runtime enable: " + id);
+            } else if (!nowEnabled && wasEnabled) {
+                FeatureRegistry.disable(id);
+                if (Logger) Logger.logInfo("App", "runtime disable: " + id);
+            }
+        }
+    }
 
     function _findHud() {
         if (_hudPanel && PanelHelpers && PanelHelpers.isPanelAlive(_hudPanel)) return _hudPanel;
@@ -108,7 +140,10 @@
                 if (flatConfig && ConfigAdapter) {
                     try {
                         // Step 0d: use loadFromFlat which handles flat→nested mapping
-                        ConfigAdapter.loadFromFlat(flatConfig);
+                        ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
+                        // Runtime toggle detection: sync FeatureRegistry enabled state
+                        // with ConfigStore after legacy enableKey injection
+                        _syncFeatureEnabledState();
                         if (Logger) Logger.logDebug("App", "config poll: updated from attribute");
                     } catch (e) {
                         if (Logger) Logger.logWarn("App", "config poll adapter failed: " + (e.message || e));
@@ -136,6 +171,9 @@
             return false;
         }
 
+        // Build enableKey map from registered manifests (for legacy config bridging)
+        _enableKeyMap = _buildEnableKeyMap();
+
         // Step 0a+0c: Load config from old system's attribute, unwrap envelope,
         // use ConfigAdapter to handle flat→nested mapping
         var storedConfig = null;
@@ -146,10 +184,10 @@
                     var flatConfig = _unwrapEnvelope(raw);
                     if (flatConfig && ConfigAdapter) {
                         // Step 0c: use loadFromFlat for flat→nested transformation
-                        ConfigAdapter.loadFromFlat(flatConfig);
+                        // Pass enableKeyMap so legacy ENABLE_X keys inject "enabled: true"
+                        ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
                         if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
                     }
-                    // Store the parsed value for FeatureRegistry.boot()
                     storedConfig = JSON.parse(raw);
                 }
             }

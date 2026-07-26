@@ -158,7 +158,7 @@
      *
      * @param {Object} flatConfig — flat key-value pairs from old storage (unwrapped from envelope)
      */
-    function loadFromFlat(flatConfig) {
+    function loadFromFlat(flatConfig, enableKeyMap) {
         if (!flatConfig || typeof flatConfig !== "object") return;
 
         var keyMap = _buildKeyToFeatureMap();
@@ -192,6 +192,23 @@
         for (var featureId in processed) {
             if (processed.hasOwnProperty(featureId)) {
                 _normalizeBucket(featureId, processed[featureId]);
+            }
+        }
+
+        // Inject "enabled: true" for features whose legacy enable key is truthy.
+        // Bridges old ENABLE_X toggles into the new "enabled" flag.
+        // Cold boot: loadFromFlat → exportAll → FeatureRegistry.boot() sees enabled.
+        // Runtime polling: ConfigStore.load() does NOT emit config:changed,
+        // so _onConfigChanged does NOT fire. Toggles require a HUD reload/restart.
+        if (enableKeyMap) {
+            for (var fid in enableKeyMap) {
+                if (!enableKeyMap.hasOwnProperty(fid)) continue;
+                var ek = enableKeyMap[fid];
+                // Use hasOwnProperty so injection is bidirectional:
+                // enableKey=1 → enabled:true, enableKey=0 → enabled:false
+                if (processed[fid] && processed[fid].hasOwnProperty(ek)) {
+                    processed[fid]["enabled"] = !!processed[fid][ek];
+                }
             }
         }
 

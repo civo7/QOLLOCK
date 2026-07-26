@@ -16,6 +16,7 @@
     if (!FR) { $.Msg("[QOLLock] cast_failed_hint: FeatureRegistry not found — aborting"); return; }
     FR.register({
         id: "ql_cast_failed_hint",
+        enableKey: "ENABLE_HIDE_FAILED_HINT",
         enabledByDefault: false,
         settings: [{ key: "ENABLE_HIDE_FAILED_HINT", type: "toggle", default: false }],
         create: function(ctx) {

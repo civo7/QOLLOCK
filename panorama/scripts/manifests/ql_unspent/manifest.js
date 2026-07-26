@@ -23,6 +23,7 @@
 
     FR.register({
         id: "ql_unspent",
+        enableKey: "ENABLE_UNSPENT_SOULS",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_UNSPENT_SOULS", type: "toggle", default: false }

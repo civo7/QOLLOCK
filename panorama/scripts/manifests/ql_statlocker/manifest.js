@@ -18,6 +18,7 @@
 
     FR.register({
         id: "ql_statlocker",
+        enableKey: "ENABLE_STATLOCKER",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_STATLOCKER", type: "toggle", default: false }
