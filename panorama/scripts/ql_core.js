@@ -1705,7 +1705,7 @@ function ExpressShotLog(msg) {
         }
 
         // ── Manifest perf detail ──
-        if (detailed) {
+        if (State.perfDetailed) {
             var mfStats = null;
             try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
             if (mfStats) {
