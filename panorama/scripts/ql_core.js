@@ -1665,6 +1665,7 @@ function ExpressShotLog(msg) {
         if (mfStats) {
             var mfPrev = (typeof State.manifestPerfSnapPrev === "object" && State.manifestPerfSnapPrev) || {};
             var mfKeys = Object.keys(mfStats);
+            var mfWindow = {};
             for (var mk = 0; mk < mfKeys.length; mk++) {
                 var mkKey = mfKeys[mk];
                 var cur = mfStats[mkKey];
@@ -1681,6 +1682,8 @@ function ExpressShotLog(msg) {
                 stats[statKey].total += dTotal;
                 stats[statKey].count += dCount;
                 if (wMax > stats[statKey].max) stats[statKey].max = wMax;
+                // Also build mfWindow for the perf overlay.
+                mfWindow[mkKey] = { count: dCount, total: dTotal, max: wMax };
             }
             // Persist snapshot as baseline for next window.
             var mfSnap = {};
