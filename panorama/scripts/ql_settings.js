@@ -3832,7 +3832,8 @@ function TryApplyImportStringWithDiagnostics(raw) {
     if (!tokenMatch) return result;
 
     var schemaSemver = String(tokenMatch[1] || "").replace(/-/g, ".");
-    if (!schemaSemver || !COMPACT_SCHEMA_REGISTRY.hasOwnProperty(schemaSemver)) return result;
+    var registry = (typeof QOL !== "undefined" && QOL.compactSchemaRegistry) || {};
+    if (!schemaSemver || !registry.hasOwnProperty(schemaSemver)) return result;
     var compactCandidate = String(tokenMatch[2] || "");
     if (!compactCandidate) return result;
 
