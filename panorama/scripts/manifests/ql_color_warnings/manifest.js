@@ -30,6 +30,7 @@
 
     FR.register({
         id: "ql_color_warnings",
+        enableKey: "ENABLE_COLORED_HEALTHBAR",
         enabledByDefault: false,
         settings: [
             // Self healthbar color warnings

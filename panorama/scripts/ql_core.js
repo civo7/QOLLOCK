@@ -13247,7 +13247,10 @@ function GetUIRoot() {
         // WHY: Skip healthbar work in hideout/sandbox — inline style.opacity set
         // by SetPanelOpacitySafe beats CSS opacity rules on .connectedToHideout.
         var needsHealthbarRuntime = !hideoutConnected && NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
-        if (needsHealthbarRuntime && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
+        // P1: skip old healthbar dispatcher when ql_healthbar manifest is active.
+        var _hbManifestActive = false;
+        try { if (QOL && QOL.core && QOL.core.FeatureRegistry) { _hbManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_healthbar"); } } catch(e) {}
+        if (needsHealthbarRuntime && !_hbManifestActive && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
             QOL.updateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
         }
         var needsHealthContainerWork =
