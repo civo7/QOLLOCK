@@ -3851,14 +3851,21 @@ function TryApplyImportStringWithDiagnostics(raw) {
         return result;
     }
 
-    var preview = BuildCandidateConfigFromParsed(result.parsedConfig, result.schemaVersion || LATEST_COMPACT_SEMVER, DEFAULT_CONFIG);
-    PreserveUiOnlySettings(preview.candidateConfig);
-    result.candidateConfig = preview.candidateConfig;
-    result.appliedKeys = preview.diagnostics.appliedKeys;
-    result.unknownKeys = preview.diagnostics.unknownKeys;
-    result.clampedKeys = preview.diagnostics.clampedKeys;
-    result.ok = true;
-    $.Msg("[QOLLock][import] OK — applied=" + result.appliedKeys + " unknown=" + result.unknownKeys + " clamped=" + result.clampedKeys);
+    try {
+        $.Msg("[QOLLock][import] calling BuildCandidateConfigFromParsed...");
+        var preview = BuildCandidateConfigFromParsed(result.parsedConfig, result.schemaVersion || LATEST_COMPACT_SEMVER, DEFAULT_CONFIG);
+        $.Msg("[QOLLock][import] BuildCandidateConfigFromParsed OK, candidateKeys=" + Object.keys(preview.candidateConfig).length);
+        PreserveUiOnlySettings(preview.candidateConfig);
+        result.candidateConfig = preview.candidateConfig;
+        result.appliedKeys = preview.diagnostics.appliedKeys;
+        result.unknownKeys = preview.diagnostics.unknownKeys;
+        result.clampedKeys = preview.diagnostics.clampedKeys;
+        result.ok = true;
+        $.Msg("[QOLLock][import] OK — applied=" + result.appliedKeys + " unknown=" + result.unknownKeys + " clamped=" + result.clampedKeys);
+    } catch (buildErr) {
+        $.Msg("[QOLLock][import] FAIL: BuildCandidateConfigFromParsed threw — " + (buildErr && buildErr.message ? buildErr.message : String(buildErr)));
+        return result;
+    }
     return result;
 }
 
