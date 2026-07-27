@@ -152,13 +152,14 @@
 
             // ── FillRow + PollForResult — click profile card, detect account ID ──
             function _fillRow(root, entry, onDone) {
+                var docRoot = _docRoot(root);
                 var name = _readClass(entry, "PlayerName");
                 if (!name) { onDone(); return; }
                 var heroName = _readClass(entry, "PlayerHeroHidden");
                 var beforeIds = _readAccountIdSet(root);
-                _setAttr(root, "qol_sr_probe_name", name);
-                _setAttr(root, "qol_sr_probe_hero", heroName);
-                _setAttr(root, "qol_sr_probe_account", "");
+                _setAttr(docRoot, "qol_sr_probe_name", name);
+                _setAttr(docRoot, "qol_sr_probe_hero", heroName);
+                _setAttr(docRoot, "qol_sr_probe_account", "");
                 _dismissProfileCard();
                 var mc = _findMainContents(entry);
                 var target = _valid(mc) ? mc : entry;
@@ -167,11 +168,11 @@
                 function _poll(attempt) {
                     var elapsed = _nowMs() - t0;
                     if (elapsed > 2000 || attempt > 66) {
-                        _setAttr(root, "qol_sr_probe_name", ""); _setAttr(root, "qol_sr_probe_hero", ""); _setAttr(root, "qol_sr_probe_account", "");
+                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
                         _dismissProfileCard(); onDone(); return;
                     }
                     // Abort if another FillRow started (probe name changed)
-                    if (_readAttr(root, "qol_sr_probe_name", "") !== name) { _dismissProfileCard(); onDone(); return; }
+                    if (_readAttr(docRoot, "qol_sr_probe_name", "") !== name) { _dismissProfileCard(); onDone(); return; }
                     var afterIds = _readAccountIdSet(root);
                     // Compute delta: only consider IDs new since before dispatch
                     var newIds = [];
@@ -182,7 +183,7 @@
                     }
                     if (newIds.length > 0) {
                         var result = newIds[0];
-                        _setAttr(root, "qol_sr_probe_name", ""); _setAttr(root, "qol_sr_probe_hero", ""); _setAttr(root, "qol_sr_probe_account", "");
+                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
                         _dismissProfileCard();
                         var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
                         if (_valid(overlay)) {
@@ -192,12 +193,12 @@
                         if (_valid(label)) { try { label.text = result; } catch(e) {} }
                         if (heroName) {
                             var key = "qol_sr_rank_" + heroName.toLowerCase();
-                            _setAttr(root, key, result);
-                            var published = _readAttr(root, "qol_sr_ranked_heroes", "");
+                            _setAttr(docRoot, key, result);
+                            var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
                             var heroes = published ? published.split("|") : [];
                             if (heroes.indexOf(heroName.toLowerCase()) === -1) {
                                 heroes.push(heroName.toLowerCase());
-                                _setAttr(root, "qol_sr_ranked_heroes", heroes.join("|"));
+                                _setAttr(docRoot, "qol_sr_ranked_heroes", heroes.join("|"));
                             }
                         }
                         _badgeVisible(overlay, true);
@@ -210,13 +211,15 @@
 
             // ── FillLoop — scan escape menu, fill one row per tick ──
             function _clearPublishedRanks(root) {
-                var published = _readAttr(root, "qol_sr_ranked_heroes", "");
+                var docRoot = _docRoot(root);
+                var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
                 if (!published) return;
                 var heroes = published.split("|");
-                for (var i = 0; i < heroes.length; i++) { if (heroes[i]) _setAttr(root, "qol_sr_rank_" + heroes[i], ""); }
-                _setAttr(root, "qol_sr_ranked_heroes", "");
+                for (var i = 0; i < heroes.length; i++) { if (heroes[i]) _setAttr(docRoot, "qol_sr_rank_" + heroes[i], ""); }
+                _setAttr(docRoot, "qol_sr_ranked_heroes", "");
             }
             function _clearAllAccountIds(root) {
+                var docRoot = _docRoot(root);
                 var entries = _findAllEntries(root);
                 for (var i = 0; i < entries.length; i++) {
                     var label = _getAccountIdLabel(entries[i]);
@@ -225,24 +228,25 @@
                     if (_valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} _badgeVisible(overlay, false); }
                 }
                 _clearPublishedRanks(root);
-                var gen = parseInt(_readAttr(root, "qol_sr_generation", "0"), 10) || 0;
-                _setAttr(root, "qol_sr_generation", String(gen + 1));
+                var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
+                _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
             }
             function _isEscapeMenuOpen(root) {
                 var h = _hudPanel(root);
                 return _hasClass(h, "ShowEscapeMenu") || _hasClass(root, "ShowEscapeMenu");
             }
             function _fillLoop(root, token) {
-                if (!_valid(root) || _readAttr(root, "qol_sr_fill_token", "") !== token) return;
+                var docRoot = _docRoot(root);
+                if (!_valid(root) || _readAttr(docRoot, "qol_sr_fill_token", "") !== token) return;
                 if (_isInHideout(root)) {
-                    var cached = _readAttr(root, "qol_sr_hideout", "");
+                    var cached = _readAttr(docRoot, "qol_sr_hideout", "");
                     if (cached !== "1") _clearAllAccountIds(root);
-                    _setAttr(root, "qol_sr_hideout", "1");
+                    _setAttr(docRoot, "qol_sr_hideout", "1");
                     $.Schedule(1.0, function() { _fillLoop(root, token); }); return;
                 }
-                _setAttr(root, "qol_sr_hideout", "0");
+                _setAttr(docRoot, "qol_sr_hideout", "0");
                 if (!_isEscapeMenuOpen(root)) { $.Schedule(2.0, function() { _fillLoop(root, token); }); return; }
-                var genNow = String(_readAttr(root, "qol_sr_generation", ""));
+                var genNow = String(_readAttr(docRoot, "qol_sr_generation", ""));
                 if (_stateGet("showRankEscapeDone", "") === genNow) { $.Schedule(2.0, function() { _fillLoop(root, token); }); return; }
                 var row = _findUnfilledRow(root);
                 if (!row) {
@@ -253,14 +257,15 @@
                 _fillRow(root, row, function() { $.Schedule(0.1, function() { _fillLoop(root, token); }); });
             }
             function _ensureFillLoopRunning(root) {
-                var token = _readAttr(root, "qol_sr_fill_token", "");
+                var docRoot = _docRoot(root);
+                var token = _readAttr(docRoot, "qol_sr_fill_token", "");
                 if (token === String(_fillToken)) return;
                 _fillToken = (_fillToken || 0) + 1;
-                _setAttr(root, "qol_sr_fill_token", String(_fillToken));
+                _setAttr(docRoot, "qol_sr_fill_token", String(_fillToken));
                 _clearPublishedRanks(root);
                 if (_isInHideout(root)) _clearAllAccountIds(root);
-                var gen = parseInt(_readAttr(root, "qol_sr_generation", "0"), 10) || 0;
-                _setAttr(root, "qol_sr_generation", String(gen + 1));
+                var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
+                _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
                 _stateSet("showRankEscapeDone", "");
                 $.Schedule(0.2, function() { _fillLoop(root, String(_fillToken)); });
             }
