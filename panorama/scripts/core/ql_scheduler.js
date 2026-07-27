@@ -49,10 +49,12 @@
         } catch(e) { /* best-effort — perf tracking is non-critical */ }
     }
 
-    // $.FrameTime() is monotonic (seconds since Panorama init).
-    // Date.now() is NOT — system clock changes corrupt timing data.
+    // Date.now() for per-tick elapsed measurement (sub-frame precision).
+    // $.FrameTime() is monotonic but only updates once per frame (~16ms),
+    // so fast callbacks always show 0 elapsed. Date.now() has ~1ms precision.
+    // Clock changes don't matter here — we're measuring a <1ms delta.
     function _nowMs() {
-        return $.FrameTime() * 1000;
+        return Date.now ? Date.now() : (new Date()).getTime();
     }
 
     function _recordTiming(featureId, elapsedMs) {
