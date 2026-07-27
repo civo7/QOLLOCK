@@ -390,7 +390,6 @@
                         return;
                     }
                     _wasEnabled = true; _stateSet("_showRankEnabled", true);
-                    if (_isInHideout(root)) return;
                     _ensureTopBarInit(root);
                     var showTopBar = _isOn(cfg, "SHOW_RANK_TOPBAR");
                     _applyTopBarVisibility(root, showTopBar);
