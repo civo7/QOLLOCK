@@ -16,6 +16,7 @@
 
     FR.register({
         id: "ql_spm",
+        enableKey: "ENABLE_MIN_SOULS",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_MIN_SOULS", type: "toggle", default: false }

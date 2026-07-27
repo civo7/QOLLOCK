@@ -16,6 +16,7 @@
 
     FR.register({
         id: "ql_zipboost",
+        enableKey: "ENABLE_ZIP_BOOST",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_ZIP_BOOST", type: "toggle", default: false },
@@ -81,8 +82,9 @@
                 if (_lastSig !== sig) {
                     _lastSig = sig;
                     ov.style.preTransformScale2d = sc.toFixed(2) + ", " + sc.toFixed(2);
-                    ov.style.x = ox + "px";
-                    ov.style.y = oy + "px";
+                    // Match old feature positioning: marginLeft/marginBottom with base offsets.
+                    ov.style.marginLeft = (-520 + ox) + "px";
+                    ov.style.marginBottom = (20 + oy) + "px";
                 }
             }
 

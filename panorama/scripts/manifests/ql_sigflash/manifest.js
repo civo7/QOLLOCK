@@ -16,6 +16,7 @@
 
     FR.register({
         id: "ql_sigflash",
+        enableKey: "ENABLE_PASSIVE_COOLDOWN",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false }
@@ -43,12 +44,18 @@
                     if (allAlive) return;
                 }
                 _slots = [];
-                var bp = root.FindChildTraverse("bottomBarPanel");
-                if (!_isAlive(bp)) return;
+                // Use the same panel path as the old feature: hud_signature, not bottomBarPanel.
+                // PANEL_ID_SIGNATURE = "hud_signature" (ql_core.js line 446).
+                var sig = root.FindChildTraverse("hud_signature");
+                if (!_isAlive(sig)) return;
                 for (var s = 1; s <= 4; s++) {
-                    var icon = bp.FindChildTraverse("slot_signature_" + s);
+                    var icon = sig.FindChildTraverse("slot_signature_" + s);
                     if (!_isAlive(icon)) continue;
                     var binding = icon.FindChildTraverse ? icon.FindChildTraverse("ability_binding_component") : null;
+                    // Binding re-fetch fallback: if binding went invalid, try to re-fetch from icon.
+                    if (!_isAlive(binding) && icon.FindChildTraverse) {
+                        binding = icon.FindChildTraverse("ability_binding_component");
+                    }
                     if (!_isAlive(binding)) continue;
                     _slots.push({ id: "slot_signature_" + s, icon: icon, binding: binding });
                 }
