@@ -1653,6 +1653,44 @@ function ExpressShotLog(msg) {
         var windowStart = State.perfWindowStartMs || nowMs;
         var windowMs = Math.max(1, nowMs - windowStart);
         var stats = State.perfStats || {};
+
+        // ── Merge manifest perf into the same rolling window ──
+        // createPollLoop() in ql_scheduler.js records to a lifetime accumulator
+        // (_timings → State.manifestPerfStats). Compute per-window deltas against
+        // the previous snapshot and merge into stats so manifests appear in the
+        // main summary line alongside dispatch PerfRecord entries.
+        var mfStats = null;
+        try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
+        if (mfStats) {
+            var mfPrev = (typeof State.manifestPerfSnapPrev === "object" && State.manifestPerfSnapPrev) || {};
+            var mfKeys = Object.keys(mfStats);
+            for (var mk = 0; mk < mfKeys.length; mk++) {
+                var mkKey = mfKeys[mk];
+                var cur = mfStats[mkKey];
+                var prev = mfPrev[mkKey];
+                if (!cur || cur.count <= 0) continue;
+                var dCount = prev ? cur.count - prev.count : cur.count;
+                var dTotal = prev ? cur.total - prev.total : cur.total;
+                if (dCount <= 0) continue;
+                var wMax = cur.max;
+                // Merge into stats with "mf." prefix so manifest entries are
+                // distinguishable from dispatch loop features.
+                var statKey = "mf." + mkKey;
+                if (!stats[statKey]) { stats[statKey] = { total: 0, count: 0, max: 0, slow: 0 }; }
+                stats[statKey].total += dTotal;
+                stats[statKey].count += dCount;
+                if (wMax > stats[statKey].max) stats[statKey].max = wMax;
+            }
+            // Persist snapshot as baseline for next window.
+            var mfSnap = {};
+            for (var mk2 = 0; mk2 < mfKeys.length; mk2++) {
+                var k2 = mfKeys[mk2];
+                var s = mfStats[k2];
+                if (s) mfSnap[k2] = { count: s.count, total: s.total, max: s.max };
+            }
+            State.manifestPerfSnapPrev = mfSnap;
+        }
+
         var keys = Object.keys(stats);
 
         keys.sort(function(a, b) {
@@ -1702,59 +1740,6 @@ function ExpressShotLog(msg) {
             }
             if (extra.length > 0) {
                 $.Msg("[QOLLock][Perf][detail] " + extra.join(" | "));
-            }
-        }
-
-        // ── Manifest perf detail (rolling window via delta snapshots) ──
-        if (State.perfDetailed) {
-            var mfStats = null;
-            try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
-            if (mfStats) {
-                // Compute per-window deltas against the previous snapshot.
-                // ql_scheduler.js accumulates timings forever; subtracting the
-                // previous snapshot gives us only the samples that landed in
-                // this window, matching the dispatch PerfRecord rolling window.
-                var mfPrev = (typeof State.manifestPerfSnapPrev === "object" && State.manifestPerfSnapPrev) || {};
-                var mfWindow = {};
-                var mfKeys = Object.keys(mfStats);
-                for (var mk = 0; mk < mfKeys.length; mk++) {
-                    var mkKey = mfKeys[mk];
-                    var cur = mfStats[mkKey];
-                    var prev = mfPrev[mkKey];
-                    if (!cur || cur.count <= 0) continue;
-                    var dCount = prev ? cur.count - prev.count : cur.count;
-                    var dTotal = prev ? cur.total - prev.total : cur.total;
-                    if (dCount <= 0) continue;
-                    // Window max: take cur.max, but clamp to prev.max if counts
-                    // are identical (no new samples → ignore stale max).
-                    var wMax = cur.max;
-                    if (prev && cur.count === prev.count) continue; // no new samples
-                    mfWindow[mkKey] = { count: dCount, total: dTotal, max: wMax };
-                }
-                // Persist this snapshot as the baseline for the next window.
-                // Shallow-copy so we don't hold a reference to the live object.
-                var mfSnap = {};
-                for (var mk2 = 0; mk2 < mfKeys.length; mk2++) {
-                    var k2 = mfKeys[mk2];
-                    var s = mfStats[k2];
-                    if (s) mfSnap[k2] = { count: s.count, total: s.total, max: s.max };
-                }
-                State.manifestPerfSnapPrev = mfSnap;
-
-                // Sort by window total descending and format.
-                var mfWKeys = Object.keys(mfWindow);
-                mfWKeys.sort(function(a, b) { return (mfWindow[b].total || 0) - (mfWindow[a].total || 0); });
-                var mfParts = [];
-                for (var mw = 0; mw < mfWKeys.length; mw++) {
-                    var mkKeyW = mfWKeys[mw];
-                    var me = mfWindow[mkKeyW];
-                    if (!me || me.count <= 0) continue;
-                    var mAvg = me.total / me.count;
-                    mfParts.push(mkKeyW + "=avg:" + mAvg.toFixed(2) + "ms,max:" + me.max.toFixed(2) + "ms,n:" + me.count);
-                }
-                if (mfParts.length > 0) {
-                    $.Msg("[QOLLock][Perf][detail] manifests: " + mfParts.join(" | "));
-                }
             }
         }
 
