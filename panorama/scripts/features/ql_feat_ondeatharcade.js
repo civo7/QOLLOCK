@@ -9,6 +9,7 @@
     var Utils = _deps.utils;
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
+    var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe || function(p) { try { return p ? p.visible : false; } catch(e) { return false; } };
     var PANEL_ID_HUD = QOL_PANEL_ID_HUD;
 
     // Phase 1.2: Missing constants and imports — defined locally.
