@@ -28,6 +28,8 @@
             var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
             var _loop = null, _wasEnabled = false;
             var _fillToken = 0;
+            var _DBG = true;
+            function _dbg(m) { if (_DBG) { try { $.Msg("[ql_sr] " + m); } catch(e) {} } }
 
             // ── Utilities ──
             function _nowMs() { try { return Date.now ? Date.now() : 0; } catch(e) { return 0; } }
@@ -193,6 +195,7 @@
                         if (_valid(label)) { try { label.text = result; } catch(e) {} }
                         if (heroName) {
                             var key = "qol_sr_rank_" + heroName.toLowerCase();
+                            _dbg("FillRow PUBLISH docRoot=" + (docRoot.id || "?") + " key=" + key + " val=" + result + " heroName='" + heroName + "'");
                             _setAttr(docRoot, key, result);
                             var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
                             var heroes = published ? published.split("|") : [];
@@ -300,7 +303,9 @@
                         var heroLabel = _findClass(player, "HeroName");
                         var heroName = ""; if (_valid(heroLabel)) { try { heroName = String(heroLabel.text || "").trim(); } catch(e) {} }
                         if (heroName) {
-                            accountId = _readAttr(root, "qol_sr_rank_" + heroName.toLowerCase(), "");
+                            var lookupKey = "qol_sr_rank_" + heroName.toLowerCase();
+                            accountId = _readAttr(root, lookupKey, "");
+                            _dbg("TryLoad READ docRoot=" + (root.id || "?") + " key=" + lookupKey + " val=" + (accountId || "<empty>") + " heroName='" + heroName + "'");
                             if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
                         }
                     }
