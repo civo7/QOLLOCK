@@ -93,7 +93,7 @@
                 var kbScale = (cfg.KEYBOARD_OVERLAY_SCALE === undefined || cfg.KEYBOARD_OVERLAY_SCALE === null) ? 100 : Math.round(cfg.KEYBOARD_OVERLAY_SCALE);
                 var kbOffsetX = (cfg.KEYBOARD_OVERLAY_X_OFFSET === undefined || cfg.KEYBOARD_OVERLAY_X_OFFSET === null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_X_OFFSET);
                 var kbOffsetY = (cfg.KEYBOARD_OVERLAY_Y_OFFSET === undefined || cfg.KEYBOARD_OVERLAY_Y_OFFSET === null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_Y_OFFSET);
-                var kbFullLayout = cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1;
+                var kbFullLayout = Number(cfg.ENABLE_FULL_KEYBOARD_LAYOUT) === 1;
                 var kbBaseMarginLeft = kbFullLayout ? 70 : 150;
                 var kbBaseMarginBottom = 300;
                 if (kbScale < 70) kbScale = 70; if (kbScale > 150) kbScale = 150;
@@ -200,7 +200,7 @@
                     if (!root) return;
                     var cfg = ctx.config.all();
 
-                    if (cfg.ENABLE_KEYBOARD_OVERLAY === 1) {
+                    if (Number(cfg.ENABLE_KEYBOARD_OVERLAY) === 1) {
                         var allBindingsBox = _ensureOverlay(root);
                         // Update State.allBindingsBoxes for cross-feature compat
                         try {

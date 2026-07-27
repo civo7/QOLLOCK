@@ -61,8 +61,8 @@
                 var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
                 var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
                 return simplifyStats || recentPurchases ||
-                    cfg.ENABLE_SIMPLIFY_SHOP === 1 || cfg.ENABLE_SIMPLIFY_ITEMS === 1 ||
-                    cfg.DISABLE_SHOP_BLUE === 1 || !_isOn(cfg, "HUD_SHOP_ENABLED") ||
+                    Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 || Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
+                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !_isOn(cfg, "HUD_SHOP_ENABLED") ||
                     _normOffset(cfg.SHOP_OFFSET_X, 0) !== 0 || _normOffset(cfg.SHOP_OFFSET_Y, 0) !== 0 ||
                     _normOpacity(cfg.SHOP_OPACITY, 1.0) !== 1.0 || _normScale(cfg.SHOP_SCALE, 1.0) !== 1.0;
             }
@@ -100,9 +100,9 @@
                     // ── Apply ──
                     if (needsFeatures && _isAlive(_shopPanel)) {
                         _setClass(_shopPanel, "simplify_shop_stats_active", simplifyStats);
-                        _setClass(_shopPanel, "simplify_shop_active", cfg.ENABLE_SIMPLIFY_SHOP === 1);
-                        _setClass(_shopPanel, "simplify_items_active", cfg.ENABLE_SIMPLIFY_ITEMS === 1);
-                        _setClass(_shopPanel, "disable_shop_blue_active", cfg.DISABLE_SHOP_BLUE === 1);
+                        _setClass(_shopPanel, "simplify_shop_active", Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1);
+                        _setClass(_shopPanel, "simplify_items_active", Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1);
+                        _setClass(_shopPanel, "disable_shop_blue_active", Number(cfg.DISABLE_SHOP_BLUE) === 1);
                         _setClass(_shopPanel, "shop_recent_purchases_active", recentPurchases);
 
                         // Refresh main panel cache if needed
