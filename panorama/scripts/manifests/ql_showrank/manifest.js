@@ -27,6 +27,8 @@
             var API_URL = "https://api.deadlock-api.com/v1/players/";
             var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
             var _loop = null, _wasEnabled = false;
+            var _DBG = true; // debug logging for top bar diagnosis
+            function _dbg(m) { if (_DBG) { try { $.Msg("[ql_showrank] " + m); } catch(e) {} } }
             var _fillToken = 0;
 
             // ── Utilities ──
@@ -68,20 +70,23 @@
             function _findTopBarPlayers(topBar) {
                 var out = [];
                 var tc = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
-                if (!_valid(tc)) return out;
+                if (!_valid(tc)) { _dbg("_findTopBarPlayers: TeamsContainer NOT FOUND"); return out; }
                 var tcc = tc.GetChildCount ? tc.GetChildCount() : 0;
+                _dbg("_findTopBarPlayers: TeamsContainer has " + tcc + " children");
                 for (var ti = 0; ti < tcc && ti < 4; ti++) {
                     var team = tc.GetChild(ti); if (!_valid(team)) continue;
                     var pc = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
-                    if (!_valid(pc)) continue;
+                    if (!_valid(pc)) { _dbg("  team[" + ti + "]: no PlayerContents"); continue; }
                     var pl = pc.FindChildTraverse ? pc.FindChildTraverse("PlayersContainer") : null;
-                    if (!_valid(pl)) continue;
+                    if (!_valid(pl)) { _dbg("  team[" + ti + "]: no PlayersContainer"); continue; }
                     var plc = pl.GetChildCount ? pl.GetChildCount() : 0;
+                    _dbg("  team[" + ti + "]: " + plc + " players");
                     for (var pi = 0; pi < plc && pi < 12; pi++) {
                         var player = pl.GetChild(pi);
-                        if (_valid(player)) out.push(player);
+                        if (_valid(player)) { out.push(player); _dbg("    player[" + pi + "]: VALID id=" + (player.id || "?")); }
                     }
                 }
+                _dbg("_findTopBarPlayers: found " + out.length + " total");
                 return out;
             }
 
@@ -273,13 +278,15 @@
                 try { player.SetAttributeString("_qol_sr_init", _readAttr(root, "qol_sr_generation", "0")); } catch(e) {}
             }
             function _initTopBarPlayer(player) {
-                var root = _docRoot(player); if (!_valid(root)) return;
+                var root = _docRoot(player); if (!_valid(root)) { _dbg("_initTopBar: invalid doc root"); return; }
                 _markTopBarInit(player, root);
                 var _lastId = "", _lastGen = "", _idleCount = 0;
+                _dbg("_initTopBar: starting per-player poll for " + (player.id || "?"));
                 function _tryLoad() {
-                    if (!_valid(player)) return;
+                    if (!_valid(player)) { _dbg("_tryLoad: player panel destroyed"); return; }
                     var gen = _readAttr(root, "qol_sr_generation", "");
                     if (gen !== _lastGen) {
+                        _dbg("_tryLoad: gen changed " + (_lastGen || "<none>") + " → " + gen);
                         _lastGen = gen;
                         var ov = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                         if (_valid(ov)) { try { ov.SetImage(""); } catch(e) {} }
@@ -291,16 +298,19 @@
                     var acctLabel = _findClass(player, "PlayerAccountHiddenTopBar");
                     var accountId = "";
                     if (_valid(acctLabel)) { try { accountId = String(acctLabel.text || "").trim(); } catch(e) {} }
+                    _dbg("_tryLoad: acctLabel=" + !!acctLabel + " directId=" + (accountId || "<empty>"));
                     if (!accountId) {
                         var heroLabel = _findClass(player, "HeroName");
                         var heroName = ""; if (_valid(heroLabel)) { try { heroName = String(heroLabel.text || "").trim(); } catch(e) {} }
                         if (heroName) {
                             accountId = _readAttr(root, "qol_sr_rank_" + heroName.toLowerCase(), "");
+                            _dbg("_tryLoad: hero=" + heroName + " docAttr=" + (accountId || "<empty>"));
                             if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
                         }
                     }
                     if (accountId === _lastId) { _idleCount++; } else { _idleCount = 0; }
                     if (!accountId && _lastId) {
+                        _dbg("_tryLoad: accountId disappeared, clearing");
                         var co = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                         if (_valid(co)) { try { co.SetImage(""); } catch(e) {} }
                         if (_valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
@@ -309,30 +319,36 @@
                     if (accountId && accountId !== _lastId) {
                         _lastId = accountId;
                         var lo = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
+                        _dbg("_tryLoad: loading image for " + accountId + " overlay=" + !!lo);
                         if (_valid(lo)) {
                             try { lo.SetImage(API_URL + accountId + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
                             var showTopBar = _isOn(ctx.config.all(), "SHOW_RANK_TOPBAR");
                             if (showTopBar) {
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
+                                _dbg("_tryLoad: badges visible, base=" + !!base);
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
-                            }
-                        }
+                            } else { _dbg("_tryLoad: SHOW_RANK_TOPBAR off, badges hidden"); }
+                        } else { _dbg("_tryLoad: RankPredictionBadgeTopBarOverlay NOT FOUND on player"); }
                     }
                     $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);
                 }
                 $.Schedule(0.3, _tryLoad);
             }
             function _ensureTopBarInit(root) {
-                if (!_valid(root)) return;
+                if (!_valid(root)) { _dbg("_ensureTopBarInit: invalid root"); return; }
                 var topBar = null; try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
-                if (!_valid(topBar)) return;
+                if (!_valid(topBar)) { _dbg("_ensureTopBarInit: TopBar NOT FOUND"); return; }
                 var players = _findTopBarPlayers(topBar);
+                _dbg("_ensureTopBarInit: " + players.length + " players found, checking init state...");
                 for (var i = 0; i < players.length; i++) {
-                    if (_isTopBarInit(players[i], root)) continue;
+                    var alreadyInit = _isTopBarInit(players[i], root);
                     var heroLabel = _findClass(players[i], "HeroName");
-                    if (!_valid(heroLabel)) continue;
-                    var heroName = ""; try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
-                    if (!heroName) continue;
+                    var heroName = ""; if (_valid(heroLabel)) { try { heroName = String(heroLabel.text || "").trim(); } catch(e) {} }
+                    _dbg("  player[" + i + "]: alreadyInit=" + alreadyInit + " hero=" + (heroName || "<none>") + " heroLabel=" + !!heroLabel);
+                    if (alreadyInit) continue;
+                    if (!_valid(heroLabel)) { _dbg("  player[" + i + "]: SKIP — no HeroName label"); continue; }
+                    if (!heroName) { _dbg("  player[" + i + "]: SKIP — empty hero name"); continue; }
+                    _dbg("  player[" + i + "]: INITIALIZING hero=" + heroName);
                     _initTopBarPlayer(players[i]);
                 }
             }
