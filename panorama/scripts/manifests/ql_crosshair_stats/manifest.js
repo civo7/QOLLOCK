@@ -204,7 +204,8 @@
 
                     // Hide while scoreboard is open
                     if (_isHudClassActive(root, "gScoreboardOpen")) {
-                        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else try { overlay.style.visibility = "collapse"; } catch(e) {}
+                        if (overlay.SetHasClass) { overlay.SetHasClass("qol-hidden", true); try { overlay.style.visibility = "collapse"; } catch(e) {} }
+                        else try { overlay.style.visibility = "collapse"; } catch(e) {}
                         st.lastVisibleCount = -1; return;
                     }
 
@@ -260,7 +261,8 @@
                         st.lastContentSig = contentSig;
                     }
                     if (visibleCount !== st.lastVisibleCount) {
-                        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", visibleCount <= 0); else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
+                        if (overlay.SetHasClass) { overlay.SetHasClass("qol-hidden", visibleCount <= 0); try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {} }
+                        else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
                         st.lastVisibleCount = visibleCount;
                     }
                 } catch(e) {
