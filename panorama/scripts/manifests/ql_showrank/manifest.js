@@ -319,13 +319,18 @@
                     if (accountId && accountId !== _lastId) {
                         _lastId = accountId;
                         var lo = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
+                        _dbg("TryLoad IMAGE: overlayExists=" + !!lo + " playerId=" + (player.id || "?"));
                         if (_valid(lo)) {
                             try { lo.SetImage(API_URL + accountId + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
                             var showTopBar = _isOn(ctx.config.all(), "SHOW_RANK_TOPBAR");
+                            _dbg("TryLoad IMAGE: showTopBar=" + showTopBar);
                             if (showTopBar) {
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
+                                _dbg("TryLoad IMAGE: badges visible, baseExists=" + !!base);
                             }
+                        } else {
+                            _dbg("TryLoad IMAGE: overlay NOT FOUND on player " + (player.id || "?"));
                         }
                     }
                     $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);
