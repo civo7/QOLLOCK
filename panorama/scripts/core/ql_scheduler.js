@@ -28,7 +28,26 @@
 
     var _loops = {};
     var _timings = {};
+    var _lastManifestPerfSync = 0;
     var _MAX_TIMING_SAMPLES = 120;
+
+    function _syncManifestPerfToState() {
+        try {
+            if (typeof QOL === "undefined" || !QOL.state) return;
+            var snapshot = {};
+            for (var id in _timings) {
+                if (_timings.hasOwnProperty(id)) {
+                    var t = _timings[id];
+                    // Only include features that have actually run (calls > 0)
+                    if (t.calls > 0) {
+                        snapshot[id] = { avgMs: t.avgMs, maxMs: t.maxMs, calls: t.calls,
+                                         totalMs: t.totalMs, lastMs: t.lastMs, lastAt: t.lastAt };
+                    }
+                }
+            }
+            QOL.state.manifestPerfStats = snapshot;
+        } catch(e) { /* best-effort — perf tracking is non-critical */ }
+    }
 
     // $.FrameTime() is monotonic (seconds since Panorama init).
     // Date.now() is NOT — system clock changes corrupt timing data.
@@ -74,6 +93,13 @@
             var elapsed = _nowMs() - t0;
             if (typeof featureId === "string" && featureId) {
                 _recordTiming(featureId, elapsed);
+                // Publish to State.manifestPerfStats for perf overlay visibility.
+                // Debounced: only sync every ~1s to avoid per-tick State writes.
+                var now = $.FrameTime();
+                if (!_lastManifestPerfSync || now - _lastManifestPerfSync > 1.0) {
+                    _lastManifestPerfSync = now;
+                    _syncManifestPerfToState();
+                }
             }
             if (!_stopped) {
                 _handle = $.Schedule(_rate, tick);

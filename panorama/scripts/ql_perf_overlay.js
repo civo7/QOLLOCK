@@ -388,6 +388,32 @@
                 titleText += ")";
                 _titleLabel.text = titleText;
             }
+            // ── Manifest perf section ──
+            var mfStats = null;
+            try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
+            if (mfStats) {
+                var mfKeys = Object.keys(mfStats);
+                var mfEntries = [];
+                for (var mk = 0; mk < mfKeys.length; mk++) {
+                    var mkey = mfKeys[mk];
+                    var me = mfStats[mkey];
+                    if (!me || me.calls <= 0) continue;
+                    mfEntries.push({ name: mkey, avg: me.totalMs / me.calls, max: me.maxMs, count: me.calls });
+                }
+                if (mfEntries.length > 0) {
+                    mfEntries.sort(function(a, b) { return b.avg - a.avg; });
+                    lines.push("");
+                    lines.push("--- Manifests ---");
+                    var mfTop = Math.min(8, mfEntries.length);
+                    for (var mj = 0; mj < mfTop; mj++) {
+                        var mi = mfEntries[mj];
+                        var sn = mi.name;
+                        if (sn.length > 22) sn = sn.substring(0, 19) + "...";
+                        lines.push(sn + ": avg " + mi.avg.toFixed(1) + "ms  max " + mi.max.toFixed(1) + "ms  n=" + mi.count);
+                    }
+                }
+            }
+
             if (_bodyLabel && IsPanelValid(_bodyLabel)) {
                 _bodyLabel.text = lines.join("\n");
             }
