@@ -415,6 +415,8 @@
                     if (_isInHideout(root)) return;
                     _ensureTopBarInit(root);
                     var showTopBar = _isOn(cfg, "SHOW_RANK_TOPBAR");
+                    // Root-level CSS class gates all top bar badge visibility (showrank.css:58-60)
+                    try { if (showTopBar) root.RemoveClass("HideShowRankTopBar"); else root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _applyTopBarVisibility(root, showTopBar);
                     _stateSet("_showRankTopBarVisible", showTopBar);
                     _ensureFillLoopRunning(root);
@@ -434,6 +436,7 @@
                     var root = $.GetContextPanel();
                     _clearTopBarBadges(root); _clearPlayerListBadges(root);
                     try { _clearPublishedRanks(root); } catch(e) {}
+                    try { root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _wasEnabled = false; _fillToken = 0;
                     _stateSet("_showRankEnabled", false); _stateSet("_showRankTopBarVisible", false); _stateSet("showRankEscapeDone", "");
                 },
