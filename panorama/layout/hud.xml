@@ -39,7 +39,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" />
+		<!-- CUT-OVER: old crosshairstats disabled, see manifests/ql_crosshair_stats/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
 		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
