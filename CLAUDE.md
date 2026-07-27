@@ -6,11 +6,11 @@ QOLLOCK is a Deadlock (Source 2 Panorama engine) mod that customizes the in-game
 It runs in two JavaScript contexts — HUD (in-game panels) and Settings (settings UI) —
 and communicates between them via panel attribute bridges.
 
-**Version:** 3.1.5  
-**Schema:** 3.1.5  
-**Features:** 40 feature files, 39 loaded, zero auto-disabled, 94 presets available  
-**Branch:** `architecture-overhaul`  
-**Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
+**Version:** 3.1.9  
+**Schema:** 3.1.9  
+**Features:** 31/38 FeatureRegistry manifests wired, 5 cut over, 37 old features, 94 presets  
+**Branch:** `full-rewrite`  
+**Primary File:** `panorama/scripts/ql_core.js` (~14.7K lines after Phase 10 wiring)
 
 ## Prerequisites
 
@@ -306,6 +306,25 @@ Key state fields:
 4. `persistentStorage` unavailable in settings context (missing guard)
 5. SafeSetAttribute fallback not logging degradation
 6. 14 silent catch sites now log at WARN level
+7. **Toggle coercion bug (Phase 10):** ConfigStore coerces `ENABLE_*`/`DISABLE_*`/etc.
+   keys from numeric 0/1 to boolean. Manifests must use `Number(cfg.X) === 1` —
+   bare `cfg.X === 1` fails because `true === 1` is false in JS. Fixed in
+   `ql_keyboard` and `ql_heroshop`.
+8. **Stuck-feature bug (Phase 10):** `_safeEnableFeature()` set `_instances[id]` before
+   `onEnable()` — if `onEnable` threw, feature was permanently stuck. Fixed with
+   `_enablingInProgress` reentry guard.
+9. **`_onConfigChanged` auto-enable bug:** Would enable a feature on ANY config key
+   change. Fixed: only auto-enables when `ConfigStore.get(id, "enabled") === true`.
+
+### Manifest Porting Rules (see docs/MIGRATION_PATTERNS.md for full details)
+- **Toggle coercion:** Always use `Number(cfg.X) === 1`, never bare `cfg.X === 1`
+- **Cut-over timing:** Cut over old include in the SAME commit as wiring manifest
+- **State writes:** Write to `State.*` for cross-feature backward compat (override
+  of the old "READ ONLY" rule — see MIGRATION_PATTERNS.md Pattern 7)
+- **QOL delegates:** Access old-system functions via `typeof QOL !== "undefined" &&
+  QOL.fnName` with try/catch (see MIGRATION_PATTERNS.md Pattern 10)
+- **Panel cache cleanup:** Clear `SetCachedPanel` entries in `onDisable`
+- **Adversarial review:** 2 agents per manifest (correctness + side effects)
 
 ### Remaining: Phase 10 Cleanup (see plans/AUDIT_PLAN.md)
 

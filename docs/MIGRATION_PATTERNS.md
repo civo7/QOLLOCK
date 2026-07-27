@@ -254,7 +254,60 @@ User toggles ENABLE_X in old settings UI
 
 ## Common Pitfalls
 
-### Never auto-boot with enabledByDefault: true during migration
+### Coercion trap: `cfg.X === 1` fails for toggle keys
+
+ConfigAdapter's `_coerceType()` (`ql_config_adapter.js` line 96-98) converts numeric 0/1
+to boolean `true`/`false` for keys matching these prefixes:
+`ENABLE_`, `DISABLE_`, `HUD_`, `SHOW_`, `SUPPORT_`, `MINIMAL_`, `DRAG_`, `PREVIEWS_`,
+`BHOP_`, `ON_DEATH_GAME_`, `ITEM_FILTER_`.
+
+In JavaScript, `true === 1` is `false`. Any manifest that does `cfg.ENABLE_X === 1`
+without wrapping in `Number()` will silently evaluate to `false` when ConfigStore
+returns a boolean `true`.
+
+```js
+// WRONG — always false when cfg.ENABLE_X is boolean true
+if (cfg.ENABLE_KEYBOARD_OVERLAY === 1) { ... }
+
+// CORRECT — Number(true) returns 1
+if (Number(cfg.ENABLE_KEYBOARD_OVERLAY) === 1) { ... }
+
+// ALSO CORRECT — truthy check works for booleans
+if (cfg.ENABLE_KEYBOARD_OVERLAY) { ... }
+```
+
+**This was a real bug** found in `ql_keyboard` and `ql_heroshop` after cut-over —
+the keyboard overlay silently failed to render because the gate check was always false.
+Use `Number(cfg.X) === 1` for ALL toggle key comparisons in manifests.
+
+### Dual-run: enableKey auto-enables the manifest silently
+
+Even with `enabledByDefault: false`, the config bridge's enableKey injection forces
+`onEnable()` if the user's saved config has `ENABLE_X = 1`. The old and new systems
+both run simultaneously, doubling CPU and creating race conditions. The keyboard
+port demonstrated this: the old feature's sticky gate fed on the manifest's shared
+panel cache, causing permanent dual-run that neither system could break free from.
+
+**Fix:** Cut over (comment out the old include in hud.xml) in the **same commit**
+as wiring the manifest. Do not leave both running to "test" them — the systems
+interfere with each other, making test results invalid.
+
+### Panel cache cleanup in onDisable
+
+Any manifest that creates panels and stores them via the global caching system
+must clear those cache entries in `onDisable()` / cleanup. If the manifest deletes
+a panel but the old-system cache still references it, the old system will write
+to a destroyed panel, causing errors or auto-disable.
+
+```js
+// In _removeOverlay() or onDisable():
+QOL.setCachedPanel("myPanelCacheKey", null);
+QOL.setCachedPanel("myOtherCacheKey", null);
+```
+
+The combat_status manifest demonstrates this: `_removeOverlay()` clears 4 cache
+entries (`combatStatusOverlay`, `combatStatusState`, `combatStatusTimer`,
+`combatStatusAlertPanel`).
 The old system still runs the feature. Two systems modifying the same panels = flickering, double-creation, race conditions. Only restore `enabledByDefault: true` after cut-over (Step 8).
 
 ### Always call boot()
@@ -295,10 +348,21 @@ function _tick() {
 ```
 
 **Rules:**
-- **READ ONLY.** Never WRITE to `QOL.state` from a manifest. Both old and new systems share it — writes corrupt both.
-- **Prefer closure state.** Per-feature data (style signatures, timing state, cache hashes) should be `var` inside `create()`, not State keys.
-- **Cross-feature shared data** (e.g., `State.topbarSoulSnapshot`, `State.rejuvState`) should eventually migrate to EventBus events (`ctx.events.emit()`). Until then, read-only access to `QOL.state` is acceptable during migration.
-- `stateKeys` in the healthbar manifest is a **documentation-only field** — FeatureRegistry ignores it. Do NOT add `stateKeys` to other manifests. Track state ownership in comments instead.
+- **Writes are allowed for backward compat.** If an old-system consumer (coreRoot,
+  another feature, healthbar variants) reads a State key, the manifest MUST continue
+  writing to that key so the consumer doesn't break. Always guard with
+  `try/catch` and `typeof QOL !== "undefined" && QOL.state`. Document which keys
+  you write and why in the manifest header comment. See examples:
+  - `combat_status` writes `State.combatStatus.*` for coreRoot's combat indicator
+  - `keyboard` writes `State.keyboardOverlayWashSig` + `State.allBindingsBoxes`
+  - `heroshop` writes `State.heroShopMainPanelStyleSig` + `State.heroShopNextSearchMs`
+- **Prefer closure state** for per-feature data that nothing else reads. Style
+  signatures, timing state, and cache hashes should be `var` inside `create()`.
+- **Cross-feature shared data** should eventually migrate to EventBus events
+  (`ctx.events.emit()`). Until then, State writes are acceptable during migration.
+- `stateKeys` in the healthbar manifest is a **documentation-only field** —
+  FeatureRegistry ignores it. Do NOT add `stateKeys` to other manifests.
+  Track state ownership in comments instead.
 
 ---
 
@@ -335,6 +399,54 @@ Features loaded outside `hud.xml` cannot use FeatureRegistry unless that context
 | `hud_escape_menu.xml` | No | No — use old includes |
 
 Before cut-over, run `grep -r "ql_feat_" --include="*.xml"` to find ALL contexts loading a feature. Remove includes from every context, not just hud.xml.
+
+---
+
+## Pattern 10: QOL Delegate Access (calling old-system functions)
+
+Manifests often need to call functions from the old system that haven't been
+extracted into standalone utilities (e.g., `resolveWashColorFromPalette`,
+`isCombatSignalActive`, `buildKeyboardOverlayLayouts`). These are available
+on the `QOL` namespace via bridge exports. Access them with the pull-through
+wrapper pattern:
+
+```js
+// Wrap each QOL delegate in a local function with try/catch.
+// Called at the top of create(), keeps _tick() clean.
+function _resolveWash(idx) {
+    try { if (typeof QOL !== "undefined" && QOL.resolveWashColorFromPalette)
+        return QOL.resolveWashColorFromPalette(idx); } catch(e) {}
+    return "";
+}
+function _isCombatSignal(root, nowMs) {
+    try { if (typeof QOL !== "undefined" && QOL.isCombatSignalActive)
+        return QOL.isCombatSignalActive(root, nowMs); } catch(e) {}
+    return false;
+}
+```
+
+**Rules:**
+- Always guard with `typeof QOL !== "undefined" && QOL.functionName` before calling
+- Wrap in try/catch so a missing function doesn't crash the manifest
+- Provide a safe fallback return value (empty string, false, null, 0)
+- Define wrappers at the top of `create()` so `_tick()` reads cleanly
+- This is a transitional pattern — eventually these functions should be
+  extracted into shared utility modules
+
+**Used extensively by:** `ql_keyboard` (8 delegates), `ql_combat_status` (2 delegates),
+`ql_heroshop` (Utils delegates).
+
+### Verification checklist additions
+
+```
+[ ] All cfg.X toggle comparisons use Number(cfg.X) === 1 (not bare === 1)
+[ ] enableKey manifest: old include is cut over in same commit
+[ ] Panel cache entries cleared in onDisable via QOL.setCachedPanel(key, null)
+[ ] State.* keys written for backward compat are documented in manifest header
+[ ] QOL delegate calls guarded with typeof + try/catch
+[ ] Poll rate matches old dispatch loop rate for this feature
+[ ] Adversarial review: 2 agents (correctness + side effects)
+```
 
 ---
 
