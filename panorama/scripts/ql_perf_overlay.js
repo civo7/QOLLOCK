@@ -390,9 +390,16 @@
                 titleText += ")";
                 _titleLabel.text = titleText;
             }
-            // ── Manifest perf section ──
+            // ── Manifest perf section (rolling window) ──
+            // Prefer State.manifestPerfWindow (computed by FlushPerfIfNeeded each ~5s
+            // window from delta snapshots). Fall back to raw manifestPerfStats if the
+            // window hasn't been computed yet (first window after boot).
             var mfStats = null;
-            try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
+            try {
+                if (typeof QOL !== "undefined" && QOL.state) {
+                    mfStats = QOL.state.manifestPerfWindow || QOL.state.manifestPerfStats;
+                }
+            } catch(e) {}
             if (mfStats) {
                 var mfKeys = Object.keys(mfStats);
                 var mfEntries = [];
@@ -405,7 +412,7 @@
                 if (mfEntries.length > 0) {
                     mfEntries.sort(function(a, b) { return b.total - a.total; });
                     lines.push("");
-                    lines.push("--- Manifests ---");
+                    lines.push("--- Manifests (window) ---");
                     var mfTop = Math.min(8, mfEntries.length);
                     for (var mj = 0; mj < mfTop; mj++) {
                         var mi = mfEntries[mj];

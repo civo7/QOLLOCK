@@ -1629,6 +1629,7 @@ function ExpressShotLog(msg) {
             State.perfLoopCount = 0;
             State.perfCompassLoopCount = 0;
             State.manifestPerfSnapPrev = null;
+            State.manifestPerfWindow = null;
             return;
         }
         if (!State.perfEnabled) {
@@ -1689,6 +1690,12 @@ function ExpressShotLog(msg) {
                 if (s) mfSnap[k2] = { count: s.count, total: s.total, max: s.max };
             }
             State.manifestPerfSnapPrev = mfSnap;
+            // Publish window data so the perf overlay can read rolling-window
+            // values instead of lifetime-accumulated totals.
+            State.manifestPerfWindow = mfWindow;
+        } else {
+            // No manifest stats at all — clear the window so overlay doesn't show stale data.
+            State.manifestPerfWindow = null;
         }
 
         var keys = Object.keys(stats);
