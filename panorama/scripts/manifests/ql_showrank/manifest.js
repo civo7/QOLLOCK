@@ -28,8 +28,6 @@
             var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
             var _loop = null, _wasEnabled = false;
             var _fillToken = 0;
-            var _DBG = true;
-            function _dbg(m) { if (_DBG) { try { $.Msg("[ql_sr] " + m); } catch(e) {} } }
 
             // ── Utilities ──
             function _nowMs() { try { return Date.now ? Date.now() : 0; } catch(e) { return 0; } }
@@ -195,7 +193,6 @@
                         if (_valid(label)) { try { label.text = result; } catch(e) {} }
                         if (heroName) {
                             var key = "qol_sr_rank_" + heroName.toLowerCase();
-                            _dbg("FillRow PUBLISH docRoot=" + (docRoot.id || "?") + " key=" + key + " val=" + result + " heroName='" + heroName + "'");
                             _setAttr(docRoot, key, result);
                             var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
                             var heroes = published ? published.split("|") : [];
@@ -305,7 +302,6 @@
                         if (heroName) {
                             var lookupKey = "qol_sr_rank_" + heroName.toLowerCase();
                             accountId = _readAttr(root, lookupKey, "");
-                            _dbg("TryLoad READ docRoot=" + (root.id || "?") + " key=" + lookupKey + " val=" + (accountId || "<empty>") + " heroName='" + heroName + "'");
                             if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
                         }
                     }
@@ -319,18 +315,14 @@
                     if (accountId && accountId !== _lastId) {
                         _lastId = accountId;
                         var lo = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        _dbg("TryLoad IMAGE: overlayExists=" + !!lo + " playerId=" + (player.id || "?"));
                         if (_valid(lo)) {
                             try { lo.SetImage(API_URL + accountId + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
                             var showTopBar = _isOn(ctx.config.all(), "SHOW_RANK_TOPBAR");
-                            _dbg("TryLoad IMAGE: showTopBar=" + showTopBar);
                             if (showTopBar) {
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
-                                _dbg("TryLoad IMAGE: badges visible, baseExists=" + !!base);
                             }
                         } else {
-                            _dbg("TryLoad IMAGE: overlay NOT FOUND on player " + (player.id || "?"));
                         }
                     }
                     $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);
@@ -418,6 +410,7 @@
                     // Root-level CSS class gates all top bar badge visibility (showrank.css:58-60)
                     try { if (showTopBar) root.RemoveClass("HideShowRankTopBar"); else root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _applyTopBarVisibility(root, showTopBar);
+                    _applyPlayerListVisibility(root, true);
                     _stateSet("_showRankTopBarVisible", showTopBar);
                     _ensureFillLoopRunning(root);
                 } catch(e) {
