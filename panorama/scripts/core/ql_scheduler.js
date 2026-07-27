@@ -40,8 +40,8 @@
                     var t = _timings[id];
                     // Only include features that have actually run (calls > 0)
                     if (t.calls > 0) {
-                        snapshot[id] = { avgMs: t.avgMs, maxMs: t.maxMs, calls: t.calls,
-                                         totalMs: t.totalMs, lastMs: t.lastMs, lastAt: t.lastAt };
+                        snapshot[id] = { count: t.calls, total: t.totalMs, max: t.maxMs,
+                                         avg: t.avgMs, lastMs: t.lastMs };
                     }
                 }
             }
