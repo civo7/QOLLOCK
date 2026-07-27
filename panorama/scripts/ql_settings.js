@@ -3823,25 +3823,31 @@ function TryApplyImportStringWithDiagnostics(raw) {
         unknownKeys: 0,
         clampedKeys: 0
     };
-    if (!raw) return result;
+    if (!raw) { $.Msg("[QOLLock][import] FAIL: raw is falsy"); return result; }
     var trimmed = raw.trim();
-    if (trimmed.length === 0) return result;
+    if (trimmed.length === 0) { $.Msg("[QOLLock][import] FAIL: empty after trim"); return result; }
 
     var normalized = String(trimmed).replace(/\s+/g, "");
+    $.Msg("[QOLLock][import] normalized len=" + normalized.length + " prefix=" + normalized.substring(0, Math.min(30, normalized.length)));
     var tokenMatch = normalized.match(EXPORT_TOKEN_REGEX);
-    if (!tokenMatch) return result;
+    if (!tokenMatch) { $.Msg("[QOLLock][import] FAIL: EXPORT_TOKEN_REGEX no match. regex=" + String(EXPORT_TOKEN_REGEX)); return result; }
 
     var schemaSemver = String(tokenMatch[1] || "").replace(/-/g, ".");
     var registry = (typeof QOL !== "undefined" && QOL.compactSchemaRegistry) || {};
-    if (!schemaSemver || !registry.hasOwnProperty(schemaSemver)) return result;
+    $.Msg("[QOLLock][import] schemaSemver=" + schemaSemver + " registryKeys=" + Object.keys(registry).length + " hasSchema=" + registry.hasOwnProperty(schemaSemver));
+    if (!schemaSemver || !registry.hasOwnProperty(schemaSemver)) { $.Msg("[QOLLock][import] FAIL: schema not in registry"); return result; }
     var compactCandidate = String(tokenMatch[2] || "");
-    if (!compactCandidate) return result;
+    if (!compactCandidate) { $.Msg("[QOLLock][import] FAIL: empty payload"); return result; }
 
+    $.Msg("[QOLLock][import] payload len=" + compactCandidate.length);
     try {
         var compactBinary = QOL.persistence.fromBase64Url(compactCandidate);
+        $.Msg("[QOLLock][import] decoded binary len=" + compactBinary.length);
         result.parsedConfig = QOL.persistence.deserializeCompactV2(compactBinary, schemaSemver);
         result.schemaVersion = schemaSemver;
+        $.Msg("[QOLLock][import] deserialized keys=" + Object.keys(result.parsedConfig).length);
     } catch (compactErr) {
+        $.Msg("[QOLLock][import] FAIL: decode/deserialize threw — " + (compactErr && compactErr.message ? compactErr.message : String(compactErr)));
         return result;
     }
 
@@ -3852,6 +3858,7 @@ function TryApplyImportStringWithDiagnostics(raw) {
     result.unknownKeys = preview.diagnostics.unknownKeys;
     result.clampedKeys = preview.diagnostics.clampedKeys;
     result.ok = true;
+    $.Msg("[QOLLock][import] OK — applied=" + result.appliedKeys + " unknown=" + result.unknownKeys + " clamped=" + result.clampedKeys);
     return result;
 }
 
