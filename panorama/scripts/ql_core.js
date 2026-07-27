@@ -1704,6 +1704,27 @@ function ExpressShotLog(msg) {
             }
         }
 
+        // ── Manifest perf detail ──
+        if (detailed) {
+            var mfStats = null;
+            try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
+            if (mfStats) {
+                var mfKeys = Object.keys(mfStats);
+                mfKeys.sort(function(a, b) { return (mfStats[b].total || 0) - (mfStats[a].total || 0); });
+                var mfParts = [];
+                for (var mk = 0; mk < mfKeys.length; mk++) {
+                    var mkKey = mfKeys[mk];
+                    var me = mfStats[mkKey];
+                    if (!me || me.count <= 0) continue;
+                    var mAvg = me.total / me.count;
+                    mfParts.push(mkKey + "=avg:" + mAvg.toFixed(2) + "ms,max:" + me.max.toFixed(2) + "ms,n:" + me.count);
+                }
+                if (mfParts.length > 0) {
+                    $.Msg("[QOLLock][Perf][detail] manifests: " + mfParts.join(" | "));
+                }
+            }
+        }
+
         ResetPerfWindow(nowMs);
     }
 
