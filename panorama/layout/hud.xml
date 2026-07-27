@@ -41,7 +41,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" />
+		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" />
 		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
@@ -114,6 +115,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_combat_status/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
