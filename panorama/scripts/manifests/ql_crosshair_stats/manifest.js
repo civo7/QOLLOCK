@@ -21,6 +21,7 @@
 
     FR.register({
         id: "ql_crosshair_stats",
+        enableKey: "ENABLE_CROSSHAIR_STATS",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_CROSSHAIR_STATS", type: "toggle", default: false },
