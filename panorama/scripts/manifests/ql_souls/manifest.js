@@ -42,17 +42,24 @@
 
                 var active = _hasNonDefault(cfg);
                 var enabled = Number(cfg.HUD_SOULS_ENABLED) === 1;
-                var ox = Math.round(Number(active ? cfg.SOULS_X_OFFSET : 0)) || 0;
-                var oy = Math.round(Number(active ? cfg.SOULS_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.SOULS_OPACITY).toFixed(2) : "1.00";
-                var sig = ox + "|" + oy + "|" + op + "|" + (enabled ? "1" : "0");
+                var offsetX = active ? (Math.round(Number(cfg.SOULS_X_OFFSET)) || 0) : 0;
+                var offsetY = active ? (Math.round(Number(cfg.SOULS_Y_OFFSET)) || 0) : 0;
+                var opacityText = active ? (Number(cfg.SOULS_OPACITY) || 1.0).toFixed(2) : "1.00";
+                var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                panel.style.x = ox + "px";
-                panel.style.y = (-oy) + "px";
-                if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
-                try { panel.style.opacity = op; } catch(e) {}
+                try { panel.style.x = offsetX + "px"; } catch(e) {}
+                try { panel.style.y = (-offsetY) + "px"; } catch(e) {}
+                if (panel.SetHasClass) { panel.SetHasClass("qol-hidden", !enabled); }
+                else { try { panel.style.visibility = enabled ? "visible" : "collapse"; } catch(e) {} }
+                try {
+                    if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) {
+                        Utils.SetPanelOpacitySafe(panel, opacityText, 1.0);
+                    } else {
+                        panel.style.opacity = opacityText;
+                    }
+                } catch(e) {}
             }
 
             return {

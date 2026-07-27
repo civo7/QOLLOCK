@@ -33,6 +33,7 @@
     var _manifests = {};
     var _instances = {};
     var _enabled = {};
+    var _enablingInProgress = {};  // reentry guard: prevents recursion during onEnable/boot
     var _errors = {};
     var _configChangedHandler = null;
     var ERROR_STREAK_MAX = 10;
@@ -45,23 +46,31 @@
     }
 
     function _safeEnableFeature(id) {
-        if (_instances.hasOwnProperty(id)) return;
+        if (_instances.hasOwnProperty(id)) return;       // already enabled
+        if (_enablingInProgress[id]) return;              // reentry guard
         var manifest = _manifests[id];
         if (!manifest) return;
+        _enablingInProgress[id] = true;
         try {
             var context = createContext(id);
             var instance = manifest.create(context);
-            if (instance && typeof instance.onEnable === "function") {
-                _instances[id] = instance;
-                _enabled[id] = true;
-                if (!_isSettingsIsolate()) {
-                    instance.onEnable();
-                }
+            if (!instance || typeof instance.onEnable !== "function") {
+                delete _enablingInProgress[id];
+                return;
             }
+            if (!_isSettingsIsolate()) {
+                instance.onEnable();                      // call BEFORE setting _instances
+            }
+            _instances[id] = instance;                    // only on success
+            _enabled[id] = true;
+            _errors[id] = 0;                              // start tracking errors
         } catch (e) {
             if (Logger) Logger.logError("FeatureRegistry", "enable failed for '" + id +
                 "': " + (e.message || e));
+            _errors[id] = (_errors[id] || 0) + 1;         // track consecutive failures
+            // _instances NOT set → retryable on next attempt
         }
+        delete _enablingInProgress[id];
     }
 
     function _safeDisableFeature(id) {
@@ -84,8 +93,12 @@
                           : _safeDisableFeature(payload.featureId);
             return;
         }
+        // Only auto-enable if the feature's "enabled" config is explicitly true.
+        // Prevents auto-enable from unrelated config key changes (dormant bug:
+        // ConfigStore.load() doesn't emit events, but ConfigStore.set() does).
         if (!_instances.hasOwnProperty(payload.featureId) &&
-            _manifests.hasOwnProperty(payload.featureId)) {
+            _manifests.hasOwnProperty(payload.featureId) &&
+            ConfigStore.get(payload.featureId, "enabled") === true) {
             _safeEnableFeature(payload.featureId);
         }
         var instance = _instances[payload.featureId];
@@ -148,31 +161,42 @@
 
     function boot(config) {
         var ids = Object.keys(_manifests);
+        var total = ids.length;
         var enabledCount = 0;
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
+            if (_instances.hasOwnProperty(id)) continue;        // already enabled
+            if (_enablingInProgress[id]) continue;              // reentry guard
             var manifest = _manifests[id];
-            var enabled = manifest.enabledByDefault === true;
+
+            var shouldEnable = manifest.enabledByDefault === true;
             if (config && config.hasOwnProperty(id) && config[id].hasOwnProperty("enabled")) {
-                enabled = !!config[id].enabled;
+                shouldEnable = !!config[id].enabled;
             }
-            _enabled[id] = enabled;
-            if (!enabled) continue;
+
+            if (!shouldEnable) continue;
+
+            _enablingInProgress[id] = true;
             try {
                 var context = createContext(id);
                 var instance = manifest.create(context);
                 if (instance && typeof instance.onEnable === "function") {
-                    _instances[id] = instance;
                     if (!_isSettingsIsolate()) { instance.onEnable(); }
-                    enabledCount++;
                 }
+                _instances[id] = instance;                     // only on success
+                _enabled[id] = true;
+                _errors[id] = 0;
+                enabledCount++;
             } catch (e) {
                 if (Logger) Logger.logError("FeatureRegistry", "boot failed for '" + id +
                     "': " + (e.message || e));
+                _errors[id] = (_errors[id] || 0) + 1;
+                // _enabled NOT set → not stuck, retryable on next re-sync
             }
+            delete _enablingInProgress[id];
         }
         $.Msg("[QOLLock] FeatureRegistry: boot complete — " + enabledCount + "/" +
-              ids.length + " features enabled");
+              total + " features enabled");
         if (!_configChangedHandler) {
             _configChangedHandler = _onConfigChanged;
             EventBus.on("config:changed", _configChangedHandler);
@@ -201,6 +225,12 @@
     function isEnabled(featureId) { return !!_enabled[featureId]; }
     function isRegistered(featureId) { return _manifests.hasOwnProperty(featureId); }
     function getRegisteredIds() { return Object.keys(_manifests); }
+    function getEnabledIds() { return Object.keys(_instances); }
+    function getErrorCounts() {
+        var snapshot = {};
+        for (var k in _errors) { if (_errors.hasOwnProperty(k)) { snapshot[k] = _errors[k]; } }
+        return snapshot;
+    }
     function getManifest(featureId) { return _manifests[featureId] || null; }
     function enableFeature(id) { _safeEnableFeature(id); }
     function disableFeature(id) { _safeDisableFeature(id); }
@@ -209,6 +239,7 @@
         register: register, boot: boot, shutdown: shutdown,
         createContext: createContext, isEnabled: isEnabled,
         isRegistered: isRegistered, getRegisteredIds: getRegisteredIds,
+        getEnabledIds: getEnabledIds, getErrorCounts: getErrorCounts,
         getManifest: getManifest, enable: enableFeature,
         disable: disableFeature
     };

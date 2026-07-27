@@ -205,6 +205,18 @@
         _startConfigPolling(hud);
         _booted = true;
 
+        // P0: Boot health summary — one-line check for registration + errors.
+        if (FeatureRegistry) {
+            var ids = FeatureRegistry.getRegisteredIds();
+            var enabled = [];
+            for (var i = 0; i < ids.length; i++) {
+                if (FeatureRegistry.isEnabled(ids[i])) enabled.push(ids[i]);
+            }
+            var errors = (Logger && Logger.getErrors) ? Logger.getErrors(10) : null;
+            $.Msg("[QOLLock] Boot health: " + ids.length + " registered, " +
+                  enabled.length + " enabled, " + (errors && errors.length ? errors.length + " errors" : "0 errors"));
+        }
+
         // Step 0f: Diagnostic canary — verify config bridge is working.
         // Only test features that have been wired (schema registered).
         if (Logger) {

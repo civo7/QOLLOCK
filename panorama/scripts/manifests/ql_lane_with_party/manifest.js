@@ -19,6 +19,7 @@
 
     FR.register({
         id: "ql_lane_with_party",
+        enableKey: "ENABLE_LANE_WITH_PARTY",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_LANE_WITH_PARTY", type: "toggle", default: false }

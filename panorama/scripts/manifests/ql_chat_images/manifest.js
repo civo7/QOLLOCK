@@ -19,6 +19,7 @@
 
     FR.register({
         id: "ql_chat_images",
+        enableKey: "ENABLE_IMAGES_IN_CHAT",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_IMAGES_IN_CHAT", type: "toggle", default: false }

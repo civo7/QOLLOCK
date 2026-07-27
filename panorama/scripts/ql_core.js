@@ -11484,7 +11484,9 @@ function GetUIRoot() {
     function UpdateItemMirrorProbeMulti(root, cfg) {
         if (!IsCustomHudContextActive(root)) {
             if (State.itemMirror.displayMode !== "context_off") {
+                if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
                 ResetPassiveCooldownCustomRuntimeState(root);
+                }
                 RemoveItemMirrorOverlay(root);
                 State.itemMirror.displayMode = "context_off";
             }
@@ -11505,7 +11507,9 @@ function GetUIRoot() {
             RuntimeTaskReset("item_mirror_render");
             RuntimeTaskReset("item_mirror_scan");
             State.itemMirror.fastModeUntilMs = 0;
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
             ResetPassiveCooldownCustomRuntimeState(root);
+            }
             if (State.itemMirror.displayMode !== "disabled") {
                 RemoveItemMirrorOverlay(root);
                 State.itemMirror.displayMode = "disabled";
@@ -13100,10 +13104,16 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "hide_testing_tools_active", hideTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "specials_active", cfg.ENABLE_SPECIALS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hero_scene_panel_visible", cfg.ENABLE_HERO_SCENE_PANEL === 1);
-            SetPanelClassCached(root, State.rootClassCache, "hide_failed_hint_active", cfg.ENABLE_HIDE_FAILED_HINT === 1);
+            // P3: coreRoot test mode — gate overlapping classes so manifests can be tested independently.
+            // When QOLLOCK_DEV_CORE_ROOT_TEST_MODE=1, these are skipped (manifests own the classes).
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "hide_failed_hint_active", cfg.ENABLE_HIDE_FAILED_HINT === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "hide_ability_suggestion_active", cfg.ENABLE_HIDE_ABILITY_SUGGESTION === 1);
-            SetPanelClassCached(root, State.rootClassCache, "hide_cosmetic_ability_active", cfg.ENABLE_HIDE_COSMETIC_ABILITY === 1);
-            SetPanelClassCached(root, State.rootClassCache, "simplify_ability_icons_active", cfg.ENABLE_SIMPLIFY_ABILITY_ICONS === 1);
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "hide_cosmetic_ability_active", cfg.ENABLE_HIDE_COSMETIC_ABILITY === 1);
+                SetPanelClassCached(root, State.rootClassCache, "simplify_ability_icons_active", cfg.ENABLE_SIMPLIFY_ABILITY_ICONS === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "hide_behavior_summary_active", cfg.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1);
             SetPanelClassCached(root, State.rootClassCache, "buff_hud_disabled", cfg.ENABLE_BUFF_HUD === 0);
             SetPanelClassCached(root, State.rootClassCache, "rejuv_hud_disabled", cfg.ENABLE_REJUV_HUD === 0);
@@ -13128,7 +13138,9 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_full_active", cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_minimap_active", cfg.MINIMAL_MINIMAP === 1);
             SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", IsCfgEnabled(cfg, "ENABLE_MINIMAP_ELEVATION_MARKERS"));
-            SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_16_10_active", cfg.SUPPORT_16_10 === 1);
@@ -13280,7 +13292,9 @@ function GetUIRoot() {
                 passiveHudPanelForClass = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
                 SetCachedPanel("passiveHud", passiveHudPanelForClass);
             }
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
             ApplyPassiveCooldownModeClasses(root, passiveHudPanelForClass, passiveCooldownMode);
+            }
         }
         if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) {
             UpdateChatRuntime(root, cfg);
@@ -14228,6 +14242,14 @@ function GetUIRoot() {
                 logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : [],
                 diagToken: forceToken
             };
+            // P1: extend diagnostic bridge with FeatureRegistry data.
+            // FeatureRegistry is loaded after this function is defined, so guard at call time.
+            if (QOL && QOL.core && QOL.core.FeatureRegistry) {
+                var FR = QOL.core.FeatureRegistry;
+                diag.newFeatures = FR.getRegisteredIds();
+                diag.newEnabled = FR.getEnabledIds();
+                diag.newErrors = FR.getErrorCounts();
+            }
             if (diagHud && diagHud.SetAttributeString) {
                 diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
                 if (forceSync) {

@@ -15,6 +15,7 @@
     if (!FR) { $.Msg("[QOLLock] passive_cooldown: FeatureRegistry not found — aborting"); return; }
     FR.register({
         id: "ql_passive_cooldown",
+        enableKey: "ENABLE_PASSIVE_COOLDOWN",
         enabledByDefault: false,
         settings: [{ key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false }],
         create: function(ctx) {

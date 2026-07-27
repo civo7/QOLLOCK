@@ -19,6 +19,7 @@
 
     FR.register({
         id: "ql_unsecured_souls_timer",
+        enableKey: "ENABLE_UNSECURED_SOUL_TIMER",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_UNSECURED_SOUL_TIMER", type: "toggle", default: false }

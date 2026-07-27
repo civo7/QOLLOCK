@@ -70,13 +70,14 @@ VALID_TYPES="toggle|slider|dropdown|text|palette|action"
 for f in "$MANIFESTS_DIR"/*/manifest.js; do
     [ -f "$f" ] || continue
     id=$(grep -oP 'id:\s*"[^"]+"' "$f" | head -1 | grep -oP '"[^"]+"' | tr -d '"')
-    types=$(grep -oP 'type:\s*"[^"]+"' "$f" | grep -oP '"[^"]+"' | tr -d '"')
-    for t in $types; do
+    # Use while-read with process substitution to avoid subshell (ERRORS must persist)
+    while IFS= read -r t; do
+        [ -z "$t" ] && continue
         if ! [[ "$t" =~ ^($VALID_TYPES)$ ]]; then
             echo "  ERROR: $id has invalid type '$t'"
             ERRORS=$((ERRORS + 1))
         fi
-    done
+    done < <(grep -oP 'type:\s*"[^"]+"' "$f" | grep -oP '"[^"]+"' | tr -d '"')
 done
 echo "  Settings types validated."
 

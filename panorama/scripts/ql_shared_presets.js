@@ -2278,6 +2278,18 @@ var QOL_DumpDiagnostics = function() {
         } else {
             lines.push("  (none)");
         }
+        // P1: FeatureRegistry manifests (new system) — reported alongside old features.
+        if (_diag.newFeatures && _diag.newFeatures.length > 0) {
+            lines.push("");
+            lines.push("--- New Feature Manifests (" + _diag.newFeatures.length + " registered, " +
+                (_diag.newEnabled ? _diag.newEnabled.length : 0) + " enabled) ---");
+            for (var _nf = 0; _nf < _diag.newFeatures.length; _nf++) {
+                var _nid = _diag.newFeatures[_nf];
+                var _nstatus = (_diag.newEnabled && _diag.newEnabled.indexOf(_nid) !== -1) ? "ON " : "OFF";
+                var _nerr = (_diag.newErrors && _diag.newErrors[_nid]) ? (" (" + _diag.newErrors[_nid] + " errors)") : "";
+                lines.push("  " + _nstatus + " " + _nid + _nerr);
+            }
+        }
         lines.push("");
         // Merge HUD-side logs (from panel attribute) with settings-side logs
         // (from local __qolLogBuf, captured by the $.Msg wrapper in this file).
@@ -2311,6 +2323,7 @@ var QOL_DumpDiagnostics = function() {
 };
 
 var QOL_DEFAULT_CONFIG = {
+    QOLLOCK_DEV_CORE_ROOT_TEST_MODE: 0,
     SHOW_RANK: 0,
     SHOW_RANK_TOPBAR: 1,
     SETTINGS_THEME: 0,

@@ -19,6 +19,7 @@
 
     FR.register({
         id: "ql_better_unsecured_hud",
+        enableKey: "ENABLE_BETTER_UNSECURED",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_BETTER_UNSECURED", type: "toggle", default: false }

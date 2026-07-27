@@ -16,6 +16,7 @@
     if (!FR) { $.Msg("[QOLLock] damage_report: FeatureRegistry not found — aborting"); return; }
     FR.register({
         id: "ql_damage_report",
+        enableKey: "DISABLE_DAMAGE_REPORT",
         enabledByDefault: false,
         settings: [{ key: "DISABLE_DAMAGE_REPORT", type: "toggle", default: false }],
         create: function(ctx) {

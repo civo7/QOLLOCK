@@ -59,7 +59,8 @@
                 if (_lastColorSig !== colorSig) {
                     _lastColorSig = colorSig;
                     _refreshColorPanels(root);
-                    var wc = String(colorIdx || "");
+                    var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
+                    var wc = (colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "";
                     for (var i = 0; i < _colorPanels.length; i++) {
                         try { _colorPanels[i].style.washColor = wc; } catch(e) {}
                     }

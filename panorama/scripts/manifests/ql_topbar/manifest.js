@@ -42,13 +42,22 @@
                 var topBar = root.FindChildTraverse("TopBar");
                 if (!topBar) return;
 
+                // Visibility gate: if the top bar is hidden in spectator/replay mode, don't apply styles.
+                // Mirrors old feature's IsHudVisibleForTopBarRuntime(root, topBar) check.
+                var hudVisible = true;
+                try {
+                    if (typeof QOL !== "undefined" && QOL.isHudVisibleForTopBarRuntime) {
+                        hudVisible = QOL.isHudVisibleForTopBarRuntime(root, topBar);
+                    }
+                } catch(e) {}
+
                 var active = _hasNonDefault(cfg);
                 var enabled = Number(cfg.HUD_TOP_BAR_ENABLED) === 1;
                 var ox = Math.round(Number(active ? cfg.TOP_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.TOP_BAR_Y_OFFSET : 0)) || 0;
                 var op = active ? Number(cfg.TOP_BAR_OPACITY).toFixed(2) : "1.00";
                 var sc = active ? Number(cfg.TOP_BAR_SCALE).toFixed(2) : "1.00";
-                var shouldShow = enabled;
+                var shouldShow = enabled && hudVisible;
 
                 var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;

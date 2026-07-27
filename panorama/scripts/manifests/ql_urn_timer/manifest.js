@@ -19,6 +19,7 @@
 
     FR.register({
         id: "ql_urn_timer",
+        enableKey: "ENABLE_URN_TIMER",
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_URN_TIMER", type: "toggle", default: false }

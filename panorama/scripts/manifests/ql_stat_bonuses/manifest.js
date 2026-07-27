@@ -19,6 +19,6 @@ function _tick(){var r=$.GetContextPanel(),cfg=ctx.config.all();if(!Number(cfg.E
 var sc=Number(cfg.STAT_BONUSES_SCALE)/100,ox=Math.round(Number(cfg.STAT_BONUSES_X_OFFSET))||0,oy=Math.round(Number(cfg.STAT_BONUSES_Y_OFFSET))||0;
 if(!_overlay){_overlay=r.FindChildTraverse("QOLStatBonusesOverlay");if(!_overlay){var gp=r.FindChildTraverse("gameplay_hud");if(!gp)return;
 _overlay=$.CreatePanel("Panel",gp,"QOLStatBonusesOverlay",{hittest:"false"});}}
-if(_overlay&&_overlay.style){_overlay.visible=true;_overlay.style.preTransformScale2d=sc.toFixed(2)+", "+sc.toFixed(2);_overlay.style.x=ox+"px";_overlay.style.y=oy+"px";}}
+if(_overlay&&_overlay.style){_overlay.visible=true;_overlay.style.preTransformScale2d=sc.toFixed(2)+", "+sc.toFixed(2);_overlay.style.marginLeft=(-520+ox)+"px";_overlay.style.marginBottom=(70+oy)+"px";}}
 return{onEnable:function(){var S=QOL.core.Scheduler;_loop=S&&S.createPollLoop?S.createPollLoop(_tick,0.2,"ql_stat_bonuses"):null;},
 onDisable:function(){if(_loop){_loop.stop();_loop=null;}if(_overlay){try{_overlay.DeleteAsync(0);}catch(e){}}_overlay=null;},onSettingsChanged:function(){}};}});})();

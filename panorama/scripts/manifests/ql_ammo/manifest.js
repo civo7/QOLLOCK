@@ -59,7 +59,7 @@
                 }
             }
 
-            function _applyChildren(ap, curScale, totScale) {
+            function _applyChildren(ap, curScale, totScale, textColor) {
                 var cf = curScale / 100, tf = totScale / 100;
                 var valFont = Math.max(12, Math.round(16 * cf));
                 var valWidth = Math.max(24, Math.round(32 * cf));
@@ -72,6 +72,7 @@
                         if (!vals[vi]) continue;
                         vals[vi].style.fontSize = valFont + "px";
                         vals[vi].style.width = valWidth + "px";
+                        if (textColor) { try { vals[vi].style.color = textColor; } catch(e) {} }
                     }
                     var maxs = ap.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
                     for (var mi = 0; mi < maxs.length; mi++) {
@@ -79,6 +80,7 @@
                         maxs[mi].style.fontSize = maxFont + "px";
                         maxs[mi].style.width = maxWidth + "px";
                         maxs[mi].style.marginLeft = maxMl + "px";
+                        if (textColor) { try { maxs[mi].style.color = textColor; } catch(e) {} }
                     }
                 } catch(e) {}
             }
@@ -96,12 +98,14 @@
                 var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
                 var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
                 var colorIdx = Number(cfg.AMMO_TEXT_COLOR) || 0;
+                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
+                var textColor = (colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "";
 
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
                 if (_lastMainSig === sig) return;
                 _lastMainSig = sig;
 
-                _applyChildren(ap, curScale, totScale);
+                _applyChildren(ap, curScale, totScale, textColor);
                 ap.style.x = ox + "px";
                 ap.style.y = (80 - oy) + "px";
                 ap.style.preTransformScale2d = "1.00, 1.00";

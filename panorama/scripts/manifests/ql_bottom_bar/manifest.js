@@ -82,9 +82,11 @@
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
                 var op = active ? Number(cfg.BOTTOM_BAR_OPACITY).toFixed(2) : "1.00";
                 var sc = active ? Number(cfg.BOTTOM_BAR_SCALE).toFixed(2) : "1.00";
-                var wc = active ? String(cfg.BOTTOM_BAR_WASH_COLOR || "") : "";
+                var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
+                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
+                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
 
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + wc + "|" + (enabled ? "1" : "0");
+                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
