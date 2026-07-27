@@ -19,7 +19,7 @@
 
     FR.register({
         id: "ql_mouse_cursor",
-        enabledByDefault: true,  // always-on gate, no enableKey
+        enabledByDefault: false,  // disabled by default — perf: avg 1.34ms/tick, 20x next most expensive feature
         settings: [],
         create: function(ctx) {
             var _loop = null;
