@@ -3402,7 +3402,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
         var nextValue = parsed[key];
         var field = fieldMap[key] || null;
         if (field && typeof nextValue === "number") {
-            var clampResult = ClampToSchemaField(nextValue, field);
+            var clampResult = QOL.persistence.clampToSchemaField(nextValue, field);
             nextValue = clampResult.value;
             if (clampResult.changed) diagnostics.clampedKeys++;
         }
