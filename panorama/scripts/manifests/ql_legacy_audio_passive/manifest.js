@@ -241,7 +241,10 @@
             var _dbgTick = 0;
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.all();
+                // Read from State.lastConfig (global config, same as old dispatch loop used)
+                // ctx.config.all() only works for manifests with enableKey — with
+                // enabledByDefault:true, config isn't populated into the ConfigStore bucket.
+                var cfg = (State.lastConfig) || {};
                 _dbgTick++;
 
                 // Passive cooldown state tracking (for coreRoot cross-feature compat)
