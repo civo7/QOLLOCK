@@ -390,29 +390,27 @@
                 titleText += ")";
                 _titleLabel.text = titleText;
             }
-            // ── Manifest perf section (rolling window) ──
-            // Prefer State.manifestPerfWindow (computed by FlushPerfIfNeeded each ~5s
-            // window from delta snapshots). Fall back to raw manifestPerfStats if the
-            // window hasn't been computed yet (first window after boot).
-            var mfStats = null;
-            try {
-                if (typeof QOL !== "undefined" && QOL.state) {
-                    mfStats = QOL.state.manifestPerfWindow || QOL.state.manifestPerfStats;
-                }
-            } catch(e) {}
-            if (mfStats) {
-                var mfKeys = Object.keys(mfStats);
+            // ── Manifest perf section (unified rolling window) ──
+            // Manifest poll loops write to State.perfStats with "mf." prefix
+            // (same as PerfRecord). ResetPerfWindow() resets both together.
+            var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats) || {};
+            var mfKeys = [];
+            for (var k in stats) {
+                if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) mfKeys.push(k);
+            }
+            if (mfKeys.length > 0) {
                 var mfEntries = [];
                 for (var mk = 0; mk < mfKeys.length; mk++) {
                     var mkey = mfKeys[mk];
-                    var me = mfStats[mkey];
+                    var me = stats[mkey];
                     if (!me || me.count <= 0) continue;
-                    mfEntries.push({ name: mkey, total: me.total, avg: me.total / me.count, max: me.max, count: me.count });
+                    var id = mkey.substring(3); // strip "mf." prefix
+                    mfEntries.push({ name: id, total: me.total, avg: me.total / me.count, max: me.max, count: me.count });
                 }
                 if (mfEntries.length > 0) {
                     mfEntries.sort(function(a, b) { return b.total - a.total; });
                     lines.push("");
-                    lines.push("--- Manifests (window) ---");
+                    lines.push("--- Manifests ---");
                     var mfTop = Math.min(8, mfEntries.length);
                     for (var mj = 0; mj < mfTop; mj++) {
                         var mi = mfEntries[mj];

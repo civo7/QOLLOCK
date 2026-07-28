@@ -1628,8 +1628,7 @@ function ExpressShotLog(msg) {
             State.perfNextFlushMs = 0;
             State.perfLoopCount = 0;
             State.perfCompassLoopCount = 0;
-            State.manifestPerfSnapPrev = null;
-            State.manifestPerfWindow = null;
+            // manifest perf stats now live in State.perfStats (mf.*) — reset with window
             return;
         }
         if (!State.perfEnabled) {
@@ -1653,54 +1652,10 @@ function ExpressShotLog(msg) {
 
         var windowStart = State.perfWindowStartMs || nowMs;
         var windowMs = Math.max(1, nowMs - windowStart);
+        // Manifest poll loops (ql_scheduler.js createPollLoop) now write directly
+        // to State.perfStats with "mf." prefix, same as PerfRecord. Both share the
+        // same reset-based rolling window — no delta snapshot hack needed.
         var stats = State.perfStats || {};
-
-        // ── Merge manifest perf into the same rolling window ──
-        // createPollLoop() in ql_scheduler.js records to a lifetime accumulator
-        // (_timings → State.manifestPerfStats). Compute per-window deltas against
-        // the previous snapshot and merge into stats so manifests appear in the
-        // main summary line alongside dispatch PerfRecord entries.
-        var mfStats = null;
-        try { if (typeof QOL !== "undefined" && QOL.state) { mfStats = QOL.state.manifestPerfStats; } } catch(e) {}
-        if (mfStats) {
-            var mfPrev = (typeof State.manifestPerfSnapPrev === "object" && State.manifestPerfSnapPrev) || {};
-            var mfKeys = Object.keys(mfStats);
-            var mfWindow = {};
-            for (var mk = 0; mk < mfKeys.length; mk++) {
-                var mkKey = mfKeys[mk];
-                var cur = mfStats[mkKey];
-                var prev = mfPrev[mkKey];
-                if (!cur || cur.count <= 0) continue;
-                var dCount = prev ? cur.count - prev.count : cur.count;
-                var dTotal = prev ? cur.total - prev.total : cur.total;
-                if (dCount <= 0) continue;
-                var wMax = cur.max;
-                // Merge into stats with "mf." prefix so manifest entries are
-                // distinguishable from dispatch loop features.
-                var statKey = "mf." + mkKey;
-                if (!stats[statKey]) { stats[statKey] = { total: 0, count: 0, max: 0, slow: 0 }; }
-                stats[statKey].total += dTotal;
-                stats[statKey].count += dCount;
-                if (wMax > stats[statKey].max) stats[statKey].max = wMax;
-                // Also build mfWindow for the perf overlay.
-                mfWindow[mkKey] = { count: dCount, total: dTotal, max: wMax };
-            }
-            // Persist snapshot as baseline for next window.
-            var mfSnap = {};
-            for (var mk2 = 0; mk2 < mfKeys.length; mk2++) {
-                var k2 = mfKeys[mk2];
-                var s = mfStats[k2];
-                if (s) mfSnap[k2] = { count: s.count, total: s.total, max: s.max };
-            }
-            State.manifestPerfSnapPrev = mfSnap;
-            // Publish window data so the perf overlay can read rolling-window
-            // values instead of lifetime-accumulated totals.
-            State.manifestPerfWindow = mfWindow;
-        } else {
-            // No manifest stats at all — clear the window so overlay doesn't show stale data.
-            State.manifestPerfWindow = null;
-        }
-
         var keys = Object.keys(stats);
 
         keys.sort(function(a, b) {

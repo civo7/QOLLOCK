@@ -27,27 +27,6 @@
     }
 
     var _loops = {};
-    var _timings = {};
-    var _lastManifestPerfSync = 0;
-    var _MAX_TIMING_SAMPLES = 120;
-
-    function _syncManifestPerfToState() {
-        try {
-            if (typeof QOL === "undefined" || !QOL.state) return;
-            var snapshot = {};
-            for (var id in _timings) {
-                if (_timings.hasOwnProperty(id)) {
-                    var t = _timings[id];
-                    // Only include features that have actually run (calls > 0)
-                    if (t.calls > 0) {
-                        snapshot[id] = { count: t.calls, total: t.totalMs, max: t.maxMs,
-                                         avg: t.avgMs, lastMs: t.lastMs };
-                    }
-                }
-            }
-            QOL.state.manifestPerfStats = snapshot;
-        } catch(e) { /* best-effort — perf tracking is non-critical */ }
-    }
 
     // Date.now() for per-tick elapsed measurement (sub-frame precision).
     // $.FrameTime() is monotonic but only updates once per frame (~16ms),
@@ -57,19 +36,25 @@
         return Date.now ? Date.now() : (new Date()).getTime();
     }
 
+    // Unified perf recording — writes directly to State.perfStats with "mf." prefix,
+    // same accumulator that PerfRecord uses. ResetPerfWindow() naturally gives both
+    // dispatch features and manifest poll loops the same rolling window.
     function _recordTiming(featureId, elapsedMs) {
-        if (!_timings[featureId]) {
-            _timings[featureId] = { avgMs: elapsedMs, maxMs: elapsedMs,
-                totalMs: elapsedMs, calls: 0, lastMs: elapsedMs, lastAt: $.FrameTime() };
-        }
-        var t = _timings[featureId];
-        t.calls++;
-        t.lastMs = elapsedMs;
-        t.lastAt = $.FrameTime();
-        t.totalMs += elapsedMs;
-        if (elapsedMs > t.maxMs) { t.maxMs = elapsedMs; }
-        var alpha = Math.min(1.0, 2.0 / Math.min(t.calls, _MAX_TIMING_SAMPLES));
-        t.avgMs = t.avgMs + alpha * (elapsedMs - t.avgMs);
+        try {
+            if (typeof QOL === "undefined" || !QOL.state) return;
+            var stats = QOL.state.perfStats;
+            if (!stats) return;
+            var key = "mf." + featureId;
+            var entry = stats[key];
+            if (!entry) {
+                entry = { count: 0, total: 0, max: 0, slow: 0 };
+                stats[key] = entry;
+            }
+            entry.count += 1;
+            entry.total += elapsedMs;
+            if (elapsedMs > entry.max) entry.max = elapsedMs;
+            if (elapsedMs >= 8) entry.slow += 1;
+        } catch(e) { /* best-effort — perf tracking is non-critical */ }
     }
 
     // -- Public API --
@@ -95,13 +80,6 @@
             var elapsed = _nowMs() - t0;
             if (typeof featureId === "string" && featureId) {
                 _recordTiming(featureId, elapsed);
-                // Publish to State.manifestPerfStats for perf overlay visibility.
-                // Debounced: only sync every ~1s to avoid per-tick State writes.
-                var now = $.FrameTime();
-                if (!_lastManifestPerfSync || now - _lastManifestPerfSync > 1.0) {
-                    _lastManifestPerfSync = now;
-                    _syncManifestPerfToState();
-                }
             }
             if (!_stopped) {
                 _handle = $.Schedule(_rate, tick);
@@ -137,25 +115,38 @@
     }
 
     function getTimings(featureId) {
+        var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats) || {};
         if (featureId) {
-            var t = _timings[featureId];
-            return t ? { avgMs: t.avgMs, maxMs: t.maxMs, calls: t.calls,
-                         totalMs: t.totalMs, lastMs: t.lastMs, lastAt: t.lastAt } : null;
+            var key = "mf." + featureId;
+            var e = stats[key];
+            if (!e || e.count <= 0) return null;
+            return { avgMs: e.total / e.count, maxMs: e.max, calls: e.count,
+                     totalMs: e.total, lastMs: 0, lastAt: 0 };
         }
         var result = {};
-        for (var id in _timings) {
-            if (_timings.hasOwnProperty(id)) {
-                var tt = _timings[id];
-                result[id] = { avgMs: tt.avgMs, maxMs: tt.maxMs, calls: tt.calls,
-                               totalMs: tt.totalMs, lastMs: tt.lastMs, lastAt: tt.lastAt };
+        for (var k in stats) {
+            if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) {
+                var ee = stats[k];
+                if (ee.count <= 0) continue;
+                var id = k.substring(3);
+                result[id] = { avgMs: ee.total / ee.count, maxMs: ee.max, calls: ee.count,
+                               totalMs: ee.total, lastMs: 0, lastAt: 0 };
             }
         }
         return result;
     }
 
     function resetTimings(featureId) {
-        if (featureId) { delete _timings[featureId]; }
-        else { _timings = {}; }
+        try {
+            var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats);
+            if (!stats) return;
+            if (featureId) { delete stats["mf." + featureId]; }
+            else {
+                for (var k in stats) {
+                    if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) delete stats[k];
+                }
+            }
+        } catch(e) { /* best-effort */ }
     }
 
     QOL.core.Scheduler = {
