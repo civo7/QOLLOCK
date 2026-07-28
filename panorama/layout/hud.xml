@@ -123,7 +123,8 @@
 		<include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_rejuv_timers/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>

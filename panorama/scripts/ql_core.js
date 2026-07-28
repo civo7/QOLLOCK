@@ -13879,7 +13879,7 @@ function GetUIRoot() {
 
         // P1: skip when new manifest is active to prevent dual execution
         var _rejuvManifestActive = false;
-        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_timers"); } } catch(e) {}
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_hud"); } } catch(e) {}
         if (!_rejuvManifestActive) {
             gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
         }
