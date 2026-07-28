@@ -1661,16 +1661,22 @@ function ExpressShotLog(msg) {
         var snap = _copyPerfEntries(State.perfStats);
         if (snap) {
             if (!State.perfSnapshotRing) State.perfSnapshotRing = [];
+            var prevLen = State.perfSnapshotRing.length;
             State.perfSnapshotRing.push({ timeMs: nowMs, entries: snap });
             // Prune old snapshots
             var cutoff = nowMs - PERF_ROLLING_WINDOW_MS;
+            var pruned = 0;
             while (State.perfSnapshotRing.length > 0 && State.perfSnapshotRing[0].timeMs < cutoff) {
                 State.perfSnapshotRing.shift();
+                pruned++;
             }
             // Hard cap
             while (State.perfSnapshotRing.length > PERF_MAX_SNAPSHOTS) {
                 State.perfSnapshotRing.shift();
             }
+            $.Msg("[QOLLock][Perf][ring] captured snapshot entries=" + Object.keys(snap).length +
+                  " ringSize=" + prevLen + "→" + State.perfSnapshotRing.length +
+                  " pruned=" + pruned + " cutoffAge=" + Math.round((nowMs - cutoff)/1000) + "s");
         }
         State.perfStats = {};
         State.perfWindowStartMs = nowMs;
@@ -1721,6 +1727,14 @@ function ExpressShotLog(msg) {
         // Merge ring buffer snapshots + current live stats into a true 60s rolling window.
         var ring = State.perfSnapshotRing || [];
         var liveStats = State.perfStats || {};
+        var liveKeys = Object.keys(liveStats);
+        var liveTotal = 0;
+        for (var lk = 0; lk < liveKeys.length; lk++) {
+            var le = liveStats[liveKeys[lk]];
+            if (le && le.count > 0) liveTotal += le.count;
+        }
+        $.Msg("[QOLLock][Perf][merge] ringSnaps=" + ring.length +
+              " liveEntries=" + liveKeys.length + " liveSamples=" + liveTotal);
         var stats = _mergePerfSnapshots(ring, liveStats);
         var rollingWindowMs = Math.max(1, nowMs - (ring.length > 0 ? ring[0].timeMs : nowMs));
         if (rollingWindowMs < snapshotWindowMs) rollingWindowMs = snapshotWindowMs;
