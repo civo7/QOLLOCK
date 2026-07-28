@@ -19,7 +19,7 @@
 
     FR.register({
         id: "ql_rejuv_timers",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "ENABLE_REJUV_HUD", type: "toggle", default: false },
             { key: "ENABLE_BUFF_HUD", type: "toggle", default: false },
