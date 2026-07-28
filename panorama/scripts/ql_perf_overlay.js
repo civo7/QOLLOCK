@@ -390,19 +390,18 @@
                 titleText += ")";
                 _titleLabel.text = titleText;
             }
-            // ── Manifest perf section (unified rolling window) ──
-            // Manifest poll loops write to State.perfStats with "mf." prefix
-            // (same as PerfRecord). ResetPerfWindow() resets both together.
-            var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats) || {};
+            // ── Manifest perf section (merged 60s rolling window) ──
+            // Read from the merged rolling stats (ring buffer + live) so manifest
+            // entries don't drop to zero after each ResetPerfWindow.
             var mfKeys = [];
-            for (var k in stats) {
-                if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) mfKeys.push(k);
+            for (var k in merged) {
+                if (merged.hasOwnProperty(k) && k.indexOf("mf.") === 0) mfKeys.push(k);
             }
             if (mfKeys.length > 0) {
                 var mfEntries = [];
                 for (var mk = 0; mk < mfKeys.length; mk++) {
                     var mkey = mfKeys[mk];
-                    var me = stats[mkey];
+                    var me = merged[mkey];
                     if (!me || me.count <= 0) continue;
                     var id = mkey.substring(3); // strip "mf." prefix
                     mfEntries.push({ name: id, total: me.total, avg: me.total / me.count, max: me.max, count: me.count });

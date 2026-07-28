@@ -1736,8 +1736,11 @@ function ExpressShotLog(msg) {
         $.Msg("[QOLLock][Perf][merge] ringSnaps=" + ring.length +
               " liveEntries=" + liveKeys.length + " liveSamples=" + liveTotal);
         var stats = _mergePerfSnapshots(ring, liveStats);
-        var rollingWindowMs = Math.max(1, nowMs - (ring.length > 0 ? ring[0].timeMs : nowMs));
-        if (rollingWindowMs < snapshotWindowMs) rollingWindowMs = snapshotWindowMs;
+        // The oldest ring snapshot was captured at ring[0].timeMs, but the data
+        // inside it was accumulated over the previous PERF_DEBUG_FLUSH_MS window.
+        // So the actual data span starts at ring[0].timeMs - PERF_DEBUG_FLUSH_MS.
+        var dataStartMs = ring.length > 0 ? ring[0].timeMs - PERF_DEBUG_FLUSH_MS : nowMs;
+        var rollingWindowMs = Math.max(snapshotWindowMs, nowMs - dataStartMs);
         var keys = Object.keys(stats);
 
         keys.sort(function(a, b) {
