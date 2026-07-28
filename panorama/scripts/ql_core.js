@@ -429,7 +429,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ACCOUNT_PROBE_MAX_PANELS = 4000;
     const ACCOUNT_PROBE_LOG = false;
     const URN_TRACKER_DEBUG = false;
-    const PERF_DEBUG_FLUSH_MS = 60000;
+    const PERF_DEBUG_FLUSH_MS = 10000;     // snapshot capture interval
+    const PERF_ROLLING_WINDOW_MS = 60000;  // merged reporting window
+    const PERF_MAX_SNAPSHOTS = 12;         // ring buffer size
     const PERF_DEBUG_SLOW_MS = 8;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
@@ -1605,7 +1607,71 @@ function ExpressShotLog(msg) {
         PerfRecord(name, PerfNowMs() - startMs);
     }
 
+    function _copyPerfEntries(stats) {
+        if (!stats) return null;
+        var keys = Object.keys(stats);
+        if (keys.length === 0) return null;
+        var copy = {};
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var e = stats[k];
+            if (e && e.count > 0) {
+                copy[k] = { total: e.total, count: e.count, max: e.max, slow: e.slow || 0 };
+            }
+        }
+        return Object.keys(copy).length > 0 ? copy : null;
+    }
+
+    function _mergePerfSnapshots(snapshots, liveStats) {
+        var merged = {};
+        for (var si = 0; si < snapshots.length; si++) {
+            var snap = snapshots[si];
+            if (!snap || !snap.entries) continue;
+            var keys = Object.keys(snap.entries);
+            for (var ki = 0; ki < keys.length; ki++) {
+                var k = keys[ki];
+                var e = snap.entries[k];
+                if (!merged[k]) merged[k] = { total: 0, count: 0, max: 0, slow: 0 };
+                merged[k].total += e.total;
+                merged[k].count += e.count;
+                if (e.max > merged[k].max) merged[k].max = e.max;
+                merged[k].slow += e.slow || 0;
+            }
+        }
+        // Merge live stats
+        if (liveStats) {
+            var lKeys = Object.keys(liveStats);
+            for (var li = 0; li < lKeys.length; li++) {
+                var lk = lKeys[li];
+                var le = liveStats[lk];
+                if (!le || le.count <= 0) continue;
+                if (!merged[lk]) merged[lk] = { total: 0, count: 0, max: 0, slow: 0 };
+                merged[lk].total += le.total;
+                merged[lk].count += le.count;
+                if (le.max > merged[lk].max) merged[lk].max = le.max;
+                merged[lk].slow += le.slow || 0;
+            }
+        }
+        return merged;
+    }
+
     function ResetPerfWindow(nowMs) {
+        // Capture snapshot before resetting — the ring buffer preserves
+        // history so we can report a true 60s rolling window.
+        var snap = _copyPerfEntries(State.perfStats);
+        if (snap) {
+            if (!State.perfSnapshotRing) State.perfSnapshotRing = [];
+            State.perfSnapshotRing.push({ timeMs: nowMs, entries: snap });
+            // Prune old snapshots
+            var cutoff = nowMs - PERF_ROLLING_WINDOW_MS;
+            while (State.perfSnapshotRing.length > 0 && State.perfSnapshotRing[0].timeMs < cutoff) {
+                State.perfSnapshotRing.shift();
+            }
+            // Hard cap
+            while (State.perfSnapshotRing.length > PERF_MAX_SNAPSHOTS) {
+                State.perfSnapshotRing.shift();
+            }
+        }
         State.perfStats = {};
         State.perfWindowStartMs = nowMs;
         State.perfNextFlushMs = nowMs + PERF_DEBUG_FLUSH_MS;
@@ -1628,13 +1694,14 @@ function ExpressShotLog(msg) {
             State.perfNextFlushMs = 0;
             State.perfLoopCount = 0;
             State.perfCompassLoopCount = 0;
-            // manifest perf stats now live in State.perfStats (mf.*) — reset with window
+            State.perfSnapshotRing = null;
             return;
         }
         if (!State.perfEnabled) {
             var nowMs = PerfNowMs();
             State.perfEnabled = true;
             State.perfDetailed = detailed;
+            State.perfSnapshotRing = null;
             ResetPerfWindow(nowMs);
             QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
             return;
@@ -1650,12 +1717,13 @@ function ExpressShotLog(msg) {
         var nowMs = PerfNowMs();
         if (!force && nowMs < (State.perfNextFlushMs || 0)) return;
 
-        var windowStart = State.perfWindowStartMs || nowMs;
-        var windowMs = Math.max(1, nowMs - windowStart);
-        // Manifest poll loops (ql_scheduler.js createPollLoop) now write directly
-        // to State.perfStats with "mf." prefix, same as PerfRecord. Both share the
-        // same reset-based rolling window — no delta snapshot hack needed.
-        var stats = State.perfStats || {};
+        var snapshotWindowMs = Math.max(1, nowMs - (State.perfWindowStartMs || nowMs));
+        // Merge ring buffer snapshots + current live stats into a true 60s rolling window.
+        var ring = State.perfSnapshotRing || [];
+        var liveStats = State.perfStats || {};
+        var stats = _mergePerfSnapshots(ring, liveStats);
+        var rollingWindowMs = Math.max(1, nowMs - (ring.length > 0 ? ring[0].timeMs : nowMs));
+        if (rollingWindowMs < snapshotWindowMs) rollingWindowMs = snapshotWindowMs;
         var keys = Object.keys(stats);
 
         keys.sort(function(a, b) {
@@ -1678,12 +1746,13 @@ function ExpressShotLog(msg) {
             );
         }
 
-        var loopHz = ((State.perfLoopCount * 1000) / windowMs).toFixed(1);
-        var compassHz = ((State.perfCompassLoopCount * 1000) / windowMs).toFixed(1);
+        // Hz uses the rolling window (60s merged) for stable rates
+        var loopHz = ((State.perfLoopCount * 1000) / snapshotWindowMs).toFixed(1);
+        var compassHz = ((State.perfCompassLoopCount * 1000) / snapshotWindowMs).toFixed(1);
         var summary = parts.length > 0 ? parts.join(" | ") : "no samples";
 
         $.Msg(
-            "[QOLLock][Perf] window=" + windowMs + "ms" +
+            "[QOLLock][Perf] window=" + rollingWindowMs + "ms" +
             " loopHz=" + loopHz +
             " compassHz=" + compassHz +
             " top=" + summary
