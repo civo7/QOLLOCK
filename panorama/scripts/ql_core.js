@@ -13877,7 +13877,12 @@ function GetUIRoot() {
             State.runtimeGates = gates;
         }
 
-        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        // P1: skip when new manifest is active to prevent dual execution
+        var _rejuvManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_timers"); } } catch(e) {}
+        if (!_rejuvManifestActive) {
+            gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        }
         gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_SPM_STATLOCKER))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         // WHY: unspent processes 1 player per tick — light enough to run every tick
         // instead of being gated by the 5-phase scheduler (which would limit it to 1Hz).

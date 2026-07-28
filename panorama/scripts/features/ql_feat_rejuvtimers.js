@@ -1282,6 +1282,10 @@
         },
         update: function(root, cfg, nowMs) {
             try {
+                // P1: skip when new manifest is active to prevent dual execution
+                var _mfActive = false;
+                try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_timers"); } } catch(e) {}
+                if (_mfActive) return;
                 UpdateRejuvBuffTimers(root, cfg, nowMs);
             } catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));

@@ -66,7 +66,8 @@
 		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" />
+		<!-- CUT-OVER: old rejuvtimers disabled, see manifests/ql_rejuv_timers/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" /> -->
 		<!-- CUT-OVER: old showrank disabled, see manifests/ql_showrank/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_showrank.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_showrank_card.vjs_c" />
@@ -122,6 +123,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_rejuv_timers/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
