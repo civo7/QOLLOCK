@@ -28,6 +28,9 @@
 
     var _loops = {};
 
+    // Optional EventBus for error reporting (loaded before us by ql_event_bus.js)
+    var EventBus = (QOL.core && QOL.core.EventBus) ? QOL.core.EventBus : null;
+
     // Date.now() for per-tick elapsed measurement (sub-frame precision).
     // $.FrameTime() is monotonic but only updates once per frame (~16ms),
     // so fast callbacks always show 0 elapsed. Date.now() has ~1ms precision.
@@ -71,11 +74,21 @@
         function tick() {
             if (_stopped) return;
             var t0 = _nowMs();
+            var _threw = false;
             try {
                 callback();
             } catch (e) {
-                $.Msg("[QOLLock][ERROR][Scheduler] poll loop threw — " +
-                      (e && e.message ? e.message : String(e)) + " (continuing)");
+                _threw = true;
+                var _errMsg = (e && e.message ? e.message : String(e));
+                // P2: emit event so FeatureRegistry can track error streaks and auto-disable
+                if (EventBus && typeof featureId === "string" && featureId) {
+                    try { EventBus.emit("scheduler:error", { featureId: featureId, message: _errMsg, timestamp: _nowMs() }); } catch(_evErr) { /* best-effort */ }
+                }
+                $.Msg("[QOLLock][ERROR][Scheduler] poll loop threw — " + _errMsg + " (continuing)");
+            }
+            // P2: emit success event to reset consecutive error counter in FeatureRegistry
+            if (!_threw && EventBus && typeof featureId === "string" && featureId) {
+                try { EventBus.emit("scheduler:tick_ok", { featureId: featureId }); } catch(_evOkErr) { /* best-effort */ }
             }
             var elapsed = _nowMs() - t0;
             if (typeof featureId === "string" && featureId) {

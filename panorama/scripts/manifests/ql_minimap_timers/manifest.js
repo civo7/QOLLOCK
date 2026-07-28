@@ -37,7 +37,7 @@
             { key: "MINIMAP_LARGE_SIZE_TAB", type: "slider", min: 400, max: 1200, step: 10, default: 750 }
         ],
         create: function(ctx) {
-            var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","hasClassInHierarchy","isHudClassActive","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
+            var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
             var GetCachedPanel = _deps.getCachedPanel;
             var ResolveCachedPanel = _deps.resolveCachedPanel;
             var State = _deps.state;
@@ -50,6 +50,8 @@
             var hasClassInHierarchy = _deps.hasClassInHierarchy;
             var EnsureMinimapOverlayAnchor = _deps.ensureMinimapOverlayAnchor;
             var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
+            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
+            var isConnectedToHideout = _deps.isConnectedToHideout;
             var BRIDGE_DURATION_SEC = 300;
 
             var _loop = null;
@@ -207,6 +209,16 @@
             // ── Main tick ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
+                // Hideout check (shared isConnectedToHideout — checks "connectedToHideout"
+                // and "InHideout" on both Hud and root panels, consistent with all features)
+                var inHideout = false;
+                try { inHideout = isConnectedToHideout(root); } catch(e) {}
+                if (inHideout) { HideMinimapObjectiveTimers(root); return; }
+                // Street brawl check — suppress minimap timers during practice mode
+                // (matches old monolithic rejuvTimers behavior)
+                var inStreetBrawl = false;
+                try { inStreetBrawl = IsStreetBrawlModeActive(root); } catch(e) {}
+                if (inStreetBrawl) { HideMinimapObjectiveTimers(root); return; }
                 var cfg = ctx.config.all();
                 var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
                 var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
@@ -244,6 +256,23 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var minimap = root ? root.FindChildTraverse("hud_minimap") : null;
+                // minimap_overlay_root and QOLMinimapTimersRoot are created lazily
+                // by the feature's tick, so they may not exist at test time.
+                // The feature test verifies the base minimap panel exists.
+                return {
+                    passed: !!minimap,
+                    name: "Minimap panel exists",
+                    message: minimap ? "" : "hud_minimap not found in HUD tree",
+                    assertions: [
+                        { passed: !!minimap, name: "hud_minimap exists" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "Minimap panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

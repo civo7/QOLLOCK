@@ -50,6 +50,7 @@ panorama/
     │   ├── ql_config_store.js                # Schema-driven typed config
     │   ├── ql_config_adapter.js              # Old flat ↔ new schema bridge
     │   ├── ql_feature_registry.js             # FeatureRegistry.register/boot/shutdown
+    │   ├── ql_manifest_tests.js               # Manifest test() runner + diagnostic bridge
     │   └── ql_app.js                         # Boot sequence, config polling bridge
     ├── manifests/                             # Phase 9: New FeatureRegistry manifests
     │   ├── ql_cast_failed_hint/manifest.js   # (wired + tested in-game)
@@ -352,9 +353,54 @@ Key state fields:
 
 ## Testing
 
-- **Diagnostic:** Run `QOL_DumpDiagnostics()` in the Panorama console. Shows loaded features, auto-disabled features, and console logs.
-- **Preset Cycle:** Settings → Dev panel → "Preset Cycle" button. Applies all 79 presets sequentially with 1.2s delay. Verifies no feature crashes.
+### In-Game
+
+- **Diagnostic:** Run `QOL_DumpDiagnostics()` in the Panorama console. Shows loaded features,
+  auto-disabled features, new FeatureRegistry manifests (enabled/disabled + error counts),
+  manifest test results (from last run), and captured console logs.
+- **Manifest Tests:** Settings → Dev panel → "Manifest Tests" button. Triggers HUD-side
+  `QOL.core.ManifestTests.runAll()` via force-sync token. Polls for results with 6s timeout.
+  Each enabled manifest's optional `test()` hook verifies panel existence and basic functionality.
+  Results also appear in `QOL_DumpDiagnostics()`.
+- **Preset Cycle:** Settings → Dev panel → "Preset Cycle" button. Applies all presets
+  sequentially with 1.2s delay. Verifies no old-system features auto-disable. Checks
+  `diag.newErrors` for manifest error counts.
+- **Console:** `QOL.core.ManifestTests.runAll()` — run all manifest tests from Panorama console.
+  `QOL.core.ManifestTests.getResults()` — read results from last run.
+- **Runtime error tracking:** Manifest poll loops that throw are tracked by FeatureRegistry.
+  After 10 consecutive poll loop errors (without an intervening success), the feature
+  auto-disables and shows in diagnostics with error count.
 - **Repack:** Changes to .js files require repacking the VPK before testing in-game.
+
+### Manifest `test()` Hook (optional, on FeatureRegistry manifest descriptor)
+
+```js
+FR.register({
+    id: "ql_example",
+    create: function(ctx) { ... },
+    test: function(ctx) {
+        // OPTIONAL — static, called from HUD context only.
+        // Must be read-only: no State writes, no config.set(), no DispatchEvent.
+        // Return null to skip (not applicable, e.g. not in a match).
+        var root = $.GetContextPanel();
+        var panel = root.FindChildTraverse("expected_panel");
+        return {
+            passed: !!panel,
+            name: "Expected panel exists",
+            message: panel ? "" : "panel not found in HUD tree",
+            assertions: [                          // OPTIONAL drill-down
+                { passed: !!panel, name: "panel exists" }
+            ]
+        };
+    }
+});
+```
+
+### Node.js Smoke Test
+
+- `node tools/qollock_smoke_test.js` — loads all JS files (infrastructure + features + manifests)
+  in dependency order with mock Panorama globals. Catches syntax errors, reference errors.
+  Reports manifest test hook coverage (structural check). 104+/104+ PASS expected.
 
 ## Key Files to Read First
 
@@ -413,6 +459,7 @@ Panorama ignores, falling back to `squish`.
 - `/plan-qollock` — Full plan creation with 4-agent adversarial review
 - `/extract-qollock` — Extract code to a standalone feature file
 - `/fix-qollock` — Fix a bug with adversarial review
+- `/diff-qollock` — Semantic diff old feature → new manifest (5-agent: constants, calls, CSS, control flow, State)
 
 ## Saved Prompts
 

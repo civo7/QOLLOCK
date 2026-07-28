@@ -286,6 +286,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var topBar0 = root ? root.FindChildTraverse("TopBarPlayer0") : null;
+            return { passed: !!topBar0, name: "Top bar player panels exist", message: topBar0 ? "" : "TopBarPlayer0 not found", assertions: [{ passed: !!topBar0, name: "TopBarPlayer0 panel exists" }] };
+        } catch(e) { return { passed: false, name: "Nicknames panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

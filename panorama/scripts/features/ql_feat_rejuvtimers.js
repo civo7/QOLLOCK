@@ -1282,9 +1282,9 @@
         },
         update: function(root, cfg, nowMs) {
             try {
-                // P1: skip when new manifest is active to prevent dual execution
+                // P1: skip when new manifests are active to prevent dual execution
                 var _mfActive = false;
-                try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_timers"); } } catch(e) {}
+                try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_hud") || QOL.core.FeatureRegistry.isEnabled("ql_minimap_timers"); } } catch(e) {}
                 if (_mfActive) return;
                 UpdateRejuvBuffTimers(root, cfg, nowMs);
             } catch(e) {

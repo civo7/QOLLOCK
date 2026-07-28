@@ -55,6 +55,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var gp = root ? root.FindChildTraverse("gameplay_hud") : null;
+            return { passed: !!gp, name: "Unsecured souls anchor panel exists", message: gp ? "" : "gameplay_hud not found", assertions: [{ passed: !!gp, name: "gameplay_hud panel exists" }] };
+        } catch(e) { return { passed: false, name: "Unsecured souls panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

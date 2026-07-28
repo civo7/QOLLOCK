@@ -63,7 +63,7 @@
         "nicknames": "ql_nicknames",
         "onDeathArcade": "ql_on_death_arcade",
         "recentPurchases": "ql_recent_purchases",
-        "rejuvTimers": "ql_rejuv_timers",
+        "rejuvTimers": "ql_rejuv_hud",  // split from ql_rejuv_timers → ql_rejuv_hud + ql_minimap_timers
         "showRank": "ql_showrank",
         "signatureFlash": "ql_sigflash",
         "spm": "ql_spm",

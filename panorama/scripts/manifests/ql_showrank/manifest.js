@@ -435,6 +435,14 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var hud = root ? root.FindChildTraverse("Hud") : null;
+            var topBar = root ? root.FindChildTraverse("TopBar") : null;
+            return { passed: !!(hud && topBar), name: "ShowRank panels exist", message: [ !hud ? "Hud not found" : "", !topBar ? "TopBar not found" : "" ].filter(function(s) { return s !== ""; }).join(", "), assertions: [{ passed: !!hud, name: "Hud panel exists" }, { passed: !!topBar, name: "TopBar panel exists" }] };
+        } catch(e) { return { passed: false, name: "ShowRank panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

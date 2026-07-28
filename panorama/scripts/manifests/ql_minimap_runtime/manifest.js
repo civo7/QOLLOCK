@@ -60,6 +60,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var minimap = root ? root.FindChildTraverse("hud_minimap") : null;
+            return { passed: !!minimap, name: "Minimap runtime panel exists", message: minimap ? "" : "hud_minimap not found", assertions: [{ passed: !!minimap, name: "hud_minimap panel exists" }] };
+        } catch(e) { return { passed: false, name: "Minimap runtime panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

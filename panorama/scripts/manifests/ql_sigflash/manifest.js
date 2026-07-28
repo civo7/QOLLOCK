@@ -114,6 +114,20 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var sig = root ? root.FindChildTraverse("hud_signature") : null;
+                return {
+                    passed: !!sig,
+                    name: "Signature flash panel exists",
+                    message: sig ? "" : "hud_signature not found in HUD tree",
+                    assertions: [
+                        { passed: !!sig, name: "hud_signature panel exists" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "Sigflash panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

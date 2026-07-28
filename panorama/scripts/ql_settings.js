@@ -8001,6 +8001,116 @@ function RenderCurrentTabContent(list) {
                 $.Schedule(0.1, runNext);
             });
         }
+        // ── Manifest Test Runner (Phase T2) ──
+        // Triggers HUD-side QOL.core.ManifestTests.runAll() via force-sync token.
+        // Polls QOL_Diag for matching testResults.token, same pattern as FIT + Preset Cycle.
+        var manifestTestHeader = CreateSectionTitle(list, "Manifest Tests");
+        var manifestTestBtn = CreateSectionInlineIconButton(manifestTestHeader, "ManifestTestBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Run all registered manifest test() hooks. Requires HUD context.");
+        var manifestTestStatus = $.CreatePanel("Label", manifestTestHeader, "ManifestTestStatus");
+        manifestTestStatus.text = "Idle";
+        manifestTestStatus.style.fontSize = "13px";
+        manifestTestStatus.style.color = "#666";
+        manifestTestStatus.style.marginLeft = "6px";
+        manifestTestStatus.style.verticalAlign = "center";
+
+        var _mtRunning = false;
+        var _mtToken = 0;
+
+        function _mtSetStatus(text, color) {
+            try { if (manifestTestStatus && manifestTestStatus.IsValid && manifestTestStatus.IsValid()) { manifestTestStatus.text = text; manifestTestStatus.style.color = color; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+        function _mtSetBtnActive(active) {
+            try { if (manifestTestBtn && manifestTestBtn.IsValid && manifestTestBtn.IsValid()) { if (active) manifestTestBtn.AddClass("CycleActive"); else manifestTestBtn.RemoveClass("CycleActive"); } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+
+        if (manifestTestBtn) {
+            manifestTestBtn.SetPanelEvent("onactivate", function() {
+                if (_mtRunning) {
+                    _mtRunning = false;
+                    _mtToken++;
+                    _mtSetStatus("Cancelled", "#aa8844");
+                    _mtSetBtnActive(false);
+                    return;
+                }
+
+                var token = ++_mtToken;
+                _mtRunning = true;
+                _mtSetBtnActive(true);
+                _mtSetStatus("Starting...", "#66cc99");
+
+                var forceToken = "mt_" + token + "_" + Date.now();
+                var hudPanel = _findHudPanel();
+                if (hudPanel && hudPanel.SetAttributeString) {
+                    try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) {}
+                    $.Msg("[QOLLock][ManifestTests] force-sync token: " + forceToken);
+                } else {
+                    _mtSetStatus("Hud panel not found", "#cc4444");
+                    _mtRunning = false;
+                    _mtSetBtnActive(false);
+                    return;
+                }
+
+                var pollStartMs = Date.now ? Date.now() : (new Date()).getTime();
+                var pollAttempts = 0;
+
+                function pollResults() {
+                    pollAttempts++;
+                    if (!_mtRunning || token !== _mtToken) return;
+
+                    var elapsedMs = (Date.now ? Date.now() : (new Date()).getTime()) - pollStartMs;
+                    if (elapsedMs > 6000) {
+                        _mtSetStatus("Timeout — no result within 6s", "#cc4444");
+                        _mtRunning = false;
+                        _mtSetBtnActive(false);
+                        return;
+                    }
+
+                    var hud = _findHudPanel();
+                    var rawDiag = "";
+                    if (hud && hud.GetAttributeString) {
+                        try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
+                    }
+                    if (rawDiag) {
+                        try {
+                            var diag = JSON.parse(rawDiag);
+                            if (diag.testResults && diag.testResults.token === forceToken) {
+                                var ts = diag.testResults.summary;
+                                var statusText = "Passed: " + ts.passed + "/" + ts.total +
+                                    ", Failed: " + ts.failed + ", Skipped: " + ts.skipped +
+                                    " (" + ts.timeMs + "ms)";
+                                var statusColor = (ts.failed > 0 || ts.errors > 0) ? "#cc8844" : "#66cc99";
+                                _mtSetStatus(statusText, statusColor);
+                                _mtRunning = false;
+                                _mtSetBtnActive(false);
+
+                                $.Msg("[QOLLock][ManifestTests] === RESULTS ===");
+                                $.Msg("[QOLLock][ManifestTests] " + statusText);
+                                if (ts.failed > 0 || ts.errors > 0) {
+                                    var trs = diag.testResults.results || [];
+                                    for (var ri = 0; ri < trs.length; ri++) {
+                                        var r = trs[ri];
+                                        if (r.passed === false || r.error) {
+                                            $.Msg("[QOLLock][ManifestTests] FAIL: " + r.id +
+                                                " [" + r.name + "]" + (r.message ? ": " + r.message : ""));
+                                        }
+                                    }
+                                }
+                                SetLocalizedConfigFeedbackMessage(
+                                    "Tests: " + ts.passed + "/" + ts.total + " passed (" + ts.timeMs + "ms)",
+                                    (ts.failed > 0 ? "warn" : "success"), 5000);
+                                return;
+                            }
+                        } catch(e) { /* JSON parse may fail on partial write */ }
+                    }
+
+                    var interval = pollAttempts < 10 ? 0.1 : (pollAttempts < 30 ? 0.2 : 0.4);
+                    $.Schedule(interval, pollResults);
+                }
+                $.Schedule(0.2, pollResults);
+            });
+        }
         // ── Preset Cycle (Robust) ──
         // Applies every preset sequentially with per-preset verification via force-sync
         // diagnostic polling. Detects auto-disabled features, tracks timing, and reports

@@ -31,6 +31,20 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var hud = root ? root.FindChildTraverse("Hud") : null;
+                return {
+                    passed: !!hud,
+                    name: "Hud panel exists for class toggle",
+                    message: hud ? "" : "Hud panel not found",
+                    assertions: [
+                        { passed: !!hud, name: "Hud root panel exists" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "Cast failed hint panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

@@ -100,6 +100,20 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var gameplayHud = root ? root.FindChildTraverse("gameplay_hud") : null;
+                return {
+                    passed: !!gameplayHud,
+                    name: "ZipBoost anchor panel exists",
+                    message: gameplayHud ? "" : "gameplay_hud not found in HUD tree",
+                    assertions: [
+                        { passed: !!gameplayHud, name: "gameplay_hud panel exists" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "ZipBoost panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

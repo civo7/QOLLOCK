@@ -227,6 +227,13 @@
                 },
                 onSettingsChanged: function() { _styleSig = ""; }
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var shop = root ? root.FindChildTraverse("CitadelShop") : null;
+            return { passed: !!shop, name: "Hero shop panel exists", message: shop ? "" : "CitadelShop not found", assertions: [{ passed: !!shop, name: "CitadelShop panel exists" }] };
+        } catch(e) { return { passed: false, name: "Hero shop panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

@@ -144,6 +144,10 @@
         perfLabel: "loop.images_in_chat",
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_IMAGES_IN_CHAT"); },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
+            // P1: skip when new manifest is active to prevent dual execution
+            var _mfActive = false;
+            try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_chat_images"); } } catch(e) {}
+            if (_mfActive) return;
             UpdateImagesInChat(root, cfg);
         },
         stateKeys: ["imagesInChatTopNextSearchMs",

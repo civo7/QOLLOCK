@@ -55,6 +55,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var topBar = root ? root.FindChildTraverse("TopBar") : null;
+            return { passed: !!topBar, name: "Urn timer top bar panel exists", message: topBar ? "" : "TopBar not found", assertions: [{ passed: !!topBar, name: "TopBar panel exists" }] };
+        } catch(e) { return { passed: false, name: "Urn timer panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

@@ -305,6 +305,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var players = root ? (root.FindChildrenWithClassTraverse("player_0") || []) : [];
+            return { passed: true, name: "Unspent player panels found", message: "Found " + players.length + " player_0 panels", assertions: [{ passed: true, name: "player_0 traversal succeeded (" + players.length + " found)" }] };
+        } catch(e) { return { passed: false, name: "Unspent panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

@@ -97,6 +97,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var container = root ? root.FindChildTraverse("health_and_abilities_container") : null;
+            return { passed: !!container, name: "Healthbar container panel exists", message: container ? "" : "health_and_abilities_container not found", assertions: [{ passed: !!container, name: "health_and_abilities_container panel exists" }] };
+        } catch(e) { return { passed: false, name: "Healthbar panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

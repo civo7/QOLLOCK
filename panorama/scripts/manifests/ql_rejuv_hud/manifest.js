@@ -29,11 +29,8 @@
         ],
         create: function(ctx) {
             // ── QOL.import deps ──
-            var _deps = QOL.import(["getCachedPanel","getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","isConnectedToHideout","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","setPanelClassIfChanged","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var ResolveCachedPanel = _deps.resolveCachedPanel;
+            var _deps = QOL.import(["getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","isConnectedToHideout","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","state","setPanelClassIfChanged","utils"]);
             var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
             var Utils = _deps.utils;
             var IsCfgEnabled = Utils.IsCfgEnabled;
             var IsPanelValid = Utils.IsPanelValid;
@@ -65,12 +62,6 @@
 
             var _loop = null;
             var _root = null;
-
-            function _isInHideout(root) {
-                var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
-                if (!hud) return false;
-                try { return hud.BHasClass("InHideout") || hud.BHasClass("inHideoutIntro"); } catch(e) { return false; }
-            }
 
             function FormatClockMmSs(totalSec) { var s = Math.max(0, Math.floor(Number(totalSec) || 0)); var mm = Math.floor(s / 60); var ss = s % 60; return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss)); }
 
@@ -156,8 +147,10 @@
                 // Fast-path early-exit
                 if (state.lastRuntimeSec === nowSec && state.lastRuntimeFeatureSig === state._cachedRuntimeFeatureSig && nowMs < (state.nextScanMs||0) && (state.rotatingUntilMs <= 0 || nowMs < state.rotatingUntilMs) && (state.rejuvBuffHideAtMs <= 0 || nowMs < state.rejuvBuffHideAtMs) && state.buffStartTime <= 0) return;
 
-                // Changed tick — hideout check
-                var hideout = _isInHideout(root);
+                // Changed tick — hideout check (uses shared isConnectedToHideout which checks
+                // "connectedToHideout" class in addition to "InHideout" on both Hud + root panels)
+                var hideout = false;
+                try { hideout = isConnectedToHideout(root); } catch(e) {}
                 if (hideout) { if (!state.wasInHideout || state.running || state.buffStartTime > 0) RejuvResetState(state, root, nowMs); state.wasInHideout = true; return; }
                 if (state.wasInHideout) { state.wasInHideout = false; state.nextScanMs = nowMs; }
 
@@ -203,6 +196,24 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var topBar = root ? (root.FindChildTraverse("TopBar") || root.FindChildTraverse("CitadelHudTopBar")) : null;
+                var rejuvHUD = root ? root.FindChildTraverse("RejuvHUD") : null;
+                var rejuvImg = root ? root.FindChildTraverse("RejuvImg") : null;
+                return {
+                    passed: !!(topBar && rejuvHUD),
+                    name: "Rejuv HUD panels exist",
+                    message: [ !topBar ? "CitadelHudTopBar not found" : "", !rejuvHUD ? "RejuvHUD not found" : "" ].filter(function(s) { return s !== ""; }).join(", "),
+                    assertions: [
+                        { passed: !!topBar, name: "CitadelHudTopBar exists" },
+                        { passed: !!rejuvHUD, name: "RejuvHUD exists" },
+                        { passed: !!rejuvImg, name: "RejuvImg exists" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "Rejuv HUD panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

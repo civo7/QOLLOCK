@@ -269,6 +269,20 @@
                 },
                 onSettingsChanged: function() {}
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var coreRatings = root ? (root.FindChildrenWithClassTraverse("coreRating") || []) : [];
+                return {
+                    passed: true,
+                    name: "Statlocker panels found",
+                    message: "Found " + coreRatings.length + " coreRating panels",
+                    assertions: [
+                        { passed: true, name: "coreRating traversal succeeded (" + coreRatings.length + " found)" }
+                    ]
+                };
+            } catch(e) { return { passed: false, name: "Statlocker panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

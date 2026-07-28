@@ -278,6 +278,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var stats = root ? root.FindChildTraverse("hudPlayerStats") : null;
+            return { passed: !!stats, name: "Crosshair stats panel exists", message: stats ? "" : "hudPlayerStats not found", assertions: [{ passed: !!stats, name: "hudPlayerStats panel exists" }] };
+        } catch(e) { return { passed: false, name: "Crosshair stats panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

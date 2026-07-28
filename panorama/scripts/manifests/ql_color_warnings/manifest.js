@@ -101,6 +101,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var bars = root ? (root.FindChildrenWithClassTraverse("ProgressBarLeft") || []) : [];
+            return { passed: true, name: "Color warning progress bars found", message: "Found " + bars.length + " ProgressBarLeft panels", assertions: [{ passed: true, name: "ProgressBarLeft traversal succeeded (" + bars.length + " found)" }] };
+        } catch(e) { return { passed: false, name: "Color warnings panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

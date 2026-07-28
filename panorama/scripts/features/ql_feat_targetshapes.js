@@ -196,6 +196,10 @@
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             try {
+                // P1: skip when new manifest is active to prevent dual execution
+                var _mfActive = false;
+                try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_target_shapes"); } } catch(e) {}
+                if (_mfActive) return;
                 var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
                 var rdEnabled = !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled);
                 ApplyTargetShapeStyles(root, unitTargetStyle.scaleText,

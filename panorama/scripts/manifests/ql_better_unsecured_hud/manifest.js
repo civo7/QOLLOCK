@@ -55,6 +55,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var hud = root ? root.FindChildTraverse("gameplay_hud") : null;
+            return { passed: !!hud, name: "Gameplay HUD exists for unsecured overlay", message: hud ? "" : "gameplay_hud not found", assertions: [{ passed: !!hud, name: "gameplay_hud panel exists" }] };
+        } catch(e) { return { passed: false, name: "Better unsecured HUD check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

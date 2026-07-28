@@ -36,6 +36,8 @@
     var _enablingInProgress = {};  // reentry guard: prevents recursion during onEnable/boot
     var _errors = {};
     var _configChangedHandler = null;
+    var _schedulerErrorHandler = null;  // P2: listens for scheduler:error to track poll loop streaks
+    var _schedulerOkHandler = null;      // P2: listens for scheduler:tick_ok to reset consecutive error counter
     var ERROR_STREAK_MAX = 10;
 
     function _isSettingsIsolate() {
@@ -79,6 +81,7 @@
         try {
             if (typeof instance.onDisable === "function") { instance.onDisable(); }
         } catch (e) {
+            _errors[id] = (_errors[id] || 0) + 1;
             if (Logger) Logger.logError("FeatureRegistry", "disable failed for '" + id +
                 "': " + (e.message || e));
         }
@@ -107,6 +110,7 @@
             payload.changes[payload.key] = payload.value;
             try { instance.onSettingsChanged(payload); }
             catch (e) {
+                _errors[payload.featureId] = (_errors[payload.featureId] || 0) + 1;
                 if (Logger) Logger.logError("FeatureRegistry",
                     payload.featureId + " onSettingsChanged: " + (e.message || e));
             }
@@ -201,9 +205,39 @@
             _configChangedHandler = _onConfigChanged;
             EventBus.on("config:changed", _configChangedHandler);
         }
+        // P2: listen for poll loop errors so we can auto-disable after consecutive failures
+        if (!_schedulerErrorHandler) {
+            _schedulerErrorHandler = function(payload) {
+                if (!payload || !payload.featureId) return;
+                var id = payload.featureId;
+                if (!_manifests.hasOwnProperty(id)) return;  // not one of ours
+                var streak = (_errors[id] || 0) + 1;
+                _errors[id] = streak;
+                if (streak >= ERROR_STREAK_MAX) {
+                    if (Logger) Logger.logError("FeatureRegistry",
+                        "auto-disabled '" + id + "' after " + streak +
+                        " consecutive poll errors: " + (payload.message || ""));
+                    _safeDisableFeature(id);
+                    delete _errors[id]; // reset streak after disable
+                }
+            };
+            EventBus.on("scheduler:error", _schedulerErrorHandler);
+        }
+        // P2: reset consecutive error counter on successful poll ticks
+        if (!_schedulerOkHandler) {
+            _schedulerOkHandler = function(payload) {
+                if (!payload || !payload.featureId) return;
+                if (_manifests.hasOwnProperty(payload.featureId) && _errors[payload.featureId] > 0) {
+                    _errors[payload.featureId] = 0;
+                }
+            };
+            EventBus.on("scheduler:tick_ok", _schedulerOkHandler);
+        }
     }
 
     function shutdown() {
+        // P2: cancel in-flight manifest tests before tearing down instances
+        try { if (QOL.core && QOL.core.ManifestTests) { QOL.core.ManifestTests.cancel(); } } catch(e) { /* best-effort */ }
         var ids = Object.keys(_instances);
         for (var i = 0; i < ids.length; i++) {
             try {
@@ -217,6 +251,15 @@
         if (_configChangedHandler) {
             EventBus.off("config:changed", _configChangedHandler);
             _configChangedHandler = null;
+        }
+        // P2: unregister scheduler error listener
+        if (_schedulerErrorHandler) {
+            EventBus.off("scheduler:error", _schedulerErrorHandler);
+            _schedulerErrorHandler = null;
+        }
+        if (_schedulerOkHandler) {
+            EventBus.off("scheduler:tick_ok", _schedulerOkHandler);
+            _schedulerOkHandler = null;
         }
         _instances = {};
         _enabled = {};
@@ -232,6 +275,10 @@
         return snapshot;
     }
     function getManifest(featureId) { return _manifests[featureId] || null; }
+    function getInstance(featureId) {
+        if (!featureId || typeof featureId !== "string") return null;
+        return _instances.hasOwnProperty(featureId) ? _instances[featureId] : null;
+    }
     function enableFeature(id) { _safeEnableFeature(id); }
     function disableFeature(id) { _safeDisableFeature(id); }
 
@@ -240,8 +287,8 @@
         createContext: createContext, isEnabled: isEnabled,
         isRegistered: isRegistered, getRegisteredIds: getRegisteredIds,
         getEnabledIds: getEnabledIds, getErrorCounts: getErrorCounts,
-        getManifest: getManifest, enable: enableFeature,
-        disable: disableFeature
+        getManifest: getManifest, getInstance: getInstance,
+        enable: enableFeature, disable: disableFeature
     };
 
     $.Msg("[QOLLock] core/ql_feature_registry: attached to QOL.core.FeatureRegistry");

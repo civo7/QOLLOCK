@@ -282,6 +282,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var dmg = root ? root.FindChildTraverse("CitadelHudDamageIndicators") : null;
+            return { passed: !!dmg, name: "Damage indicators panel exists", message: dmg ? "" : "CitadelHudDamageIndicators not found", assertions: [{ passed: !!dmg, name: "CitadelHudDamageIndicators panel exists" }] };
+        } catch(e) { return { passed: false, name: "Damage numbers panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();

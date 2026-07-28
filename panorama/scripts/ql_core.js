@@ -13877,9 +13877,9 @@ function GetUIRoot() {
             State.runtimeGates = gates;
         }
 
-        // P1: skip when new manifest is active to prevent dual execution
+        // P1: skip when new manifests are active to prevent dual execution
         var _rejuvManifestActive = false;
-        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_hud"); } } catch(e) {}
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_hud") || QOL.core.FeatureRegistry.isEnabled("ql_minimap_timers"); } } catch(e) {}
         if (!_rejuvManifestActive) {
             gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
         }
@@ -14328,6 +14328,15 @@ function GetUIRoot() {
                 forceToken = diagHud.GetAttributeString("QOL_DiagRequest", "");
                 if (forceToken && forceToken !== State._lastDiagForceToken) {
                     State._lastDiagForceToken = forceToken;
+                    // ── Command dispatch: if forceToken starts with "mt_", trigger manifest
+                    //     test runner. This is a COMMAND path (not a diagnostic read path) —
+                    //     it returns early to avoid being tangled with diag snapshot logic. ──
+                    if (forceToken.indexOf("mt_") === 0) {
+                        if (QOL && QOL.core && QOL.core.ManifestTests) {
+                            try { QOL.core.ManifestTests.runAll({ token: forceToken }); } catch(_mtErr) { QOL_WARN("core", "manifest test run failed: " + (_mtErr && _mtErr.message ? _mtErr.message : String(_mtErr || ""))); }
+                        }
+                        return;
+                    }
                     forceSync = true;
                     QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));
                 }
@@ -14349,6 +14358,18 @@ function GetUIRoot() {
                 diag.newFeatures = FR.getRegisteredIds();
                 diag.newEnabled = FR.getEnabledIds();
                 diag.newErrors = FR.getErrorCounts();
+            }
+            // P2: include manifest test results in diagnostic snapshot
+            if (QOL && QOL.core && QOL.core.ManifestTests) {
+                var tr = QOL.core.ManifestTests.getResults();
+                if (tr) {
+                    diag.testResults = {
+                        summary: tr.summary,
+                        results: tr.results,
+                        timestamp: tr.timestamp,
+                        token: tr.token
+                    };
+                }
             }
             if (diagHud && diagHud.SetAttributeString) {
                 diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));

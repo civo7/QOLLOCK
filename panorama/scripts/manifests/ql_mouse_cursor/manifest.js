@@ -177,6 +177,13 @@
                 },
                 onSettingsChanged: function() {}
             };
-        }
+        },
+    test: function(ctx) {
+        try {
+            var root = $.GetContextPanel();
+            var loader = root ? root.FindChildTraverse("StartupLoader") : null;
+            return { passed: !!loader, name: "Startup loader panel exists", message: loader ? "" : "StartupLoader not found", assertions: [{ passed: !!loader, name: "StartupLoader panel exists" }] };
+        } catch(e) { return { passed: false, name: "Mouse cursor panel check", message: (e && e.message ? e.message : String(e)) }; }
+    }
     });
 })();
