@@ -24,8 +24,7 @@
 
     FR.register({
         id: "ql_legacy_audio_passive",
-        enableKey: "ENABLE_LEGACY_COOLDOWNS",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "ENABLE_LEGACY_COOLDOWNS", type: "toggle", default: false },
             { key: "ENABLE_ONE_TIME", type: "toggle", default: false },
@@ -90,7 +89,7 @@
             }
 
             // ── Constants from old feature ──
-            var SOUND_DEBUG = false;
+            var SOUND_DEBUG = true;
             var INTERNAL_CONFIG = { FIRST_ALERT: 300, INTERVAL_SEC: 300, ONE_TIME_TIER1_SEC: 120, ONE_TIME_TIER2_SEC: 60, ONE_TIME_TIER3_SEC: 30, MINIMAP_INTERVAL_SEC: 15, ALERT_WINDOW: 2 };
             var DL4D_REMINDER_EVENTS = [
                 { key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", time: 60, duration: 5, label: "Small Camps & Boxes", event: "DL4D_SmallCampsBoxes_Reminder" },
@@ -239,9 +238,11 @@
             }
 
             // ── Main tick ──
+            var _dbgTick = 0;
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
                 var cfg = ctx.config.all();
+                _dbgTick++;
 
                 // Passive cooldown state tracking (for coreRoot cross-feature compat)
                 var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
@@ -250,7 +251,17 @@
 
                 var needsPassiveRuntime = basicModeActive;
                 var needsReminderRuntime = (IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg));
-                if (!needsPassiveRuntime && !needsReminderRuntime) return;
+                if (_dbgTick === 1 || _dbgTick % 60 === 0) {
+                    $.Msg("[QOLLock][la] tick=" + _dbgTick + " passive=" + needsPassiveRuntime + " reminder=" + needsReminderRuntime +
+                          " legacyCooldowns=" + IsCfgEnabled(cfg, "ENABLE_LEGACY_COOLDOWNS") +
+                          " interval=" + IsCfgEnabled(cfg, "ENABLE_INTERVAL") +
+                          " dl4d=" + IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS") +
+                          " passiveCooldown=" + IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"));
+                }
+                if (!needsPassiveRuntime && !needsReminderRuntime) {
+                    if (_dbgTick === 1) $.Msg("[QOLLock][la] early return — nothing enabled");
+                    return;
+                }
 
                 var hideoutConnected = _isInHideout(root);
                 if (hideoutConnected) { UpdateDl4dReminderRuntime(root, cfg, 0, true); return; }
@@ -294,7 +305,8 @@
                 var timeMatch = gameTimeText.match(/(\d+):(\d+)/);
                 if (timeMatch) currentTime = (parseInt(timeMatch[1], 10) || 0) * 60 + (parseInt(timeMatch[2], 10) || 0);
 
-                if (currentTime < 0) return;
+                if (currentTime < 0) { if (_dbgTick <= 2) $.Msg("[QOLLock][la] no game clock found"); return; }
+                if (_dbgTick <= 2) $.Msg("[QOLLock][la] gameTime=" + currentTime + " hideout=" + hideoutConnected);
 
                 // Time rollover detection
                 if (currentTime < State.lastTime) { State.lastIntervalAlert = 0; State.lastMinimapAlert = 0; State.triggeredOneTimers = {}; }
@@ -318,6 +330,7 @@
                         State.lastIntervalAlert = currentTime;
                         var variant = GetRandomBridgeVariant(cfg);
                         var eventName = ResolveAnnouncerEventForVolume("BridgeBuff_Interval_" + voiceSelection + "_" + variant, cfg);
+                        $.Msg("[QOLLock][la] DISPATCH interval: " + eventName + " at gameTime=" + currentTime);
                         $.DispatchEvent("PlaySoundEffect", eventName);
                         LogSoundDispatch(eventName, cfg, voiceSelection);
                     }
