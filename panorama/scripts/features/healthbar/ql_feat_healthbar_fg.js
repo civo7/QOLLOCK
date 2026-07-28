@@ -148,9 +148,9 @@
         if (!IsPanelValid(levelAmount)) return "";
         var heroImage = levelAmount.FindChildTraverse ? levelAmount.FindChildTraverse("HeroImage") : null;
         var sig = "";
-        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(heroImage)); } catch (e0) { sig = ""; }
+        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(heroImage)); } catch (e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); sig = ""; }
         if (sig) return sig;
-        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(levelAmount)); } catch (e1) { sig = ""; }
+        try { sig = QOL.normalizeHeroId(TryReadHeroFromPanelDetails(levelAmount)); } catch (e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); sig = ""; }
         return sig || "";
     }
 
@@ -168,14 +168,14 @@
         try {
             var settingsSignal = QOL.tryReadBuildSaveStorageHeroFromSettings ? QOL.tryReadBuildSaveStorageHeroFromSettings() : null;
             hero = QOL.normalizeHeroId(settingsSignal && settingsSignal.hero ? settingsSignal.hero : "");
-        } catch (e0) { hero = ""; }
+        } catch (e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); hero = ""; }
         if (hero) return hero;
 
         try {
             if (root && root.GetAttributeString) {
                 hero = QOL.normalizeHeroId(root.GetAttributeString(HERO_HINT_ATTR, ""));
             }
-        } catch (e1) { hero = ""; }
+        } catch (e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); hero = ""; }
         if (hero) return hero;
 
         return QOL.normalizeHeroId(State.heroDetectLastKnownPlayableHero || "");

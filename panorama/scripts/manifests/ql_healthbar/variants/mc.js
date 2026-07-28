@@ -637,7 +637,7 @@
                 var percent = MC_SOULS_BAR_MAX_HEIGHT_PX > 0 ? Math.round((heightValue / MC_SOULS_BAR_MAX_HEIGHT_PX) * 100) : 0;
                 if (percent < 0) percent = 0; else if (percent > 100) percent = 100;
                 if (!GetCachedPanel("mcXpBarFill")) SetCachedPanel("mcXpBarFill", root && root.FindChildTraverse ? (root.FindChildTraverse("MinecraftXPBarFill") || null) : null);
-                if (GetCachedPanel("mcXpBarFill") && GetCachedPanel("mcXpBarFill").style) GetCachedPanel("mcXpBarFill").style.clip = "rect( 0px, " + percent + "%, 100%, 0px )";
+                if (GetCachedPanel("mcXpBarFill") && GetCachedPanel("mcXpBarFill").style) { try { GetCachedPanel("mcXpBarFill").style.clip = "rect( 0px, " + percent + "%, 100%, 0px )"; } catch(e) {} }
             }
             if (!GetCachedPanel("mcPlayerLevelLabel")) SetCachedPanel("mcPlayerLevelLabel", GetCachedPanel("mcGoldApContainer").FindChildTraverse ? (GetCachedPanel("mcGoldApContainer").FindChildTraverse("PlayerLevelNumber") || null) : null);
             if (GetCachedPanel("mcPlayerLevelLabel")) {

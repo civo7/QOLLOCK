@@ -110,6 +110,7 @@
                 try {
                     percentLabel = $.CreatePanel("Label", healthContainer, "HealthPercentLabel");
                 } catch (eCreate) {
+                    $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eCreate && eCreate.message ? eCreate.message : String(eCreate || "")));
                     percentLabel = null;
                 }
             }
