@@ -251,12 +251,17 @@
 
                 var needsPassiveRuntime = basicModeActive;
                 var needsReminderRuntime = (IsAnyAnnouncerReminderTypeEnabled(cfg) || IsDl4dReminderRuntimeActive(cfg));
-                if (_dbgTick === 1 || _dbgTick % 60 === 0) {
-                    $.Msg("[QOLLock][la] tick=" + _dbgTick + " passive=" + needsPassiveRuntime + " reminder=" + needsReminderRuntime +
-                          " legacyCooldowns=" + IsCfgEnabled(cfg, "ENABLE_LEGACY_COOLDOWNS") +
-                          " interval=" + IsCfgEnabled(cfg, "ENABLE_INTERVAL") +
-                          " dl4d=" + IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS") +
-                          " passiveCooldown=" + IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN"));
+                if (_dbgTick === 1 || _dbgTick % 30 === 0) {
+                    // Check raw config values directly — ctx.config.all() vs cfg[key]
+                    var rawDl4d = Number(cfg.ENABLE_DL4D_REMINDERS);
+                    var rawLegacy = Number(cfg.ENABLE_LEGACY_COOLDOWNS);
+                    var rawInterval = Number(cfg.ENABLE_INTERVAL);
+                    $.Msg("[QOLLock][la] tick=" + _dbgTick +
+                          " cfg.ENABLE_DL4D_REMINDERS=" + rawDl4d +
+                          " cfg.ENABLE_LEGACY_COOLDOWNS=" + rawLegacy +
+                          " cfg.ENABLE_INTERVAL=" + rawInterval +
+                          " IsCfgEnabled(dl4d)=" + IsCfgEnabled(cfg, "ENABLE_DL4D_REMINDERS") +
+                          " needsReminder=" + needsReminderRuntime);
                 }
                 if (!needsPassiveRuntime && !needsReminderRuntime) {
                     if (_dbgTick === 1) $.Msg("[QOLLock][la] early return — nothing enabled");
