@@ -59,7 +59,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" />
+		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" />
 		<!-- CUT-OVER: old unspent disabled, see manifests/ql_unspent/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" /> -->
@@ -125,6 +126,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_legacy_audio_passive/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>

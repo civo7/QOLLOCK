@@ -410,6 +410,9 @@
         },
         update: function(root, cfg, nowMs, State, hideoutConnected) {
             try {
+                var _mfActive = false;
+                try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_legacy_audio_passive"); } } catch(e) {}
+                if (_mfActive) return;
                 UpdateLegacyAudioAndPassiveHudRuntime(root, cfg, hideoutConnected);
             } catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] update: " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));

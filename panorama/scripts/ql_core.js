@@ -13897,7 +13897,9 @@ function GetUIRoot() {
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
-        gates.legacyAudioPassive = gates.legacyAudioPassiveActive;
+        var _legacyManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _legacyManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_legacy_audio_passive"); } } catch(e) {}
+        if (!_legacyManifestActive) { gates.legacyAudioPassive = gates.legacyAudioPassiveActive; }
         gates.imagesInChat = gates.imagesInChatActive;
         gates.showRank = gates.showRankActive;
         gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
