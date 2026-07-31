@@ -7555,6 +7555,7 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "size_50_200_s5");
     } else if (currentTab === "HUD") {
         CreateAnimatedInlineToggleSection(list, "Top Bar", "HUD_TOP_BAR_ENABLED", "", function(sectionParent) {
+            CreateRow(sectionParent, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");

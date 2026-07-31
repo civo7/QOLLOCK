@@ -387,6 +387,10 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
         }
 
         var occupiedBottom = 0;
+        if (IsCfgEnabled(cfg, "ENABLE_OBJ_MAP")) {
+            var objectiveMap = root && root.FindChildTraverse ? root.FindChildTraverse("ObjectivesMap") : null;
+            occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(objectiveMap, 112));
+        }
         if (IsCfgEnabled(cfg, "ENABLE_URN_DIFF")) {
             var urnTracker = root && root.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
             occupiedBottom = Math.max(occupiedBottom, GetTopBarOverlayBottomRP(urnTracker, 96));

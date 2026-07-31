@@ -13145,6 +13145,7 @@ function GetUIRoot() {
             cfg.ENABLE_BETTER_UNSECURED,
             cfg.ENABLE_MIN_SOULS,
             cfg.ENABLE_OBJ_DMG,
+            cfg.ENABLE_OBJ_MAP,
             cfg.ENABLE_URN_DIFF,
             cfg.ENABLE_URN_TIMER,
             cfg.ENABLE_MISSING_HERO,
@@ -13232,6 +13233,7 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "better_unsecured_active", cfg.ENABLE_BETTER_UNSECURED === 1);
             SetPanelClassCached(root, State.rootClassCache, "min_souls_disabled", cfg.ENABLE_MIN_SOULS === 0);
             SetPanelClassCached(root, State.rootClassCache, "obj_dmg_disabled", cfg.ENABLE_OBJ_DMG === 0);
+            SetPanelClassCached(root, State.rootClassCache, "obj_map_disabled", cfg.ENABLE_OBJ_MAP === 0);
             SetPanelClassCached(root, State.rootClassCache, "urn_diff_disabled", cfg.ENABLE_URN_DIFF === 0);
             SetPanelClassCached(root, State.rootClassCache, "rift_timer_disabled", cfg.ENABLE_URN_TIMER === 0);
             SetPanelClassCached(root, State.rootClassCache, "missing_hero_disabled", cfg.ENABLE_MISSING_HERO === 0);

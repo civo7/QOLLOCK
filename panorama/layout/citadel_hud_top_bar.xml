@@ -55,6 +55,7 @@
 			<CitadelHudTopBarTeam id="TeamFriendly" team="2" />
 			<CitadelHudTopBarTeam id="TeamEnemy" team="3" />
 		</Panel>
+		<CitadelObjectivesMap id="ObjectivesMap" liveGame="true" />
 		<Panel id="BuffHUD" class="BuffP" hittest="false">
 			<Label id="BuffTimeHUD" text="0:00" />
 			<Image id="BuffImgHUD" src="s2r://panorama/images/hud/modifiers/icon_powerup.svg" />
