@@ -34,16 +34,6 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	visibility: collapse;
 }
 
-.obj_map_disabled .ScoreLabel
-{
-	font-size: 22px !important;
-}
-
-.obj_map_disabled .TeamScore
-{
-	width: 145px;
-}
-
 #TeamScoreFriendly .TeamIcon
 {
 	margin-right: 20px;
@@ -52,16 +42,6 @@ CitadelHudTopBar CitadelHudItemBarGraph
 #TeamScoreEnemy .TeamIcon
 {
 	margin-left: 20px;
-}
-
-.obj_map_disabled #TeamScoreFriendly .TeamIcon
-{
-	margin-right: 0px;
-}
-
-.obj_map_disabled #TeamScoreEnemy .TeamIcon
-{
-	margin-left: 0px;
 }
 
 .urn_diff_disabled #UrnTracker.show
@@ -98,6 +78,9 @@ CitadelHudTopBar CitadelHudItemBarGraph
 .connectedToHideout CitadelHudTopBar
 {
 	visibility: visible;
+	opacity: 1;
+	pre-transform-scale2d: 1;
+	wash-color: none;
 }
 
 .connectedToHideout .GameClock,.connectedToHideout .TeamNetworth
@@ -450,14 +433,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
     flow-children: right;
 }
 
-.obj_map_disabled #UrnTracker
-{
-	width: 145px !important;
-	margin-right: 40px !important;
-	border-bottom-right-radius: 0px;
-	x: -58px;
-}
-
 #UrnTracker.show
 {
 	opacity: 1;
@@ -477,12 +452,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	text-overflow: shrink;
 	font-family: oracle;
 	padding-left: 30px;
-}
-
-.obj_map_disabled #UrnTrackerLabel
-{
-	padding-left: 50px;
-	width: 120px;
 }
 
 #UrnTracker[visible="false"]
@@ -536,14 +505,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	opacity-mask: url("s2r://panorama/images/masks/dust_01_psd.vtex");
 }
 
-.obj_map_disabled #RiftTimer
-{
-	width: 145px !important;
-	margin-left: 40px !important;
-	border-bottom-left-radius: 0px;
-	x: 57px;
-}
-
 #RiftTimer.show
 {
 	opacity: 1;
@@ -587,11 +548,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	x: 29px;
 }
 
-.obj_map_disabled .RiftTimerRiftIcon
-{
-	x: 9px;
-}
-
 .rift_idle #RiftTimerLabel,
 .rift_active #RiftTimerLabel
 {
@@ -601,13 +557,6 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 .rift_warning #RiftTimerLabel
 {
 	transform: translateX(20px);
-}
-
-.obj_map_disabled #RiftTimerLabel
-{
-	padding-right: 20px;
-	margin-top: 0px;
-	transform: translateX(0px);
 }
 
 #UrnTracker .UrnTrackerSoulIcon

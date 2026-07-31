@@ -3402,7 +3402,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
         var nextValue = parsed[key];
         var field = fieldMap[key] || null;
         if (field && typeof nextValue === "number") {
-            var clampResult = ClampToSchemaField(nextValue, field);
+            var clampResult = QOL.persistence.clampToSchemaField(nextValue, field);
             nextValue = clampResult.value;
             if (clampResult.changed) diagnostics.clampedKeys++;
         }
@@ -3832,7 +3832,7 @@ function TryApplyImportStringWithDiagnostics(raw) {
     if (!tokenMatch) return result;
 
     var schemaSemver = String(tokenMatch[1] || "").replace(/-/g, ".");
-    if (!schemaSemver || !COMPACT_SCHEMA_REGISTRY.hasOwnProperty(schemaSemver)) return result;
+    if (!schemaSemver || !QOL_COMPACT_SCHEMA_REGISTRY.hasOwnProperty(schemaSemver)) return result;
     var compactCandidate = String(tokenMatch[2] || "");
     if (!compactCandidate) return result;
 
@@ -7555,7 +7555,6 @@ function RenderCurrentTabContent(list) {
         CreateSliderRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "size_50_200_s5");
     } else if (currentTab === "HUD") {
         CreateAnimatedInlineToggleSection(list, "Top Bar", "HUD_TOP_BAR_ENABLED", "", function(sectionParent) {
-            CreateRow(sectionParent, "Objective Map", "ENABLE_OBJ_MAP", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Mid Boss Timer", "ENABLE_REJUV_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Bridge Buff Timer", "ENABLE_BUFF_HUD", "toggle", null, null, null, null, "");
             CreateRow(sectionParent, "Urn Difference", "ENABLE_URN_DIFF", "toggle", null, null, null, null, "");
