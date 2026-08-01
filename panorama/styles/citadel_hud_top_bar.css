@@ -75,12 +75,12 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	visibility: collapse;
 }
 
-.connectedToHideout CitadelHudTopBar
+.connectedToHideout CitadelHudTopBar,.InHideout CitadelHudTopBar#TopBar
 {
 	visibility: visible;
 	opacity: 1;
 	pre-transform-scale2d: 1;
-	wash-color: none;
+	wash-color: white;
 }
 
 .connectedToHideout .GameClock,.connectedToHideout .TeamNetworth

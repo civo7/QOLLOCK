@@ -98,27 +98,11 @@
         var overlay = EnsureUnsecuredSoulsOverlay(root);
         if (!overlay) return;
 
-        var hideout = (typeof hideoutOverride === "boolean") ? hideoutOverride : isConnectedToHideout(root);
-        if (hideout) {
-            if (State.unsecuredSouls.displayMode !== "hideout") {
-                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse";
-                overlay.SetHasClass("danger_1", false);
-                overlay.SetHasClass("danger_2", false);
-                overlay.SetHasClass("danger_3", false);
-                overlay.SetHasClass("danger_4", false);
-                overlay.SetHasClass("has_souls", false);
-                overlay.SetHasClass("is_safe", true);
-                overlay.SetHasClass("is_syncing", false);
-                State.unsecuredSouls.lastClassSig = "";
-            }
-            State.unsecuredSouls.displayMode = "hideout";
-            ResetUnsecuredSoulsTracking();
-            return;
-        }
-
         if (State.unsecuredSouls.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
             if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
         }
+        overlay.style.visibility = "visible";
+        overlay.style.opacity = "1";
         State.unsecuredSouls.displayMode = "active";
 
         var timerOffsetX = Utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_X_OFFSET, 0, -1500, 1500, true);
@@ -137,8 +121,11 @@
         }
         var layoutSig = [String(timerOffsetX), String(timerOffsetY), String(timerScale)].join("|");
         if (layoutSig !== State.unsecuredSouls.lastLayoutSig) {
-            overlay.style.marginLeft = (-520 + timerOffsetX) + "px";
-            overlay.style.marginBottom = (110 + timerOffsetY) + "px";
+            // The schema stores -850 as the default 16:9 coordinate. Keep
+            // imported values compatible by applying them around that baseline.
+            overlay.style.marginLeft = "0px";
+            overlay.style.marginRight = (1500 - (timerOffsetX - (-850))) + "px";
+            overlay.style.marginBottom = (92 + timerOffsetY) + "px";
             State.unsecuredSouls.lastLayoutSig = layoutSig;
         }
 
