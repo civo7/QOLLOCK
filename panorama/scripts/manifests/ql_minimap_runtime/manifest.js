@@ -37,6 +37,7 @@
             function _tick() {
                 try { _update(); } catch(e) {
                     logger.logError("ql_minimap_runtime", "_tick threw: " + (e.message || e));
+                    throw e;
                 }
             }
 

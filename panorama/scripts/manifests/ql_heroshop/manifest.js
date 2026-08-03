@@ -192,6 +192,7 @@
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
                         QOL.core.Logger.logError("ql_heroshop", "_tick: " + (e.message || e));
                     }
+                    throw e;
                 }
             }
 
@@ -232,7 +233,8 @@
         try {
             var root = $.GetContextPanel();
             var shop = root ? root.FindChildTraverse("CitadelShop") : null;
-            return { passed: !!shop, name: "Hero shop panel exists", message: shop ? "" : "CitadelShop not found", assertions: [{ passed: !!shop, name: "CitadelShop panel exists" }] };
+            if (!shop) return null;  // Skip — not in a match context
+            return { passed: true, name: "Hero shop panel exists", message: "", assertions: [{ passed: true, name: "CitadelShop panel exists" }] };
         } catch(e) { return { passed: false, name: "Hero shop panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

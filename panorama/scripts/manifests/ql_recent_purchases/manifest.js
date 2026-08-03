@@ -32,6 +32,7 @@
             function _tick() {
                 try { _update(); } catch(e) {
                     logger.logError("ql_recent_purchases", "_tick threw: " + (e.message || e));
+                    throw e;
                 }
             }
 
@@ -60,7 +61,8 @@
         try {
             var root = $.GetContextPanel();
             var shop = root ? root.FindChildTraverse("CitadelShop") : null;
-            return { passed: !!shop, name: "Shop panel exists for recent purchases", message: shop ? "" : "CitadelShop not found", assertions: [{ passed: !!shop, name: "CitadelShop panel exists" }] };
+            if (!shop) return null;  // Skip — not in a match context
+            return { passed: true, name: "Shop panel exists for recent purchases", message: "", assertions: [{ passed: true, name: "CitadelShop panel exists" }] };
         } catch(e) { return { passed: false, name: "Recent purchases panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

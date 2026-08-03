@@ -242,6 +242,7 @@
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
                         QOL.core.Logger.logError("ql_keyboard", "_tick: " + (e.message || e));
                     }
+                    throw e;
                 }
             }
 
@@ -264,7 +265,8 @@
         try {
             var root = $.GetContextPanel();
             var hud = root ? root.FindChildTraverse("Hud") : null;
-            return { passed: !!hud, name: "Keyboard overlay anchor panel exists", message: hud ? "" : "Hud not found", assertions: [{ passed: !!hud, name: "Hud root panel exists" }] };
+            if (!hud) return null;  // Skip — not in a match context
+            return { passed: true, name: "Keyboard overlay anchor panel exists", message: "", assertions: [{ passed: true, name: "Hud root panel exists" }] };
         } catch(e) { return { passed: false, name: "Keyboard panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

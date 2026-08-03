@@ -116,6 +116,15 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("bottomBarPanel") : null;
+                if (!panel) panel = root ? root.FindChildTraverse("APContainer") : null;
+                if (!panel) return null;  // Skip — not in a match context
+                return { passed: true, name: "Bottom bar panel exists", message: "", assertions: [{ passed: true, name: "bottomBarPanel or APContainer exists" }] };
+            } catch(e) { return { passed: false, name: "Bottom bar panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

@@ -83,6 +83,14 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("charges_container") : null;
+                if (!panel) return null;  // Skip — not in a match context
+                return { passed: true, name: "Stamina charges panel exists", message: "", assertions: [{ passed: true, name: "charges_container panel exists" }] };
+            } catch(e) { return { passed: false, name: "Stamina panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

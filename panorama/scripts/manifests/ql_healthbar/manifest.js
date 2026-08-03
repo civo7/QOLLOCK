@@ -74,6 +74,7 @@
             function _tick() {
                 try { _update(); } catch(e) {
                     logger.logError("ql_healthbar", "_tick threw: " + (e.message || e));
+                    throw e;
                 }
             }
 

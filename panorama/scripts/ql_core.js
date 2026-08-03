@@ -14331,11 +14331,13 @@ function GetUIRoot() {
                     // ── Command dispatch: if forceToken starts with "mt_", trigger manifest
                     //     test runner. This is a COMMAND path (not a diagnostic read path) —
                     //     it returns early to avoid being tangled with diag snapshot logic. ──
-                    if (forceToken.indexOf("mt_") === 0) {
+                    if (forceToken.indexOf("mt_") === 0 || forceToken.indexOf("fs_") === 0) {
                         if (QOL && QOL.core && QOL.core.ManifestTests) {
-                            try { QOL.core.ManifestTests.runAll({ token: forceToken }); } catch(_mtErr) { QOL_WARN("core", "manifest test run failed: " + (_mtErr && _mtErr.message ? _mtErr.message : String(_mtErr || ""))); }
+                            try { QOL.core.ManifestTests.runAll({ token: forceToken, onComplete: function() { State._diagWriteNextMs = 0; } }); } catch(_mtErr) { QOL_WARN("core", "manifest test run failed: " + (_mtErr && _mtErr.message ? _mtErr.message : String(_mtErr || ""))); }
                         }
-                        return;
+                        // Fall through to write diagnostic now — echos token so Settings
+                        // poller sees request was received. onComplete resets throttle so
+                        // results are written on the next cycle after tests finish.
                     }
                     forceSync = true;
                     QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));

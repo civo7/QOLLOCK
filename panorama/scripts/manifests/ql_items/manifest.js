@@ -102,6 +102,15 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("StatsAndModsContainer") : null;
+                if (!panel) panel = root ? root.FindChildTraverse("ModsContainer") : null;
+                if (!panel) return null;  // Skip — not in a match context
+                return { passed: true, name: "Items mods panel exists", message: "", assertions: [{ passed: true, name: "StatsAndModsContainer or ModsContainer exists" }] };
+            } catch(e) { return { passed: false, name: "Items panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

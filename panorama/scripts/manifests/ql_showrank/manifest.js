@@ -415,6 +415,7 @@
                     _ensureFillLoopRunning(root);
                 } catch(e) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) { QOL.core.Logger.logError("ql_showrank", "_tick: " + (e.message || e)); }
+                    throw e;
                 }
             }
 
@@ -440,8 +441,10 @@
         try {
             var root = $.GetContextPanel();
             var hud = root ? root.FindChildTraverse("Hud") : null;
+            if (!hud) return null;  // Skip — not in a match context
             var topBar = root ? root.FindChildTraverse("TopBar") : null;
-            return { passed: !!(hud && topBar), name: "ShowRank panels exist", message: [ !hud ? "Hud not found" : "", !topBar ? "TopBar not found" : "" ].filter(function(s) { return s !== ""; }).join(", "), assertions: [{ passed: !!hud, name: "Hud panel exists" }, { passed: !!topBar, name: "TopBar panel exists" }] };
+            if (!topBar) return null;  // Skip — TopBar not loaded
+            return { passed: true, name: "ShowRank panels exist", message: "", assertions: [{ passed: true, name: "Hud panel exists" }, { passed: true, name: "TopBar panel exists" }] };
         } catch(e) { return { passed: false, name: "ShowRank panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

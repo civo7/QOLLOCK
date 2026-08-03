@@ -8111,6 +8111,191 @@ function RenderCurrentTabContent(list) {
                 $.Schedule(0.2, pollResults);
             });
         }
+        // ── Run Full Suite + Copy Report ──
+        // Triggers Manifest Tests, waits for results, builds a compact report,
+        // and copies it to clipboard. One click → clipboard.
+        var suiteHeader = CreateSectionTitle(list, "Test Suite");
+        var suiteBtn = CreateSectionInlineIconButton(suiteHeader, "FullSuiteBtn",
+            "s2r://panorama/images/icons/icon_copy.vsvg",
+            "Run all tests and copy a compact report to clipboard.");
+        var suiteStatus = $.CreatePanel("Label", suiteHeader, "FullSuiteStatus");
+        suiteStatus.text = "Idle";
+        suiteStatus.style.fontSize = "13px";
+        suiteStatus.style.color = "#666";
+        suiteStatus.style.marginLeft = "6px";
+        suiteStatus.style.verticalAlign = "center";
+
+        var _fsRunning = false;
+        var _fsToken = 0;
+
+        function _fsSetStatus(text, color) {
+            try { if (suiteStatus && suiteStatus.IsValid && suiteStatus.IsValid()) { suiteStatus.text = text; suiteStatus.style.color = color; } } catch(e) {}
+        }
+        function _fsSetBtnActive(active) {
+            try { if (suiteBtn && suiteBtn.IsValid && suiteBtn.IsValid()) { if (active) suiteBtn.AddClass("CycleActive"); else suiteBtn.RemoveClass("CycleActive"); } } catch(e) {}
+        }
+
+        if (suiteBtn) {
+            suiteBtn.SetPanelEvent("onactivate", function() {
+                if (_fsRunning) { return; }
+                var token = ++_fsToken;
+                _fsRunning = true;
+                _fsSetBtnActive(true);
+                _fsSetStatus("Running...", "#66cc99");
+
+                var forceToken = "fs_" + token + "_" + Date.now();
+                var hudPanel = _findHudPanel();
+                if (!hudPanel || !hudPanel.SetAttributeString) {
+                    _fsSetStatus("Hud panel not found", "#cc4444");
+                    _fsRunning = false;
+                    _fsSetBtnActive(false);
+                    return;
+                }
+
+                // Step 1: Trigger manifest tests via mt_ token
+                try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch(e) {}
+
+                var pollStartMs = Date.now();
+                var pollAttempts = 0;
+
+                function pollSuiteResults() {
+                    pollAttempts++;
+                    if (!_fsRunning || token !== _fsToken) return;
+
+                    var elapsedMs = (Date.now ? Date.now() : (new Date()).getTime()) - pollStartMs;
+                    if (elapsedMs > 8000) {
+                        _fsSetStatus("Timeout (8s)", "#cc4444");
+                        _fsRunning = false;
+                        _fsSetBtnActive(false);
+                        return;
+                    }
+
+                    var hud = _findHudPanel();
+                    var rawDiag = "";
+                    if (hud && hud.GetAttributeString) {
+                        try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch(e) {}
+                    }
+                    if (rawDiag) {
+                        try {
+                            var diag = JSON.parse(rawDiag);
+                            if (diag.testResults && diag.testResults.token === forceToken) {
+                                // Build compact report (inlined — Settings context doesn't have
+                                // QOL.core.ManifestTests, only HUD context does)
+                                var lines = [];
+                                lines.push("=== QOLLOCK Test Report ===");
+
+                                var ts = diag.testResults.summary;
+                                lines.push("");
+                                lines.push("-- Manifest Tests --");
+                                lines.push("Total: " + ts.total + " | Passed: " + ts.passed +
+                                    " | Failed: " + ts.failed + " | Errors: " + ts.errors +
+                                    " | Time: " + ts.timeMs + "ms");
+                                if (diag.testResults.timestamp) {
+                                    lines.push("Ran at: " + new Date(diag.testResults.timestamp).toISOString());
+                                }
+                                if (ts.failed > 0 || ts.errors > 0) {
+                                    var trs = diag.testResults.results || [];
+                                    for (var ri = 0; ri < trs.length; ri++) {
+                                        var r = trs[ri];
+                                        if (r.passed === false || r.error) {
+                                            lines.push("  FAIL: " + r.id + " [" + r.name + "]" +
+                                                (r.message ? ": " + r.message : ""));
+                                        }
+                                    }
+                                }
+
+                                lines.push("");
+                                lines.push("-- Old Features --");
+                                lines.push("Loaded: " + (diag.features ? diag.features.length : "?") +
+                                    " | Auto-disabled: " + (diag.disabled ? diag.disabled.length : 0));
+                                if (diag.disabled && diag.disabled.length > 0) {
+                                    for (var di = 0; di < diag.disabled.length; di++) {
+                                        var dName = diag.disabled[di];
+                                        lines.push("  OFF: " + dName);
+                                    }
+                                }
+
+                                if (diag.newFeatures) {
+                                    lines.push("");
+                                    lines.push("-- Manifests --");
+                                    lines.push("Registered: " + diag.newFeatures.length +
+                                        " | Enabled: " + (diag.newEnabled ? diag.newEnabled.length : 0));
+                                    if (diag.newErrors) {
+                                        var neKeys = Object.keys(diag.newErrors);
+                                        var neCount = 0;
+                                        for (var nek = 0; nek < neKeys.length; nek++) {
+                                            if (diag.newErrors[neKeys[nek]] > 0) neCount++;
+                                        }
+                                        lines.push("Manifests with errors: " + neCount);
+                                        if (neCount > 0) {
+                                            for (var nek2 = 0; nek2 < neKeys.length; nek2++) {
+                                                var ek = neKeys[nek2];
+                                                var ec = diag.newErrors[ek];
+                                                if (ec > 0) lines.push("  " + ek + ": " + ec + " errors");
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Filter logs to QOLLOCK WARN/ERROR only
+                                var logs = diag.logs || [];
+                                var filtered = [];
+                                var seen = {};
+                                for (var li = 0; li < logs.length; li++) {
+                                    var msg = String(logs[li] || "");
+                                    if (msg.indexOf("[QOLLock]") === -1) continue;
+                                    if (msg.indexOf("[QOLLock][TRACE]") !== -1) continue;
+                                    if (msg.indexOf("[QOL DEBUG]") !== -1) continue;
+                                    if (msg.indexOf("[QOLLock][INFO]") !== -1) continue;
+                                    var dedup = msg.substring(msg.indexOf("] ") + 2);
+                                    if (seen[dedup]) { seen[dedup]++; continue; }
+                                    seen[dedup] = 1;
+                                    filtered.push(msg);
+                                }
+                                if (filtered.length > 0) {
+                                    lines.push("");
+                                    lines.push("-- QOLLOCK Messages (" + filtered.length + " unique) --");
+                                    for (var fi = 0; fi < filtered.length; fi++) {
+                                        var dm = filtered[fi];
+                                        var ddup = seen[dm.substring(dm.indexOf("] ") + 2)] || 1;
+                                        lines.push(dm + (ddup > 1 ? " (x" + ddup + ")" : ""));
+                                    }
+                                }
+
+                                var report = lines.join("\n");
+
+                                // Copy to clipboard
+                                var hiddenEntry = $.CreatePanel("TextEntry", list, "FullSuiteCopyTextEntry");
+                                hiddenEntry.text = report;
+                                hiddenEntry.multiline = true;
+                                hiddenEntry.maxchars = Math.max(report.length + 100, 1000);
+                                var copied = TryCopyTextToClipboard(report, hiddenEntry);
+                                if (hiddenEntry && hiddenEntry.IsValid && hiddenEntry.IsValid()) {
+                                    try { hiddenEntry.DeleteAsync(0); } catch(e) {}
+                                }
+
+                                var ts = diag.testResults.summary;
+                                if (copied) {
+                                    _fsSetStatus("Copied! " + ts.passed + "/" + ts.total + " passed (" + ts.timeMs + "ms)", "#66cc99");
+                                    SetLocalizedConfigFeedbackMessage("Test report copied to clipboard.", "success", 3000);
+                                } else {
+                                    _fsSetStatus(ts.passed + "/" + ts.total + " passed (copy failed)", "#cc8844");
+                                    SetLocalizedConfigFeedbackMessage("Report ready but clipboard copy failed.", "error", 3000);
+                                }
+                                _fsRunning = false;
+                                _fsSetBtnActive(false);
+                                $.Schedule(2.0, function() { _fsSetStatus("Idle", "#666"); });
+                                return;
+                            }
+                        } catch(e) { /* partial write */ }
+                    }
+
+                    var interval = pollAttempts < 10 ? 0.1 : (pollAttempts < 30 ? 0.2 : 0.4);
+                    $.Schedule(interval, pollSuiteResults);
+                }
+                $.Schedule(0.3, pollSuiteResults);
+            });
+        }
         // ── Preset Cycle (Robust) ──
         // Applies every preset sequentially with per-preset verification via force-sync
         // diagnostic polling. Detects auto-disabled features, tracks timing, and reports

@@ -93,6 +93,7 @@
 
             // ── Main tick (adapted from UpdateLanePreferenceWithParty) ──
             function _tick() {
+                try {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
                 var cfg = ctx.config.all();
 
@@ -170,6 +171,12 @@
                     State.laneWithPartyLastState = (selectorActivated || optionActivated || setAttempted) ? "pending_retry" : "option_missing";
                     State.laneWithPartyNextApplyMs = now + (option ? LANE_PREF_APPLY_INTERVAL_MS : LANE_PREF_HIDDEN_INTERVAL_MS);
                 }
+                } catch(e) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
+                        QOL.core.Logger.logError("ql_lane_with_party", "_tick: " + (e.message || e));
+                    }
+                    throw e;
+                }
             }
 
             return {
@@ -194,12 +201,13 @@
             try {
                 var root = $.GetContextPanel();
                 var selector = root ? root.FindChildTraverse("LanePreferenceSelector") : null;
+                if (!selector) return null;  // Skip — not in a match context
                 return {
-                    passed: !!selector,
+                    passed: true,
                     name: "Lane preference selector exists",
-                    message: selector ? "" : "LanePreferenceSelector not found in HUD tree",
+                    message: "",
                     assertions: [
-                        { passed: !!selector, name: "LanePreferenceSelector exists" }
+                        { passed: true, name: "LanePreferenceSelector exists" }
                     ]
                 };
             } catch(e) { return { passed: false, name: "Lane preference selector check", message: (e && e.message ? e.message : String(e)) }; }

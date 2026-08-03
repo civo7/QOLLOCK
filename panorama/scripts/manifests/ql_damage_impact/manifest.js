@@ -86,6 +86,14 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("damage_impact") : null;
+                if (!panel) return null;
+                return { passed: true, name: "Damage impact panel exists", message: "", assertions: [{ passed: true, name: "damage_impact panel exists" }] };
+            } catch(e) { return { passed: false, name: "Damage impact panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

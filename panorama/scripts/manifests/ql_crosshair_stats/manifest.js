@@ -267,6 +267,7 @@
                     }
                 } catch(e) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) { QOL.core.Logger.logError("ql_crosshair_stats", "_tick: " + (e.message || e)); }
+                    throw e;
                 }
             }
 

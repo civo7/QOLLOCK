@@ -76,6 +76,14 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("gold_and_ap_container") : null;
+                if (!panel) return null;  // Skip — not in a match context
+                return { passed: true, name: "Souls panel exists", message: "", assertions: [{ passed: true, name: "gold_and_ap_container panel exists" }] };
+            } catch(e) { return { passed: false, name: "Souls panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

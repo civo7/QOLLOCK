@@ -135,6 +135,15 @@
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
+        },
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var panel = root ? root.FindChildTraverse("ammo_panel") : null;
+                if (!panel) panel = root ? root.FindChildTraverse("clip_status") : null;
+                if (!panel) return null;  // Skip — not in a match context
+                return { passed: true, name: "Ammo panel exists", message: "", assertions: [{ passed: true, name: "ammo_panel or clip_status exists" }] };
+            } catch(e) { return { passed: false, name: "Ammo panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

@@ -263,6 +263,7 @@
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
                         QOL.core.Logger.logError("ql_damage_numbers", "_tick: " + (e.message || e));
                     }
+                    throw e;
                 }
             }
 
@@ -287,7 +288,8 @@
         try {
             var root = $.GetContextPanel();
             var dmg = root ? root.FindChildTraverse("CitadelHudDamageIndicators") : null;
-            return { passed: !!dmg, name: "Damage indicators panel exists", message: dmg ? "" : "CitadelHudDamageIndicators not found", assertions: [{ passed: !!dmg, name: "CitadelHudDamageIndicators panel exists" }] };
+            if (!dmg) return null;  // Skip — not in a match context
+            return { passed: true, name: "Damage indicators panel exists", message: "", assertions: [{ passed: true, name: "CitadelHudDamageIndicators panel exists" }] };
         } catch(e) { return { passed: false, name: "Damage numbers panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

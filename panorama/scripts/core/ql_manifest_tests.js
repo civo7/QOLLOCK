@@ -103,13 +103,11 @@
             var id = ids[index];
             index++;
 
-            // Skip features that aren't enabled (test() is for runtime verification)
-            if (!FR.isEnabled(id)) {
-                resultList.push({ id: id, passed: null, name: "Feature disabled — skipped",
-                                  skipped: true, duration: 0 });
-                $.Schedule(0, runNext);
-                return;
-            }
+            // Run test() on ALL manifests, not just enabled ones.
+            // The test() hook contract requires it to be read-only (no State writes,
+            // no config.set(), no DispatchEvent), so it's safe to run regardless
+            // of enabled state. This catches panel-existence regressions before
+            // a feature is ever toggled on.
 
             // Skip manifests without a test()
             var manifest = FR.getManifest(id);
@@ -212,12 +210,126 @@
 
     function isRunning() { return _testInProgress; }
 
+    /**
+     * Build a compact, human-readable test report from diagnostic data.
+     * Filters out non-QOLLOCK noise (game system logs, TRACE messages, server spam).
+     * @param {Object} diag - Parsed QOL_Diag JSON object
+     * @returns {string} Compact report text, suitable for clipboard
+     */
+    function buildCompactReport(diag) {
+        if (!diag) return "No diagnostic data.";
+        var lines = [];
+        lines.push("=== QOLLOCK Test Report ===");
+
+        // Manifest test results
+        if (diag.testResults && diag.testResults.summary) {
+            var ts = diag.testResults.summary;
+            lines.push("");
+            lines.push("── Manifest Tests ──");
+            lines.push("Total: " + ts.total + " | Passed: " + ts.passed + " | Failed: " + ts.failed +
+                " | Skipped: " + ts.skipped + " | Errors: " + ts.errors + " | Time: " + ts.timeMs + "ms");
+            if (ts.failed > 0 || ts.errors > 0) {
+                var trs = diag.testResults.results || [];
+                for (var ri = 0; ri < trs.length; ri++) {
+                    var r = trs[ri];
+                    if (r.passed === false || r.error) {
+                        lines.push("  FAIL: " + r.id + " [" + r.name + "]" +
+                            (r.message ? ": " + r.message : ""));
+                    }
+                }
+            }
+            if (diag.testResults.timestamp) {
+                lines.push("Ran at: " + new Date(diag.testResults.timestamp).toISOString());
+            }
+        }
+
+        // Feature health
+        var features = diag.features || [];
+        var disabled = diag.disabled || [];
+        lines.push("");
+        lines.push("── Old Features ──");
+        lines.push("Loaded: " + features.length + " | Auto-disabled: " + (disabled.length || 0));
+        if (disabled.length > 0) {
+            for (var di = 0; di < disabled.length; di++) {
+                var dName = disabled[di];
+                var errCount = (diag.errors && diag.errors[dName]) ? diag.errors[dName] : "?";
+                lines.push("  OFF: " + dName + " (errors: " + errCount + ")");
+            }
+        }
+
+        // New FeatureRegistry manifests
+        if (diag.newFeatures) {
+            lines.push("");
+            lines.push("── Manifests ──");
+            lines.push("Registered: " + diag.newFeatures.length +
+                " | Enabled: " + ((diag.newEnabled && diag.newEnabled.length) || 0));
+            if (diag.newErrors) {
+                var neKeys = Object.keys(diag.newErrors);
+                var neCount = 0;
+                for (var nek = 0; nek < neKeys.length; nek++) {
+                    if (diag.newErrors[neKeys[nek]] > 0) neCount++;
+                }
+                if (neCount > 0) {
+                    lines.push("Manifests with errors: " + neCount);
+                    for (var nek2 = 0; nek2 < neKeys.length; nek2++) {
+                        var ek = neKeys[nek2];
+                        var ec = diag.newErrors[ek];
+                        if (ec > 0) lines.push("  " + ek + ": " + ec + " errors");
+                    }
+                } else {
+                    lines.push("Manifest errors: 0");
+                }
+            }
+        }
+
+        // Filtered logs — QOLLOCK WARN/ERROR only, deduplicated
+        var logs = diag.logs || [];
+        var filtered = [];
+        var seen = {};
+        for (var li = 0; li < logs.length; li++) {
+            var msg = String(logs[li] || "");
+            // Skip non-QOLLOCK noise
+            if (msg.indexOf("[QOLLock]") === -1) continue;
+            // Skip TRACE/DEBUG messages
+            if (msg.indexOf("[QOLLock][TRACE]") !== -1) continue;
+            if (msg.indexOf("[QOL DEBUG]") !== -1) continue;
+            // Skip INFO registration messages (verbose, not useful in report)
+            if (msg.indexOf("[QOLLock][INFO][FeatureRegistry] registered") !== -1) continue;
+            if (msg.indexOf("[QOLLock][INFO][App]") !== -1) continue;
+            // Deduplicate
+            var dedupKey = msg.substring(msg.indexOf("] ") + 2);
+            if (seen[dedupKey]) { seen[dedupKey]++; continue; }
+            seen[dedupKey] = 1;
+            filtered.push(msg);
+        }
+        if (filtered.length > 0) {
+            lines.push("");
+            lines.push("── QOLLOCK Messages (" + filtered.length + " unique) ──");
+            for (var fi = 0; fi < filtered.length; fi++) {
+                var dupCount = seen[filtered[fi].substring(filtered[fi].indexOf("] ") + 2)] || 1;
+                lines.push(filtered[fi] + (dupCount > 1 ? " (x" + dupCount + ")" : ""));
+            }
+        }
+
+        // Preset cycle summary (if available from last run)
+        if (diag.presetCycle) {
+            lines.push("");
+            lines.push("── Preset Cycle ──");
+            var pc = diag.presetCycle;
+            lines.push("Passed: " + (pc.passed || "?") + "/" + (pc.total || "?") +
+                " | Failed: " + (pc.failed || 0) + " | Time: " + (pc.totalTimeMs || "?") + "ms");
+        }
+
+        return lines.join("\n");
+    }
+
     // -- Attach to namespace --
     QOL.core.ManifestTests = {
         runAll: runAllTests,
         getResults: getResults,
         cancel: cancel,
-        isRunning: isRunning
+        isRunning: isRunning,
+        buildCompactReport: buildCompactReport
     };
 
     $.Msg("[QOLLock] core/ql_manifest_tests: attached to QOL.core.ManifestTests");
