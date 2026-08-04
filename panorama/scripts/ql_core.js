@@ -419,9 +419,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
-    const ULT_CD_MAX_PLAYERS = 12;
-    const ULT_CD_SLOT_MIN_INDEX = 0;
-    const ULT_CD_SLOT_MAX_INDEX = ULT_CD_MAX_PLAYERS - 1;
+    const ULT_CD_MAX_PLAYERS = 13;
+    const ULT_CD_SLOT_MIN_INDEX = 1;
+    const ULT_CD_SLOT_MAX_INDEX = 12;
     const ULT_CD_FULL_RESCAN_MS = 30000;     // WHY: periodic full cache flush every 30s to self-heal stale lookups from destroyed/recreated panels
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
@@ -3681,10 +3681,10 @@ function GetUIRoot() {
         var debugParts = [];
         // Periodic full reset every 30 s so transient misses eventually self-heal
         if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
-            for (var ri = 0; ri < ULT_CD_MAX_PLAYERS; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
+            for (var ri = ULT_CD_SLOT_MIN_INDEX; ri <= ULT_CD_SLOT_MAX_INDEX; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
             State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
         }
-        for (var i = 0; i < ULT_CD_MAX_PLAYERS; i++) {
+        for (var i = ULT_CD_SLOT_MIN_INDEX; i <= ULT_CD_SLOT_MAX_INDEX; i++) {
             var slotStart = PerfNowMs();
             var slot = slots[i];
             var didTraverse = false;
