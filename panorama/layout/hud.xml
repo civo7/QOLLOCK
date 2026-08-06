@@ -28,16 +28,24 @@
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_souls.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_damageimpact.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" />
+		<!-- CUT-OVER: old topBarRuntime disabled, see manifests/ql_topbar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
+		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" /> -->
+		<!-- CUT-OVER: old itemsRuntime disabled, see manifests/ql_items/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" /> -->
+		<!-- CUT-OVER: old soulsRuntime disabled, see manifests/ql_souls/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_souls.vjs_c" /> -->
+		<!-- CUT-OVER: old damageImpactRuntime disabled, see manifests/ql_damage_impact/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damageimpact.vjs_c" /> -->
+		<!-- CUT-OVER: old ammo disabled, see manifests/ql_ammo/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" /> -->
+		<!-- CUT-OVER: old staminaChargeColorRuntime disabled, see manifests/ql_stamina/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" />
+		<!-- CUT-OVER: old unsecuredSoulsTimer disabled, see manifests/ql_unsecured_souls_timer/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
 		<!-- CUT-OVER: old crosshairstats disabled, see manifests/ql_crosshair_stats/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
@@ -54,10 +62,12 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />
+		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" />
+		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
 		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
@@ -72,7 +82,8 @@
 		<!-- CUT-OVER: old showrank disabled, see manifests/ql_showrank/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_showrank.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_showrank_card.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_urntimer.vjs_c" />
+		<!-- CUT-OVER: old urnTimer disabled, see manifests/ql_urn_timer/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_urntimer.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_healthbar.vjs_c" />
 		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_accent.vjs_c" />
 		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_budhud.vjs_c" />

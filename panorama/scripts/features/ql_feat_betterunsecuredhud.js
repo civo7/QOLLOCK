@@ -311,7 +311,11 @@ function ParseUnsecuredSoulsValue(valueText) {
         gate: function(cfg) { return NeedsBetterUnsecuredHudLayoutWork(cfg); },
         update: function(root, cfg, nowMs) {
             try {
-                UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs);
+
+                    // P1: skip when new manifest is active to prevent dual execution
+                    var _mfActive = false;
+                    try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_better_unsecured_hud"); } } catch(e) {}
+                    if (_mfActive) return;                UpdateUnsecuredSoulsHudContainerLayout(root, cfg, nowMs);
             } catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;

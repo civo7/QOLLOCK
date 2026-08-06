@@ -75,6 +75,10 @@
     var STAMINA_DEBUG = false; // Toggle true only during diagnosis
 
     function update(root, cfg, nowMs) {
+        // P1: skip when new manifest is active to prevent dual execution
+        var _mfActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_stamina"); } } catch(e) {}
+        if (_mfActive) return;
         _dbgTick++;
         var rawIndex = RSC(cfg);
         var color = RWP(rawIndex);

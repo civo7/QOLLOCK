@@ -13893,7 +13893,10 @@ function GetUIRoot() {
         gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
         gates.keyboardRuntime = gates.keyboardRuntimeActive || GetCachedPanel("keyboardOverlayRoot") || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
-        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED));
+// P1: skip when new manifest is active to prevent dual execution
+        var _unsecuredSoulsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _unsecuredSoulsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_unsecured_souls_timer"); } } catch(e) {}
+        if (!_unsecuredSoulsManifestActive) {         gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED)); }
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
@@ -13904,20 +13907,39 @@ function GetUIRoot() {
         gates.showRank = gates.showRankActive;
         gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
-        gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
+// P1: skip when new manifest is active to prevent dual execution
+        var _betterUnsecuredHudManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _betterUnsecuredHudManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_better_unsecured_hud"); } } catch(e) {}
+        if (!_betterUnsecuredHudManifestActive) {         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
             State.unsecuredSouls.hudStyleSig ||
             GetCachedPanel("betterUnsecuredOverlay") ||
             GetCachedPanel("unsecuredSoulsHudContainer")
-        );
-        gates.colorWarning = gates.colorWarningActive;
+        ); }
+// P1: skip when new manifest is active to prevent dual execution
+        var _colorWarningsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _colorWarningsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_color_warnings"); } } catch(e) {}
+        if (!_colorWarningsManifestActive) {         gates.colorWarning = gates.colorWarningActive; }
         gates.enemyColorWarning = NeedsEnemyColorWarningRuntimeWork(cfg);
         gates.allyColorWarning = NeedsAllyColorWarningRuntimeWork(cfg);
-        gates.ammo = gates.ammoActive || !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
-        gates.topBarRuntime = NeedsTopBarRuntimeWork(cfg);
-        gates.bottomBarRuntime = NeedsBottomBarRuntimeWork(cfg);
-        gates.itemsRuntime = NeedsItemsRuntimeWork(cfg);
-        gates.soulsRuntime = NeedsSoulsRuntimeWork(cfg);
-        gates.heroShop = NeedsHeroShopRuntimeWork(cfg);
+// P1: skip when new manifest is active to prevent dual execution
+        var _ammoManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _ammoManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_ammo"); } } catch(e) {}
+        if (!_ammoManifestActive) {         gates.ammo = gates.ammoActive || !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0); }
+        var _topBarManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _topBarManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_topbar"); } } catch(e) {}
+        if (!_topBarManifestActive) {        gates.topBarRuntime = NeedsTopBarRuntimeWork(cfg); }
+        var _bottomBarManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _bottomBarManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_bottom_bar"); } } catch(e) {}
+        if (!_bottomBarManifestActive) {         gates.bottomBarRuntime = NeedsBottomBarRuntimeWork(cfg); }
+        var _itemsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _itemsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_items"); } } catch(e) {}
+        if (!_itemsManifestActive) {         gates.itemsRuntime = NeedsItemsRuntimeWork(cfg); }
+        var _soulsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _soulsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_souls"); } } catch(e) {}
+        if (!_soulsManifestActive) {         gates.soulsRuntime = NeedsSoulsRuntimeWork(cfg); }
+        var _heroShopManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _heroShopManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_heroshop"); } } catch(e) {}
+        if (!_heroShopManifestActive) {      gates.heroShop = NeedsHeroShopRuntimeWork(cfg); }
         gates.targetShapes = gates.targetShapesActive || !!(
             State.targetShapeHadNonDefaultRuntime ||
             State.targetShapeStyleSig ||
@@ -13925,8 +13947,12 @@ function GetUIRoot() {
             (State.targetShapesCache && State.targetShapesCache.length > 0) ||
             (State.hintContainerCache && State.hintContainerCache.length > 0)
         );
-        gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg);
-        gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg);
+        var _damageImpactManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _damageImpactManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_damage_impact"); } } catch(e) {}
+        if (!_damageImpactManifestActive) {  gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg); }
+        var _staminaManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _staminaManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_stamina"); } } catch(e) {}
+        if (!_staminaManifestActive) {         gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg); }
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;

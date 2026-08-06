@@ -4,10 +4,11 @@
 // =============================================================================
 // OWNS:        Items/mods container styles
 // DOES NOT OWN: Item content, other HUD panels
-// DEPENDS ON:  QOL.core.FeatureRegistry
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
 // CONFIG KEYS: HUD_ITEMS_ENABLED, ITEMS_OPACITY, ITEMS_X_OFFSET,
 //              ITEMS_Y_OFFSET, ITEMS_WASH_COLOR
-// PATTERN:     Event-driven (no polling). Signature diffing preserved.
+// PATTERN:     Polled at 1.0Hz — the mods container may not exist at enable time
+//              (e.g. main menu), so the poll loop retries until found.
 // =============================================================================
 
 (function() {
@@ -28,6 +29,7 @@
         create: function(ctx) {
             var _lastSig = "";
             var _lastWashColor = "";
+            var _loop = null;
 
             function _hasNonDefault(cfg) {
                 return Number(cfg.HUD_ITEMS_ENABLED) !== 1 ||
@@ -47,6 +49,21 @@
 
             function _clearOpacity(panel) { try { panel.style.opacity = ""; } catch(e) {} }
             function _setOpacity(panel, val) { try { panel.style.opacity = val; } catch(e) {} }
+
+            function _resetAllChildren(mc) {
+                // Reset BarGraphContainer, ModSection children, and mod_icon_single_container
+                // children that _apply sets opacity on. onDisable must leave the HUD clean.
+                var barGraph = mc.FindChildTraverse ? mc.FindChildTraverse("BarGraphContainer") : null;
+                if (barGraph) _clearOpacity(barGraph);
+                try {
+                    var modSections = mc.FindChildrenWithClassTraverse ? (mc.FindChildrenWithClassTraverse("ModSection") || []) : [];
+                    for (var s = 0; s < modSections.length; s++) { if (modSections[s]) _clearOpacity(modSections[s]); }
+                    var iconContainers = mc.FindChildrenWithClassTraverse ? (mc.FindChildrenWithClassTraverse("mod_icon_single_container") || []) : [];
+                    for (var ic = 0; ic < iconContainers.length; ic++) {
+                        if (iconContainers[ic]) _clearOpacity(iconContainers[ic]);
+                    }
+                } catch(e) {}
+            }
 
             function _apply(cfg) {
                 var root = $.GetContextPanel();
@@ -86,9 +103,27 @@
                 } catch(e) {}
             }
 
+            function _tick() {
+                try { _apply(ctx.config.all()); } catch(e) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
+                        QOL.core.Logger.logError("ql_items", "_tick: " + (e.message || e));
+                    }
+                    throw e;
+                }
+            }
+
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    // Polling retries container resolution; the mods container may not
+                    // exist at enable time (e.g. main menu).
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_items") : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature("ql_items");
                     _lastSig = ""; _lastWashColor = "";
                     try {
                         var root = $.GetContextPanel();
@@ -97,6 +132,8 @@
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
                             if (mc.SetHasClass) mc.SetHasClass("qol-hidden", false);
+                            // Also reset all child panels that _apply touches.
+                            _resetAllChildren(mc);
                         }
                     } catch(e) {}
                 },

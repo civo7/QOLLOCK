@@ -716,7 +716,11 @@ var ToRgbString = Utils.ToRgbString;
                    IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
         },
         update: function(root, cfg) {
-            try { UpdateColoredHealthbarRuntime(root, cfg); } catch(e) {
+            try { 
+                    // P1: skip when new manifest is active to prevent dual execution
+                    var _mfActive = false;
+                    try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_color_warnings"); } } catch(e) {}
+                    if (_mfActive) return;UpdateColoredHealthbarRuntime(root, cfg); } catch(e) {
                 $.Msg("[QOLLock][ERROR][colorWarning] " + (e && e.message ? e.message : String(e)) + "\n" + (e && e.stack ? String(e.stack) : ""));
                 throw e;
             }

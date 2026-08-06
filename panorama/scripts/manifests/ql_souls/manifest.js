@@ -44,7 +44,8 @@
                 var enabled = Number(cfg.HUD_SOULS_ENABLED) === 1;
                 var offsetX = active ? (Math.round(Number(cfg.SOULS_X_OFFSET)) || 0) : 0;
                 var offsetY = active ? (Math.round(Number(cfg.SOULS_Y_OFFSET)) || 0) : 0;
-                var opacityText = active ? (Number(cfg.SOULS_OPACITY) || 1.0).toFixed(2) : "1.00";
+                var rawOp = Number(cfg.SOULS_OPACITY);
+                var opacityText = active ? (isFinite(rawOp) ? rawOp : 1.0).toFixed(2) : "1.00";
                 var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;

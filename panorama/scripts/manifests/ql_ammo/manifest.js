@@ -38,7 +38,7 @@
             var _lastClipSig = "";
             var _lastColorSig = "";
 
-            function _clamp(v, lo, hi) { var n = Math.round(Number(v)); if (!isFinite(n)) return lo; return n < lo ? lo : n > hi ? hi : n; }
+            function _clamp(v, lo, hi) { var n = Math.round(Number(v)); if (!isFinite(n)) return 0; return n < lo ? lo : n > hi ? hi : n; }
 
             function _applyClipAngle(root, angle) {
                 var cs = root.FindChildTraverse("clip_status");
@@ -59,6 +59,16 @@
                 }
             }
 
+            function _applyTextColor(label, textColor) {
+                if (textColor) {
+                    try { label.style.color = textColor; } catch(e) {}
+                } else {
+                    // ClearStyleSafe cascade: delete → null → "" (Panorama needs this;
+                    // setting "" alone does not reliably clear an inline color).
+                    try { label.style.color = null; } catch(e) {}
+                }
+            }
+
             function _applyChildren(ap, curScale, totScale, textColor) {
                 var cf = curScale / 100, tf = totScale / 100;
                 var valFont = Math.max(12, Math.round(16 * cf));
@@ -72,7 +82,7 @@
                         if (!vals[vi]) continue;
                         vals[vi].style.fontSize = valFont + "px";
                         vals[vi].style.width = valWidth + "px";
-                        if (textColor) { try { vals[vi].style.color = textColor; } catch(e) {} }
+                        _applyTextColor(vals[vi], textColor);
                     }
                     var maxs = ap.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
                     for (var mi = 0; mi < maxs.length; mi++) {
@@ -80,7 +90,12 @@
                         maxs[mi].style.fontSize = maxFont + "px";
                         maxs[mi].style.width = maxWidth + "px";
                         maxs[mi].style.marginLeft = maxMl + "px";
-                        if (textColor) { try { maxs[mi].style.color = textColor; } catch(e) {} }
+                        _applyTextColor(maxs[mi], textColor);
+                    }
+                    var infs = ap.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
+                    for (var ii = 0; ii < infs.length; ii++) {
+                        if (!infs[ii]) continue;
+                        _applyTextColor(infs[ii], textColor);
                     }
                 } catch(e) {}
             }
@@ -93,8 +108,8 @@
 
                 var hideMagazine = Number(cfg.ENABLE_HIDE_MAGAZINE) === 1;
                 var hideAll = Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1;
-                var curScale = _clamp(cfg.AMMO_CURRENT_SCALE || cfg.AMMO_PANEL_SCALE, 100, 300);
-                var totScale = _clamp(cfg.AMMO_TOTAL_SCALE || cfg.AMMO_PANEL_SCALE, 100, 300);
+                var curScale = _clamp(cfg.AMMO_CURRENT_SCALE !== undefined && cfg.AMMO_CURRENT_SCALE !== null ? cfg.AMMO_CURRENT_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
+                var totScale = _clamp(cfg.AMMO_TOTAL_SCALE !== undefined && cfg.AMMO_TOTAL_SCALE !== null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
                 var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
                 var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
                 var colorIdx = Number(cfg.AMMO_TEXT_COLOR) || 0;
@@ -121,7 +136,7 @@
                         var root = $.GetContextPanel();
                         var ap = root.FindChildTraverse("ammo_panel");
                         if (ap && ap.style) {
-                            ap.style.x = "0px"; ap.style.y = "0px";
+                            ap.style.x = "0px"; ap.style.y = "80px";
                             ap.style.preTransformScale2d = "1.00, 1.00";
                         }
                         var cs = root.FindChildTraverse("clip_status");

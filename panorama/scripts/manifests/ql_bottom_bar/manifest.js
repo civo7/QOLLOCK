@@ -7,7 +7,7 @@
 // DEPENDS ON:  QOL.core.FeatureRegistry
 // CONFIG KEYS: HUD_BOTTOM_BAR_ENABLED, BOTTOM_BAR_OPACITY, BOTTOM_BAR_SCALE,
 //              BOTTOM_BAR_X_OFFSET, BOTTOM_BAR_Y_OFFSET, BOTTOM_BAR_WASH_COLOR
-// PANEL ID:    bottomBarPanel
+// PANEL ID:    hud_signature (cache key was "bottomBarPanel" in old feature)
 // PATTERN:     Event-driven (no polling). Signature diffing preserved.
 // =============================================================================
 
@@ -73,24 +73,28 @@
 
             function _apply(cfg) {
                 var root = $.GetContextPanel();
-                var bp = root.FindChildTraverse("bottomBarPanel");
+                var active = _hasNonDefault(cfg);
+                var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
+                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
+                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
+
+                // Apply currency color BEFORE the panel guard — old feature
+                // applies it unconditionally (ql_feat_bottombar.js:93 before guard at :94).
+                _applyCurrencyColor(root, wc);
+
+                var bp = root.FindChildTraverse("hud_signature");
                 if (!bp) return;
 
-                var active = _hasNonDefault(cfg);
                 var enabled = Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
                 var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
                 var op = active ? Number(cfg.BOTTOM_BAR_OPACITY).toFixed(2) : "1.00";
                 var sc = active ? Number(cfg.BOTTOM_BAR_SCALE).toFixed(2) : "1.00";
-                var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
-                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
 
                 var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                _applyCurrencyColor(root, wc);
                 bp.style.x = ox + "px";
                 bp.style.y = (-oy) + "px";
                 bp.style.preTransformScale2d = sc + ", " + sc;
@@ -105,7 +109,7 @@
                     try {
                         var root = $.GetContextPanel();
                         _applyCurrencyColor(root, "");
-                        var bp = root.FindChildTraverse("bottomBarPanel");
+                        var bp = root.FindChildTraverse("hud_signature");
                         if (bp && bp.style) {
                             bp.style.x = "0px"; bp.style.y = "0px";
                             bp.style.preTransformScale2d = "1.00, 1.00";
@@ -120,10 +124,9 @@
         test: function(ctx) {
             try {
                 var root = $.GetContextPanel();
-                var panel = root ? root.FindChildTraverse("bottomBarPanel") : null;
-                if (!panel) panel = root ? root.FindChildTraverse("APContainer") : null;
+                var panel = root ? root.FindChildTraverse("hud_signature") : null;
                 if (!panel) return null;  // Skip — not in a match context
-                return { passed: true, name: "Bottom bar panel exists", message: "", assertions: [{ passed: true, name: "bottomBarPanel or APContainer exists" }] };
+                return { passed: true, name: "Bottom bar hud_signature panel exists", message: "", assertions: [{ passed: true, name: "hud_signature panel exists" }] };
             } catch(e) { return { passed: false, name: "Bottom bar panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });

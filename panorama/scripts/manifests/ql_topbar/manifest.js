@@ -4,11 +4,12 @@
 // =============================================================================
 // OWNS:        Top bar panel: position, scale, opacity, visibility, HUD state
 // DOES NOT OWN: Top bar content (scores, timers, player panels)
-// DEPENDS ON:  QOL.core.FeatureRegistry
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
 // CONFIG KEYS: HUD_TOP_BAR_ENABLED, TOP_BAR_OPACITY, TOP_BAR_SCALE,
 //              TOP_BAR_X_OFFSET, TOP_BAR_Y_OFFSET
 // PANEL ID:    TopBar
-// PATTERN:     Event-driven. Clears inline opacity on hide so CSS can take over.
+// PATTERN:     Polled at 0.5Hz — HUD visibility flips during match (spectating,
+//              escape menu, hideout) require re-evaluation every tick.
 // =============================================================================
 
 (function() {
@@ -28,6 +29,15 @@
         ],
         create: function(ctx) {
             var _lastSig = "";
+            var _loop = null;
+
+            function _clamp(v, lo, hi) {
+                var n = Number(v);
+                if (!isFinite(n)) return lo;
+                if (n < lo) return lo;
+                if (n > hi) return hi;
+                return n;
+            }
 
             function _hasNonDefault(cfg) {
                 return Number(cfg.HUD_TOP_BAR_ENABLED) !== 1 ||
@@ -43,7 +53,6 @@
                 if (!topBar) return;
 
                 // Visibility gate: if the top bar is hidden in spectator/replay mode, don't apply styles.
-                // Mirrors old feature's IsHudVisibleForTopBarRuntime(root, topBar) check.
                 var hudVisible = true;
                 try {
                     if (typeof QOL !== "undefined" && QOL.isHudVisibleForTopBarRuntime) {
@@ -53,13 +62,15 @@
 
                 var active = _hasNonDefault(cfg);
                 var enabled = Number(cfg.HUD_TOP_BAR_ENABLED) === 1;
-                var ox = Math.round(Number(active ? cfg.TOP_BAR_X_OFFSET : 0)) || 0;
-                var oy = Math.round(Number(active ? cfg.TOP_BAR_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.TOP_BAR_OPACITY).toFixed(2) : "1.00";
-                var sc = active ? Number(cfg.TOP_BAR_SCALE).toFixed(2) : "1.00";
+                var ox = Math.round(_clamp(active ? cfg.TOP_BAR_X_OFFSET : 0, -1500, 1500));
+                var oy = Math.round(_clamp(active ? cfg.TOP_BAR_Y_OFFSET : 0, -500, 500));
+                var op = _clamp(active ? cfg.TOP_BAR_OPACITY : 1.0, 0, 1).toFixed(2);
+                var sc = _clamp(active ? cfg.TOP_BAR_SCALE : 1.0, 0.5, 1.5).toFixed(2);
                 var shouldShow = enabled && hudVisible;
 
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0");
+                // hudVisible must be in the signature — when HUD visibility flips
+                // (spectating, escape menu, hideout) the sig changes and we re-apply.
+                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
@@ -74,19 +85,29 @@
                 }
             }
 
+            function _tick() {
+                try { _apply(ctx.config.all()); } catch(e) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
+                        QOL.core.Logger.logError("ql_topbar", "_tick: " + (e.message || e));
+                    }
+                    throw e;
+                }
+            }
+
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_topbar") : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature("ql_topbar");
                     _lastSig = "";
-                    try {
-                        var p = $.GetContextPanel().FindChildTraverse("TopBar");
-                        if (p && p.style) {
-                            p.style.x = "0px"; p.style.y = "0px";
-                            p.style.preTransformScale2d = "1.00, 1.00";
-                            try { delete p.style.opacity; } catch(e) { p.style.opacity = ""; }
-                            if (p.SetHasClass) p.SetHasClass("qol-hidden", false);
-                        }
-                    } catch(e) {}
+                    // Don't reset x/y to "0px" — the old feature had no onDisable and
+                    // left the panel position alone, just hiding via qol-hidden.
+                    // Forcing y="0px" would move the bar from its CSS-native position.
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };

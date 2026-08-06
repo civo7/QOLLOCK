@@ -236,8 +236,8 @@ function stepB_gateGuard(manifestId, info) {
 
     var lineIdx = content.indexOf(gateLine);
     if (lineIdx === -1) {
-        console.error("  ERROR: Could not find gate line '" + gateLine + "' in ql_core.js");
-        return false;
+        console.log("  SKIP Step B: gate line '" + gateLine + "' not found in ql_core.js (feature gated in feature file only)");
+        return true;
     }
 
     backup(CORE_JS);

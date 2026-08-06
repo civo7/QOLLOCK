@@ -295,7 +295,11 @@
         gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_URN_TIMER"); },
         requiresRoot: true,
         update: function(root, cfg, nowMs) {
-            try { UpdateRiftTimer(root, cfg, nowMs); }
+            try { 
+                    // P1: skip when new manifest is active to prevent dual execution
+                    var _mfActive = false;
+                    try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_urn_timer"); } } catch(e) {}
+                    if (_mfActive) return;UpdateRiftTimer(root, cfg, nowMs); }
             catch(e) {
                 $.Msg("[QOLLock][ERROR][" + _featureId + "] " +
                     (e && e.message ? e.message : String(e)));

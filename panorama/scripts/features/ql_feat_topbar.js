@@ -77,7 +77,11 @@
 
     // ── Self-test ──
     try {
-        if (typeof update !== "function") throw new Error("update is not a function");
+
+                    // P1: skip when new manifest is active to prevent dual execution
+                    var _mfActive = false;
+                    try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _mfActive = QOL.core.FeatureRegistry.isEnabled("ql_topbar"); } } catch(e) {}
+                    if (_mfActive) return;        if (typeof update !== "function") throw new Error("update is not a function");
     } catch(e) {
         $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test failed: " + (e && e.message ? e.message : String(e)));
     }

@@ -73,16 +73,10 @@
                 onEnable: function() { _apply(ctx.config.all()); },
                 onDisable: function() {
                     _lastSig = "";
-                    try {
-                        var root = $.GetContextPanel();
-                        var panel = root.FindChildTraverse("damage_impact");
-                        if (panel && panel.style) {
-                            panel.style.x = "0px"; panel.style.y = "0px";
-                            panel.style.opacity = "1.00";
-                            panel.style.preTransformScale2d = "1.00, 1.00";
-                            if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
-                        }
-                    } catch(e) { /* panel may be destroyed */ }
+                    // Don't force the panel visible — the old feature had no onDisable
+                    // and left the panel in whatever state the user configured. Forcing
+                    // qol-hidden=false + opacity=1.00 would un-hide a panel the user
+                    // explicitly set ENABLE_DAMAGE_IMPACT=0 to hide.
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
