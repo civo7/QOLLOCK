@@ -486,7 +486,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 1200;  // extended for non-English UI render latency
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 20;  // more attempts for build detection
+    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 30;  // must exceed create_verify window (1200ms / 50ms = 24 ticks)
     const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
     const BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS = 2;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;  // poll-driven
@@ -6803,7 +6803,11 @@ function GetUIRoot() {
         var initCreateLookup = FindCreateBuildButtonStrict(root);
         var initCreateBtn = initCreateLookup && initCreateLookup.panel ? initCreateLookup.panel : null;
 
-        if (selectedBuild && QOL.countBuildCategoryHeaders(selectedBuild) > 0 && !(initCreateBtn && IsPanelVisibleMaybe(initCreateBtn))) {
+        // Early-success: if a selected build already has category headers, the
+        // storage build exists — skip the browse/create/save pipeline entirely.
+        // (The create-button visibility gate was removed because Deadlock's create
+        // button is always visible, making the condition impossible to satisfy.)
+        if (selectedBuild && QOL.countBuildCategoryHeaders(selectedBuild) > 0) {
             QOL.resetBuildCategoryPayloadProbeInitState();
             return true;
         }
@@ -8468,6 +8472,18 @@ function GetUIRoot() {
         if (heroBuildItemsTotal === 0) {
             $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning TRUE (heroBuildItemsTotal=0)");
             return true;
+        }
+        // heroBuildItemsTotal === -1: HeroBuildList panel not found (build browser
+        // popup closed or not under any searched root). Fall back to the structural
+        // scan which searches by class name and does a deep tree walk — it works
+        // even when the build browser popup is closed.
+        if (heroBuildItemsTotal === -1) {
+            var altEntries = CollectStorageBuildEntryPanels(root, true);
+            $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: heroBuildItems=-1, altEntries=" + String(altEntries.length));
+            if (altEntries.length > 0) {
+                $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning FALSE (altEntries>0)");
+                return false;
+            }
         }
         var createLookupStrict = FindCreateBuildButtonStrict(root);
         var createBtnStrict = createLookupStrict && createLookupStrict.panel ? createLookupStrict.panel : null;
