@@ -3,7 +3,7 @@
 
 #QOLUnsecuredSoulsOverlay
 {
-    visibility: collapse;
+    visibility: visible;
     horizontal-align: center;
     vertical-align: bottom;
     margin-bottom: 110px;
@@ -14,9 +14,15 @@
     border: 0px;
     border-radius: 0px;
     box-shadow: none;
+    z-index: 2;
 }
 
 .unsecured_souls_overlay_active #QOLUnsecuredSoulsOverlay
+{
+    visibility: visible;
+}
+
+#QOLUnsecuredSoulsOverlay:not(.qol-hidden)
 {
     visibility: visible;
 }
@@ -91,12 +97,18 @@
 {
     visibility: collapse;
     horizontal-align: left;
-    vertical-align: top;
+    vertical-align: bottom;
     flow-children: right;
     padding: 0px;
     background-color: none;
     border: 0px;
     box-shadow: none;
+    z-index: 1;
+}
+
+#QOLBetterUnsecuredOverlay:not(.qol-hidden)
+{
+    visibility: visible;
 }
 
 #QOLBetterUnsecuredMirrorIcon
@@ -114,12 +126,20 @@
     opacity: 0.95;
 }
 
+#QOLBetterUnsecuredMirrorIcon:not(.qol-hidden)
+{
+    visibility: visible;
+}
+
 #QOLBetterUnsecuredMirrorLabel
 {
+    visibility: visible;
     color: #e83e38;
     font-size: 14px;
     font-weight: semi-bold;
     text-align: right;
+    horizontal-align: left;
+    vertical-align: center;
 }
 
 #QOLBetterUnsecuredMirrorText
@@ -131,4 +151,9 @@
     text-transform: uppercase;
     vertical-align: center;
     margin-left: 4px;
+}
+
+#QOLBetterUnsecuredMirrorText:not(.qol-hidden)
+{
+    visibility: visible;
 }

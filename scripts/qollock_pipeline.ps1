@@ -543,6 +543,11 @@ try {
     Ensure-Directory -Path $FinalUnpackedRoot
     $staleCompiledArtifacts = @(
         "panorama\scripts\hero_testing_plus_plus.vjs_c",
+        # Disabled after build 10725 changed the native leaderboard snippet contract.
+        # Keeping this full-popup override causes a fatal "Unable to load snippet Hero".
+        "panorama\layout\popups\citadel_popup_global_leaderboard.vxml_c",
+        "panorama\scripts\ql_popup_search.vjs_c",
+        "panorama\styles\leaderboard_search.vcss_c",
         "scripts\validate_compact_schema.vjs_c"
     )
     foreach ($staleRelative in $staleCompiledArtifacts) {

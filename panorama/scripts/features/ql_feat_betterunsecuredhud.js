@@ -89,12 +89,13 @@ function ParseUnsecuredSoulsValue(valueText) {
         return IsPanelValid(textLabel) ? textLabel : null;
     }
 
-    function EnsureBetterUnsecuredOverlay(root) {
+    function EnsureBetterUnsecuredOverlay(root, nativeContainer) {
         var overlay = GetCachedPanel("betterUnsecuredOverlay");
         if (!overlay) {
             overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
             if (!overlay) {
-                var parent = GetGameplayHudPanel(root);
+                var parent = root && root.FindChildTraverse ? root.FindChildTraverse("StatsAndModsContainer") : null;
+                if (!IsPanelValid(parent)) parent = GetGameplayHudPanel(root);
                 if (!parent) return null;
                 overlay = $.CreatePanel("Panel", parent, "QOLBetterUnsecuredOverlay", {
                     hittest: "false",
@@ -175,26 +176,17 @@ function ParseUnsecuredSoulsValue(valueText) {
             }
             return;
         }
-        var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
-        var sourcePos = Utils.GetPanelPositionRelativeToAncestor(label, overlayParent);
-        var baseX = null;
-        var baseY = null;
-        if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
-            baseX = Math.round(sourcePos.x);
-            baseY = Math.round(sourcePos.y);
-            State.unsecuredSouls.hudBaseX = baseX;
-            State.unsecuredSouls.hudBaseY = baseY;
-        } else {
-            var cachedBaseX = Utils.ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
-            var cachedBaseY = Utils.ReadSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
-            baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
-            baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
-        }
-        var targetX = baseX + xOffset;
+        // Keep this overlay independent from the native unsecured container.
+        // That container pulses and translates as its danger state changes;
+        // reading its live geometry makes replacement HUD elements drift.
+        // Treat the old 16:9 absolute defaults as zero-point adjustments so
+        // existing settings/import strings remain compatible.
+        var unsecuredHudBaselineX = Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET);
+        if (!isFinite(unsecuredHudBaselineX)) unsecuredHudBaselineX = 0;
         var unsecuredHudBaselineY = Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET);
         if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
-        var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
-        var targetY = baseY + reflectedYOffset;
+        var targetX = 115 + (xOffset - unsecuredHudBaselineX);
+        var targetY = 130 - (yOffset - unsecuredHudBaselineY);
         if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
             if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
             State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
@@ -203,16 +195,16 @@ function ParseUnsecuredSoulsValue(valueText) {
         var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
         if (sig === State.unsecuredSouls.hudStyleSig) return;
 
-        if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
-        overlay.style.x = targetX + "px";
-        overlay.style.y = targetY + "px";
+        if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
+        overlay.style.marginLeft = targetX + "px";
+        overlay.style.marginBottom = targetY + "px";
 
         if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
         if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
         if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
 
         if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
-        if (!mirrorLabel.BHasClass || !mirrorLabel.BHasClass("qol-hidden")) { if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible"; }
+        if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible";
         mirrorLabel.style.fontSize = fontPx + "px";
         mirrorLabel.style.x = "0px";
         mirrorLabel.style.y = "0px";
@@ -256,7 +248,7 @@ function ParseUnsecuredSoulsValue(valueText) {
             label = FindUnsecuredSoulsHudLabel(root, panel);
             State.unsecuredSouls.hudLabel = label || null;
         }
-        var overlay = EnsureBetterUnsecuredOverlay(root);
+        var overlay = EnsureBetterUnsecuredOverlay(root, panel);
         if (!overlay) {
             State.unsecuredSouls.hudStyleSig = "";
             return;

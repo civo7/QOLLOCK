@@ -205,42 +205,6 @@
 	animation-timing-function: ease-in;
 }
 
-.klutz_healthbar_active #gold_and_ap_container
-{
-	flow-children: right;
-	horizontal-align: left;
-	vertical-align: bottom;
-	margin-left: 26px;
-	margin-bottom: 142px;
-	margin-top: 30px;
-	ui-scale: 100%;
-	width: 400px;
-	overflow: noclip;
-	transition-property: ui-scale, transform, margin-bottom, margin-left, opacity;
-	transition-duration: 0.02s;
-	transition-timing-function: ease-out;
-}
-
-.klutz_healthbar_active #gold_and_ap_container.gShopOpen
-{
-	margin-left: 20px;
-	margin-bottom: 180px;
-	transform: translateX(0px) translateY(0px);
-	visibility: visible;
-}
-
-.klutz_healthbar_active #hudGoldContainer
-{
-	margin-top: 5px;
-}
-
-.klutz_healthbar_active #HudCurrentAPContainer,.klutz_healthbar_active #hudGoldContainer
-{
-	width: fit-children;
-	flow-children: right;
-	margin-left: 10px;
-}
-
 .klutz_healthbar_active .CurrencyLabel
 {
 	font-size: 32px;
@@ -251,6 +215,12 @@
 	text-shadow: 0px 0px 0px 4.0 offBlack;
 	overflow: noclip;
 	border: 15px;
+}
+
+.klutz_healthbar_active #hudGoldContainer
+{
+	margin-left: 82px;
+	margin-bottom: 0px;
 }
 
 .klutz_healthbar_active .goldIncreaseEvent_Min .CurrencyLabel
@@ -710,21 +680,6 @@
 	transition-property: opacity, height;
 	transition-duration: 1s;
 	transition-timing-function: ease-in;
-}
-
-.klutz_healthbar_active #PlayerLevelContainer
-{
-	flow-children: right;
-	ignore-parent-flow: true;
-	max-width: 200px;
-	horizontal-align: right;
-	margin-left: 20px;
-	opacity: 0;
-}
-
-.klutz_healthbar_active.gShopOpen #PlayerLevelContainer,.klutz_healthbar_active.gScoreboardOpen #PlayerLevelContainer
-{
-	opacity: 1;
 }
 
 .klutz_healthbar_active .boon_bg

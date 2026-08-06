@@ -4,7 +4,12 @@ const vm = require("vm");
 
 const projectRoot = path.resolve(__dirname, "..");
 const sharedPath = path.join(projectRoot, "panorama", "scripts", "ql_shared_presets.js");
+const utilsPath = path.join(projectRoot, "panorama", "scripts", "ql_utils.js");
 const bridgePath = path.join(projectRoot, "panorama", "scripts", "ql_bridge.js");
+const configPath = path.join(projectRoot, "panorama", "scripts", "ql_config.js");
+const settingsPreviewsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings_previews.js");
+const settingsTooltipsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings_tooltips.js");
+const settingsPersistencePath = path.join(projectRoot, "panorama", "scripts", "ql_settings_persistence.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
 
@@ -550,16 +555,16 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [sharedPath, bridgePath, settingsPath],
+        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
             defaultConfig: QOL_DEFAULT_CONFIG,
             presets: QOL_PRESETS,
             latestSemver: LATEST_COMPACT_SEMVER,
-            registry: COMPACT_SCHEMA_REGISTRY,
-            serialize: SerializeCompactV2,
-            deserialize: DeserializeCompactV2,
+            registry: QOL_COMPACT_SCHEMA_REGISTRY,
+            serialize: QOL.persistence.serializeCompactV2,
+            deserialize: QOL.persistence.deserializeCompactV2,
             buildCandidateConfig: BuildCandidateConfigFromParsed,
             tryImport: TryApplyImportStringWithDiagnostics
         };`,
@@ -590,6 +595,14 @@ function main() {
     const coreLatestSemver = coreExports.latestSemver;
     const settingsRegistry = JSON.parse(JSON.stringify(settingsExports.registry));
     const coreRegistry = JSON.parse(JSON.stringify(coreExports.registry));
+
+    // Real 3.1.9 export reported after the July 30 UI patch. The settings wire
+    // format is immutable: keep this exact community payload importable.
+    const community319String = "[QOL-3-1-9]:AjQ0S18jZMhMDg8lk6kBZCADh4clKBTpq0IGEEChYmRkZI5YQjZiCZlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLBB5kzgIAAAAyyJDpIEMmQ8kHBrQMSzIDAVCWyChLZFj0U5bIKEtk2KuU8ryKIkMGAAAAoAUgIQNbkZEpkP8fpRqQpFWQQTYAk5HJ0MjI-P8DqQ";
+    const community319Import = settingsExports.tryImport(community319String);
+    if (!community319Import || community319Import.ok !== true || !community319Import.parsedConfig) {
+        fail("Current settings failed to import known 3.1.9 community string");
+    }
     var mirrorDefaultConfig = null; var hasMirror = false; // mirror not available
     var mirrorSettingsRegistry = null; // mirror not available
     var mirrorCoreRegistry = null; // mirror not available

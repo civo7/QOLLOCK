@@ -13329,9 +13329,9 @@ function GetUIRoot() {
         if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
-        // WHY: Skip healthbar work in hideout/sandbox — inline style.opacity set
-        // by SetPanelOpacitySafe beats CSS opacity rules on .connectedToHideout.
-        var needsHealthbarRuntime = !hideoutConnected && NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
+        // Player healthbar offsets, scale and opacity are user-controlled in both
+        // live matches and the hideout/sandbox. Visibility is handled separately.
+        var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
         // P1: skip old healthbar dispatcher when ql_healthbar manifest is active.
         var _hbManifestActive = false;
         try { if (QOL && QOL.core && QOL.core.FeatureRegistry) { _hbManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_healthbar"); } } catch(e) {}
