@@ -6888,6 +6888,10 @@ function GetUIRoot() {
             // when the popup is closed — don't burn retries on a false-positive ok.
             if (!IsBrowseBuildsPopupOpen(root)) {
                 stage = "browse";
+                // Reset createAttempts so a future create-stage entry can
+                // re-trigger (otherwise createAttempts > 0 skips straight
+                // to create_verify with no new create).
+                State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
                 State.buildCategoryPayloadHeroProbeInitRetries += 1;
                 State.buildCategoryPayloadHeroProbeInitStage = stage;
                 State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
@@ -6916,16 +6920,12 @@ function GetUIRoot() {
         }
 
         if (stage === "create_verify") {
-            // If the build browser popup was closed (user dismissed it, or it
-            // never opened), the HeroBuildList panel won't exist and createdSignal
-            // will never fire. Cycle back to browse to re-open.
-            if (!IsBrowseBuildsPopupOpen(root)) {
-                stage = "browse";
-                State.buildCategoryPayloadHeroProbeInitRetries += 1;
-                State.buildCategoryPayloadHeroProbeInitStage = stage;
-                State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
-                return false;
-            }
+            // NOTE: Do NOT gate on IsBrowseBuildsPopupOpen here. The create
+            // button's onmouseactivate fires UIPopupButtonClicked() which
+            // CLOSES the popup as a side effect. If we bounce to browse when
+            // the popup is closed, we abandon a successfully-created build
+            // and falsely exhaust retries. IsStorageBuildListEmpty has a
+            // fallback path that works even when HeroBuildList is absent.
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             SetCachedPanel("shopModsSelectedBuild", selectedBuild);
@@ -7594,23 +7594,10 @@ function GetUIRoot() {
             if (IsBrowseBuildsPopupOpen(root)) return true;
         }
 
-        // Method 2: dispatch events that may open the build browser
-        var openEvents = [
-            "ShowHeroBuildsBrowser",
-            "CitadelHudHeroBuildsBrowseBuilds",
-            "OpenBuildBrowser",
-            "CitadelHudHeroBuildsShowMyBuilds"
-        ];
-        for (var i = 0; i < openEvents.length; i++) {
-            try { $.DispatchEvent(openEvents[i]); } catch(e) {}
-            if (IsBrowseBuildsPopupOpen(root)) return true;
-        }
-
-        // Method 3: try the CitadelHud function if available
-        if (typeof CitadelHudHeroBuildsShowMyBuilds === "function") {
-            try { CitadelHudHeroBuildsShowMyBuilds(); } catch(e) {}
-            if (IsBrowseBuildsPopupOpen(root)) return true;
-        }
+        // Method 2: dispatch CitadelOpenBuildBrowser (real event confirmed in
+        // client.dll dispatch table — decomp verified, Aug 2026).
+        try { $.DispatchEvent("CitadelOpenBuildBrowser"); } catch(e) { QOL_WARN("core", "CitadelOpenBuildBrowser dispatch failed: " + (e && e.message ? e.message : String(e || ""))); }
+        if (IsBrowseBuildsPopupOpen(root)) return true;
 
         return IsBrowseBuildsPopupOpen(root);
     }
