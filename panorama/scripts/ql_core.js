@@ -7875,30 +7875,12 @@ function GetUIRoot() {
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteSelectedBuild" };
             }
         } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsDeleteBuild === "function") {
-                CitadelHudHeroBuildsDeleteBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteBuild" };
-            }
-        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsRemoveSelectedBuild === "function") {
-                CitadelHudHeroBuildsRemoveSelectedBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveSelectedBuild" };
-            }
-        } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsRemoveBuild === "function") {
-                CitadelHudHeroBuildsRemoveBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveBuild" };
-            }
-        } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        // CitadelHudHeroBuildsDeleteBuild, ...RemoveSelectedBuild, ...RemoveBuild
+        // are fabricated — confirmed absent from client.dll_decomp-strings.json
+        // (Aug 2026). The only real delete function is DeleteSelectedBuild above.
 
         var eventNames = [
-            "CitadelHudHeroBuildsDeleteSelectedBuild",
-            "CitadelHudHeroBuildsDeleteBuild",
-            "CitadelHudHeroBuildsRemoveSelectedBuild",
-            "CitadelHudHeroBuildsRemoveBuild"
+            "CitadelHudHeroBuildsDeleteSelectedBuild"
         ];
         for (var j = 0; j < eventNames.length; j++) {
             try {
@@ -8686,9 +8668,10 @@ function GetUIRoot() {
             } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
 
+        // CitadelHudHeroBuildsCreateBuild is fabricated — confirmed absent from
+        // client.dll_decomp-strings.json (Aug 2026). Only CreateNewBuild is real.
         var eventNames = [
-            "CitadelHudHeroBuildsCreateNewBuild",
-            "CitadelHudHeroBuildsCreateBuild"
+            "CitadelHudHeroBuildsCreateNewBuild"
         ];
         for (var i = 0; i < eventNames.length; i++) {
             var ev = eventNames[i];
