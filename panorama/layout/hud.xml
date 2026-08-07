@@ -102,6 +102,7 @@
 		<include src="s2r://panorama/scripts/core/ql_feature_registry.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_manifest_tests.vjs_c" />
 		<!-- Phase 9: New feature manifests (order-independent; all depend on FeatureRegistry) -->
+		<include src="s2r://panorama/scripts/manifests/ql_build_payload/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
