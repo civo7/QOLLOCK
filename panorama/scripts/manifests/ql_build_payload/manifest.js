@@ -269,48 +269,49 @@
     }
 
     // ── Config apply ──
-    function _buildAppliedConfig(rawCfg, parsed) {
-        // Merge order matches old loader (ql_feat_buildload.js:1494-1521):
-        // raw → defaults (defaults overwrite raw gaps) → parsed payload → migrations
+    function _buildAppliedConfig(rawCfg, parsed, schemaVersion) {
+        // Merge order matches old loader (ql_feat_buildload.js:1493-1521):
+        // raw → defaults overwrite → parsed payload → normalizers → migrations
         var base = _callQol("buildDefaultConfig", {}, []);
         if (typeof base !== "object" || !base) base = {};
 
         var merged = {};
-        // Start with raw
+        // 1. Copy raw
         if (rawCfg && typeof rawCfg === "object") {
             for (var k in rawCfg) {
                 if (rawCfg.hasOwnProperty && rawCfg.hasOwnProperty(k)) merged[k] = rawCfg[k];
             }
         }
-        // Fill gaps from defaults
+        // 2. Defaults OVERWRITE raw (unconditional, matching old loader:1498-1500)
         for (k in base) {
-            if (base.hasOwnProperty && base.hasOwnProperty(k) && typeof merged[k] === "undefined") {
-                merged[k] = base[k];
-            }
+            if (base.hasOwnProperty && base.hasOwnProperty(k)) merged[k] = base[k];
         }
-        // Overlay parsed payload
+        // 3. Parsed payload overrides both
         if (parsed && typeof parsed === "object") {
             for (k in parsed) {
                 if (parsed.hasOwnProperty && parsed.hasOwnProperty(k)) merged[k] = parsed[k];
             }
         }
-        // Preserve UI-only keys
+        // 4. Preserve UI-only keys from raw
         if (rawCfg && typeof rawCfg === "object") {
-            if (typeof rawCfg.DRAG_ENABLED !== "undefined") merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
-            if (typeof rawCfg.PREVIEWS_ENABLED !== "undefined") merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
+            if (rawCfg.hasOwnProperty("DRAG_ENABLED")) merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
+            if (rawCfg.hasOwnProperty("PREVIEWS_ENABLED")) merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
         }
 
-        // Run through mergeConfig normalize chain
+        // 5. Run through mergeConfig normalize chain
         merged = _callQol("mergeConfig", merged, [merged]);
 
-        // Schema migrations that mergeConfig does NOT run (old loader calls these explicitly)
+        // 6. Schema migrations that mergeConfig does NOT run.
+        // These mutate merged in place and return undefined — do NOT
+        // reassign. Keys are camelCase on the QOL namespace.
+        var schemaVer = schemaVersion || "";
         try {
-            var mfn = _qol("NormalizeCompassSpeedSchemaMigration");
-            if (typeof mfn === "function") merged = mfn(merged);
+            var cfn = _qol("normalizeCompassSpeedSchemaMigration");
+            if (typeof cfn === "function") cfn(merged, parsed, schemaVer);
         } catch(e) {}
         try {
-            var lfn = _qol("NormalizeLanguageSchemaMigration");
-            if (typeof lfn === "function") merged = lfn(merged);
+            var lfn = _qol("normalizeLanguageSchemaMigration");
+            if (typeof lfn === "function") lfn(merged, parsed, schemaVer);
         } catch(e) {}
 
         return merged;
@@ -812,7 +813,7 @@
                                 var State = QOL.state;
                                 if (State && State.lastConfig) rawCfg = State.lastConfig;
                             } catch(e) {}
-                            var applied = _buildAppliedConfig(rawCfg, parsed.parsed);
+                            var applied = _buildAppliedConfig(rawCfg, parsed.parsed, parsed.schemaVersion);
 
                             // Wrap and write
                             var wrapped = {};
