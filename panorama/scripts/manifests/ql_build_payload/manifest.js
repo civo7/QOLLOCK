@@ -28,14 +28,11 @@
     var TOKEN_EXTRACT = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
 
     // Panel IDs (verified against Valve XML, Aug 2026)
-    var PID_SHOP = "CitadelHudHeroShop";
     var PID_SELECTED_BUILD = "ShopModsSelectedBuild";
     var PID_BUILD_LIST = "HeroBuildList";
-    var PID_SELECTOR = "HeroBuildSelector";
     var PID_CATEGORY_NAME = "BuildCategoryName";
     var CLASS_BUILD_ITEM = "HeroBuildListItem";
     var CLASS_CATEGORY_NAME = "CategoryName";
-    var CLASS_ENTRY = "CategoryNameTextEntry";
 
     // Bridge attrs (from ql_bridge.js:29-32)
     var BRIDGE_REQUEST = "QOL_BUILD_SAVE_REQUEST";
@@ -273,19 +270,22 @@
 
     // ── Config apply ──
     function _buildAppliedConfig(rawCfg, parsed) {
-        // Merge order: defaults → raw current config → parsed payload
+        // Merge order matches old loader (ql_feat_buildload.js:1494-1521):
+        // raw → defaults (defaults overwrite raw gaps) → parsed payload → migrations
         var base = _callQol("buildDefaultConfig", {}, []);
         if (typeof base !== "object" || !base) base = {};
 
         var merged = {};
-        // Start with defaults
-        for (var k in base) {
-            if (base.hasOwnProperty && base.hasOwnProperty(k)) merged[k] = base[k];
-        }
-        // Overlay raw (unwrapped)
+        // Start with raw
         if (rawCfg && typeof rawCfg === "object") {
-            for (k in rawCfg) {
+            for (var k in rawCfg) {
                 if (rawCfg.hasOwnProperty && rawCfg.hasOwnProperty(k)) merged[k] = rawCfg[k];
+            }
+        }
+        // Fill gaps from defaults
+        for (k in base) {
+            if (base.hasOwnProperty && base.hasOwnProperty(k) && typeof merged[k] === "undefined") {
+                merged[k] = base[k];
             }
         }
         // Overlay parsed payload
@@ -303,22 +303,17 @@
         // Run through mergeConfig normalize chain
         merged = _callQol("mergeConfig", merged, [merged]);
 
-        return merged;
-    }
-
-    function _heroFromCompactIndex(idx) {
-        var opts = [];
+        // Schema migrations that mergeConfig does NOT run (old loader calls these explicitly)
         try {
-            if (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0) {
-                opts = QOL_COMPACT_DEFAULT_HERO_OPTIONS;
-            }
+            var mfn = _qol("NormalizeCompassSpeedSchemaMigration");
+            if (typeof mfn === "function") merged = mfn(merged);
         } catch(e) {}
-        var i = Number(idx);
-        if (isFinite(i) && i >= 0 && i < opts.length) {
-            var h = _callQol("normalizeHeroId", "", [String(opts[i] || "")]);
-            if (h) return h;
-        }
-        return "";
+        try {
+            var lfn = _qol("NormalizeLanguageSchemaMigration");
+            if (typeof lfn === "function") merged = lfn(merged);
+        } catch(e) {}
+
+        return merged;
     }
 
     function _resolveReturnHero(ctx) {
@@ -484,7 +479,41 @@
                 return false;
             }
 
-            // Delete first build
+            // Safety: select the first item before deleting. The game's
+            // delete function operates on the SELECTED build — if we haven't
+            // selected one, the delete is a no-op.
+            var firstItem = items[0];
+            var itemTitle = _deepText(firstItem).substring(0, 128);
+            if (_alive(firstItem)) {
+                var afn = _qol("activatePanelSafe");
+                if (typeof afn === "function") {
+                    try { afn(firstItem); } catch(e) {}
+                }
+            }
+
+            // Track title to detect same-title repeat (native confirmation
+            // popup was dismissed — no actual deletion occurred).
+            if (st.repairLastTitle === itemTitle) {
+                st.repairSameTitleHits = (st.repairSameTitleHits || 0) + 1;
+                if (st.repairSameTitleHits >= 3) {
+                    // Same build title 3x in a row — confirmation popup not
+                    // clearing. Skip this build and move on.
+                    st.repairSkippedTitles = (st.repairSkippedTitles || 0) + 1;
+                    if (st.repairSkippedTitles >= 5) {
+                        // Too many skips — repair can't clear
+                        st.repairActive = false;
+                        try { _callQol("setStartupCorruptRepairPending", undefined, [root, false]); } catch(e) {}
+                        return true;
+                    }
+                    st.repairStage = "rebuild"; // Give up clearing, try rebuild
+                    return false;
+                }
+            } else {
+                st.repairLastTitle = itemTitle;
+                st.repairSameTitleHits = 0;
+            }
+
+            // Delete selected build
             if (!_callDeleteSelectedBuild()) return false;
             st.repairDeleted++;
             st.repairNextMs = now + REPAIR_STEP_MS;
@@ -585,19 +614,30 @@
             }
 
             function _finish(code, detail) {
+                // Restore hero on ALL terminal paths — even failure/default.
+                // A switched hero leaks if we only restore in the return_hero stage.
+                if (_st.didSwitch && _st.returnHero) {
+                    _returnHero(_st.returnHero);
+                } else if (_st.didSwitch) {
+                    // No return hero resolved yet — use fallback
+                    var fallback = _resolveReturnHero(ctx);
+                    _returnHero(fallback);
+                }
                 _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
-                _setStep("return_hero", "done", detail || "");
+                _setStep("return_hero", code === "success" ? "done" : "error", detail || "");
                 _setStep("complete", "done", detail || "");
                 try { _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]); } catch(e) {}
                 _st.stage = "done";
                 _st.doneAccount = _st.accountId;
-                // Write applied config to State for main loop pickup
-                try {
-                    var State = QOL.state;
-                    if (State && _st._appliedRaw) {
-                        State.accountPresetRawOverride = _st._appliedRaw;
-                    }
-                } catch(e) {}
+                // Write applied config to State for main loop pickup (success only)
+                if (code === "success") {
+                    try {
+                        var State = QOL.state;
+                        if (State && _st._appliedRaw) {
+                            State.accountPresetRawOverride = _st._appliedRaw;
+                        }
+                    } catch(e) {}
+                }
                 _reschedule(DORMANT_RATE_SEC);
             }
 
@@ -633,15 +673,28 @@
 
                     _reschedule(ACTIVE_RATE_SEC);
 
-                    // Guard: don't run while save pipeline is pending (avoids races)
-                    var saveState = _readAttr(root, BRIDGE_STATE);
-                    if (saveState === "pending" && _st.stage !== "done") return;
-
-                    // Overall timeout
+                    // Overall timeout — must run BEFORE the save-pending guard so a
+                    // stuck-pending save can't bypass the 30s limit.
                     if (now - _st.startedAt > OVERALL_TIMEOUT_MS && _st.stage !== "done") {
                         _fail("overall_timeout");
                         return;
                     }
+
+                    // Account change mid-probe — abort and restart
+                    var curAcct = _getAccountId(root);
+                    if (curAcct && _st.accountId && curAcct !== _st.accountId) {
+                        _fail("account_changed");
+                        _reset(curAcct);
+                        _st.stage = "idle";
+                        _st.nextAt = now;
+                        return;
+                    }
+
+                    // Guard: don't step while save pipeline is pending (avoids
+                    // race where both try to write the build payload). Only skip
+                    // when we're in ensure_storage waiting for the save result.
+                    var saveState = _readAttr(root, BRIDGE_STATE);
+                    if (saveState === "pending" && _st.stage === "ensure_storage" && _st.saveQueued) return;
 
                     // Per-stage timing guard
                     if (_st.nextAt > now) return;
@@ -680,6 +733,17 @@
                         case "confirm_storage":
                             if (_confirmStorageHero(root, now, _st)) {
                                 _setStep("confirm_airheart", "done", "Skyrunner confirmed");
+                                // Write backward-compat State fields so the save
+                                // pipeline (ql_feat_buildsave.js:337) and buildbridge
+                                // (CanReuseLoaderConfirmedSkyrunnerContext) can skip
+                                // locale-dependent text re-confirmation.
+                                try {
+                                    var State = QOL.state;
+                                    if (State) {
+                                        State.buildCategoryPayloadSkyrunnerHeaderConfirmed = true;
+                                        State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs = now;
+                                    }
+                                } catch(e) {}
                                 _st.stage = "ensure_storage";
                                 _st.nextAt = now;
                             } else if (now - _st.confirmStarted > CONFIRM_TIMEOUT_MS) {
@@ -740,24 +804,15 @@
                             _setStep("decode_payload", "done", "Decoded");
                             _setStep("apply_config", "active", "Applying config");
 
-                            // Resolve DEFAULT_HERO from compact index if present
-                            if (parsed.parsed && typeof parsed.parsed.QOL_COMPACT_DEFAULT_HERO_INDEX === "undefined") {
-                                // No compact index — use raw DEFAULT_HERO if present
-                            }
-                            // Build applied config
+                            // Build applied config. Note: deserializeBuildPayloadCompact
+                            // already resolves DEFAULT_HERO from the compact DEFAULT_HERO_INDEX
+                            // field — no manual index→hero conversion needed here.
                             var rawCfg = {};
                             try {
                                 var State = QOL.state;
                                 if (State && State.lastConfig) rawCfg = State.lastConfig;
                             } catch(e) {}
                             var applied = _buildAppliedConfig(rawCfg, parsed.parsed);
-                            // Resolve DEFAULT_HERO from compact index
-                            if (parsed.parsed && typeof parsed.parsed.QOL_COMPACT_DEFAULT_HERO_INDEX !== "undefined") {
-                                var heroFromIdx = _heroFromCompactIndex(parsed.parsed.QOL_COMPACT_DEFAULT_HERO_INDEX);
-                                if (heroFromIdx && heroFromIdx !== STORAGE_HERO) {
-                                    applied.DEFAULT_HERO = heroFromIdx;
-                                }
-                            }
 
                             // Wrap and write
                             var wrapped = {};
