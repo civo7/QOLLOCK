@@ -6823,14 +6823,20 @@ function GetUIRoot() {
         State.buildCategoryPayloadHeroProbeInitAttempted = true;
 
         if (stage === "browse") {
-            var browseLookup = FindBrowseBuildsButton(root);
-            var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
-            if (ActivatePanelSafe(browseBtn)) {
+            // Ensure the build browser popup is open before advancing to create.
+            // If we can't open it, re-try browse — creating a build requires
+            // the popup to be open, and CitadelHudHeroBuildsCreateNewBuild()
+            // is a no-op when called with the browser closed.
+            var popupOpen = TryOpenBuildBrowserPopup(root);
+            if (popupOpen) {
                 activated = true;
                 progressed = true;
+                stage = "create";
+            } else {
+                // Popup still closed — stay in browse to retry next tick.
+                // Don't burn retries on a create attempt that can't succeed.
+                stage = "browse";
             }
-            // Always advance to create stage after browse attempt.
-            stage = "create";
             State.buildCategoryPayloadHeroProbeInitRetries += 1;
             State.buildCategoryPayloadHeroProbeInitStage = stage;
             State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
@@ -6876,6 +6882,17 @@ function GetUIRoot() {
 
             // No-build path: BrowseBuildsButton -> CreateBuildButton.
             // Do not fall back to add-category here; create build must happen first.
+            //
+            // Gate: the build browser popup MUST be open before CreateBuildButton
+            // exists in the tree. CitadelHudHeroBuildsCreateNewBuild() is a no-op
+            // when the popup is closed — don't burn retries on a false-positive ok.
+            if (!IsBrowseBuildsPopupOpen(root)) {
+                stage = "browse";
+                State.buildCategoryPayloadHeroProbeInitRetries += 1;
+                State.buildCategoryPayloadHeroProbeInitStage = stage;
+                State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
+                return false;
+            }
             var createLookup = FindCreateBuildButtonStrict(root);
             var createBuildBtn = createLookup && createLookup.panel ? createLookup.panel : null;
             var createTrigger = TryTriggerCreateBuild(createBuildBtn);
@@ -6899,6 +6916,16 @@ function GetUIRoot() {
         }
 
         if (stage === "create_verify") {
+            // If the build browser popup was closed (user dismissed it, or it
+            // never opened), the HeroBuildList panel won't exist and createdSignal
+            // will never fire. Cycle back to browse to re-open.
+            if (!IsBrowseBuildsPopupOpen(root)) {
+                stage = "browse";
+                State.buildCategoryPayloadHeroProbeInitRetries += 1;
+                State.buildCategoryPayloadHeroProbeInitStage = stage;
+                State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
+                return false;
+            }
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             SetCachedPanel("shopModsSelectedBuild", selectedBuild);
@@ -7553,6 +7580,39 @@ function GetUIRoot() {
         var cancelBtn = cancelLookup && cancelLookup.panel ? cancelLookup.panel : null;
         if (cancelBtn && IsPanelVisibleMaybe(cancelBtn)) return true;
         return false;
+    }
+
+    function TryOpenBuildBrowserPopup(root) {
+        // Returns true if the popup is confirmed open after all attempts.
+        if (IsBrowseBuildsPopupOpen(root)) return true;
+
+        // Method 1: click the browse button if it exists
+        var browseLookup = FindBrowseBuildsButton(root);
+        var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
+        if (browseBtn && IsPanelValid(browseBtn)) {
+            ActivatePanelSafe(browseBtn);
+            if (IsBrowseBuildsPopupOpen(root)) return true;
+        }
+
+        // Method 2: dispatch events that may open the build browser
+        var openEvents = [
+            "ShowHeroBuildsBrowser",
+            "CitadelHudHeroBuildsBrowseBuilds",
+            "OpenBuildBrowser",
+            "CitadelHudHeroBuildsShowMyBuilds"
+        ];
+        for (var i = 0; i < openEvents.length; i++) {
+            try { $.DispatchEvent(openEvents[i]); } catch(e) {}
+            if (IsBrowseBuildsPopupOpen(root)) return true;
+        }
+
+        // Method 3: try the CitadelHud function if available
+        if (typeof CitadelHudHeroBuildsShowMyBuilds === "function") {
+            try { CitadelHudHeroBuildsShowMyBuilds(); } catch(e) {}
+            if (IsBrowseBuildsPopupOpen(root)) return true;
+        }
+
+        return IsBrowseBuildsPopupOpen(root);
     }
 
     function FindBrowseBuildsCancelButton(root) {
@@ -14804,6 +14864,7 @@ function GetUIRoot() {
         ["getSaveSettingsLoaderDetailForMessage", function() { return GetSaveSettingsLoaderDetailForMessage; }],
         ["hasBuildSaveStorageUiReady", function() { return HasBuildSaveStorageUiReady; }],
         ["isBrowseBuildsPopupOpen", function() { return IsBrowseBuildsPopupOpen; }],
+        ["tryOpenBuildBrowserPopup", function() { return TryOpenBuildBrowserPopup; }],
         ["isBuildSaveStorageRuntimeSourceStale", function() { return IsBuildSaveStorageRuntimeSourceStale; }],
         ["isBuildSaveTargetSelectionMatch", function() { return IsBuildSaveTargetSelectionMatch; }],
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],
