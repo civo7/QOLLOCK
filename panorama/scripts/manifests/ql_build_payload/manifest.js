@@ -381,8 +381,18 @@
     }
 
     // ── API calls (verified real APIs only) ──
-    function _dispatchOpenBrowser() {
+    function _openBuildBrowser(root) {
+        // Use the proven QOL delegate which tries the BrowseBuilds button
+        // first, then falls back to CitadelOpenBuildBrowser dispatch.
+        // Bare dispatch alone is unreliable — the button-click path is
+        // what the old loader uses and what works in practice.
+        try {
+            var fn = _qol("tryOpenBuildBrowserPopup");
+            if (typeof fn === "function") return fn(root);
+        } catch(e) {}
+        // Fallback if delegate is unavailable
         try { $.DispatchEvent("CitadelOpenBuildBrowser"); } catch(e) {}
+        return _isPopupOpen(root);
     }
     function _callCreateNewBuild() {
         if (typeof CitadelHudHeroBuildsCreateNewBuild === "function") {
@@ -436,7 +446,7 @@
 
         // Need to open the build browser
         if (!_isPopupOpen(root)) {
-            _dispatchOpenBrowser();
+            _openBuildBrowser(root);
             return false; // Wait for popup to render
         }
 
@@ -520,7 +530,7 @@
         if (st.repairStage === "clear") {
             // Ensure popup is open
             if (!_isPopupOpen(root)) {
-                _dispatchOpenBrowser();
+                _openBuildBrowser(root);
                 return false;
             }
 
@@ -575,7 +585,7 @@
         if (st.repairStage === "rebuild") {
             // Create fresh build and queue default payload
             if (!_isPopupOpen(root)) {
-                _dispatchOpenBrowser();
+                _openBuildBrowser(root);
                 return false;
             }
 
