@@ -352,13 +352,13 @@
         return merged;
     }
 
-    function _resolveReturnHero(ctx) {
+    function _resolveReturnHero(ctx, st) {
         // 1. Use the payload-applied DEFAULT_HERO (if this is a success path
-        //    and we just applied config). _st.appliedDefaultHero is set in
+        //    and we just applied config). st.appliedDefaultHero is set in
         //    apply_payload from the merged config — this matches the old
         //    loader's payload-derived return hero.
-        if (_st.appliedDefaultHero && _st.appliedDefaultHero !== STORAGE_HERO) {
-            return _st.appliedDefaultHero;
+        if (st && st.appliedDefaultHero && st.appliedDefaultHero !== STORAGE_HERO) {
+            return st.appliedDefaultHero;
         }
 
         // 2. Fall back to the running config's DEFAULT_HERO
@@ -674,7 +674,7 @@
                     _returnHero(_st.returnHero);
                 } else if (_st.didSwitch) {
                     // No return hero resolved yet — use fallback
-                    var fallback = _resolveReturnHero(ctx);
+                    var fallback = _resolveReturnHero(ctx, _st);
                     _returnHero(fallback);
                 }
                 _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
@@ -904,7 +904,7 @@
                             break;
 
                         case "return_hero":
-                            var returnHero = _resolveReturnHero(ctx);
+                            var returnHero = _resolveReturnHero(ctx, _st);
                             _st.returnHero = returnHero;
                             _setStep("return_hero", "active", "Returning to " + returnHero);
                             if (_st.didSwitch && returnHero) {
