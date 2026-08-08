@@ -775,12 +775,6 @@
                         return;
                     }
 
-                    // Guard: don't step while save pipeline is pending (avoids
-                    // race where both try to write the build payload). Only skip
-                    // when we're in ensure_storage waiting for the save result.
-                    var saveState = _readAttr(root, BRIDGE_STATE);
-                    if (saveState === "pending" && _st.stage === "ensure_storage" && _st.saveQueued) return;
-
                     // Per-stage timing guard
                     if (_st.nextAt > now) return;
 
