@@ -563,7 +563,7 @@
     // ── State machine ──
     FR.register({
         id: "ql_build_payload",
-        enabledByDefault: false, // Phase A: observe only; Phase B: flip to true
+        enabledByDefault: true,  // Phase B: manifest is the active loader
         settings: [
             { key: "DEFAULT_HERO", type: "dropdown",
               options: (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0)

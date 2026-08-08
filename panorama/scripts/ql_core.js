@@ -14235,6 +14235,13 @@ function GetUIRoot() {
     }
 
     function applyBuildCategoryOverride(root, cfg, nowMs, raw) {
+        // P1: skip old loader when ql_build_payload manifest is active (dual-dispatch guard)
+        try {
+            if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry &&
+                QOL.core.FeatureRegistry.isEnabled("ql_build_payload")) {
+                return cfg;
+            }
+        } catch(e) { /* fall through to legacy loader on guard failure */ }
         if (QOL.shouldRunBuildCategoryPayloadOverride(root, nowMs)) {
             var perfSection = PerfStart();
             cfg = QOL.applyBuildCategoryPayloadOverride(root, cfg, nowMs, raw);

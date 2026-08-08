@@ -27,7 +27,8 @@
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" />
+		<!-- CUT-OVER: ql_feat_buildload.js replaced by manifests/ql_build_payload/manifest.js -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" /> -->
 		<!-- CUT-OVER: old topBarRuntime disabled, see manifests/ql_topbar/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
 		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
