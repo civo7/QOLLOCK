@@ -459,47 +459,45 @@
 
         $.Msg("[QOLLock][ql_build_payload] ensure: popup open, checking items...");
 
-        // Popup is open — check if builds exist
-        var items = _buildListItems(root);
-        $.Msg("[QOLLock][ql_build_payload] ensure: items=" + String(items.length) + " createAttempted=" + (st.createAttempted ? "1" : "0"));
-        if (items.length === 0) {
-            // Create a new storage build (only when popup is open — otherwise
-            // CitadelHudHeroBuildsCreateNewBuild is a no-op). Guard against
-            // duplicate creates: the button's onmouseactivate closes the popup
-            // as a side effect, and re-calling would spawn duplicates.
-            if (_isPopupOpen(root) && !st.createAttempted) {
+        // No payload token found — need a fresh Skyrunner build. Existing builds
+        // in the list may belong to other heroes or have no writable categories,
+        // which causes the save pipeline to lock onto the wrong target.
+        // CitadelHudHeroBuildsCreateNewBuild() creates a build with one default
+        // category, giving the save pipeline a clean writable target.
+        if (!st.createAttempted) {
+            if (_isPopupOpen(root)) {
                 $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild");
                 _callCreateNewBuild();
                 st.createAttempted = true;
                 st.createStarted = now;
             }
-            // If we already attempted create but no builds appeared, wait
-            // for the verify window (matching OLD's INIT_CREATE_VERIFY_WINDOW_MS
-            // = 1200ms). If the popup closed (side effect of create), wait
-            // for it to re-open via the next ensure_storage poll.
+            return false; // Wait for create + popup re-open
+        }
+
+        // Create was triggered — wait for items to appear. The create button's
+        // onmouseactivate closes the popup as a side effect, so we may need to
+        // re-open it.
+        var items = _buildListItems(root);
+        $.Msg("[QOLLock][ql_build_payload] ensure: items=" + String(items.length) + " after create");
+        if (items.length === 0) {
+            // Popup may have closed — re-open it
+            if (!_isPopupOpen(root)) _openBuildBrowser(root);
             return false;
         }
 
-        // Build exists (or was created) — select first to load it into the shop.
-        // We do NOT write a payload here. The bridge save pipeline is designed for
-        // user-triggered saves (Settings → Save button) and requires full shop UI
-        // context. First-time bootstrap just selects a build and proceeds — the
-        // user's config is already in flat storage. User-triggered saves write
-        // the payload for future sessions.
-        if (!st.selectAttempted && items.length > 0) {
+        // Select the newly created (first) build
+        if (!st.selectAttempted) {
             $.Msg("[QOLLock][ql_build_payload] ensure: selecting first build item");
             var fn = _qol("activatePanelSafe");
             if (typeof fn === "function") {
                 try { fn(items[0]); st.selectAttempted = true; } catch(e) {}
             }
-            // Selected — give the shop a tick to load, then proceed
             return false;
         }
 
-        // Build selected. If payload exists, we're done. If not, proceed to
-        // read_payload which will scan and apply defaults. The user's config
-        // lives in flat storage — a build payload is additive, not essential.
-        $.Msg("[QOLLock][ql_build_payload] ensure: build selected, proceeding to read");
+        // New build selected — proceed. The save pipeline will have a clean
+        // Skyrunner target with a writable category.
+        $.Msg("[QOLLock][ql_build_payload] ensure: fresh build ready, proceeding to read");
         return true;
     }
 
