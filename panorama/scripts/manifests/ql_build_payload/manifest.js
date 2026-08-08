@@ -152,14 +152,12 @@
         return n;
     }
     function _storageBuildReady(root) {
+        // Only consider a build "ready" if it has categories. FavoriteBuildEntry
+        // containers are pre-populated by Deadlock for every hero — they don't
+        // indicate a user-created storage build with a config payload.
         var sb = _selectedBuild(root);
         if (!_alive(sb)) return false;
-        if (_countCategories(sb) > 0) return true;
-        try {
-            var entries = _findClass(sb, "FavoriteBuildEntryContainer");
-            if (entries.length > 0) return true;
-        } catch(e) {}
-        return false;
+        return _countCategories(sb) > 0;
     }
     // Multi-root search matching OLD's FindHeroBuildListPanel (ql_core.js:8694-8708):
     // searches context root, GetUIRoot, parent chain, CitadelHudHeroBuilds, and
