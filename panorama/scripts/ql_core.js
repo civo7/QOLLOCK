@@ -2019,6 +2019,80 @@ function ResetBuildClearRequestAttributes(root) {
     root.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "");
 }
 
+// ── Surviving buildload utilities (ported from ql_feat_buildload.js) ──
+// These were defined only in the old buildload file (now commented out in
+// hud.xml Phase B). The save pipeline (ql_feat_buildsave.js) and buildbridge
+// still call them, so they must survive the cut-over.
+
+function ShouldRunBuildCategoryPayloadUiAction(nowMs, stateField, cooldownMs) {
+    if (!stateField || stateField.length === 0) return true;
+    var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+    var nextMs = Number(State[stateField]) || 0;
+    if (now < nextMs) return false;
+    var cd = Number(cooldownMs);
+    if (!isFinite(cd) || cd < 0) cd = BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS;
+    State[stateField] = now + cd;
+    return true;
+}
+
+function IsBuildCategoryPayloadSourceReady(root) {
+    if (!root || !root.FindChildTraverse) return false;
+    var selectedBuild = GetCachedPanel("shopModsSelectedBuild");
+    if (!selectedBuild) {
+        selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
+        SetCachedPanel("shopModsSelectedBuild", selectedBuild);
+    }
+    if (!selectedBuild) return false;
+    if (selectedBuild.FindChildTraverse && selectedBuild.FindChildTraverse("BuildCategoryName")) return true;
+    if (!selectedBuild.FindChildrenWithClassTraverse) return false;
+    var categoryNames = selectedBuild.FindChildrenWithClassTraverse("CategoryName") || [];
+    if (categoryNames.length > 0) return true;
+    var buildEntries = selectedBuild.FindChildrenWithClassTraverse("FavoriteBuildEntryContainer") || [];
+    if (buildEntries.length > 0) return true;
+    if (QOL.collectStorageBuildEntryPanels && QOL.collectStorageBuildEntryPanels(root).length > 0) return true;
+    return false;
+}
+
+function ResetBuildCategoryPayloadProbeInitState() {
+    State.buildCategoryPayloadHeroProbeInitAttempted = false;
+    State.buildCategoryPayloadHeroProbeInitStage = "";
+    State.buildCategoryPayloadHeroProbeInitNextMs = 0;
+    State.buildCategoryPayloadHeroProbeInitRetries = 0;
+    State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
+    State.buildCategoryPayloadHeroProbeInitCreateVerifyUntilMs = 0;
+}
+
+function TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root) {
+    if (!root || !root.FindChildTraverse) return { hero: "", source: "shopFavoritesHeaderMissing" };
+    var shopPanel = root.FindChildTraverse("CitadelHudHeroShop");
+    if (!shopPanel || !shopPanel.FindChildrenWithClassTraverse) {
+        return { hero: "", source: "shopFavoritesHeaderMissing" };
+    }
+    var labels = [];
+    try { labels = shopPanel.FindChildrenWithClassTraverse("HeroFavoritesHeaderLabel") || []; } catch (e0) { labels = []; }
+    var fallbackHero = "";
+    for (var i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        if (!label) continue;
+        var txt = ReadPanelTextMaybe(label);
+        if (!txt || txt.length === 0) continue;
+        var parsed = QOL.normalizeHeroId(QOL.extractHeroTokenFromText(txt) || QOL.extractLastHeroTokenFromText(txt));
+        if (!parsed && typeof QOL.extractHeroFromLabelText === "function") {
+            parsed = QOL.normalizeHeroId(QOL.extractHeroFromLabelText(txt));
+        }
+        if (!parsed) continue;
+        if (!fallbackHero) fallbackHero = parsed;
+    }
+    if (fallbackHero) {
+        return { hero: fallbackHero, source: "shopFavoritesHeader" };
+    }
+    var cmdHero = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
+    if (cmdHero) {
+        return { hero: cmdHero, source: "shopCommands" };
+    }
+    return { hero: "", source: "shopFavoritesHeaderMissing" };
+}
+
 function IsStartupCorruptRepairPending(root) {
     if (!root || !root.GetAttributeString) return false;
     var raw = "";
@@ -14846,6 +14920,10 @@ function GetUIRoot() {
         ["hasBuildSaveStorageUiReady", function() { return HasBuildSaveStorageUiReady; }],
         ["isBrowseBuildsPopupOpen", function() { return IsBrowseBuildsPopupOpen; }],
         ["tryOpenBuildBrowserPopup", function() { return TryOpenBuildBrowserPopup; }],
+        ["shouldRunBuildCategoryPayloadUiAction", function() { return ShouldRunBuildCategoryPayloadUiAction; }],
+        ["isBuildCategoryPayloadSourceReady", function() { return IsBuildCategoryPayloadSourceReady; }],
+        ["resetBuildCategoryPayloadProbeInitState", function() { return ResetBuildCategoryPayloadProbeInitState; }],
+        ["tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader", function() { return TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader; }],
         ["isBuildSaveStorageRuntimeSourceStale", function() { return IsBuildSaveStorageRuntimeSourceStale; }],
         ["isBuildSaveTargetSelectionMatch", function() { return IsBuildSaveTargetSelectionMatch; }],
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],
