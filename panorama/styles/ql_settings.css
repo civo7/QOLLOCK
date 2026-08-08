@@ -3218,7 +3218,7 @@
 	width: 100%;
 	color: #a6b1b4;
 	font-size: 12px;
-	font-weight: semibold;
+	font-weight: semi-bold;
 	text-align: center;
 	horizontal-align: center;
 	vertical-align: center;
@@ -12857,11 +12857,11 @@
 	text-shadow: none;
 }
 
-/* --- pass9 task 4: fix invalid font-weight: medium on dropdown labels --- */
+/* font-weight: medium is valid in Panorama (confirmed by DLL evidence — panorama.dll L345055) */
 
 #SettingsWindow .SettingsDropDown.QOLSettingsDropDown Label
 {
-	font-weight: 500;
+	font-weight: medium;
 }
 
 #DEFAULT_HERO_dropdownDropDownMenu Label,
@@ -12880,7 +12880,7 @@
 #LANGUAGE_dropdownDropDownMenu .DropDownChild,
 #LANGUAGE_dropdownDropDownMenu .QOLSettingsDropDownItem
 {
-	font-weight: 500;
+	font-weight: medium;
 }
 
 /* text-overflow: shrink and overflow: noclip on crowdable labels */

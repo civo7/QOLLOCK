@@ -18,7 +18,7 @@
 //   §14 Misc: images in chat, on-death arcade, mouse cursor, DL4D, audio
 //   §15 Build category payload, account preset binding, settings loader
 //   §16 Feature registrations (QOL_REGISTER_FEATURE calls)
-//   §17 Bootstrap: ConvarStorageProbe, $.Schedule startup
+//   §17 Bootstrap: $.Schedule startup
 // ==========================================================================
 
 'use strict';
@@ -90,13 +90,7 @@ _TLog = function(label, detail) {
 
 
 
-    // WHY: probes the `joy_name` convar as a persistent key-value store that survives
-    // game restarts — used as an additional config persistence channel alongside panel attrs.
-    // DISABLED: GameInterfaceAPI confirmed absent — cannot read convar values, so probe
-    // provides zero value while overwriting the user's joystick name on every startup.
-    const QOL_CONVAR_STORAGE_PROBE_ENABLED = false;
-    const QOL_CONVAR_STORAGE_PROBE_CONVAR = "joy_name";
-    const QOL_CONVAR_STORAGE_PROBE_PREFIX = "QOLJOY_";
+    // ConvarStorageProbe removed — GameInterfaceAPI confirmed absent, probe was dead code.
     // WHY: palette color settings are persisted both in MOD_CONFIG (for export/import)
     // and as standalone panel attributes (for synchronous bridging into CSS without
     // waiting for the next loop tick).
@@ -435,7 +429,9 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ACCOUNT_PROBE_MAX_PANELS = 4000;
     const ACCOUNT_PROBE_LOG = false;
     const URN_TRACKER_DEBUG = false;
-    const PERF_DEBUG_FLUSH_MS = 5000;
+    const PERF_DEBUG_FLUSH_MS = 10000;     // snapshot capture interval
+    const PERF_ROLLING_WINDOW_MS = 60000;  // merged reporting window
+    const PERF_MAX_SNAPSHOTS = 12;         // ring buffer size
     const PERF_DEBUG_SLOW_MS = 8;
     const PERF_DEBUG_TOP_COUNT = 10;
     const LOOP_ERROR_LOG_INTERVAL_MS = 2000;
@@ -490,7 +486,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 1200;  // extended for non-English UI render latency
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 20;  // more attempts for build detection
+    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 30;  // must exceed create_verify window (1200ms / 50ms = 24 ticks)
     const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
     const BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS = 2;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;  // poll-driven
@@ -1611,7 +1607,77 @@ function ExpressShotLog(msg) {
         PerfRecord(name, PerfNowMs() - startMs);
     }
 
+    function _copyPerfEntries(stats) {
+        if (!stats) return null;
+        var keys = Object.keys(stats);
+        if (keys.length === 0) return null;
+        var copy = {};
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var e = stats[k];
+            if (e && e.count > 0) {
+                copy[k] = { total: e.total, count: e.count, max: e.max, slow: e.slow || 0 };
+            }
+        }
+        return Object.keys(copy).length > 0 ? copy : null;
+    }
+
+    function _mergePerfSnapshots(snapshots, liveStats) {
+        var merged = {};
+        for (var si = 0; si < snapshots.length; si++) {
+            var snap = snapshots[si];
+            if (!snap || !snap.entries) continue;
+            var keys = Object.keys(snap.entries);
+            for (var ki = 0; ki < keys.length; ki++) {
+                var k = keys[ki];
+                var e = snap.entries[k];
+                if (!merged[k]) merged[k] = { total: 0, count: 0, max: 0, slow: 0 };
+                merged[k].total += e.total;
+                merged[k].count += e.count;
+                if (e.max > merged[k].max) merged[k].max = e.max;
+                merged[k].slow += e.slow || 0;
+            }
+        }
+        // Merge live stats
+        if (liveStats) {
+            var lKeys = Object.keys(liveStats);
+            for (var li = 0; li < lKeys.length; li++) {
+                var lk = lKeys[li];
+                var le = liveStats[lk];
+                if (!le || le.count <= 0) continue;
+                if (!merged[lk]) merged[lk] = { total: 0, count: 0, max: 0, slow: 0 };
+                merged[lk].total += le.total;
+                merged[lk].count += le.count;
+                if (le.max > merged[lk].max) merged[lk].max = le.max;
+                merged[lk].slow += le.slow || 0;
+            }
+        }
+        return merged;
+    }
+
     function ResetPerfWindow(nowMs) {
+        // Capture snapshot before resetting — the ring buffer preserves
+        // history so we can report a true 60s rolling window.
+        var snap = _copyPerfEntries(State.perfStats);
+        if (snap) {
+            if (!State.perfSnapshotRing) State.perfSnapshotRing = [];
+            var prevLen = State.perfSnapshotRing.length;
+            State.perfSnapshotRing.push({ timeMs: nowMs, entries: snap });
+            // Prune old snapshots
+            var cutoff = nowMs - PERF_ROLLING_WINDOW_MS;
+            var pruned = 0;
+            while (State.perfSnapshotRing.length > 0 && State.perfSnapshotRing[0].timeMs < cutoff) {
+                State.perfSnapshotRing.shift();
+                pruned++;
+            }
+            // Hard cap
+            while (State.perfSnapshotRing.length > PERF_MAX_SNAPSHOTS) {
+                State.perfSnapshotRing.shift();
+            }
+            $.Msg("[QOLLock][Perf][ring] captured snapshot entries=" + Object.keys(snap).length +
+                  " ringSize=" + prevLen + "→" + State.perfSnapshotRing.length +
+                  " pruned=" + pruned + " cutoffAge=" + Math.round((nowMs - cutoff)/1000) + "s");
+        }
         State.perfStats = {};
         State.perfWindowStartMs = nowMs;
         State.perfNextFlushMs = nowMs + PERF_DEBUG_FLUSH_MS;
@@ -1634,12 +1700,14 @@ function ExpressShotLog(msg) {
             State.perfNextFlushMs = 0;
             State.perfLoopCount = 0;
             State.perfCompassLoopCount = 0;
+            State.perfSnapshotRing = null;
             return;
         }
         if (!State.perfEnabled) {
             var nowMs = PerfNowMs();
             State.perfEnabled = true;
             State.perfDetailed = detailed;
+            State.perfSnapshotRing = null;
             ResetPerfWindow(nowMs);
             QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
             return;
@@ -1655,9 +1723,24 @@ function ExpressShotLog(msg) {
         var nowMs = PerfNowMs();
         if (!force && nowMs < (State.perfNextFlushMs || 0)) return;
 
-        var windowStart = State.perfWindowStartMs || nowMs;
-        var windowMs = Math.max(1, nowMs - windowStart);
-        var stats = State.perfStats || {};
+        var snapshotWindowMs = Math.max(1, nowMs - (State.perfWindowStartMs || nowMs));
+        // Merge ring buffer snapshots + current live stats into a true 60s rolling window.
+        var ring = State.perfSnapshotRing || [];
+        var liveStats = State.perfStats || {};
+        var liveKeys = Object.keys(liveStats);
+        var liveTotal = 0;
+        for (var lk = 0; lk < liveKeys.length; lk++) {
+            var le = liveStats[liveKeys[lk]];
+            if (le && le.count > 0) liveTotal += le.count;
+        }
+        $.Msg("[QOLLock][Perf][merge] ringSnaps=" + ring.length +
+              " liveEntries=" + liveKeys.length + " liveSamples=" + liveTotal);
+        var stats = _mergePerfSnapshots(ring, liveStats);
+        // The oldest ring snapshot was captured at ring[0].timeMs, but the data
+        // inside it was accumulated over the previous PERF_DEBUG_FLUSH_MS window.
+        // So the actual data span starts at ring[0].timeMs - PERF_DEBUG_FLUSH_MS.
+        var dataStartMs = ring.length > 0 ? ring[0].timeMs - PERF_DEBUG_FLUSH_MS : nowMs;
+        var rollingWindowMs = Math.max(snapshotWindowMs, nowMs - dataStartMs);
         var keys = Object.keys(stats);
 
         keys.sort(function(a, b) {
@@ -1680,12 +1763,13 @@ function ExpressShotLog(msg) {
             );
         }
 
-        var loopHz = ((State.perfLoopCount * 1000) / windowMs).toFixed(1);
-        var compassHz = ((State.perfCompassLoopCount * 1000) / windowMs).toFixed(1);
+        // Hz uses the rolling window (60s merged) for stable rates
+        var loopHz = ((State.perfLoopCount * 1000) / snapshotWindowMs).toFixed(1);
+        var compassHz = ((State.perfCompassLoopCount * 1000) / snapshotWindowMs).toFixed(1);
         var summary = parts.length > 0 ? parts.join(" | ") : "no samples";
 
         $.Msg(
-            "[QOLLock][Perf] window=" + windowMs + "ms" +
+            "[QOLLock][Perf] window=" + rollingWindowMs + "ms" +
             " loopHz=" + loopHz +
             " compassHz=" + compassHz +
             " top=" + summary
@@ -1903,95 +1987,6 @@ function BuildDefaultPayloadToken(cfg) {
     var encoded = BuildPayloadToBase64Url(compact);
     if (!encoded || encoded.length === 0) return "";
     return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
-}
-
-function BuildMaxPayloadTokenForConvarStorageProbe() {
-    var maxConfig = _BDC();
-    var schema = GetBuildPayloadCompactSchema(BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
-    for (var i = 0; i < schema.length; i++) {
-        var field = schema[i];
-        if (!field || !field.key) continue;
-        if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
-            if (BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length > 0) {
-                maxConfig.DEFAULT_HERO = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS[BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length - 1];
-            }
-            continue;
-        }
-        if (Object.prototype.hasOwnProperty.call(field, "max")) {
-            maxConfig[field.key] = field.max;
-        }
-    }
-
-    var compact = SerializeBuildPayloadCompact(maxConfig);
-    var encoded = BuildPayloadToBase64Url(compact);
-    return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
-}
-
-function RepeatConvarStorageProbeChars(length) {
-    var targetLen = Math.max(0, Math.floor(Number(length) || 0));
-    var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    var out = "";
-    for (var i = 0; i < targetLen; i++) {
-        out += alphabet.charAt(i % alphabet.length);
-    }
-    return out;
-}
-function ReadConvarStorageProbeValue() {
-    // GameInterfaceAPI confirmed absent — cannot read convar values from Panorama.
-    return "";
-}
-
-function CanReadConvarStorageProbeValue() {
-    // GameInterfaceAPI confirmed absent.
-    return false;
-}
-
-function DispatchConvarStorageProbeCommand(commandText) {
-    var command = String(commandText || "").trim();
-    if (!command) return false;
-    // GameInterfaceAPI.ConsoleCommand confirmed absent.
-    // CitadelConCommand is the only dispatch path.
-    try { $.DispatchEvent("CitadelConCommand", command); return true; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    return false;
-}
-
-function WriteConvarStorageProbeValue(value) {
-    var text = String(value || "");
-    // GameInterfaceAPI.SetSettingString/ConsoleCommand confirmed absent.
-    // CitadelConCommand dispatch is the only write path.
-    return DispatchConvarStorageProbeCommand(QOL_CONVAR_STORAGE_PROBE_CONVAR + ' "' + text.replace(/"/g, "") + '"');
-}
-
-function RunConvarStorageProbe() {
-    if (!QOL_CONVAR_STORAGE_PROBE_ENABLED) return;
-    $.Schedule(1.0, function() {
-        try {
-            var canRead = CanReadConvarStorageProbeValue();
-            var defaultExport = BuildDefaultPayloadToken(_BDC());
-            var maxExport = BuildMaxPayloadTokenForConvarStorageProbe();
-            var targetLen = Math.max(1, Math.floor(maxExport.length * 2));
-            var fillerLen = Math.max(1, targetLen - QOL_CONVAR_STORAGE_PROBE_PREFIX.length);
-            var probeValue = QOL_CONVAR_STORAGE_PROBE_PREFIX + RepeatConvarStorageProbeChars(fillerLen);
-            var beforeRaw = canRead ? ReadConvarStorageProbeValue() : "";
-            var wrote = WriteConvarStorageProbeValue(probeValue);
-            DispatchConvarStorageProbeCommand("host_writeconfig");
-            var afterRaw = canRead ? ReadConvarStorageProbeValue() : "";
-            $.Msg(
-                "[QOLLock][ConvarStorageProbe] target=joy_name" +
-                " readApi=" + (canRead ? "1" : "0") +
-                " wrote=" + (wrote ? "1" : "0") +
-                " beforeLen=" + beforeRaw.length +
-                " afterLen=" + afterRaw.length +
-                " afterMatch=" + (afterRaw === probeValue ? "1" : "0") +
-                " defaultExportLen=" + defaultExport.length +
-                " maxExportLen=" + maxExport.length +
-                " targetProbeLen=" + targetLen +
-                " writeLen=" + probeValue.length
-            );
-        } catch (probeErr) {
-            $.Msg("[QOLLock][ConvarStorageProbe] error=" + String(probeErr && probeErr.message ? probeErr.message : probeErr));
-        }
-    });
 }
 
 function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
@@ -4027,12 +4022,11 @@ function GetUIRoot() {
 
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
-        cfg.ENABLE_MIN_SOULS = 0;
-        if (!IsBreadPresetActive(cfg)) cfg.ENABLE_UNSPENT_SOULS = 0;
-        // ENEMY_V2 features (ENHANCED, ULT_INDICATOR, LEVEL) were previously
-        // force-disabled here. Removed because no runtime gate or feature
-        // execution path reads these values — they were dead writes.
-        return cfg;
+        // Clone to avoid corrupting State.lastConfig (shared reference).
+        var result = Object.assign({}, cfg);
+        result.ENABLE_MIN_SOULS = 0;
+        if (!IsBreadPresetActive(result)) result.ENABLE_UNSPENT_SOULS = 0;
+        return result;
     }
 
     function LogHealthbarVisibilityDebug(root, healthContainer, cfg) {
@@ -6809,7 +6803,11 @@ function GetUIRoot() {
         var initCreateLookup = FindCreateBuildButtonStrict(root);
         var initCreateBtn = initCreateLookup && initCreateLookup.panel ? initCreateLookup.panel : null;
 
-        if (selectedBuild && QOL.countBuildCategoryHeaders(selectedBuild) > 0 && !(initCreateBtn && IsPanelVisibleMaybe(initCreateBtn))) {
+        // Early-success: if a selected build already has category headers, the
+        // storage build exists — skip the browse/create/save pipeline entirely.
+        // (The create-button visibility gate was removed because Deadlock's create
+        // button is always visible, making the condition impossible to satisfy.)
+        if (selectedBuild && QOL.countBuildCategoryHeaders(selectedBuild) > 0) {
             QOL.resetBuildCategoryPayloadProbeInitState();
             return true;
         }
@@ -6825,14 +6823,20 @@ function GetUIRoot() {
         State.buildCategoryPayloadHeroProbeInitAttempted = true;
 
         if (stage === "browse") {
-            var browseLookup = FindBrowseBuildsButton(root);
-            var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
-            if (ActivatePanelSafe(browseBtn)) {
+            // Ensure the build browser popup is open before advancing to create.
+            // If we can't open it, re-try browse — creating a build requires
+            // the popup to be open, and CitadelHudHeroBuildsCreateNewBuild()
+            // is a no-op when called with the browser closed.
+            var popupOpen = TryOpenBuildBrowserPopup(root);
+            if (popupOpen) {
                 activated = true;
                 progressed = true;
+                stage = "create";
+            } else {
+                // Popup still closed — stay in browse to retry next tick.
+                // Don't burn retries on a create attempt that can't succeed.
+                stage = "browse";
             }
-            // Always advance to create stage after browse attempt.
-            stage = "create";
             State.buildCategoryPayloadHeroProbeInitRetries += 1;
             State.buildCategoryPayloadHeroProbeInitStage = stage;
             State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
@@ -6878,6 +6882,21 @@ function GetUIRoot() {
 
             // No-build path: BrowseBuildsButton -> CreateBuildButton.
             // Do not fall back to add-category here; create build must happen first.
+            //
+            // Gate: the build browser popup MUST be open before CreateBuildButton
+            // exists in the tree. CitadelHudHeroBuildsCreateNewBuild() is a no-op
+            // when the popup is closed — don't burn retries on a false-positive ok.
+            if (!IsBrowseBuildsPopupOpen(root)) {
+                stage = "browse";
+                // Reset createAttempts so a future create-stage entry can
+                // re-trigger (otherwise createAttempts > 0 skips straight
+                // to create_verify with no new create).
+                State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
+                State.buildCategoryPayloadHeroProbeInitRetries += 1;
+                State.buildCategoryPayloadHeroProbeInitStage = stage;
+                State.buildCategoryPayloadHeroProbeInitNextMs = now + BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS;
+                return false;
+            }
             var createLookup = FindCreateBuildButtonStrict(root);
             var createBuildBtn = createLookup && createLookup.panel ? createLookup.panel : null;
             var createTrigger = TryTriggerCreateBuild(createBuildBtn);
@@ -6901,6 +6920,12 @@ function GetUIRoot() {
         }
 
         if (stage === "create_verify") {
+            // NOTE: Do NOT gate on IsBrowseBuildsPopupOpen here. The create
+            // button's onmouseactivate fires UIPopupButtonClicked() which
+            // CLOSES the popup as a side effect. If we bounce to browse when
+            // the popup is closed, we abandon a successfully-created build
+            // and falsely exhaust retries. IsStorageBuildListEmpty has a
+            // fallback path that works even when HeroBuildList is absent.
             selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
             if (!IsPanelValid(selectedBuild)) selectedBuild = null;
             SetCachedPanel("shopModsSelectedBuild", selectedBuild);
@@ -7557,6 +7582,26 @@ function GetUIRoot() {
         return false;
     }
 
+    function TryOpenBuildBrowserPopup(root) {
+        // Returns true if the popup is confirmed open after all attempts.
+        if (IsBrowseBuildsPopupOpen(root)) return true;
+
+        // Method 1: click the browse button if it exists
+        var browseLookup = FindBrowseBuildsButton(root);
+        var browseBtn = browseLookup && browseLookup.panel ? browseLookup.panel : null;
+        if (browseBtn && IsPanelValid(browseBtn)) {
+            ActivatePanelSafe(browseBtn);
+            if (IsBrowseBuildsPopupOpen(root)) return true;
+        }
+
+        // Method 2: dispatch CitadelOpenBuildBrowser (real event confirmed in
+        // client.dll dispatch table — decomp verified, Aug 2026).
+        try { $.DispatchEvent("CitadelOpenBuildBrowser"); } catch(e) { QOL_WARN("core", "CitadelOpenBuildBrowser dispatch failed: " + (e && e.message ? e.message : String(e || ""))); }
+        if (IsBrowseBuildsPopupOpen(root)) return true;
+
+        return IsBrowseBuildsPopupOpen(root);
+    }
+
     function FindBrowseBuildsCancelButton(root) {
         var roots = CollectBuildUiSearchRoots(root);
         var scanned = 0;
@@ -7830,30 +7875,12 @@ function GetUIRoot() {
                 return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteSelectedBuild" };
             }
         } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsDeleteBuild === "function") {
-                CitadelHudHeroBuildsDeleteBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsDeleteBuild" };
-            }
-        } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsRemoveSelectedBuild === "function") {
-                CitadelHudHeroBuildsRemoveSelectedBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveSelectedBuild" };
-            }
-        } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-        try {
-            if (typeof CitadelHudHeroBuildsRemoveBuild === "function") {
-                CitadelHudHeroBuildsRemoveBuild();
-                return { ok: true, mode: "delete", source: "fn:CitadelHudHeroBuildsRemoveBuild" };
-            }
-        } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        // CitadelHudHeroBuildsDeleteBuild, ...RemoveSelectedBuild, ...RemoveBuild
+        // are fabricated — confirmed absent from client.dll_decomp-strings.json
+        // (Aug 2026). The only real delete function is DeleteSelectedBuild above.
 
         var eventNames = [
-            "CitadelHudHeroBuildsDeleteSelectedBuild",
-            "CitadelHudHeroBuildsDeleteBuild",
-            "CitadelHudHeroBuildsRemoveSelectedBuild",
-            "CitadelHudHeroBuildsRemoveBuild"
+            "CitadelHudHeroBuildsDeleteSelectedBuild"
         ];
         for (var j = 0; j < eventNames.length; j++) {
             try {
@@ -8475,6 +8502,18 @@ function GetUIRoot() {
             $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning TRUE (heroBuildItemsTotal=0)");
             return true;
         }
+        // heroBuildItemsTotal === -1: HeroBuildList panel not found (build browser
+        // popup closed or not under any searched root). Fall back to the structural
+        // scan which searches by class name and does a deep tree walk — it works
+        // even when the build browser popup is closed.
+        if (heroBuildItemsTotal === -1) {
+            var altEntries = CollectStorageBuildEntryPanels(root, true);
+            $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: heroBuildItems=-1, altEntries=" + String(altEntries.length));
+            if (altEntries.length > 0) {
+                $.Msg("[QOLLock][LANG] IsStorageBuildListEmpty: returning FALSE (altEntries>0)");
+                return false;
+            }
+        }
         var createLookupStrict = FindCreateBuildButtonStrict(root);
         var createBtnStrict = createLookupStrict && createLookupStrict.panel ? createLookupStrict.panel : null;
         if (createBtnStrict && IsPanelVisibleMaybe(createBtnStrict)) {
@@ -8629,9 +8668,10 @@ function GetUIRoot() {
             } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
 
+        // CitadelHudHeroBuildsCreateBuild is fabricated — confirmed absent from
+        // client.dll_decomp-strings.json (Aug 2026). Only CreateNewBuild is real.
         var eventNames = [
-            "CitadelHudHeroBuildsCreateNewBuild",
-            "CitadelHudHeroBuildsCreateBuild"
+            "CitadelHudHeroBuildsCreateNewBuild"
         ];
         for (var i = 0; i < eventNames.length; i++) {
             var ev = eventNames[i];
@@ -11580,7 +11620,9 @@ function GetUIRoot() {
     function UpdateItemMirrorProbeMulti(root, cfg) {
         if (!IsCustomHudContextActive(root)) {
             if (State.itemMirror.displayMode !== "context_off") {
+                if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
                 ResetPassiveCooldownCustomRuntimeState(root);
+                }
                 RemoveItemMirrorOverlay(root);
                 State.itemMirror.displayMode = "context_off";
             }
@@ -11601,7 +11643,9 @@ function GetUIRoot() {
             RuntimeTaskReset("item_mirror_render");
             RuntimeTaskReset("item_mirror_scan");
             State.itemMirror.fastModeUntilMs = 0;
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
             ResetPassiveCooldownCustomRuntimeState(root);
+            }
             if (State.itemMirror.displayMode !== "disabled") {
                 RemoveItemMirrorOverlay(root);
                 State.itemMirror.displayMode = "disabled";
@@ -13196,10 +13240,16 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "hide_testing_tools_active", hideTestingTools);
             SetPanelClassCached(root, State.rootClassCache, "specials_active", cfg.ENABLE_SPECIALS === 1);
             SetPanelClassCached(root, State.rootClassCache, "hero_scene_panel_visible", cfg.ENABLE_HERO_SCENE_PANEL === 1);
-            SetPanelClassCached(root, State.rootClassCache, "hide_failed_hint_active", cfg.ENABLE_HIDE_FAILED_HINT === 1);
+            // P3: coreRoot test mode — gate overlapping classes so manifests can be tested independently.
+            // When QOLLOCK_DEV_CORE_ROOT_TEST_MODE=1, these are skipped (manifests own the classes).
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "hide_failed_hint_active", cfg.ENABLE_HIDE_FAILED_HINT === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "hide_ability_suggestion_active", cfg.ENABLE_HIDE_ABILITY_SUGGESTION === 1);
-            SetPanelClassCached(root, State.rootClassCache, "hide_cosmetic_ability_active", cfg.ENABLE_HIDE_COSMETIC_ABILITY === 1);
-            SetPanelClassCached(root, State.rootClassCache, "simplify_ability_icons_active", cfg.ENABLE_SIMPLIFY_ABILITY_ICONS === 1);
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "hide_cosmetic_ability_active", cfg.ENABLE_HIDE_COSMETIC_ABILITY === 1);
+                SetPanelClassCached(root, State.rootClassCache, "simplify_ability_icons_active", cfg.ENABLE_SIMPLIFY_ABILITY_ICONS === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "hide_behavior_summary_active", cfg.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1);
             SetPanelClassCached(root, State.rootClassCache, "buff_hud_disabled", cfg.ENABLE_BUFF_HUD === 0);
             SetPanelClassCached(root, State.rootClassCache, "rejuv_hud_disabled", cfg.ENABLE_REJUV_HUD === 0);
@@ -13224,7 +13274,9 @@ function GetUIRoot() {
             SetPanelClassCached(root, State.rootClassCache, "keyboard_overlay_full_active", cfg.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
             SetPanelClassCached(root, State.rootClassCache, "minimalist_minimap_active", cfg.MINIMAL_MINIMAP === 1);
             SetPanelClassCached(root, State.rootClassCache, "qol_minimap_elevation_markers_active", IsCfgEnabled(cfg, "ENABLE_MINIMAP_ELEVATION_MARKERS"));
-            SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+                SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
+            }
             SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_16_10_active", cfg.SUPPORT_16_10 === 1);
@@ -13310,7 +13362,10 @@ function GetUIRoot() {
         // Player healthbar offsets, scale and opacity are user-controlled in both
         // live matches and the hideout/sandbox. Visibility is handled separately.
         var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
-        if (needsHealthbarRuntime && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
+        // P1: skip old healthbar dispatcher when ql_healthbar manifest is active.
+        var _hbManifestActive = false;
+        try { if (QOL && QOL.core && QOL.core.FeatureRegistry) { _hbManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_healthbar"); } } catch(e) {}
+        if (needsHealthbarRuntime && !_hbManifestActive && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
             QOL.updateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
         }
         var needsHealthContainerWork =
@@ -13376,7 +13431,9 @@ function GetUIRoot() {
                 passiveHudPanelForClass = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
                 SetCachedPanel("passiveHud", passiveHudPanelForClass);
             }
+            if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
             ApplyPassiveCooldownModeClasses(root, passiveHudPanelForClass, passiveCooldownMode);
+            }
         }
         if (HasNonDefaultChatRuntimeConfig(cfg) || State.chatStyleApplied) {
             UpdateChatRuntime(root, cfg);
@@ -13420,12 +13477,15 @@ function GetUIRoot() {
      */
     function _scheduleFeatureBucket(offsetSec, features, _s) {
         if (!features || features.length === 0) return;
+        // Clone snapshot so deferred callbacks don't see the next tick's
+        // overwritten data if the $.Schedule fires late due to jitter.
+        var snapshot = Object.assign({}, _s);
         $.Schedule(offsetSec, function() {
             for (var i = 0; i < features.length; i++) {
                 var fn = features[i];
                 if (!fn) continue;
                 try {
-                    fn(_s);
+                    fn(snapshot);
                 } catch (e) {
                     if (typeof $ !== "undefined" && $.Msg) {
                         $.Msg("[QOLLock] bucket feature error: " + (e && e.message ? e.message : String(e)));
@@ -13830,6 +13890,8 @@ function GetUIRoot() {
                 try {
                     gates[_gk + "Active"] = _fentry.gate(cfg, raw, hideoutConnected);
                 } catch(_ge) {
+                    $.Msg("[QOLLock][WARN][core] gate evaluation failed for '" + _fname +
+                          "': " + (_ge && _ge.message ? _ge.message : String(_ge)));
                     gates[_gk + "Active"] = false;
                 }
                 // Phase 10 safety: default non-suffixed gate for populateFeatureBuckets.
@@ -13861,7 +13923,12 @@ function GetUIRoot() {
             State.runtimeGates = gates;
         }
 
-        gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        // P1: skip when new manifests are active to prevent dual execution
+        var _rejuvManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _rejuvManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_rejuv_hud") || QOL.core.FeatureRegistry.isEnabled("ql_minimap_timers"); } } catch(e) {}
+        if (!_rejuvManifestActive) {
+            gates.rejuvTimers = gates.rejuvTimersActive || (!gates.rejuvTimersActive && !State.rejuvWasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_REJUV_NICKNAMES));
+        }
         gates.spm = (gates.spmActive || (!gates.spmActive && !State.spm.wasDisabled && ShouldRunStaggeredDisableCleanup(corePhase, CORE_PHASE_SPM_STATLOCKER))) && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_SPM_STATLOCKER));
         // WHY: unspent processes 1 player per tick — light enough to run every tick
         // instead of being gated by the 5-phase scheduler (which would limit it to 1Hz).
@@ -13872,29 +13939,53 @@ function GetUIRoot() {
         gates.laneWithParty = gates.laneWithPartyActive && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSPENT_LANE));
         gates.keyboardRuntime = gates.keyboardRuntimeActive || GetCachedPanel("keyboardOverlayRoot") || !!(State.allBindingsBoxes && State.allBindingsBoxes.length > 0);
         gates.zipBoost = gates.zipBoostActive || State.zipBoostDisplayMode !== "";
-        gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED));
+// P1: skip when new manifest is active to prevent dual execution
+        var _unsecuredSoulsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _unsecuredSoulsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_unsecured_souls_timer"); } } catch(e) {}
+        if (!_unsecuredSoulsManifestActive) {         gates.unsecuredSouls = (gates.unsecuredSoulsActive || State.unsecuredSouls.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_UNSECURED)); }
         gates.statBonuses = (gates.statBonusesActive || State.statBonuses.displayMode !== "") && ((!CORE_SCHEDULER_V2_ENABLED) || (corePhase === CORE_PHASE_STAT_BONUSES));
         gates.combatStatus = gates.combatStatusActive || gates.combatIndicatorActive || State.combatStatus.displayMode !== "";
         gates.signatureFlash = gates.signatureFlashActive || !!State.signatureCooldownFlashWasEnabled;
-        gates.legacyAudioPassive = gates.legacyAudioPassiveActive;
+        var _legacyManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _legacyManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_legacy_audio_passive"); } } catch(e) {}
+        if (!_legacyManifestActive) { gates.legacyAudioPassive = gates.legacyAudioPassiveActive; }
         gates.imagesInChat = gates.imagesInChatActive;
         gates.showRank = gates.showRankActive;
         gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
-        gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
+// P1: skip when new manifest is active to prevent dual execution
+        var _betterUnsecuredHudManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _betterUnsecuredHudManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_better_unsecured_hud"); } } catch(e) {}
+        if (!_betterUnsecuredHudManifestActive) {         gates.betterUnsecuredHud = gates.betterUnsecuredHudActive || !!(
             State.unsecuredSouls.hudStyleSig ||
             GetCachedPanel("betterUnsecuredOverlay") ||
             GetCachedPanel("unsecuredSoulsHudContainer")
-        );
-        gates.colorWarning = gates.colorWarningActive;
+        ); }
+// P1: skip when new manifest is active to prevent dual execution
+        var _colorWarningsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _colorWarningsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_color_warnings"); } } catch(e) {}
+        if (!_colorWarningsManifestActive) {         gates.colorWarning = gates.colorWarningActive; }
         gates.enemyColorWarning = NeedsEnemyColorWarningRuntimeWork(cfg);
         gates.allyColorWarning = NeedsAllyColorWarningRuntimeWork(cfg);
-        gates.ammo = gates.ammoActive || !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0);
-        gates.topBarRuntime = NeedsTopBarRuntimeWork(cfg);
-        gates.bottomBarRuntime = NeedsBottomBarRuntimeWork(cfg);
-        gates.itemsRuntime = NeedsItemsRuntimeWork(cfg);
-        gates.soulsRuntime = NeedsSoulsRuntimeWork(cfg);
-        gates.heroShop = NeedsHeroShopRuntimeWork(cfg);
+// P1: skip when new manifest is active to prevent dual execution
+        var _ammoManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _ammoManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_ammo"); } } catch(e) {}
+        if (!_ammoManifestActive) {         gates.ammo = gates.ammoActive || !!(State.ammoPanelStyleSig && String(State.ammoPanelStyleSig).length > 0); }
+        var _topBarManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _topBarManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_topbar"); } } catch(e) {}
+        if (!_topBarManifestActive) {        gates.topBarRuntime = NeedsTopBarRuntimeWork(cfg); }
+        var _bottomBarManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _bottomBarManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_bottom_bar"); } } catch(e) {}
+        if (!_bottomBarManifestActive) {         gates.bottomBarRuntime = NeedsBottomBarRuntimeWork(cfg); }
+        var _itemsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _itemsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_items"); } } catch(e) {}
+        if (!_itemsManifestActive) {         gates.itemsRuntime = NeedsItemsRuntimeWork(cfg); }
+        var _soulsManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _soulsManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_souls"); } } catch(e) {}
+        if (!_soulsManifestActive) {         gates.soulsRuntime = NeedsSoulsRuntimeWork(cfg); }
+        var _heroShopManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _heroShopManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_heroshop"); } } catch(e) {}
+        if (!_heroShopManifestActive) {      gates.heroShop = NeedsHeroShopRuntimeWork(cfg); }
         gates.targetShapes = gates.targetShapesActive || !!(
             State.targetShapeHadNonDefaultRuntime ||
             State.targetShapeStyleSig ||
@@ -13902,8 +13993,12 @@ function GetUIRoot() {
             (State.targetShapesCache && State.targetShapesCache.length > 0) ||
             (State.hintContainerCache && State.hintContainerCache.length > 0)
         );
-        gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg);
-        gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg);
+        var _damageImpactManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _damageImpactManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_damage_impact"); } } catch(e) {}
+        if (!_damageImpactManifestActive) {  gates.damageImpactRuntime = NeedsDamageImpactRuntimeWork(cfg); }
+        var _staminaManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _staminaManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_stamina"); } } catch(e) {}
+        if (!_staminaManifestActive) {         gates.staminaChargeColorRuntime = NeedsStaminaChargeColorRuntimeWork(cfg); }
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;
@@ -14305,6 +14400,17 @@ function GetUIRoot() {
                 forceToken = diagHud.GetAttributeString("QOL_DiagRequest", "");
                 if (forceToken && forceToken !== State._lastDiagForceToken) {
                     State._lastDiagForceToken = forceToken;
+                    // ── Command dispatch: if forceToken starts with "mt_", trigger manifest
+                    //     test runner. This is a COMMAND path (not a diagnostic read path) —
+                    //     it returns early to avoid being tangled with diag snapshot logic. ──
+                    if (forceToken.indexOf("mt_") === 0 || forceToken.indexOf("fs_") === 0) {
+                        if (QOL && QOL.core && QOL.core.ManifestTests) {
+                            try { QOL.core.ManifestTests.runAll({ token: forceToken, onComplete: function() { State._diagWriteNextMs = 0; } }); } catch(_mtErr) { QOL_WARN("core", "manifest test run failed: " + (_mtErr && _mtErr.message ? _mtErr.message : String(_mtErr || ""))); }
+                        }
+                        // Fall through to write diagnostic now — echos token so Settings
+                        // poller sees request was received. onComplete resets throttle so
+                        // results are written on the next cycle after tests finish.
+                    }
                     forceSync = true;
                     QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));
                 }
@@ -14319,6 +14425,26 @@ function GetUIRoot() {
                 logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : [],
                 diagToken: forceToken
             };
+            // P1: extend diagnostic bridge with FeatureRegistry data.
+            // FeatureRegistry is loaded after this function is defined, so guard at call time.
+            if (QOL && QOL.core && QOL.core.FeatureRegistry) {
+                var FR = QOL.core.FeatureRegistry;
+                diag.newFeatures = FR.getRegisteredIds();
+                diag.newEnabled = FR.getEnabledIds();
+                diag.newErrors = FR.getErrorCounts();
+            }
+            // P2: include manifest test results in diagnostic snapshot
+            if (QOL && QOL.core && QOL.core.ManifestTests) {
+                var tr = QOL.core.ManifestTests.getResults();
+                if (tr) {
+                    diag.testResults = {
+                        summary: tr.summary,
+                        results: tr.results,
+                        timestamp: tr.timestamp,
+                        token: tr.token
+                    };
+                }
+            }
             if (diagHud && diagHud.SetAttributeString) {
                 diagHud.SetAttributeString("QOL_Diag", JSON.stringify(diag));
                 if (forceSync) {
@@ -14485,8 +14611,6 @@ function GetUIRoot() {
     }
 
     $.Schedule(0.0, BootstrapUnitTargetStyles);
-
-    RunConvarStorageProbe();
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
     $.Schedule(CORE_START_DELAY_COMPASS_SEC, compassLoop);
     $.Schedule(CORE_START_DELAY_BUILD_SEC, buildRequestLoop);
@@ -14530,13 +14654,13 @@ function GetUIRoot() {
 
 
     // =========================================================================
-    // §18 Global bridge — exported for per-feature files in ql_features/
+    // §18 Global bridge — exported for per-feature files in features/
     // =========================================================================
     // Features extracted to separate files lose IIFE closure access to State,
     // cache helpers, and perf tools. This bridge publishes them on window so
     // feature files can use the same APIs without being inline in ql_core.js.
     //
-    // Load order: ql_utils.js → ql_shared_presets.js → ql_core.js → ql_features/*.js
+    // Load order: ql_utils.js → ql_shared_presets.js → ql_core.js → features/*.js
     //
     // Feature files should use:
     //   QOL_STATE.*                  (was: State.*)
@@ -14710,6 +14834,7 @@ function GetUIRoot() {
         ["getSaveSettingsLoaderDetailForMessage", function() { return GetSaveSettingsLoaderDetailForMessage; }],
         ["hasBuildSaveStorageUiReady", function() { return HasBuildSaveStorageUiReady; }],
         ["isBrowseBuildsPopupOpen", function() { return IsBrowseBuildsPopupOpen; }],
+        ["tryOpenBuildBrowserPopup", function() { return TryOpenBuildBrowserPopup; }],
         ["isBuildSaveStorageRuntimeSourceStale", function() { return IsBuildSaveStorageRuntimeSourceStale; }],
         ["isBuildSaveTargetSelectionMatch", function() { return IsBuildSaveTargetSelectionMatch; }],
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],

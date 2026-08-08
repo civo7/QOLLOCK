@@ -1,0 +1,65 @@
+/* ==========================================================================
+   QOLLOCK Core Styles — Single source of truth for @define design tokens
+   ==========================================================================
+   OWNS:        ALL @define tokens used across QOLLOCK CSS files
+   DOES NOT OWN: Feature-specific CSS rules, layout overrides
+   DEPENDS ON:  Nothing — pure @define declarations
+   USED BY:     All QOLLOCK CSS files that need token values
+
+   IMPORTANT: The Panorama engine emits "Conflicting @define value"
+   if two files define the same token. ALL @define declarations MUST
+   live in this single file. No other CSS file may contain @define.
+
+   Extracted from qollock_defines.css (Phase 2).
+   ========================================================================== */
+
+/* ---- Universal Colors ---- */
+@define QOL_COLOR_WHITE: #FFFFFF;
+@define QOL_COLOR_TRANSPARENT: #00000000;
+@define QOL_COLOR_OPAQUE_WHITE: #FFFFFFFF;
+@define QOL_COLOR_GRAY_MEDIUM: #AAAAAA;
+
+/* ---- Health Bar Colors ---- */
+@define QOL_HEALTHBAR_ALLY: #33CC33;
+@define QOL_HEALTHBAR_ENEMY: #CC3333;
+@define QOL_HEALTHBAR_SHIELD: #3399FF;
+@define QOL_HEALTHBAR_BULWARK: #FF9933;
+@define QOL_HEALTHBAR_LOW: #FF3333;
+@define QOL_HEALTHBAR_MID: #FFAA33;
+@define QOL_HEALTHBAR_CRITICAL: #FF0000;
+
+/* ---- Health Bar Theme Colors ---- */
+@define QOL_HEALTHBAR_SHIELD_GREEN: #4BDC68;
+@define QOL_HEALTHBAR_LOW_BRIGHT: #FF5656;
+@define QOL_HEALTHBAR_FRAME_DARK: #142304;
+@define QOL_HEALTHBAR_FILL_CREAM: #FEEED5;
+@define QOL_HEALTHBAR_BG_DARK: #2D402A;
+
+/* ---- Health Bar Sizing ---- */
+@define QOL_HEALTHBAR_HEIGHT: 75px;
+
+/* ---- Minimap Colors ---- */
+@define QOL_MINIMAP_ALLY_ICON: #33FF33;
+@define QOL_MINIMAP_ENEMY_ICON: #FF3333;
+@define QOL_MINIMAP_NEUTRAL_ICON: #FFFF33;
+@define QOL_MINIMAP_BACKGROUND: #000000DD;
+
+/* ---- Compass Colors ---- */
+@define QOL_COMPASS_NEEDLE: #FF4444;
+@define QOL_COMPASS_TICK: #FFFFFFCC;
+@define QOL_COMPASS_TEXT: #FFFFFF;
+
+/* ---- Shop & UI Accent ---- */
+@define QOL_ACCENT_PRIMARY: #FFCC00;
+@define QOL_ACCENT_DANGER: #FF3333;
+@define QOL_ACCENT_SUCCESS: #33FF33;
+
+/* ---- Animation Timing ---- */
+@define QOL_TRANSITION_FAST: 0.1s;
+@define QOL_TRANSITION_NORMAL: 0.2s;
+@define QOL_TRANSITION_SLOW: 0.5s;
+
+/* ---- Layout Constants ---- */
+@define QOL_TOPBAR_HEIGHT: 32px;
+@define QOL_COMPASS_SIZE: 200px;
+@define QOL_MINIMAP_SIZE: 400px;

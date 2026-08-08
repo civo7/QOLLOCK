@@ -18,7 +18,8 @@ var path = require("path");
 var vm = require("vm");
 
 var SCRIPTS_DIR = path.resolve(__dirname, "..");
-var FEATURES_DIR = path.join(SCRIPTS_DIR, "ql_features");
+var FEATURES_DIR = path.join(SCRIPTS_DIR, "features");
+var MANIFESTS_DIR = path.join(SCRIPTS_DIR, "manifests");
 
 // ── Mock Panorama globals ──
 var mockLog = [];
@@ -63,8 +64,18 @@ var HUD_LOAD_ORDER = [
     "ql_recent_purchases_data.js",
     "ql_minimap_crate_data.js",
     "ql_perf_overlay.js",
-    path.join("ql_features", "ql_feat_buildbridge.js"),
+    path.join("features", "ql_feat_buildbridge.js"),
     "ql_locale_lookup.js",
+    // Core modules (Phase 1+ infrastructure)
+    path.join("core", "ql_namespace.js"),
+    path.join("core", "ql_logger.js"),
+    path.join("core", "ql_event_bus.js"),
+    path.join("core", "ql_scheduler.js"),
+    path.join("core", "ql_panel_helpers.js"),
+    path.join("core", "ql_config_store.js"),
+    path.join("core", "ql_config_adapter.js"),
+    path.join("core", "ql_feature_registry.js"),
+    path.join("core", "ql_manifest_tests.js"),
     "ql_core.js"
 ];
 
@@ -95,6 +106,27 @@ function getFeatureFiles() {
         if (!aIsRoot && bIsRoot) return 1;
         return aRel.localeCompare(bRel);
     });
+    return files.map(function(f) { return path.relative(SCRIPTS_DIR, f); });
+}
+
+// ── Manifest files (Phase 9+ FeatureRegistry manifests) ──
+function getManifestFiles() {
+    function walk(dir) {
+        var entries = fs.readdirSync(dir, { withFileTypes: true });
+        var result = [];
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            var full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                result = result.concat(walk(full));
+            } else if (entry.isFile() && entry.name === "manifest.js") {
+                result.push(full);
+            }
+        }
+        return result;
+    }
+    var files = walk(MANIFESTS_DIR);
+    files.sort();
     return files.map(function(f) { return path.relative(SCRIPTS_DIR, f); });
 }
 
@@ -138,6 +170,41 @@ getFeatureFiles().forEach(function(file) {
     if (r.status === "PASS") { passCount++; console.log("  PASS " + file); }
     else { failCount++; console.log("  FAIL " + file + ": " + r.error); }
 });
+
+// Load manifest files
+console.log("\n── Manifest Files ──");
+getManifestFiles().forEach(function(file) {
+    var r = runFile(file);
+    results.push(r);
+    if (r.status === "PASS") { passCount++; console.log("  PASS " + file); }
+    else { failCount++; console.log("  FAIL " + file + ": " + r.error); }
+});
+
+// ── Structural check: manifest test hooks ──
+console.log("\n── Manifest Test Hooks (structural) ──");
+try {
+    var QOL = global.QOL || (typeof QOL !== "undefined" ? QOL : null);
+    if (QOL && QOL.core && QOL.core.FeatureRegistry) {
+        var FR = QOL.core.FeatureRegistry;
+        var ids = FR.getRegisteredIds();
+        var withTest = 0, withoutTest = 0;
+        ids.forEach(function(id) {
+            var m = FR.getManifest(id);
+            if (m && typeof m.test === "function") {
+                withTest++;
+                console.log("  TEST " + id);
+            } else {
+                withoutTest++;
+                console.log("  noop " + id + " (no test hook)");
+            }
+        });
+        console.log("  " + ids.length + " manifests: " + withTest + " with test(), " + withoutTest + " without");
+    } else {
+        console.log("  FeatureRegistry not available — skipping");
+    }
+} catch(e) {
+    console.log("  FAIL manifest test hook enumeration: " + e.message);
+}
 
 // ── Summary ──
 console.log("\n=== Summary ===");

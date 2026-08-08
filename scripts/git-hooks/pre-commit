@@ -23,6 +23,9 @@ cd "$SCRIPTS_DIR" && bash tools/check_bridges.sh
 echo "[QOLLOCK] Running import validation..."
 cd "$SCRIPTS_DIR" && bash tools/validate_imports.sh
 
+echo "[QOLLOCK] Running manifest validation..."
+cd "$SCRIPTS_DIR" && bash tools/check_manifests.sh
+
 echo "[QOLLOCK] Running smoke test..."
 node "$SCRIPTS_DIR/tools/qollock_smoke_test.js"
 

@@ -327,11 +327,12 @@
                     name: k,
                     avg: avg,
                     max: entry.max,
-                    count: entry.count
+                    count: entry.count,
+                    total: entry.total
                 });
             }
             entries.sort(function (a, b) {
-                return b.avg - a.avg;
+                return b.total - a.total;
             });
 
             var topN = Math.min(8, entries.length);
@@ -346,7 +347,7 @@
             }
 
             var lines = [];
-            var topAvg = entries[0].avg;
+            var topTotal = entries[0].total;
 
             for (var j = 0; j < topN; j++) {
                 var item = entries[j];
@@ -357,9 +358,10 @@
                     shortName = shortName.substring(0, 19) + "...";
                 }
 
-                // Render line: "name: avg X.Xms  max X.Xms  n=N"
+                // Render line: "name: total X.Xms  avg X.Xms  max X.Xms  n=N"
                 lines.push(
-                    shortName + ": avg " + item.avg.toFixed(1) + "ms" +
+                    shortName + ": " + item.total.toFixed(1) + "ms" +
+                    "  avg " + item.avg.toFixed(1) + "ms" +
                     "  max " + item.max.toFixed(1) + "ms" +
                     "  n=" + item.count
                 );
@@ -380,7 +382,7 @@
 
             // Update labels
             if (_titleLabel && IsPanelValid(_titleLabel)) {
-                var titleText = "Perf  (" + topAvg.toFixed(1) + "ms avg";
+                var titleText = "Perf  (" + topTotal.toFixed(1) + "ms total";
                 if (_windowSnapshots.length > 0) {
                     var windowSec = Math.min(60, Math.round((nowMs - _windowSnapshots[0].timeMs) / 1000));
                     titleText += ", " + windowSec + "s";
@@ -388,6 +390,36 @@
                 titleText += ")";
                 _titleLabel.text = titleText;
             }
+            // ── Manifest perf section (merged 60s rolling window) ──
+            // Read from the merged rolling stats (ring buffer + live) so manifest
+            // entries don't drop to zero after each ResetPerfWindow.
+            var mfKeys = [];
+            for (var k in merged) {
+                if (merged.hasOwnProperty(k) && k.indexOf("mf.") === 0) mfKeys.push(k);
+            }
+            if (mfKeys.length > 0) {
+                var mfEntries = [];
+                for (var mk = 0; mk < mfKeys.length; mk++) {
+                    var mkey = mfKeys[mk];
+                    var me = merged[mkey];
+                    if (!me || me.count <= 0) continue;
+                    var id = mkey.substring(3); // strip "mf." prefix
+                    mfEntries.push({ name: id, total: me.total, avg: me.total / me.count, max: me.max, count: me.count });
+                }
+                if (mfEntries.length > 0) {
+                    mfEntries.sort(function(a, b) { return b.total - a.total; });
+                    lines.push("");
+                    lines.push("--- Manifests ---");
+                    var mfTop = Math.min(8, mfEntries.length);
+                    for (var mj = 0; mj < mfTop; mj++) {
+                        var mi = mfEntries[mj];
+                        var sn = mi.name;
+                        if (sn.length > 22) sn = sn.substring(0, 19) + "...";
+                        lines.push(sn + ": " + mi.total.toFixed(1) + "ms  avg " + mi.avg.toFixed(1) + "ms  max " + mi.max.toFixed(1) + "ms  n=" + mi.count);
+                    }
+                }
+            }
+
             if (_bodyLabel && IsPanelValid(_bodyLabel)) {
                 _bodyLabel.text = lines.join("\n");
             }

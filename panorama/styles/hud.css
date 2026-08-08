@@ -11,6 +11,7 @@
 
 @import url("s2r://panorama/styles/base/hud.vcss_c");
 @import url("s2r://panorama/styles/qollock_global.vcss_c");
+@import url("s2r://panorama/styles/ql_core_styles.vcss_c");
 
 @import url("s2r://panorama/styles/features/ql_feat_settings_loader.vcss_c");
 @import url("s2r://panorama/styles/features/ql_feat_item_mirror.vcss_c");

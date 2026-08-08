@@ -4,7 +4,7 @@
 // contexts. Logs its own failure (no silent catch).
 (function() {
     var _qolLogBuf = [];
-    var _qolLogMax = 500;
+    var _qolLogMax = 1000;
     var _qolOrigMsg = null;
     try {
         if (typeof $ !== "undefined" && $.Msg) {
@@ -2278,6 +2278,40 @@ var QOL_DumpDiagnostics = function() {
         } else {
             lines.push("  (none)");
         }
+        // P1: FeatureRegistry manifests (new system) — reported alongside old features.
+        if (_diag.newFeatures && _diag.newFeatures.length > 0) {
+            lines.push("");
+            lines.push("--- New Feature Manifests (" + _diag.newFeatures.length + " registered, " +
+                (_diag.newEnabled ? _diag.newEnabled.length : 0) + " enabled) ---");
+            for (var _nf = 0; _nf < _diag.newFeatures.length; _nf++) {
+                var _nid = _diag.newFeatures[_nf];
+                var _nstatus = (_diag.newEnabled && _diag.newEnabled.indexOf(_nid) !== -1) ? "ON " : "OFF";
+                var _nerr = (_diag.newErrors && _diag.newErrors[_nid]) ? (" (" + _diag.newErrors[_nid] + " errors)") : "";
+                lines.push("  " + _nstatus + " " + _nid + _nerr);
+            }
+        }
+        // P2: Manifest test results (from core/ql_manifest_tests.js)
+        if (_diag.testResults && _diag.testResults.summary) {
+            lines.push("");
+            var _ts = _diag.testResults.summary;
+            lines.push("--- Manifest Tests (" + _ts.passed + "/" + _ts.total + " passed, " +
+                _ts.failed + " failed, " + _ts.skipped + " skipped, " +
+                _ts.errors + " errors, " + _ts.timeMs + "ms) ---");
+            if (_diag.testResults.timestamp) {
+                try { lines.push("  Run at: " + new Date(_diag.testResults.timestamp).toISOString()); } catch(_dte) { lines.push("  Run at: " + String(_diag.testResults.timestamp)); }
+            }
+            if (_ts.failed > 0 || _ts.errors > 0) {
+                lines.push("  Failures:");
+                var _trs = _diag.testResults.results || [];
+                for (var _tri = 0; _tri < _trs.length; _tri++) {
+                    var _tr = _trs[_tri];
+                    if (_tr.passed === false || _tr.error) {
+                        var _detail = _tr.message ? ": " + _tr.message : "";
+                        lines.push("    " + _tr.id + " [" + _tr.name + "]" + _detail);
+                    }
+                }
+            }
+        }
         lines.push("");
         // Merge HUD-side logs (from panel attribute) with settings-side logs
         // (from local __qolLogBuf, captured by the $.Msg wrapper in this file).
@@ -2311,6 +2345,7 @@ var QOL_DumpDiagnostics = function() {
 };
 
 var QOL_DEFAULT_CONFIG = {
+    QOLLOCK_DEV_CORE_ROOT_TEST_MODE: 0,
     SHOW_RANK: 0,
     SHOW_RANK_TOPBAR: 1,
     SETTINGS_THEME: 0,

@@ -6,11 +6,11 @@ QOLLOCK is a Deadlock (Source 2 Panorama engine) mod that customizes the in-game
 It runs in two JavaScript contexts — HUD (in-game panels) and Settings (settings UI) —
 and communicates between them via panel attribute bridges.
 
-**Version:** 3.1.5  
-**Schema:** 3.1.5  
-**Features:** 40 feature files, 39 loaded, zero auto-disabled, 94 presets available  
-**Branch:** `architecture-overhaul`  
-**Primary File:** `panorama/scripts/ql_core.js` (~16K lines after Phase 9 extraction)
+**Version:** 3.1.9  
+**Schema:** 3.1.9  
+**Features:** 31/38 FeatureRegistry manifests wired, 5 cut over, 37 old features, 94 presets  
+**Branch:** `full-rewrite`  
+**Primary File:** `panorama/scripts/ql_core.js` (~14.7K lines after Phase 10 wiring)
 
 ## Prerequisites
 
@@ -41,7 +41,25 @@ panorama/
     ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
-    ├── ql_features/                        # 39 loaded feature files (all loaded via hud.xml; showrank_card also via profile_card.xml)
+    ├── core/                                  # Phase 1: New infrastructure (8 modules)
+    │   ├── ql_namespace.js                   # QOL.core/ui/features/adapters buckets
+    │   ├── ql_logger.js                      # Structured logging + ring buffer
+    │   ├── ql_event_bus.js                   # Pub/sub with error isolation
+    │   ├── ql_scheduler.js                   # createPollLoop with perf tracking
+    │   ├── ql_panel_helpers.js               # isPanelAlive, findHud, syncStyles
+    │   ├── ql_config_store.js                # Schema-driven typed config
+    │   ├── ql_config_adapter.js              # Old flat ↔ new schema bridge
+    │   ├── ql_feature_registry.js             # FeatureRegistry.register/boot/shutdown
+    │   ├── ql_manifest_tests.js               # Manifest test() runner + diagnostic bridge
+    │   └── ql_app.js                         # Boot sequence, config polling bridge
+    ├── manifests/                             # Phase 9: New FeatureRegistry manifests
+    │   ├── ql_cast_failed_hint/manifest.js   # (wired + tested in-game)
+    │   ├── ql_mouse_cursor/manifest.js       # (wired)
+    │   ├── ql_statlocker/manifest.js         # (wired)
+    │   ├── ql_nicknames/manifest.js          # (wired)
+    │   ├── ql_unspent/manifest.js            # (wired)
+    │   └── ... (33 more manifest directories)
+    ├── features/                             # Old system: 39 QOL.register() feature files
     │   ├── ql_feat_ammo.js
     │   ├── ql_feat_betterunsecuredhud.js
     │   ├── ql_feat_bottombar.js
@@ -91,7 +109,7 @@ panorama/
 ```
 ql_utils.js → ql_shared_presets.js → ql_bridge.js → ql_state.js → ql_panelcache.js → ql_config.js →
 ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
-ql_feat_buildbridge.js → ql_core.js → ql_features/*.js (36 files; order-independent)
+ql_feat_buildbridge.js → ql_core.js → features/*.js (36 files; order-independent)
 ```
 
 ### Context Architecture (Source 2 Panorama)
@@ -272,7 +290,7 @@ Key state fields:
 
 ### Previous Phases (9–10)
 
-- **34 features extracted** from ql_core.js into ql_features/
+- **34 features extracted** from ql_core.js into features/
 - **~6,400 lines removed** from ql_core.js
 - **All 34 feature files migrated** to `QOL.import()` and `QOL.register()` API
 - **QOL namespace system** implemented (data-driven bridge exports)
@@ -289,6 +307,25 @@ Key state fields:
 4. `persistentStorage` unavailable in settings context (missing guard)
 5. SafeSetAttribute fallback not logging degradation
 6. 14 silent catch sites now log at WARN level
+7. **Toggle coercion bug (Phase 10):** ConfigStore coerces `ENABLE_*`/`DISABLE_*`/etc.
+   keys from numeric 0/1 to boolean. Manifests must use `Number(cfg.X) === 1` —
+   bare `cfg.X === 1` fails because `true === 1` is false in JS. Fixed in
+   `ql_keyboard` and `ql_heroshop`.
+8. **Stuck-feature bug (Phase 10):** `_safeEnableFeature()` set `_instances[id]` before
+   `onEnable()` — if `onEnable` threw, feature was permanently stuck. Fixed with
+   `_enablingInProgress` reentry guard.
+9. **`_onConfigChanged` auto-enable bug:** Would enable a feature on ANY config key
+   change. Fixed: only auto-enables when `ConfigStore.get(id, "enabled") === true`.
+
+### Manifest Porting Rules (see docs/MIGRATION_PATTERNS.md for full details)
+- **Toggle coercion:** Always use `Number(cfg.X) === 1`, never bare `cfg.X === 1`
+- **Cut-over timing:** Cut over old include in the SAME commit as wiring manifest
+- **State writes:** Write to `State.*` for cross-feature backward compat (override
+  of the old "READ ONLY" rule — see MIGRATION_PATTERNS.md Pattern 7)
+- **QOL delegates:** Access old-system functions via `typeof QOL !== "undefined" &&
+  QOL.fnName` with try/catch (see MIGRATION_PATTERNS.md Pattern 10)
+- **Panel cache cleanup:** Clear `SetCachedPanel` entries in `onDisable`
+- **Adversarial review:** 2 agents per manifest (correctness + side effects)
 
 ### Remaining: Phase 10 Cleanup (see plans/AUDIT_PLAN.md)
 
@@ -316,16 +353,61 @@ Key state fields:
 
 ## Testing
 
-- **Diagnostic:** Run `QOL_DumpDiagnostics()` in the Panorama console. Shows loaded features, auto-disabled features, and console logs.
-- **Preset Cycle:** Settings → Dev panel → "Preset Cycle" button. Applies all 79 presets sequentially with 1.2s delay. Verifies no feature crashes.
+### In-Game
+
+- **Diagnostic:** Run `QOL_DumpDiagnostics()` in the Panorama console. Shows loaded features,
+  auto-disabled features, new FeatureRegistry manifests (enabled/disabled + error counts),
+  manifest test results (from last run), and captured console logs.
+- **Manifest Tests:** Settings → Dev panel → "Manifest Tests" button. Triggers HUD-side
+  `QOL.core.ManifestTests.runAll()` via force-sync token. Polls for results with 6s timeout.
+  Each enabled manifest's optional `test()` hook verifies panel existence and basic functionality.
+  Results also appear in `QOL_DumpDiagnostics()`.
+- **Preset Cycle:** Settings → Dev panel → "Preset Cycle" button. Applies all presets
+  sequentially with 1.2s delay. Verifies no old-system features auto-disable. Checks
+  `diag.newErrors` for manifest error counts.
+- **Console:** `QOL.core.ManifestTests.runAll()` — run all manifest tests from Panorama console.
+  `QOL.core.ManifestTests.getResults()` — read results from last run.
+- **Runtime error tracking:** Manifest poll loops that throw are tracked by FeatureRegistry.
+  After 10 consecutive poll loop errors (without an intervening success), the feature
+  auto-disables and shows in diagnostics with error count.
 - **Repack:** Changes to .js files require repacking the VPK before testing in-game.
+
+### Manifest `test()` Hook (optional, on FeatureRegistry manifest descriptor)
+
+```js
+FR.register({
+    id: "ql_example",
+    create: function(ctx) { ... },
+    test: function(ctx) {
+        // OPTIONAL — static, called from HUD context only.
+        // Must be read-only: no State writes, no config.set(), no DispatchEvent.
+        // Return null to skip (not applicable, e.g. not in a match).
+        var root = $.GetContextPanel();
+        var panel = root.FindChildTraverse("expected_panel");
+        return {
+            passed: !!panel,
+            name: "Expected panel exists",
+            message: panel ? "" : "panel not found in HUD tree",
+            assertions: [                          // OPTIONAL drill-down
+                { passed: !!panel, name: "panel exists" }
+            ]
+        };
+    }
+});
+```
+
+### Node.js Smoke Test
+
+- `node tools/qollock_smoke_test.js` — loads all JS files (infrastructure + features + manifests)
+  in dependency order with mock Panorama globals. Catches syntax errors, reference errors.
+  Reports manifest test hook coverage (structural check). 104+/104+ PASS expected.
 
 ## Key Files to Read First
 
 1. `panorama/scripts/ql_shared_presets.js` — QOL namespace, QOL.import(), QOL.register(), 79 presets, diagnostics
 2. `panorama/scripts/ql_core.js` lines 23585-23702 — QOL namespace population (the bridge)
 3. `panorama/scripts/ql_core.js` lines 24500-24750 — Feature registration and dispatch loop
-4. Any `ql_features/ql_feat_*.js` — Example of the current feature file pattern
+4. Any `features/ql_feat_*.js` — Example of the current feature file pattern
 5. `plans/AUDIT_PLAN.md` — Full audit findings and cleanup roadmap
 
 ## Panorama CSS Gotchas (Phase D + F)
@@ -377,6 +459,7 @@ Panorama ignores, falling back to `squish`.
 - `/plan-qollock` — Full plan creation with 4-agent adversarial review
 - `/extract-qollock` — Extract code to a standalone feature file
 - `/fix-qollock` — Fix a bug with adversarial review
+- `/diff-qollock` — Semantic diff old feature → new manifest (5-agent: constants, calls, CSS, control flow, State)
 
 ## Saved Prompts
 

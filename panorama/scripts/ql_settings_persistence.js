@@ -241,7 +241,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
         deserializeCompactV2: DeserializeCompactV2,
         applyParsedConfig: ApplyParsedConfig,
         applyParsedConfigWithDiagnostics: ApplyParsedConfigWithDiagnostics,
-        clampToSchemaField: ClampToSchemaField,
-        buildSchemaFieldMap: BuildSchemaFieldMap
+        buildSchemaFieldMap: BuildSchemaFieldMap,
+        clampToSchemaField: ClampToSchemaField
     };
 })();

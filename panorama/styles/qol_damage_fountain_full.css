@@ -3905,7 +3905,7 @@
 
 .damage_fountain_active .gold .HudIndicatorText
 {
-	font-weight: bolder;
+	font-weight: bold;
 	font-size: 40px;
 	animation-name: soul_color;
 	animation-duration: 3s;

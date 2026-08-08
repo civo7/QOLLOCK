@@ -4,7 +4,7 @@
 
 #QOLCrosshairStatsOverlay
 {
-    visibility: collapse;
+    visibility: visible;
     horizontal-align: center;
     vertical-align: center;
     width: fit-children;

@@ -40,12 +40,12 @@ EXPORTED=$(grep -oP '\["\K[a-zA-Z0-9]+(?=")' ql_core.js | sort -u)
 INFRA_SYMBOLS=$(grep -ohP "QOL\.\K[a-zA-Z0-9]+" ql_state.js ql_panelcache.js ql_bridge.js ql_config.js ql_shared_presets.js 2>/dev/null | sort -u)
 
 # Collect all symbols imported by feature files
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     IMPORTS=$(tr '\n' ' ' < "$f" | grep -oP 'QOL\.import\(\[[^)]*\]\)' | grep -oP '"[a-zA-Z0-9]+"' | tr -d '"' | sort -u)
     for sym in $IMPORTS; do
         if ! echo "$EXPORTED" | grep -qx "$sym" && ! echo "$INFRA_SYMBOLS" | grep -qx "$sym"; then
             # Check if symbol is published by another feature file (cross-feature)
-            if ! grep -rq "QOL\.${sym}\s*=" ql_features/ 2>/dev/null; then
+            if ! grep -rq "QOL\.${sym}\s*=" features/ 2>/dev/null; then
                 echo "  MISSING: $sym (imported by $(basename "$f"), not exported anywhere)"
                 ISSUES=$((ISSUES + 1))
             fi
@@ -61,7 +61,7 @@ fi
 echo ""
 echo "[2/5] Checking feature files have self-tests..."
 
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     fname=$(basename "$f")
     if ! grep -q 'try\s*{' "$f" 2>/dev/null; then
         # No try/catch at all — definitely no self-test
@@ -81,7 +81,7 @@ echo "  Self-test check complete."
 echo ""
 echo "[3/5] Checking for bare QOL_* globals in feature files..."
 
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     fname=$(basename "$f")
     # Find QOL_ prefixed identifiers used as bare names (not in comments, not in QOL.import strings)
     BARE_GLOBALS=$(grep -oP '\bQOL_[A-Za-z0-9_]+\b' "$f" 2>/dev/null | sort -u || true)
@@ -103,7 +103,7 @@ echo "  Bare global check complete."
 echo ""
 echo "[4/5] Checking DEPENDS comments match QOL.import() calls..."
 
-for f in ql_features/ql_feat_*.js; do
+for f in features/ql_feat_*.js; do
     fname=$(basename "$f")
     if grep -q 'QOL\.import\(' "$f" 2>/dev/null; then
         if ! grep -q '// DEPENDS:' "$f" 2>/dev/null; then
@@ -119,7 +119,7 @@ echo "  DEPENDS comment check complete."
 echo ""
 echo "[5/5] Checking for nonexistent FindChildrenWithClass (without Traverse)..."
 
-for f in ql_features/ql_feat_*.js ql_core.js ql_settings.js; do
+for f in features/ql_feat_*.js ql_core.js ql_settings.js; do
     fname=$(basename "$f")
     if grep -qP '\.FindChildrenWithClass\b(?!Traverse)' "$f" 2>/dev/null; then
         echo "  API_MISUSE: $fname uses FindChildrenWithClass (should be FindChildrenWithClassTraverse)"

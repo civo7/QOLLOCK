@@ -23,53 +23,124 @@
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildbridge.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildsave.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_buildload.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_topbar.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_bottombar.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_items.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_souls.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_damageimpact.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_ammo.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_stamina.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_combatstatus.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_zipboost.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_unsecuredsouls.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_statbonuses.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_crosshairstats.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_statsposition.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_keyboard.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_sigflash.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_chatimg.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_mousecursor.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_lanewithparty.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_statlocker.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_ondeatharcade.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_heroshop.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_recentpurchases.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_betterunsecuredhud.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_targetshapes.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_minimapruntime.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_colorwarnings.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_damagenumbers.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_legacyaudiopassive.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_spm.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_unspent.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_nicknames.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_panelcache.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_rejuvtimers.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_showrank_card.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_urntimer.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/ql_feat_healthbar.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_accent.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_budhud.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_fg.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_features/healthbar/ql_feat_healthbar_mc.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" />
+		<!-- CUT-OVER: old topBarRuntime disabled, see manifests/ql_topbar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
+		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" /> -->
+		<!-- CUT-OVER: old itemsRuntime disabled, see manifests/ql_items/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" /> -->
+		<!-- CUT-OVER: old soulsRuntime disabled, see manifests/ql_souls/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_souls.vjs_c" /> -->
+		<!-- CUT-OVER: old damageImpactRuntime disabled, see manifests/ql_damage_impact/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damageimpact.vjs_c" /> -->
+		<!-- CUT-OVER: old ammo disabled, see manifests/ql_ammo/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" /> -->
+		<!-- CUT-OVER: old staminaChargeColorRuntime disabled, see manifests/ql_stamina/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
+		<!-- CUT-OVER: old unsecuredSoulsTimer disabled, see manifests/ql_unsecured_souls_timer/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
+		<!-- CUT-OVER: old crosshairstats disabled, see manifests/ql_crosshair_stats/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
+		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" />
+		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_lanewithparty.vjs_c" />
+		<!-- CUT-OVER: old statlocker disabled, see manifests/ql_statlocker/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_statlocker.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
+		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
+		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
+		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" />
+		<!-- CUT-OVER: old unspent disabled, see manifests/ql_unspent/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" /> -->
+		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" />
+		<!-- CUT-OVER: old rejuvtimers disabled, see manifests/ql_rejuv_timers/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" /> -->
+		<!-- CUT-OVER: old showrank disabled, see manifests/ql_showrank/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_showrank.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_showrank_card.vjs_c" />
+		<!-- CUT-OVER: old urnTimer disabled, see manifests/ql_urn_timer/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_urntimer.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_healthbar.vjs_c" />
+		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_accent.vjs_c" />
+		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_budhud.vjs_c" />
+		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
+		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_fg.vjs_c" />
+		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_mc.vjs_c" />
+		<!-- Phase 9: New core infrastructure (coexists with old system) -->
+		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_logger.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_event_bus.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_scheduler.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_config_store.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_config_adapter.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_feature_registry.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_manifest_tests.vjs_c" />
+		<!-- Phase 9: New feature manifests (order-independent; all depend on FeatureRegistry) -->
+		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_nicknames/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_unspent/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_ability_icons/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_damage_report/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_passive_cooldown/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_chat_images/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_target_shapes/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_bottom_bar/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_items/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_stamina/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_ammo/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_topbar/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_zipboost/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_combat_status/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_damage_numbers/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_legacy_audio_passive/manifest.vjs_c" />
+		<!-- App: loads LAST, after all feature manifests -->
+		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
@@ -126,8 +197,8 @@
 			<CitadelRadialAbilities id="RadialAbilitiesMenu" startangle="-70" endangle="70" />
 			<Panel id="SafeToAbandonIndicator">
 				<Button class="MinimizeSafeToLeave CloseButton" onactivate="$.GetContextPanel().ToggleClass(&apos;MinimizeSafeToLeave&apos;)" />
-				<Label class="SafeToAbandonLabel" text="#SafeToAbandon_Text" />
-				<Label class="NotScoredLabel" text="#NotScored_Text" />
+				<Label class="abandon_title" text="#AbandonTriggerTeam_Title" />
+				<Label text="{s:safe_to_abandon_text}" />
 			</Panel>
 			<Panel id="context_action_container">
 				<GlobalClassListener classes="gDetailView" />
@@ -389,6 +460,7 @@
 			<CitadelHudPregame id="Pregame" hittest="false" />
 			<CitadelHudMatchStart id="MatchStart" />
 		</Panel>
+		<CitadelCommendNotification id="CommendNotification" />
 		<ToastManager id="ToastManager" hittest="false" toastduration="5s" maxtoastsvisible="4" />
 		<CitadelHudEscapeMenu id="EscapeMenu" />
 		<Panel id="CitadelPartyContainer" hittest="false">

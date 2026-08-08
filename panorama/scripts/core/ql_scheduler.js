@@ -1,0 +1,173 @@
+// =============================================================================
+// QOLLOCK — core/ql_scheduler.js
+// =============================================================================
+// OWNS:        Self-cancelling $.Schedule poll loops for features.
+//              createPollLoop(cb, rateSec, featureId) → {stop, reschedule}.
+//              cancelAllForFeature(id). Observational perf tracking.
+//              Internal phase staggering. Zero-handle safety.
+// DOES NOT OWN: Feature lifecycle (FeatureRegistry), panel access (PanelCache),
+//               config (ConfigStore), logging (Logger).
+// DEPENDS ON:  core/ql_namespace.js (QOL.core)
+// USED BY:     Feature manifests (via QOL.core.Scheduler)
+// GOTCHAS:     $.Schedule returns a number handle. $.CancelScheduled is safe with
+//              already-fired handles (no-throw). Raw $.Schedule() is BANNED
+//              in feature code — use createPollLoop().
+// LOAD ORDER:  4th — after ql_event_bus.js
+//
+// Boundary validation: Checks QOL.core exists. Aborts with message if not.
+// =============================================================================
+
+(function () {
+    "use strict";
+
+    if (!QOL || !QOL.core) {
+        $.Msg("[QOLLock] core/ql_scheduler: QOL.core not found — aborting. " +
+              "Is core/ql_namespace.js loaded first?");
+        return;
+    }
+
+    var _loops = {};
+
+    // Optional EventBus for error reporting (loaded before us by ql_event_bus.js)
+    var EventBus = (QOL.core && QOL.core.EventBus) ? QOL.core.EventBus : null;
+
+    // Date.now() for per-tick elapsed measurement (sub-frame precision).
+    // $.FrameTime() is monotonic but only updates once per frame (~16ms),
+    // so fast callbacks always show 0 elapsed. Date.now() has ~1ms precision.
+    // Clock changes don't matter here — we're measuring a <1ms delta.
+    function _nowMs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+
+    // Unified perf recording — writes directly to State.perfStats with "mf." prefix,
+    // same accumulator that PerfRecord uses. ResetPerfWindow() naturally gives both
+    // dispatch features and manifest poll loops the same rolling window.
+    function _recordTiming(featureId, elapsedMs) {
+        try {
+            if (typeof QOL === "undefined" || !QOL.state) return;
+            var stats = QOL.state.perfStats;
+            if (!stats) return;
+            var key = "mf." + featureId;
+            var entry = stats[key];
+            if (!entry) {
+                entry = { count: 0, total: 0, max: 0, slow: 0 };
+                stats[key] = entry;
+            }
+            entry.count += 1;
+            entry.total += elapsedMs;
+            if (elapsedMs > entry.max) entry.max = elapsedMs;
+            if (elapsedMs >= 8) entry.slow += 1;
+        } catch(e) { /* best-effort — perf tracking is non-critical */ }
+    }
+
+    // -- Public API --
+    function createPollLoop(callback, rateSec, featureId) {
+        if (typeof callback !== "function") {
+            $.Msg("[QOLLock][WARN][Scheduler] createPollLoop requires a function callback");
+            return { stop: function () {}, reschedule: function () {} };
+        }
+
+        var _stopped = false;
+        var _rate = (typeof rateSec === "number" && rateSec > 0) ? rateSec : 0.2;
+        var _handle = null;
+
+        function tick() {
+            if (_stopped) return;
+            var t0 = _nowMs();
+            var _threw = false;
+            try {
+                callback();
+            } catch (e) {
+                _threw = true;
+                var _errMsg = (e && e.message ? e.message : String(e));
+                // P2: emit event so FeatureRegistry can track error streaks and auto-disable
+                if (EventBus && typeof featureId === "string" && featureId) {
+                    try { EventBus.emit("scheduler:error", { featureId: featureId, message: _errMsg, timestamp: _nowMs() }); } catch(_evErr) { /* best-effort */ }
+                }
+                $.Msg("[QOLLock][ERROR][Scheduler] poll loop threw — " + _errMsg + " (continuing)");
+            }
+            // P2: emit success event to reset consecutive error counter in FeatureRegistry
+            if (!_threw && EventBus && typeof featureId === "string" && featureId) {
+                try { EventBus.emit("scheduler:tick_ok", { featureId: featureId }); } catch(_evOkErr) { /* best-effort */ }
+            }
+            var elapsed = _nowMs() - t0;
+            if (typeof featureId === "string" && featureId) {
+                _recordTiming(featureId, elapsed);
+            }
+            if (!_stopped) {
+                _handle = $.Schedule(_rate, tick);
+            }
+        }
+
+        // Jitter first tick (0-50% of rate) to prevent frame-aligned spikes
+        var jitter = (typeof Math !== "undefined" && Math.random) ? Math.random() * _rate * 0.5 : 0;
+        _handle = $.Schedule(jitter, tick);
+
+        var loop = {
+            stop: function () { _stopped = true; if (_handle !== null) { $.CancelScheduled(_handle); _handle = null; } },
+            reschedule: function (newRateSec) {
+                if (typeof newRateSec === "number" && newRateSec > 0) { _rate = newRateSec; }
+            }
+        };
+
+        if (typeof featureId === "string" && featureId) {
+            if (!_loops[featureId]) { _loops[featureId] = []; }
+            _loops[featureId].push(loop);
+        }
+
+        return loop;
+    }
+
+    function cancelAllForFeature(featureId) {
+        var list = _loops[featureId];
+        if (!list) return;
+        for (var i = 0; i < list.length; i++) {
+            try { list[i].stop(); } catch (e) { /* best-effort */ }
+        }
+        delete _loops[featureId];
+    }
+
+    function getTimings(featureId) {
+        var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats) || {};
+        if (featureId) {
+            var key = "mf." + featureId;
+            var e = stats[key];
+            if (!e || e.count <= 0) return null;
+            return { avgMs: e.total / e.count, maxMs: e.max, calls: e.count,
+                     totalMs: e.total, lastMs: 0, lastAt: 0 };
+        }
+        var result = {};
+        for (var k in stats) {
+            if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) {
+                var ee = stats[k];
+                if (ee.count <= 0) continue;
+                var id = k.substring(3);
+                result[id] = { avgMs: ee.total / ee.count, maxMs: ee.max, calls: ee.count,
+                               totalMs: ee.total, lastMs: 0, lastAt: 0 };
+            }
+        }
+        return result;
+    }
+
+    function resetTimings(featureId) {
+        try {
+            var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats);
+            if (!stats) return;
+            if (featureId) { delete stats["mf." + featureId]; }
+            else {
+                for (var k in stats) {
+                    if (stats.hasOwnProperty(k) && k.indexOf("mf.") === 0) delete stats[k];
+                }
+            }
+        } catch(e) { /* best-effort */ }
+    }
+
+    QOL.core.Scheduler = {
+        createPollLoop: createPollLoop,
+        cancelAllForFeature: cancelAllForFeature,
+        getTimings: getTimings,
+        resetTimings: resetTimings
+    };
+
+    $.Msg("[QOLLock] core/ql_scheduler: attached to QOL.core.Scheduler");
+})();
