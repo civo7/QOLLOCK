@@ -14924,6 +14924,19 @@ function GetUIRoot() {
         ["isBuildCategoryPayloadSourceReady", function() { return IsBuildCategoryPayloadSourceReady; }],
         ["resetBuildCategoryPayloadProbeInitState", function() { return ResetBuildCategoryPayloadProbeInitState; }],
         ["tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader", function() { return TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader; }],
+        // Surviving stubs: called from FinalizeSettingsLoaderSession skip/reset paths.
+        // The manifest never sets old-loader probe State fields, so probeWasActive is
+        // always false — these are only reached on the else/cleanup branches.
+        ["completeBuildCategoryPayloadHeroProbe", function() { return function(a,m,r,d,o) { /* manifest-only: probe state never active */ }; }],
+        ["resetBuildCategoryPayloadHeroProbeState", function() { return function() {
+            State.buildCategoryPayloadHeroProbeStage = "";
+            State.buildCategoryPayloadHeroProbeNextMs = 0;
+            State.buildCategoryPayloadHeroProbeDidSwitch = false;
+            State.buildCategoryPayloadHeroProbeReturnHero = "";
+            State.buildCategoryPayloadCorruptRepairActive = false;
+            State.buildCategoryPayloadCorruptRepairCleared = false;
+            ResetBuildCategoryPayloadProbeInitState();
+        }; }],
         ["isBuildSaveStorageRuntimeSourceStale", function() { return IsBuildSaveStorageRuntimeSourceStale; }],
         ["isBuildSaveTargetSelectionMatch", function() { return IsBuildSaveTargetSelectionMatch; }],
         ["isStartupCorruptRepairPending", function() { return IsStartupCorruptRepairPending; }],
