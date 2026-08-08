@@ -434,30 +434,44 @@
     // ── Build init ──
     function _ensureStorageBuild(root, now, st) {
         // Early success: storage build ready with content
-        if (_storageBuildReady(root)) return true;
+        if (_storageBuildReady(root)) {
+            $.Msg("[QOLLock][ql_build_payload] ensure: storage build ready, returning true");
+            return true;
+        }
 
         // Early success: payload already visible (existing build with token)
         var existing = _scanPayloadText(root, false, null);
-        if (existing) return true;
+        if (existing) {
+            $.Msg("[QOLLock][ql_build_payload] ensure: existing payload found, returning true");
+            return true;
+        }
 
         // Navigate to Favorites tab so Skyrunner builds are visible.
         // OLD calls this in handleWaitStorage + handleBootstrapViaSaveEnqueue.
-        try { _callQol("ensureStorageHeroFavoritesHeaderVisible", undefined, [root]); } catch(e) {}
+        if (!st._favTabDone) {
+            try { _callQol("ensureStorageHeroFavoritesHeaderVisible", undefined, [root]); } catch(e) {}
+            st._favTabDone = true;
+        }
 
         // Need to open the build browser
         if (!_isPopupOpen(root)) {
+            $.Msg("[QOLLock][ql_build_payload] ensure: popup closed, opening...");
             _openBuildBrowser(root);
             return false; // Wait for popup to render
         }
 
+        $.Msg("[QOLLock][ql_build_payload] ensure: popup open, checking items...");
+
         // Popup is open — check if builds exist
         var items = _buildListItems(root);
+        $.Msg("[QOLLock][ql_build_payload] ensure: items=" + String(items.length) + " createAttempted=" + (st.createAttempted ? "1" : "0"));
         if (items.length === 0) {
             // Create a new storage build (only when popup is open — otherwise
             // CitadelHudHeroBuildsCreateNewBuild is a no-op). Guard against
             // duplicate creates: the button's onmouseactivate closes the popup
             // as a side effect, and re-calling would spawn duplicates.
             if (_isPopupOpen(root) && !st.createAttempted) {
+                $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild");
                 _callCreateNewBuild();
                 st.createAttempted = true;
                 st.createStarted = now;
@@ -471,6 +485,7 @@
 
         // Builds exist but no payload — select first and wait for shop to load it
         if (!existing && !st.selectAttempted && items.length > 0) {
+            $.Msg("[QOLLock][ql_build_payload] ensure: selecting first build item");
             var fn = _qol("activatePanelSafe");
             if (typeof fn === "function") {
                 try { fn(items[0]); st.selectAttempted = true; } catch(e) {}
@@ -480,6 +495,7 @@
 
         // Build selected but still no payload — queue a default save
         if (!existing && !st.saveQueued) {
+            $.Msg("[QOLLock][ql_build_payload] ensure: queueing default save");
             var token = _callQol("buildDefaultPayloadToken", "", [{}]);
             if (token) {
                 _callQol("queueBuildSaveRequestFromLoader", false, [root, token, now]);
@@ -492,6 +508,7 @@
         // Waiting for save to complete
         if (st.saveQueued) {
             var state = _readAttr(_root(), BRIDGE_STATE);
+            $.Msg("[QOLLock][ql_build_payload] ensure: waiting for save, bridgeState=" + String(state));
             if (state === "success" || state === "done") {
                 // Re-scan after save
                 var saved = _scanPayloadText(root, false, null);
@@ -769,6 +786,12 @@
 
                     // Per-stage timing guard
                     if (_st.nextAt > now) return;
+
+                    // Trace stage transitions
+                    if (_st._lastStage !== _st.stage) {
+                        $.Msg("[QOLLock][ql_build_payload] stage: " + _st.stage);
+                        _st._lastStage = _st.stage;
+                    }
 
                     switch (_st.stage) {
                         case "idle":
