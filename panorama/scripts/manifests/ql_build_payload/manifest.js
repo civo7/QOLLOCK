@@ -433,13 +433,10 @@
 
     // ── Build init ──
     function _ensureStorageBuild(root, now, st) {
-        // Early success: storage build ready with content
-        if (_storageBuildReady(root)) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: storage build ready, returning true");
-            return true;
-        }
-
-        // Early success: payload already visible (existing build with token)
+        // Early success: a QOL payload token is already visible in the
+        // selected build's categories. A build with categories but no
+        // token (e.g. Deadlock pre-populated) is NOT "ready" — we need
+        // to create or overwrite a build with a QOL payload.
         var existing = _scanPayloadText(root, false, null);
         if (existing) {
             $.Msg("[QOLLock][ql_build_payload] ensure: existing payload found, returning true");
