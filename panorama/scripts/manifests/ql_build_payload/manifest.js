@@ -710,8 +710,17 @@
                         _reschedule(DORMANT_RATE_SEC);
                         var acct = _getAccountId(root);
                         if (acct && acct !== _st.doneAccount) {
-                            _reset(acct);
-                            _st.stage = "idle";
+                            // If we completed without knowing the account (empty),
+                            // and now a real account is available, just update
+                            // the tracker — don't re-arm. Re-arm only on genuine
+                            // account change (both tracks non-empty and differ).
+                            if (_st.doneAccount && _st.doneAccount.length > 0) {
+                                _reset(acct);
+                                _st.stage = "idle";
+                            } else {
+                                _st.doneAccount = acct;
+                                _st.accountId = acct;
+                            }
                         } else {
                             // Check for corrupt repair pending
                             var rp = _readAttr(root, CORRUPT_ATTR);
