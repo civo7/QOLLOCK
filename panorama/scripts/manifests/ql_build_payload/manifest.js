@@ -119,7 +119,20 @@
         try { return _callQol("isBrowseBuildsPopupOpen", false, [root]); } catch(e) { return false; }
     }
     function _getAccountId(root) {
-        try { return _callQol("getAccountIdForBuildCategoryPayload", "", [root]); } catch(e) { return ""; }
+        // After Phase B cut-over, QOL.getAccountIdForBuildCategoryPayload is a
+        // "" stub (real impl was in commented-out buildload). Read directly from
+        // the party path + surviving State fields instead.
+        try {
+            var viaParty = _callQol("tryReadAccountIdFromKnownPartyPath", "", [root]);
+            if (viaParty && String(viaParty).length > 0) return String(viaParty);
+            var State = QOL.state;
+            if (State) {
+                if (State.accountPresetSessionLockId && String(State.accountPresetSessionLockId).length > 0) return String(State.accountPresetSessionLockId);
+                if (State.accountPresetBootstrapAccountId && String(State.accountPresetBootstrapAccountId).length > 0) return String(State.accountPresetBootstrapAccountId);
+                if (State.accountProbeFoundId && String(State.accountProbeFoundId).length > 0) return String(State.accountProbeFoundId);
+            }
+        } catch(e) {}
+        return "";
     }
 
     // ── Storage helpers ──
@@ -148,8 +161,30 @@
         } catch(e) {}
         return false;
     }
+    // Multi-root search matching OLD's FindHeroBuildListPanel (ql_core.js:8694-8708):
+    // searches context root, GetUIRoot, parent chain, CitadelHudHeroBuilds, and
+    // cached panels — the build list may live outside the context root's subtree.
     function _buildList(root) {
-        return _find(root, PID_BUILD_LIST);
+        if (!root) return null;
+        var seen = {};
+        var roots = [root];
+        // Walk parent chain
+        var walk = root;
+        var guard = 0;
+        while (walk && typeof walk.GetParent === "function" && guard < 16) {
+            try { var p = walk.GetParent(); if (p && !seen[String(p.id || "")]) { roots.push(p); seen[String(p.id || "")] = true; } } catch(e) {}
+            walk = (walk.GetParent && typeof walk.GetParent === "function") ? walk.GetParent() : null;
+            guard++;
+        }
+        // Add CitadelHudHeroBuilds if present
+        try { var hb = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudHeroBuilds") : null; if (hb) roots.push(hb); } catch(e) {}
+        // Search each root
+        for (var i = 0; i < roots.length; i++) {
+            if (!roots[i]) continue;
+            var panel = _find(roots[i], PID_BUILD_LIST);
+            if (_alive(panel)) return panel;
+        }
+        return null;
     }
     function _buildListItems(root) {
         var list = _buildList(root);
@@ -318,7 +353,15 @@
     }
 
     function _resolveReturnHero(ctx) {
-        // Prefer the running config's DEFAULT_HERO (survives compact schema round-trip)
+        // 1. Use the payload-applied DEFAULT_HERO (if this is a success path
+        //    and we just applied config). _st.appliedDefaultHero is set in
+        //    apply_payload from the merged config — this matches the old
+        //    loader's payload-derived return hero.
+        if (_st.appliedDefaultHero && _st.appliedDefaultHero !== STORAGE_HERO) {
+            return _st.appliedDefaultHero;
+        }
+
+        // 2. Fall back to the running config's DEFAULT_HERO
         try {
             var State = (typeof QOL !== "undefined" && QOL.state) ? QOL.state : null;
             var lastCfg = State ? State.lastConfig : null;
@@ -326,11 +369,11 @@
             if (dh && dh !== STORAGE_HERO) return dh;
         } catch(e) {}
 
-        // Fall back to the legacy base default
+        // 3. Fall back to the legacy base default
         var base = _callQol("getLoaderBaseDefaultHeroId", "", []);
         if (base && base !== STORAGE_HERO) return base;
 
-        // Manifest setting
+        // 4. Manifest setting
         try {
             var mh = _callQol("normalizeHeroId", "", [String(ctx.config.get("DEFAULT_HERO") || "")]);
             if (mh && mh !== STORAGE_HERO) return mh;
@@ -389,6 +432,10 @@
         var existing = _scanPayloadText(root, false, null);
         if (existing) return true;
 
+        // Navigate to Favorites tab so Skyrunner builds are visible.
+        // OLD calls this in handleWaitStorage + handleBootstrapViaSaveEnqueue.
+        try { _callQol("ensureStorageHeroFavoritesHeaderVisible", undefined, [root]); } catch(e) {}
+
         // Need to open the build browser
         if (!_isPopupOpen(root)) {
             _dispatchOpenBrowser();
@@ -399,12 +446,18 @@
         var items = _buildListItems(root);
         if (items.length === 0) {
             // Create a new storage build (only when popup is open — otherwise
-            // CitadelHudHeroBuildsCreateNewBuild is a no-op)
-            if (_isPopupOpen(root)) {
+            // CitadelHudHeroBuildsCreateNewBuild is a no-op). Guard against
+            // duplicate creates: the button's onmouseactivate closes the popup
+            // as a side effect, and re-calling would spawn duplicates.
+            if (_isPopupOpen(root) && !st.createAttempted) {
                 _callCreateNewBuild();
                 st.createAttempted = true;
                 st.createStarted = now;
             }
+            // If we already attempted create but no builds appeared, wait
+            // for the verify window (matching OLD's INIT_CREATE_VERIFY_WINDOW_MS
+            // = 1200ms). If the popup closed (side effect of create), wait
+            // for it to re-open via the next ensure_storage poll.
             return false;
         }
 
@@ -732,6 +785,13 @@
                             break;
 
                         case "confirm_storage":
+                            // Ensure shop is open — signature confirmation needs the
+                            // shop panels visible. OLD drove this via open_item_shop
+                            // + EnsureStoragePayloadSourceVisibleReadOnly.
+                            if (!_isShopOpen(root) && !_st.shopOpenAttempted) {
+                                try { _callQol("dispatchCitadelConCommand", undefined, ["open_item_shop"]); } catch(e) {}
+                                _st.shopOpenAttempted = true;
+                            }
                             if (_confirmStorageHero(root, now, _st)) {
                                 _setStep("confirm_airheart", "done", "Skyrunner confirmed");
                                 // Write backward-compat State fields so the save
@@ -825,6 +885,9 @@
                                 }
                             } catch(e) { wrapped = applied; }
 
+                            // Store for _resolveReturnHero — use payload-derived hero
+                            // instead of stale State.lastConfig (agent 5-1 diff finding).
+                            _st.appliedDefaultHero = applied.DEFAULT_HERO || "";
                             _st._appliedRaw = wrapped;
                             try {
                                 _callQol("writeStorageConfigRawToUi", false, [root, wrapped]);
