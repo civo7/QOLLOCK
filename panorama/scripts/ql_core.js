@@ -14235,14 +14235,18 @@ function GetUIRoot() {
     }
 
     function applyBuildCategoryOverride(root, cfg, nowMs, raw) {
-        // P1: skip old loader when ql_build_payload manifest is active (dual-dispatch guard)
+        // P1: skip old loader when ql_build_payload manifest is active (dual-dispatch guard).
+        // Also guard the fall-through: if the old load file is commented out (Phase B),
+        // QOL.shouldRunBuildCategoryPayloadOverride is undefined and calling it would
+        // throw every tick, freezing all features.
         try {
             if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry &&
                 QOL.core.FeatureRegistry.isEnabled("ql_build_payload")) {
                 return cfg;
             }
         } catch(e) { /* fall through to legacy loader on guard failure */ }
-        if (QOL.shouldRunBuildCategoryPayloadOverride(root, nowMs)) {
+        if (typeof QOL.shouldRunBuildCategoryPayloadOverride === "function" &&
+            QOL.shouldRunBuildCategoryPayloadOverride(root, nowMs)) {
             var perfSection = PerfStart();
             cfg = QOL.applyBuildCategoryPayloadOverride(root, cfg, nowMs, raw);
             cfg = ApplyForcedFeatureDisables(cfg);
