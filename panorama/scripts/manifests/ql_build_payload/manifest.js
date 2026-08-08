@@ -480,46 +480,27 @@
             return false;
         }
 
-        // Builds exist but no payload — select first and wait for shop to load it
-        if (!existing && !st.selectAttempted && items.length > 0) {
+        // Build exists (or was created) — select first to load it into the shop.
+        // We do NOT write a payload here. The bridge save pipeline is designed for
+        // user-triggered saves (Settings → Save button) and requires full shop UI
+        // context. First-time bootstrap just selects a build and proceeds — the
+        // user's config is already in flat storage. User-triggered saves write
+        // the payload for future sessions.
+        if (!st.selectAttempted && items.length > 0) {
             $.Msg("[QOLLock][ql_build_payload] ensure: selecting first build item");
             var fn = _qol("activatePanelSafe");
             if (typeof fn === "function") {
                 try { fn(items[0]); st.selectAttempted = true; } catch(e) {}
             }
+            // Selected — give the shop a tick to load, then proceed
             return false;
         }
 
-        // Build selected but still no payload — queue a default save
-        if (!existing && !st.saveQueued) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: queueing default save");
-            var token = _callQol("buildDefaultPayloadToken", "", [{}]);
-            if (token) {
-                _callQol("queueBuildSaveRequestFromLoader", false, [root, token, now]);
-                st.saveQueued = true;
-                st.saveStarted = now;
-            }
-            return false;
-        }
-
-        // Waiting for save to complete
-        if (st.saveQueued) {
-            var state = _readAttr(_root(), BRIDGE_STATE);
-            $.Msg("[QOLLock][ql_build_payload] ensure: waiting for save, bridgeState=" + String(state));
-            if (state === "success" || state === "done") {
-                // Re-scan after save
-                var saved = _scanPayloadText(root, false, null);
-                if (saved) return true;
-            }
-            if (now - (st.saveStarted || now) > SAVE_WAIT_TIMEOUT_MS) return false;
-        }
-
-        // Timeout on create
-        if (st.createAttempted && (now - (st.createStarted || now) > (CREATE_MAX_RETRIES * CREATE_POLL_MS))) {
-            return false;
-        }
-
-        return false;
+        // Build selected. If payload exists, we're done. If not, proceed to
+        // read_payload which will scan and apply defaults. The user's config
+        // lives in flat storage — a build payload is additive, not essential.
+        $.Msg("[QOLLock][ql_build_payload] ensure: build selected, proceeding to read");
+        return true;
     }
 
     // ── Corrupt repair sub-flow ──
