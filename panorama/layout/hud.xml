@@ -54,6 +54,7 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_chattranslate.vjs_c" />
 		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_lanewithparty.vjs_c" />

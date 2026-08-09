@@ -17,6 +17,8 @@ plans
 .claude/
 .fallow/
 mostrecentlogs.txt
+tools/local_chat_translation/.venv/
+tools/local_chat_translation/__pycache__/
 
 # Self-build tool runtime artifacts (build_mod/build_mod.ps1 stays tracked)
 build_mod/data/
