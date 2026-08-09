@@ -33,6 +33,11 @@ class TranslationService:
     def __init__(self) -> None:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._lock = threading.Lock()
+        self._translation_cache: OrderedDict[str, str] = OrderedDict()
+        # Top and bottom chat panels can request the same new message at nearly
+        # the same time. Serialize translation cache misses so that race still
+        # consumes only one external API call.
+        self._translation_lock = threading.Lock()
         self._font = self._load_font(15 * RENDER_SCALE)
         self._indicator_font = self._load_font(11 * RENDER_SCALE)
 
@@ -57,6 +62,21 @@ class TranslationService:
             raise RuntimeError("translation API returned no translatedText")
         return translated
 
+    def translated_text_for(self, text: str, source: str, target: str) -> str:
+        cache_key = hashlib.sha256(f"{source}\0{target}\0{text}".encode("utf-8")).hexdigest()
+        with self._translation_lock:
+            cached = self._translation_cache.get(cache_key)
+            if cached is not None:
+                self._translation_cache.move_to_end(cache_key)
+                return cached
+
+            translated = self.translate(text, source, target)
+            self._translation_cache[cache_key] = translated
+            self._translation_cache.move_to_end(cache_key)
+            while len(self._translation_cache) > MAX_CACHE_ITEMS:
+                self._translation_cache.popitem(last=False)
+            return translated
+
     def image_for(self, text: str, source: str, target: str, layout: str) -> bytes:
         cache_key = hashlib.sha256(f"{source}\0{target}\0{layout}\0{text}".encode("utf-8")).hexdigest()
         with self._lock:
@@ -65,7 +85,7 @@ class TranslationService:
                 self._cache.move_to_end(cache_key)
                 return cached
 
-        translated = self.translate(text, source, target)
+        translated = self.translated_text_for(text, source, target)
         image_bytes = self._render(translated, layout)
         with self._lock:
             self._cache[cache_key] = image_bytes
