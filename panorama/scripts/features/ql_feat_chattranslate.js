@@ -38,9 +38,15 @@
     }
 
     function DeleteInjected(entry) {
-        if (!entry || !IsPanelValid(entry.image)) return;
-        try { entry.image.DeleteAsync(0); } catch(e) { /* panel deleted mid-frame */ }
+        if (!entry) return;
+        if (IsPanelValid(entry.label)) {
+            try { entry.label.style.visibility = "visible"; } catch(eLabel) { /* panel deleted mid-frame */ }
+        }
+        if (IsPanelValid(entry.image)) {
+            try { entry.image.DeleteAsync(0); } catch(e) { /* panel deleted mid-frame */ }
+        }
         entry.image = null;
+        entry.label = null;
     }
 
     function ApproxUtf8Length(text) {
@@ -60,14 +66,16 @@
         var image = $.CreatePanel("Image", parent, "QOLLocalTranslation_" + String(PerfNowMs()));
         if (!image) return;
         image.AddClass("QOLLocalChatTranslation");
-        image.style.maxWidth = isBottom ? "410px" : "360px";
+        image.style.maxWidth = isBottom ? "390px" : "215px";
         image.style.maxHeight = "100px";
-        image.style.marginTop = "2px";
-        image.style.marginBottom = "1px";
+        image.style.margin = "8px 10px 6px 12px";
         image.style.horizontalAlign = "left";
-        var url = ENDPOINT + "?style=inline-v2&source=ru&target=en&text=" + encodeURIComponent(text);
+        var layout = isBottom ? "bottom" : "top";
+        var url = ENDPOINT + "?style=replace-v3&layout=" + layout + "&source=ru&target=en&text=" + encodeURIComponent(text);
         image.SetImage(url);
         entry.image = image;
+        entry.label = label;
+        try { label.style.visibility = "collapse"; } catch(eHide) { /* panel deleted mid-frame */ }
     }
 
     function ProcessContainer(container, cacheKey, isBottom) {
@@ -87,7 +95,7 @@
             var entry = FindEntry(cache, msg);
             if (entry && entry.text === text) continue;
             if (!entry) {
-                entry = { panel: msg, text: "", image: null };
+                entry = { panel: msg, text: "", image: null, label: null };
                 cache.push(entry);
             } else {
                 DeleteInjected(entry);
@@ -119,14 +127,40 @@
         MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache", true);
     }
 
+    function HasActiveTranslations() {
+        var top = State.localTranslationTopCache;
+        var bottom = State.localTranslationBottomCache;
+        return (Array.isArray(top) && top.length > 0) || (Array.isArray(bottom) && bottom.length > 0);
+    }
+
+    function ClearTranslationCache(cacheKey) {
+        var cache = State[cacheKey];
+        if (!Array.isArray(cache)) return;
+        for (var i = 0; i < cache.length; i++) DeleteInjected(cache[i]);
+        State[cacheKey] = [];
+    }
+
+    function DisableLocalChatTranslation() {
+        ClearTranslationCache("localTranslationTopCache");
+        ClearTranslationCache("localTranslationBottomCache");
+        State.localTranslationTopWatermark = "";
+        State.localTranslationBottomWatermark = "";
+    }
+
     QOL.register("localChatTranslation", {
         configKeys: ["ENABLE_LOCAL_CHAT_TRANSLATION"],
         bucket: 7,
         phase: -1,
         requiresRoot: true,
         perfLabel: "loop.local_chat_translation",
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_LOCAL_CHAT_TRANSLATION"); },
-        update: function(root) { UpdateLocalChatTranslation(root); },
+        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_LOCAL_CHAT_TRANSLATION") || HasActiveTranslations(); },
+        update: function(root, cfg) {
+            if (!IsCfgEnabled(cfg, "ENABLE_LOCAL_CHAT_TRANSLATION")) {
+                DisableLocalChatTranslation();
+                return;
+            }
+            UpdateLocalChatTranslation(root);
+        },
         stateKeys: ["localTranslationTopContainer", "localTranslationBottomContainer",
                     "localTranslationTopWatermark", "localTranslationBottomWatermark",
                     "localTranslationTopCache", "localTranslationBottomCache"]

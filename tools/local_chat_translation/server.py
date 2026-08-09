@@ -22,6 +22,7 @@ MAX_TEXT_BYTES = 500
 MAX_CACHE_ITEMS = 256
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 FONT_CANDIDATES = (
+    Path("C:/Program Files (x86)/Steam/steamapps/common/Deadlock/game/citadel/panorama/fonts/valveoracle-semibold.ttf"),
     Path("C:/Windows/Fonts/segoeui.ttf"),
     Path("C:/Windows/Fonts/arial.ttf"),
 )
@@ -31,7 +32,7 @@ class TranslationService:
     def __init__(self) -> None:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._lock = threading.Lock()
-        self._font = self._load_font(18)
+        self._font = self._load_font(15)
 
     @staticmethod
     def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -54,8 +55,8 @@ class TranslationService:
             raise RuntimeError("translation API returned no translatedText")
         return translated
 
-    def image_for(self, text: str, source: str, target: str) -> bytes:
-        cache_key = hashlib.sha256(f"{source}\0{target}\0{text}".encode("utf-8")).hexdigest()
+    def image_for(self, text: str, source: str, target: str, layout: str) -> bytes:
+        cache_key = hashlib.sha256(f"{source}\0{target}\0{layout}\0{text}".encode("utf-8")).hexdigest()
         with self._lock:
             cached = self._cache.get(cache_key)
             if cached is not None:
@@ -63,7 +64,7 @@ class TranslationService:
                 return cached
 
         translated = self.translate(text, source, target)
-        image_bytes = self._render(translated, source, target)
+        image_bytes = self._render(translated, layout)
         with self._lock:
             self._cache[cache_key] = image_bytes
             self._cache.move_to_end(cache_key)
@@ -71,15 +72,15 @@ class TranslationService:
                 self._cache.popitem(last=False)
         return image_bytes
 
-    def _render(self, translated: str, source: str, target: str) -> bytes:
+    def _render(self, translated: str, layout: str) -> bytes:
         # Panorama places this inside an existing chat bubble. Keep the image
         # transparent and compact so it reads like a second line, not a card
         # nested inside another card.
-        max_width = 410
-        padding_x = 3
-        padding_y = 3
+        max_width = 390 if layout == "bottom" else 215
+        padding_x = 1
+        padding_y = 1
         lines = self._wrap(translated, max_width - (padding_x * 2), self._font)
-        line_height = 23
+        line_height = 16
         width = min(
             max_width,
             max(80, max(self._text_width(line, self._font) for line in lines) + padding_x * 2),
@@ -93,9 +94,7 @@ class TranslationService:
                 (padding_x, y),
                 line,
                 font=self._font,
-                fill=(210, 238, 255, 255),
-                stroke_width=1,
-                stroke_fill=(5, 9, 13, 235),
+                fill=(0, 0, 0, 255),
             )
             y += line_height
         output = io.BytesIO()
@@ -143,6 +142,7 @@ class Handler(BaseHTTPRequestHandler):
         text = params.get("text", [""])[0].strip()
         source = params.get("source", ["ru"])[0].lower()
         target = params.get("target", ["en"])[0].lower()
+        layout = params.get("layout", ["top"])[0].lower()
         if not text:
             self._send_json(400, {"error": "text is required"})
             return
@@ -152,8 +152,11 @@ class Handler(BaseHTTPRequestHandler):
         if (source, target) not in (("ru", "en"), ("en", "ru")):
             self._send_json(400, {"error": "only ru|en and en|ru are enabled"})
             return
+        if layout not in ("top", "bottom"):
+            self._send_json(400, {"error": "layout must be top or bottom"})
+            return
         try:
-            image_bytes = SERVICE.image_for(text, source, target)
+            image_bytes = SERVICE.image_for(text, source, target, layout)
         except (urllib.error.URLError, TimeoutError, RuntimeError, ValueError) as exc:
             self._send_json(502, {"error": str(exc)})
             return
