@@ -360,7 +360,6 @@ const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
     "CHAT_Y_OFFSET": "Adjust vertical position of the in-game chat.",
     "ENABLE_CHAT": "Show the in-game chat panel.",
     "ENABLE_IMAGES_IN_CHAT": "Render image URLs as images.",
-    "ENABLE_LOCAL_CHAT_TRANSLATION": "Translate Cyrillic Russian chat to English through the personal localhost helper.",
     "HITMARKERS_RUNTIME": "Toggle the hitmarkers when attacking enemies.",
     "MINIMAL_MINIMAP": "Cleans up visuals of the minimap significantly to reduce clutter.",
     "MINIMAP_FLIP": "Rotates the static minimap 180 degrees.",
@@ -744,7 +743,6 @@ const SETTING_PERF_IMPACT_TIERS = {
     CHAT_Y_OFFSET: "low",
     ENABLE_CHAT: "none",
     ENABLE_IMAGES_IN_CHAT: "low",
-    ENABLE_LOCAL_CHAT_TRANSLATION: "low",
     HITMARKERS_RUNTIME: "none",
     HUD_INDICATOR_SIZE: "low",
     ITEM_FILTER_DEF_ACTIVE: "medium",
@@ -7720,7 +7718,6 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "offset_n1500_1500", "");
             CreateSliderRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "offset_n250_800", "");
             CreateRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
-            CreateRow(sectionParent, "Local RU to EN Translation", "ENABLE_LOCAL_CHAT_TRANSLATION", "toggle", null, null, null, null, "Requires tools/local_chat_translation/start.ps1 to be running.");
         });
     } else if (currentTab === "Overlay") {
         CreateSeparator(list);

@@ -14,6 +14,15 @@ The first start creates an isolated Python 3.12 environment under
 environment outside this repository prevents DeadPacker from copying or
 compiling Python dependencies. Leave the window open while playing.
 
+## Start automatically at Windows sign-in
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/local_chat_translation/install_startup.ps1
+```
+
+This creates a hidden, per-user scheduled task named
+`QOLLOCK Local Chat Translation`. Remove it with `uninstall_startup.ps1`.
+
 ## Test
 
 ```powershell

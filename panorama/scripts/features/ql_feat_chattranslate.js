@@ -2,19 +2,55 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_chattranslate";
-    // DEPENDS: buildImagesInChatContainerWatermark, findChatMessageLabel, state, utils
-    var _deps = QOL.import(["buildImagesInChatContainerWatermark", "findChatMessageLabel", "state", "utils"]);
+    // DEPENDS: buildImagesInChatContainerWatermark, findChatMessageLabel, state, tryReadAccountIdFromKnownPartyPath, utils
+    var _deps = QOL.import(["buildImagesInChatContainerWatermark", "findChatMessageLabel", "state", "tryReadAccountIdFromKnownPartyPath", "utils"]);
     var State = _deps.state;
     var Utils = _deps.utils;
-    var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var PerfNowMs = Utils.PerfNowMs;
     var BuildWatermark = _deps.buildImagesInChatContainerWatermark;
     var FindChatMessageLabel = _deps.findChatMessageLabel;
+    var TryReadAccountIdFromKnownPartyPath = _deps.tryReadAccountIdFromKnownPartyPath;
     var ENDPOINT = "http://127.0.0.1:8765/translate.webp";
+    var OWNER_ACCOUNT_ID = "841196165";
+    var OWNER_IGN = "breadrollius";
     var CYRILLIC_RE = /[\u0400-\u04FF]/;
     var MAX_TEXT_BYTES_APPROX = 480;
     var CACHE_MAX = 80;
+
+    function ReadLocalPlayerName(root) {
+        if (!root || !root.FindChildTraverse) return "";
+        var partyContainer = root.FindChildTraverse("CitadelPartyContainer");
+        var party = partyContainer && partyContainer.FindChildTraverse ? partyContainer.FindChildTraverse("CitadelParty") : null;
+        var localPlayer = party && party.FindChildTraverse ? party.FindChildTraverse("LocalPlayer") : null;
+        if (!localPlayer) return "";
+        var ids = ["PlayerName", "PersonaName", "Username", "UserName"];
+        for (var i = 0; i < ids.length; i++) {
+            var label = localPlayer.FindChildTraverse ? localPlayer.FindChildTraverse(ids[i]) : null;
+            if (label && label.text) return String(label.text).trim().toLowerCase();
+        }
+        return "";
+    }
+
+    function ResolveOwnerMatch(root, nowMs) {
+        if (State.localTranslationOwnerMatch === true || State.localTranslationOwnerMatch === false) {
+            return State.localTranslationOwnerMatch;
+        }
+        if (nowMs < (Number(State.localTranslationOwnerNextCheckMs) || 0)) return false;
+        State.localTranslationOwnerNextCheckMs = nowMs + 2000;
+        var accountId = "";
+        try { accountId = String(TryReadAccountIdFromKnownPartyPath(root) || ""); } catch(eId) { accountId = ""; }
+        if (accountId) {
+            State.localTranslationOwnerMatch = accountId === OWNER_ACCOUNT_ID;
+            return State.localTranslationOwnerMatch;
+        }
+        var playerName = ReadLocalPlayerName(root);
+        if (playerName) {
+            State.localTranslationOwnerMatch = playerName === OWNER_IGN;
+            return State.localTranslationOwnerMatch;
+        }
+        return false;
+    }
 
     function GetContainer(root, cacheKey, panelId) {
         var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
@@ -139,43 +175,21 @@
         MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache", true);
     }
 
-    function HasActiveTranslations() {
-        var top = State.localTranslationTopCache;
-        var bottom = State.localTranslationBottomCache;
-        return (Array.isArray(top) && top.length > 0) || (Array.isArray(bottom) && bottom.length > 0);
-    }
-
-    function ClearTranslationCache(cacheKey) {
-        var cache = State[cacheKey];
-        if (!Array.isArray(cache)) return;
-        for (var i = 0; i < cache.length; i++) DeleteInjected(cache[i]);
-        State[cacheKey] = [];
-    }
-
-    function DisableLocalChatTranslation() {
-        ClearTranslationCache("localTranslationTopCache");
-        ClearTranslationCache("localTranslationBottomCache");
-        State.localTranslationTopWatermark = "";
-        State.localTranslationBottomWatermark = "";
-    }
-
     QOL.register("localChatTranslation", {
-        configKeys: ["ENABLE_LOCAL_CHAT_TRANSLATION"],
+        configKeys: [],
         bucket: 7,
         phase: -1,
         requiresRoot: true,
         perfLabel: "loop.local_chat_translation",
-        gate: function(cfg) { return IsCfgEnabled(cfg, "ENABLE_LOCAL_CHAT_TRANSLATION") || HasActiveTranslations(); },
-        update: function(root, cfg) {
-            if (!IsCfgEnabled(cfg, "ENABLE_LOCAL_CHAT_TRANSLATION")) {
-                DisableLocalChatTranslation();
-                return;
-            }
+        gate: function() { return State.localTranslationOwnerMatch !== false; },
+        update: function(root, cfg, nowMs) {
+            if (!ResolveOwnerMatch(root, nowMs || PerfNowMs())) return;
             UpdateLocalChatTranslation(root);
         },
         stateKeys: ["localTranslationTopContainer", "localTranslationBottomContainer",
                     "localTranslationTopWatermark", "localTranslationBottomWatermark",
-                    "localTranslationTopCache", "localTranslationBottomCache"]
+                    "localTranslationTopCache", "localTranslationBottomCache",
+                    "localTranslationOwnerMatch", "localTranslationOwnerNextCheckMs"]
     });
 
     try {
