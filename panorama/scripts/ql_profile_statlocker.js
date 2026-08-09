@@ -1,75 +1,30 @@
 (function () {
     "use strict";
 
-    var ACTIVE_INTERVAL_SEC = 0.35;
+    var UPDATE_INTERVAL_SEC = 0.35;
     var IDLE_INTERVAL_SEC = 1.0;
-    var NO_PANEL_INTERVAL_SEC = 0.35;
-    var DEEP_SCAN_COOLDOWN_MS = 1500;
-    var gLastKnownAccountId = "";
-    var DEBUG_LOGS = false;
-    var gNextHeartbeatLogMs = 0;
-    var gLastDeepScanMs = 0;
-    var STATLOCKER_IMAGE_SRC = "s2r://panorama/images/qollock/statlocker_png.vtex";
+    var API_RANK_URL = "https://api.deadlock-api.com/v1/players/";
+    var gLastAccountId = "";
 
     function IsPanelValid(panel) {
         if (!panel) return false;
         if (!panel.IsValid) return true;
-        return panel.IsValid();
+        try { return panel.IsValid(); } catch (e0) { return false; }
     }
 
-    function ParseAccountId(text) {
-        if (text === undefined || text === null) return "";
-        var digits = String(text).replace(/[^0-9]/g, "");
+    function ParseAccountId(value) {
+        if (value === undefined || value === null) return "";
+        var digits = String(value).replace(/[^0-9]/g, "");
         if (!digits || digits.length < 5 || digits.length > 12) return "";
         return digits;
-    }
-
-    function DebugLog(msg) {
-        if (!DEBUG_LOGS) return;
-        try { $.Msg("[QOLLock][StatlockerProfile] " + String(msg || "")); } catch (e0) { /* console unavailable */ }
-    }
-
-    function HasClassSafe(panel, className) {
-        if (!IsPanelValid(panel) || !className || !panel.BHasClass) return false;
-        try { return !!panel.BHasClass(className); } catch (e0) { return false; }
-    }
-
-    function HasAscendantClass(panel, className, maxDepth) {
-        var depth = 0;
-        var cur = panel;
-        var limit = maxDepth || 16;
-        while (IsPanelValid(cur) && depth < limit) {
-            if (HasClassSafe(cur, className)) return true;
-            cur = cur.GetParent ? cur.GetParent() : null;
-            depth++;
-        }
-        return false;
-    }
-
-    function IsProfilePageActive(ctx) {
-        if (!IsPanelValid(ctx)) return false;
-        if (HasAscendantClass(ctx, "isShowingProfilePage", 24)) return true;
-        // Fallback when class propagation differs by page hierarchy.
-        var roots = [];
-        roots.push(ctx);
-        var p = ctx;
-        for (var i = 0; i < 10 && IsPanelValid(p); i++) {
-            p = p.GetParent ? p.GetParent() : null;
-            if (IsPanelValid(p)) roots.push(p);
-        }
-        for (var r = 0; r < roots.length; r++) {
-            var node = roots[r];
-            if (HasClassSafe(node, "DashboardPage") && HasClassSafe(node, "active")) return true;
-        }
-        return false;
     }
 
     function ReadAccountIdFromPanel(panel) {
         if (!IsPanelValid(panel)) return "";
         var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) { /* property may not exist on this panel */ }
-        try { candidates.push(panel.account_id); } catch (e1) { /* property may not exist on this panel */ }
-        try { candidates.push(panel.accountID); } catch (e2) { /* property may not exist on this panel */ }
+        try { candidates.push(panel.accountid); } catch (e0) { /* property unavailable */ }
+        try { candidates.push(panel.account_id); } catch (e1) { /* property unavailable */ }
+        try { candidates.push(panel.accountID); } catch (e2) { /* property unavailable */ }
         try {
             if (panel.GetAttributeString) {
                 candidates.push(panel.GetAttributeString("accountid", ""));
@@ -84,31 +39,31 @@
         return "";
     }
 
-    function FindCurrentAccountIdFromLabels(ctx) {
+    function FindAccountIdInClass(ctx, className) {
         if (!IsPanelValid(ctx) || !ctx.FindChildrenWithClassTraverse) return "";
-        var labels = ctx.FindChildrenWithClassTraverse("AccountID") || [];
-        for (var i = 0; i < labels.length; i++) {
-            var lbl = labels[i];
-            if (!IsPanelValid(lbl)) continue;
-            var text = "";
-            try { text = String(lbl.text || ""); } catch (e0) { text = ""; }
-            var accountId = ParseAccountId(text);
-            if (accountId) return accountId;
+        var panels = ctx.FindChildrenWithClassTraverse(className) || [];
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i];
+            if (!IsPanelValid(panel)) continue;
+            var fromText = "";
+            try { fromText = ParseAccountId(panel.text || ""); } catch (e0) { fromText = ""; }
+            if (fromText) return fromText;
+            var fromPanel = ReadAccountIdFromPanel(panel);
+            if (fromPanel) return fromPanel;
         }
         return "";
     }
 
-    function ScanPanelTreeForAccountId(root) {
+    function ScanPanelTree(root) {
         if (!IsPanelValid(root)) return "";
         var stack = [root];
         var scanned = 0;
-        var limit = 3000;
-        while (stack.length > 0 && scanned < limit) {
+        while (stack.length > 0 && scanned < 2500) {
             var panel = stack.pop();
             if (!IsPanelValid(panel)) continue;
             scanned++;
-            var idFromPanel = ReadAccountIdFromPanel(panel);
-            if (idFromPanel) return idFromPanel;
+            var accountId = ReadAccountIdFromPanel(panel);
+            if (accountId) return accountId;
             try {
                 var childCount = panel.GetChildCount ? panel.GetChildCount() : 0;
                 for (var i = 0; i < childCount; i++) {
@@ -120,71 +75,54 @@
         return "";
     }
 
-    function ReadLocalPlayerAccountIdFromApi() {
-        // Game.GetLocalPlayerInfo and Players.* confirmed absent.
-        // Account ID detection relies on panel tree scanning instead.
-        return "";
+    function FindCurrentAccountId(ctx) {
+        return (
+            FindAccountIdInClass(ctx, "HiddenAccountID") ||
+            FindAccountIdInClass(ctx, "FriendID") ||
+            FindAccountIdInClass(ctx, "AccountID") ||
+            ReadAccountIdFromPanel(ctx) ||
+            ScanPanelTree(ctx)
+        );
     }
 
-    function FindCurrentAccountId(ctx, allowDeepScan) {
-        var labelId = FindCurrentAccountIdFromLabels(ctx);
-        if (labelId) return { id: labelId, source: "label:AccountID" };
-        var panelId = ReadAccountIdFromPanel(ctx);
-        if (panelId) return { id: panelId, source: "ctx_panel" };
-        if (allowDeepScan) {
-            var treeId = ScanPanelTreeForAccountId(ctx);
-            if (treeId) return { id: treeId, source: "panel_tree" };
-        }
-        var apiId = ReadLocalPlayerAccountIdFromApi();
-        if (apiId) return { id: apiId, source: "api_local_player" };
-        return { id: "", source: "-" };
+    function SetToolsVisible(tools, visible) {
+        if (!IsPanelValid(tools)) return;
+        try {
+            if (visible) tools.AddClass("QOLProfileToolsVisible");
+            else tools.RemoveClass("QOLProfileToolsVisible");
+        } catch (e0) { /* panel deleted mid-frame */ }
     }
 
-    function EnsureStatButton(coreRatingPanel, accountId, index) {
-        if (!IsPanelValid(coreRatingPanel)) return;
-        var btnId = "QOLStatlockerBtn_" + String(index);
-        var button = coreRatingPanel.FindChildTraverse ? coreRatingPanel.FindChildTraverse(btnId) : null;
-        if (!IsPanelValid(button) && coreRatingPanel.FindChildrenWithClassTraverse) {
-            var existing = coreRatingPanel.FindChildrenWithClassTraverse("QOLStatlockerButton") || [];
-            if (existing.length > 0) button = existing[0];
-        }
-        if (!IsPanelValid(button) && $.CreatePanel) {
-            try { button = $.CreatePanel("Button", coreRatingPanel, btnId); } catch (e0) { button = null; }
-            if (IsPanelValid(button) && button.AddClass) button.AddClass("QOLStatlockerButton");
-        }
-        if (!IsPanelValid(button)) return;
-
-        var icon = button.FindChildTraverse ? button.FindChildTraverse("QOLStatlockerImage") : null;
-        if (!IsPanelValid(icon) && button.FindChildrenWithClassTraverse) {
-            var icons = button.FindChildrenWithClassTraverse("QOLStatlockerImage") || [];
-            if (icons.length > 0) icon = icons[0];
-        }
-        if (!IsPanelValid(icon) && $.CreatePanel) {
-            try { icon = $.CreatePanel("Image", button, "QOLStatlockerImage"); } catch (e1) { icon = null; }
-            if (IsPanelValid(icon) && icon.AddClass) icon.AddClass("QOLStatlockerImage");
-        }
-        if (IsPanelValid(icon) && icon.SetImage) {
-            try { icon.SetImage(STATLOCKER_IMAGE_SRC); } catch (eSet) { /* panel deleted mid-frame */ }
-        }
-
-        button.style.visibility = "visible";
-        try { button.enabled = true; } catch (eBtn0) { /* panel deleted mid-frame */ }
-        try { button.hittest = true; } catch (eBtn1) { /* panel deleted mid-frame */ }
-        try { button.hittestchildren = true; } catch (eBtn2) { /* panel deleted mid-frame */ }
-        if (accountId) gLastKnownAccountId = accountId;
+    function BindStatlockerButton(button, accountId) {
+        if (!IsPanelValid(button) || !accountId) return;
         try {
             button.SetPanelEvent("onactivate", function () {
-                var resolved = FindCurrentAccountId($.GetContextPanel(), true);
-                var currentAccountId = (resolved && resolved.id) ? resolved.id : (gLastKnownAccountId || accountId);
-                if (!currentAccountId) {
-                    DebugLog("click: no account id resolved");
-                    return;
-                }
-                var url = "https://statlocker.gg/profile/" + currentAccountId;
-                DebugLog("click: resolved account=" + currentAccountId + " source=" + ((resolved && resolved.source) ? resolved.source : "cached") + " url=" + url);
-                try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e3) { DebugLog("click: ExternalBrowserGoToURL failed"); }
+                $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
             });
-        } catch (e2) { /* panel deleted mid-frame */ }
+        } catch (e0) { /* panel deleted mid-frame */ }
+    }
+
+    function UpdateProfileTools(ctx, accountId) {
+        var tools = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendProfileTools") : null;
+        if (!IsPanelValid(tools)) return false;
+        if (!accountId) {
+            SetToolsVisible(tools, false);
+            return true;
+        }
+
+        var rankImage = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendRankImage") : null;
+        var statlockerButton = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileStatlockerButton") : null;
+        if (accountId !== gLastAccountId) {
+            gLastAccountId = accountId;
+            if (IsPanelValid(rankImage) && rankImage.SetImage) {
+                try {
+                    rankImage.SetImage(API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small");
+                } catch (e0) { /* panel deleted mid-frame */ }
+            }
+            BindStatlockerButton(statlockerButton, accountId);
+        }
+        SetToolsVisible(tools, true);
+        return true;
     }
 
     function Update() {
@@ -193,42 +131,9 @@
             $.Schedule(IDLE_INTERVAL_SEC, Update);
             return;
         }
-
-        if (!IsProfilePageActive(ctx)) {
-            $.Schedule(IDLE_INTERVAL_SEC, Update);
-            return;
-        }
-
-        var corePanels = ctx.FindChildrenWithClassTraverse ? (ctx.FindChildrenWithClassTraverse("coreRating") || []) : [];
-        if (!corePanels || corePanels.length <= 0) {
-            $.Schedule(NO_PANEL_INTERVAL_SEC, Update);
-            return;
-        }
-
-        var resolvedInfo = FindCurrentAccountId(ctx, false);
-        var accountId = resolvedInfo.id || "";
-        if (!accountId) {
-            var nowForDeep = Date.now ? Date.now() : (new Date()).getTime();
-            if ((nowForDeep - gLastDeepScanMs) >= DEEP_SCAN_COOLDOWN_MS) {
-                gLastDeepScanMs = nowForDeep;
-                resolvedInfo = FindCurrentAccountId(ctx, true);
-                accountId = resolvedInfo.id || "";
-            }
-        }
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        if (nowMs >= gNextHeartbeatLogMs) {
-            gNextHeartbeatLogMs = nowMs + 2000;
-            DebugLog("heartbeat: corePanels=" + corePanels.length + " account=" + (accountId || "-") + " source=" + (resolvedInfo.source || "-"));
-        }
-        for (var i = 0; i < corePanels.length; i++) {
-            var coreRating = corePanels[i];
-            if (!IsPanelValid(coreRating)) continue;
-            var hasHeroRowBg = !!(coreRating.FindChildTraverse && coreRating.FindChildTraverse("HeroRowBackground"));
-            if (!hasHeroRowBg) continue;
-            EnsureStatButton(coreRating, accountId, i);
-        }
-
-        $.Schedule(ACTIVE_INTERVAL_SEC, Update);
+        var accountId = FindCurrentAccountId(ctx);
+        var foundTools = UpdateProfileTools(ctx, accountId);
+        $.Schedule(foundTools ? UPDATE_INTERVAL_SEC : IDLE_INTERVAL_SEC, Update);
     }
 
     Update();

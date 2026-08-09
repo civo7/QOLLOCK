@@ -548,6 +548,9 @@ try {
         "panorama\layout\popups\citadel_popup_global_leaderboard.vxml_c",
         "panorama\scripts\ql_popup_search.vjs_c",
         "panorama\styles\leaderboard_search.vcss_c",
+        # The profile page now extends Valve's current stylesheet instead of
+        # overriding it with the removed Time Played/Skill Rating layout.
+        "panorama\styles\citadel_db_page_profile.vcss_c",
         "scripts\validate_compact_schema.vjs_c"
     )
     foreach ($staleRelative in $staleCompiledArtifacts) {
