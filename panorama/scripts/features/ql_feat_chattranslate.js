@@ -16,7 +16,10 @@
     var OWNER_IGN = "breadrollius";
     var CYRILLIC_RE = /[\u0400-\u04FF]/;
     var MAX_TEXT_BYTES_APPROX = 480;
-    var CACHE_MAX = 80;
+    var TOP_RETAINED_MESSAGES = 6;
+    var BOTTOM_RETAINED_MESSAGES = 10;
+    var ACTIVE_SCAN_DELAY_MS = 200;
+    var IDLE_SCAN_MAX_DELAY_MS = 2000;
 
     function ReadLocalPlayerName(root) {
         if (!root || !root.FindChildTraverse) return "";
@@ -134,7 +137,22 @@
             State[cacheKey] = cache;
         }
         var messages = container.FindChildrenWithClassTraverse("ChatMessage") || [];
-        for (var i = 0; i < messages.length; i++) {
+        var retainedCount = isBottom ? BOTTOM_RETAINED_MESSAGES : TOP_RETAINED_MESSAGES;
+        var firstRetained = Math.max(0, messages.length - retainedCount);
+        for (var cacheIndex = cache.length - 1; cacheIndex >= 0; cacheIndex--) {
+            var retained = false;
+            for (var recentIndex = firstRetained; recentIndex < messages.length; recentIndex++) {
+                if (cache[cacheIndex] && cache[cacheIndex].panel === messages[recentIndex]) {
+                    retained = true;
+                    break;
+                }
+            }
+            if (!retained) {
+                DeleteInjected(cache[cacheIndex]);
+                cache.splice(cacheIndex, 1);
+            }
+        }
+        for (var i = firstRetained; i < messages.length; i++) {
             var msg = messages[i];
             if (!IsPanelValid(msg)) continue;
             var label = FindChatMessageLabel(msg);
@@ -152,27 +170,39 @@
             if (!text || !CYRILLIC_RE.test(text) || ApproxUtf8Length(text) > MAX_TEXT_BYTES_APPROX) continue;
             InjectTranslation(msg, label, text, entry, isBottom);
         }
-        while (cache.length > CACHE_MAX) {
+        while (cache.length > retainedCount) {
             DeleteInjected(cache[0]);
             cache.shift();
         }
     }
 
-    function MaybeProcess(root, containerKey, panelId, watermarkKey, cacheKey, isBottom) {
+    function MaybeProcess(root, containerKey, panelId, watermarkKey, cacheKey, nextScanKey, idleKey, isBottom, nowMs) {
+        if (nowMs < (Number(State[nextScanKey]) || 0)) return;
         var container = GetContainer(root, containerKey, panelId);
         if (!IsPanelValid(container)) {
             State[watermarkKey] = "";
+            State[idleKey] = 0;
+            State[nextScanKey] = nowMs + IDLE_SCAN_MAX_DELAY_MS;
             return;
         }
         var watermark = BuildWatermark(container);
-        if (watermark === String(State[watermarkKey] || "")) return;
+        if (watermark === String(State[watermarkKey] || "")) {
+            var idleMisses = Math.min(8, (Number(State[idleKey]) || 0) + 1);
+            State[idleKey] = idleMisses;
+            State[nextScanKey] = nowMs + Math.min(IDLE_SCAN_MAX_DELAY_MS, ACTIVE_SCAN_DELAY_MS + (idleMisses * 225));
+            return;
+        }
         State[watermarkKey] = watermark;
+        State[idleKey] = 0;
+        State[nextScanKey] = nowMs + ACTIVE_SCAN_DELAY_MS;
         ProcessContainer(container, cacheKey, isBottom);
     }
 
-    function UpdateLocalChatTranslation(root) {
-        MaybeProcess(root, "localTranslationTopContainer", "Messages", "localTranslationTopWatermark", "localTranslationTopCache", false);
-        MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache", true);
+    function UpdateLocalChatTranslation(root, nowMs) {
+        MaybeProcess(root, "localTranslationTopContainer", "Messages", "localTranslationTopWatermark", "localTranslationTopCache",
+                     "localTranslationTopNextScanMs", "localTranslationTopIdleMisses", false, nowMs);
+        MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache",
+                     "localTranslationBottomNextScanMs", "localTranslationBottomIdleMisses", true, nowMs);
     }
 
     QOL.register("localChatTranslation", {
@@ -184,11 +214,13 @@
         gate: function() { return State.localTranslationOwnerMatch !== false; },
         update: function(root, cfg, nowMs) {
             if (!ResolveOwnerMatch(root, nowMs || PerfNowMs())) return;
-            UpdateLocalChatTranslation(root);
+            UpdateLocalChatTranslation(root, nowMs || PerfNowMs());
         },
         stateKeys: ["localTranslationTopContainer", "localTranslationBottomContainer",
                     "localTranslationTopWatermark", "localTranslationBottomWatermark",
                     "localTranslationTopCache", "localTranslationBottomCache",
+                    "localTranslationTopNextScanMs", "localTranslationBottomNextScanMs",
+                    "localTranslationTopIdleMisses", "localTranslationBottomIdleMisses",
                     "localTranslationOwnerMatch", "localTranslationOwnerNextCheckMs"]
     });
 

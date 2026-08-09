@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 MAX_TEXT_BYTES = 500
 MAX_CACHE_ITEMS = 256
-RENDER_SCALE = 3
+RENDER_SCALE = 2
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 FONT_CANDIDATES = (
     Path("C:/Program Files (x86)/Steam/steamapps/common/Deadlock/game/citadel/panorama/fonts/valveoracle-semibold.ttf"),
