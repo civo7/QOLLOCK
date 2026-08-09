@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 MAX_TEXT_BYTES = 500
 MAX_CACHE_ITEMS = 256
+RENDER_SCALE = 3
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 FONT_CANDIDATES = (
     Path("C:/Program Files (x86)/Steam/steamapps/common/Deadlock/game/citadel/panorama/fonts/valveoracle-semibold.ttf"),
@@ -32,7 +33,7 @@ class TranslationService:
     def __init__(self) -> None:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._lock = threading.Lock()
-        self._font = self._load_font(15)
+        self._font = self._load_font(15 * RENDER_SCALE)
 
     @staticmethod
     def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -76,15 +77,18 @@ class TranslationService:
         # Panorama places this inside an existing chat bubble. Keep the image
         # transparent and compact so it reads like a second line, not a card
         # nested inside another card.
-        max_width = 390 if layout == "bottom" else 215
-        padding_x = 1
-        padding_y = 1
+        # Render at 3x and let Panorama's max-width scale it back to the native
+        # chat dimensions. This supersampling avoids the visibly pixelated
+        # edges produced by a bitmap rendered directly at 15px.
+        logical_width = 390 if layout == "bottom" else 215
+        max_width = logical_width * RENDER_SCALE
+        padding_x = RENDER_SCALE
+        padding_y = RENDER_SCALE
         lines = self._wrap(translated, max_width - (padding_x * 2), self._font)
-        line_height = 16
-        width = min(
-            max_width,
-            max(80, max(self._text_width(line, self._font) for line in lines) + padding_x * 2),
-        )
+        line_height = 16 * RENDER_SCALE
+        # A fixed high-resolution width guarantees Panorama always downsamples
+        # the texture, including very short translations.
+        width = max_width
         height = padding_y * 2 + line_height * len(lines)
         image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)

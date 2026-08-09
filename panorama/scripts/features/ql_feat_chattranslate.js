@@ -71,7 +71,7 @@
         image.style.margin = "8px 10px 6px 12px";
         image.style.horizontalAlign = "left";
         var layout = isBottom ? "bottom" : "top";
-        var url = ENDPOINT + "?style=replace-v3&layout=" + layout + "&source=ru&target=en&text=" + encodeURIComponent(text);
+        var url = ENDPOINT + "?style=replace-v4&layout=" + layout + "&source=ru&target=en&text=" + encodeURIComponent(text);
         image.SetImage(url);
         entry.image = image;
         entry.label = label;
