@@ -8,10 +8,15 @@
 	margin-top: 0px;
 }
 
+#StatsTitle
+{
+	padding-left: 30px;
+}
+
 #QOLFriendProfileTools
 {
 	ignore-parent-flow: true;
-	x: 12px;
+	x: 20px;
 	y: 0px;
 	width: 390px;
 	height: 48px;
