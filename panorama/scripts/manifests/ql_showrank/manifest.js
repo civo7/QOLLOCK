@@ -28,6 +28,10 @@
             var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
             var _loop = null, _wasEnabled = false;
             var _fillToken = 0;
+            var _lifecycleToken = 0;
+            var _scoreboardWasOpen = false;
+            var _topBarWasVisible = null;
+            var _hideoutWasActive = false;
 
             // ── Utilities ──
             function _nowMs() { try { return Date.now ? Date.now() : 0; } catch(e) { return 0; } }
@@ -153,6 +157,8 @@
             // ── FillRow + PollForResult — click profile card, detect account ID ──
             function _fillRow(root, entry, onDone) {
                 var docRoot = _docRoot(root);
+                var lifecycleToken = _lifecycleToken;
+                var activeFillToken = _readAttr(docRoot, "qol_sr_fill_token", "");
                 var name = _readClass(entry, "PlayerName");
                 if (!name) { onDone(); return; }
                 var heroName = _readClass(entry, "PlayerHeroHidden");
@@ -163,11 +169,26 @@
                 _dismissProfileCard();
                 var mc = _findMainContents(entry);
                 var target = _valid(mc) ? mc : entry;
-                try { $.DispatchEvent("Activated", target, "mouse"); } catch(e) { onDone(); return; }
+                try { $.DispatchEvent("Activated", target, "mouse"); } catch(e) {
+                    var activateFailLabel = _getAccountIdLabel(entry);
+                    if (_valid(activateFailLabel)) { try { activateFailLabel.text = "-"; } catch(eLabel) {} }
+                    _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
+                    _dismissProfileCard();
+                    onDone(); return;
+                }
                 var t0 = _nowMs();
                 function _poll(attempt) {
+                    if (lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
+                    if (!_isEscapeMenuOpen(root)) {
+                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
+                        if (_readAttr(docRoot, "qol_sr_fill_token", "") === activeFillToken) _setAttr(docRoot, "qol_sr_fill_token", "");
+                        _dismissProfileCard();
+                        return;
+                    }
                     var elapsed = _nowMs() - t0;
                     if (elapsed > 2000 || attempt > 66) {
+                        var timeoutLabel = _getAccountIdLabel(entry);
+                        if (_valid(timeoutLabel)) { try { timeoutLabel.text = "-"; } catch(eLabel) {} }
                         _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
                         _dismissProfileCard(); onDone(); return;
                     }
@@ -237,37 +258,40 @@
             }
             function _fillLoop(root, token) {
                 var docRoot = _docRoot(root);
-                if (!_valid(root) || _readAttr(docRoot, "qol_sr_fill_token", "") !== token) return;
+                if (!_wasEnabled || !_valid(root) || _readAttr(docRoot, "qol_sr_fill_token", "") !== token) return;
                 if (_isInHideout(root)) {
-                    var cached = _readAttr(docRoot, "qol_sr_hideout", "");
-                    if (cached !== "1") _clearAllAccountIds(root);
-                    _setAttr(docRoot, "qol_sr_hideout", "1");
-                    $.Schedule(1.0, function() { _fillLoop(root, token); }); return;
+                    _setAttr(docRoot, "qol_sr_fill_token", "");
+                    return;
                 }
                 _setAttr(docRoot, "qol_sr_hideout", "0");
-                if (!_isEscapeMenuOpen(root)) { $.Schedule(2.0, function() { _fillLoop(root, token); }); return; }
+                if (!_isEscapeMenuOpen(root)) {
+                    _setAttr(docRoot, "qol_sr_fill_token", "");
+                    return;
+                }
                 var genNow = String(_readAttr(docRoot, "qol_sr_generation", ""));
-                if (_stateGet("showRankEscapeDone", "") === genNow) { $.Schedule(2.0, function() { _fillLoop(root, token); }); return; }
+                if (_stateGet("showRankEscapeDone", "") === genNow) {
+                    _setAttr(docRoot, "qol_sr_fill_token", "");
+                    return;
+                }
                 var row = _findUnfilledRow(root);
                 if (!row) {
                     _stateSet("showRankEscapeDone", genNow);
                     $.Schedule(0.5, _dismissProfileCard);
-                    $.Schedule(2.0, function() { _fillLoop(root, token); }); return;
+                    _setAttr(docRoot, "qol_sr_fill_token", "");
+                    return;
                 }
                 _fillRow(root, row, function() { $.Schedule(0.1, function() { _fillLoop(root, token); }); });
             }
             function _ensureFillLoopRunning(root) {
                 var docRoot = _docRoot(root);
                 var token = _readAttr(docRoot, "qol_sr_fill_token", "");
-                if (token === String(_fillToken)) return;
+                if (token) return;
+                var genNow = String(_readAttr(docRoot, "qol_sr_generation", ""));
+                if (_stateGet("showRankEscapeDone", "") === genNow) return;
                 _fillToken = (_fillToken || 0) + 1;
-                _setAttr(docRoot, "qol_sr_fill_token", String(_fillToken));
-                _clearPublishedRanks(root);
-                if (_isInHideout(root)) _clearAllAccountIds(root);
-                var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
-                _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
-                _stateSet("showRankEscapeDone", "");
-                $.Schedule(0.2, function() { _fillLoop(root, String(_fillToken)); });
+                var newToken = String(_lifecycleToken) + "_" + String(_fillToken);
+                _setAttr(docRoot, "qol_sr_fill_token", newToken);
+                $.Schedule(0.2, function() { _fillLoop(root, newToken); });
             }
 
             // ── Top bar player init (per-player polling, generation-aware) ──
@@ -280,9 +304,13 @@
             function _initTopBarPlayer(player) {
                 var root = _docRoot(player); if (!_valid(root)) return;
                 _markTopBarInit(player, root);
+                var initGeneration = _readAttr(root, "qol_sr_generation", "0");
+                var lifecycleToken = _lifecycleToken;
                 var _lastId = "", _lastGen = "", _idleCount = 0;
                 function _tryLoad() {
-                    if (!_valid(player)) return;
+                    if (!_valid(player) || lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
+                    if (!_isOn(ctx.config.all(), "SHOW_RANK_TOPBAR")) return;
+                    try { if (player.GetAttributeString("_qol_sr_init", "") !== initGeneration) return; } catch(eMarker) { return; }
                     var gen = _readAttr(root, "qol_sr_generation", "");
                     if (gen !== _lastGen) {
                         _lastGen = gen;
@@ -341,6 +369,16 @@
                     var heroName = ""; try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
                     if (!heroName) continue;
                     _initTopBarPlayer(players[i]);
+                }
+            }
+
+            function _clearTopBarInitMarkers(root) {
+                var topBar = null;
+                try { topBar = root.FindChildTraverse ? root.FindChildTraverse("TopBar") : null; } catch(e) {}
+                if (!_valid(topBar)) return;
+                var players = _findTopBarPlayers(topBar);
+                for (var i = 0; i < players.length; i++) {
+                    try { players[i].SetAttributeString("_qol_sr_init", ""); } catch(eMarker) {}
                 }
             }
 
@@ -404,15 +442,33 @@
                         return;
                     }
                     _wasEnabled = true; _stateSet("_showRankEnabled", true);
-                    if (_isInHideout(root)) return;
-                    _ensureTopBarInit(root);
+                    if (_isInHideout(root)) {
+                        if (!_hideoutWasActive) {
+                            _clearAllAccountIds(root);
+                            _stateSet("showRankEscapeDone", "");
+                            _setAttr(_docRoot(root), "qol_sr_fill_token", "");
+                        }
+                        _hideoutWasActive = true;
+                        _scoreboardWasOpen = false;
+                        return;
+                    }
+                    _hideoutWasActive = false;
                     var showTopBar = _isOn(cfg, "SHOW_RANK_TOPBAR");
-                    // Root-level CSS class gates all top bar badge visibility (showrank.css:58-60)
-                    try { if (showTopBar) root.RemoveClass("HideShowRankTopBar"); else root.AddClass("HideShowRankTopBar"); } catch(e) {}
-                    _applyTopBarVisibility(root, showTopBar);
-                    _applyPlayerListVisibility(root, true);
+                    if (_topBarWasVisible !== showTopBar) {
+                        // Root-level CSS class gates all top bar badge visibility (showrank.css:58-60)
+                        try { if (showTopBar) root.RemoveClass("HideShowRankTopBar"); else root.AddClass("HideShowRankTopBar"); } catch(e) {}
+                        if (showTopBar) _clearTopBarInitMarkers(root);
+                        _applyTopBarVisibility(root, showTopBar);
+                        _topBarWasVisible = showTopBar;
+                    }
+                    if (showTopBar) _ensureTopBarInit(root);
                     _stateSet("_showRankTopBarVisible", showTopBar);
-                    _ensureFillLoopRunning(root);
+                    var scoreboardOpen = _isEscapeMenuOpen(root);
+                    if (scoreboardOpen) {
+                        if (!_scoreboardWasOpen) _applyPlayerListVisibility(root, true);
+                        _ensureFillLoopRunning(root);
+                    }
+                    _scoreboardWasOpen = scoreboardOpen;
                 } catch(e) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) { QOL.core.Logger.logError("ql_showrank", "_tick: " + (e.message || e)); }
                     throw e;
@@ -421,17 +477,29 @@
 
             return {
                 onEnable: function() {
+                    _lifecycleToken++;
                     _wasEnabled = false; _fillToken = 0;
+                    _scoreboardWasOpen = false; _topBarWasVisible = null; _hideoutWasActive = false;
+                    var root = $.GetContextPanel();
+                    var docRoot = _docRoot(root);
+                    _setAttr(docRoot, "qol_sr_fill_token", "");
+                    _clearPublishedRanks(root);
+                    var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
+                    _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
+                    _stateSet("showRankEscapeDone", "");
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_showrank") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_showrank") : null;
                 },
                 onDisable: function() {
+                    _lifecycleToken++;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var root = $.GetContextPanel();
+                    try { _setAttr(_docRoot(root), "qol_sr_fill_token", ""); } catch(eToken) {}
                     _clearTopBarBadges(root); _clearPlayerListBadges(root);
                     try { _clearPublishedRanks(root); } catch(e) {}
                     try { root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _wasEnabled = false; _fillToken = 0;
+                    _scoreboardWasOpen = false; _topBarWasVisible = false; _hideoutWasActive = false;
                     _stateSet("_showRankEnabled", false); _stateSet("_showRankTopBarVisible", false); _stateSet("showRankEscapeDone", "");
                 },
                 onSettingsChanged: function() {}
