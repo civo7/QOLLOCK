@@ -483,7 +483,6 @@
                     var root = $.GetContextPanel();
                     var docRoot = _docRoot(root);
                     _setAttr(docRoot, "qol_sr_fill_token", "");
-                    _clearPublishedRanks(root);
                     var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
                     _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
                     _stateSet("showRankEscapeDone", "");
@@ -496,7 +495,6 @@
                     var root = $.GetContextPanel();
                     try { _setAttr(_docRoot(root), "qol_sr_fill_token", ""); } catch(eToken) {}
                     _clearTopBarBadges(root); _clearPlayerListBadges(root);
-                    try { _clearPublishedRanks(root); } catch(e) {}
                     try { root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _wasEnabled = false; _fillToken = 0;
                     _scoreboardWasOpen = false; _topBarWasVisible = false; _hideoutWasActive = false;
