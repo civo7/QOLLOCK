@@ -1,4 +1,4 @@
-// One-shot: replace the 8 updated player preset blocks in ql_shared_presets.js
+// One-shot: replace updated player preset blocks in ql_shared_presets.js
 // with freshly-decoded diff-from-default objects (from decoded_presets.json).
 const fs = require("fs");
 const path = require("path");
@@ -22,14 +22,18 @@ function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 // form: "assign" -> QOL_PRESETS["KEY"] = { ... };   "member" -> indented  "KEY": { ... },
 const TARGETS = [
     { key: "BreadRollius", form: "member" },
-    { key: "Synthronix",   form: "assign" },
-    { key: "munchkinman",  form: "assign" },
-    { key: "Xavier",       form: "member" },
-    { key: "Jared",        form: "member" },
-    { key: "Basil",        form: "member" },
-    { key: "Neonvoid",     form: "member" },
-    { key: "ninjabladeJr", form: "assign" },
-    { key: "BSQTT",        form: "member" }
+    { key: "Jaundice", form: "assign" },
+    { key: "Valerie", form: "assign" },
+    { key: "Deethirty", form: "member" },
+    { key: "mituu", form: "assign" },
+    { key: "Seyer", form: "assign" },
+    { key: "Boredom", form: "member" },
+    { key: "Anguish", form: "assign" },
+    { key: "Nairshark", form: "member" },
+    { key: "Blank2762", form: "assign" },
+    { key: "Keta", form: "assign" },
+    { key: "loony", form: "assign" },
+    { key: "Starjadian", form: "assign" }
 ];
 
 TARGETS.forEach(function(t) {
