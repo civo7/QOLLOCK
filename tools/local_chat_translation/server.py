@@ -34,6 +34,7 @@ class TranslationService:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._lock = threading.Lock()
         self._font = self._load_font(15 * RENDER_SCALE)
+        self._indicator_font = self._load_font(11 * RENDER_SCALE)
 
     @staticmethod
     def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -84,22 +85,35 @@ class TranslationService:
         max_width = logical_width * RENDER_SCALE
         padding_x = RENDER_SCALE
         padding_y = RENDER_SCALE
-        lines = self._wrap(translated, max_width - (padding_x * 2), self._font)
+        indicator = "RU"
+        indicator_gap = 5 * RENDER_SCALE
+        indicator_width = self._text_width(indicator, self._indicator_font)
+        text_width_limit = max_width - (padding_x * 2) - indicator_gap - indicator_width
+        lines = self._wrap(translated, text_width_limit, self._font)
         line_height = 16 * RENDER_SCALE
-        # A fixed high-resolution width guarantees Panorama always downsamples
-        # the texture, including very short translations.
-        width = max_width
+        line_widths = [self._text_width(line, self._font) for line in lines]
+        last_combined_width = line_widths[-1] + indicator_gap + indicator_width
+        content_width = max(line_widths[:-1] + [last_combined_width])
+        width = min(max_width, max(80 * RENDER_SCALE, content_width + padding_x * 2))
         height = padding_y * 2 + line_height * len(lines)
         image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
         y = padding_y
-        for line in lines:
+        for index, line in enumerate(lines):
             draw.text(
                 (padding_x, y),
                 line,
                 font=self._font,
                 fill=(0, 0, 0, 255),
             )
+            if index == len(lines) - 1:
+                line_width = self._text_width(line, self._font)
+                draw.text(
+                    (padding_x + line_width + indicator_gap, y + (3 * RENDER_SCALE)),
+                    indicator,
+                    font=self._indicator_font,
+                    fill=(90, 78, 72, 220),
+                )
             y += line_height
         output = io.BytesIO()
         image.save(output, format="WEBP", lossless=True, method=4)

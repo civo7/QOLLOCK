@@ -68,7 +68,11 @@
         });
         if (!image) return;
         image.AddClass("QOLLocalChatTranslation");
-        var logicalWidth = isBottom ? 390 : 215;
+        var maxLogicalWidth = isBottom ? 390 : 215;
+        // Approximate Oracle Semibold's 15px advance from the source text.
+        // The server independently shrink-wraps the translated texture, while
+        // this keeps the Panorama viewport compact for short chat messages.
+        var logicalWidth = Math.max(80, Math.min(maxLogicalWidth, (text.length * 7) + 34));
         // The server wraps at the same logical widths. Estimate lines from the
         // source so the explicit image viewport follows the native chat row;
         // preserve-aspect scaling then downsamples the 3x texture into it.
@@ -79,7 +83,7 @@
         image.style.margin = "8px 10px 6px 12px";
         image.style.horizontalAlign = "left";
         var layout = isBottom ? "bottom" : "top";
-        var url = ENDPOINT + "?style=replace-v4&layout=" + layout + "&source=ru&target=en&text=" + encodeURIComponent(text);
+        var url = ENDPOINT + "?style=replace-v5&layout=" + layout + "&source=ru&target=en&text=" + encodeURIComponent(text);
         image.SetImage(url);
         entry.image = image;
         entry.label = label;
