@@ -63,11 +63,19 @@
     function InjectTranslation(msg, label, text, entry, isBottom) {
         var parent = label.GetParent ? label.GetParent() : null;
         if (!IsPanelValid(parent)) return;
-        var image = $.CreatePanel("Image", parent, "QOLLocalTranslation_" + String(PerfNowMs()));
+        var image = $.CreatePanel("Image", parent, "QOLLocalTranslation_" + String(PerfNowMs()), {
+            scaling: "stretch-to-fit-preserve-aspect"
+        });
         if (!image) return;
         image.AddClass("QOLLocalChatTranslation");
-        image.style.maxWidth = isBottom ? "390px" : "215px";
-        image.style.maxHeight = "100px";
+        var logicalWidth = isBottom ? 390 : 215;
+        // The server wraps at the same logical widths. Estimate lines from the
+        // source so the explicit image viewport follows the native chat row;
+        // preserve-aspect scaling then downsamples the 3x texture into it.
+        var charsPerLine = isBottom ? 48 : 26;
+        var estimatedLines = Math.max(1, Math.min(4, Math.ceil(text.length / charsPerLine)));
+        image.style.width = logicalWidth + "px";
+        image.style.height = ((estimatedLines * 16) + 2) + "px";
         image.style.margin = "8px 10px 6px 12px";
         image.style.horizontalAlign = "left";
         var layout = isBottom ? "bottom" : "top";
