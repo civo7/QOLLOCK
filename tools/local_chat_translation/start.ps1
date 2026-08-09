@@ -1,9 +1,12 @@
 $ErrorActionPreference = "Stop"
 $ToolRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Python = Join-Path $ToolRoot ".venv\Scripts\python.exe"
+$QollockRuntimeRoot = Join-Path $env:LOCALAPPDATA "QOLLOCK\chat_translation"
+$QollockVenv = Join-Path $QollockRuntimeRoot ".venv"
+$Python = Join-Path $QollockVenv "Scripts\python.exe"
 
 if (-not (Test-Path -LiteralPath $Python)) {
-    py -3.12 -m venv (Join-Path $ToolRoot ".venv")
+    New-Item -ItemType Directory -Force -Path $QollockRuntimeRoot | Out-Null
+    py -3.12 -m venv $QollockVenv
 }
 
 & $Python -m pip install -r (Join-Path $ToolRoot "requirements.txt")

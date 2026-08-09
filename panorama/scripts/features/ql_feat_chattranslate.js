@@ -60,12 +60,12 @@
         var image = $.CreatePanel("Image", parent, "QOLLocalTranslation_" + String(PerfNowMs()));
         if (!image) return;
         image.AddClass("QOLLocalChatTranslation");
-        image.style.maxWidth = isBottom ? "520px" : "440px";
-        image.style.maxHeight = "180px";
-        image.style.marginTop = "5px";
-        image.style.marginBottom = "3px";
+        image.style.maxWidth = isBottom ? "410px" : "360px";
+        image.style.maxHeight = "100px";
+        image.style.marginTop = "2px";
+        image.style.marginBottom = "1px";
         image.style.horizontalAlign = "left";
-        var url = ENDPOINT + "?source=ru&target=en&text=" + encodeURIComponent(text);
+        var url = ENDPOINT + "?style=inline-v2&source=ru&target=en&text=" + encodeURIComponent(text);
         image.SetImage(url);
         entry.image = image;
     }

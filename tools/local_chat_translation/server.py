@@ -31,8 +31,7 @@ class TranslationService:
     def __init__(self) -> None:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._lock = threading.Lock()
-        self._font = self._load_font(22)
-        self._small_font = self._load_font(15)
+        self._font = self._load_font(18)
 
     @staticmethod
     def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -73,32 +72,34 @@ class TranslationService:
         return image_bytes
 
     def _render(self, translated: str, source: str, target: str) -> bytes:
-        max_width = 680
-        padding_x = 18
-        padding_y = 13
+        # Panorama places this inside an existing chat bubble. Keep the image
+        # transparent and compact so it reads like a second line, not a card
+        # nested inside another card.
+        max_width = 410
+        padding_x = 3
+        padding_y = 3
         lines = self._wrap(translated, max_width - (padding_x * 2), self._font)
-        line_height = 29
-        footer_height = 22
+        line_height = 23
         width = min(
             max_width,
-            max(220, max(self._text_width(line, self._font) for line in lines) + padding_x * 2),
+            max(80, max(self._text_width(line, self._font) for line in lines) + padding_x * 2),
         )
-        height = padding_y * 2 + line_height * len(lines) + footer_height
-        image = Image.new("RGBA", (width, height), (15, 18, 24, 242))
+        height = padding_y * 2 + line_height * len(lines)
+        image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
-        draw.rounded_rectangle((0, 0, width - 1, height - 1), radius=12, outline=(104, 196, 255, 220), width=2)
         y = padding_y
         for line in lines:
-            draw.text((padding_x, y), line, font=self._font, fill=(241, 246, 252, 255))
+            draw.text(
+                (padding_x, y),
+                line,
+                font=self._font,
+                fill=(210, 238, 255, 255),
+                stroke_width=1,
+                stroke_fill=(5, 9, 13, 235),
+            )
             y += line_height
-        draw.text(
-            (padding_x, height - padding_y - 15),
-            f"LOCAL TRANSLATION  {source.upper()} -> {target.upper()}",
-            font=self._small_font,
-            fill=(145, 185, 211, 255),
-        )
         output = io.BytesIO()
-        image.convert("RGB").save(output, format="WEBP", quality=88, method=4)
+        image.save(output, format="WEBP", lossless=True, method=4)
         return output.getvalue()
 
     @staticmethod

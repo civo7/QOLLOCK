@@ -9,8 +9,10 @@ renders the result as WebP, and serves it to Panorama on `127.0.0.1:8765`.
 tools/local_chat_translation/start.ps1
 ```
 
-The first start creates an isolated Python 3.12 environment and installs Pillow.
-Leave the window open while playing.
+The first start creates an isolated Python 3.12 environment under
+`%LOCALAPPDATA%\QOLLOCK\chat_translation` and installs Pillow. Keeping the
+environment outside this repository prevents DeadPacker from copying or
+compiling Python dependencies. Leave the window open while playing.
 
 ## Test
 
