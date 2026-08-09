@@ -1,11 +1,11 @@
 $ErrorActionPreference = "Stop"
 $TaskName = "QOLLOCK Local Chat Translation"
 $ToolRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$StartScript = Join-Path $ToolRoot "start.ps1"
-$PowerShell = (Get-Command "powershell.exe").Source
-$Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$StartScript`""
+$HiddenLauncher = Join-Path $ToolRoot "launch_hidden.vbs"
+$WScript = (Get-Command "wscript.exe").Source
+$Arguments = "`"$HiddenLauncher`""
 
-$Action = New-ScheduledTaskAction -Execute $PowerShell -Argument $Arguments
+$Action = New-ScheduledTaskAction -Execute $WScript -Argument $Arguments
 $Trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero)
 
