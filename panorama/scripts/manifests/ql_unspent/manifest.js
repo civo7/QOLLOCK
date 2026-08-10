@@ -86,6 +86,10 @@
             function _getTopBarPlayerPanel(root, index) {
                 if (!root || !root.FindChildTraverse) return null;
                 try {
+                    var playerPanel = root.FindChildTraverse("TopBarPlayer" + index);
+                    if (_alive(playerPanel)) return playerPanel;
+
+                    // Compatibility fallback for older top-bar layouts.
                     var panels = root.FindChildrenWithClassTraverse("player_" + index) || [];
                     for (var i = 0; i < panels.length; i++) {
                         if (!_alive(panels[i])) continue;
