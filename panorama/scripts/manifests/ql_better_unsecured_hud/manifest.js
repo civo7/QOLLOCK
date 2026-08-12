@@ -2,9 +2,9 @@
 // =============================================================================
 // QOLLOCK — Unsecured Plus
 // =============================================================================
-// Moves/scales Valve's live Unsecured panel directly.  The previous mirrored
-// panel approach was fragile: Panorama may retain an old HUD tree after a map
-// transition, which let the mod hide the live counter while drawing elsewhere.
+// Moves/scales Valve's live Unsecured panel.  The panel is temporarily moved
+// under gameplay_hud so its coordinates are not constrained by the native
+// currency container's flow/clipping.  No value mirror is created.
 // =============================================================================
 
 (function() {
@@ -29,12 +29,38 @@
         ],
         create: function(ctx) {
             var _loop = null;
-            var _runtime = { panel: null, isModern: false, lastSig: "" };
+            var _runtime = {
+                panel: null,
+                host: null,
+                originalParent: null,
+                originalPreviousSibling: null,
+                originalNextSibling: null,
+                originalStyle: null,
+                lastSig: ""
+            };
+            var _touchedStyleNames = [
+                "horizontalAlign", "verticalAlign", "ignoreParentFlow",
+                "marginLeft", "marginRight", "marginTop", "marginBottom",
+                "x", "y", "uiScale", "zIndex"
+            ];
 
             function _isPanelValid(panel) {
                 try { return !!(QOL.utils && QOL.utils.IsPanelValid && QOL.utils.IsPanelValid(panel)); } catch(e) {}
                 return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
             }
+
+            function _isDescendantOf(panel, ancestor) {
+                if (!_isPanelValid(panel) || !_isPanelValid(ancestor)) return false;
+                var current = panel;
+                var guard = 0;
+                while (current && guard < 96) {
+                    if (current === ancestor) return true;
+                    current = current.GetParent ? current.GetParent() : null;
+                    guard++;
+                }
+                return false;
+            }
+
             function _clamp(val, def, min, max) {
                 var value = Number(val);
                 if (!isFinite(value)) value = def;
@@ -43,63 +69,161 @@
                 if (value > max) value = max;
                 return value;
             }
-            function _findLivePanel(root) {
+
+            function _getGameplayHud(root) {
+                try {
+                    if (QOL.getGameplayHudPanel) {
+                        var delegated = QOL.getGameplayHudPanel(root);
+                        if (_isPanelValid(delegated)) return delegated;
+                    }
+                } catch(e) {}
                 if (!root || !root.FindChildTraverse) return null;
+                var hud = root.FindChildTraverse("gameplay_hud");
+                return _isPanelValid(hud) ? hud : null;
+            }
 
-                // Current Deadlock HUD.  This is the same panel that displays
-                // "94 UNSECURED" in Panorama Debugger.
-                var modern = root.FindChildTraverse("HudUnsecuredLabelContainer");
-                if (_isPanelValid(modern)) return { panel: modern, isModern: true };
+            function _findLivePanel(root, host) {
+                if (_isPanelValid(_runtime.panel) && _runtime.host === host && _isDescendantOf(_runtime.panel, host)) {
+                    return _runtime.panel;
+                }
+                var searchRoot = _isPanelValid(host) ? host : root;
+                if (!searchRoot || !searchRoot.FindChildTraverse) return null;
 
-                // Older HUD fallback.
-                var label = root.FindChildTraverse("hudUnsecuredLabel");
+                var panel = searchRoot.FindChildTraverse("HudUnsecuredLabelContainer");
+                if (_isPanelValid(panel)) return panel;
+
+                var label = searchRoot.FindChildTraverse("HudUnsecuredLabel");
+                if (!_isPanelValid(label)) label = searchRoot.FindChildTraverse("hudUnsecuredLabel");
                 if (_isPanelValid(label) && label.GetParent) {
-                    return { panel: label.GetParent(), isModern: false };
+                    panel = label.GetParent();
+                    if (_isPanelValid(panel)) return panel;
                 }
                 return null;
             }
-            function _clearLegacyMirror(root) {
-                // Remove copies left by builds prior to this direct-panel rewrite.
+
+            function _captureStyle(panel) {
+                var values = {};
+                for (var i = 0; i < _touchedStyleNames.length; i++) {
+                    var name = _touchedStyleNames[i];
+                    try { values[name] = panel.style[name]; } catch(e) { values[name] = ""; }
+                }
+                return values;
+            }
+
+            function _restoreStyle(panel, values) {
+                if (!_isPanelValid(panel) || !values) return;
+                for (var i = 0; i < _touchedStyleNames.length; i++) {
+                    var name = _touchedStyleNames[i];
+                    try { panel.style[name] = values[name] == null ? "" : values[name]; } catch(e) {}
+                }
+            }
+
+            function _captureSiblings(panel, parent) {
+                var result = { previous: null, next: null };
+                if (!parent || !parent.GetChildCount || !parent.GetChild) return result;
+                var count = Number(parent.GetChildCount()) || 0;
+                for (var i = 0; i < count; i++) {
+                    if (parent.GetChild(i) !== panel) continue;
+                    if (i > 0) result.previous = parent.GetChild(i - 1);
+                    if (i + 1 < count) result.next = parent.GetChild(i + 1);
+                    break;
+                }
+                return result;
+            }
+
+            function _clearRuntime() {
+                _runtime.panel = null;
+                _runtime.host = null;
+                _runtime.originalParent = null;
+                _runtime.originalPreviousSibling = null;
+                _runtime.originalNextSibling = null;
+                _runtime.originalStyle = null;
+                _runtime.lastSig = "";
+            }
+
+            function _restoreNativePanel() {
+                var panel = _runtime.panel;
+                var parent = _runtime.originalParent;
+                if (_isPanelValid(panel)) {
+                    if (_isPanelValid(parent) && panel.GetParent && panel.GetParent() !== parent && panel.SetParent) {
+                        try { panel.SetParent(parent); } catch(e) {}
+                    }
+                    if (_isPanelValid(parent) && panel.GetParent && panel.GetParent() === parent) {
+                        var next = _runtime.originalNextSibling;
+                        var previous = _runtime.originalPreviousSibling;
+                        if (_isPanelValid(next) && next.GetParent && next.GetParent() === parent && parent.MoveChildBefore) {
+                            try { parent.MoveChildBefore(panel, next); } catch(e0) {}
+                        } else if (_isPanelValid(previous) && previous.GetParent && previous.GetParent() === parent && parent.MoveChildAfter) {
+                            try { parent.MoveChildAfter(panel, previous); } catch(e1) {}
+                        }
+                    }
+                    _restoreStyle(panel, _runtime.originalStyle);
+                }
+                _clearRuntime();
+            }
+
+            function _moveNativePanel(panel, host) {
+                if (!_isPanelValid(panel) || !_isPanelValid(host) || !panel.GetParent || !panel.SetParent) return false;
+                if (_runtime.panel === panel && _runtime.host === host && panel.GetParent() === host) return true;
+
+                _restoreNativePanel();
+
+                var originalParent = panel.GetParent();
+                if (!_isPanelValid(originalParent)) return false;
+                var siblings = _captureSiblings(panel, originalParent);
+                var originalStyle = _captureStyle(panel);
+                try { panel.SetParent(host); } catch(e) { return false; }
+                if (panel.GetParent && panel.GetParent() !== host) return false;
+
+                _runtime.panel = panel;
+                _runtime.host = host;
+                _runtime.originalParent = originalParent;
+                _runtime.originalPreviousSibling = siblings.previous;
+                _runtime.originalNextSibling = siblings.next;
+                _runtime.originalStyle = originalStyle;
+                _runtime.lastSig = "";
+
+                if (host.MoveChildAfter && host.GetChildCount && host.GetChild) {
+                    var count = Number(host.GetChildCount()) || 0;
+                    if (count > 0) {
+                        var last = host.GetChild(count - 1);
+                        if (last && last !== panel) {
+                            try { host.MoveChildAfter(panel, last); } catch(e0) {}
+                        }
+                    }
+                }
+                return true;
+            }
+
+            function _removeLegacyMirror(root) {
                 var mirror = root && root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
                 if (_isPanelValid(mirror)) mirror.DeleteAsync(0);
                 if (root && root.SetHasClass) root.SetHasClass("better_unsecured_ready", false);
             }
-            function _restoreNativePanel(root) {
-                var found = _findLivePanel(root);
-                if (!found || !_isPanelValid(found.panel)) return;
-                var panel = found.panel;
-                panel.style.marginLeft = "";
-                panel.style.marginBottom = "";
-                panel.style.uiScale = "";
-                panel.style.visibility = "";
-            }
-            function _applyDirectLayout(root, cfg) {
-                var found = _findLivePanel(root);
-                if (!found || !_isPanelValid(found.panel)) {
-                    _runtime.panel = null;
-                    _runtime.lastSig = "";
-                    return;
-                }
 
+            function _applyLayout(panel, cfg) {
                 var scale = _clamp(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200);
                 var xOffset = _clamp(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 120, -1000, 2000);
                 var yOffset = _clamp(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 925, 800, 2000);
-                var sig = String(scale) + "|" + String(xOffset) + "|" + String(yOffset) + "|" + (found.isModern ? "modern" : "legacy");
-                var panel = found.panel;
+                var sig = String(scale) + "|" + String(xOffset) + "|" + String(yOffset);
+                if (sig === _runtime.lastSig) return;
 
-                if (sig !== _runtime.lastSig || panel !== _runtime.panel) {
-                    // Defaults are the old Plus zero point.  Thus existing
-                    // presets retain their default location without hiding or
-                    // recreating Valve's live counter.
-                    panel.style.marginLeft = (xOffset - 120) + "px";
-                    panel.style.marginBottom = (925 - yOffset) + "px";
-                    panel.style.uiScale = scale + "%";
-                    panel.style.visibility = "visible";
-                    _runtime.panel = panel;
-                    _runtime.isModern = found.isModern;
-                    _runtime.lastSig = sig;
-                }
+                // These settings are screen-space coordinates.  Keeping the
+                // live panel under gameplay_hud avoids native parent clipping.
+                panel.style.ignoreParentFlow = "true";
+                panel.style.horizontalAlign = "left";
+                panel.style.verticalAlign = "top";
+                panel.style.marginLeft = "0px";
+                panel.style.marginRight = "0px";
+                panel.style.marginTop = "0px";
+                panel.style.marginBottom = "0px";
+                panel.style.x = xOffset + "px";
+                panel.style.y = yOffset + "px";
+                panel.style.uiScale = scale + "%";
+                panel.style.zIndex = "50";
+                _runtime.lastSig = sig;
             }
+
             function _tick() {
                 try {
                     var root = $.GetContextPanel();
@@ -107,15 +231,26 @@
                     var cfg = ctx.config.all();
                     var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
 
-                    // Never let an old mirror hide the native panel.
-                    _clearLegacyMirror(root);
+                    _removeLegacyMirror(root);
                     if (!enabled) {
-                        _restoreNativePanel(root);
-                        _runtime.panel = null;
-                        _runtime.lastSig = "";
+                        _restoreNativePanel();
                         return;
                     }
-                    _applyDirectLayout(root, cfg);
+
+                    var host = _getGameplayHud(root);
+                    if (!_isPanelValid(host)) {
+                        _restoreNativePanel();
+                        return;
+                    }
+
+                    if (_runtime.panel && (!_isPanelValid(_runtime.panel) || _runtime.host !== host || !_isDescendantOf(_runtime.panel, host))) {
+                        _restoreNativePanel();
+                    }
+
+                    var panel = _findLivePanel(root, host);
+                    if (!_isPanelValid(panel)) return;
+                    if (!_moveNativePanel(panel, host)) return;
+                    _applyLayout(panel, cfg);
                 } catch(e) {
                     logger.logError("ql_better_unsecured_hud", "_tick threw: " + (e.message || e));
                     throw e;
@@ -133,14 +268,13 @@
                     if (S) S.cancelAllForFeature("ql_better_unsecured_hud");
                     logger.clearThrottle("ql_better_unsecured_hud");
                     var root = $.GetContextPanel();
-                    if (_isPanelValid(root)) {
-                        _clearLegacyMirror(root);
-                        _restoreNativePanel(root);
-                    }
-                    _runtime.panel = null;
-                    _runtime.lastSig = "";
+                    if (_isPanelValid(root)) _removeLegacyMirror(root);
+                    _restoreNativePanel();
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _runtime.lastSig = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {
