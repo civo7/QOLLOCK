@@ -1,8 +1,25 @@
 [CmdletBinding()]
 param(
     [string]$ModFolderName,
-    [switch]$Force
+    [switch]$Force,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$RemainingArguments
 )
+
+# PowerShell accepts -Force natively, but treats GNU-style --force as a
+# positional argument. Normalize both forms so the .bat and direct PowerShell
+# workflows behave the same way.
+if ($ModFolderName -match '^--(?:force|f)$') {
+    $Force = $true
+    $ModFolderName = $null
+}
+foreach ($argument in $RemainingArguments) {
+    if ($argument -match '^--(?:force|f)$') {
+        $Force = $true
+    } elseif (-not [string]::IsNullOrWhiteSpace($argument)) {
+        throw "Unknown build argument: $argument"
+    }
+}
 
 [console]::TreatControlCAsInput = $false
 $ErrorActionPreference = "Stop"
@@ -179,7 +196,61 @@ function Get-CompiledOutputPath($BaseDir, $RelativePath, $CompiledExtension) {
     return Join-Path $BaseDir $compiledPath
 }
 
-# Parses a raw menu entry like "6 -Force", "6 f" or "6 -f" into the command
+# Generates a minimal .vtex descriptor for a bare image. This lets image files
+# remain the source of truth: resourcecompiler still receives a .vtex and emits
+# the *_png.vtex_c target Panorama expects, without hand-authored descriptors.
+function Get-AutoVtexBody($RelFileName) {
+    return @"
+<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
+"CDmeVtex"
+{
+    "m_inputTextureArray" "element_array"
+    [
+        "CDmeInputTexture"
+        {
+            "m_name" "string" "InputTexture0"
+            "m_fileName" "string" "$RelFileName"
+            "m_colorSpace" "string" "srgb"
+            "m_typeString" "string" "2D"
+            "m_imageProcessorArray" "element_array"
+            [
+                "CDmeImageProcessor"
+                {
+                    "m_algorithm" "string" ""
+                    "m_stringArg" "string" ""
+                    "m_vFloat4Arg" "vector4" "0 0 0 0"
+                }
+            ]
+        }
+    ]
+    "m_outputTypeString" "string" "2D"
+    "m_outputFormat" "string" "BGRA8888"
+    "m_outputClearColor" "vector4" "0 0 0 0"
+    "m_nOutputMinDimension" "int" "0"
+    "m_nOutputMaxDimension" "int" "0"
+    "m_textureOutputChannelArray" "element_array"
+    [
+        "CDmeTextureOutputChannel"
+        {
+            "m_inputTextureArray" "string_array" [ "InputTexture0" ]
+            "m_srcChannels" "string" "rgba"
+            "m_dstChannels" "string" "rgba"
+            "m_mipAlgorithm" "CDmeImageProcessor"
+            {
+                "m_algorithm" "string" ""
+                "m_stringArg" "string" ""
+                "m_vFloat4Arg" "vector4" "0 0 0 0"
+            }
+            "m_outputColorSpace" "string" "srgb"
+        }
+    ]
+    "m_vClamp" "vector3" "0 0 0"
+    "m_bNoLod" "bool" "0"
+}
+"@
+}
+
+# Parses a raw menu entry like "6 --force", "6 f" or "6 -f" into the command
 # token plus the per-run Force flag. The flag is accepted with or without a
 # leading '-'/'/' and in both long and short form (force/f), so the same tag
 # that works as a launch parameter also works when typed at the interactive
@@ -329,7 +400,7 @@ $InitialMod = $ModFolderName
 while ($true) {
     Clear-Host
     Write-Host "=== Deadlock Mod Compiler (Incremental Build) ===" -ForegroundColor Cyan
-    Write-Host "Tip: add '-Force' (or '-f') after the number, e.g. '6 -Force', for a full clean rebuild of that mod.`n" -ForegroundColor DarkGray
+    Write-Host "Tip: add '--force' (or '-f') after the number, e.g. '6 --force', for a full clean rebuild of that mod.`n" -ForegroundColor DarkGray
     
     $SelectedMod = $InitialMod
 
@@ -362,8 +433,8 @@ while ($true) {
         while (-not $validSelection) {
             $rawSelection = Read-Host "Enter the number of the mod to compile"
 
-            # Strip and apply the per-run Force flag (-Force/-f) typed alongside
-            # the menu choice, e.g. "6 -Force" or "6 f".
+            # Strip and apply the per-run Force flag (--force/-f) typed alongside
+            # the menu choice, e.g. "6 --force" or "6 f".
             $parsedRun = Parse-RunFlags -InputText $rawSelection
             $Force = $parsedRun.Force
             $selection = $parsedRun.Command
@@ -499,10 +570,16 @@ while ($true) {
         # script/data/builds/VPK never get packed into the mod itself. The
         # build_mod exclusion applies in both modes — the tools-based build of the
         # same mod must skip it too.
+        # Build only actual Source 2 content roots. This prevents tooling,
+        # node_modules and repository metadata from being compiled or packed.
+        # QOLLOCK's root-level scripts folder is development tooling, not game
+        # content; its runtime scripts are all under panorama/.
+        $ContentRoots = @('panorama', 'soundevents', 'sounds')
         $SourceFiles = Get-ChildItem -Path $ModSourcePath -Recurse -File | Where-Object {
             $rel = $_.FullName.Substring($ModSourcePath.Length + 1)
             $segs = $rel -split '[\\/]'
-            -not (($segs | Where-Object { $_.StartsWith('.') }) -or ($segs[0] -ieq 'build_mod'))
+            if ($segs | Where-Object { $_.StartsWith('.') }) { return $false }
+            return ($ContentRoots -contains $segs[0].ToLowerInvariant())
         }
         $CurrentFiles = @{}
         $FilesToCompile = New-Object System.Collections.Generic.List[string]
@@ -521,7 +598,10 @@ while ($true) {
             '.vpcf'     = '.vpcf_c'
             '.vmdl'     = '.vmdl_c'
             '.vmat'     = '.vmat_c'
+            '.png'      = '.vtex_c'
+            '.tga'      = '.vtex_c'
         }
+        $AutoVtexSourceExts = @('.png', '.tga')
         $StaleCompiledExts = @('.vxml_c', '.vcss_c', '.vjs_c', '.vsndevts_c', '.vsnd_c', '.vtex_c', '.vdata_c', '.vsvg_c', '.vpcf_c', '.vmdl_c', '.vmat_c')
         
         $updatedCount = 0
@@ -547,6 +627,14 @@ while ($true) {
             $hashChanged = $Force -or $null -eq $cachedCompileKey -or $cachedCompileKey.Trim() -ne $compileKey
             $contentMissing = -not (Test-Path $contentDest)
             $compiledMissing = $compiledDest -and -not (Test-Path $compiledDest)
+
+            if ($AutoVtexSourceExts -contains $file.Extension) {
+                $relDir = Split-Path $relPath
+                $relBase = [System.IO.Path]::GetFileNameWithoutExtension($relPath)
+                $bareCompiled = Join-Path $TempGame (Join-Path $relDir "$relBase.vtex_c")
+                $compiledMissing = -not (Test-Path $bareCompiled)
+            }
+
             $needsCopy = $hashChanged -or $contentMissing
             $needsCompile = $hashChanged -or $compiledMissing
 
@@ -567,6 +655,29 @@ while ($true) {
 
             if ($AllowedExts -contains $file.Extension -and ($needsCopy -or $needsCompile)) {
                 $FilesToCompile.Add($contentDest)
+            }
+
+            if ($AutoVtexSourceExts -contains $file.Extension) {
+                $bareVtexSourcePath = [System.IO.Path]::ChangeExtension($file.FullName, '.vtex')
+                if (Test-Path $bareVtexSourcePath) {
+                    if ($needsCopy -or $needsCompile) {
+                        Write-Host "  Skipping bare auto-vtex for $relPath (custom .vtex present)" -ForegroundColor DarkGray
+                    }
+                } else {
+                    $genBareVtexPath = [System.IO.Path]::ChangeExtension($contentDest, '.vtex')
+                    $genBareRelPath = $genBareVtexPath.Substring($TempContent.Length + 1)
+
+                    # Mark generated descriptors as live even on incremental runs.
+                    # Otherwise the orphan sweep deletes their compiled texture.
+                    $CurrentFiles["${SelectedMod}|${genBareRelPath}".ToLower()] = $true
+
+                    if ($needsCopy -or $needsCompile) {
+                        $relFileName = $relPath -replace '\\', '/'
+                        $vtexBody = Get-AutoVtexBody -RelFileName $relFileName
+                        [System.IO.File]::WriteAllText($genBareVtexPath, $vtexBody, $Utf8NoBom)
+                        $FilesToCompile.Add($genBareVtexPath)
+                    }
+                }
             }
 
             if ($hashChanged) {
@@ -651,12 +762,6 @@ while ($true) {
             }
         }
 
-        $CacheObj = New-Object PSObject
-        foreach ($key in $BuildCache.Keys) {
-            $CacheObj | Add-Member -MemberType NoteProperty -Name $key -Value $BuildCache[$key]
-        }
-        $CacheObj | ConvertTo-Json -Depth 1 | Set-Content $CachePath -Encoding UTF8
-
         Write-Host "Step 2/3: Compiling assets..." -ForegroundColor Cyan
         $errorCount = 0
         $totalFiles = $FilesToCompile.Count
@@ -692,8 +797,16 @@ while ($true) {
         }
 
         if ($errorCount -gt 0) {
-            Write-Host "WARNING: $errorCount files failed to compile. VPK might be incomplete." -ForegroundColor Red
+            throw "$errorCount files failed to compile. Aborting before VPK packing."
         }
+
+        # Only persist the cache after a fully successful compile. A failed
+        # source must be retried on the next run rather than silently skipped.
+        $CacheObj = New-Object PSObject
+        foreach ($key in $BuildCache.Keys) {
+            $CacheObj | Add-Member -MemberType NoteProperty -Name $key -Value $BuildCache[$key]
+        }
+        $CacheObj | ConvertTo-Json -Depth 1 | Set-Content $CachePath -Encoding UTF8
 
         Write-Host "Step 3/3: Packing VPK..." -ForegroundColor Cyan
         if (Test-Path $OutputVpk) { Remove-Item -Path $OutputVpk -Force }
@@ -725,6 +838,10 @@ while ($true) {
     catch {
         Write-Host "`n=== BUILD FAILED ===" -ForegroundColor Red
         Write-Host $_.Exception.Message -ForegroundColor Red
+        # Let scripts that invoked a specific mod observe a non-zero failure.
+        if (-not [string]::IsNullOrWhiteSpace($ModFolderName)) {
+            throw
+        }
     }
     finally {
         Start-Sleep -Milliseconds 500 
