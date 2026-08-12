@@ -1,24 +1,10 @@
 // features/ql_better_unsecured_hud/manifest.js
 // =============================================================================
-// QOLLOCK — Better Unsecured HUD (Mirrored Unsecured Souls Overlay)
+// QOLLOCK — Unsecured Plus
 // =============================================================================
-// OWNS:        QOLBetterUnsecuredOverlay with mirrored icon/label/text.
-//              Positional mirroring relative to the game's Unsecured label.
-// DOES NOT OWN: gameplay_hud (Valve), HudUnsecuredLabel (Valve)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler,
-//              QOL delegates: getCachedPanel, setCachedPanel, state, utils,
-//              getGameplayHudPanel, parseUnsecuredSoulsValue, panelIdGoldApContainer
-// CONFIG KEYS: ENABLE_BETTER_UNSECURED, UNSECURED_SOULS_HUD_SCALE,
-//              UNSECURED_SOULS_HUD_X_OFFSET, UNSECURED_SOULS_HUD_Y_OFFSET,
-//              ENABLE_BETTER_UNSECURED_SHOW_ICON, ENABLE_BETTER_UNSECURED_SHOW_TEXT,
-//              ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT
-// CSS:         none
-// PATTERN:     Polling (0.2Hz). Signature-based style caching.
-//              Finds game's unsecured souls container via traversal.
-//              Creates mirror overlay with reflected y-offset.
-// STATE KEYS:  State.unsecuredSouls.hud* (hudNextSearchMs, hudLabel, hudMirrorLabel,
-//              hudMirrorIcon, hudMirrorText, hudStyleSig)
-//              (written for backward compat — Pattern 7)
+// Moves/scales Valve's live Unsecured panel directly.  The previous mirrored
+// panel approach was fragile: Panorama may retain an old HUD tree after a map
+// transition, which let the mod hide the live counter while drawing elsewhere.
 // =============================================================================
 
 (function() {
@@ -35,394 +21,101 @@
         settings: [
             { key: "ENABLE_BETTER_UNSECURED", type: "toggle", default: false },
             { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider", min: 50, max: 200, default: 100 },
-            { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 0 },
-            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 0 },
+            { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 120 },
+            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 925 },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL delegate wrappers (Pattern 10) ──
-            function _getState() {
-                try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
-                return null;
-            }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
-            function _getGameplayHudPanel(root) {
-                try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {}
-                if (!root || !root.FindChildTraverse) return root || null;
-                return root.FindChildTraverse("gameplay_hud") || root;
-            }
-            function _getPanelIdGoldApContainer() {
-                try { if (typeof QOL !== "undefined" && QOL.panelIdGoldApContainer) return QOL.panelIdGoldApContainer; } catch(e) {}
-                return "gold_and_ap_container";
-            }
-            function _parseUnsecuredSoulsValue(valueText) {
-                try { if (typeof QOL !== "undefined" && QOL.parseUnsecuredSoulsValue) return QOL.parseUnsecuredSoulsValue(valueText); } catch(e) {}
-                return 0;
-            }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
-            function _clampConfigNumber(val, def, min, max, round) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClampConfigNumber) return QOL.utils.ClampConfigNumber(val, def, min, max, round); } catch(e) {}
-                var v = Number(val); if (!isFinite(v)) v = def;
-                if (round) v = Math.round(v);
-                if (v < min) v = min; if (v > max) v = max;
-                return v;
-            }
-            function _getDefaultConfigYOffset() {
-                try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
-                return 925;
-            }
-            function _getDefaultConfigXOffset() {
-                try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET); } catch(e) {}
-                return 120;
-            }
-
-            // ── Constants ──
-            var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
-            var UNSECURED_SOULS_HUD_SEARCH_MS = 2000;
-
             var _loop = null;
+            var _runtime = { panel: null, isModern: false, lastSig: "" };
 
-            // ── Helpers ──
-            function _parseSpmNumber(valueText) {
-                if (!valueText) return 0;
-                var raw = String(valueText).replace(/,/g, "").trim().toLowerCase();
-                if (raw.length === 0) return 0;
-                var scale = 1;
-                var suffix = raw.charAt(raw.length - 1);
-                if (suffix === "k" || suffix === "m" || suffix === "b") {
-                    raw = raw.substring(0, raw.length - 1);
-                    if (suffix === "k") scale = 1000;
-                    else if (suffix === "m") scale = 1000000;
-                    else if (suffix === "b") scale = 1000000000;
-                }
-                var v = parseFloat(raw);
-                return isFinite(v) ? (v * scale) : 0;
+            function _isPanelValid(panel) {
+                try { return !!(QOL.utils && QOL.utils.IsPanelValid && QOL.utils.IsPanelValid(panel)); } catch(e) {}
+                return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
             }
-
-            function _parseUnsecuredSouls(sourceText) {
-                return Math.max(0, Math.round(_parseSpmNumber(sourceText)));
+            function _clamp(val, def, min, max) {
+                var value = Number(val);
+                if (!isFinite(value)) value = def;
+                value = Math.round(value);
+                if (value < min) value = min;
+                if (value > max) value = max;
+                return value;
             }
-
-            function _findModernUnsecuredLabel(root) {
+            function _findLivePanel(root) {
                 if (!root || !root.FindChildTraverse) return null;
-                var label = root.FindChildTraverse("HudUnsecuredLabel");
-                return _isPanelValid(label) ? label : null;
-            }
 
-            // A Panorama panel can stay IsValid() after a HUD transition while
-            // no longer belonging to the current context.  Treat it as stale:
-            // otherwise the native counter is hidden for an overlay that cannot
-            // be drawn in the new match.
-            function _isPanelInCurrentRoot(panel, root) {
-                if (!_isPanelValid(panel) || !_isPanelValid(root)) return false;
-                var current = panel;
-                var guard = 0;
-                while (current && guard < 96) {
-                    if (current === root) return true;
-                    current = current.GetParent ? current.GetParent() : null;
-                    guard++;
-                }
-                return false;
-            }
+                // Current Deadlock HUD.  This is the same panel that displays
+                // "94 UNSECURED" in Panorama Debugger.
+                var modern = root.FindChildTraverse("HudUnsecuredLabelContainer");
+                if (_isPanelValid(modern)) return { panel: modern, isModern: true };
 
-            function _findContainer(root) {
-                var PANEL_ID_GOLD_AP_CONTAINER = _getPanelIdGoldApContainer();
-                if (!root) return null;
-
-                // August 2026 HUD: the Unsecured counter is no longer the
-                // death-gold label.  It lives in its own HudUnsecuredLabelContainer.
-                var modernLabel = _findModernUnsecuredLabel(root);
-                if (modernLabel) return modernLabel.GetParent ? modernLabel.GetParent() : modernLabel;
-
-                // Pre-August HUD fallback kept for older game builds.
-                var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
-                if (goldContainer && goldContainer.FindChildrenWithClassTraverse) {
-                    var goldContainers = goldContainer.FindChildrenWithClassTraverse("hudDeathGoldContainer") || [];
-                    for (var i = 0; i < goldContainers.length; i++) {
-                        if (_isPanelValid(goldContainers[i])) return goldContainers[i];
-                    }
-                }
-                var containers = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("hudDeathGoldContainer") || []) : [];
-                for (var j = 0; j < containers.length; j++) {
-                    if (_isPanelValid(containers[j])) return containers[j];
+                // Older HUD fallback.
+                var label = root.FindChildTraverse("hudUnsecuredLabel");
+                if (_isPanelValid(label) && label.GetParent) {
+                    return { panel: label.GetParent(), isModern: false };
                 }
                 return null;
             }
-
-            function _findLabel(root, container) {
-                // Prefer the current Unsecured value.  The old implementation
-                // accidentally mirrored hudDeathGoldLabel ("ITEM VALUE"), so it
-                // always received 0 while CSS hid the real Unsecured counter.
-                var label = _findModernUnsecuredLabel(root);
-                if (label) return label;
-
-                if (container && container.FindChildTraverse) {
-                    label = container.FindChildTraverse("hudDeathGoldLabel");
-                    if (!label) label = container.FindChildTraverse("hudDealthGoldLabel");
-                }
-                if (!label && root && root.FindChildTraverse) {
-                    label = root.FindChildTraverse("hudDeathGoldLabel");
-                    if (!label) label = root.FindChildTraverse("hudDealthGoldLabel");
-                }
-                if (!label && container && container.FindChildrenWithClassTraverse) {
-                    var labels = container.FindChildrenWithClassTraverse("death_penalty_gold") || [];
-                    for (var i = 0; i < labels.length; i++) {
-                        if (!_isPanelValid(labels[i])) continue;
-                        label = labels[i];
-                        break;
-                    }
-                }
-                if (!_isPanelValid(label)) return null;
-                if (label.BHasClass && !label.BHasClass("death_penalty_gold")) return null;
-                return label;
+            function _clearLegacyMirror(root) {
+                // Remove copies left by builds prior to this direct-panel rewrite.
+                var mirror = root && root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
+                if (_isPanelValid(mirror)) mirror.DeleteAsync(0);
+                if (root && root.SetHasClass) root.SetHasClass("better_unsecured_ready", false);
             }
-
-            function _getMirrorValueText(sourceText, sourceValue) {
-                // The current HUD supplies "16 UNSECURED" in one label.  The
-                // mirror has a separate optional title, so only copy the number.
-                var match = String(sourceText || "").match(/[+-]?\d[\d,.\s]*(?:[kmb])?/i);
-                if (match && match[0]) return match[0].replace(/\s/g, "");
-                return String(sourceValue);
+            function _restoreNativePanel(root) {
+                var found = _findLivePanel(root);
+                if (!found || !_isPanelValid(found.panel)) return;
+                var panel = found.panel;
+                panel.style.marginLeft = "";
+                panel.style.marginBottom = "";
+                panel.style.uiScale = "";
+                panel.style.visibility = "";
             }
-
-            function _setNativeReplacementReady(root, ready) {
-                if (root && root.SetHasClass) root.SetHasClass("better_unsecured_ready", !!ready);
-            }
-
-            function _findTextLabel(root, container) {
-                var textLabel = null;
-                if (container && container.FindChildTraverse) textLabel = container.FindChildTraverse("hudUnsecuredLabel");
-                if (!textLabel && root && root.FindChildTraverse) textLabel = root.FindChildTraverse("hudUnsecuredLabel");
-                return _isPanelValid(textLabel) ? textLabel : null;
-            }
-
-            function _ensureOverlay(root) {
-                var State = _getState();
-                var overlay = _getCachedPanel("betterUnsecuredOverlay");
-                if (!_isPanelInCurrentRoot(overlay, root)) {
-                    overlay = null;
-                    _setCachedPanel("betterUnsecuredOverlay", null);
-                    if (State && State.unsecuredSouls) {
-                        State.unsecuredSouls.hudMirrorLabel = null;
-                        State.unsecuredSouls.hudMirrorIcon = null;
-                        State.unsecuredSouls.hudMirrorText = null;
-                        State.unsecuredSouls.hudStyleSig = "";
-                    }
-                }
-                if (!overlay) {
-                    overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
-                    if (!overlay) {
-                        var parent = _getGameplayHudPanel(root);
-                        if (!parent) return null;
-                        overlay = $.CreatePanel("Panel", parent, "QOLBetterUnsecuredOverlay", {
-                            hittest: "false", hittestchildren: "false"
-                        });
-                        var icon = $.CreatePanel("Panel", overlay, "QOLBetterUnsecuredMirrorIcon");
-                        if (icon) { icon.hittest = false; icon.hittestchildren = false; }
-                        var mirror = $.CreatePanel("Label", overlay, "QOLBetterUnsecuredMirrorLabel");
-                        if (mirror) {
-                            mirror.hittest = false; mirror.hittestchildren = false;
-                            if (mirror.AddClass) mirror.AddClass("death_penalty_gold");
-                        }
-                        var text = $.CreatePanel("Label", overlay, "QOLBetterUnsecuredMirrorText");
-                        if (text) { text.hittest = false; text.hittestchildren = false; text.text = "UNSECURED"; }
-                    }
-                    _setCachedPanel("betterUnsecuredOverlay", overlay);
-                }
-                if (!State) return overlay;
-                if (!State.unsecuredSouls) State.unsecuredSouls = {};
-                var mirrorLabel = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorLabel, root) ? State.unsecuredSouls.hudMirrorLabel : null;
-                var mirrorIcon = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorIcon, root) ? State.unsecuredSouls.hudMirrorIcon : null;
-                var mirrorText = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorText, root) ? State.unsecuredSouls.hudMirrorText : null;
-                if (!mirrorLabel && overlay && overlay.FindChildTraverse) {
-                    mirrorLabel = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
-                    if (mirrorLabel && mirrorLabel.AddClass && !mirrorLabel.BHasClass("death_penalty_gold")) mirrorLabel.AddClass("death_penalty_gold");
-                    State.unsecuredSouls.hudMirrorLabel = mirrorLabel || null;
-                }
-                if (!mirrorIcon && overlay && overlay.FindChildTraverse) {
-                    mirrorIcon = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorIcon");
-                    State.unsecuredSouls.hudMirrorIcon = mirrorIcon || null;
-                }
-                if (!mirrorText && overlay && overlay.FindChildTraverse) {
-                    mirrorText = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorText");
-                    State.unsecuredSouls.hudMirrorText = mirrorText || null;
-                }
-                return overlay;
-            }
-
-            function _removeOverlay(root) {
-                var overlay = _getCachedPanel("betterUnsecuredOverlay");
-                if (!overlay && root && root.FindChildTraverse) overlay = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
-                if (_isPanelValid(overlay)) overlay.DeleteAsync(0);
-                _setCachedPanel("betterUnsecuredOverlay", null);
-                var State = _getState();
-                if (State) {
-                    State.unsecuredSouls.hudMirrorLabel = null;
-                    State.unsecuredSouls.hudMirrorIcon = null;
-                    State.unsecuredSouls.hudMirrorText = null;
-                }
-            }
-
-            function _applyLayout(overlay, mirrorLabel, mirrorIcon, mirrorText, label, panel, root, cfg, scale, xOffset, yOffset, fontPx, showIcon, showText) {
-                var State = _getState();
-                if (!State) return;
-                if (!_isPanelInCurrentRoot(overlay, root) || !_isPanelInCurrentRoot(mirrorLabel, root) || !_isPanelInCurrentRoot(mirrorIcon, root) || !_isPanelInCurrentRoot(mirrorText, root)) {
-                    _setNativeReplacementReady(root, false);
-                    State.unsecuredSouls.hudStyleSig = "";
-                    return;
-                }
-                var sourceText = (typeof label.text === "string") ? label.text : "";
-                var sourceTextLabel = _findTextLabel(root, panel);
-                var unsecuredText = (sourceTextLabel && typeof sourceTextLabel.text === "string" && sourceTextLabel.text.length > 0) ? sourceTextLabel.text : "UNSECURED";
-                var sourceValue = _parseUnsecuredSouls(sourceText);
-                if (!isFinite(sourceValue)) sourceValue = 0;
-                if (sourceValue <= 0) {
-                    _setNativeReplacementReady(root, false);
-                    var zeroSig = "hidden_zero|" + sourceText;
-                    if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
-                        if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
-                        State.unsecuredSouls.hudStyleSig = zeroSig;
-                    }
-                    return;
-                }
-                // The overlay is bottom-left aligned.  Do not derive its position
-                // from the live Valve panel: modern HUD coordinates are in a
-                // different layout tree, which sent the copy off-screen.
-                // Keep the original QOLLOCK zero point so existing presets work.
-                var unsecuredHudBaselineX = _getDefaultConfigXOffset();
-                if (!isFinite(unsecuredHudBaselineX)) unsecuredHudBaselineX = 120;
-                var unsecuredHudBaselineY = _getDefaultConfigYOffset();
-                if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 925;
-                var targetX = 115 + (xOffset - unsecuredHudBaselineX);
-                var targetY = 130 - (yOffset - unsecuredHudBaselineY);
-                if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
-                    _setNativeReplacementReady(root, false);
-                    if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
-                    State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
-                    return;
-                }
-                var mirrorValueText = _getMirrorValueText(sourceText, sourceValue);
-                var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + mirrorValueText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-                if (sig === State.unsecuredSouls.hudStyleSig) {
-                    _setNativeReplacementReady(root, true);
+            function _applyDirectLayout(root, cfg) {
+                var found = _findLivePanel(root);
+                if (!found || !_isPanelValid(found.panel)) {
+                    _runtime.panel = null;
+                    _runtime.lastSig = "";
                     return;
                 }
 
-                if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
-                _setNativeReplacementReady(root, true);
-                overlay.style.marginLeft = targetX + "px";
-                overlay.style.marginBottom = targetY + "px";
+                var scale = _clamp(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200);
+                var xOffset = _clamp(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 120, -1000, 2000);
+                var yOffset = _clamp(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 925, 800, 2000);
+                var sig = String(scale) + "|" + String(xOffset) + "|" + String(yOffset) + "|" + (found.isModern ? "modern" : "legacy");
+                var panel = found.panel;
 
-                if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
-                if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
-                if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
-
-                if (mirrorLabel.text !== mirrorValueText) mirrorLabel.text = mirrorValueText;
-                if (!mirrorLabel.BHasClass || !mirrorLabel.BHasClass("qol-hidden")) { if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible"; }
-                mirrorLabel.style.fontSize = fontPx + "px";
-                mirrorLabel.style.x = "0px";
-                mirrorLabel.style.y = "0px";
-                State.unsecuredSouls.hudStyleSig = sig;
+                if (sig !== _runtime.lastSig || panel !== _runtime.panel) {
+                    // Defaults are the old Plus zero point.  Thus existing
+                    // presets retain their default location without hiding or
+                    // recreating Valve's live counter.
+                    panel.style.marginLeft = (xOffset - 120) + "px";
+                    panel.style.marginBottom = (925 - yOffset) + "px";
+                    panel.style.uiScale = scale + "%";
+                    panel.style.visibility = "visible";
+                    _runtime.panel = panel;
+                    _runtime.isModern = found.isModern;
+                    _runtime.lastSig = sig;
+                }
             }
-
-            // ── Main tick ──
             function _tick() {
                 try {
                     var root = $.GetContextPanel();
                     if (!_isPanelValid(root)) return;
-
-                    var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                     var cfg = ctx.config.all();
                     var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
-                    var State = _getState();
-                    if (!State) return;
-                    if (!State.unsecuredSouls) State.unsecuredSouls = {};
 
-                    var panel = _getCachedPanel("unsecuredSoulsHudContainer");
-                    if (!_isPanelInCurrentRoot(panel, root)) {
-                        panel = null;
-                        _setCachedPanel("unsecuredSoulsHudContainer", null);
-                        State.unsecuredSouls.hudLabel = null;
-                        State.unsecuredSouls.hudStyleSig = "";
-                    }
-                    var label = _isPanelInCurrentRoot(State.unsecuredSouls.hudLabel, root) ? State.unsecuredSouls.hudLabel : null;
-
+                    // Never let an old mirror hide the native panel.
+                    _clearLegacyMirror(root);
                     if (!enabled) {
-                        _setNativeReplacementReady(root, false);
-                        _removeOverlay(root);
-                        State.unsecuredSouls.hudLabel = null;
-                        State.unsecuredSouls.hudMirrorLabel = null;
-                        State.unsecuredSouls.hudMirrorIcon = null;
-                        State.unsecuredSouls.hudMirrorText = null;
-                        State.unsecuredSouls.hudBaseX = null;
-                        State.unsecuredSouls.hudBaseY = null;
-                        State.unsecuredSouls.hudStyleSig = "";
+                        _restoreNativePanel(root);
+                        _runtime.panel = null;
+                        _runtime.lastSig = "";
                         return;
                     }
-
-                    if (!panel) {
-                        if (nowMs >= (State.unsecuredSouls.hudNextSearchMs || 0)) {
-                            panel = _findContainer(root);
-                            _setCachedPanel("unsecuredSoulsHudContainer", panel);
-                            State.unsecuredSouls.hudNextSearchMs = panel ? 0 : (nowMs + UNSECURED_SOULS_HUD_SEARCH_MS);
-                        }
-                    }
-                    if (!panel) {
-                        _setNativeReplacementReady(root, false);
-                        State.unsecuredSouls.hudMirrorLabel = null;
-                        State.unsecuredSouls.hudMirrorIcon = null;
-                        State.unsecuredSouls.hudMirrorText = null;
-                        State.unsecuredSouls.hudStyleSig = "";
-                        _removeOverlay(root);
-                        return;
-                    }
-                    if (!label) {
-                        label = _findLabel(root, panel);
-                        State.unsecuredSouls.hudLabel = label || null;
-                    }
-
-                    var overlay = _ensureOverlay(root);
-                    if (!overlay) { State.unsecuredSouls.hudStyleSig = ""; return; }
-
-                    var mirrorLabel = _isPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
-                    var mirrorIcon = _isPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
-                    var mirrorText = _isPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
-
-                    if (!label) {
-                        _setNativeReplacementReady(root, false);
-                        if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
-                        State.unsecuredSouls.hudStyleSig = "";
-                        return;
-                    }
-                    if (!mirrorLabel || !mirrorIcon || !mirrorText) { State.unsecuredSouls.hudStyleSig = ""; return; }
-
-                    var scale = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200, true);
-                    var xOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 0, -1000, 2000, true);
-                    var yOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 0, 800, 2000, true);
-                    var fontPx = Math.round(14 * (scale / 100));
-                    if (fontPx < 8) fontPx = 8;
-                    if (fontPx > 72) fontPx = 72;
-
-                    var legacyShowBoth = _isCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT");
-                    var showIcon = legacyShowBoth || _isCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_ICON");
-                    var showText = legacyShowBoth || _isCfgEnabled(cfg, "ENABLE_BETTER_UNSECURED_SHOW_TEXT");
-
-                    _applyLayout(overlay, mirrorLabel, mirrorIcon, mirrorText, label, panel, root, cfg, scale, xOffset, yOffset, fontPx, showIcon, showText);
+                    _applyDirectLayout(root, cfg);
                 } catch(e) {
                     logger.logError("ql_better_unsecured_hud", "_tick threw: " + (e.message || e));
                     throw e;
@@ -440,20 +133,12 @@
                     if (S) S.cancelAllForFeature("ql_better_unsecured_hud");
                     logger.clearThrottle("ql_better_unsecured_hud");
                     var root = $.GetContextPanel();
-                    _setNativeReplacementReady(root, false);
-                    _removeOverlay(root);
-                    _setCachedPanel("unsecuredSoulsHudContainer", null);
-                    var State = _getState();
-                    if (State) {
-                        State.unsecuredSouls.hudLabel = null;
-                        State.unsecuredSouls.hudMirrorLabel = null;
-                        State.unsecuredSouls.hudMirrorIcon = null;
-                        State.unsecuredSouls.hudMirrorText = null;
-                        State.unsecuredSouls.hudBaseX = null;
-                        State.unsecuredSouls.hudBaseY = null;
-                        State.unsecuredSouls.hudStyleSig = "";
-                        State.unsecuredSouls.hudNextSearchMs = 0;
+                    if (_isPanelValid(root)) {
+                        _clearLegacyMirror(root);
+                        _restoreNativePanel(root);
                     }
+                    _runtime.panel = null;
+                    _runtime.lastSig = "";
                 },
                 onSettingsChanged: function() {}
             };
@@ -463,8 +148,8 @@
                 var root = $.GetContextPanel();
                 var hud = root ? root.FindChildTraverse("gameplay_hud") : null;
                 if (!hud) return null;
-                return { passed: true, name: "Gameplay HUD exists for unsecured overlay", message: "", assertions: [{ passed: true, name: "gameplay_hud panel exists" }] };
-            } catch(e) { return { passed: false, name: "Better unsecured HUD check", message: (e && e.message ? e.message : String(e)) }; }
+                return { passed: true, name: "Gameplay HUD exists for Unsecured Plus", message: "", assertions: [{ passed: true, name: "gameplay_hud panel exists" }] };
+            } catch(e) { return { passed: false, name: "Unsecured Plus check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

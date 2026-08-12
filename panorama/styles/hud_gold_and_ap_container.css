@@ -76,21 +76,6 @@
 	ui-scale: 110%;
 }
 
-.better_unsecured_ready #hudUnsecuredLabel,.better_unsecured_ready #HudUnsecuredLabel
-{
-	visibility: collapse;
-}
-
-.better_unsecured_ready #hudDeathGoldIcon
-{
-	visibility: collapse;
-}
-
-.better_unsecured_ready #hudDealthGoldLabel,.better_unsecured_ready #hudDeathGoldLabel
-{
-	visibility: collapse;
-}
-
 .fg_healthbar_active:not(.minimalist_healthbar_active) #gold_and_ap_container
 {
 	horizontal-align: left;
