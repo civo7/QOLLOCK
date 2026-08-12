@@ -17,7 +17,7 @@
 //              Finds game's unsecured souls container via traversal.
 //              Creates mirror overlay with reflected y-offset.
 // STATE KEYS:  State.unsecuredSouls.hud* (hudNextSearchMs, hudLabel, hudMirrorLabel,
-//              hudMirrorIcon, hudMirrorText, hudBaseX, hudBaseY, hudStyleSig)
+//              hudMirrorIcon, hudMirrorText, hudStyleSig)
 //              (written for backward compat — Pattern 7)
 // =============================================================================
 
@@ -82,22 +82,17 @@
                 if (v < min) v = min; if (v > max) v = max;
                 return v;
             }
-            function _getPanelPositionRelativeToAncestor(child, ancestor) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.GetPanelPositionRelativeToAncestor) return QOL.utils.GetPanelPositionRelativeToAncestor(child, ancestor); } catch(e) {}
-                return null;
-            }
-            function _readSafePanelLayoutOffset(val) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ReadSafePanelLayoutOffset) return QOL.utils.ReadSafePanelLayoutOffset(val); } catch(e) {}
-                return (val != null && isFinite(val)) ? val : null;
-            }
             function _getDefaultConfigYOffset() {
                 try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
-                return 0;
+                return 925;
+            }
+            function _getDefaultConfigXOffset() {
+                try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET); } catch(e) {}
+                return 120;
             }
 
             // ── Constants ──
             var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
-            var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
             var UNSECURED_SOULS_HUD_SEARCH_MS = 2000;
 
             var _loop = null;
@@ -274,23 +269,16 @@
                     }
                     return;
                 }
-                var overlayParent = overlay.GetParent ? overlay.GetParent() : null;
-                var sourcePos = _getPanelPositionRelativeToAncestor(label, overlayParent);
-                var baseX = null, baseY = null;
-                if (sourcePos && isFinite(sourcePos.x) && isFinite(sourcePos.y)) {
-                    baseX = Math.round(sourcePos.x); baseY = Math.round(sourcePos.y);
-                    State.unsecuredSouls.hudBaseX = baseX; State.unsecuredSouls.hudBaseY = baseY;
-                } else {
-                    var cachedBaseX = _readSafePanelLayoutOffset(State.unsecuredSouls.hudBaseX);
-                    var cachedBaseY = _readSafePanelLayoutOffset(State.unsecuredSouls.hudBaseY);
-                    baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
-                    baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
-                }
-                var targetX = baseX + xOffset;
+                // The overlay is bottom-left aligned.  Do not derive its position
+                // from the live Valve panel: modern HUD coordinates are in a
+                // different layout tree, which sent the copy off-screen.
+                // Keep the original QOLLOCK zero point so existing presets work.
+                var unsecuredHudBaselineX = _getDefaultConfigXOffset();
+                if (!isFinite(unsecuredHudBaselineX)) unsecuredHudBaselineX = 120;
                 var unsecuredHudBaselineY = _getDefaultConfigYOffset();
-                if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
-                var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
-                var targetY = baseY + reflectedYOffset;
+                if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 925;
+                var targetX = 115 + (xOffset - unsecuredHudBaselineX);
+                var targetY = 130 - (yOffset - unsecuredHudBaselineY);
                 if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
                     _setNativeReplacementReady(root, false);
                     if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
@@ -306,8 +294,8 @@
 
                 if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
                 _setNativeReplacementReady(root, true);
-                overlay.style.x = targetX + "px";
-                overlay.style.y = targetY + "px";
+                overlay.style.marginLeft = targetX + "px";
+                overlay.style.marginBottom = targetY + "px";
 
                 if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
                 if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
