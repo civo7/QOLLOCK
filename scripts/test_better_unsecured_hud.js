@@ -1,6 +1,7 @@
 "use strict";
 
 var assert = require("assert");
+var fs = require("fs");
 var path = require("path");
 
 function Panel(id, parent) {
@@ -63,7 +64,9 @@ function createHud(root, suffix) {
     var nativeParent = new Panel("NativeCurrencyParent" + suffix, host);
     var before = new Panel("Before" + suffix, nativeParent);
     var unsecured = new Panel("HudUnsecuredLabelContainer", nativeParent);
+    var icon = new Panel("hudUnsecuredIcon", unsecured);
     var label = new Panel("HudUnsecuredLabel", unsecured);
+    var text = new Panel("hudUnsecuredLabel", unsecured);
     var after = new Panel("After" + suffix, nativeParent);
     unsecured.style.horizontalAlign = "right";
     unsecured.style.verticalAlign = "bottom";
@@ -71,18 +74,22 @@ function createHud(root, suffix) {
     unsecured.style.y = "9px";
     unsecured.style.uiScale = "87%";
     unsecured.style.visibility = "collapse";
+    icon.style.visibility = "";
+    text.style.visibility = "";
     return {
         host: host,
         nativeParent: nativeParent,
         before: before,
         unsecured: unsecured,
+        icon: icon,
         label: label,
+        text: text,
         after: after
     };
 }
 
+var registeredName = "";
 var registered = null;
-var pollTick = null;
 var root = new Panel("Root", null);
 var first = createHud(root, "One");
 var config = {
@@ -95,17 +102,9 @@ var config = {
 global.QOL = {
     utils: { IsPanelValid: function(panel) { return !!(panel && panel.IsValid()); } },
     getGameplayHudPanel: function(panel) { return panel.FindChildTraverse("gameplay_hud"); },
-    core: {
-        FeatureRegistry: { register: function(definition) { registered = definition; } },
-        Logger: { logError: function() {}, clearThrottle: function() {} },
-        Scheduler: {
-            createPollLoop: function(tick) {
-                pollTick = tick;
-                tick();
-                return { stop: function() {} };
-            },
-            cancelAllForFeature: function() {}
-        }
+    register: function(name, definition) {
+        registeredName = name;
+        registered = definition;
     }
 };
 global.$ = {
@@ -113,27 +112,46 @@ global.$ = {
     Msg: function() {}
 };
 
-require(path.join(__dirname, "..", "panorama", "scripts", "manifests", "ql_better_unsecured_hud", "manifest.js"));
-assert(registered, "manifest should register");
+require(path.join(__dirname, "..", "panorama", "scripts", "features", "ql_feat_betterunsecuredhud.js"));
+assert(registered, "legacy feature should register");
+assert.strictEqual(registeredName, "betterUnsecuredHud");
 
-var feature = registered.create({ config: { all: function() { return config; } } });
-feature.onEnable();
+var hudXml = fs.readFileSync(path.join(__dirname, "..", "panorama", "layout", "hud.xml"), "utf8");
+assert(
+    hudXml.indexOf('<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />') !== -1,
+    "hud.xml should load the authoritative flat-config runtime"
+);
+assert(
+    hudXml.indexOf('<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />') === -1,
+    "hud.xml should not load the stale manifest runtime"
+);
+
+assert.strictEqual(registered.gate(config), true, "enabled flat config should open the legacy gate");
+registered.update(root, config);
 
 assert.strictEqual(first.unsecured.GetParent(), first.host, "live panel should move under gameplay_hud");
 assert.strictEqual(first.unsecured.style.x, "120px");
 assert.strictEqual(first.unsecured.style.y, "925px");
 assert.strictEqual(first.unsecured.style.uiScale, "120%");
 assert.strictEqual(first.unsecured.style.visibility, "collapse", "game visibility must remain native-controlled");
+assert.strictEqual(first.icon.style.visibility, "collapse");
+assert.strictEqual(first.text.style.visibility, "collapse");
 
 config.UNSECURED_SOULS_HUD_X_OFFSET = 500;
 config.UNSECURED_SOULS_HUD_Y_OFFSET = 1000;
 config.UNSECURED_SOULS_HUD_SCALE = 150;
-feature.onSettingsChanged();
+config.ENABLE_BETTER_UNSECURED_SHOW_ICON = 1;
+config.ENABLE_BETTER_UNSECURED_SHOW_TEXT = 1;
+registered.update(root, config);
 assert.strictEqual(first.unsecured.style.x, "500px");
 assert.strictEqual(first.unsecured.style.y, "1000px");
 assert.strictEqual(first.unsecured.style.uiScale, "150%");
+assert.strictEqual(first.icon.style.visibility, "visible");
+assert.strictEqual(first.text.style.visibility, "visible");
 
-feature.onDisable();
+config.ENABLE_BETTER_UNSECURED = 0;
+assert.strictEqual(registered.gate(config), true, "disabled config should keep the gate open for cleanup");
+registered.update(root, config);
 assert.strictEqual(first.unsecured.GetParent(), first.nativeParent, "disable should restore native parent");
 assert.deepStrictEqual(first.nativeParent.children, [first.before, first.unsecured, first.after], "disable should restore sibling order");
 assert.strictEqual(first.unsecured.style.horizontalAlign, "right");
@@ -142,19 +160,23 @@ assert.strictEqual(first.unsecured.style.x, "7px");
 assert.strictEqual(first.unsecured.style.y, "9px");
 assert.strictEqual(first.unsecured.style.uiScale, "87%");
 assert.strictEqual(first.unsecured.style.visibility, "collapse");
+assert.strictEqual(first.icon.style.visibility, "");
+assert.strictEqual(first.text.style.visibility, "");
+assert.strictEqual(registered.gate(config), false, "gate should close after cleanup");
 
 config.ENABLE_BETTER_UNSECURED = 1;
-feature.onEnable();
+registered.update(root, config);
 invalidateTree(first.host);
 first.host.parent = null;
 root.children.splice(root.children.indexOf(first.host), 1);
 var second = createHud(root, "Two");
-pollTick();
+registered.update(root, config);
 assert.strictEqual(second.unsecured.GetParent(), second.host, "replacement HUD panel should be adopted");
 assert.strictEqual(second.unsecured.style.x, "500px");
 assert.strictEqual(second.unsecured.style.y, "1000px");
 
-feature.onDisable();
+config.ENABLE_BETTER_UNSECURED = 0;
+registered.update(root, config);
 assert.strictEqual(second.unsecured.GetParent(), second.nativeParent, "replacement panel should also restore");
 
 console.log("Unsecured Plus regression test passed.");

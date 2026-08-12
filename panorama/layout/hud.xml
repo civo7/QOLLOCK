@@ -65,8 +65,8 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
-		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
+		<!-- Unsecured Plus stays on the authoritative flat-config runtime. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
 		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
@@ -116,7 +116,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />
+		<!-- Disabled: manifest ConfigStore could remain off while the legacy toggle was on. -->
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
