@@ -124,6 +124,22 @@
                 return _isPanelValid(label) ? label : null;
             }
 
+            // A Panorama panel can stay IsValid() after a HUD transition while
+            // no longer belonging to the current context.  Treat it as stale:
+            // otherwise the native counter is hidden for an overlay that cannot
+            // be drawn in the new match.
+            function _isPanelInCurrentRoot(panel, root) {
+                if (!_isPanelValid(panel) || !_isPanelValid(root)) return false;
+                var current = panel;
+                var guard = 0;
+                while (current && guard < 96) {
+                    if (current === root) return true;
+                    current = current.GetParent ? current.GetParent() : null;
+                    guard++;
+                }
+                return false;
+            }
+
             function _findContainer(root) {
                 var PANEL_ID_GOLD_AP_CONTAINER = _getPanelIdGoldApContainer();
                 if (!root) return null;
@@ -198,6 +214,16 @@
             function _ensureOverlay(root) {
                 var State = _getState();
                 var overlay = _getCachedPanel("betterUnsecuredOverlay");
+                if (!_isPanelInCurrentRoot(overlay, root)) {
+                    overlay = null;
+                    _setCachedPanel("betterUnsecuredOverlay", null);
+                    if (State && State.unsecuredSouls) {
+                        State.unsecuredSouls.hudMirrorLabel = null;
+                        State.unsecuredSouls.hudMirrorIcon = null;
+                        State.unsecuredSouls.hudMirrorText = null;
+                        State.unsecuredSouls.hudStyleSig = "";
+                    }
+                }
                 if (!overlay) {
                     overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
                     if (!overlay) {
@@ -220,9 +246,9 @@
                 }
                 if (!State) return overlay;
                 if (!State.unsecuredSouls) State.unsecuredSouls = {};
-                var mirrorLabel = _isPanelValid(State.unsecuredSouls.hudMirrorLabel) ? State.unsecuredSouls.hudMirrorLabel : null;
-                var mirrorIcon = _isPanelValid(State.unsecuredSouls.hudMirrorIcon) ? State.unsecuredSouls.hudMirrorIcon : null;
-                var mirrorText = _isPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
+                var mirrorLabel = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorLabel, root) ? State.unsecuredSouls.hudMirrorLabel : null;
+                var mirrorIcon = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorIcon, root) ? State.unsecuredSouls.hudMirrorIcon : null;
+                var mirrorText = _isPanelInCurrentRoot(State.unsecuredSouls.hudMirrorText, root) ? State.unsecuredSouls.hudMirrorText : null;
                 if (!mirrorLabel && overlay && overlay.FindChildTraverse) {
                     mirrorLabel = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
                     if (mirrorLabel && mirrorLabel.AddClass && !mirrorLabel.BHasClass("death_penalty_gold")) mirrorLabel.AddClass("death_penalty_gold");
@@ -255,6 +281,11 @@
             function _applyLayout(overlay, mirrorLabel, mirrorIcon, mirrorText, label, panel, root, cfg, scale, xOffset, yOffset, fontPx, showIcon, showText) {
                 var State = _getState();
                 if (!State) return;
+                if (!_isPanelInCurrentRoot(overlay, root) || !_isPanelInCurrentRoot(mirrorLabel, root) || !_isPanelInCurrentRoot(mirrorIcon, root) || !_isPanelInCurrentRoot(mirrorText, root)) {
+                    _setNativeReplacementReady(root, false);
+                    State.unsecuredSouls.hudStyleSig = "";
+                    return;
+                }
                 var sourceText = (typeof label.text === "string") ? label.text : "";
                 var sourceTextLabel = _findTextLabel(root, panel);
                 var unsecuredText = (sourceTextLabel && typeof sourceTextLabel.text === "string" && sourceTextLabel.text.length > 0) ? sourceTextLabel.text : "UNSECURED";
@@ -323,7 +354,13 @@
                     if (!State.unsecuredSouls) State.unsecuredSouls = {};
 
                     var panel = _getCachedPanel("unsecuredSoulsHudContainer");
-                    var label = _isPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
+                    if (!_isPanelInCurrentRoot(panel, root)) {
+                        panel = null;
+                        _setCachedPanel("unsecuredSoulsHudContainer", null);
+                        State.unsecuredSouls.hudLabel = null;
+                        State.unsecuredSouls.hudStyleSig = "";
+                    }
+                    var label = _isPanelInCurrentRoot(State.unsecuredSouls.hudLabel, root) ? State.unsecuredSouls.hudLabel : null;
 
                     if (!enabled) {
                         _setNativeReplacementReady(root, false);
