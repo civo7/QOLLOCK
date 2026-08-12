@@ -42,3 +42,21 @@ Project expectation:
 - compile changed files
 - pack
 - launch Deadlock once at the end
+
+## Publishing a public release
+
+QOLLOCK's Settings version does not change for every release, so it is **not**
+used to detect updates. Before publishing a build to GitHub, Discord or another
+public channel, use the public [qollock-updates](https://github.com/Predi-i/qollock-updates)
+repository:
+
+1. Read its **Current release marker** and choose the next whole number.
+2. Set `QOL_UPDATE_MARKER` in `panorama/scripts/ql_update_checker.js` to that
+   same number.
+3. In the public repository's **Actions** tab, run **Publish QOLLOCK update
+   marker** with that number. Leave `Dry run` off.
+4. Wait for the workflow's green checkmark, then pack and publish QOLLOCK.
+
+The Action creates the new current marker, retires all old markers and updates
+its README automatically. No image editing or manual upload is required. Do
+this for every public release, even when the Settings version remains `3.1.9`.
