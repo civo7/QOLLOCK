@@ -126,7 +126,8 @@
         if (layoutSig !== State.zipBoostLastLayoutSig) {
             overlay.style.marginLeft = (-520 + zipOffsetX) + "px";
             overlay.style.marginBottom = (20 + zipOffsetY) + "px";
-            overlay.style.preTransformScale2d = (zipScale / 100).toFixed(2);
+            // Keep text and the vtex icon crisp: ui-scale is layout-time scaling.
+            overlay.style.uiScale = zipScale + "%";
             State.zipBoostLastLayoutSig = layoutSig;
         }
 

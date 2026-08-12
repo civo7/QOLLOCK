@@ -221,7 +221,9 @@
                     if (layoutSig !== st.lastLayoutSig) {
                         try { overlay.style.marginLeft = (BASE_X + offX) + "px"; } catch(e) {}
                         try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) {}
-                        try { overlay.style.preTransformScale2d = (scale / 100).toFixed(2); } catch(e) {}
+                        // Keep a future manifest cut-over crisp as well: ui-scale is
+                        // layout-time scaling, unlike the blurry transform raster.
+                        try { overlay.style.uiScale = scale + "%"; } catch(e) {}
                         _setOpacitySafe(overlay, opacity, 1); st.lastLayoutSig = layoutSig;
                     }
 
