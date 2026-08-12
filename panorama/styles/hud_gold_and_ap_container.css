@@ -76,17 +76,17 @@
 	ui-scale: 110%;
 }
 
-.better_unsecured_active #hudUnsecuredLabel
+.better_unsecured_ready #hudUnsecuredLabel,.better_unsecured_ready #HudUnsecuredLabel
 {
 	visibility: collapse;
 }
 
-.better_unsecured_active #hudDeathGoldIcon
+.better_unsecured_ready #hudDeathGoldIcon
 {
 	visibility: collapse;
 }
 
-.better_unsecured_active #hudDealthGoldLabel,.better_unsecured_active #hudDeathGoldLabel
+.better_unsecured_ready #hudDealthGoldLabel,.better_unsecured_ready #hudDeathGoldLabel
 {
 	visibility: collapse;
 }

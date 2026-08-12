@@ -3,8 +3,8 @@
 // QOLLOCK — Better Unsecured HUD (Mirrored Unsecured Souls Overlay)
 // =============================================================================
 // OWNS:        QOLBetterUnsecuredOverlay with mirrored icon/label/text.
-//              Positional mirroring relative to game's hudDeathGoldContainer.
-// DOES NOT OWN: gameplay_hud (Valve), hudDeathGoldContainer (Valve)
+//              Positional mirroring relative to the game's Unsecured label.
+// DOES NOT OWN: gameplay_hud (Valve), HudUnsecuredLabel (Valve)
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler,
 //              QOL delegates: getCachedPanel, setCachedPanel, state, utils,
 //              getGameplayHudPanel, parseUnsecuredSoulsValue, panelIdGoldApContainer
@@ -123,9 +123,22 @@
                 return Math.max(0, Math.round(_parseSpmNumber(sourceText)));
             }
 
+            function _findModernUnsecuredLabel(root) {
+                if (!root || !root.FindChildTraverse) return null;
+                var label = root.FindChildTraverse("HudUnsecuredLabel");
+                return _isPanelValid(label) ? label : null;
+            }
+
             function _findContainer(root) {
                 var PANEL_ID_GOLD_AP_CONTAINER = _getPanelIdGoldApContainer();
                 if (!root) return null;
+
+                // August 2026 HUD: the Unsecured counter is no longer the
+                // death-gold label.  It lives in its own HudUnsecuredLabelContainer.
+                var modernLabel = _findModernUnsecuredLabel(root);
+                if (modernLabel) return modernLabel.GetParent ? modernLabel.GetParent() : modernLabel;
+
+                // Pre-August HUD fallback kept for older game builds.
                 var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
                 if (goldContainer && goldContainer.FindChildrenWithClassTraverse) {
                     var goldContainers = goldContainer.FindChildrenWithClassTraverse("hudDeathGoldContainer") || [];
@@ -141,7 +154,12 @@
             }
 
             function _findLabel(root, container) {
-                var label = null;
+                // Prefer the current Unsecured value.  The old implementation
+                // accidentally mirrored hudDeathGoldLabel ("ITEM VALUE"), so it
+                // always received 0 while CSS hid the real Unsecured counter.
+                var label = _findModernUnsecuredLabel(root);
+                if (label) return label;
+
                 if (container && container.FindChildTraverse) {
                     label = container.FindChildTraverse("hudDeathGoldLabel");
                     if (!label) label = container.FindChildTraverse("hudDealthGoldLabel");
@@ -161,6 +179,18 @@
                 if (!_isPanelValid(label)) return null;
                 if (label.BHasClass && !label.BHasClass("death_penalty_gold")) return null;
                 return label;
+            }
+
+            function _getMirrorValueText(sourceText, sourceValue) {
+                // The current HUD supplies "16 UNSECURED" in one label.  The
+                // mirror has a separate optional title, so only copy the number.
+                var match = String(sourceText || "").match(/[+-]?\d[\d,.\s]*(?:[kmb])?/i);
+                if (match && match[0]) return match[0].replace(/\s/g, "");
+                return String(sourceValue);
+            }
+
+            function _setNativeReplacementReady(root, ready) {
+                if (root && root.SetHasClass) root.SetHasClass("better_unsecured_ready", !!ready);
             }
 
             function _findTextLabel(root, container) {
@@ -236,6 +266,7 @@
                 var sourceValue = _parseUnsecuredSouls(sourceText);
                 if (!isFinite(sourceValue)) sourceValue = 0;
                 if (sourceValue <= 0) {
+                    _setNativeReplacementReady(root, false);
                     var zeroSig = "hidden_zero|" + sourceText;
                     if (State.unsecuredSouls.hudStyleSig !== zeroSig) {
                         if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
@@ -261,14 +292,20 @@
                 var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
                 var targetY = baseY + reflectedYOffset;
                 if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
+                    _setNativeReplacementReady(root, false);
                     if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
                     State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
                     return;
                 }
-                var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
-                if (sig === State.unsecuredSouls.hudStyleSig) return;
+                var mirrorValueText = _getMirrorValueText(sourceText, sourceValue);
+                var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + mirrorValueText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
+                if (sig === State.unsecuredSouls.hudStyleSig) {
+                    _setNativeReplacementReady(root, true);
+                    return;
+                }
 
                 if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
+                _setNativeReplacementReady(root, true);
                 overlay.style.x = targetX + "px";
                 overlay.style.y = targetY + "px";
 
@@ -276,7 +313,7 @@
                 if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
                 if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
 
-                if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
+                if (mirrorLabel.text !== mirrorValueText) mirrorLabel.text = mirrorValueText;
                 if (!mirrorLabel.BHasClass || !mirrorLabel.BHasClass("qol-hidden")) { if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible"; }
                 mirrorLabel.style.fontSize = fontPx + "px";
                 mirrorLabel.style.x = "0px";
@@ -301,6 +338,7 @@
                     var label = _isPanelValid(State.unsecuredSouls.hudLabel) ? State.unsecuredSouls.hudLabel : null;
 
                     if (!enabled) {
+                        _setNativeReplacementReady(root, false);
                         _removeOverlay(root);
                         State.unsecuredSouls.hudLabel = null;
                         State.unsecuredSouls.hudMirrorLabel = null;
@@ -320,6 +358,7 @@
                         }
                     }
                     if (!panel) {
+                        _setNativeReplacementReady(root, false);
                         State.unsecuredSouls.hudMirrorLabel = null;
                         State.unsecuredSouls.hudMirrorIcon = null;
                         State.unsecuredSouls.hudMirrorText = null;
@@ -340,6 +379,7 @@
                     var mirrorText = _isPanelValid(State.unsecuredSouls.hudMirrorText) ? State.unsecuredSouls.hudMirrorText : null;
 
                     if (!label) {
+                        _setNativeReplacementReady(root, false);
                         if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
                         State.unsecuredSouls.hudStyleSig = "";
                         return;
@@ -375,6 +415,7 @@
                     if (S) S.cancelAllForFeature("ql_better_unsecured_hud");
                     logger.clearThrottle("ql_better_unsecured_hud");
                     var root = $.GetContextPanel();
+                    _setNativeReplacementReady(root, false);
                     _removeOverlay(root);
                     _setCachedPanel("unsecuredSoulsHudContainer", null);
                     var State = _getState();
