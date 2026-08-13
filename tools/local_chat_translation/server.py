@@ -7,6 +7,7 @@ import hashlib
 import html
 import io
 import json
+import re
 import threading
 import urllib.error
 import urllib.parse
@@ -17,10 +18,17 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+try:
+    import winreg
+except ImportError:  # pragma: no cover - helper is normally run on Windows
+    winreg = None
+
 
 MAX_TEXT_BYTES = 500
 MAX_CACHE_ITEMS = 256
 RENDER_SCALE = 2
+OWNER_ACCOUNT_ID = "841196165"
+STEAM64_ACCOUNT_BASE = 76561197960265728
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 FONT_CANDIDATES = (
     Path("C:/Program Files (x86)/Steam/steamapps/common/Deadlock/game/citadel/panorama/fonts/valveoracle-semibold.ttf"),
@@ -40,6 +48,60 @@ class TranslationService:
         self._translation_lock = threading.Lock()
         self._font = self._load_font(15 * RENDER_SCALE)
         self._indicator_font = self._load_font(11 * RENDER_SCALE)
+        self._owner_authorized: bool | None = None
+        self._owner_lock = threading.Lock()
+
+    def owner_authorized(self) -> bool:
+        """Resolve Steam's most-recent account once, then latch for this process."""
+        with self._owner_lock:
+            if self._owner_authorized is not None:
+                return self._owner_authorized
+            account_id = self._read_active_steam_account_id()
+            self._owner_authorized = account_id == OWNER_ACCOUNT_ID
+            print(
+                "[translation] owner gate: "
+                f"account={account_id or 'unavailable'} enabled={self._owner_authorized}"
+            )
+            return self._owner_authorized
+
+    @staticmethod
+    def _read_active_steam_account_id() -> str:
+        if winreg is not None:
+            try:
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Valve\Steam\ActiveProcess",
+                ) as key:
+                    active_user = int(winreg.QueryValueEx(key, "ActiveUser")[0])
+                    if active_user > 0:
+                        return str(active_user)
+            except (OSError, TypeError, ValueError):
+                pass
+
+        candidates = (
+            Path("C:/Program Files (x86)/Steam/config/loginusers.vdf"),
+            Path("C:/Program Files/Steam/config/loginusers.vdf"),
+        )
+        for path in candidates:
+            if not path.exists():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            account_blocks = re.finditer(
+                r'"(\d{17})"\s*\{(.*?)(?=\n\s*"\d{17}"\s*\{|\Z)',
+                text,
+                re.DOTALL,
+            )
+            for match in account_blocks:
+                if not re.search(r'"MostRecent"\s+"1"', match.group(2)):
+                    continue
+                steam64 = int(match.group(1))
+                account_id = steam64 - STEAM64_ACCOUNT_BASE
+                if account_id > 0:
+                    return str(account_id)
+        return ""
 
     @staticmethod
     def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -170,10 +232,19 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/health":
-            self._send_json(200, {"ok": True, "backend": "mymemory", "bind": "localhost"})
+            self._send_json(200, {
+                "ok": True,
+                "backend": "mymemory",
+                "bind": "localhost",
+                "owner_authorized": SERVICE.owner_authorized(),
+            })
             return
         if parsed.path != "/translate.webp":
             self._send_json(404, {"error": "not found"})
+            return
+
+        if not SERVICE.owner_authorized():
+            self._send_json(403, {"error": "translation is disabled for this Steam account"})
             return
 
         params = urllib.parse.parse_qs(parsed.query)

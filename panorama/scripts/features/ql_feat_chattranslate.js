@@ -13,46 +13,64 @@
     var TryReadAccountIdFromKnownPartyPath = _deps.tryReadAccountIdFromKnownPartyPath;
     var ENDPOINT = "http://127.0.0.1:8765/translate.webp";
     var OWNER_ACCOUNT_ID = "841196165";
-    var OWNER_IGN = "breadrollius";
+    var OWNER_LATCH_ATTR = "QOL_LocalTranslationOwner_v1";
+    var OWNER_RESOLVE_INTERVAL_MS = 250;
+    var OWNER_RESOLVE_TIMEOUT_MS = 15000;
     var CYRILLIC_RE = /[\u0400-\u04FF]/;
     var MAX_TEXT_BYTES_APPROX = 480;
-    var TOP_RETAINED_MESSAGES = 6;
-    var BOTTOM_RETAINED_MESSAGES = 10;
+    var MAX_CACHED_MESSAGE_PANELS = 256;
     var ACTIVE_SCAN_DELAY_MS = 200;
     var IDLE_SCAN_MAX_DELAY_MS = 2000;
 
-    function ReadLocalPlayerName(root) {
-        if (!root || !root.FindChildTraverse) return "";
-        var partyContainer = root.FindChildTraverse("CitadelPartyContainer");
-        var party = partyContainer && partyContainer.FindChildTraverse ? partyContainer.FindChildTraverse("CitadelParty") : null;
-        var localPlayer = party && party.FindChildTraverse ? party.FindChildTraverse("LocalPlayer") : null;
-        if (!localPlayer) return "";
-        var ids = ["PlayerName", "PersonaName", "Username", "UserName"];
-        for (var i = 0; i < ids.length; i++) {
-            var label = localPlayer.FindChildTraverse ? localPlayer.FindChildTraverse(ids[i]) : null;
-            if (label && label.text) return String(label.text).trim().toLowerCase();
+    function FindHudPanel(root) {
+        if (!root || !root.FindChildTraverse) return null;
+        try { return root.FindChildTraverse("Hud"); } catch(e) { return null; }
+    }
+
+    function ReadPersistedOwnerLatch(root) {
+        var panels = [root, FindHudPanel(root)];
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i];
+            if (!panel || !panel.GetAttributeString) continue;
+            var value = "";
+            try { value = String(panel.GetAttributeString(OWNER_LATCH_ATTR, "") || ""); } catch(e) { value = ""; }
+            if (value === "1") return true;
+            if (value === "0") return false;
         }
-        return "";
+        return null;
+    }
+
+    function WritePersistedOwnerLatch(root, enabled) {
+        var value = enabled ? "1" : "0";
+        var panels = [root, FindHudPanel(root)];
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i];
+            if (!panel || !panel.SetAttributeString) continue;
+            try { panel.SetAttributeString(OWNER_LATCH_ATTR, value); } catch(e) { /* panel deleted mid-frame */ }
+        }
     }
 
     function ResolveOwnerMatch(root, nowMs) {
         if (State.localTranslationOwnerMatch === true || State.localTranslationOwnerMatch === false) {
             return State.localTranslationOwnerMatch;
         }
+        var persisted = ReadPersistedOwnerLatch(root);
+        if (persisted === true || persisted === false) {
+            State.localTranslationOwnerMatch = persisted;
+            return persisted;
+        }
+        if (!State.localTranslationOwnerResolveDeadlineMs) {
+            State.localTranslationOwnerResolveDeadlineMs = nowMs + OWNER_RESOLVE_TIMEOUT_MS;
+        }
+        if (nowMs >= State.localTranslationOwnerResolveDeadlineMs) return false;
         if (nowMs < (Number(State.localTranslationOwnerNextCheckMs) || 0)) return false;
-        State.localTranslationOwnerNextCheckMs = nowMs + 2000;
+        State.localTranslationOwnerNextCheckMs = nowMs + OWNER_RESOLVE_INTERVAL_MS;
         var accountId = "";
         try { accountId = String(TryReadAccountIdFromKnownPartyPath(root) || ""); } catch(eId) { accountId = ""; }
-        if (accountId) {
-            State.localTranslationOwnerMatch = accountId === OWNER_ACCOUNT_ID;
-            return State.localTranslationOwnerMatch;
-        }
-        var playerName = ReadLocalPlayerName(root);
-        if (playerName) {
-            State.localTranslationOwnerMatch = playerName === OWNER_IGN;
-            return State.localTranslationOwnerMatch;
-        }
-        return false;
+        if (!accountId) return false;
+        State.localTranslationOwnerMatch = accountId === OWNER_ACCOUNT_ID;
+        WritePersistedOwnerLatch(root, State.localTranslationOwnerMatch);
+        return State.localTranslationOwnerMatch;
     }
 
     function GetContainer(root, cacheKey, panelId) {
@@ -137,29 +155,24 @@
             State[cacheKey] = cache;
         }
         var messages = container.FindChildrenWithClassTraverse("ChatMessage") || [];
-        var retainedCount = isBottom ? BOTTOM_RETAINED_MESSAGES : TOP_RETAINED_MESSAGES;
-        var firstRetained = Math.max(0, messages.length - retainedCount);
+        // Panorama traversal order is not chronological in either chatbox.
+        // Only discard panels the engine has actually deleted; slicing either
+        // end of this array can remove currently visible translated messages.
         for (var cacheIndex = cache.length - 1; cacheIndex >= 0; cacheIndex--) {
-            var retained = false;
-            for (var recentIndex = firstRetained; recentIndex < messages.length; recentIndex++) {
-                if (cache[cacheIndex] && cache[cacheIndex].panel === messages[recentIndex]) {
-                    retained = true;
-                    break;
-                }
-            }
-            if (!retained) {
+            if (!cache[cacheIndex] || !IsPanelValid(cache[cacheIndex].panel)) {
                 DeleteInjected(cache[cacheIndex]);
                 cache.splice(cacheIndex, 1);
             }
         }
-        for (var i = firstRetained; i < messages.length; i++) {
+        for (var i = 0; i < messages.length; i++) {
             var msg = messages[i];
             if (!IsPanelValid(msg)) continue;
             var label = FindChatMessageLabel(msg);
             if (!IsPanelValid(label)) continue;
             var text = label.text ? String(label.text).trim() : "";
             var entry = FindEntry(cache, msg);
-            if (entry && entry.text === text) continue;
+            var needsTranslation = !!text && CYRILLIC_RE.test(text) && ApproxUtf8Length(text) <= MAX_TEXT_BYTES_APPROX;
+            if (entry && entry.text === text && (!needsTranslation || IsPanelValid(entry.image))) continue;
             if (!entry) {
                 entry = { panel: msg, text: "", image: null, label: null };
                 cache.push(entry);
@@ -167,10 +180,10 @@
                 DeleteInjected(entry);
             }
             entry.text = text;
-            if (!text || !CYRILLIC_RE.test(text) || ApproxUtf8Length(text) > MAX_TEXT_BYTES_APPROX) continue;
+            if (!needsTranslation) continue;
             InjectTranslation(msg, label, text, entry, isBottom);
         }
-        while (cache.length > retainedCount) {
+        while (cache.length > MAX_CACHED_MESSAGE_PANELS) {
             DeleteInjected(cache[0]);
             cache.shift();
         }
@@ -190,6 +203,11 @@
             var idleMisses = Math.min(8, (Number(State[idleKey]) || 0) + 1);
             State[idleKey] = idleMisses;
             State[nextScanKey] = nowMs + Math.min(IDLE_SCAN_MAX_DELAY_MS, ACTIVE_SCAN_DELAY_MS + (idleMisses * 225));
+            // The bottom ChatMessages panel nests ChatMessage rows below direct
+            // children, so its shallow watermark can remain unchanged when a
+            // message arrives. The retained-row cache makes this periodic scan
+            // cheap while guaranteeing both chatboxes eventually see each row.
+            ProcessContainer(container, cacheKey, isBottom);
             return;
         }
         State[watermarkKey] = watermark;
@@ -221,7 +239,8 @@
                     "localTranslationTopCache", "localTranslationBottomCache",
                     "localTranslationTopNextScanMs", "localTranslationBottomNextScanMs",
                     "localTranslationTopIdleMisses", "localTranslationBottomIdleMisses",
-                    "localTranslationOwnerMatch", "localTranslationOwnerNextCheckMs"]
+                    "localTranslationOwnerMatch", "localTranslationOwnerNextCheckMs",
+                    "localTranslationOwnerResolveDeadlineMs"]
     });
 
     try {

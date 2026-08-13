@@ -741,7 +741,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	border-radius: 5px;
 	border-top-right-radius: 15px;
 	border-bottom-right-radius: 15px;
-	height: 31px;
+	height: 31.5px;
 	margin-top: 8px;
 	x: 65px;
 }
@@ -758,7 +758,7 @@ CitadelHudTopBarPlayer:not(.HealthVisible) #HeroContents
 	border-radius: 5px;
 	border-top-left-radius: 15px;
 	border-bottom-left-radius: 15px;
-	height: 31px;
+	height: 31.5px;
 	margin-top: 8px;
 	x: -65px;
 }
