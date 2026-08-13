@@ -6399,16 +6399,29 @@ function GetUIRoot() {
     }
 
     function EnsureShopFavoritesNavActive(root, nowMs, stateField, cooldownMs) {
-        var favoritesNav = FindShopFavoritesNavButton(root);
-        if (!favoritesNav || !IsPanelValid(favoritesNav)) {
-            SetCachedPanel("shopFavoritesNavButton", null);
-            return false;
-        }
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var field = stateField ? String(stateField) : "";
         var cd = Number(cooldownMs);
         if (!isFinite(cd) || cd < 0) cd = BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS;
         if (field.length > 0 && !QOL.shouldRunBuildCategoryPayloadUiAction(now, field, cd)) {
+            return false;
+        }
+        // Direct engine call (verified JS binding): switch shop mods to Favorites tab.
+        // Requires the shop to already be open.
+        if (IsHudClassActive(root, "gShopOpen")) {
+            try {
+                if (typeof CitadelShopModsActivate === "function" && typeof EItemSlotType_Favorites !== "undefined") {
+                    CitadelShopModsActivate(EItemSlotType_Favorites);
+                    return true;
+                }
+            } catch (eDirect) {
+                QOL_WARN("core", "CitadelShopModsActivate failed: " + (eDirect && eDirect.message ? eDirect.message : String(eDirect || "")));
+            }
+        }
+        // Fallback: activate the Favorites nav panel directly.
+        var favoritesNav = FindShopFavoritesNavButton(root);
+        if (!favoritesNav || !IsPanelValid(favoritesNav)) {
+            SetCachedPanel("shopFavoritesNavButton", null);
             return false;
         }
         return ActivatePanelSafe(favoritesNav);
@@ -6425,22 +6438,20 @@ function GetUIRoot() {
         var opened = false;
         if ((State.openItemShopLastMs || 0) > now - 1000) return false;
         State.openItemShopLastMs = now;
-        // open_item_shop is the only confirmed working path in the current game build.
-        // It routes via CitadelConCommand -> RunConCommand -> Engine ClientCmd,
-        // which sends the predicted command to the server's ClientCommand dispatcher.
-        // CitadelOpenUpgradeShop is a type-0 notification event (native->JS), not an
-        // action. CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist
-        // in any decompiled DLL (0 occurrences in client.dll, server.dll).
+        // CitadelOpenUpgradeShop is a registered Panorama JS action (arg count 0),
+        // verified in client.dll (registered by FUN_1801adc40 via FUN_181ee3c90).
+        // Try it first; fall back to the open_item_shop console command (the B-key
+        // input-action path, CitadelConCommand -> RunConCommand -> Engine ClientCmd).
+        // CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist in any
+        // decompiled DLL (0 occurrences in client.dll, server.dll).
+        try {
+            if (typeof CitadelOpenUpgradeShop === "function") {
+                CitadelOpenUpgradeShop();
+                opened = true;
+            }
+        } catch (e0) { QOL_WARN("core", "CitadelOpenUpgradeShop failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         if (!opened) {
             opened = QOL.dispatchCitadelConCommand("open_item_shop");
-        }
-        if (!opened) {
-            try {
-                if (typeof CitadelOpenUpgradeShop === "function") {
-                    CitadelOpenUpgradeShop();
-                    opened = true;
-                }
-            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         }
         if (!opened) {
             try {
@@ -7668,9 +7679,16 @@ function GetUIRoot() {
             if (IsBrowseBuildsPopupOpen(root)) return true;
         }
 
-        // Method 2: dispatch CitadelOpenBuildBrowser (real event confirmed in
-        // client.dll dispatch table — decomp verified, Aug 2026).
-        try { $.DispatchEvent("CitadelOpenBuildBrowser"); } catch(e) { QOL_WARN("core", "CitadelOpenBuildBrowser dispatch failed: " + (e && e.message ? e.message : String(e || ""))); }
+        // Method 2: CitadelOpenBuildBrowser is a JS-callable script function with
+        // arg count 1 (int tab filter: 1=MyBuilds, 2=PublicBuilds — matches
+        // CitadelBuildBrowserSetTabFilter in citadel_ui_build_selector.xml). It must
+        // be called directly; bare $.DispatchEvent with 0 args throws "Invalid number
+        // of arguments for event in DispatchEvent".
+        try {
+            if (typeof CitadelOpenBuildBrowser === "function") {
+                CitadelOpenBuildBrowser(1);
+            }
+        } catch(e) { QOL_WARN("core", "CitadelOpenBuildBrowser failed: " + (e && e.message ? e.message : String(e || ""))); }
         if (IsBrowseBuildsPopupOpen(root)) return true;
 
         return IsBrowseBuildsPopupOpen(root);

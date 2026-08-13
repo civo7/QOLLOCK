@@ -381,18 +381,77 @@
     }
 
     // ── API calls (verified real APIs only) ──
+    var _diagLastLogMs = 0;
     function _openBuildBrowser(root) {
-        // Use the proven QOL delegate which tries the BrowseBuilds button
-        // first, then falls back to CitadelOpenBuildBrowser dispatch.
-        // Bare dispatch alone is unreliable — the button-click path is
-        // what the old loader uses and what works in practice.
+        // DIAGNOSTIC (Aug 2026): the PopupBuildBrowser is native-wired with no
+        // clean JS open hook. Try every candidate open method and log which one
+        // (if any) makes the popup detectable. Throttled to 1 log/sec.
+        var now = _now();
+        var logThis = (now - _diagLastLogMs) >= 1000;
+        var opened = false;
+        var winner = "";
+
+        // A — CitadelOpenBuildBrowser(0): int arg 0 (maybe "browse public" mode).
         try {
-            var fn = _qol("tryOpenBuildBrowserPopup");
-            if (typeof fn === "function") return fn(root);
-        } catch(e) {}
-        // Fallback if delegate is unavailable
-        try { $.DispatchEvent("CitadelOpenBuildBrowser"); } catch(e) {}
-        return _isPopupOpen(root);
+            if (typeof CitadelOpenBuildBrowser === "function") { CitadelOpenBuildBrowser(0); }
+        } catch(e0) {}
+        if (_isPopupOpen(root)) { winner = "CitadelOpenBuildBrowser(0)"; opened = true; }
+
+        // B — CitadelOpenBuildBrowser(1): int arg 1 (maybe "my builds" mode).
+        if (!opened) {
+            try {
+                if (typeof CitadelOpenBuildBrowser === "function") { CitadelOpenBuildBrowser(1); }
+            } catch(e1) {}
+            if (_isPopupOpen(root)) { winner = "CitadelOpenBuildBrowser(1)"; opened = true; }
+        }
+
+        // C — CitadelHudHeroBuildsToggleFavoriteSelector(): shop build-header toggle.
+        if (!opened) {
+            try {
+                if (typeof CitadelHudHeroBuildsToggleFavoriteSelector === "function") { CitadelHudHeroBuildsToggleFavoriteSelector(); }
+            } catch(e2) {}
+            if (_isPopupOpen(root)) { winner = "ToggleFavoriteSelector"; opened = true; }
+        }
+
+        // D — Direct panel show: remove Hidden class + set visible + refresh.
+        if (!opened) {
+            try {
+                var popup = _find(root, "PopupBuildBrowser");
+                if (_alive(popup)) {
+                    try { if (typeof popup.RemoveClass === "function") popup.RemoveClass("Hidden"); } catch(e3a) {}
+                    try { popup.visible = true; } catch(e3b) {}
+                    try { if (popup.style) popup.style.visibility = "visible"; } catch(e3c) {}
+                    if (typeof CitadelBuildBrowserRefresh === "function") {
+                        try { CitadelBuildBrowserRefresh(true); } catch(e3d) {}
+                    }
+                }
+            } catch(e3) {}
+            if (_isPopupOpen(root)) { winner = "direct-show"; opened = true; }
+        }
+
+        // E — Original QOL delegate (BrowseBuilds button click + more).
+        if (!opened) {
+            try {
+                var fn = _qol("tryOpenBuildBrowserPopup");
+                if (typeof fn === "function") { fn(root); }
+            } catch(e4) {}
+            if (_isPopupOpen(root)) { winner = "delegate"; opened = true; }
+        }
+
+        if (logThis) {
+            _diagLastLogMs = now;
+            var popupPanel = _find(root, "PopupBuildBrowser");
+            var cls = "";
+            try { cls = (popupPanel && _alive(popupPanel) && typeof popupPanel.GetAttributeString === "function") ? String(popupPanel.GetAttributeString("class", "") || "") : ""; } catch(eC) {}
+            $.Msg("[QOLLock][ql_build_payload][DIAG] open result: opened=" + (opened ? "1" : "0") +
+                " winner=" + (winner || "-") +
+                " popupFound=" + (_alive(popupPanel) ? "1" : "0") +
+                " popupClass=\"" + cls + "\"");
+        }
+        if (opened && winner) {
+            $.Msg("[QOLLock][ql_build_payload][DIAG] POPUP OPENED via " + winner);
+        }
+        return opened;
     }
     function _callCreateNewBuild() {
         if (typeof CitadelHudHeroBuildsCreateNewBuild === "function") {
@@ -450,54 +509,17 @@
             st._favTabDone = true;
         }
 
-        // Need to open the build browser
-        if (!_isPopupOpen(root)) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: popup closed, opening...");
-            _openBuildBrowser(root);
-            return false; // Wait for popup to render
-        }
-
-        $.Msg("[QOLLock][ql_build_payload] ensure: popup open, checking items...");
-
-        // No payload token found — need a fresh Skyrunner build. Existing builds
-        // in the list may belong to other heroes or have no writable categories,
-        // which causes the save pipeline to lock onto the wrong target.
-        // CitadelHudHeroBuildsCreateNewBuild() creates a build with one default
-        // category, giving the save pipeline a clean writable target.
+        // No payload — create a fresh Skyrunner build via the JS-callable
+        // CitadelHudHeroBuildsCreateNewBuild() (arg 0). Verified in-game: works
+        // from the shop with no popup. Fire-and-forget — the build is an empty
+        // target the SAVE pipeline populates later; LOAD proceeds to apply
+        // defaults since there is no payload to read yet.
         if (!st.createAttempted) {
-            if (_isPopupOpen(root)) {
-                $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild");
-                _callCreateNewBuild();
-                st.createAttempted = true;
-                st.createStarted = now;
-            }
-            return false; // Wait for create + popup re-open
+            $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild (shop path)");
+            _callCreateNewBuild();
+            st.createAttempted = true;
         }
-
-        // Create was triggered — wait for items to appear. The create button's
-        // onmouseactivate closes the popup as a side effect, so we may need to
-        // re-open it.
-        var items = _buildListItems(root);
-        $.Msg("[QOLLock][ql_build_payload] ensure: items=" + String(items.length) + " after create");
-        if (items.length === 0) {
-            // Popup may have closed — re-open it
-            if (!_isPopupOpen(root)) _openBuildBrowser(root);
-            return false;
-        }
-
-        // Select the newly created (first) build
-        if (!st.selectAttempted) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: selecting first build item");
-            var fn = _qol("activatePanelSafe");
-            if (typeof fn === "function") {
-                try { fn(items[0]); st.selectAttempted = true; } catch(e) {}
-            }
-            return false;
-        }
-
-        // New build selected — proceed. The save pipeline will have a clean
-        // Skyrunner target with a writable category.
-        $.Msg("[QOLLock][ql_build_payload] ensure: fresh build ready, proceeding to read");
+        $.Msg("[QOLLock][ql_build_payload] ensure: fresh build requested, proceeding to read");
         return true;
     }
 
@@ -796,10 +818,13 @@
 
                         case "confirm_storage":
                             // Ensure shop is open — signature confirmation needs the
-                            // shop panels visible. OLD drove this via open_item_shop
-                            // + EnsureStoragePayloadSourceVisibleReadOnly.
+                            // shop panels visible. Try the CitadelOpenUpgradeShop JS
+                            // action (verified callable, arg count 0) first, falling
+                            // back to the open_item_shop client command.
                             if (!_isShopOpen(root) && !_st.shopOpenAttempted) {
-                                try { _callQol("dispatchCitadelConCommand", undefined, ["open_item_shop"]); } catch(e) {}
+                                var _openedShop = false;
+                                try { if (typeof CitadelOpenUpgradeShop === "function") { CitadelOpenUpgradeShop(); _openedShop = true; } } catch(e) {}
+                                if (!_openedShop) { try { _callQol("dispatchCitadelConCommand", undefined, ["open_item_shop"]); } catch(e) {} }
                                 _st.shopOpenAttempted = true;
                             }
                             if (_confirmStorageHero(root, now, _st)) {

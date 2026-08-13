@@ -227,16 +227,22 @@
         if (!isConnectedToHideout(root)) return false;
 
         // Shop is not open and browse popup is not visible. Try to open the shop
-        // via the open_item_shop client command (routes through CitadelConCommand ->
-        // RunConCommand -> Engine ClientCmd -> server ClientCommand dispatcher).
-        // This is the only confirmed working shop-open path in the current build.
-        // CitadelEnterUpgradeShop / CitadelToggleUpgradeShop do not exist in any DLL,
-        // and CitadelOpenUpgradeShop is a type-0 notification event (native->JS).
+        // via the CitadelOpenUpgradeShop JS action (verified callable, arg count 0),
+        // falling back to the open_item_shop client command (B-key input path,
+        // CitadelConCommand -> RunConCommand -> Engine ClientCmd).
         if (!QOL.isHudClassActive(root, "gShopOpen") && !QOL.isBrowseBuildsPopupOpen(root)) {
             if ((State.openItemShopLastMs || 0) <= nowMs - 1000 &&
                 ShouldRunBuildCategoryPayloadUiAction(nowMs, "buildCategoryPayloadShopOpenActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) {
                 State.openItemShopLastMs = nowMs;
-                QOL.dispatchCitadelConCommand("open_item_shop");
+                try {
+                    if (typeof CitadelOpenUpgradeShop === "function") {
+                        CitadelOpenUpgradeShop();
+                    } else {
+                        QOL.dispatchCitadelConCommand("open_item_shop");
+                    }
+                } catch (eShop) {
+                    QOL.dispatchCitadelConCommand("open_item_shop");
+                }
             }
             return false;
         }
