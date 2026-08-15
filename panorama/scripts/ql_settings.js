@@ -10120,6 +10120,13 @@ $.ToggleSettingsWindow = function() {
                 }
             } catch (eBuildOpen) {
             }
+            try {
+                if (QOL.updateChecker && QOL.updateChecker.onSettingsOpened) {
+                    QOL.updateChecker.onSettingsOpened();
+                }
+            } catch (eUpdateCheck) {
+                WarnLog("update_checker", "op failed: " + (eUpdateCheck && eUpdateCheck.message ? eUpdateCheck.message : String(eUpdateCheck || "")));
+            }
             try { win.SetFocus(); } catch(eFocusOpen) { WarnLog("settings", "op failed: " + (eFocusOpen && eFocusOpen.message ? eFocusOpen.message : String(eFocusOpen || ""))); }
             if (gSettingsOpenedInHideout) {
                 StartSettingsGameTransitionWatch();

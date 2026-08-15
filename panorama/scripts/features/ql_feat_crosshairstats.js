@@ -322,7 +322,10 @@
             // Subtract offY so a positive "Vertical Offset" raises the overlay (matches the
             // slider's intuitive up = more direction; previously inverted).
             try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) { /* panel deleted mid-frame */ }
-            try { overlay.style.preTransformScale2d = (scale / 100).toFixed(2); } catch(e) { /* panel deleted mid-frame */ }
+            // ui-scale reflows and re-rasterises text/icons at the requested size.  A
+            // pre-transform scale only enlarges the already-rendered texture, which
+            // makes the overlay visibly blurry above 100%.
+            try { overlay.style.uiScale = scale + "%"; } catch(e) { /* panel deleted mid-frame */ }
             Utils.SetPanelOpacitySafe(overlay, opacity, 1);
             st.lastLayoutSig = layoutSig;
         }

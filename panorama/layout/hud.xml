@@ -48,8 +48,10 @@
 		<!-- CUT-OVER: old unsecuredSoulsTimer disabled, see manifests/ql_unsecured_souls_timer/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
-		<!-- CUT-OVER: old crosshairstats disabled, see manifests/ql_crosshair_stats/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
+		<!-- Active Stats remains on the legacy runtime while settings are stored in the
+		     legacy flat config.  The manifest bridge could leave this feature disabled
+		     in-game even though its settings preview still rendered. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
 		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
@@ -136,7 +138,8 @@
 		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_numbers/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" />
+		<!-- Kept out of the manifest runtime until its config source is authoritative. -->
+		<!-- <include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />

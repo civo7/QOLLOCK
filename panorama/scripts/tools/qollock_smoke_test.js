@@ -61,6 +61,7 @@ var HUD_LOAD_ORDER = [
     "ql_state.js",
     "ql_panelcache.js",
     "ql_config.js",
+    "ql_update_checker.js",
     "ql_recent_purchases_data.js",
     "ql_minimap_crate_data.js",
     "ql_perf_overlay.js",

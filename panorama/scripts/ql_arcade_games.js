@@ -1985,7 +1985,7 @@ function ShowZipBoostPreview() {
 
     panel.style.marginLeft = (gZipBoostPreviewBaseX + xOffset) + "px";
     panel.style.marginBottom = (gZipBoostPreviewBaseY + yOffset) + "px";
-    gZipBoostPreviewBox.style.preTransformScale2d = (scale / 100).toFixed(2);
+    gZipBoostPreviewBox.style.uiScale = scale + "%";
     gZipBoostPreviewLabel.text = _Localize("ZIP BOOST", true) + " " + scale + "%";
     panel.AddClass("Visible");
     ScheduleHideZipBoostPreview(1.2);
@@ -2021,7 +2021,7 @@ function ShowCrosshairStatsPreview() {
     // Subtract yOffset so the preview moves the same way the runtime overlay does
     // (positive Vertical Offset = up). Keeps showcase honest to in-game behaviour.
     panel.style.marginTop = (gCrosshairStatsPreviewBaseY - yOffset) + "px";
-    gCrosshairStatsPreviewBox.style.preTransformScale2d = (scale / 100).toFixed(2);
+    gCrosshairStatsPreviewBox.style.uiScale = scale + "%";
     gCrosshairStatsPreviewBox.style.opacity = opacity.toFixed(2);
     gCrosshairStatsPreviewLabel.text = _Localize("ACTIVE STATS", true);
     panel.AddClass("Visible");

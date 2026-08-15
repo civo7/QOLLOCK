@@ -9330,6 +9330,12 @@ function GetUIRoot() {
     function FindUnsecuredSoulsSource(root) {
         if (!root) return null;
 
+        // Deadlock's August 2026 HUD moved Unsecured out of the old
+        // death-gold container.  Prefer the dedicated live counter; the
+        // fallback below is retained for older builds.
+        var modernUnsecured = root.FindChildTraverse ? root.FindChildTraverse("HudUnsecuredLabel") : null;
+        if (IsPanelValid(modernUnsecured)) return modernUnsecured;
+
         var goldContainer = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GOLD_AP_CONTAINER) : null;
         if (goldContainer && goldContainer.FindChildTraverse) {
             var fromGoldById = goldContainer.FindChildTraverse("hudDealthGoldLabel");

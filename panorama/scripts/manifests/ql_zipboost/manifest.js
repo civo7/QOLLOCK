@@ -75,13 +75,18 @@
                 }
 
                 // Apply position and scale
-                var sc = Number(cfg.ZIP_BOOST_SCALE) / 100;
+                var scale = Math.round(Number(cfg.ZIP_BOOST_SCALE));
+                if (!isFinite(scale)) scale = 100;
+                if (scale < 50) scale = 50;
+                if (scale > 200) scale = 200;
                 var ox = Math.round(Number(cfg.ZIP_BOOST_X_OFFSET)) || 0;
                 var oy = Math.round(Number(cfg.ZIP_BOOST_Y_OFFSET)) || 0;
-                var sig = sc.toFixed(2) + "|" + ox + "|" + oy;
+                var sig = scale + "|" + ox + "|" + oy;
                 if (_lastSig !== sig) {
                     _lastSig = sig;
-                    ov.style.preTransformScale2d = sc.toFixed(2) + ", " + sc.toFixed(2);
+                    // ui-scale lets Panorama reflow and re-rasterise the overlay instead
+                    // of stretching its texture like pre-transform-scale2d does.
+                    ov.style.uiScale = scale + "%";
                     // Match old feature positioning: marginLeft/marginBottom with base offsets.
                     ov.style.marginLeft = (-520 + ox) + "px";
                     ov.style.marginBottom = (20 + oy) + "px";

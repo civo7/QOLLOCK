@@ -200,6 +200,113 @@
 	visibility: visible;
 }
 
+/* Public release update notice. It is a sibling of SettingsWindow so it stays
+   above dynamically rebuilt setting tabs; the pale green uses QOLLOCK's accent. */
+#QOLUpdatePopupLayer
+{
+	width: 100%;
+	height: 100%;
+	ignore-parent-flow: true;
+	visibility: collapse;
+	z-index: 6000;
+}
+
+#QOLUpdatePopupLayer.UpdateAvailable
+{
+	visibility: visible;
+}
+
+#QOLUpdatePopup
+{
+	width: 430px;
+	padding: 18px 20px 20px 20px;
+	flow-children: down;
+	align: center center;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #15201b ), to( #0d1411 ) );
+	border: 1px solid rgba(102, 204, 153, 0.82);
+	border-radius: 4px;
+	box-shadow: rgba(0, 0, 0, 0.72) 0px 18px 48px 0px;
+}
+
+.QOLUpdatePopupHeader
+{
+	width: 100%;
+	flow-children: right;
+	vertical-align: center;
+}
+
+.QOLUpdatePopupTitle
+{
+	font-family: oracle;
+	font-weight: bold;
+	color: #e7f7ee;
+	font-size: 22px;
+	letter-spacing: 2px;
+	vertical-align: center;
+}
+
+.QOLUpdatePopupSpacer
+{
+	width: fill-parent-flow(1.0);
+	height: 1px;
+}
+
+.QOLUpdatePopupClose
+{
+	width: 30px;
+	height: 30px;
+	background-color: #17251e;
+	border: 1px solid rgba(102, 204, 153, 0.34);
+	border-radius: 3px;
+	vertical-align: center;
+}
+
+.QOLUpdatePopupClose Label
+{
+	font-family: oracle;
+	font-weight: bold;
+	color: #9ecfb1;
+	font-size: 18px;
+	horizontal-align: center;
+	vertical-align: center;
+	margin-left: 3px;
+	margin-top: 2px;
+}
+
+.QOLUpdatePopupClose:hover
+{
+	background-color: #2d1b1b;
+	border-color: #cf6a6a;
+}
+
+.QOLUpdatePopupClose:hover Label
+{
+	color: #f4cece;
+}
+
+.QOLUpdatePopupBody
+{
+	width: 100%;
+	margin-top: 14px;
+	color: #b7c9bd;
+	font-size: 18px;
+	line-height: 24px;
+	white-space: normal;
+}
+
+/* Remote image probes must be visible at a non-zero opacity, otherwise the
+   Panorama loader silently skips the request. The host is tiny and input-free. */
+#QOLUpdateMarkerProbeHost
+{
+	position: 2px 2px 0px;
+	width: 128px;
+	height: 128px;
+	opacity: 0.02;
+	z-index: 9999;
+	hittest: false;
+	hittestchildren: false;
+}
+
 @keyframes 'PulseDiscordPurpleText'
 {
 	0%
