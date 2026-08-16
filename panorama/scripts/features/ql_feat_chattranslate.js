@@ -94,6 +94,32 @@
         return null;
     }
 
+    function HasAncestorId(panel, panelId) {
+        var current = panel;
+        var depth = 0;
+        while (current && depth < 32) {
+            try {
+                if (String(current.id || "") === panelId) return true;
+                current = current.GetParent ? current.GetParent() : null;
+            } catch(e) {
+                return false;
+            }
+            depth++;
+        }
+        return false;
+    }
+
+    function FindTopChatMessages(root) {
+        if (!root || !root.FindChildrenWithClassTraverse) return [];
+        var all = [];
+        try { all = root.FindChildrenWithClassTraverse("ChatMessage") || []; } catch(e) { all = []; }
+        var top = [];
+        for (var i = 0; i < all.length; i++) {
+            if (IsPanelValid(all[i]) && !HasAncestorId(all[i], "ChatMessages")) top.push(all[i]);
+        }
+        return top;
+    }
+
     function DeleteInjected(entry) {
         if (!entry) return;
         if (IsPanelValid(entry.label)) {
@@ -147,14 +173,13 @@
         try { label.style.visibility = "collapse"; } catch(eHide) { /* panel deleted mid-frame */ }
     }
 
-    function ProcessContainer(container, cacheKey, isBottom) {
-        if (!IsPanelValid(container)) return;
+    function ProcessMessages(messages, cacheKey, isBottom) {
         var cache = State[cacheKey];
         if (!Array.isArray(cache)) {
             cache = [];
             State[cacheKey] = cache;
         }
-        var messages = container.FindChildrenWithClassTraverse("ChatMessage") || [];
+        messages = messages || [];
         // Panorama traversal order is not chronological in either chatbox.
         // Only discard panels the engine has actually deleted; slicing either
         // end of this array can remove currently visible translated messages.
@@ -189,6 +214,20 @@
         }
     }
 
+    function ProcessContainer(container, cacheKey, isBottom) {
+        if (!IsPanelValid(container)) return;
+        var messages = [];
+        try { messages = container.FindChildrenWithClassTraverse("ChatMessage") || []; } catch(e) { messages = []; }
+        ProcessMessages(messages, cacheKey, isBottom);
+    }
+
+    function MaybeProcessTop(root, nowMs) {
+        if (nowMs < (Number(State.localTranslationTopNextScanMs) || 0)) return;
+        var messages = FindTopChatMessages(root);
+        ProcessMessages(messages, "localTranslationTopCache", false);
+        State.localTranslationTopNextScanMs = nowMs + (messages.length > 0 ? 300 : 1000);
+    }
+
     function MaybeProcess(root, containerKey, panelId, watermarkKey, cacheKey, nextScanKey, idleKey, isBottom, nowMs) {
         if (nowMs < (Number(State[nextScanKey]) || 0)) return;
         var container = GetContainer(root, containerKey, panelId);
@@ -217,8 +256,7 @@
     }
 
     function UpdateLocalChatTranslation(root, nowMs) {
-        MaybeProcess(root, "localTranslationTopContainer", "Messages", "localTranslationTopWatermark", "localTranslationTopCache",
-                     "localTranslationTopNextScanMs", "localTranslationTopIdleMisses", false, nowMs);
+        MaybeProcessTop(root, nowMs);
         MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache",
                      "localTranslationBottomNextScanMs", "localTranslationBottomIdleMisses", true, nowMs);
     }

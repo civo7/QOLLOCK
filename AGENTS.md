@@ -48,7 +48,6 @@ State:      Global State singleton → QOL.state in feature files
 ## Commit Style
 
 ```
-Author: bzihnali <bzihnali@users.noreply.github.com>
 One logical change per commit.
 node --check after each JS change.
 ```
