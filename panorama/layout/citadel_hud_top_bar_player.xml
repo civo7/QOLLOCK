@@ -8,7 +8,7 @@
 		</styles>
 		<scripts>
 		</scripts>
-		<CitadelHudTopBarPlayer>
+		<CitadelHudTopBarPlayer hittest="false">
 			<GlobalClassListener classes="gDetailView" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />
@@ -85,7 +85,7 @@
 				</Panel>
 			</Panel>
 			<Label class="AlwaysPlayerName" text="{s:player_name}" />
-			<Panel id="PlayerNameNWContainer" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
+			<Panel id="PlayerNameNWContainer" hittest="false" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
 				<Panel id="BackgroundStrip" />
 				<Panel class="PlayerInfoContainer TopBottomFlow">
 					<Label class="PlayerName" text="{s:player_name}" />
