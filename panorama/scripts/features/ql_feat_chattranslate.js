@@ -21,6 +21,7 @@
     var MAX_CACHED_MESSAGE_PANELS = 256;
     var ACTIVE_SCAN_DELAY_MS = 200;
     var IDLE_SCAN_MAX_DELAY_MS = 2000;
+    var TOP_FALLBACK_SCAN_INTERVAL_MS = 2000;
 
     function FindHudPanel(root) {
         if (!root || !root.FindChildTraverse) return null;
@@ -50,27 +51,38 @@
         }
     }
 
+    function CommitOwnerMatch(root, enabled, persist) {
+        var resolved = !!enabled;
+        if (State.localTranslationOwnerMatch !== resolved) {
+            State.localTranslationOwnerMatch = resolved;
+            // Legacy gates are cached by config signature. Force one rebuild so
+            // a resolved non-owner stops dispatching this feature entirely.
+            State.runtimeGateSig = "";
+        }
+        if (persist) WritePersistedOwnerLatch(root, resolved);
+        return resolved;
+    }
+
     function ResolveOwnerMatch(root, nowMs) {
         if (State.localTranslationOwnerMatch === true || State.localTranslationOwnerMatch === false) {
             return State.localTranslationOwnerMatch;
         }
         var persisted = ReadPersistedOwnerLatch(root);
         if (persisted === true || persisted === false) {
-            State.localTranslationOwnerMatch = persisted;
-            return persisted;
+            return CommitOwnerMatch(root, persisted, false);
         }
         if (!State.localTranslationOwnerResolveDeadlineMs) {
             State.localTranslationOwnerResolveDeadlineMs = nowMs + OWNER_RESOLVE_TIMEOUT_MS;
         }
-        if (nowMs >= State.localTranslationOwnerResolveDeadlineMs) return false;
+        if (nowMs >= State.localTranslationOwnerResolveDeadlineMs) {
+            return CommitOwnerMatch(root, false, true);
+        }
         if (nowMs < (Number(State.localTranslationOwnerNextCheckMs) || 0)) return false;
         State.localTranslationOwnerNextCheckMs = nowMs + OWNER_RESOLVE_INTERVAL_MS;
         var accountId = "";
         try { accountId = String(TryReadAccountIdFromKnownPartyPath(root) || ""); } catch(eId) { accountId = ""; }
         if (!accountId) return false;
-        State.localTranslationOwnerMatch = accountId === OWNER_ACCOUNT_ID;
-        WritePersistedOwnerLatch(root, State.localTranslationOwnerMatch);
-        return State.localTranslationOwnerMatch;
+        return CommitOwnerMatch(root, accountId === OWNER_ACCOUNT_ID, true);
     }
 
     function GetContainer(root, cacheKey, panelId) {
@@ -221,13 +233,6 @@
         ProcessMessages(messages, cacheKey, isBottom);
     }
 
-    function MaybeProcessTop(root, nowMs) {
-        if (nowMs < (Number(State.localTranslationTopNextScanMs) || 0)) return;
-        var messages = FindTopChatMessages(root);
-        ProcessMessages(messages, "localTranslationTopCache", false);
-        State.localTranslationTopNextScanMs = nowMs + (messages.length > 0 ? 300 : 1000);
-    }
-
     function MaybeProcess(root, containerKey, panelId, watermarkKey, cacheKey, nextScanKey, idleKey, isBottom, nowMs) {
         if (nowMs < (Number(State[nextScanKey]) || 0)) return;
         var container = GetContainer(root, containerKey, panelId);
@@ -255,8 +260,19 @@
         ProcessContainer(container, cacheKey, isBottom);
     }
 
+    function MaybeProcessTopFallback(root, nowMs) {
+        if (nowMs < (Number(State.localTranslationTopFallbackNextScanMs) || 0)) return;
+        // Some HUD variants expose a duplicate/unusable `Messages` ID. Preserve
+        // root-wide discovery for those layouts, but keep it off the 300ms hot
+        // path now that the normal case uses the cached top-chat container.
+        ProcessMessages(FindTopChatMessages(root), "localTranslationTopCache", false);
+        State.localTranslationTopFallbackNextScanMs = nowMs + TOP_FALLBACK_SCAN_INTERVAL_MS;
+    }
+
     function UpdateLocalChatTranslation(root, nowMs) {
-        MaybeProcessTop(root, nowMs);
+        MaybeProcess(root, "localTranslationTopContainer", "Messages", "localTranslationTopWatermark", "localTranslationTopCache",
+                     "localTranslationTopNextScanMs", "localTranslationTopIdleMisses", false, nowMs);
+        MaybeProcessTopFallback(root, nowMs);
         MaybeProcess(root, "localTranslationBottomContainer", "ChatMessages", "localTranslationBottomWatermark", "localTranslationBottomCache",
                      "localTranslationBottomNextScanMs", "localTranslationBottomIdleMisses", true, nowMs);
     }
@@ -276,6 +292,7 @@
                     "localTranslationTopWatermark", "localTranslationBottomWatermark",
                     "localTranslationTopCache", "localTranslationBottomCache",
                     "localTranslationTopNextScanMs", "localTranslationBottomNextScanMs",
+                    "localTranslationTopFallbackNextScanMs",
                     "localTranslationTopIdleMisses", "localTranslationBottomIdleMisses",
                     "localTranslationOwnerMatch", "localTranslationOwnerNextCheckMs",
                     "localTranslationOwnerResolveDeadlineMs"]

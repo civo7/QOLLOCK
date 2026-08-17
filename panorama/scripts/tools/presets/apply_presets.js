@@ -31,6 +31,7 @@ const TARGETS = [
     { key: "Anguish", form: "assign" },
     { key: "Nairshark", form: "member" },
     { key: "Jared", form: "member" },
+    { key: "Profitable", form: "member" },
     { key: "Blank2762", form: "assign" },
     { key: "Keta", form: "assign" },
     { key: "loony", form: "assign" },

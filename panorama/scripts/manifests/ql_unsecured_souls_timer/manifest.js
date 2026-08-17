@@ -164,7 +164,7 @@
                         return;
                     }
 
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     var enabled = Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1;
                     if (!enabled) {
                         if (_timer.displayMode !== "disabled") {

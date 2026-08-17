@@ -43,7 +43,8 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" /> -->
 		<!-- CUT-OVER: old staminaChargeColorRuntime disabled, see manifests/ql_stamina/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" />
+		<!-- CUT-OVER: old combatStatus disabled, see manifests/ql_combat_status/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
 		<!-- CUT-OVER: old unsecuredSoulsTimer disabled, see manifests/ql_unsecured_souls_timer/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" /> -->
@@ -55,20 +56,25 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
 		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" />
+		<!-- CUT-OVER: old sigflash disabled, see manifests/ql_sigflash/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" /> -->
+		<!-- CUT-OVER: old imagesInChat disabled, see manifests/ql_chat_images/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_chattranslate.vjs_c" />
 		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_lanewithparty.vjs_c" />
+		<!-- CUT-OVER: old laneWithParty disabled, see manifests/ql_lane_with_party/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_lanewithparty.vjs_c" /> -->
 		<!-- CUT-OVER: old statlocker disabled, see manifests/ql_statlocker/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_statlocker.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" />
+		<!-- CUT-OVER: old onDeathArcade disabled, see manifests/ql_on_death_arcade/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
 		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" />
+		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
 		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
@@ -85,7 +91,7 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" /> -->
 		<!-- CUT-OVER: old showrank disabled, see manifests/ql_showrank/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_showrank.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_showrank_card.vjs_c" />
+		<!-- Profile-card-only helper; loaded by profile_card.xml, not the HUD. -->
 		<!-- CUT-OVER: old urnTimer disabled, see manifests/ql_urn_timer/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_urntimer.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_healthbar.vjs_c" />
@@ -132,8 +138,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_zipboost/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" />
+		<!-- SHADOW DISABLED: zipboost manifest has no source-state implementation yet. -->
+		<!-- <include src="s2r://panorama/scripts/manifests/ql_zipboost/manifest.vjs_c" /> -->
+		<!-- SHADOW DISABLED: SPM manifest tick is a no-op; legacy runtime remains authoritative. -->
+		<!-- <include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/manifests/ql_combat_status/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />

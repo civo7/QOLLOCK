@@ -113,7 +113,7 @@
             // ── Main tick ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
                 var nowMs = Date.now ? Date.now() : (new Date()).getTime();
 
                 var rejuvHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_REJUV_HUD"));

@@ -219,7 +219,7 @@
                 var inStreetBrawl = false;
                 try { inStreetBrawl = IsStreetBrawlModeActive(root); } catch(e) {}
                 if (inStreetBrawl) { HideMinimapObjectiveTimers(root); return; }
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
                 var buffEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER"));
                 var rejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
                 if (!buffEnabled && !rejuvEnabled) { HideMinimapObjectiveTimers(root); return; }

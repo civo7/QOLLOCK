@@ -9,7 +9,7 @@
 // CSS:         none
 // PATTERN:     Polling (0.5Hz). Self-throttling with 3-tier intervals.
 //              $.DispatchEvent("Activated") on lane selector.
-// CONFIG SRC:  ctx.config.all() (Pattern A — has enableKey)
+// CONFIG SRC:  ctx.config.view() (read-only hot path; has enableKey)
 // PORTED FROM: features/ql_feat_lanewithparty.js (168 lines)
 // =============================================================================
 
@@ -95,7 +95,7 @@
             function _tick() {
                 try {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
 
                 var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_LANE_WITH_PARTY"));
                 if (!enabled) {

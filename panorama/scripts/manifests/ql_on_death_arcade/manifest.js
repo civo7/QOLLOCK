@@ -14,7 +14,7 @@
 // CSS:         none (AddClass/RemoveClass "ShowEscapeMenu" only)
 // PATTERN:     Polling (0.2Hz). Bridge attribute writes via SetAttributeString.
 //              Has postUpdate equivalent (writes onDeathArcadeRuntimeWasActive).
-// CONFIG SRC:  ctx.config.all() (Pattern A — has enableKey)
+// CONFIG SRC:  ctx.config.view() (read-only hot path; has enableKey)
 // PORTED FROM: features/ql_feat_ondeatharcade.js (220 lines)
 // =============================================================================
 
@@ -178,7 +178,7 @@
             // ── Main tick (adapted from UpdateOnDeathArcadeBridge + postUpdate) ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
 
                 if (!root || !cfg) return;
 

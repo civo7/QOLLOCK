@@ -9,7 +9,7 @@
 // CONFIG KEYS: ENABLE_KEYBOARD_OVERLAY, ENABLE_FULL_KEYBOARD_LAYOUT,
 //              KEYBOARD_OVERLAY_SCALE, KEYBOARD_OVERLAY_X_OFFSET,
 //              KEYBOARD_OVERLAY_Y_OFFSET, KEYBOARD_OVERLAY_WASH_COLOR
-// PATTERN:     Polling (~20Hz). Creates overlay with child panels.
+// PATTERN:     Polling (~5Hz). Creates overlay with child panels.
 //              Delegates complex layout to QOL.buildKeyboardOverlayLayouts.
 // =============================================================================
 
@@ -198,7 +198,7 @@
                 try {
                     var root = $.GetContextPanel();
                     if (!root) return;
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
 
                     if (Number(cfg.ENABLE_KEYBOARD_OVERLAY) === 1) {
                         var allBindingsBox = _ensureOverlay(root);
@@ -250,7 +250,9 @@
                 onEnable: function() {
                     _boxCaches = null;
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_keyboard") : null;
+                    // Match the original central-dispatch cadence. Layout and
+                    // binding state do not require a 20Hz polling loop.
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_keyboard") : null;
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }

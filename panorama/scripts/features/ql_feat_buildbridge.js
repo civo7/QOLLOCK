@@ -230,7 +230,9 @@
     QOL.register("buildBridge", {
         configKeys: [],
         bucket: 0, phase: -1,
-        gate: function(cfg) { return true; },
+        // Export-only module. Its helpers are called directly; registering an
+        // always-on empty update kept the whole core out of deep idle.
+        gate: function(cfg) { return false; },
         update: function(root, cfg, nowMs) {
             // Bridge functions are called directly; no per-frame update needed.
         },

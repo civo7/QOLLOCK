@@ -1,10 +1,20 @@
 (function () {
     "use strict";
 
-    var UPDATE_INTERVAL_SEC = 0.35;
+    var ACTIVE_INTERVAL_SEC = 0.35;
     var IDLE_INTERVAL_SEC = 1.0;
+    var PANEL_RETRY_MS = 500;
+    var FALLBACK_SCAN_MS = 2000;
     var API_RANK_URL = "https://api.deadlock-api.com/v1/players/";
+
+    var gAccountLabel = null;
+    var gToolsPanel = null;
+    var gRankImage = null;
+    var gStatlockerButton = null;
     var gLastAccountId = "";
+    var gToolsVisible = null;
+    var gNextPanelSearchMs = 0;
+    var gNextFallbackScanMs = 0;
 
     function IsPanelValid(panel) {
         if (!panel) return false;
@@ -15,125 +25,148 @@
     function ParseAccountId(value) {
         if (value === undefined || value === null) return "";
         var digits = String(value).replace(/[^0-9]/g, "");
-        if (!digits || digits.length < 5 || digits.length > 12) return "";
+        if (!digits || digits.length < 1 || digits.length > 10) return "";
         return digits;
     }
 
     function ReadAccountIdFromPanel(panel) {
         if (!IsPanelValid(panel)) return "";
-        var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) { /* property unavailable */ }
-        try { candidates.push(panel.account_id); } catch (e1) { /* property unavailable */ }
-        try { candidates.push(panel.accountID); } catch (e2) { /* property unavailable */ }
+        var parsed = "";
+        try { parsed = ParseAccountId(panel.text || ""); } catch (e0) {}
+        if (parsed) return parsed;
+        try { parsed = ParseAccountId(panel.accountid); } catch (e1) {}
+        if (parsed) return parsed;
+        try { parsed = ParseAccountId(panel.account_id); } catch (e2) {}
+        if (parsed) return parsed;
         try {
             if (panel.GetAttributeString) {
-                candidates.push(panel.GetAttributeString("accountid", ""));
-                candidates.push(panel.GetAttributeString("account_id", ""));
-                candidates.push(panel.GetAttributeString("accountID", ""));
+                parsed = ParseAccountId(panel.GetAttributeString("accountid", "")) ||
+                    ParseAccountId(panel.GetAttributeString("account_id", ""));
             }
-        } catch (e3) { /* panel deleted mid-frame */ }
-        for (var i = 0; i < candidates.length; i++) {
-            var parsed = ParseAccountId(candidates[i]);
-            if (parsed) return parsed;
-        }
-        return "";
+        } catch (e3) {}
+        return parsed;
     }
 
-    function FindAccountIdInClass(ctx, className) {
+    function HasClassSafe(panel, className) {
+        if (!IsPanelValid(panel) || !panel.BHasClass) return false;
+        try { return !!panel.BHasClass(className); } catch (e0) { return false; }
+    }
+
+    function HasAscendantClass(panel, className, maxDepth) {
+        var cur = panel;
+        var depth = 0;
+        while (IsPanelValid(cur) && depth < maxDepth) {
+            if (HasClassSafe(cur, className)) return true;
+            try { cur = cur.GetParent ? cur.GetParent() : null; } catch (e0) { cur = null; }
+            depth++;
+        }
+        return false;
+    }
+
+    function IsProfilePageActive(ctx) {
+        if (!IsPanelValid(ctx)) return false;
+        if (HasAscendantClass(ctx, "isShowingProfilePage", 24)) return true;
+        var cur = ctx;
+        for (var i = 0; i < 12 && IsPanelValid(cur); i++) {
+            if (HasClassSafe(cur, "DashboardPage") && HasClassSafe(cur, "active")) return true;
+            try { cur = cur.GetParent ? cur.GetParent() : null; } catch (e0) { cur = null; }
+        }
+        return false;
+    }
+
+    function ResolvePanels(ctx, nowMs) {
+        var needsSearch = !IsPanelValid(gAccountLabel) || !IsPanelValid(gToolsPanel) ||
+            !IsPanelValid(gRankImage) || !IsPanelValid(gStatlockerButton);
+        if (!needsSearch || nowMs < gNextPanelSearchMs) return;
+        gNextPanelSearchMs = nowMs + PANEL_RETRY_MS;
+
+        var oldTools = gToolsPanel;
+        var oldImage = gRankImage;
+        var oldButton = gStatlockerButton;
+        if (!IsPanelValid(gAccountLabel)) {
+            gAccountLabel = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileAccountID") : null;
+        }
+        if (!IsPanelValid(gToolsPanel)) {
+            gToolsPanel = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendProfileTools") : null;
+        }
+        if (!IsPanelValid(gRankImage)) {
+            gRankImage = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendRankImage") : null;
+        }
+        if (!IsPanelValid(gStatlockerButton)) {
+            gStatlockerButton = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileStatlockerButton") : null;
+        }
+        if (gToolsPanel !== oldTools) gToolsVisible = null;
+        if (gRankImage !== oldImage || gStatlockerButton !== oldButton) gLastAccountId = "";
+    }
+
+    function FindAccountIdFallback(ctx) {
         if (!IsPanelValid(ctx) || !ctx.FindChildrenWithClassTraverse) return "";
-        var panels = ctx.FindChildrenWithClassTraverse(className) || [];
-        for (var i = 0; i < panels.length; i++) {
-            var panel = panels[i];
-            if (!IsPanelValid(panel)) continue;
-            var fromText = "";
-            try { fromText = ParseAccountId(panel.text || ""); } catch (e0) { fromText = ""; }
-            if (fromText) return fromText;
-            var fromPanel = ReadAccountIdFromPanel(panel);
-            if (fromPanel) return fromPanel;
-        }
-        return "";
-    }
-
-    function ScanPanelTree(root) {
-        if (!IsPanelValid(root)) return "";
-        var stack = [root];
-        var scanned = 0;
-        while (stack.length > 0 && scanned < 2500) {
-            var panel = stack.pop();
-            if (!IsPanelValid(panel)) continue;
-            scanned++;
-            var accountId = ReadAccountIdFromPanel(panel);
+        var labels = ctx.FindChildrenWithClassTraverse("HiddenAccountID") || [];
+        for (var i = 0; i < labels.length; i++) {
+            var accountId = ReadAccountIdFromPanel(labels[i]);
             if (accountId) return accountId;
-            try {
-                var childCount = panel.GetChildCount ? panel.GetChildCount() : 0;
-                for (var i = 0; i < childCount; i++) {
-                    var child = panel.GetChild ? panel.GetChild(i) : null;
-                    if (IsPanelValid(child)) stack.push(child);
-                }
-            } catch (e0) { /* panel deleted mid-frame */ }
         }
-        return "";
+        return ReadAccountIdFromPanel(ctx);
     }
 
-    function FindCurrentAccountId(ctx) {
-        return (
-            FindAccountIdInClass(ctx, "HiddenAccountID") ||
-            FindAccountIdInClass(ctx, "FriendID") ||
-            FindAccountIdInClass(ctx, "AccountID") ||
-            ReadAccountIdFromPanel(ctx) ||
-            ScanPanelTree(ctx)
-        );
-    }
-
-    function SetToolsVisible(tools, visible) {
-        if (!IsPanelValid(tools)) return;
+    function SetToolsVisible(visible) {
+        if (!IsPanelValid(gToolsPanel) || gToolsVisible === visible) return;
         try {
-            if (visible) tools.AddClass("QOLProfileToolsVisible");
-            else tools.RemoveClass("QOLProfileToolsVisible");
+            if (visible) gToolsPanel.AddClass("QOLProfileToolsVisible");
+            else gToolsPanel.RemoveClass("QOLProfileToolsVisible");
+            gToolsVisible = visible;
         } catch (e0) { /* panel deleted mid-frame */ }
     }
 
-    function BindStatlockerButton(button, accountId) {
-        if (!IsPanelValid(button) || !accountId) return;
+    function BindStatlockerButton(accountId) {
+        if (!IsPanelValid(gStatlockerButton) || !accountId) return;
         try {
-            button.SetPanelEvent("onactivate", function () {
+            gStatlockerButton.SetPanelEvent("onactivate", function () {
                 $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
             });
         } catch (e0) { /* panel deleted mid-frame */ }
     }
 
-    function UpdateProfileTools(ctx, accountId) {
-        var tools = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendProfileTools") : null;
-        if (!IsPanelValid(tools)) return false;
+    function UpdateProfileTools(accountId) {
+        if (!IsPanelValid(gToolsPanel)) return false;
         if (!accountId) {
-            SetToolsVisible(tools, false);
+            SetToolsVisible(false);
             return true;
         }
 
-        var rankImage = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendRankImage") : null;
-        var statlockerButton = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileStatlockerButton") : null;
         if (accountId !== gLastAccountId) {
             gLastAccountId = accountId;
-            if (IsPanelValid(rankImage) && rankImage.SetImage) {
+            if (IsPanelValid(gRankImage) && gRankImage.SetImage) {
                 try {
-                    rankImage.SetImage(API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small");
+                    gRankImage.SetImage(API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small");
                 } catch (e0) { /* panel deleted mid-frame */ }
             }
-            BindStatlockerButton(statlockerButton, accountId);
+            BindStatlockerButton(accountId);
         }
-        SetToolsVisible(tools, true);
+        SetToolsVisible(true);
         return true;
     }
 
     function Update() {
         var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        if (!IsPanelValid(ctx)) {
+        // A destroyed Panorama context cannot recover. Do not create a zombie
+        // schedule chain after this profile page has been torn down.
+        if (!IsPanelValid(ctx)) return;
+
+        if (!IsProfilePageActive(ctx)) {
             $.Schedule(IDLE_INTERVAL_SEC, Update);
             return;
         }
-        var accountId = FindCurrentAccountId(ctx);
-        var foundTools = UpdateProfileTools(ctx, accountId);
-        $.Schedule(foundTools ? UPDATE_INTERVAL_SEC : IDLE_INTERVAL_SEC, Update);
+
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        ResolvePanels(ctx, nowMs);
+        var accountId = ReadAccountIdFromPanel(gAccountLabel);
+        if (!accountId && nowMs >= gNextFallbackScanMs) {
+            gNextFallbackScanMs = nowMs + FALLBACK_SCAN_MS;
+            accountId = FindAccountIdFallback(ctx);
+        }
+        var foundTools = UpdateProfileTools(accountId);
+        $.Schedule(foundTools ? ACTIVE_INTERVAL_SEC : IDLE_INTERVAL_SEC, Update);
     }
 
     Update();

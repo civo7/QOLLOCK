@@ -18,10 +18,14 @@
 
         // Read account_id from HiddenAccountID (populated by {i:r:account_id})
         var accountId = "";
-        var hiddenList = card.FindChildrenWithClassTraverse("HiddenAccountID") || [];
-        if (hiddenList.length > 0) {
+        var hidden = card.FindChildTraverse ? card.FindChildTraverse("QOLProfileCardAccountID") : null;
+        if (!hidden) {
+            var hiddenList = card.FindChildrenWithClassTraverse("HiddenAccountID") || [];
+            hidden = hiddenList.length > 0 ? hiddenList[0] : null;
+        }
+        if (hidden) {
             try {
-                var t = String(hiddenList[0].text || "").replace(/[^0-9]/g, "");
+                var t = String(hidden.text || "").replace(/[^0-9]/g, "");
                 if (t.length >= 1 && t.length <= 10) accountId = t;
             } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] HiddenAccountID read failed: " + (e && e.message ? e.message : String(e))); }
         }
@@ -45,8 +49,11 @@
         // Walk to doc root so FillRow can poll qol_sr_probe_account
         var root = card;
         var guard = 0;
-        while (root && root.GetParent && root.GetParent() && guard < 64) {
-            root = root.GetParent();
+        while (root && root.GetParent && guard < 64) {
+            var parent = null;
+            try { parent = root.GetParent(); } catch(eParent) { parent = null; }
+            if (!parent || parent === root) break;
+            root = parent;
             guard++;
         }
 

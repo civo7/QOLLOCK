@@ -10,7 +10,7 @@
 // CSS:         none
 // PATTERN:     Polling (0.2Hz). Adaptive idle backoff (200ms active, up to 2500ms idle).
 //              Self-throttling via imagesInChatTop/BottomNextSearchMs.
-// CONFIG SRC:  ctx.config.all() (Pattern A — has enableKey)
+// CONFIG SRC:  ctx.config.view() (read-only hot path; has enableKey)
 // PORTED FROM: features/ql_feat_chatimg.js (167 lines)
 // =============================================================================
 
@@ -139,7 +139,7 @@
             // ── Main tick (adapted from UpdateImagesInChat) ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
                 if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
 
                 var nowMs = PerfNowMs();

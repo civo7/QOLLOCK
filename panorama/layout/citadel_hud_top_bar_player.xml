@@ -8,7 +8,7 @@
 		</styles>
 		<scripts>
 		</scripts>
-		<CitadelHudTopBarPlayer hittest="false">
+		<CitadelHudTopBarPlayer>
 			<GlobalClassListener classes="gDetailView" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />

@@ -58,7 +58,7 @@
 
             function _tick() {
                 var root = $.GetContextPanel();
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
                 if (!Number(cfg.ENABLE_ZIP_BOOST)) {
                     if (_isAlive(_overlay)) _overlay.visible = false;
                     return;

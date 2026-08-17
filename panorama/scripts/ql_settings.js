@@ -3898,6 +3898,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "Kr1stux", preset: "Kr1stux" });
     entries.push({ label: "Wrvth", preset: "Wrvth" });
     entries.push({ label: "Jared", preset: "Jared" });
+    entries.push({ label: "Profitable", preset: "Profitable" });
     entries.push({ label: "Bubsito", preset: "Bubsito" });
     entries.push({ label: "Gambler", preset: "Gambler" });
     entries.push({ label: "Hikyo", preset: "Hikyo" });

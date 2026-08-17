@@ -1578,6 +1578,8 @@ function ExpressShotLog(msg) {
     // Module-level cache of State.perfEnabled — avoids repeated property lookups
     // across 70+ PerfStart/PerfEnd calls per tick when perf tracking is off.
     var _perfTrackingActive = false;
+    var _perfConsoleActive = false;
+    var _perfDisabledStateClean = false;
 
     function PerfRecord(name, elapsedMs) {
         if (!_perfTrackingActive) return;
@@ -1656,27 +1658,29 @@ function ExpressShotLog(msg) {
     }
 
     function ResetPerfWindow(nowMs) {
-        // Capture snapshot before resetting — the ring buffer preserves
-        // history so we can report a true 60s rolling window.
-        var snap = _copyPerfEntries(State.perfStats);
-        if (snap) {
-            if (!State.perfSnapshotRing) State.perfSnapshotRing = [];
-            var prevLen = State.perfSnapshotRing.length;
-            State.perfSnapshotRing.push({ timeMs: nowMs, entries: snap });
-            // Prune old snapshots
-            var cutoff = nowMs - PERF_ROLLING_WINDOW_MS;
-            var pruned = 0;
-            while (State.perfSnapshotRing.length > 0 && State.perfSnapshotRing[0].timeMs < cutoff) {
-                State.perfSnapshotRing.shift();
-                pruned++;
+        if (_perfConsoleActive) {
+            // Console diagnostics keep a 60s history. The on-screen overlay has
+            // its own rolling buffer and does not need this duplicate copy.
+            var snap = _copyPerfEntries(State.perfStats);
+            if (snap) {
+                if (!State.perfSnapshotRing) State.perfSnapshotRing = [];
+                var prevLen = State.perfSnapshotRing.length;
+                State.perfSnapshotRing.push({ timeMs: nowMs, entries: snap });
+                var cutoff = nowMs - PERF_ROLLING_WINDOW_MS;
+                var pruned = 0;
+                while (State.perfSnapshotRing.length > 0 && State.perfSnapshotRing[0].timeMs < cutoff) {
+                    State.perfSnapshotRing.shift();
+                    pruned++;
+                }
+                while (State.perfSnapshotRing.length > PERF_MAX_SNAPSHOTS) {
+                    State.perfSnapshotRing.shift();
+                }
+                $.Msg("[QOLLock][Perf][ring] captured snapshot entries=" + Object.keys(snap).length +
+                      " ringSize=" + prevLen + "→" + State.perfSnapshotRing.length +
+                      " pruned=" + pruned + " cutoffAge=" + Math.round((nowMs - cutoff)/1000) + "s");
             }
-            // Hard cap
-            while (State.perfSnapshotRing.length > PERF_MAX_SNAPSHOTS) {
-                State.perfSnapshotRing.shift();
-            }
-            $.Msg("[QOLLock][Perf][ring] captured snapshot entries=" + Object.keys(snap).length +
-                  " ringSize=" + prevLen + "→" + State.perfSnapshotRing.length +
-                  " pruned=" + pruned + " cutoffAge=" + Math.round((nowMs - cutoff)/1000) + "s");
+        } else {
+            State.perfSnapshotRing = null;
         }
         State.perfStats = {};
         State.perfWindowStartMs = nowMs;
@@ -1686,11 +1690,17 @@ function ExpressShotLog(msg) {
     }
 
     function UpdatePerfEnabledFromConfig(cfg) {
-        var enabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG"));
-        var detailed = !!(enabled && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG_DETAIL"));
-        _perfTrackingActive = enabled;
-        if (!enabled) {
-            if (State.perfEnabled) {
+        var consoleEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG"));
+        var trackingEnabled = !!(consoleEnabled || (cfg && IsCfgEnabled(cfg, "ENABLE_PERF_OVERLAY")));
+        var detailed = !!(consoleEnabled && IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG_DETAIL"));
+        var wasConsoleEnabled = _perfConsoleActive;
+        _perfTrackingActive = trackingEnabled;
+        _perfConsoleActive = consoleEnabled;
+        if (!trackingEnabled) {
+            // The disabled path runs on every core tick. Clear diagnostic state
+            // once per transition, not by allocating a new object at 5Hz.
+            if (_perfDisabledStateClean && !State.perfEnabled) return;
+            if (State.perfEnabled && wasConsoleEnabled) {
                 QOL_INFO("Perf", "disabled");
             }
             State.perfEnabled = false;
@@ -1701,15 +1711,32 @@ function ExpressShotLog(msg) {
             State.perfLoopCount = 0;
             State.perfCompassLoopCount = 0;
             State.perfSnapshotRing = null;
+            _perfDisabledStateClean = true;
             return;
         }
+        _perfDisabledStateClean = false;
         if (!State.perfEnabled) {
             var nowMs = PerfNowMs();
             State.perfEnabled = true;
             State.perfDetailed = detailed;
             State.perfSnapshotRing = null;
             ResetPerfWindow(nowMs);
-            QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
+            if (consoleEnabled) {
+                QOL_INFO("Perf", "enabled (detail=" + (detailed ? "on" : "off") + ")");
+            }
+            return;
+        }
+        if (wasConsoleEnabled !== consoleEnabled) {
+            State.perfDetailed = detailed;
+            State.perfSnapshotRing = null;
+            // Treat overlay and console profiling as separate measurement
+            // windows. In particular, do not seed the console ring with
+            // samples gathered before console diagnostics were enabled.
+            State.perfStats = {};
+            ResetPerfWindow(PerfNowMs());
+            QOL_INFO("Perf", consoleEnabled
+                ? ("enabled (detail=" + (detailed ? "on" : "off") + ")")
+                : "disabled (overlay tracking remains)");
             return;
         }
         if (State.perfDetailed !== detailed) {
@@ -1722,6 +1749,10 @@ function ExpressShotLog(msg) {
         if (!_perfTrackingActive) return;
         var nowMs = PerfNowMs();
         if (!force && nowMs < (State.perfNextFlushMs || 0)) return;
+        if (!_perfConsoleActive) {
+            ResetPerfWindow(nowMs);
+            return;
+        }
 
         var snapshotWindowMs = Math.max(1, nowMs - (State.perfWindowStartMs || nowMs));
         // Merge ring buffer snapshots + current live stats into a true 60s rolling window.
@@ -4048,6 +4079,9 @@ function GetUIRoot() {
 
     var BREAD_PRESET_NAME = "BreadRollius";
     var LEGACY_BREAD_PRESET_NAME = "Bread";
+    var _breadPresetMatchDefaults = null;
+    var _forcedConfigInput = null;
+    var _forcedConfigOutput = null;
 
     function IsBreadPresetName(presetName) {
         var name = String(presetName || "");
@@ -4073,7 +4107,8 @@ function GetUIRoot() {
         if (!cfg || typeof QOL_PRESETS !== "object" || !QOL_PRESETS) return false;
         var bread = QOL_PRESETS[BREAD_PRESET_NAME] || QOL_PRESETS[LEGACY_BREAD_PRESET_NAME];
         if (!bread) return false;
-        var defaults = _BDC();
+        if (!_breadPresetMatchDefaults) _breadPresetMatchDefaults = _BDC();
+        var defaults = _breadPresetMatchDefaults;
         for (var key in defaults) {
             if (!defaults.hasOwnProperty(key) || IsBreadPresetMatchKeyIgnored(key)) continue;
             var expected = bread.hasOwnProperty(key) ? bread[key] : defaults[key];
@@ -4085,21 +4120,35 @@ function GetUIRoot() {
 
     function IsBreadPresetActive(cfg) {
         if (!cfg) return false;
-        if (IsBreadPresetName(cfg.ACTIVE_PRESET_NAME)) {
-            cfg.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
-            return true;
-        }
-        if (!DoesConfigMatchBreadPreset(cfg)) return false;
-        cfg.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
-        return true;
+        if (IsBreadPresetName(cfg.ACTIVE_PRESET_NAME)) return true;
+        return DoesConfigMatchBreadPreset(cfg);
     }
 
     function ApplyForcedFeatureDisables(cfg) {
         if (!cfg) return cfg;
-        // Clone to avoid corrupting State.lastConfig (shared reference).
+        // The same resolved config is consumed by the core, compass, and build
+        // loops. Reuse the forced result instead of cloning and re-matching the
+        // full preset on every consumer tick.
+        if (cfg === _forcedConfigInput || cfg === _forcedConfigOutput) {
+            return _forcedConfigOutput || cfg;
+        }
+        var breadActive = IsBreadPresetActive(cfg);
+        var normalizeBreadName = breadActive && cfg.ACTIVE_PRESET_NAME !== BREAD_PRESET_NAME;
+        var disableMinSouls = cfg.ENABLE_MIN_SOULS !== 0;
+        var disableUnspent = !breadActive && cfg.ENABLE_UNSPENT_SOULS !== 0;
+        if (!normalizeBreadName && !disableMinSouls && !disableUnspent) {
+            _forcedConfigInput = cfg;
+            _forcedConfigOutput = cfg;
+            return cfg;
+        }
+
+        // Clone only when at least one forced value actually differs.
         var result = Object.assign({}, cfg);
         result.ENABLE_MIN_SOULS = 0;
-        if (!IsBreadPresetActive(result)) result.ENABLE_UNSPENT_SOULS = 0;
+        if (breadActive) result.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
+        else result.ENABLE_UNSPENT_SOULS = 0;
+        _forcedConfigInput = cfg;
+        _forcedConfigOutput = result;
         return result;
     }
 
@@ -12843,6 +12892,13 @@ function GetUIRoot() {
         }
     }
 
+    function IsManifestFeatureEnabled(featureId) {
+        try {
+            return !!(QOL.core && QOL.core.FeatureRegistry &&
+                QOL.core.FeatureRegistry.isEnabled(featureId));
+        } catch(eManifestEnabled) { return false; }
+    }
+
     function compassLoop() {
         ProfileHit("compassLoop");
         var nextDelaySec = COMPASS_INTERVAL_IDLE_SEC;
@@ -12854,6 +12910,7 @@ function GetUIRoot() {
             // Use precomputed gates from main loop (5Hz) to avoid redundant
             // Number() config checks and sticky-state evaluations at 20Hz.
             var gates = State.lastResolvedGates;
+            var manifestOwnsTargetShapes = IsManifestFeatureEnabled("ql_target_shapes");
 
             // Hard-gate: skip when no compass-specific features are active.
             // Don't use State.allFeaturesDisabled — that's global. The compass
@@ -12866,7 +12923,7 @@ function GetUIRoot() {
                     gates.compassItemMirror ||
                     gates.compassReloadCd ||
                     gates.compassUltCd ||
-                    gates.compassTargetShapesFast;
+                    (gates.compassTargetShapesFast && !manifestOwnsTargetShapes);
                 if (!compassHasWork) {
                     nextDelaySec = COMPASS_INTERVAL_DEEP_IDLE_SEC;
                     var _cidle = DetectGlobalIdleState(root);
@@ -12936,7 +12993,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (gates.compassTargetShapesFast) {
+                    if (gates.compassTargetShapesFast && !manifestOwnsTargetShapes) {
                         hasCompassRuntimeWork = true;
                         var _rdEnabled = gates.redDiamondEnabled || false;
                         ExecuteFeature("compass.target_shapes_fast", function() {
@@ -13005,7 +13062,7 @@ function GetUIRoot() {
                         });
                     }
 
-                    if (unitTargetFastMode) {
+                    if (unitTargetFastMode && !manifestOwnsTargetShapes) {
                         hasCompassRuntimeWork = true;
                         ExecuteFeature("compass.target_shapes_fast", function() {
                             var perfSection = PerfStart();
@@ -13029,7 +13086,7 @@ function GetUIRoot() {
                     itemMirrorFastActive ||
                     gates.compassReloadCd ||
                     gates.compassUltCd ||
-                    gates.compassTargetShapesFast
+                    (gates.compassTargetShapesFast && !manifestOwnsTargetShapes)
                 );
             } else {
                 itemMirrorRuntimeActive = IsPassiveCooldownAdvancedMode(ResolvePassiveCooldownMode(cfg)) || State.itemMirror.probeWasEnabled || State.itemMirror.displayMode === "active";
@@ -13041,7 +13098,7 @@ function GetUIRoot() {
                     itemMirrorFastActive ||
                     IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN") ||
                     IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS") ||
-                    (IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") || IsUnitTargetStyleCustomized(cfg))
+                    (!manifestOwnsTargetShapes && (IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") || IsUnitTargetStyleCustomized(cfg)))
                 ));
             }
             if (State.perfEnabled) {
@@ -13575,15 +13632,12 @@ function GetUIRoot() {
      */
     function _scheduleFeatureBucket(offsetSec, features, _s) {
         if (!features || features.length === 0) return;
-        // Clone snapshot so deferred callbacks don't see the next tick's
-        // overwritten data if the $.Schedule fires late due to jitter.
-        var snapshot = Object.assign({}, _s);
         $.Schedule(offsetSec, function() {
             for (var i = 0; i < features.length; i++) {
                 var fn = features[i];
                 if (!fn) continue;
                 try {
-                    fn(snapshot);
+                    fn(_s);
                 } catch (e) {
                     if (typeof $ !== "undefined" && $.Msg) {
                         $.Msg("[QOLLock] bucket feature error: " + (e && e.message ? e.message : String(e)));
@@ -14397,9 +14451,30 @@ function GetUIRoot() {
     // ── Registry-driven feature bucket population (Phase 5) ──
     // Pre-compute sorted registry key list once to avoid per-tick allocation
     var _REGISTRY_KEYS = null;
+    var _FEATURE_RUNNERS = {};
     function _getRegistryKeys() {
         if (!_REGISTRY_KEYS) _REGISTRY_KEYS = Object.keys(QOL_FEATURE_REGISTRY).sort();
         return _REGISTRY_KEYS;
+    }
+
+    function _getFeatureRunner(featureName, featureEntry, perfLabel) {
+        var cached = _FEATURE_RUNNERS[featureName];
+        if (cached) return cached;
+        var currentSnapshot = null;
+        function executeCurrentSnapshot() {
+            var snapshot = currentSnapshot;
+            var perfStartMs = PerfStart();
+            featureEntry.update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
+            if (featureEntry.postUpdate) featureEntry.postUpdate(snapshot, State);
+            PerfEnd(perfLabel, perfStartMs);
+        }
+        cached = function(snapshot) {
+            currentSnapshot = snapshot;
+            try { ExecuteFeature(featureName, executeCurrentSnapshot); }
+            finally { currentSnapshot = null; }
+        };
+        _FEATURE_RUNNERS[featureName] = cached;
+        return cached;
     }
 
     function populateFeatureBuckets(buckets, staggerEnabled, loopSnapshot, gates, root) {
@@ -14417,19 +14492,7 @@ function GetUIRoot() {
             if (featureEntry.requiresRoot && !root) continue;
 
             var bucketIndex = staggerEnabled ? featureEntry.bucket : 0;
-            var perfLabel = featureEntry.perfLabel;
-
-            // IIFE captures per-iteration values (ES5.1: var is function-scoped, not block-scoped)
-            buckets[bucketIndex].push((function(fn, entry, label) {
-                return function(snapshot) {
-                    ExecuteFeature(fn, function() {
-                        var perfStartMs = PerfStart();
-                        entry.update(snapshot.root, snapshot.cfg, snapshot.nowMs, State, snapshot.hideoutConnected, snapshot.raw);
-                        if (entry.postUpdate) entry.postUpdate(snapshot, State);
-                        PerfEnd(label, perfStartMs);
-                    });
-                };
-            })(featureName, featureEntry, perfLabel));
+            buckets[bucketIndex].push(_getFeatureRunner(featureName, featureEntry, featureEntry.perfLabel));
         }
     }
 
@@ -14462,14 +14525,17 @@ function GetUIRoot() {
 
     function dispatchOrExecuteBuckets(buckets, loopSnapshot) {
         if (FEATURE_STAGGER_ENABLED) {
-            if (buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, buckets[0], loopSnapshot);
-            if (buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, buckets[1], loopSnapshot);
-            if (buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, buckets[2], loopSnapshot);
-            if (buckets[3].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_3_MS, buckets[3], loopSnapshot);
-            if (buckets[4].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_4_MS, buckets[4], loopSnapshot);
-            if (buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, buckets[5], loopSnapshot);
-            if (buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, buckets[6], loopSnapshot);
-            if (buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, buckets[7], loopSnapshot);
+            // Deferred buckets all consume the same immutable per-tick data.
+            // Clone once, rather than once for every non-empty bucket.
+            var scheduledSnapshot = Object.assign({}, loopSnapshot);
+            if (buckets[0].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_0_MS, buckets[0], scheduledSnapshot);
+            if (buckets[1].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_1_MS, buckets[1], scheduledSnapshot);
+            if (buckets[2].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_2_MS, buckets[2], scheduledSnapshot);
+            if (buckets[3].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_3_MS, buckets[3], scheduledSnapshot);
+            if (buckets[4].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_4_MS, buckets[4], scheduledSnapshot);
+            if (buckets[5].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_5_MS, buckets[5], scheduledSnapshot);
+            if (buckets[6].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_6_MS, buckets[6], scheduledSnapshot);
+            if (buckets[7].length > 0) _scheduleFeatureBucket(FEATURE_OFFSET_BUCKET_7_MS, buckets[7], scheduledSnapshot);
         } else {
             for (var bucketIdx = 0; bucketIdx < buckets[0].length; bucketIdx++) {
                 var featureFn = buckets[0][bucketIdx];
@@ -14679,6 +14745,10 @@ function GetUIRoot() {
 
     function BootstrapUnitTargetStyles() {
         if (State.unitTargetBootstrapDone) return;
+        if (IsManifestFeatureEnabled("ql_target_shapes")) {
+            State.unitTargetBootstrapDone = true;
+            return;
+        }
         State.unitTargetBootstrapTryCount = (Number(State.unitTargetBootstrapTryCount) || 0) + 1;
 
         var root = GetUIRoot();

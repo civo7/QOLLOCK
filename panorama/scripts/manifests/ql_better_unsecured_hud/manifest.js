@@ -291,7 +291,7 @@
                     if (!_isPanelValid(root)) return;
 
                     var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     var enabled = Number(cfg.ENABLE_BETTER_UNSECURED) === 1;
                     var State = _getState();
                     if (!State) return;

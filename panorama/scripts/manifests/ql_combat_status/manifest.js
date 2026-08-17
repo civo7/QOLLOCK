@@ -117,7 +117,7 @@
                 var root = $.GetContextPanel();
                 if (!root) return;  // null-root guard (mirrors old requiresRoot: true)
                 var now = Date.now ? Date.now() : (new Date()).getTime();
-                var cfg = ctx.config.all();
+                var cfg = ctx.config.view();
 
                 // ── Context gate (mirrors old line 100-106) ──
                 if (!_isCustomHudActive(root)) {
@@ -219,7 +219,9 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_combat_status") : null;
+                    // Legacy dispatch ran at 5Hz; the 20Hz rewrite cadence was
+                    // unnecessary for a timer rendered to one decimal place.
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_combat_status") : null;
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }

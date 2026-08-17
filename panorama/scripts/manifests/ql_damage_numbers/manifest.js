@@ -191,7 +191,7 @@
                 try {
                     var root = $.GetContextPanel();
                     if (!root) return;
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     var now = Date.now ? Date.now() : (new Date()).getTime();
 
                     var sig = _resolveSig(cfg);

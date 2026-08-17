@@ -7,8 +7,8 @@
 // DOES NOT OWN: coreRating panels (Valve), statlocker.gg website
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
 // CONFIG KEYS: ENABLE_STATLOCKER (toggle)
-// PATTERN:     Polling (~1.2Hz). Scans for coreRating panels, injects
-//              "STAT" buttons that open statlocker.gg profile pages.
+// PATTERN:     Polling every 1.2s; full-tree discovery backs off to 3-6s.
+//              Injects "STAT" buttons that open statlocker.gg profiles.
 // =============================================================================
 
 (function() {
@@ -25,13 +25,14 @@
         ],
         create: function(ctx) {
             var _loop = null;
-            var SCAN_INTERVAL_MS = 1200;
+            var SCAN_INTERVAL_MS = 3000;
             var SCAN_IDLE_MAX_MS = 6000;
 
             var _corePanels = [];
             var _buttons = [];
             var _scanMisses = 0;
             var _nextScanMs = 0;
+            var _cacheInitialized = false;
             var _wasEnabled = false;
 
             function _alive(p) {
@@ -39,16 +40,18 @@
             }
 
             function _listValid(list) {
-                if (!list || list.length === 0) return false;
+                if (!list) return false;
                 for (var i = 0; i < list.length; i++) {
                     if (!_alive(list[i])) return false;
                 }
+                // Empty is a valid cached result after the first discovery
+                // scan; _cacheInitialized distinguishes it from startup.
                 return true;
             }
 
             function _isLikelyAccountId(digits) {
-                if (typeof digits !== "string" || digits.length < 7 || digits.length > 19) return false;
-                return /^\d{7,19}$/.test(digits);
+                if (typeof digits !== "string" || digits.length < 1 || digits.length > 10) return false;
+                return /^\d{1,10}$/.test(digits);
             }
 
             function _parseAccountId(text) {
@@ -70,7 +73,46 @@
                 return "";
             }
 
+            function _readAccountIdPanel(panel) {
+                if (!_alive(panel)) return "";
+                var accountId = "";
+                try { accountId = _parseAccountId(panel.text || ""); } catch(eText) {}
+                if (accountId) return accountId;
+                try { accountId = _parseAccountId(panel.accountid); } catch(eProp) {}
+                if (accountId) return accountId;
+                try {
+                    if (panel.GetAttributeString) {
+                        accountId = _parseAccountId(panel.GetAttributeString("accountid", "")) ||
+                            _parseAccountId(panel.GetAttributeString("account_id", ""));
+                    }
+                } catch(eAttr) {}
+                return accountId;
+            }
+
+            function _findCanonicalProfileAccount(anchorPanel) {
+                var cur = anchorPanel;
+                for (var depth = 0; cur && depth < 16; depth++) {
+                    var binding = null;
+                    try {
+                        if (String(cur.id || "") === "QOLProfileAccountID") binding = cur;
+                        else if (cur.FindChildTraverse) binding = cur.FindChildTraverse("QOLProfileAccountID");
+                    } catch(eFind) { binding = null; }
+                    if (_alive(binding)) {
+                        return { found: true, accountId: _readAccountIdPanel(binding) };
+                    }
+                    try { cur = cur.GetParent ? cur.GetParent() : null; }
+                    catch(eParent) { cur = null; }
+                }
+                return { found: false, accountId: "" };
+            }
+
             function _resolveAccountId(anchorPanel, root) {
+                // Profile hero rows have an authoritative viewed-friend binding.
+                // If it exists but is not populated yet, fail closed instead of
+                // opening a stacked card or the local/session account.
+                var canonical = _findCanonicalProfileAccount(anchorPanel);
+                if (canonical.found) return canonical.accountId;
+
                 // Walk up ancestry from anchor
                 var cur = anchorPanel, depth = 0;
                 while (cur && depth < 10) {
@@ -121,30 +163,42 @@
             }
 
             function _collectCorePanels(root) {
-                var scanRoots = [];
-                if (_alive(root)) scanRoots.push(root);
+                var scanRoot = _alive(root) ? root : null;
                 var ctx = null;
                 try { ctx = $.GetContextPanel ? $.GetContextPanel() : null; } catch(e) {}
-                if (_alive(ctx) && scanRoots.indexOf(ctx) === -1) scanRoots.push(ctx);
-                // Walk up ancestry to find broader scan roots (matches old behavior)
-                var ancestor = ctx;
-                for (var d = 0; d < 8 && ancestor; d++) {
-                    ancestor = ancestor.GetParent ? ancestor.GetParent() : null;
-                    if (!_alive(ancestor)) break;
-                    if (scanRoots.indexOf(ancestor) === -1) scanRoots.push(ancestor);
+                if (_alive(ctx)) scanRoot = ctx;
+                // Use the broadest live ancestor once. Scanning every nested
+                // ancestor rescanned the same subtrees up to nine times.
+                var ancestor = scanRoot;
+                for (var d = 0; d < 8 && _alive(ancestor); d++) {
+                    var parent = null;
+                    try { parent = ancestor.GetParent ? ancestor.GetParent() : null; } catch(eParent) {}
+                    if (!_alive(parent) || parent === ancestor) break;
+                    ancestor = parent;
+                    scanRoot = parent;
                 }
                 var out = [];
-                for (var i = 0; i < scanRoots.length; i++) {
-                    var sr = scanRoots[i];
-                    if (!sr || !sr.FindChildrenWithClassTraverse) continue;
-                    var found = sr.FindChildrenWithClassTraverse("coreRating") || [];
-                    for (var j = 0; j < found.length; j++) {
-                        if (!_alive(found[j])) continue;
-                        if (!_isTargetPanel(found[j])) continue;
-                        if (out.indexOf(found[j]) === -1) out.push(found[j]);
-                    }
+                if (!scanRoot || !scanRoot.FindChildrenWithClassTraverse) return out;
+                var found = scanRoot.FindChildrenWithClassTraverse("coreRating") || [];
+                for (var i = 0; i < found.length; i++) {
+                    if (!_alive(found[i]) || !_isTargetPanel(found[i])) continue;
+                    out.push(found[i]);
                 }
                 return out;
+            }
+
+            function _isButtonInitialized(button) {
+                if (!_alive(button) || !button.GetAttributeString) return false;
+                try {
+                    return button.GetAttributeString("_qol_statlocker_initialized", "") === "1" &&
+                        _alive(_findDirectChild(button, "QOLStatlockerLabel"));
+                }
+                catch(e) { return false; }
+            }
+
+            function _markButtonInitialized(button) {
+                if (!_alive(button) || !button.SetAttributeString) return;
+                try { button.SetAttributeString("_qol_statlocker_initialized", "1"); } catch(e) {}
             }
 
             function _styleButton(button, label) {
@@ -186,6 +240,10 @@
                 }
                 if (!_alive(btn)) return null;
 
+                // Stable buttons need no repeated style writes or event-closure
+                // allocation. Reinitialize only after panel recreation/reload.
+                if (_isButtonInitialized(btn)) return btn;
+
                 var label = _findDirectChild(btn, "QOLStatlockerLabel");
                 if (!label && $.CreatePanel) {
                     try { label = $.CreatePanel("Label", btn, ""); } catch(e) { label = null; }
@@ -194,6 +252,7 @@
                 if (label && label.text !== "STAT") label.text = "STAT";
                 _styleButton(btn, label);
 
+                var eventBound = false;
                 try {
                     btn.SetPanelEvent("onactivate", function() {
                         // Resolve root fresh at click time (panel tree may have changed since scan)
@@ -202,7 +261,10 @@
                         var accountId = _resolveAccountId(corePanel, clickRoot);
                         if (accountId) $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
                     });
+                    eventBound = true;
                 } catch(e) {}
+
+                if (_alive(label) && eventBound) _markButtonInitialized(btn);
 
                 return btn;
             }
@@ -217,7 +279,8 @@
                     var child = _findDirectChild(_corePanels[j], "QOLStatlockerButton");
                     if (_alive(child)) { try { child.DeleteAsync(0); } catch(e) {} }
                 }
-                _buttons = []; _corePanels = []; _nextScanMs = 0; _scanMisses = 0;
+                _buttons = []; _corePanels = []; _nextScanMs = 0;
+                _scanMisses = 0; _cacheInitialized = false;
             }
 
             function _getScanDelay(foundCount) {
@@ -240,9 +303,15 @@
                 if (!_alive(root)) return;
 
                 // Re-scan when cache invalid OR timer expired
-                var cacheValid = _listValid(_corePanels);
+                var cacheValid = _cacheInitialized && _listValid(_corePanels);
+                var buttonsValid = _buttons.length === _corePanels.length && _listValid(_buttons);
+                if (cacheValid && buttonsValid && now < _nextScanMs) {
+                    _wasEnabled = true;
+                    return;
+                }
                 if (!cacheValid || now >= _nextScanMs) {
                     _corePanels = _collectCorePanels(root);
+                    _cacheInitialized = true;
                     _nextScanMs = now + _getScanDelay(_corePanels.length);
                 }
 

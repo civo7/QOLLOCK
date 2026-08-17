@@ -271,7 +271,7 @@
                     var root = $.GetContextPanel();
                     if (!_isPanelValid(root)) return;
 
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     var enabled = Number(cfg.ENABLE_URN_TIMER) === 1;
                     var inHideout = _isConnectedToHideout(root);
 

@@ -194,7 +194,7 @@
             function _tick() {
                 try {
                     var root = $.GetContextPanel(); if (!root) return;
-                    var cfg = ctx.config.all(); var st = _ensureState();
+                    var cfg = ctx.config.view(); var st = _ensureState();
 
                     if (!_isOn(cfg, "ENABLE_CROSSHAIR_STATS")) {
                         if (st.built || _getPanel("crosshairStatsOverlay")) _removeOverlay(root);

@@ -15,7 +15,7 @@ FR.register({id:"ql_stat_bonuses",enabledByDefault:false,settings:[
 {key:"STAT_BONUSES_X_OFFSET",type:"slider",min:-1000,max:1000,step:5,default:0},
 {key:"STAT_BONUSES_Y_OFFSET",type:"slider",min:0,max:1000,step:5,default:0}],
 create:function(ctx){var _loop=null,_overlay=null;
-function _tick(){var r=$.GetContextPanel(),cfg=ctx.config.all();if(!Number(cfg.ENABLE_STAT_BONUSES)){if(_overlay)_overlay.visible=false;return;}
+function _tick(){var r=$.GetContextPanel(),cfg=ctx.config.view();if(!Number(cfg.ENABLE_STAT_BONUSES)){if(_overlay)_overlay.visible=false;return;}
 var sc=Number(cfg.STAT_BONUSES_SCALE)/100,ox=Math.round(Number(cfg.STAT_BONUSES_X_OFFSET))||0,oy=Math.round(Number(cfg.STAT_BONUSES_Y_OFFSET))||0;
 if(!_overlay){_overlay=r.FindChildTraverse("QOLStatBonusesOverlay");if(!_overlay){var gp=r.FindChildTraverse("gameplay_hud");if(!gp)return;
 _overlay=$.CreatePanel("Panel",gp,"QOLStatBonusesOverlay",{hittest:"false"});}}

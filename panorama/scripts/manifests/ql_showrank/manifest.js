@@ -186,7 +186,7 @@
                         return;
                     }
                     var elapsed = _nowMs() - t0;
-                    if (elapsed > 2000 || attempt > 66) {
+                    if (elapsed > 2000 || attempt > 20) {
                         var timeoutLabel = _getAccountIdLabel(entry);
                         if (_valid(timeoutLabel)) { try { timeoutLabel.text = "-"; } catch(eLabel) {} }
                         _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
@@ -194,16 +194,23 @@
                     }
                     // Abort if another FillRow started (probe name changed)
                     if (_readAttr(docRoot, "qol_sr_probe_name", "") !== name) { _dismissProfileCard(); onDone(); return; }
-                    var afterIds = _readAccountIdSet(root);
-                    // Compute delta: only consider IDs new since before dispatch
-                    var newIds = [];
-                    for (var ai = 0; ai < afterIds.length; ai++) {
-                        var isNew = true;
-                        for (var bi = 0; bi < beforeIds.length; bi++) { if (afterIds[ai] === beforeIds[bi]) { isNew = false; break; } }
-                        if (isNew) newIds.push(afterIds[ai]);
+                    // The profile-card onload bridge publishes the exact account
+                    // ID without a HUD traversal. Keep the set-difference scan as
+                    // a fallback for Panorama builds where synthetic activation
+                    // does not fire that onload callback.
+                    var result = String(_readAttr(docRoot, "qol_sr_probe_account", "") || "").replace(/[^0-9]/g, "");
+                    if (result.length < 1 || result.length > 10) result = "";
+                    if (!result) {
+                        var afterIds = _readAccountIdSet(root);
+                        for (var ai = 0; ai < afterIds.length && !result; ai++) {
+                            var isNew = true;
+                            for (var bi = 0; bi < beforeIds.length; bi++) {
+                                if (afterIds[ai] === beforeIds[bi]) { isNew = false; break; }
+                            }
+                            if (isNew) result = afterIds[ai];
+                        }
                     }
-                    if (newIds.length > 0) {
-                        var result = newIds[0];
+                    if (result) {
                         _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
                         _dismissProfileCard();
                         var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
@@ -225,9 +232,12 @@
                         _badgeVisible(overlay, true);
                         onDone(); return;
                     }
-                    $.Schedule(0.03, function() { _poll(attempt + 1); });
+                    // A 30ms full-HUD class traversal caused bursty work while
+                    // filling the scoreboard. 100ms keeps the same 2s timeout
+                    // while bounding each row to at most 20 fallback scans.
+                    $.Schedule(0.10, function() { _poll(attempt + 1); });
                 }
-                $.Schedule(0.03, function() { _poll(1); });
+                $.Schedule(0.10, function() { _poll(1); });
             }
 
             // ── FillLoop — scan escape menu, fill one row per tick ──
@@ -276,7 +286,12 @@
                 var row = _findUnfilledRow(root);
                 if (!row) {
                     _stateSet("showRankEscapeDone", genNow);
-                    $.Schedule(0.5, _dismissProfileCard);
+                    var dismissLifecycleToken = _lifecycleToken;
+                    $.Schedule(0.5, function() {
+                        if (dismissLifecycleToken === _lifecycleToken && _wasEnabled) {
+                            _dismissProfileCard();
+                        }
+                    });
                     _setAttr(docRoot, "qol_sr_fill_token", "");
                     return;
                 }
@@ -309,7 +324,7 @@
                 var _lastId = "", _lastGen = "", _idleCount = 0;
                 function _tryLoad() {
                     if (!_valid(player) || lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
-                    if (!_isOn(ctx.config.all(), "SHOW_RANK_TOPBAR")) return;
+                    if (Number(ctx.config.get("SHOW_RANK_TOPBAR")) !== 1) return;
                     try { if (player.GetAttributeString("_qol_sr_init", "") !== initGeneration) return; } catch(eMarker) { return; }
                     var gen = _readAttr(root, "qol_sr_generation", "");
                     if (gen !== _lastGen) {
@@ -345,7 +360,7 @@
                         var lo = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
                         if (_valid(lo)) {
                             try { lo.SetImage(API_URL + accountId + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
-                            var showTopBar = _isOn(ctx.config.all(), "SHOW_RANK_TOPBAR");
+                            var showTopBar = Number(ctx.config.get("SHOW_RANK_TOPBAR")) === 1;
                             if (showTopBar) {
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
@@ -436,7 +451,7 @@
             function _tick() {
                 try {
                     var root = $.GetContextPanel(); if (!root) return;
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     if (!_isOn(cfg, "SHOW_RANK")) {
                         if (_wasEnabled) { _clearTopBarBadges(root); _clearPlayerListBadges(root); _clearPublishedRanks(root); _wasEnabled = false; _stateSet("_showRankEnabled", false); _stateSet("showRankEscapeDone", ""); }
                         return;
@@ -493,7 +508,17 @@
                     _lifecycleToken++;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var root = $.GetContextPanel();
-                    try { _setAttr(_docRoot(root), "qol_sr_fill_token", ""); } catch(eToken) {}
+                    try {
+                        var docRoot = _docRoot(root);
+                        var probeActive = !!_readAttr(docRoot, "qol_sr_probe_name", "");
+                        _setAttr(docRoot, "qol_sr_fill_token", "");
+                        if (probeActive) {
+                            _setAttr(docRoot, "qol_sr_probe_name", "");
+                            _setAttr(docRoot, "qol_sr_probe_hero", "");
+                            _setAttr(docRoot, "qol_sr_probe_account", "");
+                            _dismissProfileCard();
+                        }
+                    } catch(eToken) {}
                     _clearTopBarBadges(root); _clearPlayerListBadges(root);
                     try { root.AddClass("HideShowRankTopBar"); } catch(e) {}
                     _wasEnabled = false; _fillToken = 0;

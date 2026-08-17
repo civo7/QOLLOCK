@@ -89,6 +89,12 @@
         return OLD_TO_NEW[oldId] || oldId;
     }
 
+    function _appendFeatureOwner(map, key, featureId) {
+        if (!key || !featureId) return;
+        if (!map[key]) map[key] = [];
+        if (map[key].indexOf(featureId) === -1) map[key].push(featureId);
+    }
+
     // Old flat defaults — populated by legacy/ql_config_defaults.js
     // Type coercion map: for each flat key, what type it should be in new system
     function _coerceType(key, value) {
@@ -126,8 +132,7 @@
                 }
                 for (var j = 0; j < entry.configKeys.length; j++) {
                     var key = entry.configKeys[j];
-                    if (!map[key]) map[key] = [];
-                    map[key].push(newId);
+                    _appendFeatureOwner(map, key, newId);
                 }
             }
             // Step 0b validation: warn about unmapped old feature IDs
@@ -157,17 +162,13 @@
             for (var i = 0; i < ids.length; i++) {
                 var m = FR.getManifest(ids[i]);
                 if (!m) continue;
-                // Add enableKey to the map if not already routed
-                if (m.enableKey && !map.hasOwnProperty(m.enableKey)) {
-                    map[m.enableKey] = [ids[i]];
-                }
-                // Add all settings keys to the map if not already routed
+                // A flat key may intentionally drive multiple manifests. Append
+                // every owner instead of letting the first manifest claim it.
+                if (m.enableKey) _appendFeatureOwner(map, m.enableKey, ids[i]);
                 if (m.settings) {
                     for (var s = 0; s < m.settings.length; s++) {
                         var sk = m.settings[s].key;
-                        if (sk && !map.hasOwnProperty(sk)) {
-                            if (!map[sk]) map[sk] = [ids[i]];
-                        }
+                        if (sk) _appendFeatureOwner(map, sk, ids[i]);
                     }
                 }
             }

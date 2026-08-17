@@ -8,7 +8,7 @@
 // CONFIG KEYS: HUD_SHOP_ENABLED, SHOP_OFFSET_X/Y, SHOP_OPACITY, SHOP_SCALE,
 //              ENABLE_SIMPLIFY_SHOP, ENABLE_SIMPLIFY_ITEMS, DISABLE_SHOP_BLUE,
 //              ENABLE_SHOP_STATS, ENABLE_SIMPLIFY_SHOP_STATS, ENABLE_SHOP_RECENT_PURCHASES
-// PATTERN:     Polling (~20Hz). Panel caching with lazy discovery.
+// PATTERN:     Polling (~5Hz). Panel caching with lazy discovery.
 //              Signature diffing to skip redundant style writes.
 // =============================================================================
 
@@ -72,7 +72,7 @@
                     var root = $.GetContextPanel();
                     if (!root) return;
                     var now = Date.now ? Date.now() : (new Date()).getTime();
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
 
                     var shopOffsetX = _normOffset(cfg.SHOP_OFFSET_X, 0);
                     var shopOffsetY = _normOffset(cfg.SHOP_OFFSET_Y, 0);
@@ -199,7 +199,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_heroshop") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_heroshop") : null;
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }

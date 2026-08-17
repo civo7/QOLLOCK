@@ -346,10 +346,21 @@
                 var reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
                 var dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
 
+                var hasReminderCleanup = !!(
+                    State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel")
+                );
+                if (!needsPassiveRuntime && !reminderTypesEnabled && !dl4dReminderEnabled && !hasReminderCleanup) {
+                    // Stay below the two-second announcer alert window so a
+                    // newly enabled reminder cannot miss its first boundary.
+                    if (_loop) _loop.reschedule(1.0);
+                    return;
+                }
+                if (_loop) _loop.reschedule(0.5);
+
                 // Hideout check — internalized from old dispatch parameter
                 var hideoutConnected = false;
                 try { hideoutConnected = isConnectedToHideout(root); } catch(e) {}
-                var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel");
+                var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || hasReminderCleanup;
 
                 if (!needsPassiveRuntime && !needsReminderRuntime) return;
 

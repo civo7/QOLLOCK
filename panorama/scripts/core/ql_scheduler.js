@@ -44,7 +44,7 @@
     // dispatch features and manifest poll loops the same rolling window.
     function _recordTiming(featureId, elapsedMs) {
         try {
-            if (typeof QOL === "undefined" || !QOL.state) return;
+            if (typeof QOL === "undefined" || !QOL.state || !QOL.state.perfEnabled) return;
             var stats = QOL.state.perfStats;
             if (!stats) return;
             var key = "mf." + featureId;
@@ -60,6 +60,16 @@
         } catch(e) { /* best-effort — perf tracking is non-critical */ }
     }
 
+    function _removeRegisteredLoop(featureId, loop) {
+        if (typeof featureId !== "string" || !featureId || !loop) return;
+        var list = _loops[featureId];
+        if (!list) return;
+        for (var i = list.length - 1; i >= 0; i--) {
+            if (list[i] === loop) list.splice(i, 1);
+        }
+        if (list.length === 0) delete _loops[featureId];
+    }
+
     // -- Public API --
     function createPollLoop(callback, rateSec, featureId) {
         if (typeof callback !== "function") {
@@ -70,15 +80,20 @@
         var _stopped = false;
         var _rate = (typeof rateSec === "number" && rateSec > 0) ? rateSec : 0.2;
         var _handle = null;
+        var _hadError = false;
+        var loop = null;
 
         function tick() {
             if (_stopped) return;
-            var t0 = _nowMs();
+            var perfActive = false;
+            try { perfActive = !!(QOL && QOL.state && QOL.state.perfEnabled); } catch(ePerf) {}
+            var t0 = perfActive ? _nowMs() : 0;
             var _threw = false;
             try {
                 callback();
             } catch (e) {
                 _threw = true;
+                _hadError = true;
                 var _errMsg = (e && e.message ? e.message : String(e));
                 // P2: emit event so FeatureRegistry can track error streaks and auto-disable
                 if (EventBus && typeof featureId === "string" && featureId) {
@@ -86,12 +101,14 @@
                 }
                 $.Msg("[QOLLock][ERROR][Scheduler] poll loop threw — " + _errMsg + " (continuing)");
             }
-            // P2: emit success event to reset consecutive error counter in FeatureRegistry
-            if (!_threw && EventBus && typeof featureId === "string" && featureId) {
+            // A success event is only useful after this loop has failed. Avoid an
+            // allocation + EventBus dispatch on every healthy poll tick.
+            if (!_threw && _hadError && EventBus && typeof featureId === "string" && featureId) {
                 try { EventBus.emit("scheduler:tick_ok", { featureId: featureId }); } catch(_evOkErr) { /* best-effort */ }
+                _hadError = false;
             }
-            var elapsed = _nowMs() - t0;
-            if (typeof featureId === "string" && featureId) {
+            if (perfActive && typeof featureId === "string" && featureId) {
+                var elapsed = _nowMs() - t0;
                 _recordTiming(featureId, elapsed);
             }
             if (!_stopped) {
@@ -103,8 +120,13 @@
         var jitter = (typeof Math !== "undefined" && Math.random) ? Math.random() * _rate * 0.5 : 0;
         _handle = $.Schedule(jitter, tick);
 
-        var loop = {
-            stop: function () { _stopped = true; if (_handle !== null) { $.CancelScheduled(_handle); _handle = null; } },
+        loop = {
+            stop: function () {
+                if (_stopped) return;
+                _stopped = true;
+                if (_handle !== null) { $.CancelScheduled(_handle); _handle = null; }
+                _removeRegisteredLoop(featureId, loop);
+            },
             reschedule: function (newRateSec) {
                 if (typeof newRateSec === "number" && newRateSec > 0) { _rate = newRateSec; }
             }
@@ -121,10 +143,12 @@
     function cancelAllForFeature(featureId) {
         var list = _loops[featureId];
         if (!list) return;
+        // Delete first because stop() unregisters itself. This keeps iteration
+        // stable and makes cancelAll safe for one or many loops.
+        delete _loops[featureId];
         for (var i = 0; i < list.length; i++) {
             try { list[i].stop(); } catch (e) { /* best-effort */ }
         }
-        delete _loops[featureId];
     }
 
     function getTimings(featureId) {

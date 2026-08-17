@@ -1,131 +1,126 @@
 (function () {
     "use strict";
 
-    var UPDATE_INTERVAL_SEC = 0.5;
-    var gLastKnownAccountId = "";
+    var RETRY_INTERVAL_SEC = 0.10;
+    var MAX_RETRY_COUNT = 20;
+    var SETTLED_INTERVAL_SEC = 1.0;
+    var MAX_SETTLED_RETRY_COUNT = 8;
+    var gContext = null;
+    var gAccountLabel = null;
+    var gLink = null;
+    var gDisplayLabel = null;
+    var gBoundLink = null;
+    var gLastDisplayText = "";
+    var gRetryCount = 0;
 
     function IsPanelValid(panel) {
         if (!panel) return false;
         if (!panel.IsValid) return true;
-        return panel.IsValid();
+        try { return panel.IsValid(); } catch (e0) { return false; }
     }
 
     function ParseAccountId(value) {
         if (value === undefined || value === null) return "";
         var digits = String(value).replace(/[^0-9]/g, "");
-        if (!digits || digits.length < 5 || digits.length > 12) return "";
+        if (!digits || digits.length < 1 || digits.length > 10) return "";
         return digits;
     }
 
-    function ReadAccountIdFromPanel(panel) {
-        if (!IsPanelValid(panel)) return "";
-        var candidates = [];
-        try { candidates.push(panel.accountid); } catch (e0) { /* property may not exist on this panel */ }
-        try { candidates.push(panel.account_id); } catch (e1) { /* property may not exist on this panel */ }
-        try { candidates.push(panel.accountID); } catch (e2) { /* property may not exist on this panel */ }
-        try { candidates.push(panel.steamid); } catch (e3) { /* property may not exist on this panel */ }
+    function ResolvePanels() {
+        if (!IsPanelValid(gContext)) {
+            gContext = $.GetContextPanel ? $.GetContextPanel() : null;
+        }
+        if (!IsPanelValid(gContext)) return false;
+        if (!IsPanelValid(gAccountLabel)) {
+            gAccountLabel = gContext.FindChildTraverse ? gContext.FindChildTraverse("QOLProfileCardAccountID") : null;
+        }
+        if (!IsPanelValid(gLink)) {
+            var oldLink = gLink;
+            gLink = gContext.FindChildTraverse ? gContext.FindChildTraverse("QOLStatlockerProfileCardLink") : null;
+            if (gLink !== oldLink) gBoundLink = null;
+        }
+        if (!IsPanelValid(gDisplayLabel)) {
+            var oldDisplayLabel = gDisplayLabel;
+            gDisplayLabel = gContext.FindChildTraverse ? gContext.FindChildTraverse("QOLStatlockerProfileCardLabel") : null;
+            if (gDisplayLabel !== oldDisplayLabel) gLastDisplayText = "";
+        }
+        return true;
+    }
+
+    function ReadAccountId() {
+        if (!IsPanelValid(gAccountLabel)) return "";
+        var accountId = "";
+        try { accountId = ParseAccountId(gAccountLabel.text || ""); } catch (e0) {}
+        if (accountId) return accountId;
+        try { accountId = ParseAccountId(gAccountLabel.accountid); } catch (e1) {}
+        if (accountId) return accountId;
         try {
-            if (panel.GetAttributeString) {
-                candidates.push(panel.GetAttributeString("accountid", ""));
-                candidates.push(panel.GetAttributeString("account_id", ""));
-                candidates.push(panel.GetAttributeString("accountID", ""));
-                candidates.push(panel.GetAttributeString("steamid", ""));
+            if (gAccountLabel.GetAttributeString) {
+                accountId = ParseAccountId(gAccountLabel.GetAttributeString("accountid", "")) ||
+                    ParseAccountId(gAccountLabel.GetAttributeString("account_id", ""));
             }
-        } catch (e4) { /* panel deleted mid-frame */ }
-        for (var i = 0; i < candidates.length; i++) {
-            var parsed = ParseAccountId(candidates[i]);
-            if (parsed) return parsed;
-        }
-        return "";
-    }
-
-    function FindAccountIdFromLabels(ctx) {
-        if (!IsPanelValid(ctx) || !ctx.FindChildrenWithClassTraverse) return "";
-        var labels = ctx.FindChildrenWithClassTraverse("AccountID") || [];
-        for (var i = 0; i < labels.length; i++) {
-            var label = labels[i];
-            if (!IsPanelValid(label)) continue;
-            var parsed = ParseAccountId(label.text || "");
-            if (parsed) return parsed;
-        }
-        return "";
-    }
-
-    function ScanLikelyPanels(ctx) {
-        var panelIds = [
-            "AvatarImage",
-            "UserName",
-            "UserNickname",
-            "MiniProfileContainer",
-            "ContentsMain",
-            "CardHeader",
-            "AccountArea"
-        ];
-        for (var i = 0; i < panelIds.length; i++) {
-            var panel = ctx.FindChildTraverse ? ctx.FindChildTraverse(panelIds[i]) : null;
-            var panelId = ReadAccountIdFromPanel(panel);
-            if (panelId) return panelId;
-        }
-        return "";
-    }
-
-    function ScanPanelTree(root) {
-        if (!IsPanelValid(root)) return "";
-        var stack = [root];
-        var scanned = 0;
-        while (stack.length > 0 && scanned < 1200) {
-            var panel = stack.pop();
-            if (!IsPanelValid(panel)) continue;
-            scanned++;
-            var panelId = ReadAccountIdFromPanel(panel);
-            if (panelId) return panelId;
-            try {
-                var childCount = panel.GetChildCount ? Number(panel.GetChildCount()) || 0 : 0;
-                for (var i = 0; i < childCount; i++) {
-                    var child = panel.GetChild ? panel.GetChild(i) : null;
-                    if (IsPanelValid(child)) stack.push(child);
-                }
-            } catch (e0) { /* panel deleted mid-frame */ }
-        }
-        return "";
-    }
-
-    function GetAccountId() {
-        var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        if (!IsPanelValid(ctx)) return "";
-        return (
-            ScanLikelyPanels(ctx) ||
-            ReadAccountIdFromPanel(ctx) ||
-            FindAccountIdFromLabels(ctx) ||
-            ScanPanelTree(ctx)
-        );
+        } catch (e2) {}
+        return accountId;
     }
 
     function OpenStatlocker() {
-        var accountId = GetAccountId() || gLastKnownAccountId;
+        // Never fall back to a prior binding: Panorama can reuse a profile card
+        // while its new account label is temporarily blank.
+        var accountId = RefreshLabelOnce();
         if (!accountId) return;
-        var url = "https://statlocker.gg/profile/" + accountId;
-        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch (e0) { $.Msg("[QOLLock][ProfileCardStatlocker] Failed to open URL: " + String(e0)); }
+        try {
+            $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
+        } catch (e0) {
+            $.Msg("[QOLLock][ProfileCardStatlocker] Failed to open URL: " + String(e0));
+        }
+    }
+
+    function BindLinkOnce() {
+        if (!IsPanelValid(gLink) || gBoundLink === gLink) return;
+        try {
+            gLink.SetPanelEvent("onactivate", OpenStatlocker);
+            // Refresh a reused card on demand without retaining an immortal
+            // polling chain for every hidden profile-card panel.
+            gLink.SetPanelEvent("onmouseover", RefreshLabelOnce);
+            gBoundLink = gLink;
+        } catch (e0) { /* panel deleted mid-frame */ }
+    }
+
+    function RefreshLabelOnce() {
+        ResolvePanels();
+        var accountId = ReadAccountId();
+        var displayText = accountId ? ("Friend ID: " + accountId) : "Friend ID:";
+        if (IsPanelValid(gDisplayLabel) && displayText !== gLastDisplayText) {
+            try {
+                gDisplayLabel.text = displayText;
+                gLastDisplayText = displayText;
+            } catch (e0) { /* panel deleted mid-frame */ }
+        }
+        return accountId;
     }
 
     function UpdateLabel() {
-        var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        if (!IsPanelValid(ctx)) {
-            $.Schedule(UPDATE_INTERVAL_SEC, UpdateLabel);
-            return;
-        }
-        var link = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLStatlockerProfileCardLink") : null;
-        var label = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLStatlockerProfileCardLabel") : null;
-        if (IsPanelValid(link)) {
-            try { link.SetPanelEvent("onactivate", OpenStatlocker); } catch (e0) { /* panel deleted mid-frame */ }
-        }
-        var accountId = GetAccountId();
-        if (accountId) gLastKnownAccountId = accountId;
-        if (IsPanelValid(label)) {
-            var displayId = accountId || gLastKnownAccountId;
-            label.text = displayId ? ("Friend ID: " + displayId) : "Friend ID:";
-        }
-        $.Schedule(UPDATE_INTERVAL_SEC, UpdateLabel);
+        ResolvePanels();
+        // A dismissed card cannot become valid again. Ending here prevents one
+        // recursive schedule chain from surviving for every Show Rank probe.
+        if (!IsPanelValid(gContext)) return;
+
+        BindLinkOnce();
+        var accountId = RefreshLabelOnce();
+        var settled = !!accountId && IsPanelValid(gLink) &&
+            IsPanelValid(gDisplayLabel) && gBoundLink === gLink;
+        if (settled) return;
+
+        // Keep late binding tolerant, but bound every schedule chain. Panorama
+        // can retain dismissed cards as valid hidden panels, so IsValid alone
+        // is not a safe lifetime signal. Reused cards refresh on hover/click.
+        var maxRetryCount = MAX_RETRY_COUNT + MAX_SETTLED_RETRY_COUNT;
+        if (gRetryCount >= maxRetryCount) return;
+        var nextDelay = gRetryCount < MAX_RETRY_COUNT
+            ? RETRY_INTERVAL_SEC
+            : SETTLED_INTERVAL_SEC;
+        gRetryCount++;
+        $.Schedule(nextDelay, UpdateLabel);
     }
 
     UpdateLabel();

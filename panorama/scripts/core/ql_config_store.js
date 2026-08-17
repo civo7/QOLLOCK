@@ -127,6 +127,13 @@
         return snapshot;
     }
 
+    // Internal hot-path view used by FeatureRegistry contexts. Callers must
+    // treat the returned bucket as read-only; ConfigStore remains its owner.
+    // The public all() API above keeps snapshot semantics for other consumers.
+    function view(featureId) {
+        return _values[featureId] || {};
+    }
+
     function exportAll() {
         var result = {};
         var ids = Object.keys(_schemas);
@@ -177,7 +184,7 @@
     }
 
     QOL.core.ConfigStore = {
-        registerSchema: registerSchema, get: get, set: set, all: all,
+        registerSchema: registerSchema, get: get, set: set, all: all, view: view,
         exportAll: exportAll, hasSchema: hasSchema, load: load,
         syncFromExternal: syncFromExternal
     };

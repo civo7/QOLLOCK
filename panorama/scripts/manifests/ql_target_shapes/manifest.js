@@ -10,7 +10,7 @@
 // CONFIG KEYS: ENABLE_RED_DIAMOND, UNIT_TARGET_SIZE, UNIT_TARGET_OPACITY,
 //              UNIT_TARGET_HINT_SIZE
 // CSS:         none (preTransformScale2d + SetPanelOpacitySafe only)
-// PATTERN:     Polling (0.2Hz). Self-throttling (60ms customized, 1000ms default).
+// PATTERN:     Polling (5Hz with panels, 2Hz discovery, 1Hz idle).
 //              Reads State.lastResolvedGates.redDiamondEnabled (cross-feature gate).
 // CONFIG SRC:  State.lastConfig (Pattern B — enabledByDefault:true, no enableKey)
 // PORTED FROM: features/ql_feat_targetshapes.js (222 lines)
@@ -36,11 +36,11 @@
             var State = _deps.state;
             var Utils = _deps.utils;
             var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var IsPanelListValid = Utils.IsPanelListValid;
             var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
 
             var _loop = null;
             var _root = null;
+            var _cacheInitialized = false;
 
             // ── Constants (verbatim from old feature) ──
             var TARGET_SHAPE_DEBUG = false;
@@ -103,6 +103,20 @@
                 $.Msg("[QOLLock][TargetShape] " + String(msg || ""));
             }
 
+            function IsCachedPanelListAlive(list) {
+                if (!list) return false;
+                for (var i = 0; i < list.length; i++) {
+                    var panel = list[i];
+                    if (!panel) return false;
+                    if (panel.IsValid) {
+                        try { if (!panel.IsValid()) return false; }
+                        catch(ePanel) { return false; }
+                    }
+                }
+                // An initialized empty cache is valid until its discovery timer.
+                return true;
+            }
+
             function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
                 var redDiamondActive = !!redDiamondEnabledHint;
                 if (!redDiamondActive && root && root.BHasClass) {
@@ -126,27 +140,27 @@
                     State.hintContainerCache = [];
                     State.targetShapeStyleSig = "";
                     State.nextTargetShapeRefreshMs = 0;
+                    _cacheInitialized = false;
                     TargetShapeDebugLogThrottled("default_skip", "default_skip scale=" + scaleText + " opacity=" + opacityText + " red=0", nowMs);
                     return;
                 }
 
                 var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0") + "|" + (hintScaleText || "1.000");
                 var styleChanged = (styleSig !== State.targetShapeStyleSig);
-                var cacheValid = IsPanelListValid(State.targetShapesCache);
+                var cacheValid = _cacheInitialized &&
+                    IsCachedPanelListAlive(State.targetShapesCache) &&
+                    IsCachedPanelListAlive(State.hintContainerCache);
                 var shouldRefreshList = needsCleanupPass || styleChanged || !cacheValid || nowMs >= (State.nextTargetShapeRefreshMs || 0);
                 if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
 
                 if (shouldRefreshList) {
                     State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
                     State.hintContainerCache = root.FindChildrenWithClassTraverse("qol_hint_target") || [];
-                    var defStyle = GetUnitTargetDefaultStyleTexts();
-                    var targetShapeRefreshMs = (
-                        redDiamondActive ||
-                        styleChanged ||
-                        scaleText !== defStyle.scaleText ||
-                        opacityText !== defStyle.opacityText ||
-                        (hintScaleText || "1.000") !== defStyle.hintScaleText
-                    ) ? 60 : 1000;
+                    _cacheInitialized = true;
+                    // Empty-cache discovery stays responsive without traversing
+                    // the full HUD every 50-200ms. Live handles invalidate early.
+                    var hasPanels = State.targetShapesCache.length > 0 || State.hintContainerCache.length > 0;
+                    var targetShapeRefreshMs = hasPanels ? 1000 : 500;
                     State.nextTargetShapeRefreshMs = nowMs + targetShapeRefreshMs;
                     TargetShapeDebugLogThrottled("refresh|" + (needsCleanupPass ? "cleanup" : "normal") + "|" + String(State.targetShapesCache.length) + "|" + String(targetShapeRefreshMs),
                         "refresh mode=" + (needsCleanupPass ? "cleanup" : "normal") + " count=" + String(State.targetShapesCache.length) + " styleChanged=" + (styleChanged ? "1" : "0") + " cacheValid=" + (cacheValid ? "1" : "0") + " nextMs=" + String(targetShapeRefreshMs), nowMs);
@@ -181,6 +195,7 @@
                     State.hintContainerCache = [];
                     State.targetShapeStyleSig = "";
                     State.nextTargetShapeRefreshMs = 0;
+                    _cacheInitialized = false;
                     TargetShapeDebugLogThrottled("cleanup_done", "default cleanup completed", nowMs);
                 }
             }
@@ -194,6 +209,7 @@
                 // Self-gating (replicates old NeedsTargetShapeRuntimeWork gate)
                 var redDiamondEnabled = !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled);
                 if (!NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled)) {
+                    if (_loop) _loop.reschedule(1.0);
                     // Idle cleanup — reset State to prevent sticky-gate firing
                     if (State.targetShapeHadNonDefaultRuntime || State.targetShapeStyleSig) {
                         State.targetShapeHadNonDefaultRuntime = false;
@@ -201,15 +217,20 @@
                         State.hintContainerCache = [];
                         State.targetShapeStyleSig = "";
                         State.nextTargetShapeRefreshMs = 0;
+                        _cacheInitialized = false;
                     }
                     return;
                 }
+                if (_loop) _loop.reschedule(0.2);
 
                 var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                 var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
                 ApplyTargetShapeStyles(root, unitTargetStyle.scaleText,
                     unitTargetStyle.opacityText, nowMs, redDiamondEnabled,
                     unitTargetStyle.hintScaleText);
+                var hasCachedPanels = (State.targetShapesCache && State.targetShapesCache.length > 0) ||
+                    (State.hintContainerCache && State.hintContainerCache.length > 0);
+                if (_loop) _loop.reschedule(hasCachedPanels ? 0.2 : 0.5);
             }
 
             return {
@@ -225,6 +246,7 @@
                     State.nextTargetShapeRefreshMs = 0;
                     State.targetShapesCache = [];
                     State.hintContainerCache = [];
+                    _cacheInitialized = false;
                     State.targetShapeDebugLastSig = "";
                     State.targetShapeDebugNextMs = 0;
                     _root = null;

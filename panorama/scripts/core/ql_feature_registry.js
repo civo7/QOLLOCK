@@ -85,6 +85,14 @@
             if (Logger) Logger.logError("FeatureRegistry", "disable failed for '" + id +
                 "': " + (e.message || e));
         }
+        // Lifecycle safety net: a manifest that forgets to stop one of its
+        // poll loops must not keep running after disable. This is idempotent
+        // when onDisable already stopped/cancelled its loops.
+        try {
+            if (QOL.core.Scheduler && QOL.core.Scheduler.cancelAllForFeature) {
+                QOL.core.Scheduler.cancelAllForFeature(id);
+            }
+        } catch (eCancel) { /* best-effort */ }
         delete _instances[id];
         _enabled[id] = false;
     }
@@ -108,7 +116,10 @@
         if (instance && typeof instance.onSettingsChanged === "function") {
             payload.changes = {};
             payload.changes[payload.key] = payload.value;
-            try { instance.onSettingsChanged(payload); }
+            try {
+                instance.onSettingsChanged(payload);
+                _errors[payload.featureId] = 0;
+            }
             catch (e) {
                 _errors[payload.featureId] = (_errors[payload.featureId] || 0) + 1;
                 if (Logger) Logger.logError("FeatureRegistry",
@@ -130,7 +141,12 @@
             config: {
                 get: function (key) { return ConfigStore.get(featureId, key); },
                 set: function (key, value) { return ConfigStore.set(featureId, key, value); },
-                all: function () { return ConfigStore.all(featureId); }
+                // all() retains defensive snapshot semantics. Polling manifests
+                // may explicitly opt into the audited, read-only hot-path view.
+                all: function () { return ConfigStore.all(featureId); },
+                view: function () {
+                    return ConfigStore.view ? ConfigStore.view(featureId) : ConfigStore.all(featureId);
+                }
             }
         };
     }
@@ -247,6 +263,11 @@
                 if (Logger) Logger.logError("FeatureRegistry", "shutdown failed for '" +
                     ids[i] + "': " + (e.message || e));
             }
+            try {
+                if (QOL.core.Scheduler && QOL.core.Scheduler.cancelAllForFeature) {
+                    QOL.core.Scheduler.cancelAllForFeature(ids[i]);
+                }
+            } catch (eCancel) { /* best-effort */ }
         }
         if (_configChangedHandler) {
             EventBus.off("config:changed", _configChangedHandler);

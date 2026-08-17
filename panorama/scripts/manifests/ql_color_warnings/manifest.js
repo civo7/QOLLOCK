@@ -613,7 +613,7 @@
 
             function _tick() {
                 try {
-                    var cfg = ctx.config.all();
+                    var cfg = ctx.config.view();
                     var root = $.GetContextPanel();
                     if (!_isPanelValid(root)) return;
 

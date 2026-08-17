@@ -264,21 +264,24 @@
     function UpdateOverlay(root, cfg, perfStats) {
         try {
             var visible = !!(cfg && Number(cfg.ENABLE_PERF_OVERLAY) === 1);
-            var stats = perfStats || {};
-            var nowMs = Date.now();
-
-            // Always track rolling window — even when overlay is hidden —
-            // so data is current when the user re-enables it.
-            _captureWindowSnapshots(stats, nowMs);
 
             // ---- hide path ----
             if (!visible) {
                 if (_overlayPanel && IsPanelValid(_overlayPanel)) {
                     SetPanelVisibility(_overlayPanel, false);
                 }
+                if (_wasVisible) {
+                    _windowSnapshots = [];
+                    _prevTotalCount = -1;
+                    _prevEntries = null;
+                }
                 _wasVisible = false;
                 return;
             }
+
+            var stats = perfStats || {};
+            var nowMs = Date.now();
+            _captureWindowSnapshots(stats, nowMs);
 
             // ---- show path ----
             var overlay = _ensureOverlay();

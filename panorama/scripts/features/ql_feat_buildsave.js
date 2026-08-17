@@ -1132,7 +1132,9 @@ function ResetBuildSaveRequestAttributes(root) {
     QOL.register("buildSave", {
         configKeys: [],
         bucket: 0, phase: -1,
-        gate: function(cfg) { return true; },
+        // Export-only module. ProcessBuildSaveRequest owns the state-machine
+        // tick, so this descriptor must not create a permanent no-op gate.
+        gate: function(cfg) { return false; },
         update: function(root, cfg, nowMs) {
             // Save state machine is driven by ProcessBuildSaveRequest in ql_core.js
         },
