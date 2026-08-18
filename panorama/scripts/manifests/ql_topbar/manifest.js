@@ -78,7 +78,8 @@
                 if (shouldShow) {
                     topBar.style.x = ox + "px";
                     topBar.style.y = (-oy) + "px";
-                    topBar.style.preTransformScale2d = sc + ", " + sc;
+                    topBar.style.preTransformScale2d = "1.00, 1.00";
+                    topBar.style.uiScale = Math.round(Number(sc) * 100) + "%";
                     try { topBar.style.opacity = op; } catch(e) {}
                 } else {
                     try { delete topBar.style.opacity; } catch(e) { topBar.style.opacity = ""; }

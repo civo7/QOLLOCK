@@ -63,6 +63,7 @@
         if (includeScaleOpacity === false) return;
 
         panel.style.preTransformScale2d = "1.00, 1.00";
+        panel.style.uiScale = "100%";
         panel.style.opacity = runtimeState.opacityText;
     }
 

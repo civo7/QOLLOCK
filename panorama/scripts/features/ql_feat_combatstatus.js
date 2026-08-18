@@ -135,7 +135,8 @@
 
         var layoutSig = String(scale) + "|" + String(offsetX) + "|" + String(offsetY);
         if (layoutSig !== State.combatStatus.lastLayoutSig) {
-            overlay.style.preTransformScale2d = (scale / 100).toFixed(2);
+            overlay.style.preTransformScale2d = "1.00, 1.00";
+            overlay.style.uiScale = String(scale) + "%";
             overlay.style.marginLeft = String(offsetX) + "px";
             overlay.style.marginBottom = String(165 + offsetY) + "px";
             State.combatStatus.lastLayoutSig = layoutSig;

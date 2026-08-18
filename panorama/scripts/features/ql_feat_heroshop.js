@@ -76,7 +76,8 @@
                         heroShopMainPanel.style.marginBottom = marginBottomText;
                         heroShopMainPanel.style.x = "0px";
                         heroShopMainPanel.style.y = "0px";
-                        heroShopMainPanel.style.preTransformScale2d = shopScaleText + ", " + shopScaleText;
+                        heroShopMainPanel.style.preTransformScale2d = "1.00, 1.00";
+                        heroShopMainPanel.style.uiScale = Math.round(Number(shopScaleText) * 100) + "%";
                         if (heroShopMainPanel.SetHasClass) heroShopMainPanel.SetHasClass("qol-hidden", !shopEnabled); else heroShopMainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
                         SetPanelOpacitySafe(heroShopMainPanel, shopOpacityText, 1.0);
                         State.heroShopMainPanelStyleSig = styleSig;
@@ -108,6 +109,7 @@
                     resetMainPanel.style.x = "0px";
                     resetMainPanel.style.y = "0px";
                     resetMainPanel.style.preTransformScale2d = "1.00, 1.00";
+                    resetMainPanel.style.uiScale = "100%";
                     if (resetMainPanel.SetHasClass) resetMainPanel.SetHasClass("qol-hidden", false); else resetMainPanel.style.visibility = "visible";
                     SetPanelOpacitySafe(resetMainPanel, 1.0, 1.0);
                 }

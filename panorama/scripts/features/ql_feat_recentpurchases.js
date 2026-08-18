@@ -774,7 +774,8 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
             rpPanel.style.x = String(panelOffsetX) + "px";
             rpPanel.style.y = String(-panelOffsetY) + "px";
             SetPanelOpacitySafe(rpPanel, panelOpacityText, 1.0);
-            rpPanel.style.preTransformScale2d = panelScaleText + ", " + panelScaleText;
+            rpPanel.style.preTransformScale2d = "1.00, 1.00";
+            rpPanel.style.uiScale = Math.round(Number(panelScaleText) * 100) + "%";
         }
 
         var quickMax = Math.round(Number(cfg && cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
@@ -832,7 +833,8 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
                     quickPanel.style.x = String(quickOffsetX) + "px";
                     quickPanel.style.y = String(-quickOffsetY) + "px";
                     SetPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                    quickPanel.style.preTransformScale2d = quickScaleText + ", " + quickScaleText;
+                    quickPanel.style.preTransformScale2d = "1.00, 1.00";
+                    quickPanel.style.uiScale = Math.round(Number(quickScaleText) * 100) + "%";
                 }
             }
         }

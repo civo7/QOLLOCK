@@ -57,7 +57,8 @@
     function ResetPlayerHealthbarScaleOpacityRuntime(panel) {
         if (!panel || !panel.style) return;
         try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style.opacity = "1.00"; } catch(e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { panel.style.uiScale = "100%"; } catch(e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        try { panel.style.opacity = "1.00"; } catch(e2) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
     }
 
     function ResetMinimalistHealthbarOffsetRuntimeAll(root, currentPanel, previousPanel) {
@@ -132,7 +133,7 @@
         var finalOffsetX = playerOffsetX + minimalistOffsetX;
         var finalOffsetY = (-playerOffsetY) + minimalistOffsetY;
         var finalScale = (playerScale / 100);
-        var scaleText = finalScale.toFixed(2) + ", " + finalScale.toFixed(2);
+        var scaleText = String(playerScale) + "%";
         var opacityText = playerOpacity.toFixed(2);
         var scaleActive = (Math.abs(finalScale - 1.0) > 0.0001);
         var opacityActive = (Math.abs(playerOpacity - 1.0) > 0.0001);
@@ -160,7 +161,8 @@
             panel.style.x = String(runtimeState.finalOffsetX) + "px";
             panel.style.y = String(runtimeState.finalOffsetY) + "px";
         }
-        panel.style.preTransformScale2d = runtimeState.scaleText;
+        panel.style.preTransformScale2d = "1.00, 1.00";
+        panel.style.uiScale = runtimeState.scaleText;
         panel.style.opacity = runtimeState.opacityText;
     }
 

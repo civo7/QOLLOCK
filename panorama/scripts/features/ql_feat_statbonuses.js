@@ -186,7 +186,8 @@
         if (layoutSig !== State.statBonuses.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + statOffsetX) + "px";
             overlay.style.marginBottom = (70 + statOffsetY) + "px";
-            overlay.style.preTransformScale2d = (statScale / 100).toFixed(2);
+            overlay.style.preTransformScale2d = "1.00, 1.00";
+            overlay.style.uiScale = String(statScale) + "%";
             State.statBonuses.lastLayoutSig = layoutSig;
         }
 

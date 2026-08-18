@@ -2710,7 +2710,8 @@ function GetUIRoot() {
         try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-        try { panel.style.visibility = "visible"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { panel.style.uiScale = "100%"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { panel.style.visibility = "visible"; } catch(e4) { QOL_WARN("core", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
     }
 
     function UpdateChatRuntime(root, cfg) {
@@ -2755,7 +2756,7 @@ function GetUIRoot() {
         if (offsetY < -250) offsetY = -250;
         if (offsetY > 800) offsetY = 800;
 
-        var scaleText = (scale / 100).toFixed(2) + ", " + (scale / 100).toFixed(2);
+        var scaleText = String(scale) + "%";
         var styleSig = enabled + "|" + scaleText + "|" + offsetX + "|" + offsetY;
         if (
             State.chatStyleApplied &&
@@ -2768,7 +2769,8 @@ function GetUIRoot() {
         chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
         chatPanel.style.x = String(offsetX) + "px";
         chatPanel.style.y = String(-offsetY) + "px";
-        chatPanel.style.preTransformScale2d = scaleText;
+        chatPanel.style.preTransformScale2d = "1.00, 1.00";
+        chatPanel.style.uiScale = scaleText;
 
         State.chatStyleSig = styleSig;
         State.chatStyleApplied = true;
@@ -4787,18 +4789,18 @@ function GetUIRoot() {
         for (var ts = 0; ts < targetShapes.length; ts++) {
             var shape = targetShapes[ts];
             if (!shape) continue;
-            if (shape.style.preTransformScale2d !== scaleText) {
-                shape.style.preTransformScale2d = scaleText;
-            }
+            if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
+            var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
+            if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
             SetPanelOpacitySafe(shape, opacityText, 1.0);
         }
         var hintContainers = State.hintContainerCache || [];
         for (var hc = 0; hc < hintContainers.length; hc++) {
             var hint = hintContainers[hc];
             if (!hint) continue;
-            if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
-                hint.style.preTransformScale2d = (hintScaleText || "1.000");
-            }
+            if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
+            var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
+            if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
         }
         State.targetShapeStyleSig = styleSig;
         if (!isDefaultUnitTargetStyle) {
@@ -11896,7 +11898,8 @@ function GetUIRoot() {
             rowOpacity.toFixed(2)
         ].join("|");
         if (layoutSig !== State.itemMirror.lastLayoutSig) {
-            mirrorOverlay.style.preTransformScale2d = pScale.toFixed(3) + ", " + pScale.toFixed(3);
+            mirrorOverlay.style.preTransformScale2d = "1.00, 1.00";
+            mirrorOverlay.style.uiScale = Math.round(pScale * 100) + "%";
             mirrorOverlay.style.marginLeft = offsetX + "%";
             mirrorOverlay.style.marginTop = (-offsetY) + "%";
             State.itemMirror.lastLayoutSig = layoutSig;
@@ -12659,8 +12662,7 @@ function GetUIRoot() {
         var appliedCompassOffsetY = (2 * compassBaselineY) - offsetY;
         var marginTopText = Math.round(appliedCompassOffsetY) + "px";
         var marginLeftText = Math.round(offsetX) + "px";
-        var uniformScale = (scale / 100).toFixed(3);
-        var scaleText = uniformScale + ", " + uniformScale;
+        var scaleText = String(scale) + "%";
         var compassBox = GetCachedPanel("compassBox");
         if (!IsPanelValid(compassBox)) {
             compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
@@ -12678,7 +12680,8 @@ function GetUIRoot() {
         if (layoutSig !== State.compass.layoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
-            if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
+            if (compassRoot.style.preTransformScale2d !== "1.00, 1.00") compassRoot.style.preTransformScale2d = "1.00, 1.00";
+            if (compassRoot.style.uiScale !== scaleText) compassRoot.style.uiScale = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
             compassRoot.style.height = "fit-children";
             compassRoot.style.overflow = "noclip";

@@ -153,7 +153,8 @@
 
                 var layoutSig = scale + "|" + offsetX + "|" + offsetY;
                 if (layoutSig !== _lastLayoutSig) {
-                    ov.style.preTransformScale2d = (scale / 100).toFixed(2);
+                    ov.style.preTransformScale2d = "1.00, 1.00";
+                    ov.style.uiScale = String(scale) + "%";
                     ov.style.marginLeft = offsetX + "px";
                     ov.style.marginBottom = (165 + offsetY) + "px";
                     _lastLayoutSig = layoutSig;

@@ -32,7 +32,8 @@
     QOL.healthbar.resetPlayerScaleOpacity = function(panel) {
         if (!panel || !panel.style) return;
         try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e0) {}
-        try { panel.style.opacity = "1.00"; } catch(e1) {}
+        try { panel.style.uiScale = "100%"; } catch(e1) {}
+        try { panel.style.opacity = "1.00"; } catch(e2) {}
     };
 
     QOL.healthbar.resetPlayerStyle = function(panel) {
@@ -111,7 +112,7 @@
         var finalOffsetX = playerOffsetX + minimalistOffsetX;
         var finalOffsetY = (-playerOffsetY) + minimalistOffsetY;
         var finalScale = playerScale / 100;
-        var scaleText = finalScale.toFixed(2) + ", " + finalScale.toFixed(2);
+        var scaleText = String(playerScale) + "%";
         var opacityText = playerOpacity.toFixed(2);
         var scaleActive = Math.abs(finalScale - 1.0) > 0.0001;
         var opacityActive = Math.abs(playerOpacity - 1.0) > 0.0001;
@@ -134,7 +135,8 @@
             panel.style.x = String(runtimeState.finalOffsetX) + "px";
             panel.style.y = String(runtimeState.finalOffsetY) + "px";
         }
-        panel.style.preTransformScale2d = runtimeState.scaleText;
+        panel.style.preTransformScale2d = "1.00, 1.00";
+        panel.style.uiScale = runtimeState.scaleText;
         panel.style.opacity = runtimeState.opacityText;
     };
 })();

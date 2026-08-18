@@ -2630,7 +2630,8 @@ function ShowShopPreview() {
     var targetY = baseY - offsetY;
     SetPreviewPanelPosition(panel, targetX, targetY);
     SetPanelOpacitySafe(panel, opacity, 1.0);
-    panel.style.preTransformScale2d = scale.toFixed(2) + ", " + scale.toFixed(2);
+    panel.style.preTransformScale2d = "1.00, 1.00";
+    panel.style.uiScale = Math.round(scale * 100) + "%";
     gShopPreviewLabel.text = "SHOP";
     panel.AddClass("Visible");
     ScheduleHideShopPreview(1.2);
