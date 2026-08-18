@@ -68,6 +68,17 @@
                 return (list && list.length > 0) ? list[0] : null;
             }
 
+            function _readTopBarHeroName(player) {
+                // HeroName is a presentation label and can be empty while the
+                // top bar is collapsed. HeroNameHidden is the stable binding
+                // added specifically for Show Ranks; keep HeroName as a fallback
+                // for older layouts that do not contain the hidden label yet.
+                var heroLabel = _findClass(player, "HeroNameHidden");
+                if (!_valid(heroLabel)) heroLabel = _findClass(player, "HeroName");
+                if (!_valid(heroLabel)) return "";
+                try { return String(heroLabel.text || "").trim(); } catch(e) { return ""; }
+            }
+
             // ── Top bar player hierarchy: TopBar → TeamsContainer → Team → PlayerContents → PlayersContainer ──
             function _findTopBarPlayers(topBar) {
                 var out = [];
@@ -340,8 +351,7 @@
                     var accountId = "";
                     if (_valid(acctLabel)) { try { accountId = String(acctLabel.text || "").trim(); } catch(e) {} }
                     if (!accountId) {
-                        var heroLabel = _findClass(player, "HeroName");
-                        var heroName = ""; if (_valid(heroLabel)) { try { heroName = String(heroLabel.text || "").trim(); } catch(e) {} }
+                        var heroName = _readTopBarHeroName(player);
                         if (heroName) {
                             var lookupKey = "qol_sr_rank_" + heroName.toLowerCase();
                             accountId = _readAttr(root, lookupKey, "");
@@ -379,10 +389,7 @@
                 var players = _findTopBarPlayers(topBar);
                 for (var i = 0; i < players.length; i++) {
                     if (_isTopBarInit(players[i], root)) continue;
-                    var heroLabel = _findClass(players[i], "HeroName");
-                    if (!_valid(heroLabel)) continue;
-                    var heroName = ""; try { heroName = String(heroLabel.text || "").trim(); } catch(e) {}
-                    if (!heroName) continue;
+                    if (!_readTopBarHeroName(players[i])) continue;
                     _initTopBarPlayer(players[i]);
                 }
             }
