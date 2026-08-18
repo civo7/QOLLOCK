@@ -6444,6 +6444,15 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
     var rowTooltipDescLine = hasRowDescription ? localizedDescription : "";
     var hasRowTooltip = QOL.tooltip.hasMeaningfulContent(rowPerfTier, rowTooltipDescLine, rowCreatedBy);
     if (gSearchCollectMode && gSearchCollectState) {
+        var searchInlineOptions = [{
+            inlineSecondaryCheckbox: secondaryConfigId || "",
+            secondaryLabel: LocalizeSettingsText(secondaryLabel || ""),
+            secondaryDescription: LocalizeSettingsText(secondaryDescription || ""),
+            rowOptions: {
+                invert: invertMain,
+                clearSecondaryWhenDisabled: rowOptions.clearSecondaryWhenDisabled === true
+            }
+        }];
         GetActiveSearchCollectSection().rows.push(BuildSearchCollectedRow(
             localizedLabel,
             configId,
@@ -6451,7 +6460,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
             null,
             null,
             null,
-            [{ inlineSecondaryCheckbox: secondaryConfigId || "" }],
+            searchInlineOptions,
             localizedDescription,
             [LocalizeSettingsText(secondaryLabel || ""), secondaryConfigId || "", secondaryDescription || ""]
         ));
@@ -7366,9 +7375,32 @@ function RenderSearchResults(list, query) {
             for (var mr = 0; mr < sectionEntry.rows.length; mr++) {
                 var row = sectionEntry.rows[mr];
                 var rowPanel = null;
+                var inlineSecondaryOption = null;
+                if (Array.isArray(row.options)) {
+                    for (var optionIndex = 0; optionIndex < row.options.length; optionIndex++) {
+                        var searchOption = row.options[optionIndex];
+                        if (searchOption && searchOption.inlineSecondaryCheckbox) {
+                            inlineSecondaryOption = searchOption;
+                            break;
+                        }
+                    }
+                }
                 gSearchResultRenderMode = true;
                 try {
-                    rowPanel = CreateRow(list, row.label, row.configId, row.type, row.min, row.max, row.step, row.options, row.subInfo);
+                    if (inlineSecondaryOption) {
+                        rowPanel = CreateInlineSecondaryCheckboxToggleRow(
+                            list,
+                            row.label,
+                            row.configId,
+                            inlineSecondaryOption.secondaryLabel || "",
+                            inlineSecondaryOption.inlineSecondaryCheckbox,
+                            row.subInfo,
+                            inlineSecondaryOption.secondaryDescription || "",
+                            inlineSecondaryOption.rowOptions || {}
+                        );
+                    } else {
+                        rowPanel = CreateRow(list, row.label, row.configId, row.type, row.min, row.max, row.step, row.options, row.subInfo);
+                    }
                 } finally {
                     gSearchResultRenderMode = false;
                 }
