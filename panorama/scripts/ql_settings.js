@@ -9170,7 +9170,7 @@ function RenderCurrentTabContent(list) {
                 title: "Commission",
                 hint: "Request a custom feature or preset",
                 iconSrc: "s2r://panorama/images/icons/icon_feedback.vsvg",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions"); }
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
             },
             {
                 id: "SupportCtaChangeLogBtn",
