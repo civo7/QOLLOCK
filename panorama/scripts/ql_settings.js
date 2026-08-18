@@ -2121,6 +2121,7 @@ function NormalizeConfig(config, parsed) {
     NormalizeTopbarEnemyHpWarningConfig(config, parsed);
     NormalizeTopbarAllyHpWarningConfig(config, parsed);
     NormalizeShopItemNotificationsConfig(config, parsed);
+    NormalizeQuickbuyDependencyConfig(config);
 }
 
 function SyncConfigFromStorage() {
@@ -3422,6 +3423,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
     NormalizeShopItemNotificationsConfig(candidateConfig, parsed);
+    NormalizeQuickbuyDependencyConfig(candidateConfig);
     NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
@@ -3637,6 +3639,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
     NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
     NormalizeShopItemNotificationsConfig(candidate, presetData);
+    NormalizeQuickbuyDependencyConfig(candidate);
 
     PreserveUiOnlySettings(candidate);
 
@@ -6449,7 +6452,8 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
             secondaryLabel: LocalizeSettingsText(secondaryLabel || ""),
             secondaryDescription: LocalizeSettingsText(secondaryDescription || ""),
             rowOptions: {
-                invert: invertMain
+                invert: invertMain,
+                clearSecondaryWhenDisabled: rowOptions.clearSecondaryWhenDisabled === true
             }
         }];
         GetActiveSearchCollectSection().rows.push(BuildSearchCollectedRow(
@@ -6589,6 +6593,10 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
 
     switchButton.SetPanelEvent("onactivate", function() {
         MOD_CONFIG[configId] = (MOD_CONFIG[configId] === 1) ? 0 : 1;
+        var mainEnabled = invertMain ? (MOD_CONFIG[configId] !== 1) : (MOD_CONFIG[configId] === 1);
+        // Keep dependent controls in sync immediately; the central config
+        // normalizer enforces the same invariant for load/import/preset paths.
+        if (!mainEnabled && rowOptions.clearSecondaryWhenDisabled === true) MOD_CONFIG[secondaryConfigId] = 0;
         update();
         SaveAndSync();
         refreshRowChangedState();
@@ -6641,6 +6649,7 @@ function ApplyPresetConfig(presetData) {
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeShopItemNotificationsConfig(MOD_CONFIG, presetData);
+    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
@@ -6745,6 +6754,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
         NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
         NormalizeShopItemNotificationsConfig(resolved, presetData);
+        NormalizeQuickbuyDependencyConfig(resolved);
     } else {
         NormalizeNeutralCampFlags(resolved, resolved);
         NormalizeItemCooldownModeConfig(resolved, resolved);
@@ -6757,6 +6767,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
         NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
         NormalizeShopItemNotificationsConfig(resolved, resolved);
+        NormalizeQuickbuyDependencyConfig(resolved);
     }
     return resolved;
 }
@@ -7670,7 +7681,7 @@ function RenderCurrentTabContent(list) {
                 "ENABLE_ENHANCED_QUICKBUY",
                 null,
                 "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
-                { invert: true }
+                { invert: true, clearSecondaryWhenDisabled: true }
             );
             CreateSliderRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
             CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);

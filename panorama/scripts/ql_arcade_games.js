@@ -2839,6 +2839,7 @@ function ApplyParsedConfig(parsed) {
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
+    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, LATEST_COMPACT_SEMVER);
 }
 
@@ -2910,6 +2911,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
     NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
+    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
     NormalizeCompassSpeedSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
@@ -3494,6 +3496,7 @@ function NormalizeConfig(config, parsed) {
     NormalizeTopbarEnemyHpWarningConfig(config, parsed);
     NormalizeTopbarAllyHpWarningConfig(config, parsed);
     NormalizeShopItemNotificationsConfig(config, parsed);
+    NormalizeQuickbuyDependencyConfig(config);
 }
 
 function SyncConfigFromStorage() {
@@ -4805,6 +4808,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
     NormalizeShopItemNotificationsConfig(candidateConfig, parsed);
+    NormalizeQuickbuyDependencyConfig(candidateConfig);
     NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
@@ -5020,6 +5024,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
     NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
     NormalizeShopItemNotificationsConfig(candidate, presetData);
+    NormalizeQuickbuyDependencyConfig(candidate);
 
     PreserveUiOnlySettings(candidate);
 

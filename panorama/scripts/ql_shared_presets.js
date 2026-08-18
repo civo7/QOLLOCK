@@ -693,6 +693,19 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeVoiceTypeConfig !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeQuickbuyDependencyConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeQuickbuyDependencyConfig = function(configTarget) {
+        if (!configTarget) return;
+        // Parent-child invariant and legacy migration: older settings UI could
+        // persist Enhanced=1 while its parent Quick Buy toggle was disabled.
+        // Enhanced is unreachable in that state, so normalize it to 0 on every
+        // load/save/import. This is idempotent and leaves valid configs untouched.
+        if (Number(configTarget.DISABLE_QUICK_BUY) === 1) {
+            configTarget.ENABLE_ENHANCED_QUICKBUY = 0;
+        }
+    };
+}
+
 if (typeof QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig !== "function") {
     QOL_SCHEMA_UTILS.NormalizeShopItemNotificationsConfig = function(configTarget, sourceConfig) {
         if (!configTarget) return;
