@@ -85,7 +85,9 @@
 				</Panel>
 			</Panel>
 			<Label class="AlwaysPlayerName" text="{s:player_name}" />
-			<Panel id="PlayerNameNWContainer" hittest="false" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
+			<!-- Keep the oversized container click-through for the minimap, but let
+			     item and mod children receive hover, tooltip, and ping input. -->
+			<Panel id="PlayerNameNWContainer" hittest="false" hittestchildren="true" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
 				<Panel id="BackgroundStrip" />
 				<Panel class="PlayerInfoContainer TopBottomFlow">
 					<Label class="PlayerName" text="{s:player_name}" />
