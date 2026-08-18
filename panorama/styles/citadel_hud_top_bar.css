@@ -75,7 +75,8 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	visibility: collapse;
 }
 
-.connectedToHideout CitadelHudTopBar,.InHideout CitadelHudTopBar#TopBar
+/* InHideout marks the main hideout; the practice area only keeps connectedToHideout. */
+.connectedToHideout:not(.InHideout) CitadelHudTopBar#TopBar
 {
 	visibility: visible;
 	opacity: 1;
