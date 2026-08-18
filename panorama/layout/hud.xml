@@ -29,20 +29,16 @@
 		<include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" />
 		<!-- CUT-OVER: ql_feat_buildload.js replaced by manifests/ql_build_payload/manifest.js -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" /> -->
-		<!-- CUT-OVER: old topBarRuntime disabled, see manifests/ql_topbar/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
-		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" /> -->
-		<!-- CUT-OVER: old itemsRuntime disabled, see manifests/ql_items/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" /> -->
+		<!-- These flat-config runtimes remain authoritative for live HUD styling. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" />
 		<!-- CUT-OVER: old soulsRuntime disabled, see manifests/ql_souls/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_souls.vjs_c" /> -->
 		<!-- CUT-OVER: old damageImpactRuntime disabled, see manifests/ql_damage_impact/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damageimpact.vjs_c" /> -->
-		<!-- CUT-OVER: old ammo disabled, see manifests/ql_ammo/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" /> -->
-		<!-- CUT-OVER: old staminaChargeColorRuntime disabled, see manifests/ql_stamina/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" />
 		<!-- CUT-OVER: old combatStatus disabled, see manifests/ql_combat_status/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
@@ -76,8 +72,7 @@
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
-		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
 		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
@@ -130,11 +125,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_target_shapes/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_bottom_bar/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_items/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_stamina/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_ammo/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_topbar/manifest.vjs_c" />
+		<!-- Disabled: these style manifests do not track the authoritative flat config live. -->
 		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
@@ -148,7 +139,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_damage_numbers/manifest.vjs_c" />
 		<!-- Kept out of the manifest runtime until its config source is authoritative. -->
 		<!-- <include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
+		<!-- Disabled: legacy color warnings remains authoritative above. -->
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
