@@ -8,7 +8,10 @@
 		</styles>
 		<scripts>
 		</scripts>
-		<CitadelHudTopBarPlayer>
+		<!-- hittest="false" keeps the player panel itself click-through so the
+		     minimap underneath still receives input, while hittestchildren
+		     defaults to true so items, mods and abilities stay hoverable. -->
+		<CitadelHudTopBarPlayer hittest="false">
 			<GlobalClassListener classes="gDetailView" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />
@@ -85,9 +88,7 @@
 				</Panel>
 			</Panel>
 			<Label class="AlwaysPlayerName" text="{s:player_name}" />
-			<!-- Keep the oversized container click-through for the minimap, but let
-			     item and mod children receive hover, tooltip, and ping input. -->
-			<Panel id="PlayerNameNWContainer" hittest="false" hittestchildren="true" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
+			<Panel id="PlayerNameNWContainer" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
 				<Panel id="BackgroundStrip" />
 				<Panel class="PlayerInfoContainer TopBottomFlow">
 					<Label class="PlayerName" text="{s:player_name}" />
