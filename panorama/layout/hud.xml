@@ -67,8 +67,8 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
-		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
+		<!-- Unsecured Plus uses the verified Aug 1 flat-config runtime. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
@@ -119,7 +119,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />
+		<!-- Disabled: legacy Unsecured Plus runtime remains authoritative above. -->
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
