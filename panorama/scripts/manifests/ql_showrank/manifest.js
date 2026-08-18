@@ -321,23 +321,36 @@
             }
 
             // ── Top bar player init (per-player polling, generation-aware) ──
-            function _isTopBarInit(player, root) {
-                try { var s = player.GetAttributeString("_qol_sr_init", ""); return s && s === _readAttr(root, "qol_sr_generation", "0"); } catch(e) { return false; }
+            // qol_sr_generation only ever lives on the document root. Callers hand
+            // us either the HUD context panel or an already-resolved doc root, so
+            // resolve it here instead of trusting the argument: comparing a doc-root
+            // generation against the HUD panel (which has no such attribute, so it
+            // falls back to "0") made _isTopBarInit always report false, so every
+            // player was re-initialised on every 0.5s tick and each fresh polling
+            // chain wiped the badge image that the previous one had just loaded.
+            function _generation(anyPanel) {
+                return _readAttr(_docRoot(anyPanel), "qol_sr_generation", "0");
             }
-            function _markTopBarInit(player, root) {
-                try { player.SetAttributeString("_qol_sr_init", _readAttr(root, "qol_sr_generation", "0")); } catch(e) {}
+            function _isTopBarInit(player) {
+                try { var s = player.GetAttributeString("_qol_sr_init", ""); return !!s && s === _generation(player); } catch(e) { return false; }
+            }
+            function _markTopBarInit(player) {
+                try { player.SetAttributeString("_qol_sr_init", _generation(player)); } catch(e) {}
             }
             function _initTopBarPlayer(player) {
                 var root = _docRoot(player); if (!_valid(root)) return;
-                _markTopBarInit(player, root);
-                var initGeneration = _readAttr(root, "qol_sr_generation", "0");
+                _markTopBarInit(player);
+                var initGeneration = _generation(player);
                 var lifecycleToken = _lifecycleToken;
-                var _lastId = "", _lastGen = "", _idleCount = 0;
+                // Seed _lastGen with the generation we were created for. Starting it
+                // empty made the very first poll take the "generation changed" branch,
+                // clearing the account label and badge and stalling 2s for nothing.
+                var _lastId = "", _lastGen = initGeneration, _idleCount = 0;
                 function _tryLoad() {
                     if (!_valid(player) || lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
                     if (Number(ctx.config.get("SHOW_RANK_TOPBAR")) !== 1) return;
                     try { if (player.GetAttributeString("_qol_sr_init", "") !== initGeneration) return; } catch(eMarker) { return; }
-                    var gen = _readAttr(root, "qol_sr_generation", "");
+                    var gen = _generation(player);
                     if (gen !== _lastGen) {
                         _lastGen = gen;
                         var ov = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
@@ -388,7 +401,7 @@
                 if (!_valid(topBar)) return;
                 var players = _findTopBarPlayers(topBar);
                 for (var i = 0; i < players.length; i++) {
-                    if (_isTopBarInit(players[i], root)) continue;
+                    if (_isTopBarInit(players[i])) continue;
                     if (!_readTopBarHeroName(players[i])) continue;
                     _initTopBarPlayer(players[i]);
                 }
