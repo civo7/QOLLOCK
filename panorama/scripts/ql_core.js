@@ -13492,6 +13492,12 @@ function GetUIRoot() {
             SetCachedPanel("quickbuy", quickbuyPanel);
         }
         if (quickbuyPanel) {
+            // The shop can create CitadelHudQuickbuy after an earlier lookup failed.
+            // Recreate the class cache after that miss so enhanced mode reaches the
+            // panel itself instead of only setting a class on the HUD root.
+            if (!State.quickbuyClassCache) {
+                State.quickbuyClassCache = { panel: null, values: {} };
+            }
             var enhancedQuickbuyCount = enhancedQuickbuyEnabled ? NormalizeEnhancedQuickbuyCount(cfg.ENHANCED_QUICKBUY_COUNT) : 3;
 
             SetPanelClassCached(

@@ -671,6 +671,7 @@ var State;
         allyColoredHealthPulseVal: 0,
         rootClassCache: { panel: null, values: {} },
         coreRootStaticSig: "",
+        quickbuyClassCache: { panel: null, values: {} },
         passiveHudClassCache: { panel: null, values: {} },
         abilitiesClassCache: { panel: null, values: {} },
         heroShopClassCache: { panel: null, values: {} },
