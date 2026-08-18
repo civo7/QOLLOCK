@@ -595,13 +595,6 @@ Label.instructionalText .rightClick
 	visibility: visible;
 }
 
-/* Enhanced quickbuy remains open in the shop even when Valve drops the
-   transient QuickbuyShopShowQueue class while rebuilding the panel. */
-.gShopOpen #CitadelHudQuickbuy.enhanced_quickbuy_active .QuickbuyQueueOuter,.enhanced_quickbuy_active .gShopOpen #CitadelHudQuickbuy .QuickbuyQueueOuter
-{
-	visibility: visible;
-}
-
 .QuickbuyQueueOuter .BuildOrderLabel
 {
 	vertical-align: center;

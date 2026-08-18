@@ -13369,13 +13369,8 @@ function GetUIRoot() {
 
         var legacyCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_LEGACY_COOLDOWNS");
         SyncLegacyCooldownsUiFlag(legacyCooldownsEnabled);
-        // Older configs can contain both flags after the parent Quick Buy toggle
-        // was switched off without clearing its nested Enhanced toggle. Preserve
-        // the explicitly enabled feature instead of resolving that conflict by
-        // hiding the entire quickbuy panel.
-        var enhancedQuickbuyEnabled = IsCfgEnabled(cfg, "ENABLE_ENHANCED_QUICKBUY");
-        var quickbuyDisabled = Number(cfg.DISABLE_QUICK_BUY) === 1 && !enhancedQuickbuyEnabled;
-        var quickbuyClickToNotifyEnabled = IsCfgEnabled(cfg, "ENABLE_QUICKBUY_CLICK_TO_NOTIFY") && !quickbuyDisabled;
+        var enhancedQuickbuyEnabled = IsCfgEnabled(cfg, "ENABLE_ENHANCED_QUICKBUY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
+        var quickbuyClickToNotifyEnabled = IsCfgEnabled(cfg, "ENABLE_QUICKBUY_CLICK_TO_NOTIFY") && Number(cfg.DISABLE_QUICK_BUY) !== 1;
         var shopRecentPurchasesEnabled = IsCfgEnabled(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
         var shopRecentPurchasesRedux = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
@@ -13440,7 +13435,7 @@ function GetUIRoot() {
             if (!(cfg.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
                 SetPanelClassCached(root, State.rootClassCache, "disable_damage_report_active", cfg.DISABLE_DAMAGE_REPORT === 1);
             }
-            SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", quickbuyDisabled);
+            SetPanelClassCached(root, State.rootClassCache, "disable_quick_buy_active", cfg.DISABLE_QUICK_BUY === 1);
             SetPanelClassCached(root, State.rootClassCache, "hud_shift_active", cfg.ENABLE_HUD_SHIFT === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_16_10_active", cfg.SUPPORT_16_10 === 1);
             SetPanelClassCached(root, State.rootClassCache, "support_4_3_active", cfg.SUPPORT_4_3 === 1);
