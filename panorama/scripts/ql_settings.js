@@ -6449,8 +6449,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
             secondaryLabel: LocalizeSettingsText(secondaryLabel || ""),
             secondaryDescription: LocalizeSettingsText(secondaryDescription || ""),
             rowOptions: {
-                invert: invertMain,
-                clearSecondaryWhenDisabled: rowOptions.clearSecondaryWhenDisabled === true
+                invert: invertMain
             }
         }];
         GetActiveSearchCollectSection().rows.push(BuildSearchCollectedRow(
@@ -6590,8 +6589,6 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
 
     switchButton.SetPanelEvent("onactivate", function() {
         MOD_CONFIG[configId] = (MOD_CONFIG[configId] === 1) ? 0 : 1;
-        var mainEnabled = invertMain ? (MOD_CONFIG[configId] !== 1) : (MOD_CONFIG[configId] === 1);
-        if (!mainEnabled && rowOptions.clearSecondaryWhenDisabled === true) MOD_CONFIG[secondaryConfigId] = 0;
         update();
         SaveAndSync();
         refreshRowChangedState();
@@ -7673,7 +7670,7 @@ function RenderCurrentTabContent(list) {
                 "ENABLE_ENHANCED_QUICKBUY",
                 null,
                 "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
-                { invert: true, clearSecondaryWhenDisabled: true }
+                { invert: true }
             );
             CreateSliderRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
             CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
