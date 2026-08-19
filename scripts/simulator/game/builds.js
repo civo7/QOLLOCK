@@ -157,6 +157,13 @@ class BuildsModel {
             const label = slot.addChild(mk("Label", { classes: ["ability_name"] }));
             return { slot, label };
         });
+
+        // --- Local player hero panel ---
+        // DetectGlobalIdleState (ql_core.js) treats a missing #HeroPanel as "not
+        // in a match" and stretches every loop interval accordingly, which starves
+        // the save state machine of ticks and trips its 12s budget. The hideout
+        // does have a hero panel — it spawns a local server — so this belongs here.
+        this.heroPanel = root.addChild(mk("Panel", { id: "HeroPanel" }));
     }
 
     /** Install the Citadel* globals and engine event routing into the sandbox. */
@@ -310,6 +317,16 @@ class BuildsModel {
             nameLabel.text = this._categoryTextFor(cat.name);
             nameLabel.SetDialogVariable("category_name", cat.name);
             catPanel.addChild(this.doc.create("Panel", { id: "ModsContainer" }));
+
+            // Activating the header focuses the category: C++ marks the category
+            // panel .Focused (the class citadel_shop_mods_build_category.css:196
+            // reveals the edit header with) and seeds CategoryNameTextEntry from
+            // it. Without this the save pipeline's wait_category_focus stage can
+            // never satisfy HasFocusedBuildCategory and times out.
+            const focus = () => this.focusCategory(i);
+            catHeader.SetPanelEvent("onactivate", focus);
+            catHeader.SetPanelEvent("onmouseactivate", focus);
+            catPanel.SetPanelEvent("onactivate", focus);
         });
     }
 
@@ -528,9 +545,19 @@ class BuildsModel {
         return true;
     }
 
+    /**
+     * Focus a category. C++ marks the category panel .Focused and seeds
+     * CategoryNameTextEntry with that category's current name, which is what the
+     * save pipeline then overwrites.
+     */
     focusCategory(index) {
+        if (this.focusedCategoryIndex === index) return true;
         this.focusedCategoryIndex = index;
+        const data = this.selectedBuildData;
+        const cat = data && data.categories[index];
+        if (cat) this.categoryNameEntry.text = cat.name;
         this._renderCategories();
+        this._trace(`focusCategory(${index}) name="${cat ? cat.name : ""}"`);
         return true;
     }
 

@@ -588,41 +588,56 @@ function ResetBuildSaveRequestAttributes(root) {
     }
 
     // ── CurrentBuildHasPayload ──
+    // ── CurrentBuildHasPayload ──
+    // Proof that the payload is PERSISTED, not merely typed.
+    //
+    // Only the rendered category label counts. BuildCategoryName / .CategoryName
+    // are repopulated by the client from the committed build, so the token
+    // appears there only once the save actually landed.
+    //
+    // CategoryNameTextEntry is deliberately NOT accepted: it is the editor's own
+    // input buffer and still holds whatever we typed even when
+    // CitadelHudHeroBuildsSaveEdits() did nothing (it is ignored outside edit
+    // mode). Verification used to check that buffer first, so a no-op save
+    // verified as success and the config was silently never written — the caller
+    // then reported "saved" and the next boot found nothing.
+    //
+    // The label is known to be readable: the startup loader recovers real user
+    // configs from exactly these panels.
     function CurrentBuildHasPayload(root, payloadText) {
         var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
         var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        var seen = [];
-        function checkToken(token) {
-            if (!token || token.length === 0) return false;
-            seen.push(token);
-            return token === expectedToken;
+        function matches(panel) {
+            var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(panel));
+            return !!(token && token === expectedToken);
         }
-
-        var directEntry = GetBuildSaveCategoryNameEntry(root);
-        if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntry)))) return true;
 
         if (selectedBuild && selectedBuild.FindChildTraverse) {
-            var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
-            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directHeader)))) return true;
-            var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
-            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntryInBuild)))) return true;
+            if (matches(selectedBuild.FindChildTraverse("BuildCategoryName"))) return true;
         }
-
-        if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
-            return false;
-        }
-
-        var classNames = ["CategoryName", "CategoryNameTextEntry", "BuildCategoryName"];
-        for (var c = 0; c < classNames.length; c++) {
-            var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
-            for (var i = 0; i < labels.length; i++) {
-                var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(labels[i]));
-                if (checkToken(token)) return true;
+        if (selectedBuild && selectedBuild.FindChildrenWithClassTraverse) {
+            var persistedClasses = ["CategoryName", "BuildCategoryName"];
+            for (var p = 0; p < persistedClasses.length; p++) {
+                var persisted = selectedBuild.FindChildrenWithClassTraverse(persistedClasses[p]) || [];
+                for (var pi = 0; pi < persisted.length; pi++) {
+                    if (matches(persisted[pi])) return true;
+                }
             }
         }
         return false;
+    }
+
+    // True when our text is sitting in the editor buffer but has not been
+    // committed. Distinguishes "write landed, commit failed" from "write never
+    // happened" — used only for diagnostics, never as proof of a save.
+    function BuildSavePayloadIsUncommitted(root, payloadText) {
+        var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
+        if (!expectedToken || expectedToken.length === 0) return false;
+        var entry = GetBuildSaveCategoryNameEntry(root);
+        var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(entry));
+        return !!(token && token === expectedToken);
     }
 
     // ── CurrentBuildHasAnyPayload ──
@@ -952,8 +967,15 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-            _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries);
-            FinishBuildSaveRequest(root, requestToken, "failed", "verify_failed");
+            // Distinguish the two failure shapes in the log: our text sitting in
+            // the editor buffer means the write landed and only the commit failed
+            // (usually focus still on the entry); nothing there means the write
+            // itself never took.
+            var uncommitted = BuildSavePayloadIsUncommitted(root, payloadText);
+            _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries +
+                  " uncommitted=" + (uncommitted ? "1" : "0"));
+            FinishBuildSaveRequest(root, requestToken, "failed",
+                uncommitted ? "verify_failed_uncommitted" : "verify_failed");
             return true;
         }
         var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
