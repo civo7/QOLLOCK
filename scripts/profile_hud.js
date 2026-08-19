@@ -6,12 +6,21 @@
 // instead of guesses, and lets you prove an optimisation worked.
 //
 //   node scripts/profile_hud.js                     # profile, print report
-//   node scripts/profile_hud.js --save baseline     # write perf/baseline.json
+//   node scripts/profile_hud.js --save baseline     # write perf/runs/baseline.json
 //   node scripts/profile_hud.js --compare baseline  # diff against a saved run
 //   node scripts/profile_hud.js --seconds 30        # longer sample (default 10)
 //   node scripts/profile_hud.js --players 12        # teamfight size (default 12)
+//   node scripts/profile_hud.js --healthbar 5       # 0 default 1 minimalist 2 fg
+//                                                  # 3 klutz 4 budhud 5 minecraft
 //   node scripts/profile_hud.js --json              # machine-readable
 //   node scripts/profile_hud.js --top 25            # rows to show (default 20)
+//
+// --healthbar matters more than it looks. HEALTHBAR_TYPE is a numeric enum, not an
+// ENABLE_* toggle, so the default "everything on" config leaves it at 0 and NONE of
+// the five healthbar variants run. Profiling the Minecraft variant (5) in
+// particular exercises a few hundred lines of per-heart panel work that is
+// invisible at the default. Compare like with like: a run saved at one healthbar
+// setting is not a baseline for a run at another.
 //
 // WHAT THE NUMBERS MEAN — read this before quoting any of them.
 //
@@ -79,6 +88,8 @@ function report(snap, meta, tree, opts) {
     out.push("QOLLOCK FRAME-COST PROFILE");
     out.push("=".repeat(100));
     out.push(`scenario        : ${meta.players} players (teamfight), ${meta.damageNumbers} floating damage panels`);
+    out.push(`healthbar       : HEALTHBAR_TYPE=${meta.healthbarType} ` +
+             `(${["default", "minimalist", "fg", "klutz", "budhud", "minecraft"][meta.healthbarType] || "?"})`);
     out.push(`HUD tree        : ${tree.panels} panels`);
     out.push(`sample          : ${secs}s of virtual game time (after ${meta.warmupMs / 1000}s warm-up)`);
     out.push(`config          : ${meta.configApplied ? `all features ON (${fmt(meta.configBytes)} bytes stored)` : "DEFAULTS ONLY — no config applied!"}`);
@@ -246,11 +257,16 @@ function main() {
     const seconds = num(arg("seconds", 10), 10);
     const players = num(arg("players", 12), 12);
     const top = num(arg("top", 20), 20);
+    const healthbar = num(arg("healthbar", 0), 0);
     const wantJson = has("json");
     const saveName = arg("save", null);
     const compareName = arg("compare", null);
 
-    const h = createProfiledHud({ players, warmupMs: 8000 });
+    const h = createProfiledHud({
+        players,
+        warmupMs: 8000,
+        configOverrides: { HEALTHBAR_TYPE: healthbar },
+    });
 
     // A harness that produces an empty profile must fail loudly, not print
     // reassuring zeroes.

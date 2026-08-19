@@ -75,8 +75,15 @@
         }
         if (!IsPanelValid(content)) return null;
 
+        // No parent check here. The one this used to carry — GetParent() !== root —
+        // was structurally always true: HealthRegenAndTotal is nested inside
+        // HealthContainerRoot (hud_health_container.xml:72), never a direct child of
+        // the HUD root passed in. So the cache never satisfied the guard and this ran
+        // a full-root FindChildTraverse every tick. GetCachedPanel already
+        // re-validates through IsValid() and drops dead refs, which is what the guard
+        // was reaching for.
         var regenTotal = GetCachedPanel("budhudHealthRegenAndTotal");
-        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== root)) {
+        if (!regenTotal) {
             regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
             SetCachedPanel("budhudHealthRegenAndTotal", regenTotal);
         }

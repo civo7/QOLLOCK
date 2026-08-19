@@ -103,6 +103,10 @@ var State;
         fgHeroImageOriginalIndex: -1,
         fgHeroImageMoved: false,
         fgHeroImageSourceProbeNextMs: 0,
+        // Last hero signature ResolveFgHeroRefreshSignal returned, so a tick
+        // throttled by fgHeroImageSourceProbeNextMs reuses it instead of seeing
+        // an empty signature and tearing down the hero-image attachment.
+        fgHeroImageLastResolvedSig: "",
         fgHeroImageCurrentSig: "",
         fgHeroImagePendingAttachMs: 0,
         fgHeroImageRefreshBounceNextMs: 0,

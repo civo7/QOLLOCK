@@ -18,50 +18,27 @@
     "total": {
       "label": "<TOTAL>",
       "calls": 0,
-      "traverseCalls": 5143,
-      "traverseNodes": 6386537,
-      "traverseMisses": 2952,
-      "classTraverseCalls": 931,
-      "classTraverseNodes": 2165194,
+      "traverseCalls": 4565,
+      "traverseNodes": 4185513,
+      "traverseMisses": 2574,
+      "classTraverseCalls": 828,
+      "classTraverseNodes": 1772970,
       "styleWritesChanged": 0,
       "styleWritesRedundant": 5969,
       "classWritesChanged": 0,
       "classWritesRedundant": 1998,
-      "attrReads": 1232,
-      "attrReadBytes": 1292760,
+      "attrReads": 1412,
+      "attrReadBytes": 461800,
       "attrWrites": 6,
-      "attrWriteBytes": 43125,
+      "attrWriteBytes": 33618,
       "textWritesChanged": 117,
       "textWritesRedundant": 83,
       "panelCreates": 0,
       "panelDeletes": 0,
-      "costUnits": 8712860.7,
-      "costPerSec": 435643.035
+      "costUnits": 6103703.36,
+      "costPerSec": 305185.168
     },
     "rows": [
-      {
-        "label": "feat:statBonuses",
-        "calls": 0,
-        "traverseCalls": 460,
-        "traverseNodes": 1751680,
-        "traverseMisses": 460,
-        "classTraverseCalls": 220,
-        "classTraverseNodes": 837760,
-        "styleWritesChanged": 0,
-        "styleWritesRedundant": 0,
-        "classWritesChanged": 0,
-        "classWritesRedundant": 0,
-        "attrReads": 0,
-        "attrReadBytes": 0,
-        "attrWrites": 0,
-        "attrWriteBytes": 0,
-        "textWritesChanged": 0,
-        "textWritesRedundant": 0,
-        "panelCreates": 0,
-        "panelDeletes": 0,
-        "costUnits": 2589440,
-        "costPerSec": 129472
-      },
       {
         "label": "feat:coreRoot",
         "calls": 0,
@@ -109,27 +86,27 @@
         "costPerSec": 51528.8
       },
       {
-        "label": "loop:loop",
+        "label": "feat:statBonuses",
         "calls": 0,
-        "traverseCalls": 210,
-        "traverseNodes": 799680,
-        "traverseMisses": 0,
-        "classTraverseCalls": 0,
-        "classTraverseNodes": 0,
+        "traverseCalls": 82,
+        "traverseNodes": 312256,
+        "traverseMisses": 82,
+        "classTraverseCalls": 117,
+        "classTraverseNodes": 445536,
         "styleWritesChanged": 0,
-        "styleWritesRedundant": 100,
+        "styleWritesRedundant": 0,
         "classWritesChanged": 0,
         "classWritesRedundant": 0,
-        "attrReads": 300,
-        "attrReadBytes": 923400,
-        "attrWrites": 4,
-        "attrWriteBytes": 43123,
-        "textWritesChanged": 117,
-        "textWritesRedundant": 83,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
         "panelCreates": 0,
         "panelDeletes": 0,
-        "costUnits": 827376.46,
-        "costPerSec": 41368.823
+        "costUnits": 757792,
+        "costPerSec": 37889.6
       },
       {
         "label": "<unattributed>",
@@ -362,6 +339,29 @@
         "costPerSec": 3236.8
       },
       {
+        "label": "loop:loop",
+        "calls": 0,
+        "traverseCalls": 10,
+        "traverseNodes": 38080,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 100,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 320,
+        "attrReadBytes": 92440,
+        "attrWrites": 4,
+        "attrWriteBytes": 33616,
+        "textWritesChanged": 117,
+        "textWritesRedundant": 83,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 49067.12,
+        "costPerSec": 2453.356
+      },
+      {
         "label": "mf:ql_chat_images",
         "calls": 0,
         "traverseCalls": 10,
@@ -546,6 +546,29 @@
         "costPerSec": 60
       },
       {
+        "label": "mf:ql_rejuv_hud",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 160,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 800,
+        "costPerSec": 40
+      },
+      {
         "label": "mf:ql_on_death_arcade",
         "calls": 0,
         "traverseCalls": 0,
@@ -658,182 +681,6 @@
         ]
       },
       {
-        "id": "StatContainer_FireRate",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_TechCooldown",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_AbilityCooldown",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_AbilityCooldownReduction",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_CooldownReduction",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_Cooldown",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_CooldownDecrease",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_AbilityCD",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_TechPower",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_SpiritPower",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_Spirit",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_ClipSizeIncrease",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_ClipSize",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_ClipSizeBonus",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_AmmoCapacity",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_BaseWeaponDamage",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_BonusBaseWeaponDamage",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_BaseAttackDamagePercent",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_BulletDamage",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_MaxHealth",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_BaseHealth",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
-        "id": "StatContainer_ArmorPower",
-        "count": 20,
-        "nodes": 76160,
-        "labels": [
-          "feat:statBonuses"
-        ]
-      },
-      {
         "id": "StatsBreakdownContainer",
         "count": 20,
         "nodes": 76160,
@@ -871,6 +718,182 @@
         "nodes": 26649,
         "labels": [
           "mf:ql_lane_with_party"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseWeaponDamage",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BonusBaseWeaponDamage",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseAttackDamagePercent",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BulletDamage",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_MaxHealth",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseHealth",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ArmorPower",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_FireRate",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_TechCooldown",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCooldown",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCooldownReduction",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_CooldownReduction",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_Cooldown",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_CooldownDecrease",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCD",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_TechPower",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_SpiritPower",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_Spirit",
+        "count": 3,
+        "nodes": 11424,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSizeIncrease",
+        "count": 2,
+        "nodes": 7616,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSize",
+        "count": 2,
+        "nodes": 7616,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSizeBonus",
+        "count": 2,
+        "nodes": 7616,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AmmoCapacity",
+        "count": 2,
+        "nodes": 7616,
+        "labels": [
+          "feat:statBonuses"
         ]
       },
       {

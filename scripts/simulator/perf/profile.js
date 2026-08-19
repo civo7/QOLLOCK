@@ -135,6 +135,49 @@ function wrapPollLoops(sandbox) {
 }
 
 /**
+ * Attribute work done directly by the mod's own scheduled loops.
+ *
+ * Without this, everything the core loop does in its own body — reading the
+ * config out of a panel attribute, resolving gates, the always-on coreRoot
+ * work, and the whole of the 20Hz compassLoop — lands in one
+ * "<unattributed>" bucket that is far too large to act on. Those functions are
+ * module-private inside an IIFE, so they cannot be wrapped by name from outside.
+ *
+ * What CAN be recovered is the identity of the scheduled callback: the mod
+ * schedules named function declarations (`$.Schedule(delay, loop)`,
+ * `compassLoop`, `buildRequestLoop`), and a function's `.name` survives. So
+ * patch $.Schedule to label each callback with its own name. Anonymous
+ * callbacks (the many `$.Schedule(0.01, function() {...})` one-shots) keep the
+ * generic label, which is honest — we genuinely cannot tell them apart.
+ *
+ * Nesting is handled by the label stack: when the core loop calls a wrapped
+ * feature, the feature's label is on top and gets charged; only work the loop
+ * does itself stays charged to the loop.
+ */
+function wrapScheduledLoops(sandbox) {
+    return sandbox.eval(`
+        (function () {
+            if (!$ || typeof $.Schedule !== "function" || $.__profSchedWrapped) return false;
+            var orig = $.Schedule;
+            $.Schedule = function (delaySec, cb) {
+                if (typeof cb !== "function") return orig.apply($, arguments);
+                var name = cb.name || "";
+                if (!name || name === "wrapped" || name === "tick") return orig.call($, delaySec, cb);
+                var label = "loop:" + name;
+                var wrapped = function () {
+                    __profEnter(label);
+                    try { return cb.apply(this, arguments); }
+                    finally { __profExit(); }
+                };
+                return orig.call($, delaySec, wrapped);
+            };
+            $.__profSchedWrapped = true;
+            return true;
+        })()
+    `);
+}
+
+/**
  * Boot a profiled HUD.
  *
  * @param {object}  opts
@@ -223,6 +266,7 @@ function createProfiledHud({
 
     const wrappedFeatures = wrapOldFeatures(sandbox);
     const wrappedScheduler = wrapPollLoops(sandbox);
+    const wrappedLoops = wrapScheduledLoops(sandbox);
 
     // Warm up with counting OFF: boot, first-run panel discovery and one-shot
     // work are not what we are profiling, and they would swamp the steady state.
@@ -236,7 +280,11 @@ function createProfiledHud({
         tree,
         counters,
         pollRates,
-        meta: { players, damageNumbers, configApplied, configBytes, wrappedFeatures, wrappedScheduler, warmupMs },
+        meta: {
+            players, damageNumbers, configApplied, configBytes,
+            healthbarType: Number(configOverrides.HEALTHBAR_TYPE) || 0,
+            wrappedFeatures, wrappedScheduler, wrappedLoops, warmupMs,
+        },
 
         /** Count for `ms` of virtual time and return a snapshot. */
         measure(ms) {
