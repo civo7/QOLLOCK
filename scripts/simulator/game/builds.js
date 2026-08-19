@@ -122,6 +122,21 @@ class BuildsModel {
         this.editBuildButton.SetPanelEvent("onactivate", () => this.editSelectedBuild());
         this.browseBuildsButton.SetPanelEvent("onactivate", () => this.openBuildBrowser());
 
+        // Delete control. Vanilla exposes this through the build-details pane
+        // (citadel_ui_build_details.xml:49) and it is only present while the shop
+        // is genuinely open — the clear pipeline depends on exactly that, and its
+        // shop gate exists because of it. Modelled as a panel whose activation is
+        // ignored while the shop is closed rather than one that vanishes, so a
+        // premature delete attempt is a no-op instead of a lookup failure.
+        this.deleteBuildButton = this.controlButtons.addChild(mk("Panel", { id: "DeleteBuildButton" }));
+        this.deleteBuildButton.SetPanelEvent("onmouseactivate", () => {
+            if (!this.shopOpen) {
+                this._trace("deleteBuildButton ignored (shop closed)");
+                return;
+            }
+            this.deleteSelectedBuild();
+        });
+
         // citadel_shop_mods_build.xml:50-51 — both empty in XML, [C++] fills
         this.categoryContainer = this.selectedBuild.addChild(mk("Panel", { id: "CategoryContainer" }));
         this.favoriteBuildList = this.selectedBuild.addChild(mk("Panel", { id: "FavoriteBuildList" }));
@@ -396,8 +411,15 @@ class BuildsModel {
         this._trace("openShop");
         this.clock.schedule(this.latency.shopOpenMs / 1000, () => {
             this.shopOpen = true;
+            // gShopOpen is a GLOBAL class: the engine sets it on the absolute root
+            // and mirrors it onto panels with a matching <GlobalClassListener>
+            // (citadel_hud_hero_builds.xml:21). Consumers resolve their root via
+            // GetUIRoot(), which walks to the topmost panel — so setting it only
+            // on #Hud leaves IsHudClassActive() blind and gates never open.
+            this.doc.absRoot.AddClass("gShopOpen");
             this.doc.root.AddClass("gShopOpen");
             this.shopPanel.AddClass("gShopOpen");
+            this.heroBuildsPanel.AddClass("gShopOpen");
             this._renderAll();
         });
         return true;
@@ -405,8 +427,10 @@ class BuildsModel {
 
     closeShop() {
         this.shopOpen = false;
+        this.doc.absRoot.RemoveClass("gShopOpen");
         this.doc.root.RemoveClass("gShopOpen");
         this.shopPanel.RemoveClass("gShopOpen");
+        this.heroBuildsPanel.RemoveClass("gShopOpen");
         return true;
     }
 

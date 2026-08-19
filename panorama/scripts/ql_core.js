@@ -629,6 +629,11 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
+    // Prune mode (post-save junk cleanup) bounds. Deliberately tight: this deletes
+    // user-visible data through a delete path that cannot report failure, so it
+    // stops early rather than trying harder.
+    const BUILD_PRUNE_MAX_DELETES = 12;
+    const BUILD_PRUNE_MAX_NO_PROGRESS = 4;
     const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 200; // poll-driven (was 60)
     // (debug infrastructure removed — BUILD_CLEAR_DEBUG, BUILD_SAVE_DEBUG)
     const ENEMY_ULT_OLD_DEBUG = false;
@@ -7357,6 +7362,10 @@ function GetUIRoot() {
         State.buildClearStorageSwitchRetries = 0;
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = false;
+        State.buildClearPreservePayload = false;
+        State.buildClearSkippedCount = 0;
+        State.buildClearLastEntryCount = -1;
+        State.buildClearNoProgressHits = 0;
     }
 
     function SetBuildClearStatus(root, state, message, token) {
@@ -9016,6 +9025,17 @@ function GetUIRoot() {
             }
         }
         SetBuildClearStatus(root, state, message, token);
+        // Clear the request payload, mirroring FinishBuildSaveRequest's call to
+        // ResetBuildSaveRequestAttributes. Without this the request attribute
+        // survives completion, so IsBuildRequestQueueActive() stays true forever
+        // and buildRequestLoop never drops back to its deep-idle interval — it
+        // polls at 50ms for the rest of the session. It also meant a second
+        // clear/prune could never be enqueued, because the queue never looked free.
+        // Status attrs are written above and intentionally left for readers.
+        if (root && root.SetAttributeString) {
+            try { root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, ""); } catch (eClr0) {}
+            try { root.SetAttributeString(BUILD_CLEAR_TOKEN_ATTR, ""); } catch (eClr1) {}
+        }
         ResetBuildClearRuntimeState();
     }
 
@@ -9156,6 +9176,107 @@ function GetUIRoot() {
                 return;
             }
 
+            // Prune mode: keep the build that holds the payload and delete only
+            // the junk around it. Everything here is written to fail closed —
+            // deleting a build the user cares about is not recoverable, and the
+            // delete path it rides on is not fully reliable
+            // (TryDismissBuildDeletePopup is a stub and FindBuildDeleteConfirmButton
+            // matches English button text), so it must give up rather than push on.
+            if (State.buildClearPreservePayload) {
+                var pruneEntries = CollectStorageBuildEntryPanels(root, true);
+                var pruneCount = pruneEntries ? pruneEntries.length : 0;
+
+                // Nothing left to consider, or only the payload build remains.
+                if (pruneCount <= 1) {
+                    _TLog("clear:Prune", "done entries=" + pruneCount +
+                          " deleted=" + State.buildClearDeletedCount +
+                          " skipped=" + State.buildClearSkippedCount);
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    return;
+                }
+
+                if (State.buildClearDeletedCount >= BUILD_PRUNE_MAX_DELETES) {
+                    _TLog("clear:Prune", "delete cap reached (" + BUILD_PRUNE_MAX_DELETES + ")");
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned_capped");
+                    return;
+                }
+
+                // Walked the whole list without finding anything deletable.
+                if (State.buildClearSkippedCount >= pruneCount) {
+                    _TLog("clear:Prune", "nothing deletable after " +
+                          State.buildClearSkippedCount + " skip(s)");
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    return;
+                }
+
+                // No-progress detector: if the entry count stops changing while we
+                // keep issuing deletes, the delete is not landing (dismissed
+                // confirmation popup, inert duplicate panel). Stop instead of
+                // hammering it.
+                if (State.buildClearLastEntryCount === pruneCount) {
+                    State.buildClearNoProgressHits = (Number(State.buildClearNoProgressHits) || 0) + 1;
+                    if (State.buildClearNoProgressHits > BUILD_PRUNE_MAX_NO_PROGRESS) {
+                        _TLog("clear:Prune", "aborting — no progress at entries=" + pruneCount);
+                        FinishBuildClearRequest(root, requestToken, "failed", "prune_no_progress");
+                        return;
+                    }
+                } else {
+                    State.buildClearLastEntryCount = pruneCount;
+                    State.buildClearNoProgressHits = 0;
+                }
+
+                // Never delete the selected build while it carries a payload.
+                // CurrentBuildHasAnyPayload also inspects the editor buffer, which
+                // is the conservative choice here: any sign of a token means keep.
+                var selectedHasPayload = false;
+                try {
+                    selectedHasPayload = !!(QOL.currentBuildHasAnyPayload &&
+                                            QOL.currentBuildHasAnyPayload(root));
+                } catch (ePrune0) {
+                    // Could not tell — assume it matters.
+                    selectedHasPayload = true;
+                }
+                if (selectedHasPayload) {
+                    State.buildClearSkippedCount = (Number(State.buildClearSkippedCount) || 0) + 1;
+                    var skipNext = TrySelectNextStorageBuildEntry(root, true);
+                    _TLog("clear:Prune", "skip payload build (" +
+                          State.buildClearSkippedCount + "/" + pruneCount +
+                          ") reselect=" + (skipNext && skipNext.ok ? "ok" : "fail"));
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_DELAY_MS;
+                    SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                    if (!skipNext || !skipNext.ok) {
+                        // Cannot move off the payload build — nothing safe to do.
+                        FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    }
+                    return;
+                }
+
+                var pruneDelete = TryTriggerBuildDeleteAction(root);
+                if (pruneDelete.ok) {
+                    if (pruneDelete.mode !== "confirm") State.buildClearDeletedCount += 1;
+                    State.buildClearRetries = 0;
+                    State.buildClearStage = pruneDelete.mode === "confirm"
+                        ? "reselect_after_delete"
+                        : "clear_loop";
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_DELETE_DELAY_MS;
+                    SetBuildClearStatus(
+                        root,
+                        "pending",
+                        pruneDelete.mode === "confirm" ? "confirming_delete" : "pruning_builds",
+                        requestToken
+                    );
+                    return;
+                }
+
+                State.buildClearRetries += 1;
+                State.buildClearNextActionMs = nowMs + BUILD_CLEAR_ACTION_DELAY_MS;
+                SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                if (State.buildClearRetries > BUILD_CLEAR_MAX_RETRIES) {
+                    FinishBuildClearRequest(root, requestToken, "failed", "delete_controls_unavailable");
+                }
+                return;
+            }
+
             if (IsStorageBuildListEmpty(root)) {
                 State.buildClearEmptyConfirmHits += 1;
                 SetBuildClearStatus(root, "pending", "verifying_clear", requestToken);
@@ -9279,6 +9400,13 @@ function GetUIRoot() {
         State.buildClearStorageSwitchRetries = 0;
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = !!reuseGateReady;
+        // Prune mode is opted into via the request attribute, so a plain clear
+        // request keeps its original wipe-everything behaviour.
+        State.buildClearPreservePayload =
+            String(root.GetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "") || "").trim() === "prune";
+        State.buildClearSkippedCount = 0;
+        State.buildClearLastEntryCount = -1;
+        State.buildClearNoProgressHits = 0;
         SetBuildClearStatus(root, "pending", reuseLoaderSkyrunner ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 

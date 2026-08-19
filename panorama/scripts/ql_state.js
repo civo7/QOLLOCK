@@ -606,6 +606,13 @@ var State;
         buildClearStorageSwitchRetries: 0,
         buildClearStorageConfirmStartedMs: 0,
         buildClearUserShopGateSatisfied: false,
+        // Prune mode: a clear request that spares the build holding the payload,
+        // used to tidy up junk builds after a verified save instead of wiping
+        // everything. See AdvanceBuildClearRequestStage in ql_core.js.
+        buildClearPreservePayload: false,
+        buildClearSkippedCount: 0,
+        buildClearLastEntryCount: -1,
+        buildClearNoProgressHits: 0,
         // (debug state fields removed — buildClearDebugLastSig, buildClearDebugNextMs, buildClearDebugOverlayLine)
         heroReturnDebugLastSig: "",
         heroReturnDebugNextMs: 0,

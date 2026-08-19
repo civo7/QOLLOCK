@@ -70,6 +70,11 @@
     var PANEL_ID_BUILD_NAME_ENTRY = "BuildNameTextEntry";
     // Must match MARKER_TITLE in manifests/ql_build_payload/manifest.js.
     var BUILD_SAVE_MARKER_TITLE = "QOLLOCK-Settings";
+    // Clear/prune channel (mirrors ql_bridge.js) — used to enqueue post-save
+    // junk-build cleanup.
+    var BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
+    var BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
+    var BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
     var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
@@ -489,6 +494,39 @@ function ResetBuildSaveRequestAttributes(root) {
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
         QOL.setBuildSaveStatus(root, state, message, token);
+        if (state === "success" && root) QueueStorageBuildPrune(root);
+    }
+
+    // ── QueueStorageBuildPrune ──
+    // After a verified save, ask the clear pipeline to delete the junk builds
+    // around the one we just wrote, so they stop accumulating for existing users.
+    //
+    // Enqueued as a separate request rather than a save stage on purpose: the save
+    // machine has a 12s budget (BUILD_SAVE_TIMEOUT_MS) and a multi-build delete
+    // loop with confirmation popups will not reliably fit in what is left of it
+    // after switch + confirm + lock + write + commit + verify.
+    //
+    // Runs only when the shop is already open, which is both a correctness
+    // requirement (the delete controls do not exist otherwise) and a consent
+    // signal — we do not repoint the user's shop to delete things unprompted.
+    function QueueStorageBuildPrune(root) {
+        if (!root || !root.SetAttributeString) return false;
+        // Never start a prune while any clear request is already in flight.
+        var existing = String(root.GetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "") || "").trim();
+        var clearState = String(root.GetAttributeString(BUILD_CLEAR_STATE_ATTR, "") || "").trim();
+        if (existing.length > 0 || clearState === "pending") return false;
+        if (!QOL.isHudClassActive(root, "gShopOpen")) return false;
+
+        try {
+            root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "prune");
+            root.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "pending");
+            root.SetAttributeString(BUILD_CLEAR_MSG_ATTR, "queued");
+        } catch (e0) {
+            if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0 && e0.message ? e0.message : String(e0 || "")));
+            return false;
+        }
+        _TLog("save:QueuePrune", "requested post-save junk cleanup");
+        return true;
     }
 
     // ── TriggerBuildEditMode ──
@@ -1266,6 +1304,7 @@ function ResetBuildSaveRequestAttributes(root) {
     QOL.countBuildCategoryHeaders = CountBuildCategoryHeaders;
     QOL.currentBuildHasPayload = CurrentBuildHasPayload;
     QOL.currentBuildHasAnyPayload = CurrentBuildHasAnyPayload;
+    QOL.queueStorageBuildPrune = QueueStorageBuildPrune;
     QOL.getBuildSaveCategoryNameEntry = GetBuildSaveCategoryNameEntry;
     QOL.isBuildSaveMutationStage = IsBuildSaveMutationStage;
     QOL.isBuildSaveEditModeActive = IsBuildSaveEditModeActive;
