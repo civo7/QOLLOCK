@@ -101,6 +101,38 @@ test("the core loop does not re-read the whole config every tick", () => {
         `attribute reads total ${Math.round(bytesPerSec)} bytes/sec — the config revision gate has regressed`);
 });
 
+test("a config change is still picked up despite the revision gate", () => {
+    // The gate above is only safe if a real edit still gets through. Write a new
+    // config with a bumped revision the way the settings context does, and check the
+    // HUD's parsed config actually changes. Without this, the previous test could be
+    // satisfied by a cache that never invalidates.
+    const h = createProfiledHud({ players: 4, warmupMs: 4000 });
+    const STORAGE_KEY = "Deadlock_Mod_Settings_v1";
+    const REV = "QOL_USER_EDIT_REV";
+
+    const before = h.sandbox.eval(`String(QOL.state.lastConfig && QOL.state.lastConfig.HUD_INDICATOR_SIZE)`);
+
+    const raw = h.doc.root.GetAttributeString(STORAGE_KEY, "");
+    const parsed = JSON.parse(raw);
+    const target = parsed.data ? parsed.data : parsed;
+    const changed = Number(target.HUD_INDICATOR_SIZE) === 77 ? 88 : 77;
+    target.HUD_INDICATOR_SIZE = changed;
+    const nextRaw = JSON.stringify(parsed);
+
+    const nextRev = String(Number(h.doc.root.GetAttributeString(REV, "0")) + 1);
+    for (const p of [h.doc.root, h.doc.absRoot.FindChildTraverse("Hud")]) {
+        if (!p) continue;
+        p.SetAttributeString(STORAGE_KEY, nextRaw);
+        p.SetAttributeString(REV, nextRev);
+    }
+
+    h.clock.advance(2000);
+    const after = h.sandbox.eval(`String(QOL.state.lastConfig && QOL.state.lastConfig.HUD_INDICATOR_SIZE)`);
+    assert.strictEqual(after, String(changed),
+        `config edit was not observed by the HUD (was ${before}, wrote ${changed}, read ${after}).\n` +
+        `The revision gate in ReadStorageConfigRawFromUi is caching too aggressively.\n${h.diagnose()}`);
+});
+
 test("no feature creates or destroys panels in steady state", () => {
     const { snap } = profile();
     // Panel construction is the most expensive single operation in Panorama.
@@ -115,16 +147,43 @@ test("no feature creates or destroys panels in steady state", () => {
 
 test("total requested engine work stays within budget", () => {
     const { snap, h } = profile();
-    // A single number to catch a regression anywhere. Measured 436k units/sec
-    // before this round of fixes and ~305k after; the ceiling sits above the
-    // starting point so it only trips on a genuine new regression, not on noise.
-    // If you are raising this, say why in the commit.
+    // A single number to catch a regression anywhere.
+    //
+    // History on this branch, same scenario and same tree: 436k units/sec before any
+    // of the perf work, 164k after. The ceiling is set at 200k — comfortably above
+    // where we landed so it does not trip on fixture noise, but well below the
+    // starting point so undoing any one of the fixes fails the build.
+    //
+    // If you raise this, say why in the commit message. A ceiling that drifts up
+    // without justification is the same as not having one.
     const cost = snap.total.costPerSec;
-    assert.ok(cost < 450000,
-        `composite cost is ${Math.round(cost)} units/sec, over the 450k ceiling.\n` +
+    assert.ok(cost < 200000,
+        `composite cost is ${Math.round(cost)} units/sec, over the 200k ceiling.\n` +
         `Top contributors:\n` +
         snap.rows.slice(0, 6).map((r) => `  ${r.label}: ${Math.round(r.costPerSec)}`).join("\n") +
         `\n${h.diagnose()}`);
+});
+
+test("the 20Hz compass loop does not rewrite unchanged styles", () => {
+    const { snap } = profile();
+    // UpdateCompassOverlay had ten writes outside any guard on a loop running every
+    // 50ms — ~200 layout-dirtying writes/sec re-asserting values that only change
+    // when the user touches a compass setting.
+    const redundant = ratePerSec(snap, "loop:compassLoop", "styleWritesRedundant");
+    assert.ok(redundant < 60,
+        `compassLoop rewrote ${Math.round(redundant)} unchanged style values/sec — ` +
+        `the compare-then-write guards have regressed`);
+});
+
+test("the minimap scans back off when the local player panel is absent", () => {
+    const { snap } = profile();
+    // Both minimap local-player lookups fall back to a whole-HUD class traversal.
+    // At the old flat 90ms retry that was ~11 full-tree walks/sec forever whenever
+    // the panel was missing — which includes being dead mid-teamfight.
+    const nodes = ratePerSec(snap, "loop:compassLoop", "traverseNodes")
+        + ratePerSec(snap, "loop:compassLoop", "classTraverseNodes");
+    assert.ok(nodes < 25000,
+        `compassLoop walked ${Math.round(nodes)} tree nodes/sec — the minimap scan backoff has regressed`);
 });
 
 test("REGRESSION: a missing gold container does not throw every tick", () => {
