@@ -165,6 +165,11 @@
                 // A flat key may intentionally drive multiple manifests. Append
                 // every owner instead of letting the first manifest claim it.
                 if (m.enableKey) _appendFeatureOwner(map, m.enableKey, ids[i]);
+                if (m.enableKeys) {
+                    for (var e = 0; e < m.enableKeys.length; e++) {
+                        if (m.enableKeys[e]) _appendFeatureOwner(map, m.enableKeys[e], ids[i]);
+                    }
+                }
                 if (m.settings) {
                     for (var s = 0; s < m.settings.length; s++) {
                         var sk = m.settings[s].key;
@@ -247,11 +252,19 @@
             for (var fid in enableKeyMap) {
                 if (!enableKeyMap.hasOwnProperty(fid)) continue;
                 var ek = enableKeyMap[fid];
-                // Use hasOwnProperty so injection is bidirectional:
-                // enableKey=1 → enabled:true, enableKey=0 → enabled:false
-                if (processed[fid] && processed[fid].hasOwnProperty(ek)) {
-                    processed[fid]["enabled"] = !!processed[fid][ek];
+                if (!processed[fid]) continue;
+                // enableKeyMap[fid] is either a single key or an array of keys with
+                // OR semantics (any truthy key boots the feature). Only decide when
+                // at least one key is actually present, so hasOwnProperty stays the
+                // guard and injection remains bidirectional (all keys 0 → enabled:false).
+                var ekList = (typeof ek === "string") ? [ek] : ek;
+                var sawKey = false, anyOn = false;
+                for (var k = 0; k < ekList.length; k++) {
+                    if (!ekList[k] || !processed[fid].hasOwnProperty(ekList[k])) continue;
+                    sawKey = true;
+                    if (processed[fid][ekList[k]]) anyOn = true;
                 }
+                if (sawKey) processed[fid]["enabled"] = anyOn;
             }
         }
 

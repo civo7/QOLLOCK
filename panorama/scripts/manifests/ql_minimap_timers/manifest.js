@@ -22,7 +22,11 @@
 
     FR.register({
         id: "ql_minimap_timers",
-        enableKey: "ENABLE_MINIMAP_REJUV_TIMER",
+        // Multi-key: the bridge buff timer and the mid-boss timer are independent
+        // toggles, either of which must boot this feature. Gating on the rejuv key
+        // alone left ENABLE_MINIMAP_BUFF_TIMER dead unless the mid-boss timer
+        // happened to be on too (regression from the ql_rejuv_timers split).
+        enableKeys: ["ENABLE_MINIMAP_REJUV_TIMER", "ENABLE_MINIMAP_BUFF_TIMER"],
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false },

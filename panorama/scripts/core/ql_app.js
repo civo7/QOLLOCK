@@ -40,14 +40,19 @@
     // Step 0a: during migration, read from old system's attribute
     var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
 
-    // Build featureId → enableKey map from registered manifests
+    // Build featureId → enableKey map from registered manifests.
+    // A manifest declares either enableKey (single legacy toggle) or enableKeys
+    // (array, OR semantics — any one toggle boots the feature). Multi-key features
+    // need the array form: gating them on one key leaves their other toggles dead.
     function _buildEnableKeyMap() {
         var map = {};
         if (!FeatureRegistry) return map;
         var ids = FeatureRegistry.getRegisteredIds();
         for (var i = 0; i < ids.length; i++) {
             var m = FeatureRegistry.getManifest(ids[i]);
-            if (m && m.enableKey) map[ids[i]] = m.enableKey;
+            if (!m) continue;
+            if (m.enableKeys && m.enableKeys.length > 0) map[ids[i]] = m.enableKeys;
+            else if (m.enableKey) map[ids[i]] = m.enableKey;
         }
         return map;
     }

@@ -7,7 +7,9 @@
 // DOES NOT OWN: Minimap overlays (see ql_minimap_timers), mid-boss game object,
 //              top-bar panels, rejuv charges
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_REJUV_HUD, ENABLE_BUFF_HUD
+// CONFIG KEYS: ENABLE_REJUV_HUD, ENABLE_BUFF_HUD, ENABLE_MINIMAP_REJUV_TIMER
+//              (the last one is read-only here: it boots the phase tracker so
+//              ql_minimap_timers has a live State.rejuvState to render)
 // CSS:         none
 // PATTERN:     Polling (0.3Hz). Self-scheduling via Scheduler.
 // SPLIT FROM:  ql_rejuv_timers — minimap code extracted to ql_minimap_timers
@@ -21,11 +23,24 @@
 
     FR.register({
         id: "ql_rejuv_hud",
-        enableKey: "ENABLE_REJUV_HUD",
+        // Multi-key. Own HUD toggles are ENABLE_REJUV_HUD / ENABLE_BUFF_HUD.
+        // ENABLE_MINIMAP_REJUV_TIMER is included because this feature is the sole
+        // writer of State.rejuvState, which ql_minimap_timers reads for the mid-boss
+        // countdown — without it that timer sits frozen at 00:00. Panel visibility is
+        // driven by the buff_hud_disabled / rejuv_hud_disabled root classes applied by
+        // coreRoot, so running the tracker for the minimap consumer does not reveal
+        // the HUD panels. Matches the pre-split ql_rejuv_timers gate.
+        // ENABLE_MINIMAP_BUFF_TIMER is deliberately absent: the bridge buff countdown
+        // is derived from game time inside ql_minimap_timers and needs nothing here.
+        enableKeys: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER"],
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_REJUV_HUD", type: "toggle", default: false },
-            { key: "ENABLE_BUFF_HUD", type: "toggle", default: false }
+            { key: "ENABLE_BUFF_HUD", type: "toggle", default: false },
+            // Declared so ConfigStore.load() lets the key into this bucket
+            // (load() drops keys absent from the schema) and ctx.config.view()
+            // can see it in the tick below.
+            { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false }
         ],
         create: function(ctx) {
             // ── QOL.import deps ──
@@ -118,7 +133,10 @@
 
                 var rejuvHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_REJUV_HUD"));
                 var buffHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_HUD"));
-                if (!rejuvHudEnabled && !buffHudEnabled) {
+                // The minimap mid-boss timer consumes State.rejuvState, so keep the
+                // phase tracker running for it even when both HUD toggles are off.
+                var minimapRejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
+                if (!rejuvHudEnabled && !buffHudEnabled && !minimapRejuvEnabled) {
                     if (!State.rejuvWasDisabled) { var ds = EnsureRejuvState(); RejuvResetState(ds, root, nowMs); State.rejuvWasDisabled = true; }
                     return;
                 }
@@ -134,7 +152,7 @@
 
                 // Config change signature
                 if (State.lastConfig !== state._cachedConfigRef) {
-                    state._cachedRuntimeFeatureSig = [rejuvHudEnabled?"1":"0",buffHudEnabled?"1":"0"].join("|");
+                    state._cachedRuntimeFeatureSig = [rejuvHudEnabled?"1":"0",buffHudEnabled?"1":"0",minimapRejuvEnabled?"1":"0"].join("|");
                     state._cachedConfigRef = State.lastConfig;
                 }
 
