@@ -10055,25 +10055,37 @@ function GetUIRoot() {
 
         var nextScan = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
         if (!breakdown) {
-            var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
-            var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
-            StatBonusesDebugLogThrottled(
-                "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
-                "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
-                    ", statNames=" + statNameCount +
-                    ", subRows=" + subRowCount + ")",
-                nowMs
-            );
+            // These two counts exist only to be interpolated into the debug message
+            // below, and StatBonusesDebugLogThrottled returns on its first line
+            // because STAT_BONUSES_DEBUG is a compile-time false. JS evaluates
+            // arguments before the call, so both FindChildrenWithClassTraverse walks
+            // ran anyway — two full-HUD tree walks per scan, purely to build a string
+            // that is immediately discarded. Guard the whole block instead.
+            if (STAT_BONUSES_DEBUG) {
+                var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
+                var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
+                StatBonusesDebugLogThrottled(
+                    "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
+                    "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
+                        ", statNames=" + statNameCount +
+                        ", subRows=" + subRowCount + ")",
+                    nowMs
+                );
+            }
             State.statBonuses.nextTooltipScanMs = nextScan;
             return;
         }
 
-        var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
-        StatBonusesDebugLogThrottled(
-            "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
-            "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
-            nowMs
-        );
+        // Same shape as above: GetStatBreakdownRowsDebugSnapshot walks the breakdown
+        // container and its rows, and its only consumer is the disabled logger.
+        if (STAT_BONUSES_DEBUG) {
+            var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
+            StatBonusesDebugLogThrottled(
+                "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
+                "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
+                nowMs
+            );
+        }
         var goldenToken = ExtractGoldenStatuesValueFromBreakdownContainer(breakdown);
         if (goldenToken) {
             var statContainerId = FindStatContainerIdFromPanel(breakdown);
