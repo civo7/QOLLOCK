@@ -49,16 +49,32 @@
     var CREATE_POLL_MS      = 200;
     var CREATE_MAX_RETRIES  = 15;
     var SCAN_POLL_MS        = 100;
-    var SCAN_MAX_ADVANCES   = 4;
+    // Minimum gap between selecting one storage build and selecting the next.
+    // Selecting a build is asynchronous — the engine re-renders #CategoryContainer
+    // a few hundred ms later. Advancing faster than this means we never read any
+    // build's categories at all.
+    var SCAN_SETTLE_MS      = 400;
+    // How long the storage build list must read as empty before we believe it.
+    // Right after the hero switch the list has not rendered yet, and treating
+    // that as "no builds exist" is what made a junk build appear on every boot.
+    var LIST_CONFIRM_MS     = 1500;
+    var CREATE_SETTLE_MS    = 800;
     var SCAN_TIMEOUT_MS     = 8000;
     var SAVE_WAIT_POLL_MS   = 250;
     var SAVE_WAIT_TIMEOUT_MS = 15000;
     var REPAIR_STEP_MS      = 150;
     var REPAIR_TIMEOUT_MS   = 15000;
     var OVERALL_TIMEOUT_MS  = 30000;
+    var OVERALL_TIMEOUT_CAP_MS = 90000;
     var DORMANT_RATE_SEC    = 5.0;
     var ACTIVE_RATE_SEC     = 0.2;
     var SIGNATURE_HITS      = 2;
+
+    // Identifiable title written by the save pipeline so the payload build can be
+    // spotted without visiting every build. Best-effort only: build-name Labels
+    // are dialog-variable backed in vanilla, so the title may not be readable at
+    // all. Everything below still works when it isn't.
+    var MARKER_TITLE = "QOLLOCK-Settings";
 
     // ── QOL delegate wrapper (Pattern 10) ──
     function _qol(name) {
@@ -189,6 +205,27 @@
         return (_alive(list) && list.FindChildrenWithClassTraverse) ? _findClass(list, CLASS_BUILD_ITEM) : [];
     }
 
+    /**
+     * Every storage build entry we could select, popup open or not.
+     *
+     * `_buildListItems` above only sees #HeroBuildList / .HeroBuildListItem, which
+     * exist solely while the build browser popup is open — and the normal read path
+     * never opens it (_openBuildBrowser is only reached from _stepRepair). That is
+     * why the loader used to see nothing but whatever build the shop had already
+     * selected.
+     *
+     * QOL.collectStorageBuildEntryPanels (ql_core.js:8682) is the enumeration the
+     * old loader used: it sweeps .FavoriteBuildEntryContainer on the shop side as
+     * well as .HeroBuildListItem, across several candidate roots, with a structural
+     * fallback. Reuse it rather than re-deriving traversal here.
+     */
+    function _storageEntries(root) {
+        var entries = _callQol("collectStorageBuildEntryPanels", null, [root, true]);
+        if (entries && entries.length > 0) return entries;
+        // Fall back to the popup list if the shared helper is unavailable.
+        return _buildListItems(root);
+    }
+
     // ── Payload text ──
     function _extractToken(text) {
         if (!text) return "";
@@ -244,35 +281,85 @@
         return parts.join(" ");
     }
 
+    /**
+     * Look for the payload in whatever is currently on screen, and — when
+     * `doAdvance` is set — step the selection to the next unvisited storage build.
+     *
+     * Advancing is rate-limited by SCAN_SETTLE_MS and each build is visited at
+     * most once. The previous version selected `advances % items.length` up to
+     * 4 times with no rate limit: at a 100ms poll that burned every attempt
+     * inside 400ms, far faster than the engine re-renders #CategoryContainer, so
+     * it read the same stale categories 4 times and could never reach index 4+.
+     * (st.scanLastAdvanceMs was written but never read — the gate was dead code.)
+     */
     function _scanPayloadText(root, doAdvance, st) {
         // 1. Scan selected build categories
         var sb = _selectedBuild(root);
         var token = _scanCategoryText(sb);
         if (token) return token;
 
-        // 2. Scan build list items (deep text)
-        var items = _buildListItems(root);
+        // 2. Scan build entries' own text (deep). Cheap, and it catches the case
+        //    where an entry surfaces its category text directly.
+        var items = _storageEntries(root);
         for (var i = 0; i < items.length; i++) {
             token = _extractToken(_deepText(items[i]));
             if (token) return token;
         }
 
-        // 3. Advance scan — select each build list item to load its payload into the shop
-        if (doAdvance && st) {
-            var advances = st.scanAdvances || 0;
-            if (advances < SCAN_MAX_ADVANCES && items.length > 0) {
-                // Select next item
-                var idx = advances % items.length;
-                var fn = _qol("activatePanelSafe");
-                if (typeof fn === "function" && _alive(items[idx])) {
-                    try { fn(items[idx]); } catch(e) {}
+        if (!doAdvance || !st) return "";
+
+        // 3. Fast path: if a build advertises the marker title, go straight there
+        //    instead of sweeping. Titles may be dialog-variable backed and thus
+        //    unreadable, so this is opportunistic — the sweep below is the
+        //    guarantee.
+        if (!st.markerTried) {
+            st.markerTried = true;
+            for (var mi = 0; mi < items.length; mi++) {
+                var itemText = _deepText(items[mi]);
+                if (itemText && itemText.indexOf(MARKER_TITLE) !== -1) {
+                    $.Msg("[QOLLock][ql_build_payload] scan: marker title found at entry " + mi);
+                    st.markerIndex = mi;
+                    if (_selectEntry(items[mi])) {
+                        st.visited["m" + mi] = true;
+                        st.scanLastAdvanceMs = _now();
+                    }
+                    return "";
                 }
-                st.scanAdvances = advances + 1;
-                st.scanLastAdvanceMs = _now();
             }
         }
 
+        // 4. Full sweep: visit every entry exactly once, honouring settle time.
+        var now = _now();
+        if (now - (st.scanLastAdvanceMs || 0) < SCAN_SETTLE_MS) return "";
+        if (items.length === 0) return "";
+
+        var cursor = st.scanCursor || 0;
+        if (cursor >= items.length) return "";   // swept everything
+
+        st.scanCursor = cursor + 1;
+        st.scanLastAdvanceMs = now;
+        if (_selectEntry(items[cursor])) {
+            st.scanAdvances = (st.scanAdvances || 0) + 1;
+        }
         return "";
+    }
+
+    /** Select a storage build entry so its categories render. */
+    function _selectEntry(entry) {
+        if (!_alive(entry)) return false;
+        var fn = _qol("activatePanelSafe");
+        if (typeof fn !== "function") return false;
+        try { fn(entry); return true; } catch(e) { return false; }
+    }
+
+    /**
+     * Time budget for a full sweep. Must scale with the number of builds or the
+     * sweep gets guillotined partway through — the old fixed 8s was fine for the
+     * 4 attempts it made and far too short for a real list.
+     */
+    function _scanBudgetMs(itemCount) {
+        var n = Math.max(1, Number(itemCount) || 1);
+        return Math.max(SCAN_TIMEOUT_MS, 2000 + n * SCAN_SETTLE_MS * 2);
     }
 
     // ── Token decode ──
@@ -491,11 +578,22 @@
     }
 
     // ── Build init ──
+    /**
+     * Make sure there is a storage build to read from.
+     *
+     * Returns true once the read stage may proceed.
+     *
+     * The hard rule: never create a build while any storage build already exists.
+     * This used to fire CreateNewBuild on the very first tick after the hero
+     * switch, before the build list had rendered — so "no payload visible yet"
+     * was misread as "no builds exist", and a fresh empty build was added on
+     * every single boot. Each one also steals the shop's selection, pushing the
+     * real payload build further out of reach. That is the accumulation players
+     * were clearing by hand.
+     */
     function _ensureStorageBuild(root, now, st) {
         // Early success: a QOL payload token is already visible in the
-        // selected build's categories. A build with categories but no
-        // token (e.g. Deadlock pre-populated) is NOT "ready" — we need
-        // to create or overwrite a build with a QOL payload.
+        // selected build's categories.
         var existing = _scanPayloadText(root, false, null);
         if (existing) {
             $.Msg("[QOLLock][ql_build_payload] ensure: existing payload found, returning true");
@@ -503,22 +601,49 @@
         }
 
         // Navigate to Favorites tab so Skyrunner builds are visible.
-        // OLD calls this in handleWaitStorage + handleBootstrapViaSaveEnqueue.
         if (!st._favTabDone) {
             try { _callQol("ensureStorageHeroFavoritesHeaderVisible", undefined, [root]); } catch(e) {}
             st._favTabDone = true;
         }
 
-        // No payload — create a fresh Skyrunner build via the JS-callable
-        // CitadelHudHeroBuildsCreateNewBuild() (arg 0). Verified in-game: works
-        // from the shop with no popup. Fire-and-forget — the build is an empty
-        // target the SAVE pipeline populates later; LOAD proceeds to apply
-        // defaults since there is no payload to read yet.
+        // Any entries at all? If so there is something to sweep — go read.
+        var entries = _storageEntries(root);
+        if (entries.length > 0) {
+            if (!st._sawEntries) {
+                st._sawEntries = true;
+                $.Msg("[QOLLock][ql_build_payload] ensure: " + entries.length +
+                      " storage build(s) present, proceeding to read (no create)");
+            }
+            return true;
+        }
+
+        // No entries yet. That may just mean the list has not rendered, so require
+        // it to read empty for LIST_CONFIRM_MS — and cross-check against the
+        // shared emptiness probe — before creating anything.
+        if (!st.emptySince) {
+            st.emptySince = now;
+            return false;
+        }
+        if (now - st.emptySince < LIST_CONFIRM_MS) return false;
+
+        var reportedEmpty = _callQol("isStorageBuildListEmpty", false, [root]);
+        if (!reportedEmpty) {
+            // Disagreement: entries are hidden rather than absent. Read, don't create.
+            $.Msg("[QOLLock][ql_build_payload] ensure: list reads non-empty, proceeding to read (no create)");
+            return true;
+        }
+
         if (!st.createAttempted) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild (shop path)");
+            $.Msg("[QOLLock][ql_build_payload] ensure: no storage builds after " +
+                  LIST_CONFIRM_MS + "ms — creating one");
             _callCreateNewBuild();
             st.createAttempted = true;
+            st.createStarted = now;
+            return false;
         }
+
+        // Give the created build time to appear before reading.
+        if (now - (st.createStarted || now) < CREATE_SETTLE_MS) return false;
         $.Msg("[QOLLock][ql_build_payload] ensure: fresh build requested, proceeding to read");
         return true;
     }
@@ -661,6 +786,14 @@
                     confirmStarted: 0,
                     scanAdvances: 0,
                     scanStarted: 0,
+                    scanCursor: 0,
+                    scanLastAdvanceMs: 0,
+                    scanBudgetMs: 0,
+                    visited: {},
+                    markerTried: false,
+                    markerIndex: -1,
+                    emptySince: 0,
+                    _sawEntries: false,
                     payloadText: "",
                     lastApplied: "",
                     lastAccount: "",
@@ -760,8 +893,18 @@
                     _reschedule(ACTIVE_RATE_SEC);
 
                     // Overall timeout — must run BEFORE the save-pending guard so a
-                    // stuck-pending save can't bypass the 30s limit.
-                    if (now - _st.startedAt > OVERALL_TIMEOUT_MS && _st.stage !== "done") {
+                    // stuck-pending save can't bypass the limit. Scales with the
+                    // scan budget: a fixed 30s would cut a long sweep short and
+                    // report "no payload" on exactly the crowded build lists that
+                    // need the sweep most.
+                    var overallBudget = OVERALL_TIMEOUT_MS;
+                    if (_st.scanBudgetMs) {
+                        overallBudget = Math.min(
+                            OVERALL_TIMEOUT_CAP_MS,
+                            Math.max(OVERALL_TIMEOUT_MS, _st.scanBudgetMs + 12000)
+                        );
+                    }
+                    if (now - _st.startedAt > overallBudget && _st.stage !== "done") {
                         _fail("overall_timeout");
                         return;
                     }
@@ -862,6 +1005,12 @@
                                 _st.stage = "read_payload";
                                 _st.scanStarted = now;
                                 _st.scanAdvances = 0;
+                                _st.scanCursor = 0;
+                                _st.visited = {};
+                                _st.markerTried = false;
+                                _st.scanLastAdvanceMs = 0;
+                                // Budget the sweep against the list we actually have.
+                                _st.scanBudgetMs = _scanBudgetMs(_storageEntries(root).length);
                                 _st.nextAt = now;
                             } else {
                                 _st.nextAt = now + CREATE_POLL_MS;
@@ -875,8 +1024,11 @@
                                 _st.payloadText = payload;
                                 _st.stage = "apply_payload";
                                 _st.nextAt = now;
-                            } else if (now - _st.scanStarted > SCAN_TIMEOUT_MS) {
+                            } else if (now - _st.scanStarted > (_st.scanBudgetMs || SCAN_TIMEOUT_MS)) {
                                 // Scan exhausted — apply defaults, no destructive repair unless explicitly enabled
+                                $.Msg("[QOLLock][ql_build_payload] scan exhausted after " +
+                                      (_st.scanAdvances || 0) + " advance(s) over " +
+                                      _storageEntries(root).length + " entry(ies)");
                                 if (Number(ctx.config.get("AUTO_CORRUPT_REPAIR")) === 1 && _isShopOpen(root) && _storageBuildReady(root)) {
                                     _startRepair(root, _st);
                                     _st.stage = "repair";
@@ -955,6 +1107,11 @@
                                 _st.stage = "read_payload";
                                 _st.scanStarted = now;
                                 _st.scanAdvances = 0;
+                                _st.scanCursor = 0;
+                                _st.scanLastAdvanceMs = 0;
+                                _st.markerTried = false;
+                                _st.visited = {};
+                                _st.scanBudgetMs = _scanBudgetMs(_storageEntries(root).length);
                                 _st.nextAt = now;
                             } else {
                                 _st.nextAt = now + REPAIR_STEP_MS;

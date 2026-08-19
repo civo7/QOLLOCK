@@ -43,7 +43,6 @@ const DEFAULT_LATENCY = {
 const TITLE_MODE = { TOKEN: "token", RESOLVED: "resolved" };
 
 const TOKEN_BUILD_NAME = "#Citadel_HeroBuilds_BuildName";
-const TOKEN_CATEGORY_NAME = "#Citadel_HeroBuilds_CategoryName";
 
 // Signature-ability confirmation (ql_core.js:610-624). Slot 2 must resolve to
 // this exact ability for the loader to accept that it is on Skyrunner.
@@ -244,8 +243,19 @@ class BuildsModel {
         return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_BUILD_NAME : title;
     }
 
+    /**
+     * Category names are always readable.
+     *
+     * `titleMode` deliberately does NOT apply here. Both build names and category
+     * names are dialog-variable backed in vanilla, but category text is known to
+     * be readable empirically: the payload has always been stored in a category
+     * name and users could load it (given the manual build-cleanup workaround).
+     * If category text returned only the raw token, the feature could never have
+     * worked at all. Build *titles* are the genuinely unverified case, so that is
+     * the only axis this switch controls.
+     */
     _categoryTextFor(name) {
-        return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_CATEGORY_NAME : name;
+        return name;
     }
 
     _renderAll() {
