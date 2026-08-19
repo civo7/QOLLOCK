@@ -509,9 +509,12 @@ class BuildsModel {
             return false;
         }
         const idx = this.editingIndex;
+        // Read what the fields actually hold. Panel.SetText already clamped the
+        // title to maxchars=50, so a marker longer than that arrives truncated
+        // here rather than being silently accepted.
         const title = String(this.buildNameEntry.text || "");
         const categoryName = String(this.categoryNameEntry.text || "");
-        this._trace(`saveEdits(${idx}) title="${title}" category="${categoryName}"`);
+        this._trace(`saveEdits(${idx}) title="${title}" category="${categoryName.slice(0, 40)}"`);
         this.clock.schedule(this.latency.saveEditsMs / 1000, () => {
             const data = this.builds[idx];
             if (data) {

@@ -66,6 +66,10 @@
     // Mirrors ql_bridge.js — "1" authorizes overwriting a config this session
     // could not read. Consumed on use.
     var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
+    // citadel_hud_hero_builds.xml:25 — maxchars="50", so keep the marker short.
+    var PANEL_ID_BUILD_NAME_ENTRY = "BuildNameTextEntry";
+    // Must match MARKER_TITLE in manifests/ql_build_payload/manifest.js.
+    var BUILD_SAVE_MARKER_TITLE = "QOLLOCK-Settings";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
     var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
@@ -528,40 +532,75 @@ function ResetBuildSaveRequestAttributes(root) {
     }
 
     // ── SetBuildCategoryNameText ──
+    // ── SetTextEntryValue ──
+    // Shared TextEntry writer. Prefers SetText() (which honours the field's
+    // maxchars) and falls back to assigning .text, then fires the two events the
+    // C++ side listens for. Neither entry declares a handler in
+    // citadel_hud_hero_builds.xml — the builds panel subscribes by id — so the
+    // events are what make the client notice the change.
+    function SetTextEntryValue(entry, value) {
+        if (!entry) return false;
+        var didSet = false;
+        var setViaMethod = false;
+        if (typeof entry.SetText === "function") {
+            try {
+                entry.SetText(value);
+                setViaMethod = true;
+                didSet = true;
+            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        }
+        if (!setViaMethod) {
+            try {
+                entry.text = value;
+                didSet = true;
+            } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        }
+        try { $.DispatchEvent("TextEntryChanged", entry); } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        if (typeof entry.Submit === "function") {
+            try { entry.Submit(); didSet = true; } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        }
+        try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e4) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e4 && e4.message ? e4.message : String(e4 || ""))); }
+        return didSet;
+    }
+
+    // ── SetBuildTitleMarker ──
+    // Stamp an identifiable title on the storage build so the startup loader can
+    // jump straight to it instead of visiting every build in turn.
+    //
+    // Best-effort by design. BuildNameTextEntry
+    // (citadel_hud_hero_builds.xml:25) is the same element type, class and parent
+    // as the category entry and carries no XML handler either, so the same write
+    // technique should apply — but nothing in the game reads a build title back
+    // to us, and vanilla renders titles from a dialog variable
+    // ({s:selected_hero_build_name}), so we cannot verify from JS that this took.
+    // Never gate a save on it: the loader's full sweep remains the guarantee.
+    //
+    // maxchars="50" on that field means the marker must stay short — which is why
+    // the payload itself lives in the category name, which has no such cap.
+    function SetBuildTitleMarker(root) {
+        var entry = null;
+        var hudBuilds = QOL.getBuildSaveHudPanel(root);
+        if (hudBuilds && hudBuilds.FindChildTraverse) {
+            try { entry = hudBuilds.FindChildTraverse(PANEL_ID_BUILD_NAME_ENTRY); } catch(e0) { entry = null; }
+        }
+        if (!entry && root && root.FindChildTraverse) {
+            try { entry = root.FindChildTraverse(PANEL_ID_BUILD_NAME_ENTRY); } catch(e1) { entry = null; }
+        }
+        if (!entry || !IsPanelValid(entry)) return false;
+
+        var current = String(QOL.readPanelTextMaybe(entry) || "");
+        if (current === BUILD_SAVE_MARKER_TITLE) return true;   // already stamped
+        return SetTextEntryValue(entry, BUILD_SAVE_MARKER_TITLE);
+    }
+
     function SetBuildCategoryNameText(root, payloadText) {
         if (!root || !payloadText) return false;
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var didSet = false;
         var entry = GetBuildSaveCategoryNameEntry(root);
-        if (entry) {
-            var before = QOL.readPanelTextMaybe(entry);
-            var setViaMethod = false;
-            if (typeof entry.SetText === "function") {
-                try {
-                    entry.SetText(payloadText);
-                    setViaMethod = true;
-                    didSet = true;
-                } catch(e0m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0m && e0m.message ? e0m.message : String(e0m || ""))); }
-            }
-            try {
-                if (!setViaMethod) {
-                    entry.text = payloadText;
-                    didSet = true;
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e1 && e1.message ? e1.message : String(e1 || ""))); }
-                } else {
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e3 && e3.message ? e3.message : String(e3 || ""))); }
-                }
-            } catch(e5) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e5 && e5.message ? e5.message : String(e5 || ""))); }
-            if (typeof entry.Submit === "function") {
-                try {
-                    entry.Submit();
-                    didSet = true;
-                } catch(e6m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e6m && e6m.message ? e6m.message : String(e6m || ""))); }
-            }
-            try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e7) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e7 && e7.message ? e7.message : String(e7 || ""))); }
-            DefocusBuildSaveCategoryEntry(root, null);
-            var after = QOL.readPanelTextMaybe(entry);
-        }
+        if (!entry) return false;
+        var didSet = SetTextEntryValue(entry, payloadText);
+        // Click away from the field before the commit. Without it the entry keeps
+        // focus and the client writes the old value back on save.
+        DefocusBuildSaveCategoryEntry(root, null);
         return didSet;
     }
 
@@ -907,6 +946,28 @@ function ResetBuildSaveRequestAttributes(root) {
             QOL.setBuildSaveStatus(root, "pending", "validating_skyrunner_signature", requestToken);
             return true;
         }
+        // Require edit mode before touching any field. Two of the three routes
+        // into this stage (handleWaitCategoryFocus's post-init and focus-success
+        // paths) did not check it, so a write could land in a field the client was
+        // not reading — and the subsequent save would commit nothing. The title
+        // field is only live in edit mode at all, so it must be checked here.
+        if (!IsBuildSaveEditModeActive(root)) {
+            _TLog("save:WriteCheck", "edit mode inactive — reopening");
+            TriggerBuildEditMode(selectedBuild);
+            State.buildSaveRetries += 1;
+            State.buildSaveStage = "wait_editor";
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                FinishBuildSaveRequest(root, requestToken, "failed", "edit_mode_unavailable");
+            }
+            return true;
+        }
+        // Stamp the marker title before the payload. SetBuildCategoryNameText
+        // ends by defocusing the category field (which handleSave depends on), so
+        // writing the title afterwards would either be undone by that defocus or
+        // steal focus back from it.
+        SetBuildTitleMarker(root);
         if (!SetBuildCategoryNameText(root, payloadText)) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
