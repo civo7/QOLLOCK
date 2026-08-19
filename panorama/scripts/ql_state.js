@@ -212,6 +212,11 @@ var State;
             lastMaxHealthText: "",
             nextSourceSearchMs: 0,
             nextSourceSearchByKey: {},
+            // Escalating retry interval for stat source lookups, and the shop
+            // state the last lookup ran under. See ResolveStatBonusesSource in
+            // ql_core.js for why a flat retry was expensive.
+            sourceSearchBackoffMs: 0,
+            lastSourceSearchShopOpen: null,
             nextIdolCountSearchMs: 0,
             nextTooltipScanMs: 0,
             goldenValues: {},

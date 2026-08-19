@@ -6,6 +6,7 @@
     "configBytes": 9234,
     "wrappedFeatures": 24,
     "wrappedScheduler": true,
+    "wrappedLoops": true,
     "warmupMs": 8000
   },
   "tree": {
@@ -62,29 +63,6 @@
         "costPerSec": 129472
       },
       {
-        "label": "<unattributed>",
-        "calls": 0,
-        "traverseCalls": 517,
-        "traverseNodes": 1207236,
-        "traverseMisses": 107,
-        "classTraverseCalls": 280,
-        "classTraverseNodes": 1066200,
-        "styleWritesChanged": 0,
-        "styleWritesRedundant": 4500,
-        "classWritesChanged": 0,
-        "classWritesRedundant": 40,
-        "attrReads": 784,
-        "attrReadBytes": 1292760,
-        "attrWrites": 4,
-        "attrWriteBytes": 43123,
-        "textWritesChanged": 117,
-        "textWritesRedundant": 83,
-        "panelCreates": 0,
-        "panelDeletes": 0,
-        "costUnits": 2399019.66,
-        "costPerSec": 119950.98300000001
-      },
-      {
         "label": "feat:coreRoot",
         "calls": 0,
         "traverseCalls": 450,
@@ -106,6 +84,75 @@
         "panelDeletes": 0,
         "costUnits": 1587500,
         "costPerSec": 79375
+      },
+      {
+        "label": "loop:compassLoop",
+        "calls": 0,
+        "traverseCalls": 7,
+        "traverseNodes": 26656,
+        "traverseMisses": 7,
+        "classTraverseCalls": 240,
+        "classTraverseNodes": 913920,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 4400,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 400,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 1030576,
+        "costPerSec": 51528.8
+      },
+      {
+        "label": "loop:loop",
+        "calls": 0,
+        "traverseCalls": 210,
+        "traverseNodes": 799680,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 100,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 300,
+        "attrReadBytes": 923400,
+        "attrWrites": 4,
+        "attrWriteBytes": 43123,
+        "textWritesChanged": 117,
+        "textWritesRedundant": 83,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 827376.46,
+        "costPerSec": 41368.823
+      },
+      {
+        "label": "<unattributed>",
+        "calls": 0,
+        "traverseCalls": 300,
+        "traverseNodes": 380900,
+        "traverseMisses": 100,
+        "classTraverseCalls": 40,
+        "classTraverseNodes": 152280,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 40,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 533260,
+        "costPerSec": 26663
       },
       {
         "label": "mf:ql_unspent",
@@ -453,6 +500,29 @@
         "costPerSec": 400
       },
       {
+        "label": "loop:poll",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 40,
+        "attrReadBytes": 369360,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 7587.2,
+        "costPerSec": 379.36
+      },
+      {
         "label": "feat:heroShop",
         "calls": 0,
         "traverseCalls": 100,
@@ -522,6 +592,29 @@
         "costPerSec": 15
       },
       {
+        "label": "loop:buildRequestLoop",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 44,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 220,
+        "costPerSec": 11
+      },
+      {
         "label": "feat:crosshairStats",
         "calls": 0,
         "traverseCalls": 1500,
@@ -560,7 +653,7 @@
         "nodes": 110410,
         "labels": [
           "mf:ql_nicknames",
-          "<unattributed>",
+          "loop:compassLoop",
           "mf:ql_unspent"
         ]
       },
@@ -968,27 +1061,27 @@
     ],
     "redundantStyleProps": [
       {
-        "label": "<unattributed>",
+        "label": "loop:compassLoop",
         "prop": "visibility",
         "count": 1200
       },
       {
-        "label": "<unattributed>",
+        "label": "loop:compassLoop",
         "prop": "width",
         "count": 800
       },
       {
-        "label": "<unattributed>",
+        "label": "loop:compassLoop",
         "prop": "textAlign",
         "count": 800
       },
       {
-        "label": "<unattributed>",
+        "label": "loop:compassLoop",
         "prop": "horizontalAlign",
         "count": 800
       },
       {
-        "label": "<unattributed>",
+        "label": "loop:compassLoop",
         "prop": "verticalAlign",
         "count": 800
       },
@@ -998,7 +1091,7 @@
         "count": 201
       },
       {
-        "label": "<unattributed>",
+        "label": "loop:loop",
         "prop": "opacity",
         "count": 100
       },
