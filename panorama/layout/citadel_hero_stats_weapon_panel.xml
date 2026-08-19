@@ -36,6 +36,9 @@
 					<Panel class="RangeArrow" />
 					<Panel id="WeaponMaxRangeContainer" />
 				</Panel>
+				<Panel id="NAWeaponRangeContainer" class="LeftRightFlow">
+					<Label id="NAWeaponRangeLabel" text="#CitadelHeroStats_Weapon_Falloff_NA" />
+				</Panel>
 			</Panel>
 		</Panel>
 		<Panel id="WeaponDisplayStats" class="displayStatsContainer">

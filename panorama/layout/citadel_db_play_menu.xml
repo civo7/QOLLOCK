@@ -15,7 +15,7 @@
 						<Panel class="TextArea">
 							<Panel id="DescArea">
 								<Label id="play_matchmaking_description" text="#menu_play_matchmaking" class="playModeDesc" />
-								<Label id="play_low_priority_matchmaking_description" text="#menu_play_low_priority_matchmaking" class="playModeDesc" />
+								<Label id="play_low_priority_matchmaking_description" text="#menu_play_low_priority_matchmaking:f" class="playModeDesc" />
 							</Panel>
 							<Panel id="TitleArea">
 								<Label text="#menu_play_normal" class="playoptionLabel" />
@@ -55,7 +55,7 @@
 								</Panel>
 							</Panel>
 						</Button>
-						<Button id="Option_ExploreMap" class="playoption option1 smallButton" onactivate="CitadelRunExploreMap() AsyncEvent( 0.2, CitadelNavigateBackToHome() )">
+						<Button id="Option_ExploreMap" class="playoption option1 smallButton" onactivate="CitadelStartExploreMap() AsyncEvent( 0.2, CitadelNavigateBackToHome() )">
 							<Panel class="TextArea">
 								<Panel id="DescArea">
 									<Label text="#menu_play_explore_map_desc" class="playModeDesc" />

@@ -22,7 +22,7 @@
 				<Panel id="KillStreakContainer" hittest="false">
 					<ParticleScenePanel id="KillStreakParticlePanel" particleonly="false" particleName="particles/ui/ui_topbar_killstreak_stylized.vpcf" fov="33" lookAt="0 0 0" squarePixels="true" renderdeferred="true" deferredalpha="true" />
 					<Panel id="KillStreakText">
-						<Label class="KillStreakNum" text="{d:kill_streak}" />
+						<Label class="KillStreakNum" text="#kill_hype_KillStreak_count" />
 						<Panel class="KillStreakLabelContainer">
 							<Label class="KillStreakLabel SpreeText TopLine" html="true" text="#kill_hype_KillStreak" />
 							<Label class="KillStreakLabel FirstBlood TopLine" html="true" text="#kill_hype_FirstBlood" />
@@ -114,7 +114,7 @@
 					<CitadelHudItemBarGraph class="TopBarStyle" id="ItemBarGraph" interactive_tooltip="true" tooltip_style="stats_panel" />
 					<CitadelTopBarPlayerDetails id="PlayerStatDetails" />
 				</Panel>
-				<Panel id="PlayerAbilitiesContainer">
+				<Panel id="PlayerAbilitiesContainer" always-cache-composition-layer="true">
 					<CitadelAbilityIcon id="AbilityButton1" class="abilityButton1" read_only="true" ability_slot="1" show_upgrade_pips="true" />
 					<CitadelAbilityIcon id="AbilityButton2" class="abilityButton2" read_only="true" ability_slot="2" show_upgrade_pips="true" />
 					<CitadelAbilityIcon id="AbilityButton3" class="abilityButton3" read_only="true" ability_slot="3" show_upgrade_pips="true" />
