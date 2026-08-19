@@ -24,3 +24,10 @@ tools/local_chat_translation/__pycache__/
 build_mod/data/
 build_mod/builds/
 build_mod/*.vpk
+
+# Profiler runs are local measurements, not shared state. A committed baseline
+# goes stale the moment anyone edits the mod or the tree fixture, and then every
+# --compare silently reports the wrong delta. Generate your own before/after pair:
+#   node scripts/profile_hud.js --seconds 20 --save before
+# See docs/PROFILING.md.
+scripts/simulator/perf/runs/
