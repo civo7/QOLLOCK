@@ -115,6 +115,11 @@ var State;
         fgHeroImageSwapCandidatePanel: null,
         minimapLocalPlayerPanelNextScanMs: 0,
         minimapLocalMainImageNextScanMs: 0,
+        // Current escalating backoff for the two minimap local-player scans. Both
+        // fall back to a whole-HUD class traversal, so a miss must not retry at the
+        // 90ms fast cooldown forever. See NextMinimapScanBackoffMs in ql_core.js.
+        minimapLocalPlayerPanelScanBackoffMs: 0,
+        minimapLocalMainImageScanBackoffMs: 0,
         minimapRotateLastDeg: null,
         minimapRotateSmoothedDeg: null,
         minimapRotateLastUpdateMs: 0,

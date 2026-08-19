@@ -274,6 +274,9 @@ _TLog = function(label, detail) {
     // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    // Cap for the escalating backoff applied after repeated scan misses. See
+    // NextMinimapScanBackoffMs.
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
     const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
     const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
     const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
@@ -12529,6 +12532,31 @@ function GetUIRoot() {
         return null;
     }
 
+    // Escalating backoff for the minimap local-player scans.
+    //
+    // Both FindLocalMinimapMainImage and FindLocalMinimapPlayerPanel fall back to
+    // FindChildrenWithClassTraverse over the WHOLE HUD — a collect-all walk with no
+    // early exit, so it always visits every node and allocates a result array. On a
+    // miss they re-armed at a flat cooldown of 90ms in aggressive mode, which at the
+    // 20Hz compass cadence is a rescan every other tick: ~11 full-tree walks a
+    // second, indefinitely.
+    //
+    // And a miss is not rare. The local minimap panel is absent while dead, while
+    // spectating, before spawn, and any time Valve renames the classes. Worse, the
+    // aggressive path uses the SHORTER cooldown, so the rescan rate goes UP exactly
+    // when you die mid-teamfight and the panel disappears.
+    //
+    // The escalation doubles from the caller's cooldown to a 1s cap, and any
+    // successful scan resets it. Worst case after respawn is up to 1s of stale
+    // minimap rotation, against a permanent ~11 whole-tree walks per second.
+    function NextMinimapScanBackoffMs(stateKey, baseCooldownMs) {
+        var current = Number(State[stateKey]) || 0;
+        var next = (current > 0) ? current * 2 : baseCooldownMs;
+        if (next > MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS) next = MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS;
+        State[stateKey] = next;
+        return next;
+    }
+
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
@@ -12554,6 +12582,7 @@ function GetUIRoot() {
             if (preferredImage) {
                 SetCachedPanel("minimapLocalMainImage", preferredImage);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return preferredImage;
             }
         }
@@ -12566,12 +12595,13 @@ function GetUIRoot() {
             if (img) {
                 SetCachedPanel("minimapLocalMainImage", img);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return img;
             }
         }
 
         SetCachedPanel("minimapLocalMainImage", null);
-        State.minimapLocalMainImageNextScanMs = now + scanCooldownMs;
+        State.minimapLocalMainImageNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalMainImageScanBackoffMs", scanCooldownMs);
         return null;
     }
 
@@ -12600,6 +12630,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp, ["active", "player", "client_cone_fov", "enemy"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp;
             }
         }
@@ -12610,6 +12641,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp2, ["active", "player", "client_cone_fov"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp2);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp2;
             }
         }
@@ -12621,12 +12653,13 @@ function GetUIRoot() {
             if (p.BHasClass && p.BHasClass("player")) {
                 SetCachedPanel("minimapLocalPlayerPanel", p);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return p;
             }
         }
 
         SetCachedPanel("minimapLocalPlayerPanel", null);
-        State.minimapLocalPlayerPanelNextScanMs = now + scanCooldownMs;
+        State.minimapLocalPlayerPanelNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalPlayerPanelScanBackoffMs", scanCooldownMs);
         return null;
     }
 
