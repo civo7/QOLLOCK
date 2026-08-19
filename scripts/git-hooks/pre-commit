@@ -16,6 +16,7 @@ if ! git diff --cached --name-only | grep -q '\.js$'; then
 fi
 
 SCRIPTS_DIR="$(git rev-parse --show-toplevel)/panorama/scripts"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 echo "[QOLLOCK] Running bridge checks..."
 cd "$SCRIPTS_DIR" && bash tools/check_bridges.sh
@@ -28,5 +29,13 @@ cd "$SCRIPTS_DIR" && bash tools/check_manifests.sh
 
 echo "[QOLLOCK] Running smoke test..."
 node "$SCRIPTS_DIR/tools/qollock_smoke_test.js"
+
+# Behavioral suite: runs the real mod against the simulated Panorama tree with a
+# virtual clock. This is the layer that catches logic regressions — the smoke
+# test above only proves the files load.
+if [ -d "$REPO_ROOT/tests" ]; then
+    echo "[QOLLOCK] Running behavioral tests..."
+    cd "$REPO_ROOT" && node --test "tests/**/*.test.js"
+fi
 
 echo "[QOLLOCK] All pre-commit checks passed!"
