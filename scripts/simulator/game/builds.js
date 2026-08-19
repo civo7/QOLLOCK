@@ -1,0 +1,545 @@
+// scripts/simulator/game/builds.js
+// =============================================================================
+// Models the Deadlock client's hero-build UI: owns build state and mutates the
+// panel tree the way the C++ side does.
+// =============================================================================
+// Every panel id/class below is transcribed from vanilla layout files in
+// G:\GameTracking-Deadlock (paths cited inline). Panels that vanilla creates at
+// runtime rather than declaring in XML are marked [C++] — those are modelled by
+// hand, and modelling them faithfully IS the test.
+//
+// LATENCY IS LOAD-BEARING. The bug this simulator exists to reproduce is a race:
+// the loader burns its scan budget faster than the engine can render a selected
+// build's categories. A zero-latency model makes the bug vanish. Defaults below
+// are deliberately non-zero; tests override them to fuzz the timing.
+// =============================================================================
+
+"use strict";
+
+/** Default latency profile, in ms of virtual time. */
+const DEFAULT_LATENCY = {
+    heroSwitchMs: 1200,   // selecthero -> signature abilities readable
+    shopOpenMs: 150,      // open_item_shop -> gShopOpen + shop panels
+    selectBuildMs: 250,   // select a build entry -> its categories render
+    createBuildMs: 400,   // CreateNewBuild -> new entry appears in the list
+    editModeMs: 120,      // EditSelectedBuild -> gEditingBuilds
+    saveEditsMs: 180,     // SaveEdits -> committed + gEditingBuilds cleared
+    browserOpenMs: 200,   // OpenBuildBrowser -> popup visible
+};
+
+/**
+ * How build-title Labels report their text.
+ *
+ *  "token"    — `.text` returns the raw localization token
+ *               (`#Citadel_HeroBuilds_BuildName`), because vanilla backs these
+ *               Labels with dialog variables:
+ *               citadel_main_english.txt:2247 =
+ *                 "{s:selected_hero_build_name}{s:obsolete_tag}"
+ *  "resolved" — `.text` returns the actual build name.
+ *
+ * Which one the engine really does is UNVERIFIED. Any feature that reads build
+ * titles must be tested under BOTH modes, and must still work under "token".
+ */
+const TITLE_MODE = { TOKEN: "token", RESOLVED: "resolved" };
+
+const TOKEN_BUILD_NAME = "#Citadel_HeroBuilds_BuildName";
+const TOKEN_CATEGORY_NAME = "#Citadel_HeroBuilds_CategoryName";
+
+// Signature-ability confirmation (ql_core.js:610-624). Slot 2 must resolve to
+// this exact ability for the loader to accept that it is on Skyrunner.
+const SIGNATURE_SLOT_IDS = ["slot_signature_1", "slot_signature_2", "slot_signature_3"];
+const HERO_SIGNATURES = {
+    hero_skyrunner: ["ability_skyrunner_flakshot", "ability_skyrunner_magic_beam", "ability_skyrunner_lifethread"],
+    hero_werewolf: ["ability_werewolf_bite", "ability_werewolf_howl", "ability_werewolf_frenzy"],
+};
+
+class BuildsModel {
+    /**
+     * @param {object}   opts
+     * @param {Sandbox}  opts.sandbox
+     * @param {object}   [opts.latency]    partial override of DEFAULT_LATENCY
+     * @param {string}   [opts.titleMode]  TITLE_MODE.*
+     * @param {string}   [opts.hero]       starting hero
+     * @param {boolean}  [opts.inHideout]
+     */
+    constructor({ sandbox, latency = {}, titleMode = TITLE_MODE.RESOLVED, hero = "hero_werewolf", inHideout = true } = {}) {
+        this.sandbox = sandbox;
+        this.doc = sandbox.doc;
+        this.clock = sandbox.clock;
+        this.latency = { ...DEFAULT_LATENCY, ...latency };
+        this.titleMode = titleMode;
+
+        this.hero = hero;
+        this.inHideout = inHideout;
+        this.shopOpen = false;
+        this.browserOpen = false;
+        this.editing = false;
+
+        /** @type {{title:string, categories:{name:string}[]}[]} */
+        this.builds = [];
+        this.selectedIndex = -1;
+        this.editingIndex = -1;
+
+        // Observability — tests assert on these instead of guessing.
+        this.log = [];
+        this.counters = {
+            createBuild: 0, deleteBuild: 0, selectBuild: 0,
+            editMode: 0, saveEdits: 0, heroSwitch: 0, browserOpen: 0,
+        };
+
+        this._buildTree();
+        this._wireGlobals();
+        this._renderAll();
+    }
+
+    _trace(msg) {
+        this.log.push(`[${this.clock.now()}] ${msg}`);
+    }
+
+    // ── Tree construction ─────────────────────────────────────────────────
+    _buildTree() {
+        const doc = this.doc;
+        const root = doc.root; // #Hud
+        const mk = (type, opts) => doc.create(type, opts);
+
+        // --- Hero shop: citadel_hud_hero_shop.xml ---
+        this.shopPanel = root.addChild(mk("CitadelHudHeroShop", { id: "CitadelHudHeroShop" }));
+
+        // citadel_hud_hero_shop.xml:56
+        this.selectedBuild = this.shopPanel.addChild(mk("CitadelShopModsBuild", { id: "ShopModsSelectedBuild" }));
+
+        // citadel_shop_mods_build.xml:21-24
+        const header = this.selectedBuild.addChild(mk("Panel", { classes: ["BuildHeader", "BuildHeaderShared"] }));
+        const headerContainer = header.addChild(mk("Panel", { classes: ["BuildHeaderContainer"] }));
+        headerContainer.addChild(mk("Panel", { classes: ["FavoriteBuildsSelector"] }));
+        this.selectedBuildOuter = headerContainer.addChild(mk("Panel", { id: "SelectedBuildOuter" })); // [C++] filled
+
+        // citadel_shop_mods_build.xml:26-48
+        this.controlButtons = header.addChild(mk("Panel", { id: "ControlButtons" }));
+        this.saveBuildButton = this.controlButtons.addChild(mk("Panel", { id: "SaveBuildButton", classes: ["EditModeButton"] }));
+        this.editBuildButton = this.controlButtons.addChild(mk("Panel", { id: "EditHeroBuildButton" }));
+        this.browseBuildsButton = this.controlButtons.addChild(mk("Panel", { id: "BrowseBuildsButton" }));
+        this.saveBuildButton.SetPanelEvent("onmouseactivate", () => this.saveEdits());
+        this.editBuildButton.SetPanelEvent("onactivate", () => this.editSelectedBuild());
+        this.browseBuildsButton.SetPanelEvent("onactivate", () => this.openBuildBrowser());
+
+        // citadel_shop_mods_build.xml:50-51 — both empty in XML, [C++] fills
+        this.categoryContainer = this.selectedBuild.addChild(mk("Panel", { id: "CategoryContainer" }));
+        this.favoriteBuildList = this.selectedBuild.addChild(mk("Panel", { id: "FavoriteBuildList" }));
+
+        // --- Build edit sidebar: citadel_hud_hero_builds.xml ---
+        // Sibling of the shop under Hud (hud.xml:199 vs :221), NOT nested in it.
+        this.heroBuildsPanel = root.addChild(mk("CitadelHudHeroBuilds", { id: "CitadelHudHeroBuilds" }));
+
+        const editBuildSection = this.heroBuildsPanel.addChild(
+            mk("Panel", { id: "EditBuildSection", classes: ["BuildEditSection"] })
+        );
+        // citadel_hud_hero_builds.xml:25 — note maxchars, absent on the category entry
+        this.buildNameEntry = editBuildSection.addChild(
+            mk("TextEntry", { id: "BuildNameTextEntry", classes: ["EditFieldTextEntry"], attributes: { maxchars: "50" } })
+        );
+        editBuildSection.addChild(
+            mk("TextEntry", { id: "BuildDescriptionTextEntry", classes: ["EditFieldTextEntry"], attributes: { maxchars: "512" } })
+        );
+
+        const editCategorySection = this.heroBuildsPanel.addChild(
+            mk("Panel", { id: "EditCategorySection", classes: ["BuildEditSection"] })
+        );
+        // citadel_hud_hero_builds.xml:40 — no maxchars, which is why the payload lives here
+        this.categoryNameEntry = editCategorySection.addChild(
+            mk("TextEntry", { id: "CategoryNameTextEntry", classes: ["EditFieldTextEntry"] })
+        );
+        editCategorySection.addChild(mk("TextEntry", { id: "CategoryDescriptionTextEntry", classes: ["EditFieldTextEntry"] }));
+
+        // --- Signature ability HUD (drives Skyrunner confirmation) ---
+        this.signatureHud = root.addChild(mk("Panel", { id: "CitadelHudAbilities" }));
+        this.signatureSlots = SIGNATURE_SLOT_IDS.map((id) => {
+            const slot = this.signatureHud.addChild(mk("Panel", { id }));
+            const label = slot.addChild(mk("Label", { classes: ["ability_name"] }));
+            return { slot, label };
+        });
+    }
+
+    /** Install the Citadel* globals and engine event routing into the sandbox. */
+    _wireGlobals() {
+        const g = this.sandbox.global;
+
+        g.CitadelHudHeroBuildsCreateNewBuild = () => this.createNewBuild();
+        g.CitadelHudHeroBuildsDeleteSelectedBuild = () => this.deleteSelectedBuild();
+        g.CitadelHudHeroBuildsEditSelectedBuild = () => this.editSelectedBuild();
+        g.CitadelHudHeroBuildsCopyAndEditSelectedBuild = () => this.editSelectedBuild();
+        g.CitadelHudHeroBuildsSaveEdits = () => this.saveEdits();
+        g.CitadelHudHeroBuildsDiscardEdits = () => this.discardEdits();
+        g.CitadelHudHeroBuildsSelectBuild = (i) => this.selectBuild(i);
+        g.CitadelHudHeroBuildsAddNewCategory = () => this.addCategory();
+        g.CitadelHudHeroBuildsToggleFavoriteSelector = () => this.openBuildBrowser();
+        g.CitadelHudHeroBuildsFocusCategory = (i) => this.focusCategory(i);
+
+        g.CitadelOpenBuildBrowser = () => this.openBuildBrowser();
+        g.CitadelBuildBrowserRefresh = () => this._renderBuildList();
+        g.CitadelBuildBrowserSetTabFilter = () => {};
+        g.CitadelBuildBrowserPopupConfirmBuild = () => {};
+
+        g.CitadelOpenUpgradeShop = () => this.openShop();
+        g.CitadelEnterUpgradeShop = () => this.openShop();
+        g.CitadelToggleUpgradeShop = () => (this.shopOpen ? this.closeShop() : this.openShop());
+        g.CitadelExitUpgradeShop = () => this.closeShop();
+        g.CitadelShopModsActivate = () => {};
+        g.DismissAllContextMenus = () => {};
+
+        // ActivatePanelSafe (ql_core.js:9015) fans out DispatchEvent("Activated", panel, ...)
+        this.sandbox.onEvent("Activated", (panel) => {
+            if (panel && typeof panel.activate === "function") panel.activate();
+        });
+        // SetBuildCategoryNameText (ql_feat_buildsave.js:547-558) fires these.
+        this.sandbox.onEvent("TextEntryChanged", () => {});
+        this.sandbox.onEvent("TextEntrySubmit", () => {});
+        this.sandbox.onEvent("CitadelConCommand", (cmd) => this._conCommand(String(cmd || "")));
+        this.sandbox.onEvent("CitadelHudHeroBuildsCreateNewBuild", () => this.createNewBuild());
+        this.sandbox.onEvent("CitadelHudHeroBuildsDeleteSelectedBuild", () => this.deleteSelectedBuild());
+    }
+
+    _conCommand(cmd) {
+        const hero = cmd.match(/^selecthero\s+(\S+)/);
+        if (hero) return this.switchHero(hero[1]);
+        if (cmd === "open_item_shop" || cmd.includes("openherosheet")) return this.openShop();
+        return undefined;
+    }
+
+    // ── Scenario setup ────────────────────────────────────────────────────
+    /**
+     * Seed the build list. Categories default to the vanilla-ish placeholder so
+     * a build without a payload still *has* a category — that distinction is
+     * what `_storageBuildReady` gets wrong upstream.
+     */
+    seedBuilds(specs) {
+        this.builds = specs.map((s, i) => ({
+            title: s.title ?? `New Skyrunner Build`,
+            categories: (s.categories ?? ["Core Items"]).map((name) => ({ name })),
+            id: s.id ?? i + 1,
+        }));
+        this.selectedIndex = this.builds.length > 0 ? 0 : -1;
+        this._renderAll();
+        return this;
+    }
+
+    /** Convenience: N junk builds with the payload token in build index `at`. */
+    seedWithPayloadAt(count, at, payloadToken) {
+        const specs = [];
+        for (let i = 0; i < count; i++) {
+            specs.push({
+                title: "New Skyrunner Build",
+                categories: [i === at ? payloadToken : "Core Items"],
+            });
+        }
+        return this.seedBuilds(specs);
+    }
+
+    get selectedBuildData() {
+        return this.builds[this.selectedIndex] || null;
+    }
+
+    // ── Rendering (what C++ does to the tree) ─────────────────────────────
+    _titleTextFor(title) {
+        return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_BUILD_NAME : title;
+    }
+
+    _categoryTextFor(name) {
+        return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_CATEGORY_NAME : name;
+    }
+
+    _renderAll() {
+        this._renderSignature();
+        this._renderSelectedBuildHeader();
+        this._renderCategories();
+        this._renderBuildList();
+    }
+
+    _renderSignature() {
+        const abilities = HERO_SIGNATURES[this.hero] || ["", "", ""];
+        this.signatureSlots.forEach(({ label }, i) => {
+            label.text = abilities[i] || "";
+            label.SetDialogVariable("ability_name", abilities[i] || "");
+        });
+    }
+
+    /** #SelectedBuildOuter -> FavoriteBuildEntryContainer -> .SelectedBuildName */
+    _renderSelectedBuildHeader() {
+        this.selectedBuildOuter.RemoveAndDeleteChildren();
+        const data = this.selectedBuildData;
+        if (!data) return;
+        // citadel_shop_mods_build.xml snippet FavoriteBuildEntry:10-11
+        const container = this.selectedBuildOuter.addChild(
+            this.doc.create("Panel", { classes: ["FavoriteBuildEntryContainer"] })
+        );
+        const label = container.addChild(
+            this.doc.create("Label", { classes: ["FavoriteBuildEntryLabel", "SelectedBuildName"] })
+        );
+        label.text = this._titleTextFor(data.title);
+        label.SetDialogVariable("selected_hero_build_name", data.title);
+    }
+
+    /** #CategoryContainer -> CitadelShopModsBuildCategory* -> #BuildCategoryName */
+    _renderCategories() {
+        this.categoryContainer.RemoveAndDeleteChildren();
+        const data = this.selectedBuildData;
+        if (!data) return;
+        data.categories.forEach((cat, i) => {
+            // Vanilla generates these; probable id pattern ModCategory%d.
+            const catPanel = this.categoryContainer.addChild(
+                this.doc.create("CitadelShopModsBuildCategory", { id: `ModCategory${i}` })
+            );
+            if (i === this.focusedCategoryIndex) catPanel.AddClass("Focused");
+            // citadel_shop_mods_build_category.xml:9-10
+            const catHeader = catPanel.addChild(
+                this.doc.create("Panel", { id: "BuildCategoryHeader", classes: ["BuildCategory"] })
+            );
+            const nameLabel = catHeader.addChild(
+                this.doc.create("Label", { id: "BuildCategoryName", classes: ["CategoryName"] })
+            );
+            nameLabel.text = this._categoryTextFor(cat.name);
+            nameLabel.SetDialogVariable("category_name", cat.name);
+            catPanel.addChild(this.doc.create("Panel", { id: "ModsContainer" }));
+        });
+    }
+
+    /**
+     * #FavoriteBuildList -> FavoriteBuildEntryContainer per build.
+     *
+     * This is the shop-side list, present whenever the shop is open — no popup
+     * required. It is what QOL.collectStorageBuildEntryPanels (ql_core.js:8682)
+     * enumerates via the "FavoriteBuildEntryContainer" class.
+     */
+    _renderBuildList() {
+        this.favoriteBuildList.RemoveAndDeleteChildren();
+        this.builds.forEach((build, i) => {
+            const entry = this.favoriteBuildList.addChild(
+                this.doc.create("Panel", {
+                    id: `FavoriteBuildEntry_${i}`,
+                    classes: ["FavoriteBuildEntryContainer"],
+                })
+            );
+            if (i === this.selectedIndex) entry.AddClass("Selected");
+            const label = entry.addChild(
+                this.doc.create("Label", { classes: ["FavoriteBuildEntryLabel", "BuildName"] })
+            );
+            label.text = this._titleTextFor(build.title);
+            label.SetDialogVariable("selected_hero_build_name", build.title);
+            entry.SetPanelEvent("onactivate", () => this.selectBuild(i));
+        });
+
+        if (this.browserOpen) this._renderBrowserList();
+    }
+
+    /** Popup-side list: #HeroBuildList -> HeroBuildListItem_%d. */
+    _renderBrowserList() {
+        if (!this.popupPanel) return;
+        const list = this.popupPanel.FindChildTraverse("HeroBuildList");
+        if (!list) return;
+        list.RemoveAndDeleteChildren();
+        this.builds.forEach((build, i) => {
+            const item = list.addChild(
+                this.doc.create("Panel", { id: `HeroBuildListItem_${i}`, classes: ["HeroBuildListItem"] })
+            );
+            if (i === this.selectedIndex) item.AddClass("Selected");
+            const label = item.addChild(this.doc.create("Label", { classes: ["BuildName"] }));
+            label.text = this._titleTextFor(build.title);
+            item.SetPanelEvent("onactivate", () => this.selectBuild(i));
+        });
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────
+    switchHero(hero) {
+        this.counters.heroSwitch++;
+        this._trace(`switchHero -> ${hero}`);
+        // Signature abilities go blank during the switch, then resolve. This is
+        // what forces the loader's confirm_storage stage to actually wait.
+        this.hero = "";
+        this._renderSignature();
+        this.clock.schedule(this.latency.heroSwitchMs / 1000, () => {
+            this.hero = hero;
+            this._renderSignature();
+            this._trace(`switchHero settled -> ${hero}`);
+        });
+        return true;
+    }
+
+    openShop() {
+        if (this.shopOpen) return true;
+        this._trace("openShop");
+        this.clock.schedule(this.latency.shopOpenMs / 1000, () => {
+            this.shopOpen = true;
+            this.doc.root.AddClass("gShopOpen");
+            this.shopPanel.AddClass("gShopOpen");
+            this._renderAll();
+        });
+        return true;
+    }
+
+    closeShop() {
+        this.shopOpen = false;
+        this.doc.root.RemoveClass("gShopOpen");
+        this.shopPanel.RemoveClass("gShopOpen");
+        return true;
+    }
+
+    openBuildBrowser() {
+        this.counters.browserOpen++;
+        this._trace("openBuildBrowser");
+        this.clock.schedule(this.latency.browserOpenMs / 1000, () => {
+            if (!this.popupPanel || !this.popupPanel.IsValid()) {
+                // popups/citadel_popup_build_browser.xml:8,15
+                this.popupPanel = this.doc.root.addChild(
+                    this.doc.create("PopupBuildBrowser", { id: "PopupBuildBrowser" })
+                );
+                const selector = this.popupPanel.addChild(
+                    this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector" })
+                );
+                selector.addChild(this.doc.create("Panel", { id: "HeroBuildList" }));
+            }
+            this.browserOpen = true;
+            this.popupPanel.RemoveClass("Hidden");
+            this.popupPanel.visible = true;
+            this._renderBrowserList();
+        });
+        return true;
+    }
+
+    /**
+     * Selecting a build re-renders its categories after `selectBuildMs`. The
+     * delay is the crux: a scanner that selects and immediately reads sees the
+     * PREVIOUS build's categories.
+     */
+    selectBuild(index) {
+        if (index < 0 || index >= this.builds.length) return false;
+        this.counters.selectBuild++;
+        this._trace(`selectBuild(${index}) requested`);
+        this.clock.schedule(this.latency.selectBuildMs / 1000, () => {
+            this.selectedIndex = index;
+            this.focusedCategoryIndex = -1;
+            this._renderAll();
+            this._trace(`selectBuild(${index}) rendered`);
+        });
+        return true;
+    }
+
+    createNewBuild() {
+        this.counters.createBuild++;
+        this._trace("createNewBuild");
+        this.clock.schedule(this.latency.createBuildMs / 1000, () => {
+            this.builds.push({
+                title: "New Skyrunner Build",
+                categories: [{ name: "Core Items" }],
+                id: this.builds.length + 1,
+            });
+            // A freshly created build becomes the selected one — this is why
+            // junk builds steal the selection from the payload build.
+            this.selectedIndex = this.builds.length - 1;
+            this._renderAll();
+            this._trace(`createNewBuild done, now ${this.builds.length} builds, selected ${this.selectedIndex}`);
+        });
+        return true;
+    }
+
+    deleteSelectedBuild() {
+        if (this.selectedIndex < 0 || this.selectedIndex >= this.builds.length) return false;
+        this.counters.deleteBuild++;
+        const removed = this.builds[this.selectedIndex];
+        this._trace(`deleteSelectedBuild(${this.selectedIndex}) "${removed.title}"`);
+        this.builds.splice(this.selectedIndex, 1);
+        if (this.selectedIndex >= this.builds.length) this.selectedIndex = this.builds.length - 1;
+        this._renderAll();
+        return true;
+    }
+
+    editSelectedBuild() {
+        if (this.selectedIndex < 0) return false;
+        this.counters.editMode++;
+        this._trace(`editSelectedBuild(${this.selectedIndex})`);
+        this.clock.schedule(this.latency.editModeMs / 1000, () => {
+            this.editing = true;
+            this.editingIndex = this.selectedIndex;
+            this.heroBuildsPanel.AddClass("gEditingBuilds");
+            const data = this.selectedBuildData;
+            if (data) {
+                // C++ seeds the edit fields from the build being edited.
+                this.buildNameEntry.text = data.title;
+                this.categoryNameEntry.text = data.categories[0] ? data.categories[0].name : "";
+            }
+        });
+        return true;
+    }
+
+    /**
+     * Commit the edit fields back into the model. Only writes while edit mode is
+     * actually active — a save outside edit mode is a no-op in the client, which
+     * is precisely the failure a verify step reading the editor buffer misses.
+     */
+    saveEdits() {
+        this.counters.saveEdits++;
+        if (!this.editing) {
+            this._trace("saveEdits IGNORED (not in edit mode)");
+            return false;
+        }
+        const idx = this.editingIndex;
+        const title = String(this.buildNameEntry.text || "");
+        const categoryName = String(this.categoryNameEntry.text || "");
+        this._trace(`saveEdits(${idx}) title="${title}" category="${categoryName}"`);
+        this.clock.schedule(this.latency.saveEditsMs / 1000, () => {
+            const data = this.builds[idx];
+            if (data) {
+                if (title) data.title = title;
+                if (categoryName) {
+                    if (data.categories.length === 0) data.categories.push({ name: categoryName });
+                    else data.categories[0].name = categoryName;
+                }
+            }
+            this.editing = false;
+            this.editingIndex = -1;
+            this.heroBuildsPanel.RemoveClass("gEditingBuilds");
+            this._renderAll();
+            this._trace(`saveEdits committed`);
+        });
+        return true;
+    }
+
+    discardEdits() {
+        this.editing = false;
+        this.editingIndex = -1;
+        this.heroBuildsPanel.RemoveClass("gEditingBuilds");
+        return true;
+    }
+
+    addCategory() {
+        const data = this.selectedBuildData;
+        if (!data) return false;
+        data.categories.push({ name: "New Category" });
+        this._renderCategories();
+        return true;
+    }
+
+    focusCategory(index) {
+        this.focusedCategoryIndex = index;
+        this._renderCategories();
+        return true;
+    }
+
+    // ── Assertions helpers for tests ──────────────────────────────────────
+    /** Index of the build whose category text contains a QOL payload token. */
+    payloadBuildIndex() {
+        const re = /\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+/;
+        return this.builds.findIndex((b) => b.categories.some((c) => re.test(c.name)));
+    }
+
+    titles() {
+        return this.builds.map((b) => b.title);
+    }
+
+    describe() {
+        return this.builds
+            .map((b, i) => `${i === this.selectedIndex ? ">" : " "} [${i}] "${b.title}" :: ${b.categories.map((c) => c.name).join(" | ")}`)
+            .join("\n");
+    }
+}
+
+module.exports = { BuildsModel, DEFAULT_LATENCY, TITLE_MODE, HERO_SIGNATURES, SIGNATURE_SLOT_IDS };
