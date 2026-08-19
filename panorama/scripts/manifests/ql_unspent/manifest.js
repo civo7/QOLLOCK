@@ -63,9 +63,41 @@
                 return !!(p && typeof p.IsValid === "function" && p.IsValid());
             }
 
+            var _hudPanel = null;
+
+            /**
+             * Hideout check.
+             *
+             * The old body ran root.FindChildTraverse("Hud") on every tick. In the HUD
+             * context $.GetContextPanel() IS the Hud panel, and FindChildTraverse never
+             * returns the panel it was called on — so that lookup could not succeed,
+             * and a miss walks the whole subtree before returning null. It was the
+             * largest single wasted traversal left in the profile, ~19k tree nodes a
+             * second.
+             *
+             * PanelHelpers.findHud handles both shapes (context panel, or a walk up to
+             * the absolute root and search from there), so resolve through it and cache
+             * the result, re-resolving only when the cached panel dies.
+             *
+             * Also fixes a latent bug: the old body had no trailing return, so the
+             * not-in-hideout path returned undefined and worked only because undefined
+             * happens to be falsy.
+             */
             function _inHideout(root) {
                 if (!root || !root.BHasClass) return false;
-                try { var _hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true; if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true; } catch(e) { return false; }
+                try {
+                    if (!_alive(_hudPanel)) {
+                        _hudPanel = (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
+                            ? QOL.ui.PanelHelpers.findHud()
+                            : null;
+                    }
+                    if (_alive(_hudPanel) && _hudPanel.BHasClass &&
+                        (_hudPanel.BHasClass("connectedToHideout") || _hudPanel.BHasClass("InHideout"))) {
+                        return true;
+                    }
+                    if (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout")) return true;
+                } catch (e) { return false; }
+                return false;
             }
 
             function _getSoulValue(primaryLabel, fallbackLabel) {
