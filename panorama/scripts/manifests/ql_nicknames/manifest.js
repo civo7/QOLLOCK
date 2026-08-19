@@ -78,13 +78,36 @@
                 return null;
             }
 
-            function _getTopBarPlayerPanel(root, index) {
+            // Per-slot backoff for panel lookups that miss.
+            //
+            // MAX_PLAYERS is 13 while a Deadlock match is 6v6, so slot 12 has no panel
+            // and never will. FindChildTraverse on a missing id walks the whole HUD
+            // subtree before returning null, so that one slot cost a full-tree walk on
+            // every pass — and it showed up in the profile as one of the largest single
+            // wasted traversals, shared with ql_unspent and the compass loop all
+            // hunting the same absent id.
+            //
+            // Deliberately NOT changing MAX_PLAYERS: whether some mode has a
+            // thirteenth top-bar slot is a game question, not a perf one, and guessing
+            // wrong would silently drop a player. Making the miss cheap is correct
+            // either way, and it also covers the ordinary case of a slot that has not
+            // been created yet early in a match.
+            var SLOT_MISS_BACKOFF_MS = 3000;
+            var _slotMissUntil = new Array(MAX_PLAYERS);
+
+            function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
+                var now = Number(nowMs) || 0;
+                if (now > 0 && now < (Number(_slotMissUntil[index]) || 0)) return null;
                 try {
                     // Match old system: panels are identified by ID "TopBarPlayerN"
                     var panel = root.FindChildTraverse("TopBarPlayer" + index);
-                    if (_alive(panel)) return panel;
+                    if (_alive(panel)) {
+                        _slotMissUntil[index] = 0;
+                        return panel;
+                    }
                 } catch(e) {}
+                if (now > 0) _slotMissUntil[index] = now + SLOT_MISS_BACKOFF_MS;
                 return null;
             }
 
@@ -186,7 +209,7 @@
                         if (_alive(spmPanel)) playerPanel = spmPanel;
                     } catch(e) {}
                 }
-                if (!playerPanel) playerPanel = _getTopBarPlayerPanel(root, i);
+                if (!playerPanel) playerPanel = _getTopBarPlayerPanel(root, i, now);
 
                 // Detect panel change — reset slot state when panel object changes
                 var cachedPanel = _alive(_players[i]) ? _players[i] : null;
