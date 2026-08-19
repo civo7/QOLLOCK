@@ -1,0 +1,1091 @@
+{
+  "meta": {
+    "players": 12,
+    "damageNumbers": 24,
+    "configApplied": true,
+    "configBytes": 9234,
+    "wrappedFeatures": 24,
+    "wrappedScheduler": true,
+    "warmupMs": 8000
+  },
+  "tree": {
+    "panels": 3099,
+    "notes": []
+  },
+  "snapshot": {
+    "seconds": 20,
+    "total": {
+      "label": "<TOTAL>",
+      "calls": 0,
+      "traverseCalls": 5143,
+      "traverseNodes": 6386537,
+      "traverseMisses": 2952,
+      "classTraverseCalls": 931,
+      "classTraverseNodes": 2165194,
+      "styleWritesChanged": 0,
+      "styleWritesRedundant": 5969,
+      "classWritesChanged": 0,
+      "classWritesRedundant": 1998,
+      "attrReads": 1232,
+      "attrReadBytes": 1292760,
+      "attrWrites": 6,
+      "attrWriteBytes": 43125,
+      "textWritesChanged": 117,
+      "textWritesRedundant": 83,
+      "panelCreates": 0,
+      "panelDeletes": 0,
+      "costUnits": 8712860.7,
+      "costPerSec": 435643.035
+    },
+    "rows": [
+      {
+        "label": "feat:statBonuses",
+        "calls": 0,
+        "traverseCalls": 460,
+        "traverseNodes": 1751680,
+        "traverseMisses": 460,
+        "classTraverseCalls": 220,
+        "classTraverseNodes": 837760,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 2589440,
+        "costPerSec": 129472
+      },
+      {
+        "label": "<unattributed>",
+        "calls": 0,
+        "traverseCalls": 517,
+        "traverseNodes": 1207236,
+        "traverseMisses": 107,
+        "classTraverseCalls": 280,
+        "classTraverseNodes": 1066200,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 4500,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 40,
+        "attrReads": 784,
+        "attrReadBytes": 1292760,
+        "attrWrites": 4,
+        "attrWriteBytes": 43123,
+        "textWritesChanged": 117,
+        "textWritesRedundant": 83,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 2399019.66,
+        "costPerSec": 119950.98300000001
+      },
+      {
+        "label": "feat:coreRoot",
+        "calls": 0,
+        "traverseCalls": 450,
+        "traverseNodes": 1585100,
+        "traverseMisses": 0,
+        "classTraverseCalls": 200,
+        "classTraverseNodes": 400,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 100,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 1587500,
+        "costPerSec": 79375
+      },
+      {
+        "label": "mf:ql_unspent",
+        "calls": 0,
+        "traverseCalls": 222,
+        "traverseNodes": 488802,
+        "traverseMisses": 102,
+        "classTraverseCalls": 2,
+        "classTraverseNodes": 7614,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 276,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 497796,
+        "costPerSec": 24889.8
+      },
+      {
+        "label": "feat:colorWarning",
+        "calls": 0,
+        "traverseCalls": 300,
+        "traverseNodes": 380800,
+        "traverseMisses": 200,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 380800,
+        "costPerSec": 19040
+      },
+      {
+        "label": "mf:ql_sigflash",
+        "calls": 0,
+        "traverseCalls": 500,
+        "traverseNodes": 380700,
+        "traverseMisses": 400,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 380700,
+        "costPerSec": 19035
+      },
+      {
+        "label": "feat:localChatTranslation",
+        "calls": 0,
+        "traverseCalls": 91,
+        "traverseNodes": 209476,
+        "traverseMisses": 18,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 72,
+        "attrReadBytes": 0,
+        "attrWrites": 2,
+        "attrWriteBytes": 2,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 209846.04,
+        "costPerSec": 10492.302
+      },
+      {
+        "label": "feat:enemyColorWarning",
+        "calls": 0,
+        "traverseCalls": 34,
+        "traverseNodes": 129472,
+        "traverseMisses": 0,
+        "classTraverseCalls": 17,
+        "classTraverseNodes": 64736,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 194208,
+        "costPerSec": 9710.4
+      },
+      {
+        "label": "feat:damageNumbers",
+        "calls": 0,
+        "traverseCalls": 17,
+        "traverseNodes": 64736,
+        "traverseMisses": 17,
+        "classTraverseCalls": 17,
+        "classTraverseNodes": 64736,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 129472,
+        "costPerSec": 6473.6
+      },
+      {
+        "label": "feat:zipBoost",
+        "calls": 0,
+        "traverseCalls": 11,
+        "traverseNodes": 41888,
+        "traverseMisses": 11,
+        "classTraverseCalls": 11,
+        "classTraverseNodes": 41888,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 83776,
+        "costPerSec": 4188.8
+      },
+      {
+        "label": "mf:ql_nicknames",
+        "calls": 0,
+        "traverseCalls": 20,
+        "traverseNodes": 76140,
+        "traverseMisses": 20,
+        "classTraverseCalls": 60,
+        "classTraverseNodes": 5700,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 720,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 83280,
+        "costPerSec": 4164
+      },
+      {
+        "label": "feat:allyColorWarning",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 17,
+        "classTraverseNodes": 64736,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 64736,
+        "costPerSec": 3236.8
+      },
+      {
+        "label": "mf:ql_chat_images",
+        "calls": 0,
+        "traverseCalls": 10,
+        "traverseNodes": 38070,
+        "traverseMisses": 10,
+        "classTraverseCalls": 4,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 38070,
+        "costPerSec": 1903.5
+      },
+      {
+        "label": "mf:ql_lane_with_party",
+        "calls": 0,
+        "traverseCalls": 7,
+        "traverseNodes": 26649,
+        "traverseMisses": 7,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 26649,
+        "costPerSec": 1332.45
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "calls": 0,
+        "traverseCalls": 804,
+        "traverseNodes": 4288,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 469,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 938,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 15544,
+        "costPerSec": 777.2
+      },
+      {
+        "label": "mf:ql_statlocker",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 3,
+        "classTraverseNodes": 11424,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 11424,
+        "costPerSec": 571.2
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 500,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 300,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 10600,
+        "costPerSec": 530
+      },
+      {
+        "label": "feat:recentPurchases",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 100,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 400,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 8000,
+        "costPerSec": 400
+      },
+      {
+        "label": "feat:heroShop",
+        "calls": 0,
+        "traverseCalls": 100,
+        "traverseNodes": 1200,
+        "traverseMisses": 100,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 1200,
+        "costPerSec": 60
+      },
+      {
+        "label": "mf:ql_on_death_arcade",
+        "calls": 0,
+        "traverseCalls": 0,
+        "traverseNodes": 0,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 100,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 500,
+        "costPerSec": 25
+      },
+      {
+        "label": "feat:betterUnsecuredHud",
+        "calls": 0,
+        "traverseCalls": 100,
+        "traverseNodes": 300,
+        "traverseMisses": 0,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 300,
+        "costPerSec": 15
+      },
+      {
+        "label": "feat:crosshairStats",
+        "calls": 0,
+        "traverseCalls": 1500,
+        "traverseNodes": 0,
+        "traverseMisses": 1500,
+        "classTraverseCalls": 0,
+        "classTraverseNodes": 0,
+        "styleWritesChanged": 0,
+        "styleWritesRedundant": 0,
+        "classWritesChanged": 0,
+        "classWritesRedundant": 0,
+        "attrReads": 0,
+        "attrReadBytes": 0,
+        "attrWrites": 0,
+        "attrWriteBytes": 0,
+        "textWritesChanged": 0,
+        "textWritesRedundant": 0,
+        "panelCreates": 0,
+        "panelDeletes": 0,
+        "costUnits": 0,
+        "costPerSec": 0
+      }
+    ],
+    "misses": [
+      {
+        "id": "Hud",
+        "count": 100,
+        "nodes": 380700,
+        "labels": [
+          "mf:ql_unspent"
+        ]
+      },
+      {
+        "id": "TopBarPlayer12",
+        "count": 29,
+        "nodes": 110410,
+        "labels": [
+          "mf:ql_nicknames",
+          "<unattributed>",
+          "mf:ql_unspent"
+        ]
+      },
+      {
+        "id": "StatContainer_FireRate",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_TechCooldown",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCooldown",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCooldownReduction",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_CooldownReduction",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_Cooldown",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_CooldownDecrease",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AbilityCD",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_TechPower",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_SpiritPower",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_Spirit",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSizeIncrease",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSize",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ClipSizeBonus",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_AmmoCapacity",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseWeaponDamage",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BonusBaseWeaponDamage",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseAttackDamagePercent",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BulletDamage",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_MaxHealth",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_BaseHealth",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatContainer_ArmorPower",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "StatsBreakdownContainer",
+        "count": 20,
+        "nodes": 76160,
+        "labels": [
+          "feat:statBonuses"
+        ]
+      },
+      {
+        "id": "CitadelHudDamageIndicators",
+        "count": 17,
+        "nodes": 64736,
+        "labels": [
+          "feat:damageNumbers"
+        ]
+      },
+      {
+        "id": "citadel_ability_zipline_boost_",
+        "count": 11,
+        "nodes": 41888,
+        "labels": [
+          "feat:zipBoost"
+        ]
+      },
+      {
+        "id": "Messages",
+        "count": 10,
+        "nodes": 38070,
+        "labels": [
+          "mf:ql_chat_images"
+        ]
+      },
+      {
+        "id": "LanePreferenceSelector",
+        "count": 7,
+        "nodes": 26649,
+        "labels": [
+          "mf:ql_lane_with_party"
+        ]
+      },
+      {
+        "id": "MainPanel",
+        "count": 100,
+        "nodes": 1200,
+        "labels": [
+          "feat:heroShop"
+        ]
+      },
+      {
+        "id": "LocalPlayer",
+        "count": 118,
+        "nodes": 0,
+        "labels": [
+          "<unattributed>",
+          "feat:localChatTranslation"
+        ]
+      },
+      {
+        "id": "slot_signature_1",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "mf:ql_sigflash"
+        ]
+      },
+      {
+        "id": "slot_signature_2",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "mf:ql_sigflash"
+        ]
+      },
+      {
+        "id": "slot_signature_3",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "mf:ql_sigflash"
+        ]
+      },
+      {
+        "id": "slot_signature_4",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "mf:ql_sigflash"
+        ]
+      },
+      {
+        "id": "hud_health_bars",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:colorWarning"
+        ]
+      },
+      {
+        "id": "health_bar",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:colorWarning"
+        ]
+      },
+      {
+        "id": "fireRateContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "speedDisplayContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "healingAmpContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "bulletResistContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "techResistContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "bulletLifeStealContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "techLifeStealContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "weaponPowerContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "spiritContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "abilityRangeContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "abilityDurationContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "damageAmpContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "clipSizeContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "regenPerSecondContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      },
+      {
+        "id": "bulletEvasionContainer",
+        "count": 100,
+        "nodes": 0,
+        "labels": [
+          "feat:crosshairStats"
+        ]
+      }
+    ],
+    "redundantStyleProps": [
+      {
+        "label": "<unattributed>",
+        "prop": "visibility",
+        "count": 1200
+      },
+      {
+        "label": "<unattributed>",
+        "prop": "width",
+        "count": 800
+      },
+      {
+        "label": "<unattributed>",
+        "prop": "textAlign",
+        "count": 800
+      },
+      {
+        "label": "<unattributed>",
+        "prop": "horizontalAlign",
+        "count": 800
+      },
+      {
+        "label": "<unattributed>",
+        "prop": "verticalAlign",
+        "count": 800
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "prop": "ignoreParentFlow",
+        "count": 201
+      },
+      {
+        "label": "<unattributed>",
+        "prop": "opacity",
+        "count": 100
+      },
+      {
+        "label": "feat:coreRoot",
+        "prop": "visibility",
+        "count": 100
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "prop": "backgroundImage",
+        "count": 100
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "prop": "backgroundSize",
+        "count": 100
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "prop": "backgroundRepeat",
+        "count": 100
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "prop": "backgroundPosition",
+        "count": 100
+      },
+      {
+        "label": "feat:minimapRuntime",
+        "prop": "opacity",
+        "count": 100
+      },
+      {
+        "label": "feat:recentPurchases",
+        "prop": "x",
+        "count": 100
+      },
+      {
+        "label": "feat:recentPurchases",
+        "prop": "y",
+        "count": 100
+      },
+      {
+        "label": "feat:recentPurchases",
+        "prop": "preTransformScale2d",
+        "count": 100
+      },
+      {
+        "label": "feat:recentPurchases",
+        "prop": "uiScale",
+        "count": 100
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "prop": "verticalAlign",
+        "count": 67
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "prop": "marginLeft",
+        "count": 67
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "prop": "marginTop",
+        "count": 67
+      },
+      {
+        "label": "mf:ql_minimap_timers",
+        "prop": "marginBottom",
+        "count": 67
+      }
+    ],
+    "weights": {
+      "traverseNode": 1,
+      "styleWriteChanged": 25,
+      "styleWriteRedundant": 20,
+      "classWriteChanged": 30,
+      "classWriteRedundant": 2,
+      "attrRead": 5,
+      "attrWrite": 5,
+      "attrByte": 0.02,
+      "textWriteChanged": 40,
+      "textWriteRedundant": 2,
+      "panelCreate": 400,
+      "panelDelete": 200
+    }
+  }
+}
