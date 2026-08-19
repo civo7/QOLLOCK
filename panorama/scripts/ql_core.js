@@ -2443,6 +2443,17 @@ function GetUIRoot() {
         try { panel.style[prop] = value; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     };
 
+    // Compare-then-write. See ql_utils.js for why this is separate from SetStyleSafe.
+    var SetStyleIfChanged = (QOL_UTILS_LOADED && QOL_UTILS.SetStyleIfChanged) ? QOL_UTILS.SetStyleIfChanged : function(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return false;
+        try {
+            if (panel.style[prop] === value) return false;
+            panel.style[prop] = value;
+            return true;
+        } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        return false;
+    };
+
     var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
         if (!panel || !panel.style || !prop) return;
         try { delete panel.style[prop]; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
@@ -12898,10 +12909,17 @@ function GetUIRoot() {
         }
 
         if (compassRoot.style.visibility !== (showCompass ? "visible" : "collapse")) compassRoot.style.visibility = (showCompass ? "visible" : "collapse");
-        
+
+        // Resolved once. This used to be looked up here and again ~30 lines below —
+        // one `var` binding assigned twice, so the second lookup was a wasted cache
+        // read plus an IsValid() call on every 20Hz tick.
         var compassBox = GetCachedPanel("compassBox");
+        if (!IsPanelValid(compassBox)) {
+            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
+            SetCachedPanel("compassBox", compassBox);
+        }
         if (compassBox) {
-            compassBox.style.visibility = showCompass ? "visible" : "collapse";
+            SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
         }
         var scale = Number(State.compass.scale);
         if (!isFinite(scale)) scale = 100;
@@ -12930,11 +12948,6 @@ function GetUIRoot() {
         var marginTopText = Math.round(appliedCompassOffsetY) + "px";
         var marginLeftText = Math.round(offsetX) + "px";
         var scaleText = String(scale) + "%";
-        var compassBox = GetCachedPanel("compassBox");
-        if (!IsPanelValid(compassBox)) {
-            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
-            SetCachedPanel("compassBox", compassBox);
-        }
         var boxWidth = Math.round(200 * (stretchX / 100));
         var boxHeight = Math.round(50 * (stretchY / 100));
         if (boxWidth < 100) boxWidth = 100;
@@ -12950,21 +12963,21 @@ function GetUIRoot() {
             if (compassRoot.style.preTransformScale2d !== "1.00, 1.00") compassRoot.style.preTransformScale2d = "1.00, 1.00";
             if (compassRoot.style.uiScale !== scaleText) compassRoot.style.uiScale = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
-            compassRoot.style.height = "fit-children";
-            compassRoot.style.overflow = "noclip";
+            SetStyleIfChanged(compassRoot, "height", "fit-children");
+            SetStyleIfChanged(compassRoot, "overflow", "noclip");
 
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
-                compassBox.style.visibility = showCompass ? "visible" : "collapse";
+                SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
             }
 
             var readout = GetCachedPanel("compassReadout");
             if (readout) {
-                readout.style.width = "100%";
-                readout.style.height = "40px";
-                readout.style.flowChildren = "none";
-                readout.style.overflow = "noclip";
+                SetStyleIfChanged(readout, "width", "100%");
+                SetStyleIfChanged(readout, "height", "40px");
+                SetStyleIfChanged(readout, "flowChildren", "none");
+                SetStyleIfChanged(readout, "overflow", "noclip");
             }
             State.compass.layoutSig = layoutSig;
         }
@@ -12984,11 +12997,16 @@ function GetUIRoot() {
             // row, and the full centered width when the compass owns the row
             // alone. (Both labels use ignore-parent-flow, so equal full widths
             // would stack on top of each other — hence the 50% split.)
-            degreeLabel.style.width = showSpeed ? "50%" : "100%";
-            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
-            degreeLabel.style.horizontalAlign = "left";
-            degreeLabel.style.verticalAlign = "center";
-            degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
+            //
+            // Compare-then-write: this runs at COMPASS_INTERVAL_SEC (20Hz) and the
+            // values only change when the user toggles a compass setting, so these
+            // were ~100 redundant layout-dirtying writes a second. Two of the five
+            // are literal constants that can never change after the first tick.
+            SetStyleIfChanged(degreeLabel, "width", showSpeed ? "50%" : "100%");
+            SetStyleIfChanged(degreeLabel, "textAlign", showSpeed ? "left" : "center");
+            SetStyleIfChanged(degreeLabel, "horizontalAlign", "left");
+            SetStyleIfChanged(degreeLabel, "verticalAlign", "center");
+            SetStyleIfChanged(degreeLabel, "visibility", showCompass ? "visible" : "collapse");
         }
         if (speedLabel) {
             var speedRoot = GetCachedPanel("speedRoot");
@@ -12999,11 +13017,11 @@ function GetUIRoot() {
             // alone it's full-width screen-centered. The speed root is sized to
             // the box width and centered on it, so "right half" lines up with the
             // box's right half — no boxWidth/2 margin shift needed.
-            speedLabel.style.width = showCompass ? "50%" : "100%";
-            speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
-            speedLabel.style.verticalAlign = "center";
-            var speedOffsetX = Number(State.compass.speedOffsetX);
+            // Same 20Hz compare-then-write as the degree label above.
+            SetStyleIfChanged(speedLabel, "width", showCompass ? "50%" : "100%");
+            SetStyleIfChanged(speedLabel, "textAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "horizontalAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "verticalAlign", "center");            var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
             if (speedOffsetX < -2000) speedOffsetX = -2000;
             if (speedOffsetX > 2000) speedOffsetX = 2000;
