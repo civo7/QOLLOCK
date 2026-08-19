@@ -10452,6 +10452,22 @@ function GetUIRoot() {
             nowMs
         );
     }
+    // Apply the combat-indicator classes to every panel the CSS keys off.
+    //
+    // Called unconditionally from ApplyCoreLoopRootClassesAndState, i.e. every tick
+    // whether or not the feature is on. The four lookups below used to be raw
+    // FindChildTraverse calls from the HUD root — 20 root traversals a second, for
+    // the whole match, to re-find four panels that live for the whole match. The two
+    // above them were already cached, which is what made the omission easy to miss.
+    //
+    // ResolveCachedPanel does the GetCachedPanel/FindChildTraverse/SetCachedPanel
+    // dance and re-validates on read, so a panel that is torn down and rebuilt is
+    // picked up again on the next tick.
+    //
+    // The class writes themselves are already correctly guarded: SetPanelClassIfChanged
+    // compares with BHasClass first, so a steady state performs no engine writes at
+    // all. That matters here because combat_indicator_enabled carries 56 CSS rules
+    // and a genuine flip is not cheap.
     function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
         if (!root || !root.FindChildTraverse) return;
         var panels = [];
@@ -10464,10 +10480,10 @@ function GetUIRoot() {
         }
         pushPanel(GetCachedPanel("healthContainer"));
         pushPanel(GetCachedPanel("gameplayHud"));
-        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-        pushPanel(root.FindChildTraverse("HealthBarContent"));
-        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
-        pushPanel(root.FindChildTraverse("hud_health_bars"));
+        pushPanel(ResolveCachedPanel(root, "healthContainer", PANEL_ID_HEALTH_CONTAINER));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBarContent", "HealthBarContent"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthRegenAndTotal", "HealthRegenAndTotal"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBars", "hud_health_bars"));
         for (var p = 0; p < panels.length; p++) {
             SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
             SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
