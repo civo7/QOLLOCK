@@ -525,6 +525,16 @@ var State;
         settingsLoaderCurrentStep: "",
         settingsLoaderDetail: "",
         settingsLoaderResult: "",
+        // Tri-state record of whether this session's config was read successfully.
+        // Guards the save pipeline against writing defaults over a stored config
+        // that exists but could not be read.
+        //   "pending" — load has not conclusively finished (also the pre-load state)
+        //   "loaded"  — our payload was read, OR storage is genuinely empty
+        //   "failed"  — a storage build exists but no payload could be read from it,
+        //               so real user data may be sitting there unread
+        configLoadState: "pending",
+        configLoadStateDetail: "",
+        configLoadStateAtMs: 0,
         settingsLoaderShowUntilMs: 0,
         settingsLoaderNextReassertMs: 0,
         settingsLoaderLastRenderSig: "",

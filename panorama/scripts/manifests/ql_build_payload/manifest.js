@@ -607,12 +607,22 @@
         }
 
         // Any entries at all? If so there is something to sweep — go read.
+        //
+        // `_preexistingEntries` records only entries that were there BEFORE we
+        // intervened. It must not count a build we created ourselves: doing so
+        // made empty storage look like "a config exists but we could not read it",
+        // which would block a new user's very first save.
+        //
+        // Note the count is entries, not builds — the selected build also appears
+        // as a FavoriteBuildEntryContainer in the header, so one build can surface
+        // as two entries. Harmless for sweeping; do not treat it as a build count.
         var entries = _storageEntries(root);
         if (entries.length > 0) {
-            if (!st._sawEntries) {
-                st._sawEntries = true;
+            if (!st.createAttempted) st._preexistingEntries = true;
+            if (!st._loggedEntries) {
+                st._loggedEntries = true;
                 $.Msg("[QOLLock][ql_build_payload] ensure: " + entries.length +
-                      " storage build(s) present, proceeding to read (no create)");
+                      " storage entr(ies) present, proceeding to read (no create)");
             }
             return true;
         }
@@ -793,7 +803,8 @@
                     markerTried: false,
                     markerIndex: -1,
                     emptySince: 0,
-                    _sawEntries: false,
+                    _preexistingEntries: false,
+                    _loggedEntries: false,
                     payloadText: "",
                     lastApplied: "",
                     lastAccount: "",
@@ -823,6 +834,37 @@
                 try { _callQol("setSettingsLoaderStepState", undefined, [key, status, detail || ""]); } catch(e) {}
             }
 
+            /**
+             * Record how conclusive this load was, for the save pipeline's
+             * overwrite guard.
+             *
+             * The dangerous case is "default": no payload was found. That means
+             * either storage is genuinely empty (nothing to lose — safe to save)
+             * or a storage build exists whose payload we simply could not read
+             * (real config may be sitting there, so a save would destroy it).
+             * `_st._preexistingEntries` distinguishes the two: it is set only for
+             * entries that were present before we created anything, so storage we
+             * initialized ourselves is never mistaken for unread user data.
+             */
+            function _recordLoadState(code, detail) {
+                var loadState = "failed";
+                if (code === "success") {
+                    loadState = "loaded";
+                } else if (code === "default") {
+                    loadState = _st._preexistingEntries ? "failed" : "loaded";
+                }
+                try {
+                    var State = QOL.state;
+                    if (State) {
+                        State.configLoadState = loadState;
+                        State.configLoadStateDetail = String(detail || code || "");
+                        State.configLoadStateAtMs = _now();
+                    }
+                } catch(e) {}
+                $.Msg("[QOLLock][ql_build_payload] configLoadState=" + loadState +
+                      " (result=" + code + ", preexisting=" + (_st._preexistingEntries ? "1" : "0") + ")");
+            }
+
             function _finish(code, detail) {
                 // Restore hero on ALL terminal paths — even failure/default.
                 // A switched hero leaks if we only restore in the return_hero stage.
@@ -833,6 +875,7 @@
                     var fallback = _resolveReturnHero(ctx, _st);
                     _returnHero(fallback);
                 }
+                _recordLoadState(code, detail);
                 _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
                 _setStep("return_hero", code === "success" ? "done" : "error", detail || "");
                 _setStep("complete", "done", detail || "");

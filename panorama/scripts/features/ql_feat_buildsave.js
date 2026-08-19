@@ -63,6 +63,9 @@
     var BUILD_SAVE_MAX_RETRIES = 12;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
+    // Mirrors ql_bridge.js — "1" authorizes overwriting a config this session
+    // could not read. Consumed on use.
+    var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
     var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
@@ -1067,7 +1070,74 @@ function ResetBuildSaveRequestAttributes(root) {
             FinishBuildSaveRequest(root, requestToken, "failed", "invalid_payload");
             return "";
         }
+        if (!IsBuildSaveAllowedByLoadState(root, requestToken)) return "";
         return payloadText;
+    }
+
+    // ── ClearBuildSaveForceFlag ──
+    // Wipe the one-shot override from the root, the Hud panel and this context
+    // panel. The settings side sets it on more than one surface, so clearing only
+    // the root it happened to be read from would leave a copy behind.
+    function ClearBuildSaveForceFlag(root) {
+        var targets = [root];
+        try {
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+            if (hud) targets.push(hud);
+        } catch (e0) {}
+        try {
+            var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+            if (ctx) targets.push(ctx);
+        } catch (e1) {}
+        for (var i = 0; i < targets.length; i++) {
+            var panel = targets[i];
+            if (!panel || !panel.SetAttributeString) continue;
+            try { panel.SetAttributeString(BUILD_SAVE_FORCE_ATTR, ""); } catch (e2) {}
+        }
+    }
+
+    // ── IsBuildSaveAllowedByLoadState ──
+    // Refuse to write when this session never managed to read the stored config.
+    //
+    // There is exactly one copy of the user's settings and it lives in the build.
+    // If load could not read it, the running config is defaults — so saving writes
+    // defaults over real settings and they are gone for good. That is the one
+    // unrecoverable failure in this pipeline, and it is also why the community
+    // workaround began with deleting every build: by then the config was already
+    // lost, so there was nothing left to protect.
+    //
+    // "failed" only means "a storage build exists but we could not read a payload
+    // from it". Genuinely empty storage records "loaded", so a first-time save
+    // still works.
+    //
+    // Escape hatch: QOL_BUILD_SAVE_FORCE = "1" bypasses the guard, for the case
+    // where the user really does want to overwrite (e.g. importing a config
+    // string). It is consumed on use so it cannot silently persist.
+    function IsBuildSaveAllowedByLoadState(root, requestToken) {
+        // Evaluate once per request, not once per tick. ResolveBuildSavePayloadText
+        // runs on every loop iteration, and the force flag is one-shot — consuming
+        // it on the first tick meant the second tick saw no flag and blocked the
+        // save that had just been authorized. Once the runtime is live for this
+        // token the decision has already been made.
+        if (State.buildSaveActiveToken && State.buildSaveActiveToken === requestToken) return true;
+
+        var loadState = State.configLoadState ? String(State.configLoadState) : "pending";
+        if (loadState !== "failed") return true;
+
+        var forced = String(root.GetAttributeString(BUILD_SAVE_FORCE_ATTR, "") || "").trim();
+        if (forced === "1") {
+            // Clear on every surface the settings context writes to
+            // (ql_settings.js:1730-1741 writes both its context panel and the
+            // root), or a stale "1" would silently authorize the next save too.
+            ClearBuildSaveForceFlag(root);
+            _TLog("save:ForceOverride", "loadState=failed detail=" +
+                  String(State.configLoadStateDetail || "-"));
+            return true;
+        }
+
+        _TLog("save:Blocked", "loadState=failed detail=" +
+              String(State.configLoadStateDetail || "-"));
+        FinishBuildSaveRequest(root, requestToken, "failed", "blocked_unread_config");
+        return false;
     }
 
     // ── EnsureBuildSaveRequestRuntimeInitialized ──

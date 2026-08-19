@@ -5921,6 +5921,13 @@ function GetUIRoot() {
         if (msg === "verifying") return "Verifying saved payload.";
         if (msg === "retrying_write") return "Retrying payload write.";
         if (msg === "saved") return "Save completed.";
+        if (msg === "blocked_unread_config") {
+            return "Save blocked: your saved settings could not be read this session, " +
+                   "so saving now would overwrite them. Restart the game and let loading finish.";
+        }
+        if (msg === "verify_failed_uncommitted") {
+            return "Save could not be committed — the payload was written but not persisted.";
+        }
         if (!msg) return "";
         var clean = msg.replace(/_/g, " ");
         if (!clean) return "";
