@@ -14,6 +14,15 @@
 //                                                  # 3 klutz 4 budhud 5 minecraft
 //   node scripts/profile_hud.js --json              # machine-readable
 //   node scripts/profile_hud.js --top 25            # rows to show (default 20)
+//   node scripts/profile_hud.js --enable SHOW_RANK,SHOW_RANK_TOPBAR
+//
+// --enable exists because "everything on" is narrower than it sounds. The maximal
+// config only forces keys matching ENABLE_* / SUPPORT_* / HUD_*_ENABLED (see
+// simulator/perf/profile.js makeMaximalConfig), and 129 of the 335 config keys are
+// 0/1 toggles that match none of those patterns. Those features are silently OFF in
+// every default run — SHOW_RANK and SHOW_RANK_TOPBAR among them, which is why a
+// live FPS complaint about the rank badges profiled as costing nothing at all.
+// Pass them explicitly. --healthbar below is the same gap with its own flag.
 //
 // --healthbar matters more than it looks. HEALTHBAR_TYPE is a numeric enum, not an
 // ENABLE_* toggle, so the default "everything on" config leaves it at 0 and NONE of
@@ -262,10 +271,26 @@ function main() {
     const saveName = arg("save", null);
     const compareName = arg("compare", null);
 
+    // --enable KEY[=VALUE][,KEY...] — force config keys the maximal config leaves
+    // alone. Bare KEY means 1, which is what a toggle needs.
+    const overrides = { HEALTHBAR_TYPE: healthbar };
+    const enableArg = arg("enable", null);
+    if (enableArg) {
+        for (const part of String(enableArg).split(",")) {
+            const spec = part.trim();
+            if (!spec) continue;
+            const eq = spec.indexOf("=");
+            const key = eq === -1 ? spec : spec.slice(0, eq).trim();
+            const raw = eq === -1 ? "1" : spec.slice(eq + 1).trim();
+            const parsed = Number(raw);
+            overrides[key] = Number.isNaN(parsed) ? raw : parsed;
+        }
+    }
+
     const h = createProfiledHud({
         players,
         warmupMs: 8000,
-        configOverrides: { HEALTHBAR_TYPE: healthbar },
+        configOverrides: overrides,
     });
 
     // A harness that produces an empty profile must fail loudly, not print
