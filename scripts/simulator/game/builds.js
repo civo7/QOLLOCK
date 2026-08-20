@@ -122,8 +122,15 @@ class BuildsModel {
         // --- Hero shop: citadel_hud_hero_shop.xml ---
         this.shopPanel = root.addChild(mk("CitadelHudHeroShop", { id: "CitadelHudHeroShop" }));
 
-        // citadel_hud_hero_shop.xml:56
-        this.selectedBuild = this.shopPanel.addChild(mk("CitadelShopModsBuild", { id: "ShopModsSelectedBuild" }));
+        // citadel_hud_hero_shop.xml:56. `shopModsBuild` is declared on the type itself
+        // (citadel_shop_mods_build.xml:20), so every instance carries it — which is the
+        // only reliable handle on this panel, because its id is NOT dependable: the
+        // Panorama debugger showed the live instance in-game under a different id than
+        // the XML declares, and the mod's own build-payload manifest records duplicate
+        // instances of which only one is live (manifest.js:317).
+        this.selectedBuild = this.shopPanel.addChild(
+            mk("CitadelShopModsBuild", { id: "ShopModsSelectedBuild", classes: ["shopModsBuild"] })
+        );
 
         // citadel_shop_mods_build.xml:21-24
         const header = this.selectedBuild.addChild(mk("Panel", { classes: ["BuildHeader", "BuildHeaderShared"] }));

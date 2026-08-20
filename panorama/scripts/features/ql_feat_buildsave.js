@@ -711,8 +711,8 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── CurrentBuildHasPayload ──
     // Proof that the payload is PERSISTED, not merely typed.
     //
-    // Only the rendered category label counts. BuildCategoryName / .CategoryName
-    // are repopulated by the client from the committed build, so the token
+    // Only rendered category labels count — BuildCategoryName by id, .CategoryName by
+    // class. The client repopulates those from the committed build, so our token
     // appears there only once the save actually landed.
     //
     // CategoryNameTextEntry is deliberately NOT accepted: it is the editor's own
@@ -720,34 +720,58 @@ function ResetBuildSaveRequestAttributes(root) {
     // CitadelHudHeroBuildsSaveEdits() did nothing (it is ignored outside edit
     // mode). Verification used to check that buffer first, so a no-op save
     // verified as success and the config was silently never written — the caller
-    // then reported "saved" and the next boot found nothing.
+    // then reported "saved" and the next boot found nothing. It is excluded
+    // structurally rather than by ordering: it carries class EditFieldTextEntry and
+    // id CategoryNameTextEntry (citadel_hud_hero_builds.xml:40), so neither the class
+    // nor the id below can reach it.
     //
-    // The label is known to be readable: the startup loader recovers real user
-    // configs from exactly these panels — but only through a reader that consults
-    // the "text" attribute, hence ReadPayloadTextAnyStore above.
+    // Not scoped to a single ShopModsSelectedBuild lookup. The panel tree holds
+    // several CitadelShopModsBuild instances and only one is live (see
+    // manifests/ql_build_payload/manifest.js:317) — FindChildTraverse returns the
+    // first in traversal order, which is not necessarily the one showing the build we
+    // just wrote. Verified in-game 2026-08-20 with the Panorama debugger: the payload
+    // sat in #BuildCategoryName's own `text` under a CitadelShopModsBuild that this
+    // lookup did not resolve to, so the save was committed and still reported failed.
+    //
+    // The token is unique to this request, so a match anywhere in the tree is proof.
+    // The selected-build scan stays as a cheap fast path.
     function CurrentBuildHasPayload(root, payloadText) {
         var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         function matches(panel) {
             var token = QOL.extractBuildCategoryPayloadToken(ReadPayloadTextAnyStore(panel));
             return !!(token && token === expectedToken);
         }
 
-        if (selectedBuild && selectedBuild.FindChildTraverse) {
-            if (matches(selectedBuild.FindChildTraverse("BuildCategoryName"))) return true;
-        }
-        if (selectedBuild && selectedBuild.FindChildrenWithClassTraverse) {
-            var persistedClasses = ["CategoryName", "BuildCategoryName"];
-            for (var p = 0; p < persistedClasses.length; p++) {
-                var persisted = selectedBuild.FindChildrenWithClassTraverse(persistedClasses[p]) || [];
-                for (var pi = 0; pi < persisted.length; pi++) {
-                    if (matches(persisted[pi])) return true;
+        function scanHost(host) {
+            if (!host) return false;
+            if (host.FindChildTraverse) {
+                if (matches(host.FindChildTraverse("BuildCategoryName"))) return true;
+            }
+            if (host.FindChildrenWithClassTraverse) {
+                var labels = host.FindChildrenWithClassTraverse("CategoryName") || [];
+                for (var i = 0; i < labels.length; i++) {
+                    if (matches(labels[i])) return true;
                 }
             }
+            return false;
         }
-        return false;
+
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
+        if (scanHost(selectedBuild)) return true;
+
+        // Every CitadelShopModsBuild instance carries class shopModsBuild
+        // (citadel_shop_mods_build.xml:20), so this reaches the live one whichever it is.
+        if (root && root.FindChildrenWithClassTraverse) {
+            var builds = root.FindChildrenWithClassTraverse("shopModsBuild") || [];
+            for (var b = 0; b < builds.length; b++) {
+                if (builds[b] !== selectedBuild && scanHost(builds[b])) return true;
+            }
+        }
+
+        // Last resort: the labels may hang outside any shopModsBuild host.
+        return scanHost(root);
     }
 
     // True when our text is sitting in the editor buffer but has not been

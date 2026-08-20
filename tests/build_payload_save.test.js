@@ -288,3 +288,45 @@ test("REGRESSION: an unreadable label does not turn a no-op save into success", 
         `save reported success with no commit and no readback\n${h.diagnose()}`
     );
 });
+
+test("REGRESSION: verification finds the payload outside the id-resolved build panel", () => {
+    // Ground truth, Panorama debugger, 2026-08-20: the committed payload was sitting
+    // in a #BuildCategoryName under a CitadelShopModsBuild that
+    // FindChildTraverse("ShopModsSelectedBuild") did not resolve to. The tree holds
+    // several instances and only one is live (see build_payload manifest.js:317), so
+    // verification scoped to that single lookup read an empty panel and failed a save
+    // that had already reached cached_hero_builds.kv3.
+    //
+    // Reparenting the category container reproduces "the labels are not where the id
+    // lookup points" without duplicating an id, which the simulator's index rejects.
+    const h = bootHud({ titleMode: TITLE_MODE.TOKEN });
+    const token = makeToken(h);
+    h.game.seedBuilds([{ title: "New Skyrunner Build", categories: ["Core Items"] }]);
+    h.game.openShop();
+    h.clock.advance(3000);
+
+    const sibling = h.game.shopPanel.addChild(
+        h.doc.create("CitadelShopModsBuild", { id: "ShopModsSelectedBuildAll", classes: ["shopModsBuild"] })
+    );
+    const moved = h.game.categoryContainer;
+    sibling.addChild(moved);
+    assert.notStrictEqual(
+        h.doc.root.FindChildTraverse("ShopModsSelectedBuild").FindChildTraverse("BuildCategoryName"),
+        moved.FindChildTraverse("BuildCategoryName"),
+        "fixture is wrong: the id lookup still reaches the categories"
+    );
+
+    requestSave(h, token);
+    h.clock.advance(30000);
+
+    assert.strictEqual(
+        saveState(h),
+        "success",
+        `save did not succeed: ${saveMsg(h)}\n${h.diagnose()}`
+    );
+    assert.strictEqual(
+        saveMsg(h),
+        "saved",
+        `expected the payload to be read back, not the editor-close fallback\n${h.diagnose()}`
+    );
+});
