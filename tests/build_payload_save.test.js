@@ -195,3 +195,96 @@ test("save works when build titles are unreadable", () => {
         `save must not depend on readable titles: ${saveMsg(h)}\n${h.diagnose()}`
     );
 });
+
+/**
+ * Strip the category label down to the template in BOTH stores, so a committed
+ * payload is unreadable from the panel tree by any means.
+ *
+ * This is the pessimistic case for the inference the simulator encodes: that the
+ * value C++ pushes into a dialog-variable-backed label is reachable as its "text"
+ * attribute. That inference is the only single explanation consistent with the
+ * in-game evidence — the startup loader reads payloads through an attribute-first
+ * reader, while save verification, using a `.text`-first reader that returns early
+ * on the non-empty template, saw nothing — but it remains an inference we cannot
+ * observe from JS.
+ *
+ * So it must not be load-bearing. The two tests below pin the behaviour that has to
+ * hold when it is simply wrong.
+ */
+function blindCategoryLabels(h) {
+    const original = h.game._applyCategoryText.bind(h.game);
+    h.game._applyCategoryText = function (label, name) {
+        original(label, name);
+        label.text = "#Citadel_HeroBuilds_CategoryName";
+        label.SetAttributeString("text", "");
+    };
+    h.game._renderAll();   // blind the already-mounted labels too
+}
+
+test("a committed save is honest even when the payload cannot be read back", () => {
+    // The in-game failure this change exists for: Steam reported the write as
+    // Success and the payload reached cached_hero_builds.kv3, yet verification
+    // failed 13/13 and the user was told the save failed. Refusing a save that
+    // actually landed is the more destructive of the two possible mistakes, so the
+    // client closing edit mode stands in as proof of commit.
+    const h = bootHud({ titleMode: TITLE_MODE.TOKEN });
+    const token = makeToken(h);
+    h.game.seedBuilds([{ title: "New Skyrunner Build", categories: ["Core Items"] }]);
+    h.game.openShop();
+    h.clock.advance(3000);
+    blindCategoryLabels(h);
+
+    requestSave(h, token);
+    h.clock.advance(30000);
+
+    assert.strictEqual(
+        saveState(h),
+        "success",
+        `an unreadable label must not fail a save that committed: ${saveMsg(h)}\n${h.diagnose()}`
+    );
+    // Reported distinctly, so a readback failure stays visible in the log instead
+    // of passing for a normally verified save.
+    assert.strictEqual(
+        saveMsg(h),
+        "saved_commit_confirmed",
+        `expected the fallback proof to be reported under its own message\n${h.diagnose()}`
+    );
+    const stored = h.game.builds[0].categories.map((c) => c.name).join(" | ");
+    assert.ok(
+        stored.includes(token),
+        `fixture is wrong: the payload should still have committed\n${h.diagnose()}`
+    );
+});
+
+test("REGRESSION: an unreadable label does not turn a no-op save into success", () => {
+    // The other half of the same coin. With the readback gone, edit mode closing is
+    // the only remaining evidence — so a commit that does nothing must leave the
+    // editor open, or this fix would reintroduce the silent data loss that
+    // motivated verifying against the persisted label in the first place.
+    const h = bootHud({ titleMode: TITLE_MODE.TOKEN });
+    const token = makeToken(h);
+    h.game.seedBuilds([{ title: "New Skyrunner Build", categories: ["Core Items"] }]);
+    h.game.openShop();
+    h.clock.advance(3000);
+    blindCategoryLabels(h);
+
+    h.game.saveEdits = function () {
+        this.counters.saveEdits++;
+        this._trace("saveEdits STUBBED to no-op");
+        return false;
+    };
+
+    requestSave(h, token);
+    h.clock.advance(30000);
+
+    const committed = h.game.builds[0].categories.map((c) => c.name).join(" | ");
+    assert.ok(
+        !committed.includes(token),
+        `fixture is wrong: the stub should have prevented any commit\n${h.diagnose()}`
+    );
+    assert.notStrictEqual(
+        saveState(h),
+        "success",
+        `save reported success with no commit and no readback\n${h.diagnose()}`
+    );
+});

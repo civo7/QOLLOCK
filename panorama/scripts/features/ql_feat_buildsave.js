@@ -96,6 +96,11 @@
     var BUILD_SAVE_TIMEOUT_MS = 12000;
     var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
     var BUILD_SAVE_VERIFY_DELAY_MS = 200;
+    // How long to wait for the client to close edit mode after we press Save.
+    // Closing is the commit signal (see handleVerify), and it is a network-adjacent
+    // round trip, so the window is generous relative to the 200ms verify poll.
+    // Bounded well inside BUILD_SAVE_TIMEOUT_MS so the overall budget still wins.
+    var BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS = 6000;
     var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     // SAVE_SETTINGS_LOADER_ENABLED is imported via _deps (line 43).
 
@@ -132,6 +137,8 @@ function ResetBuildSaveRequestAttributes(root) {
         State.storageHeroSignatureConfirmHits = 0;
         State.storageHeroSignatureLastDetail = "";
         State.buildSaveMutationClosed = false;
+        State.buildSaveCommitPressedInEditor = false;
+        State.buildSaveCommitPressedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -669,6 +676,37 @@ function ResetBuildSaveRequestAttributes(root) {
         return didCommit;
     }
 
+    // ── ReadPayloadTextAnyStore ──
+    // Read a panel's text from BOTH stores the engine keeps for it.
+    //
+    // A Label declared `text="#Citadel_HeroBuilds_CategoryName"`
+    // (citadel_shop_mods_build_category.xml:10) renders from the dialog variable
+    // that token expands to ("{s:category_name}", citadel_main_english.txt:2230),
+    // so `.text` holds the TEMPLATE while the value the client pushed in is
+    // reachable as the "text" attribute. The two are separate stores.
+    //
+    // ReadPanelTextMaybe (ql_core.js:7146) reads `.text` first and returns as soon
+    // as it is non-empty — and a template is non-empty. So on these labels it
+    // always returns "#Citadel_HeroBuilds_CategoryName" and never reaches the
+    // attribute. That is why save verification could not see a payload the startup
+    // loader reads without trouble: the loader's reader
+    // (manifests/ql_build_payload/manifest.js:116) checks the attribute FIRST.
+    //
+    // Order here does not matter because the caller only asks "does either store
+    // contain our token", so this cannot mask a value the way an early return does.
+    // The mod writes no "text" attribute anywhere, so nothing stale can live there.
+    function ReadPayloadTextAnyStore(panel) {
+        if (!panel) return "";
+        var fromAttr = "";
+        if (panel.GetAttributeString) {
+            try { fromAttr = String(panel.GetAttributeString("text", "") || ""); } catch (e0) { fromAttr = ""; }
+        }
+        if (QOL.extractBuildCategoryPayloadToken(fromAttr)) return fromAttr;
+        var fromProp = QOL.readPanelTextMaybe(panel);
+        if (QOL.extractBuildCategoryPayloadToken(fromProp)) return fromProp;
+        return fromAttr || fromProp || "";
+    }
+
     // ── CurrentBuildHasPayload ──
     // ── CurrentBuildHasPayload ──
     // Proof that the payload is PERSISTED, not merely typed.
@@ -685,14 +723,15 @@ function ResetBuildSaveRequestAttributes(root) {
     // then reported "saved" and the next boot found nothing.
     //
     // The label is known to be readable: the startup loader recovers real user
-    // configs from exactly these panels.
+    // configs from exactly these panels — but only through a reader that consults
+    // the "text" attribute, hence ReadPayloadTextAnyStore above.
     function CurrentBuildHasPayload(root, payloadText) {
         var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
         var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
         function matches(panel) {
-            var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(panel));
+            var token = QOL.extractBuildCategoryPayloadToken(ReadPayloadTextAnyStore(panel));
             return !!(token && token === expectedToken);
         }
 
@@ -1036,10 +1075,16 @@ function ResetBuildSaveRequestAttributes(root) {
             }
         }
         var committed = CommitCategoryNameEdit(root, selectedBuild, payloadText);
+        // Record that we pressed Save from inside an open editor. handleVerify uses
+        // the editor closing as its proof of commit, and that inference is only
+        // valid if the editor was actually open when we pressed.
+        State.buildSaveCommitPressedInEditor = IsBuildSaveEditModeActive(root);
+        State.buildSaveCommitPressedMs = nowMs;
         var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
         State.buildSaveMutationClosed = true;
         _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
-        _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0"));
+        _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0") +
+              " inEditor=" + (State.buildSaveCommitPressedInEditor ? "1" : "0"));
         State.buildSaveStage = "verify";
         State.buildSaveRetries += 1;
         State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
@@ -1047,11 +1092,39 @@ function ResetBuildSaveRequestAttributes(root) {
         return true;
     }
 
+    // Two independent facts make a save verified, and neither alone is enough:
+    //
+    //   1. The client closed edit mode. Only the client can do that, and
+    //      CitadelHudHeroBuildsSaveEdits() is ignored outside edit mode — so an
+    //      editor that stays open is precisely the no-op save that used to be
+    //      reported as success (the silent config loss 20a49f1 set out to stop).
+    //   2. The payload reads back out of the committed build.
+    //
+    // (2) is the stronger claim and is tried first. But it depends on reading a
+    // dialog-variable-backed label, and if that read is unavailable — which is how
+    // this pipeline came to fail every save in-game while Steam wrote the file
+    // successfully — then refusing the save is the more destructive answer of the
+    // two: the settings ARE on disk and the user is told they are not. So (1) alone
+    // is accepted as a fallback, under its own timeout and reported distinctly in
+    // the log so a readback failure stays visible rather than becoming invisible.
     function handleVerify(root, nowMs, requestToken, selectedBuild, payloadText) {
         if (State.buildSaveStage !== "verify") return false;
         if (CurrentBuildHasPayload(root, payloadText)) {
             _TLog("save:VerifyOk", "payload confirmed in build");
             FinishBuildSaveRequest(root, requestToken, "success", "saved");
+            return true;
+        }
+
+        var editorOpen = IsBuildSaveEditModeActive(root);
+        var pressedInEditor = !!State.buildSaveCommitPressedInEditor;
+        var pressedMs = Number(State.buildSaveCommitPressedMs) || nowMs;
+
+        // Committed, but the label would not give the payload back. Accept and say
+        // so. Requires having pressed Save from an open editor, so "no editor at
+        // all" can never masquerade as a commit.
+        if (pressedInEditor && !editorOpen) {
+            _TLog("save:VerifyOk", "commit confirmed by editor close; payload readback unavailable");
+            FinishBuildSaveRequest(root, requestToken, "success", "saved_commit_confirmed");
             return true;
         }
 
@@ -1070,14 +1143,28 @@ function ResetBuildSaveRequestAttributes(root) {
             return true;
         }
 
-        if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+        // While the editor is still open the retry budget must not end the save:
+        // the commit has not been refused, it has not happened yet. Bound that wait
+        // on elapsed time instead, so a client that never closes the editor still
+        // fails rather than hanging.
+        if (editorOpen && (nowMs - pressedMs) <= BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS) {
+            TriggerBuildSaveCommit(selectedBuild);
+            State.buildSaveRetries += 1;
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
+            return true;
+        }
+
+        if (editorOpen || State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
             // Distinguish the two failure shapes in the log: our text sitting in
             // the editor buffer means the write landed and only the commit failed
             // (usually focus still on the entry); nothing there means the write
             // itself never took.
             var uncommitted = BuildSavePayloadIsUncommitted(root, payloadText);
             _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries +
-                  " uncommitted=" + (uncommitted ? "1" : "0"));
+                  " uncommitted=" + (uncommitted ? "1" : "0") +
+                  " editorOpen=" + (editorOpen ? "1" : "0") +
+                  " pressedInEditor=" + (pressedInEditor ? "1" : "0"));
             FinishBuildSaveRequest(root, requestToken, "failed",
                 uncommitted ? "verify_failed_uncommitted" : "verify_failed");
             return true;
@@ -1283,6 +1370,8 @@ function ResetBuildSaveRequestAttributes(root) {
             State.storageHeroSignatureLastDetail = "";
         }
         State.buildSaveMutationClosed = false;
+        State.buildSaveCommitPressedInEditor = false;
+        State.buildSaveCommitPressedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -1357,6 +1446,7 @@ function ResetBuildSaveRequestAttributes(root) {
             "buildSaveStorageShopReopenNextMs", "buildSaveStorageShopReopenAttempts",
             "buildSaveFavoritesActionNextMs", "buildSaveStorageProvisionalHits",
             "buildSaveMutationClosed", "buildSaveTargetBuildPanel",
+            "buildSaveCommitPressedInEditor", "buildSaveCommitPressedMs",
             "buildSaveTargetBuildSig", "buildSaveTargetBuildTitle",
             "buildSaveTargetStableHits", "buildSaveTargetDriftRetries",
             "buildSaveTargetQuietUntilMs", "buildSaveLastTraceStage"

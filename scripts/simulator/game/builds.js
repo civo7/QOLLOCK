@@ -29,7 +29,7 @@ const DEFAULT_LATENCY = {
 };
 
 /**
- * How build-title Labels report their text.
+ * How dialog-variable-backed Labels report their text.
  *
  *  "token"    — `.text` returns the raw localization token
  *               (`#Citadel_HeroBuilds_BuildName`), because vanilla backs these
@@ -38,12 +38,26 @@ const DEFAULT_LATENCY = {
  *                 "{s:selected_hero_build_name}{s:obsolete_tag}"
  *  "resolved" — `.text` returns the actual build name.
  *
- * Which one the engine really does is UNVERIFIED. Any feature that reads build
- * titles must be tested under BOTH modes, and must still work under "token".
+ * Which one the engine really does is UNVERIFIED. Any feature that reads such a
+ * Label must be tested under BOTH modes, and must still work under "token".
+ *
+ * WHEN GUESSING, GUESS AGAINST OURSELVES. An optimistic default makes the test
+ * suite weaker than the game, which is worse than having no test: a save-verify
+ * regression shipped green at 14/14 because this model resolved text the engine
+ * does not resolve. Unverified reads default to TOKEN.
  */
 const TITLE_MODE = { TOKEN: "token", RESOLVED: "resolved" };
 
 const TOKEN_BUILD_NAME = "#Citadel_HeroBuilds_BuildName";
+
+// citadel_shop_mods_build_category.xml:10 declares
+//   <Label id="BuildCategoryName" class="CategoryName"
+//          text="#Citadel_HeroBuilds_CategoryName" />
+// and citadel_main_english.txt:2230 defines that token as "{s:category_name}",
+// so the rendered name lives in a dialog variable and `.text` holds the template.
+// There is no readable GetDialogVariable in Panorama — the mod never calls one —
+// so under TOKEN mode this text is unrecoverable from the label, by design.
+const TOKEN_CATEGORY_NAME = "#Citadel_HeroBuilds_CategoryName";
 
 // Signature-ability confirmation (ql_core.js:610-624). Slot 2 must resolve to
 // this exact ability for the loader to accept that it is on Skyrunner.
@@ -62,7 +76,7 @@ class BuildsModel {
      * @param {string}   [opts.hero]       starting hero
      * @param {boolean}  [opts.inHideout]
      */
-    constructor({ sandbox, latency = {}, titleMode = TITLE_MODE.RESOLVED, hero = "hero_werewolf", inHideout = true } = {}) {
+    constructor({ sandbox, latency = {}, titleMode = TITLE_MODE.TOKEN, hero = "hero_werewolf", inHideout = true } = {}) {
         this.sandbox = sandbox;
         this.doc = sandbox.doc;
         this.clock = sandbox.clock;
@@ -265,23 +279,45 @@ class BuildsModel {
     }
 
     // ── Rendering (what C++ does to the tree) ─────────────────────────────
+    // Titles get no "text" attribute mirror, unlike category names below. The
+    // mirror is inferred for categories because loading demonstrably reaches the
+    // payload through an attribute-first reader; nothing equivalent is known for
+    // titles, so they stay unreadable under TOKEN mode. That is what keeps the
+    // marker fast path honest — it must degrade to the full sweep, not rely on a
+    // readability we have never observed.
     _titleTextFor(title) {
         return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_BUILD_NAME : title;
     }
 
     /**
-     * Category names are always readable.
+     * How the category-name Label reports its text.
      *
-     * `titleMode` deliberately does NOT apply here. Both build names and category
-     * names are dialog-variable backed in vanilla, but category text is known to
-     * be readable empirically: the payload has always been stored in a category
-     * name and users could load it (given the manual build-cleanup workaround).
-     * If category text returned only the raw token, the feature could never have
-     * worked at all. Build *titles* are the genuinely unverified case, so that is
-     * the only axis this switch controls.
+     * The earlier claim that category text is "known readable" was right about the
+     * symptom and wrong about the mechanism, and the difference is the whole bug.
+     *
+     * citadel_shop_mods_build_category.xml:10 declares the label with
+     * text="#Citadel_HeroBuilds_CategoryName", and citadel_main_english.txt:2230
+     * defines that as "{s:category_name}". So `.text` holds the TEMPLATE, while the
+     * value C++ pushed in is reachable as the "text" ATTRIBUTE — the two are
+     * separate stores (see the fidelity note in panel.js).
+     *
+     * That asymmetry is why the two readers in this repo disagree in-game:
+     *   - manifests/ql_build_payload/manifest.js:116 reads the attribute FIRST and
+     *     falls through to `.text` → finds the payload → loading works.
+     *   - ql_core.js:7146 ReadPanelTextMaybe reads `.text` first and RETURNS EARLY
+     *     when it is non-empty. The template is non-empty, so it never reaches the
+     *     attribute → save verification can never see the payload.
+     *
+     * Modelling only the resolved value hid that completely: both readers passed.
+     * Under TOKEN mode we now model both stores, so an attribute-first reader still
+     * works and a text-first reader fails exactly as it does in-game.
      */
-    _categoryTextFor(name) {
-        return name;
+    _applyCategoryText(label, name) {
+        label.text = this.titleMode === TITLE_MODE.TOKEN ? TOKEN_CATEGORY_NAME : name;
+        // What C++ pushed in. Readable via GetAttributeString("text"), never via
+        // `.text` when the label is dialog-variable backed.
+        label.SetAttributeString("text", name);
+        label.SetDialogVariable("category_name", name);
     }
 
     _renderAll() {
@@ -333,8 +369,7 @@ class BuildsModel {
             const nameLabel = catHeader.addChild(
                 this.doc.create("Label", { id: "BuildCategoryName", classes: ["CategoryName"] })
             );
-            nameLabel.text = this._categoryTextFor(cat.name);
-            nameLabel.SetDialogVariable("category_name", cat.name);
+            this._applyCategoryText(nameLabel, cat.name);
             catPanel.addChild(this.doc.create("Panel", { id: "ModsContainer" }));
 
             // Activating the header focuses the category: C++ marks the category
