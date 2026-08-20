@@ -41,42 +41,21 @@
             var _resolveStates = new Array(MAX_PLAYERS);
             var _retryNextMs = new Array(MAX_PLAYERS);
             var _nextRefreshMs = 0;
-            var _lastClockSec = null;
             var _wasEnabled = false;
-            var _wasInHideout = false;
 
             function _alive(p) {
                 return !!(p && typeof p.IsValid === "function" && p.IsValid());
             }
 
-            function _inHideout(root) {
-                if (!root) return false;
-                try {
-                    var hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
-                    var hudHideout = hud && hud.BHasClass && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"));
-                    var rootHideout = root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"));
-                    if (hudHideout || rootHideout) {
-                        $.Msg("[QOLLock][DEBUG][nicknames] inHideout: hud=" + !!hudHideout + " root=" + !!rootHideout + " root.id=" + (root.id || "?"));
-                    }
-                    if (hudHideout) return true;
-                    if (rootHideout) return true;
-                } catch(e) {}
-                return false;
-            }
-
-            function _getGameSeconds(root) {
-                // Read game clock from Urn timer panel
-                try {
-                    if (root && root.FindChildTraverse) {
-                        var urn = root.FindChildTraverse("UrnTimer");
-                        if (urn && urn.GetAttributeString) {
-                            var t = urn.GetAttributeString("time", "");
-                            if (t) { var n = parseFloat(t); if (isFinite(n)) return n; }
-                        }
-                    }
-                } catch(e) {}
-                return null;
-            }
+            // _inHideout and _getGameSeconds were defined here and never called. Removed
+            // rather than wired up: nothing in this feature needs the game clock, and the
+            // hideout check would have needed fixing first anyway — it looked for "Hud"
+            // from the context panel, which in the HUD context IS the Hud panel, so
+            // FindChildTraverse can never return it. It also carried an ungated $.Msg in
+            // its success path, which would have logged on every pass had it ever run.
+            // The unreachable-id audit reported its "UrnTimer" lookup as a guaranteed
+            // full-tree miss, which reads as a live cost until you notice the caller list
+            // is empty.
 
             // Per-slot backoff for panel lookups that miss.
             //
@@ -177,7 +156,14 @@
                 if (display.text !== String(text || "")) display.text = String(text || "");
                 if (display.style) {
                     var newVis = show ? "visible" : "collapse";
-                    if (display.SetHasClass) display.SetHasClass("qol-hidden", !show);
+                    // Same reason as the qol_nickname_active guard in _processSlot: an
+                    // unchanged class write still costs a subtree style re-match.
+                    if (display.SetHasClass) {
+                        var wantHidden = !show;
+                        if (!display.BHasClass || display.BHasClass("qol-hidden") !== wantHidden) {
+                            display.SetHasClass("qol-hidden", wantHidden);
+                        }
+                    }
                     else if (display.style.visibility !== newVis) display.style.visibility = newVis;
                     var newZ = show ? "1000" : "0";
                     if (display.style.zIndex !== newZ) display.style.zIndex = newZ;
@@ -196,7 +182,7 @@
                     _resetSlot(i);
                     if (!keepLabels) _fallbackLabels[i] = null;
                 }
-                _nextRefreshMs = 0; _lastClockSec = null;
+                _nextRefreshMs = 0;
             }
 
             function _processSlot(root, now, i, enabled) {
@@ -226,7 +212,21 @@
                     return { saw: false, resolved: false };
                 }
 
-                try { playerPanel.SetHasClass("qol_nickname_active", enabled); } catch(e) {}
+                // Only touch the class when it actually differs.
+                //
+                // Panorama does not compare before acting: re-applying a class a panel
+                // already has still invalidates it and re-matches styles for its whole
+                // subtree. A top bar player panel is not small — it carries the hero
+                // badge, ability icons, item bars and purchased-mod panels — and this ran
+                // for all 13 slots on every pass. The in-game perf overlay measured
+                // ql_nicknames at 2.4ms average and 8-9ms peak per pass, by far the most
+                // expensive feature in a live match; a 9ms spike is over half a frame at
+                // 60fps, which is what a player reports as a stutter.
+                try {
+                    if (!playerPanel.BHasClass || playerPanel.BHasClass("qol_nickname_active") !== enabled) {
+                        playerPanel.SetHasClass("qol_nickname_active", enabled);
+                    }
+                } catch(e) {}
 
                 var state = String(_resolveStates[i] || "unknown");
                 var retryAt = Number(_retryNextMs[i]) || 0;
