@@ -38,8 +38,42 @@
             function _valid(p) { if (!p) return false; try { return p.IsValid ? p.IsValid() : true; } catch(e) { return false; } }
             function _isOn(cfg, k) { if (!cfg || !k) return false; return Number(cfg[k]) === 1; }
             function _hasClass(panel, cls) { try { return panel && panel.BHasClass && panel.BHasClass(cls); } catch(e) { return false; } }
-            function _hudPanel(root) { try { return root.FindChildTraverse("Hud"); } catch(e) { return null; } }
-            function _isInHideout(root) { var h = _hudPanel(root); return _hasClass(h, "InHideout") || _hasClass(h, "inHideoutIntro") || _hasClass(h, "connectedToHideout") || _hasClass(root, "connectedToHideout"); }
+            /**
+             * Resolve the Hud panel once and hold it.
+             *
+             * The old body was root.FindChildTraverse("Hud") on every call. In the HUD
+             * context $.GetContextPanel() IS the Hud panel, and FindChildTraverse never
+             * returns the panel it was called on — so this lookup could not succeed, and
+             * a miss walks the entire subtree before returning null. Called twice per
+             * tick (_isInHideout, _isEscapeMenuOpen) plus once per scoreboard poll at
+             * 10Hz per row, it was the single most expensive wasted traversal in the
+             * whole mod: 15.2k tree nodes per second, four times the next-worst.
+             *
+             * PanelHelpers.findHud handles both tree shapes — context panel, or a walk up
+             * to the absolute root and a search from there — and caches its own result,
+             * so it returns the real panel instead of null. ql_unspent resolved the same
+             * lookup the same way.
+             *
+             * Fixing the lookup also fixes what depended on it: _isInHideout's InHideout
+             * and inHideoutIntro checks were reading an always-null panel, so two of the
+             * four hideout states were undetectable, and the manifest's own test() bailed
+             * with "skip" on every run because it gated on this same lookup.
+             */
+            var _hudPanelCache = null;
+            function _hudPanel(root) {
+                if (_valid(_hudPanelCache)) return _hudPanelCache;
+                _hudPanelCache = null;
+                try {
+                    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud) {
+                        _hudPanelCache = QOL.ui.PanelHelpers.findHud();
+                    }
+                } catch(e) { _hudPanelCache = null; }
+                if (!_valid(_hudPanelCache)) {
+                    try { _hudPanelCache = root ? root.FindChildTraverse("Hud") : null; } catch(e) { _hudPanelCache = null; }
+                }
+                return _valid(_hudPanelCache) ? _hudPanelCache : null;
+            }
+            function _isInHideout(root) { var h = _hudPanel(root); return _hasClass(h, "InHideout") || _hasClass(h, "inHideoutIntro") || _hasClass(h, "connectedToHideout") || _hasClass(root, "connectedToHideout") || _hasClass(root, "InHideout"); }
             function _stateGet(k, d) { try { if (typeof QOL !== "undefined" && QOL.state) { var v = QOL.state[k]; return v !== undefined ? v : d; } } catch(e) {} return d; }
             function _stateSet(k, v) { try { if (typeof QOL !== "undefined" && QOL.state) QOL.state[k] = v; } catch(e) {} }
 
@@ -101,8 +135,16 @@
             }
 
             // ── Escape menu entry scan (BFS matching paneltype) ──
+            // "CitadelHudEscapeMenu" is the panel TYPE; the id is "EscapeMenu"
+            // (hud.xml:469, vanilla hud.xml:322). FindChildTraverse matches on id, so
+            // the old lookup could never hit — a guaranteed full-subtree walk on every
+            // call, which scripts/audit_panel_ids.js flags as an unreachable id.
+            //
+            // Narrowing to the escape menu is only an optimisation for the PlayersList
+            // search below, so the fallback to root is kept: an id that fails to resolve
+            // should cost us the wider search, not the feature.
             function _getPlayersList(root) {
-                var esc = null; try { esc = root.FindChildTraverse("CitadelHudEscapeMenu"); } catch(e) {}
+                var esc = null; try { esc = root.FindChildTraverse("EscapeMenu"); } catch(e) {}
                 var start = _valid(esc) ? esc : root;
                 try { return start.FindChildTraverse("PlayersList"); } catch(e) { return null; }
             }
@@ -514,6 +556,7 @@
                 onEnable: function() {
                     _lifecycleToken++;
                     _wasEnabled = false; _fillToken = 0;
+                    _hudPanelCache = null;   // never carry a panel across a reload
                     _scoreboardWasOpen = false; _topBarWasVisible = null; _hideoutWasActive = false;
                     var root = $.GetContextPanel();
                     var docRoot = _docRoot(root);
@@ -551,7 +594,15 @@
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            var hud = root ? root.FindChildTraverse("Hud") : null;
+            // Resolve through PanelHelpers, not root.FindChildTraverse("Hud"): in the
+            // HUD context the context panel IS Hud, and FindChildTraverse never returns
+            // the panel it was called on. This hook gated on that lookup, so it reported
+            // "skip" on every run since it was written and never checked anything —
+            // which is why none of the perf or binding regressions here were caught by
+            // the manifest test suite.
+            var hud = (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
+                ? QOL.ui.PanelHelpers.findHud()
+                : (root ? root.FindChildTraverse("Hud") : null);
             if (!hud) return null;  // Skip — not in a match context
             var topBar = root ? root.FindChildTraverse("TopBar") : null;
             if (!topBar) return null;  // Skip — TopBar not loaded
