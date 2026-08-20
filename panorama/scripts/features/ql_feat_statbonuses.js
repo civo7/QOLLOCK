@@ -121,6 +121,9 @@
             lastMaxHealthText: "",
             nextSourceSearchMs: 0,
             nextSourceSearchByKey: {},
+            // Kept in sync with ql_state.js — ResolveStatBonusesSource reads both.
+            sourceSearchBackoffMs: 0,
+            lastSourceSearchShopOpen: null,
             nextIdolCountSearchMs: 0,
             nextTooltipScanMs: 0,
             goldenValues: {},

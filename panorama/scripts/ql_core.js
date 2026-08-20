@@ -274,6 +274,9 @@ _TLog = function(label, detail) {
     // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    // Cap for the escalating backoff applied after repeated scan misses. See
+    // NextMinimapScanBackoffMs.
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
     const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
     const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
     const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
@@ -2207,11 +2210,86 @@ function GetUIRoot() {
     var _startupConfigLoadDiagLogged = false;
     var _startupConfigDefaultDiagLogged = false;
 
+    // Resolve the Hud panel, cached. The parent-chain position of #Hud never
+    // changes for the life of the context, but four separate call sites used to
+    // re-run FindChildTraverse for it on every tick. GetCachedPanel validates via
+    // IsValid() and sweepStalePanelCache() drops dead entries once a second, so
+    // the cache is safe across the panel being torn down and rebuilt.
+    function ResolveHudPanel(root) {
+        var hud = GetCachedPanel("cachedHudPanel");
+        if (hud) return hud;
+        if (!root || !root.FindChildTraverse) return null;
+        try { hud = root.FindChildTraverse(PANEL_ID_HUD); } catch (e) { hud = null; }
+        if (hud) SetCachedPanel("cachedHudPanel", hud);
+        return hud;
+    }
+
+    var _parseRevisionNumber = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) {
+        var n = Number(v);
+        if (!isFinite(n) || n < 0) return 0;
+        return Math.floor(n);
+    };
+
+    // ── Revision-gated config read ──
+    //
+    // The stored config is a ~9.2 KB JSON envelope (335 keys, all of them always
+    // present because MergeConfig fills from defaults). GetAttributeString does
+    // not hand back a view of the C++ buffer — it marshals a fresh JS string of
+    // the full length. Reading it from both the root and the Hud panel therefore
+    // allocated ~18.4 KB per tick, ~92 KB/s, ~220 MB over a 40-minute match, all
+    // of it immediately garbage. Panorama's V8 runs on the UI thread, so those
+    // scavenges land inside frames: exactly the shape of a 1%-low complaint
+    // rather than an average-FPS one.
+    //
+    // Every writer of the config attribute pairs it with an increment of
+    // USER_EDIT_REV_ATTR — ql_core.js WriteStorageConfigRawToUi, ql_settings.js
+    // SaveAndSync, ql_arcade_games.js — on both the root and the Hud panel. So the
+    // revision is a trustworthy 1-3 byte proxy for "did the config change", and
+    // the 9.2 KB read only has to happen when it did.
+    //
+    // A wall-clock backstop still forces a full read periodically. If a future
+    // writer ever forgets to bump the revision, that turns a permanent stale-config
+    // bug into a bounded delay, which is the failure mode worth having.
+    var _cfgCacheRevision = -1;
+    var _cfgCacheRaw = "";
+    var _cfgCacheFullReadMs = 0;
+    const CONFIG_FULL_REREAD_INTERVAL_MS = 2000;
+
     // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
     // panel attributes, picking the version with the highest user-edit revision number.
-    // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
+    // Returns the SAME string instance while the revision is unchanged, which also makes
+    // the callers' `raw === State.lastRawConfig` checks true pointer compares instead of
+    // 9.2 KB memcmps.
     function ReadStorageConfigRawFromUi(root) {
-        
+        if (!root || !root.GetAttributeString) return "";
+
+        var hud = ResolveHudPanel(root);
+
+        // Cheap probe: two small attribute reads.
+        var rootRev = 0;
+        var hudRev = 0;
+        try { rootRev = _parseRevisionNumber(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eR) { rootRev = 0; }
+        if (hud && hud.GetAttributeString) {
+            try { hudRev = _parseRevisionNumber(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eH) { hudRev = 0; }
+        }
+        var revision = (hudRev > rootRev) ? hudRev : rootRev;
+
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        var backstopDue = (nowMs - _cfgCacheFullReadMs) >= CONFIG_FULL_REREAD_INTERVAL_MS;
+        if (revision === _cfgCacheRevision && _cfgCacheRaw !== "" && !backstopDue) {
+            return _cfgCacheRaw;
+        }
+
+        var result = ReadStorageConfigRawUncached(root, hud, rootRev, hudRev);
+        _cfgCacheRevision = revision;
+        _cfgCacheRaw = result;
+        _cfgCacheFullReadMs = nowMs;
+        return result;
+    }
+
+    // The full read. Split out so the revision fast path above stays obvious, and
+    // so a caller that genuinely needs current bytes can bypass the cache.
+    function ReadStorageConfigRawUncached(root, hud, rootRev, hudRev) {
         var result = "";
         var source = "none";
         var rootLen = 0;
@@ -2221,8 +2299,6 @@ function GetUIRoot() {
             try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
             rootLen = rootRaw.length;
 
-            var hud = null;
-            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
             if (!hud || !hud.GetAttributeString) {
                 result = rootRaw;
                 if (rootLen > 0) source = "root_attr";
@@ -2237,15 +2313,6 @@ function GetUIRoot() {
                     result = hudRaw;
                     source = "hud_attr";
                 } else {
-                    var parseRev = function(v) {
-                        var n = Number(v);
-                        if (!isFinite(n) || n < 0) return 0;
-                        return Math.floor(n);
-                    };
-                    var rootRev = 0;
-                    var hudRev = 0;
-                    try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
-                    try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
                     result = (hudRev >= rootRev) ? hudRaw : rootRaw;
                     source = "attr_rev(" + rootRev + "/" + hudRev + ")";
                 }
@@ -2269,9 +2336,8 @@ function GetUIRoot() {
         }
 
         var nextRaw = String(rawText || "");
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
-        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+        var hud = ResolveHudPanel(root);
+        var parseRev = _parseRevisionNumber;
         var rootRev = 0;
         var hudRev = 0;
         try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { rootRev = 0; }
@@ -2287,6 +2353,14 @@ function GetUIRoot() {
             try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
         // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
+
+        // Seed the read cache with what we just wrote. Without this the next
+        // ReadStorageConfigRawFromUi would see a bumped revision and re-marshal
+        // 9.2 KB it already has — and, worse, a write that loses a race with a
+        // concurrent read would leave the cache holding pre-write bytes.
+        _cfgCacheRevision = nextRevision;
+        _cfgCacheRaw = nextRaw;
+        _cfgCacheFullReadMs = Date.now ? Date.now() : (new Date()).getTime();
 
         if (!_writeStorageDiagLogged) {
             _writeStorageDiagLogged = true;
@@ -2370,6 +2444,17 @@ function GetUIRoot() {
     var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
         if (!panel || !panel.style || !prop) return;
         try { panel.style[prop] = value; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    };
+
+    // Compare-then-write. See ql_utils.js for why this is separate from SetStyleSafe.
+    var SetStyleIfChanged = (QOL_UTILS_LOADED && QOL_UTILS.SetStyleIfChanged) ? QOL_UTILS.SetStyleIfChanged : function(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return false;
+        try {
+            if (panel.style[prop] === value) return false;
+            panel.style[prop] = value;
+            return true;
+        } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        return false;
     };
 
     var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
@@ -3212,18 +3297,14 @@ function GetUIRoot() {
 
     function IsConnectedToHideout(root) {
         // Game.GetMapInfo confirmed absent — use HUD panel classes for hideout detection.
-        var hud = GetCachedPanel("cachedHudPanel");
-        if (!hud && root && root.FindChildTraverse) {
-            hud = root.FindChildTraverse(PANEL_ID_HUD);
-            SetCachedPanel("cachedHudPanel", hud);
-        }
+        var hud = ResolveHudPanel(root);
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
         return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout");
     }
 
     function IsStartupLoaderInActiveMatchContext(root) {
         if (!root) return false;
-        var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
+        var hud = ResolveHudPanel(root);
         var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
         var hideout = IsConnectedToHideout(root);
 
@@ -9624,20 +9705,69 @@ function GetUIRoot() {
         return "";
     }
 
+    // Resolve one stat-bonus source panel, with a negative-result backoff.
+    //
+    // The candidate ids (StatContainer_FireRate, StatContainer_TechPower, ...)
+    // belong to the hero-stats panels — citadel_hero_stats_{weapon,tech,armor}_panel
+    // — which the engine builds for the shop, the hero-details page and stat
+    // tooltips. They do not exist in the combat HUD. Their stylesheet says as
+    // much: every rule in citadel_hero_stats_panels_shared.css is scoped under
+    // .gShopOpen.
+    //
+    // That matters because FindChildTraverse on an absent id is not cheap-and-null:
+    // it is a depth-first walk of the ENTIRE subtree that returns null only after
+    // visiting every descendant. Six stat defs with up to seven candidate ids
+    // each, plus a FindChildrenWithClassTraverse fallback per def, is 28 full-HUD
+    // walks per sweep. At the previous flat 500ms retry that ran ~56 whole-tree
+    // walks every second, for the entire match, to keep discovering nothing —
+    // measured at 30% of all engine work the mod requested in a 12-player
+    // teamfight profile (scripts/profile_hud.js).
+    //
+    // Fix: double the retry interval after each failed sweep up to a cap, and
+    // reset it the moment the shop opens or closes. A panel that has not appeared
+    // in eight seconds will not appear in the next half-second, and the only
+    // event that can create these panels also flips gShopOpen — so the overlay
+    // still populates as promptly as before in the case that matters, while a
+    // match spent not shopping costs ~1/16th of the lookups.
+    const STAT_BONUSES_SOURCE_SEARCH_MAX_MS = 8000;
+
     function ResolveStatBonusesSource(root, cacheKey, candidateIds, nowMs) {
         var source = State.cachedPanels[cacheKey];
         if (IsPanelValid(source)) {
             return source;
         }
 
-        var nextByKey = State.statBonuses.nextSourceSearchByKey || {};
+        var statState = State.statBonuses;
+
+        // Cheap: three BHasClass calls against already-cached panels.
+        var shopOpen = false;
+        try { shopOpen = !!IsHudClassActive(root, "gShopOpen"); } catch (eShop) { shopOpen = false; }
+        if (shopOpen !== statState.lastSourceSearchShopOpen) {
+            // The context that builds these panels just changed. Search now
+            // rather than waiting out a backoff earned under the old context.
+            statState.lastSourceSearchShopOpen = shopOpen;
+            statState.sourceSearchBackoffMs = 0;
+            statState.nextSourceSearchByKey = {};
+        }
+
+        var nextByKey = statState.nextSourceSearchByKey || {};
         var nextSearchMs = Number(nextByKey[cacheKey] || 0);
         if (nowMs < nextSearchMs) {
             return null;
         }
         source = FindStatBonusesSourceByIds(root, candidateIds);
-        nextByKey[cacheKey] = source ? 0 : (nowMs + STAT_BONUSES_SOURCE_SEARCH_MS);
-        State.statBonuses.nextSourceSearchByKey = nextByKey;
+        if (source) {
+            statState.sourceSearchBackoffMs = 0;
+            nextByKey[cacheKey] = 0;
+        } else {
+            var backoffMs = Number(statState.sourceSearchBackoffMs) || 0;
+            backoffMs = (backoffMs > 0)
+                ? Math.min(backoffMs * 2, STAT_BONUSES_SOURCE_SEARCH_MAX_MS)
+                : STAT_BONUSES_SOURCE_SEARCH_MS;
+            statState.sourceSearchBackoffMs = backoffMs;
+            nextByKey[cacheKey] = nowMs + backoffMs;
+        }
+        statState.nextSourceSearchByKey = nextByKey;
         State.cachedPanels[cacheKey] = source || null;
         return source;
     }
@@ -9929,25 +10059,37 @@ function GetUIRoot() {
 
         var nextScan = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
         if (!breakdown) {
-            var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
-            var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
-            StatBonusesDebugLogThrottled(
-                "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
-                "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
-                    ", statNames=" + statNameCount +
-                    ", subRows=" + subRowCount + ")",
-                nowMs
-            );
+            // These two counts exist only to be interpolated into the debug message
+            // below, and StatBonusesDebugLogThrottled returns on its first line
+            // because STAT_BONUSES_DEBUG is a compile-time false. JS evaluates
+            // arguments before the call, so both FindChildrenWithClassTraverse walks
+            // ran anyway — two full-HUD tree walks per scan, purely to build a string
+            // that is immediately discarded. Guard the whole block instead.
+            if (STAT_BONUSES_DEBUG) {
+                var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
+                var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
+                StatBonusesDebugLogThrottled(
+                    "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
+                    "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
+                        ", statNames=" + statNameCount +
+                        ", subRows=" + subRowCount + ")",
+                    nowMs
+                );
+            }
             State.statBonuses.nextTooltipScanMs = nextScan;
             return;
         }
 
-        var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
-        StatBonusesDebugLogThrottled(
-            "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
-            "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
-            nowMs
-        );
+        // Same shape as above: GetStatBreakdownRowsDebugSnapshot walks the breakdown
+        // container and its rows, and its only consumer is the disabled logger.
+        if (STAT_BONUSES_DEBUG) {
+            var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
+            StatBonusesDebugLogThrottled(
+                "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
+                "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
+                nowMs
+            );
+        }
         var goldenToken = ExtractGoldenStatuesValueFromBreakdownContainer(breakdown);
         if (goldenToken) {
             var statContainerId = FindStatContainerIdFromPanel(breakdown);
@@ -10337,6 +10479,22 @@ function GetUIRoot() {
             nowMs
         );
     }
+    // Apply the combat-indicator classes to every panel the CSS keys off.
+    //
+    // Called unconditionally from ApplyCoreLoopRootClassesAndState, i.e. every tick
+    // whether or not the feature is on. The four lookups below used to be raw
+    // FindChildTraverse calls from the HUD root — 20 root traversals a second, for
+    // the whole match, to re-find four panels that live for the whole match. The two
+    // above them were already cached, which is what made the omission easy to miss.
+    //
+    // ResolveCachedPanel does the GetCachedPanel/FindChildTraverse/SetCachedPanel
+    // dance and re-validates on read, so a panel that is torn down and rebuilt is
+    // picked up again on the next tick.
+    //
+    // The class writes themselves are already correctly guarded: SetPanelClassIfChanged
+    // compares with BHasClass first, so a steady state performs no engine writes at
+    // all. That matters here because combat_indicator_enabled carries 56 CSS rules
+    // and a genuine flip is not cheap.
     function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
         if (!root || !root.FindChildTraverse) return;
         var panels = [];
@@ -10349,10 +10507,10 @@ function GetUIRoot() {
         }
         pushPanel(GetCachedPanel("healthContainer"));
         pushPanel(GetCachedPanel("gameplayHud"));
-        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-        pushPanel(root.FindChildTraverse("HealthBarContent"));
-        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
-        pushPanel(root.FindChildTraverse("hud_health_bars"));
+        pushPanel(ResolveCachedPanel(root, "healthContainer", PANEL_ID_HEALTH_CONTAINER));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBarContent", "HealthBarContent"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthRegenAndTotal", "HealthRegenAndTotal"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBars", "hud_health_bars"));
         for (var p = 0; p < panels.length; p++) {
             SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
             SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
@@ -12375,6 +12533,31 @@ function GetUIRoot() {
         return null;
     }
 
+    // Escalating backoff for the minimap local-player scans.
+    //
+    // Both FindLocalMinimapMainImage and FindLocalMinimapPlayerPanel fall back to
+    // FindChildrenWithClassTraverse over the WHOLE HUD — a collect-all walk with no
+    // early exit, so it always visits every node and allocates a result array. On a
+    // miss they re-armed at a flat cooldown of 90ms in aggressive mode, which at the
+    // 20Hz compass cadence is a rescan every other tick: ~11 full-tree walks a
+    // second, indefinitely.
+    //
+    // And a miss is not rare. The local minimap panel is absent while dead, while
+    // spectating, before spawn, and any time Valve renames the classes. Worse, the
+    // aggressive path uses the SHORTER cooldown, so the rescan rate goes UP exactly
+    // when you die mid-teamfight and the panel disappears.
+    //
+    // The escalation doubles from the caller's cooldown to a 1s cap, and any
+    // successful scan resets it. Worst case after respawn is up to 1s of stale
+    // minimap rotation, against a permanent ~11 whole-tree walks per second.
+    function NextMinimapScanBackoffMs(stateKey, baseCooldownMs) {
+        var current = Number(State[stateKey]) || 0;
+        var next = (current > 0) ? current * 2 : baseCooldownMs;
+        if (next > MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS) next = MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS;
+        State[stateKey] = next;
+        return next;
+    }
+
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
@@ -12400,6 +12583,7 @@ function GetUIRoot() {
             if (preferredImage) {
                 SetCachedPanel("minimapLocalMainImage", preferredImage);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return preferredImage;
             }
         }
@@ -12412,12 +12596,13 @@ function GetUIRoot() {
             if (img) {
                 SetCachedPanel("minimapLocalMainImage", img);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return img;
             }
         }
 
         SetCachedPanel("minimapLocalMainImage", null);
-        State.minimapLocalMainImageNextScanMs = now + scanCooldownMs;
+        State.minimapLocalMainImageNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalMainImageScanBackoffMs", scanCooldownMs);
         return null;
     }
 
@@ -12446,6 +12631,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp, ["active", "player", "client_cone_fov", "enemy"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp;
             }
         }
@@ -12456,6 +12642,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp2, ["active", "player", "client_cone_fov"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp2);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp2;
             }
         }
@@ -12467,12 +12654,13 @@ function GetUIRoot() {
             if (p.BHasClass && p.BHasClass("player")) {
                 SetCachedPanel("minimapLocalPlayerPanel", p);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return p;
             }
         }
 
         SetCachedPanel("minimapLocalPlayerPanel", null);
-        State.minimapLocalPlayerPanelNextScanMs = now + scanCooldownMs;
+        State.minimapLocalPlayerPanelNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalPlayerPanelScanBackoffMs", scanCooldownMs);
         return null;
     }
 
@@ -12767,10 +12955,17 @@ function GetUIRoot() {
         }
 
         if (compassRoot.style.visibility !== (showCompass ? "visible" : "collapse")) compassRoot.style.visibility = (showCompass ? "visible" : "collapse");
-        
+
+        // Resolved once. This used to be looked up here and again ~30 lines below —
+        // one `var` binding assigned twice, so the second lookup was a wasted cache
+        // read plus an IsValid() call on every 20Hz tick.
         var compassBox = GetCachedPanel("compassBox");
+        if (!IsPanelValid(compassBox)) {
+            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
+            SetCachedPanel("compassBox", compassBox);
+        }
         if (compassBox) {
-            compassBox.style.visibility = showCompass ? "visible" : "collapse";
+            SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
         }
         var scale = Number(State.compass.scale);
         if (!isFinite(scale)) scale = 100;
@@ -12799,11 +12994,6 @@ function GetUIRoot() {
         var marginTopText = Math.round(appliedCompassOffsetY) + "px";
         var marginLeftText = Math.round(offsetX) + "px";
         var scaleText = String(scale) + "%";
-        var compassBox = GetCachedPanel("compassBox");
-        if (!IsPanelValid(compassBox)) {
-            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
-            SetCachedPanel("compassBox", compassBox);
-        }
         var boxWidth = Math.round(200 * (stretchX / 100));
         var boxHeight = Math.round(50 * (stretchY / 100));
         if (boxWidth < 100) boxWidth = 100;
@@ -12819,21 +13009,21 @@ function GetUIRoot() {
             if (compassRoot.style.preTransformScale2d !== "1.00, 1.00") compassRoot.style.preTransformScale2d = "1.00, 1.00";
             if (compassRoot.style.uiScale !== scaleText) compassRoot.style.uiScale = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
-            compassRoot.style.height = "fit-children";
-            compassRoot.style.overflow = "noclip";
+            SetStyleIfChanged(compassRoot, "height", "fit-children");
+            SetStyleIfChanged(compassRoot, "overflow", "noclip");
 
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
-                compassBox.style.visibility = showCompass ? "visible" : "collapse";
+                SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
             }
 
             var readout = GetCachedPanel("compassReadout");
             if (readout) {
-                readout.style.width = "100%";
-                readout.style.height = "40px";
-                readout.style.flowChildren = "none";
-                readout.style.overflow = "noclip";
+                SetStyleIfChanged(readout, "width", "100%");
+                SetStyleIfChanged(readout, "height", "40px");
+                SetStyleIfChanged(readout, "flowChildren", "none");
+                SetStyleIfChanged(readout, "overflow", "noclip");
             }
             State.compass.layoutSig = layoutSig;
         }
@@ -12853,11 +13043,16 @@ function GetUIRoot() {
             // row, and the full centered width when the compass owns the row
             // alone. (Both labels use ignore-parent-flow, so equal full widths
             // would stack on top of each other — hence the 50% split.)
-            degreeLabel.style.width = showSpeed ? "50%" : "100%";
-            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
-            degreeLabel.style.horizontalAlign = "left";
-            degreeLabel.style.verticalAlign = "center";
-            degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
+            //
+            // Compare-then-write: this runs at COMPASS_INTERVAL_SEC (20Hz) and the
+            // values only change when the user toggles a compass setting, so these
+            // were ~100 redundant layout-dirtying writes a second. Two of the five
+            // are literal constants that can never change after the first tick.
+            SetStyleIfChanged(degreeLabel, "width", showSpeed ? "50%" : "100%");
+            SetStyleIfChanged(degreeLabel, "textAlign", showSpeed ? "left" : "center");
+            SetStyleIfChanged(degreeLabel, "horizontalAlign", "left");
+            SetStyleIfChanged(degreeLabel, "verticalAlign", "center");
+            SetStyleIfChanged(degreeLabel, "visibility", showCompass ? "visible" : "collapse");
         }
         if (speedLabel) {
             var speedRoot = GetCachedPanel("speedRoot");
@@ -12868,11 +13063,11 @@ function GetUIRoot() {
             // alone it's full-width screen-centered. The speed root is sized to
             // the box width and centered on it, so "right half" lines up with the
             // box's right half — no boxWidth/2 margin shift needed.
-            speedLabel.style.width = showCompass ? "50%" : "100%";
-            speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
-            speedLabel.style.verticalAlign = "center";
-            var speedOffsetX = Number(State.compass.speedOffsetX);
+            // Same 20Hz compare-then-write as the degree label above.
+            SetStyleIfChanged(speedLabel, "width", showCompass ? "50%" : "100%");
+            SetStyleIfChanged(speedLabel, "textAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "horizontalAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "verticalAlign", "center");            var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
             if (speedOffsetX < -2000) speedOffsetX = -2000;
             if (speedOffsetX > 2000) speedOffsetX = 2000;
@@ -14710,7 +14905,10 @@ function GetUIRoot() {
         try {
             if (typeof QOL_FEATURE_REGISTRY === "undefined") return;
             var diagRoot = State.rootPanel || root;
-            var diagHud = (diagRoot && diagRoot.FindChildTraverse) ? diagRoot.FindChildTraverse("Hud") : null;
+            // Cached: the throttle below is 5s, but the force-sync token has to be
+            // polled every tick for the Settings-side 6s timeout to work — so this
+            // lookup ran 5x/sec while 24 of every 25 results were discarded.
+            var diagHud = ResolveHudPanel(diagRoot);
             // ── Force-sync: Settings context writes a token to QOL_DiagRequest when it
             //     needs an immediate diagnostic snapshot (e.g. after a preset change).
             //     Echo the token in the response so the caller can match it. ──

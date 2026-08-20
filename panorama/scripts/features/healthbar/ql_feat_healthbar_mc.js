@@ -297,7 +297,19 @@
                 return false;
             }
         }
-        if (State.mcBarrierHeartsCapacity === heartsNeeded && State.mcBarrierHeartsPanels.length === State.mcBarrierHeartsCapacity) return true;
+        // >=, not ==. heartsNeeded here is derived from total BARRIER, parsed off the
+        // shield bar's max label — and unlike total health that is not stable: bullet
+        // armour and shield items change it, and it can differ per shield application.
+        // With an equality test, a max that oscillates between two values ran
+        // RemoveAndDeleteChildren plus 3 CreatePanel per heart on every oscillation,
+        // up to 5 times a second. Panel construction is the most expensive single
+        // operation in Panorama, and shields are churning hardest mid-teamfight.
+        //
+        // The main heart path already gets this right (McEnsureHeartsCapacity uses
+        // >=), and over-allocated slots are harmless: the render loop collapses any
+        // slot past fullHearts, and isLastSlot compares against heartsNeeded rather
+        // than the array length, so a longer array still indexes correctly.
+        if (State.mcBarrierHeartsCapacity >= heartsNeeded && State.mcBarrierHeartsPanels.length >= State.mcBarrierHeartsCapacity) return true;
         GetCachedPanel("mcBarrierHearts").RemoveAndDeleteChildren();
         State.mcBarrierHeartsPanels = [];
         State.mcBarrierHeartContainerImages = [];
@@ -473,6 +485,16 @@
             for (var i = 0; i < State.mcBarrierHeartsPanels.length; i += 1) {
                 var container = State.mcBarrierHeartContainerImages[i];
                 var fill = State.mcBarrierHeartFillImages[i];
+                // Capacity only grows now (see McEnsureBarrierHeartsCapacity), so the
+                // array can be longer than heartsNeeded. Collapse the whole surplus
+                // slot: collapsing only its fill would leave a visible empty heart
+                // outline from a barrier maximum the player no longer has.
+                var slot = State.mcBarrierHeartsPanels[i];
+                if (i >= heartsNeeded) {
+                    if (slot) slot.style.visibility = "collapse";
+                    continue;
+                }
+                if (slot) slot.style.visibility = "visible";
                 var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
                 container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x_png.vtex" : "s2r://panorama/images/minecraft/container_8x_png.vtex");
                 fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
@@ -489,9 +511,51 @@
         } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateBarrierHearts: " + error); }
     }
 
-    function McParseDeferredDamage(hudRoot) {
+    // Resolve a pending-bar panel by id, caching both hits and misses.
+    //
+    // These two ids miss on every call: neither "pending_incoming_damage_Middle"
+    // nor "pending_incoming_heal_Middle" appears in any mod layout or in any of
+    // Valve's 457 layout files. The layouts declare
+    // <ProgressBarWithMiddle id="pending_incoming_damage"> (hud_health.xml:25) and
+    // vanilla CSS addresses the generated child by CLASS —
+    // "#pending_incoming_damage .ProgressBarMiddle" (hud_health.css:483) — so the
+    // "<parentId>Middle" id convention assumed here does not exist in Panorama.
+    //
+    // A FindChildTraverse miss is not a cheap null: it walks every descendant of
+    // the panel it was called on before returning. Called from McComputeHealthState
+    // on every MC tick, these two were ~10 whole-HUD walks a second for the length
+    // of a match, and the walk is longest exactly during a teamfight when the tree
+    // is at its largest.
+    //
+    // This is the perf fix only, and it deliberately preserves current behaviour:
+    // both functions still return 0, which means the deferred-damage and
+    // incoming-heal heart overlays stay non-functional as they have always been.
+    // Resolving them by class would switch on visuals users have never seen, so
+    // that belongs in its own change with its own in-game verification.
+    var MC_PENDING_BAR_PROBE_MS = 2000;
+
+    function McResolvePendingBar(hudRoot, cacheKey, panelId, nowMs) {
+        var cached = GetCachedPanel(cacheKey);
+        if (cached) return cached;
+        if (!hudRoot || !hudRoot.FindChildTraverse) return null;
+
+        var probe = State.mcPendingBarProbeNextMs || (State.mcPendingBarProbeNextMs = {});
+        if (nowMs < (Number(probe[cacheKey]) || 0)) return null;
+
+        var found = null;
+        try { found = hudRoot.FindChildTraverse(panelId); } catch (e) { found = null; }
+        if (found) {
+            SetCachedPanel(cacheKey, found);
+            probe[cacheKey] = 0;
+        } else {
+            probe[cacheKey] = nowMs + MC_PENDING_BAR_PROBE_MS;
+        }
+        return found;
+    }
+
+    function McParseDeferredDamage(hudRoot, nowMs) {
         try {
-            var damageBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_damage_Middle") : null;
+            var damageBar = McResolvePendingBar(hudRoot, "mcPendingDamageMiddle", "pending_incoming_damage_Middle", nowMs);
             if (!damageBar) return 0;
             var heightStr = damageBar.style && damageBar.style.height ? damageBar.style.height.toString() : "";
             var heightValue = parseFloat(heightStr) || 0;
@@ -499,9 +563,9 @@
         } catch (e) { $.Msg("[QOLLock][MC] Error in McParseDeferredDamage: " + e); return 0; }
     }
 
-    function McParseIncomingHeal(hudRoot) {
+    function McParseIncomingHeal(hudRoot, nowMs) {
         try {
-            var healBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_heal_Middle") : null;
+            var healBar = McResolvePendingBar(hudRoot, "mcPendingHealMiddle", "pending_incoming_heal_Middle", nowMs);
             if (!healBar) return 0;
             var heightStr = healBar.style && healBar.style.height ? healBar.style.height.toString() : "";
             var heightValue = parseFloat(heightStr) || 0;
@@ -542,11 +606,11 @@
         return { currentHealth: currentHealth, totalHealth: totalHealth };
     }
 
-    function McComputeHealthState(currentHealth, totalHealth, hudRoot) {
-        var deferredFraction = McParseDeferredDamage(hudRoot);
+    function McComputeHealthState(currentHealth, totalHealth, hudRoot, nowMs) {
+        var deferredFraction = McParseDeferredDamage(hudRoot, nowMs);
         var deferredDamage = Math.round(deferredFraction * totalHealth);
         var trueCurrentHealth = Math.max(0, currentHealth - deferredDamage);
-        var incomingHealFraction = McParseIncomingHeal(hudRoot);
+        var incomingHealFraction = McParseIncomingHeal(hudRoot, nowMs);
         var incomingHealAmount = Math.round(incomingHealFraction * totalHealth);
         var healingHealth = Math.min(totalHealth, currentHealth + incomingHealAmount);
         var currentHalfSegments = Math.ceil(trueCurrentHealth / MC_HP_PER_HALF_SEGMENT);
@@ -727,11 +791,11 @@
             mcPercentLabel.text = "  [" + String(Math.floor(mcPercent)) + "%]";
         }
 
-        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot);
+        var nowMsForMod = Date.now();
+        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot, nowMsForMod);
 
         McUpdateAnimationState(hs.currentHalfSegments, hs.effectiveHalfSegments, hs.hasIncomingHeal);
 
-        var nowMsForMod = Date.now();
         if (nowMsForMod >= (Number(State.mcCheckModifierNextMs) || 0)) {
             State.mcLastModifierResult = McCheckModifierActive(root, "AFFLICTED");
             State.mcCheckModifierNextMs = nowMsForMod + MC_MODIFIER_THROTTLE_MS;

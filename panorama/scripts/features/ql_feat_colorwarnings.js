@@ -542,43 +542,50 @@ var ToRgbString = Utils.ToRgbString;
         var use25dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? 1 : 0;
         var use65dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? 1 : 0;
         var use75dbg = IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? 1 : 0;
-        var sampleBar = "-";
-        var sampleTeam = "-";
-        if (entries.length > 0 && entries[0]) sampleBar = String(entries[0].barId || "-");
-        if (entries.length > 0 && entries[0]) sampleTeam = String(entries[0].teamClass || "-");
-        var scanSig =
-            "en=" + (enabled ? "1" : "0") +
-            "|t=" + use25dbg + use65dbg + use75dbg +
-            "|e=" + entries.length +
-            "|bar=" + sampleBar +
-            "|team=" + sampleTeam +
-            "|friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
-            "|r=" + (scanStats ? scanStats.roots : -1) +
-            "|us=" + (scanStats ? scanStats.unitStatus : -1) +
-            "|uo=" + (scanStats ? scanStats.unitStatusOld : -1) +
-            "|c=" + (scanStats ? scanStats.candidates : -1) +
-            "|lag=" + (scanStats ? scanStats.foundLagging : -1) +
-            "|state=" + (scanStats ? scanStats.foundState : -1) +
-            "|skipEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
-            "|inferTeam=" + (scanStats ? scanStats.inferredByTeam : -1);
-        EnemyColoredHealthDebugLogThrottled(
-            scanSig,
-            "enabled=" + (enabled ? "1" : "0") +
-                " thresholds=" + use25dbg + "/" + use65dbg + "/" + use75dbg +
-                " entries=" + entries.length +
-                " sampleBar=" + sampleBar +
-                " sampleTeam=" + sampleTeam +
-                " friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
-                " roots=" + (scanStats ? scanStats.roots : -1) +
-                " unitStatus=" + (scanStats ? scanStats.unitStatus : -1) +
-                " unitStatusOld=" + (scanStats ? scanStats.unitStatusOld : -1) +
-                " candidates=" + (scanStats ? scanStats.candidates : -1) +
-                " foundLagging=" + (scanStats ? scanStats.foundLagging : -1) +
-                " foundState=" + (scanStats ? scanStats.foundState : -1) +
-                " skippedNoEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
-                " inferredByTeam=" + (scanStats ? scanStats.inferredByTeam : -1),
-            now
-        );
+        // Both strings below are arguments to EnemyColoredHealthDebugLogThrottled,
+        // which returns on its first line because ENEMY_COLORED_HEALTH_DEBUG is a
+        // compile-time false. Arguments are evaluated before the call, so ~30 string
+        // concatenations ran every tick and were thrown away. Allocation churn like
+        // this is what shows up as a bad 1% low rather than a lower average FPS.
+        if (ENEMY_COLORED_HEALTH_DEBUG) {
+            var sampleBar = "-";
+            var sampleTeam = "-";
+            if (entries.length > 0 && entries[0]) sampleBar = String(entries[0].barId || "-");
+            if (entries.length > 0 && entries[0]) sampleTeam = String(entries[0].teamClass || "-");
+            var scanSig =
+                "en=" + (enabled ? "1" : "0") +
+                "|t=" + use25dbg + use65dbg + use75dbg +
+                "|e=" + entries.length +
+                "|bar=" + sampleBar +
+                "|team=" + sampleTeam +
+                "|friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
+                "|r=" + (scanStats ? scanStats.roots : -1) +
+                "|us=" + (scanStats ? scanStats.unitStatus : -1) +
+                "|uo=" + (scanStats ? scanStats.unitStatusOld : -1) +
+                "|c=" + (scanStats ? scanStats.candidates : -1) +
+                "|lag=" + (scanStats ? scanStats.foundLagging : -1) +
+                "|state=" + (scanStats ? scanStats.foundState : -1) +
+                "|skipEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
+                "|inferTeam=" + (scanStats ? scanStats.inferredByTeam : -1);
+            EnemyColoredHealthDebugLogThrottled(
+                scanSig,
+                "enabled=" + (enabled ? "1" : "0") +
+                    " thresholds=" + use25dbg + "/" + use65dbg + "/" + use75dbg +
+                    " entries=" + entries.length +
+                    " sampleBar=" + sampleBar +
+                    " sampleTeam=" + sampleTeam +
+                    " friendlyTeam=" + (scanStats ? (scanStats.friendlyTeamClass || "-") : "-") +
+                    " roots=" + (scanStats ? scanStats.roots : -1) +
+                    " unitStatus=" + (scanStats ? scanStats.unitStatus : -1) +
+                    " unitStatusOld=" + (scanStats ? scanStats.unitStatusOld : -1) +
+                    " candidates=" + (scanStats ? scanStats.candidates : -1) +
+                    " foundLagging=" + (scanStats ? scanStats.foundLagging : -1) +
+                    " foundState=" + (scanStats ? scanStats.foundState : -1) +
+                    " skippedNoEnemy=" + (scanStats ? scanStats.skippedNoEnemy : -1) +
+                    " inferredByTeam=" + (scanStats ? scanStats.inferredByTeam : -1),
+                now
+            );
+        }
         if (entries.length <= 0) {
             State.enemyColoredHealthNextUpdateMs = now + ENEMY_COLORED_HEALTH_UPDATE_MS;
             return;
@@ -609,17 +616,23 @@ var ToRgbString = Utils.ToRgbString;
             var teamColor = ResolveEnemyColoredHealthTeamColor(entry);
             var nextColor = ResolveEnemyColoredHealthColor(pct, cfg, teamColor);
 
-            EnemyColoredHealthDebugLogThrottled(
-                "apply|" + String(Math.round(Number(entry.healthBar.actuallayoutheight))) + "|" + String(Math.round(pct)) + "|" + nextColor,
-                "apply bar=" + String(entry.barId || "-") +
-                    " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
-                    " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
-                    " use25=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? "1" : "0") +
-                    " use65=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? "1" : "0") +
-                    " use75=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? "1" : "0") +
-                    " color=" + nextColor,
-                now
-            );
+            // Per-entry, so this ran ~13 string concatenations for every one of up to
+            // 12 tracked players every tick — the bulk of this file's allocation churn
+            // — to feed a logger that returns immediately. Guarded, not deleted: the
+            // detail is genuinely useful when the flag is flipped for diagnosis.
+            if (ENEMY_COLORED_HEALTH_DEBUG) {
+                EnemyColoredHealthDebugLogThrottled(
+                    "apply|" + String(Math.round(Number(entry.healthBar.actuallayoutheight))) + "|" + String(Math.round(pct)) + "|" + nextColor,
+                    "apply bar=" + String(entry.barId || "-") +
+                        " height=" + String(Number(entry.healthBar.actuallayoutheight)) +
+                        " pct=" + String(pct.toFixed ? pct.toFixed(2) : pct) +
+                        " use25=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_25") ? "1" : "0") +
+                        " use65=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_65") ? "1" : "0") +
+                        " use75=" + (IsCfgEnabled(cfg, "ENABLE_TOPBAR_ENEMY_HP_WARNING_75") ? "1" : "0") +
+                        " color=" + nextColor,
+                    now
+                );
+            }
 
             if (String(entry.lastColor || "") === nextColor) continue;
 

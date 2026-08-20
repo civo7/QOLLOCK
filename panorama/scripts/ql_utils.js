@@ -253,6 +253,35 @@
     exports.SetStyleSafe = SetStyleSafe;
 
     /**
+     * Set a CSS style property only when the panel does not already hold that value.
+     *
+     * Panorama does not compare before acting on a style assignment: writing the
+     * value a panel already has still marks it dirty and queues a re-layout of its
+     * subtree. A loop that re-asserts the same geometry every tick therefore pays
+     * full price for doing nothing, and at 20Hz across several panels that is real
+     * frame time.
+     *
+     * Deliberately a separate function rather than a compare added inside
+     * SetStyleSafe. Reading a style property back does not always return the string
+     * that was written — the engine may normalize it — so folding the compare into
+     * SetStyleSafe would make it an inert guard in some places and, worse, could skip
+     * a write whose read-back matches while the engine's own state differs. Opt in at
+     * sites where the redundancy has actually been measured.
+     *
+     * Returns true when a write was performed.
+     */
+    function SetStyleIfChanged(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return false;
+        try {
+            if (panel.style[prop] === value) return false;
+            panel.style[prop] = value;
+            return true;
+        } catch (e) { /* SetStyleIfChanged: panel may be deleted mid-frame */ }
+        return false;
+    }
+    exports.SetStyleIfChanged = SetStyleIfChanged;
+
+    /**
      * Clear a CSS style property on a panel (tries delete, null, then "").
      */
     function ClearStyleSafe(panel, prop) {

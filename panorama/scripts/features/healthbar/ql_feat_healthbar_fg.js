@@ -171,7 +171,6 @@
             hero = QOL.normalizeHeroId(settingsSignal && settingsSignal.hero ? settingsSignal.hero : "");
         } catch (e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); hero = ""; }
         if (hero) return hero;
-
         try {
             if (root && root.GetAttributeString) {
                 hero = QOL.normalizeHeroId(root.GetAttributeString(HERO_HINT_ATTR, ""));
@@ -259,7 +258,24 @@
         }
 
         if (fgEnabled && hudVisibleForRuntime) {
-            var refreshHero = ResolveFgHeroRefreshSignal(root, cfg, levelAmount);
+            // Hero identity is constant for a match, but resolving it is not cheap:
+            // TryReadHeroFromPanelDetails walks a 62-entry alias map doing two
+            // BHasClass calls per entry, then runs the locale-table regex chain over
+            // several candidate strings. At 5Hz that was on the order of hundreds of
+            // native calls and regex executions per second to re-derive a value that
+            // had not changed.
+            //
+            // State.fgHeroImageSourceProbeNextMs was already being written for exactly
+            // this purpose (twice, below) but never read, so the throttle never took
+            // effect. Wire it up, and remember the last answer so a throttled tick
+            // behaves identically to an unthrottled one rather than seeing an empty
+            // signature and tearing down the attachment.
+            var refreshHero = State.fgHeroImageLastResolvedSig || "";
+            var probeNextMs = Number(State.fgHeroImageSourceProbeNextMs) || 0;
+            if (!refreshHero || nowMs >= probeNextMs) {
+                refreshHero = ResolveFgHeroRefreshSignal(root, cfg, levelAmount);
+                State.fgHeroImageLastResolvedSig = refreshHero || "";
+            }
             if (refreshHero && refreshHero !== State.fgHeroImageCurrentSig) {
                 State.fgHeroImageCurrentSig = refreshHero;
                 State.fgHeroImagePendingAttachMs = nowMs + 140;
@@ -341,6 +357,7 @@
 
         State.fgHeroImageMoved = false;
         State.fgHeroImageSourceProbeNextMs = nowMs + 350;
+        State.fgHeroImageLastResolvedSig = "";
         State.fgHeroImageCurrentSig = "";
         State.fgHeroImagePendingAttachMs = 0;
         State.fgHeroImageRuntimeStyleSig = "";

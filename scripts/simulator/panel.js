@@ -112,7 +112,17 @@ class Panel {
         return this._children[index] || null;
     }
 
-    get Children() {
+    /**
+     * A METHOD, not a getter — `panel.Children()` is how the engine exposes it and
+     * how the mod calls it (39 call sites). Modelling it as a getter made
+     * `panel.Children()` throw "Children is not a function", which the mod's error
+     * boundaries swallowed: features died silently partway through their update and
+     * the profiler under-counted their real cost. The mod also guards with
+     * `if (panel.Children)`, which is satisfied either way, so nothing catches this
+     * except an explicit test.
+     */
+    Children() {
+        this._assertValid("Children");
         return this._children.slice();
     }
 

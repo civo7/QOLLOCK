@@ -103,6 +103,10 @@ var State;
         fgHeroImageOriginalIndex: -1,
         fgHeroImageMoved: false,
         fgHeroImageSourceProbeNextMs: 0,
+        // Last hero signature ResolveFgHeroRefreshSignal returned, so a tick
+        // throttled by fgHeroImageSourceProbeNextMs reuses it instead of seeing
+        // an empty signature and tearing down the hero-image attachment.
+        fgHeroImageLastResolvedSig: "",
         fgHeroImageCurrentSig: "",
         fgHeroImagePendingAttachMs: 0,
         fgHeroImageRefreshBounceNextMs: 0,
@@ -111,6 +115,11 @@ var State;
         fgHeroImageSwapCandidatePanel: null,
         minimapLocalPlayerPanelNextScanMs: 0,
         minimapLocalMainImageNextScanMs: 0,
+        // Current escalating backoff for the two minimap local-player scans. Both
+        // fall back to a whole-HUD class traversal, so a miss must not retry at the
+        // 90ms fast cooldown forever. See NextMinimapScanBackoffMs in ql_core.js.
+        minimapLocalPlayerPanelScanBackoffMs: 0,
+        minimapLocalMainImageScanBackoffMs: 0,
         minimapRotateLastDeg: null,
         minimapRotateSmoothedDeg: null,
         minimapRotateLastUpdateMs: 0,
@@ -212,6 +221,11 @@ var State;
             lastMaxHealthText: "",
             nextSourceSearchMs: 0,
             nextSourceSearchByKey: {},
+            // Escalating retry interval for stat source lookups, and the shop
+            // state the last lookup ran under. See ResolveStatBonusesSource in
+            // ql_core.js for why a flat retry was expensive.
+            sourceSearchBackoffMs: 0,
+            lastSourceSearchShopOpen: null,
             nextIdolCountSearchMs: 0,
             nextTooltipScanMs: 0,
             goldenValues: {},

@@ -46,13 +46,30 @@
     }
 
     // -- Hud resolution --
+    //
+    // Cached, because this is called from poll loops and is not cheap when it
+    // fails. The first attempt — ctx.FindChildTraverse("Hud") — MISSES whenever the
+    // context panel is itself the Hud panel, which is the normal case in the HUD
+    // context: FindChildTraverse never returns the panel it was called on. A miss
+    // walks the whole subtree before returning null, so the uncached version cost
+    // two full-tree walks (one from the context panel, one from the absolute root)
+    // every time a caller asked.
+    //
+    // The Hud panel lives for the whole context, so one resolution is enough;
+    // isPanelAlive re-validates on every call and a torn-down panel is re-resolved
+    // on the next one.
+    var _cachedHud = null;
+
     function findHud() {
+        if (isPanelAlive(_cachedHud)) return _cachedHud;
+        _cachedHud = null;
+
         var MAX_DEPTH = 64;
         try {
             var ctx = $.GetContextPanel();
             if (!isPanelAlive(ctx)) return null;
             var hud = ctx.FindChildTraverse("Hud");
-            if (isPanelAlive(hud)) return hud;
+            if (isPanelAlive(hud)) { _cachedHud = hud; return hud; }
             var absRoot = ctx;
             var depth = 0;
             while (depth < MAX_DEPTH) {
@@ -62,7 +79,11 @@
                 depth++;
             }
             hud = absRoot.FindChildTraverse("Hud");
-            return isPanelAlive(hud) ? hud : null;
+            if (isPanelAlive(hud)) { _cachedHud = hud; return hud; }
+            // The context panel IS the Hud in the HUD context, where neither search
+            // can return it. Recognise that rather than reporting no Hud at all.
+            if (ctx.id === "Hud") { _cachedHud = ctx; return ctx; }
+            return null;
         } catch (e) {
             return null;
         }

@@ -69,6 +69,28 @@ Put it in every failure message; it turns "assertion failed" into an answer.
 | `scripts/simulator/sandbox.js` | The `vm` context: `$` API, event dispatch, `$.persistentStorage`, deterministic `Math.random`. |
 | `scripts/simulator/game/builds.js` | `BuildsModel` — owns build state and mutates the tree the way the C++ client does. |
 | `scripts/simulator/index.js` | `createHud()`, `diagnose()`. Start here. |
+| `scripts/simulator/perf/` | Layer 3 — operation counters, a realistic in-match tree, and the profiled-HUD entry point. See `docs/PROFILING.md`. |
+
+## Layer 3 — frame-cost profiling
+
+Same simulator, different question: not "did it behave correctly" but "how much
+work did it ask the engine to do, and which feature asked".
+
+```
+node scripts/profile_hud.js --seconds 20               # per-feature cost report
+node scripts/profile_hud.js --seconds 20 --save before # then make a change
+node scripts/profile_hud.js --seconds 20 --compare before
+node scripts/audit_panel_ids.js                        # lookups that can never hit
+node --test tests/perf_guards.test.js                  # regression ceilings
+```
+
+This layer catches a class of bug the other two cannot: code that produces exactly
+the right output while doing a hundred times more work than it needs to. It also
+catches features that throw on a per-tick path, which are invisible in game because
+the mod's error boundary swallows them.
+
+Read `docs/PROFILING.md` before quoting any number from it — in particular, it
+cannot produce milliseconds, and the healthbar variants are only partially covered.
 
 ### Latency is load-bearing
 
