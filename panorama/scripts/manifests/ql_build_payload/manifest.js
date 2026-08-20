@@ -59,6 +59,9 @@
     // that as "no builds exist" is what made a junk build appear on every boot.
     var LIST_CONFIRM_MS     = 1500;
     var CREATE_SETTLE_MS    = 800;
+    // Expanding the build dropdown is what populates #FavoriteBuildList.
+    var EXPAND_SETTLE_MS    = 400;
+    var EXPAND_MAX_FAILS    = 6;
     var SCAN_TIMEOUT_MS     = 8000;
     var SAVE_WAIT_POLL_MS   = 250;
     var SAVE_WAIT_TIMEOUT_MS = 15000;
@@ -206,24 +209,86 @@
     }
 
     /**
-     * Every storage build entry we could select, popup open or not.
+     * Every storage build entry we could select.
      *
-     * `_buildListItems` above only sees #HeroBuildList / .HeroBuildListItem, which
-     * exist solely while the build browser popup is open — and the normal read path
-     * never opens it (_openBuildBrowser is only reached from _stepRepair). That is
-     * why the loader used to see nothing but whatever build the shop had already
-     * selected.
+     * IMPORTANT (verified against real game logs, 2026-08-20): the build list is
+     * COLLAPSED by default. #FavoriteBuildList is empty in XML
+     * (citadel_shop_mods_build.xml:51) and the engine only fills it once the build
+     * dropdown is expanded. Until then the sole .FavoriteBuildEntryContainer in the
+     * tree is the selected build's own header entry under #SelectedBuildOuter — so
+     * a class sweep reports exactly ONE entry no matter how many builds exist.
+     * That is what "1 storage entr(ies) present" in the logs meant.
      *
-     * QOL.collectStorageBuildEntryPanels (ql_core.js:8682) is the enumeration the
-     * old loader used: it sweeps .FavoriteBuildEntryContainer on the shop side as
-     * well as .HeroBuildListItem, across several candidate roots, with a structural
-     * fallback. Reuse it rather than re-deriving traversal here.
+     * #HeroBuildList / .HeroBuildListItem only exist while the build browser popup
+     * is open, which the normal read path never opens.
+     *
+     * So enumeration REQUIRES expanding one of the two lists first — see
+     * _expandBuildList. This function only reports what is currently reachable.
      */
     function _storageEntries(root) {
         var entries = _callQol("collectStorageBuildEntryPanels", null, [root, true]);
         if (entries && entries.length > 0) return entries;
         // Fall back to the popup list if the shared helper is unavailable.
         return _buildListItems(root);
+    }
+
+    /**
+     * Expand the build dropdown so #FavoriteBuildList is populated.
+     *
+     * .BuildHeaderContainer's onactivate is
+     * CitadelHudHeroBuildsToggleFavoriteSelector() (citadel_shop_mods_build.xml:22).
+     * Prefer activating the panel over calling the global: the C++ globals are
+     * registered against the builds panel's own JS context, so `typeof` is often
+     * not "function" from ours, while panel activation crosses contexts.
+     *
+     * The sweep re-enters this after every pick, because selecting an entry
+     * collapses the list again. The attempt cap therefore bounds CONSECUTIVE
+     * FAILURES only and resets on success — counting successful expansions too
+     * would strand the sweep partway through a long list.
+     *
+     * Returns true once more than one entry is reachable, i.e. the list is open.
+     */
+    function _expandBuildList(root, now, st) {
+        if (_storageEntries(root).length > 1) {
+            st.expandFails = 0;
+            return true;
+        }
+
+        if (st.expandNextMs && now < st.expandNextMs) return false;
+        if ((st.expandFails || 0) >= EXPAND_MAX_FAILS) return false;
+        st.expandFails = (st.expandFails || 0) + 1;
+        st.expandNextMs = now + EXPAND_SETTLE_MS;
+
+        var sb = _selectedBuild(root);
+        var header = null;
+        if (_alive(sb)) {
+            var containers = _findClass(sb, "BuildHeaderContainer");
+            if (containers.length > 0) header = containers[0];
+        }
+        var acted = false;
+        if (_alive(header)) {
+            var fn = _qol("activatePanelSafe");
+            if (typeof fn === "function") {
+                try { fn(header); acted = true; } catch(e) {}
+            }
+        }
+        if (!acted) {
+            try {
+                if (typeof CitadelHudHeroBuildsToggleFavoriteSelector === "function") {
+                    CitadelHudHeroBuildsToggleFavoriteSelector();
+                    acted = true;
+                }
+            } catch(e) {}
+        }
+        if (!acted) {
+            try { $.DispatchEvent("CitadelHudHeroBuildsToggleFavoriteSelector"); acted = true; } catch(e) {}
+        }
+        if (!st._loggedExpand) {
+            st._loggedExpand = true;
+            $.Msg("[QOLLock][ql_build_payload] expand: header=" + (_alive(header) ? "1" : "0") +
+                  " acted=" + (acted ? "1" : "0"));
+        }
+        return false;
     }
 
     // ── Payload text ──
@@ -312,7 +377,7 @@
         //    instead of sweeping. Titles may be dialog-variable backed and thus
         //    unreadable, so this is opportunistic — the sweep below is the
         //    guarantee.
-        if (!st.markerTried) {
+        if (!st.markerTried && items.length > 1) {
             st.markerTried = true;
             for (var mi = 0; mi < items.length; mi++) {
                 var itemText = _deepText(items[mi]);
@@ -320,7 +385,6 @@
                     $.Msg("[QOLLock][ql_build_payload] scan: marker title found at entry " + mi);
                     st.markerIndex = mi;
                     if (_selectEntry(items[mi])) {
-                        st.visited["m" + mi] = true;
                         st.scanLastAdvanceMs = _now();
                     }
                     return "";
@@ -328,16 +392,31 @@
             }
         }
 
-        // 4. Full sweep: visit every entry exactly once, honouring settle time.
+        // 4. Full sweep.
+        //
+        // Selecting an entry COLLAPSES the dropdown (that is what the real client
+        // does), so the entry list is not stable across steps: after each pick we
+        // are back to a single header entry and must re-expand before the next one.
+        // The cursor therefore counts builds *visited*, and we re-derive the list
+        // each time rather than holding panel references across a collapse — those
+        // panels are destroyed and would fail _alive().
         var now = _now();
         if (now - (st.scanLastAdvanceMs || 0) < SCAN_SETTLE_MS) return "";
-        if (items.length === 0) return "";
+
+        // Re-expand if the list collapsed after the previous pick.
+        if (items.length <= 1) {
+            _expandBuildList(root, now, st);
+            return "";
+        }
 
         var cursor = st.scanCursor || 0;
-        if (cursor >= items.length) return "";   // swept everything
+        if (cursor >= items.length) return "";   // swept every entry
 
         st.scanCursor = cursor + 1;
         st.scanLastAdvanceMs = now;
+        // Fresh expand budget for the next step.
+        st.expandNextMs = 0;
+        st.expandFails = 0;
         if (_selectEntry(items[cursor])) {
             st.scanAdvances = (st.scanAdvances || 0) + 1;
         }
@@ -353,13 +432,14 @@
     }
 
     /**
-     * Time budget for a full sweep. Must scale with the number of builds or the
-     * sweep gets guillotined partway through — the old fixed 8s was fine for the
-     * 4 attempts it made and far too short for a real list.
+     * Time budget for a full sweep. Must scale with the number of builds, and
+     * each step costs a re-expand plus a settle: picking an entry collapses the
+     * dropdown, so the sweep pays that round trip per build.
      */
     function _scanBudgetMs(itemCount) {
         var n = Math.max(1, Number(itemCount) || 1);
-        return Math.max(SCAN_TIMEOUT_MS, 2000 + n * SCAN_SETTLE_MS * 2);
+        var perStep = SCAN_SETTLE_MS + EXPAND_SETTLE_MS;
+        return Math.max(SCAN_TIMEOUT_MS, 3000 + n * perStep * 2);
     }
 
     // ── Token decode ──
@@ -606,6 +686,12 @@
             st._favTabDone = true;
         }
 
+        // Expand the build dropdown. Without this the list is collapsed and only
+        // the selected build's header entry is reachable, so the sweep has nothing
+        // to walk. Note ensureStorageHeroFavoritesHeaderVisible above only opens
+        // the shop and switches to the Favorites tab — it does NOT expand the list.
+        var expanded = _expandBuildList(root, now, st);
+
         // Any entries at all? If so there is something to sweep — go read.
         //
         // `_preexistingEntries` records only entries that were there BEFORE we
@@ -617,12 +703,22 @@
         // as a FavoriteBuildEntryContainer in the header, so one build can surface
         // as two entries. Harmless for sweeping; do not treat it as a build count.
         var entries = _storageEntries(root);
+
+        // Keep waiting while expansion is still in flight and all we can see is
+        // that single header entry — otherwise we would read one build and declare
+        // the payload missing.
+        if (!expanded && entries.length <= 1 && (st.expandFails || 0) < EXPAND_MAX_FAILS) {
+            if (entries.length > 0 && !st.createAttempted) st._preexistingEntries = true;
+            return false;
+        }
+
         if (entries.length > 0) {
             if (!st.createAttempted) st._preexistingEntries = true;
             if (!st._loggedEntries) {
                 st._loggedEntries = true;
                 $.Msg("[QOLLock][ql_build_payload] ensure: " + entries.length +
-                      " storage entr(ies) present, proceeding to read (no create)");
+                      " storage entr(ies) present, expanded=" + (expanded ? "1" : "0") +
+                      ", proceeding to read (no create)");
             }
             return true;
         }
@@ -803,6 +899,8 @@
                     markerTried: false,
                     markerIndex: -1,
                     emptySince: 0,
+                    expandFails: 0,
+                    expandNextMs: 0,
                     _preexistingEntries: false,
                     _loggedEntries: false,
                     payloadText: "",

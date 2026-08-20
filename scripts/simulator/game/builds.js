@@ -25,6 +25,7 @@ const DEFAULT_LATENCY = {
     editModeMs: 120,      // EditSelectedBuild -> gEditingBuilds
     saveEditsMs: 180,     // SaveEdits -> committed + gEditingBuilds cleared
     browserOpenMs: 200,   // OpenBuildBrowser -> popup visible
+    selectorExpandMs: 200, // ToggleFavoriteSelector -> #FavoriteBuildList populated
 };
 
 /**
@@ -73,6 +74,8 @@ class BuildsModel {
         this.shopOpen = false;
         this.browserOpen = false;
         this.editing = false;
+        // #FavoriteBuildList is empty until the build dropdown is expanded.
+        this.favoritesExpanded = false;
 
         /** @type {{title:string, categories:{name:string}[]}[]} */
         this.builds = [];
@@ -84,6 +87,7 @@ class BuildsModel {
         this.counters = {
             createBuild: 0, deleteBuild: 0, selectBuild: 0,
             editMode: 0, saveEdits: 0, heroSwitch: 0, browserOpen: 0,
+            toggleSelector: 0,
         };
 
         this._buildTree();
@@ -112,6 +116,9 @@ class BuildsModel {
         const headerContainer = header.addChild(mk("Panel", { classes: ["BuildHeaderContainer"] }));
         headerContainer.addChild(mk("Panel", { classes: ["FavoriteBuildsSelector"] }));
         this.selectedBuildOuter = headerContainer.addChild(mk("Panel", { id: "SelectedBuildOuter" })); // [C++] filled
+        // citadel_shop_mods_build.xml:22 — activating the header toggles the build
+        // dropdown, which is the only thing that populates #FavoriteBuildList.
+        headerContainer.SetPanelEvent("onactivate", () => this.toggleFavoriteSelector());
 
         // citadel_shop_mods_build.xml:26-48
         this.controlButtons = header.addChild(mk("Panel", { id: "ControlButtons" }));
@@ -193,7 +200,7 @@ class BuildsModel {
         g.CitadelHudHeroBuildsDiscardEdits = () => this.discardEdits();
         g.CitadelHudHeroBuildsSelectBuild = (i) => this.selectBuild(i);
         g.CitadelHudHeroBuildsAddNewCategory = () => this.addCategory();
-        g.CitadelHudHeroBuildsToggleFavoriteSelector = () => this.openBuildBrowser();
+        g.CitadelHudHeroBuildsToggleFavoriteSelector = () => this.toggleFavoriteSelector();
         g.CitadelHudHeroBuildsFocusCategory = (i) => this.focusCategory(i);
 
         g.CitadelOpenBuildBrowser = () => this.openBuildBrowser();
@@ -348,29 +355,58 @@ class BuildsModel {
     /**
      * #FavoriteBuildList -> FavoriteBuildEntryContainer per build.
      *
-     * This is the shop-side list, present whenever the shop is open — no popup
-     * required. It is what QOL.collectStorageBuildEntryPanels (ql_core.js:8682)
-     * enumerates via the "FavoriteBuildEntryContainer" class.
+     * GROUND TRUTH (citadel_shop_mods_build.xml:50-51, confirmed against real
+     * game logs 2026-08-20): #FavoriteBuildList is EMPTY in XML and stays empty
+     * until the favorites selector is expanded. The only
+     * .FavoriteBuildEntryContainer present in a normal open shop is the selected
+     * build's own header entry under #SelectedBuildOuter — so an enumeration that
+     * just sweeps that class finds exactly ONE entry, no matter how many builds
+     * the player has.
+     *
+     * Expanding is what populates the list: .BuildHeaderContainer's onactivate is
+     * CitadelHudHeroBuildsToggleFavoriteSelector() (citadel_shop_mods_build.xml:22).
+     *
+     * This modelling mistake — populating the list unconditionally — is why the
+     * test suite passed while the real game reported "1 storage entr(ies)".
      */
     _renderBuildList() {
         this.favoriteBuildList.RemoveAndDeleteChildren();
-        this.builds.forEach((build, i) => {
-            const entry = this.favoriteBuildList.addChild(
-                this.doc.create("Panel", {
-                    id: `FavoriteBuildEntry_${i}`,
-                    classes: ["FavoriteBuildEntryContainer"],
-                })
-            );
-            if (i === this.selectedIndex) entry.AddClass("Selected");
-            const label = entry.addChild(
-                this.doc.create("Label", { classes: ["FavoriteBuildEntryLabel", "BuildName"] })
-            );
-            label.text = this._titleTextFor(build.title);
-            label.SetDialogVariable("selected_hero_build_name", build.title);
-            entry.SetPanelEvent("onactivate", () => this.selectBuild(i));
-        });
+        if (this.favoritesExpanded) {
+            this.builds.forEach((build, i) => {
+                const entry = this.favoriteBuildList.addChild(
+                    this.doc.create("Panel", {
+                        id: `FavoriteBuildEntry_${i}`,
+                        classes: ["FavoriteBuildEntryContainer"],
+                    })
+                );
+                if (i === this.selectedIndex) entry.AddClass("Selected");
+                const label = entry.addChild(
+                    this.doc.create("Label", { classes: ["FavoriteBuildEntryLabel", "BuildName"] })
+                );
+                label.text = this._titleTextFor(build.title);
+                label.SetDialogVariable("selected_hero_build_name", build.title);
+                entry.SetPanelEvent("onactivate", () => {
+                    this.selectBuild(i);
+                    // Picking an entry collapses the dropdown again.
+                    this.favoritesExpanded = false;
+                });
+            });
+        }
 
         if (this.browserOpen) this._renderBrowserList();
+    }
+
+    /** Toggle the build dropdown, which is what fills #FavoriteBuildList. */
+    toggleFavoriteSelector() {
+        this.counters.toggleSelector++;
+        const next = !this.favoritesExpanded;
+        this._trace(`toggleFavoriteSelector -> ${next ? "expanded" : "collapsed"}`);
+        // Expanding is asynchronous like everything else here.
+        this.clock.schedule(this.latency.selectorExpandMs / 1000, () => {
+            this.favoritesExpanded = next;
+            this._renderBuildList();
+        });
+        return true;
     }
 
     /** Popup-side list: #HeroBuildList -> HeroBuildListItem_%d. */

@@ -190,7 +190,9 @@ test("prune is skipped when the shop is closed", () => {
         { title: "New Skyrunner Build", categories: ["Core Items"] },
         { title: "QOLLOCK-Settings", categories: [token] },
     ]);
-    h.clock.advance(3000);
+    // Let the loader finish, then close the shop it opened for its own probing.
+    h.clock.advance(45000);
+    h.game.closeShop();
     assert.strictEqual(h.game.shopOpen, false, "fixture: shop must be closed");
 
     const queued = h.sandbox.eval(

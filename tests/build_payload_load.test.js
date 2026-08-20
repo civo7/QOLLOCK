@@ -141,6 +141,57 @@ test("tolerates slow category rendering", () => {
     );
 });
 
+test("REGRESSION: the build list is collapsed and must be expanded to enumerate", () => {
+    // Ground truth from real game logs (2026-08-20): #FavoriteBuildList is empty
+    // in XML and the engine only fills it once the build dropdown is expanded.
+    // Until then the only .FavoriteBuildEntryContainer in the tree is the selected
+    // build's own header entry — so a class sweep reports ONE entry regardless of
+    // how many builds exist. The logs said "1 storage entr(ies) present" with six
+    // builds on the account.
+    //
+    // The simulator originally populated that list unconditionally, which is why
+    // the suite was green while the game failed. This test pins the real shape.
+    const h = sim.createHud({ inHideout: true });
+    h.assertLoaded();
+    h.game.seedWithPayloadAt(8, 5, payloadToken());
+    h.game.openShop();
+    h.clock.advance(2000);
+
+    assert.strictEqual(
+        h.game.favoritesExpanded,
+        false,
+        "fixture: the dropdown must start collapsed"
+    );
+    const collapsed = h.sandbox.evalJson(
+        'QOL.collectStorageBuildEntryPanels($.GetContextPanel(), true).length'
+    );
+    assert.strictEqual(
+        collapsed,
+        1,
+        `a collapsed list must expose exactly one entry, got ${collapsed}`
+    );
+
+    // Now let the loader run: it has to expand the list itself to get anywhere.
+    h.clock.advance(60000);
+    assert.ok(
+        h.game.counters.toggleSelector > 0,
+        `loader never expanded the build dropdown, so it could not enumerate\n${h.diagnose()}`
+    );
+    assert.match(finalizeLine(h), /Payload applied/, `\n${h.diagnose()}`);
+});
+
+test("selecting a build collapses the list, and the sweep recovers", () => {
+    // Picking an entry closes the dropdown, so the sweep must re-expand between
+    // every step rather than holding panel references across the collapse.
+    const { h } = runLoader({ buildCount: 8, payloadAt: 7, ms: 60000 });
+    assert.match(finalizeLine(h), /Payload applied/, `\n${h.diagnose()}`);
+    assert.ok(
+        h.game.counters.toggleSelector >= h.game.counters.selectBuild,
+        `expected one re-expand per selection, got ${h.game.counters.toggleSelector} ` +
+        `expands for ${h.game.counters.selectBuild} selections\n${h.diagnose()}`
+    );
+});
+
 test("no duplicate ids or handler throws in the simulated tree", () => {
     const { h } = runLoader({ buildCount: 8, payloadAt: 5 });
     const problems = h.doc.assertClean();
