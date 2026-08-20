@@ -34,8 +34,11 @@
 					<Button id="htpp_primary_tab_button_Core" class="htpp_primary_tab_button" onactivate="PrimaryTabSelect(&apos;Core&apos;)">
 						<Label text="Basic" />
 					</Button>
-					<Button id="htpp_primary_tab_button_World" class="htpp_primary_tab_button hide_in_coop" onactivate="PrimaryTabSelect(&apos;World&apos;)">
+					<Button id="htpp_primary_tab_button_World" class="htpp_primary_tab_button" onactivate="PrimaryTabSelect(&apos;World&apos;)">
 						<Label text="Advanced" />
+					</Button>
+					<Button id="htpp_primary_tab_button_Host" class="htpp_primary_tab_button hide_in_coop" onactivate="PrimaryTabSelect(&apos;Host&apos;)">
+						<Label text="Host-Only" />
 					</Button>
 				</Panel>
 				<Panel id="htpp_tab_buttons_container" class="htpp_tab_buttons_container">
@@ -62,6 +65,9 @@
 					</Button>
 					<Button id="htpp_tab_button_Maps" class="htpp_tab_button htpp_section_tab" onactivate="TabSelect(&apos;Maps&apos;)">
 						<Label text="Maps" />
+					</Button>
+					<Button id="htpp_tab_button_Movement" class="htpp_tab_button htpp_section_tab" onactivate="TabSelect(&apos;Movement&apos;)">
+						<Label text="Warps" />
 					</Button>
 				</Panel>
 				<Panel id="htpp_dynamic_subtabs" class="htpp_dynamic_subtabs" />
@@ -105,44 +111,56 @@
 				</Panel>
 				<Panel class="nav_menu_item_container htpp_basic_action_row">
 					<Button class="nav_menu_item small_text quarter_width htpp_spawn_action htpp_glow_white" onactivate="HeroTestingChangeHero()">
+						<Label text="◉" />
 						<Label text="#HeroTesting_ChangeHero" />
 					</Button>
 					<Button class="nav_menu_item small_text quarter_width htpp_spawn_action htpp_glow_white" onactivate="HeroTestingChangeTeam();">
+						<Label text="⇄" />
 						<Label text="#HeroTesting_ChangeTeam" />
 					</Button>
 					<Button class="nav_menu_item small_text quarter_width htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;resetme&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="■" />
 						<Label text="#HeroTesting_ResetHero" />
 					</Button>
 					<Button class="nav_menu_item small_text quarter_width htpp_spawn_action htpp_glow_white" onactivate="giveAllItems();">
+						<Label text="✿" />
 						<Label text="Give All Items" />
 					</Button>
 				</Panel>
 				<Panel class="nav_menu_item_container htpp_basic_action_row">
 					<Button class="small_text nav_menu_item quarter_width htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;killme&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="†" />
 						<Label text="#HeroTesting_KillHero" />
 					</Button>
 					<Button class="small_text nav_menu_item quarter_width htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;healthpct 50&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="♡" />
 						<Label text="#HeroTesting_HalfHealth" />
 					</Button>
 					<Button class="small_text nav_menu_item quarter_width htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;healthpct 100&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="♥" />
 						<Label text="#HeroTesting_FullHealth" />
 					</Button>
 					<Button class="nav_menu_item small_text quarter_width htpp_spawn_action htpp_glow_white" onactivate="Cmd(`unstick`);">
+						<Label text="↗" />
 						<Label text="Unstick" />
 					</Button>
 				</Panel>
 				<Panel class="nav_menu_item_container htpp_basic_action_row">
 					<Button class="small_text nav_menu_item htpp_btn_4 htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;givelevelupgold 1&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="⬆️" />
 						<Label text="#HeroTesting_LevelUp" />
 					</Button>
 					<Button class="small_text nav_menu_item htpp_btn_4 htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;givelevelupgold 32&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="⤴" />
 						<Label text="#HeroTesting_MaxLevel" />
 					</Button>
-					<Button class="nav_menu_item small_text htpp_btn_4 htpp_spawn_action htpp_glow_white" onactivate="Cmd(`kingme`);">
-						<Label text="King Hero" />
-					</Button>
 					<Button class="nav_menu_item small_text htpp_btn_4 htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;giveallupgrades&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+						<Label text="☆" />
 						<Label text="#HeroTesting_AllPerks" />
+					</Button>
+					<Button class="nav_menu_item small_text htpp_btn_4 htpp_spawn_action htpp_glow_white" onactivate="Cmd(`kingme`);">
+						<Label text="★" />
+						<Label text="King Hero" />
 					</Button>
 				</Panel>
 				<Panel class="nav_menu_item_container htpp_row_4col htpp_separator_top">
@@ -219,47 +237,44 @@
 					<CitadelHeroCard id="SpawnBotCard" onactivate="HeroTestingChangeSelectedBot()" />
 					<Panel class="htpp_hero_control_rows">
 						<Panel class="htpp_hero_control_row">
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_red hide_in_coop" onactivate="Cmd( &apos;bot_kick_all&apos; );">
-								<Label text="#HeroTesting_RemoveBots" />
-							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_green hide_in_coop" onactivate="Cmd( &apos;citadel_assume_pawn_control&apos; );">
-								<Label text="#HeroTesting_TakeControl" />
-							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white hide_in_coop" onactivate="Cmd( &apos;bot_mimic 0&apos; ); Cmd( &apos; bot_puppet 0&apos; );">
-								<Label text="#HeroTesting_ClearFollow" />
-							</Button>
-						</Panel>
-						<Panel class="htpp_hero_control_row">
 							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_red" onactivate="HeroTestingSpawnBotHero(&apos;enemy&apos;)">
 								<Label text="Spawn As Enemy" />
 							</Button>
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;citadel_assume_pawn_control&apos; );">
+								<Label text="#HeroTesting_TakeControl" />
+							</Button>
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd(`citadel_spawn_all_heroes_in_a_line`)">
+								<Label text="Spawn Enemy Team" />
+							</Button>
+						</Panel>
+						<Panel class="htpp_hero_control_row">
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_blue" onactivate="HeroTestingSpawnBotHero(&apos;neutral&apos;)">
+								<Label text="Spawn As Neutral" />
+							</Button>
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;bot_mimic_target&apos; );">
+								<Label text="#HeroTesting_MakeMimic" />
+							</Button>
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd(`citadel_create_unit hero_targetdummy enemy`);">
+								<Label text="Spawn Dummy" />
+							</Button>
+						</Panel>
+						<Panel class="htpp_hero_control_row">
 							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_green" onactivate="HeroTestingSpawnBotHero(&apos;friend&apos;)">
 								<Label text="Spawn As Friendly" />
 							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white hide_in_coop" onactivate="Cmd( &apos;bot_mimic_target&apos; );">
-								<Label text="#HeroTesting_MakeMimic" />
-							</Button>
-						</Panel>
-						<Panel class="htpp_hero_control_row">
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="HeroTestingSpawnBotHero(&apos;neutral&apos;)">
-								<Label text="Spawn As Neutral" />
-							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="HeroTestingSpawnBotHero(&apos;unassigned&apos;)">
-								<Label text="Spawn As Unassigned" />
-							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white hide_in_coop" onactivate="Cmd( &apos;bot_puppet_target&apos; );">
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;bot_puppet_target&apos; );">
 								<Label text="#HeroTesting_MakePuppet" />
 							</Button>
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="Cmd( &apos;citadel_spawn_nearby_neutrals&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
+								<Label text="#HeroTesting_SpawnCamp" />
+							</Button>
 						</Panel>
 						<Panel class="htpp_hero_control_row">
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white" onactivate="HeroTestingSpawnBotHero(&apos;spectator&apos;)">
-								<Label text="Spawn As Spectator" />
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_yellow" onactivate="Cmd( &apos;bot_kick_all&apos; );">
+								<Label text="#HeroTesting_RemoveBots" />
 							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white hide_in_coop" onactivate="Cmd(`citadel_spawn_all_heroes_in_a_line`)">
-								<Label text="Spawn Enemy Team" />
-							</Button>
-							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_white hide_in_coop" onactivate="Cmd( &apos;citadel_spawn_nearby_neutrals&apos; ); $.DispatchEvent( &apos;PlaySoundEffect&apos;, &apos;Stinger.LevelUp&apos; )">
-								<Label text="#HeroTesting_SpawnCamp" />
+							<Button class="nav_menu_item small_text htpp_hero_ctrl_btn htpp_spawn_action htpp_glow_yellow" onactivate="Cmd( &apos;bot_mimic 0&apos; ); Cmd( &apos; bot_puppet 0&apos; );">
+								<Label text="#HeroTesting_ClearFollow" />
 							</Button>
 						</Panel>
 					</Panel>
@@ -301,7 +316,7 @@
 					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`ent_fire !picker Kill`)">
 						<Label class="htpp_center_text" text="Remove Entity" />
 					</Button>
-					<Button class="nav_menu_item small_text half_width" onactivate="RemoveAllObjectives()">
+					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`citadel_dev_test_endgame`)">
 						<Label class="htpp_center_text" text="Remove Units" />
 					</Button>
 				</Panel>
@@ -390,8 +405,11 @@
 						</Button>
 					</Panel>
 					<Panel class="nav_menu_item_container">
-						<Button class="nav_menu_item small_text" onactivate="Cmd(`citadel_spawn_urn`)">
+						<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`citadel_spawn_urn`)">
 							<Label class="htpp_center_text" text="Soul Urn" />
+						</Button>
+						<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`citadel_koth_dev_test_spawn`)">
+							<Label class="htpp_center_text" text="Unstable Rift" />
 						</Button>
 					</Panel>
 				</Panel>
@@ -400,6 +418,14 @@
 					<Label text="Neutrals" />
 				</Panel>
 				<Panel class="htpp_subsection" id="HTPP_SubSection_Neutrals">
+					<Panel class="nav_menu_item_container">
+						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`npc_super_neutral`)">
+							<Label class="htpp_center_text" text="MidBoss" />
+						</Button>
+						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`neutral_sinners_sacrifice`)">
+							<Label class="htpp_center_text" text="Sacrifice" />
+						</Button>
+					</Panel>
 					<Panel class="nav_menu_item_container">
 						<Button class="nav_menu_item small_text third_width" onactivate="SpawnTeamEntity(`neutral_trooper_weak`)">
 							<Label class="htpp_center_text" text="Weak" />
@@ -411,16 +437,6 @@
 							<Label class="htpp_center_text" text="Strong" />
 						</Button>
 					</Panel>
-					<Panel class="nav_menu_item_container">
-						<Button class="nav_menu_item small_text third_width" onactivate="SpawnTeamEntity(`neutral_sinners_sacrifice`)">
-							<Label class="htpp_center_text" text="Sacrifice" />
-						</Button>
-					</Panel>
-					<Panel class="nav_menu_item_container">
-						<Button class="nav_menu_item small_text" onactivate="SpawnTeamEntity(`npc_super_neutral`)">
-							<Label class="htpp_center_text" text="MidBoss" />
-						</Button>
-					</Panel>
 				</Panel>
 				<Panel class="small_text full_width htpp_subsection_header">
 					<Button class="htpp_subsection_arrow" id="HTPP_SubSectionButton_Troopers" onactivate="ToggleSubsection(`Troopers`)" />
@@ -428,17 +444,17 @@
 				</Panel>
 				<Panel class="htpp_subsection" id="HTPP_SubSection_Troopers">
 					<Panel class="nav_menu_item_container">
-						<Button class="nav_menu_item small_text third_width" onactivate="SpawnTeamEntity(`trooper_normal`)">
+						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`trooper_normal`)">
 							<Label class="htpp_center_text" text="Normal" />
 						</Button>
-						<Button class="nav_menu_item small_text third_width" onactivate="SpawnTeamEntity(`trooper_medic`)">
+						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`trooper_medic`)">
 							<Label class="htpp_center_text" text="Medic" />
-						</Button>
-						<Button class="nav_menu_item small_text third_width" onactivate="SpawnTeamEntity(`trooper_melee`)">
-							<Label class="htpp_center_text" text="Melee" />
 						</Button>
 					</Panel>
 					<Panel class="nav_menu_item_container">
+						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`trooper_melee`)">
+							<Label class="htpp_center_text" text="Melee" />
+						</Button>
 						<Button class="nav_menu_item small_text half_width" onactivate="SpawnTeamEntity(`npc_necro_skele`)">
 							<Label class="htpp_center_text" text="Necro" />
 						</Button>
@@ -1322,11 +1338,6 @@
 					<Panel class="dash" />
 				</Panel>
 				<Panel class="nav_menu_item_container">
-					<Button class="nav_menu_item small_text" onactivate="Cmd(`citadel_loot_table_test_street_brawl_draft_round`)">
-						<Label class="htpp_center_text" text="Draft Items" />
-					</Button>
-				</Panel>
-				<Panel class="nav_menu_item_container">
 					<Button class="nav_menu_item small_text quarter_width" onactivate="imbuedSkill = 0;">
 						<Label class="htpp_center_text" text="1" />
 					</Button>
@@ -1401,6 +1412,36 @@
 					</Button>
 					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`giveitem upgrade_prism_blast`)">
 						<Label class="htpp_center_text" text="Prism Blast" />
+					</Button>
+				</Panel>
+			</Panel>
+			<Panel id="htpp_section_Movement" class="htpp_section">
+				<Panel class="nav_menu_item_header">
+					<Label text="Movement" />
+					<Panel class="dash" />
+				</Panel>
+				<!-- <Panel class="nav_menu_item_container">
+					<Button class="nav_menu_item small_text half_width" onactivate="SaveCurrentPlayerPosition();">
+						<Label class="htpp_center_text" text="Save Position" />
+					</Button>
+					<Button class="nav_menu_item small_text half_width" onactivate="TeleportToSavedPosition();">
+						<Label class="htpp_center_text" text="Teleport" />
+					</Button>
+				</Panel> -->
+				<Panel class="nav_menu_item_container">
+					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`setpos 11692.937500 -6104.343750 -325;setang 0.000000 180.000000 0.000000`);">
+						<Label class="htpp_center_text" text="Spawn" />
+					</Button>
+					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`setpos 12121.562500 -9166.562500 291.406250;setang 19.625000 123.531250 0.000000`);">
+						<Label class="htpp_center_text" text="Atrium" />
+					</Button>
+				</Panel>
+				<Panel class="nav_menu_item_container">
+					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`setpos 13702.093750 -6584.156250 -50;setang 13.031250 295.500000 0.000000`);">
+						<Label class="htpp_center_text" text="Rem's Room" />
+					</Button>
+					<Button class="nav_menu_item small_text half_width" onactivate="Cmd(`setpos 5238.437500 -7026.843750 -1574.500000;setang 1.312500 89.718750 0.000000`);">
+						<Label class="htpp_center_text" text="Outside" />
 					</Button>
 				</Panel>
 			</Panel>

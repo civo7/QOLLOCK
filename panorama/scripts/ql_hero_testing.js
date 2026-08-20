@@ -607,7 +607,7 @@ function giveAllItems() {
         index += batchSize;
 
         if (index < compatibleItemlist.length) {
-            $.Schedule(0.5, giveBatch);
+            $.Schedule(1, giveBatch);
         }
     }
 
@@ -854,7 +854,8 @@ function HeroTestingUpdateDisableDeath() {
 
 const HTPP_PRIMARY_TAB_SECTIONS = {
     Core: ["GameRules"],
-    World: ["HUD", "LegendaryItems", "Entities", "Props", "Modifiers", "Skybox", "Maps"],
+    World: ["HUD", "LegendaryItems", "Maps", "Movement"],
+    Host: ["Entities", "Props", "Modifiers", "Skybox"],
 };
 
 const HTPP_DEFAULT_PRIMARY_TAB = "Core";
@@ -2137,7 +2138,7 @@ function TeleportToSavedPosition() {
 }
 
 function LoadMidtownMap() {
-    Cmd("changelevel dl_midtown");
+    Cmd("map dl_midtown");
     $.DispatchEvent("PlaySoundEffect", "Stinger.LevelUp");
 }
 

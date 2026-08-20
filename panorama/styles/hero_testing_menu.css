@@ -347,6 +347,19 @@ Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_green Label
 	text-shadow: 0px 0px 3px #40d05066;
 }
 
+Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_blue Label
+{
+	color: #91dcff;
+	text-shadow: 0px 0px 3px #1b536d;
+}
+
+Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_yellow Label
+{
+	color: #fff491;
+	text-shadow: 0px 0px 3px #7c7323;
+}
+
+
 Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_white Label
 {
 	color: #f5f7f8;
@@ -506,7 +519,7 @@ Button.nav_menu_item Label
 
 Button.nav_menu_item.small_text Label
 {
-	font-size: 13px;
+	font-size: 16px;
 	line-height: 16px;
 	color: #9aa4a7;
 	text-overflow: shrink;
@@ -915,6 +928,18 @@ Button.nav_menu_item:hover Label,Button.nav_menu_item:active Label
 	text-shadow: 0px 0px 2px #40d0503d;
 }
 
+#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_blue Label
+{
+	color: #91dcff;
+	text-shadow: 0px 0px 2px #1b536d;
+}
+
+#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_yellow Label
+{
+	color: #fff491;
+	text-shadow: 0px 0px 2px #7c7323;
+}
+
 #htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_white Label
 {
 	color: #f3f5f6;
@@ -970,14 +995,15 @@ Button.nav_menu_item:hover Label,Button.nav_menu_item:active Label
 	color: #8d9698;
 }
 
-#htpp_primary_tab_button_Core,#htpp_primary_tab_button_World
+#htpp_primary_tab_button_Core,#htpp_primary_tab_button_World,#htpp_primary_tab_button_Host
 {
 	min-width: 170px;
 	min-height: 42px;
 }
 
-#htpp_primary_tab_button_Core Label,#htpp_primary_tab_button_World Label
+#htpp_primary_tab_button_Core Label,#htpp_primary_tab_button_World Label,#htpp_primary_tab_button_Host Label
 {
+	font-family: block;
 	font-size: 20px;
 	letter-spacing: 0.8px;
 }
