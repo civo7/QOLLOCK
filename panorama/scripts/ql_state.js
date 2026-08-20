@@ -535,6 +535,9 @@ var State;
         configLoadState: "pending",
         configLoadStateDetail: "",
         configLoadStateAtMs: 0,
+        // Set when a save is refused for an unread config; a second press inside
+        // this window is treated as consent to overwrite.
+        buildSaveOverwriteArmedUntilMs: 0,
         settingsLoaderShowUntilMs: 0,
         settingsLoaderNextReassertMs: 0,
         settingsLoaderLastRenderSig: "",

@@ -24,8 +24,7 @@ const DEFAULT_LATENCY = {
     createBuildMs: 400,   // CreateNewBuild -> new entry appears in the list
     editModeMs: 120,      // EditSelectedBuild -> gEditingBuilds
     saveEditsMs: 180,     // SaveEdits -> committed + gEditingBuilds cleared
-    browserOpenMs: 200,   // OpenBuildBrowser -> popup visible
-    selectorExpandMs: 200, // ToggleFavoriteSelector -> #FavoriteBuildList populated
+    browseRevealMs: 250,  // Browse click -> #HeroBuildList rendered inline
 };
 
 /**
@@ -72,10 +71,9 @@ class BuildsModel {
         this.hero = hero;
         this.inHideout = inHideout;
         this.shopOpen = false;
-        this.browserOpen = false;
+        // #HeroBuildList only exists while Browse is showing (inline, no popup).
+        this.browseOpen = false;
         this.editing = false;
-        // #FavoriteBuildList is empty until the build dropdown is expanded.
-        this.favoritesExpanded = false;
 
         /** @type {{title:string, categories:{name:string}[]}[]} */
         this.builds = [];
@@ -87,7 +85,6 @@ class BuildsModel {
         this.counters = {
             createBuild: 0, deleteBuild: 0, selectBuild: 0,
             editMode: 0, saveEdits: 0, heroSwitch: 0, browserOpen: 0,
-            toggleSelector: 0,
         };
 
         this._buildTree();
@@ -116,9 +113,6 @@ class BuildsModel {
         const headerContainer = header.addChild(mk("Panel", { classes: ["BuildHeaderContainer"] }));
         headerContainer.addChild(mk("Panel", { classes: ["FavoriteBuildsSelector"] }));
         this.selectedBuildOuter = headerContainer.addChild(mk("Panel", { id: "SelectedBuildOuter" })); // [C++] filled
-        // citadel_shop_mods_build.xml:22 — activating the header toggles the build
-        // dropdown, which is the only thing that populates #FavoriteBuildList.
-        headerContainer.SetPanelEvent("onactivate", () => this.toggleFavoriteSelector());
 
         // citadel_shop_mods_build.xml:26-48
         this.controlButtons = header.addChild(mk("Panel", { id: "ControlButtons" }));
@@ -200,7 +194,7 @@ class BuildsModel {
         g.CitadelHudHeroBuildsDiscardEdits = () => this.discardEdits();
         g.CitadelHudHeroBuildsSelectBuild = (i) => this.selectBuild(i);
         g.CitadelHudHeroBuildsAddNewCategory = () => this.addCategory();
-        g.CitadelHudHeroBuildsToggleFavoriteSelector = () => this.toggleFavoriteSelector();
+        g.CitadelHudHeroBuildsToggleFavoriteSelector = () => {};
         g.CitadelHudHeroBuildsFocusCategory = (i) => this.focusCategory(i);
 
         g.CitadelOpenBuildBrowser = () => this.openBuildBrowser();
@@ -353,77 +347,83 @@ class BuildsModel {
     }
 
     /**
-     * #FavoriteBuildList -> FavoriteBuildEntryContainer per build.
+     * #FavoriteBuildList — the shop header's single-entry strip.
      *
-     * GROUND TRUTH (citadel_shop_mods_build.xml:50-51, confirmed against real
-     * game logs 2026-08-20): #FavoriteBuildList is EMPTY in XML and stays empty
-     * until the favorites selector is expanded. The only
-     * .FavoriteBuildEntryContainer present in a normal open shop is the selected
-     * build's own header entry under #SelectedBuildOuter — so an enumeration that
-     * just sweeps that class finds exactly ONE entry, no matter how many builds
-     * the player has.
+     * GROUND TRUTH (real game logs, 2026-08-20): this is NOT the build list. It
+     * holds exactly ONE .FavoriteBuildEntryContainer — the selected build — however
+     * many builds exist. Sweeping that class always reports 1, which is what made
+     * an account with six builds log "1 storage entr(ies) present".
      *
-     * Expanding is what populates the list: .BuildHeaderContainer's onactivate is
-     * CitadelHudHeroBuildsToggleFavoriteSelector() (citadel_shop_mods_build.xml:22).
-     *
-     * This modelling mistake — populating the list unconditionally — is why the
-     * test suite passed while the real game reported "1 storage entr(ies)".
+     * The real list is #HeroBuildList / .HeroBuildListItem, revealed by clicking
+     * BrowseBuildsButton. It appears INLINE — PopupBuildBrowser never exists — so
+     * any gate keyed on a popup being open can never pass.
      */
     _renderBuildList() {
+        // Stays empty: the single .FavoriteBuildEntryContainer in the tree is the
+        // selected build's header strip, rendered by _renderSelectedBuildHeader.
+        // Adding another here would double the class count and hide the very fact
+        // this models — that sweeping the class always yields exactly one entry.
         this.favoriteBuildList.RemoveAndDeleteChildren();
-        if (this.favoritesExpanded) {
-            this.builds.forEach((build, i) => {
-                const entry = this.favoriteBuildList.addChild(
-                    this.doc.create("Panel", {
-                        id: `FavoriteBuildEntry_${i}`,
-                        classes: ["FavoriteBuildEntryContainer"],
-                    })
-                );
-                if (i === this.selectedIndex) entry.AddClass("Selected");
-                const label = entry.addChild(
-                    this.doc.create("Label", { classes: ["FavoriteBuildEntryLabel", "BuildName"] })
-                );
-                label.text = this._titleTextFor(build.title);
-                label.SetDialogVariable("selected_hero_build_name", build.title);
-                entry.SetPanelEvent("onactivate", () => {
-                    this.selectBuild(i);
-                    // Picking an entry collapses the dropdown again.
-                    this.favoritesExpanded = false;
-                });
-            });
+        this._renderBrowseList();
+    }
+
+    /**
+     * #HeroBuildList, revealed inline by Browse. CreateBuildButton appears
+     * alongside it whenever the list is showing — with builds or without — which is
+     * the only reliable "list is up" signal.
+     */
+    _renderBrowseList() {
+        if (!this.browseOpen) {
+            if (this.buildListPanel && this.buildListPanel.IsValid()) {
+                this.buildListPanel._destroy();
+            }
+            this.buildListPanel = null;
+            if (this.createBuildButton && this.createBuildButton.IsValid()) {
+                this.createBuildButton._destroy();
+            }
+            this.createBuildButton = null;
+            return;
         }
 
-        if (this.browserOpen) this._renderBrowserList();
-    }
+        if (!this.buildListPanel || !this.buildListPanel.IsValid()) {
+            this.buildListPanel = this.selectedBuild.addChild(
+                this.doc.create("Panel", { id: "HeroBuildList" })
+            );
+        }
+        if (!this.createBuildButton || !this.createBuildButton.IsValid()) {
+            this.createBuildButton = this.selectedBuild.addChild(
+                this.doc.create("Panel", { id: "CreateBuildButton" })
+            );
+            this.createBuildButton.SetPanelEvent("onactivate", () => this.createNewBuild());
+        }
 
-    /** Toggle the build dropdown, which is what fills #FavoriteBuildList. */
-    toggleFavoriteSelector() {
-        this.counters.toggleSelector++;
-        const next = !this.favoritesExpanded;
-        this._trace(`toggleFavoriteSelector -> ${next ? "expanded" : "collapsed"}`);
-        // Expanding is asynchronous like everything else here.
-        this.clock.schedule(this.latency.selectorExpandMs / 1000, () => {
-            this.favoritesExpanded = next;
-            this._renderBuildList();
-        });
-        return true;
-    }
-
-    /** Popup-side list: #HeroBuildList -> HeroBuildListItem_%d. */
-    _renderBrowserList() {
-        if (!this.popupPanel) return;
-        const list = this.popupPanel.FindChildTraverse("HeroBuildList");
-        if (!list) return;
-        list.RemoveAndDeleteChildren();
+        this.buildListPanel.RemoveAndDeleteChildren();
         this.builds.forEach((build, i) => {
-            const item = list.addChild(
-                this.doc.create("Panel", { id: `HeroBuildListItem_${i}`, classes: ["HeroBuildListItem"] })
+            const item = this.buildListPanel.addChild(
+                this.doc.create("Panel", {
+                    id: `HeroBuildListItem_${i}`,
+                    classes: ["HeroBuildListItem"],
+                })
             );
             if (i === this.selectedIndex) item.AddClass("Selected");
             const label = item.addChild(this.doc.create("Label", { classes: ["BuildName"] }));
             label.text = this._titleTextFor(build.title);
+            label.SetDialogVariable("selected_hero_build_name", build.title);
             item.SetPanelEvent("onactivate", () => this.selectBuild(i));
         });
+    }
+
+    /** Clicking Browse reveals the list inline, after a render delay. */
+    openBuildBrowser() {
+        this.counters.browserOpen++;
+        if (this.browseOpen) return true;
+        this._trace("openBuildBrowser (Browse clicked)");
+        this.clock.schedule(this.latency.browseRevealMs / 1000, () => {
+            this.browseOpen = true;
+            this._renderBuildList();
+            this._trace("browse list visible");
+        });
+        return true;
     }
 
     // ── Actions ───────────────────────────────────────────────────────────
@@ -467,28 +467,6 @@ class BuildsModel {
         this.doc.root.RemoveClass("gShopOpen");
         this.shopPanel.RemoveClass("gShopOpen");
         this.heroBuildsPanel.RemoveClass("gShopOpen");
-        return true;
-    }
-
-    openBuildBrowser() {
-        this.counters.browserOpen++;
-        this._trace("openBuildBrowser");
-        this.clock.schedule(this.latency.browserOpenMs / 1000, () => {
-            if (!this.popupPanel || !this.popupPanel.IsValid()) {
-                // popups/citadel_popup_build_browser.xml:8,15
-                this.popupPanel = this.doc.root.addChild(
-                    this.doc.create("PopupBuildBrowser", { id: "PopupBuildBrowser" })
-                );
-                const selector = this.popupPanel.addChild(
-                    this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector" })
-                );
-                selector.addChild(this.doc.create("Panel", { id: "HeroBuildList" }));
-            }
-            this.browserOpen = true;
-            this.popupPanel.RemoveClass("Hidden");
-            this.popupPanel.visible = true;
-            this._renderBrowserList();
-        });
         return true;
     }
 

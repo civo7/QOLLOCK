@@ -66,6 +66,8 @@
     // Mirrors ql_bridge.js — "1" authorizes overwriting a config this session
     // could not read. Consumed on use.
     var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
+    // How long a "press Save again to overwrite" window stays armed.
+    var BUILD_SAVE_OVERWRITE_CONFIRM_MS = 60000;
     // citadel_hud_hero_builds.xml:25 — maxchars="50", so keep the marker short.
     var PANEL_ID_BUILD_NAME_ENTRY = "BuildNameTextEntry";
     // Must match MARKER_TITLE in manifests/ql_build_payload/manifest.js.
@@ -1233,8 +1235,23 @@ function ResetBuildSaveRequestAttributes(root) {
             return true;
         }
 
+        // Second press within the confirm window counts as consent.
+        //
+        // Blocking outright turned a load failure into "you cannot save at all",
+        // with no way out from the UI — which is worse than the risk it guards
+        // against, because the user's config is already unreadable. The first press
+        // explains the situation and arms this window; pressing Save again inside
+        // it goes through.
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        if (State.buildSaveOverwriteArmedUntilMs && nowMs < State.buildSaveOverwriteArmedUntilMs) {
+            State.buildSaveOverwriteArmedUntilMs = 0;
+            _TLog("save:ConfirmedOverwrite", "second press accepted; loadState=failed");
+            return true;
+        }
+
+        State.buildSaveOverwriteArmedUntilMs = nowMs + BUILD_SAVE_OVERWRITE_CONFIRM_MS;
         _TLog("save:Blocked", "loadState=failed detail=" +
-              String(State.configLoadStateDetail || "-"));
+              String(State.configLoadStateDetail || "-") + " (armed confirm window)");
         FinishBuildSaveRequest(root, requestToken, "failed", "blocked_unread_config");
         return false;
     }

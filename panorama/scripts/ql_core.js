@@ -5928,7 +5928,8 @@ function GetUIRoot() {
         if (msg === "saved") return "Save completed.";
         if (msg === "blocked_unread_config") {
             return "Save blocked: your saved settings could not be read this session, " +
-                   "so saving now would overwrite them. Restart the game and let loading finish.";
+                   "so saving now would overwrite them. Restart and let loading finish — " +
+                   "or press Save again to overwrite anyway.";
         }
         if (msg === "verify_failed_uncommitted") {
             return "Save could not be committed — the payload was written but not persisted.";

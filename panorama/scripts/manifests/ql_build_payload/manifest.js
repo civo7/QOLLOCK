@@ -32,6 +32,9 @@
     var PID_BUILD_LIST = "HeroBuildList";
     var PID_CATEGORY_NAME = "BuildCategoryName";
     var CLASS_BUILD_ITEM = "HeroBuildListItem";
+    // Browse reveals the list inline; Create appears whenever the list is showing.
+    var PID_BROWSE_BUTTON = "BrowseBuildsButton";
+    var PID_CREATE_BUTTON = "CreateBuildButton";
     var CLASS_CATEGORY_NAME = "CategoryName";
 
     // Bridge attrs (from ql_bridge.js:29-32)
@@ -59,9 +62,11 @@
     // that as "no builds exist" is what made a junk build appear on every boot.
     var LIST_CONFIRM_MS     = 1500;
     var CREATE_SETTLE_MS    = 800;
-    // Expanding the build dropdown is what populates #FavoriteBuildList.
-    var EXPAND_SETTLE_MS    = 400;
-    var EXPAND_MAX_FAILS    = 6;
+    // Clicking Browse is what reveals the real build list (#HeroBuildList).
+    var BROWSE_SETTLE_MS    = 500;
+    var BROWSE_MAX_FAILS    = 8;
+    // The list fills item by item; require the count to hold steady.
+    var LIST_SETTLE_MS      = 700;
     var SCAN_TIMEOUT_MS     = 8000;
     var SAVE_WAIT_POLL_MS   = 250;
     var SAVE_WAIT_TIMEOUT_MS = 15000;
@@ -211,84 +216,106 @@
     /**
      * Every storage build entry we could select.
      *
-     * IMPORTANT (verified against real game logs, 2026-08-20): the build list is
-     * COLLAPSED by default. #FavoriteBuildList is empty in XML
-     * (citadel_shop_mods_build.xml:51) and the engine only fills it once the build
-     * dropdown is expanded. Until then the sole .FavoriteBuildEntryContainer in the
-     * tree is the selected build's own header entry under #SelectedBuildOuter — so
-     * a class sweep reports exactly ONE entry no matter how many builds exist.
-     * That is what "1 storage entr(ies) present" in the logs meant.
+     * GROUND TRUTH (verified against real game logs 2026-08-20):
      *
-     * #HeroBuildList / .HeroBuildListItem only exist while the build browser popup
-     * is open, which the normal read path never opens.
-     *
-     * So enumeration REQUIRES expanding one of the two lists first — see
-     * _expandBuildList. This function only reports what is currently reachable.
+     *  - `.FavoriteBuildEntryContainer` is NOT the build list. It holds exactly ONE
+     *    entry — the selected build's header — however many builds exist. Sweeping
+     *    that class is why the logs said "1 storage entr(ies) present" with six
+     *    builds on the account.
+     *  - The real list is `#HeroBuildList` / `.HeroBuildListItem`, and it does not
+     *    exist at all until Browse has been clicked.
+     *  - Browse reveals the list INLINE. `PopupBuildBrowser` never appears, so any
+     *    gate keyed on a popup being open can never pass — which is why the old
+     *    `_isPopupOpen()` checks were dead ends.
+     *  - Expanding the build dropdown (ToggleFavoriteSelector) does NOT populate
+     *    #HeroBuildList either. Only Browse does.
      */
     function _storageEntries(root) {
-        var entries = _callQol("collectStorageBuildEntryPanels", null, [root, true]);
-        if (entries && entries.length > 0) return entries;
-        // Fall back to the popup list if the shared helper is unavailable.
         return _buildListItems(root);
     }
 
+    /** The Create button exists whenever the browse list is showing, empty or not. */
+    function _createBuildButton(root) {
+        return _find(root, PID_CREATE_BUTTON);
+    }
+
     /**
-     * Expand the build dropdown so #FavoriteBuildList is populated.
+     * Is the browse list showing?
      *
-     * .BuildHeaderContainer's onactivate is
-     * CitadelHudHeroBuildsToggleFavoriteSelector() (citadel_shop_mods_build.xml:22).
-     * Prefer activating the panel over calling the global: the C++ globals are
-     * registered against the builds panel's own JS context, so `typeof` is often
-     * not "function" from ours, while panel activation crosses contexts.
-     *
-     * The sweep re-enters this after every pick, because selecting an entry
-     * collapses the list again. The attempt cap therefore bounds CONSECUTIVE
-     * FAILURES only and resets on success — counting successful expansions too
-     * would strand the sweep partway through a long list.
-     *
-     * Returns true once more than one entry is reachable, i.e. the list is open.
+     * Keyed on the Create button rather than on item count: Create appears as soon
+     * as the list renders, with builds or without. Keying on `items > 0` cannot
+     * distinguish a hero with genuinely zero builds (a valid create case) from a
+     * list that is still loading, which deadlocks the very first save.
      */
-    function _expandBuildList(root, now, st) {
-        if (_storageEntries(root).length > 1) {
-            st.expandFails = 0;
+    function _isBrowseOpen(root) {
+        return _alive(_createBuildButton(root)) || _buildListItems(root).length > 0;
+    }
+
+    /**
+     * Click Browse to reveal the inline build list.
+     *
+     * Activates every BrowseBuildsButton found, not just the first: duplicate
+     * ShopModsSelectedBuild panels each carry their own copy and only one is live,
+     * so FindChildTraverse can hand back an inert one.
+     */
+    function _openBrowseList(root, now, st) {
+        if (_isBrowseOpen(root)) {
+            st.browseFails = 0;
             return true;
         }
+        if (st.browseNextMs && now < st.browseNextMs) return false;
+        if ((st.browseFails || 0) >= BROWSE_MAX_FAILS) return false;
+        st.browseFails = (st.browseFails || 0) + 1;
+        st.browseNextMs = now + BROWSE_SETTLE_MS;
 
-        if (st.expandNextMs && now < st.expandNextMs) return false;
-        if ((st.expandFails || 0) >= EXPAND_MAX_FAILS) return false;
-        st.expandFails = (st.expandFails || 0) + 1;
-        st.expandNextMs = now + EXPAND_SETTLE_MS;
-
-        var sb = _selectedBuild(root);
-        var header = null;
-        if (_alive(sb)) {
-            var containers = _findClass(sb, "BuildHeaderContainer");
-            if (containers.length > 0) header = containers[0];
-        }
-        var acted = false;
-        if (_alive(header)) {
-            var fn = _qol("activatePanelSafe");
-            if (typeof fn === "function") {
-                try { fn(header); acted = true; } catch(e) {}
+        var acted = 0;
+        var fn = _qol("activatePanelSafe");
+        var roots = [root];
+        try {
+            var sb = _selectedBuild(root);
+            if (_alive(sb)) roots.push(sb);
+        } catch(e) {}
+        var seen = [];
+        for (var r = 0; r < roots.length; r++) {
+            var found = _findClass(roots[r], PID_BROWSE_BUTTON);
+            var direct = _find(roots[r], PID_BROWSE_BUTTON);
+            if (_alive(direct)) found = found.concat([direct]);
+            for (var i = 0; i < found.length; i++) {
+                var btn = found[i];
+                if (!_alive(btn)) continue;
+                var already = false;
+                for (var s = 0; s < seen.length; s++) { if (seen[s] === btn) { already = true; break; } }
+                if (already) continue;
+                seen.push(btn);
+                if (typeof fn === "function") {
+                    try { fn(btn); acted++; } catch(e) {}
+                }
             }
         }
-        if (!acted) {
-            try {
-                if (typeof CitadelHudHeroBuildsToggleFavoriteSelector === "function") {
-                    CitadelHudHeroBuildsToggleFavoriteSelector();
-                    acted = true;
-                }
-            } catch(e) {}
-        }
-        if (!acted) {
-            try { $.DispatchEvent("CitadelHudHeroBuildsToggleFavoriteSelector"); acted = true; } catch(e) {}
-        }
-        if (!st._loggedExpand) {
-            st._loggedExpand = true;
-            $.Msg("[QOLLock][ql_build_payload] expand: header=" + (_alive(header) ? "1" : "0") +
-                  " acted=" + (acted ? "1" : "0"));
+        if (!st._loggedBrowse) {
+            st._loggedBrowse = true;
+            $.Msg("[QOLLock][ql_build_payload] browse: buttons=" + seen.length +
+                  " activated=" + acted);
         }
         return false;
+    }
+
+    /**
+     * The list fills item by item. Require the count to hold steady before
+     * concluding a build is absent, or one still rendering reads as missing.
+     */
+    function _listSettled(root, now, st) {
+        var count = _buildListItems(root).length;
+        if (st.listLastCount !== count) {
+            st.listLastCount = count;
+            st.listStableSince = now;
+            return false;
+        }
+        if (!st.listStableSince) {
+            st.listStableSince = now;
+            return false;
+        }
+        return (now - st.listStableSince) >= LIST_SETTLE_MS;
     }
 
     // ── Payload text ──
@@ -351,7 +378,7 @@
      * `doAdvance` is set — step the selection to the next unvisited storage build.
      *
      * Advancing is rate-limited by SCAN_SETTLE_MS and each build is visited at
-     * most once. The previous version selected `advances % items.length` up to
+     * most once. The original version selected `advances % items.length` up to
      * 4 times with no rate limit: at a 100ms poll that burned every attempt
      * inside 400ms, far faster than the engine re-renders #CategoryContainer, so
      * it read the same stale categories 4 times and could never reach index 4+.
@@ -373,11 +400,20 @@
 
         if (!doAdvance || !st) return "";
 
-        // 3. Fast path: if a build advertises the marker title, go straight there
+        var now = _now();
+
+        // 3. The list only exists while Browse is showing. Keep it open — selecting
+        //    an entry can close it, and without it there is nothing to sweep.
+        if (!_openBrowseList(root, now, st)) return "";
+        if (!_listSettled(root, now, st)) return "";
+        items = _storageEntries(root);
+        if (items.length === 0) return "";
+
+        // 4. Fast path: if a build advertises the marker title, go straight there
         //    instead of sweeping. Titles may be dialog-variable backed and thus
         //    unreadable, so this is opportunistic — the sweep below is the
         //    guarantee.
-        if (!st.markerTried && items.length > 1) {
+        if (!st.markerTried) {
             st.markerTried = true;
             for (var mi = 0; mi < items.length; mi++) {
                 var itemText = _deepText(items[mi]);
@@ -385,38 +421,26 @@
                     $.Msg("[QOLLock][ql_build_payload] scan: marker title found at entry " + mi);
                     st.markerIndex = mi;
                     if (_selectEntry(items[mi])) {
-                        st.scanLastAdvanceMs = _now();
+                        st.scanLastAdvanceMs = now;
                     }
                     return "";
                 }
             }
         }
 
-        // 4. Full sweep.
-        //
-        // Selecting an entry COLLAPSES the dropdown (that is what the real client
-        // does), so the entry list is not stable across steps: after each pick we
-        // are back to a single header entry and must re-expand before the next one.
-        // The cursor therefore counts builds *visited*, and we re-derive the list
-        // each time rather than holding panel references across a collapse — those
-        // panels are destroyed and would fail _alive().
-        var now = _now();
+        // 5. Full sweep: visit every item once, honouring settle time. The list is
+        //    re-derived each step rather than held across a selection, because
+        //    selecting can rebuild it and stale panel refs fail _alive().
         if (now - (st.scanLastAdvanceMs || 0) < SCAN_SETTLE_MS) return "";
-
-        // Re-expand if the list collapsed after the previous pick.
-        if (items.length <= 1) {
-            _expandBuildList(root, now, st);
-            return "";
-        }
 
         var cursor = st.scanCursor || 0;
         if (cursor >= items.length) return "";   // swept every entry
 
         st.scanCursor = cursor + 1;
         st.scanLastAdvanceMs = now;
-        // Fresh expand budget for the next step.
-        st.expandNextMs = 0;
-        st.expandFails = 0;
+        // Fresh budget for reopening the list on the next step.
+        st.browseNextMs = 0;
+        st.browseFails = 0;
         if (_selectEntry(items[cursor])) {
             st.scanAdvances = (st.scanAdvances || 0) + 1;
         }
@@ -686,62 +710,48 @@
             st._favTabDone = true;
         }
 
-        // Expand the build dropdown. Without this the list is collapsed and only
-        // the selected build's header entry is reachable, so the sweep has nothing
-        // to walk. Note ensureStorageHeroFavoritesHeaderVisible above only opens
-        // the shop and switches to the Favorites tab — it does NOT expand the list.
-        var expanded = _expandBuildList(root, now, st);
+        // Reveal the real build list by clicking Browse. #HeroBuildList does not
+        // exist before that, and .FavoriteBuildEntryContainer is NOT the list — it
+        // holds a single entry however many builds exist, which is why an earlier
+        // attempt reported "1 storage entr(ies)" on an account with six builds.
+        // ensureStorageHeroFavoritesHeaderVisible above only opens the shop and
+        // switches tab; it does not reveal the list.
+        if (!_openBrowseList(root, now, st)) {
+            if ((st.browseFails || 0) >= BROWSE_MAX_FAILS) {
+                // Could not reveal the list at all. This is the "read did not
+                // complete" case: we do NOT know whether builds exist, so do not
+                // create one and do not claim the payload is missing.
+                $.Msg("[QOLLock][ql_build_payload] ensure: build list never opened — " +
+                      "treating as inconclusive (no create)");
+                return true;
+            }
+            return false;
+        }
 
-        // Any entries at all? If so there is something to sweep — go read.
-        //
+        // The list fills item by item. Let it settle before deciding anything, or a
+        // build still rendering reads as absent.
+        if (!_listSettled(root, now, st)) return false;
+
         // `_preexistingEntries` records only entries that were there BEFORE we
         // intervened. It must not count a build we created ourselves: doing so
         // made empty storage look like "a config exists but we could not read it",
         // which would block a new user's very first save.
-        //
-        // Note the count is entries, not builds — the selected build also appears
-        // as a FavoriteBuildEntryContainer in the header, so one build can surface
-        // as two entries. Harmless for sweeping; do not treat it as a build count.
         var entries = _storageEntries(root);
-
-        // Keep waiting while expansion is still in flight and all we can see is
-        // that single header entry — otherwise we would read one build and declare
-        // the payload missing.
-        if (!expanded && entries.length <= 1 && (st.expandFails || 0) < EXPAND_MAX_FAILS) {
-            if (entries.length > 0 && !st.createAttempted) st._preexistingEntries = true;
-            return false;
-        }
 
         if (entries.length > 0) {
             if (!st.createAttempted) st._preexistingEntries = true;
             if (!st._loggedEntries) {
                 st._loggedEntries = true;
                 $.Msg("[QOLLock][ql_build_payload] ensure: " + entries.length +
-                      " storage entr(ies) present, expanded=" + (expanded ? "1" : "0") +
-                      ", proceeding to read (no create)");
+                      " build(s) in list, proceeding to read (no create)");
             }
             return true;
         }
 
-        // No entries yet. That may just mean the list has not rendered, so require
-        // it to read empty for LIST_CONFIRM_MS — and cross-check against the
-        // shared emptiness probe — before creating anything.
-        if (!st.emptySince) {
-            st.emptySince = now;
-            return false;
-        }
-        if (now - st.emptySince < LIST_CONFIRM_MS) return false;
-
-        var reportedEmpty = _callQol("isStorageBuildListEmpty", false, [root]);
-        if (!reportedEmpty) {
-            // Disagreement: entries are hidden rather than absent. Read, don't create.
-            $.Msg("[QOLLock][ql_build_payload] ensure: list reads non-empty, proceeding to read (no create)");
-            return true;
-        }
-
+        // The list is open and settled at zero items: the hero genuinely has no
+        // builds. This is the only safe place to create one.
         if (!st.createAttempted) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: no storage builds after " +
-                  LIST_CONFIRM_MS + "ms — creating one");
+            $.Msg("[QOLLock][ql_build_payload] ensure: list open and empty — creating a build");
             _callCreateNewBuild();
             st.createAttempted = true;
             st.createStarted = now;
@@ -899,8 +909,10 @@
                     markerTried: false,
                     markerIndex: -1,
                     emptySince: 0,
-                    expandFails: 0,
-                    expandNextMs: 0,
+                    browseFails: 0,
+                    browseNextMs: 0,
+                    listLastCount: -1,
+                    listStableSince: 0,
                     _preexistingEntries: false,
                     _loggedEntries: false,
                     payloadText: "",

@@ -141,54 +141,62 @@ test("tolerates slow category rendering", () => {
     );
 });
 
-test("REGRESSION: the build list is collapsed and must be expanded to enumerate", () => {
-    // Ground truth from real game logs (2026-08-20): #FavoriteBuildList is empty
-    // in XML and the engine only fills it once the build dropdown is expanded.
-    // Until then the only .FavoriteBuildEntryContainer in the tree is the selected
-    // build's own header entry — so a class sweep reports ONE entry regardless of
-    // how many builds exist. The logs said "1 storage entr(ies) present" with six
-    // builds on the account.
+test("REGRESSION: FavoriteBuildEntryContainer is not the build list", () => {
+    // Ground truth from real game logs (2026-08-20). Sweeping
+    // .FavoriteBuildEntryContainer always yields ONE entry — the selected build's
+    // header strip — however many builds exist. That is why an account with six
+    // builds logged "1 storage entr(ies) present" and the sweep had nothing to walk.
     //
-    // The simulator originally populated that list unconditionally, which is why
-    // the suite was green while the game failed. This test pins the real shape.
+    // The real list is #HeroBuildList / .HeroBuildListItem, and it does not exist
+    // until Browse is clicked. Browse reveals it INLINE: PopupBuildBrowser never
+    // appears, so any gate keyed on a popup being open can never pass.
     const h = sim.createHud({ inHideout: true });
     h.assertLoaded();
     h.game.seedWithPayloadAt(8, 5, payloadToken());
     h.game.openShop();
     h.clock.advance(2000);
 
-    assert.strictEqual(
-        h.game.favoritesExpanded,
-        false,
-        "fixture: the dropdown must start collapsed"
-    );
-    const collapsed = h.sandbox.evalJson(
-        'QOL.collectStorageBuildEntryPanels($.GetContextPanel(), true).length'
+    const favEntries = h.sandbox.evalJson(
+        '$.GetContextPanel().FindChildrenWithClassTraverse("FavoriteBuildEntryContainer").length'
     );
     assert.strictEqual(
-        collapsed,
+        favEntries,
         1,
-        `a collapsed list must expose exactly one entry, got ${collapsed}`
+        `FavoriteBuildEntryContainer must expose exactly one entry, got ${favEntries}`
     );
 
-    // Now let the loader run: it has to expand the list itself to get anywhere.
+    assert.strictEqual(
+        h.game.browseOpen,
+        false,
+        "fixture: the browse list must start hidden"
+    );
+    const listBefore = h.sandbox.eval('!!$.GetContextPanel().FindChildTraverse("HeroBuildList")');
+    assert.strictEqual(listBefore, false, "#HeroBuildList must not exist before Browse");
+
+    // The loader has to click Browse itself to get anywhere.
     h.clock.advance(60000);
     assert.ok(
-        h.game.counters.toggleSelector > 0,
-        `loader never expanded the build dropdown, so it could not enumerate\n${h.diagnose()}`
+        h.game.counters.browserOpen > 0,
+        `loader never clicked Browse, so it could not enumerate builds\n${h.diagnose()}`
     );
     assert.match(finalizeLine(h), /Payload applied/, `\n${h.diagnose()}`);
 });
 
-test("selecting a build collapses the list, and the sweep recovers", () => {
-    // Picking an entry closes the dropdown, so the sweep must re-expand between
-    // every step rather than holding panel references across the collapse.
+test("PopupBuildBrowser never exists — browse is inline", () => {
+    // A gate keyed on the popup can never pass, so nothing may depend on it.
+    const { h } = runLoader({ buildCount: 8, payloadAt: 5, ms: 60000 });
+    const popup = h.sandbox.eval('!!$.GetContextPanel().FindChildTraverse("PopupBuildBrowser")');
+    assert.strictEqual(popup, false, "PopupBuildBrowser should never appear");
+    assert.match(finalizeLine(h), /Payload applied/, `\n${h.diagnose()}`);
+});
+
+test("the whole list is swept from a single Browse click", () => {
+    // Browse stays up across selections, so revealing the list once is enough.
     const { h } = runLoader({ buildCount: 8, payloadAt: 7, ms: 60000 });
     assert.match(finalizeLine(h), /Payload applied/, `\n${h.diagnose()}`);
     assert.ok(
-        h.game.counters.toggleSelector >= h.game.counters.selectBuild,
-        `expected one re-expand per selection, got ${h.game.counters.toggleSelector} ` +
-        `expands for ${h.game.counters.selectBuild} selections\n${h.diagnose()}`
+        h.game.counters.selectBuild >= 7,
+        `expected the sweep to reach the last build, only ${h.game.counters.selectBuild} selections\n${h.diagnose()}`
     );
 });
 

@@ -147,6 +147,39 @@ test("the block is reported with an actionable message", () => {
     );
     assert.match(detail, /could not be read/i, `unhelpful message: ${detail}`);
     assert.match(detail, /overwrite/i, `message should name the risk: ${detail}`);
+    assert.match(detail, /again/i, `message should offer a way through: ${detail}`);
+});
+
+test("pressing Save a second time overrides the block", () => {
+    // Blocking outright turned a load failure into "you cannot save at all", with
+    // no escape from the UI — worse than the risk, since the config is already
+    // unreadable. First press explains and arms; second press goes through.
+    const h = bootHud();
+    h.game.seedBuilds([
+        { title: "New Skyrunner Build", categories: ["[QOL-9-9-9]:corruptgarbage"] },
+    ]);
+    h.clock.advance(45000);
+    assert.strictEqual(loadState(h), "failed");
+
+    const token = makeToken(h);
+    h.game.openShop();
+    h.clock.advance(2000);
+
+    requestSave(h, token);
+    h.clock.advance(30000);
+    assert.strictEqual(
+        readAttr(h, MSG_ATTR),
+        "blocked_unread_config",
+        `first press should be refused\n${h.diagnose()}`
+    );
+
+    requestSave(h, token);
+    h.clock.advance(30000);
+    assert.strictEqual(
+        readAttr(h, STATE_ATTR),
+        "success",
+        `second press should be accepted as confirmation\n${h.diagnose()}`
+    );
 });
 
 test("an explicit force flag overrides the guard and is consumed", () => {
