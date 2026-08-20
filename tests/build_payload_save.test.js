@@ -160,6 +160,10 @@ test("save survives extra junk builds in the list", () => {
         { title: "New Skyrunner Build", categories: ["Core Items"] },
         { title: "New Skyrunner Build", categories: ["Core Items"] },
     ]);
+    // Let the loader finish first. It sweeps the list, changing the selected build
+    // as it goes; saving mid-sweep races it for the selection, which is not what a
+    // player does — they save after boot settles.
+    h.clock.advance(60000);
     h.game.openShop();
     h.clock.advance(3000);
 

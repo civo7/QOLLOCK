@@ -32,9 +32,11 @@
     var PID_BUILD_LIST = "HeroBuildList";
     var PID_CATEGORY_NAME = "BuildCategoryName";
     var CLASS_BUILD_ITEM = "HeroBuildListItem";
-    // Browse reveals the list inline; Create appears whenever the list is showing.
+    // BrowseBuildsButton has no XML handler — bound in C++, so activate the panel.
     var PID_BROWSE_BUTTON = "BrowseBuildsButton";
-    var PID_CREATE_BUTTON = "CreateBuildButton";
+    // citadel_ui_build_selector.xml:81-84 — the list and its loading spinner.
+    var PID_BUILD_SELECTOR = "HeroBuildSelector";
+    var PID_LIST_LOADING = "HeroBuildListLoading";
     var CLASS_CATEGORY_NAME = "CategoryName";
 
     // Bridge attrs (from ql_bridge.js:29-32)
@@ -67,6 +69,9 @@
     var BROWSE_MAX_FAILS    = 8;
     // The list fills item by item; require the count to hold steady.
     var LIST_SETTLE_MS      = 700;
+    // An empty list needs much more convincing — zero items is also what an
+    // outstanding GC reply looks like, and acting on it creates a junk build.
+    var EMPTY_CONFIRM_MS    = 4000;
     var SCAN_TIMEOUT_MS     = 8000;
     var SAVE_WAIT_POLL_MS   = 250;
     var SAVE_WAIT_TIMEOUT_MS = 15000;
@@ -216,47 +221,101 @@
     /**
      * Every storage build entry we could select.
      *
-     * GROUND TRUTH (verified against real game logs 2026-08-20):
+     * GROUND TRUTH (vanilla XML/CSS, verified 2026-08-20):
      *
      *  - `.FavoriteBuildEntryContainer` is NOT the build list. It holds exactly ONE
      *    entry — the selected build's header — however many builds exist. Sweeping
      *    that class is why the logs said "1 storage entr(ies) present" with six
      *    builds on the account.
-     *  - The real list is `#HeroBuildList` / `.HeroBuildListItem`, and it does not
-     *    exist at all until Browse has been clicked.
-     *  - Browse reveals the list INLINE. `PopupBuildBrowser` never appears, so any
-     *    gate keyed on a popup being open can never pass — which is why the old
-     *    `_isPopupOpen()` checks were dead ends.
-     *  - Expanding the build dropdown (ToggleFavoriteSelector) does NOT populate
-     *    #HeroBuildList either. Only Browse does.
+     *  - The real list is `#HeroBuildList` / `.HeroBuildListItem`
+     *    (citadel_ui_build_selector.xml:81 and the snippet at :8-9).
+     *  - It lives inside a genuine POPUP: popups/citadel_popup_build_browser.xml:8
+     *    declares `<PopupBuildBrowser class="PopupPanel Hidden" popupbackground="dim">`.
+     *  - Items are `visibility: collapse` until the selector carries ShowMyBuilds /
+     *    ShowPublicBuilds (citadel_ui_build_selector.css:312, :86). We count with
+     *    FindChildrenWithClassTraverse, which still returns collapsed panels, so the
+     *    count is honest — do NOT switch to a visibility-filtered count.
      */
     function _storageEntries(root) {
         return _buildListItems(root);
     }
 
-    /** The Create button exists whenever the browse list is showing, empty or not. */
-    function _createBuildButton(root) {
-        return _find(root, PID_CREATE_BUTTON);
+    /**
+     * The popup root, located by the subtree that contains #HeroBuildSelector.
+     *
+     * The popup root carries no id in vanilla XML — its element name is
+     * PopupBuildBrowser — so walk up from a child that does have one.
+     */
+    function _browserPopup(root) {
+        var selector = _find(root, PID_BUILD_SELECTOR);
+        if (!_alive(selector)) return null;
+        var node = selector;
+        var guard = 0;
+        while (_alive(node) && guard < 12) {
+            try {
+                if (typeof node.BHasClass === "function" && node.BHasClass("PopupPanel")) return node;
+            } catch(e) {}
+            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
+            guard++;
+        }
+        return null;
     }
 
     /**
-     * Is the browse list showing?
+     * Is the browser actually OPEN?
      *
-     * Keyed on the Create button rather than on item count: Create appears as soon
-     * as the list renders, with builds or without. Keying on `items > 0` cannot
-     * distinguish a hero with genuinely zero builds (a valid create case) from a
-     * list that is still loading, which deadlocks the very first save.
+     * The discriminator is the `Hidden` class, not visibility: popups_shared.css:26
+     * sets `.PopupPanel.Hidden { visibility: visible; }` — a dismissed popup is
+     * still "visible" to the engine, so IsPanelVisibleMaybe() reports true on a
+     * closed browser. Hidden present = closed, absent = open.
      */
     function _isBrowseOpen(root) {
-        return _alive(_createBuildButton(root)) || _buildListItems(root).length > 0;
+        var popup = _browserPopup(root);
+        if (!_alive(popup)) return false;
+        try {
+            if (typeof popup.BHasClass === "function" && popup.BHasClass("Hidden")) return false;
+        } catch(e) {}
+        return true;
     }
 
     /**
-     * Click Browse to reveal the inline build list.
+     * Is the list still waiting on the GC?
      *
-     * Activates every BrowseBuildsButton found, not just the first: duplicate
-     * ShopModsSelectedBuild panels each carry their own copy and only one is live,
-     * so FindChildTraverse can hand back an inert one.
+     * Opening the browser fires a hero-build search and the reply arrives over the
+     * network. While it is outstanding the selector carries BuildsLoading, which
+     * collapses #HeroBuildList and reveals #HeroBuildListLoading
+     * (citadel_ui_build_selector.css:41-49, XML :82-84).
+     *
+     * This is the gate the previous attempt got wrong: it keyed "list is showing"
+     * on #CreateBuildButton, which sits in the popup's #Header — a SIBLING of the
+     * selector (citadel_popup_build_browser.xml:11 vs :15). Create exists the
+     * instant the popup inflates, with no dependency on the reply, so an empty list
+     * mid-round-trip read as "this hero has no builds" and a junk build was created.
+     */
+    function _isListLoading(root) {
+        var selector = _find(root, PID_BUILD_SELECTOR);
+        if (_alive(selector)) {
+            try {
+                if (typeof selector.BHasClass === "function" && selector.BHasClass("BuildsLoading")) return true;
+            } catch(e) {}
+        }
+        var spinner = _find(root, PID_LIST_LOADING);
+        if (_alive(spinner)) {
+            try {
+                var vis = (spinner.style && spinner.style.visibility) ? String(spinner.style.visibility) : "";
+                if (vis === "visible") return true;
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    /**
+     * Click Browse to open the build browser.
+     *
+     * BrowseBuildsButton has no XML handler (citadel_shop_mods_build.xml:42) — it is
+     * bound in C++ — so activate the panel rather than calling a global. Activates
+     * every match found, because duplicate ShopModsSelectedBuild panels each carry
+     * their own copy and only one is live.
      */
     function _openBrowseList(root, now, st) {
         if (_isBrowseOpen(root)) {
@@ -292,19 +351,30 @@
                 }
             }
         }
+        // Last resort: the verified C++ global (client_strings.txt:22912).
+        if (acted === 0) {
+            try { if (typeof CitadelOpenBuildBrowser === "function") { CitadelOpenBuildBrowser(1); acted++; } } catch(e) {}
+        }
         if (!st._loggedBrowse) {
             st._loggedBrowse = true;
             $.Msg("[QOLLock][ql_build_payload] browse: buttons=" + seen.length +
-                  " activated=" + acted);
+                  " activated=" + acted +
+                  " popupFound=" + (_alive(_browserPopup(root)) ? "1" : "0"));
         }
         return false;
     }
 
     /**
-     * The list fills item by item. Require the count to hold steady before
-     * concluding a build is absent, or one still rendering reads as missing.
+     * The list is trustworthy only once it is open, not loading, and its item count
+     * has held steady. Returns false while any of those is unmet, so callers keep
+     * waiting rather than acting on a partial read.
      */
     function _listSettled(root, now, st) {
+        if (_isListLoading(root)) {
+            st.listStableSince = 0;
+            st.listLastCount = -1;
+            return false;
+        }
         var count = _buildListItems(root).length;
         if (st.listLastCount !== count) {
             st.listLastCount = count;
@@ -315,7 +385,10 @@
             st.listStableSince = now;
             return false;
         }
-        return (now - st.listStableSince) >= LIST_SETTLE_MS;
+        // An empty list needs far more convincing than a populated one: zero is
+        // also what a not-yet-arrived reply looks like.
+        var needMs = (count === 0) ? EMPTY_CONFIRM_MS : LIST_SETTLE_MS;
+        return (now - st.listStableSince) >= needMs;
     }
 
     // ── Payload text ──
@@ -350,6 +423,48 @@
             if (t3) return t3;
         }
         return "";
+    }
+
+    /**
+     * Dump what the category labels actually contain when no token matched.
+     *
+     * This exists because "no payload found" has several very different causes and
+     * the log could not tell them apart: the label may hold the raw localization
+     * token (dialog-variable backed and unreadable), a value the client truncated,
+     * a value split across sibling labels, or nothing at all. Logging the length and
+     * a bounded prefix/suffix settles it from a single log instead of a guess.
+     *
+     * Fires once per session. Truncated to keep the console usable, and the payload
+     * body is not secret — it is the user's own settings.
+     */
+    function _diagnoseCategoryText(root, st) {
+        if (st._diagCatDone) return;
+        st._diagCatDone = true;
+        var sb = _selectedBuild(root);
+        if (!_alive(sb)) {
+            $.Msg("[QOLLock][ql_build_payload][DIAG] category: no selected build panel");
+            return;
+        }
+        var seen = 0;
+        var classes = [CLASS_CATEGORY_NAME, "BuildCategoryName"];
+        for (var c = 0; c < classes.length; c++) {
+            var panels = _findClass(sb, classes[c]);
+            for (var i = 0; i < panels.length && seen < 6; i++) {
+                var raw = _readText(panels[i]);
+                var len = raw ? raw.length : 0;
+                var head = raw ? raw.substring(0, 40) : "";
+                var tail = (len > 60) ? raw.substring(len - 20) : "";
+                seen++;
+                $.Msg("[QOLLock][ql_build_payload][DIAG] category[" + classes[c] + "#" + i +
+                      "] len=" + len +
+                      " head=\"" + head + "\"" +
+                      (tail ? " tail=\"" + tail + "\"" : "") +
+                      " tokenMatch=" + (_extractToken(raw) ? "1" : "0"));
+            }
+        }
+        if (seen === 0) {
+            $.Msg("[QOLLock][ql_build_payload][DIAG] category: no CategoryName panels under selected build");
+        }
     }
 
     function _deepText(panel) {
@@ -444,6 +559,13 @@
         if (_selectEntry(items[cursor])) {
             st.scanAdvances = (st.scanAdvances || 0) + 1;
         }
+        // Mark the sweep complete once every item has been visited AND its
+        // categories have had time to render. This is what makes "no payload" a
+        // conclusive answer rather than an incomplete read.
+        if (st.scanCursor >= items.length) {
+            st.sweptAll = true;
+            st.sweptCount = items.length;
+        }
         return "";
     }
 
@@ -462,7 +584,7 @@
      */
     function _scanBudgetMs(itemCount) {
         var n = Math.max(1, Number(itemCount) || 1);
-        var perStep = SCAN_SETTLE_MS + EXPAND_SETTLE_MS;
+        var perStep = SCAN_SETTLE_MS + BROWSE_SETTLE_MS;
         return Math.max(SCAN_TIMEOUT_MS, 3000 + n * perStep * 2);
     }
 
@@ -710,26 +832,24 @@
             st._favTabDone = true;
         }
 
-        // Reveal the real build list by clicking Browse. #HeroBuildList does not
-        // exist before that, and .FavoriteBuildEntryContainer is NOT the list — it
-        // holds a single entry however many builds exist, which is why an earlier
-        // attempt reported "1 storage entr(ies)" on an account with six builds.
-        // ensureStorageHeroFavoritesHeaderVisible above only opens the shop and
-        // switches tab; it does not reveal the list.
+        // Reveal the real build list by opening the browser. #HeroBuildList lives
+        // inside the PopupBuildBrowser and .FavoriteBuildEntryContainer is NOT the
+        // list — it holds a single entry however many builds exist.
         if (!_openBrowseList(root, now, st)) {
             if ((st.browseFails || 0) >= BROWSE_MAX_FAILS) {
-                // Could not reveal the list at all. This is the "read did not
-                // complete" case: we do NOT know whether builds exist, so do not
-                // create one and do not claim the payload is missing.
-                $.Msg("[QOLLock][ql_build_payload] ensure: build list never opened — " +
-                      "treating as inconclusive (no create)");
+                // Could not open the browser. INCONCLUSIVE: we do not know whether
+                // builds exist, so do not create one and do not claim the payload
+                // is missing.
+                $.Msg("[QOLLock][ql_build_payload] ensure: browser never opened — inconclusive (no create)");
                 return true;
             }
             return false;
         }
 
-        // The list fills item by item. Let it settle before deciding anything, or a
-        // build still rendering reads as absent.
+        // Opening the browser fires a GC hero-build search; the reply arrives over
+        // the network. Waiting for BuildsLoading to clear and the count to hold
+        // steady is what separates "this hero has no builds" from "the reply has
+        // not arrived". Getting that wrong created a junk build every boot.
         if (!_listSettled(root, now, st)) return false;
 
         // `_preexistingEntries` records only entries that were there BEFORE we
@@ -748,10 +868,11 @@
             return true;
         }
 
-        // The list is open and settled at zero items: the hero genuinely has no
-        // builds. This is the only safe place to create one.
+        // Browser open, not loading, count stable at zero for EMPTY_CONFIRM_MS:
+        // the hero genuinely has no builds. Only safe place to create one.
         if (!st.createAttempted) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: list open and empty — creating a build");
+            $.Msg("[QOLLock][ql_build_payload] ensure: list confirmed empty for " +
+                  EMPTY_CONFIRM_MS + "ms — creating a build");
             _callCreateNewBuild();
             st.createAttempted = true;
             st.createStarted = now;
@@ -912,6 +1033,8 @@
                     browseFails: 0,
                     browseNextMs: 0,
                     listLastCount: -1,
+                    sweptAll: false,
+                    sweptCount: 0,
                     listStableSince: 0,
                     _preexistingEntries: false,
                     _loggedEntries: false,
@@ -958,10 +1081,22 @@
              */
             function _recordLoadState(code, detail) {
                 var loadState = "failed";
+                var why = "";
                 if (code === "success") {
                     loadState = "loaded";
+                    why = "payload applied";
                 } else if (code === "default") {
-                    loadState = _st._preexistingEntries ? "failed" : "loaded";
+                    if (!_st._preexistingEntries) {
+                        loadState = "loaded";
+                        why = "storage was empty";
+                    } else if (_st.sweptAll) {
+                        // Conclusive: every build in a settled list was visited and
+                        // none carried a payload. Nothing to lose, so saving is safe.
+                        loadState = "loaded";
+                        why = "swept all " + (_st.sweptCount || 0) + " build(s), none carried a payload";
+                    } else {
+                        why = "read did not complete";
+                    }
                 }
                 try {
                     var State = QOL.state;
@@ -972,7 +1107,7 @@
                     }
                 } catch(e) {}
                 $.Msg("[QOLLock][ql_build_payload] configLoadState=" + loadState +
-                      " (result=" + code + ", preexisting=" + (_st._preexistingEntries ? "1" : "0") + ")");
+                      " (result=" + code + ", " + why + ")");
             }
 
             function _finish(code, detail) {
@@ -1182,6 +1317,9 @@
                                 $.Msg("[QOLLock][ql_build_payload] scan exhausted after " +
                                       (_st.scanAdvances || 0) + " advance(s) over " +
                                       _storageEntries(root).length + " entry(ies)");
+                                // Report what the labels actually held, so "not found"
+                                // can be told apart from unreadable/truncated/split.
+                                _diagnoseCategoryText(root, _st);
                                 if (Number(ctx.config.get("AUTO_CORRUPT_REPAIR")) === 1 && _isShopOpen(root) && _storageBuildReady(root)) {
                                     _startRepair(root, _st);
                                     _st.stage = "repair";

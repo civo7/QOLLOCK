@@ -24,7 +24,8 @@ const DEFAULT_LATENCY = {
     createBuildMs: 400,   // CreateNewBuild -> new entry appears in the list
     editModeMs: 120,      // EditSelectedBuild -> gEditingBuilds
     saveEditsMs: 180,     // SaveEdits -> committed + gEditingBuilds cleared
-    browseRevealMs: 250,  // Browse click -> #HeroBuildList rendered inline
+    browseRevealMs: 250,  // Browse click -> popup shown (list still loading)
+    buildsReplyMs: 900,   // GC hero-build search reply -> BuildsLoading clears
 };
 
 /**
@@ -71,8 +72,10 @@ class BuildsModel {
         this.hero = hero;
         this.inHideout = inHideout;
         this.shopOpen = false;
-        // #HeroBuildList only exists while Browse is showing (inline, no popup).
+        // The browser is a popup; .Hidden is the open/closed discriminator.
         this.browseOpen = false;
+        // True while the GC hero-build search is outstanding.
+        this.buildsLoading = false;
         this.editing = false;
 
         /** @type {{title:string, categories:{name:string}[]}[]} */
@@ -368,41 +371,66 @@ class BuildsModel {
     }
 
     /**
-     * #HeroBuildList, revealed inline by Browse. CreateBuildButton appears
-     * alongside it whenever the list is showing — with builds or without — which is
-     * the only reliable "list is up" signal.
+     * The build browser — a genuine POPUP
+     * (popups/citadel_popup_build_browser.xml:8 declares
+     * `<PopupBuildBrowser class="PopupPanel Hidden" popupbackground="dim">`).
+     *
+     * Three things this models that all bit us:
+     *  - `.Hidden` is the open/closed discriminator, NOT visibility. popups_shared.css:26
+     *    sets `.PopupPanel.Hidden { visibility: visible; }`, so a dismissed popup still
+     *    reads as visible and IsPanelVisibleMaybe() returns true on a closed browser.
+     *  - `#CreateBuildButton` lives in the popup's `#Header`, a SIBLING of
+     *    `#HeroBuildSelector` (XML :11 vs :15). It exists the instant the popup
+     *    inflates, with zero dependency on build data — so it is NOT a "list is
+     *    ready" signal.
+     *  - The list arrives over the network. While the search is outstanding the
+     *    selector carries `BuildsLoading`, which collapses `#HeroBuildList` and
+     *    reveals `#HeroBuildListLoading` (citadel_ui_build_selector.css:41-49).
      */
     _renderBrowseList() {
-        if (!this.browseOpen) {
-            if (this.buildListPanel && this.buildListPanel.IsValid()) {
-                this.buildListPanel._destroy();
-            }
-            this.buildListPanel = null;
-            if (this.createBuildButton && this.createBuildButton.IsValid()) {
-                this.createBuildButton._destroy();
-            }
-            this.createBuildButton = null;
-            return;
+        // The popup is inflated on first open, not at HUD load — the engine logs
+        // "Panel HeroBuildSelector has fill-parent-flow..." at the moment Browse is
+        // clicked, so nothing in its subtree exists before that.
+        if (!this.popupPanel || !this.popupPanel.IsValid()) {
+            if (!this.browseOpen) return;
+            this.popupPanel = this.doc.root.addChild(
+                this.doc.create("PopupBuildBrowser", { classes: ["PopupPanel", "Hidden"] })
+            );
+            const header = this.popupPanel.addChild(this.doc.create("Panel", { id: "Header" }));
+            // Sibling of the selector, and present from inflation onward — which is
+            // why it is not a "list is ready" signal.
+            this.createBuildButton = header.addChild(
+                this.doc.create("Button", { id: "CreateBuildButton" })
+            );
+            this.createBuildButton.SetPanelEvent("onmouseactivate", () => this.createNewBuild());
+
+            this.buildSelector = this.popupPanel.addChild(
+                this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector" })
+            );
+            const main = this.buildSelector.addChild(
+                this.doc.create("Panel", { classes: ["MainContainer"] })
+            );
+            this.buildListPanel = main.addChild(this.doc.create("Panel", { id: "HeroBuildList" }));
+            this.listLoadingPanel = main.addChild(
+                this.doc.create("Panel", { id: "HeroBuildListLoading" })
+            );
         }
 
-        if (!this.buildListPanel || !this.buildListPanel.IsValid()) {
-            this.buildListPanel = this.selectedBuild.addChild(
-                this.doc.create("Panel", { id: "HeroBuildList" })
-            );
-        }
-        if (!this.createBuildButton || !this.createBuildButton.IsValid()) {
-            this.createBuildButton = this.selectedBuild.addChild(
-                this.doc.create("Panel", { id: "CreateBuildButton" })
-            );
-            this.createBuildButton.SetPanelEvent("onactivate", () => this.createNewBuild());
-        }
+        this.popupPanel.SetHasClass("Hidden", !this.browseOpen);
+        // Items are only revealed when the selector is showing a tab.
+        this.buildSelector.SetHasClass("ShowMyBuilds", this.browseOpen);
+        this.buildSelector.SetHasClass("BuildsLoading", this.browseOpen && this.buildsLoading);
+        this.listLoadingPanel.style.visibility =
+            (this.browseOpen && this.buildsLoading) ? "visible" : "collapse";
 
         this.buildListPanel.RemoveAndDeleteChildren();
+        if (!this.browseOpen || this.buildsLoading) return;
+
         this.builds.forEach((build, i) => {
             const item = this.buildListPanel.addChild(
                 this.doc.create("Panel", {
                     id: `HeroBuildListItem_${i}`,
-                    classes: ["HeroBuildListItem"],
+                    classes: ["HeroBuildListItem", "MyBuild"],
                 })
             );
             if (i === this.selectedIndex) item.AddClass("Selected");
@@ -413,15 +441,25 @@ class BuildsModel {
         });
     }
 
-    /** Clicking Browse reveals the list inline, after a render delay. */
+    /**
+     * Open the browser. The popup appears immediately, but the list is empty and
+     * flagged BuildsLoading until the simulated GC reply lands — which is exactly
+     * the window a naive readiness check mistakes for "this hero has no builds".
+     */
     openBuildBrowser() {
         this.counters.browserOpen++;
         if (this.browseOpen) return true;
         this._trace("openBuildBrowser (Browse clicked)");
+        this.buildsLoading = true;
         this.clock.schedule(this.latency.browseRevealMs / 1000, () => {
             this.browseOpen = true;
-            this._renderBuildList();
-            this._trace("browse list visible");
+            this._renderBrowseList();
+            this._trace("browser popup shown, list loading");
+            this.clock.schedule(this.latency.buildsReplyMs / 1000, () => {
+                this.buildsLoading = false;
+                this._renderBrowseList();
+                this._trace(`builds reply arrived (${this.builds.length} build(s))`);
+            });
         });
         return true;
     }
