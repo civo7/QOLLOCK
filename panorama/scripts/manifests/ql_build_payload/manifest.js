@@ -1464,10 +1464,18 @@
                     var ok = !!(typeof QOL !== "undefined" && typeof QOL[required[i]] === "function");
                     asserts.push({ passed: ok, name: "QOL." + required[i] + " exists" });
                 }
-                // Verify real game APIs
+                // NOT asserted: CitadelHudHeroBuildsCreateNewBuild / DeleteSelectedBuild.
+                //
+                // This used to fail the suite whenever those globals were absent, which
+                // is stricter than the code it is testing: _callCreateNewBuild and
+                // _callDeleteSelectedBuild (manifest.js:769-782) treat them as optional
+                // and fall back to $.DispatchEvent. So the test reported a failure on a
+                // build where loading demonstrably worked — a false alarm that cost real
+                // debugging time. Reported as an observation instead.
                 var hasCreate = typeof CitadelHudHeroBuildsCreateNewBuild === "function";
                 var hasDelete = typeof CitadelHudHeroBuildsDeleteSelectedBuild === "function";
-                asserts.push({ passed: hasCreate || hasDelete, name: "CitadelHudHeroBuilds* APIs present" });
+                var apiNote = "CitadelHudHeroBuilds* globals: create=" + (hasCreate ? "1" : "0") +
+                              " delete=" + (hasDelete ? "1" : "0") + " (event fallback covers absence)";
                 // Verify key panels
                 var shop = root ? root.FindChildTraverse("CitadelHudHeroShop") : null;
                 asserts.push({ passed: !!shop, name: "CitadelHudHeroShop panel exists" });
@@ -1475,7 +1483,7 @@
                 return {
                     passed: all,
                     name: "ql_build_payload API surface",
-                    message: all ? "" : asserts.filter(function(a) { return !a.passed; }).map(function(a) { return a.name; }).join(", "),
+                    message: all ? apiNote : asserts.filter(function(a) { return !a.passed; }).map(function(a) { return a.name; }).join(", "),
                     assertions: asserts
                 };
             } catch(e) {

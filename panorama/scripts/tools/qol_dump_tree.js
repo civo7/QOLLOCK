@@ -163,9 +163,13 @@
      *
      * All of that is a few hundred lines instead of tens of thousands.
      *
-     * Per-id output is capped and sorted by count, because a real tree has thousands
-     * of distinct ids and the long tail of unique ones tells us nothing a total does
-     * not. The cap being hit is reported rather than hidden.
+     * Per-id output is capped, but the cap is generous (a real HUD had 1,925 distinct
+     * ids, which is a few hundred lines — nothing next to 37,524). The first version
+     * capped at 400 sorted by count descending, which was exactly backwards: the
+     * frequent ids are the least informative, and the RARE ones are what a lookup
+     * needs. "TopBarPlayer0" occurs once, so it was dropped — and a manifest test
+     * failing with "TopBarPlayer0 not found" could not be checked against the capture.
+     * Emit everything up to the cap, and say loudly when the cap was hit.
      */
     function DumpTreeSummary(root, maxIds) {
         var start = _alive(root) ? root : null;
@@ -177,7 +181,7 @@
             return null;
         }
 
-        var idCap = _clamp(maxIds, 400, 4000);
+        var idCap = _clamp(maxIds, 4000, 20000);
 
         var total = 0;
         var deepest = 0;
@@ -221,6 +225,11 @@
               "\tpanels=" + total +
               "\tmaxDepth=" + deepest +
               "\tanonymous=" + noId);
+        // Walking a real HUD costs a visible hitch — measured at 196ms for 31,930
+        // panels, which trips the perf overlay's own spike alert. Say so, so that
+        // alert is not mistaken for a mod regression the next time someone reads a log.
+        $.Msg("[QOLSUM:NOTE]\tthis walk blocks for ~200ms on a full HUD; any perf spike " +
+              "alert next to these lines is this tool, not the mod");
 
         for (var d = 0; d <= deepest; d++) {
             $.Msg("[QOLSUM:DEPTH]\t" + d + "\t" + (byDepth[d] || 0));

@@ -101,12 +101,21 @@
     // round trip, so the window is generous relative to the 200ms verify poll.
     // Bounded well inside BUILD_SAVE_TIMEOUT_MS so the overall budget still wins.
     var BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS = 6000;
-    // How long to keep polling for the payload to read back AFTER the editor closes,
-    // before settling for the editor-close proof alone. Save rebuilds the category
-    // panels, so an immediate read sees the pre-commit ones. The reference
-    // implementation polls its carrier for 4s after edit mode closes; 1.5s is the
-    // budget that fits inside BUILD_SAVE_TIMEOUT_MS after switch + confirm + write.
-    var BUILD_SAVE_READBACK_GRACE_MS = 1500;
+    // How long to keep trying the payload readback AFTER the editor closes, before
+    // settling for the editor-close proof alone.
+    //
+    // Kept short on purpose. In-game evidence (2026-08-21) says the readback cannot
+    // normally succeed here at all: comparing payload tokens through a save shows the
+    // rendered category label still holding the PREVIOUS payload while the new one
+    // appears only twice — once as we write it into the entry, once as the client
+    // reads that entry to commit. The client does not re-render the category header
+    // until something refreshes the build list, so no window we could afford would
+    // catch it. A 1500ms window was measured doing exactly nothing but delaying every
+    // save by 1.5s.
+    //
+    // So this is an opportunistic attempt, not the plan. saved_commit_confirmed is the
+    // expected outcome of a healthy save, not a degraded one.
+    var BUILD_SAVE_READBACK_GRACE_MS = 400;
     var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     // SAVE_SETTINGS_LOADER_ENABLED is imported via _deps (line 43).
 
@@ -1150,18 +1159,14 @@ function ResetBuildSaveRequestAttributes(root) {
         var pressedInEditor = !!State.buildSaveCommitPressedInEditor;
         var pressedMs = Number(State.buildSaveCommitPressedMs) || nowMs;
 
-        // Committed, but the payload has not read back yet. Give the client time to
-        // rebuild the category panels before settling for the weaker proof.
+        // Committed. Try the readback briefly, then accept the editor-close proof.
         //
-        // Save tears down and rebuilds that subtree, so a read taken the instant the
-        // editor closes sees the panels that were there before the commit. Accepting
-        // immediately is why two in-game runs both reported saved_commit_confirmed
-        // while the Panorama debugger showed the payload plainly present in
-        // #BuildCategoryName a moment later.
-        //
-        // Only the readback is delayed, never the commit: the settings are already on
-        // disk by this point, and the fallback below still ends the save if the panels
-        // never come back readable.
+        // Both proofs mean the save landed; the readback is just the stronger evidence
+        // when it is available, and in-game it usually is not — the client keeps
+        // showing the previously committed category name until the build list
+        // refreshes (see BUILD_SAVE_READBACK_GRACE_MS). saved_commit_confirmed is
+        // therefore a normal success, not a warning sign. It stays a distinct message
+        // only so the log can tell the two apart.
         if (pressedInEditor && !editorOpen) {
             var closedMs = Number(State.buildSaveEditorClosedMs) || 0;
             if (closedMs <= 0) {

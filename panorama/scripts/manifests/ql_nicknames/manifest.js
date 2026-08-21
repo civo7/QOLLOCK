@@ -313,8 +313,48 @@
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            var topBar0 = root ? root.FindChildTraverse("TopBarPlayer0") : null;
-            return { passed: !!topBar0, name: "Top bar player panels exist", message: topBar0 ? "" : "TopBarPlayer0 not found", assertions: [{ passed: !!topBar0, name: "TopBarPlayer0 panel exists" }] };
+            if (!root || !root.FindChildTraverse) return null;   // Skip — no tree
+
+            // Skip when there is no top bar at all: that is "not in a match", not a
+            // failure. This hook used to assert TopBarPlayer0 directly and reported
+            // FAIL in a session where nicknames were working, which is a false alarm
+            // that costs real debugging time.
+            var topBar = root.FindChildTraverse("TopBar");
+            if (!topBar) return null;   // Skip — top bar not loaded
+
+            // Accept either route to a player panel, because the feature does too:
+            // _processSlot tries its own cache, then State.spm.playerPanels, and only
+            // then the "TopBarPlayerN" id. Asserting just the id would fail whenever
+            // the engine names those panels differently, while the feature carries on
+            // working through the container chain — which is how ql_showrank reaches
+            // them (TopBar -> TeamsContainer -> Team -> PlayerContents ->
+            // PlayersContainer -> child).
+            var byId = root.FindChildTraverse("TopBarPlayer0");
+            var byChain = null;
+            var teams = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
+            if (teams && teams.GetChildCount) {
+                for (var t = 0; t < teams.GetChildCount() && t < 4 && !byChain; t++) {
+                    var team = teams.GetChild(t);
+                    var contents = (team && team.FindChildTraverse) ? team.FindChildTraverse("PlayerContents") : null;
+                    var container = (contents && contents.FindChildTraverse) ? contents.FindChildTraverse("PlayersContainer") : null;
+                    if (container && container.GetChildCount && container.GetChildCount() > 0) {
+                        byChain = container.GetChild(0);
+                    }
+                }
+            }
+
+            var found = !!(byId || byChain);
+            return {
+                passed: found,
+                name: "Top bar player panels are reachable",
+                message: found
+                    ? ("via " + (byId ? "id" : "-") + (byChain ? "+chain" : "") )
+                    : "no player panel found by id TopBarPlayer0 or via TeamsContainer chain",
+                assertions: [
+                    { passed: !!byId, name: "TopBarPlayer0 resolves by id" },
+                    { passed: !!byChain, name: "player resolves via TeamsContainer chain" }
+                ]
+            };
         } catch(e) { return { passed: false, name: "Nicknames panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });
