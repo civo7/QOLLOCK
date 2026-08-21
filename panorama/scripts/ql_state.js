@@ -391,6 +391,11 @@ var State;
         topbarPlayerPanelRoot: null,
         topbarPlayerPanels: null,
         topbarPlayerPanelLastScanMs: null,
+        // Latched per slot on first successful resolve, never cleared for the session.
+        // Distinguishes "the engine does not create this slot" (index 0 — see
+        // GetTopBarPlayerPanel) from "the panel died and will come back", which decides
+        // whether a lookup gets a 30s cooldown or the normal 1.5s one.
+        topbarPlayerPanelEverResolved: null,
         topbarNicknamesWasEnabled: false,
         topbarNicknamesNextRefreshMs: 0,
         topbarNicknamePlayers: null,

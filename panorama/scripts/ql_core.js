@@ -3770,10 +3770,16 @@ function GetUIRoot() {
         if (State.topbarPlayerPanelRoot && State.topbarPlayerPanelRoot !== root) {
             State.topbarPlayerPanels = null;
             State.topbarPlayerPanelLastScanMs = null;
+            // Deliberately NOT cleared with the panels: which slots the engine ever
+            // creates is a property of the game, not of this root. Resetting it on a
+            // root swap would re-arm the 30s absent-slot cooldown for every real
+            // player and blank their nicknames and badges for half a minute.
+            if (!State.topbarPlayerPanelEverResolved) State.topbarPlayerPanelEverResolved = new Array(SPM_MAX_PLAYERS);
         }
         State.topbarPlayerPanelRoot = root || null;
         if (!State.topbarPlayerPanels) State.topbarPlayerPanels = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarPlayerPanelLastScanMs) State.topbarPlayerPanelLastScanMs = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarPlayerPanelEverResolved) State.topbarPlayerPanelEverResolved = new Array(SPM_MAX_PLAYERS);
     }
 
     function GetTopBarPlayerPanel(root, index, nowMs, forceRefresh) {
@@ -3795,8 +3801,8 @@ function GetUIRoot() {
             lastScanMs = 0;
         }
         var recentlyScanned = lastScanMs > 0 && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS;
-        // A slot that has never resolved gets a much longer cooldown than one that
-        // merely went stale.
+        // A slot that has NEVER ONCE resolved gets a much longer cooldown than one
+        // whose panel merely went away.
         //
         // GROUND TRUTH from a captured live tree (2026-08-21): the engine numbers these
         // panels TopBarPlayer1..TopBarPlayer12 — twelve panels for a 6v6 match, and
@@ -3805,6 +3811,13 @@ function GetUIRoot() {
         // HUD: 31,411 panels in that capture. At the 1500ms refresh that is a full-tree
         // walk roughly every second and a half, forever, for a panel that does not
         // exist.
+        //
+        // The "ever resolved" flag is load-bearing and must not be simplified into
+        // "is the cache empty right now". Panels die on every match transition and HUD
+        // rebuild, so keying on an empty cache would apply the 30s freeze to REAL
+        // players — their nicknames and rank badges would vanish for half a minute
+        // after every reload. Only a slot that has never produced a panel in this
+        // session is treated as absent.
         //
         // Not hard-skipping index 0. Two player-slot id families in the capture
         // (TopBarPlayer, PlayerIntentsPlayer) are both 1-based, but other families in
@@ -3826,6 +3839,10 @@ function GetUIRoot() {
         var playerPanel = root.FindChildTraverse("TopBarPlayer" + index) || null;
         State.topbarPlayerPanels[index] = playerPanel || null;
         State.topbarPlayerPanelLastScanMs[index] = now;
+        // Latch on first success. Never cleared for the life of the session — see the
+        // absent-slot note above: this records "the engine does create this slot", so
+        // a panel dying later must not re-arm the long cooldown.
+        if (playerPanel) State.topbarPlayerPanelEverResolved[index] = true;
         return playerPanel || null;
     }
 

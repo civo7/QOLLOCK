@@ -213,3 +213,41 @@ test("REGRESSION: a missing gold container does not throw every tick", () => {
     assert.deepStrictEqual(errors.slice(0, 3), [],
         `feature threw with the gold container absent:\n${errors.slice(0, 3).join("\n")}`);
 });
+
+// ── The slot the engine never creates ──
+//
+// GROUND TRUTH from a captured live tree: the engine creates TopBarPlayer1..12 for a
+// 6v6 match and there is NO TopBarPlayer0. Every consumer loops from 0, so slot 0 is a
+// lookup that cannot succeed, and a FindChildTraverse miss walks the whole HUD (31,411
+// panels in that capture). GetTopBarPlayerPanel therefore gives a never-resolved slot
+// a 30s cooldown rather than the usual 1.5s stale-cache refresh.
+//
+// This asserts only the part the simulator can actually decide: that a second attempt
+// 2s after a miss does not re-search. The companion property — that a REAL player's
+// slot is not caught by the same cooldown when its panel dies — is NOT tested here,
+// deliberately. It depends on a dead panel reporting IsValid() === false, and this
+// simulator's DeleteAsync unlinks a panel while leaving the object valid, so a test for
+// it passes against the buggy implementation too. Two drafts of that test did exactly
+// that and were deleted rather than kept as false assurance; the guard for it lives in
+// GetTopBarPlayerPanel's own comment, and it needs an in-game check.
+test("the slot the engine never creates is not re-searched every refresh", () => {
+    const { h } = profile();
+    const sb = h.sandbox;
+
+    // forceRefresh=false and advancing timestamps, because that is how the poll loops
+    // call it — passing true bypasses the cooldown branch entirely.
+    const scans = sb.evalJson(`(function(){
+        var root = $.GetContextPanel();
+        var t = 2000000;
+        QOL.getTopBarPlayerPanel(root, 0, t, false);
+        var before = QOL.state.topbarPlayerPanelLastScanMs[0];
+        QOL.getTopBarPlayerPanel(root, 0, t + 2000, false);
+        var after = QOL.state.topbarPlayerPanelLastScanMs[0];
+        return { before: before, after: after };
+    })()`);
+
+    assert.strictEqual(scans.after, scans.before,
+        `slot 0 was re-searched 2s after a miss (lastScan ${scans.before} -> ` +
+        `${scans.after}). The absent-slot cooldown is not holding, so a panel that ` +
+        `does not exist costs a whole-HUD walk every 1.5s for the entire match.`);
+});
