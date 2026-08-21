@@ -123,7 +123,20 @@
             //
             // MAX_PLAYERS is left alone on purpose; see the note in ql_nicknames.
             var SLOT_MISS_BACKOFF_MS = 3000;
+            // A slot that has NEVER resolved is treated differently from one that is
+            // merely late. Captured live tree (2026-08-21): the engine creates
+            // TopBarPlayer1..TopBarPlayer12 and there is no TopBarPlayer0, while this
+            // loop runs 0..12 — so slot 0 is a lookup that cannot succeed, and a miss
+            // walks the whole HUD (31,411 panels measured). At the 3s backoff that is a
+            // full-tree walk every three seconds for the entire match.
+            //
+            // Not skipped outright: two player-slot id families in that capture are
+            // 1-based but other families in the same tree are 0-based, so 1-based is an
+            // observation about one build, not a rule. A long cooldown removes the cost
+            // and still finds the panel if some mode does create slot 0.
+            var SLOT_NEVER_RESOLVED_BACKOFF_MS = 30000;
             var _slotMissUntil = new Array(MAX_PLAYERS);
+            var _slotEverResolved = new Array(MAX_PLAYERS);
 
             function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
@@ -133,6 +146,7 @@
                     var playerPanel = root.FindChildTraverse("TopBarPlayer" + index);
                     if (_alive(playerPanel)) {
                         _slotMissUntil[index] = 0;
+                        _slotEverResolved[index] = true;
                         return playerPanel;
                     }
 
@@ -147,11 +161,15 @@
                         var parent = panels[i].GetParent ? panels[i].GetParent() : null;
                         if (parent && parent.id === "PlayerStatus") {
                             _slotMissUntil[index] = 0;
+                            _slotEverResolved[index] = true;
                             return panels[i];
                         }
                     }
                 } catch(e) {}
-                if (now > 0) _slotMissUntil[index] = now + SLOT_MISS_BACKOFF_MS;
+                if (now > 0) {
+                    _slotMissUntil[index] = now +
+                        (_slotEverResolved[index] ? SLOT_MISS_BACKOFF_MS : SLOT_NEVER_RESOLVED_BACKOFF_MS);
+                }
                 return null;
             }
 

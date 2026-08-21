@@ -310,7 +310,15 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
                 dedupeIds: count > 1 && !isPlayer,
             });
             // Stamp the engine-assigned per-player id on the subtree root.
-            if (isPlayer && created.length > 0) created[0].id = PLAYER_PANEL_ID_PREFIX + i;
+            //
+            // 1-BASED, from a captured live tree (2026-08-21): the engine creates
+            // TopBarPlayer1..TopBarPlayer12 for a 6v6 match and there is no
+            // TopBarPlayer0. Modelling these 0-based was not a harmless off-by-one — it
+            // made the profiler blame slot 12 for the wasted full-tree walk when the
+            // real dead slot is 0, and a perf fix was aimed at the wrong index as a
+            // result. The mod loops 0..12, so with correct numbering the model now
+            // reproduces the real miss.
+            if (isPlayer && created.length > 0) created[0].id = PLAYER_PANEL_ID_PREFIX + (i + 1);
         }
         byLayout[spec.file] = { perInstance: per, instances: count, total: per * count };
     }

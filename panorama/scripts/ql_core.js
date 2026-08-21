@@ -411,6 +411,11 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
+    // Cooldown for a slot that has never resolved. Deliberately far longer than the
+    // stale-cache refresh above: the cost of re-checking is a whole-HUD walk (31k
+    // panels measured), and the only slot that behaves this way is one the engine
+    // never creates. Still bounded so a genuinely late-arriving panel is picked up.
+    const TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS = 30000;
     // WHY: nickname refresh at 1s initially, then 4.2s once stable — player names
     // WHY: 280ms sample interval (~3.6Hz) — fast enough to catch soul swings during
     // urn fights, slow enough to not dominate the main loop budget
@@ -3790,6 +3795,27 @@ function GetUIRoot() {
             lastScanMs = 0;
         }
         var recentlyScanned = lastScanMs > 0 && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS;
+        // A slot that has never resolved gets a much longer cooldown than one that
+        // merely went stale.
+        //
+        // GROUND TRUTH from a captured live tree (2026-08-21): the engine numbers these
+        // panels TopBarPlayer1..TopBarPlayer12 — twelve panels for a 6v6 match, and
+        // there is NO TopBarPlayer0. Every consumer here loops from 0, so index 0 is a
+        // lookup that cannot ever succeed, and a FindChildTraverse miss walks the entire
+        // HUD: 31,411 panels in that capture. At the 1500ms refresh that is a full-tree
+        // walk roughly every second and a half, forever, for a panel that does not
+        // exist.
+        //
+        // Not hard-skipping index 0. Two player-slot id families in the capture
+        // (TopBarPlayer, PlayerIntentsPlayer) are both 1-based, but other families in
+        // the same tree are 0-based (ModCategory 0..2, ModIcon 0..7), so 1-based
+        // numbering is an observation about one build, not a rule I can rely on. A long
+        // negative cooldown removes essentially all of the cost while still finding the
+        // panel within a minute if some mode really does create slot 0.
+        var neverResolved = lastScanMs > 0 && !State.topbarPlayerPanels[index];
+        if (neverResolved && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS) {
+            return null;
+        }
         if (cached && (!forceRefresh || recentlyScanned)) return cached;
         if (!forceRefresh && recentlyScanned) return cached;
         if (!root.FindChildTraverse) {

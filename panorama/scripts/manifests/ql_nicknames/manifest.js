@@ -59,20 +59,31 @@
 
             // Per-slot backoff for panel lookups that miss.
             //
-            // MAX_PLAYERS is 13 while a Deadlock match is 6v6, so slot 12 has no panel
-            // and never will. FindChildTraverse on a missing id walks the whole HUD
-            // subtree before returning null, so that one slot cost a full-tree walk on
-            // every pass — and it showed up in the profile as one of the largest single
-            // wasted traversals, shared with ql_unspent and the compass loop all
-            // hunting the same absent id.
+            // CORRECTED 2026-08-21 from a captured live tree. The earlier note here said
+            // "MAX_PLAYERS is 13 while a Deadlock match is 6v6, so slot 12 has no panel
+            // and never will" — that was backwards, and it sent a perf fix at the wrong
+            // slot. The engine numbers these panels TopBarPlayer1..TopBarPlayer12: twelve
+            // panels, one per player, and **no TopBarPlayer0**. Slot 12 is real; slot 0
+            // is the one that can never resolve.
             //
-            // Deliberately NOT changing MAX_PLAYERS: whether some mode has a
-            // thirteenth top-bar slot is a game question, not a perf one, and guessing
-            // wrong would silently drop a player. Making the miss cheap is correct
-            // either way, and it also covers the ordinary case of a slot that has not
-            // been created yet early in a match.
+            // A FindChildTraverse miss walks the entire HUD — 31,411 panels in that
+            // capture — so the dead slot cost a full-tree walk on every pass. The shared
+            // getter (ql_core.js GetTopBarPlayerPanel) now applies a 30s cooldown to any
+            // slot that has never resolved, which covers this path and every other
+            // consumer of the same ids; this local backoff still handles a slot that has
+            // simply not been created yet early in a match.
+            //
+            // Deliberately NOT changing the loop to start at 1: two player-slot families
+            // in the capture are 1-based, but other id families in the same tree are
+            // 0-based, so that is an observation about one build rather than a rule. A
+            // cheap miss is correct either way; a skipped slot would silently drop a
+            // player if some mode does number from zero.
             var SLOT_MISS_BACKOFF_MS = 3000;
+            // Long cooldown for a slot that has never resolved once — see the note
+            // above: slot 0 cannot resolve, and each attempt is a whole-HUD walk.
+            var SLOT_NEVER_RESOLVED_BACKOFF_MS = 30000;
             var _slotMissUntil = new Array(MAX_PLAYERS);
+            var _slotEverResolved = new Array(MAX_PLAYERS);
 
             function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
@@ -83,10 +94,14 @@
                     var panel = root.FindChildTraverse("TopBarPlayer" + index);
                     if (_alive(panel)) {
                         _slotMissUntil[index] = 0;
+                        _slotEverResolved[index] = true;
                         return panel;
                     }
                 } catch(e) {}
-                if (now > 0) _slotMissUntil[index] = now + SLOT_MISS_BACKOFF_MS;
+                if (now > 0) {
+                    _slotMissUntil[index] = now +
+                        (_slotEverResolved[index] ? SLOT_MISS_BACKOFF_MS : SLOT_NEVER_RESOLVED_BACKOFF_MS);
+                }
                 return null;
             }
 
