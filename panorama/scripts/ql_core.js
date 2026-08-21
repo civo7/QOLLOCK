@@ -14929,18 +14929,24 @@ function GetUIRoot() {
                         // poller sees request was received. onComplete resets throttle so
                         // results are written on the next cycle after tests finish.
                     }
-                    // ── "dt_" — dump the real panel tree to the console log.
-                    //     Developer tool, not part of any feature: the log it produces is
-                    //     converted by scripts/import_tree_dump.js into a captured tree for
-                    //     the headless profiler, so cost numbers stop depending on our
-                    //     model of what the engine builds. Emits one line per panel, so
-                    //     it is deliberately manual and never runs on its own. ──
+                    // ── "dt_" — summarise the real panel tree into the console log.
+                    //     Developer tool, not part of any feature. The log it produces is
+                    //     converted by scripts/import_tree_dump.js into a captured profile
+                    //     for the headless profiler, so cost numbers stop depending on our
+                    //     model of what the engine builds.
+                    //
+                    //     Summary, not a full per-panel dump: a live match HUD measured
+                    //     37,524 panels, and a full dump of that overran the game's
+                    //     rolling console log — 2,152 lines survived out of 37,524. The
+                    //     aggregate is a few hundred lines and carries what the profiler
+                    //     needs (tree size, depth profile, id distribution). QOL.dumpTree
+                    //     is still available for a single subtree. ──
                     if (forceToken.indexOf("dt_") === 0) {
-                        if (QOL && typeof QOL.dumpTree === "function") {
-                            try { QOL.dumpTree(diagHud || diagRoot); }
-                            catch(_dtErr) { QOL_WARN("core", "tree dump failed: " + (_dtErr && _dtErr.message ? _dtErr.message : String(_dtErr || ""))); }
+                        if (QOL && typeof QOL.dumpTreeSummary === "function") {
+                            try { QOL.dumpTreeSummary(diagHud || diagRoot); }
+                            catch(_dtErr) { QOL_WARN("core", "tree summary failed: " + (_dtErr && _dtErr.message ? _dtErr.message : String(_dtErr || ""))); }
                         } else {
-                            QOL_WARN("core", "tree dump requested but QOL.dumpTree is unavailable");
+                            QOL_WARN("core", "tree summary requested but QOL.dumpTreeSummary is unavailable");
                         }
                     }
                     forceSync = true;

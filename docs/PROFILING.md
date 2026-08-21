@@ -129,20 +129,37 @@ A model built from our assumptions cannot falsify those assumptions. Which is wh
 4. node scripts/profile_hud.js --tree scripts/simulator/perf/runs/captured_tree.json
 ```
 
-The dump writes one `[QOLTREE]` line per panel to the console log — depth-first
-**pre-order**, tab separated. Pre-order is what makes it reconstructible: a node's
-parent is the most recent line at depth-1. It goes to the log rather than back over
-the attribute bridge because a full HUD is tens of thousands of lines.
+**Ground truth, 2026-08-21: a live match HUD is 37,524 panels.** The modelled tree is
+3,099 — so it understates the real thing by 12×, and a full-tree miss costs 12× more
+than any modelled number suggested.
 
-`import_tree_dump.js` reports every way a capture can be incomplete — truncated at
-the panel cap, clipped at the depth cap, lines lost, not pre-order — and those
-warnings are carried into the profile header as tree notes. A partial capture is
-still useful as a **floor**, but it must not be mistaken for the whole tree.
+That measurement also killed the first version of this tool. A per-panel dump of
+37,524 panels is ~3MB of `$.Msg`, and the game's console log is a rolling buffer: the
+capture arrived with 2,152 of 37,524 lines and the START line had already scrolled
+out. The importer refused it rather than reconstruct a wrong tree — which is the
+behaviour you want, but it means **the button captures an aggregate**, not every
+panel:
 
-`--stats` also prints duplicated ids, which is directly useful: duplicate ids are why
+- total panels, max depth, and how many panels carry no id
+- panels per depth
+- panel count per type
+- panel count per id (capped, most frequent first)
+
+That is what decides lookup cost — a `FindChildTraverse` hit stops at its target
+while a miss visits every node, so what matters is the tree's size and whether an id
+exists at all, not the identity of each panel. And it fits in a log.
+
+`QOL.dumpTree` still exists for a full per-panel dump of a single subtree, which is
+small enough to survive. It is not wired to a button.
+
+`--stats` prints duplicated ids, which is directly useful: duplicate ids are why
 `FindChildTraverse` by id is unreliable in this codebase (it returns the first match
-in traversal order, which is not necessarily the live panel — that bug cost a full
-debug cycle on the build-save pipeline).
+in traversal order, not necessarily the live panel — that cost a full debug cycle on
+the build-save pipeline).
+
+Every way a capture can be incomplete — rolled log, missing END, capped id list,
+depth lines lost — is reported by the importer and carried into the profile header as
+a tree note. A partial capture is a **floor**, not a baseline.
 
 Captured and modelled runs are **not comparable** — the header and saved JSON record
 which one you got, so don't diff across them.

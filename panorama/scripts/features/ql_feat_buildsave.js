@@ -101,6 +101,12 @@
     // round trip, so the window is generous relative to the 200ms verify poll.
     // Bounded well inside BUILD_SAVE_TIMEOUT_MS so the overall budget still wins.
     var BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS = 6000;
+    // How long to keep polling for the payload to read back AFTER the editor closes,
+    // before settling for the editor-close proof alone. Save rebuilds the category
+    // panels, so an immediate read sees the pre-commit ones. The reference
+    // implementation polls its carrier for 4s after edit mode closes; 1.5s is the
+    // budget that fits inside BUILD_SAVE_TIMEOUT_MS after switch + confirm + write.
+    var BUILD_SAVE_READBACK_GRACE_MS = 1500;
     var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     // SAVE_SETTINGS_LOADER_ENABLED is imported via _deps (line 43).
 
@@ -139,6 +145,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveMutationClosed = false;
         State.buildSaveCommitPressedInEditor = false;
         State.buildSaveCommitPressedMs = 0;
+        State.buildSaveEditorClosedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -1143,11 +1150,31 @@ function ResetBuildSaveRequestAttributes(root) {
         var pressedInEditor = !!State.buildSaveCommitPressedInEditor;
         var pressedMs = Number(State.buildSaveCommitPressedMs) || nowMs;
 
-        // Committed, but the label would not give the payload back. Accept and say
-        // so. Requires having pressed Save from an open editor, so "no editor at
-        // all" can never masquerade as a commit.
+        // Committed, but the payload has not read back yet. Give the client time to
+        // rebuild the category panels before settling for the weaker proof.
+        //
+        // Save tears down and rebuilds that subtree, so a read taken the instant the
+        // editor closes sees the panels that were there before the commit. Accepting
+        // immediately is why two in-game runs both reported saved_commit_confirmed
+        // while the Panorama debugger showed the payload plainly present in
+        // #BuildCategoryName a moment later.
+        //
+        // Only the readback is delayed, never the commit: the settings are already on
+        // disk by this point, and the fallback below still ends the save if the panels
+        // never come back readable.
         if (pressedInEditor && !editorOpen) {
-            _TLog("save:VerifyOk", "commit confirmed by editor close; payload readback unavailable");
+            var closedMs = Number(State.buildSaveEditorClosedMs) || 0;
+            if (closedMs <= 0) {
+                State.buildSaveEditorClosedMs = nowMs;
+                closedMs = nowMs;
+            }
+            if ((nowMs - closedMs) < BUILD_SAVE_READBACK_GRACE_MS) {
+                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+                QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
+                return true;
+            }
+            _TLog("save:VerifyOk", "commit confirmed by editor close; payload readback unavailable after " +
+                  (nowMs - closedMs) + "ms");
             FinishBuildSaveRequest(root, requestToken, "success", "saved_commit_confirmed");
             return true;
         }
@@ -1396,6 +1423,7 @@ function ResetBuildSaveRequestAttributes(root) {
         State.buildSaveMutationClosed = false;
         State.buildSaveCommitPressedInEditor = false;
         State.buildSaveCommitPressedMs = 0;
+        State.buildSaveEditorClosedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -1471,6 +1499,7 @@ function ResetBuildSaveRequestAttributes(root) {
             "buildSaveFavoritesActionNextMs", "buildSaveStorageProvisionalHits",
             "buildSaveMutationClosed", "buildSaveTargetBuildPanel",
             "buildSaveCommitPressedInEditor", "buildSaveCommitPressedMs",
+            "buildSaveEditorClosedMs",
             "buildSaveTargetBuildSig", "buildSaveTargetBuildTitle",
             "buildSaveTargetStableHits", "buildSaveTargetDriftRetries",
             "buildSaveTargetQuietUntilMs", "buildSaveLastTraceStage"

@@ -148,8 +148,115 @@
         return { panels: emitted, maxDepth: deepest, truncated: truncated, clipped: clipped };
     }
 
+    /**
+     * Aggregate summary — the mode you actually want on a real HUD.
+     *
+     * GROUND TRUTH, 2026-08-21: a live match HUD is 37,524 panels. A full per-panel
+     * dump of that is ~3MB of console output, and the game's console log is a rolling
+     * buffer — the capture arrived with 2,152 of 37,524 lines and even the START line
+     * had scrolled out. A full dump is therefore only usable on small subtrees.
+     *
+     * What the profiler actually needs is not every panel: it needs the SIZE of the
+     * tree, its depth profile, and the id distribution — because a FindChildTraverse
+     * hit stops at its target while a miss visits every node, so the cost of a lookup
+     * is decided by how many panels exist and whether the id exists at all.
+     *
+     * All of that is a few hundred lines instead of tens of thousands.
+     *
+     * Per-id output is capped and sorted by count, because a real tree has thousands
+     * of distinct ids and the long tail of unique ones tells us nothing a total does
+     * not. The cap being hit is reported rather than hidden.
+     */
+    function DumpTreeSummary(root, maxIds) {
+        var start = _alive(root) ? root : null;
+        if (!start) {
+            try { start = $.GetContextPanel(); } catch (e) { start = null; }
+        }
+        if (!_alive(start)) {
+            $.Msg("[QOLSUM:ERROR] no valid root panel to summarise");
+            return null;
+        }
+
+        var idCap = _clamp(maxIds, 400, 4000);
+
+        var total = 0;
+        var deepest = 0;
+        var noId = 0;
+        var byDepth = {};
+        var byId = {};
+        var byType = {};
+
+        var stack = [[start, 0]];
+        while (stack.length > 0) {
+            var frame = stack.pop();
+            var panel = frame[0];
+            var depth = frame[1];
+            if (!_alive(panel)) continue;
+
+            total++;
+            if (depth > deepest) deepest = depth;
+            byDepth[depth] = (byDepth[depth] || 0) + 1;
+
+            var id = "";
+            try { id = panel.id || ""; } catch (e) { id = ""; }
+            if (id) byId[id] = (byId[id] || 0) + 1; else noId++;
+
+            var type = "";
+            try { type = panel.paneltype || ""; } catch (e) { type = ""; }
+            if (type) byType[type] = (byType[type] || 0) + 1;
+
+            var childCount = 0;
+            try { if (panel.GetChildCount) childCount = panel.GetChildCount(); } catch (e) { childCount = 0; }
+            for (var i = childCount - 1; i >= 0; i--) {
+                var child = null;
+                try { child = panel.GetChild(i); } catch (e) { child = null; }
+                if (_alive(child)) stack.push([child, depth + 1]);
+            }
+        }
+
+        var rootId = "";
+        try { rootId = start.id || "-"; } catch (e) { rootId = "-"; }
+
+        $.Msg("[QOLSUM:START]\troot=" + (rootId || "-") +
+              "\tpanels=" + total +
+              "\tmaxDepth=" + deepest +
+              "\tanonymous=" + noId);
+
+        for (var d = 0; d <= deepest; d++) {
+            $.Msg("[QOLSUM:DEPTH]\t" + d + "\t" + (byDepth[d] || 0));
+        }
+
+        // Sort descending by count so the cap keeps what matters.
+        function sortedPairs(map) {
+            var keys = [];
+            for (var k in map) { if (map.hasOwnProperty(k)) keys.push(k); }
+            keys.sort(function(a, b) { return map[b] - map[a]; });
+            return keys;
+        }
+
+        var typeKeys = sortedPairs(byType);
+        for (var t = 0; t < typeKeys.length && t < idCap; t++) {
+            $.Msg("[QOLSUM:TYPE]\t" + typeKeys[t] + "\t" + byType[typeKeys[t]]);
+        }
+
+        var idKeys = sortedPairs(byId);
+        var idsEmitted = Math.min(idKeys.length, idCap);
+        for (var n = 0; n < idsEmitted; n++) {
+            $.Msg("[QOLSUM:ID]\t" + idKeys[n] + "\t" + byId[idKeys[n]]);
+        }
+
+        $.Msg("[QOLSUM:END]\tpanels=" + total +
+              "\tdistinctIds=" + idKeys.length +
+              "\tidsEmitted=" + idsEmitted +
+              "\tidsCapped=" + (idKeys.length > idsEmitted ? "1" : "0") +
+              "\tdistinctTypes=" + typeKeys.length);
+
+        return { panels: total, maxDepth: deepest, distinctIds: idKeys.length, idsEmitted: idsEmitted };
+    }
+
     if (typeof QOL !== "undefined" && QOL) {
         QOL.dumpTree = DumpTree;
+        QOL.dumpTreeSummary = DumpTreeSummary;
     } else {
         $.Msg("[QOLTREE:ERROR] QOL namespace missing — load order is wrong, tree dump unavailable");
     }

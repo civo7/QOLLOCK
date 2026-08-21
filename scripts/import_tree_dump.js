@@ -36,7 +36,108 @@ const START = "[QOLTREE:START]";
 const END = "[QOLTREE:END]";
 
 /**
- * Parse a console log into a nested tree.
+ * Parse a [QOLSUM] aggregate capture.
+ *
+ * This is the mode that survives a real HUD. A live match measured 37,524 panels;
+ * a full per-panel dump of that is ~3MB and the game's console log is a rolling
+ * buffer, so the first attempt arrived with 2,152 of 37,524 lines and no START.
+ *
+ * The aggregate carries what the profiler actually needs — total panels, the depth
+ * profile, and which ids exist and how often. Lookup cost is decided by tree size
+ * and by whether an id exists at all (a hit stops early, a miss visits everything),
+ * and none of that requires knowing each panel individually.
+ */
+function parseTreeSummary(text) {
+    const lines = String(text || "").split(/\r?\n/);
+    const warnings = [];
+    const byDepth = {};
+    const byId = {};
+    const byType = {};
+    let meta = { root: null, panels: null, maxDepth: null, anonymous: null };
+    let end = null;
+
+    const field = (line, marker) => {
+        const at = line.indexOf(marker);
+        return at === -1 ? null : line.slice(at + marker.length);
+    };
+
+    for (const line of lines) {
+        let rest = field(line, "[QOLSUM:START]\t");
+        if (rest !== null) {
+            const get = (k) => {
+                const m = new RegExp(`${k}=([^\\t]*)`).exec(rest);
+                return m ? m[1].trim() : null;
+            };
+            meta = {
+                root: get("root"),
+                panels: Number(get("panels")),
+                maxDepth: Number(get("maxDepth")),
+                anonymous: Number(get("anonymous")),
+            };
+            continue;
+        }
+
+        rest = field(line, "[QOLSUM:END]\t");
+        if (rest !== null) {
+            const get = (k) => {
+                const m = new RegExp(`${k}=([^\\t]*)`).exec(rest);
+                return m ? m[1].trim() : null;
+            };
+            end = {
+                panels: Number(get("panels")),
+                distinctIds: Number(get("distinctIds")),
+                idsEmitted: Number(get("idsEmitted")),
+                idsCapped: get("idsCapped") === "1",
+                distinctTypes: Number(get("distinctTypes")),
+            };
+            continue;
+        }
+
+        rest = field(line, "[QOLSUM:DEPTH]\t");
+        if (rest !== null) {
+            const [d, n] = rest.split("\t");
+            byDepth[Number(d)] = Number(n) || 0;
+            continue;
+        }
+
+        rest = field(line, "[QOLSUM:TYPE]\t");
+        if (rest !== null) {
+            const [type, n] = rest.split("\t");
+            if (type) byType[type] = Number(n) || 0;
+            continue;
+        }
+
+        rest = field(line, "[QOLSUM:ID]\t");
+        if (rest !== null) {
+            const [id, n] = rest.split("\t");
+            if (id) byId[id] = Number(n) || 0;
+            continue;
+        }
+    }
+
+    if (meta.panels === null || !isFinite(meta.panels)) {
+        return { ok: false, warnings: ["no [QOLSUM:START] line — is this the right log, or was it rolled?"] };
+    }
+    if (!end) {
+        warnings.push("no [QOLSUM:END] line — the capture was cut off, treat every count as a floor");
+    } else if (end.panels !== meta.panels) {
+        warnings.push(`START says ${meta.panels} panels, END says ${end.panels} — lines were lost`);
+    }
+    if (end && end.idsCapped) {
+        warnings.push(`id list was capped at ${end.idsEmitted} of ${end.distinctIds} distinct ids ` +
+                      `(the omitted ones are the rarest, so a lookup for one of them may read as a miss)`);
+    }
+
+    const depthSum = Object.values(byDepth).reduce((a, b) => a + b, 0);
+    if (depthSum !== meta.panels) {
+        warnings.push(`depth histogram sums to ${depthSum} but the tree is ${meta.panels} panels — depth lines were lost`);
+    }
+
+    return { ok: true, meta, end, byDepth, byId, byType, warnings };
+}
+
+/**
+ * Parse a full per-panel [QOLTREE] dump into a nested tree.
  *
  * Returns { root, panels, maxDepth, warnings, meta }. `root` is
  * { id, type, classes: string[], children: [...] }.
@@ -184,11 +285,69 @@ function main() {
         ? argv[outIdx + 1]
         : path.join("scripts", "simulator", "perf", "runs", "captured_tree.json");
 
-    const parsed = parseTreeDump(fs.readFileSync(logPath, "utf8"));
+    const text = fs.readFileSync(logPath, "utf8");
+
+    // Prefer the aggregate: it is the mode that survives a real HUD. The full dump is
+    // only usable on a subtree small enough not to overrun the console log.
+    const summary = parseTreeSummary(text);
+    if (summary.ok) {
+        const m = summary.meta;
+        process.stdout.write(`captured SUMMARY: ${m.panels} panels, max depth ${m.maxDepth}, ` +
+                             `${m.anonymous} with no id (root=${m.root})\n`);
+        for (const w of summary.warnings) process.stdout.write(`WARNING: ${w}\n`);
+
+        if (argv.includes("--stats")) {
+            const top = (map, n) => Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n);
+            process.stdout.write("\npanels per depth:\n");
+            for (const [d, n] of Object.entries(summary.byDepth)) {
+                process.stdout.write(`  depth ${String(d).padStart(2)}  ${String(n).padStart(6)}\n`);
+            }
+            process.stdout.write("\nmost common panel types:\n");
+            for (const [type, n] of top(summary.byType, 15)) {
+                process.stdout.write(`  ${String(n).padStart(6)}  ${type}\n`);
+            }
+            // Duplicate ids are why FindChildTraverse-by-id is unreliable here: it
+            // returns the first match in traversal order, not necessarily the live one.
+            const dupes = top(summary.byId, 200).filter(([, n]) => n > 1).slice(0, 15);
+            if (dupes.length > 0) {
+                process.stdout.write("\nduplicated ids (FindChildTraverse returns the first):\n");
+                for (const [id, n] of dupes) process.stdout.write(`  ${String(n).padStart(6)}  ${id}\n`);
+            }
+        }
+
+        fs.mkdirSync(path.dirname(outPath), { recursive: true });
+        fs.writeFileSync(outPath, JSON.stringify({
+            kind: "summary",
+            capturedFrom: path.basename(logPath),
+            panels: m.panels,
+            maxDepth: m.maxDepth,
+            anonymous: m.anonymous,
+            root: m.root,
+            byDepth: summary.byDepth,
+            byId: summary.byId,
+            byType: summary.byType,
+            end: summary.end,
+            warnings: summary.warnings,
+        }, null, 1));
+        process.stdout.write(`\nwrote ${outPath}\n`);
+        return;
+    }
+
+    const parsed = parseTreeDump(text);
 
     if (!parsed.root) {
         process.stderr.write("FATAL: no tree found in that log.\n");
-        for (const w of parsed.warnings) process.stderr.write(`  - ${w}\n`);
+        // Report the summary attempt too, so "wrong log" and "rolled log" are
+        // distinguishable instead of both reading as a parse failure.
+        for (const w of summary.warnings) process.stderr.write(`  - ${w}\n`);
+        const firstFew = parsed.warnings.slice(0, 6);
+        for (const w of firstFew) process.stderr.write(`  - ${w}\n`);
+        if (parsed.warnings.length > firstFew.length) {
+            process.stderr.write(`  - ...and ${parsed.warnings.length - firstFew.length} more of the same\n`);
+        }
+        process.stderr.write("\nA full per-panel dump of a live HUD does not fit the game's console log\n" +
+                             "(37,524 panels measured). Use the Dev Panel button, which captures the\n" +
+                             "aggregate summary instead.\n");
         process.exit(1);
     }
 
@@ -226,4 +385,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { parseTreeDump, summarize };
+module.exports = { parseTreeDump, parseTreeSummary, summarize };
