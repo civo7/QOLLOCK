@@ -96,10 +96,12 @@ function report(snap, meta, tree, opts) {
     out.push("=".repeat(100));
     out.push("QOLLOCK FRAME-COST PROFILE");
     out.push("=".repeat(100));
-    out.push(`scenario        : ${meta.players} players (teamfight), ${meta.damageNumbers} floating damage panels`);
+    out.push(`scenario        : ${meta.treeSource === "captured"
+        ? `CAPTURED tree from ${meta.capturedFrom} (real match)`
+        : `${meta.players} players (teamfight), ${meta.damageNumbers} floating damage panels`}`);
     out.push(`healthbar       : HEALTHBAR_TYPE=${meta.healthbarType} ` +
              `(${["default", "minimalist", "fg", "klutz", "budhud", "minecraft"][meta.healthbarType] || "?"})`);
-    out.push(`HUD tree        : ${tree.panels} panels`);
+    out.push(`HUD tree        : ${tree.panels} panels (${meta.treeSource === "captured" ? "captured from the game" : "modelled from layout XML — see docs/PROFILING.md"})`);
     out.push(`sample          : ${secs}s of virtual game time (after ${meta.warmupMs / 1000}s warm-up)`);
     out.push(`config          : ${meta.configApplied ? `all features ON (${fmt(meta.configBytes)} bytes stored)` : "DEFAULTS ONLY — no config applied!"}`);
     out.push(`attribution     : ${meta.wrappedFeatures} old-system features wrapped, scheduler ${meta.wrappedScheduler ? "wrapped" : "NOT WRAPPED"}`);
@@ -287,10 +289,33 @@ function main() {
         }
     }
 
+    // --tree <json> — profile against a tree captured from a live match
+    // (scripts/import_tree_dump.js output) instead of the modelled composition.
+    // This is the only mode whose panel counts are not a guess.
+    let capturedTree = null;
+    const treeArg = arg("tree", null);
+    if (treeArg) {
+        if (!fs.existsSync(treeArg)) {
+            process.stderr.write(`[profiler] FATAL: no such captured tree: ${treeArg}\n`);
+            process.exit(2);
+        }
+        try {
+            capturedTree = JSON.parse(fs.readFileSync(treeArg, "utf8"));
+        } catch (e) {
+            process.stderr.write(`[profiler] FATAL: could not parse ${treeArg}: ${e.message}\n`);
+            process.exit(2);
+        }
+        if (!capturedTree || !capturedTree.root) {
+            process.stderr.write(`[profiler] FATAL: ${treeArg} has no root — was it written by import_tree_dump.js?\n`);
+            process.exit(2);
+        }
+    }
+
     const h = createProfiledHud({
         players,
         warmupMs: 8000,
         configOverrides: overrides,
+        capturedTree,
     });
 
     // A harness that produces an empty profile must fail loudly, not print

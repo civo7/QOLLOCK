@@ -39,7 +39,7 @@
 
 const path = require("node:path");
 const { install, counters, silently } = require("./instrument.js");
-const { buildMatchHud } = require("./hud_tree.js");
+const { buildMatchHud, buildCapturedHud } = require("./hud_tree.js");
 
 // Install before requiring the simulator so index.js sees patched classes.
 install();
@@ -185,6 +185,10 @@ function wrapScheduledLoops(sandbox) {
  * @param {boolean} [opts.enableAll=true]
  * @param {object}  [opts.configOverrides]
  * @param {number}  [opts.warmupMs=8000]  virtual ms to run before counting
+ * @param {object}  [opts.capturedTree]   parsed output of scripts/import_tree_dump.js;
+ *                                        when given, the real captured tree is used
+ *                                        instead of the modelled composition and
+ *                                        `players`/`damageNumbers` no longer apply
  */
 function createProfiledHud({
     players = 12,
@@ -192,6 +196,7 @@ function createProfiledHud({
     enableAll = true,
     configOverrides = {},
     warmupMs = 8000,
+    capturedTree = null,
 } = {}) {
     const clock = new Clock(1000);
     const doc = new Document(clock);
@@ -213,7 +218,11 @@ function createProfiledHud({
     silently(() => {
         // A live match: connected, not in the hideout.
         doc.root.SetHasClass("connectedToHideout", false);
-        tree = buildMatchHud(doc, { players, damageNumbers });
+        // A captured tree wins over the modelled one: it is the same HUD the engine
+        // actually built, so nothing about it depends on our composition guesses.
+        tree = capturedTree
+            ? buildCapturedHud(doc, capturedTree)
+            : buildMatchHud(doc, { players, damageNumbers });
     });
 
     const scripts = layout.hudScripts();
@@ -284,6 +293,10 @@ function createProfiledHud({
             players, damageNumbers, configApplied, configBytes,
             healthbarType: Number(configOverrides.HEALTHBAR_TYPE) || 0,
             wrappedFeatures, wrappedScheduler, wrappedLoops, warmupMs,
+            // Which tree the numbers describe. A modelled run and a captured run are
+            // not comparable, so this has to travel with the results.
+            treeSource: capturedTree ? "captured" : "modelled",
+            capturedFrom: capturedTree ? (capturedTree.capturedFrom || "unknown") : null,
         },
 
         /** Count for `ms` of virtual time and return a snapshot. */

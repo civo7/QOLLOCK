@@ -8155,6 +8155,57 @@ function RenderCurrentTabContent(list) {
                 $.Schedule(0.2, pollResults);
             });
         }
+
+        // ── Panel Tree Dump ──
+        // Writes the real HUD panel tree to the console log, one line per panel, so
+        // scripts/import_tree_dump.js can turn it into a captured tree for the headless
+        // profiler. Everything that profiler reports is otherwise relative to a tree we
+        // modelled from XML plus guesses about what C++ builds at runtime, and those
+        // guesses have been wrong by more than an order of magnitude in both directions.
+        //
+        // Fire-and-forget: unlike Manifest Tests there is no result to poll for. The
+        // payload goes to the log rather than back over the attribute bridge, because a
+        // full HUD is tens of thousands of lines — far past what an attribute should
+        // carry. Run it in a real match, then save the console log.
+        var treeDumpHeader = CreateSectionTitle(list, "Panel Tree Dump");
+        var treeDumpBtn = CreateSectionInlineIconButton(treeDumpHeader, "TreeDumpBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Dump the live panel tree to the console log for the offline profiler. Requires HUD context; save your console log afterwards.");
+        var treeDumpStatus = $.CreatePanel("Label", treeDumpHeader, "TreeDumpStatus");
+        treeDumpStatus.text = "Idle";
+        treeDumpStatus.style.fontSize = "13px";
+        treeDumpStatus.style.color = "#666";
+        treeDumpStatus.style.marginLeft = "6px";
+        treeDumpStatus.style.verticalAlign = "center";
+
+        function _tdSetStatus(text, color) {
+            try {
+                if (treeDumpStatus && treeDumpStatus.IsValid && treeDumpStatus.IsValid()) {
+                    treeDumpStatus.text = text;
+                    treeDumpStatus.style.color = color;
+                }
+            } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+
+        if (treeDumpBtn) {
+            treeDumpBtn.SetPanelEvent("onactivate", function() {
+                var hudPanel = _findHudPanel();
+                if (!hudPanel || !hudPanel.SetAttributeString) {
+                    _tdSetStatus("Hud panel not found", "#cc4444");
+                    return;
+                }
+                var forceToken = "dt_" + Date.now();
+                try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); }
+                catch(e) {
+                    WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || "")));
+                    _tdSetStatus("Request failed", "#cc4444");
+                    return;
+                }
+                $.Msg("[QOLLock][TreeDump] requested, token: " + forceToken);
+                _tdSetStatus("Dumped to console log", "#66cc99");
+                SetLocalizedConfigFeedbackMessage("Panel tree written to console log", "success", 5000);
+            });
+        }
         // ── Run Full Suite + Copy Report ──
         // Triggers Manifest Tests, waits for results, builds a compact report,
         // and copies it to clipboard. One click → clipboard.

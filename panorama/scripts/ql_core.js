@@ -14929,6 +14929,20 @@ function GetUIRoot() {
                         // poller sees request was received. onComplete resets throttle so
                         // results are written on the next cycle after tests finish.
                     }
+                    // ── "dt_" — dump the real panel tree to the console log.
+                    //     Developer tool, not part of any feature: the log it produces is
+                    //     converted by scripts/import_tree_dump.js into a captured tree for
+                    //     the headless profiler, so cost numbers stop depending on our
+                    //     model of what the engine builds. Emits one line per panel, so
+                    //     it is deliberately manual and never runs on its own. ──
+                    if (forceToken.indexOf("dt_") === 0) {
+                        if (QOL && typeof QOL.dumpTree === "function") {
+                            try { QOL.dumpTree(diagHud || diagRoot); }
+                            catch(_dtErr) { QOL_WARN("core", "tree dump failed: " + (_dtErr && _dtErr.message ? _dtErr.message : String(_dtErr || ""))); }
+                        } else {
+                            QOL_WARN("core", "tree dump requested but QOL.dumpTree is unavailable");
+                        }
+                    }
                     forceSync = true;
                     QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));
                 }

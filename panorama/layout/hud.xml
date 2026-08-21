@@ -23,6 +23,9 @@
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
+		<!-- Dev tool: dumps the real panel tree to the console log so the headless
+		     profiler can be fed a captured tree instead of a modelled one. -->
+		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />

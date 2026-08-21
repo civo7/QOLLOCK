@@ -91,7 +91,8 @@ It has no engine timings and cannot produce milliseconds. Do not quote it as suc
 - The **tree** is assembled from real layout XML (the mod's patched copies plus the
   vanilla files it does not override, 12 top-bar players, ~3100 panels) but it is
   calibrated, not captured from a live match. In-engine, C++ decides composition
-  and creates much of the content dynamically.
+  and creates much of the content dynamically. Use `--tree` (below) to remove this
+  caveat entirely.
 - The single `cost` column combines ops using **estimated weights**, documented in
   `scripts/simulator/perf/counters.js`. Raw counters are always reported alongside.
   Any conclusion that flips when you nudge a weight is one to draw from the raw
@@ -100,6 +101,51 @@ It has no engine timings and cannot produce milliseconds. Do not quote it as suc
 So: "feature A does 40x the tree walks of feature B" is a fact. "This change cut
 total cost 46%" is a fact about the same tree. "This saves 3ms a frame" is not
 something this tool can tell you — verify wins in-game with the perf overlay.
+
+## How wrong the modelled tree can be
+
+This is not hypothetical, so it is worth stating plainly before you trust a ranking.
+
+On 2026-08-21 the modelled profile put `ql_showrank` third of 28 features at 13.5% of
+all mod cost, and `ql_nicknames` at 1%. The in-game perf overlay, on the same build,
+measured `ql_showrank` at **1-3ms total over a minute** and `ql_nicknames` at
+**152-169ms, 2.4ms average, 9ms peak** — the most expensive feature in the mod by a
+wide margin, and a peak worth over half a frame at 60fps.
+
+The ranking was inverted because the cost lived somewhere the model could not see: a
+class write re-applied to a real top-bar player subtree (hero badge, ability icons,
+item bars, purchased mods) costs far more than the same write in a model with a
+fraction of the panels.
+
+A model built from our assumptions cannot falsify those assumptions. Which is what
+`--tree` is for.
+
+## Capturing the real tree (`--tree`)
+
+```
+1. In game:   Settings → Dev Panel → "Panel Tree Dump"   (in a real match)
+2. Save the console log.
+3. node scripts/import_tree_dump.js <log> --stats
+4. node scripts/profile_hud.js --tree scripts/simulator/perf/runs/captured_tree.json
+```
+
+The dump writes one `[QOLTREE]` line per panel to the console log — depth-first
+**pre-order**, tab separated. Pre-order is what makes it reconstructible: a node's
+parent is the most recent line at depth-1. It goes to the log rather than back over
+the attribute bridge because a full HUD is tens of thousands of lines.
+
+`import_tree_dump.js` reports every way a capture can be incomplete — truncated at
+the panel cap, clipped at the depth cap, lines lost, not pre-order — and those
+warnings are carried into the profile header as tree notes. A partial capture is
+still useful as a **floor**, but it must not be mistaken for the whole tree.
+
+`--stats` also prints duplicated ids, which is directly useful: duplicate ids are why
+`FindChildTraverse` by id is unreliable in this codebase (it returns the first match
+in traversal order, which is not necessarily the live panel — that bug cost a full
+debug cycle on the build-save pipeline).
+
+Captured and modelled runs are **not comparable** — the header and saved JSON record
+which one you got, so don't diff across them.
 
 ### Known coverage gap
 

@@ -356,4 +356,54 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
     return { panels, notes, byLayout };
 }
 
-module.exports = { buildMatchHud, parseLayout, countNodes, COMPOSITION };
+/**
+ * Rebuild a tree captured from a live match instead of modelling one.
+ *
+ * Takes the JSON that scripts/import_tree_dump.js produces from a
+ * Dev Panel -> "Panel Tree Dump" console log, and materialises it under doc.root.
+ * The point is to remove our guesses from the measurement: buildMatchHud below
+ * composes layout XML plus hand-written assumptions about what C++ creates, and
+ * those assumptions have been wrong by more than an order of magnitude in both
+ * directions (see docs/PROFILING.md).
+ *
+ * The capture's own root becomes doc.root — its id and classes are copied onto it
+ * rather than mounted beneath it, because in-engine #Hud IS the context panel and
+ * several features depend on that.
+ *
+ * Any warning recorded at import time is surfaced here as a note, so a truncated or
+ * depth-clipped capture cannot quietly become a trusted baseline.
+ */
+function buildCapturedHud(doc, captured) {
+    const notes = [];
+    if (!captured || !captured.root) throw new Error("[hud_tree] captured tree has no root");
+
+    for (const w of captured.warnings || []) notes.push(`capture warning: ${w}`);
+    if (captured.meta && captured.meta.truncated) {
+        notes.push("capture was truncated — real tree is larger, treat counts as a floor");
+    }
+    if (captured.meta && captured.meta.clipped) {
+        notes.push("capture was depth-clipped — deep subtrees are missing");
+    }
+
+    const hud = doc.root;
+    if (captured.root.id) hud.id = captured.root.id;
+    for (const cls of captured.root.classes || []) hud.AddClass(cls);
+
+    let panels = 1;
+    // Iterative to survive a deep real tree without blowing the JS stack.
+    const stack = [[captured.root, hud]];
+    while (stack.length > 0) {
+        const [node, parent] = stack.pop();
+        for (const child of node.children || []) {
+            const panel = parent.addChild(
+                doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
+            );
+            panels++;
+            if (child.children && child.children.length > 0) stack.push([child, panel]);
+        }
+    }
+
+    return { panels, notes, byLayout: { captured: panels } };
+}
+
+module.exports = { buildMatchHud, buildCapturedHud, parseLayout, countNodes, COMPOSITION };
