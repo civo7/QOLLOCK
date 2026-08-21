@@ -8,10 +8,22 @@
 		</styles>
 		<scripts>
 		</scripts>
-		<!-- hittest="false" keeps the player panel itself click-through so the
-		     minimap underneath still receives input, while hittestchildren
-		     defaults to true so items, mods and abilities stay hoverable. -->
-		<CitadelHudTopBarPlayer hittest="false">
+		<!-- Vanilla leaves this panel hit-testable and declares no click handler on it:
+		     the C++ side binds the player callout ("<hero> is Missing") to the panel
+		     itself. So hittest="false" here silently removed callouts while leaving
+		     items hoverable, because hittestchildren defaults to true.
+
+		     That attribute arrived via 5366d75 -> 5cbf520 while chasing the top bar
+		     swallowing minimap clicks. The geometry cause of that has since been fixed
+		     separately (b65b3c8 shrank .wants_scoreboard CitadelHudTopBarPlayer from
+		     600px to 230px; base/citadel_hud_top_bar.css now matches vanilla again), so
+		     the hit-test workaround is no longer carrying its own weight.
+
+		     Do not reintroduce it here. If the top bar starts eating minimap input
+		     again, fix the panel that actually overlaps rather than the whole player
+		     panel — and note that CSS `hittest` is NOT a safe tool for it: vanilla
+		     styles never use that property once, so it may simply be ignored. -->
+		<CitadelHudTopBarPlayer>
 			<GlobalClassListener classes="gDetailView" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />
