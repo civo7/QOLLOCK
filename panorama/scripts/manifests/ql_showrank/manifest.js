@@ -113,6 +113,17 @@
                 try { return String(heroLabel.text || "").trim(); } catch(e) { return ""; }
             }
 
+            function _readTopBarPlayerName(player) {
+                // .PlayerName / .AlwaysPlayerName both carry text="{s:player_name}"
+                // (citadel_hud_top_bar_player.xml:90,94). Read as a second identity when
+                // the hero label comes back empty. AlwaysPlayerName is checked second
+                // because ql_nicknames creates its own runtime label with that class.
+                var label = _findClass(player, "PlayerName");
+                if (!_valid(label)) label = _findClass(player, "AlwaysPlayerName");
+                if (!_valid(label)) return "";
+                try { return String(label.text || "").trim(); } catch(e) { return ""; }
+            }
+
             // ── Top bar player hierarchy: TopBar → TeamsContainer → Team → PlayerContents → PlayersContainer ──
             //
             // The CONTAINERS are cached; the player panels are not.
@@ -338,6 +349,34 @@
                                 _setAttr(docRoot, "qol_sr_ranked_heroes", heroes.join("|"));
                             }
                         }
+                        // Also publish under the PLAYER name, as a second key the top bar
+                        // can look itself up by.
+                        //
+                        // The top bar has no way to discover an account id on its own — it
+                        // relies entirely on this publication and looks it up by the hero
+                        // name it reads from its own .HeroNameHidden label. Reported
+                        // in-game 2026-08-21: ranks appear in the escape menu and not in
+                        // the top bar, and the Panorama debugger showed that label holding
+                        // an empty string. When it cannot be read, that single key is a
+                        // dead end and no top bar badge can ever appear.
+                        //
+                        // Player names demonstrably ARE readable on top bar player panels:
+                        // ql_nicknames reads .PlayerName there and renders it, which is
+                        // visible on screen. Both sides carry `text="{s:player_name}"`
+                        // (citadel_hud_top_bar_player.xml:94, players_list_entry.xml), so
+                        // the two spellings agree.
+                        //
+                        // Additive on purpose — the hero key still works where it worked.
+                        if (name) {
+                            var nameKey = "qol_sr_rankp_" + name.toLowerCase();
+                            _setAttr(docRoot, nameKey, result);
+                            var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
+                            var names = publishedNames ? publishedNames.split("|") : [];
+                            if (names.indexOf(name.toLowerCase()) === -1) {
+                                names.push(name.toLowerCase());
+                                _setAttr(docRoot, "qol_sr_ranked_names", names.join("|"));
+                            }
+                        }
                         _badgeVisible(overlay, true);
                         onDone(); return;
                     }
@@ -353,10 +392,20 @@
             function _clearPublishedRanks(root) {
                 var docRoot = _docRoot(root);
                 var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
-                if (!published) return;
-                var heroes = published.split("|");
-                for (var i = 0; i < heroes.length; i++) { if (heroes[i]) _setAttr(docRoot, "qol_sr_rank_" + heroes[i], ""); }
-                _setAttr(docRoot, "qol_sr_ranked_heroes", "");
+                if (published) {
+                    var heroes = published.split("|");
+                    for (var i = 0; i < heroes.length; i++) { if (heroes[i]) _setAttr(docRoot, "qol_sr_rank_" + heroes[i], ""); }
+                    _setAttr(docRoot, "qol_sr_ranked_heroes", "");
+                }
+                // Player-name keys are cleared on the same trigger. Missing this would
+                // leak a previous match's ranks into the next one, which is worse than
+                // showing none: a badge attached to the wrong player.
+                var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
+                if (publishedNames) {
+                    var names = publishedNames.split("|");
+                    for (var n = 0; n < names.length; n++) { if (names[n]) _setAttr(docRoot, "qol_sr_rankp_" + names[n], ""); }
+                    _setAttr(docRoot, "qol_sr_ranked_names", "");
+                }
             }
             function _clearAllAccountIds(root) {
                 var docRoot = _docRoot(root);
@@ -466,8 +515,20 @@
                         if (heroName) {
                             var lookupKey = "qol_sr_rank_" + heroName.toLowerCase();
                             accountId = _readAttr(root, lookupKey, "");
-                            if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
                         }
+                        // Fall back to the player name. The hero label can read empty on
+                        // top bar panels (seen in the debugger, 2026-08-21), and when it
+                        // does the hero key is a dead end — which is exactly the reported
+                        // symptom of ranks showing in the escape menu but not the top bar.
+                        // The player name is readable here; ql_nicknames renders it from
+                        // the same panel.
+                        if (!accountId) {
+                            var playerName = _readTopBarPlayerName(player);
+                            if (playerName) {
+                                accountId = _readAttr(root, "qol_sr_rankp_" + playerName.toLowerCase(), "");
+                            }
+                        }
+                        if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
                     }
                     if (accountId === _lastId) { _idleCount++; } else { _idleCount = 0; }
                     if (!accountId && _lastId) {
@@ -523,7 +584,13 @@
                 for (var i = 0; i < players.length; i++) {
                     if (_isTopBarInit(players[i])) continue;
                     pendingAny = true;
-                    if (!_readTopBarHeroName(players[i])) continue;
+                    // Initialise on EITHER identity. Gating on the hero name alone meant
+                    // a panel whose .HeroNameHidden reads empty was never initialised, so
+                    // its poll chain never started and its badge could never appear — the
+                    // reported "ranks in the escape menu but not the top bar". The chain
+                    // itself re-reads both identities on every attempt, so starting it
+                    // with only a player name is safe.
+                    if (!_readTopBarHeroName(players[i]) && !_readTopBarPlayerName(players[i])) continue;
                     _initTopBarPlayer(players[i]);
                     initialisedAny = true;
                 }
