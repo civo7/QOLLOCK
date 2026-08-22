@@ -334,7 +334,11 @@ var State;
             overlapPending: false,
             mapState: 0,
             buildGen: 0,
-            ultCooldownsEnabled: false
+            ultCooldownsEnabled: false,
+            // Resolved Item Buy Notifications geometry (offset/opacity/scale), cached
+            // so lazily-created per-hero panels can be styled at creation time and
+            // live panels only re-styled when the sliders actually move.
+            style: null
         },
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",

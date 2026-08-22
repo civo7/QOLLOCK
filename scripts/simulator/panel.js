@@ -280,6 +280,17 @@ class Panel {
         this._dialogVars.set(name, String(value));
     }
 
+    /**
+     * The engine exposes typed setters alongside SetDialogVariable, and the mod
+     * uses the int one to bind a hero id onto a top bar player card
+     * (ql_feat_recentpurchases.js BuildHeroPlayerCardMap). Without it that call
+     * throws, the feature's error boundary swallows it, and the popup system
+     * looks merely inert rather than broken.
+     */
+    SetDialogVariableInt(name, value) {
+        this._dialogVars.set(name, String(Math.trunc(Number(value) || 0)));
+    }
+
     GetDialogVariable(name) {
         return this._dialogVars.get(name) || "";
     }

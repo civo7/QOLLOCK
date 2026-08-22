@@ -13,6 +13,7 @@
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
+    var SetStyleIfChanged = Utils.SetStyleIfChanged;
     var NormalizeOpacityNumber = Utils.NormalizeOpacityNumber;
     var NormalizeHudOffsetNumber = _deps.normalizeHudOffsetNumber;
     var NormalizeHudScaleNumber = _deps.normalizeHudScaleNumber;
@@ -495,7 +496,52 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
         var panel = $.CreatePanel("Panel", playerPanel, "");
         panel.AddClass("QuickPurchasesPanel");
         State.heroPopup.panelsByHero[heroNameUpper] = panel;
+        ApplyHeroPopupStyle(panel);
         return panel;
+    }
+
+    // ── Per-hero popup geometry ───────────────────────────────────────────
+    // The Item Buy Notifications sliders (offset X/Y, opacity, scale) belong to
+    // the feature, not to one of its two rendering modes. Centralized mode has a
+    // single panel to write them to; per-hero mode has one panel per hero, each
+    // created lazily when that hero first buys something. So the wanted values
+    // are cached here: a panel created later is styled on the spot, and a slider
+    // change re-styles every live panel exactly once. Once is the point — this
+    // sits on the 20Hz loop and Panorama re-lays out a subtree on every style
+    // write, including a write of the value the panel already holds.
+    function SyncHeroPopupStyle(offsetX, offsetY, opacityText, scale) {
+        var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + scale;
+        if (State.heroPopup.style && State.heroPopup.style.sig === sig) return;
+        State.heroPopup.style = {
+            sig: sig,
+            x: String(offsetX) + "px",
+            y: String(-offsetY) + "px",
+            opacity: opacityText,
+            uiScale: Math.round(scale * 100) + "%",
+            scale: scale
+        };
+        for (var hero in State.heroPopup.panelsByHero) {
+            if (!Object.prototype.hasOwnProperty.call(State.heroPopup.panelsByHero, hero)) continue;
+            ApplyHeroPopupStyle(State.heroPopup.panelsByHero[hero]);
+        }
+        // A scale change resizes every popup, so the overlap cascade has to be
+        // recomputed against the new footprints.
+        ScheduleResolveHeroPopupOverlaps(0.1);
+    }
+
+    function ApplyHeroPopupStyle(panel) {
+        var st = State.heroPopup.style;
+        if (!st || !IsPanelValid(panel)) return;
+        SetStyleIfChanged(panel, "x", st.x);
+        SetStyleIfChanged(panel, "y", st.y);
+        SetStyleIfChanged(panel, "uiScale", st.uiScale);
+        SetPanelOpacitySafe(panel, st.opacity, 1.0);
+    }
+
+    function GetHeroPopupScale() {
+        var st = State.heroPopup.style;
+        var n = st ? Number(st.scale) : 1;
+        return isFinite(n) && n > 0 ? n : 1;
     }
 
     function GetPanelLeftInTopBar(panel) {
@@ -572,9 +618,19 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
             return;
         }
 
+        // Footprints are measured, then scaled by the configured popup scale.
+        // The engine reports layout numbers with ui-scale NOT applied — which is
+        // exactly why QUICK_ROW_UI_SCALE exists: contentheight sums the unscaled
+        // .quickPurchase rows and has to be multiplied by their 75% ui-scale to get
+        // the rendered height. The panel's own uiScale (the Scale slider) composes
+        // the same way. At the default scale of 1.0 this arithmetic is unchanged.
+        var popupScale = GetHeroPopupScale();
         for (var i = 0; i < active.length; i++) {
-            active[i].leftX = GetPanelLeftInTopBar(active[i].panel);
-            active[i].width = Math.max(1, Number(active[i].panel.actuallayoutwidth) || 0);
+            var rawWidth = Math.max(1, Number(active[i].panel.actuallayoutwidth) || 0);
+            // Compared by centers rather than edges: ui-scale shrinks a panel about
+            // its own center, so the center holds while the edges move inward.
+            active[i].centerX = GetPanelLeftInTopBar(active[i].panel) + rawWidth / 2;
+            active[i].halfWidth = rawWidth * popupScale / 2;
         }
 
         // Sort newest first
@@ -588,15 +644,13 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
         for (var i = 0; i < active.length; i++) margins[i] = active[i].baseMargin;
 
         for (var i = 1; i < active.length; i++) {
-            var aLeft = active[i].leftX;
-            var aRight = aLeft + active[i].width;
-            if (active[i].width <= 0) continue;
+            if (active[i].halfWidth <= 0) continue;
             for (var j = 0; j < i; j++) {
-                if (active[j].width <= 0) continue;
-                var bLeft = active[j].leftX;
-                var bRight = bLeft + active[j].width;
-                if (aLeft < bRight && aRight > bLeft) {
-                    var needed = margins[j] + (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE + QUICK_OVERLAP_GAP;
+                if (active[j].halfWidth <= 0) continue;
+                var gap = Math.abs(active[i].centerX - active[j].centerX);
+                if (gap < active[i].halfWidth + active[j].halfWidth) {
+                    var rowsHeight = (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE * popupScale;
+                    var needed = margins[j] + rowsHeight + QUICK_OVERLAP_GAP;
                     if (needed > margins[i]) margins[i] = needed;
                 }
             }
@@ -693,6 +747,11 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
             if (panel && IsPanelValid(panel)) panel.DeleteAsync(0);
         }
         var ultSetting = State.heroPopup.ultCooldownsEnabled;
+        // The resolved slider geometry survives a reset for the same reason the ult
+        // setting does: it mirrors config, not panel state. Dropping it would leave
+        // the panels rebuilt after this reset unstyled until the user next touched a
+        // slider, because the sig guard only re-applies on change.
+        var styleSetting = State.heroPopup.style || null;
         State.heroPopup = {
             panelsByHero: {},
             activeEntriesByHero: {},
@@ -701,7 +760,8 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
             overlapPending: false,
             mapState: HERO_MAP_IDLE,
             buildGen: 0,
-            ultCooldownsEnabled: ultSetting
+            ultCooldownsEnabled: ultSetting,
+            style: styleSetting
         };
     }
 
@@ -808,11 +868,22 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
         if (notifyEnabled) {
             var heroPopupsEnabled = IsCfgEnabled(cfg, "ENABLE_HERO_PURCHASE_POPUPS");
 
+            // The four geometry sliders belong to Item Buy Notifications as a whole,
+            // not to one of its two rendering modes. They used to be read inside the
+            // centralized branch only, so with Per-Hero Popups on the user moved the
+            // sliders and nothing happened.
+            var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
+            var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
+            var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
+            var quickScale = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0);
+            var quickScaleText = quickScale.toFixed(2);
+
             if (heroPopupsEnabled) {
                 // Per-hero popup panels on player cards.
                 // Centralized QuickPurchasesPanel is hidden by CSS
                 // (.shop_recent_purchases_redux #QuickPurchasesPanel).
                 State.heroPopup.ultCooldownsEnabled = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+                SyncHeroPopupStyle(quickOffsetX, quickOffsetY, quickOpacityText, quickScale);
                 UpdateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
             } else {
                 // Default: centralized popup panel.
@@ -821,10 +892,6 @@ var ResolveCachedPanel = _deps.resolveCachedPanel || function(parent, cacheKey, 
                 UpdateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases);
                 var rejuvEnabled      = Number(cfg && cfg.RECENT_PURCHASES_QUICK_REJUV)      !== 0;
                 var scoreboardEnabled = Number(cfg && cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
-                var quickOffsetX   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
-                var quickOffsetY   = NormalizeHudOffsetNumber(cfg && cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
-                var quickOpacityText = NormalizeOpacityNumber(cfg && cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
-                var quickScaleText = NormalizeHudScaleNumber(cfg && cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0).toFixed(2);
                 SyncRejuvClassRP(rejuvEnabled);
                 var quickPanel = GetCachedPanel("quickPurchasesPanel");
                 if (IsPanelValid(quickPanel)) {
