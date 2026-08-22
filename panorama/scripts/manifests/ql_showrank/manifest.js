@@ -27,6 +27,25 @@
             var API_URL = "https://api.deadlock-api.com/v1/players/";
             var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
             var _loop = null, _wasEnabled = false;
+            // Separator for the published-names list, and the escape that makes it safe.
+            //
+            // A player name may legally contain "|". The hero list next to this one gets
+            // away with joining on "|" only because hero names cannot contain it. An
+            // unescaped "|" in a player name round-trips as two bogus entries, so
+            // _clearPublishedRanks would clear "a" and "b" and never the real "a|b" key --
+            // that rank then survives into the next match, where it can attach to a
+            // different player. The dedupe check fails the same way, re-pushing the name
+            // on every fill until the attribute grows without bound.
+            //
+            // Escaped rather than given an exotic separator, because the escaped form is
+            // also the attribute NAME (qol_sr_rankp_<name>) and has to be tame there too.
+            // "%" goes first or the two rules would collide.
+            var RANK_NAME_SEP = "|";
+            function _rankNameKeyPart(name) {
+                return String(name || "").toLowerCase()
+                    .split("%").join("%25")
+                    .split(RANK_NAME_SEP).join("%7C");
+            }
             var _fillToken = 0;
             var _lifecycleToken = 0;
             var _scoreboardWasOpen = false;
@@ -367,14 +386,30 @@
                         // the two spellings agree.
                         //
                         // Additive on purpose — the hero key still works where it worked.
+                        //
+                        // The name namespace is flat and last-writer-wins, so a duplicate
+                        // display name would silently point two players at one account.
+                        // Names are not unique: bots share them routinely and Steam allows
+                        // it. A wrong badge is worse than no badge because it is
+                        // indistinguishable from a correct one, so an ambiguous name has
+                        // its key CLEARED rather than overwritten and both players fall
+                        // back to the hero key. That matters exactly when the hero label
+                        // reads empty, which is the case this player-name path exists for.
                         if (name) {
-                            var nameKey = "qol_sr_rankp_" + name.toLowerCase();
-                            _setAttr(docRoot, nameKey, result);
+                            var nameLower = _rankNameKeyPart(name);
+                            var nameKey = "qol_sr_rankp_" + nameLower;
                             var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
-                            var names = publishedNames ? publishedNames.split("|") : [];
-                            if (names.indexOf(name.toLowerCase()) === -1) {
-                                names.push(name.toLowerCase());
-                                _setAttr(docRoot, "qol_sr_ranked_names", names.join("|"));
+                            var names = publishedNames ? publishedNames.split(RANK_NAME_SEP) : [];
+                            var seenBefore = names.indexOf(nameLower) !== -1;
+                            var priorId = seenBefore ? _readAttr(docRoot, nameKey, "") : "";
+                            if (seenBefore && priorId && priorId !== result) {
+                                _setAttr(docRoot, nameKey, "");
+                            } else {
+                                _setAttr(docRoot, nameKey, result);
+                                if (!seenBefore) {
+                                    names.push(nameLower);
+                                    _setAttr(docRoot, "qol_sr_ranked_names", names.join(RANK_NAME_SEP));
+                                }
                             }
                         }
                         _badgeVisible(overlay, true);
@@ -400,9 +435,15 @@
                 // Player-name keys are cleared on the same trigger. Missing this would
                 // leak a previous match's ranks into the next one, which is worse than
                 // showing none: a badge attached to the wrong player.
+                //
+                // The list holds names already escaped by _rankNameKeyPart, so splitting
+                // on the separator is safe and each entry is the exact key that was
+                // written — no re-escaping here, or a name containing "|" or "%" would be
+                // double-encoded and its key missed, which is the leak this loop exists
+                // to prevent.
                 var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
                 if (publishedNames) {
-                    var names = publishedNames.split("|");
+                    var names = publishedNames.split(RANK_NAME_SEP);
                     for (var n = 0; n < names.length; n++) { if (names[n]) _setAttr(docRoot, "qol_sr_rankp_" + names[n], ""); }
                     _setAttr(docRoot, "qol_sr_ranked_names", "");
                 }
@@ -525,7 +566,7 @@
                         if (!accountId) {
                             var playerName = _readTopBarPlayerName(player);
                             if (playerName) {
-                                accountId = _readAttr(root, "qol_sr_rankp_" + playerName.toLowerCase(), "");
+                                accountId = _readAttr(root, "qol_sr_rankp_" + _rankNameKeyPart(playerName), "");
                             }
                         }
                         if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
