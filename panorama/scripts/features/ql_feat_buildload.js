@@ -135,7 +135,7 @@
     var BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;
     // Phase 6: Use QOL namespace (published by ql_shared_presets.js lines 2158-2159).
     var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (QOL && QOL.compactSchemaRegistry) || {};
-    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (QOL && QOL.latestCompactSemver) || "3.1.9";
+    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (QOL && QOL.latestCompactSemver) || "3.2.0";
     var BUILD_LOADER_TEMP_DISABLED = false;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";

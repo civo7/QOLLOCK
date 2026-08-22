@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.1.9";
+var QOL_SCHEMA_SEMVER = "3.2.0";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1757,6 +1757,10 @@ var QOL_COMPACT_SCHEMA_3_1_8 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
     CROSSHAIR_STATS_PERSTAT_SCHEMA_FIELDS
 );
 var QOL_COMPACT_SCHEMA_3_1_9 = QOL_COMPACT_SCHEMA_3_1_8;
+// 3.2.0 adds no payload fields — same wire layout as 3.1.9, so tokens written by
+// either version decode identically. The bump exists to version the release, not
+// the wire format (QOL_SCHEMA_WIRE_VERSION stays 2).
+var QOL_COMPACT_SCHEMA_3_2_0 = QOL_COMPACT_SCHEMA_3_1_9;
 
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -2026,6 +2030,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "3.1.9": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_3_1_9
+    },
+    "3.2.0": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_3_2_0
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")

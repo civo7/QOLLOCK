@@ -260,7 +260,7 @@
                     var flatExport = ConfigAdapter ? ConfigAdapter.exportToFlat() : {};
                     // Wrap in old system's envelope format for backward compat
                     var envelope = JSON.stringify({
-                        schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "3.1.9"),
+                        schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "3.2.0"),
                         data: flatExport
                     });
                     hud.SetAttributeString(_CONFIG_ATTRIBUTE, envelope);
