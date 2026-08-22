@@ -400,6 +400,10 @@ var State;
         // GetTopBarPlayerPanel) from "the panel died and will come back", which decides
         // whether a lookup gets a 30s cooldown or the normal 1.5s one.
         topbarPlayerPanelEverResolved: null,
+        // Per-slot deadline before which a missed lookup is not retried, stamped when
+        // the miss happens. Only a slot that has never resolved while the top bar
+        // demonstrably exists earns the long cooldown — see GetTopBarPlayerPanel.
+        topbarPlayerPanelMissUntilMs: null,
         topbarNicknamesWasEnabled: false,
         topbarNicknamesNextRefreshMs: 0,
         topbarNicknamePlayers: null,

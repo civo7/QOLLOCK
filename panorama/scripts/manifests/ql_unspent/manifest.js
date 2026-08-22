@@ -137,6 +137,11 @@
             var SLOT_NEVER_RESOLVED_BACKOFF_MS = 30000;
             var _slotMissUntil = new Array(MAX_PLAYERS);
             var _slotEverResolved = new Array(MAX_PLAYERS);
+            // Has ANY slot resolved this session — i.e. does the top bar exist yet.
+            // Before it inflates no slot has resolved, so keying the long cooldown on
+            // this slot alone would arm 30s on all thirteen during loading and blank
+            // every real player's unspent souls for half a minute afterwards.
+            var _anySlotEverResolved = false;
 
             function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
@@ -147,6 +152,7 @@
                     if (_alive(playerPanel)) {
                         _slotMissUntil[index] = 0;
                         _slotEverResolved[index] = true;
+                        _anySlotEverResolved = true;
                         return playerPanel;
                     }
 
@@ -162,13 +168,15 @@
                         if (parent && parent.id === "PlayerStatus") {
                             _slotMissUntil[index] = 0;
                             _slotEverResolved[index] = true;
+                            _anySlotEverResolved = true;
                             return panels[i];
                         }
                     }
                 } catch(e) {}
                 if (now > 0) {
+                    var absent = !_slotEverResolved[index] && _anySlotEverResolved;
                     _slotMissUntil[index] = now +
-                        (_slotEverResolved[index] ? SLOT_MISS_BACKOFF_MS : SLOT_NEVER_RESOLVED_BACKOFF_MS);
+                        (absent ? SLOT_NEVER_RESOLVED_BACKOFF_MS : SLOT_MISS_BACKOFF_MS);
                 }
                 return null;
             }

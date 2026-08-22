@@ -84,6 +84,15 @@
             var SLOT_NEVER_RESOLVED_BACKOFF_MS = 30000;
             var _slotMissUntil = new Array(MAX_PLAYERS);
             var _slotEverResolved = new Array(MAX_PLAYERS);
+            // Has ANY slot resolved this session — i.e. does the top bar exist yet.
+            //
+            // "Never resolved" alone is not enough to call a slot absent. Before the
+            // top bar inflates (loading screen, draft, hideout) no slot has resolved,
+            // so the first miss would arm the 30s cooldown on all thirteen and every
+            // real player would stay nameless for half a minute after the top bar
+            // finally appeared. Until something resolves, a miss only means "too
+            // early" and takes the ordinary short backoff.
+            var _anySlotEverResolved = false;
 
             function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
@@ -95,12 +104,14 @@
                     if (_alive(panel)) {
                         _slotMissUntil[index] = 0;
                         _slotEverResolved[index] = true;
+                        _anySlotEverResolved = true;
                         return panel;
                     }
                 } catch(e) {}
                 if (now > 0) {
+                    var absent = !_slotEverResolved[index] && _anySlotEverResolved;
                     _slotMissUntil[index] = now +
-                        (_slotEverResolved[index] ? SLOT_MISS_BACKOFF_MS : SLOT_NEVER_RESOLVED_BACKOFF_MS);
+                        (absent ? SLOT_NEVER_RESOLVED_BACKOFF_MS : SLOT_MISS_BACKOFF_MS);
                 }
                 return null;
             }
@@ -297,7 +308,14 @@
                 for (var i = 0; i < MAX_PLAYERS; i++) {
                     var result = _processSlot(root, now, i, enabled);
                     if (result.saw) sawAny = true;
-                    if (!result.resolved) allResolved = false;
+                    // Only slots that were actually seen can withhold the stable
+                    // cadence. MAX_PLAYERS is 13 and slot 0 does not exist, so demanding
+                    // resolution from every index made allResolved permanently false and
+                    // REFRESH_MS_STABLE unreachable — this feature measured as the most
+                    // expensive one in a live match while its own 4.2x backoff never
+                    // once engaged. Smaller game modes have the same problem for every
+                    // index above the roster.
+                    if (result.saw && !result.resolved) allResolved = false;
                 }
                 // sawAny: at least one player panel found. allResolved: all names resolved.
 

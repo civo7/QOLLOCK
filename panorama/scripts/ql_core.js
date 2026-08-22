@@ -3770,6 +3770,10 @@ function GetUIRoot() {
         if (State.topbarPlayerPanelRoot && State.topbarPlayerPanelRoot !== root) {
             State.topbarPlayerPanels = null;
             State.topbarPlayerPanelLastScanMs = null;
+            // Cleared with the panels: a stamped cooldown describes the old root's
+            // tree, and holding it would freeze slots in a tree that was never
+            // searched.
+            State.topbarPlayerPanelMissUntilMs = null;
             // Deliberately NOT cleared with the panels: which slots the engine ever
             // creates is a property of the game, not of this root. Resetting it on a
             // root swap would re-arm the 30s absent-slot cooldown for every real
@@ -3780,6 +3784,16 @@ function GetUIRoot() {
         if (!State.topbarPlayerPanels) State.topbarPlayerPanels = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarPlayerPanelLastScanMs) State.topbarPlayerPanelLastScanMs = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarPlayerPanelEverResolved) State.topbarPlayerPanelEverResolved = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarPlayerPanelMissUntilMs) State.topbarPlayerPanelMissUntilMs = new Array(SPM_MAX_PLAYERS);
+    }
+
+    function AnyTopBarPlayerSlotEverResolved() {
+        var flags = State.topbarPlayerPanelEverResolved;
+        if (!flags) return false;
+        for (var i = 0; i < flags.length; i++) {
+            if (flags[i]) return true;
+        }
+        return false;
     }
 
     function GetTopBarPlayerPanel(root, index, nowMs, forceRefresh) {
@@ -3819,15 +3833,38 @@ function GetUIRoot() {
         // after every reload. Only a slot that has never produced a panel in this
         // session is treated as absent.
         //
+        // That flag was added with exactly this rule and then never read: the condition
+        // was `!State.topbarPlayerPanels[index]`, which IS the simplification the
+        // paragraph above forbids. Any transient miss on a real slot froze it for 30s,
+        // and because this early return sits above the forceRefresh checks the freeze
+        // could not be broken — RefreshSpmPlayerSlotCache passes forceRefresh=true and
+        // was blocked anyway, which froze State.spm.playerPanels, the first lookup path
+        // ql_nicknames tries.
+        //
+        // The cooldown is STAMPED at miss time rather than derived from lastScanMs on
+        // read, because "is this slot absent" is only answerable in the moment. Before
+        // the top bar inflates no slot has resolved, so every slot looks absent; deriving
+        // the verdict on read means those early misses are re-judged as absent the
+        // instant the first real slot resolves, and the other eleven stay frozen for
+        // half a minute after the top bar appeared. Stamping records the verdict that
+        // was true when the miss happened: early misses get the ordinary refresh
+        // interval and are retried, and only a slot still missing once the top bar
+        // demonstrably exists gets the long cooldown.
+        //
         // Not hard-skipping index 0. Two player-slot id families in the capture
         // (TopBarPlayer, PlayerIntentsPlayer) are both 1-based, but other families in
         // the same tree are 0-based (ModCategory 0..2, ModIcon 0..7), so 1-based
         // numbering is an observation about one build, not a rule I can rely on. A long
         // negative cooldown removes essentially all of the cost while still finding the
         // panel within a minute if some mode really does create slot 0.
-        var neverResolved = lastScanMs > 0 && !State.topbarPlayerPanels[index];
-        if (neverResolved && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS) {
-            return null;
+        var missUntil = Number(State.topbarPlayerPanelMissUntilMs[index]) || 0;
+        if (missUntil > 0) {
+            // Same time-source guard as above: a mismatched clock must not freeze a
+            // slot for the rest of the session.
+            if (now < missUntil && (missUntil - now) <= TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS) {
+                return null;
+            }
+            State.topbarPlayerPanelMissUntilMs[index] = 0;
         }
         if (cached && (!forceRefresh || recentlyScanned)) return cached;
         if (!forceRefresh && recentlyScanned) return cached;
@@ -3842,7 +3879,16 @@ function GetUIRoot() {
         // Latch on first success. Never cleared for the life of the session — see the
         // absent-slot note above: this records "the engine does create this slot", so
         // a panel dying later must not re-arm the long cooldown.
-        if (playerPanel) State.topbarPlayerPanelEverResolved[index] = true;
+        if (playerPanel) {
+            State.topbarPlayerPanelEverResolved[index] = true;
+            State.topbarPlayerPanelMissUntilMs[index] = 0;
+        } else if (!State.topbarPlayerPanelEverResolved[index] &&
+                   AnyTopBarPlayerSlotEverResolved()) {
+            // Missed, has never resolved, and the top bar demonstrably exists because
+            // another slot did resolve. That is the "the engine does not create this
+            // slot" case, and it is the only one that earns the long freeze.
+            State.topbarPlayerPanelMissUntilMs[index] = now + TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS;
+        }
         return playerPanel || null;
     }
 
