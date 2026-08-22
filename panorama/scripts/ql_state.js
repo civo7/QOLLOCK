@@ -643,6 +643,10 @@ var State;
         buildClearSkippedCount: 0,
         buildClearLastEntryCount: -1,
         buildClearNoProgressHits: 0,
+        // Prune deletes nothing until it has found our payload in the list it is
+        // looking at. "No payload in this build" is equally consistent with looking at
+        // the wrong hero's list, where every build is the user's own.
+        buildClearPruneSawPayload: false,
         // (debug state fields removed — buildClearDebugLastSig, buildClearDebugNextMs, buildClearDebugOverlayLine)
         heroReturnDebugLastSig: "",
         heroReturnDebugNextMs: 0,

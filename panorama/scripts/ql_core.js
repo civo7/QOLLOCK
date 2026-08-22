@@ -7537,6 +7537,7 @@ function GetUIRoot() {
         State.buildClearSkippedCount = 0;
         State.buildClearLastEntryCount = -1;
         State.buildClearNoProgressHits = 0;
+        State.buildClearPruneSawPayload = false;
     }
 
     function SetBuildClearStatus(root, state, message, token) {
@@ -9357,9 +9358,27 @@ function GetUIRoot() {
                 var pruneEntries = CollectStorageBuildEntryPanels(root, true);
                 var pruneCount = pruneEntries ? pruneEntries.length : 0;
 
+                // The real build count, for the "stop before the last one" guard.
+                //
+                // pruneCount cannot serve as that count. CollectStorageBuildEntryPanels
+                // matches FavoriteBuildEntryContainer as well as HeroBuildListItem, and
+                // the favorites container is a single header strip that exists however
+                // many builds there are — so pruneCount is builds+1 and `pruneCount <= 1`
+                // only ever tripped at zero builds. A one-build account therefore ran the
+                // loop and deleted that build. CountHeroBuildListItems counts the list
+                // items alone; -1 means it could not find the list, which is not evidence
+                // of anything and must not authorize a delete.
+                var pruneBuildCount = CountHeroBuildListItems(root, true);
+                if (pruneBuildCount < 0) {
+                    _TLog("clear:Prune", "build list not resolvable — refusing to prune");
+                    FinishBuildClearRequest(root, requestToken, "failed", "prune_list_unreadable");
+                    return;
+                }
+
                 // Nothing left to consider, or only the payload build remains.
-                if (pruneCount <= 1) {
+                if (pruneCount <= 1 || pruneBuildCount <= 1) {
                     _TLog("clear:Prune", "done entries=" + pruneCount +
+                          " builds=" + pruneBuildCount +
                           " deleted=" + State.buildClearDeletedCount +
                           " skipped=" + State.buildClearSkippedCount);
                     FinishBuildClearRequest(root, requestToken, "success", "pruned");
@@ -9408,6 +9427,7 @@ function GetUIRoot() {
                     selectedHasPayload = true;
                 }
                 if (selectedHasPayload) {
+                    State.buildClearPruneSawPayload = true;
                     State.buildClearSkippedCount = (Number(State.buildClearSkippedCount) || 0) + 1;
                     var skipNext = TrySelectNextStorageBuildEntry(root, true);
                     _TLog("clear:Prune", "skip payload build (" +
@@ -9418,6 +9438,37 @@ function GetUIRoot() {
                     if (!skipNext || !skipNext.ok) {
                         // Cannot move off the payload build — nothing safe to do.
                         FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    }
+                    return;
+                }
+
+                // Refuse to delete anything until the payload has actually been seen
+                // in this list.
+                //
+                // "This build has no payload" is not evidence that it is junk — it is
+                // equally consistent with looking at the WRONG LIST. The clear pipeline
+                // switches to the storage hero and waits 300ms, but unlike the save
+                // pipeline it never confirms the switch landed via signature abilities,
+                // and FinishBuildSaveRequest queues the hero restore BEFORE queueing
+                // this prune. So the deletes can run against the user's own hero's
+                // builds, none of which carry a token, making every one of them "junk":
+                // measured 4 of 5 real builds deleted in the simulator.
+                //
+                // Finding our own payload first proves the list is the storage list.
+                // Until then a miss means "look elsewhere", so walk on instead of
+                // deleting. If the whole list is walked without ever seeing a payload,
+                // the skipped >= count check above ends the run having deleted nothing —
+                // which is the correct outcome for a list we cannot identify.
+                if (!State.buildClearPruneSawPayload) {
+                    State.buildClearSkippedCount = (Number(State.buildClearSkippedCount) || 0) + 1;
+                    var probeNext = TrySelectNextStorageBuildEntry(root, true);
+                    _TLog("clear:Prune", "no payload seen yet — not deleting (" +
+                          State.buildClearSkippedCount + "/" + pruneCount +
+                          ") reselect=" + (probeNext && probeNext.ok ? "ok" : "fail"));
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_DELAY_MS;
+                    SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                    if (!probeNext || !probeNext.ok) {
+                        FinishBuildClearRequest(root, requestToken, "success", "pruned_nothing_identified");
                     }
                     return;
                 }
@@ -9578,6 +9629,9 @@ function GetUIRoot() {
         State.buildClearSkippedCount = 0;
         State.buildClearLastEntryCount = -1;
         State.buildClearNoProgressHits = 0;
+        // Has this prune run seen our payload in the list it is looking at? Nothing is
+        // deleted before it has — see the note in the clear_loop prune branch.
+        State.buildClearPruneSawPayload = false;
         SetBuildClearStatus(root, "pending", reuseLoaderSkyrunner ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 

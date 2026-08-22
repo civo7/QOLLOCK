@@ -804,8 +804,19 @@ function ResetBuildSaveRequestAttributes(root) {
     // ── CurrentBuildHasAnyPayload ──
     // Unlike CurrentBuildHasPayload (which requires an exact token match), this
     // checks whether the currently selected build contains ANY valid QOLLOCK
-    // payload. Used as a guard in bootstrap_via_save_enqueue to avoid
-    // overwriting an existing user config with a fresh default payload.
+    // payload. Two callers, both of which use it to decide "there is something
+    // here, leave it alone": the load bootstrap (don't overwrite an existing
+    // config with a fresh default) and the post-save prune (don't delete the build
+    // holding the settings).
+    //
+    // Reads through ReadPayloadTextAnyStore, NOT ReadPanelTextMaybe. On a category
+    // label declared text="#Citadel_HeroBuilds_CategoryName" the `.text` property
+    // holds that template — non-empty — so ReadPanelTextMaybe returns it and never
+    // reaches the attribute store where the payload actually sits. See the long
+    // note on ReadPayloadTextAnyStore above; save verification had the same bug and
+    // was fixed there. Here the consequence was worse than a failed verify: the
+    // prune's only safety check answered "no payload in this build" for the build
+    // that held the payload, and then deleted it.
     function CurrentBuildHasAnyPayload(root) {
         var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
 
@@ -815,13 +826,13 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         var directEntry = GetBuildSaveCategoryNameEntry(root);
-        if (hasToken(QOL.readPanelTextMaybe(directEntry))) return true;
+        if (hasToken(ReadPayloadTextAnyStore(directEntry))) return true;
 
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
-            if (hasToken(QOL.readPanelTextMaybe(directHeader))) return true;
+            if (hasToken(ReadPayloadTextAnyStore(directHeader))) return true;
             var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
-            if (hasToken(QOL.readPanelTextMaybe(directEntryInBuild))) return true;
+            if (hasToken(ReadPayloadTextAnyStore(directEntryInBuild))) return true;
         }
 
         if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
@@ -832,7 +843,7 @@ function ResetBuildSaveRequestAttributes(root) {
         for (var c = 0; c < classNames.length; c++) {
             var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
             for (var i = 0; i < labels.length; i++) {
-                if (hasToken(QOL.readPanelTextMaybe(labels[i]))) return true;
+                if (hasToken(ReadPayloadTextAnyStore(labels[i]))) return true;
             }
         }
         return false;
