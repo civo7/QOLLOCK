@@ -91,6 +91,8 @@ class BuildsModel {
         // True while the GC hero-build search is outstanding.
         this.buildsLoading = false;
         this.editing = false;
+        // PopupGeneric#DeleteHeroBuildWarning while a delete is awaiting confirmation.
+        this.deletePopup = null;
 
         /** @type {{title:string, categories:{name:string}[]}[]} */
         this.builds = [];
@@ -586,12 +588,67 @@ class BuildsModel {
         return true;
     }
 
+    /**
+     * Delete the selected build — behind a confirm popup, as the client does.
+     *
+     * GROUND TRUTH (Panorama debugger, 2026-08-22): pressing #DeleteBuildButton in
+     * the browser's #BuildDetails does NOT delete. It inflates
+     * `PopupGeneric#DeleteHeroBuildWarning` titled "Delete Hero Build" with
+     * `#Button0.PopupButton.IsAutoConfirm` (label "OK") and
+     * `#Button1.PopupButton.IsAutoCancel`. The build goes away only once Button0 is
+     * activated.
+     *
+     * Modelling the delete as immediate made the mod's two-step delete path
+     * (TryTriggerBuildDeleteAction returns mode "confirm", then the pipeline runs the
+     * reselect_after_delete stage) untestable: the model deleted on the first press,
+     * so the confirm stage never ran in any test and a break there could not fail.
+     *
+     * IsAutoConfirm/IsAutoCancel appear nowhere in the vanilla layout or CSS dump, so
+     * C++ applies them when it builds the popup — which is also why matching on that
+     * class rather than the "OK" label is language-independent.
+     */
     deleteSelectedBuild() {
         if (this.selectedIndex < 0 || this.selectedIndex >= this.builds.length) return false;
+        if (this.deletePopup && this.deletePopup.IsValid()) return false;   // already asking
+        const target = this.selectedIndex;
+        this._trace(`deleteSelectedBuild(${target}) "${this.builds[target].title}" -> confirm popup`);
+
+        this.deletePopup = this.doc.root.addChild(
+            this.doc.create("PopupGeneric", { id: "DeleteHeroBuildWarning", classes: ["PopupPanel"] })
+        );
+        this.deletePopup.addChild(this.doc.create("Label", {
+            classes: ["TitleLabel", "h2", "silvered_align_center"], text: "Delete Hero Build",
+        }));
+        const row = this.deletePopup.addChild(this.doc.create("Panel", { classes: ["PopupButtonRow"] }));
+        const container = row.addChild(this.doc.create("Panel", { classes: ["ButtonContainer"] }));
+        const confirm = container.addChild(this.doc.create("Button", {
+            id: "Button0", classes: ["PopupButton", "IsAutoConfirm"],
+        }));
+        confirm.addChild(this.doc.create("Label", { text: "OK" }));
+        const cancel = container.addChild(this.doc.create("Button", {
+            id: "Button1", classes: ["PopupButton", "IsAutoCancel"],
+        }));
+        cancel.addChild(this.doc.create("Label", { text: "Cancel" }));
+
+        confirm.SetPanelEvent("onactivate", () => this._commitDelete(target));
+        confirm.SetPanelEvent("onmouseactivate", () => this._commitDelete(target));
+        cancel.SetPanelEvent("onactivate", () => this._dismissDeletePopup());
+        cancel.SetPanelEvent("onmouseactivate", () => this._dismissDeletePopup());
+        return true;
+    }
+
+    _dismissDeletePopup() {
+        if (this.deletePopup && this.deletePopup.IsValid()) this.deletePopup.DeleteAsync(0);
+        this.deletePopup = null;
+    }
+
+    _commitDelete(index) {
+        this._dismissDeletePopup();
+        if (index < 0 || index >= this.builds.length) return false;
         this.counters.deleteBuild++;
-        const removed = this.builds[this.selectedIndex];
-        this._trace(`deleteSelectedBuild(${this.selectedIndex}) "${removed.title}"`);
-        this.builds.splice(this.selectedIndex, 1);
+        const removed = this.builds[index];
+        this._trace(`confirmDelete(${index}) "${removed.title}"`);
+        this.builds.splice(index, 1);
         if (this.selectedIndex >= this.builds.length) this.selectedIndex = this.builds.length - 1;
         this._renderAll();
         return true;

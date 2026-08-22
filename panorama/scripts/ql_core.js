@@ -9351,9 +9351,15 @@ function GetUIRoot() {
             // Prune mode: keep the build that holds the payload and delete only
             // the junk around it. Everything here is written to fail closed —
             // deleting a build the user cares about is not recoverable, and the
-            // delete path it rides on is not fully reliable
-            // (TryDismissBuildDeletePopup is a stub and FindBuildDeleteConfirmButton
-            // matches English button text), so it must give up rather than push on.
+            // delete path it rides on is not fully reliable (TryDismissBuildDeletePopup
+            // is a stub), so it must give up rather than push on.
+            //
+            // The confirm dialog is now known from the Panorama debugger (2026-08-22):
+            // PopupGeneric#DeleteHeroBuildWarning with #Button0.PopupButton.IsAutoConfirm
+            // and #Button1.PopupButton.IsAutoCancel. FindBuildDeleteConfirmButton matches
+            // on the isautoconfirm class, so it is NOT dependent on the English label
+            // "OK" — earlier comments here claimed it was. IsAutoConfirm appears nowhere
+            // in the vanilla layout or CSS dump, so C++ applies it at construction.
             if (State.buildClearPreservePayload) {
                 var pruneEntries = CollectStorageBuildEntryPanels(root, true);
                 var pruneCount = pruneEntries ? pruneEntries.length : 0;

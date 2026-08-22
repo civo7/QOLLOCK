@@ -7,9 +7,17 @@
 // existing players cleared by hand goes away on its own.
 //
 // This deletes user-visible data through a path that cannot report failure
-// (TryDismissBuildDeletePopup is a stub; FindBuildDeleteConfirmButton matches
-// English button text), so every test here is about it failing CLOSED: never
-// touching the payload build, and giving up rather than pushing on.
+// (TryDismissBuildDeletePopup is a stub), so every test here is about it failing
+// CLOSED: never touching the payload build, and giving up rather than pushing on.
+//
+// The confirm dialog itself is no longer guesswork — Panorama debugger, 2026-08-22:
+// PopupGeneric#DeleteHeroBuildWarning, #Button0.PopupButton.IsAutoConfirm (OK) and
+// #Button1.PopupButton.IsAutoCancel. The finder matches the isautoconfirm class, not
+// the English label, which an earlier version of this comment claimed.
+//
+// NOTE: this file inherits the simulator's RESOLVED title mode. See
+// tests/build_prune_token_mode.test.js for the same pipeline under TOKEN, which is
+// the mode the repo's own rule says to trust.
 //
 // Run: node --test tests/
 // =============================================================================
