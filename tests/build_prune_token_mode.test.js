@@ -138,6 +138,37 @@ test("REGRESSION: builds that are not ours are not deleted wholesale", () => {
         `prune deleted ${before - h.game.builds.length} of ${before} builds it had no payload evidence about\n${h.diagnose()}`);
 });
 
+test("no delete confirm popup is left on screen", () => {
+    // An INVARIANT guard, not a reproduction. The prune presses Delete and confirms
+    // on a later tick, so a run that terminates in between used to leave
+    // PopupGeneric#DeleteHeroBuildWarning up — modal, over the shop, with nothing able
+    // to dismiss it (TryDismissBuildDeletePopup was a stub returning false).
+    //
+    // Being honest about its power: this fixture does not currently reproduce that
+    // interleaving, so it passes against the pre-fix code too. It is kept because the
+    // invariant is cheap to state and a future change to the prune's step order could
+    // break it. The leak was found by hand, driving the pipeline directly.
+    const h = bootHud();
+    const token = makeToken(h);
+    h.game.seedBuilds([
+        { title: "A junk", categories: ["Core Items"] },
+        { title: "B junk", categories: ["Core Items"] },
+        { title: "QOLLOCK-Settings", categories: [token] },
+        { title: "C junk", categories: ["Core Items"] },
+    ]);
+    h.game.openShop();
+    h.clock.advance(3000);
+
+    requestPrune(h);
+    h.clock.advance(45000);
+
+    const popup = h.doc.absRoot.FindChildTraverse("DeleteHeroBuildWarning");
+    assert.strictEqual(popup, null,
+        `a delete confirm popup was left open over the shop\n${h.diagnose()}`);
+    assert.strictEqual(payloadBuildCount(h, token), 1,
+        `payload must still survive\n${h.diagnose()}`);
+});
+
 test("prune still terminates and clears its request", () => {
     const h = bootHud();
     const token = makeToken(h);

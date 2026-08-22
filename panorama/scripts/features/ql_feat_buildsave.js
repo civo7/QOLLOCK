@@ -78,6 +78,10 @@
     var BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
     var BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
+    // Kill switch for the post-save junk-build prune. See FinishBuildSaveRequest for
+    // the reasoning: cosmetic benefit, irreversible failure mode, unverifiable outside
+    // the real client. An explicit prune request still works.
+    var AUTO_PRUNE_AFTER_SAVE = false;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
     var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
     var BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;
@@ -519,7 +523,23 @@ function ResetBuildSaveRequestAttributes(root) {
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
         QOL.setBuildSaveStatus(root, state, message, token);
-        if (state === "success" && root) QueueStorageBuildPrune(root);
+        // Auto-prune after a save is OFF.
+        //
+        // The feature is cosmetic — it tidies away junk "New Skyrunner Build" entries
+        // — and its failure mode is not. Three separate ways it could delete the
+        // user's real builds were found and fixed on 2026-08-22 (blind payload reader,
+        // a guard counting a header strip as a build, and no proof the list on screen
+        // even belonged to the storage hero). The fixes hold in the simulator, but the
+        // simulator's latencies are guesses, and the deletes ride a path that cannot
+        // report failure. Measured convergence is poor either way: at most one build
+        // per run, before any of these changes.
+        //
+        // Cosmetic upside against irreversible downside, on a path that cannot be
+        // verified outside the real client, is not a trade worth making automatically.
+        // Everything below still works and a prune can be requested explicitly by
+        // writing "prune" to BUILD_CLEAR_REQUEST_ATTR; flip this to true once the
+        // pipeline has been watched end to end in a running game.
+        if (AUTO_PRUNE_AFTER_SAVE && state === "success" && root) QueueStorageBuildPrune(root);
     }
 
     // ── QueueStorageBuildPrune ──

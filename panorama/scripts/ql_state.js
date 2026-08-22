@@ -647,6 +647,10 @@ var State;
         // looking at. "No payload in this build" is equally consistent with looking at
         // the wrong hero's list, where every build is the user's own.
         buildClearPruneSawPayload: false,
+        // Delete presses issued this run. The no-progress detector counts against this
+        // rather than against ticks: walking the list to find the payload legitimately
+        // leaves the entry count unchanged, so a per-tick counter aborted mid-walk.
+        buildClearDeleteAttempts: 0,
         // (debug state fields removed — buildClearDebugLastSig, buildClearDebugNextMs, buildClearDebugOverlayLine)
         heroReturnDebugLastSig: "",
         heroReturnDebugNextMs: 0,

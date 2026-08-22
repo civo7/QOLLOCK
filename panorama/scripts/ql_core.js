@@ -634,6 +634,16 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
     const BUILD_CLEAR_POST_DELETE_DELAY_MS = 150;  // poll-driven
     const BUILD_CLEAR_POST_SELECT_DELAY_MS = 80;   // poll-driven
+    // How long to let a newly selected build's categories render before reading them.
+    //
+    // BUILD_CLEAR_POST_SELECT_DELAY_MS (80ms) is the cadence for pressing on to the
+    // next entry, which is fine while the loop only needs the entry list. It is NOT
+    // enough to then READ that build: selecting is asynchronous and the categories —
+    // where the payload lives — arrive later (the simulator models 250ms, which is
+    // itself a guess but the right order of magnitude). Reading at 80ms sees the
+    // PREVIOUS build's categories, so a prune walking the list decided every build
+    // was payload-free and, before the walk-first guard, deleted them.
+    const BUILD_CLEAR_POST_SELECT_READ_DELAY_MS = 400;
     const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
@@ -7538,6 +7548,7 @@ function GetUIRoot() {
         State.buildClearLastEntryCount = -1;
         State.buildClearNoProgressHits = 0;
         State.buildClearPruneSawPayload = false;
+        State.buildClearDeleteAttempts = 0;
     }
 
     function SetBuildClearStatus(root, state, message, token) {
@@ -8224,9 +8235,45 @@ function GetUIRoot() {
     }
 
     function TryDismissBuildDeletePopup(root) {
-        // Intentionally conservative: avoid parent/child popup traversal in this
-        // path because stale popup ancestry can crash native UI in some sessions.
-        // Keep cleanup to existing close paths (shop/browse close + state reset).
+        // Implementable now that the popup's exact shape is known (Panorama debugger,
+        // 2026-08-22): PopupGeneric#DeleteHeroBuildWarning holding
+        // #Button0.PopupButton.IsAutoConfirm and #Button1.PopupButton.IsAutoCancel.
+        //
+        // The previous body was a stub that returned false. Its comment said a blind
+        // parent/child popup traversal was too risky because stale popup ancestry can
+        // crash native UI — which was true of a blind walk, but this needs none: the
+        // popup is found by id and the cancel button by class inside it, the same kind
+        // of lookup-then-activate the confirm side already does.
+        //
+        // Why it matters: the prune presses Delete, which opens this popup, and
+        // confirms it on a LATER tick. When the run terminates in between — the skip
+        // counter reaching the entry count is enough — the popup was left on screen,
+        // modal, over the shop, with nothing in the codebase able to dismiss it.
+        // Reproduced in the simulator once the confirm step was modelled.
+        var roots = CollectBuildUiSearchRoots(root);
+        for (var i = 0; i < roots.length; i++) {
+            var host = roots[i];
+            if (!host || !host.FindChildTraverse) continue;
+            var popup = null;
+            try { popup = host.FindChildTraverse("DeleteHeroBuildWarning"); } catch (e0) { popup = null; }
+            if (!popup || !IsPanelValid(popup)) continue;
+
+            var cancels = [];
+            try { cancels = popup.FindChildrenWithClassTraverse("IsAutoCancel") || []; } catch (e1) { cancels = []; }
+            for (var c = 0; c < cancels.length; c++) {
+                if (IsPanelValid(cancels[c]) && ActivatePanelSafe(cancels[c])) {
+                    _TLog("clear:DismissPopup", "cancelled via IsAutoCancel");
+                    return true;
+                }
+            }
+            // Fallback by id, in case a build ships the popup without that class.
+            var byId = null;
+            try { byId = popup.FindChildTraverse("Button1"); } catch (e2) { byId = null; }
+            if (byId && IsPanelValid(byId) && ActivatePanelSafe(byId)) {
+                _TLog("clear:DismissPopup", "cancelled via #Button1");
+                return true;
+            }
+        }
         return false;
     }
 
@@ -9197,6 +9244,10 @@ function GetUIRoot() {
             }
         }
         SetBuildClearStatus(root, state, message, token);
+        // Any delete confirm still on screen belongs to this run and must not outlive
+        // it: the popup is modal over the shop, and the run can terminate between
+        // pressing Delete and confirming on the next tick.
+        TryDismissBuildDeletePopup(root);
         // Clear the request payload, mirroring FinishBuildSaveRequest's call to
         // ResetBuildSaveRequestAttributes. Without this the request attribute
         // survives completion, so IsBuildRequestQueueActive() stays true forever
@@ -9409,7 +9460,15 @@ function GetUIRoot() {
                 // keep issuing deletes, the delete is not landing (dismissed
                 // confirmation popup, inert duplicate panel). Stop instead of
                 // hammering it.
-                if (State.buildClearLastEntryCount === pruneCount) {
+                //
+                // Counted per DELETE ATTEMPT, not per tick. Walking the list to look
+                // for the payload legitimately does not change the entry count, so
+                // ticking this on every pass aborted the run partway through the walk
+                // — with the abort landing before the payload build had been reached,
+                // which is the worst possible moment to stop and reported failure for
+                // a prune that was working correctly.
+                var deletesAttempted = Number(State.buildClearDeleteAttempts) || 0;
+                if (deletesAttempted > 0 && State.buildClearLastEntryCount === pruneCount) {
                     State.buildClearNoProgressHits = (Number(State.buildClearNoProgressHits) || 0) + 1;
                     if (State.buildClearNoProgressHits > BUILD_PRUNE_MAX_NO_PROGRESS) {
                         _TLog("clear:Prune", "aborting — no progress at entries=" + pruneCount);
@@ -9439,7 +9498,7 @@ function GetUIRoot() {
                     _TLog("clear:Prune", "skip payload build (" +
                           State.buildClearSkippedCount + "/" + pruneCount +
                           ") reselect=" + (skipNext && skipNext.ok ? "ok" : "fail"));
-                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_DELAY_MS;
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_READ_DELAY_MS;
                     SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
                     if (!skipNext || !skipNext.ok) {
                         // Cannot move off the payload build — nothing safe to do.
@@ -9471,7 +9530,7 @@ function GetUIRoot() {
                     _TLog("clear:Prune", "no payload seen yet — not deleting (" +
                           State.buildClearSkippedCount + "/" + pruneCount +
                           ") reselect=" + (probeNext && probeNext.ok ? "ok" : "fail"));
-                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_DELAY_MS;
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_READ_DELAY_MS;
                     SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
                     if (!probeNext || !probeNext.ok) {
                         FinishBuildClearRequest(root, requestToken, "success", "pruned_nothing_identified");
@@ -9480,6 +9539,7 @@ function GetUIRoot() {
                 }
 
                 var pruneDelete = TryTriggerBuildDeleteAction(root);
+                State.buildClearDeleteAttempts = (Number(State.buildClearDeleteAttempts) || 0) + 1;
                 if (pruneDelete.ok) {
                     if (pruneDelete.mode !== "confirm") State.buildClearDeletedCount += 1;
                     State.buildClearRetries = 0;
@@ -9638,6 +9698,7 @@ function GetUIRoot() {
         // Has this prune run seen our payload in the list it is looking at? Nothing is
         // deleted before it has — see the note in the clear_loop prune branch.
         State.buildClearPruneSawPayload = false;
+        State.buildClearDeleteAttempts = 0;
         SetBuildClearStatus(root, "pending", reuseLoaderSkyrunner ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 
