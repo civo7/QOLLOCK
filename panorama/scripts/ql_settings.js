@@ -5247,7 +5247,18 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             return parsed;
         };
-        slider.min = isFloat ? 0 : min;
+        // Float sliders carry their value scaled by 100 (Panorama sliders step in
+        // integers), so BOTH bounds have to be scaled — min was left at a literal 0.
+        // For opacity that is invisible because its min really is 0, but every scale
+        // slider could be dragged below its own floor: a Scale of 0.22 on a 0.5–1.5
+        // slider, which the runtime then clamps back to 0.5. The UI showed one number
+        // and the HUD applied another, and the reporter's screenshot of the Item Buy
+        // Notification sliders is exactly that.
+        //
+        // A config already holding an out-of-range value is not lost: syncRowVisualState
+        // clamps to [min,max] before display, so it shows the value the HUD is really
+        // using.
+        slider.min = isFloat ? min * 100 : min;
         slider.max = isFloat ? max * 100 : max;
         slider.value = isFloat ? MOD_CONFIG[configId] * 100 : MOD_CONFIG[configId];
         var input = $.CreatePanel("TextEntry", sliderValueGroup, "");
