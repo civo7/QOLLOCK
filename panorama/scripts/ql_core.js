@@ -10648,7 +10648,6 @@ function GetUIRoot() {
             }
             panels.push(panel);
         }
-        pushPanel(GetCachedPanel("healthContainer"));
         pushPanel(GetCachedPanel("gameplayHud"));
         pushPanel(ResolveCachedPanel(root, "healthContainer", PANEL_ID_HEALTH_CONTAINER));
         pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBarContent", "HealthBarContent"));

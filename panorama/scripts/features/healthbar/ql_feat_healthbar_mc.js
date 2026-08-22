@@ -76,6 +76,7 @@
         State.mcLastBarrierFullHearts = -1;
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
+        State.mcLastBarrierHeartsNeeded = -1;
         State.mcWasEnabled = false;
         SetCachedPanel("mcHealthPercentLabel", null);
     }
@@ -468,6 +469,7 @@
                 State.mcLastBarrierFullHearts = -1;
                 State.mcLastBarrierHasHalf = null;
                 State.mcLastBarrierLastSlotIsHalf = null;
+                State.mcLastBarrierHeartsNeeded = -1;
                 return;
             }
             var totalHalfSegments = Math.ceil(totalBarrier / MC_HP_PER_HALF_SEGMENT);
@@ -478,10 +480,23 @@
             var currentHalfSegments = Math.ceil(currentBarrier / MC_HP_PER_HALF_SEGMENT);
             var fullHearts = Math.floor(currentHalfSegments / 2);
             var hasHalfHeart = (currentHalfSegments % 2) === 1;
-            if (fullHearts === State.mcLastBarrierFullHearts && hasHalfHeart === State.mcLastBarrierHasHalf && lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf) return;
+            // heartsNeeded belongs in this signature because the loop below uses it to
+            // decide which slots are surplus and must be collapsed. It was left out
+            // while capacity was rebuilt on every change of it — the teardown masked
+            // the omission. Now that capacity only grows, a barrier maximum that drops
+            // within the existing capacity (500→300 while the barrier is empty) leaves
+            // fullHearts, hasHalfHeart and lastSlotIsHalf all unchanged, so the early
+            // return fires and the two surplus heart outlines stay on screen. The main
+            // heart path already includes its own count for the same reason
+            // (McUpdateHearts / mcLastContainerHeartsNeeded).
+            if (fullHearts === State.mcLastBarrierFullHearts &&
+                hasHalfHeart === State.mcLastBarrierHasHalf &&
+                lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf &&
+                heartsNeeded === State.mcLastBarrierHeartsNeeded) return;
             State.mcLastBarrierFullHearts = fullHearts;
             State.mcLastBarrierHasHalf = hasHalfHeart;
             State.mcLastBarrierLastSlotIsHalf = lastSlotIsHalf;
+            State.mcLastBarrierHeartsNeeded = heartsNeeded;
             for (var i = 0; i < State.mcBarrierHeartsPanels.length; i += 1) {
                 var container = State.mcBarrierHeartContainerImages[i];
                 var fill = State.mcBarrierHeartFillImages[i];

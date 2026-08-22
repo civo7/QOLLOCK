@@ -807,6 +807,10 @@ var State;
         mcLastBarrierFullHearts: -1,
         mcLastBarrierHasHalf: null,
         mcLastBarrierLastSlotIsHalf: null,
+        // How many barrier heart slots were wanted on the last render. Part of the
+        // render signature because the slot array only grows, so a shrinking barrier
+        // maximum has to re-run the loop that collapses the surplus outlines.
+        mcLastBarrierHeartsNeeded: -1,
         dl4dLastTime: -1,
         dl4dTriggeredTimes: {},
         dl4dCaptionToken: 0,

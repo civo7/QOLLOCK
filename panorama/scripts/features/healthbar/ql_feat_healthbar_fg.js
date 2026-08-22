@@ -19,6 +19,11 @@
     var HEALTHBAR_TYPE_FG = 2;
     var PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
     var PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
+    // How long a resolved hero signature is reused before re-deriving it. Must be
+    // longer than the loop interval (0.2s) to save anything, and the stamp has to be
+    // written where the resolve happens or the deadline is pushed forward on every
+    // tick and never expires.
+    var FG_HERO_PROBE_THROTTLE_MS = 350;
 
     // Note: Shared helpers remain in ql_feat_healthbar.js but are imported
     // via QOL.healthbar namespace at runtime
@@ -275,6 +280,16 @@
             if (!refreshHero || nowMs >= probeNextMs) {
                 refreshHero = ResolveFgHeroRefreshSignal(root, cfg, levelAmount);
                 State.fgHeroImageLastResolvedSig = refreshHero || "";
+                // Stamped HERE, where the work actually happened. Re-stamping at the end
+                // of every enabled tick made the throttle unreachable: this loop runs at
+                // LOOP_INTERVAL_SEC (0.2s) and the deadline was always pushed 350ms out,
+                // so `nowMs >= probeNextMs` never became true again. The first answer
+                // then stuck for the session — and ResolveFgHeroRefreshSignal falls back
+                // through the settings bridge and heroDetectLastKnownPlayableHero, so a
+                // stale answer from a previous match could stick too. It also meant a
+                // hero change inside a session (hero testing, spectator target switch)
+                // was never picked up.
+                State.fgHeroImageSourceProbeNextMs = nowMs + FG_HERO_PROBE_THROTTLE_MS;
             }
             if (refreshHero && refreshHero !== State.fgHeroImageCurrentSig) {
                 State.fgHeroImageCurrentSig = refreshHero;
@@ -331,7 +346,6 @@
                 SetStyleSafe(levelAmount, "opacity", runtimeState.opacityText);
             }
 
-            State.fgHeroImageSourceProbeNextMs = nowMs + 350;
             return;
         }
 
@@ -356,7 +370,10 @@
         }
 
         State.fgHeroImageMoved = false;
-        State.fgHeroImageSourceProbeNextMs = nowMs + 350;
+        // Zero rather than nowMs+throttle: the teardown path also clears
+        // fgHeroImageLastResolvedSig, so the next enabled tick must be free to resolve
+        // immediately instead of holding an empty signature for another 350ms.
+        State.fgHeroImageSourceProbeNextMs = 0;
         State.fgHeroImageLastResolvedSig = "";
         State.fgHeroImageCurrentSig = "";
         State.fgHeroImagePendingAttachMs = 0;
