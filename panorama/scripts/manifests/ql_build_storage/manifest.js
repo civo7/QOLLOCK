@@ -1,0 +1,1044 @@
+// manifests/ql_build_storage/manifest.js
+// =============================================================================
+// QOLLOCK — Build Description Storage (read + write)
+// =============================================================================
+// OWNS:        The whole storage round trip. Config is carried in the storage
+//              build's DESCRIPTION field, not its category name. Reading and
+//              writing live in one manifest on purpose: both walk the identical
+//              path (storage hero -> shop -> browser -> our build), and having
+//              that path duplicated across ql_build_payload + ql_feat_buildsave
+//              is what let them drift (the save stamps a marker title the load
+//              never reads).
+// DOES NOT OWN: config codec (ql_core.js:1926-2075), bridge attribute names
+//              (ql_bridge.js:29-36), hero switching (QOL.selectHeroForBuildSave).
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.* delegates.
+// CONFIG KEYS: enabled (kill switch), DEFAULT_HERO (dropdown)
+// PANEL IDs:   BuildDescriptionTextEntry, BuildDetails, HeroBuildList,
+//              HeroBuildSelector, CreateBuildButton, EditBuildButton,
+//              SaveBuildButton, BrowseBuildsButton
+// PATTERN:     Polled state machine, one stage per tick. Every wait is gated on
+//              a CLASS the client sets (BuildsLoading / Selected /
+//              gEditingBuilds), never on a bare timer — timeouts are only ever
+//              the give-up bound, not the success signal.
+//
+// GROUND TRUTH (Panorama debugger, 2026-08-23 — see the block above each helper):
+//   - Label.BuildDescription reports the RESOLVED user string, not the
+//     {s:selected_hero_build_description} template. Payload is readable.
+//   - One click on a .HeroBuildListItem adds class Selected and #BuildDetails
+//     follows it. No double-click, no "Use Selected Build".
+//   - Label.BuildName inside each list item carries the literal name, so
+//     candidates are filtered WITHOUT clicking.
+//
+// NEVER DELETES A BUILD. There is no delete path in this file at all. A corrupt
+// token needs no repair: the next save overwrites the description wholesale.
+// =============================================================================
+
+(function() {
+    "use strict";
+    const FR = QOL.core.FeatureRegistry;
+    if (!FR) { $.Msg("[QOLLock] ql_build_storage: FeatureRegistry not found — aborting"); return; }
+
+    const LOG_TAG = "[QOLLock][ql_build_storage] ";
+
+    // ── Identity ──
+    const STORAGE_HERO = "hero_skyrunner";
+    const FALLBACK_HERO = "hero_werewolf";
+    const BUILD_NAME = "QOLLOCK-Settings";
+
+    // Written by the old pipeline too (ql_feat_buildsave.js:74), so a build made
+    // before this manifest is still recognised by name.
+    const TOKEN_EXTRACT = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
+
+    // citadel_hud_hero_builds.xml:27 declares maxchars="512". Leave room rather
+    // than discovering the cap by silent truncation — a truncated token decodes
+    // to garbage, which is worse than a refused save.
+    const MAX_TOKEN_LEN = 500;
+
+    // ── Panel ids / classes (verified against Valve XML + live tree) ──
+    // citadel_hud_hero_builds.xml:27 — our carrier. In #EditBuildSection, so it
+    // only holds this build's text while the editor is open.
+    const PID_DESC_ENTRY   = "BuildDescriptionTextEntry";
+    const PID_NAME_ENTRY   = "BuildNameTextEntry";
+    // citadel_ui_build_selector.xml — the popup's list, spinner and details pane.
+    const PID_BUILD_LIST   = "HeroBuildList";
+    const PID_SELECTOR     = "HeroBuildSelector";
+    const PID_DETAILS      = "BuildDetails";
+    const PID_CREATE_BTN   = "CreateBuildButton";
+    const PID_BROWSE_BTN   = "BrowseBuildsButton";
+    const PID_SAVE_BTN     = "SaveBuildButton";
+    const PID_SELECTED_BUILD = "ShopModsSelectedBuild";
+    const CLASS_BUILD_ITEM = "HeroBuildListItem";
+    const CLASS_BUILD_NAME = "BuildName";
+    const CLASS_DESCRIPTION = "BuildDescription";
+    // citadel_ui_build_selector.css:334 — set by the client on the clicked item.
+    const CLASS_SELECTED   = "Selected";
+    // citadel_ui_build_selector.css:46 — present while the GC reply is outstanding.
+    const CLASS_LOADING    = "BuildsLoading";
+    // citadel_hud_hero_builds.css — on CitadelHudHeroBuilds while the editor is open.
+    const CLASS_EDITING    = "gEditingBuilds";
+    // citadel_ui_build_details.xml — #BuildDetails carries this when the build is ours.
+    const CLASS_CAN_EDIT   = "CanEditBuild";
+
+    // ── Bridge attributes (mirror ql_bridge.js:29-36) ──
+    const BRIDGE_REQUEST = "QOL_BUILD_SAVE_REQUEST";
+    const BRIDGE_STATE   = "QOL_BUILD_SAVE_STATE";
+    const BRIDGE_MSG     = "QOL_BUILD_SAVE_MSG";
+    const BRIDGE_TOKEN   = "QOL_BUILD_SAVE_TOKEN";
+    const BRIDGE_FORCE   = "QOL_BUILD_SAVE_FORCE";
+
+    // ── Timing ──
+    // Poll rates. Fast while a request is in flight, slow when idle.
+    const ACTIVE_RATE_SEC  = 0.2;
+    const DORMANT_RATE_SEC = 1.0;
+    const STEP_MS          = 120;   // gap between two UI actions
+    const SETTLE_MS        = 300;   // after a hero switch, before probing
+    // Give-up bounds. These never signal success — a class does.
+    const CONFIRM_TIMEOUT_MS = 4000;
+    const LOADING_TIMEOUT_MS = 12000;  // GC round trip; generous on purpose
+    const SELECT_TIMEOUT_MS  = 2000;
+    const EDITOR_TIMEOUT_MS  = 4000;
+    const COMMIT_TIMEOUT_MS  = 6000;
+    const VERIFY_TIMEOUT_MS  = 4000;
+    const OVERALL_TIMEOUT_MS = 45000;
+    const SIGNATURE_HITS     = 2;
+
+    // ── QOL delegate wrapper (MIGRATION_PATTERNS Pattern 10) ──
+    function _qol(name) {
+        try {
+            return (typeof QOL !== "undefined" && typeof QOL[name] !== "undefined") ? QOL[name] : undefined;
+        } catch(e) { return undefined; }
+    }
+    function _callQol(name, fallback, args) {
+        const fn = _qol(name);
+        if (typeof fn === "function") {
+            try { return fn.apply(null, args || []); } catch(e) { return fallback; }
+        }
+        return fallback;
+    }
+
+    // ── Panorama helpers ──
+    function _alive(p) {
+        return !!(p && typeof p.IsValid === "function" && p.IsValid());
+    }
+    function _find(root, id) {
+        try { return (root && root.FindChildTraverse) ? root.FindChildTraverse(id) : null; } catch(e) { return null; }
+    }
+    function _findClass(root, cls) {
+        try { return (root && root.FindChildrenWithClassTraverse) ? (root.FindChildrenWithClassTraverse(cls) || []) : []; } catch(e) { return []; }
+    }
+    function _hasClass(panel, cls) {
+        if (!_alive(panel)) return false;
+        try { return typeof panel.BHasClass === "function" && panel.BHasClass(cls); } catch(e) { return false; }
+    }
+    function _root() {
+        try { return $.GetContextPanel(); } catch(e) { return null; }
+    }
+    function _now() {
+        try { return Date.now ? Date.now() : (new Date()).getTime(); } catch(e) { return 0; }
+    }
+    function _log(msg) {
+        try { $.Msg(LOG_TAG + msg); } catch(e) {}
+    }
+
+    /**
+     * Read a panel's text.
+     *
+     * The "text" attribute is tried first because it survives on panels whose
+     * .text accessor throws mid-teardown. Both are needed: Labels expose .text,
+     * TextEntry exposes both, and a panel deleted between the two reads must not
+     * take the tick down with it.
+     */
+    function _readText(panel) {
+        if (!_alive(panel)) return "";
+        try {
+            if (typeof panel.GetAttributeString === "function") {
+                const t = panel.GetAttributeString("text", "");
+                if (t) return String(t);
+            }
+            if (typeof panel.text !== "undefined" && panel.text !== null) return String(panel.text);
+        } catch(e) {}
+        return "";
+    }
+
+    function _extractToken(text) {
+        if (!text) return "";
+        const m = TOKEN_EXTRACT.exec(String(text).replace(/\s+/g, ""));
+        return m ? String(m[1]) : "";
+    }
+
+    // ── Context ──
+    function _isShopOpen(root)  { return _callQol("isHudClassActive", false, [root, "gShopOpen"]); }
+    function _inHideout(root)   { return _callQol("isConnectedToHideout", false, [root]); }
+    function _activate(panel)   { return _callQol("activatePanelSafe", false, [panel]); }
+
+    /**
+     * The build browser popup root.
+     *
+     * PopupBuildBrowser carries no id in vanilla XML, so walk up from
+     * #HeroBuildSelector (which does) until a .PopupPanel ancestor appears.
+     */
+    function _popup(root) {
+        let node = _find(root, PID_SELECTOR);
+        let guard = 0;
+        while (_alive(node) && guard < 12) {
+            if (_hasClass(node, "PopupPanel")) return node;
+            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
+            guard++;
+        }
+        return null;
+    }
+
+    /**
+     * Is the browser open?
+     *
+     * popups_shared.css:26 sets `.PopupPanel.Hidden { visibility: visible; }` — a
+     * dismissed popup still reads as visible to the engine, so a visibility probe
+     * reports true on a CLOSED browser. The `Hidden` class is the discriminator.
+     */
+    function _isBrowseOpen(root) {
+        const popup = _popup(root);
+        if (!_alive(popup)) return false;
+        return !_hasClass(popup, "Hidden");
+    }
+
+    /**
+     * Is the list still waiting on the GC?
+     *
+     * citadel_ui_build_selector.css:46 — the selector carries BuildsLoading while
+     * the hero-build search is outstanding, which collapses #HeroBuildList and
+     * reveals the spinner. This is the honest "not ready yet" flag, and it is why
+     * this manifest needs no settle heuristics.
+     *
+     * #CreateBuildButton must NOT be used for this: it lives in the popup's
+     * .Header, a SIBLING of the selector, so it exists the instant the popup
+     * inflates regardless of the reply. Keying readiness on it is what made an
+     * empty mid-round-trip list read as "this hero has no builds".
+     */
+    function _isListLoading(root) {
+        return _hasClass(_find(root, PID_SELECTOR), CLASS_LOADING);
+    }
+
+    function _listItems(root) {
+        const list = _find(root, PID_BUILD_LIST);
+        return _alive(list) ? _findClass(list, CLASS_BUILD_ITEM) : [];
+    }
+
+    /** The literal build name shown in a list row — readable without clicking. */
+    function _itemName(item) {
+        if (!_alive(item)) return "";
+        const labels = _findClass(item, CLASS_BUILD_NAME);
+        for (let i = 0; i < labels.length; i++) {
+            const t = _readText(labels[i]);
+            if (t) return t;
+        }
+        return "";
+    }
+
+    /**
+     * The description of whichever build is currently selected.
+     *
+     * Reads Label.BuildDescription under #BuildDetails. Verified in the debugger:
+     * the client substitutes the resolved user string here, so this is a real
+     * read and not the localization template.
+     */
+    function _selectedDescription(root) {
+        const details = _find(root, PID_DETAILS);
+        if (!_alive(details)) return "";
+        const labels = _findClass(details, CLASS_DESCRIPTION);
+        for (let i = 0; i < labels.length; i++) {
+            const t = _readText(labels[i]);
+            if (t) return t;
+        }
+        return "";
+    }
+
+    function _isOurBuildSelected(root) {
+        return _hasClass(_find(root, PID_DETAILS), CLASS_CAN_EDIT);
+    }
+
+    // ── Editor ──
+    function _hudBuilds(root) {
+        const byClass = _findClass(root, "shopModsBuild");
+        for (let i = 0; i < byClass.length; i++) {
+            if (_alive(byClass[i])) return byClass[i];
+        }
+        return _find(root, PID_SELECTED_BUILD);
+    }
+
+    /**
+     * Is the build editor open?
+     *
+     * gEditingBuilds is set by the client on CitadelHudHeroBuilds. Only the
+     * client can set or clear it, which makes it the one trustworthy signal for
+     * both "editor opened" and "save committed" (it clears on commit).
+     */
+    function _isEditing(root) {
+        const panels = _findClass(root, "CitadelHudHeroBuilds");
+        for (let i = 0; i < panels.length; i++) {
+            if (_hasClass(panels[i], CLASS_EDITING)) return true;
+        }
+        // The class may sit on an ancestor of the edit section rather than on a
+        // panel matching that class name, so fall back to the section's chain.
+        let node = _find(root, PID_DESC_ENTRY);
+        let guard = 0;
+        while (_alive(node) && guard < 8) {
+            if (_hasClass(node, CLASS_EDITING)) return true;
+            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
+            guard++;
+        }
+        return false;
+    }
+
+    function _descEntry(root) { return _find(root, PID_DESC_ENTRY); }
+
+    /**
+     * Write into a TextEntry the way the client notices.
+     *
+     * SetText() is preferred because it honours the field's maxchars. Neither
+     * entry declares an XML handler (the builds panel subscribes by id), so the
+     * two dispatched events are what make C++ pick the change up.
+     */
+    function _setEntryText(entry, value) {
+        if (!_alive(entry)) return false;
+        let didSet = false;
+        if (typeof entry.SetText === "function") {
+            try { entry.SetText(value); didSet = true; } catch(e) {}
+        }
+        if (!didSet) {
+            try { entry.text = value; didSet = true; } catch(e) {}
+        }
+        try { $.DispatchEvent("TextEntryChanged", entry); } catch(e) {}
+        try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e) {}
+        return didSet;
+    }
+
+    function _triggerEdit(root) {
+        let ok = false;
+        // The browser's own Edit button confirms the popup selection first
+        // (citadel_ui_build_details.xml:38 calls CitadelBuildBrowserPopupConfirmBuild
+        // then CitadelHudHeroBuildsEditSelectedBuild), so prefer it while the
+        // browser is open.
+        const details = _find(root, PID_DETAILS);
+        if (_alive(details)) {
+            if (_activate(_find(details, "EditBuildButton"))) ok = true;
+        }
+        if (!ok) {
+            try {
+                if (typeof CitadelHudHeroBuildsEditSelectedBuild === "function") {
+                    CitadelHudHeroBuildsEditSelectedBuild();
+                    ok = true;
+                }
+            } catch(e) {}
+        }
+        return ok;
+    }
+
+    function _triggerSave(root) {
+        let ok = false;
+        try {
+            if (typeof CitadelHudHeroBuildsSaveEdits === "function") {
+                CitadelHudHeroBuildsSaveEdits();
+                ok = true;
+            }
+        } catch(e) {}
+        if (_activate(_find(root, PID_SAVE_BTN))) ok = true;
+        return ok;
+    }
+
+    function _triggerCreate(root) {
+        const popup = _popup(root);
+        if (_alive(popup) && _activate(_find(popup, PID_CREATE_BTN))) return true;
+        if (_activate(_find(root, PID_CREATE_BTN))) return true;
+        try {
+            if (typeof CitadelHudHeroBuildsCreateNewBuild === "function") {
+                CitadelHudHeroBuildsCreateNewBuild();
+                return true;
+            }
+        } catch(e) {}
+        return false;
+    }
+
+    // ── Hero switch ──
+    function _switchToStorageHero() {
+        return _callQol("selectHeroForBuildSave", false, [STORAGE_HERO, "ql_build_storage"]);
+    }
+    function _returnHero(hero) {
+        return _callQol("queueDelayedHeroRestore", false, [hero, "ql_build_storage_return", 0.3]);
+    }
+    function _confirmStorageHero(root, now) {
+        const res = _callQol("confirmStorageHeroSignatureAbilities",
+            { confirmed: false }, [root, now, SIGNATURE_HITS]);
+        return !!(res && res.confirmed);
+    }
+    function _resolveReturnHero(ctx) {
+        let hero = "";
+        try { hero = String(ctx.config.get("DEFAULT_HERO") || ""); } catch(e) { hero = ""; }
+        if (!hero) hero = _callQol("getConfiguredDefaultHeroId", "", [null]) || "";
+        hero = _callQol("normalizeHeroId", hero, [hero]) || hero;
+        return hero || FALLBACK_HERO;
+    }
+
+    FR.register({
+        id: "ql_build_storage",
+        // Off until verified in-game. ql_build_payload + ql_feat_buildsave stay
+        // authoritative meanwhile, so flipping this is the whole rollback.
+        enabledByDefault: false,
+        settings: [
+            { key: "DEFAULT_HERO", type: "dropdown",
+              options: (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0)
+                       ? QOL_COMPACT_DEFAULT_HERO_OPTIONS : [FALLBACK_HERO],
+              default: FALLBACK_HERO }
+        ],
+        create: function(ctx) {
+            let _loop = null;
+            let _st = {};
+
+            function _reset() {
+                _st = {
+                    stage: "idle",
+                    mode: "",            // "read" | "write"
+                    nextAt: 0,
+                    startedAt: 0,
+                    stageAt: 0,          // when the current wait began
+                    didSwitch: false,
+                    returnHero: "",
+                    cursor: 0,           // index into the candidate list
+                    candidates: [],      // .HeroBuildListItem panels named BUILD_NAME
+                    sweptAll: false,
+                    sawAnyBuild: false,
+                    createdBuild: false,
+                    token: "",           // write mode: what we must persist
+                    requestToken: "",    // write mode: bridge correlation id
+                    foundToken: ""       // read mode: what we recovered
+                };
+            }
+            _reset();
+
+            function _reschedule(rateSec) {
+                const S = QOL.core.Scheduler;
+                if (_loop && _loop.stop) _loop.stop();
+                _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, rateSec, "ql_build_storage") : null;
+            }
+
+            function _setStep(key, status, detail) {
+                _callQol("setSettingsLoaderStepState", undefined, [key, status, detail || ""]);
+            }
+
+            /** Enter a stage and stamp when its wait started, for the timeout bound. */
+            function _go(stage, now, delayMs) {
+                _st.stage = stage;
+                _st.stageAt = now;
+                _st.nextAt = now + (delayMs === undefined ? STEP_MS : delayMs);
+            }
+
+            function _expired(now, budgetMs) {
+                return (now - (_st.stageAt || now)) > budgetMs;
+            }
+
+            /**
+             * Record how conclusive the read was, for the save-side overwrite guard.
+             *
+             * "loaded" must mean one of exactly two things: we read our payload, or
+             * we proved there is nothing to read. Anything else is "failed", because
+             * a storage build we could not read may hold real config, and saving over
+             * it destroys settings silently. `sweptAll` is the proof for the second
+             * case: every candidate in a settled list was visited.
+             */
+            function _recordLoadState(code, detail) {
+                let loadState = "failed";
+                let why = "";
+                if (code === "success") {
+                    loadState = "loaded";
+                    why = "payload applied";
+                } else if (code === "default") {
+                    if (!_st.sawAnyBuild) {
+                        loadState = "loaded";
+                        why = "storage was empty";
+                    } else if (_st.sweptAll) {
+                        loadState = "loaded";
+                        why = "visited every candidate, none carried a payload";
+                    } else {
+                        why = "read did not complete";
+                    }
+                }
+                try {
+                    const State = QOL.state;
+                    if (State) {
+                        State.configLoadState = loadState;
+                        State.configLoadStateDetail = String(detail || code || "");
+                        State.configLoadStateAtMs = _now();
+                    }
+                } catch(e) {}
+                _log("configLoadState=" + loadState + " (result=" + code + ", " + why + ")");
+            }
+
+            function _writeStatus(root, state, msg) {
+                if (!root || !root.SetAttributeString) return;
+                try {
+                    root.SetAttributeString(BRIDGE_STATE, String(state));
+                    root.SetAttributeString(BRIDGE_MSG, String(msg || ""));
+                    if (_st.requestToken) root.SetAttributeString(BRIDGE_TOKEN, _st.requestToken);
+                } catch(e) {}
+            }
+
+            function _clearRequest(root) {
+                if (!root || !root.SetAttributeString) return;
+                try { root.SetAttributeString(BRIDGE_REQUEST, ""); } catch(e) {}
+            }
+
+            /**
+             * Terminal path for both modes.
+             *
+             * The hero is restored on EVERY exit, including failures — restoring
+             * only on the success stage leaks a switched hero whenever anything
+             * goes wrong, which strands the player on the storage hero.
+             */
+            function _finish(root, code, detail) {
+                if (_st.didSwitch) {
+                    _returnHero(_st.returnHero || _resolveReturnHero(ctx));
+                }
+                if (_st.mode === "read") {
+                    _recordLoadState(code, detail);
+                    _setStep("complete", code === "success" ? "done" : "skipped", detail || "");
+                    _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
+                } else if (_st.mode === "write") {
+                    _writeStatus(root, code === "success" ? "success" : "failed", detail || "");
+                    _clearRequest(root);
+                }
+                _log(_st.mode + ": " + code + " — " + (detail || ""));
+                _st.stage = "done";
+                _reschedule(DORMANT_RATE_SEC);
+            }
+
+            // ── Shared: get to the storage hero with the browser list settled ──
+            /**
+             * Returns "wait" (call again later), "ready", or "fail".
+             * Every wait here is gated on a client-set class.
+             */
+            function _advanceToList(root, now) {
+                switch (_st.stage) {
+                    case "switch_hero":
+                        if (!_switchToStorageHero()) {
+                            return "fail";
+                        }
+                        _st.didSwitch = true;
+                        _go("confirm_hero", now, SETTLE_MS);
+                        return "wait";
+
+                    case "confirm_hero":
+                        if (_confirmStorageHero(root, now)) {
+                            _go("open_shop", now);
+                            return "wait";
+                        }
+                        if (_expired(now, CONFIRM_TIMEOUT_MS)) return "fail";
+                        _st.nextAt = now + STEP_MS;
+                        return "wait";
+
+                    case "open_shop":
+                        if (!_isShopOpen(root)) {
+                            _callQol("tryOpenHeroShopForHeroProbe", false, [root]);
+                            _st.nextAt = now + STEP_MS;
+                            if (_expired(now, EDITOR_TIMEOUT_MS)) return "fail";
+                            return "wait";
+                        }
+                        _go("open_browser", now);
+                        return "wait";
+
+                    case "open_browser":
+                        if (!_isBrowseOpen(root)) {
+                            _activate(_find(root, PID_BROWSE_BTN));
+                            _st.nextAt = now + STEP_MS;
+                            if (_expired(now, EDITOR_TIMEOUT_MS)) return "fail";
+                            return "wait";
+                        }
+                        _go("await_list", now);
+                        return "wait";
+
+                    case "await_list":
+                        // BuildsLoading is the GC gate. Nothing about the list means
+                        // anything while it is set — an empty list here is just an
+                        // unfinished round trip.
+                        if (_isListLoading(root)) {
+                            if (_expired(now, LOADING_TIMEOUT_MS)) return "fail";
+                            _st.nextAt = now + STEP_MS;
+                            return "wait";
+                        }
+                        return "ready";
+                }
+                return "fail";
+            }
+
+            /**
+             * Collect the rows worth clicking.
+             *
+             * Filtering by name is free — Label.BuildName holds the literal string —
+             * so a player with thirty builds costs one click, not thirty.
+             */
+            function _collectCandidates(root) {
+                const items = _listItems(root);
+                _st.sawAnyBuild = items.length > 0;
+                const out = [];
+                for (let i = 0; i < items.length; i++) {
+                    if (_itemName(items[i]) === BUILD_NAME) out.push(items[i]);
+                }
+                _st.candidates = out;
+                _st.cursor = 0;
+                _log("list: " + items.length + " build(s), " + out.length + " named " + BUILD_NAME);
+            }
+
+            // ── READ ──
+            function _tickRead(root, now) {
+                const gate = _advanceToList(root, now);
+                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "wait") return;
+
+                switch (_st.stage) {
+                    case "await_list":
+                        _collectCandidates(root);
+                        _setStep("read_payload", "active", "Scanning " + _st.candidates.length + " candidate build(s)");
+                        _go("select_candidate", now, 0);
+                        return;
+
+                    case "select_candidate": {
+                        if (_st.cursor >= _st.candidates.length) {
+                            // Every candidate visited and none held a token. That is
+                            // conclusive, which is what lets a first save proceed.
+                            _st.sweptAll = true;
+                            _finish(root, "default", "no payload on any " + BUILD_NAME + " build");
+                            return;
+                        }
+                        const item = _st.candidates[_st.cursor];
+                        if (!_alive(item)) { _st.cursor++; _st.nextAt = now; return; }
+                        if (!_hasClass(item, CLASS_SELECTED)) _activate(item);
+                        _go("read_description", now);
+                        return;
+                    }
+
+                    case "read_description": {
+                        const item = _st.candidates[_st.cursor];
+                        // Wait for the client to mark the row Selected — #BuildDetails
+                        // only follows once it has.
+                        if (!_hasClass(item, CLASS_SELECTED)) {
+                            if (_expired(now, SELECT_TIMEOUT_MS)) {
+                                _log("read: candidate " + _st.cursor + " never became Selected, skipping");
+                                _st.cursor++;
+                                _go("select_candidate", now, 0);
+                                return;
+                            }
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        const token = _extractToken(_selectedDescription(root));
+                        if (!token) {
+                            _st.cursor++;
+                            _go("select_candidate", now, 0);
+                            return;
+                        }
+                        _st.foundToken = token;
+                        _setStep("decode_payload", "active", "Decoding");
+                        _go("apply", now, 0);
+                        return;
+                    }
+
+                    case "apply": {
+                        const decoded = _decodeToken(_st.foundToken);
+                        if (!decoded.ok) {
+                            // Corrupt, and deliberately not fatal: the next save
+                            // overwrites the description wholesale, so there is
+                            // nothing to repair and no build to delete. Keep scanning
+                            // in case another candidate carries a good token.
+                            _log("read: corrupt token on candidate " + _st.cursor +
+                                 " (" + decoded.error + ") — will be overwritten by the next save");
+                            _st.cursor++;
+                            _go("select_candidate", now, 0);
+                            return;
+                        }
+                        _applyConfig(root, decoded);
+                        _finish(root, "success", "payload applied from build description");
+                        return;
+                    }
+                }
+            }
+
+            function _decodeToken(rawText) {
+                const m = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i.exec(String(rawText || ""));
+                if (!m) return { ok: false, error: "malformed" };
+                const schemaVer = String(m[1] || "").replace(/-/g, ".");
+                const payload = String(m[2] || "");
+                // QOL.compactSchemaRegistry is a value, not a function.
+                const registry = _qol("compactSchemaRegistry");
+                if (registry && typeof registry === "object" &&
+                    !Object.prototype.hasOwnProperty.call(registry, schemaVer)) {
+                    return { ok: false, error: "unsupported_schema:" + schemaVer };
+                }
+                const binary = _callQol("buildPayloadFromBase64Url", null, [payload]);
+                if (!binary) return { ok: false, error: "base64" };
+                const parsed = _callQol("deserializeBuildPayloadCompact", null, [binary, schemaVer]);
+                if (!parsed || typeof parsed !== "object") return { ok: false, error: "deserialize" };
+                return { ok: true, parsed: parsed, schemaVersion: schemaVer };
+            }
+
+            /**
+             * Merge the decoded payload over defaults and hand it to the runtime.
+             *
+             * Order mirrors the established loader: raw -> defaults overwrite ->
+             * payload -> normalize chain -> the two migrations mergeConfig does not
+             * run. Those migrations mutate in place and return undefined, so their
+             * results must not be reassigned.
+             */
+            function _applyConfig(root, decoded) {
+                let rawCfg = {};
+                try {
+                    const State = QOL.state;
+                    if (State && State.lastConfig) rawCfg = State.lastConfig;
+                } catch(e) {}
+
+                const base = _callQol("buildDefaultConfig", {}, []) || {};
+                let merged = {};
+                for (const k in rawCfg) {
+                    if (Object.prototype.hasOwnProperty.call(rawCfg, k)) merged[k] = rawCfg[k];
+                }
+                for (const k in base) {
+                    if (Object.prototype.hasOwnProperty.call(base, k)) merged[k] = base[k];
+                }
+                for (const k in decoded.parsed) {
+                    if (Object.prototype.hasOwnProperty.call(decoded.parsed, k)) merged[k] = decoded.parsed[k];
+                }
+                // UI-only keys live in the raw config, never in the payload.
+                if (Object.prototype.hasOwnProperty.call(rawCfg, "DRAG_ENABLED")) merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
+                if (Object.prototype.hasOwnProperty.call(rawCfg, "PREVIEWS_ENABLED")) merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
+
+                merged = _callQol("mergeConfig", merged, [merged]) || merged;
+
+                const cfn = _qol("normalizeCompassSpeedSchemaMigration");
+                if (typeof cfn === "function") { try { cfn(merged, decoded.parsed, decoded.schemaVersion); } catch(e) {} }
+                const lfn = _qol("normalizeLanguageSchemaMigration");
+                if (typeof lfn === "function") { try { lfn(merged, decoded.parsed, decoded.schemaVersion); } catch(e) {} }
+
+                let wrapped = merged;
+                try {
+                    if (typeof WrapConfigForStorage === "function") wrapped = WrapConfigForStorage(merged);
+                } catch(e) { wrapped = merged; }
+
+                _st.returnHero = merged.DEFAULT_HERO || _resolveReturnHero(ctx);
+                _callQol("writeStorageConfigRawToUi", false, [root, wrapped]);
+                try {
+                    const State = QOL.state;
+                    if (State) State.accountPresetRawOverride = wrapped;
+                } catch(e) {}
+            }
+
+            // ── WRITE ──
+            function _tickWrite(root, now) {
+                const gate = _advanceToList(root, now);
+                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "wait") return;
+
+                switch (_st.stage) {
+                    case "await_list":
+                        _collectCandidates(root);
+                        _go("pick_target", now, 0);
+                        return;
+
+                    case "pick_target": {
+                        if (_st.candidates.length === 0) {
+                            if (_st.createdBuild) {
+                                _finish(root, "failed", "created a build but it never appeared in the list");
+                                return;
+                            }
+                            _writeStatus(root, "pending", "creating_storage_build");
+                            if (!_triggerCreate(root)) {
+                                _finish(root, "failed", "CreateBuildButton unavailable");
+                                return;
+                            }
+                            _st.createdBuild = true;
+                            // A fresh build opens straight into the editor, so the
+                            // name still has to be stamped before the description.
+                            _go("await_editor", now, SETTLE_MS);
+                            return;
+                        }
+                        const item = _st.candidates[_st.cursor];
+                        if (!_alive(item)) { _finish(root, "failed", "target row vanished"); return; }
+                        if (!_hasClass(item, CLASS_SELECTED)) _activate(item);
+                        _go("await_selected", now);
+                        return;
+                    }
+
+                    case "await_selected": {
+                        const item = _st.candidates[_st.cursor];
+                        if (!_hasClass(item, CLASS_SELECTED)) {
+                            if (_expired(now, SELECT_TIMEOUT_MS)) {
+                                // Prefer another same-named row over guessing.
+                                if (_st.cursor + 1 < _st.candidates.length) {
+                                    _st.cursor++;
+                                    _go("pick_target", now, 0);
+                                    return;
+                                }
+                                _finish(root, "failed", "target never became Selected");
+                                return;
+                            }
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        // Refuse to edit a build that is not ours: CanEditBuild is the
+                        // client's own answer to that question.
+                        if (!_isOurBuildSelected(root)) {
+                            if (_st.cursor + 1 < _st.candidates.length) {
+                                _st.cursor++;
+                                _go("pick_target", now, 0);
+                                return;
+                            }
+                            _finish(root, "failed", "selected build is not editable by us");
+                            return;
+                        }
+                        _writeStatus(root, "pending", "opening_edit_mode");
+                        _triggerEdit(root);
+                        _go("await_editor", now);
+                        return;
+                    }
+
+                    case "await_editor":
+                        if (!_isEditing(root)) {
+                            if (_expired(now, EDITOR_TIMEOUT_MS)) {
+                                _finish(root, "failed", "edit mode never opened");
+                                return;
+                            }
+                            _triggerEdit(root);
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        _go("write_description", now, 0);
+                        return;
+
+                    case "write_description": {
+                        const entry = _descEntry(root);
+                        if (!_alive(entry)) {
+                            if (_expired(now, EDITOR_TIMEOUT_MS)) {
+                                _finish(root, "failed", "no " + PID_DESC_ENTRY);
+                                return;
+                            }
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        // Stamp the name first. It is only a convenience for
+                        // filtering (the token in the description is the real
+                        // identity), but writing it after the description would mean
+                        // touching another field between the write and the commit.
+                        _setEntryText(_find(root, PID_NAME_ENTRY), BUILD_NAME);
+                        if (!_setEntryText(entry, _st.token)) {
+                            _finish(root, "failed", "description rejected the text");
+                            return;
+                        }
+                        _writeStatus(root, "pending", "saving");
+                        _log("write: put " + _st.token.length + " chars into the description");
+                        _go("commit", now);
+                        return;
+                    }
+
+                    case "commit":
+                        _triggerSave(root);
+                        _go("await_commit", now);
+                        return;
+
+                    case "await_commit":
+                        // The editor closing IS the commit: only the client can clear
+                        // gEditingBuilds, and SaveEdits is a no-op outside edit mode.
+                        if (_isEditing(root)) {
+                            if (_expired(now, COMMIT_TIMEOUT_MS)) {
+                                _finish(root, "failed", "editor never closed after Save");
+                                return;
+                            }
+                            _triggerSave(root);
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        _go("verify", now);
+                        return;
+
+                    case "verify": {
+                        // Saving tears the panels down and rebuilds them, so an
+                        // immediate read can see the old ones. Poll instead of
+                        // deciding on the first look.
+                        const back = _readText(_descEntry(root));
+                        if (_extractToken(back) === _st.token) {
+                            _finish(root, "success", "verified in the description");
+                            return;
+                        }
+                        if (_expired(now, VERIFY_TIMEOUT_MS)) {
+                            _finish(root, "failed",
+                                "verify failed (read back " + String(back).length + " chars)");
+                            return;
+                        }
+                        _st.nextAt = now + STEP_MS;
+                        return;
+                    }
+                }
+            }
+
+            // ── Request intake ──
+            /**
+             * A write request arrives as the payload token in QOL_BUILD_SAVE_REQUEST
+             * (written by ql_settings.js:1722-1742). Refuse it when the read could
+             * not conclude, unless the user has explicitly forced it — overwriting a
+             * config we failed to read loses settings silently.
+             */
+            function _pendingWrite(root) {
+                let raw = "";
+                try { raw = String(root.GetAttributeString(BRIDGE_REQUEST, "") || ""); } catch(e) { return null; }
+                const token = _extractToken(raw);
+                if (!token) return null;
+
+                if (token.length > MAX_TOKEN_LEN) {
+                    return { reject: "token too large for the build description (" + token.length + " chars)" };
+                }
+
+                let loadState = "pending";
+                try {
+                    const State = QOL.state;
+                    if (State && State.configLoadState) loadState = String(State.configLoadState);
+                } catch(e) {}
+                if (loadState === "failed") {
+                    let forced = "";
+                    try { forced = String(root.GetAttributeString(BRIDGE_FORCE, "") || "").trim(); } catch(e) {}
+                    if (forced !== "1") {
+                        return { reject: "blocked_unread_config" };
+                    }
+                    try { root.SetAttributeString(BRIDGE_FORCE, ""); } catch(e) {}
+                    _log("write: force flag consumed, proceeding over an unread config");
+                }
+                let reqToken = "";
+                try { reqToken = String(root.GetAttributeString(BRIDGE_TOKEN, "") || ""); } catch(e) {}
+                return { token: token, requestToken: reqToken };
+            }
+
+            function _tick() {
+                try {
+                    const root = _root();
+                    if (!root) return;
+                    if (Number(ctx.config.get("enabled")) !== 1) return;
+                    const now = _now();
+
+                    if (_st.stage !== "done" && _st.stage !== "idle" &&
+                        (now - _st.startedAt) > OVERALL_TIMEOUT_MS) {
+                        _finish(root, "failed", "overall timeout in stage " + _st.stage);
+                        return;
+                    }
+                    if (_st.nextAt && now < _st.nextAt) return;
+
+                    if (_st.stage === "idle" || _st.stage === "done") {
+                        // Writes win over reads: the user pressed Save and is waiting.
+                        const req = _pendingWrite(root);
+                        if (req && req.reject) {
+                            _reset();
+                            _st.mode = "write";
+                            _writeStatus(root, "failed", req.reject);
+                            _clearRequest(root);
+                            _log("write refused: " + req.reject);
+                            return;
+                        }
+                        if (req) {
+                            _reset();
+                            _st.mode = "write";
+                            _st.token = req.token;
+                            _st.requestToken = req.requestToken;
+                            _st.startedAt = now;
+                            _st.returnHero = _resolveReturnHero(ctx);
+                            _writeStatus(root, "pending", "switching_to_storage_hero");
+                            _go("switch_hero", now, 0);
+                            _reschedule(ACTIVE_RATE_SEC);
+                            return;
+                        }
+                        if (_st.stage === "done") return;   // read already ran
+                        if (!_inHideout(root)) return;      // startup read only in the hideout
+                        _reset();
+                        _st.mode = "read";
+                        _st.startedAt = now;
+                        _st.returnHero = _resolveReturnHero(ctx);
+                        _callQol("beginSettingsLoaderSession", undefined, ["", now]);
+                        _setStep("start", "done", "");
+                        _go("switch_hero", now, 0);
+                        _reschedule(ACTIVE_RATE_SEC);
+                        return;
+                    }
+
+                    if (_st.mode === "read") _tickRead(root, now);
+                    else if (_st.mode === "write") _tickWrite(root, now);
+                } catch(e) {
+                    _log("tick error: " + (e && e.message ? e.message : String(e)));
+                    throw e;   // FeatureRegistry tracks and auto-disables after 10
+                }
+            }
+
+            return {
+                onEnable: function() {
+                    _reset();
+                    _reschedule(ACTIVE_RATE_SEC);
+                },
+                onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    const S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature("ql_build_storage");
+                    _reset();
+                },
+                onSettingsChanged: function() {
+                    // _tick re-reads config every pass; nothing to do here.
+                }
+            };
+        },
+        test: function(ctx) {
+            try {
+                const root = $.GetContextPanel();
+                const asserts = [];
+
+                const required = [
+                    "selectHeroForBuildSave", "queueDelayedHeroRestore",
+                    "confirmStorageHeroSignatureAbilities", "normalizeHeroId",
+                    "getConfiguredDefaultHeroId", "activatePanelSafe",
+                    "buildPayloadFromBase64Url", "deserializeBuildPayloadCompact",
+                    "buildDefaultConfig", "mergeConfig", "writeStorageConfigRawToUi",
+                    "isConnectedToHideout", "isHudClassActive",
+                    "beginSettingsLoaderSession", "finalizeSettingsLoaderSession",
+                    "setSettingsLoaderStepState", "tryOpenHeroShopForHeroProbe"
+                ];
+                for (let i = 0; i < required.length; i++) {
+                    asserts.push({
+                        passed: !!(typeof QOL !== "undefined" && typeof QOL[required[i]] === "function"),
+                        name: "QOL." + required[i] + " exists"
+                    });
+                }
+
+                // Panels are only present with the shop open, so their absence is
+                // reported rather than failed — this test must not depend on where
+                // the player happens to be standing.
+                const descEntry = _find(root, PID_DESC_ENTRY);
+                const details = _find(root, PID_DETAILS);
+                const note = "shop-dependent panels: " + PID_DESC_ENTRY + "=" + (descEntry ? "1" : "0") +
+                             " " + PID_DETAILS + "=" + (details ? "1" : "0");
+
+                // maxchars is the one hard constraint on the carrier: a token past
+                // the cap is silently truncated and decodes to garbage.
+                if (descEntry) {
+                    let maxchars = "";
+                    try { maxchars = String(descEntry.GetAttributeString("maxchars", "") || ""); } catch(e) {}
+                    if (maxchars) {
+                        asserts.push({
+                            passed: Number(maxchars) >= MAX_TOKEN_LEN,
+                            name: "description maxchars (" + maxchars + ") >= " + MAX_TOKEN_LEN
+                        });
+                    }
+                }
+
+                let failed = 0;
+                for (let i = 0; i < asserts.length; i++) if (!asserts[i].passed) failed++;
+                return {
+                    passed: failed === 0,
+                    name: "ql_build_storage delegates + carrier",
+                    message: failed === 0 ? note : (failed + " assertion(s) failed; " + note),
+                    assertions: asserts
+                };
+            } catch(e) {
+                return { passed: false, name: "ql_build_storage", message: String(e && e.message ? e.message : e) };
+            }
+        }
+    });
+})();
