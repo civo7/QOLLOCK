@@ -9781,7 +9781,22 @@ function GetUIRoot() {
         );
     }
 
+    // True while manifests/ql_build_storage owns the storage round trip.
+    //
+    // Both pipelines service the SAME bridge attribute (QOL_BUILD_SAVE_REQUEST),
+    // so running them together means two state machines answer one Save press —
+    // each switching heroes and pressing buttons under the other. This gate is
+    // what makes ql_build_storage's feature toggle a real cut-over rather than an
+    // addition, and flipping that toggle off restores the old path unchanged.
+    function IsBuildStorageManifestActive() {
+        try {
+            var FR = QOL.core && QOL.core.FeatureRegistry;
+            return !!(FR && FR.isEnabled && FR.isEnabled("ql_build_storage"));
+        } catch (e) { return false; }
+    }
+
     function ProcessBuildRequestOrchestration(root, nowMs, cfg) {
+        if (IsBuildStorageManifestActive()) return;
         var perfSection = PerfStart();
         ProcessBuildSaveRequest(root, nowMs, cfg);
         PerfEnd("loop.build_save_request", perfSection);

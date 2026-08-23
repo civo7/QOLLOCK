@@ -1001,7 +1001,14 @@
     // ── State machine ──
     FR.register({
         id: "ql_build_payload",
-        enabledByDefault: true,  // Phase B: manifest is the active loader
+        // Superseded by manifests/ql_build_storage, which carries the payload in
+        // the build DESCRIPTION instead of its category name. Both switch heroes
+        // and drive the same browser UI, so exactly one may be enabled: two
+        // loaders racing would fight over the hero and the selection.
+        //
+        // Kept registered (not deleted) so it remains the rollback: enable this
+        // and disable ql_build_storage to return to the category-name pipeline.
+        enabledByDefault: false,
         settings: [
             { key: "DEFAULT_HERO", type: "dropdown",
               options: (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0)

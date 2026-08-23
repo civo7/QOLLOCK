@@ -380,9 +380,11 @@
 
     FR.register({
         id: "ql_build_storage",
-        // Off until verified in-game. ql_build_payload + ql_feat_buildsave stay
-        // authoritative meanwhile, so flipping this is the whole rollback.
-        enabledByDefault: false,
+        // Active. While this is on, ql_core.js's ProcessBuildRequestOrchestration
+        // stands down and ql_build_payload is off (its enabledByDefault is false),
+        // so this manifest owns the storage round trip alone. Turning it off
+        // restores both, which is the whole rollback.
+        enabledByDefault: true,
         settings: [
             { key: "DEFAULT_HERO", type: "dropdown",
               options: (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0)
@@ -402,8 +404,12 @@
                     stageAt: 0,          // when the current wait began
                     didSwitch: false,
                     returnHero: "",
-                    cursor: 0,           // index into the candidate list
-                    candidates: [],      // .HeroBuildListItem panels named BUILD_NAME
+                    cursor: 0,           // position within the candidate list
+                    // Panels are never cached: selecting a build makes the client
+                    // rebuild #HeroBuildList, so rows are re-resolved by index every
+                    // tick (_candidateAt).
+                    candidateCount: 0,
+                    targetChosen: false, // write mode: _pickWriteCursor has run
                     sweptAll: false,
                     sawAnyBuild: false,
                     createdBuild: false,
@@ -472,18 +478,53 @@
                 _log("configLoadState=" + loadState + " (result=" + code + ", " + why + ")");
             }
 
-            function _writeStatus(root, state, msg) {
-                if (!root || !root.SetAttributeString) return;
+            /**
+             * Every panel the settings context might read the bridge from.
+             *
+             * ql_settings.js:1745-1760 ReadBuildSaveStatus prefers FindRootPanel()
+             * — the ABSOLUTE root — and only falls back to its own context panel.
+             * Writing to $.GetContextPanel() alone therefore left the settings UI
+             * showing "pending" forever on a save that had already succeeded, which
+             * is precisely the "it says it failed but the file is on disk" class of
+             * bug. QueueBuildSaveRequest writes both surfaces, so both are answered.
+             */
+            function _bridgeSurfaces(root) {
+                const out = [];
+                if (root && root.SetAttributeString) out.push(root);
                 try {
-                    root.SetAttributeString(BRIDGE_STATE, String(state));
-                    root.SetAttributeString(BRIDGE_MSG, String(msg || ""));
-                    if (_st.requestToken) root.SetAttributeString(BRIDGE_TOKEN, _st.requestToken);
+                    const ui = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (ui && ui.SetAttributeString && out.indexOf(ui) === -1) out.push(ui);
                 } catch(e) {}
+                // Walk to the absolute root; that is what FindRootPanel() returns.
+                let node = root;
+                let guard = 0;
+                while (node && guard < 24) {
+                    let parent = null;
+                    try { parent = node.GetParent ? node.GetParent() : null; } catch(e) { parent = null; }
+                    if (!parent) break;
+                    node = parent;
+                    guard++;
+                }
+                if (node && node.SetAttributeString && out.indexOf(node) === -1) out.push(node);
+                return out;
+            }
+
+            function _writeStatus(root, state, msg) {
+                const panels = _bridgeSurfaces(root);
+                for (let i = 0; i < panels.length; i++) {
+                    try {
+                        panels[i].SetAttributeString(BRIDGE_STATE, String(state));
+                        panels[i].SetAttributeString(BRIDGE_MSG, String(msg || ""));
+                        if (_st.requestToken) panels[i].SetAttributeString(BRIDGE_TOKEN, _st.requestToken);
+                    } catch(e) {}
+                }
             }
 
             function _clearRequest(root) {
-                if (!root || !root.SetAttributeString) return;
-                try { root.SetAttributeString(BRIDGE_REQUEST, ""); } catch(e) {}
+                const panels = _bridgeSurfaces(root);
+                for (let i = 0; i < panels.length; i++) {
+                    try { panels[i].SetAttributeString(BRIDGE_REQUEST, ""); } catch(e) {}
+                }
             }
 
             /**
@@ -499,6 +540,9 @@
                 }
                 if (_st.mode === "read") {
                     _recordLoadState(code, detail);
+                    _setStep("decode_payload", code === "success" ? "done" : "skipped", "");
+                    _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
+                    _setStep("return_hero", "done", _st.returnHero || "");
                     _setStep("complete", code === "success" ? "done" : "skipped", detail || "");
                     _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
                 } else if (_st.mode === "write") {
@@ -514,6 +558,12 @@
             /**
              * Returns "wait" (call again later), "ready", or "fail".
              * Every wait here is gated on a client-set class.
+             *
+             * Stages past await_list belong to the read/write machines, so this
+             * reports "ready" for anything it does not own — falling through to
+             * "fail" instead meant the very first post-list tick aborted the whole
+             * run with "could not reach the build list", after the list had already
+             * been reached and enumerated.
              */
             function _advanceToList(root, now) {
                 switch (_st.stage) {
@@ -522,11 +572,17 @@
                             return "fail";
                         }
                         _st.didSwitch = true;
+                        // Overlay step keys come from ql_core.js:535 — the historical
+                        // names say "airheart" where the hero is now Skyrunner.
+                        _setStep("switch_airheart", "done", "");
+                        _setStep("confirm_airheart", "active", "Confirming Skyrunner");
                         _go("confirm_hero", now, SETTLE_MS);
                         return "wait";
 
                     case "confirm_hero":
                         if (_confirmStorageHero(root, now)) {
+                            _setStep("confirm_airheart", "done", "");
+                            _setStep("read_payload", "active", "Opening the build browser");
                             _go("open_shop", now);
                             return "wait";
                         }
@@ -565,7 +621,8 @@
                         }
                         return "ready";
                 }
-                return "fail";
+                // Not one of this helper's stages — the read/write machine owns it.
+                return "ready";
             }
 
             /**
@@ -573,17 +630,38 @@
              *
              * Filtering by name is free — Label.BuildName holds the literal string —
              * so a player with thirty builds costs one click, not thirty.
+             *
+             * Returns INDICES, never panels. Selecting a build makes the client
+             * rebuild #HeroBuildList, so any panel reference held across a tick is
+             * already dangling by the time it is used. Holding them meant every
+             * candidate read as dead, the cursor ran to the end without a single
+             * click, and the sweep reported "none carried a payload" — a false
+             * "storage is empty" that would then authorize overwriting real config.
              */
-            function _collectCandidates(root) {
+            function _candidateIndices(root) {
                 const items = _listItems(root);
-                _st.sawAnyBuild = items.length > 0;
                 const out = [];
                 for (let i = 0; i < items.length; i++) {
-                    if (_itemName(items[i]) === BUILD_NAME) out.push(items[i]);
+                    if (_itemName(items[i]) === BUILD_NAME) out.push(i);
                 }
-                _st.candidates = out;
+                return { total: items.length, indices: out };
+            }
+
+            /** Re-resolve one candidate row by its position in the live list. */
+            function _candidateAt(root, cursor) {
+                const items = _listItems(root);
+                const found = _candidateIndices(root);
+                if (cursor < 0 || cursor >= found.indices.length) return null;
+                const idx = found.indices[cursor];
+                return (idx >= 0 && idx < items.length) ? items[idx] : null;
+            }
+
+            function _collectCandidates(root) {
+                const found = _candidateIndices(root);
+                _st.sawAnyBuild = found.total > 0;
+                _st.candidateCount = found.indices.length;
                 _st.cursor = 0;
-                _log("list: " + items.length + " build(s), " + out.length + " named " + BUILD_NAME);
+                _log("list: " + found.total + " build(s), " + found.indices.length + " named " + BUILD_NAME);
             }
 
             // ── READ ──
@@ -595,27 +673,30 @@
                 switch (_st.stage) {
                     case "await_list":
                         _collectCandidates(root);
-                        _setStep("read_payload", "active", "Scanning " + _st.candidates.length + " candidate build(s)");
+                        _setStep("read_payload", "active", "Scanning " + _st.candidateCount + " candidate build(s)");
                         _go("select_candidate", now, 0);
                         return;
 
                     case "select_candidate": {
-                        if (_st.cursor >= _st.candidates.length) {
+                        if (_st.cursor >= _st.candidateCount) {
                             // Every candidate visited and none held a token. That is
                             // conclusive, which is what lets a first save proceed.
                             _st.sweptAll = true;
                             _finish(root, "default", "no payload on any " + BUILD_NAME + " build");
                             return;
                         }
-                        const item = _st.candidates[_st.cursor];
+                        const item = _candidateAt(root, _st.cursor);
                         if (!_alive(item)) { _st.cursor++; _st.nextAt = now; return; }
+                        // Already selected (the client preselects one) — read it
+                        // without spending a click.
                         if (!_hasClass(item, CLASS_SELECTED)) _activate(item);
                         _go("read_description", now);
                         return;
                     }
 
                     case "read_description": {
-                        const item = _st.candidates[_st.cursor];
+                        const item = _candidateAt(root, _st.cursor);
+                        if (!_alive(item)) { _st.cursor++; _go("select_candidate", now, 0); return; }
                         // Wait for the client to mark the row Selected — #BuildDetails
                         // only follows once it has.
                         if (!_hasClass(item, CLASS_SELECTED)) {
@@ -625,6 +706,7 @@
                                 _go("select_candidate", now, 0);
                                 return;
                             }
+                            _activate(item);
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
@@ -729,6 +811,29 @@
             }
 
             // ── WRITE ──
+            /**
+             * Which candidate to overwrite when several carry our name.
+             *
+             * Valve resets build names, so the name is a filter and never an
+             * identity — the token in the description is. Prefer whichever row
+             * already shows one; writing to a different same-named row would leave
+             * the real config sitting on a build nobody reads again. Only the
+             * currently-selected row can be inspected without spending clicks, so
+             * this is a cheap best-effort check that falls back to the first row.
+             */
+            function _pickWriteCursor(root) {
+                const selfToken = _extractToken(_selectedDescription(root));
+                if (selfToken) {
+                    const items = _listItems(root);
+                    const found = _candidateIndices(root);
+                    for (let c = 0; c < found.indices.length; c++) {
+                        const item = items[found.indices[c]];
+                        if (_hasClass(item, CLASS_SELECTED)) return c;
+                    }
+                }
+                return 0;
+            }
+
             function _tickWrite(root, now) {
                 const gate = _advanceToList(root, now);
                 if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
@@ -741,7 +846,7 @@
                         return;
 
                     case "pick_target": {
-                        if (_st.candidates.length === 0) {
+                        if (_st.candidateCount === 0) {
                             if (_st.createdBuild) {
                                 _finish(root, "failed", "created a build but it never appeared in the list");
                                 return;
@@ -757,7 +862,14 @@
                             _go("await_editor", now, SETTLE_MS);
                             return;
                         }
-                        const item = _st.candidates[_st.cursor];
+                        // Prefer a candidate that already carries a token: that is the
+                        // build holding the real config, and writing to a different
+                        // same-named row would strand it. Falls back to the first.
+                        if (!_st.targetChosen) {
+                            _st.cursor = _pickWriteCursor(root);
+                            _st.targetChosen = true;
+                        }
+                        const item = _candidateAt(root, _st.cursor);
                         if (!_alive(item)) { _finish(root, "failed", "target row vanished"); return; }
                         if (!_hasClass(item, CLASS_SELECTED)) _activate(item);
                         _go("await_selected", now);
@@ -765,11 +877,12 @@
                     }
 
                     case "await_selected": {
-                        const item = _st.candidates[_st.cursor];
+                        const item = _candidateAt(root, _st.cursor);
+                        if (!_alive(item)) { _finish(root, "failed", "target row vanished"); return; }
                         if (!_hasClass(item, CLASS_SELECTED)) {
                             if (_expired(now, SELECT_TIMEOUT_MS)) {
                                 // Prefer another same-named row over guessing.
-                                if (_st.cursor + 1 < _st.candidates.length) {
+                                if (_st.cursor + 1 < _st.candidateCount) {
                                     _st.cursor++;
                                     _go("pick_target", now, 0);
                                     return;
@@ -777,13 +890,14 @@
                                 _finish(root, "failed", "target never became Selected");
                                 return;
                             }
+                            _activate(item);
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
                         // Refuse to edit a build that is not ours: CanEditBuild is the
                         // client's own answer to that question.
                         if (!_isOurBuildSelected(root)) {
-                            if (_st.cursor + 1 < _st.candidates.length) {
+                            if (_st.cursor + 1 < _st.candidateCount) {
                                 _st.cursor++;
                                 _go("pick_target", now, 0);
                                 return;
