@@ -30,12 +30,27 @@ cd "$SCRIPTS_DIR" && bash tools/check_manifests.sh
 echo "[QOLLOCK] Running smoke test..."
 node "$SCRIPTS_DIR/tools/qollock_smoke_test.js"
 
-# Behavioral suite: runs the real mod against the simulated Panorama tree with a
-# virtual clock. This is the layer that catches logic regressions — the smoke
-# test above only proves the files load.
-if [ -d "$REPO_ROOT/tests" ]; then
-    echo "[QOLLOCK] Running behavioral tests..."
-    cd "$REPO_ROOT" && node --test "tests/**/*.test.js"
-fi
+echo "[QOLLOCK] Validating compact schema..."
+node "$REPO_ROOT/scripts/validate_compact_schema.js"
+
+# No behavioural suite here on purpose.
+#
+# tests/ ran the mod against a MODELLED Panorama tree. The model cannot know which
+# panels the client actually creates — several are conditional in C++ — so its
+# answers about panel existence and label readability were guesses. When a guess
+# disagreed with the game the suite went red on correct code and green on broken
+# code: a save-verify regression once shipped green at 14/14 because the model
+# resolved label text the engine does not, and conversely a fix matching a
+# debugger capture (Label.BuildName holds the literal build name) failed a test
+# asserting the opposite. Removed 2026-08-23.
+#
+# What replaces it, none of which models the game:
+#   - this smoke test           — every file loads, no syntax/reference errors
+#   - validate_compact_schema   — 57 schema versions, ~450 codec fuzz cases
+#   - each manifest's test()    — runs IN the client against the real tree
+#   - scripts/profile_hud.js    — counts operations; feed it a real tree with
+#                                 scripts/import_tree_dump.js
+#
+# scripts/simulator/ stays because the profiler is built on it.
 
 echo "[QOLLOCK] All pre-commit checks passed!"

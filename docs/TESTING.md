@@ -1,8 +1,13 @@
 # Testing QOLLOCK
 
-Two layers, and they catch different things.
+Nothing here models the game. That is the point.
 
-## Layer 1 — static/load checks (pre-existing)
+The behavioural suite that used to live in `tests/` was removed on 2026-08-23 —
+see "Why there is no behavioural suite" at the bottom. What remains either checks
+the code without claiming anything about the client, or runs inside the real
+client.
+
+## Layer 1 — static / load checks
 
 ```
 node panorama/scripts/tools/qollock_smoke_test.js   # every file loads, in order
@@ -12,148 +17,114 @@ bash panorama/scripts/tools/check_manifests.sh      # manifest shape + hud.xml w
 node scripts/validate_compact_schema.js             # config codec round-trips
 ```
 
-These prove the code *loads*. They cannot catch a logic bug: the 2026-08 settings
-loader failure passed all of them 107/107.
+These prove the code *loads* and that the codec is sound. The schema validator is
+the strongest thing in this file: 57 schema versions and ~450 fuzz cases, and it
+touches no panels at all, so it cannot be wrong about the client.
 
-## Layer 2 — behavioral tests
+They cannot catch a logic bug. The 2026-08 settings-loader failure passed all of
+them.
+
+## Layer 2 — manifest `test()` hooks (run in the client)
+
+Each FeatureRegistry manifest may declare a `test()` hook. It executes **in the
+game**, against the **real** panel tree, so it is the only automated check that
+can honestly answer "does this panel exist".
 
 ```
-node --test "tests/**/*.test.js"
-node --test --watch "tests/**/*.test.js"           # while iterating
-node --test "tests/build_payload_load.test.js"     # one file
+Settings -> Dev panel -> "Manifest Tests"
+QOL.core.ManifestTests.runAll()      # from the Panorama console
+QOL_DumpDiagnostics()                # includes the last run's results
 ```
 
-Node's built-in runner. **No npm dependencies** — nothing to install, no
-`node_modules`, nothing that could end up in the VPK.
+Rules for a `test()` hook, learned the hard way:
 
-### What it actually runs
+- **Read-only.** No `State` writes, no `config.set()`, no `DispatchEvent`.
+- **Return `null` to skip** when not applicable (e.g. not in a match).
+- **Do not fail on panels that only exist in some contexts.** Report them as an
+  observation instead. `ql_build_payload`'s hook used to fail whenever
+  `CitadelHudHeroBuilds*` globals were absent — stricter than the code it tested,
+  which already falls back to `DispatchEvent`. It cried wolf on a working build.
 
-The mod's real source, unmodified, inside a `vm` context, against a simulated
-panel tree driven by a virtual clock. Load order is parsed out of
-`panorama/layout/hud.xml`, so the tests exercise exactly what ships. Boot output
-matches the real game line for line — same `3/29 features enabled`, same
-`ReadStorageConfig: source=none`.
-
-### Writing a test
-
-```js
-const sim = require("../scripts/simulator/index.js");
-
-const h = sim.createHud({ inHideout: true });
-h.assertLoaded();                       // throws with the real error if a file failed
-
-h.game.seedBuilds([                     // set up game state
-    { title: "New Skyrunner Build", categories: ["Core Items"] },
-]);
-h.game.openShop();
-h.clock.advance(45000);                 // 45s of virtual time, instantly
-
-assert.match(
-    h.sandbox.grepMessages("load:FinalizeSession").pop(),
-    /Payload applied/,
-    `\n${h.diagnose()}`                 // always attach this — see below
-);
-```
-
-`h.diagnose()` dumps virtual time, the build list, game-action counters, the
-game trace, recent mod log lines, scheduled-callback errors and tree anomalies.
-Put it in every failure message; it turns "assertion failed" into an answer.
-
-### The pieces
-
-| File | Responsibility |
-|---|---|
-| `scripts/simulator/clock.js` | Virtual clock. One time source for `Date.now`, `performance.now`, `$.FrameTime`, `$.Schedule`. `advance()` is bounded, so a runaway poll loop fails loudly. |
-| `scripts/simulator/panel.js` | Panel object model + `Document`. Real tree, DFS pre-order `FindChildTraverse`, `Set`-backed classes, `Map`-backed attributes, `maxchars`-aware `SetText`, duplicate-id detection. |
-| `scripts/simulator/layout.js` | Reads script load order from the layout XML, stripping comments so cut-over includes stay out. |
-| `scripts/simulator/sandbox.js` | The `vm` context: `$` API, event dispatch, `$.persistentStorage`, deterministic `Math.random`. |
-| `scripts/simulator/game/builds.js` | `BuildsModel` — owns build state and mutates the tree the way the C++ client does. |
-| `scripts/simulator/index.js` | `createHud()`, `diagnose()`. Start here. |
-| `scripts/simulator/perf/` | Layer 3 — operation counters, a realistic in-match tree, and the profiled-HUD entry point. See `docs/PROFILING.md`. |
+The smoke test reports hook coverage (`41 manifests: 41 with test()`), which is a
+structural check only — it does not run them.
 
 ## Layer 3 — frame-cost profiling
 
-Same simulator, different question: not "did it behave correctly" but "how much
-work did it ask the engine to do, and which feature asked".
+A different question: not "did it behave correctly" but "how much work did it ask
+the engine to do, and which feature asked".
 
 ```
 node scripts/profile_hud.js --seconds 20               # per-feature cost report
 node scripts/profile_hud.js --seconds 20 --save before # then make a change
 node scripts/profile_hud.js --seconds 20 --compare before
 node scripts/audit_panel_ids.js                        # lookups that can never hit
-node --test tests/perf_guards.test.js                  # regression ceilings
+node scripts/import_tree_dump.js <dump>                # feed it a REAL tree
 ```
 
-This layer catches a class of bug the other two cannot: code that produces exactly
+This catches a class of bug the other layers cannot: code that produces exactly
 the right output while doing a hundred times more work than it needs to. It also
-catches features that throw on a per-tick path, which are invisible in game because
-the mod's error boundary swallows them.
+surfaces features that throw on a per-tick path, which are invisible in game
+because the mod's error boundary swallows them.
 
-Read `docs/PROFILING.md` before quoting any number from it — in particular, it
-cannot produce milliseconds, and the healthbar variants are only partially covered.
+**Why this layer survived the cull.** It counts operations — `FindChildTraverse`
+calls, style writes — rather than asserting what the client does. And
+`import_tree_dump.js` replaces the modelled tree with a capture from
+`tools/qol_dump_tree.js`, which is the actual 31.4k-panel tree rather than a 3.1k
+guess. Feed it a real tree before quoting any number.
 
-### Latency is load-bearing
+Read `docs/PROFILING.md` first: it cannot produce milliseconds, and the healthbar
+variants are only partially covered.
 
-`BuildsModel` models the engine's asynchrony: selecting a build re-renders its
-categories ~250ms later, creating one takes ~400ms, the hero switch ~1200ms.
-Override per test:
+### The pieces it is built on
 
-```js
-sim.createHud({ latency: { selectBuildMs: 600 } })
-```
+`scripts/simulator/` remains for the profiler's sake only:
 
-**Do not set these to zero.** The bug this suite exists for is a race between the
-loader's scan rate and the engine's render latency. At zero latency it does not
-reproduce at all.
+| File | Responsibility |
+|---|---|
+| `clock.js` | Virtual clock: one source for `Date.now`, `performance.now`, `$.FrameTime`, `$.Schedule`. Bounded `advance()`, so a runaway poll loop fails loudly. |
+| `panel.js` | Panel object model + `Document`. DFS pre-order `FindChildTraverse`, `Set`-backed classes, `Map`-backed attributes, `maxchars`-aware `SetText`, duplicate-id detection. |
+| `layout.js` | Reads script load order from `hud.xml`, stripping comments so cut-over includes stay out. |
+| `sandbox.js` | The `vm` context: `$` API, event dispatch, deterministic `Math.random`. |
+| `game/builds.js` | `BuildsModel` — build state and the tree mutations the C++ client is believed to make. **This is the guessing part.** Fine for counting operations; not evidence about the client. |
+| `perf/` | Operation counters, in-match tree, profiled-HUD entry point. |
 
-### Title fidelity is a deliberate unknown
+## Ground truth is the Panorama debugger
 
-Vanilla renders build titles from a dialog variable
-(`{s:selected_hero_build_name}`), so `panel.text` may hand back the raw
-localization token instead of the name. **Whether titles are readable from JS is
-unverified.** Rather than assume, the simulator makes it an axis:
+For anything about panel existence, class names, or whether a label's text is
+readable, the answer comes from the in-game debugger, not from a model. Facts
+captured that way are cited inline where they are used — e.g.
+`manifests/ql_build_storage/manifest.js` documents each class it waits on
+(`BuildsLoading`, `Selected`, `gEditingBuilds`) with where it was observed.
 
-```js
-const { TITLE_MODE } = require("../scripts/simulator/game/builds.js");
-sim.createHud({ titleMode: TITLE_MODE.TOKEN })     // titles unreadable
-sim.createHud({ titleMode: TITLE_MODE.RESOLVED })  // titles readable
-```
+Note: the debugger is **read-only**. You can search and inspect the tree; you
+cannot type into its JS console.
 
-Anything that reads a build title must be tested in **both** and must still work
-in `TOKEN`. Category names are *not* affected by this switch — they are known
-readable, since the payload has always lived there.
+When vanilla Deadlock updates, re-check panel ids against
+`G:\GameTracking-Deadlock` — layout under
+`game/citadel/pak01_dir/panorama/layout/`, styles under `.../styles/`.
 
-## What this cannot catch
+## Why there is no behavioural suite
 
-Be honest about the boundary:
+`tests/` ran the real mod against a **modelled** panel tree. The model cannot know
+which panels the client actually creates — several are conditional in C++ (a stat
+panel appears only once you have that stat) — so its answers about panel existence
+and label readability were guesses. Guesses fail in both directions:
 
-- **No rendering.** `style` is a plain object. No CSS parsing, no layout, no
-  sizes. It cannot tell you a panel is off-screen, invisible, or that
-  `overflow: hidden` is not a Panorama value.
-- **No real engine.** Every `Citadel*` function is a model of what we believe the
-  client does. Where that belief is wrong, tests pass and the game still breaks.
-- **Runtime-created panels are hand-modelled.** `HeroBuildListItem_%d`,
-  `FavoriteBuildEntryContainer`, the per-category panels — none appear in vanilla
-  XML. They are transcribed from observation, with source citations in
-  `game/builds.js`.
-- **No input, focus or animation semantics.**
+- **Green on broken code.** A save-verify regression shipped at 14/14 green
+  because the model resolved label text the engine does not resolve.
+- **Red on correct code.** A fix matching a debugger capture — `Label.BuildName`
+  inside `.HeroBuildListItem` holds the literal build name — failed a test that
+  asserted the opposite. The test was defending a state the game never enters.
 
-So a green suite means "the logic is right given our model of the engine". It is
-not a substitute for a repack and an in-game check.
+The second failure mode is the expensive one: it makes the suite an obstacle to
+shipping correct code, and every fix has to argue with the model before it can
+land.
 
-## Keeping the model honest
+A suite for the class-gated storage manifest would have been worse still. Its
+whole design is "wait for a class the client sets". Testing that requires the
+model to decide when those classes appear, then verifying its own decision — a
+tautology wearing a green checkmark.
 
-When a test fails, first ask whether the *simulator* is wrong. Several fidelity
-bugs were found this way, each initially looking like a mod bug:
-
-- Host intrinsics injected into the `vm` context made `[] instanceof Array` false
-  across the realm boundary, silently breaking `ConfigStore.registerSchema` so
-  every manifest looked disabled.
-- `gShopOpen` set only on `#Hud` rather than the absolute root left
-  `IsHudClassActive()` blind, because consumers resolve their root via
-  `GetUIRoot()`.
-- A missing `#HeroPanel` made `DetectGlobalIdleState` report "not in a match",
-  stretching every loop interval until the save machine tripped its own timeout.
-
-When vanilla Deadlock updates, panel ids in `game/builds.js` are the first thing
-to re-check against `G:\GameTracking-Deadlock`; each is cited inline.
+So: verify logic that is genuinely self-contained (the codec — 450 fuzz cases),
+verify panels in the client (`test()` hooks), count operations against a captured
+tree (the profiler), and check rendering by repacking the VPK and looking.

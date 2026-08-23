@@ -179,7 +179,7 @@ class BuildsModel {
         this.buildNameEntry = editBuildSection.addChild(
             mk("TextEntry", { id: "BuildNameTextEntry", classes: ["EditFieldTextEntry"], attributes: { maxchars: "50" } })
         );
-        editBuildSection.addChild(
+        this.buildDescEntry = editBuildSection.addChild(
             mk("TextEntry", { id: "BuildDescriptionTextEntry", classes: ["EditFieldTextEntry"], attributes: { maxchars: "512" } })
         );
 
@@ -263,6 +263,7 @@ class BuildsModel {
     seedBuilds(specs) {
         this.builds = specs.map((s, i) => ({
             title: s.title ?? `New Skyrunner Build`,
+            description: s.description ?? "",
             categories: (s.categories ?? ["Core Items"]).map((name) => ({ name })),
             id: s.id ?? i + 1,
         }));
@@ -288,12 +289,13 @@ class BuildsModel {
     }
 
     // ── Rendering (what C++ does to the tree) ─────────────────────────────
-    // Titles get no "text" attribute mirror, unlike category names below. The
-    // mirror is inferred for categories because loading demonstrably reaches the
-    // payload through an attribute-first reader; nothing equivalent is known for
-    // titles, so they stay unreadable under TOKEN mode. That is what keeps the
-    // marker fast path honest — it must degrade to the full sweep, not rely on a
-    // readability we have never observed.
+    // Governs the SHOP HEADER title label (.SelectedBuildName) only. Nothing has
+    // ever handed that label's text back to us, so it stays unreadable under TOKEN
+    // mode — guessing against ourselves.
+    //
+    // It deliberately does NOT govern the browser row's .BuildName label: the
+    // Panorama debugger (2026-08-23) shows that one holding the literal build name,
+    // so modelling it as unreadable would make the suite weaker than the game.
     _titleTextFor(title) {
         return this.titleMode === TITLE_MODE.TOKEN ? TOKEN_BUILD_NAME : title;
     }
@@ -458,6 +460,26 @@ class BuildsModel {
             this.listLoadingPanel = main.addChild(
                 this.doc.create("Panel", { id: "HeroBuildListLoading" })
             );
+            // citadel_ui_build_selector.xml — the details pane is a SIBLING of the
+            // list inside .MainContainer, and it follows the list's selection.
+            this.buildDetailsPanel = main.addChild(
+                this.doc.create("CitadelBuildDetails", { id: "BuildDetails" })
+            );
+            const detailsInfo = this.buildDetailsPanel.addChild(
+                this.doc.create("Panel", { id: "BuildInfo" })
+            );
+            // citadel_ui_build_details.xml:29. Declared as
+            // text="#Citadel_HeroBuilds_BuildDescription" -> {s:selected_hero_build_description},
+            // BUT the live tree shows the RESOLVED user string here (Panorama
+            // debugger, 2026-08-23). So .text is a real read on this label, unlike
+            // the category-name label modelled under TITLE_MODE.TOKEN.
+            this.buildDescriptionLabel = detailsInfo.addChild(
+                this.doc.create("Label", { classes: ["BuildDescription"] })
+            );
+            this.editBuildButton = detailsInfo.addChild(
+                this.doc.create("Button", { id: "EditBuildButton" })
+            );
+            this.editBuildButton.SetPanelEvent("onmouseactivate", () => this.editSelectedBuild());
         }
 
         this.popupPanel.SetHasClass("Hidden", !this.browseOpen);
@@ -479,10 +501,23 @@ class BuildsModel {
             );
             if (i === this.selectedIndex) item.AddClass("Selected");
             const label = item.addChild(this.doc.create("Label", { classes: ["BuildName"] }));
-            label.text = this._titleTextFor(build.title);
+            // Verified literal in the live tree: the debugger shows
+            // text="QOLLOCK-Settings" on this label, so the name can be read
+            // straight out of a list row without selecting it. This is NOT under
+            // TITLE_MODE — that guard covers the category label, which stays
+            // unverified.
+            label.text = build.title;
             label.SetDialogVariable("selected_hero_build_name", build.title);
             item.SetPanelEvent("onactivate", () => this.selectBuild(i));
         });
+
+        // The details pane mirrors whichever row is Selected. CanEditBuild is the
+        // client's own "this build is yours" flag (every build here is the local
+        // player's, so it is unconditional in the model).
+        const selected = this.selectedBuildData;
+        this.buildDescriptionLabel.text = selected ? String(selected.description || "") : "";
+        this.buildDetailsPanel.SetHasClass("CanEditBuild", !!selected);
+        this.buildDetailsPanel.SetHasClass("CanDeleteBuild", !!selected);
     }
 
     /**
@@ -576,6 +611,7 @@ class BuildsModel {
         this.clock.schedule(this.latency.createBuildMs / 1000, () => {
             this.builds.push({
                 title: "New Skyrunner Build",
+                description: "",
                 categories: [{ name: "Core Items" }],
                 id: this.builds.length + 1,
             });
@@ -666,6 +702,7 @@ class BuildsModel {
             if (data) {
                 // C++ seeds the edit fields from the build being edited.
                 this.buildNameEntry.text = data.title;
+                this.buildDescEntry.text = String(data.description || "");
                 this.categoryNameEntry.text = data.categories[0] ? data.categories[0].name : "";
             }
         });
@@ -689,11 +726,15 @@ class BuildsModel {
         // here rather than being silently accepted.
         const title = String(this.buildNameEntry.text || "");
         const categoryName = String(this.categoryNameEntry.text || "");
-        this._trace(`saveEdits(${idx}) title="${title}" category="${categoryName.slice(0, 40)}"`);
+        // The description is written wholesale, so an empty field genuinely clears
+        // it — unlike title/category below, which keep their old value when blank.
+        const description = String(this.buildDescEntry.text || "");
+        this._trace(`saveEdits(${idx}) title="${title}" category="${categoryName.slice(0, 40)}" desc=${description.length}ch`);
         this.clock.schedule(this.latency.saveEditsMs / 1000, () => {
             const data = this.builds[idx];
             if (data) {
                 if (title) data.title = title;
+                data.description = description;
                 if (categoryName) {
                     if (data.categories.length === 0) data.categories.push({ name: categoryName });
                     else data.categories[0].name = categoryName;

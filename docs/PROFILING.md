@@ -173,26 +173,36 @@ then the simulated tree lacks the heart panels, so healthbar work is only
 partially covered — changes there need an in-game check. A run saved at one
 healthbar setting is not a valid baseline for a run at another.
 
-## `tests/perf_guards.test.js`
+## Regression ceilings (removed)
 
-Locks in the fixes whose entire value is "this expensive thing stopped happening".
-No behavioral test can see them: the output is identical either way, only the
-amount of work differs.
+`tests/perf_guards.test.js` locked in the fixes whose entire value is "this
+expensive thing stopped happening" — the output is identical either way, only the
+amount of work differs. It went with the rest of `tests/` on 2026-08-23
+(`docs/TESTING.md` explains why).
 
-Assertions are ceilings, not exact counts. An exact count would fail on any
-unrelated change to the tree fixture and get deleted in irritation; a generous
-ceiling still catches a reverted fix, because these regressions are
-order-of-magnitude.
+One of its two genuinely load-bearing checks survives without it: the profiler
+itself prints `scheduled-callback errors` (`scripts/simulator/perf/profile.js:317`).
+A feature that throws every tick is invisible in game — the mod's error boundary
+catches it — while the work leading up to the throw repeats forever. That is how
+the `betterUnsecuredHud` ReferenceError was found, and a profiler run still shows
+it.
 
-Two of the tests are not about cost at all and are the most valuable ones:
+What is no longer automated is the ceiling itself. Use `--save` / `--compare`
+before and after a perf change instead:
 
-- **no scheduled callback throws** — a feature that throws every tick is invisible
-  in game, because the mod's error boundary catches it, but the work leading up to
-  the throw repeats forever. This is how the `betterUnsecuredHud` ReferenceError
-  was found.
-- **a config change is still picked up** — the revision gate on the config read is
-  only safe if a real edit gets through. Without this test, the "does not re-read
-  the config" ceiling could be satisfied by a cache that never invalidates.
+```
+node scripts/profile_hud.js --seconds 20 --save before
+# ...make the change...
+node scripts/profile_hud.js --seconds 20 --compare before
+```
+
+Compare against a run at the **same** `--players` and healthbar setting; a
+baseline from another configuration is not a baseline.
+
+The other lost check was "a config change is still picked up", which guarded
+against satisfying a *no re-read* ceiling with a cache that never invalidates. If
+you touch the config revision gate, verify that by hand — change a setting in game
+and confirm it applies.
 
 ## Reading the report
 

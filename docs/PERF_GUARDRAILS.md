@@ -50,9 +50,10 @@ Every rule above is now checkable offline. See `docs/PROFILING.md`.
 - `node scripts/audit_panel_ids.js` — finds `FindChildTraverse` ids that nothing
   can ever create. Each one is a guaranteed full-tree walk that can only return
   null. Directly enforces the "avoid full-tree scans in frequent loops" rule.
-- `node --test tests/perf_guards.test.js` — ceilings that fail the build when one
-  of these guarantees regresses, including a check that no feature throws on a
-  per-tick path.
+- `node --test tests/perf_guards.test.js` — **removed 2026-08-23** with the rest of
+  `tests/` (see `docs/TESTING.md`). Its per-tick-throw check survives inside the
+  profiler, which prints `scheduled-callback errors`; its ceilings do not — use
+  `profile_hud.js --save` / `--compare` around a change instead.
 
 Two findings worth internalising, because they are the reason several of these
 rules exist and were nonetheless being broken:
