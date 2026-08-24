@@ -129,6 +129,18 @@
     // Same reasoning, smaller job: one button press and a popup inflate.
     const BROWSER_OPEN_TIMEOUT_MS = 8000;
 
+    // ── Hiding the machinery ──
+    // The round trip drives real game UI: the shop opens, the browser popup opens,
+    // rows get clicked. All of that is visible, and there is no reason for the user
+    // to watch it.
+    //
+    // 0.02 and not 0 or 0.01: IsPanelSuppressedMaybe (ql_core.js:2645-2651) treats
+    // opacity <= 0.01 as SUPPRESSED, and TryCloseBrowseBuildsPopupForLoader
+    // (ql_core.js:6566) refuses to activate a button it considers hidden. Dimming to
+    // 0.01 would therefore disarm the old pipeline's own popup closer — invisible to
+    // the eye either way, so take the value that does not booby-trap shared code.
+    const HIDE_OPACITY = "0.02";
+
     // ── QOL delegate wrapper (MIGRATION_PATTERNS Pattern 10) ──
     function _qol(name) {
         try {
@@ -344,6 +356,59 @@
         // it — the popup does not take keyboard focus.)
         try { $.DispatchEvent("Cancelled", popup); return true; } catch(e) {}
         return false;
+    }
+
+    /**
+     * Panels to dim while the round trip runs.
+     *
+     * Re-resolved on every call rather than remembered: the popup is created lazily
+     * and the client rebuilds it (and the selector under it) when a build is
+     * selected, so a style set once is gone by the next stage. Applying every tick
+     * is idempotent and is the only thing that survives a rebuild.
+     *
+     * PopupManager itself is deliberately NOT dimmed even though it is the common
+     * ancestor of both the popup and its backdrop. It hosts every other popup too,
+     * so a run that died without restoring would leave the whole game unable to show
+     * one. Dimming the two known children keeps the blast radius to our own UI.
+     */
+    function _hideTargets(root) {
+        const out = [];
+        const popup = _popup(root);
+        if (_alive(popup)) out.push(popup);
+        // The popup's dim backdrop, a sibling under PopupManager (seen in the live
+        // tree 2026-08-25). Left alone it veils the screen on its own.
+        const backdrop = _find(root, "DimBackground");
+        if (_alive(backdrop)) out.push(backdrop);
+        // The shop is reached by class AND by id, because neither alone is dependable:
+        // citadel_hud_hero_shop.xml:19 declares class="CitadelHudHeroShop" on the type
+        // of the same name, but panel ids in this tree have already proven unreliable
+        // (duplicate, C++-assigned instances) — so take whichever resolves and
+        // de-duplicate.
+        const shops = _findClass(root, "CitadelHudHeroShop");
+        for (let i = 0; i < shops.length; i++) {
+            if (_alive(shops[i]) && out.indexOf(shops[i]) === -1) out.push(shops[i]);
+        }
+        const shopById = _find(root, "CitadelHudHeroShop");
+        if (_alive(shopById) && out.indexOf(shopById) === -1) out.push(shopById);
+        return out;
+    }
+
+    function _setHidden(root, hidden) {
+        const Utils = _qol("utils");
+        const targets = _hideTargets(root);
+        for (let i = 0; i < targets.length; i++) {
+            try {
+                if (hidden) {
+                    if (Utils && Utils.SetStyleSafe) Utils.SetStyleSafe(targets[i], "opacity", HIDE_OPACITY);
+                    else targets[i].style.opacity = HIDE_OPACITY;
+                } else if (Utils && Utils.ClearStyleSafe) {
+                    Utils.ClearStyleSafe(targets[i], "opacity");
+                } else {
+                    targets[i].style.opacity = "1.0";
+                }
+            } catch(e) {}
+        }
+        return targets.length;
     }
 
     // ── Editor ──
@@ -640,6 +705,12 @@
              * goes wrong, which strands the player on the storage hero.
              */
             function _finish(root, code, detail) {
+                // Restore opacity first — before dismissing anything. An invisible
+                // shop left behind is worse than the popup ever was: nothing on
+                // screen tells the user the game is stuck, and the old pipeline's
+                // popup closer refuses to press a button it reads as hidden. Runs on
+                // EVERY exit for the same reason the hero restore does.
+                _setHidden(root, false);
                 // Close the browser popup before anything else. WE opened it — the new
                 // carrier (Label.BuildDescription) lives under #BuildDetails, which
                 // only exists inside citadel_popup_build_browser.xml, so reaching the
@@ -1252,6 +1323,11 @@
                         return;
                     }
 
+                    // Only reached while a run is in flight. Re-applied every tick
+                    // because the popup is created lazily and rebuilt on selection —
+                    // a style set once does not survive that.
+                    _setHidden(root, true);
+
                     if (_st.mode === "read") _tickRead(root, now);
                     else if (_st.mode === "write") _tickWrite(root, now);
                 } catch(e) {
@@ -1269,6 +1345,11 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     const S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_build_storage");
+                    // FeatureRegistry disables us after 10 consecutive throwing ticks,
+                    // and a tick that threw mid-run never reached _finish. Without this
+                    // the shop and popup would stay dimmed for the rest of the session
+                    // with nothing left running to undo it.
+                    try { _setHidden(_root(), false); } catch(e) {}
                     _reset();
                 },
                 onSettingsChanged: function() {

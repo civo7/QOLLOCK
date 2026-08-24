@@ -128,7 +128,13 @@ class BuildsModel {
         const mk = (type, opts) => doc.create(type, opts);
 
         // --- Hero shop: citadel_hud_hero_shop.xml ---
-        this.shopPanel = root.addChild(mk("CitadelHudHeroShop", { id: "CitadelHudHeroShop" }));
+        // The XML declares class="CitadelHudHeroShop gShopOpen" on the type of the
+        // same name, so the panel carries BOTH a type and a matching class. Modelling
+        // only the type made FindChildrenWithClassTraverse("CitadelHudHeroShop") miss
+        // it — a lookup that works in-game.
+        this.shopPanel = root.addChild(mk("CitadelHudHeroShop", {
+            id: "CitadelHudHeroShop", classes: ["CitadelHudHeroShop"]
+        }));
 
         // citadel_hud_hero_shop.xml:56. `shopModsBuild` is declared on the type itself
         // (citadel_shop_mods_build.xml:20), so every instance carries it — which is the
