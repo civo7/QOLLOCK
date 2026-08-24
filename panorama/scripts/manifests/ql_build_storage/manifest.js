@@ -104,6 +104,8 @@
     // stage that was still legitimately waiting.
     const OVERALL_TIMEOUT_MS = 120000;
     const SIGNATURE_HITS     = 2;
+    // Consecutive polls the list count must hold before it counts as settled.
+    const LIST_STABLE_HITS   = 3;
 
     // ── Opening the shop ──
     // Verified in-game 2026-08-24: this is the command that works, and it TOGGLES —
@@ -459,6 +461,8 @@
                     // rebuild #HeroBuildList, so rows are re-resolved by index every
                     // tick (_candidateAt).
                     candidateCount: 0,
+                    listCount: -1,       // last observed row count, for settle detection
+                    listStableHits: 0,   // consecutive polls the count has held
                     targetChosen: false, // write mode: _pickWriteCursor has run
                     sweptAll: false,
                     sawAnyBuild: false,
@@ -476,7 +480,19 @@
                 _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, rateSec, "ql_build_storage") : null;
             }
 
+            /**
+             * Drive the loader overlay — READ ONLY.
+             *
+             * The overlay belongs to the read session. _advanceToList is shared with
+             * the write machine, and while it stamped these steps unconditionally a
+             * save left the panel frozen on "Reading Build Payload / Opening the build
+             * browser": write's _finish has no reason to complete read steps, so it sat
+             * there until the user pressed SKIP — long after the save had succeeded and
+             * the hero had been switched back. That is why a working save looked like a
+             * hung read. A save reports through the bridge (_writeStatus), never here.
+             */
             function _setStep(key, status, detail) {
+                if (_st.mode !== "read") return;
                 _callQol("setSettingsLoaderStepState", undefined, [key, status, detail || ""]);
             }
 
@@ -666,16 +682,44 @@
                         _go("await_list", now);
                         return "wait";
 
-                    case "await_list":
+                    case "await_list": {
                         // BuildsLoading is the GC gate. Nothing about the list means
                         // anything while it is set — an empty list here is just an
                         // unfinished round trip.
-                        if (_isListLoading(root)) {
+                        //
+                        // Its ABSENCE is ambiguous, which is the part worth guarding: a
+                        // selector that has not been created yet carries no class either,
+                        // so "gate clear" and "panel not there" are indistinguishable.
+                        // Reading 0 items in that state produces a CONCLUSIVE "storage
+                        // was empty" (_recordLoadState), and that is exactly what
+                        // authorizes a save to overwrite — the one wrong answer that
+                        // loses a user's settings instead of just failing. Require
+                        // positive evidence: selector present, gate clear, count settled.
+                        //
+                        // Not the cause of any observed failure — in the 2026-08-24 logs
+                        // the account genuinely had no builds and 0 was the right answer.
+                        // This is here because that conflation has already destroyed data
+                        // once through the prune path.
+                        const selector = _find(root, PID_SELECTOR);
+                        if (!_alive(selector) || _isListLoading(root)) {
+                            if (_expired(now, LOADING_TIMEOUT_MS)) return "fail";
+                            _st.nextAt = now + STEP_MS;
+                            return "wait";
+                        }
+                        const count = _listItems(root).length;
+                        if (count !== _st.listCount) {
+                            _st.listCount = count;
+                            _st.listStableHits = 0;
+                        } else {
+                            _st.listStableHits++;
+                        }
+                        if (_st.listStableHits < LIST_STABLE_HITS) {
                             if (_expired(now, LOADING_TIMEOUT_MS)) return "fail";
                             _st.nextAt = now + STEP_MS;
                             return "wait";
                         }
                         return "ready";
+                    }
                 }
                 // Not one of this helper's stages — the read/write machine owns it.
                 return "ready";
