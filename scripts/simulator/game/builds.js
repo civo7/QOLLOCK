@@ -86,6 +86,12 @@ class BuildsModel {
         this.hero = hero;
         this.inHideout = inHideout;
         this.shopOpen = false;
+        // The open command is a toggle, and the shop takes shopOpenMs to appear. Both
+        // facts are needed together: a second toggle sent inside that window must
+        // CANCEL the opening, not queue a second one, or the harness cannot see the
+        // re-fire bug at all. _shopGen invalidates an in-flight open.
+        this.shopOpenPending = false;
+        this._shopGen = 0;
         // The browser is a popup; .Hidden is the open/closed discriminator.
         this.browseOpen = false;
         // True while the GC hero-build search is outstanding.
@@ -247,10 +253,27 @@ class BuildsModel {
         this.sandbox.onEvent("CitadelHudHeroBuildsDeleteSelectedBuild", () => this.deleteSelectedBuild());
     }
 
+    /**
+     * Console commands the client actually answers.
+     *
+     * `citadel_open_hero_sheet` is the real shop command and it TOGGLES — sending it
+     * again while the shop is open closes it (verified in-game 2026-08-24). Modelling
+     * it as open-only would hide the bug it exists to catch: a caller that re-sends
+     * the command every tick until it sees gShopOpen keeps closing what the previous
+     * tick opened, so it never converges on a machine where the shop takes longer to
+     * appear than the retry interval.
+     *
+     * `open_item_shop` is NOT answered on purpose. It is a string in the client
+     * binary and the engine logs RunConCommand for it, but it did not open the shop
+     * in a live hideout session. The simulator used to treat it as working, which is
+     * why a pipeline built on it passed headlessly and then failed in-game.
+     */
     _conCommand(cmd) {
         const hero = cmd.match(/^selecthero\s+(\S+)/);
         if (hero) return this.switchHero(hero[1]);
-        if (cmd === "open_item_shop" || cmd.includes("openherosheet")) return this.openShop();
+        if (cmd === "citadel_open_hero_sheet") {
+            return (this.shopOpen || this.shopOpenPending) ? this.closeShop() : this.openShop();
+        }
         return undefined;
     }
 
@@ -562,14 +585,22 @@ class BuildsModel {
     openShop() {
         if (this.shopOpen) return true;
         this._trace("openShop");
+        this.shopOpenPending = true;
+        const gen = ++this._shopGen;
         this.clock.schedule(this.latency.shopOpenMs / 1000, () => {
+            // A toggle arrived while this open was in flight — it cancelled us.
+            if (gen !== this._shopGen) return;
+            this.shopOpenPending = false;
             this.shopOpen = true;
-            // gShopOpen is a GLOBAL class: the engine sets it on the absolute root
-            // and mirrors it onto panels with a matching <GlobalClassListener>
-            // (citadel_hud_hero_builds.xml:21). Consumers resolve their root via
-            // GetUIRoot(), which walks to the topmost panel — so setting it only
-            // on #Hud leaves IsHudClassActive() blind and gates never open.
-            this.doc.absRoot.AddClass("gShopOpen");
+            // gShopOpen is a GLOBAL class, mirrored by the engine onto panels that
+            // declare a <GlobalClassListener> (citadel_hud_hero_builds.xml:21).
+            //
+            // The absolute root is NOT one of them. Panorama-debugger capture
+            // 2026-08-24: Panel#CitadelHudRoot carries the QOLLOCK theme classes and
+            // no gShopOpen, while CitadelHud#Hud and #gameplay_hud both carry it.
+            // Setting it on absRoot here made every root-level probe pass in the
+            // simulator regardless of which panel the code under test looked at,
+            // which is exactly the kind of miss this harness exists to catch.
             this.doc.root.AddClass("gShopOpen");
             this.shopPanel.AddClass("gShopOpen");
             this.heroBuildsPanel.AddClass("gShopOpen");
@@ -579,8 +610,9 @@ class BuildsModel {
     }
 
     closeShop() {
+        this._shopGen++;              // invalidate any open still in flight
+        this.shopOpenPending = false;
         this.shopOpen = false;
-        this.doc.absRoot.RemoveClass("gShopOpen");
         this.doc.root.RemoveClass("gShopOpen");
         this.shopPanel.RemoveClass("gShopOpen");
         this.heroBuildsPanel.RemoveClass("gShopOpen");

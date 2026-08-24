@@ -99,8 +99,33 @@
     const EDITOR_TIMEOUT_MS  = 4000;
     const COMMIT_TIMEOUT_MS  = 6000;
     const VERIFY_TIMEOUT_MS  = 4000;
-    const OVERALL_TIMEOUT_MS = 45000;
+    // A backstop, not a schedule. It must exceed the sum of the stage bounds below
+    // or it becomes the thing that fires first, reporting "overall timeout" for a
+    // stage that was still legitimately waiting.
+    const OVERALL_TIMEOUT_MS = 120000;
     const SIGNATURE_HITS     = 2;
+
+    // ── Opening the shop ──
+    // Verified in-game 2026-08-24: this is the command that works, and it TOGGLES —
+    // sending it again while the shop is open closes it. So it is fired exactly once
+    // per run and never retried; gShopOpen is what we wait on.
+    //
+    // This used to delegate to QOL.tryOpenHeroShopForHeroProbe. That helper's first
+    // attempt is `open_item_shop`, which this build does not have, and
+    // dispatchCitadelConCommand returns true whenever $.DispatchEvent did not throw
+    // (ql_feat_buildbridge.js:56-65) — so the dead attempt reported success, the five
+    // real fallbacks under it became unreachable, and its own 1s internal throttle
+    // silently became the retry budget. Four throttled attempts against a 4s stage
+    // bound is exactly the failure this manifest was reporting as "could not reach
+    // the build list".
+    const SHOP_OPEN_CMD = "citadel_open_hero_sheet";
+    // Give-up bound for the shop appearing, deliberately generous: this lands right
+    // after a hero switch, and a cold switch does blocking model/animgraph/particle
+    // loads whose cost is entirely machine-dependent. A tight bound here is a coin
+    // toss, not a give-up bound.
+    const SHOP_OPEN_TIMEOUT_MS = 30000;
+    // Same reasoning, smaller job: one button press and a popup inflate.
+    const BROWSER_OPEN_TIMEOUT_MS = 8000;
 
     // ── QOL delegate wrapper (MIGRATION_PATTERNS Pattern 10) ──
     function _qol(name) {
@@ -170,6 +195,11 @@
     function _isShopOpen(root)  { return _callQol("isHudClassActive", false, [root, "gShopOpen"]); }
     function _inHideout(root)   { return _callQol("isConnectedToHideout", false, [root]); }
     function _activate(panel)   { return _callQol("activatePanelSafe", false, [panel]); }
+
+    /** Ask the client to open the shop. Fired at most once per run — see SHOP_OPEN_CMD. */
+    function _fireShopOpen() {
+        return _callQol("dispatchCitadelConCommand", false, [SHOP_OPEN_CMD]);
+    }
 
     /**
      * The build browser popup root.
@@ -254,6 +284,25 @@
 
     function _isOurBuildSelected(root) {
         return _hasClass(_find(root, PID_DETAILS), CLASS_CAN_EDIT);
+    }
+
+    /**
+     * Press Browse Builds, on every copy of the button that exists.
+     *
+     * Unlike its neighbours in citadel_shop_mods_build.xml:42-44, BrowseBuildsButton
+     * declares NO onactivate — C++ binds the handler by id at construction. The tree
+     * carries several CitadelShopModsBuild panels and only one is live, so a single
+     * FindChildTraverse can hand back an inert copy whose activation goes nowhere and
+     * reports success. Press them all; opening an already-open browser is a no-op.
+     */
+    function _pressBrowse(root) {
+        let pressed = false;
+        const owners = _findClass(root, "shopModsBuild");
+        for (let i = 0; i < owners.length; i++) {
+            if (_activate(_find(owners[i], PID_BROWSE_BTN))) pressed = true;
+        }
+        if (_activate(_find(root, PID_BROWSE_BTN))) pressed = true;
+        return pressed;
     }
 
     // ── Editor ──
@@ -403,6 +452,7 @@
                     startedAt: 0,
                     stageAt: 0,          // when the current wait began
                     didSwitch: false,
+                    shopCmdSent: false,  // the open command is a toggle — send it once
                     returnHero: "",
                     cursor: 0,           // position within the candidate list
                     // Panels are never cached: selecting a build makes the client
@@ -592,9 +642,15 @@
 
                     case "open_shop":
                         if (!_isShopOpen(root)) {
-                            _callQol("tryOpenHeroShopForHeroProbe", false, [root]);
+                            // Fire once, then only ever wait on the class. Re-sending
+                            // a toggle closes what the previous tick opened, which is
+                            // why a retry loop can never win on a slow machine.
+                            if (!_st.shopCmdSent) {
+                                _st.shopCmdSent = true;
+                                _fireShopOpen();
+                            }
+                            if (_expired(now, SHOP_OPEN_TIMEOUT_MS)) return "fail";
                             _st.nextAt = now + STEP_MS;
-                            if (_expired(now, EDITOR_TIMEOUT_MS)) return "fail";
                             return "wait";
                         }
                         _go("open_browser", now);
@@ -602,9 +658,9 @@
 
                     case "open_browser":
                         if (!_isBrowseOpen(root)) {
-                            _activate(_find(root, PID_BROWSE_BTN));
+                            if (_expired(now, BROWSER_OPEN_TIMEOUT_MS)) return "fail";
+                            _pressBrowse(root);
                             _st.nextAt = now + STEP_MS;
-                            if (_expired(now, EDITOR_TIMEOUT_MS)) return "fail";
                             return "wait";
                         }
                         _go("await_list", now);
@@ -996,10 +1052,41 @@
              * not conclude, unless the user has explicitly forced it — overwriting a
              * config we failed to read loses settings silently.
              */
+            /**
+             * Read a bridge attribute from wherever the settings context left it.
+             *
+             * The settings UI writes the request to its OWN context panel AND to
+             * FindRootPanel() — the absolute root (ql_settings.js:1727-1741). In the
+             * HUD context $.GetContextPanel() is #Hud, a CHILD of that root, and panel
+             * attributes do not inherit. Reading only from `root` therefore never saw
+             * a save request at all: pressing Save did nothing, not even a hero switch.
+             * _writeStatus already answered all three surfaces, so this file was
+             * reading one panel and writing three.
+             *
+             * The old path got this right without saying so: ql_core.js's root comes
+             * from GetUIRoot() (ql_core.js:2210-2221), which walks to the absolute
+             * root — the same panel the settings UI writes to.
+             */
+            function _readBridge(root, attr) {
+                const panels = _bridgeSurfaces(root);
+                for (let i = 0; i < panels.length; i++) {
+                    try {
+                        const v = String(panels[i].GetAttributeString(attr, "") || "");
+                        if (v) return v;
+                    } catch(e) {}
+                }
+                return "";
+            }
+
+            function _clearBridge(root, attr) {
+                const panels = _bridgeSurfaces(root);
+                for (let i = 0; i < panels.length; i++) {
+                    try { panels[i].SetAttributeString(attr, ""); } catch(e) {}
+                }
+            }
+
             function _pendingWrite(root) {
-                let raw = "";
-                try { raw = String(root.GetAttributeString(BRIDGE_REQUEST, "") || ""); } catch(e) { return null; }
-                const token = _extractToken(raw);
+                const token = _extractToken(_readBridge(root, BRIDGE_REQUEST));
                 if (!token) return null;
 
                 if (token.length > MAX_TOKEN_LEN) {
@@ -1012,17 +1099,13 @@
                     if (State && State.configLoadState) loadState = String(State.configLoadState);
                 } catch(e) {}
                 if (loadState === "failed") {
-                    let forced = "";
-                    try { forced = String(root.GetAttributeString(BRIDGE_FORCE, "") || "").trim(); } catch(e) {}
-                    if (forced !== "1") {
+                    if (_readBridge(root, BRIDGE_FORCE).trim() !== "1") {
                         return { reject: "blocked_unread_config" };
                     }
-                    try { root.SetAttributeString(BRIDGE_FORCE, ""); } catch(e) {}
+                    _clearBridge(root, BRIDGE_FORCE);
                     _log("write: force flag consumed, proceeding over an unread config");
                 }
-                let reqToken = "";
-                try { reqToken = String(root.GetAttributeString(BRIDGE_TOKEN, "") || ""); } catch(e) {}
-                return { token: token, requestToken: reqToken };
+                return { token: token, requestToken: _readBridge(root, BRIDGE_TOKEN) };
             }
 
             function _tick() {
@@ -1112,7 +1195,7 @@
                     "buildDefaultConfig", "mergeConfig", "writeStorageConfigRawToUi",
                     "isConnectedToHideout", "isHudClassActive",
                     "beginSettingsLoaderSession", "finalizeSettingsLoaderSession",
-                    "setSettingsLoaderStepState", "tryOpenHeroShopForHeroProbe"
+                    "setSettingsLoaderStepState", "dispatchCitadelConCommand"
                 ];
                 for (let i = 0; i < required.length; i++) {
                     asserts.push({

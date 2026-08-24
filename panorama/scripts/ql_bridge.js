@@ -172,7 +172,7 @@ QOL.bridge = {
         if (typeof QOLBridgeRead !== "function") throw new Error("QOLBridgeRead not defined");
         if (typeof QOLBridgeWrite !== "function") throw new Error("QOLBridgeWrite not defined");
         if (typeof QOL.bridge !== "object" || QOL.bridge === null) throw new Error("QOL.bridge not published");
-        // Verify all 18 channels have attr + type + desc
+        // Verify every channel has attr + type + desc
         var _channelCount = 0;
         for (var _ch2 in QOL_BRIDGE_CHANNELS) {
             if (QOL_BRIDGE_CHANNELS.hasOwnProperty(_ch2)) {
@@ -183,7 +183,7 @@ QOL.bridge = {
                 if (typeof _c.desc !== "string") throw new Error("Channel '" + _ch2 + "' missing desc");
             }
         }
-        if (_channelCount !== 18) throw new Error("Expected 18 channels, got " + _channelCount);
+        if (_channelCount !== 19) throw new Error("Expected 19 channels, got " + _channelCount);
 
         if (typeof $ !== "undefined" && $.Msg) {
             $.Msg("[QOL DEBUG] ql_bridge.js self-test passed: " + _channelCount + " channels");
