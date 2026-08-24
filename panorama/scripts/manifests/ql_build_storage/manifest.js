@@ -1191,19 +1191,44 @@
                         return;
 
                     case "verify": {
-                        // Saving tears the panels down and rebuilds them, so an
-                        // immediate read can see the old ones. Poll instead of
-                        // deciding on the first look.
-                        const back = _readText(_descEntry(root));
-                        if (_extractToken(back) === _st.token) {
+                        // Verify against the PERSISTED value, never against the field we
+                        // typed into. BuildDescriptionTextEntry is the editor: it still
+                        // holds our text whether or not the commit landed anywhere, so
+                        // reading it back proves only that we can read our own input.
+                        //
+                        // Found by the fuzzer (seed 9): wipe the build list between the
+                        // keystroke and the commit and the client accepts Save against a
+                        // build that no longer exists — CitadelHudHeroBuildsSaveEdits
+                        // clears gEditingBuilds either way — so await_commit passed, the
+                        // entry still read back 214 chars, and the save reported
+                        // "verified" with nothing on disk. That is precisely the
+                        // "it says it saved but the data is gone" failure this carrier
+                        // was chosen to eliminate.
+                        //
+                        // Label.BuildDescription under #BuildDetails is resolved by the
+                        // client FROM THE BUILD (the same source the read path trusts),
+                        // so it cannot show our token unless the build really holds it.
+                        // Saving tears panels down and rebuilds them, so poll rather
+                        // than deciding on the first look.
+                        const persisted = _selectedDescription(root);
+                        if (_extractToken(persisted) === _st.token) {
                             _finish(root, "success", "verified in the description");
                             return;
                         }
                         if (_expired(now, VERIFY_TIMEOUT_MS)) {
+                            // Deliberately a failure and not a shrug: an unverified save
+                            // reported as success is the one outcome that loses data
+                            // silently. The user can retry; a false success they cannot.
                             _finish(root, "failed",
-                                "verify failed (read back " + String(back).length + " chars)");
+                                "save not confirmed by the build (details read back " +
+                                String(persisted).length + " chars)");
                             return;
                         }
+                        // Re-select our row so #BuildDetails follows it again: the commit
+                        // rebuilds the list and the details pane can be left showing
+                        // nothing at all.
+                        const row = _candidateAt(root, _st.cursor);
+                        if (_alive(row) && !_hasClass(row, CLASS_SELECTED)) _activate(row);
                         _st.nextAt = now + STEP_MS;
                         return;
                     }
