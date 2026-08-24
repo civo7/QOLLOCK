@@ -503,6 +503,31 @@ class BuildsModel {
                 this.doc.create("Button", { id: "EditBuildButton" })
             );
             this.editBuildButton.SetPanelEvent("onmouseactivate", () => this.editSelectedBuild());
+
+            // citadel_popup_build_browser.xml:16-23 — the .ButtonRow. Two buttons that
+            // differ ONLY by class and handler, never by anything language-independent
+            // in their labels. Modelled because pressing the wrong one is the worst
+            // outcome in this file: confirm applies the selected build to the player's
+            // own loadout, silently, while trying to tidy up after a save.
+            const buttonRow = this.popupPanel.addChild(
+                this.doc.create("Panel", { classes: ["ButtonRow", "LeftRightFlow"] })
+            );
+            this.confirmBuildButton = buttonRow.addChild(
+                this.doc.create("Button", { classes: ["SecondaryButton", "fill", "light"] })
+            );
+            this.confirmBuildButton.SetAttributeString(
+                "onactivate", "CitadelBuildBrowserPopupConfirmBuild()"
+            );
+            this.confirmBuildButton.SetPanelEvent("onactivate", () => {
+                this.confirmedBuildApplied = true;   // the mistake we assert never happens
+                this._trace("CONFIRM pressed — build applied to the player");
+                this.closeBuildBrowser();
+            });
+            this.cancelBuildButton = buttonRow.addChild(
+                this.doc.create("Button", { classes: ["SecondaryButton", "outline"] })
+            );
+            this.cancelBuildButton.SetAttributeString("onactivate", "UIPopupButtonClicked()");
+            this.cancelBuildButton.SetPanelEvent("onactivate", () => this.closeBuildBrowser());
         }
 
         this.popupPanel.SetHasClass("Hidden", !this.browseOpen);
@@ -563,6 +588,18 @@ class BuildsModel {
                 this._trace(`builds reply arrived (${this.builds.length} build(s))`);
             });
         });
+        return true;
+    }
+
+    /** Dismiss the popup — Cancel, oncancel, and the confirm path all route here. */
+    closeBuildBrowser() {
+        if (!this.browseOpen) return true;
+        this._trace("closeBuildBrowser");
+        this.browseOpen = false;
+        this.buildsLoading = false;
+        if (this.popupPanel && this.popupPanel.IsValid()) {
+            this.popupPanel.SetHasClass("Hidden", true);
+        }
         return true;
     }
 

@@ -307,6 +307,45 @@
         return pressed;
     }
 
+    /**
+     * Dismiss the build browser popup.
+     *
+     * Identified by CLASS and HANDLER, never by label. Vanilla puts two buttons in
+     * the popup's .ButtonRow (citadel_popup_build_browser.xml:17-22): confirm is
+     * `SecondaryButton fill light` with onactivate
+     * CitadelBuildBrowserPopupConfirmBuild(), cancel is `SecondaryButton outline`
+     * with UIPopupButtonClicked(). Matching the word "Cancel" would break in every
+     * non-English client, and pressing the WRONG one applies the selected build to
+     * the player's loadout — so this excludes the confirm button explicitly and
+     * gives up rather than guessing. `outline` is confirmed present in the live tree
+     * (Panorama debugger, 2026-08-25).
+     */
+    function _closeBrowse(root) {
+        const popup = _popup(root);
+        if (!_alive(popup)) return false;
+
+        const buttons = _findClass(popup, "SecondaryButton");
+        let cancel = null;
+        for (let i = 0; i < buttons.length; i++) {
+            let handler = "";
+            try {
+                handler = String(buttons[i].GetAttributeString("onactivate", "") || "").toLowerCase();
+            } catch(e) {}
+            if (handler.indexOf("confirmbuild") !== -1) continue;   // never press confirm
+            if (_hasClass(buttons[i], "fill")) continue;            // confirm is `fill light`
+            if (_hasClass(buttons[i], "outline") || handler.indexOf("uipopupbuttonclicked") !== -1) {
+                cancel = buttons[i];
+                break;
+            }
+        }
+        if (cancel && _activate(cancel)) return true;
+        // PopupBuildBrowser declares oncancel="UIPopupButtonClicked()", so the
+        // engine's own cancel path is a legitimate second try. (ESC does not reach
+        // it — the popup does not take keyboard focus.)
+        try { $.DispatchEvent("Cancelled", popup); return true; } catch(e) {}
+        return false;
+    }
+
     // ── Editor ──
     function _hudBuilds(root) {
         const byClass = _findClass(root, "shopModsBuild");
@@ -601,6 +640,17 @@
              * goes wrong, which strands the player on the storage hero.
              */
             function _finish(root, code, detail) {
+                // Close the browser popup before anything else. WE opened it — the new
+                // carrier (Label.BuildDescription) lives under #BuildDetails, which
+                // only exists inside citadel_popup_build_browser.xml, so reaching the
+                // payload REQUIRES the popup. The old category-name carrier lived in
+                // the shop panel (citadel_shop_mods_build_category.xml:10) and needed
+                // no popup, which is why main never had one to close and why this
+                // manifest must. Left open it stays up indefinitely and only Cancel
+                // dismisses it — ESC does not reach the popup's oncancel. Do this
+                // before the hero switch: selecthero rebuilds the shop panel and can
+                // strand the popup.
+                _closeBrowse(root);
                 if (_st.didSwitch) {
                     _returnHero(_st.returnHero || _resolveReturnHero(ctx));
                 }
