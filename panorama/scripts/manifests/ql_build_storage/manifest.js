@@ -126,8 +126,28 @@
     // loads whose cost is entirely machine-dependent. A tight bound here is a coin
     // toss, not a give-up bound.
     const SHOP_OPEN_TIMEOUT_MS = 30000;
-    // Same reasoning, smaller job: one button press and a popup inflate.
-    const BROWSER_OPEN_TIMEOUT_MS = 8000;
+    // Same reasoning, smaller job: one button press and a popup inflate. Not as
+    // small as it looks, which is why this is no longer 8s: the press lands right
+    // after a hero switch and a shop open, so the client is in the middle of exactly
+    // the blocking work the bound above allows for. The fuzzer produced an 8.9s
+    // reveal, and against an 8s bound the read gave up — then passed on a retry only
+    // because a leftover popup was still on screen for it, a success bought with a
+    // modal stranded on the player. The longer bound is only ever paid out in the
+    // case that was going to fail anyway.
+    const BROWSER_OPEN_TIMEOUT_MS = 16000;
+    // How long a Browse press stays our responsibility after the run gives up on it.
+    // Giving up means WE stop waiting, not that the client stopped inflating: the
+    // popup can still land, modal, on a player whose round trip is over. Held equal
+    // to the bound above so no reveal the pipeline was willing to wait for can
+    // outlive the cleanup that owns it — sweeping longer than that would start
+    // dismissing browsers the PLAYER opened.
+    const BROWSE_SWEEP_MS = BROWSER_OPEN_TIMEOUT_MS;
+    // Minimum gap between two Browse presses. The waiting stages call every STEP_MS
+    // and each press queues its own reveal, so a slow client returned ~20 popups one
+    // after another (fuzzer seed 54). Not the full reveal window either: a press
+    // really can be lost — sabotage deletes the popup mid-inflate — and a stage that
+    // cannot press again inside its own budget just fails instead.
+    const BROWSE_REPRESS_MS = 1000;
 
     // ── Hiding the machinery ──
     // The round trip drives real game UI: the shop opens, the browser popup opens,
@@ -357,7 +377,12 @@
         for (let i = 0; i < owners.length; i++) {
             if (_activate(_find(owners[i], PID_BROWSE_BTN))) pressed = true;
         }
-        if (_activate(_find(root, PID_BROWSE_BTN))) pressed = true;
+        // Root-level lookup is the FALLBACK for a tree with no shopModsBuild panel,
+        // not an extra press. Unconditionally it re-pressed the button already
+        // pressed above — the traverse finds that same live copy — and every press
+        // queues its own popup reveal, so the stage was firing two per tick and ~80
+        // per attempt. Only reached when the class-based sweep found nothing.
+        if (!pressed && _activate(_find(root, PID_BROWSE_BTN))) pressed = true;
         return pressed;
     }
 
@@ -649,6 +674,16 @@
             let _st = {};
 
             function _reset() {
+                // A Browse press outlives the session that made it, so the duty to
+                // dismiss the popup it causes has to outlive the session too. Wiping
+                // these along with everything else meant the NEXT session inherited a
+                // popup already on its way up and threw away the only record that we
+                // owed it a close: fuzzer seed 1093 pressed at 42.1s, gave up at
+                // 42.7s, opened another session that cleared the stamp, and the popup
+                // landed at 45s with nothing watching for it. Carried, not reset — the
+                // debt belongs to the feature, not to the run.
+                const priorPress = _st.browsePressedAt || 0;
+                const priorSweep = _st.sweepUntil || 0;
                 _st = {
                     stage: "idle",
                     mode: "",            // "read" | "write"
@@ -670,6 +705,8 @@
                     sawAnyBuild: false,
                     createdBuild: false,
                     verifyReopened: false,  // verify had to reopen the browser to read back
+                    browsePressedAt: priorPress,  // outlives the run that pressed it
+                    sweepUntil: priorSweep,       // ditto: the popup is still coming
                     token: "",           // write mode: what we must persist
                     requestToken: "",    // write mode: bridge correlation id
                     // 3.1.9 MIGRATION — delete these three with legacy_3_1_9.js.
@@ -859,6 +896,16 @@
                 // not reach the popup's oncancel. Before the hero switch, too:
                 // selecthero rebuilds the shop panel and can strand the popup.
                 _closeBrowse(root);
+                // A press already fired but not yet honoured has no popup to close
+                // YET — the client inflates it browseRevealMs later, which on a loaded
+                // machine is seconds. Keep watching for that long so the popup is
+                // dismissed the moment it appears, instead of landing on a player
+                // whose run is already over. Costs one tick per pass and nothing at
+                // all when no press was outstanding.
+                _st.sweepUntil = (_st.browsePressedAt &&
+                                  (_now() - _st.browsePressedAt) < BROWSE_SWEEP_MS)
+                    ? _st.browsePressedAt + BROWSE_SWEEP_MS
+                    : 0;
                 // Close the shop only when WE opened it. shopCmdSent is exactly that
                 // fact: the toggle is fired once, in open_shop, and only when the shop
                 // was shut. A shop the user already had open is theirs to keep.
@@ -892,10 +939,41 @@
                     _log("write: " + code + " — " + (detail || ""));
                 }
                 _st.stage = "done";
-                _reschedule(DORMANT_RATE_SEC);
+                // Faster than dormant while a late popup may still be coming: at the
+                // dormant rate the player would stare at it for up to a second.
+                _reschedule(_st.sweepUntil ? ACTIVE_RATE_SEC : DORMANT_RATE_SEC);
             }
 
             // ── Shared: get to the storage hero with the browser list settled ──
+            /**
+             * Press Browse and remember that we did.
+             *
+             * The popup does not inflate on the press — it appears browseRevealMs
+             * later, and on a loaded machine that is seconds. So a press outlives the
+             * tick that made it, and if the run ends in between, _finish's
+             * _closeBrowse finds nothing to close and the popup arrives on the
+             * player's screen with the run already over and nobody left to dismiss
+             * it. Modal, and only Cancel closes it. The stamp is what lets _finish
+             * tell "no popup, nothing to do" apart from "no popup YET".
+             *
+             * Pressed at most once per BROWSE_REPRESS_MS, for the same reason the shop
+             * toggle is fired once: the waiting stages call this every STEP_MS, and
+             * every press queues its own reveal. The fuzzer showed what that costs —
+             * with an 11.7s reveal, ~20 popups came back one after another and the
+             * post-run sweep dismissed each only for the next to appear (seed 54).
+             * One press already covers every copy of the button (_pressBrowse), so
+             * re-pressing on the next tick buys nothing that waiting does not.
+             */
+            function _openBrowse(root) {
+                const now = _now();
+                if (_st.browsePressedAt && (now - _st.browsePressedAt) < BROWSE_REPRESS_MS) {
+                    return true;
+                }
+                _st.browsePressedAt = now;
+                return _pressBrowse(root);
+            }
+
+
             /**
              * Returns "wait" (call again later), "ready", or "fail".
              * Every wait here is gated on a client-set class.
@@ -950,7 +1028,7 @@
                     case "open_browser":
                         if (!_isBrowseOpen(root)) {
                             if (_expired(now, BROWSER_OPEN_TIMEOUT_MS)) return "fail";
-                            _pressBrowse(root);
+                            _openBrowse(root);
                             _st.nextAt = now + STEP_MS;
                             return "wait";
                         }
@@ -1480,7 +1558,7 @@
                                     "wrote the description but could not reopen the browser to confirm it");
                                 return;
                             }
-                            _pressBrowse(root);
+                            _openBrowse(root);
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
@@ -1585,6 +1663,30 @@
                     if (_st.nextAt && now < _st.nextAt) return;
 
                     if (_st.stage === "idle" || _st.stage === "done") {
+                        // Finish what a late Browse press started. Only ever armed by
+                        // _finish, and only when a press was still outstanding then, so
+                        // an idle feature does no work here. A new run wipes it through
+                        // _reset and owns the browser itself from that point.
+                        if (_st.sweepUntil) {
+                            if (now >= _st.sweepUntil) {
+                                _st.sweepUntil = 0;
+                                _reschedule(DORMANT_RATE_SEC);
+                            } else if (_isBrowseOpen(root)) {
+                                // Keep sweeping rather than disarming on the first hit.
+                                // A stage that waits on the popup presses Browse every
+                                // STEP_MS, so several reveals can be in flight at once
+                                // and closing one just lets the next one through — the
+                                // fuzzer (seed 83) ended with the popup on screen after
+                                // this had already dismissed it twice.
+                                //
+                                // Falls through rather than returning: this is cleanup,
+                                // and letting it own the tick starved the state machine
+                                // of the passes it needed to start the next session —
+                                // four reads that used to load ended up failing.
+                                _log("cleanup: dismissed a browser popup that opened after the run ended");
+                                _closeBrowse(root);
+                            }
+                        }
                         // Writes win over reads: the user pressed Save and is waiting.
                         const req = _pendingWrite(root);
                         if (req && req.reject) {
