@@ -542,16 +542,35 @@
         return ok;
     }
 
+    /**
+     * Create the storage build.
+     *
+     * The global function is tried FIRST, and the button only as a fallback, which
+     * is the opposite of the obvious order and the whole point of this function.
+     * citadel_popup_build_browser.xml:11 declares
+     *   onmouseactivate="CitadelHudHeroBuildsCreateNewBuild(); UIPopupButtonClicked();"
+     * so pressing #CreateBuildButton creates the build AND DISMISSES THE POPUP. The
+     * verify stage reads Label.BuildDescription under #BuildDetails, which lives
+     * inside that popup, so a first-ever save wrote 214 chars to disk and then
+     * reported "save not confirmed by the build (details read back 0 chars)" —
+     * observed in-game 2026-08-25, exactly as predicted from the XML. Calling the
+     * handler directly runs the create without the dismissal.
+     *
+     * Both are kept because the globals are the load-bearing half of this file
+     * (CitadelHudHeroBuildsEditSelectedBuild and ...SaveEdits are how edit and
+     * commit already work in-game), but a client that renames one should degrade to
+     * a working-with-a-reopen save rather than no save at all.
+     */
     function _triggerCreate(root) {
-        const popup = _popup(root);
-        if (_alive(popup) && _activate(_find(popup, PID_CREATE_BTN))) return true;
-        if (_activate(_find(root, PID_CREATE_BTN))) return true;
         try {
             if (typeof CitadelHudHeroBuildsCreateNewBuild === "function") {
                 CitadelHudHeroBuildsCreateNewBuild();
                 return true;
             }
         } catch(e) {}
+        const popup = _popup(root);
+        if (_alive(popup) && _activate(_find(popup, PID_CREATE_BTN))) return true;
+        if (_activate(_find(root, PID_CREATE_BTN))) return true;
         return false;
     }
 
@@ -650,6 +669,7 @@
                     sweptAll: false,
                     sawAnyBuild: false,
                     createdBuild: false,
+                    verifyReopened: false,  // verify had to reopen the browser to read back
                     token: "",           // write mode: what we must persist
                     requestToken: "",    // write mode: bridge correlation id
                     // 3.1.9 MIGRATION — delete these three with legacy_3_1_9.js.
@@ -1435,7 +1455,39 @@
                             _finish(root, "success", "verified in the description");
                             return;
                         }
-                        if (_expired(now, VERIFY_TIMEOUT_MS)) {
+                        // The carrier is only READABLE through the browser popup, so a
+                        // popup that is gone means we cannot verify — not that the save
+                        // failed. Reopen and keep waiting instead of reporting a
+                        // failure we have no evidence for; the write really did land in
+                        // the in-game case that produced this (a first-ever save, where
+                        // creating the build used to dismiss the popup).
+                        //
+                        // Costs a GC round trip, so the budget grows by exactly that
+                        // once — tracked as a flag rather than a timestamp so a popup
+                        // that keeps vanishing cannot extend the deadline forever.
+                        if (!_isBrowseOpen(root)) {
+                            if (!_st.verifyReopened) {
+                                _st.verifyReopened = true;
+                                _log("write: the browser closed before verification — reopening to read the build back");
+                            }
+                            // Deadline BEFORE the press, not after. The other order
+                            // pressed Browse and gave up in the same tick, so the popup
+                            // inflated seconds later with the run already concluded and
+                            // nothing left to dismiss it — the fuzzer caught two runs
+                            // ending with a modal on screen that no code owned.
+                            if (_expired(now, VERIFY_TIMEOUT_MS + BROWSER_OPEN_TIMEOUT_MS + LOADING_TIMEOUT_MS)) {
+                                _finish(root, "failed",
+                                    "wrote the description but could not reopen the browser to confirm it");
+                                return;
+                            }
+                            _pressBrowse(root);
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        const budget = _st.verifyReopened
+                            ? (VERIFY_TIMEOUT_MS + BROWSER_OPEN_TIMEOUT_MS + LOADING_TIMEOUT_MS)
+                            : VERIFY_TIMEOUT_MS;
+                        if (_expired(now, budget)) {
                             // Deliberately a failure and not a shrug: an unverified save
                             // reported as success is the one outcome that loses data
                             // silently. The user can retry; a false success they cannot.
