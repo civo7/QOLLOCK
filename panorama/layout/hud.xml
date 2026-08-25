@@ -114,6 +114,11 @@
 		     build's description instead of its category name. Ships disabled; while
 		     it is off, ql_build_payload + ql_feat_buildsave stay authoritative, so
 		     the feature toggle is the whole rollback. -->
+		<!-- 3.1.9 MIGRATION — DELETE ALONG WITH THE FILE. Read-only reader for the
+		     old category-name carrier. Loaded before the manifest that consults it;
+		     the manifest resolves it lazily off QOL, so order is convention not a
+		     requirement. -->
+		<include src="s2r://panorama/scripts/manifests/ql_build_storage/legacy_3_1_9.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_build_storage/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />

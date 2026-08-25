@@ -71,19 +71,46 @@ const SABOTAGE = [
     ])],
 ];
 
+// Returns the builds to seed AND every token that counts as "ours" for the
+// payload invariants. A migration writes the token it RECOVERED, which for a
+// 3.1.9 build is a 3.1.9 token, not the default one — checking only the default
+// would report "wrote success but no build holds the payload" on a migration that
+// worked perfectly.
 function buildScenario(rand, token) {
+    // Same payload, stamped with the version 3.1.9 wrote. The schema is still in
+    // the registry (ql_shared_presets.js:2030), so this really does decode.
+    const legacyToken = token.replace("[QOL-3-2-0]", "[QOL-3-1-9]");
+    const both = [token, legacyToken];
     const roll = rand();
-    if (roll < 0.25) return [];                                             // empty storage
-    if (roll < 0.5) return [{ title: "QOLLOCK-Settings", description: token }];
-    if (roll < 0.65) return [{ title: "QOLLOCK-Settings", description: "" }];
-    if (roll < 0.8) return [                                                // payload on the 2nd
-        { title: "QOLLOCK-Settings", description: "" },
-        { title: "QOLLOCK-Settings", description: token },
-    ];
-    if (roll < 0.9) return [{ title: "Someone else's build", description: "not a token" }];
-    return [                                                                // corrupt token
-        { title: "QOLLOCK-Settings", description: "[QOL-3-2-0]:!!!!not-base64!!!!" },
-    ];
+    if (roll < 0.20) return { specs: [], tokens: both };                     // empty storage
+    if (roll < 0.40) return { specs: [{ title: "QOLLOCK-Settings", description: token }], tokens: both };
+    if (roll < 0.52) return { specs: [{ title: "QOLLOCK-Settings", description: "" }], tokens: both };
+    if (roll < 0.64) return {                                               // payload on the 2nd
+        specs: [
+            { title: "QOLLOCK-Settings", description: "" },
+            { title: "QOLLOCK-Settings", description: token },
+        ], tokens: both };
+    if (roll < 0.72) return { specs: [{ title: "Someone else's build", description: "not a token" }], tokens: both };
+    if (roll < 0.80) return {                                               // corrupt token
+        specs: [{ title: "QOLLOCK-Settings", description: "[QOL-3-2-0]:!!!!not-base64!!!!" }],
+        tokens: both };
+    // ── 3.1.9 MIGRATION scenarios — drop with legacy_3_1_9.js ──
+    if (roll < 0.90) return {                                               // straight 3.1.9 user
+        specs: [{ title: "New Skyrunner Build", description: "", categories: [legacyToken] }],
+        tokens: both };
+    if (roll < 0.96) return {                                               // 3.1.9 among clutter
+        specs: [
+            { title: "My real build", description: "", categories: ["Core Items"] },
+            { title: "New Skyrunner Build", description: "", categories: [legacyToken] },
+            { title: "Another build", description: "", categories: ["Late Game"] },
+        ], tokens: both };
+    return {                                                                // a STRANGER's token
+        // The trap the MyBuild filter exists for: a public build carrying a
+        // QOLLOCK token. Reading it would import someone else's settings.
+        specs: [
+            { title: "Pro player build", description: "", categories: [legacyToken], isPublic: true },
+            { title: "New Skyrunner Build", description: "", categories: ["Core Items"] },
+        ], tokens: both };
 }
 
 function opacityOf(panel) {
@@ -115,7 +142,17 @@ function runCase(seed, mode) {
             return realOpen();
         };
     }
-    g.seedBuilds(buildScenario(rand, token));
+    const scenario = buildScenario(rand, token);
+    // Any of these, in a description OR in a category name, counts as our payload
+    // being present. Both places matter: 3.1.9 stored it in the category, so a
+    // legacy read that succeeds has observed a real payload even though no
+    // description holds one yet. Checking descriptions alone reported 25 false
+    // "claimed a payload was applied but never observed one" failures.
+    const ourTokens = scenario.tokens;
+    const holdsOurPayload = () => g.builds.some((b) =>
+        ourTokens.indexOf(b.description) !== -1 ||
+        (b.categories || []).some((c) => ourTokens.indexOf(c.name) !== -1));
+    g.seedBuilds(scenario.specs);
 
     const applied = [];
     if (mode === "write") {
@@ -136,16 +173,22 @@ function runCase(seed, mode) {
     // Sampled every slice. The final state of the build list is NOT evidence about a
     // read that ran earlier — sabotage rewrites it on purpose — so anything the
     // invariants need to know about mid-run has to be observed mid-run.
-    let sawPayloadDuringRun = g.builds.some((b) => b.description === token);
+    let sawPayloadDuringRun = holdsOurPayload();
     let payloadSeenAfterWrite = false;
     // Latched the moment the run promises it is over, so anything that happens
     // AFTER that promise can be told apart from the run doing its job. Without
     // this, cleanup that fires late is indistinguishable from cleanup that fired
     // on time — and "late" is what the user perceives as the mod glitching.
     let shopOpensAtConclusion = -1;
+    // Counted against a baseline taken after the pre-roll, not tested as a boolean.
+    // A 3.1.9 migration finishes a write of its own during the pre-roll, so a
+    // boolean would already read "concluded" before the fuzzer's save request was
+    // even queued, and every shop open the real save then performs would be blamed
+    // on post-run cleanup.
+    const concludedBaseline = terminalLineCount(h, mode);
     const latchConclusion = () => {
         if (shopOpensAtConclusion !== -1) return;
-        if (!hasConcluded(h, mode)) return;
+        if (terminalLineCount(h, mode) <= concludedBaseline) return;
         shopOpensAtConclusion = g.counters.shopOpen;
     };
 
@@ -163,7 +206,7 @@ function runCase(seed, mode) {
             thrown = e && e.message ? e.message : String(e);
             break;
         }
-        if (g.builds.some((b) => b.description === token)) {
+        if (holdsOurPayload()) {
             sawPayloadDuringRun = true;
             payloadSeenAfterWrite = true;
         }
@@ -190,6 +233,9 @@ function runCase(seed, mode) {
         stateLines: grep("configLoadState="),
         tickErrors: grep("tick error:"),
         createCount: g.counters.createBuild,
+        // 3.1.9 MIGRATION — drop with legacy_3_1_9.js.
+        migrated: grep("3.1.9 config recovered").length > 0,
+        legacySwept: grep("3.1.9 sweep").length > 0,
         deleteCount: g.counters.deleteBuild,
         builds: g.builds.map((b) => b.description || ""),
         sawPayloadDuringRun, payloadSeenAfterWrite,
@@ -201,7 +247,7 @@ function runCase(seed, mode) {
         //
         // "Concluded" gates the lot: a run still legitimately in flight at the end
         // of the window has not promised anything yet.
-        concluded: hasConcluded(h, mode),
+        concluded: terminalLineCount(h, mode) > concludedBaseline,
         shopOpen: !!g.shopOpen,
         // How many times the shop was opened after the run said it was finished.
         // Zero is the only acceptable answer: the player is looking at the game
@@ -234,14 +280,14 @@ function runCase(seed, mode) {
 // so a truthiness test latches on the very first tick and every later shop open
 // looks like it happened after the run finished. The bridge attribute has the same
 // flaw in reverse — _writeStatus writes "pending" to it mid-run.
-function hasConcluded(h, mode) {
+function terminalLineCount(h, mode) {
     const re = mode === "read"
         ? /\] read: (success|failed|default) — /
         // "write refused" is terminal too: the request is answered and cleared
         // without ever entering _finish.
         : /\] write: (success|failed|default) — |\] write refused: /;
-    try { return h.sandbox.messages.some((m) => re.test(m)); }
-    catch (e) { return false; }
+    try { return h.sandbox.messages.filter((m) => re.test(m)).length; }
+    catch (e) { return 0; }
 }
 
 // ── Invariants: things that must hold no matter how hostile the run was ──
@@ -293,8 +339,14 @@ function checkInvariants(r) {
     //    all, so any delete means something reached one by accident.
     if (r.deleteCount > 0) fails.push("deleted " + r.deleteCount + " build(s)");
 
-    // 6. Junk builds pile up if a create is retried. One run creates at most one.
-    if (r.createCount > 1) fails.push("created " + r.createCount + " builds in one run");
+    // 6. Junk builds pile up if a create is retried. One write run creates at most
+    //    one — and a 3.1.9 migration legitimately runs two writes: the migration
+    //    itself, then the save the fuzzer queued. Budgeted, not exempted, so a
+    //    retry loop still fails.
+    const createBudget = r.migrated ? 2 : 1;
+    if (r.createCount > createBudget) {
+        fails.push("created " + r.createCount + " builds in one run (budget " + createBudget + ")");
+    }
 
     // 7. A save that reports success must have put the payload somewhere. Judged
     //    against what was on disk when the write verified, not at the very end —

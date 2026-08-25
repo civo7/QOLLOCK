@@ -155,6 +155,22 @@
         return fallback;
     }
 
+    // ── 3.1.9 MIGRATION — delete with legacy_3_1_9.js ──
+    /**
+     * The old-carrier reader, or undefined when the file is gone.
+     *
+     * Resolved lazily on every use rather than captured at load, so deleting
+     * legacy_3_1_9.js and its <include> cannot break this file at load time — the
+     * migration simply stops happening, which is the intended end state.
+     */
+    function _legacy() {
+        try {
+            const L = (typeof QOL !== "undefined") ? QOL.legacy319 : undefined;
+            return (L && typeof L.readCategoryToken === "function" &&
+                    typeof L.isOwnBuildRow === "function") ? L : undefined;
+        } catch(e) { return undefined; }
+    }
+
     // ── Panorama helpers ──
     function _alive(p) {
         return !!(p && typeof p.IsValid === "function" && p.IsValid());
@@ -636,6 +652,10 @@
                     createdBuild: false,
                     token: "",           // write mode: what we must persist
                     requestToken: "",    // write mode: bridge correlation id
+                    // 3.1.9 MIGRATION — delete these three with legacy_3_1_9.js.
+                    legacyPass: false,   // read mode: sweeping own builds for the old carrier
+                    fromLegacy: false,   // the applied token came from a category name
+                    silent: false,       // write mode: a migration, so answer no bridge
                     foundToken: ""       // read mode: what we recovered
                 };
             }
@@ -743,6 +763,12 @@
             }
 
             function _writeStatus(root, state, msg) {
+                // 3.1.9 MIGRATION — remove this guard with legacy_3_1_9.js.
+                // A migration write is nobody's request. The settings UI correlates
+                // a save by the request token it sent, so publishing a state with no
+                // token would surface as an unexplained "success"/"failed" against
+                // whatever it last asked for.
+                if (_st.silent) return;
                 const panels = _bridgeSurfaces(root);
                 for (let i = 0; i < panels.length; i++) {
                     try {
@@ -767,6 +793,30 @@
              * only on the success stage leaks a switched hero whenever anything
              * goes wrong, which strands the player on the storage hero.
              */
+            /**
+             * Report the outcome of a read to everything that is waiting on one.
+             *
+             * Split out of _finish so the 3.1.9 migration can say "the config is
+             * loaded" and then keep the session alive to re-home it, instead of
+             * tearing everything down and paying for a second round trip. Only ever
+             * called while mode is still "read" — _setStep is a no-op otherwise.
+             */
+            function _reportReadOutcome(code, detail) {
+                _recordLoadState(code, detail);
+                _setStep("decode_payload", code === "success" ? "done" : "skipped", "");
+                _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
+                _setStep("return_hero", "done", _st.returnHero || "");
+                _setStep("complete", code === "success" ? "done" : "skipped", detail || "");
+                _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
+                // The read's own terminal line belongs here, not in _finish. A 3.1.9
+                // migration reports its read outcome and then keeps the session alive
+                // to re-home the token, so a line emitted from _finish would never be
+                // written for the one path where knowing the read succeeded matters
+                // most — and it is the only trace saying which carrier the config came
+                // from.
+                _log("read: " + code + " — " + (detail || ""));
+            }
+
             function _finish(root, code, detail) {
                 // Tear the machinery down while it is still dimmed, and restore
                 // opacity as the very last act. Both halves of that order matter: the
@@ -810,17 +860,17 @@
                     _returnHero(_st.returnHero || _resolveReturnHero(ctx));
                 }
                 if (_st.mode === "read") {
-                    _recordLoadState(code, detail);
-                    _setStep("decode_payload", code === "success" ? "done" : "skipped", "");
-                    _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
-                    _setStep("return_hero", "done", _st.returnHero || "");
-                    _setStep("complete", code === "success" ? "done" : "skipped", detail || "");
-                    _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
+                    _reportReadOutcome(code, detail);
                 } else if (_st.mode === "write") {
                     _writeStatus(root, code === "success" ? "success" : "failed", detail || "");
-                    _clearRequest(root);
+                    // 3.1.9 MIGRATION — remove this guard with legacy_3_1_9.js.
+                    // A migration write has no request of its own to clear, and the
+                    // attribute it would clear may by then hold a REAL save the user
+                    // queued while the migration was running. Clearing it would drop
+                    // that save on the floor.
+                    if (!_st.silent) _clearRequest(root);
+                    _log("write: " + code + " — " + (detail || ""));
                 }
-                _log(_st.mode + ": " + code + " — " + (detail || ""));
                 _st.stage = "done";
                 _reschedule(DORMANT_RATE_SEC);
             }
@@ -946,6 +996,19 @@
             function _candidateIndices(root) {
                 const items = _listItems(root);
                 const out = [];
+                // 3.1.9 MIGRATION — remove this branch with legacy_3_1_9.js.
+                // The legacy pass cannot filter by name: main never sets one
+                // ("BuildNameTextEntry" appears 0 times in main), so a 3.1.9 build
+                // is called whatever the client called it. Its only filter is
+                // "mine" — #HeroBuildList carries other players' public builds too
+                // and the tabs merely hide them with CSS.
+                if (_st.legacyPass) {
+                    const L = _legacy();
+                    for (let i = 0; i < items.length; i++) {
+                        if (L && L.isOwnBuildRow(items[i])) out.push(i);
+                    }
+                    return { total: items.length, indices: out };
+                }
                 for (let i = 0; i < items.length; i++) {
                     if (_itemName(items[i]) === BUILD_NAME) out.push(i);
                 }
@@ -966,7 +1029,8 @@
                 _st.sawAnyBuild = found.total > 0;
                 _st.candidateCount = found.indices.length;
                 _st.cursor = 0;
-                _log("list: " + found.total + " build(s), " + found.indices.length + " named " + BUILD_NAME);
+                _log("list: " + found.total + " build(s), " + found.indices.length +
+                     (_st.legacyPass ? " of them mine (3.1.9 sweep)" : " named " + BUILD_NAME));
             }
 
             // ── READ ──
@@ -984,10 +1048,31 @@
 
                     case "select_candidate": {
                         if (_st.cursor >= _st.candidateCount) {
+                            // 3.1.9 MIGRATION — remove this block with legacy_3_1_9.js.
+                            // Before declaring the storage empty, sweep the player's
+                            // OWN builds for the old category-name carrier. This has
+                            // to happen here and not later: the "default" result below
+                            // becomes configLoadState=loaded, which is precisely what
+                            // authorizes the next save to overwrite. A 3.1.9 user's
+                            // config would be declared absent and then destroyed.
+                            //
+                            // Runs at most once per session and only when the fast
+                            // path came back empty-handed, so a migrated user (named
+                            // build, token in the description) never pays for it.
+                            if (!_st.legacyPass && _legacy()) {
+                                _st.legacyPass = true;
+                                _collectCandidates(root);
+                                if (_st.candidateCount > 0) {
+                                    _setStep("read_payload", "active",
+                                             "Checking " + _st.candidateCount + " build(s) for a 3.1.9 config");
+                                    _go("select_candidate", now, 0);
+                                    return;
+                                }
+                            }
                             // Every candidate visited and none held a token. That is
                             // conclusive, which is what lets a first save proceed.
                             _st.sweptAll = true;
-                            _finish(root, "default", "no payload on any " + BUILD_NAME + " build");
+                            _finish(root, "default", "no payload in any description or 3.1.9 category name");
                             return;
                         }
                         const item = _candidateAt(root, _st.cursor);
@@ -1015,7 +1100,21 @@
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
-                        const token = _extractToken(_selectedDescription(root));
+                        let token = _extractToken(_selectedDescription(root));
+                        // 3.1.9 MIGRATION — remove with legacy_3_1_9.js.
+                        // Tried on EVERY candidate, not only during the legacy pass:
+                        // a user whose build got named by 3.2.0 but never saved still
+                        // has an empty description and the token in the category. The
+                        // description wins when both hold one — it is the newer write.
+                        if (!token) {
+                            const L = _legacy();
+                            const legacyToken = L ? L.readCategoryToken(root) : "";
+                            if (legacyToken) {
+                                token = legacyToken;
+                                _st.fromLegacy = true;
+                                _log("read: found a 3.1.9 token in the category name of candidate " + _st.cursor);
+                            }
+                        }
                         if (!token) {
                             _st.cursor++;
                             _go("select_candidate", now, 0);
@@ -1041,6 +1140,43 @@
                             return;
                         }
                         _applyConfig(root, decoded);
+                        // 3.1.9 MIGRATION — remove this block with legacy_3_1_9.js.
+                        //
+                        // Hand straight over to the write machine instead of finishing
+                        // and queueing a second run. The first version did queue, and
+                        // the fuzzer's post-conclusion shop-open check is what argued
+                        // it down: a queued migration means the hero switch, the shop
+                        // and the browser all happen TWICE on the first launch after
+                        // upgrading — the exact visible churn this pipeline is being
+                        // cleaned up to remove.
+                        //
+                        // Nothing needs setting up. We are already on the storage hero
+                        // with the shop open, the browser open and the list settled;
+                        // didSwitch and shopCmdSent stay as they are so the write's own
+                        // _finish still performs exactly one teardown. The read's
+                        // outcome is reported first, while mode is still "read", so the
+                        // settings loader completes when the config actually goes live
+                        // rather than after the extra editor trip.
+                        if (_st.fromLegacy) {
+                            _reportReadOutcome("success", "payload applied from 3.1.9 category name");
+                            _log("read: 3.1.9 config recovered — re-homing it into the description");
+                            _st.mode = "write";
+                            _st.silent = true;          // nobody asked; answer no bridge
+                            _st.token = _st.foundToken;
+                            // Back to the named-candidate view: the migration writes to
+                            // the 3.2.0 build, creating it if absent. The old build is
+                            // left untouched, which is what keeps a 3.1.9 rollback
+                            // working and the migration repeatable.
+                            _st.legacyPass = false;
+                            _st.targetChosen = false;
+                            _st.createdBuild = false;
+                            _st.cursor = 0;
+                            _st.listCount = -1;
+                            _st.listStableHits = 0;
+                            _st.startedAt = now;        // its own overall-timeout budget
+                            _go("await_list", now, 0);
+                            return;
+                        }
                         _finish(root, "success", "payload applied from build description");
                         return;
                     }

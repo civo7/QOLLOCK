@@ -309,6 +309,15 @@ class BuildsModel {
             description: s.description ?? "",
             categories: (s.categories ?? ["Core Items"]).map((name) => ({ name })),
             id: s.id ?? i + 1,
+            // Not the local player's. #HeroBuildList holds both — the My Builds /
+            // Public tabs only switch visibility through CSS, and the row's own
+            // class is the discriminator (Panorama debugger 2026-08-25):
+            //   CitadelHeroBuildsSelector .HeroBuildListItem { visibility: collapse; }
+            //   CitadelHeroBuildsSelector.ShowMyBuilds .HeroBuildListItem… { visible; }
+            // Modelled as the presence or absence of MyBuild and nothing more. The
+            // live row also carried HidePublic and ActiveBuild; what those mean is
+            // unverified, so they are deliberately not modelled rather than guessed.
+            isPublic: s.isPublic === true,
         }));
         this.selectedIndex = this.builds.length > 0 ? 0 : -1;
         this._renderAll();
@@ -561,10 +570,12 @@ class BuildsModel {
         if (!this.browseOpen || this.buildsLoading) return;
 
         this.builds.forEach((build, i) => {
+            const rowClasses = ["HeroBuildListItem"];
+            if (!build.isPublic) rowClasses.push("MyBuild");
             const item = this.buildListPanel.addChild(
                 this.doc.create("Panel", {
                     id: `HeroBuildListItem_${i}`,
-                    classes: ["HeroBuildListItem", "MyBuild"],
+                    classes: rowClasses,
                 })
             );
             if (i === this.selectedIndex) item.AddClass("Selected");
