@@ -123,7 +123,7 @@ class BuildsModel {
         this.log = [];
         this.counters = {
             createBuild: 0, deleteBuild: 0, selectBuild: 0,
-            editMode: 0, saveEdits: 0, heroSwitch: 0, browserOpen: 0,
+            editMode: 0, saveEdits: 0, heroSwitch: 0, browserOpen: 0, shopOpen: 0,
         };
 
         this._buildTree();
@@ -641,6 +641,11 @@ class BuildsModel {
 
     openShop() {
         if (this.shopOpen) return true;
+        // Counted, not just flagged. A caller that closes the shop and reopens it is
+        // invisible to a boolean but obvious in a counter, and reopening a shop the
+        // player is no longer expecting is a full-brightness flash of UI they were
+        // never meant to see.
+        this.counters.shopOpen++;
         this._trace("openShop");
         this.shopOpenPending = true;
         const gen = ++this._shopGen;

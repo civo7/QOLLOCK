@@ -216,6 +216,32 @@
     }
 
     /**
+     * Close the shop.
+     *
+     * CitadelExitUpgradeShop is the shop's OWN oncancel handler
+     * (citadel_hud_hero_shop.xml:19), so this is the client's close path and not a
+     * guess. Preferred over the console command for one reason: SHOP_OPEN_CMD is a
+     * toggle, and a toggle sent at the wrong moment opens what it was meant to
+     * shut.
+     *
+     * The toggle survives only as a fallback for a client with no such function,
+     * and only while gShopOpen still says open. Deliberately NOT re-checked after
+     * calling CitadelExitUpgradeShop: if the class clears asynchronously, a
+     * "did it work?" probe reads stale-open and the fallback would re-open the shop
+     * we just closed.
+     */
+    function _closeShop(root) {
+        try {
+            if (typeof CitadelExitUpgradeShop === "function") {
+                CitadelExitUpgradeShop();
+                return true;
+            }
+        } catch(e) {}
+        if (_isShopOpen(root)) return _fireShopOpen();
+        return false;
+    }
+
+    /**
      * The build browser popup root.
      *
      * PopupBuildBrowser carries no id in vanilla XML, so walk up from
@@ -514,6 +540,43 @@
     }
 
     // ── Hero switch ──
+    // The old pipeline's post-restore shop pulse must be disarmed for our restores,
+    // and this is how long to hold it off. HERO_RESTORE_BLIND_SUCCESS_MS is 800 and
+    // HERO_RESTORE_MAX_WAIT_MS is 3200 (ql_core.js:667-669), on top of the 0.3s the
+    // restore is queued with — so this is that worst case with room to spare, not a
+    // number picked to feel safe.
+    const SHOP_PULSE_SUPPRESS_MS = 10000;
+
+    /**
+     * Disarm the old pipeline's post-restore shop pulse.
+     *
+     * queueDelayedHeroRestore finishes at QueueShopPulseAfterHeroRestore
+     * (ql_core.js:9196), which schedules PulseShopAfterBuildPayloadStartupReturn
+     * (ql_core.js:6490). That helper closes the shop, then opens it
+     * UNCONDITIONALLY (ql_core.js:6512-6535), then closes it again 0.05s later. It
+     * is a deliberate refresh pulse that the old category-name carrier needed —
+     * that carrier lived in the shop panel, so the shop had to be re-inflated to
+     * show the committed value. This manifest reads from the browser popup and
+     * needs none of it.
+     *
+     * Left armed it is the single most visible artefact of the whole round trip:
+     * opacity has already been restored by the time it fires, so the user watches
+     * the shop flash open by itself once the run is over. The fuzzer flagged it on
+     * 228 of 300 runs — including runs where the shop was correctly closed first,
+     * because the reopen is not conditional on anything.
+     *
+     * Suppressed through the helper's OWN throttle rather than by editing it: the
+     * guard is `if (now < State.heroRestoreShopPulseNextMs) return`, so arming that
+     * stamp is the sanctioned way to say "not this time" and leaves the old path
+     * intact for any caller that still wants it.
+     */
+    function _suppressShopPulse() {
+        try {
+            const State = QOL.state;
+            if (State) State.heroRestoreShopPulseNextMs = _now() + SHOP_PULSE_SUPPRESS_MS;
+        } catch(e) {}
+    }
+
     function _switchToStorageHero() {
         return _callQol("selectHeroForBuildSave", false, [STORAGE_HERO, "ql_build_storage"]);
     }
@@ -705,24 +768,45 @@
              * goes wrong, which strands the player on the storage hero.
              */
             function _finish(root, code, detail) {
-                // Restore opacity first — before dismissing anything. An invisible
-                // shop left behind is worse than the popup ever was: nothing on
-                // screen tells the user the game is stuck, and the old pipeline's
-                // popup closer refuses to press a button it reads as hidden. Runs on
-                // EVERY exit for the same reason the hero restore does.
-                _setHidden(root, false);
-                // Close the browser popup before anything else. WE opened it — the new
-                // carrier (Label.BuildDescription) lives under #BuildDetails, which
-                // only exists inside citadel_popup_build_browser.xml, so reaching the
-                // payload REQUIRES the popup. The old category-name carrier lived in
-                // the shop panel (citadel_shop_mods_build_category.xml:10) and needed
-                // no popup, which is why main never had one to close and why this
-                // manifest must. Left open it stays up indefinitely and only Cancel
-                // dismisses it — ESC does not reach the popup's oncancel. Do this
-                // before the hero switch: selecthero rebuilds the shop panel and can
-                // strand the popup.
+                // Tear the machinery down while it is still dimmed, and restore
+                // opacity as the very last act. Both halves of that order matter: the
+                // user never sees the popup being dismissed or the shop closing, and
+                // the un-dim runs unconditionally afterwards so no failure path can
+                // leave a panel stranded at HIDE_OPACITY. An invisible shop left
+                // behind is worse than the popup ever was — nothing on screen would
+                // tell the user the game is stuck. Dimming to 0.02 rather than 0.01 is
+                // what keeps the activations below legal at all: IsPanelSuppressedMaybe
+                // (ql_core.js:2645-2651) counts <= 0.01 as hidden, and
+                // ActivatePanelSafe refuses a button it reads as hidden.
+                //
+                // Close the browser popup first. WE opened it — the new carrier
+                // (Label.BuildDescription) lives under #BuildDetails, which only exists
+                // inside the browser popup, so reaching the payload REQUIRES the popup.
+                // The old category-name carrier lived in the shop panel
+                // (citadel_shop_mods_build_category.xml:10) and needed no popup, which
+                // is why main never had one to close and why this manifest must. Left
+                // open it stays up indefinitely and only Cancel dismisses it — ESC does
+                // not reach the popup's oncancel. Before the hero switch, too:
+                // selecthero rebuilds the shop panel and can strand the popup.
                 _closeBrowse(root);
+                // Close the shop only when WE opened it. shopCmdSent is exactly that
+                // fact: the toggle is fired once, in open_shop, and only when the shop
+                // was shut. A shop the user already had open is theirs to keep.
+                //
+                // Nothing here closed the shop before this, and the run still ended
+                // tidy — by accident, which is the worst way for it to be true.
+                // _returnHero below eventually reaches QueueShopPulseAfterHeroRestore
+                // (ql_core.js:9196), and that old-pipeline helper closes the shop,
+                // RE-OPENS it, then closes it again 0.05s later (ql_core.js:6490-6560).
+                // By that point opacity has been restored, so its re-open is a
+                // full-brightness flash of the very shop this run spent its whole life
+                // hiding. Owning the close leaves the pulse nothing to do.
+                if (_st.shopCmdSent) _closeShop(root);
+                _setHidden(root, false);
                 if (_st.didSwitch) {
+                    // Disarm before queueing: the restore is what eventually reaches
+                    // the pulse, so the stamp has to be in place first.
+                    _suppressShopPulse();
                     _returnHero(_st.returnHero || _resolveReturnHero(ctx));
                 }
                 if (_st.mode === "read") {
@@ -1371,10 +1455,27 @@
                     const S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_build_storage");
                     // FeatureRegistry disables us after 10 consecutive throwing ticks,
-                    // and a tick that threw mid-run never reached _finish. Without this
-                    // the shop and popup would stay dimmed for the rest of the session
-                    // with nothing left running to undo it.
-                    try { _setHidden(_root(), false); } catch(e) {}
+                    // and a tick that threw mid-run never reached _finish — so this is
+                    // the only place left to undo what the run had already done. Every
+                    // step is guarded by the state that records we did it, so a disable
+                    // from an idle feature (the user flipping the toggle off) is a
+                    // no-op. Same order as _finish: tear down while dimmed, un-dim last.
+                    try {
+                        const root = _root();
+                        if (_st.stage !== "idle" && _st.stage !== "done") {
+                            _closeBrowse(root);
+                            if (_st.shopCmdSent) _closeShop(root);
+                        }
+                        _setHidden(root, false);
+                        // Stranding the player on the storage hero is the loudest way
+                        // this can fail: they are standing in the hideout as the wrong
+                        // character with no idea why, and nothing is left running to
+                        // put them back.
+                        if (_st.didSwitch) {
+                            _suppressShopPulse();
+                            _returnHero(_st.returnHero || _resolveReturnHero(ctx));
+                        }
+                    } catch(e) {}
                     _reset();
                 },
                 onSettingsChanged: function() {
