@@ -97,7 +97,7 @@ function opacityOf(panel) {
 function runCase(seed, mode) {
     const rand = rng(seed);
     const latency = randomLatency(rand);
-    const titleMode = rand() < 0.5 ? "TOKEN" : "RESOLVED";
+    const titleMode = rand() < 0.5 ? sim.TITLE_MODE.TOKEN : sim.TITLE_MODE.RESOLVED;
 
     const h = sim.createHud({ latency, titleMode, inHideout: true });
     if (h.sandbox.loadErrors.length) {

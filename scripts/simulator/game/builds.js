@@ -81,6 +81,20 @@ class BuildsModel {
         this.doc = sandbox.doc;
         this.clock = sandbox.clock;
         this.latency = { ...DEFAULT_LATENCY, ...latency };
+        // Validated, not normalised. Every titleMode test is written as
+        // `x === TITLE_MODE.TOKEN`, so ANY unrecognised value silently selects the
+        // RESOLVED branch — the optimistic one this whole mechanism exists to guard
+        // against. The fuzzer passed the literals "TOKEN"/"RESOLVED" (uppercase)
+        // against values that are lowercase, so every one of its ~3000 cases ran
+        // resolved while reporting titleMode=TOKEN in its failure output. A typo
+        // must break the harness loudly, not quietly weaken it.
+        if (titleMode !== TITLE_MODE.TOKEN && titleMode !== TITLE_MODE.RESOLVED) {
+            throw new Error(
+                `[simulator] unknown titleMode ${JSON.stringify(titleMode)}; ` +
+                `expected TITLE_MODE.TOKEN (${JSON.stringify(TITLE_MODE.TOKEN)}) or ` +
+                `TITLE_MODE.RESOLVED (${JSON.stringify(TITLE_MODE.RESOLVED)})`
+            );
+        }
         this.titleMode = titleMode;
 
         this.hero = hero;
