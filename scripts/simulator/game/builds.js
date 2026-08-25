@@ -500,7 +500,17 @@ class BuildsModel {
             this.createBuildButton = header.addChild(
                 this.doc.create("Button", { id: "CreateBuildButton" })
             );
-            this.createBuildButton.SetPanelEvent("onmouseactivate", () => this.createNewBuild());
+            // citadel_popup_build_browser.xml:11 declares
+            //   onmouseactivate="CitadelHudHeroBuildsCreateNewBuild(); UIPopupButtonClicked();"
+            // The second call DISMISSES THE POPUP. Modelling only the create hid a
+            // real bug completely: the verify stage reads Label.BuildDescription from
+            // inside this popup, so a first-ever save wrote its 214 chars and then
+            // reported "save not confirmed by the build (details read back 0 chars)".
+            // Confirmed in-game 2026-08-25 with that exact wording.
+            this.createBuildButton.SetPanelEvent("onmouseactivate", () => {
+                this.createNewBuild();
+                this.closeBuildBrowser();
+            });
 
             this.buildSelector = this.popupPanel.addChild(
                 this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector" })

@@ -376,9 +376,21 @@ function checkInvariants(r) {
         //     already been restored by then, so that reopen is a full-brightness
         //     flash of the UI the run spent its whole life hiding — and the end
         //     state looks perfectly clean either way.
-        if (r.shopOpensAfterConclusion > 0 && r.sabotage.indexOf("reopen the shop") === -1) {
+        //
+        //     Budgeted, not forbidden, for the same reason invariant 6 budgets two
+        //     creates: the latch fires at the FIRST terminal line, and a 3.1.9
+        //     migration legitimately runs a second write session afterwards (the
+        //     migration, then the save queued while it ran). That session opens the
+        //     shop for its own round trip, dimmed, exactly as intended — blaming it
+        //     on post-run cleanup reported four failures that were the pipeline
+        //     working. One open per session past the first; a stray flash on top of
+        //     that still fails.
+        const writeSessions = (r.writeLines || [])
+            .filter((l) => /write: (success|failed)/.test(l)).length;
+        const reopenBudget = Math.max(0, writeSessions - 1);
+        if (r.shopOpensAfterConclusion > reopenBudget && r.sabotage.indexOf("reopen the shop") === -1) {
             fails.push("reopened the shop " + r.shopOpensAfterConclusion +
-                       "x after the run concluded");
+                       "x after the run concluded (budget " + reopenBudget + ")");
         }
 
         // 9. Never strand the player on the storage hero. No sabotage selects
@@ -406,8 +418,10 @@ function main() {
     const args = process.argv.slice(2);
     let cases = 200;
     let onlySeed = null;
+    let listAll = false;
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--seed") onlySeed = Number(args[++i]);
+        else if (args[i] === "--list") listAll = true;
         else if (!isNaN(Number(args[i]))) cases = Number(args[i]);
     }
 
@@ -420,6 +434,8 @@ function main() {
     // message text is the key, minus its parenthetical detail.
     const byKind = new Map();
     const firstSeedOfKind = new Map();
+    const outcomes = new Map();
+    const tally = (k) => outcomes.set(k, (outcomes.get(k) || 0) + 1);
 
     for (const seed of seeds) {
         for (const mode of modes) {
@@ -431,6 +447,19 @@ function main() {
                 r = { seed, mode, fatal: "harness crashed: " + (e && e.stack ? e.stack : e) };
             }
             const fails = checkInvariants(r);
+            if (r.fatal) {
+                tally("harness crashed");
+            } else {
+                tally("read: " + (r.loadState || "none"));
+                // Joined rather than counted separately because a run can write twice
+                // (a 3.1.9 migration, then the queued save) and "success+failed" is a
+                // different story from two runs that each did one of them.
+                const w = (r.writeLines || [])
+                    .filter((l) => /write: (success|failed)/.test(l))
+                    .map((l) => (l.indexOf("write: success") !== -1 ? "success" : "failed"));
+                tally("write: " + (w.length ? w.join("+") : "none"));
+                if (r.migrated) tally("3.1.9 migration ran");
+            }
             if (fails.length) {
                 failed++;
                 failures.push({ r, fails });
@@ -464,6 +493,26 @@ function main() {
 
     console.log(`\n${run} run(s), ${failed} violated an invariant.`);
     if (failures.length > 10) console.log(`(${failures.length - 10} further failures not printed)`);
+    // Outcome tally. The invariants only say "nothing was broken", which a pipeline
+    // that achieves nothing at all satisfies perfectly. This is the other half:
+    // how often the round trip actually worked. Needed to judge whether a change
+    // that removes failures also removed the successes that justified it.
+    if (outcomes.size > 0) {
+        console.log("\noutcomes:");
+        for (const [k, n] of [...outcomes.entries()].sort()) {
+            console.log(`  ${String(n).padStart(5)}  ${k}`);
+        }
+    }
+    // --list prints every failure on one line. The totals alone cannot answer the
+    // only question that matters after a code change: are these the SAME failures
+    // as before, or did I trade four old ones for four new ones? Diffing two
+    // --list runs answers it; comparing two counts does not.
+    if (listAll && failures.length) {
+        console.log("\nall failures (seed/mode: kinds):");
+        for (const { r, fails } of failures) {
+            console.log(`  ${r.seed}/${r.mode}: ${fails.map((f) => String(f).replace(/\s*\(.*$/, "")).join(" ; ")}`);
+        }
+    }
     if (byKind.size > 0) {
         console.log("\nby kind:");
         const sorted = [...byKind.entries()].sort((a, b) => b[1] - a[1]);
