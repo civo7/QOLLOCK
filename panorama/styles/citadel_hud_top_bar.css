@@ -94,16 +94,6 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	flow-children: right;
 }
 
-.ult_cooldowns_active #StatusRow
-{
-	flow-children: down;
-	height: 45px;
-}
-
-.ult_cooldowns_active .UltimateUnlocked .UltimateStatus
-{
-	horizontal-align: center;
-}
 
 #UltimateCooldownTextHidden
 {
@@ -119,18 +109,6 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	font-weight: bold;
 	text-shadow: 0px 0px 0px 4.0 offBlack;
 	z-index: 999;
-}
-
-.ult_cooldowns_active .UltimateUnlocked #UltimateCooldownTextShown
-{
-	visibility: visible;
-}
-
-.ult_cooldowns_active .UltimateCooldownReady #UltimateCooldownTextShown,
-.ult_cooldowns_active.gScoreboardOpen #UltimateCooldownTextShown,
-.ult_cooldowns_active .gScoreboardOpen #UltimateCooldownTextShown
-{
-	visibility: collapse;
 }
 
 .AlwaysPlayerName
@@ -156,25 +134,10 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	visibility: visible;
 }
 
-.qol_topbar_nicknames_enabled CitadelHudTopBarPlayer .AlwaysPlayerName
-{
-	visibility: visible;
-}
 
 .spec_mode .AlwaysPlayerName
 {
 	margin-top: -15px;
-}
-
-.qol_topbar_nicknames_enabled CitadelHudTopBarPlayer .QOLNickRuntime
-{
-	ignore-parent-flow: true;
-	horizontal-align: center;
-	vertical-align: top;
-	margin-top: 2px;
-	visibility: visible;
-	opacity: 1;
-	z-index: 1200;
 }
 
 .QOLAlwaysPlayerNameFallback
