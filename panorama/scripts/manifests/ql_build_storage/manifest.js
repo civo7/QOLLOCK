@@ -1131,6 +1131,12 @@
                     _reportReadOutcome(code, detail);
                 } else if (_st.mode === "write") {
                     _writeStatus(root, code === "success" ? "success" : "failed", detail || "");
+                    _callQol("finalizeSaveSettingsLoaderSession", undefined, [
+                        code === "success" ? "success" : "failed",
+                        detail || "",
+                        _now(),
+                        _st.didSwitch
+                    ]);
                     // 3.1.9 MIGRATION — remove this guard with legacy_3_1_9.js.
                     // A migration write has no request of its own to clear, and the
                     // attribute it would clear may by then hold a REAL save the user
@@ -2007,6 +2013,7 @@
                             _st.requestToken = req.requestToken;
                             _st.startedAt = now;
                             _st.returnHero = _resolveReturnHero(ctx);
+                            _callQol("beginSaveSettingsLoaderSession", undefined, [req.requestToken, now]);
                             _writeStatus(root, "pending", "switching_to_storage_hero");
                             _go("switch_hero", now, 0);
                             _reschedule(ACTIVE_RATE_SEC);
@@ -2090,7 +2097,8 @@
                     "buildDefaultConfig", "mergeConfig", "writeStorageConfigRawToUi",
                     "isConnectedToHideout", "isHudClassActive",
                     "beginSettingsLoaderSession", "finalizeSettingsLoaderSession",
-                    "setSettingsLoaderStepState", "dispatchCitadelConCommand"
+                    "setSettingsLoaderStepState", "dispatchCitadelConCommand",
+                    "beginSaveSettingsLoaderSession", "finalizeSaveSettingsLoaderSession"
                 ];
                 for (let i = 0; i < required.length; i++) {
                     asserts.push({

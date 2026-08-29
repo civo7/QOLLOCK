@@ -524,7 +524,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SETTINGS_LOADER_SKIP_BUTTON_ID = "QOLSettingsLoaderSkipButton";
     const SETTINGS_LOADER_SKIP_LABEL_ID = "QOLSettingsLoaderSkipButtonLabel";
     const SETTINGS_LOADER_SKIP_TEXT = "Skip";
-    const SETTINGS_LOADER_WARNING_TEXT = "DO NOT PRESS ANY KEYS UNTIL COMPLETE UNLESS PROMPTED";
+    const SETTINGS_LOADER_WARNING_TEXT = "DO NOT PRESS ANYTHING";
     const SETTINGS_LOADER_ICON_PENDING = "s2r://panorama/images/getting_started/checklist_task_empty_png.vtex";
     const SETTINGS_LOADER_ICON_DONE = "s2r://panorama/images/getting_started/checklist_task_complete_png.vtex";
     const SETTINGS_LOADER_ICON_ACTIVE = "s2r://panorama/images/glyphs/arrow_right.vsvg";
@@ -5990,7 +5990,7 @@ function GetUIRoot() {
         if (sig === State.settingsLoaderLastRenderSig) return;
         State.settingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Loader") title.text = "QOL Settings Loader";
+        if (title && title.text !== "QOLLOCK LOADING...") title.text = "QOLLOCK LOADING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isShopPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
@@ -6276,7 +6276,7 @@ function GetUIRoot() {
         if (sig === State.saveSettingsLoaderLastRenderSig) return;
         State.saveSettingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Saver") title.text = "QOL Settings Saver";
+        if (title && title.text !== "QOLLOCK SAVING...") title.text = "QOLLOCK SAVING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
@@ -6480,7 +6480,7 @@ function GetUIRoot() {
         if (sig === State.clearSettingsLoaderLastRenderSig) return;
         State.clearSettingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Clearer") title.text = "QOL Settings Clearer";
+        if (title && title.text !== "QOLLOCK CLEARING...") title.text = "QOLLOCK CLEARING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
