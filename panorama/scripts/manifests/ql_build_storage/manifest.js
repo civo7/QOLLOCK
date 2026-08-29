@@ -1025,7 +1025,13 @@
                 _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
                 _setStep("return_hero", "done", _st.returnHero || "");
                 _setStep("complete", code === "success" ? "done" : "skipped", detail || "");
-                _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
+                
+                // Do not finalize the session yet if we are migrating. If we do, ql_core.js
+                // will close the browser and shop popup, which breaks the subsequent write pass.
+                if (!(code === "success" && _st.fromLegacy && _st.mode === "read")) {
+                    _callQol("finalizeSettingsLoaderSession", undefined, [code, detail || "", _now()]);
+                }
+
                 // The read's own terminal line belongs here, not in _finish. A 3.1.9
                 // migration reports its read outcome and then keeps the session alive
                 // to re-home the token, so a line emitted from _finish would never be
@@ -1099,6 +1105,15 @@
                         _now(),
                         _st.didSwitch
                     ]);
+                    
+                    if (_st.fromLegacy) {
+                        _callQol("finalizeSettingsLoaderSession", undefined, [
+                            code === "success" ? "success" : "failed",
+                            detail || "",
+                            _now()
+                        ]);
+                    }
+                    
                     // 3.1.9 MIGRATION — remove this guard with legacy_3_1_9.js.
                     // A migration write has no request of its own to clear, and the
                     // attribute it would clear may by then hold a REAL save the user
