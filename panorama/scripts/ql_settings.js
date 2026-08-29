@@ -3964,6 +3964,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "nkonin.me", preset: "nkonin.me" });
     entries.push({ label: "loony", preset: "loony" });
     entries.push({ label: "leah", preset: "leah" });
+    entries.push({ label: "Thorkizzle", preset: "Thorkizzle" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
