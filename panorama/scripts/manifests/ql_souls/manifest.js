@@ -26,6 +26,7 @@
         ],
         create: function(ctx) {
             var _lastSig = "";
+            var _loop = null;
             var PANEL_ID = "gold_and_ap_container";
 
             function _hasNonDefault(cfg) {
@@ -63,9 +64,24 @@
                 } catch(e) {}
             }
 
+            function _tick() {
+                try { _apply(ctx.config.all()); } catch(e) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
+                        QOL.core.Logger.logError("ql_souls", "_tick: " + (e.message || e));
+                    }
+                }
+            }
+
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature("ql_souls");
                     _lastSig = "";
                     try {
                         var p = $.GetContextPanel().FindChildTraverse(PANEL_ID);
