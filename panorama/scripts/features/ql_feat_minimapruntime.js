@@ -513,7 +513,7 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         if (!isFinite(scale) || scale <= 0) scale = 1.0;
         if (scale < 0.20) scale = 0.20;
         if (scale > 2.00) scale = 2.00;
-        var scaleText = Math.round(scale * 100) + "%";
+        var scaleText = scale.toFixed(2) + ", " + scale.toFixed(2);
 
         if (rangePanels.length <= 0 && root && root.FindChildTraverse) {
             var fallbackCastRange = root.FindChildTraverse("CastRange");
@@ -522,8 +522,8 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
         for (var j = 0; j < rangePanels.length; j++) {
             var panel = rangePanels[j];
             if (!panel || !panel.style) continue;
-            if (panel.style.preTransformScale2d !== "1.00, 1.00") panel.style.preTransformScale2d = "1.00, 1.00";
-            if (panel.style.uiScale !== scaleText) panel.style.uiScale = scaleText;
+            if (panel.style.preTransformScale2d !== scaleText) panel.style.preTransformScale2d = scaleText;
+            if (panel.style.uiScale !== "100%") panel.style.uiScale = "100%";
         }
         State.minimapCastRangeScaleApplied = rangePanels.length > 0 && Math.abs(scale - 1.0) > 0.001;
     }
