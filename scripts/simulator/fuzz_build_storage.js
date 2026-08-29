@@ -121,6 +121,9 @@ function opacityOf(panel) {
     } catch (e) { return null; }
 }
 
+// Set by --events; null means "randomise 1-5 as usual".
+let forcedEvents = null;
+
 function runCase(seed, mode) {
     const rand = rng(seed);
     const latency = randomLatency(rand);
@@ -164,7 +167,13 @@ function runCase(seed, mode) {
     }
 
     // Drive the clock in slices, injecting sabotage at random points.
-    const events = 1 + Math.floor(rand() * 5);
+    //
+    // At least one event, always — until --events made it configurable there was no
+    // way to run this harness WITHOUT sabotage, so it could report "552 successes in
+    // 3000 runs" and nobody could tell whether that meant the pipeline is broken or
+    // that it was being actively attacked in every single run. It was the latter, but
+    // the harness had no way to say so. `--events 0` is the control group.
+    const events = forcedEvents !== null ? forcedEvents : (1 + Math.floor(rand() * 5));
     const totalMs = 90000;
     const sliceMs = 250;
     let nextSabotageAt = Math.floor(rand() * 40) * sliceMs;
@@ -422,10 +431,12 @@ function main() {
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--seed") onlySeed = Number(args[++i]);
         else if (args[i] === "--list") listAll = true;
+        else if (args[i] === "--events") forcedEvents = Number(args[++i]);
         else if (!isNaN(Number(args[i]))) cases = Number(args[i]);
     }
 
     const seeds = onlySeed !== null ? [onlySeed] : Array.from({ length: cases }, (_, i) => i + 1);
+    if (forcedEvents !== null) console.log(`sabotage events forced to ${forcedEvents} per run`);
     const modes = ["read", "write"];
     let run = 0, failed = 0;
     const failures = [];

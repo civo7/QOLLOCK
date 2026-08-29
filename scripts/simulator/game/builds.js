@@ -491,8 +491,34 @@ class BuildsModel {
         // clicked, so nothing in its subtree exists before that.
         if (!this.popupPanel || !this.popupPanel.IsValid()) {
             if (!this.browseOpen) return;
-            this.popupPanel = this.doc.root.addChild(
-                this.doc.create("PopupBuildBrowser", { classes: ["PopupPanel", "Hidden"] })
+            // Real placement, from the Panorama debugger 2026-08-25:
+            //   #Hud > PopupManager.PopupManager.HaveActivePopups
+            //          ├─ Button#BlurBackground.Hidden
+            //          ├─ Panel#DimBackground          <- popupbackground="dim"
+            //          └─ PopupBuildBrowser#BrowseBuilds.PopupPanel
+            // It was modelled as a bare child of #Hud with no id, which quietly made
+            // two things untestable: the popup is reached by walking UP from the
+            // selector to a .PopupPanel, and that walk now has a PopupManager above it;
+            // and #DimBackground is a panel this mod dims by id, so a model without one
+            // could never show it missing. The engine's own dim backdrop is also the
+            // likeliest explanation for "everything else looks dimmed" — it veils the
+            // screen behind the popup with no help from us.
+            if (!this.popupManager || !this.popupManager.IsValid()) {
+                this.popupManager = this.doc.root.addChild(
+                    this.doc.create("PopupManager", {
+                        id: "PopupManager",
+                        classes: ["PopupManager", "HaveActivePopups"],
+                    })
+                );
+                this.blurBackground = this.popupManager.addChild(
+                    this.doc.create("Button", { id: "BlurBackground", classes: ["Hidden"] })
+                );
+                this.dimBackground = this.popupManager.addChild(
+                    this.doc.create("Panel", { id: "DimBackground" })
+                );
+            }
+            this.popupPanel = this.popupManager.addChild(
+                this.doc.create("PopupBuildBrowser", { id: "BrowseBuilds", classes: ["PopupPanel", "Hidden"] })
             );
             const header = this.popupPanel.addChild(this.doc.create("Panel", { id: "Header" }));
             // Sibling of the selector, and present from inflation onward — which is

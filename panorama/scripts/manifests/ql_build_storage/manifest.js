@@ -141,13 +141,19 @@
     // to the bound above so no reveal the pipeline was willing to wait for can
     // outlive the cleanup that owns it — sweeping longer than that would start
     // dismissing browsers the PLAYER opened.
-    const BROWSE_SWEEP_MS = BROWSER_OPEN_TIMEOUT_MS;
-    // Minimum gap between two Browse presses. The waiting stages call every STEP_MS
-    // and each press queues its own reveal, so a slow client returned ~20 popups one
-    // after another (fuzzer seed 54). Not the full reveal window either: a press
-    // really can be lost — sabotage deletes the popup mid-inflate — and a stage that
-    // cannot press again inside its own budget just fails instead.
-    const BROWSE_REPRESS_MS = 1000;
+    const CLEANUP_SWEEP_MS = BROWSER_OPEN_TIMEOUT_MS;
+    // Minimum gap between two presses of the same non-idempotent button. The waiting
+    // stages call every STEP_MS, and none of these buttons is a no-op when pressed
+    // again:
+    //   Browse queues another popup reveal — a slow client returned ~20 popups one
+    //     after another (fuzzer seed 54).
+    //   Edit re-seeds the edit fields FROM THE BUILD, so a queued second open wipes
+    //     the token we just typed and the commit saves 0 chars (fuzzer seed 52).
+    //   Save commits again.
+    // Not the full stage window either: a press really can be lost — sabotage
+    // deletes the popup mid-inflate — and a stage that cannot press again inside its
+    // own budget just fails instead.
+    const REPRESS_MS = 1000;
 
     // ── Hiding the machinery ──
     // The round trip drives real game UI: the shop opens, the browser popup opens,
@@ -460,6 +466,69 @@
         return out;
     }
 
+    /**
+     * Describe a panel the way a log reader needs it: what it IS, not that it exists.
+     *
+     * There is no classList in Panorama — BHasClass only answers about a name you
+     * already suspect — so this reports the id plus the handful of classes this file
+     * makes decisions on. Enough to tell the live panel from an inert duplicate,
+     * which is the distinction that has cost us the most.
+     */
+    function _describe(panel) {
+        if (!_alive(panel)) return "MISSING";
+        let out = "";
+        try { out = "#" + (panel.id || "(no id)"); } catch(e) { out = "#?"; }
+        const flags = [];
+        const probe = ["PopupPanel", "Hidden", CLASS_LOADING, CLASS_SELECTED,
+                       CLASS_CAN_EDIT, CLASS_EDITING, "shopModsBuild", "ShowMyBuilds"];
+        for (let i = 0; i < probe.length; i++) {
+            if (_hasClass(panel, probe[i])) flags.push(probe[i]);
+        }
+        if (flags.length) out += " ." + flags.join(".");
+        // Read the inline opacity back. Panorama does not always return what was
+        // written here, so an empty answer proves nothing — but a value does, and
+        // that is what settles "did our dim actually land on this panel".
+        try {
+            const op = String(panel.style.opacity || "");
+            if (op) out += " opacity=" + op;
+        } catch(e) {}
+        return out;
+    }
+
+    /**
+     * One block per run, emitted once the list is ready: what the tree ACTUALLY gave
+     * us, with the candidate counts.
+     *
+     * The counts are the point. Every hard bug in this file has been a lookup that
+     * returned something plausible and wrong — a second CitadelShopModsBuild that is
+     * not the live one, a HeroBuildSelector reached by id in a tree where ids are
+     * C++-assigned and duplicated. "Found it" cannot distinguish those; "3 matched,
+     * using the first" can.
+     *
+     * Also the only honest way to answer whether the dim landed: the manifest cannot
+     * see the screen, but it can say which panels it aimed at.
+     */
+    function _reportTree(root, label) {
+        const selectors = _findClass(root, "ShowMyBuilds");
+        const shops = _findClass(root, "CitadelHudHeroShop");
+        const owners = _findClass(root, "shopModsBuild");
+        const editors = _findClass(root, "CitadelHudHeroBuilds");
+        const editorById = _find(root, "CitadelHudHeroBuilds");
+        _log("tree[" + label + "]: popup " + _describe(_popup(root)) +
+             " | selector " + _describe(_find(root, PID_SELECTOR)) +
+             " (ShowMyBuilds x" + selectors.length + ")");
+        _log("tree[" + label + "]: list " + _describe(_find(root, PID_BUILD_LIST)) +
+             " | details " + _describe(_find(root, PID_DETAILS)) +
+             " | descEntry " + _describe(_find(root, PID_DESC_ENTRY)));
+        _log("tree[" + label + "]: shop x" + shops.length + " " + _describe(shops[0]) +
+             " | shopModsBuild x" + owners.length +
+             " | heroBuilds byClass x" + editors.length + " byId " + _describe(editorById));
+        const targets = _hideTargets(root);
+        let dim = "";
+        for (let i = 0; i < targets.length; i++) dim += (i ? ", " : "") + _describe(targets[i]);
+        _log("tree[" + label + "]: dim targets x" + targets.length + ": " + (dim || "NONE"));
+    }
+
     function _setHidden(root, hidden) {
         const Utils = _qol("utils");
         const targets = _hideTargets(root);
@@ -495,6 +564,14 @@
      * both "editor opened" and "save committed" (it clears on commit).
      */
     function _isEditing(root) {
+        // By ID first, because that is what actually exists: hud.xml:221 declares
+        // <CitadelHudHeroBuilds id="CitadelHudHeroBuilds" hittest="false" /> with NO
+        // class attribute, and a panel's TYPE is not a class in Panorama. So the class
+        // sweep below matches nothing in the live client — the new tree trace reported
+        // "heroBuilds x0" — and this function has always been running on its fallback.
+        // Harmless, but a lookup that can never succeed is a lookup nobody can reason
+        // about. Kept anyway: a future layout may add the class, and it costs one pass.
+        if (_hasClass(_find(root, "CitadelHudHeroBuilds"), CLASS_EDITING)) return true;
         const panels = _findClass(root, "CitadelHudHeroBuilds");
         for (let i = 0; i < panels.length; i++) {
             if (_hasClass(panels[i], CLASS_EDITING)) return true;
@@ -563,8 +640,35 @@
                 ok = true;
             }
         } catch(e) {}
-        if (_activate(_find(root, PID_SAVE_BTN))) ok = true;
+        // Fallback, not a second press: CitadelHudHeroBuildsSaveEdits above already
+        // committed, and pressing the button on top commits again. Same mistake the
+        // Browse path made, with the same fix.
+        if (!ok && _activate(_find(root, PID_SAVE_BTN))) ok = true;
         return ok;
+    }
+
+    /**
+     * Leave edit mode WITHOUT committing.
+     *
+     * citadel_shop_mods_build.xml:30 —
+     *   <Panel id="CancelChangesButton" class="... EditModeButton"
+     *          onmouseactivate="CitadelHudHeroBuildsDiscardEdits()">
+     * so the global and the button are one action; the global goes first for the
+     * reason _triggerCreate explains.
+     *
+     * Save must not be the only way out. A run that dies anywhere between "enter the
+     * editor" and "the commit landed" leaves a half-typed token in a visible field,
+     * and pressing Save to tidy up would commit the very state we just decided not
+     * to trust. Discard throws it away, which is the right end for every failure.
+     */
+    function _triggerDiscard(root) {
+        try {
+            if (typeof CitadelHudHeroBuildsDiscardEdits === "function") {
+                CitadelHudHeroBuildsDiscardEdits();
+                return true;
+            }
+        } catch(e) {}
+        return _activate(_find(root, "CancelChangesButton"));
     }
 
     /**
@@ -684,6 +788,14 @@
                 // debt belongs to the feature, not to the run.
                 const priorPress = _st.browsePressedAt || 0;
                 const priorSweep = _st.sweepUntil || 0;
+                // The DEBT is carried; the PERMISSION is not. editPressedAt says "this
+                // run opened the editor", which is what authorises discarding it —
+                // carrying that made the next run believe it had opened an editor it
+                // never touched, and cost eight saves that used to land. owesEditorClose
+                // says "an editor opening late is ours to close", which really does
+                // outlive the run that caused it. Two different facts, one of which
+                // used to be doing both jobs.
+                const priorOwesEditor = !!_st.owesEditorClose;
                 _st = {
                     stage: "idle",
                     mode: "",            // "read" | "write"
@@ -705,8 +817,12 @@
                     sawAnyBuild: false,
                     createdBuild: false,
                     verifyReopened: false,  // verify had to reopen the browser to read back
+                    treeReported: false,    // the one-shot tree snapshot has been logged
                     browsePressedAt: priorPress,  // outlives the run that pressed it
                     sweepUntil: priorSweep,       // ditto: the popup is still coming
+                    editPressedAt: 0,    // gate for _openEditor, and permission to discard
+                    owesEditorClose: priorOwesEditor,
+                    savePressedAt: 0,    // gate for _pressSave
                     token: "",           // write mode: what we must persist
                     requestToken: "",    // write mode: bridge correlation id
                     // 3.1.9 MIGRATION — delete these three with legacy_3_1_9.js.
@@ -742,6 +858,18 @@
 
             /** Enter a stage and stamp when its wait started, for the timeout bound. */
             function _go(stage, now, delayMs) {
+                // One line per TRANSITION, with the time the previous stage actually
+                // took. Not per tick: the loop runs at 5Hz and $.Msg is not free, so a
+                // per-tick trace would move the very timings it exists to measure.
+                //
+                // Always on, deliberately. The whole round trip used to leave six lines
+                // in a 2078-line engine log, so every in-game failure cost a repack and
+                // a play session and came back with nothing to read. Fifteen lines per
+                // run turns "it didn't work" into "await_list waited 12s and gave up".
+                if (_st.stage && _st.stage !== stage) {
+                    _log("stage: " + (_st.mode || "?") + " " + _st.stage + " -> " + stage +
+                         " after " + Math.round(now - (_st.stageAt || now)) + "ms");
+                }
                 _st.stage = stage;
                 _st.stageAt = now;
                 _st.nextAt = now + (delayMs === undefined ? STEP_MS : delayMs);
@@ -896,15 +1024,22 @@
                 // not reach the popup's oncancel. Before the hero switch, too:
                 // selecthero rebuilds the shop panel and can strand the popup.
                 _closeBrowse(root);
-                // A press already fired but not yet honoured has no popup to close
-                // YET — the client inflates it browseRevealMs later, which on a loaded
-                // machine is seconds. Keep watching for that long so the popup is
-                // dismissed the moment it appears, instead of landing on a player
-                // whose run is already over. Costs one tick per pass and nothing at
-                // all when no press was outstanding.
-                _st.sweepUntil = (_st.browsePressedAt &&
-                                  (_now() - _st.browsePressedAt) < BROWSE_SWEEP_MS)
-                    ? _st.browsePressedAt + BROWSE_SWEEP_MS
+                // And leave the editor, which Save is not guaranteed to have done: any
+                // failure between entering it and the commit landing ends with our
+                // half-typed token sitting in a text field the player is now looking
+                // at. Only when WE opened it — editPressedAt is exactly that fact — so
+                // an editor the player opened themselves is theirs to keep.
+                if (_st.editPressedAt && _isEditing(root)) _triggerDiscard(root);
+                // A press already fired but not yet honoured has nothing to close YET —
+                // the client honours it editModeMs / browseRevealMs later, which on a
+                // loaded machine is seconds. Keep watching for that long so whatever
+                // opens gets closed the moment it appears, instead of landing on a
+                // player whose run is already over. Costs one tick per pass and nothing
+                // at all when no press was outstanding.
+                if (_st.editPressedAt) _st.owesEditorClose = true;
+                const lastPress = Math.max(_st.browsePressedAt || 0, _st.editPressedAt || 0);
+                _st.sweepUntil = (lastPress && (_now() - lastPress) < CLEANUP_SWEEP_MS)
+                    ? lastPress + CLEANUP_SWEEP_MS
                     : 0;
                 // Close the shop only when WE opened it. shopCmdSent is exactly that
                 // fact: the toggle is fired once, in open_shop, and only when the shop
@@ -956,7 +1091,7 @@
              * it. Modal, and only Cancel closes it. The stamp is what lets _finish
              * tell "no popup, nothing to do" apart from "no popup YET".
              *
-             * Pressed at most once per BROWSE_REPRESS_MS, for the same reason the shop
+             * Pressed at most once per REPRESS_MS, for the same reason the shop
              * toggle is fired once: the waiting stages call this every STEP_MS, and
              * every press queues its own reveal. The fuzzer showed what that costs —
              * with an 11.7s reveal, ~20 popups came back one after another and the
@@ -966,11 +1101,45 @@
              */
             function _openBrowse(root) {
                 const now = _now();
-                if (_st.browsePressedAt && (now - _st.browsePressedAt) < BROWSE_REPRESS_MS) {
+                if (_st.browsePressedAt && (now - _st.browsePressedAt) < REPRESS_MS) {
                     return true;
                 }
                 _st.browsePressedAt = now;
                 return _pressBrowse(root);
+            }
+
+            /**
+             * Open the editor, at most once per REPRESS_MS.
+             *
+             * Entering edit mode makes the client SEED the edit fields from the build
+             * (buildDescEntry.text = build.description), and that seeding lands when
+             * the editor opens, not when the button is pressed. await_editor was
+             * pressing every STEP_MS while waiting for gEditingBuilds, so a run
+             * queued four opens, typed its token into the field the first one
+             * produced, and then watched the other three overwrite it with the
+             * build's empty description. The commit saved 0 chars and the pipeline
+             * reported "save not confirmed by the build (details read back 0 chars)"
+             * — the same line the user hit in-game 2026-08-25, and the single largest
+             * cause of write failure: 48 of 59 on a fast machine with no sabotage at
+             * all (fuzzer seed 52).
+             */
+            function _openEditor(root) {
+                const now = _now();
+                if (_st.editPressedAt && (now - _st.editPressedAt) < REPRESS_MS) {
+                    return true;
+                }
+                _st.editPressedAt = now;
+                return _triggerEdit(root);
+            }
+
+            /** Commit, at most once per REPRESS_MS. Each press commits again. */
+            function _pressSave(root) {
+                const now = _now();
+                if (_st.savePressedAt && (now - _st.savePressedAt) < REPRESS_MS) {
+                    return true;
+                }
+                _st.savePressedAt = now;
+                return _triggerSave(root);
             }
 
 
@@ -1129,6 +1298,15 @@
                 _st.cursor = 0;
                 _log("list: " + found.total + " build(s), " + found.indices.length +
                      (_st.legacyPass ? " of them mine (3.1.9 sweep)" : " named " + BUILD_NAME));
+                // Once per run, here: this is the first moment everything the round trip
+                // depends on exists at the same time — popup inflated, list replied,
+                // details pane built — so it is the only point where a snapshot is worth
+                // anything. Guarded because the 3.1.9 sweep collects a second time and
+                // the tree has not changed in between.
+                if (!_st.treeReported) {
+                    _st.treeReported = true;
+                    _reportTree(root, _st.mode || "run");
+                }
             }
 
             // ── READ ──
@@ -1456,7 +1634,7 @@
                                 _finish(root, "failed", "edit mode never opened");
                                 return;
                             }
-                            _triggerEdit(root);
+                            _openEditor(root);
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
@@ -1488,10 +1666,30 @@
                         return;
                     }
 
-                    case "commit":
-                        _triggerSave(root);
+                    case "commit": {
+                        // Re-read the field we are about to commit. Entering edit mode
+                        // seeds it from the build, and that seeding is asynchronous, so
+                        // an open queued before we typed can land between
+                        // write_description and here and silently replace our token
+                        // with the build's empty description. Press-once discipline
+                        // makes that rare; this makes committing 0 chars impossible,
+                        // which matters more, because a wiped field commits happily and
+                        // only the verify stage two steps later notices anything wrong.
+                        const entry = _descEntry(root);
+                        if (_alive(entry) && _extractToken(_readText(entry)) !== _st.token) {
+                            if (_expired(now, EDITOR_TIMEOUT_MS)) {
+                                _finish(root, "failed", "the editor kept clearing the description");
+                                return;
+                            }
+                            _log("write: the editor cleared the description — typing it again");
+                            _setEntryText(entry, _st.token);
+                            _st.nextAt = now + STEP_MS;
+                            return;
+                        }
+                        _pressSave(root);
                         _go("await_commit", now);
                         return;
+                    }
 
                     case "await_commit":
                         // The editor closing IS the commit: only the client can clear
@@ -1501,7 +1699,7 @@
                                 _finish(root, "failed", "editor never closed after Save");
                                 return;
                             }
-                            _triggerSave(root);
+                            _pressSave(root);
                             _st.nextAt = now + STEP_MS;
                             return;
                         }
@@ -1671,6 +1869,12 @@
                             if (now >= _st.sweepUntil) {
                                 _st.sweepUntil = 0;
                                 _reschedule(DORMANT_RATE_SEC);
+                            } else if (_st.owesEditorClose && _isEditing(root)) {
+                                // Same debt as the popup: an edit-open queued before we
+                                // gave up lands afterwards and drops the player into a
+                                // build editor they never asked for.
+                                _log("cleanup: left an editor that opened after the run ended");
+                                _triggerDiscard(root);
                             } else if (_isBrowseOpen(root)) {
                                 // Keep sweeping rather than disarming on the first hit.
                                 // A stage that waits on the popup presses Browse every
