@@ -114,18 +114,28 @@
                         (absent ? SLOT_NEVER_RESOLVED_BACKOFF_MS : SLOT_MISS_BACKOFF_MS);
                 }
                 return null;
+            }
+
             function _apply(cfg) {
                 var root = $.GetContextPanel();
-                if (root && root.SetHasClass) {
-                    var enabled = Number(cfg.ENABLE_NICKNAMES) === 1;
-                    root.SetHasClass("qol_topbar_nicknames_enabled", enabled);
+                if (root && root.FindChildTraverse) {
+                    var topBar = root.FindChildTraverse("TopBar");
+                    if (topBar && topBar.SetHasClass) {
+                        var enabled = Number(cfg.ENABLE_NICKNAMES) === 1;
+                        topBar.SetHasClass("qol_topbar_nicknames_enabled", enabled);
+                    }
                 }
             }
             return {
                 onEnable: function() { _apply(ctx.config.all()); },
                 onDisable: function() {
                     var root = $.GetContextPanel();
-                    if (root && root.SetHasClass) root.SetHasClass("qol_topbar_nicknames_enabled", false);
+                    if (root && root.FindChildTraverse) {
+                        var topBar = root.FindChildTraverse("TopBar");
+                        if (topBar && topBar.SetHasClass) {
+                            topBar.SetHasClass("qol_topbar_nicknames_enabled", false);
+                        }
+                    }
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
