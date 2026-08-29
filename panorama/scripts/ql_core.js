@@ -940,21 +940,59 @@ function ExpressShotLog(msg) {
 
     function ApplyLoaderCardTheme(card) {
         if (!card || !card.style) return;
-        // Styles are driven by ql_feat_settings_loader.css
+        var theme = GetSettingsUiThemePalette();
+        card.style.horizontalAlign = "center";
+        card.style.verticalAlign = "top";
+        card.style.flowChildren = "down";
+        card.style.marginTop = "30px";
+        card.style.width = "1040px";
+        card.style.maxWidth = "92%";
+        card.style.paddingTop = "18px";
+        card.style.paddingRight = "20px";
+        card.style.paddingBottom = "18px";
+        card.style.paddingLeft = "20px";
+        card.style.backgroundColor = theme.card;
+        card.style.border = theme.cardBorder;
+        card.style.borderRadius = "5px";
+        card.style.boxShadow = theme.cardShadow;
     }
 
     function ApplyLoaderWarningTheme(warning) {
         if (!warning || !warning.style) return;
-        // Styles are driven by ql_feat_settings_loader.css
+        var theme = GetSettingsUiThemePalette();
+        warning.style.horizontalAlign = "center";
+        warning.style.fontFamily = "oracle";
+        warning.style.marginBottom = "10px";
+        warning.style.fontSize = "14px";
+        warning.style.fontWeight = "semi-bold";
+        warning.style.letterSpacing = "1.0px";
+        warning.style.color = theme.warn;
+        warning.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.14)";
+        warning.style.textTransform = "uppercase";
     }
 
     function ApplyLoaderTitleTheme(title) {
         if (!title || !title.style) return;
-        // Styles are driven by ql_feat_settings_loader.css
+        var theme = GetSettingsUiThemePalette();
+        title.style.horizontalAlign = "center";
+        title.style.fontFamily = "oracle";
+        title.style.fontSize = "28px";
+        title.style.fontWeight = "semi-bold";
+        title.style.letterSpacing = "1.8px";
+        title.style.color = theme.title;
+        title.style.textShadow = "0px 0px 9px rgba(152, 255, 181, 0.12)";
+        title.style.marginBottom = "12px";
+        title.style.textTransform = "uppercase";
     }
 
     function ApplyLoaderDetailTheme(detailLabel) {
         if (!detailLabel || !detailLabel.style) return;
+        var theme = GetSettingsUiThemePalette();
+        detailLabel.style.width = "100%";
+        detailLabel.style.marginTop = "12px";
+        detailLabel.style.fontFamily = "oracle";
+        detailLabel.style.fontSize = "13px";
+        detailLabel.style.lineHeight = "19px";
         detailLabel.style.letterSpacing = "0.18px";
         detailLabel.style.color = theme.body;
         detailLabel.style.textShadow = "none";
@@ -5605,8 +5643,14 @@ function GetUIRoot() {
         overlay.hittest = false;
         overlay.hittestchildren = cfg.overlayHittestChildren;
         if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
+        overlay.style.horizontalAlign = "left";
+        overlay.style.verticalAlign = "top";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = cfg.zIndex;
+        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -6178,6 +6222,33 @@ function GetUIRoot() {
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
+        var saveCard = GetCachedPanel("saveSettingsLoaderCard");
+        if (saveCard) {
+            var saveCardTopPx = 36;
+            var startupVisible = IsSettingsLoaderVisibleNow(now);
+            var stackUnderStartupLoader = !!startupVisible;
+            var startupStackTopPx = 36;
+            if (stackUnderStartupLoader) {
+                var settingsCard = GetCachedPanel("settingsLoaderCard");
+                var settingsCardHeight = GetPanelLayoutHeightPx(settingsCard, 180);
+                startupStackTopPx = 36 + settingsCardHeight + 16;
+                saveCardTopPx = startupStackTopPx;
+            }
+            var clearVisible = IsClearSettingsLoaderVisibleNow(now);
+            if (clearVisible) {
+                var clearCard = GetCachedPanel("clearSettingsLoaderCard");
+                var clearFallbackTopPx = stackUnderStartupLoader ? startupStackTopPx : 36;
+                var clearTopPx = ReadPanelMarginTopPx(clearCard, clearFallbackTopPx);
+                var clearHeightPx = GetPanelLayoutHeightPx(clearCard, 180);
+                var stackedSaveTopPx = clearTopPx + clearHeightPx + 12;
+                if (stackedSaveTopPx > saveCardTopPx) saveCardTopPx = stackedSaveTopPx;
+            }
+            var desiredTop = String(saveCardTopPx) + "px";
+            if (saveCard.style.marginTop !== desiredTop) {
+                saveCard.style.marginTop = desiredTop;
+            }
+        }
+
         var title = GetCachedPanel("saveSettingsLoaderTitle");
         var warning = GetCachedPanel("saveSettingsLoaderWarning");
         var stepsWrap = GetCachedPanel("saveSettingsLoaderStepsWrap");
@@ -6373,6 +6444,17 @@ function GetUIRoot() {
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var clearCard = GetCachedPanel("clearSettingsLoaderCard");
+        if (clearCard) {
+            var clearCardTopPx = 36;
+            if (IsSettingsLoaderVisibleNow(now)) {
+                var startupCard = GetCachedPanel("settingsLoaderCard");
+                clearCardTopPx = 36 + GetPanelLayoutHeightPx(startupCard, 180) + 16;
+            }
+            var clearTop = String(clearCardTopPx) + "px";
+            if (clearCard.style.marginTop !== clearTop) {
+                clearCard.style.marginTop = clearTop;
+            }
+        }
 
         var title = GetCachedPanel("clearSettingsLoaderTitle");
         var warning = GetCachedPanel("clearSettingsLoaderWarning");
