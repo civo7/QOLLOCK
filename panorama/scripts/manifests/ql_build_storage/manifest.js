@@ -409,7 +409,20 @@
         const popup = _popup(root);
         if (!_alive(popup)) return false;
 
-        const buttons = _findClass(popup, "SecondaryButton");
+        let buttons = _findClass(popup, "SecondaryButton");
+        if (!buttons || buttons.length === 0) {
+            // Fallback: Valve removed SecondaryButton class. The buttons are inside .ButtonRow.
+            buttons = [];
+            const rows = _findClass(popup, "ButtonRow");
+            for (let r = 0; r < rows.length; r++) {
+                const row = rows[r];
+                for (let c = 0; c < row.GetChildCount(); c++) {
+                    const child = row.GetChild(c);
+                    if (child) buttons.push(child);
+                }
+            }
+        }
+
         let cancel = null;
         for (let i = 0; i < buttons.length; i++) {
             let handler = "";
