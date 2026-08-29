@@ -940,32 +940,31 @@ function ExpressShotLog(msg) {
 
     function ApplyLoaderCardTheme(card) {
         if (!card || !card.style) return;
-        var theme = GetSettingsUiThemePalette();
         card.style.horizontalAlign = "center";
         card.style.verticalAlign = "center";
         card.style.flowChildren = "down";
         card.style.marginTop = "0px";
-        card.style.width = "1200px";
+        card.style.width = "750px";
         card.style.maxWidth = "95%";
-        card.style.paddingTop = "40px";
-        card.style.paddingRight = "40px";
-        card.style.paddingBottom = "40px";
-        card.style.paddingLeft = "40px";
-        card.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( #101212 ), to( #080a0b ) )";
-        card.style.border = "2px solid #202525";
+        card.style.paddingTop = "32px";
+        card.style.paddingRight = "32px";
+        card.style.paddingBottom = "32px";
+        card.style.paddingLeft = "32px";
+        card.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.8) ), to( rgba(12, 15, 15, 0.8) ) )";
+        card.style.border = "1px solid rgba(210, 224, 216, 0.075)";
         card.style.borderRadius = "8px";
-        card.style.boxShadow = "fill #000000aa 0px 20px 60px 0px";
+        card.style.boxShadow = "fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px";
     }
 
     function ApplyLoaderWarningTheme(warning) {
         if (!warning || !warning.style) return;
         warning.style.horizontalAlign = "center";
         warning.style.fontFamily = "oracle";
-        warning.style.marginBottom = "40px";
-        warning.style.fontSize = "72px";
-        warning.style.fontWeight = "bold";
-        warning.style.letterSpacing = "2.0px";
-        warning.style.color = "#ff5555";
+        warning.style.marginBottom = "24px";
+        warning.style.fontSize = "22px";
+        warning.style.fontWeight = "semi-bold";
+        warning.style.letterSpacing = "1.0px";
+        warning.style.color = "#ff9d9d";
         warning.style.textShadow = "none";
         warning.style.textTransform = "uppercase";
     }
@@ -974,12 +973,12 @@ function ExpressShotLog(msg) {
         if (!title || !title.style) return;
         title.style.horizontalAlign = "center";
         title.style.fontFamily = "oracle";
-        title.style.fontSize = "64px";
+        title.style.fontSize = "36px";
         title.style.fontWeight = "bold";
-        title.style.letterSpacing = "2.0px";
-        title.style.color = "#ffffff";
+        title.style.letterSpacing = "1.5px";
+        title.style.color = "#f2faf5";
         title.style.textShadow = "none";
-        title.style.marginBottom = "10px";
+        title.style.marginBottom = "8px";
         title.style.textTransform = "uppercase";
     }
 
@@ -5648,7 +5647,7 @@ function GetUIRoot() {
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = cfg.zIndex;
-        overlay.style.backgroundColor = "#000000";
+        overlay.style.backgroundColor = "rgba(15, 20, 25, 0.92)";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
