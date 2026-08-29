@@ -539,7 +539,7 @@ class BuildsModel {
             });
 
             this.buildSelector = this.popupPanel.addChild(
-                this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector" })
+                this.doc.create("CitadelHeroBuildsSelector", { id: "HeroBuildSelector", classes: ["ShowMyBuilds"] })
             );
             const main = this.buildSelector.addChild(
                 this.doc.create("Panel", { classes: ["MainContainer"] })

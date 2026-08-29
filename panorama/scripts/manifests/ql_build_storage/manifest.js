@@ -540,6 +540,21 @@
         let dim = "";
         for (let i = 0; i < targets.length; i++) dim += (i ? ", " : "") + _describe(targets[i]);
         _log("tree[" + label + "]: dim targets x" + targets.length + ": " + (dim || "NONE"));
+
+        const popup = _popup(root);
+        const popupMgr = popup ? popup.GetParent() : null;
+        if (popupMgr) {
+            let chstr = "";
+            for (let i = 0; i < popupMgr.GetChildCount(); i++) {
+                const child = popupMgr.GetChild(i);
+                if (child) {
+                    let vis = child.BHasClass("Hidden") ? "hidden" : "visible";
+                    let op = child.style.opacity || "none";
+                    chstr += child.id + "[" + vis + ", op:" + op + "] ";
+                }
+            }
+            _log("tree[" + label + "]: PopupManager children: " + chstr);
+        }
     }
 
     function _setHidden(root, hidden) {
@@ -548,12 +563,23 @@
         for (let i = 0; i < targets.length; i++) {
             try {
                 if (hidden) {
-                    if (Utils && Utils.SetStyleSafe) Utils.SetStyleSafe(targets[i], "opacity", HIDE_OPACITY);
-                    else targets[i].style.opacity = HIDE_OPACITY;
+                    if (Utils && Utils.SetStyleSafe) {
+                        Utils.SetStyleSafe(targets[i], "opacity", HIDE_OPACITY);
+                        Utils.SetStyleSafe(targets[i], "transition", "none");
+                        Utils.SetStyleSafe(targets[i], "animation", "none");
+                    } else {
+                        targets[i].style.opacity = HIDE_OPACITY;
+                        targets[i].style.transition = "none";
+                        targets[i].style.animation = "none";
+                    }
                 } else if (Utils && Utils.ClearStyleSafe) {
                     Utils.ClearStyleSafe(targets[i], "opacity");
+                    Utils.ClearStyleSafe(targets[i], "transition");
+                    Utils.ClearStyleSafe(targets[i], "animation");
                 } else {
                     targets[i].style.opacity = "1.0";
+                    targets[i].style.transition = null;
+                    targets[i].style.animation = null;
                 }
             } catch(e) {}
         }
