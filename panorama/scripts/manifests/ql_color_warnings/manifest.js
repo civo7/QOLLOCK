@@ -332,15 +332,24 @@
                     if (!panels || !panels.progressLeft) return;
                     var progressLeft = panels.progressLeft;
                     var parent = progressLeft.GetParent ? progressLeft.GetParent() : null;
-                    var pH = Number(progressLeft.actuallayoutheight);
-                    var cH = parent ? Number(parent.actuallayoutheight) : 0;
-                    if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
-                        State.coloredHealthbarZeroHeightStreak += 1;
-                        if (State.coloredHealthbarZeroHeightStreak >= 4) _resetSelfPanelCache();
-                        return;
+                    var val = parent ? parent.value : undefined;
+                    var max = parent ? parent.max : undefined;
+                    var pct = 0;
+                    
+                    if (val !== undefined && max !== undefined && max > 0) {
+                        State.coloredHealthbarZeroHeightStreak = 0;
+                        pct = (val / max) * 100;
+                    } else {
+                        var pH = Number(progressLeft.actuallayoutheight);
+                        var cH = parent ? Number(parent.actuallayoutheight) : 0;
+                        if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
+                            State.coloredHealthbarZeroHeightStreak += 1;
+                            if (State.coloredHealthbarZeroHeightStreak >= 4) _resetSelfPanelCache();
+                            return;
+                        }
+                        State.coloredHealthbarZeroHeightStreak = 0;
+                        pct = (pH / cH) * 100;
                     }
-                    State.coloredHealthbarZeroHeightStreak = 0;
-                    var pct = (pH / cH) * 100;
                     var color = _resolveSelfColor(pct, cfg);
                     if (panels.healthBar) _setWashColorSafe(panels.healthBar, color);
                     if (panels.progressLeft) _setWashColorSafe(panels.progressLeft, color);
