@@ -1958,6 +1958,7 @@
                         if (req && req.reject) {
                             _reset();
                             _st.mode = "write";
+                            _st.stage = "done";
                             _writeStatus(root, "failed", req.reject);
                             _clearRequest(root);
                             _log("write refused: " + req.reject);

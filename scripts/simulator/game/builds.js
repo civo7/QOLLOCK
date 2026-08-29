@@ -589,9 +589,8 @@ class BuildsModel {
                 this.closeBuildBrowser();
             });
             this.cancelBuildButton = buttonRow.addChild(
-                this.doc.create("Button", { classes: ["SecondaryButton", "outline"] })
+                this.doc.create("Button", { id: "Button1", classes: ["SecondaryButton", "outline"] })
             );
-            this.cancelBuildButton.SetAttributeString("onactivate", "UIPopupButtonClicked()");
             this.cancelBuildButton.SetPanelEvent("onactivate", () => this.closeBuildBrowser());
         }
 
