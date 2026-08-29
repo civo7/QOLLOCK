@@ -33,6 +33,11 @@
 	margin-left: 40px !important;
 }
 
+.hud_shift_active.fg_healthbar_active:not(.minimalist_healthbar_active) #gold_and_ap_container
+{
+	margin-left: 66px !important;
+}
+
 .support_16_10_active #PlayerLevelContainer
 {
 	max-width: 200px;
