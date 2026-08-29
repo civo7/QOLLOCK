@@ -576,41 +576,8 @@
     }
 
     function _setHidden(root, hidden) {
-        const Utils = _qol("utils");
-        const targets = _hideTargets(root);
-        for (let i = 0; i < targets.length; i++) {
-            try {
-                if (hidden) {
-                    let op = targets[i].id === "HeroBuildListLoading" ? "0.0" : HIDE_OPACITY;
-                    if (Utils && Utils.SetStyleSafe) {
-                        Utils.SetStyleSafe(targets[i], "opacity", op);
-                        Utils.SetStyleSafe(targets[i], "transition", "none");
-                        Utils.SetStyleSafe(targets[i], "animation", "none");
-                        Utils.SetStyleSafe(targets[i], "opacityMask", "none");
-                        Utils.SetStyleSafe(targets[i], "transform", "none");
-                    } else {
-                        targets[i].style.opacity = op;
-                        targets[i].style.transition = "none";
-                        targets[i].style.animation = "none";
-                        targets[i].style.opacityMask = "none";
-                        targets[i].style.transform = "none";
-                    }
-                } else if (Utils && Utils.ClearStyleSafe) {
-                    Utils.ClearStyleSafe(targets[i], "opacity");
-                    Utils.ClearStyleSafe(targets[i], "transition");
-                    Utils.ClearStyleSafe(targets[i], "animation");
-                    Utils.ClearStyleSafe(targets[i], "opacityMask");
-                    Utils.ClearStyleSafe(targets[i], "transform");
-                } else {
-                    targets[i].style.opacity = "1.0";
-                    targets[i].style.transition = "";
-                    targets[i].style.animation = "";
-                    targets[i].style.opacityMask = "";
-                    targets[i].style.transform = "";
-                }
-            } catch(e) {}
-        }
-        return targets.length;
+        // Opacity hiding removed per user request.
+        return 0;
     }
 
     // ── Editor ──

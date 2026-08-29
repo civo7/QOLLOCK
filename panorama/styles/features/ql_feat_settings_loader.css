@@ -3,14 +3,14 @@
 
 #QOLSettingsLoaderOverlay,#QOLSaveSettingsLoaderOverlay,#QOLClearSettingsLoaderOverlay
 {
-    horizontal-align: left;
-    vertical-align: top;
+    horizontal-align: center;
+    vertical-align: center;
     width: 100%;
     height: 100%;
     overflow: noclip;
     z-index: 2147483647;
     visibility: collapse;
-    background-color: rgba(3, 5, 6, 1.0);
+    background-color: #000000;
 }
 
 #QOLSettingsLoaderCard,#QOLSaveSettingsLoaderCard,#QOLClearSettingsLoaderCard
@@ -19,25 +19,25 @@
     vertical-align: center;
     flow-children: down;
     margin-top: 0px;
-    width: 1040px;
-    max-width: 92%;
-    padding: 18px 20px 18px 20px;
-    background-color: gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.985) ), color-stop( 0.56, rgba(12, 15, 15, 0.970) ), to( rgba(8, 10, 11, 0.985) ) );
-    border: 1px solid rgba(210, 224, 216, 0.075);
-    border-radius: 5px;
-    box-shadow: fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px;
+    width: 1200px;
+    max-width: 95%;
+    padding: 40px;
+    background-color: gradient( linear, 0% 0%, 100% 100%, from( #101212 ), to( #080a0b ) );
+    border: 2px solid #202525;
+    border-radius: 8px;
+    box-shadow: fill #000000aa 0px 20px 60px 0px;
 }
 
 .QOLSettingsLoaderTitle
 {
     horizontal-align: center;
     font-family: oracle;
-    font-size: 56px;
+    font-size: 64px;
     font-weight: bold;
     letter-spacing: 2.0px;
-    color: #f2faf5;
-    text-shadow: 0px 0px 15px rgba(152, 255, 181, 0.2);
-    margin-bottom: 20px;
+    color: #ffffff;
+    text-shadow: none;
+    margin-bottom: 10px;
     text-transform: uppercase;
 }
 
@@ -45,12 +45,12 @@
 {
     horizontal-align: center;
     font-family: oracle;
-    font-size: 42px;
+    font-size: 72px;
     font-weight: bold;
     letter-spacing: 2.0px;
-    color: #ff9d9d;
-    text-shadow: 0px 0px 15px rgba(255, 126, 126, 0.2);
-    margin-bottom: 30px;
+    color: #ff5555;
+    text-shadow: none;
+    margin-bottom: 40px;
     text-transform: uppercase;
 }
 
