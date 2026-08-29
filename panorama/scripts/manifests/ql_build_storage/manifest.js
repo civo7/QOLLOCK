@@ -1551,6 +1551,19 @@
                 return 0;
             }
 
+            function _tickDump(root, now) {
+                const gate = _advanceToList(root, now);
+                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "wait") return;
+
+                switch (_st.stage) {
+                    case "await_list":
+                        _collectCandidates(root); // snapshot is taken here
+                        _finish(root, "success", "tree dump complete");
+                        return;
+                }
+            }
+
             function _tickWrite(root, now) {
                 const gate = _advanceToList(root, now);
                 if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
@@ -1861,6 +1874,16 @@
                     if (_st.nextAt && now < _st.nextAt) return;
 
                     if (_st.stage === "idle" || _st.stage === "done") {
+                        if (_readBridge(root, "QOL_BUILD_DUMP_TREE") === "1") {
+                            _clearBridge(root, "QOL_BUILD_DUMP_TREE");
+                            _reset();
+                            _st.mode = "dump";
+                            _st.startedAt = now;
+                            _st.returnHero = _resolveReturnHero(ctx);
+                            _go("switch_hero", now, 0);
+                            _reschedule(ACTIVE_RATE_SEC);
+                            return;
+                        }
                         // Finish what a late Browse press started. Only ever armed by
                         // _finish, and only when a press was still outstanding then, so
                         // an idle feature does no work here. A new run wipes it through
@@ -1933,6 +1956,7 @@
 
                     if (_st.mode === "read") _tickRead(root, now);
                     else if (_st.mode === "write") _tickWrite(root, now);
+                    else if (_st.mode === "dump") _tickDump(root, now);
                 } catch(e) {
                     _log("tick error: " + (e && e.message ? e.message : String(e)));
                     throw e;   // FeatureRegistry tracks and auto-disables after 10

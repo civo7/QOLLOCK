@@ -8217,6 +8217,43 @@ function RenderCurrentTabContent(list) {
                 SetLocalizedConfigFeedbackMessage("Panel tree written to console log", "success", 5000);
             });
         }
+
+        // ── Build Storage UI Dump ──
+        // Automates the switch -> open shop -> open browse steps, and then dumps
+        // the state of the panels before returning the player. Helps verify model
+        // accuracy without performing an actual write.
+        var bsDumpHeader = CreateSectionTitle(list, "Build Storage Dry Run");
+        var bsDumpBtn = CreateSectionInlineIconButton(bsDumpHeader, "BsDumpBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Perform a dry run of the build storage pipeline (switch hero, open shop, open popup) and dump tree to console. Requires HUD context.");
+        var bsDumpStatus = $.CreatePanel("Label", bsDumpHeader, "BsDumpStatus");
+        bsDumpStatus.text = "Idle";
+        bsDumpStatus.style.fontSize = "13px";
+        bsDumpStatus.style.color = "#666";
+        bsDumpStatus.style.marginLeft = "6px";
+        bsDumpStatus.style.verticalAlign = "center";
+
+        if (bsDumpBtn) {
+            bsDumpBtn.SetPanelEvent("onactivate", function() {
+                var hudPanel = _findHudPanel();
+                if (!hudPanel || !hudPanel.SetAttributeString) {
+                    bsDumpStatus.text = "Hud panel not found";
+                    bsDumpStatus.style.color = "#cc4444";
+                    return;
+                }
+                try { hudPanel.SetAttributeString("QOL_BUILD_DUMP_TREE", "1"); }
+                catch(e) {
+                    WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || "")));
+                    bsDumpStatus.text = "Request failed";
+                    bsDumpStatus.style.color = "#cc4444";
+                    return;
+                }
+                $.Msg("[QOLLock][BuildStorage] requested tree dump dry run");
+                bsDumpStatus.text = "Dry run started";
+                bsDumpStatus.style.color = "#66cc99";
+                SetLocalizedConfigFeedbackMessage("Build storage dry run started", "success", 5000);
+            });
+        }
         // ── Run Full Suite + Copy Report ──
         // Triggers Manifest Tests, waits for results, builds a compact report,
         // and copies it to clipboard. One click → clipboard.
