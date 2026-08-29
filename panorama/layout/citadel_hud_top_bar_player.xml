@@ -96,7 +96,7 @@
 						<Panel class="RebirthIcon" />
 						<Panel class="RebirthAndRejuvenator" />
 					</Panel>
-					<Label id="UltimateCooldownTextShown" />
+					<Label id="UltimateCooldownTextShown" text="{i:ult_cooldown}" />
 				</Panel>
 			</Panel>
 			<Label class="AlwaysPlayerName" text="{s:player_name}" />
