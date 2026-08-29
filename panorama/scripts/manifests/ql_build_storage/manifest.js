@@ -465,6 +465,8 @@
         // tree 2026-08-25). Left alone it veils the screen on its own.
         const backdrop = _find(root, "DimBackground");
         if (_alive(backdrop)) out.push(backdrop);
+        const spinner = _find(root, "HeroBuildListLoading");
+        if (_alive(spinner)) out.push(spinner);
         // The shop is reached by class AND by id, because neither alone is dependable:
         // citadel_hud_hero_shop.xml:19 declares class="CitadelHudHeroShop" on the type
         // of the same name, but panel ids in this tree have already proven unreliable
@@ -530,9 +532,25 @@
         _log("tree[" + label + "]: popup " + _describe(_popup(root)) +
              " | selector " + _describe(_find(root, PID_SELECTOR)) +
              " (ShowMyBuilds x" + selectors.length + ")");
+        const details = _find(root, PID_DETAILS);
         _log("tree[" + label + "]: list " + _describe(_find(root, PID_BUILD_LIST)) +
-             " | details " + _describe(_find(root, PID_DETAILS)) +
+             " | details " + _describe(details) +
              " | descEntry " + _describe(_find(root, PID_DESC_ENTRY)));
+        if (details && _alive(details)) {
+            const btns = _findClass(details, "ButtonRow");
+            const btnPrimary = _findClass(details, "PrimaryButton");
+            _log("tree[" + label + "]: details ButtonRow x" + (btns ? btns.length : 0) + " PrimaryButton x" + (btnPrimary ? btnPrimary.length : 0));
+            if (btns && btns.length > 0) {
+                let btnStr = "";
+                for (let i = 0; i < btns[0].GetChildCount(); i++) {
+                    const c = btns[0].GetChild(i);
+                    let h = "";
+                    try { h = c.GetAttributeString("onactivate", ""); } catch(e) {}
+                    btnStr += (c.id || c.paneltype) + (h ? "[onactivate=" + h + "]" : "[]") + " ";
+                }
+                _log("tree[" + label + "]: details buttons: " + btnStr);
+            }
+        }
         _log("tree[" + label + "]: shop x" + shops.length + " " + _describe(shops[0]) +
              " | shopModsBuild x" + owners.length +
              " | heroBuilds byClass x" + editors.length + " byId " + _describe(editorById));
@@ -563,23 +581,32 @@
         for (let i = 0; i < targets.length; i++) {
             try {
                 if (hidden) {
+                    let op = targets[i].id === "HeroBuildListLoading" ? "0.0" : HIDE_OPACITY;
                     if (Utils && Utils.SetStyleSafe) {
-                        Utils.SetStyleSafe(targets[i], "opacity", HIDE_OPACITY);
+                        Utils.SetStyleSafe(targets[i], "opacity", op);
                         Utils.SetStyleSafe(targets[i], "transition", "none");
                         Utils.SetStyleSafe(targets[i], "animation", "none");
+                        Utils.SetStyleSafe(targets[i], "opacityMask", "none");
+                        Utils.SetStyleSafe(targets[i], "transform", "none");
                     } else {
-                        targets[i].style.opacity = HIDE_OPACITY;
+                        targets[i].style.opacity = op;
                         targets[i].style.transition = "none";
                         targets[i].style.animation = "none";
+                        targets[i].style.opacityMask = "none";
+                        targets[i].style.transform = "none";
                     }
                 } else if (Utils && Utils.ClearStyleSafe) {
                     Utils.ClearStyleSafe(targets[i], "opacity");
                     Utils.ClearStyleSafe(targets[i], "transition");
                     Utils.ClearStyleSafe(targets[i], "animation");
+                    Utils.ClearStyleSafe(targets[i], "opacityMask");
+                    Utils.ClearStyleSafe(targets[i], "transform");
                 } else {
                     targets[i].style.opacity = "1.0";
-                    targets[i].style.transition = null;
-                    targets[i].style.animation = null;
+                    targets[i].style.transition = "";
+                    targets[i].style.animation = "";
+                    targets[i].style.opacityMask = "";
+                    targets[i].style.transform = "";
                 }
             } catch(e) {}
         }
@@ -1674,6 +1701,14 @@
                             _finish(root, "failed", "selected build is not editable by us");
                             return;
                         }
+
+                        // If the text already matches, we are done!
+                        const currentText = _selectedDescription(root);
+                        if (_extractToken(currentText) === _st.token) {
+                            _finish(root, "success", "already up to date");
+                            return;
+                        }
+
                         _writeStatus(root, "pending", "opening_edit_mode");
                         _triggerEdit(root);
                         _go("await_editor", now);
@@ -1708,7 +1743,8 @@
                         // identity), but writing it after the description would mean
                         // touching another field between the write and the commit.
                         _setEntryText(_find(root, PID_NAME_ENTRY), BUILD_NAME);
-                        if (!_setEntryText(entry, _st.token)) {
+                        const dirtyText = _st.token + "\n\n[" + _now() + "]";
+                        if (!_setEntryText(entry, dirtyText)) {
                             _finish(root, "failed", "description rejected the text");
                             return;
                         }
