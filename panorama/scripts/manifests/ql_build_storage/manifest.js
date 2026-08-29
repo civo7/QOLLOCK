@@ -1051,18 +1051,13 @@
                 // (Label.BuildDescription) lives under #BuildDetails, which only exists
                 // inside the browser popup, so reaching the payload REQUIRES the popup.
                 // The old category-name carrier lived in the shop panel
-                // (citadel_shop_mods_build_category.xml:10) and needed no popup, which
-                // is why main never had one to close and why this manifest must. Left
-                // open it stays up indefinitely and only Cancel dismisses it — ESC does
-                // not reach the popup's oncancel. Before the hero switch, too:
-                // selecthero rebuilds the shop panel and can strand the popup.
-                _closeBrowse(root);
-                // And leave the editor, which Save is not guaranteed to have done: any
-                // failure between entering it and the commit landing ends with our
-                // half-typed token sitting in a text field the player is now looking
-                // at. Only when WE opened it — editPressedAt is exactly that fact — so
-                // an editor the player opened themselves is theirs to keep.
-                if (_st.editPressedAt && _isEditing(root)) _triggerDiscard(root);
+                if (_closeBrowse(root)) {
+                    _st.browsePressedAt = 0;
+                }
+                if (_st.editPressedAt && _isEditing(root)) {
+                    _triggerDiscard(root);
+                    _st.editPressedAt = 0;
+                }
                 // A press already fired but not yet honoured has nothing to close YET —
                 // the client honours it editModeMs / browseRevealMs later, which on a
                 // loaded machine is seconds. Keep watching for that long so whatever
