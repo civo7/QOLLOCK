@@ -117,27 +117,13 @@
             }
 
             function _apply(cfg) {
-                var root = $.GetContextPanel();
-                if (root && root.FindChildTraverse) {
-                    var topBar = root.FindChildTraverse("TopBar");
-                    if (topBar && topBar.SetHasClass) {
-                        var enabled = Number(cfg.ENABLE_NICKNAMES) === 1;
-                        topBar.SetHasClass("qol_topbar_nicknames_enabled", enabled);
-                    }
-                }
+                // Handled natively by ql_core.js via 'nicknames_active' root class
+                // combined with rule in qollock_global.css
             }
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
-                onDisable: function() {
-                    var root = $.GetContextPanel();
-                    if (root && root.FindChildTraverse) {
-                        var topBar = root.FindChildTraverse("TopBar");
-                        if (topBar && topBar.SetHasClass) {
-                            topBar.SetHasClass("qol_topbar_nicknames_enabled", false);
-                        }
-                    }
-                },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onEnable: function() { },
+                onDisable: function() { },
+                onSettingsChanged: function() { }
             };
         },
     test: function(ctx) {

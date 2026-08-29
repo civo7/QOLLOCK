@@ -296,3 +296,7 @@
 {
     visibility: collapse;
 }
+
+/* Nicknames global override */
+.nicknames_active CitadelHudTopBarPlayer .AlwaysPlayerName { visibility: visible; }
+
