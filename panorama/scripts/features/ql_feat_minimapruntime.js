@@ -493,23 +493,28 @@ function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
     function UpdateMinimapCastRangeScale(root, targetSize) {
         var size = Number(targetSize);
         if (!isFinite(size) || size <= 0) size = MINIMAP_CAST_RANGE_BASE_SIZE;
-        // Skip the expensive FindChildrenWithClassTraverse when size hasn't changed
-        if (size === State._cachedMinimapCastRangeSize) return;
-        State._cachedMinimapCastRangeSize = size;
+
+        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP);
+        var mapButtons = (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse)
+            ? (hudMinimapPanel.FindChildrenWithClassTraverse("doorman_doorway") || [])
+            : [];
+
+        var rangePanels = [];
+        for (var i = 0; i < mapButtons.length; i++) {
+            var castRange = mapButtons[i] && mapButtons[i].FindChildTraverse ? mapButtons[i].FindChildTraverse("CastRange") : null;
+            if (castRange) rangePanels.push(castRange);
+        }
+
+        var cacheKey = size + "|" + rangePanels.length;
+        if (cacheKey === State._cachedMinimapCastRangeKey) return;
+        State._cachedMinimapCastRangeKey = cacheKey;
+
         var scale = MINIMAP_CAST_RANGE_BASE_SIZE / size;
         if (!isFinite(scale) || scale <= 0) scale = 1.0;
         if (scale < 0.20) scale = 0.20;
         if (scale > 2.00) scale = 2.00;
         var scaleText = Math.round(scale * 100) + "%";
-        var hudMinimapPanel = ResolveCachedPanel(root, "hudMinimapPanel", PANEL_ID_MINIMAP);
-        var rangePanels = [];
-        if (hudMinimapPanel && hudMinimapPanel.FindChildrenWithClassTraverse) {
-            var mapButtons = hudMinimapPanel.FindChildrenWithClassTraverse("map_button") || [];
-            for (var i = 0; i < mapButtons.length; i++) {
-                var castRange = mapButtons[i] && mapButtons[i].FindChildTraverse ? mapButtons[i].FindChildTraverse("CastRange") : null;
-                if (castRange) rangePanels.push(castRange);
-            }
-        }
+
         if (rangePanels.length <= 0 && root && root.FindChildTraverse) {
             var fallbackCastRange = root.FindChildTraverse("CastRange");
             if (fallbackCastRange) rangePanels.push(fallbackCastRange);
