@@ -156,7 +156,7 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	visibility: visible;
 }
 
-CitadelHudTopBarPlayer.qol_nickname_active .AlwaysPlayerName
+.qol_topbar_nicknames_enabled CitadelHudTopBarPlayer .AlwaysPlayerName
 {
 	visibility: visible;
 }
@@ -166,7 +166,7 @@ CitadelHudTopBarPlayer.qol_nickname_active .AlwaysPlayerName
 	margin-top: -15px;
 }
 
-CitadelHudTopBarPlayer.qol_nickname_active .QOLNickRuntime
+.qol_topbar_nicknames_enabled CitadelHudTopBarPlayer .QOLNickRuntime
 {
 	ignore-parent-flow: true;
 	horizontal-align: center;
