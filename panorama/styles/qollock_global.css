@@ -193,7 +193,7 @@
 .bhop_gamemode_active #minimap_container,
 .bhop_gamemode_active #health_and_abilities_container
 {
-    visibility: collapse !important;
+    visibility: collapse;
 }
 
 /* ── Hideout — hide QOLLOCK overlays ── */
@@ -251,14 +251,14 @@
 .GameStatePreGame #health_and_abilities_container,
 .GameStatePreGameWait #health_and_abilities_container
 {
-    visibility: collapse !important;
+    visibility: collapse;
     opacity: 0;
 }
 
 .connectedToHeroTesting.GameStatePreGame #health_and_abilities_container,
 .connectedToHeroTesting.GameStatePreGameWait #health_and_abilities_container
 {
-    visibility: visible !important;
+    visibility: visible;
     opacity: 1;
 }
 
@@ -291,8 +291,14 @@
 }
 
 /* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
+/* Do NOT add !important here. It has been tried twice (eeb70b8, bdbb396) and both
+   times panels stopped collapsing — the bridge-buff icons in ql_minimap_timers, which
+   the manifest keeps permanently in qol-hidden, rendered on the minimap anyway. This
+   class is the only hide mechanism for ~120 SetHasClass sites across 34 files, so a
+   dropped declaration here breaks features that look unrelated. If some rule ever
+   outbids this one, raise specificity instead. */
 .qol-hidden
 {
-    visibility: collapse !important;
+    visibility: collapse;
 }
 
