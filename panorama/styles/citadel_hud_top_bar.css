@@ -95,13 +95,16 @@ CitadelHudTopBar CitadelHudItemBarGraph
 }
 
 
-.ult_cooldowns_active #StatusRow
+.ult_cooldowns_active #StatusRow,
+CitadelHudTopBarPlayer.ult_cooldowns_active #StatusRow
 {
 	flow-children: down;
 	height: 45px;
 }
 
-.ult_cooldowns_active .UltimateUnlocked .UltimateStatus
+.ult_cooldowns_active .UltimateUnlocked .UltimateStatus,
+.ult_cooldowns_active.UltimateUnlocked .UltimateStatus,
+CitadelHudTopBarPlayer.ult_cooldowns_active .UltimateStatus
 {
 	horizontal-align: center;
 }
@@ -123,12 +126,17 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	z-index: 999;
 }
 
-.ult_cooldowns_active .UltimateUnlocked #UltimateCooldownTextShown
+.ult_cooldowns_active .UltimateUnlocked #UltimateCooldownTextShown,
+.ult_cooldowns_active.UltimateUnlocked #UltimateCooldownTextShown,
+.ult_cooldowns_active #UltimateCooldownTextShown,
+CitadelHudTopBarPlayer.ult_cooldowns_active #UltimateCooldownTextShown
 {
 	visibility: visible;
 }
 
 .ult_cooldowns_active .UltimateCooldownReady #UltimateCooldownTextShown,
+.ult_cooldowns_active.UltimateCooldownReady #UltimateCooldownTextShown,
+CitadelHudTopBarPlayer.ult_cooldowns_active.UltimateCooldownReady #UltimateCooldownTextShown,
 .ult_cooldowns_active.gScoreboardOpen #UltimateCooldownTextShown,
 .ult_cooldowns_active .gScoreboardOpen #UltimateCooldownTextShown
 {

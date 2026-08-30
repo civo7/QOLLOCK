@@ -1,4 +1,4 @@
-﻿// features/ql_ult_cooldowns/manifest.js
+// features/ql_ult_cooldowns/manifest.js
 // =============================================================================
 // QOLLOCK — Top Bar Ultimate Cooldowns
 // =============================================================================
@@ -18,7 +18,6 @@
     var FEATURE_ID = "ql_ult_cooldowns";
     var CLASS_NAME = "ult_cooldowns_active";
     var POLL_INTERVAL = 0.25;
-    var MAX_PLAYERS = 12;
 
     FR.register({
         id: FEATURE_ID,
@@ -30,113 +29,204 @@
         create: function(ctx) {
             var _loop = null;
             var _topBar = null;
-            var _slots = []; // per-player { hidden, shown, playerPanel } cache
+            var _cachedSlots = []; // array of { playerPanel, hidden, shown }
+            var _running = false;
 
             function _isAlive(p) {
                 return !!(p && typeof p.IsValid === "function" && p.IsValid());
             }
 
-            function _isAttached(panel) {
-                var cursor = panel;
-                while (cursor && cursor.GetParent) {
-                    if (cursor === _topBar) { return true; }
-                    cursor = cursor.GetParent();
+            function _getTopBar() {
+                if (_isAlive(_topBar)) return _topBar;
+                _topBar = null;
+                var hud = QOL.ui && QOL.ui.PanelHelpers ? QOL.ui.PanelHelpers.findHud() : null;
+                if (!hud || !_isAlive(hud)) {
+                    var root = $.GetContextPanel();
+                    if (root && _isAlive(root)) {
+                        hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : root;
+                    }
                 }
-                return false;
+                if (!hud || !_isAlive(hud)) return null;
+                _topBar = hud.FindChildTraverse ? (hud.FindChildTraverse("TopBar") || hud.FindChildTraverse("CitadelHudTopBar")) : null;
+                return _topBar;
             }
 
-            function _ensureSlot(i) {
-                var slot = _slots[i];
-                if (
-                    slot &&
-                    _isAlive(slot.hidden) &&
-                    _isAlive(slot.shown) &&
-                    _isAttached(slot.playerPanel)
-                ) {
-                    return slot;
+            function _resolvePlayerPanels(topBar) {
+                var list = [];
+                if (!_isAlive(topBar)) return list;
+
+                // 1. Try slot IDs 0..12 (covers 0-indexed sandbox & 1-indexed matches)
+                for (var i = 0; i <= 12; i++) {
+                    var p = topBar.FindChildTraverse("TopBarPlayer" + i);
+                    if (_isAlive(p) && list.indexOf(p) === -1) {
+                        list.push(p);
+                    }
+                }
+                if (list.length > 0) return list;
+
+                // 2. Fallback: TeamsContainer -> Team -> PlayerContents -> PlayersContainer -> children
+                var tc = topBar.FindChildTraverse("TeamsContainer");
+                if (_isAlive(tc) && tc.GetChildCount) {
+                    var numTeams = tc.GetChildCount();
+                    for (var t = 0; t < numTeams; t++) {
+                        var team = tc.GetChild(t);
+                        if (!_isAlive(team)) continue;
+                        var pc = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
+                        if (!_isAlive(pc)) continue;
+                        var plc = pc.FindChildTraverse ? pc.FindChildTraverse("PlayersContainer") : null;
+                        if (!_isAlive(plc) || !plc.GetChildCount) continue;
+                        var count = plc.GetChildCount();
+                        for (var c = 0; c < count; c++) {
+                            var child = plc.GetChild(c);
+                            if (_isAlive(child) && list.indexOf(child) === -1) {
+                                list.push(child);
+                            }
+                        }
+                    }
+                }
+                return list;
+            }
+
+            function _syncSlots() {
+                var topBar = _getTopBar();
+                if (!_isAlive(topBar)) return;
+
+                topBar.SetHasClass(CLASS_NAME, true);
+                var root = $.GetContextPanel();
+                if (root && root.SetHasClass) root.SetHasClass(CLASS_NAME, true);
+
+                var playerPanels = _resolvePlayerPanels(topBar);
+                var validSlots = [];
+
+                for (var i = 0; i < playerPanels.length; i++) {
+                    var playerPanel = playerPanels[i];
+                    if (!_isAlive(playerPanel)) continue;
+
+                    if (playerPanel.SetHasClass) {
+                        playerPanel.SetHasClass(CLASS_NAME, true);
+                    }
+
+                    var hidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
+                    var shown = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
+                    if (!_isAlive(hidden) || !_isAlive(shown)) continue;
+
+                    validSlots.push({ playerPanel: playerPanel, hidden: hidden, shown: shown });
+
+                    var rawText = hidden.text;
+                    if (rawText !== undefined && rawText !== null) {
+                        var cdStr = String(rawText).trim();
+                        if (cdStr !== "" && cdStr !== "0") {
+                            if (shown.text !== cdStr) {
+                                shown.text = cdStr;
+                            }
+                        } else {
+                            if (shown.text !== "") {
+                                shown.text = "";
+                            }
+                        }
+                    }
                 }
 
-                if (!_isAlive(_topBar)) return null;
-
-                // Player panels are 1-indexed (TopBarPlayer1..12); slot 0..11
-                var playerPanel = _topBar.FindChildTraverse("TopBarPlayer" + (i + 1));
-                if (!_isAlive(playerPanel)) {
-                    _slots[i] = null;
-                    return null;
-                }
-                var hidden = playerPanel.FindChildTraverse("UltimateCooldownTextHidden");
-                var shown = playerPanel.FindChildTraverse("UltimateCooldownTextShown");
-                if (!_isAlive(hidden) || !_isAlive(shown)) {
-                    _slots[i] = null;
-                    return null;
-                }
-                slot = { playerPanel: playerPanel, hidden: hidden, shown: shown };
-                _slots[i] = slot;
-                return slot;
+                _cachedSlots = validSlots;
             }
 
             function _tick() {
-                if (!_isAlive(_topBar)) {
-                    var hud = QOL.ui && QOL.ui.PanelHelpers ? QOL.ui.PanelHelpers.findHud() : null;
-                    if (!hud || !_isAlive(hud)) return;
-                    _topBar = hud.FindChildTraverse("TopBar");
-                    if (!_isAlive(_topBar)) return;
-                    _topBar.SetHasClass(CLASS_NAME, true);
-                    hud.SetHasClass(CLASS_NAME, true);
-                    _slots = [];
+                if (!_running) return;
+
+                // Quick pass if cached slots are all alive
+                var allAlive = _cachedSlots.length > 0;
+                for (var s = 0; s < _cachedSlots.length; s++) {
+                    var slot = _cachedSlots[s];
+                    if (!slot || !_isAlive(slot.playerPanel) || !_isAlive(slot.hidden) || !_isAlive(slot.shown)) {
+                        allAlive = false;
+                        break;
+                    }
                 }
 
-                for (var i = 0; i < MAX_PLAYERS; i++) {
-                    var slot = _ensureSlot(i);
-                    if (!slot) continue;
+                if (!allAlive) {
+                    _syncSlots();
+                    return;
+                }
 
-                    var hText = slot.hidden.text;
-                    if (typeof hText !== "string") continue;
-                    if (slot.shown.text !== hText) {
-                        slot.shown.text = hText;
+                for (var i = 0; i < _cachedSlots.length; i++) {
+                    var cur = _cachedSlots[i];
+                    var raw = cur.hidden.text;
+                    if (raw !== undefined && raw !== null) {
+                        var cd = String(raw).trim();
+                        if (cd !== "" && cd !== "0") {
+                            if (cur.shown.text !== cd) {
+                                cur.shown.text = cd;
+                            }
+                        } else {
+                            if (cur.shown.text !== "") {
+                                cur.shown.text = "";
+                            }
+                        }
                     }
+                }
+            }
+
+            function _start() {
+                if (_running) return;
+                _running = true;
+                try {
+                    _syncSlots();
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, POLL_INTERVAL, FEATURE_ID) : null;
+                } catch(e) {
+                    $.Msg("[QOLLock][ERROR][" + FEATURE_ID + "] _start: " + (e && e.message ? e.message : String(e)));
+                }
+            }
+
+            function _stop() {
+                _running = false;
+                try {
+                    if (_loop) {
+                        _loop.stop();
+                        _loop = null;
+                    }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature(FEATURE_ID);
+
+                    if (_isAlive(_topBar)) {
+                        _topBar.SetHasClass(CLASS_NAME, false);
+                    }
+                    var root = $.GetContextPanel();
+                    if (root && root.SetHasClass) root.SetHasClass(CLASS_NAME, false);
+
+                    for (var i = 0; i < _cachedSlots.length; i++) {
+                        var s = _cachedSlots[i];
+                        if (s && _isAlive(s.playerPanel) && s.playerPanel.SetHasClass) {
+                            s.playerPanel.SetHasClass(CLASS_NAME, false);
+                        }
+                    }
+                    _topBar = null;
+                    _cachedSlots = [];
+                } catch(e) {
+                    $.Msg("[QOLLock][ERROR][" + FEATURE_ID + "] _stop: " + (e && e.message ? e.message : String(e)));
                 }
             }
 
             return {
                 onEnable: function() {
-                    try {
-                        var hud = QOL.ui && QOL.ui.PanelHelpers ? QOL.ui.PanelHelpers.findHud() : null;
-                        if (hud && _isAlive(hud)) {
-                            hud.SetHasClass(CLASS_NAME, true);
-                            _topBar = hud.FindChildTraverse("TopBar");
-                            if (_isAlive(_topBar)) {
-                                _topBar.SetHasClass(CLASS_NAME, true);
-                            }
-                        }
-                        var S = QOL.core.Scheduler;
-                        _loop = S && S.createPollLoop ? S.createPollLoop(_tick, POLL_INTERVAL, FEATURE_ID) : null;
-                    } catch(e) {
-                        $.Msg("[QOLLock][ERROR][" + FEATURE_ID + "] onEnable: " + (e && e.message ? e.message : String(e)));
-                    }
+                    _start();
                 },
                 onDisable: function() {
-                    try {
-                        if (_loop) {
-                            _loop.stop();
-                            _loop = null;
-                        }
-                        var S = QOL.core.Scheduler;
-                        if (S) S.cancelAllForFeature(FEATURE_ID);
-                        if (_isAlive(_topBar)) {
-                            _topBar.SetHasClass(CLASS_NAME, false);
-                        }
-                        var hud = QOL.ui && QOL.ui.PanelHelpers ? QOL.ui.PanelHelpers.findHud() : null;
-                        if (hud && _isAlive(hud)) {
-                            hud.SetHasClass(CLASS_NAME, false);
-                        }
-                        _topBar = null;
-                        _slots = [];
-                    } catch(e) {
-                        $.Msg("[QOLLock][ERROR][" + FEATURE_ID + "] onDisable: " + (e && e.message ? e.message : String(e)));
-                    }
+                    _stop();
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function(payload) {
+                    var enabled = false;
+                    if (payload && payload.changes && payload.changes.hasOwnProperty("ENABLE_ULT_COOLDOWNS")) {
+                        enabled = Number(payload.changes.ENABLE_ULT_COOLDOWNS) === 1 || payload.changes.ENABLE_ULT_COOLDOWNS === true;
+                    } else if (ctx && ctx.config) {
+                        enabled = Number(ctx.config.get("ENABLE_ULT_COOLDOWNS")) === 1 || ctx.config.get("ENABLE_ULT_COOLDOWNS") === true;
+                    }
+                    if (enabled) {
+                        _start();
+                    } else {
+                        _stop();
+                    }
+                }
             };
         },
         test: function(ctx) {
