@@ -3955,55 +3955,7 @@ function GetUIRoot() {
     }
 
     function UpdateUltimateCooldownOverlay(root, cfg) {
-        if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
-        var fnStart = PerfNowMs();
-        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(ULT_CD_MAX_PLAYERS);
-        var slots = State.ultCdSlotCache;
-        var recheckMs = State.ultCdSlotNextRecheckMs;
-        var nowMs = PerfNowMs();
-        var debugParts = [];
-        // Periodic full reset every 30 s so transient misses eventually self-heal
-        if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
-            for (var ri = ULT_CD_SLOT_MIN_INDEX; ri <= ULT_CD_SLOT_MAX_INDEX; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
-            State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
-        }
-        for (var i = ULT_CD_SLOT_MIN_INDEX; i <= ULT_CD_SLOT_MAX_INDEX; i++) {
-            var slotStart = PerfNowMs();
-            var slot = slots[i];
-            var didTraverse = false;
-            if (!slot || !IsPanelValid(slot.elHidden) || !IsPanelValid(slot.elShown)) {
-                if (slot === false && nowMs < (recheckMs[i] || 0)) continue;
-                didTraverse = true;
-                var playerPanel = GetTopBarPlayerPanel(root, i, nowMs, false);
-                if (!playerPanel) {
-                    slots[i] = false;
-                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
-                    if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noPlayer(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
-                    continue;
-                }
-                var els = FindUltCooldownElements(playerPanel);
-                if (!els) {
-                    slots[i] = false;
-                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
-                    if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noEl(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
-                    continue;
-                }
-                slot = els;
-                slots[i] = slot;
-            }
-            var cd = String(Number(slot.elHidden.text) + 1);
-            if (slot.elShown.text !== cd) slot.elShown.text = cd;
-            var slotMs = PerfNowMs() - slotStart;
-            if (ULT_CD_DEBUG_ENABLED && slotMs >= ULT_CD_DEBUG_SPIKE_MS) debugParts.push(i + (didTraverse ? ":traverse(" : ":cached(") + slotMs.toFixed(2) + "ms)");
-        }
-        var fnMs = PerfNowMs() - fnStart;
-        if (ULT_CD_DEBUG_ENABLED && fnMs >= ULT_CD_DEBUG_SPIKE_MS) {
-            if (nowMs - ultCdDebugLastLogMs >= ULT_CD_DEBUG_THROTTLE_MS) {
-                ultCdDebugLastLogMs = nowMs;
-                $.Msg("[QOLLock][UltimateCooldownDebug] spike total=" + fnMs.toFixed(2) + "ms slots=[" + (debugParts.length ? debugParts.join(" ") : "none") + "]");
-            }
-        }
+        // Obsolete: Handled by manifests/ql_ult_cooldowns/manifest.js at 4Hz
     }
 
 
@@ -14702,7 +14654,7 @@ function GetUIRoot() {
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
         gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
-        gates.compassUltCd = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+        gates.compassUltCd = false;
         gates.compassTargetShapesFast = gates.targetShapesActive;
 
         // Hard-gate optimization: track whether any runtime feature needs execution.

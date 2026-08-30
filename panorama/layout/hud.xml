@@ -124,6 +124,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_nicknames/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_ult_cooldowns/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unspent/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_ability_icons/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_report/manifest.vjs_c" />

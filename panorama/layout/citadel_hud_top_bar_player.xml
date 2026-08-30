@@ -25,6 +25,7 @@
 		     styles never use that property once, so it may simply be ignored. -->
 		<CitadelHudTopBarPlayer>
 			<GlobalClassListener classes="gDetailView" />
+			<Label class="AlwaysPlayerName" text="{s:player_name}" />
 			<Panel id="PauseIndicator">
 				<Panel id="PauseIcon" />
 				<Label text="#Citadel_Notification_Paused_Title" />
@@ -99,7 +100,6 @@
 					<Label id="UltimateCooldownTextShown" />
 				</Panel>
 			</Panel>
-			<Label class="AlwaysPlayerName" text="{s:player_name}" />
 			<Panel id="PlayerNameNWContainer" onmouseover="CitadelTopDownScoreboardPlayerHovered();">
 				<Panel id="BackgroundStrip" />
 				<Panel class="PlayerInfoContainer TopBottomFlow">

@@ -291,19 +291,8 @@
 }
 
 /* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
-/* ── Phase 8.6: Visibility class toggle (replaces direct style.visibility mutations) ── */
 .qol-hidden
 {
     visibility: collapse !important;
 }
-
-/* Nicknames global override */
-.nicknames_active #TopBar .AlwaysPlayerName { visibility: visible !important; }
-
-
-/* Ultimate Cooldowns global override */
-.ult_cooldowns_active #TopBar #StatusRow { flow-children: down !important; height: 45px !important; }
-.ult_cooldowns_active #TopBar .UltimateUnlocked .UltimateStatus { horizontal-align: center !important; }
-.ult_cooldowns_active #TopBar .UltimateUnlocked #UltimateCooldownTextShown { visibility: visible !important; }
-.ult_cooldowns_active.gScoreboardOpen #TopBar #UltimateCooldownTextShown, .ult_cooldowns_active #TopBar .UltimateCooldownReady #UltimateCooldownTextShown, .ult_cooldowns_active #TopBar .gScoreboardOpen #UltimateCooldownTextShown { visibility: collapse !important; }
 

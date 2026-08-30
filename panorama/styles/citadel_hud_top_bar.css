@@ -95,6 +95,17 @@ CitadelHudTopBar CitadelHudItemBarGraph
 }
 
 
+.ult_cooldowns_active #StatusRow
+{
+	flow-children: down;
+	height: 45px;
+}
+
+.ult_cooldowns_active .UltimateUnlocked .UltimateStatus
+{
+	horizontal-align: center;
+}
+
 #UltimateCooldownTextHidden
 {
 	visibility: collapse;
@@ -107,33 +118,43 @@ CitadelHudTopBar CitadelHudItemBarGraph
 	text-align: center;
 	font-family: numericOracle;
 	font-weight: bold;
-	text-shadow: 0px 0px 0px 4.0 offBlack;
+	color: #ffffff;
+	text-shadow: 0px 0px 0px 3 black;
 	z-index: 999;
+}
+
+.ult_cooldowns_active .UltimateUnlocked #UltimateCooldownTextShown
+{
+	visibility: visible;
+}
+
+.ult_cooldowns_active .UltimateCooldownReady #UltimateCooldownTextShown,
+.ult_cooldowns_active.gScoreboardOpen #UltimateCooldownTextShown,
+.ult_cooldowns_active .gScoreboardOpen #UltimateCooldownTextShown
+{
+	visibility: collapse;
 }
 
 .AlwaysPlayerName
 {
 	visibility: collapse;
-	opacity: 0.8;
-	width: 100%;
-	height: 20px;
-	font-size: 20px;
-	color: #FFF6D8;
-	text-align: center;
-	font-weight: semi-bold;
+	ignore-parent-flow: true;
 	font-family: oracle;
-	text-overflow: shrink min(12px) ellipsis;
-	white-space: nowrap;
+	z-index: 21;
 	horizontal-align: center;
-	text-shadow: 0px 0px 2px 3.0 #000000;
-	margin-top: -17px;
+	font-weight: bold;
+	text-shadow: 0px 0px 0px 4.0 offBlack;
+	font-size: 16px;
+	max-height: 20px;
+	max-width: 80px;
+	text-overflow: shrink;
+	text-align: center;
 }
 
 .nicknames_active .AlwaysPlayerName
 {
 	visibility: visible;
 }
-
 
 .spec_mode .AlwaysPlayerName
 {
