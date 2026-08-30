@@ -191,13 +191,24 @@
     width: 16px;
     height: 16px;
     vertical-align: center;
-    opacity: 0.55;
+    opacity: 0.75;
     wash-color: #c7c3bd;
+    margin-right: 4px;
+}
+
+#QOLMinimapBuffBridgeLeftIcon,
+#QOLMinimapBuffBridgeRightIcon
+{
+    width: 10px;
+    height: 10px;
+    vertical-align: center;
+    opacity: 0.75;
+    wash-color: #c7c3bd;
+    margin-right: 2px;
 }
 
 .QOLMinimapTimerLabel
 {
-    width: fill-parent-flow(1.0);
     height: fit-children;
     horizontal-align: center;
     vertical-align: center;
