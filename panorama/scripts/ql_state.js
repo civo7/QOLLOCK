@@ -343,6 +343,10 @@ var State;
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
+        // Paired with the sig above. A colour already applied still has to be
+        // re-applied when the HUD rebuilds and the signature panel is a different
+        // object, or the sig claims work was done on panels that no longer exist.
+        bottomBarCurrencyColorPanel: null,
         bottomBarCurrencyDebugLastSig: "",
         bottomBarCurrencyDebugNextMs: 0,
         itemsRuntimeStyleSig: "",

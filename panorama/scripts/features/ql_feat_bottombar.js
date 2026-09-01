@@ -83,30 +83,60 @@
     }
 
     // ── Update ──
+    // #hud_signature carries its own ui-scale in CSS — base/hud.css:1824 is 90%, and
+    // .gShopOpen drops it to 75% (base/hud.css:1832). An inline ui-scale REPLACES
+    // that rather than multiplying with it, and Panorama does not report a computed
+    // value back, so the base is stated here and the slider applied on top of it.
+    // Writing a flat "100%" is what made the bar render 11% larger than the game
+    // intends the moment any bottom-bar key went non-default.
+    //
+    // Nothing is written while the config sits at its defaults, so an untouched HUD
+    // keeps every CSS rule including the shop-open shrink. Once the slider is moved
+    // the inline value wins for good and .gShopOpen's 75% stops applying: that is the
+    // accepted cost of a continuous slider on a panel whose base is class-dependent.
+    var SIGNATURE_UI_SCALE_BASE_PCT = 90;
+
     function update(root, cfg) {
-        
+
         var active = hasNonDefaultConfig(cfg);
         var enabled = Utils.IsCfgEnabled(cfg, "HUD_BOTTOM_BAR_ENABLED");
         var hudSignature = RC(root, "bottomBarPanel", PID_SIGNATURE);
 
         var washColor = active ? RWP(ReadBottomBarWashColor(cfg)) : "";
-        applyCurrencyColor(root, washColor);
+        // Guarded on the recorded colour. This walks five containers — two of them
+        // GetUIRoot() and the context panel — with FindChildrenWithClassTraverse for
+        // two classes plus a FindChildTraverse each, and a traverse miss walks the
+        // whole subtree. It ran on every tick of an always-run feature while the sig
+        // it writes was never read back.
+        if (State.bottomBarCurrencyColorStyleSig !== washColor ||
+            State.bottomBarCurrencyColorPanel !== hudSignature) {
+            applyCurrencyColor(root, washColor);
+            State.bottomBarCurrencyColorPanel = hudSignature;
+        }
         if (!hudSignature) return;
 
         var offsetX = active ? Utils.NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_X_OFFSET, 0) : 0;
         var offsetY = active ? Utils.NormalizeHudOffsetNumber(cfg.BOTTOM_BAR_Y_OFFSET, 0) : 0;
-        var opacityText = active ? Utils.NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0).toFixed(2) : "1.00";
-        var scaleText = active ? Utils.NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0).toFixed(2) : "1.00";
+        var opacity = active ? Utils.NormalizeOpacityNumber(cfg.BOTTOM_BAR_OPACITY, 1.0) : 1.0;
+        var scale = active ? Utils.NormalizeHudScaleNumber(cfg.BOTTOM_BAR_SCALE, 1.0) : 1.0;
+        var opacityText = opacity.toFixed(2);
+        var scaleText = Math.round(SIGNATURE_UI_SCALE_BASE_PCT * scale) + "%";
         var styleSig = String(offsetX) + "|" + String(offsetY) + "|" + opacityText + "|" + scaleText + "|" + washColor + "|" + (enabled ? "1" : "0");
         if (State.bottomBarRuntimeStyleSig === styleSig) return;
 
-        hudSignature.style.x = String(offsetX) + "px";
-        hudSignature.style.y = String(-offsetY) + "px";
-        hudSignature.style.preTransformScale2d = "1.00, 1.00";
-        hudSignature.style.uiScale = Math.round(Number(scaleText) * 100) + "%";
+        // Clear rather than write an identity value, so a config at its defaults
+        // hands the panel back to CSS instead of pinning it.
+        if (offsetX !== 0) hudSignature.style.x = String(offsetX) + "px";
+        else Utils.ClearStyleSafe(hudSignature, "x");
+        if (offsetY !== 0) hudSignature.style.y = String(-offsetY) + "px";
+        else Utils.ClearStyleSafe(hudSignature, "y");
+        Utils.ClearStyleSafe(hudSignature, "preTransformScale2d");
+        if (Math.abs(scale - 1.0) > 0.0001) hudSignature.style.uiScale = scaleText;
+        else Utils.ClearStyleSafe(hudSignature, "uiScale");
         if (hudSignature.SetHasClass) hudSignature.SetHasClass("qol-hidden", !enabled); else hudSignature.style.visibility = enabled ? "visible" : "collapse";
         SetWashColor(hudSignature, washColor);
-        Utils.SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
+        if (Math.abs(opacity - 1.0) > 0.0001) Utils.SetPanelOpacitySafe(hudSignature, opacityText, 1.0);
+        else Utils.ClearStyleSafe(hudSignature, "opacity");
         State.bottomBarRuntimeStyleSig = styleSig;
     }
 
@@ -118,7 +148,7 @@
         gate: gate,
         update: function(root, cfg) { update(root, cfg); },
         stateKeys: ["bottomBarRuntimeStyleSig", "bottomBarCurrencyColorStyleSig",
-                    "cachedPanels.bottomBarPanel"]
+                    "bottomBarCurrencyColorPanel", "cachedPanels.bottomBarPanel"]
     });
 
     // ── Self-test ──
