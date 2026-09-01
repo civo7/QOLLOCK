@@ -1761,6 +1761,13 @@ function ReadBuildSaveStatus() {
     return { state: "", msg: "", token: "" };
 }
 
+// Two vocabularies land here. The old build-save pipeline published the
+// message names below; ql_build_storage publishes its own stage names instead,
+// and because none of them matched, every stage of a save fell through to the
+// default and the button read "SAVING" from the first tick to the last — about
+// four and a half seconds of nothing changing, which reads as a hang.
+// Deliberately mapped onto the labels that already exist rather than new ones:
+// six distinct labels the user can watch move, no new strings to translate.
 function ResolveBuildSavePendingLabel(message) {
     if (message === "starting") return "START";
     if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
@@ -1770,6 +1777,16 @@ function ResolveBuildSavePendingLabel(message) {
     if (message === "writing_category_name") return "WRITING";
     if (message === "saving") return "SAVING";
     if (message === "verifying") return "VERIFY";
+    // ql_build_storage stage names.
+    if (message === "switching_to_storage_hero" || message === "switch_hero") return "SKYRUNNER";
+    if (message === "confirm_hero") return "SKYRUNNER";
+    if (message === "open_shop") return "OPEN SHOP";
+    if (message === "open_browser" || message === "await_list") return "INIT BUILD";
+    if (message === "pick_target" || message === "await_selected") return "INIT BUILD";
+    if (message === "await_editor") return "EDITING";
+    if (message === "write_description") return "WRITING";
+    if (message === "commit" || message === "await_commit") return "SAVING";
+    if (message === "verify") return "VERIFY";
     return "SAVING";
 }
 
@@ -1783,15 +1800,19 @@ function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
         if (key === lastFeedbackKey) return;
         lastFeedbackKey = key;
         var message = String(msg || "");
-        if (message === "waiting_for_shop") {
+        if (message === "waiting_for_shop" || message === "open_shop") {
             SetLocalizedConfigFeedbackMessage("Open shop to continue save.", "warning", 0);
             return;
         }
-        if (message === "switching_to_skyrunner" || message === "switching_to_airheart") {
+        if (message === "switching_to_skyrunner" || message === "switching_to_airheart" ||
+            message === "switching_to_storage_hero" || message === "switch_hero" ||
+            message === "confirm_hero") {
             SetLocalizedConfigFeedbackMessage("Switching to Skyrunner...", "info", 0);
             return;
         }
-        if (message === "writing_category_name" || message === "saving") {
+        if (message === "writing_category_name" || message === "saving" ||
+            message === "write_description" || message === "commit" ||
+            message === "await_commit") {
             SetLocalizedConfigFeedbackMessage("Writing settings string to build...", "info", 0);
             return;
         }

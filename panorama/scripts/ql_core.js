@@ -6077,6 +6077,20 @@ function GetUIRoot() {
         } else if (GetSaveSettingsLoaderStepState("verify_save") === "active") {
             SetSaveSettingsLoaderStepState("verify_save", "done", "Payload verified.");
         }
+        // A save can finish early and legitimately — "already up to date" returns
+        // before the payload is ever written — and every row it never reached was
+        // left pending with the one it stopped on still active. On a run that
+        // succeeded, that reads as a save which gave up halfway.
+        if (code !== "failed") {
+            for (var si = 0; si < SAVE_SETTINGS_LOADER_STEPS.length; si++) {
+                var stepKey = SAVE_SETTINGS_LOADER_STEPS[si].key;
+                if (stepKey === "return_hero" || stepKey === "complete") continue;
+                var stepState = GetSaveSettingsLoaderStepState(stepKey);
+                if (stepState === "pending" || stepState === "active") {
+                    SetSaveSettingsLoaderStepState(stepKey, "skipped", "");
+                }
+            }
+        }
         if (didSwitchToStorageHero) {
             SetSaveSettingsLoaderStepState("return_hero", "done", "Returned to selected hero.");
         } else {

@@ -889,6 +889,68 @@
                 _callQol("setSettingsLoaderStepState", undefined, [key, status, detail || ""]);
             }
 
+            /**
+             * Drive the SAVE overlay's checklist — WRITE ONLY.
+             *
+             * Write mode had no checklist calls of any kind. The plate showed
+             * "Start" active and the other eight rows pending for the whole run,
+             * then jumped straight to complete, so the one question it exists to
+             * answer — which stage is this waiting on — it could not. Driving it
+             * off _go instead of scattering calls through the machine keeps it
+             * complete by construction: _go is the only way the stage changes.
+             *
+             * Several stages map onto one row on purpose. Everything between the
+             * shop opening and the editor being ready is "preparing the build UI"
+             * as far as a person watching is concerned; splitting it into six rows
+             * would say less, not more.
+             */
+            const WRITE_STAGE_STEPS = {
+                switch_hero:       [["start", "done"], ["switch_airheart", "active"]],
+                confirm_hero:      [["switch_airheart", "done"], ["confirm_airheart", "active"]],
+                open_shop:         [["confirm_airheart", "done"], ["prepare_build", "active"]],
+                open_browser:      [["prepare_build", "active"]],
+                await_list:        [["prepare_build", "active"]],
+                pick_target:       [["prepare_build", "active"]],
+                await_selected:    [["prepare_build", "active"]],
+                await_editor:      [["prepare_build", "active"]],
+                write_description: [["prepare_build", "done"], ["write_payload", "active"]],
+                commit:            [["write_payload", "done"], ["commit_save", "active"]],
+                await_commit:      [["commit_save", "active"]],
+                verify:            [["commit_save", "done"], ["verify_save", "active"]]
+            };
+
+            const WRITE_STAGE_DETAIL = {
+                switch_hero:       "Switching to Skyrunner",
+                confirm_hero:      "Confirming Skyrunner context",
+                open_shop:         "Opening the shop",
+                open_browser:      "Opening the build browser",
+                await_list:        "Waiting for the build list to settle",
+                pick_target:       "Selecting the storage build",
+                await_selected:    "Waiting for the selection to register",
+                await_editor:      "Opening the build editor",
+                write_description: "Writing the payload into the description",
+                commit:            "Saving the build",
+                await_commit:      "Waiting for the save to commit",
+                verify:            "Verifying the saved payload"
+            };
+
+            function _stampWriteStage(root, stage) {
+                const rows = WRITE_STAGE_STEPS[stage];
+                if (!rows) return;
+                const detail = WRITE_STAGE_DETAIL[stage] || "";
+                for (let i = 0; i < rows.length; i++) {
+                    _callQol("setSaveSettingsLoaderStepState", undefined,
+                        [rows[i][0], rows[i][1], i === rows.length - 1 ? detail : ""]);
+                }
+                // The settings-side Save button correlates on this attribute and
+                // showed "SAVING" for the whole run, because the only status the
+                // write machine ever published before the terminal one was
+                // "switching_to_storage_hero" — which ResolveBuildSavePendingLabel
+                // does not know, so it fell through to the default label. Four and
+                // a half seconds of an unchanging "SAVING" reads as a hang.
+                _writeStatus(root, "pending", stage);
+            }
+
             /** Enter a stage and stamp when its wait started, for the timeout bound. */
             function _go(stage, now, delayMs) {
                 // One line per TRANSITION, with the time the previous stage actually
@@ -906,6 +968,13 @@
                 _st.stage = stage;
                 _st.stageAt = now;
                 _st.nextAt = now + (delayMs === undefined ? STEP_MS : delayMs);
+                // Not for a silent write. A 3.1.9 migration flips mode to "write"
+                // without ever beginning a save session (manifest.js:1548-1552),
+                // and _SetLoaderStepState turns a session on as a side effect of
+                // any "active" step (ql_core.js:5145-5150) — so stamping here would
+                // put a "QOLLOCK SAVING..." plate on screen for a save the user
+                // never asked for. _writeStatus guards on the same flag.
+                if (_st.mode === "write" && !_st.silent) _stampWriteStage(_root(), stage);
             }
 
             function _expired(now, budgetMs) {
@@ -1991,7 +2060,7 @@
                             _st.startedAt = now;
                             _st.returnHero = _resolveReturnHero(ctx);
                             _callQol("beginSaveSettingsLoaderSession", undefined, [req.requestToken, now]);
-                            _writeStatus(root, "pending", "switching_to_storage_hero");
+                            _writeStatus(root, "pending", "starting");
                             _go("switch_hero", now, 0);
                             _reschedule(ACTIVE_RATE_SEC);
                             return;
@@ -2002,7 +2071,16 @@
                         _st.mode = "read";
                         _st.startedAt = now;
                         _st.returnHero = _resolveReturnHero(ctx);
-                        _callQol("beginSettingsLoaderSession", undefined, ["", now]);
+                        // BeginSettingsLoaderSession (ql_core.js:5332) bails on an empty
+                        // id, so passing "" never started a session at all — the read
+                        // plate appeared only because _SetLoaderStepState turns the
+                        // session on as a side effect of the first "active" step
+                        // (ql_core.js:5145-5150). That made every row before
+                        // read_payload unreachable and left the whole overlay hanging
+                        // off an implementation detail. The id is a de-dup key, not an
+                        // account: one per run is what the machine wants, since the
+                        // stage === "done" guard above is what stops a second read.
+                        _callQol("beginSettingsLoaderSession", undefined, ["storage_read_" + now, now]);
                         _setStep("start", "done", "");
                         _go("switch_hero", now, 0);
                         _reschedule(ACTIVE_RATE_SEC);
