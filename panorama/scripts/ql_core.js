@@ -5281,6 +5281,55 @@ function GetUIRoot() {
 
     // ── Settings Loader (load) overlay ──
 
+    // One line per change in what the user can actually see, for all three
+    // loaders. Always on while a session is live, silent otherwise.
+    //
+    // These overlays are only reachable in-game behind a VPK repack, so a
+    // failure that leaves no trace costs a whole play session to observe — a
+    // save whose plate never appeared produced a log in which the write machine
+    // reported success at every stage and the overlay was never mentioned at
+    // all. `above` is the point of it: the overlay is appended last under the
+    // context root on purpose, and anything listed there is drawing on top of
+    // the "DO NOT PRESS ANYTHING" card.
+    var _loaderTraceSigs = {};
+    function TraceLoaderOverlay(tag, overlay, shouldShow) {
+        var parent = null;
+        try { parent = (overlay && overlay.GetParent) ? overlay.GetParent() : null; } catch(e0) { parent = null; }
+
+        var idx = -1;
+        var count = -1;
+        var above = "";
+        if (parent && parent.GetChildCount && parent.GetChild) {
+            try {
+                count = parent.GetChildCount();
+                for (var i = 0; i < count; i++) {
+                    var child = parent.GetChild(i);
+                    if (child === overlay) { idx = i; continue; }
+                    if (idx < 0) continue;
+                    above += (above ? "," : "") + String((child && (child.id || child.paneltype)) || "?");
+                }
+            } catch(e1) { QOL_WARN("core", "loader trace: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        }
+
+        var vis = "";
+        var op = "";
+        try { vis = String((overlay && overlay.style && overlay.style.visibility) || ""); } catch(e2) { vis = "?"; }
+        try { op = String((overlay && overlay.style && overlay.style.opacity) || ""); } catch(e3) { op = "?"; }
+
+        var sig = (shouldShow ? "1" : "0") + "|" + (overlay ? "1" : "0") + "|" + idx + "/" + count +
+                  "|" + vis + "|" + op + "|" + above;
+        if (_loaderTraceSigs[tag] === sig) return;
+        _loaderTraceSigs[tag] = sig;
+        _TLog("loader:" + tag,
+            "show=" + (shouldShow ? 1 : 0) +
+            " overlay=" + (overlay ? "yes" : "NO") +
+            " parent=" + (parent ? String(parent.id || parent.paneltype || "?") : "-") +
+            " child=" + idx + "/" + count +
+            " vis=" + (vis || "(unset)") +
+            " op=" + (op || "(unset)") +
+            " above=[" + above + "]");
+    }
+
     function ResetSettingsLoaderStepStates() {
         _ResetLoaderStepStates(State.settingsLoaderStepStates, SETTINGS_LOADER_STEPS);
     }
@@ -5858,13 +5907,18 @@ function GetUIRoot() {
             if (State.settingsLoaderSessionCompleted) {
                 ResetSettingsLoaderSession(true);
             }
+            TraceLoaderOverlay("load", overlay, false);
             return;
         }
 
         overlay = EnsureSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("load", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("load", overlay, true);
 
         var title = GetCachedPanel("settingsLoaderTitle");
         var warning = GetCachedPanel("settingsLoaderWarning");
@@ -6163,13 +6217,18 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
+            TraceLoaderOverlay("save", overlay, false);
             return;
         }
 
         overlay = EnsureSaveSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("save", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("save", overlay, true);
 
         var saveCard = GetCachedPanel("saveSettingsLoaderCard");
 
@@ -6359,13 +6418,18 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
+            TraceLoaderOverlay("clear", overlay, false);
             return;
         }
 
         overlay = EnsureClearSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("clear", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("clear", overlay, true);
 
         var clearCard = GetCachedPanel("clearSettingsLoaderCard");
 
@@ -15033,6 +15097,12 @@ function GetUIRoot() {
             State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
             State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
             if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMs);
+            // The load loader wins the screen outright: a stale load session that
+            // was never reset therefore hides a save behind a plate frozen on the
+            // read checklist, with nothing anywhere saying so.
+            if (_settingsLoaderShowing && (ShouldUpdateSaveLoaderOverlay() || ShouldUpdateClearLoaderOverlay())) {
+                TraceLoaderOverlay("suppressed-by-load", GetCachedPanel("settingsLoaderOverlay"), true);
+            }
             if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMs);
             if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMs);
         }
