@@ -21,6 +21,7 @@
     var IsCfgEnabled = Utils.IsCfgEnabled;
     var IsPanelValid = Utils.IsPanelValid;
     var SetStyleSafe = Utils.SetStyleSafe;
+    var ClearStyleSafe = Utils.ClearStyleSafe;
     var SetWashColorSafe = _deps.setWashColorSafe;
     var NormalizePaletteColorIndex = _deps.normalizePaletteColorIndex;
     var ResolveWashColorFromPalette = _deps.resolveWashColorFromPalette;
@@ -50,15 +51,21 @@
 
     function ResetMinimalistHealthbarOffsetRuntime(panel) {
         if (!panel || !panel.style) return;
-        try { panel.style.x = "0px"; } catch(e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style.y = "0px"; } catch(e00) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e00 && e00.message ? e00.message : String(e00 || ""))); }
+        ClearStyleSafe(panel, "x");
+        ClearStyleSafe(panel, "y");
     }
 
+    // Clear, never write identity values. ui-scale in particular belongs to CSS:
+    // base/hud.css:420 puts 120% on #health_and_abilities_container (104% under
+    // .support_16_10_active), so writing "100%" here is not a reset — it shrinks
+    // the bar to 100/120 and, because the panel is centred off a 1290px right
+    // margin, moves it left. Same reasoning for opacity: the game fades the
+    // container in over 1.5s on .GameStatePreGame, and a forced 1.00 skips it.
     function ResetPlayerHealthbarScaleOpacityRuntime(panel) {
         if (!panel || !panel.style) return;
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style.uiScale = "100%"; } catch(e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try { panel.style.opacity = "1.00"; } catch(e2) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        ClearStyleSafe(panel, "preTransformScale2d");
+        ClearStyleSafe(panel, "uiScale");
+        ClearStyleSafe(panel, "opacity");
     }
 
     function ResetMinimalistHealthbarOffsetRuntimeAll(root, currentPanel, previousPanel) {
@@ -134,6 +141,7 @@
         var finalOffsetY = (-playerOffsetY) + minimalistOffsetY;
         var finalScale = (playerScale / 100);
         var scaleText = String(playerScale) + "%";
+        var preTransformScaleText = finalScale.toFixed(2) + ", " + finalScale.toFixed(2);
         var opacityText = playerOpacity.toFixed(2);
         var scaleActive = (Math.abs(finalScale - 1.0) > 0.0001);
         var opacityActive = (Math.abs(playerOpacity - 1.0) > 0.0001);
@@ -146,6 +154,7 @@
             finalOffsetY: finalOffsetY,
             finalScale: finalScale,
             scaleText: scaleText,
+            preTransformScaleText: preTransformScaleText,
             opacityText: opacityText,
             playerOpacity: playerOpacity,
             scaleActive: scaleActive,
@@ -154,16 +163,25 @@
         };
     }
 
+    // ui-scale on #health_and_abilities_container is the game's (base/hud.css:420
+    // = 120%, and .support_16_10_active overrides it to 104%), so the mod must not
+    // write it — the factor rides on pre-transform-scale2d, which multiplies with
+    // ui-scale instead of replacing it. Anything at its default value is cleared
+    // rather than written, so the CSS value and its transitions come back.
     function ApplyPlayerHealthbarRuntimeStyleToPanel(panel, runtimeState, includeOffsets) {
         if (!panel || !panel.style || !runtimeState) return;
         var applyOffsets = (includeOffsets !== false);
         if (applyOffsets) {
-            panel.style.x = String(runtimeState.finalOffsetX) + "px";
-            panel.style.y = String(runtimeState.finalOffsetY) + "px";
+            if (runtimeState.finalOffsetX !== 0) panel.style.x = String(runtimeState.finalOffsetX) + "px";
+            else ClearStyleSafe(panel, "x");
+            if (runtimeState.finalOffsetY !== 0) panel.style.y = String(runtimeState.finalOffsetY) + "px";
+            else ClearStyleSafe(panel, "y");
         }
-        panel.style.preTransformScale2d = "1.00, 1.00";
-        panel.style.uiScale = runtimeState.scaleText;
-        panel.style.opacity = runtimeState.opacityText;
+        ClearStyleSafe(panel, "uiScale");
+        if (runtimeState.scaleActive) panel.style.preTransformScale2d = runtimeState.preTransformScaleText;
+        else ClearStyleSafe(panel, "preTransformScale2d");
+        if (runtimeState.opacityActive) panel.style.opacity = runtimeState.opacityText;
+        else ClearStyleSafe(panel, "opacity");
     }
 
     function ResetPlayerHealthbarRuntimeStyle(panel) {
