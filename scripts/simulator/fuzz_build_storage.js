@@ -151,10 +151,19 @@ function runCase(seed, mode) {
     // legacy read that succeeds has observed a real payload even though no
     // description holds one yet. Checking descriptions alone reported 25 false
     // "claimed a payload was applied but never observed one" failures.
+    //
+    // Containment, not equality. The write appends a dirty marker —
+    // `token + "\n\n[" + now + "]"` (manifest.js:1798) — so the stored description
+    // never equals the bare token, and an exact match called 67 of 183 perfectly
+    // good writes failures. At that rate the 13 real ones were unreadable.
     const ourTokens = scenario.tokens;
+    const carries = (text) => {
+        const s = String(text || "");
+        return ourTokens.some((t) => t && s.indexOf(t) !== -1);
+    };
     const holdsOurPayload = () => g.builds.some((b) =>
-        ourTokens.indexOf(b.description) !== -1 ||
-        (b.categories || []).some((c) => ourTokens.indexOf(c.name) !== -1));
+        carries(b.description) ||
+        (b.categories || []).some((c) => carries(c.name)));
     g.seedBuilds(scenario.specs);
 
     const applied = [];
