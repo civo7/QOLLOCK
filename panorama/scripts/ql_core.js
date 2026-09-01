@@ -2690,9 +2690,15 @@ function GetUIRoot() {
         var hud = ResolveCachedPanel(root, "hudPanel", PANEL_ID_HUD);
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
-        if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
+        var isHeroTesting = hasClassInHierarchy(root, "connectedToHeroTesting");
+        if (!isHeroTesting) {
+            if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
+            if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
+            if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
+        } else {
+            var heroTestingHiddenClasses = ["inHideoutIntro", "HideoutIntro"];
+            if (hasAnyClassInHierarchySafe(root, heroTestingHiddenClasses)) return false;
+        }
 
         var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
         var gameplayHudAlive = ResolveCachedPanel(root, "gameplayHudAlive", "gameplay_hud_alive");
@@ -2753,6 +2759,7 @@ function GetUIRoot() {
             State.minimalistHealthbarOffsetApplied ||
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) return true;
+        if ((Number(healthbarType) === 2) || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
         if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
         if ((Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled) return true;
         return false;

@@ -10,6 +10,8 @@
 	flow-children: none;
 }
 
+
+
 #RecentHealContainer,
 .recentDamageCounters
 {
@@ -193,19 +195,18 @@
 	transform: rotateZ(0deg);
 }
 
+
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthContainer
 {
-	/* margin-top drives the HP number's vertical position. At 41px it floated
-	 * above the bar; pushed down to sit ON the bar (right side), matching the
-	 * reference. TUNE THIS if it's not centered on the bar: higher = lower on
-	 * screen. */
 	horizontal-align: right;
-	margin-top: 100px;
+	vertical-align: center;
+	margin-top: -5px;
+	margin-right: 75px;
 	z-index: 100;
 	width: 100px;
 	height: 65px;
 	flow-children: down;
-	transform: rotateZ(-10deg);
+	transform: rotateZ(0deg);
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthBacker
@@ -286,7 +287,7 @@
 	opacity: 1;
 	margin-top: -8px;
 	horizontal-align: right;
-	margin-right: 30px;
+	margin-right: 5px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .shieldNumbersContainer
@@ -294,7 +295,7 @@
 	width: 40px;
 	margin-top: 85px;
 	margin-right: 60px;
-	transform: rotateZ(-10deg);
+	transform: rotateZ(0deg);
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) #BulletShieldNumbers

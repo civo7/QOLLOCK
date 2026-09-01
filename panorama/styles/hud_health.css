@@ -687,9 +687,10 @@
 {
 	background-color: #363636dd;
 	width: 25px;
-	height: 230px;
-	vertical-align: bottom;
-	margin: 0px 0px 265px 25px;
+	height: 292px;
+	horizontal-align: center;
+	vertical-align: center;
+	margin-top: 20px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -731,6 +732,7 @@
 	width: 200px;
 	height: 600px;
 	margin-top: -150px;
+	margin-left: 64px;
 	transform: rotateZ(90deg);
 }
 
@@ -818,9 +820,10 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #pending_incoming_heal
 {
 	width: 25px;
-	height: 230px;
-	vertical-align: bottom;
-	margin: 0px 0px 265px 25px;
+	height: 292px;
+	horizontal-align: center;
+	vertical-align: center;
+	margin-top: 20px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -828,9 +831,10 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #pending_incoming_damage
 {
 	width: 25px;
-	height: 230px;
-	vertical-align: bottom;
-	margin: 0px 0px 265px 25px;
+	height: 292px;
+	horizontal-align: center;
+	vertical-align: center;
+	margin-top: 20px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -858,6 +862,8 @@
 	transition-duration: 0.0s;
 	width: 75px;
 	height: 400px;
+	horizontal-align: center;
+	vertical-align: center;
 	background-size: cover;
 	background-repeat: no-repeat;
 	background-image: url("s2r://panorama/images/qollock/qol_fg_healthbar_border_png.vtex");
