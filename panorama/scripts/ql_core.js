@@ -6231,6 +6231,14 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
+            // Same self-reset the load loader has done all along. Without it a
+            // completed session stayed completed for the rest of the match, and
+            // _BeginLoaderSession refuses a token it has already completed — so a
+            // repeat request with a token that had not changed silently got no
+            // session and no plate.
+            if (State.saveSettingsLoaderSessionCompleted) {
+                ResetSaveSettingsLoaderSession(true);
+            }
             TraceLoaderOverlay("save", overlay, false);
             return;
         }
@@ -6431,6 +6439,9 @@ function GetUIRoot() {
         if (!shouldShow) {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+            }
+            if (State.clearSettingsLoaderSessionCompleted) {
+                ResetClearSettingsLoaderSession(true);
             }
             TraceLoaderOverlay("clear", overlay, false);
             return;

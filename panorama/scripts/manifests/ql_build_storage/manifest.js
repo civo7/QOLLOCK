@@ -1069,7 +1069,24 @@
             function _clearRequest(root) {
                 const panels = _bridgeSurfaces(root);
                 for (let i = 0; i < panels.length; i++) {
-                    try { panels[i].SetAttributeString(BRIDGE_REQUEST, ""); } catch(e) {}
+                    try {
+                        panels[i].SetAttributeString(BRIDGE_REQUEST, "");
+                        // The token goes too. It is the settings context's to write,
+                        // but _writeStatus echoes it onto every surface — including
+                        // #Hud, which the settings side never writes and cannot
+                        // correct. _readBridge returns the first non-empty surface, so
+                        // #Hud kept answering with the FIRST save's token forever, and
+                        // BeginSaveSettingsLoaderSession refuses a token it has
+                        // already completed (ql_core.js:5111-5116). Every save after
+                        // the first therefore ran with no session and no plate: the
+                        // overlay only appeared at the end, off the one-second hold
+                        // window that FinalizeSaveSettingsLoaderSession opens.
+                        //
+                        // The settings-side watcher treats an empty token as a match
+                        // (ql_settings.js:1813), so clearing it does not break the
+                        // correlation of the terminal status it is waiting on.
+                        panels[i].SetAttributeString(BRIDGE_TOKEN, "");
+                    } catch(e) {}
                 }
             }
 
