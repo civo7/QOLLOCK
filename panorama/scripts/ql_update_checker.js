@@ -17,6 +17,7 @@
 
     var autoCheckStarted = false;
     var updateAvailable = false;
+    var hasBeenShown = false;
     var requestToken = 0;
     var popupLayer = null;
 
@@ -30,10 +31,14 @@
         return root;
     }
 
-    function IsSettingsOpen() {
+    function FindSettingsWindow() {
         var root = FindRoot();
-        var win = null;
-        try { win = root && root.FindChildTraverse ? root.FindChildTraverse("SettingsWindow") : null; } catch(e) { win = null; }
+        if (!root || !root.FindChildTraverse) return null;
+        try { return root.FindChildTraverse("SettingsWindow"); } catch(e) { return null; }
+    }
+
+    function IsSettingsOpen() {
+        var win = FindSettingsWindow();
         try { return !!(win && win.BHasClass && win.BHasClass("Visible")); } catch(e2) { return false; }
     }
 
@@ -48,17 +53,17 @@
     }
 
     function EnsurePopup() {
+        var win = FindSettingsWindow();
+        if (!win) return null;
         if (IsValid(popupLayer)) return popupLayer;
-        var root = FindRoot();
-        if (!root) return null;
 
-        var existing = root.FindChildTraverse ? root.FindChildTraverse("QOLUpdatePopupLayer") : null;
+        var existing = win.FindChildTraverse ? win.FindChildTraverse("QOLUpdatePopupLayer") : null;
         if (IsValid(existing)) {
             popupLayer = existing;
             return popupLayer;
         }
 
-        var layer = $.CreatePanel("Panel", root, "QOLUpdatePopupLayer");
+        var layer = $.CreatePanel("Panel", win, "QOLUpdatePopupLayer");
         if (!layer) return null;
         layer.AddClass("QOLUpdatePopupLayer");
 
@@ -77,7 +82,7 @@
         closeLabel.text = "X";
         var body = $.CreatePanel("Label", popup, "QOLUpdatePopupBody");
         body.AddClass("QOLUpdatePopupBody");
-        body.text = "A newer QOLLOCK update is available. Please download the latest release from GitHub or Discord.";
+        body.text = "A newer QOLLOCK update is available. Please download the latest release.";
         close.SetPanelEvent("onactivate", function() {
             if (IsValid(layer)) layer.RemoveClass("UpdateAvailable");
         });
@@ -87,9 +92,12 @@
     }
 
     function ShowPopupIfSettingsOpen() {
-        if (!updateAvailable || !IsSettingsOpen()) return;
+        if (!updateAvailable || hasBeenShown || !IsSettingsOpen()) return;
         var layer = EnsurePopup();
-        if (IsValid(layer)) layer.AddClass("UpdateAvailable");
+        if (IsValid(layer)) {
+            layer.AddClass("UpdateAvailable");
+            hasBeenShown = true;
+        }
     }
 
     function DeleteProbe(host, image) {

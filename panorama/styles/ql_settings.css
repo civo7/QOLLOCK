@@ -200,8 +200,8 @@
 	visibility: visible;
 }
 
-/* Public release update notice. It is a sibling of SettingsWindow so it stays
-   above dynamically rebuilt setting tabs; the pale green uses QOLLOCK's accent. */
+/* Public release update notice. Rendered inside #SettingsWindow so it is strictly
+   contained within QOLLOCK settings and never leaks into the escape menu. */
 #QOLUpdatePopupLayer
 {
 	width: 100%;
@@ -211,7 +211,7 @@
 	z-index: 6000;
 }
 
-#QOLUpdatePopupLayer.UpdateAvailable
+#SettingsWindow.Visible #QOLUpdatePopupLayer.UpdateAvailable
 {
 	visibility: visible;
 }
