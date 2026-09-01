@@ -16,6 +16,7 @@ if ! git diff --cached --name-only | grep -q '\.js$'; then
 fi
 
 SCRIPTS_DIR="$(git rev-parse --show-toplevel)/panorama/scripts"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 echo "[QOLLOCK] Running bridge checks..."
 cd "$SCRIPTS_DIR" && bash tools/check_bridges.sh
@@ -28,5 +29,28 @@ cd "$SCRIPTS_DIR" && bash tools/check_manifests.sh
 
 echo "[QOLLOCK] Running smoke test..."
 node "$SCRIPTS_DIR/tools/qollock_smoke_test.js"
+
+echo "[QOLLOCK] Validating compact schema..."
+node "$REPO_ROOT/scripts/validate_compact_schema.js"
+
+# No behavioural suite here on purpose.
+#
+# tests/ ran the mod against a MODELLED Panorama tree. The model cannot know which
+# panels the client actually creates — several are conditional in C++ — so its
+# answers about panel existence and label readability were guesses. When a guess
+# disagreed with the game the suite went red on correct code and green on broken
+# code: a save-verify regression once shipped green at 14/14 because the model
+# resolved label text the engine does not, and conversely a fix matching a
+# debugger capture (Label.BuildName holds the literal build name) failed a test
+# asserting the opposite. Removed 2026-08-23.
+#
+# What replaces it, none of which models the game:
+#   - this smoke test           — every file loads, no syntax/reference errors
+#   - validate_compact_schema   — 57 schema versions, ~450 codec fuzz cases
+#   - each manifest's test()    — runs IN the client against the real tree
+#   - scripts/profile_hud.js    — counts operations; feed it a real tree with
+#                                 scripts/import_tree_dump.js
+#
+# scripts/simulator/ stays because the profiler is built on it.
 
 echo "[QOLLOCK] All pre-commit checks passed!"

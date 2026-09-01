@@ -49,6 +49,7 @@ function MergeConfig(config) {
     NormalizeTopbarEnemyHpWarningConfig(merged, config);
     NormalizeTopbarAllyHpWarningConfig(merged, config);
     NormalizeShopItemNotificationsConfig(merged, config);
+    NormalizeQuickbuyDependencyConfig(merged);
     return merged;
 }
 
@@ -118,6 +119,10 @@ function NormalizeTopbarAllyHpWarningConfig(configTarget, sourceConfig) {
 
 function NormalizeShopItemNotificationsConfig(configTarget, sourceConfig) {
     GetSharedSchemaUtils().NormalizeShopItemNotificationsConfig(configTarget, sourceConfig);
+}
+
+function NormalizeQuickbuyDependencyConfig(configTarget) {
+    GetSharedSchemaUtils().NormalizeQuickbuyDependencyConfig(configTarget);
 }
 
 function NormalizeItemCooldownModeConfig(configTarget, sourceConfig) {
@@ -220,6 +225,7 @@ if (typeof QOL !== "undefined") {
     QOL.normalizeTopbarEnemyHpWarningConfig = NormalizeTopbarEnemyHpWarningConfig;
     QOL.normalizeTopbarAllyHpWarningConfig = NormalizeTopbarAllyHpWarningConfig;
     QOL.normalizeShopItemNotificationsConfig = NormalizeShopItemNotificationsConfig;
+    QOL.normalizeQuickbuyDependencyConfig = NormalizeQuickbuyDependencyConfig;
     QOL.normalizeItemCooldownModeConfig = NormalizeItemCooldownModeConfig;
     QOL.compareSchemaSemver = CompareSchemaSemver;
     QOL.normalizeCompassSpeedSchemaMigration = NormalizeCompassSpeedSchemaMigration;
@@ -237,6 +243,7 @@ try {
     if (typeof CompareSchemaSemver !== "function") throw new Error("CompareSchemaSemver is not a function");
     if (typeof NormalizeNeutralCampTierConfig !== "function") throw new Error("NormalizeNeutralCampTierConfig is not a function");
     if (typeof NormalizeNeutralCampFlags !== "function") throw new Error("NormalizeNeutralCampFlags is not a function");
+    if (typeof NormalizeQuickbuyDependencyConfig !== "function") throw new Error("NormalizeQuickbuyDependencyConfig is not a function");
     if (typeof NormalizeCompassSpeedSchemaMigration !== "function") throw new Error("NormalizeCompassSpeedSchemaMigration is not a function");
     if (typeof NormalizeLanguageSchemaMigration !== "function") throw new Error("NormalizeLanguageSchemaMigration is not a function");
 

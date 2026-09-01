@@ -2,7 +2,7 @@
 
 ## What This Is
 A skill file teaching AI agents how to use [Fallow](https://github.com/fallow-rs/fallow)
-(v2.89.0+) productively with the QOLLOCK Panorama ES5 codebase. Commit this file so
+(v2.89.0+) productively with the QOLLOCK Panorama codebase. Commit this file so
 future agent sessions can pick it up without re-discovering the limitations.
 
 ## Quick Reference
@@ -108,8 +108,8 @@ The health score (72/B for QOLLOCK) is a rough guide. Key metrics to watch:
 | Unit size > 60 LOC | 147 functions | These are mostly feature updates — complexity is inherent |
 
 **Do not** refactor feature update functions to reduce complexity scores.
-Panorama's ES5 constraint limits abstraction patterns, and feature update functions
-are naturally complex (read config → find panels → apply styles → handle edge cases).
+Feature update functions are naturally complex (read config → find panels →
+apply styles → handle edge cases).
 
 ## Known Limitations for QOLLOCK
 

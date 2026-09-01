@@ -65,7 +65,8 @@
                 panel.style.x = ox + "px";
                 panel.style.y = (-oy) + "px";
                 panel.style.opacity = op;
-                panel.style.preTransformScale2d = sc + ", " + sc;
+                panel.style.preTransformScale2d = "1.00, 1.00";
+                panel.style.uiScale = Math.round(Number(sc) * 100) + "%";
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
             }
 

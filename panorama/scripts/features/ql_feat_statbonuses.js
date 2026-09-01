@@ -121,6 +121,9 @@
             lastMaxHealthText: "",
             nextSourceSearchMs: 0,
             nextSourceSearchByKey: {},
+            // Kept in sync with ql_state.js — ResolveStatBonusesSource reads both.
+            sourceSearchBackoffMs: 0,
+            lastSourceSearchShopOpen: null,
             nextIdolCountSearchMs: 0,
             nextTooltipScanMs: 0,
             goldenValues: {},
@@ -186,7 +189,8 @@
         if (layoutSig !== State.statBonuses.lastLayoutSig) {
             overlay.style.marginLeft = (-520 + statOffsetX) + "px";
             overlay.style.marginBottom = (70 + statOffsetY) + "px";
-            overlay.style.preTransformScale2d = (statScale / 100).toFixed(2);
+            overlay.style.preTransformScale2d = "1.00, 1.00";
+            overlay.style.uiScale = String(statScale) + "%";
             State.statBonuses.lastLayoutSig = layoutSig;
         }
 

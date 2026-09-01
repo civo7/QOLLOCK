@@ -59,21 +59,30 @@
 	opacity-mask-scale: 100% 200%;
 }
 
-#newgame .menuButtonLabel
+#newgame
 {
 	margin-bottom: 490px;
+}
+#newgame .menuButtonLabel
+{
 	text-transform: uppercase;
 }
 
-#watchgame .menuButtonLabel
+#watchgame
 {
 	margin-bottom: 420px;
+}
+#watchgame .menuButtonLabel
+{
 	text-transform: uppercase;
 }
 
-#guides .menuButtonLabel
+#guides
 {
 	margin-bottom: 350px;
+}
+#guides .menuButtonLabel
+{
 	text-transform: uppercase;
 }
 

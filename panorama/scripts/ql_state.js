@@ -103,6 +103,10 @@ var State;
         fgHeroImageOriginalIndex: -1,
         fgHeroImageMoved: false,
         fgHeroImageSourceProbeNextMs: 0,
+        // Last hero signature ResolveFgHeroRefreshSignal returned, so a tick
+        // throttled by fgHeroImageSourceProbeNextMs reuses it instead of seeing
+        // an empty signature and tearing down the hero-image attachment.
+        fgHeroImageLastResolvedSig: "",
         fgHeroImageCurrentSig: "",
         fgHeroImagePendingAttachMs: 0,
         fgHeroImageRefreshBounceNextMs: 0,
@@ -111,6 +115,11 @@ var State;
         fgHeroImageSwapCandidatePanel: null,
         minimapLocalPlayerPanelNextScanMs: 0,
         minimapLocalMainImageNextScanMs: 0,
+        // Current escalating backoff for the two minimap local-player scans. Both
+        // fall back to a whole-HUD class traversal, so a miss must not retry at the
+        // 90ms fast cooldown forever. See NextMinimapScanBackoffMs in ql_core.js.
+        minimapLocalPlayerPanelScanBackoffMs: 0,
+        minimapLocalMainImageScanBackoffMs: 0,
         minimapRotateLastDeg: null,
         minimapRotateSmoothedDeg: null,
         minimapRotateLastUpdateMs: 0,
@@ -212,6 +221,11 @@ var State;
             lastMaxHealthText: "",
             nextSourceSearchMs: 0,
             nextSourceSearchByKey: {},
+            // Escalating retry interval for stat source lookups, and the shop
+            // state the last lookup ran under. See ResolveStatBonusesSource in
+            // ql_core.js for why a flat retry was expensive.
+            sourceSearchBackoffMs: 0,
+            lastSourceSearchShopOpen: null,
             nextIdolCountSearchMs: 0,
             nextTooltipScanMs: 0,
             goldenValues: {},
@@ -320,11 +334,19 @@ var State;
             overlapPending: false,
             mapState: 0,
             buildGen: 0,
-            ultCooldownsEnabled: false
+            ultCooldownsEnabled: false,
+            // Resolved Item Buy Notifications geometry (offset/opacity/scale), cached
+            // so lazily-created per-hero panels can be styled at creation time and
+            // live panels only re-styled when the sliders actually move.
+            style: null
         },
         topBarRuntimeStyleSig: "",
         bottomBarRuntimeStyleSig: "",
         bottomBarCurrencyColorStyleSig: "",
+        // Paired with the sig above. A colour already applied still has to be
+        // re-applied when the HUD rebuilds and the signature panel is a different
+        // object, or the sig claims work was done on panels that no longer exist.
+        bottomBarCurrencyColorPanel: null,
         bottomBarCurrencyDebugLastSig: "",
         bottomBarCurrencyDebugNextMs: 0,
         itemsRuntimeStyleSig: "",
@@ -377,6 +399,15 @@ var State;
         topbarPlayerPanelRoot: null,
         topbarPlayerPanels: null,
         topbarPlayerPanelLastScanMs: null,
+        // Latched per slot on first successful resolve, never cleared for the session.
+        // Distinguishes "the engine does not create this slot" (index 0 — see
+        // GetTopBarPlayerPanel) from "the panel died and will come back", which decides
+        // whether a lookup gets a 30s cooldown or the normal 1.5s one.
+        topbarPlayerPanelEverResolved: null,
+        // Per-slot deadline before which a missed lookup is not retried, stamped when
+        // the miss happens. Only a slot that has never resolved while the top bar
+        // demonstrably exists earns the long cooldown — see GetTopBarPlayerPanel.
+        topbarPlayerPanelMissUntilMs: null,
         topbarNicknamesWasEnabled: false,
         topbarNicknamesNextRefreshMs: 0,
         topbarNicknamePlayers: null,
@@ -525,6 +556,19 @@ var State;
         settingsLoaderCurrentStep: "",
         settingsLoaderDetail: "",
         settingsLoaderResult: "",
+        // Tri-state record of whether this session's config was read successfully.
+        // Guards the save pipeline against writing defaults over a stored config
+        // that exists but could not be read.
+        //   "pending" — load has not conclusively finished (also the pre-load state)
+        //   "loaded"  — our payload was read, OR storage is genuinely empty
+        //   "failed"  — a storage build exists but no payload could be read from it,
+        //               so real user data may be sitting there unread
+        configLoadState: "pending",
+        configLoadStateDetail: "",
+        configLoadStateAtMs: 0,
+        // Set when a save is refused for an unread config; a second press inside
+        // this window is treated as consent to overwrite.
+        buildSaveOverwriteArmedUntilMs: 0,
         settingsLoaderShowUntilMs: 0,
         settingsLoaderNextReassertMs: 0,
         settingsLoaderLastRenderSig: "",
@@ -596,6 +640,21 @@ var State;
         buildClearStorageSwitchRetries: 0,
         buildClearStorageConfirmStartedMs: 0,
         buildClearUserShopGateSatisfied: false,
+        // Prune mode: a clear request that spares the build holding the payload,
+        // used to tidy up junk builds after a verified save instead of wiping
+        // everything. See AdvanceBuildClearRequestStage in ql_core.js.
+        buildClearPreservePayload: false,
+        buildClearSkippedCount: 0,
+        buildClearLastEntryCount: -1,
+        buildClearNoProgressHits: 0,
+        // Prune deletes nothing until it has found our payload in the list it is
+        // looking at. "No payload in this build" is equally consistent with looking at
+        // the wrong hero's list, where every build is the user's own.
+        buildClearPruneSawPayload: false,
+        // Delete presses issued this run. The no-progress detector counts against this
+        // rather than against ticks: walking the list to find the payload legitimately
+        // leaves the entry count unchanged, so a per-tick counter aborted mid-walk.
+        buildClearDeleteAttempts: 0,
         // (debug state fields removed — buildClearDebugLastSig, buildClearDebugNextMs, buildClearDebugOverlayLine)
         heroReturnDebugLastSig: "",
         heroReturnDebugNextMs: 0,
@@ -671,6 +730,7 @@ var State;
         allyColoredHealthPulseVal: 0,
         rootClassCache: { panel: null, values: {} },
         coreRootStaticSig: "",
+        quickbuyClassCache: { panel: null, values: {} },
         passiveHudClassCache: { panel: null, values: {} },
         abilitiesClassCache: { panel: null, values: {} },
         heroShopClassCache: { panel: null, values: {} },
@@ -755,6 +815,10 @@ var State;
         mcLastBarrierFullHearts: -1,
         mcLastBarrierHasHalf: null,
         mcLastBarrierLastSlotIsHalf: null,
+        // How many barrier heart slots were wanted on the last render. Part of the
+        // render signature because the slot array only grows, so a shrinking barrier
+        // maximum has to re-run the loop that collapses the surplus outlines.
+        mcLastBarrierHeartsNeeded: -1,
         dl4dLastTime: -1,
         dl4dTriggeredTimes: {},
         dl4dCaptionToken: 0,

@@ -22,7 +22,11 @@
 
     FR.register({
         id: "ql_minimap_timers",
-        enableKey: "ENABLE_MINIMAP_REJUV_TIMER",
+        // Multi-key: the bridge buff timer and the mid-boss timer are independent
+        // toggles, either of which must boot this feature. Gating on the rejuv key
+        // alone left ENABLE_MINIMAP_BUFF_TIMER dead unless the mid-boss timer
+        // happened to be on too (regression from the ql_rejuv_timers split).
+        enableKeys: ["ENABLE_MINIMAP_REJUV_TIMER", "ENABLE_MINIMAP_BUFF_TIMER"],
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false },
@@ -180,6 +184,11 @@
                 if (ri) { if (ri.SetHasClass) ri.SetHasClass("qol-hidden", rbe); else ri.style.visibility = rbe ? "collapse" : "visible"; }
                 if (be && panels.buffBridgeLeftTime && panels.buffBridgeLeftTime.text !== bridgeText) panels.buffBridgeLeftTime.text = bridgeText;
                 if (be && panels.buffBridgeRightTime && panels.buffBridgeRightTime.text !== bridgeText) panels.buffBridgeRightTime.text = bridgeText;
+                // The centre plate is on screen whenever sbbp, which happens in bridge
+                // mode when the buff timer is on but "On Bridge" is off (the mid-boss
+                // timer is what put us in bridge mode). Without this write its label
+                // keeps whatever standard mode last set — a clock frozen mid-countdown.
+                if (sbbp && panels.buffTime && panels.buffTime.text !== bridgeText) panels.buffTime.text = bridgeText;
                 if (re && panels.rejuvTime && panels.rejuvTime.text !== rejuvText) panels.rejuvTime.text = rejuvText;
                 if (panels.buffBridgeLeftPanel) { SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", br); }
                 if (panels.buffBridgeRightPanel) { SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", br); }

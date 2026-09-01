@@ -408,7 +408,7 @@ CitadelHudTopBarPlayer.SpectatorTarget.SpectateHover
 
 .wants_scoreboard CitadelHudTopBarPlayer
 {
-	height: 230px;
+	height: 600px;
 }
 
 #PlayerDetailsContainer

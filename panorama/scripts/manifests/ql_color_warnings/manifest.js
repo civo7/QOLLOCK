@@ -41,7 +41,24 @@
 
     FR.register({
         id: "ql_color_warnings",
-        enableKey: "ENABLE_COLORED_HEALTHBAR",
+        // Multi-key. _tick() already gates its three subsystems independently via
+        // anySelf / anyEnemy / anyAlly, so any one of these twelve toggles must be
+        // able to boot the feature. Gating on ENABLE_COLORED_HEALTHBAR alone left
+        // enemy-only and ally-only configurations dead.
+        enableKeys: [
+            "ENABLE_COLORED_HEALTHBAR",
+            "ENABLE_COLOR_WARNING_25",
+            "ENABLE_COLOR_WARNING_65",
+            "ENABLE_COLOR_WARNING_75",
+            "ENABLE_ENEMY_COLORED_HEALTHBAR",
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_65",
+            "ENABLE_TOPBAR_ENEMY_HP_WARNING_75",
+            "ENABLE_ALLY_COLORED_HEALTHBAR",
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_25",
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_65",
+            "ENABLE_TOPBAR_ALLY_HP_WARNING_75"
+        ],
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_COLORED_HEALTHBAR", type: "toggle", default: false },
@@ -315,15 +332,24 @@
                     if (!panels || !panels.progressLeft) return;
                     var progressLeft = panels.progressLeft;
                     var parent = progressLeft.GetParent ? progressLeft.GetParent() : null;
-                    var pH = Number(progressLeft.actuallayoutheight);
-                    var cH = parent ? Number(parent.actuallayoutheight) : 0;
-                    if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
-                        State.coloredHealthbarZeroHeightStreak += 1;
-                        if (State.coloredHealthbarZeroHeightStreak >= 4) _resetSelfPanelCache();
-                        return;
+                    var val = parent ? parent.value : undefined;
+                    var max = parent ? parent.max : undefined;
+                    var pct = 0;
+                    
+                    if (val !== undefined && max !== undefined && max > 0) {
+                        State.coloredHealthbarZeroHeightStreak = 0;
+                        pct = (val / max) * 100;
+                    } else {
+                        var pH = Number(progressLeft.actuallayoutheight);
+                        var cH = parent ? Number(parent.actuallayoutheight) : 0;
+                        if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
+                            State.coloredHealthbarZeroHeightStreak += 1;
+                            if (State.coloredHealthbarZeroHeightStreak >= 4) _resetSelfPanelCache();
+                            return;
+                        }
+                        State.coloredHealthbarZeroHeightStreak = 0;
+                        pct = (pH / cH) * 100;
                     }
-                    State.coloredHealthbarZeroHeightStreak = 0;
-                    var pct = (pH / cH) * 100;
                     var color = _resolveSelfColor(pct, cfg);
                     if (panels.healthBar) _setWashColorSafe(panels.healthBar, color);
                     if (panels.progressLeft) _setWashColorSafe(panels.progressLeft, color);

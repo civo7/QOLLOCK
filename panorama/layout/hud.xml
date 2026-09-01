@@ -23,26 +23,25 @@
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
+		<!-- Dev tool: dumps the real panel tree to the console log so the headless
+		     profiler can be fed a captured tree instead of a modelled one. -->
+		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" />
 		<!-- CUT-OVER: ql_feat_buildload.js replaced by manifests/ql_build_payload/manifest.js -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" /> -->
-		<!-- CUT-OVER: old topBarRuntime disabled, see manifests/ql_topbar/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
-		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" /> -->
-		<!-- CUT-OVER: old itemsRuntime disabled, see manifests/ql_items/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" /> -->
+		<!-- These flat-config runtimes remain authoritative for live HUD styling. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_items.vjs_c" />
 		<!-- CUT-OVER: old soulsRuntime disabled, see manifests/ql_souls/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_souls.vjs_c" /> -->
 		<!-- CUT-OVER: old damageImpactRuntime disabled, see manifests/ql_damage_impact/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damageimpact.vjs_c" /> -->
-		<!-- CUT-OVER: old ammo disabled, see manifests/ql_ammo/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" /> -->
-		<!-- CUT-OVER: old staminaChargeColorRuntime disabled, see manifests/ql_stamina/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_ammo.vjs_c" />
+		<include src="s2r://panorama/scripts/features/ql_feat_stamina.vjs_c" />
 		<!-- CUT-OVER: old combatStatus disabled, see manifests/ql_combat_status/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_combatstatus.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_zipboost.vjs_c" />
@@ -71,13 +70,12 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
-		<!-- CUT-OVER: old betterUnsecuredHud disabled, see manifests/ql_better_unsecured_hud/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
+		<!-- Unsecured Plus uses the verified Aug 1 flat-config runtime. -->
+		<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
-		<!-- CUT-OVER: old colorWarning disabled, see manifests/ql_color_warnings/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" />
 		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
@@ -112,10 +110,21 @@
 		<include src="s2r://panorama/scripts/core/ql_manifest_tests.vjs_c" />
 		<!-- Phase 9: New feature manifests (order-independent; all depend on FeatureRegistry) -->
 		<include src="s2r://panorama/scripts/manifests/ql_build_payload/manifest.vjs_c" />
+		<!-- Description-carrier storage: reads AND writes the config in the storage
+		     build's description instead of its category name. Ships disabled; while
+		     it is off, ql_build_payload + ql_feat_buildsave stay authoritative, so
+		     the feature toggle is the whole rollback. -->
+		<!-- 3.1.9 MIGRATION — DELETE ALONG WITH THE FILE. Read-only reader for the
+		     old category-name carrier. Loaded before the manifest that consults it;
+		     the manifest resolves it lazily off QOL, so order is convention not a
+		     requirement. -->
+		<include src="s2r://panorama/scripts/manifests/ql_build_storage/legacy_3_1_9.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_build_storage/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_nicknames/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_ult_cooldowns/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unspent/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_ability_icons/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_report/manifest.vjs_c" />
@@ -124,17 +133,13 @@
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />
+		<!-- Disabled: legacy Unsecured Plus runtime remains authoritative above. -->
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_target_shapes/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_bottom_bar/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_items/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_stamina/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_ammo/manifest.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_topbar/manifest.vjs_c" />
+		<!-- Disabled: these style manifests do not track the authoritative flat config live. -->
 		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
@@ -148,7 +153,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_damage_numbers/manifest.vjs_c" />
 		<!-- Kept out of the manifest runtime until its config source is authoritative. -->
 		<!-- <include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
+		<!-- Disabled: legacy color warnings remains authoritative above. -->
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
@@ -210,7 +215,6 @@
 			<CitadelHudQuickResponse id="CitadelQuickResponse" />
 			<CitadelRadialAbilities id="RadialAbilitiesMenu" startangle="-70" endangle="70" />
 			<Panel id="SafeToAbandonIndicator">
-				<Button class="MinimizeSafeToLeave CloseButton" onactivate="$.GetContextPanel().ToggleClass(&apos;MinimizeSafeToLeave&apos;)" />
 				<Label class="abandon_title" text="#AbandonTriggerTeam_Title" />
 				<Label text="{s:safe_to_abandon_text}" />
 			</Panel>
@@ -258,6 +262,7 @@
 			<Panel id="gameplay_hud" class="gameplay_hud" hittest="false">
 				<GlobalClassListener classes="gShopOpen" />
 				<Panel id="hudBacker" />
+				<CitadelHudGameAnnouncements id="CitadelHudGameAnnouncements" />
 				<TeamObjectiveHealthPanel id="objectives_health_friendly" team="2" />
 				<Panel id="spectator_count" onmouseover="UIShowTextTooltip( #hud_spectate_count_tooltip )" onmouseout="UIHideTextTooltip()">
 					<Panel id="spectator_count_container">
@@ -291,14 +296,6 @@
 					<Label id="out_of_ammo_label" text="#Citadel_Hud_OutOfAmmo" />
 					<Label id="low_ammo_label" text="#Citadel_Hud_LowAmmo" />
 					<Label id="out_of_mana_label" text="#Citadel_Hud_NotEnoughEnergy" />
-					<Panel id="cast_failed_box">
-						<GlobalClassListener hittest="false" classes="gDetailView" />
-						<Label id="invalid_cast_ability" text="{s:failed_ability_name}" />
-						<Panel class="invalid_cast_line">
-							<Label id="invalid_cast_reason" text="{s:invalid_cast_reason}" />
-							<Label id="invalid_cast_time_remaining" text="#Citadel_Hud_CastTimeRemaining" />
-						</Panel>
-					</Panel>
 					<Citadel_AbilityHUDPanels id="crosshair" />
 					<Panel id="LowHealthWarning">
 						<Label text="#Citadel_Hud_HealthCritical" />
@@ -321,7 +318,6 @@
 				<CitadelHudDamageSummary id="hud_damage_summary" />
 				<CitadelHudHealthContainer id="health_and_abilities_container" />
 				<CitadelHudAbilityInterrupt id="ability_interrupt_panel" />
-				<CitadelDamageImpact id="damage_impact" />
 				<Panel id="friendly_final_objective_container" class="final_objective_container friendly">
 					<Panel id="center_container">
 						<Panel id="cp_container" class="cp_container" />
@@ -358,9 +354,9 @@
 			<CitadelHudPlayerIntents id="hud_playerintents" />
 			<CitadelChatWheel id="ChatWheel" />
 			<CitadelItemDraftPanel id="ItemDraft" />
+			<CitadelDamageImpact id="damage_impact" />
 			<CitadelHudTopBar id="TopBar" hittest="false" />
 			<CitadelPregameCountdown id="PregameCountdown" />
-			<CitadelHudGameAnnouncements id="CitadelHudGameAnnouncements" />
 			<CitadelHudHeroShop id="CitadelHudHeroShop" />
 			<CitadelHudDamageReport id="CitadelHudDamageReport" />
 			<CitadelHudHeroTesting id="hud_hero_testing" />
@@ -465,6 +461,14 @@
 					</Panel>
 					<CitadelBinding id="UnlockBinding_Scoreboard" class="APUnlockBinding" action="Scoreboard" />
 					<CitadelBinding id="UnlockBinding_AbilityRadial" class="APUnlockBinding" action="AbilityUpgradeRadial" />
+				</Panel>
+			</Panel>
+			<Panel id="cast_failed_box">
+				<GlobalClassListener hittest="false" classes="gDetailView" />
+				<Label id="invalid_cast_ability" text="{s:failed_ability_name}" />
+				<Panel class="invalid_cast_line">
+					<Label id="invalid_cast_reason" text="{s:invalid_cast_reason}" />
+					<Label id="invalid_cast_time_remaining" text="#Citadel_Hud_CastTimeRemaining" />
 				</Panel>
 			</Panel>
 			<CitadelChat id="Chat" />

@@ -63,9 +63,41 @@
                 return !!(p && typeof p.IsValid === "function" && p.IsValid());
             }
 
+            var _hudPanel = null;
+
+            /**
+             * Hideout check.
+             *
+             * The old body ran root.FindChildTraverse("Hud") on every tick. In the HUD
+             * context $.GetContextPanel() IS the Hud panel, and FindChildTraverse never
+             * returns the panel it was called on — so that lookup could not succeed,
+             * and a miss walks the whole subtree before returning null. It was the
+             * largest single wasted traversal left in the profile, ~19k tree nodes a
+             * second.
+             *
+             * PanelHelpers.findHud handles both shapes (context panel, or a walk up to
+             * the absolute root and search from there), so resolve through it and cache
+             * the result, re-resolving only when the cached panel dies.
+             *
+             * Also fixes a latent bug: the old body had no trailing return, so the
+             * not-in-hideout path returned undefined and worked only because undefined
+             * happens to be falsy.
+             */
             function _inHideout(root) {
                 if (!root || !root.BHasClass) return false;
-                try { var _hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true; if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true; } catch(e) { return false; }
+                try {
+                    if (!_alive(_hudPanel)) {
+                        _hudPanel = (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
+                            ? QOL.ui.PanelHelpers.findHud()
+                            : null;
+                    }
+                    if (_alive(_hudPanel) && _hudPanel.BHasClass &&
+                        (_hudPanel.BHasClass("connectedToHideout") || _hudPanel.BHasClass("InHideout"))) {
+                        return true;
+                    }
+                    if (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout")) return true;
+                } catch (e) { return false; }
+                return false;
             }
 
             function _getSoulValue(primaryLabel, fallbackLabel) {
@@ -83,20 +115,69 @@
                 return isFinite(val) ? Math.round(val * multiplier) : 0;
             }
 
-            function _getTopBarPlayerPanel(root, index) {
+            // Per-slot backoff, for the same reason as in ql_nicknames: MAX_PLAYERS is
+            // 13 while a match is 6v6, so slot 12 never resolves and a
+            // FindChildTraverse miss walks the whole HUD subtree. Here it is worse,
+            // because a miss ALSO ran the class-traverse fallback below — a collect-all
+            // walk with no early exit — so a dead slot cost two full-tree walks.
+            //
+            // MAX_PLAYERS is left alone on purpose; see the note in ql_nicknames.
+            var SLOT_MISS_BACKOFF_MS = 3000;
+            // A slot that has NEVER resolved is treated differently from one that is
+            // merely late. Captured live tree (2026-08-21): the engine creates
+            // TopBarPlayer1..TopBarPlayer12 and there is no TopBarPlayer0, while this
+            // loop runs 0..12 — so slot 0 is a lookup that cannot succeed, and a miss
+            // walks the whole HUD (31,411 panels measured). At the 3s backoff that is a
+            // full-tree walk every three seconds for the entire match.
+            //
+            // Not skipped outright: two player-slot id families in that capture are
+            // 1-based but other families in the same tree are 0-based, so 1-based is an
+            // observation about one build, not a rule. A long cooldown removes the cost
+            // and still finds the panel if some mode does create slot 0.
+            var SLOT_NEVER_RESOLVED_BACKOFF_MS = 30000;
+            var _slotMissUntil = new Array(MAX_PLAYERS);
+            var _slotEverResolved = new Array(MAX_PLAYERS);
+            // Has ANY slot resolved this session — i.e. does the top bar exist yet.
+            // Before it inflates no slot has resolved, so keying the long cooldown on
+            // this slot alone would arm 30s on all thirteen during loading and blank
+            // every real player's unspent souls for half a minute afterwards.
+            var _anySlotEverResolved = false;
+
+            function _getTopBarPlayerPanel(root, index, nowMs) {
                 if (!root || !root.FindChildTraverse) return null;
+                var now = Number(nowMs) || 0;
+                if (now > 0 && now < (Number(_slotMissUntil[index]) || 0)) return null;
                 try {
                     var playerPanel = root.FindChildTraverse("TopBarPlayer" + index);
-                    if (_alive(playerPanel)) return playerPanel;
+                    if (_alive(playerPanel)) {
+                        _slotMissUntil[index] = 0;
+                        _slotEverResolved[index] = true;
+                        _anySlotEverResolved = true;
+                        return playerPanel;
+                    }
 
-                    // Compatibility fallback for older top-bar layouts.
+                    // Compatibility fallback for older top-bar layouts. No layout in
+                    // the current game or in the mod declares a "player_N" class, so
+                    // this cannot hit today — kept for the older layouts it was written
+                    // for, but now behind the same backoff so it is not a full-tree
+                    // collect-all on every pass.
                     var panels = root.FindChildrenWithClassTraverse("player_" + index) || [];
                     for (var i = 0; i < panels.length; i++) {
                         if (!_alive(panels[i])) continue;
                         var parent = panels[i].GetParent ? panels[i].GetParent() : null;
-                        if (parent && parent.id === "PlayerStatus") return panels[i];
+                        if (parent && parent.id === "PlayerStatus") {
+                            _slotMissUntil[index] = 0;
+                            _slotEverResolved[index] = true;
+                            _anySlotEverResolved = true;
+                            return panels[i];
+                        }
                     }
                 } catch(e) {}
+                if (now > 0) {
+                    var absent = !_slotEverResolved[index] && _anySlotEverResolved;
+                    _slotMissUntil[index] = now +
+                        (absent ? SLOT_NEVER_RESOLVED_BACKOFF_MS : SLOT_MISS_BACKOFF_MS);
+                }
                 return null;
             }
 
@@ -105,7 +186,7 @@
                 if (nowMs < _cacheNextMs) return;
 
                 for (var i = 0; i < MAX_PLAYERS; i++) {
-                    var playerPanel = _getTopBarPlayerPanel(root, i);
+                    var playerPanel = _getTopBarPlayerPanel(root, i, nowMs);
                     var panelChanged = (_playerPanels[i] !== (playerPanel || null));
                     _playerPanels[i] = playerPanel || null;
 

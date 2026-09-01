@@ -32,6 +32,11 @@
     var PID_BUILD_LIST = "HeroBuildList";
     var PID_CATEGORY_NAME = "BuildCategoryName";
     var CLASS_BUILD_ITEM = "HeroBuildListItem";
+    // BrowseBuildsButton has no XML handler — bound in C++, so activate the panel.
+    var PID_BROWSE_BUTTON = "BrowseBuildsButton";
+    // citadel_ui_build_selector.xml:81-84 — the list and its loading spinner.
+    var PID_BUILD_SELECTOR = "HeroBuildSelector";
+    var PID_LIST_LOADING = "HeroBuildListLoading";
     var CLASS_CATEGORY_NAME = "CategoryName";
 
     // Bridge attrs (from ql_bridge.js:29-32)
@@ -49,16 +54,40 @@
     var CREATE_POLL_MS      = 200;
     var CREATE_MAX_RETRIES  = 15;
     var SCAN_POLL_MS        = 100;
-    var SCAN_MAX_ADVANCES   = 4;
+    // Minimum gap between selecting one storage build and selecting the next.
+    // Selecting a build is asynchronous — the engine re-renders #CategoryContainer
+    // a few hundred ms later. Advancing faster than this means we never read any
+    // build's categories at all.
+    var SCAN_SETTLE_MS      = 400;
+    // How long the storage build list must read as empty before we believe it.
+    // Right after the hero switch the list has not rendered yet, and treating
+    // that as "no builds exist" is what made a junk build appear on every boot.
+    var LIST_CONFIRM_MS     = 1500;
+    var CREATE_SETTLE_MS    = 800;
+    // Clicking Browse is what reveals the real build list (#HeroBuildList).
+    var BROWSE_SETTLE_MS    = 500;
+    var BROWSE_MAX_FAILS    = 8;
+    // The list fills item by item; require the count to hold steady.
+    var LIST_SETTLE_MS      = 700;
+    // An empty list needs much more convincing — zero items is also what an
+    // outstanding GC reply looks like, and acting on it creates a junk build.
+    var EMPTY_CONFIRM_MS    = 4000;
     var SCAN_TIMEOUT_MS     = 8000;
     var SAVE_WAIT_POLL_MS   = 250;
     var SAVE_WAIT_TIMEOUT_MS = 15000;
     var REPAIR_STEP_MS      = 150;
     var REPAIR_TIMEOUT_MS   = 15000;
     var OVERALL_TIMEOUT_MS  = 30000;
+    var OVERALL_TIMEOUT_CAP_MS = 90000;
     var DORMANT_RATE_SEC    = 5.0;
     var ACTIVE_RATE_SEC     = 0.2;
     var SIGNATURE_HITS      = 2;
+
+    // Identifiable title written by the save pipeline so the payload build can be
+    // spotted without visiting every build. Best-effort only: build-name Labels
+    // are dialog-variable backed in vanilla, so the title may not be readable at
+    // all. Everything below still works when it isn't.
+    var MARKER_TITLE = "QOLLOCK-Settings";
 
     // ── QOL delegate wrapper (Pattern 10) ──
     function _qol(name) {
@@ -189,6 +218,179 @@
         return (_alive(list) && list.FindChildrenWithClassTraverse) ? _findClass(list, CLASS_BUILD_ITEM) : [];
     }
 
+    /**
+     * Every storage build entry we could select.
+     *
+     * GROUND TRUTH (vanilla XML/CSS, verified 2026-08-20):
+     *
+     *  - `.FavoriteBuildEntryContainer` is NOT the build list. It holds exactly ONE
+     *    entry — the selected build's header — however many builds exist. Sweeping
+     *    that class is why the logs said "1 storage entr(ies) present" with six
+     *    builds on the account.
+     *  - The real list is `#HeroBuildList` / `.HeroBuildListItem`
+     *    (citadel_ui_build_selector.xml:81 and the snippet at :8-9).
+     *  - It lives inside a genuine POPUP: popups/citadel_popup_build_browser.xml:8
+     *    declares `<PopupBuildBrowser class="PopupPanel Hidden" popupbackground="dim">`.
+     *  - Items are `visibility: collapse` until the selector carries ShowMyBuilds /
+     *    ShowPublicBuilds (citadel_ui_build_selector.css:312, :86). We count with
+     *    FindChildrenWithClassTraverse, which still returns collapsed panels, so the
+     *    count is honest — do NOT switch to a visibility-filtered count.
+     */
+    function _storageEntries(root) {
+        return _buildListItems(root);
+    }
+
+    /**
+     * The popup root, located by the subtree that contains #HeroBuildSelector.
+     *
+     * The popup root carries no id in vanilla XML — its element name is
+     * PopupBuildBrowser — so walk up from a child that does have one.
+     */
+    function _browserPopup(root) {
+        var selector = _find(root, PID_BUILD_SELECTOR);
+        if (!_alive(selector)) return null;
+        var node = selector;
+        var guard = 0;
+        while (_alive(node) && guard < 12) {
+            try {
+                if (typeof node.BHasClass === "function" && node.BHasClass("PopupPanel")) return node;
+            } catch(e) {}
+            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
+            guard++;
+        }
+        return null;
+    }
+
+    /**
+     * Is the browser actually OPEN?
+     *
+     * The discriminator is the `Hidden` class, not visibility: popups_shared.css:26
+     * sets `.PopupPanel.Hidden { visibility: visible; }` — a dismissed popup is
+     * still "visible" to the engine, so IsPanelVisibleMaybe() reports true on a
+     * closed browser. Hidden present = closed, absent = open.
+     */
+    function _isBrowseOpen(root) {
+        var popup = _browserPopup(root);
+        if (!_alive(popup)) return false;
+        try {
+            if (typeof popup.BHasClass === "function" && popup.BHasClass("Hidden")) return false;
+        } catch(e) {}
+        return true;
+    }
+
+    /**
+     * Is the list still waiting on the GC?
+     *
+     * Opening the browser fires a hero-build search and the reply arrives over the
+     * network. While it is outstanding the selector carries BuildsLoading, which
+     * collapses #HeroBuildList and reveals #HeroBuildListLoading
+     * (citadel_ui_build_selector.css:41-49, XML :82-84).
+     *
+     * This is the gate the previous attempt got wrong: it keyed "list is showing"
+     * on #CreateBuildButton, which sits in the popup's #Header — a SIBLING of the
+     * selector (citadel_popup_build_browser.xml:11 vs :15). Create exists the
+     * instant the popup inflates, with no dependency on the reply, so an empty list
+     * mid-round-trip read as "this hero has no builds" and a junk build was created.
+     */
+    function _isListLoading(root) {
+        var selector = _find(root, PID_BUILD_SELECTOR);
+        if (_alive(selector)) {
+            try {
+                if (typeof selector.BHasClass === "function" && selector.BHasClass("BuildsLoading")) return true;
+            } catch(e) {}
+        }
+        var spinner = _find(root, PID_LIST_LOADING);
+        if (_alive(spinner)) {
+            try {
+                var vis = (spinner.style && spinner.style.visibility) ? String(spinner.style.visibility) : "";
+                if (vis === "visible") return true;
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    /**
+     * Click Browse to open the build browser.
+     *
+     * BrowseBuildsButton has no XML handler (citadel_shop_mods_build.xml:42) — it is
+     * bound in C++ — so activate the panel rather than calling a global. Activates
+     * every match found, because duplicate ShopModsSelectedBuild panels each carry
+     * their own copy and only one is live.
+     */
+    function _openBrowseList(root, now, st) {
+        if (_isBrowseOpen(root)) {
+            st.browseFails = 0;
+            return true;
+        }
+        if (st.browseNextMs && now < st.browseNextMs) return false;
+        if ((st.browseFails || 0) >= BROWSE_MAX_FAILS) return false;
+        st.browseFails = (st.browseFails || 0) + 1;
+        st.browseNextMs = now + BROWSE_SETTLE_MS;
+
+        var acted = 0;
+        var fn = _qol("activatePanelSafe");
+        var roots = [root];
+        try {
+            var sb = _selectedBuild(root);
+            if (_alive(sb)) roots.push(sb);
+        } catch(e) {}
+        var seen = [];
+        for (var r = 0; r < roots.length; r++) {
+            var found = _findClass(roots[r], PID_BROWSE_BUTTON);
+            var direct = _find(roots[r], PID_BROWSE_BUTTON);
+            if (_alive(direct)) found = found.concat([direct]);
+            for (var i = 0; i < found.length; i++) {
+                var btn = found[i];
+                if (!_alive(btn)) continue;
+                var already = false;
+                for (var s = 0; s < seen.length; s++) { if (seen[s] === btn) { already = true; break; } }
+                if (already) continue;
+                seen.push(btn);
+                if (typeof fn === "function") {
+                    try { fn(btn); acted++; } catch(e) {}
+                }
+            }
+        }
+        // Last resort: the verified C++ global (client_strings.txt:22912).
+        if (acted === 0) {
+            try { if (typeof CitadelOpenBuildBrowser === "function") { CitadelOpenBuildBrowser(1); acted++; } } catch(e) {}
+        }
+        if (!st._loggedBrowse) {
+            st._loggedBrowse = true;
+            $.Msg("[QOLLock][ql_build_payload] browse: buttons=" + seen.length +
+                  " activated=" + acted +
+                  " popupFound=" + (_alive(_browserPopup(root)) ? "1" : "0"));
+        }
+        return false;
+    }
+
+    /**
+     * The list is trustworthy only once it is open, not loading, and its item count
+     * has held steady. Returns false while any of those is unmet, so callers keep
+     * waiting rather than acting on a partial read.
+     */
+    function _listSettled(root, now, st) {
+        if (_isListLoading(root)) {
+            st.listStableSince = 0;
+            st.listLastCount = -1;
+            return false;
+        }
+        var count = _buildListItems(root).length;
+        if (st.listLastCount !== count) {
+            st.listLastCount = count;
+            st.listStableSince = now;
+            return false;
+        }
+        if (!st.listStableSince) {
+            st.listStableSince = now;
+            return false;
+        }
+        // An empty list needs far more convincing than a populated one: zero is
+        // also what a not-yet-arrived reply looks like.
+        var needMs = (count === 0) ? EMPTY_CONFIRM_MS : LIST_SETTLE_MS;
+        return (now - st.listStableSince) >= needMs;
+    }
+
     // ── Payload text ──
     function _extractToken(text) {
         if (!text) return "";
@@ -223,6 +425,48 @@
         return "";
     }
 
+    /**
+     * Dump what the category labels actually contain when no token matched.
+     *
+     * This exists because "no payload found" has several very different causes and
+     * the log could not tell them apart: the label may hold the raw localization
+     * token (dialog-variable backed and unreadable), a value the client truncated,
+     * a value split across sibling labels, or nothing at all. Logging the length and
+     * a bounded prefix/suffix settles it from a single log instead of a guess.
+     *
+     * Fires once per session. Truncated to keep the console usable, and the payload
+     * body is not secret — it is the user's own settings.
+     */
+    function _diagnoseCategoryText(root, st) {
+        if (st._diagCatDone) return;
+        st._diagCatDone = true;
+        var sb = _selectedBuild(root);
+        if (!_alive(sb)) {
+            $.Msg("[QOLLock][ql_build_payload][DIAG] category: no selected build panel");
+            return;
+        }
+        var seen = 0;
+        var classes = [CLASS_CATEGORY_NAME, "BuildCategoryName"];
+        for (var c = 0; c < classes.length; c++) {
+            var panels = _findClass(sb, classes[c]);
+            for (var i = 0; i < panels.length && seen < 6; i++) {
+                var raw = _readText(panels[i]);
+                var len = raw ? raw.length : 0;
+                var head = raw ? raw.substring(0, 40) : "";
+                var tail = (len > 60) ? raw.substring(len - 20) : "";
+                seen++;
+                $.Msg("[QOLLock][ql_build_payload][DIAG] category[" + classes[c] + "#" + i +
+                      "] len=" + len +
+                      " head=\"" + head + "\"" +
+                      (tail ? " tail=\"" + tail + "\"" : "") +
+                      " tokenMatch=" + (_extractToken(raw) ? "1" : "0"));
+            }
+        }
+        if (seen === 0) {
+            $.Msg("[QOLLock][ql_build_payload][DIAG] category: no CategoryName panels under selected build");
+        }
+    }
+
     function _deepText(panel) {
         // Walk subtree text for token extraction (capped)
         if (!_alive(panel)) return "";
@@ -244,35 +488,104 @@
         return parts.join(" ");
     }
 
+    /**
+     * Look for the payload in whatever is currently on screen, and — when
+     * `doAdvance` is set — step the selection to the next unvisited storage build.
+     *
+     * Advancing is rate-limited by SCAN_SETTLE_MS and each build is visited at
+     * most once. The original version selected `advances % items.length` up to
+     * 4 times with no rate limit: at a 100ms poll that burned every attempt
+     * inside 400ms, far faster than the engine re-renders #CategoryContainer, so
+     * it read the same stale categories 4 times and could never reach index 4+.
+     * (st.scanLastAdvanceMs was written but never read — the gate was dead code.)
+     */
     function _scanPayloadText(root, doAdvance, st) {
         // 1. Scan selected build categories
         var sb = _selectedBuild(root);
         var token = _scanCategoryText(sb);
         if (token) return token;
 
-        // 2. Scan build list items (deep text)
-        var items = _buildListItems(root);
+        // 2. Scan build entries' own text (deep). Cheap, and it catches the case
+        //    where an entry surfaces its category text directly.
+        var items = _storageEntries(root);
         for (var i = 0; i < items.length; i++) {
             token = _extractToken(_deepText(items[i]));
             if (token) return token;
         }
 
-        // 3. Advance scan — select each build list item to load its payload into the shop
-        if (doAdvance && st) {
-            var advances = st.scanAdvances || 0;
-            if (advances < SCAN_MAX_ADVANCES && items.length > 0) {
-                // Select next item
-                var idx = advances % items.length;
-                var fn = _qol("activatePanelSafe");
-                if (typeof fn === "function" && _alive(items[idx])) {
-                    try { fn(items[idx]); } catch(e) {}
+        if (!doAdvance || !st) return "";
+
+        var now = _now();
+
+        // 3. The list only exists while Browse is showing. Keep it open — selecting
+        //    an entry can close it, and without it there is nothing to sweep.
+        if (!_openBrowseList(root, now, st)) return "";
+        if (!_listSettled(root, now, st)) return "";
+        items = _storageEntries(root);
+        if (items.length === 0) return "";
+
+        // 4. Fast path: if a build advertises the marker title, go straight there
+        //    instead of sweeping. Titles may be dialog-variable backed and thus
+        //    unreadable, so this is opportunistic — the sweep below is the
+        //    guarantee.
+        if (!st.markerTried) {
+            st.markerTried = true;
+            for (var mi = 0; mi < items.length; mi++) {
+                var itemText = _deepText(items[mi]);
+                if (itemText && itemText.indexOf(MARKER_TITLE) !== -1) {
+                    $.Msg("[QOLLock][ql_build_payload] scan: marker title found at entry " + mi);
+                    st.markerIndex = mi;
+                    if (_selectEntry(items[mi])) {
+                        st.scanLastAdvanceMs = now;
+                    }
+                    return "";
                 }
-                st.scanAdvances = advances + 1;
-                st.scanLastAdvanceMs = _now();
             }
         }
 
+        // 5. Full sweep: visit every item once, honouring settle time. The list is
+        //    re-derived each step rather than held across a selection, because
+        //    selecting can rebuild it and stale panel refs fail _alive().
+        if (now - (st.scanLastAdvanceMs || 0) < SCAN_SETTLE_MS) return "";
+
+        var cursor = st.scanCursor || 0;
+        if (cursor >= items.length) return "";   // swept every entry
+
+        st.scanCursor = cursor + 1;
+        st.scanLastAdvanceMs = now;
+        // Fresh budget for reopening the list on the next step.
+        st.browseNextMs = 0;
+        st.browseFails = 0;
+        if (_selectEntry(items[cursor])) {
+            st.scanAdvances = (st.scanAdvances || 0) + 1;
+        }
+        // Mark the sweep complete once every item has been visited AND its
+        // categories have had time to render. This is what makes "no payload" a
+        // conclusive answer rather than an incomplete read.
+        if (st.scanCursor >= items.length) {
+            st.sweptAll = true;
+            st.sweptCount = items.length;
+        }
         return "";
+    }
+
+    /** Select a storage build entry so its categories render. */
+    function _selectEntry(entry) {
+        if (!_alive(entry)) return false;
+        var fn = _qol("activatePanelSafe");
+        if (typeof fn !== "function") return false;
+        try { fn(entry); return true; } catch(e) { return false; }
+    }
+
+    /**
+     * Time budget for a full sweep. Must scale with the number of builds, and
+     * each step costs a re-expand plus a settle: picking an entry collapses the
+     * dropdown, so the sweep pays that round trip per build.
+     */
+    function _scanBudgetMs(itemCount) {
+        var n = Math.max(1, Number(itemCount) || 1);
+        var perStep = SCAN_SETTLE_MS + BROWSE_SETTLE_MS;
+        return Math.max(SCAN_TIMEOUT_MS, 3000 + n * perStep * 2);
     }
 
     // ── Token decode ──
@@ -491,11 +804,22 @@
     }
 
     // ── Build init ──
+    /**
+     * Make sure there is a storage build to read from.
+     *
+     * Returns true once the read stage may proceed.
+     *
+     * The hard rule: never create a build while any storage build already exists.
+     * This used to fire CreateNewBuild on the very first tick after the hero
+     * switch, before the build list had rendered — so "no payload visible yet"
+     * was misread as "no builds exist", and a fresh empty build was added on
+     * every single boot. Each one also steals the shop's selection, pushing the
+     * real payload build further out of reach. That is the accumulation players
+     * were clearing by hand.
+     */
     function _ensureStorageBuild(root, now, st) {
         // Early success: a QOL payload token is already visible in the
-        // selected build's categories. A build with categories but no
-        // token (e.g. Deadlock pre-populated) is NOT "ready" — we need
-        // to create or overwrite a build with a QOL payload.
+        // selected build's categories.
         var existing = _scanPayloadText(root, false, null);
         if (existing) {
             $.Msg("[QOLLock][ql_build_payload] ensure: existing payload found, returning true");
@@ -503,22 +827,60 @@
         }
 
         // Navigate to Favorites tab so Skyrunner builds are visible.
-        // OLD calls this in handleWaitStorage + handleBootstrapViaSaveEnqueue.
         if (!st._favTabDone) {
             try { _callQol("ensureStorageHeroFavoritesHeaderVisible", undefined, [root]); } catch(e) {}
             st._favTabDone = true;
         }
 
-        // No payload — create a fresh Skyrunner build via the JS-callable
-        // CitadelHudHeroBuildsCreateNewBuild() (arg 0). Verified in-game: works
-        // from the shop with no popup. Fire-and-forget — the build is an empty
-        // target the SAVE pipeline populates later; LOAD proceeds to apply
-        // defaults since there is no payload to read yet.
+        // Reveal the real build list by opening the browser. #HeroBuildList lives
+        // inside the PopupBuildBrowser and .FavoriteBuildEntryContainer is NOT the
+        // list — it holds a single entry however many builds exist.
+        if (!_openBrowseList(root, now, st)) {
+            if ((st.browseFails || 0) >= BROWSE_MAX_FAILS) {
+                // Could not open the browser. INCONCLUSIVE: we do not know whether
+                // builds exist, so do not create one and do not claim the payload
+                // is missing.
+                $.Msg("[QOLLock][ql_build_payload] ensure: browser never opened — inconclusive (no create)");
+                return true;
+            }
+            return false;
+        }
+
+        // Opening the browser fires a GC hero-build search; the reply arrives over
+        // the network. Waiting for BuildsLoading to clear and the count to hold
+        // steady is what separates "this hero has no builds" from "the reply has
+        // not arrived". Getting that wrong created a junk build every boot.
+        if (!_listSettled(root, now, st)) return false;
+
+        // `_preexistingEntries` records only entries that were there BEFORE we
+        // intervened. It must not count a build we created ourselves: doing so
+        // made empty storage look like "a config exists but we could not read it",
+        // which would block a new user's very first save.
+        var entries = _storageEntries(root);
+
+        if (entries.length > 0) {
+            if (!st.createAttempted) st._preexistingEntries = true;
+            if (!st._loggedEntries) {
+                st._loggedEntries = true;
+                $.Msg("[QOLLock][ql_build_payload] ensure: " + entries.length +
+                      " build(s) in list, proceeding to read (no create)");
+            }
+            return true;
+        }
+
+        // Browser open, not loading, count stable at zero for EMPTY_CONFIRM_MS:
+        // the hero genuinely has no builds. Only safe place to create one.
         if (!st.createAttempted) {
-            $.Msg("[QOLLock][ql_build_payload] ensure: calling CreateNewBuild (shop path)");
+            $.Msg("[QOLLock][ql_build_payload] ensure: list confirmed empty for " +
+                  EMPTY_CONFIRM_MS + "ms — creating a build");
             _callCreateNewBuild();
             st.createAttempted = true;
+            st.createStarted = now;
+            return false;
         }
+
+        // Give the created build time to appear before reading.
+        if (now - (st.createStarted || now) < CREATE_SETTLE_MS) return false;
         $.Msg("[QOLLock][ql_build_payload] ensure: fresh build requested, proceeding to read");
         return true;
     }
@@ -639,7 +1001,14 @@
     // ── State machine ──
     FR.register({
         id: "ql_build_payload",
-        enabledByDefault: true,  // Phase B: manifest is the active loader
+        // Superseded by manifests/ql_build_storage, which carries the payload in
+        // the build DESCRIPTION instead of its category name. Both switch heroes
+        // and drive the same browser UI, so exactly one may be enabled: two
+        // loaders racing would fight over the hero and the selection.
+        //
+        // Kept registered (not deleted) so it remains the rollback: enable this
+        // and disable ql_build_storage to return to the category-name pipeline.
+        enabledByDefault: false,
         settings: [
             { key: "DEFAULT_HERO", type: "dropdown",
               options: (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS === "object" && QOL_COMPACT_DEFAULT_HERO_OPTIONS.length > 0)
@@ -661,6 +1030,21 @@
                     confirmStarted: 0,
                     scanAdvances: 0,
                     scanStarted: 0,
+                    scanCursor: 0,
+                    scanLastAdvanceMs: 0,
+                    scanBudgetMs: 0,
+                    visited: {},
+                    markerTried: false,
+                    markerIndex: -1,
+                    emptySince: 0,
+                    browseFails: 0,
+                    browseNextMs: 0,
+                    listLastCount: -1,
+                    sweptAll: false,
+                    sweptCount: 0,
+                    listStableSince: 0,
+                    _preexistingEntries: false,
+                    _loggedEntries: false,
                     payloadText: "",
                     lastApplied: "",
                     lastAccount: "",
@@ -690,6 +1074,49 @@
                 try { _callQol("setSettingsLoaderStepState", undefined, [key, status, detail || ""]); } catch(e) {}
             }
 
+            /**
+             * Record how conclusive this load was, for the save pipeline's
+             * overwrite guard.
+             *
+             * The dangerous case is "default": no payload was found. That means
+             * either storage is genuinely empty (nothing to lose — safe to save)
+             * or a storage build exists whose payload we simply could not read
+             * (real config may be sitting there, so a save would destroy it).
+             * `_st._preexistingEntries` distinguishes the two: it is set only for
+             * entries that were present before we created anything, so storage we
+             * initialized ourselves is never mistaken for unread user data.
+             */
+            function _recordLoadState(code, detail) {
+                var loadState = "failed";
+                var why = "";
+                if (code === "success") {
+                    loadState = "loaded";
+                    why = "payload applied";
+                } else if (code === "default") {
+                    if (!_st._preexistingEntries) {
+                        loadState = "loaded";
+                        why = "storage was empty";
+                    } else if (_st.sweptAll) {
+                        // Conclusive: every build in a settled list was visited and
+                        // none carried a payload. Nothing to lose, so saving is safe.
+                        loadState = "loaded";
+                        why = "swept all " + (_st.sweptCount || 0) + " build(s), none carried a payload";
+                    } else {
+                        why = "read did not complete";
+                    }
+                }
+                try {
+                    var State = QOL.state;
+                    if (State) {
+                        State.configLoadState = loadState;
+                        State.configLoadStateDetail = String(detail || code || "");
+                        State.configLoadStateAtMs = _now();
+                    }
+                } catch(e) {}
+                $.Msg("[QOLLock][ql_build_payload] configLoadState=" + loadState +
+                      " (result=" + code + ", " + why + ")");
+            }
+
             function _finish(code, detail) {
                 // Restore hero on ALL terminal paths — even failure/default.
                 // A switched hero leaks if we only restore in the return_hero stage.
@@ -700,6 +1127,7 @@
                     var fallback = _resolveReturnHero(ctx, _st);
                     _returnHero(fallback);
                 }
+                _recordLoadState(code, detail);
                 _setStep("apply_config", code === "success" ? "done" : "skipped", detail || "");
                 _setStep("return_hero", code === "success" ? "done" : "error", detail || "");
                 _setStep("complete", "done", detail || "");
@@ -760,8 +1188,18 @@
                     _reschedule(ACTIVE_RATE_SEC);
 
                     // Overall timeout — must run BEFORE the save-pending guard so a
-                    // stuck-pending save can't bypass the 30s limit.
-                    if (now - _st.startedAt > OVERALL_TIMEOUT_MS && _st.stage !== "done") {
+                    // stuck-pending save can't bypass the limit. Scales with the
+                    // scan budget: a fixed 30s would cut a long sweep short and
+                    // report "no payload" on exactly the crowded build lists that
+                    // need the sweep most.
+                    var overallBudget = OVERALL_TIMEOUT_MS;
+                    if (_st.scanBudgetMs) {
+                        overallBudget = Math.min(
+                            OVERALL_TIMEOUT_CAP_MS,
+                            Math.max(OVERALL_TIMEOUT_MS, _st.scanBudgetMs + 12000)
+                        );
+                    }
+                    if (now - _st.startedAt > overallBudget && _st.stage !== "done") {
                         _fail("overall_timeout");
                         return;
                     }
@@ -862,6 +1300,12 @@
                                 _st.stage = "read_payload";
                                 _st.scanStarted = now;
                                 _st.scanAdvances = 0;
+                                _st.scanCursor = 0;
+                                _st.visited = {};
+                                _st.markerTried = false;
+                                _st.scanLastAdvanceMs = 0;
+                                // Budget the sweep against the list we actually have.
+                                _st.scanBudgetMs = _scanBudgetMs(_storageEntries(root).length);
                                 _st.nextAt = now;
                             } else {
                                 _st.nextAt = now + CREATE_POLL_MS;
@@ -875,8 +1319,14 @@
                                 _st.payloadText = payload;
                                 _st.stage = "apply_payload";
                                 _st.nextAt = now;
-                            } else if (now - _st.scanStarted > SCAN_TIMEOUT_MS) {
+                            } else if (now - _st.scanStarted > (_st.scanBudgetMs || SCAN_TIMEOUT_MS)) {
                                 // Scan exhausted — apply defaults, no destructive repair unless explicitly enabled
+                                $.Msg("[QOLLock][ql_build_payload] scan exhausted after " +
+                                      (_st.scanAdvances || 0) + " advance(s) over " +
+                                      _storageEntries(root).length + " entry(ies)");
+                                // Report what the labels actually held, so "not found"
+                                // can be told apart from unreadable/truncated/split.
+                                _diagnoseCategoryText(root, _st);
                                 if (Number(ctx.config.get("AUTO_CORRUPT_REPAIR")) === 1 && _isShopOpen(root) && _storageBuildReady(root)) {
                                     _startRepair(root, _st);
                                     _st.stage = "repair";
@@ -955,6 +1405,11 @@
                                 _st.stage = "read_payload";
                                 _st.scanStarted = now;
                                 _st.scanAdvances = 0;
+                                _st.scanCursor = 0;
+                                _st.scanLastAdvanceMs = 0;
+                                _st.markerTried = false;
+                                _st.visited = {};
+                                _st.scanBudgetMs = _scanBudgetMs(_storageEntries(root).length);
                                 _st.nextAt = now;
                             } else {
                                 _st.nextAt = now + REPAIR_STEP_MS;
@@ -1016,10 +1471,18 @@
                     var ok = !!(typeof QOL !== "undefined" && typeof QOL[required[i]] === "function");
                     asserts.push({ passed: ok, name: "QOL." + required[i] + " exists" });
                 }
-                // Verify real game APIs
+                // NOT asserted: CitadelHudHeroBuildsCreateNewBuild / DeleteSelectedBuild.
+                //
+                // This used to fail the suite whenever those globals were absent, which
+                // is stricter than the code it is testing: _callCreateNewBuild and
+                // _callDeleteSelectedBuild (manifest.js:769-782) treat them as optional
+                // and fall back to $.DispatchEvent. So the test reported a failure on a
+                // build where loading demonstrably worked — a false alarm that cost real
+                // debugging time. Reported as an observation instead.
                 var hasCreate = typeof CitadelHudHeroBuildsCreateNewBuild === "function";
                 var hasDelete = typeof CitadelHudHeroBuildsDeleteSelectedBuild === "function";
-                asserts.push({ passed: hasCreate || hasDelete, name: "CitadelHudHeroBuilds* APIs present" });
+                var apiNote = "CitadelHudHeroBuilds* globals: create=" + (hasCreate ? "1" : "0") +
+                              " delete=" + (hasDelete ? "1" : "0") + " (event fallback covers absence)";
                 // Verify key panels
                 var shop = root ? root.FindChildTraverse("CitadelHudHeroShop") : null;
                 asserts.push({ passed: !!shop, name: "CitadelHudHeroShop panel exists" });
@@ -1027,7 +1490,7 @@
                 return {
                     passed: all,
                     name: "ql_build_payload API surface",
-                    message: all ? "" : asserts.filter(function(a) { return !a.passed; }).map(function(a) { return a.name; }).join(", "),
+                    message: all ? apiNote : asserts.filter(function(a) { return !a.passed; }).map(function(a) { return a.name; }).join(", "),
                     assertions: asserts
                 };
             } catch(e) {

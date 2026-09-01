@@ -122,7 +122,7 @@ for f in "$MANIFESTS_DIR"/*/manifest.js; do
     [ -f "$f" ] || continue
     id=$(grep -oP 'id:\s*"[^"]+"' "$f" | head -1 | grep -oP '"[^"]+"' | tr -d '"')
     [ -z "$id" ] && continue
-    has_enableKey=$(grep -c 'enableKey:' "$f" 2>/dev/null || true)
+    has_enableKey=$(grep -c -E 'enableKeys?:' "$f" 2>/dev/null || true)
     has_enableKey=$(echo "$has_enableKey" | tr -d '[:space:]')
     [ -z "$has_enableKey" ] && has_enableKey=0
     has_comment=$(grep -c -E 'OMIT enableKey|multi-key|always-on' "$f" 2>/dev/null || true)

@@ -274,6 +274,9 @@ _TLog = function(label, detail) {
     // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
     const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    // Cap for the escalating backoff applied after repeated scan misses. See
+    // NextMinimapScanBackoffMs.
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
     const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
     const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
     const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
@@ -408,6 +411,11 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const SPM_PANEL_CACHE_REFRESH_MS = 7000;
     const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
+    // Cooldown for a slot that has never resolved. Deliberately far longer than the
+    // stale-cache refresh above: the cost of re-checking is a whole-HUD walk (31k
+    // panels measured), and the only slot that behaves this way is one the engine
+    // never creates. Still bounded so a genuinely late-arriving panel is picked up.
+    const TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS = 30000;
     // WHY: nickname refresh at 1s initially, then 4.2s once stable — player names
     // WHY: 280ms sample interval (~3.6Hz) — fast enough to catch soul swings during
     // urn fights, slow enough to not dominate the main loop budget
@@ -516,7 +524,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SETTINGS_LOADER_SKIP_BUTTON_ID = "QOLSettingsLoaderSkipButton";
     const SETTINGS_LOADER_SKIP_LABEL_ID = "QOLSettingsLoaderSkipButtonLabel";
     const SETTINGS_LOADER_SKIP_TEXT = "Skip";
-    const SETTINGS_LOADER_WARNING_TEXT = "DO NOT PRESS ANY KEYS UNTIL COMPLETE UNLESS PROMPTED";
+    const SETTINGS_LOADER_WARNING_TEXT = "DO NOT PRESS ANYTHING";
     const SETTINGS_LOADER_ICON_PENDING = "s2r://panorama/images/getting_started/checklist_task_empty_png.vtex";
     const SETTINGS_LOADER_ICON_DONE = "s2r://panorama/images/getting_started/checklist_task_complete_png.vtex";
     const SETTINGS_LOADER_ICON_ACTIVE = "s2r://panorama/images/glyphs/arrow_right.vsvg";
@@ -626,9 +634,24 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
     const BUILD_CLEAR_POST_DELETE_DELAY_MS = 150;  // poll-driven
     const BUILD_CLEAR_POST_SELECT_DELAY_MS = 80;   // poll-driven
+    // How long to let a newly selected build's categories render before reading them.
+    //
+    // BUILD_CLEAR_POST_SELECT_DELAY_MS (80ms) is the cadence for pressing on to the
+    // next entry, which is fine while the loop only needs the entry list. It is NOT
+    // enough to then READ that build: selecting is asynchronous and the categories —
+    // where the payload lives — arrive later (the simulator models 250ms, which is
+    // itself a guess but the right order of magnitude). Reading at 80ms sees the
+    // PREVIOUS build's categories, so a prune walking the list decided every build
+    // was payload-free and, before the walk-first guard, deleted them.
+    const BUILD_CLEAR_POST_SELECT_READ_DELAY_MS = 400;
     const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
     const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
     const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
+    // Prune mode (post-save junk cleanup) bounds. Deliberately tight: this deletes
+    // user-visible data through a delete path that cannot report failure, so it
+    // stops early rather than trying harder.
+    const BUILD_PRUNE_MAX_DELETES = 12;
+    const BUILD_PRUNE_MAX_NO_PROGRESS = 4;
     const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 200; // poll-driven (was 60)
     // (debug infrastructure removed — BUILD_CLEAR_DEBUG, BUILD_SAVE_DEBUG)
     const ENEMY_ULT_OLD_DEBUG = false;
@@ -917,48 +940,45 @@ function ExpressShotLog(msg) {
 
     function ApplyLoaderCardTheme(card) {
         if (!card || !card.style) return;
-        var theme = GetSettingsUiThemePalette();
         card.style.horizontalAlign = "center";
-        card.style.verticalAlign = "top";
+        card.style.verticalAlign = "center";
         card.style.flowChildren = "down";
-        card.style.marginTop = "30px";
-        card.style.width = "1040px";
-        card.style.maxWidth = "92%";
-        card.style.paddingTop = "18px";
-        card.style.paddingRight = "20px";
-        card.style.paddingBottom = "18px";
-        card.style.paddingLeft = "20px";
-        card.style.backgroundColor = theme.card;
-        card.style.border = theme.cardBorder;
-        card.style.borderRadius = "5px";
-        card.style.boxShadow = theme.cardShadow;
+        card.style.marginTop = "0px";
+        card.style.width = "750px";
+        card.style.maxWidth = "95%";
+        card.style.paddingTop = "32px";
+        card.style.paddingRight = "32px";
+        card.style.paddingBottom = "32px";
+        card.style.paddingLeft = "32px";
+        card.style.backgroundColor = "gradient( linear, 0% 0%, 100% 100%, from( rgba(24, 29, 29, 0.8) ), to( rgba(12, 15, 15, 0.8) ) )";
+        card.style.border = "1px solid rgba(210, 224, 216, 0.075)";
+        card.style.borderRadius = "8px";
+        card.style.boxShadow = "fill rgba(0, 0, 0, 0.56) 0px 18px 42px 0px, inset rgba(166, 246, 184, 0.05) 0px 1px 0px 0px";
     }
 
     function ApplyLoaderWarningTheme(warning) {
         if (!warning || !warning.style) return;
-        var theme = GetSettingsUiThemePalette();
         warning.style.horizontalAlign = "center";
         warning.style.fontFamily = "oracle";
-        warning.style.marginBottom = "10px";
-        warning.style.fontSize = "14px";
+        warning.style.marginBottom = "24px";
+        warning.style.fontSize = "22px";
         warning.style.fontWeight = "semi-bold";
         warning.style.letterSpacing = "1.0px";
-        warning.style.color = theme.warn;
-        warning.style.textShadow = "0px 0px 7px rgba(255, 126, 126, 0.14)";
+        warning.style.color = "#ff9d9d";
+        warning.style.textShadow = "none";
         warning.style.textTransform = "uppercase";
     }
 
     function ApplyLoaderTitleTheme(title) {
         if (!title || !title.style) return;
-        var theme = GetSettingsUiThemePalette();
         title.style.horizontalAlign = "center";
         title.style.fontFamily = "oracle";
-        title.style.fontSize = "28px";
-        title.style.fontWeight = "semi-bold";
-        title.style.letterSpacing = "1.8px";
-        title.style.color = theme.title;
-        title.style.textShadow = "0px 0px 9px rgba(152, 255, 181, 0.12)";
-        title.style.marginBottom = "12px";
+        title.style.fontSize = "36px";
+        title.style.fontWeight = "bold";
+        title.style.letterSpacing = "1.5px";
+        title.style.color = "#f2faf5";
+        title.style.textShadow = "none";
+        title.style.marginBottom = "8px";
         title.style.textTransform = "uppercase";
     }
 
@@ -2202,11 +2222,86 @@ function GetUIRoot() {
     var _startupConfigLoadDiagLogged = false;
     var _startupConfigDefaultDiagLogged = false;
 
+    // Resolve the Hud panel, cached. The parent-chain position of #Hud never
+    // changes for the life of the context, but four separate call sites used to
+    // re-run FindChildTraverse for it on every tick. GetCachedPanel validates via
+    // IsValid() and sweepStalePanelCache() drops dead entries once a second, so
+    // the cache is safe across the panel being torn down and rebuilt.
+    function ResolveHudPanel(root) {
+        var hud = GetCachedPanel("cachedHudPanel");
+        if (hud) return hud;
+        if (!root || !root.FindChildTraverse) return null;
+        try { hud = root.FindChildTraverse(PANEL_ID_HUD); } catch (e) { hud = null; }
+        if (hud) SetCachedPanel("cachedHudPanel", hud);
+        return hud;
+    }
+
+    var _parseRevisionNumber = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) {
+        var n = Number(v);
+        if (!isFinite(n) || n < 0) return 0;
+        return Math.floor(n);
+    };
+
+    // ── Revision-gated config read ──
+    //
+    // The stored config is a ~9.2 KB JSON envelope (335 keys, all of them always
+    // present because MergeConfig fills from defaults). GetAttributeString does
+    // not hand back a view of the C++ buffer — it marshals a fresh JS string of
+    // the full length. Reading it from both the root and the Hud panel therefore
+    // allocated ~18.4 KB per tick, ~92 KB/s, ~220 MB over a 40-minute match, all
+    // of it immediately garbage. Panorama's V8 runs on the UI thread, so those
+    // scavenges land inside frames: exactly the shape of a 1%-low complaint
+    // rather than an average-FPS one.
+    //
+    // Every writer of the config attribute pairs it with an increment of
+    // USER_EDIT_REV_ATTR — ql_core.js WriteStorageConfigRawToUi, ql_settings.js
+    // SaveAndSync, ql_arcade_games.js — on both the root and the Hud panel. So the
+    // revision is a trustworthy 1-3 byte proxy for "did the config change", and
+    // the 9.2 KB read only has to happen when it did.
+    //
+    // A wall-clock backstop still forces a full read periodically. If a future
+    // writer ever forgets to bump the revision, that turns a permanent stale-config
+    // bug into a bounded delay, which is the failure mode worth having.
+    var _cfgCacheRevision = -1;
+    var _cfgCacheRaw = "";
+    var _cfgCacheFullReadMs = 0;
+    const CONFIG_FULL_REREAD_INTERVAL_MS = 2000;
+
     // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
     // panel attributes, picking the version with the highest user-edit revision number.
-    // Falls back to persistentStorage when panel attrs are empty (e.g. after restart).
+    // Returns the SAME string instance while the revision is unchanged, which also makes
+    // the callers' `raw === State.lastRawConfig` checks true pointer compares instead of
+    // 9.2 KB memcmps.
     function ReadStorageConfigRawFromUi(root) {
-        
+        if (!root || !root.GetAttributeString) return "";
+
+        var hud = ResolveHudPanel(root);
+
+        // Cheap probe: two small attribute reads.
+        var rootRev = 0;
+        var hudRev = 0;
+        try { rootRev = _parseRevisionNumber(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eR) { rootRev = 0; }
+        if (hud && hud.GetAttributeString) {
+            try { hudRev = _parseRevisionNumber(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eH) { hudRev = 0; }
+        }
+        var revision = (hudRev > rootRev) ? hudRev : rootRev;
+
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        var backstopDue = (nowMs - _cfgCacheFullReadMs) >= CONFIG_FULL_REREAD_INTERVAL_MS;
+        if (revision === _cfgCacheRevision && _cfgCacheRaw !== "" && !backstopDue) {
+            return _cfgCacheRaw;
+        }
+
+        var result = ReadStorageConfigRawUncached(root, hud, rootRev, hudRev);
+        _cfgCacheRevision = revision;
+        _cfgCacheRaw = result;
+        _cfgCacheFullReadMs = nowMs;
+        return result;
+    }
+
+    // The full read. Split out so the revision fast path above stays obvious, and
+    // so a caller that genuinely needs current bytes can bypass the cache.
+    function ReadStorageConfigRawUncached(root, hud, rootRev, hudRev) {
         var result = "";
         var source = "none";
         var rootLen = 0;
@@ -2216,8 +2311,6 @@ function GetUIRoot() {
             try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
             rootLen = rootRaw.length;
 
-            var hud = null;
-            try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e1) { hud = null; }
             if (!hud || !hud.GetAttributeString) {
                 result = rootRaw;
                 if (rootLen > 0) source = "root_attr";
@@ -2232,15 +2325,6 @@ function GetUIRoot() {
                     result = hudRaw;
                     source = "hud_attr";
                 } else {
-                    var parseRev = function(v) {
-                        var n = Number(v);
-                        if (!isFinite(n) || n < 0) return 0;
-                        return Math.floor(n);
-                    };
-                    var rootRev = 0;
-                    var hudRev = 0;
-                    try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e3) { rootRev = 0; }
-                    try { hudRev = parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e4) { hudRev = 0; }
                     result = (hudRev >= rootRev) ? hudRaw : rootRaw;
                     source = "attr_rev(" + rootRev + "/" + hudRev + ")";
                 }
@@ -2264,9 +2348,8 @@ function GetUIRoot() {
         }
 
         var nextRaw = String(rawText || "");
-        var hud = null;
-        try { hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null; } catch (e0) { hud = null; }
-        var parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+        var hud = ResolveHudPanel(root);
+        var parseRev = _parseRevisionNumber;
         var rootRev = 0;
         var hudRev = 0;
         try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { rootRev = 0; }
@@ -2282,6 +2365,14 @@ function GetUIRoot() {
             try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
         }
         // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
+
+        // Seed the read cache with what we just wrote. Without this the next
+        // ReadStorageConfigRawFromUi would see a bumped revision and re-marshal
+        // 9.2 KB it already has — and, worse, a write that loses a race with a
+        // concurrent read would leave the cache holding pre-write bytes.
+        _cfgCacheRevision = nextRevision;
+        _cfgCacheRaw = nextRaw;
+        _cfgCacheFullReadMs = Date.now ? Date.now() : (new Date()).getTime();
 
         if (!_writeStorageDiagLogged) {
             _writeStorageDiagLogged = true;
@@ -2365,6 +2456,17 @@ function GetUIRoot() {
     var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
         if (!panel || !panel.style || !prop) return;
         try { panel.style[prop] = value; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    };
+
+    // Compare-then-write. See ql_utils.js for why this is separate from SetStyleSafe.
+    var SetStyleIfChanged = (QOL_UTILS_LOADED && QOL_UTILS.SetStyleIfChanged) ? QOL_UTILS.SetStyleIfChanged : function(panel, prop, value) {
+        if (!panel || !panel.style || !prop) return false;
+        try {
+            if (panel.style[prop] === value) return false;
+            panel.style[prop] = value;
+            return true;
+        } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        return false;
     };
 
     var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
@@ -2588,9 +2690,15 @@ function GetUIRoot() {
         var hud = ResolveCachedPanel(root, "hudPanel", PANEL_ID_HUD);
         if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
         if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
-        if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
+        var isHeroTesting = hasClassInHierarchy(root, "connectedToHeroTesting");
+        if (!isHeroTesting) {
+            if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
+            if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
+            if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
+        } else {
+            var heroTestingHiddenClasses = ["inHideoutIntro", "HideoutIntro"];
+            if (hasAnyClassInHierarchySafe(root, heroTestingHiddenClasses)) return false;
+        }
 
         var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
         var gameplayHudAlive = ResolveCachedPanel(root, "gameplayHudAlive", "gameplay_hud_alive");
@@ -2651,6 +2759,7 @@ function GetUIRoot() {
             State.minimalistHealthbarOffsetApplied ||
             State.playerHealthbarScaleOpacityRuntimeApplied;
         if (shouldRunMinimalistRuntime) return true;
+        if ((Number(healthbarType) === 2) || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
         if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
         if ((Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled) return true;
         return false;
@@ -2710,7 +2819,8 @@ function GetUIRoot() {
         try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
         try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
         try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-        try { panel.style.visibility = "visible"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { panel.style.uiScale = "100%"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        try { panel.style.visibility = "visible"; } catch(e4) { QOL_WARN("core", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
     }
 
     function UpdateChatRuntime(root, cfg) {
@@ -2755,7 +2865,7 @@ function GetUIRoot() {
         if (offsetY < -250) offsetY = -250;
         if (offsetY > 800) offsetY = 800;
 
-        var scaleText = (scale / 100).toFixed(2) + ", " + (scale / 100).toFixed(2);
+        var scaleText = String(scale) + "%";
         var styleSig = enabled + "|" + scaleText + "|" + offsetX + "|" + offsetY;
         if (
             State.chatStyleApplied &&
@@ -2768,7 +2878,8 @@ function GetUIRoot() {
         chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
         chatPanel.style.x = String(offsetX) + "px";
         chatPanel.style.y = String(-offsetY) + "px";
-        chatPanel.style.preTransformScale2d = scaleText;
+        chatPanel.style.preTransformScale2d = "1.00, 1.00";
+        chatPanel.style.uiScale = scaleText;
 
         State.chatStyleSig = styleSig;
         State.chatStyleApplied = true;
@@ -3205,18 +3316,14 @@ function GetUIRoot() {
 
     function IsConnectedToHideout(root) {
         // Game.GetMapInfo confirmed absent — use HUD panel classes for hideout detection.
-        var hud = GetCachedPanel("cachedHudPanel");
-        if (!hud && root && root.FindChildTraverse) {
-            hud = root.FindChildTraverse(PANEL_ID_HUD);
-            SetCachedPanel("cachedHudPanel", hud);
-        }
+        var hud = ResolveHudPanel(root);
         if (hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
         return root.BHasClass("connectedToHideout") || root.BHasClass("InHideout");
     }
 
     function IsStartupLoaderInActiveMatchContext(root) {
         if (!root) return false;
-        var hud = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_HUD) : null;
+        var hud = ResolveHudPanel(root);
         var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD)
         var hideout = IsConnectedToHideout(root);
 
@@ -3677,10 +3784,30 @@ function GetUIRoot() {
         if (State.topbarPlayerPanelRoot && State.topbarPlayerPanelRoot !== root) {
             State.topbarPlayerPanels = null;
             State.topbarPlayerPanelLastScanMs = null;
+            // Cleared with the panels: a stamped cooldown describes the old root's
+            // tree, and holding it would freeze slots in a tree that was never
+            // searched.
+            State.topbarPlayerPanelMissUntilMs = null;
+            // Deliberately NOT cleared with the panels: which slots the engine ever
+            // creates is a property of the game, not of this root. Resetting it on a
+            // root swap would re-arm the 30s absent-slot cooldown for every real
+            // player and blank their nicknames and badges for half a minute.
+            if (!State.topbarPlayerPanelEverResolved) State.topbarPlayerPanelEverResolved = new Array(SPM_MAX_PLAYERS);
         }
         State.topbarPlayerPanelRoot = root || null;
         if (!State.topbarPlayerPanels) State.topbarPlayerPanels = new Array(SPM_MAX_PLAYERS);
         if (!State.topbarPlayerPanelLastScanMs) State.topbarPlayerPanelLastScanMs = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarPlayerPanelEverResolved) State.topbarPlayerPanelEverResolved = new Array(SPM_MAX_PLAYERS);
+        if (!State.topbarPlayerPanelMissUntilMs) State.topbarPlayerPanelMissUntilMs = new Array(SPM_MAX_PLAYERS);
+    }
+
+    function AnyTopBarPlayerSlotEverResolved() {
+        var flags = State.topbarPlayerPanelEverResolved;
+        if (!flags) return false;
+        for (var i = 0; i < flags.length; i++) {
+            if (flags[i]) return true;
+        }
+        return false;
     }
 
     function GetTopBarPlayerPanel(root, index, nowMs, forceRefresh) {
@@ -3702,6 +3829,57 @@ function GetUIRoot() {
             lastScanMs = 0;
         }
         var recentlyScanned = lastScanMs > 0 && (now - lastScanMs) < TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS;
+        // A slot that has NEVER ONCE resolved gets a much longer cooldown than one
+        // whose panel merely went away.
+        //
+        // GROUND TRUTH from a captured live tree (2026-08-21): the engine numbers these
+        // panels TopBarPlayer1..TopBarPlayer12 — twelve panels for a 6v6 match, and
+        // there is NO TopBarPlayer0. Every consumer here loops from 0, so index 0 is a
+        // lookup that cannot ever succeed, and a FindChildTraverse miss walks the entire
+        // HUD: 31,411 panels in that capture. At the 1500ms refresh that is a full-tree
+        // walk roughly every second and a half, forever, for a panel that does not
+        // exist.
+        //
+        // The "ever resolved" flag is load-bearing and must not be simplified into
+        // "is the cache empty right now". Panels die on every match transition and HUD
+        // rebuild, so keying on an empty cache would apply the 30s freeze to REAL
+        // players — their nicknames and rank badges would vanish for half a minute
+        // after every reload. Only a slot that has never produced a panel in this
+        // session is treated as absent.
+        //
+        // That flag was added with exactly this rule and then never read: the condition
+        // was `!State.topbarPlayerPanels[index]`, which IS the simplification the
+        // paragraph above forbids. Any transient miss on a real slot froze it for 30s,
+        // and because this early return sits above the forceRefresh checks the freeze
+        // could not be broken — RefreshSpmPlayerSlotCache passes forceRefresh=true and
+        // was blocked anyway, which froze State.spm.playerPanels, the first lookup path
+        // ql_nicknames tries.
+        //
+        // The cooldown is STAMPED at miss time rather than derived from lastScanMs on
+        // read, because "is this slot absent" is only answerable in the moment. Before
+        // the top bar inflates no slot has resolved, so every slot looks absent; deriving
+        // the verdict on read means those early misses are re-judged as absent the
+        // instant the first real slot resolves, and the other eleven stay frozen for
+        // half a minute after the top bar appeared. Stamping records the verdict that
+        // was true when the miss happened: early misses get the ordinary refresh
+        // interval and are retried, and only a slot still missing once the top bar
+        // demonstrably exists gets the long cooldown.
+        //
+        // Not hard-skipping index 0. Two player-slot id families in the capture
+        // (TopBarPlayer, PlayerIntentsPlayer) are both 1-based, but other families in
+        // the same tree are 0-based (ModCategory 0..2, ModIcon 0..7), so 1-based
+        // numbering is an observation about one build, not a rule I can rely on. A long
+        // negative cooldown removes essentially all of the cost while still finding the
+        // panel within a minute if some mode really does create slot 0.
+        var missUntil = Number(State.topbarPlayerPanelMissUntilMs[index]) || 0;
+        if (missUntil > 0) {
+            // Same time-source guard as above: a mismatched clock must not freeze a
+            // slot for the rest of the session.
+            if (now < missUntil && (missUntil - now) <= TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS) {
+                return null;
+            }
+            State.topbarPlayerPanelMissUntilMs[index] = 0;
+        }
         if (cached && (!forceRefresh || recentlyScanned)) return cached;
         if (!forceRefresh && recentlyScanned) return cached;
         if (!root.FindChildTraverse) {
@@ -3712,6 +3890,19 @@ function GetUIRoot() {
         var playerPanel = root.FindChildTraverse("TopBarPlayer" + index) || null;
         State.topbarPlayerPanels[index] = playerPanel || null;
         State.topbarPlayerPanelLastScanMs[index] = now;
+        // Latch on first success. Never cleared for the life of the session — see the
+        // absent-slot note above: this records "the engine does create this slot", so
+        // a panel dying later must not re-arm the long cooldown.
+        if (playerPanel) {
+            State.topbarPlayerPanelEverResolved[index] = true;
+            State.topbarPlayerPanelMissUntilMs[index] = 0;
+        } else if (!State.topbarPlayerPanelEverResolved[index] &&
+                   AnyTopBarPlayerSlotEverResolved()) {
+            // Missed, has never resolved, and the top bar demonstrably exists because
+            // another slot did resolve. That is the "the engine does not create this
+            // slot" case, and it is the only one that earns the long freeze.
+            State.topbarPlayerPanelMissUntilMs[index] = now + TOPBAR_PLAYER_PANEL_MISSING_RECHECK_MS;
+        }
         return playerPanel || null;
     }
 
@@ -3771,55 +3962,7 @@ function GetUIRoot() {
     }
 
     function UpdateUltimateCooldownOverlay(root, cfg) {
-        if (!cfg || Number(cfg.ENABLE_ULT_COOLDOWNS) !== 1) return;
-        var fnStart = PerfNowMs();
-        if (!State.ultCdSlotCache) State.ultCdSlotCache = new Array(ULT_CD_MAX_PLAYERS);
-        if (!State.ultCdSlotNextRecheckMs) State.ultCdSlotNextRecheckMs = new Array(ULT_CD_MAX_PLAYERS);
-        var slots = State.ultCdSlotCache;
-        var recheckMs = State.ultCdSlotNextRecheckMs;
-        var nowMs = PerfNowMs();
-        var debugParts = [];
-        // Periodic full reset every 30 s so transient misses eventually self-heal
-        if (nowMs > (State.ultCdSlotFullRescanAtMs || 0)) {
-            for (var ri = ULT_CD_SLOT_MIN_INDEX; ri <= ULT_CD_SLOT_MAX_INDEX; ri++) { slots[ri] = undefined; recheckMs[ri] = 0; }
-            State.ultCdSlotFullRescanAtMs = nowMs + ULT_CD_FULL_RESCAN_MS;
-        }
-        for (var i = ULT_CD_SLOT_MIN_INDEX; i <= ULT_CD_SLOT_MAX_INDEX; i++) {
-            var slotStart = PerfNowMs();
-            var slot = slots[i];
-            var didTraverse = false;
-            if (!slot || !IsPanelValid(slot.elHidden) || !IsPanelValid(slot.elShown)) {
-                if (slot === false && nowMs < (recheckMs[i] || 0)) continue;
-                didTraverse = true;
-                var playerPanel = GetTopBarPlayerPanel(root, i, nowMs, false);
-                if (!playerPanel) {
-                    slots[i] = false;
-                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
-                    if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noPlayer(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
-                    continue;
-                }
-                var els = FindUltCooldownElements(playerPanel);
-                if (!els) {
-                    slots[i] = false;
-                    recheckMs[i] = nowMs + ULT_CD_MISSING_RECHECK_MS;
-                    if (ULT_CD_DEBUG_ENABLED) debugParts.push(i + ":noEl(" + (PerfNowMs() - slotStart).toFixed(2) + "ms)");
-                    continue;
-                }
-                slot = els;
-                slots[i] = slot;
-            }
-            var cd = String(Number(slot.elHidden.text) + 1);
-            if (slot.elShown.text !== cd) slot.elShown.text = cd;
-            var slotMs = PerfNowMs() - slotStart;
-            if (ULT_CD_DEBUG_ENABLED && slotMs >= ULT_CD_DEBUG_SPIKE_MS) debugParts.push(i + (didTraverse ? ":traverse(" : ":cached(") + slotMs.toFixed(2) + "ms)");
-        }
-        var fnMs = PerfNowMs() - fnStart;
-        if (ULT_CD_DEBUG_ENABLED && fnMs >= ULT_CD_DEBUG_SPIKE_MS) {
-            if (nowMs - ultCdDebugLastLogMs >= ULT_CD_DEBUG_THROTTLE_MS) {
-                ultCdDebugLastLogMs = nowMs;
-                $.Msg("[QOLLock][UltimateCooldownDebug] spike total=" + fnMs.toFixed(2) + "ms slots=[" + (debugParts.length ? debugParts.join(" ") : "none") + "]");
-            }
-        }
+        // Obsolete: Handled by manifests/ql_ult_cooldowns/manifest.js at 4Hz
     }
 
 
@@ -4787,18 +4930,18 @@ function GetUIRoot() {
         for (var ts = 0; ts < targetShapes.length; ts++) {
             var shape = targetShapes[ts];
             if (!shape) continue;
-            if (shape.style.preTransformScale2d !== scaleText) {
-                shape.style.preTransformScale2d = scaleText;
-            }
+            if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
+            var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
+            if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
             SetPanelOpacitySafe(shape, opacityText, 1.0);
         }
         var hintContainers = State.hintContainerCache || [];
         for (var hc = 0; hc < hintContainers.length; hc++) {
             var hint = hintContainers[hc];
             if (!hint) continue;
-            if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
-                hint.style.preTransformScale2d = (hintScaleText || "1.000");
-            }
+            if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
+            var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
+            if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
         }
         State.targetShapeStyleSig = styleSig;
         if (!isDefaultUnitTargetStyle) {
@@ -5145,6 +5288,55 @@ function GetUIRoot() {
 
     // ── Settings Loader (load) overlay ──
 
+    // One line per change in what the user can actually see, for all three
+    // loaders. Always on while a session is live, silent otherwise.
+    //
+    // These overlays are only reachable in-game behind a VPK repack, so a
+    // failure that leaves no trace costs a whole play session to observe — a
+    // save whose plate never appeared produced a log in which the write machine
+    // reported success at every stage and the overlay was never mentioned at
+    // all. `above` is the point of it: the overlay is appended last under the
+    // context root on purpose, and anything listed there is drawing on top of
+    // the "DO NOT PRESS ANYTHING" card.
+    var _loaderTraceSigs = {};
+    function TraceLoaderOverlay(tag, overlay, shouldShow) {
+        var parent = null;
+        try { parent = (overlay && overlay.GetParent) ? overlay.GetParent() : null; } catch(e0) { parent = null; }
+
+        var idx = -1;
+        var count = -1;
+        var above = "";
+        if (parent && parent.GetChildCount && parent.GetChild) {
+            try {
+                count = parent.GetChildCount();
+                for (var i = 0; i < count; i++) {
+                    var child = parent.GetChild(i);
+                    if (child === overlay) { idx = i; continue; }
+                    if (idx < 0) continue;
+                    above += (above ? "," : "") + String((child && (child.id || child.paneltype)) || "?");
+                }
+            } catch(e1) { QOL_WARN("core", "loader trace: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        }
+
+        var vis = "";
+        var op = "";
+        try { vis = String((overlay && overlay.style && overlay.style.visibility) || ""); } catch(e2) { vis = "?"; }
+        try { op = String((overlay && overlay.style && overlay.style.opacity) || ""); } catch(e3) { op = "?"; }
+
+        var sig = (shouldShow ? "1" : "0") + "|" + (overlay ? "1" : "0") + "|" + idx + "/" + count +
+                  "|" + vis + "|" + op + "|" + above;
+        if (_loaderTraceSigs[tag] === sig) return;
+        _loaderTraceSigs[tag] = sig;
+        _TLog("loader:" + tag,
+            "show=" + (shouldShow ? 1 : 0) +
+            " overlay=" + (overlay ? "yes" : "NO") +
+            " parent=" + (parent ? String(parent.id || parent.paneltype || "?") : "-") +
+            " child=" + idx + "/" + count +
+            " vis=" + (vis || "(unset)") +
+            " op=" + (op || "(unset)") +
+            " above=[" + above + "]");
+    }
+
     function ResetSettingsLoaderStepStates() {
         _ResetLoaderStepStates(State.settingsLoaderStepStates, SETTINGS_LOADER_STEPS);
     }
@@ -5456,14 +5648,14 @@ function GetUIRoot() {
         overlay.hittest = false;
         overlay.hittestchildren = cfg.overlayHittestChildren;
         if (overlay.AddClass) overlay.AddClass("QOLSettingsLoaderOverlay");
-        overlay.style.horizontalAlign = "left";
-        overlay.style.verticalAlign = "top";
+        overlay.style.horizontalAlign = "center";
+        overlay.style.verticalAlign = "center";
         overlay.style.width = "100%";
         overlay.style.height = "100%";
         overlay.style.overflow = "noclip";
         overlay.style.visibility = "visible";
         overlay.style.zIndex = cfg.zIndex;
-        overlay.style.backgroundColor = GetSettingsUiThemePalette().overlay;
+        overlay.style.backgroundColor = "rgba(15, 20, 25, 0.92)";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
 
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -5722,13 +5914,18 @@ function GetUIRoot() {
             if (State.settingsLoaderSessionCompleted) {
                 ResetSettingsLoaderSession(true);
             }
+            TraceLoaderOverlay("load", overlay, false);
             return;
         }
 
         overlay = EnsureSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("load", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("load", overlay, true);
 
         var title = GetCachedPanel("settingsLoaderTitle");
         var warning = GetCachedPanel("settingsLoaderWarning");
@@ -5803,7 +6000,7 @@ function GetUIRoot() {
         if (sig === State.settingsLoaderLastRenderSig) return;
         State.settingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Loader") title.text = "QOL Settings Loader";
+        if (title && title.text !== "QOLLOCK LOADING...") title.text = "QOLLOCK LOADING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isShopPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
@@ -5887,6 +6084,20 @@ function GetUIRoot() {
         } else if (GetSaveSettingsLoaderStepState("verify_save") === "active") {
             SetSaveSettingsLoaderStepState("verify_save", "done", "Payload verified.");
         }
+        // A save can finish early and legitimately — "already up to date" returns
+        // before the payload is ever written — and every row it never reached was
+        // left pending with the one it stopped on still active. On a run that
+        // succeeded, that reads as a save which gave up halfway.
+        if (code !== "failed") {
+            for (var si = 0; si < SAVE_SETTINGS_LOADER_STEPS.length; si++) {
+                var stepKey = SAVE_SETTINGS_LOADER_STEPS[si].key;
+                if (stepKey === "return_hero" || stepKey === "complete") continue;
+                var stepState = GetSaveSettingsLoaderStepState(stepKey);
+                if (stepState === "pending" || stepState === "active") {
+                    SetSaveSettingsLoaderStepState(stepKey, "skipped", "");
+                }
+            }
+        }
         if (didSwitchToStorageHero) {
             SetSaveSettingsLoaderStepState("return_hero", "done", "Returned to selected hero.");
         } else {
@@ -5919,6 +6130,14 @@ function GetUIRoot() {
         if (msg === "verifying") return "Verifying saved payload.";
         if (msg === "retrying_write") return "Retrying payload write.";
         if (msg === "saved") return "Save completed.";
+        if (msg === "blocked_unread_config") {
+            return "Save blocked: your saved settings could not be read this session, " +
+                   "so saving now would overwrite them. Restart and let loading finish — " +
+                   "or press Save again to overwrite anyway.";
+        }
+        if (msg === "verify_failed_uncommitted") {
+            return "Save could not be committed — the payload was written but not persisted.";
+        }
         if (!msg) return "";
         var clean = msg.replace(/_/g, " ");
         if (!clean) return "";
@@ -6019,40 +6238,28 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
+            // Same self-reset the load loader has done all along. Without it a
+            // completed session stayed completed for the rest of the match, and
+            // _BeginLoaderSession refuses a token it has already completed — so a
+            // repeat request with a token that had not changed silently got no
+            // session and no plate.
+            if (State.saveSettingsLoaderSessionCompleted) {
+                ResetSaveSettingsLoaderSession(true);
+            }
+            TraceLoaderOverlay("save", overlay, false);
             return;
         }
 
         overlay = EnsureSaveSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("save", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("save", overlay, true);
 
         var saveCard = GetCachedPanel("saveSettingsLoaderCard");
-        if (saveCard) {
-            var saveCardTopPx = 36;
-            var startupVisible = IsSettingsLoaderVisibleNow(now);
-            var stackUnderStartupLoader = !!startupVisible;
-            var startupStackTopPx = 36;
-            if (stackUnderStartupLoader) {
-                var settingsCard = GetCachedPanel("settingsLoaderCard");
-                var settingsCardHeight = GetPanelLayoutHeightPx(settingsCard, 180);
-                startupStackTopPx = 36 + settingsCardHeight + 16;
-                saveCardTopPx = startupStackTopPx;
-            }
-            var clearVisible = IsClearSettingsLoaderVisibleNow(now);
-            if (clearVisible) {
-                var clearCard = GetCachedPanel("clearSettingsLoaderCard");
-                var clearFallbackTopPx = stackUnderStartupLoader ? startupStackTopPx : 36;
-                var clearTopPx = ReadPanelMarginTopPx(clearCard, clearFallbackTopPx);
-                var clearHeightPx = GetPanelLayoutHeightPx(clearCard, 180);
-                var stackedSaveTopPx = clearTopPx + clearHeightPx + 12;
-                if (stackedSaveTopPx > saveCardTopPx) saveCardTopPx = stackedSaveTopPx;
-            }
-            var desiredTop = String(saveCardTopPx) + "px";
-            if (saveCard.style.marginTop !== desiredTop) {
-                saveCard.style.marginTop = desiredTop;
-            }
-        }
 
         var title = GetCachedPanel("saveSettingsLoaderTitle");
         var warning = GetCachedPanel("saveSettingsLoaderWarning");
@@ -6081,7 +6288,7 @@ function GetUIRoot() {
         if (sig === State.saveSettingsLoaderLastRenderSig) return;
         State.saveSettingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Saver") title.text = "QOL Settings Saver";
+        if (title && title.text !== "QOLLOCK SAVING...") title.text = "QOLLOCK SAVING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
@@ -6240,26 +6447,23 @@ function GetUIRoot() {
             if (overlay) {
                 try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
             }
+            if (State.clearSettingsLoaderSessionCompleted) {
+                ResetClearSettingsLoaderSession(true);
+            }
+            TraceLoaderOverlay("clear", overlay, false);
             return;
         }
 
         overlay = EnsureClearSettingsLoaderOverlay(root, now);
-        if (!overlay) return;
+        if (!overlay) {
+            TraceLoaderOverlay("clear", null, true);
+            return;
+        }
         overlay.style.visibility = "visible";
         SetPanelOpacitySafe(overlay, 1.0, 1.0);
+        TraceLoaderOverlay("clear", overlay, true);
 
         var clearCard = GetCachedPanel("clearSettingsLoaderCard");
-        if (clearCard) {
-            var clearCardTopPx = 36;
-            if (IsSettingsLoaderVisibleNow(now)) {
-                var startupCard = GetCachedPanel("settingsLoaderCard");
-                clearCardTopPx = 36 + GetPanelLayoutHeightPx(startupCard, 180) + 16;
-            }
-            var clearTop = String(clearCardTopPx) + "px";
-            if (clearCard.style.marginTop !== clearTop) {
-                clearCard.style.marginTop = clearTop;
-            }
-        }
 
         var title = GetCachedPanel("clearSettingsLoaderTitle");
         var warning = GetCachedPanel("clearSettingsLoaderWarning");
@@ -6285,7 +6489,7 @@ function GetUIRoot() {
         if (sig === State.clearSettingsLoaderLastRenderSig) return;
         State.clearSettingsLoaderLastRenderSig = sig;
         if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOL Settings Clearer") title.text = "QOL Settings Clearer";
+        if (title && title.text !== "QOLLOCK CLEARING...") title.text = "QOLLOCK CLEARING...";
         if (detailLabel) {
             ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
@@ -7348,6 +7552,12 @@ function GetUIRoot() {
         State.buildClearStorageSwitchRetries = 0;
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = false;
+        State.buildClearPreservePayload = false;
+        State.buildClearSkippedCount = 0;
+        State.buildClearLastEntryCount = -1;
+        State.buildClearNoProgressHits = 0;
+        State.buildClearPruneSawPayload = false;
+        State.buildClearDeleteAttempts = 0;
     }
 
     function SetBuildClearStatus(root, state, message, token) {
@@ -8034,9 +8244,45 @@ function GetUIRoot() {
     }
 
     function TryDismissBuildDeletePopup(root) {
-        // Intentionally conservative: avoid parent/child popup traversal in this
-        // path because stale popup ancestry can crash native UI in some sessions.
-        // Keep cleanup to existing close paths (shop/browse close + state reset).
+        // Implementable now that the popup's exact shape is known (Panorama debugger,
+        // 2026-08-22): PopupGeneric#DeleteHeroBuildWarning holding
+        // #Button0.PopupButton.IsAutoConfirm and #Button1.PopupButton.IsAutoCancel.
+        //
+        // The previous body was a stub that returned false. Its comment said a blind
+        // parent/child popup traversal was too risky because stale popup ancestry can
+        // crash native UI — which was true of a blind walk, but this needs none: the
+        // popup is found by id and the cancel button by class inside it, the same kind
+        // of lookup-then-activate the confirm side already does.
+        //
+        // Why it matters: the prune presses Delete, which opens this popup, and
+        // confirms it on a LATER tick. When the run terminates in between — the skip
+        // counter reaching the entry count is enough — the popup was left on screen,
+        // modal, over the shop, with nothing in the codebase able to dismiss it.
+        // Reproduced in the simulator once the confirm step was modelled.
+        var roots = CollectBuildUiSearchRoots(root);
+        for (var i = 0; i < roots.length; i++) {
+            var host = roots[i];
+            if (!host || !host.FindChildTraverse) continue;
+            var popup = null;
+            try { popup = host.FindChildTraverse("DeleteHeroBuildWarning"); } catch (e0) { popup = null; }
+            if (!popup || !IsPanelValid(popup)) continue;
+
+            var cancels = [];
+            try { cancels = popup.FindChildrenWithClassTraverse("IsAutoCancel") || []; } catch (e1) { cancels = []; }
+            for (var c = 0; c < cancels.length; c++) {
+                if (IsPanelValid(cancels[c]) && ActivatePanelSafe(cancels[c])) {
+                    _TLog("clear:DismissPopup", "cancelled via IsAutoCancel");
+                    return true;
+                }
+            }
+            // Fallback by id, in case a build ships the popup without that class.
+            var byId = null;
+            try { byId = popup.FindChildTraverse("Button1"); } catch (e2) { byId = null; }
+            if (byId && IsPanelValid(byId) && ActivatePanelSafe(byId)) {
+                _TLog("clear:DismissPopup", "cancelled via #Button1");
+                return true;
+            }
+        }
         return false;
     }
 
@@ -9007,6 +9253,21 @@ function GetUIRoot() {
             }
         }
         SetBuildClearStatus(root, state, message, token);
+        // Any delete confirm still on screen belongs to this run and must not outlive
+        // it: the popup is modal over the shop, and the run can terminate between
+        // pressing Delete and confirming on the next tick.
+        TryDismissBuildDeletePopup(root);
+        // Clear the request payload, mirroring FinishBuildSaveRequest's call to
+        // ResetBuildSaveRequestAttributes. Without this the request attribute
+        // survives completion, so IsBuildRequestQueueActive() stays true forever
+        // and buildRequestLoop never drops back to its deep-idle interval — it
+        // polls at 50ms for the rest of the session. It also meant a second
+        // clear/prune could never be enqueued, because the queue never looked free.
+        // Status attrs are written above and intentionally left for readers.
+        if (root && root.SetAttributeString) {
+            try { root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, ""); } catch (eClr0) {}
+            try { root.SetAttributeString(BUILD_CLEAR_TOKEN_ATTR, ""); } catch (eClr1) {}
+        }
         ResetBuildClearRuntimeState();
     }
 
@@ -9147,6 +9408,172 @@ function GetUIRoot() {
                 return;
             }
 
+            // Prune mode: keep the build that holds the payload and delete only
+            // the junk around it. Everything here is written to fail closed —
+            // deleting a build the user cares about is not recoverable, and the
+            // delete path it rides on is not fully reliable (TryDismissBuildDeletePopup
+            // is a stub), so it must give up rather than push on.
+            //
+            // The confirm dialog is now known from the Panorama debugger (2026-08-22):
+            // PopupGeneric#DeleteHeroBuildWarning with #Button0.PopupButton.IsAutoConfirm
+            // and #Button1.PopupButton.IsAutoCancel. FindBuildDeleteConfirmButton matches
+            // on the isautoconfirm class, so it is NOT dependent on the English label
+            // "OK" — earlier comments here claimed it was. IsAutoConfirm appears nowhere
+            // in the vanilla layout or CSS dump, so C++ applies it at construction.
+            if (State.buildClearPreservePayload) {
+                var pruneEntries = CollectStorageBuildEntryPanels(root, true);
+                var pruneCount = pruneEntries ? pruneEntries.length : 0;
+
+                // The real build count, for the "stop before the last one" guard.
+                //
+                // pruneCount cannot serve as that count. CollectStorageBuildEntryPanels
+                // matches FavoriteBuildEntryContainer as well as HeroBuildListItem, and
+                // the favorites container is a single header strip that exists however
+                // many builds there are — so pruneCount is builds+1 and `pruneCount <= 1`
+                // only ever tripped at zero builds. A one-build account therefore ran the
+                // loop and deleted that build. CountHeroBuildListItems counts the list
+                // items alone; -1 means it could not find the list, which is not evidence
+                // of anything and must not authorize a delete.
+                var pruneBuildCount = CountHeroBuildListItems(root, true);
+                if (pruneBuildCount < 0) {
+                    _TLog("clear:Prune", "build list not resolvable — refusing to prune");
+                    FinishBuildClearRequest(root, requestToken, "failed", "prune_list_unreadable");
+                    return;
+                }
+
+                // Nothing left to consider, or only the payload build remains.
+                if (pruneCount <= 1 || pruneBuildCount <= 1) {
+                    _TLog("clear:Prune", "done entries=" + pruneCount +
+                          " builds=" + pruneBuildCount +
+                          " deleted=" + State.buildClearDeletedCount +
+                          " skipped=" + State.buildClearSkippedCount);
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    return;
+                }
+
+                if (State.buildClearDeletedCount >= BUILD_PRUNE_MAX_DELETES) {
+                    _TLog("clear:Prune", "delete cap reached (" + BUILD_PRUNE_MAX_DELETES + ")");
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned_capped");
+                    return;
+                }
+
+                // Walked the whole list without finding anything deletable.
+                if (State.buildClearSkippedCount >= pruneCount) {
+                    _TLog("clear:Prune", "nothing deletable after " +
+                          State.buildClearSkippedCount + " skip(s)");
+                    FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    return;
+                }
+
+                // No-progress detector: if the entry count stops changing while we
+                // keep issuing deletes, the delete is not landing (dismissed
+                // confirmation popup, inert duplicate panel). Stop instead of
+                // hammering it.
+                //
+                // Counted per DELETE ATTEMPT, not per tick. Walking the list to look
+                // for the payload legitimately does not change the entry count, so
+                // ticking this on every pass aborted the run partway through the walk
+                // — with the abort landing before the payload build had been reached,
+                // which is the worst possible moment to stop and reported failure for
+                // a prune that was working correctly.
+                var deletesAttempted = Number(State.buildClearDeleteAttempts) || 0;
+                if (deletesAttempted > 0 && State.buildClearLastEntryCount === pruneCount) {
+                    State.buildClearNoProgressHits = (Number(State.buildClearNoProgressHits) || 0) + 1;
+                    if (State.buildClearNoProgressHits > BUILD_PRUNE_MAX_NO_PROGRESS) {
+                        _TLog("clear:Prune", "aborting — no progress at entries=" + pruneCount);
+                        FinishBuildClearRequest(root, requestToken, "failed", "prune_no_progress");
+                        return;
+                    }
+                } else {
+                    State.buildClearLastEntryCount = pruneCount;
+                    State.buildClearNoProgressHits = 0;
+                }
+
+                // Never delete the selected build while it carries a payload.
+                // CurrentBuildHasAnyPayload also inspects the editor buffer, which
+                // is the conservative choice here: any sign of a token means keep.
+                var selectedHasPayload = false;
+                try {
+                    selectedHasPayload = !!(QOL.currentBuildHasAnyPayload &&
+                                            QOL.currentBuildHasAnyPayload(root));
+                } catch (ePrune0) {
+                    // Could not tell — assume it matters.
+                    selectedHasPayload = true;
+                }
+                if (selectedHasPayload) {
+                    State.buildClearPruneSawPayload = true;
+                    State.buildClearSkippedCount = (Number(State.buildClearSkippedCount) || 0) + 1;
+                    var skipNext = TrySelectNextStorageBuildEntry(root, true);
+                    _TLog("clear:Prune", "skip payload build (" +
+                          State.buildClearSkippedCount + "/" + pruneCount +
+                          ") reselect=" + (skipNext && skipNext.ok ? "ok" : "fail"));
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_READ_DELAY_MS;
+                    SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                    if (!skipNext || !skipNext.ok) {
+                        // Cannot move off the payload build — nothing safe to do.
+                        FinishBuildClearRequest(root, requestToken, "success", "pruned");
+                    }
+                    return;
+                }
+
+                // Refuse to delete anything until the payload has actually been seen
+                // in this list.
+                //
+                // "This build has no payload" is not evidence that it is junk — it is
+                // equally consistent with looking at the WRONG LIST. The clear pipeline
+                // switches to the storage hero and waits 300ms, but unlike the save
+                // pipeline it never confirms the switch landed via signature abilities,
+                // and FinishBuildSaveRequest queues the hero restore BEFORE queueing
+                // this prune. So the deletes can run against the user's own hero's
+                // builds, none of which carry a token, making every one of them "junk":
+                // measured 4 of 5 real builds deleted in the simulator.
+                //
+                // Finding our own payload first proves the list is the storage list.
+                // Until then a miss means "look elsewhere", so walk on instead of
+                // deleting. If the whole list is walked without ever seeing a payload,
+                // the skipped >= count check above ends the run having deleted nothing —
+                // which is the correct outcome for a list we cannot identify.
+                if (!State.buildClearPruneSawPayload) {
+                    State.buildClearSkippedCount = (Number(State.buildClearSkippedCount) || 0) + 1;
+                    var probeNext = TrySelectNextStorageBuildEntry(root, true);
+                    _TLog("clear:Prune", "no payload seen yet — not deleting (" +
+                          State.buildClearSkippedCount + "/" + pruneCount +
+                          ") reselect=" + (probeNext && probeNext.ok ? "ok" : "fail"));
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_SELECT_READ_DELAY_MS;
+                    SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                    if (!probeNext || !probeNext.ok) {
+                        FinishBuildClearRequest(root, requestToken, "success", "pruned_nothing_identified");
+                    }
+                    return;
+                }
+
+                var pruneDelete = TryTriggerBuildDeleteAction(root);
+                State.buildClearDeleteAttempts = (Number(State.buildClearDeleteAttempts) || 0) + 1;
+                if (pruneDelete.ok) {
+                    if (pruneDelete.mode !== "confirm") State.buildClearDeletedCount += 1;
+                    State.buildClearRetries = 0;
+                    State.buildClearStage = pruneDelete.mode === "confirm"
+                        ? "reselect_after_delete"
+                        : "clear_loop";
+                    State.buildClearNextActionMs = nowMs + BUILD_CLEAR_POST_DELETE_DELAY_MS;
+                    SetBuildClearStatus(
+                        root,
+                        "pending",
+                        pruneDelete.mode === "confirm" ? "confirming_delete" : "pruning_builds",
+                        requestToken
+                    );
+                    return;
+                }
+
+                State.buildClearRetries += 1;
+                State.buildClearNextActionMs = nowMs + BUILD_CLEAR_ACTION_DELAY_MS;
+                SetBuildClearStatus(root, "pending", "pruning_builds", requestToken);
+                if (State.buildClearRetries > BUILD_CLEAR_MAX_RETRIES) {
+                    FinishBuildClearRequest(root, requestToken, "failed", "delete_controls_unavailable");
+                }
+                return;
+            }
+
             if (IsStorageBuildListEmpty(root)) {
                 State.buildClearEmptyConfirmHits += 1;
                 SetBuildClearStatus(root, "pending", "verifying_clear", requestToken);
@@ -9270,6 +9697,17 @@ function GetUIRoot() {
         State.buildClearStorageSwitchRetries = 0;
         State.buildClearStorageConfirmStartedMs = 0;
         State.buildClearUserShopGateSatisfied = !!reuseGateReady;
+        // Prune mode is opted into via the request attribute, so a plain clear
+        // request keeps its original wipe-everything behaviour.
+        State.buildClearPreservePayload =
+            String(root.GetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "") || "").trim() === "prune";
+        State.buildClearSkippedCount = 0;
+        State.buildClearLastEntryCount = -1;
+        State.buildClearNoProgressHits = 0;
+        // Has this prune run seen our payload in the list it is looking at? Nothing is
+        // deleted before it has — see the note in the clear_loop prune branch.
+        State.buildClearPruneSawPayload = false;
+        State.buildClearDeleteAttempts = 0;
         SetBuildClearStatus(root, "pending", reuseLoaderSkyrunner ? "reuse_skyrunner_context" : "starting", requestToken);
     }
 
@@ -9352,7 +9790,22 @@ function GetUIRoot() {
         );
     }
 
+    // True while manifests/ql_build_storage owns the storage round trip.
+    //
+    // Both pipelines service the SAME bridge attribute (QOL_BUILD_SAVE_REQUEST),
+    // so running them together means two state machines answer one Save press —
+    // each switching heroes and pressing buttons under the other. This gate is
+    // what makes ql_build_storage's feature toggle a real cut-over rather than an
+    // addition, and flipping that toggle off restores the old path unchanged.
+    function IsBuildStorageManifestActive() {
+        try {
+            var FR = QOL.core && QOL.core.FeatureRegistry;
+            return !!(FR && FR.isEnabled && FR.isEnabled("ql_build_storage"));
+        } catch (e) { return false; }
+    }
+
     function ProcessBuildRequestOrchestration(root, nowMs, cfg) {
+        if (IsBuildStorageManifestActive()) return;
         var perfSection = PerfStart();
         ProcessBuildSaveRequest(root, nowMs, cfg);
         PerfEnd("loop.build_save_request", perfSection);
@@ -9486,20 +9939,69 @@ function GetUIRoot() {
         return "";
     }
 
+    // Resolve one stat-bonus source panel, with a negative-result backoff.
+    //
+    // The candidate ids (StatContainer_FireRate, StatContainer_TechPower, ...)
+    // belong to the hero-stats panels — citadel_hero_stats_{weapon,tech,armor}_panel
+    // — which the engine builds for the shop, the hero-details page and stat
+    // tooltips. They do not exist in the combat HUD. Their stylesheet says as
+    // much: every rule in citadel_hero_stats_panels_shared.css is scoped under
+    // .gShopOpen.
+    //
+    // That matters because FindChildTraverse on an absent id is not cheap-and-null:
+    // it is a depth-first walk of the ENTIRE subtree that returns null only after
+    // visiting every descendant. Six stat defs with up to seven candidate ids
+    // each, plus a FindChildrenWithClassTraverse fallback per def, is 28 full-HUD
+    // walks per sweep. At the previous flat 500ms retry that ran ~56 whole-tree
+    // walks every second, for the entire match, to keep discovering nothing —
+    // measured at 30% of all engine work the mod requested in a 12-player
+    // teamfight profile (scripts/profile_hud.js).
+    //
+    // Fix: double the retry interval after each failed sweep up to a cap, and
+    // reset it the moment the shop opens or closes. A panel that has not appeared
+    // in eight seconds will not appear in the next half-second, and the only
+    // event that can create these panels also flips gShopOpen — so the overlay
+    // still populates as promptly as before in the case that matters, while a
+    // match spent not shopping costs ~1/16th of the lookups.
+    const STAT_BONUSES_SOURCE_SEARCH_MAX_MS = 8000;
+
     function ResolveStatBonusesSource(root, cacheKey, candidateIds, nowMs) {
         var source = State.cachedPanels[cacheKey];
         if (IsPanelValid(source)) {
             return source;
         }
 
-        var nextByKey = State.statBonuses.nextSourceSearchByKey || {};
+        var statState = State.statBonuses;
+
+        // Cheap: three BHasClass calls against already-cached panels.
+        var shopOpen = false;
+        try { shopOpen = !!IsHudClassActive(root, "gShopOpen"); } catch (eShop) { shopOpen = false; }
+        if (shopOpen !== statState.lastSourceSearchShopOpen) {
+            // The context that builds these panels just changed. Search now
+            // rather than waiting out a backoff earned under the old context.
+            statState.lastSourceSearchShopOpen = shopOpen;
+            statState.sourceSearchBackoffMs = 0;
+            statState.nextSourceSearchByKey = {};
+        }
+
+        var nextByKey = statState.nextSourceSearchByKey || {};
         var nextSearchMs = Number(nextByKey[cacheKey] || 0);
         if (nowMs < nextSearchMs) {
             return null;
         }
         source = FindStatBonusesSourceByIds(root, candidateIds);
-        nextByKey[cacheKey] = source ? 0 : (nowMs + STAT_BONUSES_SOURCE_SEARCH_MS);
-        State.statBonuses.nextSourceSearchByKey = nextByKey;
+        if (source) {
+            statState.sourceSearchBackoffMs = 0;
+            nextByKey[cacheKey] = 0;
+        } else {
+            var backoffMs = Number(statState.sourceSearchBackoffMs) || 0;
+            backoffMs = (backoffMs > 0)
+                ? Math.min(backoffMs * 2, STAT_BONUSES_SOURCE_SEARCH_MAX_MS)
+                : STAT_BONUSES_SOURCE_SEARCH_MS;
+            statState.sourceSearchBackoffMs = backoffMs;
+            nextByKey[cacheKey] = nowMs + backoffMs;
+        }
+        statState.nextSourceSearchByKey = nextByKey;
         State.cachedPanels[cacheKey] = source || null;
         return source;
     }
@@ -9791,25 +10293,37 @@ function GetUIRoot() {
 
         var nextScan = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
         if (!breakdown) {
-            var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
-            var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
-            StatBonusesDebugLogThrottled(
-                "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
-                "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
-                    ", statNames=" + statNameCount +
-                    ", subRows=" + subRowCount + ")",
-                nowMs
-            );
+            // These two counts exist only to be interpolated into the debug message
+            // below, and StatBonusesDebugLogThrottled returns on its first line
+            // because STAT_BONUSES_DEBUG is a compile-time false. JS evaluates
+            // arguments before the call, so both FindChildrenWithClassTraverse walks
+            // ran anyway — two full-HUD tree walks per scan, purely to build a string
+            // that is immediately discarded. Guard the whole block instead.
+            if (STAT_BONUSES_DEBUG) {
+                var statNameCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("StatName") || []).length : 0;
+                var subRowCount = root && root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []).length : 0;
+                StatBonusesDebugLogThrottled(
+                    "no_breakdown|" + String(statNameCount) + "|" + String(subRowCount),
+                    "breakdown missing: no usable stat breakdown panel (id=" + STAT_BONUSES_TOOLTIP_BREAKDOWN_ID +
+                        ", statNames=" + statNameCount +
+                        ", subRows=" + subRowCount + ")",
+                    nowMs
+                );
+            }
             State.statBonuses.nextTooltipScanMs = nextScan;
             return;
         }
 
-        var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
-        StatBonusesDebugLogThrottled(
-            "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
-            "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
-            nowMs
-        );
+        // Same shape as above: GetStatBreakdownRowsDebugSnapshot walks the breakdown
+        // container and its rows, and its only consumer is the disabled logger.
+        if (STAT_BONUSES_DEBUG) {
+            var rowsSnapshot = GetStatBreakdownRowsDebugSnapshot(breakdown, 10);
+            StatBonusesDebugLogThrottled(
+                "breakdown_found|" + String(breakdown.id || "(noid)") + "|" + rowsSnapshot,
+                "breakdown found id=" + String(breakdown.id || "(noid)") + " rows=[" + rowsSnapshot + "]",
+                nowMs
+            );
+        }
         var goldenToken = ExtractGoldenStatuesValueFromBreakdownContainer(breakdown);
         if (goldenToken) {
             var statContainerId = FindStatContainerIdFromPanel(breakdown);
@@ -10199,6 +10713,22 @@ function GetUIRoot() {
             nowMs
         );
     }
+    // Apply the combat-indicator classes to every panel the CSS keys off.
+    //
+    // Called unconditionally from ApplyCoreLoopRootClassesAndState, i.e. every tick
+    // whether or not the feature is on. The four lookups below used to be raw
+    // FindChildTraverse calls from the HUD root — 20 root traversals a second, for
+    // the whole match, to re-find four panels that live for the whole match. The two
+    // above them were already cached, which is what made the omission easy to miss.
+    //
+    // ResolveCachedPanel does the GetCachedPanel/FindChildTraverse/SetCachedPanel
+    // dance and re-validates on read, so a panel that is torn down and rebuilt is
+    // picked up again on the next tick.
+    //
+    // The class writes themselves are already correctly guarded: SetPanelClassIfChanged
+    // compares with BHasClass first, so a steady state performs no engine writes at
+    // all. That matters here because combat_indicator_enabled carries 56 CSS rules
+    // and a genuine flip is not cheap.
     function SyncCombatIndicatorHealthbarClasses(root, active, enabled) {
         if (!root || !root.FindChildTraverse) return;
         var panels = [];
@@ -10209,12 +10739,11 @@ function GetUIRoot() {
             }
             panels.push(panel);
         }
-        pushPanel(GetCachedPanel("healthContainer"));
         pushPanel(GetCachedPanel("gameplayHud"));
-        pushPanel(root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER));
-        pushPanel(root.FindChildTraverse("HealthBarContent"));
-        pushPanel(root.FindChildTraverse("HealthRegenAndTotal"));
-        pushPanel(root.FindChildTraverse("hud_health_bars"));
+        pushPanel(ResolveCachedPanel(root, "healthContainer", PANEL_ID_HEALTH_CONTAINER));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBarContent", "HealthBarContent"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthRegenAndTotal", "HealthRegenAndTotal"));
+        pushPanel(ResolveCachedPanel(root, "combatIndicatorHealthBars", "hud_health_bars"));
         for (var p = 0; p < panels.length; p++) {
             SetPanelClassIfChanged(panels[p], "combat_indicator_enabled", enabled);
             SetPanelClassIfChanged(panels[p], "combat_indicator_active", active);
@@ -11896,7 +12425,8 @@ function GetUIRoot() {
             rowOpacity.toFixed(2)
         ].join("|");
         if (layoutSig !== State.itemMirror.lastLayoutSig) {
-            mirrorOverlay.style.preTransformScale2d = pScale.toFixed(3) + ", " + pScale.toFixed(3);
+            mirrorOverlay.style.preTransformScale2d = "1.00, 1.00";
+            mirrorOverlay.style.uiScale = Math.round(pScale * 100) + "%";
             mirrorOverlay.style.marginLeft = offsetX + "%";
             mirrorOverlay.style.marginTop = (-offsetY) + "%";
             State.itemMirror.lastLayoutSig = layoutSig;
@@ -12236,6 +12766,31 @@ function GetUIRoot() {
         return null;
     }
 
+    // Escalating backoff for the minimap local-player scans.
+    //
+    // Both FindLocalMinimapMainImage and FindLocalMinimapPlayerPanel fall back to
+    // FindChildrenWithClassTraverse over the WHOLE HUD — a collect-all walk with no
+    // early exit, so it always visits every node and allocates a result array. On a
+    // miss they re-armed at a flat cooldown of 90ms in aggressive mode, which at the
+    // 20Hz compass cadence is a rescan every other tick: ~11 full-tree walks a
+    // second, indefinitely.
+    //
+    // And a miss is not rare. The local minimap panel is absent while dead, while
+    // spectating, before spawn, and any time Valve renames the classes. Worse, the
+    // aggressive path uses the SHORTER cooldown, so the rescan rate goes UP exactly
+    // when you die mid-teamfight and the panel disappears.
+    //
+    // The escalation doubles from the caller's cooldown to a 1s cap, and any
+    // successful scan resets it. Worst case after respawn is up to 1s of stale
+    // minimap rotation, against a permanent ~11 whole-tree walks per second.
+    function NextMinimapScanBackoffMs(stateKey, baseCooldownMs) {
+        var current = Number(State[stateKey]) || 0;
+        var next = (current > 0) ? current * 2 : baseCooldownMs;
+        if (next > MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS) next = MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS;
+        State[stateKey] = next;
+        return next;
+    }
+
     function FindLocalMinimapMainImage(root, nowMs, aggressiveScan) {
         if (CanReuseMinimapHeadingSnapshot(nowMs, aggressiveScan) && IsPanelValid(State.minimapHeadingSnapshotMainImage)) {
             return State.minimapHeadingSnapshotMainImage;
@@ -12261,6 +12816,7 @@ function GetUIRoot() {
             if (preferredImage) {
                 SetCachedPanel("minimapLocalMainImage", preferredImage);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return preferredImage;
             }
         }
@@ -12273,12 +12829,13 @@ function GetUIRoot() {
             if (img) {
                 SetCachedPanel("minimapLocalMainImage", img);
                 State.minimapLocalMainImageNextScanMs = 0;
+                State.minimapLocalMainImageScanBackoffMs = 0;
                 return img;
             }
         }
 
         SetCachedPanel("minimapLocalMainImage", null);
-        State.minimapLocalMainImageNextScanMs = now + scanCooldownMs;
+        State.minimapLocalMainImageNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalMainImageScanBackoffMs", scanCooldownMs);
         return null;
     }
 
@@ -12307,6 +12864,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp, ["active", "player", "client_cone_fov", "enemy"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp;
             }
         }
@@ -12317,6 +12875,7 @@ function GetUIRoot() {
             if (PanelHasAllClasses(cp2, ["active", "player", "client_cone_fov"])) {
                 SetCachedPanel("minimapLocalPlayerPanel", cp2);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return cp2;
             }
         }
@@ -12328,12 +12887,13 @@ function GetUIRoot() {
             if (p.BHasClass && p.BHasClass("player")) {
                 SetCachedPanel("minimapLocalPlayerPanel", p);
                 State.minimapLocalPlayerPanelNextScanMs = 0;
+                State.minimapLocalPlayerPanelScanBackoffMs = 0;
                 return p;
             }
         }
 
         SetCachedPanel("minimapLocalPlayerPanel", null);
-        State.minimapLocalPlayerPanelNextScanMs = now + scanCooldownMs;
+        State.minimapLocalPlayerPanelNextScanMs = now + NextMinimapScanBackoffMs("minimapLocalPlayerPanelScanBackoffMs", scanCooldownMs);
         return null;
     }
 
@@ -12628,10 +13188,17 @@ function GetUIRoot() {
         }
 
         if (compassRoot.style.visibility !== (showCompass ? "visible" : "collapse")) compassRoot.style.visibility = (showCompass ? "visible" : "collapse");
-        
+
+        // Resolved once. This used to be looked up here and again ~30 lines below —
+        // one `var` binding assigned twice, so the second lookup was a wasted cache
+        // read plus an IsValid() call on every 20Hz tick.
         var compassBox = GetCachedPanel("compassBox");
+        if (!IsPanelValid(compassBox)) {
+            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
+            SetCachedPanel("compassBox", compassBox);
+        }
         if (compassBox) {
-            compassBox.style.visibility = showCompass ? "visible" : "collapse";
+            SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
         }
         var scale = Number(State.compass.scale);
         if (!isFinite(scale)) scale = 100;
@@ -12659,13 +13226,7 @@ function GetUIRoot() {
         var appliedCompassOffsetY = (2 * compassBaselineY) - offsetY;
         var marginTopText = Math.round(appliedCompassOffsetY) + "px";
         var marginLeftText = Math.round(offsetX) + "px";
-        var uniformScale = (scale / 100).toFixed(3);
-        var scaleText = uniformScale + ", " + uniformScale;
-        var compassBox = GetCachedPanel("compassBox");
-        if (!IsPanelValid(compassBox)) {
-            compassBox = compassRoot.FindChildTraverse("QOLCompassBox");
-            SetCachedPanel("compassBox", compassBox);
-        }
+        var scaleText = String(scale) + "%";
         var boxWidth = Math.round(200 * (stretchX / 100));
         var boxHeight = Math.round(50 * (stretchY / 100));
         if (boxWidth < 100) boxWidth = 100;
@@ -12678,23 +13239,24 @@ function GetUIRoot() {
         if (layoutSig !== State.compass.layoutSig) {
             if (compassRoot.style.marginTop !== marginTopText) compassRoot.style.marginTop = marginTopText;
             if (compassRoot.style.marginLeft !== marginLeftText) compassRoot.style.marginLeft = marginLeftText;
-            if (compassRoot.style.preTransformScale2d !== scaleText) compassRoot.style.preTransformScale2d = scaleText;
+            if (compassRoot.style.preTransformScale2d !== "1.00, 1.00") compassRoot.style.preTransformScale2d = "1.00, 1.00";
+            if (compassRoot.style.uiScale !== scaleText) compassRoot.style.uiScale = scaleText;
             if (compassRoot.style.width !== boxWidthText) compassRoot.style.width = boxWidthText;
-            compassRoot.style.height = "fit-children";
-            compassRoot.style.overflow = "noclip";
+            SetStyleIfChanged(compassRoot, "height", "fit-children");
+            SetStyleIfChanged(compassRoot, "overflow", "noclip");
 
             if (compassBox) {
                 if (compassBox.style.width !== boxWidthText) compassBox.style.width = boxWidthText;
                 if (compassBox.style.height !== boxHeightText) compassBox.style.height = boxHeightText;
-                compassBox.style.visibility = showCompass ? "visible" : "collapse";
+                SetStyleIfChanged(compassBox, "visibility", showCompass ? "visible" : "collapse");
             }
 
             var readout = GetCachedPanel("compassReadout");
             if (readout) {
-                readout.style.width = "100%";
-                readout.style.height = "40px";
-                readout.style.flowChildren = "none";
-                readout.style.overflow = "noclip";
+                SetStyleIfChanged(readout, "width", "100%");
+                SetStyleIfChanged(readout, "height", "40px");
+                SetStyleIfChanged(readout, "flowChildren", "none");
+                SetStyleIfChanged(readout, "overflow", "noclip");
             }
             State.compass.layoutSig = layoutSig;
         }
@@ -12714,11 +13276,16 @@ function GetUIRoot() {
             // row, and the full centered width when the compass owns the row
             // alone. (Both labels use ignore-parent-flow, so equal full widths
             // would stack on top of each other — hence the 50% split.)
-            degreeLabel.style.width = showSpeed ? "50%" : "100%";
-            degreeLabel.style.textAlign = showSpeed ? "left" : "center";
-            degreeLabel.style.horizontalAlign = "left";
-            degreeLabel.style.verticalAlign = "center";
-            degreeLabel.style.visibility = showCompass ? "visible" : "collapse";
+            //
+            // Compare-then-write: this runs at COMPASS_INTERVAL_SEC (20Hz) and the
+            // values only change when the user toggles a compass setting, so these
+            // were ~100 redundant layout-dirtying writes a second. Two of the five
+            // are literal constants that can never change after the first tick.
+            SetStyleIfChanged(degreeLabel, "width", showSpeed ? "50%" : "100%");
+            SetStyleIfChanged(degreeLabel, "textAlign", showSpeed ? "left" : "center");
+            SetStyleIfChanged(degreeLabel, "horizontalAlign", "left");
+            SetStyleIfChanged(degreeLabel, "verticalAlign", "center");
+            SetStyleIfChanged(degreeLabel, "visibility", showCompass ? "visible" : "collapse");
         }
         if (speedLabel) {
             var speedRoot = GetCachedPanel("speedRoot");
@@ -12729,11 +13296,11 @@ function GetUIRoot() {
             // alone it's full-width screen-centered. The speed root is sized to
             // the box width and centered on it, so "right half" lines up with the
             // box's right half — no boxWidth/2 margin shift needed.
-            speedLabel.style.width = showCompass ? "50%" : "100%";
-            speedLabel.style.textAlign = showCompass ? "right" : "center";
-            speedLabel.style.horizontalAlign = showCompass ? "right" : "center";
-            speedLabel.style.verticalAlign = "center";
-            var speedOffsetX = Number(State.compass.speedOffsetX);
+            // Same 20Hz compare-then-write as the degree label above.
+            SetStyleIfChanged(speedLabel, "width", showCompass ? "50%" : "100%");
+            SetStyleIfChanged(speedLabel, "textAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "horizontalAlign", showCompass ? "right" : "center");
+            SetStyleIfChanged(speedLabel, "verticalAlign", "center");            var speedOffsetX = Number(State.compass.speedOffsetX);
             if (!isFinite(speedOffsetX)) speedOffsetX = 0;
             if (speedOffsetX < -2000) speedOffsetX = -2000;
             if (speedOffsetX > 2000) speedOffsetX = 2000;
@@ -13489,6 +14056,12 @@ function GetUIRoot() {
             SetCachedPanel("quickbuy", quickbuyPanel);
         }
         if (quickbuyPanel) {
+            // The shop can create CitadelHudQuickbuy after an earlier lookup failed.
+            // Recreate the class cache after that miss so enhanced mode reaches the
+            // panel itself instead of only setting a class on the HUD root.
+            if (!State.quickbuyClassCache) {
+                State.quickbuyClassCache = { panel: null, values: {} };
+            }
             var enhancedQuickbuyCount = enhancedQuickbuyEnabled ? NormalizeEnhancedQuickbuyCount(cfg.ENHANCED_QUICKBUY_COUNT) : 3;
 
             SetPanelClassCached(
@@ -14177,7 +14750,7 @@ function GetUIRoot() {
             IsCfgEnabled(cfg, "MINIMAP_FLIP");
         gates.compassItemMirror = IsPassiveCooldownAdvancedMode(gates.featureState.passiveCooldownMode);
         gates.compassReloadCd = IsCfgEnabled(cfg, "ENABLE_RELOAD_COOLDOWN");
-        gates.compassUltCd = IsCfgEnabled(cfg, "ENABLE_ULT_COOLDOWNS");
+        gates.compassUltCd = false;
         gates.compassTargetShapesFast = gates.targetShapesActive;
 
         // Hard-gate optimization: track whether any runtime feature needs execution.
@@ -14556,6 +15129,12 @@ function GetUIRoot() {
             State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
             State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
             if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMs);
+            // The load loader wins the screen outright: a stale load session that
+            // was never reset therefore hides a save behind a plate frozen on the
+            // read checklist, with nothing anywhere saying so.
+            if (_settingsLoaderShowing && (ShouldUpdateSaveLoaderOverlay() || ShouldUpdateClearLoaderOverlay())) {
+                TraceLoaderOverlay("suppressed-by-load", GetCachedPanel("settingsLoaderOverlay"), true);
+            }
             if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMs);
             if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMs);
         }
@@ -14565,7 +15144,10 @@ function GetUIRoot() {
         try {
             if (typeof QOL_FEATURE_REGISTRY === "undefined") return;
             var diagRoot = State.rootPanel || root;
-            var diagHud = (diagRoot && diagRoot.FindChildTraverse) ? diagRoot.FindChildTraverse("Hud") : null;
+            // Cached: the throttle below is 5s, but the force-sync token has to be
+            // polled every tick for the Settings-side 6s timeout to work — so this
+            // lookup ran 5x/sec while 24 of every 25 results were discarded.
+            var diagHud = ResolveHudPanel(diagRoot);
             // ── Force-sync: Settings context writes a token to QOL_DiagRequest when it
             //     needs an immediate diagnostic snapshot (e.g. after a preset change).
             //     Echo the token in the response so the caller can match it. ──
@@ -14585,6 +15167,26 @@ function GetUIRoot() {
                         // Fall through to write diagnostic now — echos token so Settings
                         // poller sees request was received. onComplete resets throttle so
                         // results are written on the next cycle after tests finish.
+                    }
+                    // ── "dt_" — summarise the real panel tree into the console log.
+                    //     Developer tool, not part of any feature. The log it produces is
+                    //     converted by scripts/import_tree_dump.js into a captured profile
+                    //     for the headless profiler, so cost numbers stop depending on our
+                    //     model of what the engine builds.
+                    //
+                    //     Summary, not a full per-panel dump: a live match HUD measured
+                    //     37,524 panels, and a full dump of that overran the game's
+                    //     rolling console log — 2,152 lines survived out of 37,524. The
+                    //     aggregate is a few hundred lines and carries what the profiler
+                    //     needs (tree size, depth profile, id distribution). QOL.dumpTree
+                    //     is still available for a single subtree. ──
+                    if (forceToken.indexOf("dt_") === 0) {
+                        if (QOL && typeof QOL.dumpTreeSummary === "function") {
+                            try { QOL.dumpTreeSummary(diagHud || diagRoot); }
+                            catch(_dtErr) { QOL_WARN("core", "tree summary failed: " + (_dtErr && _dtErr.message ? _dtErr.message : String(_dtErr || ""))); }
+                        } else {
+                            QOL_WARN("core", "tree summary requested but QOL.dumpTreeSummary is unavailable");
+                        }
                     }
                     forceSync = true;
                     QOL_WARN("core", "diag force-sync requested, token=" + String(forceToken).substring(0, 12));

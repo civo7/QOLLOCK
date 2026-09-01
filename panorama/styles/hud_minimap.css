@@ -28,16 +28,8 @@
 	background-image: url("s2r://panorama/images/qollock/minimap_midtown_mid_tunnels_qollock_psd_png.vtex");
 }
 
-.minimalist_minimap_active .map_button.doorman_doorway.ability_castrange
-{
-	transform: scaleX(1) scaleY(1);
-	pre-transform-scale2d: 1;
-}
-
 .minimalist_minimap_active .map_button.doorman_doorway.ability_castrange #CastRange
 {
-	transform: scaleX(1) scaleY(1);
-	pre-transform-scale2d: 1;
 	width: 100%;
 	height: 100%;
 	border-radius: 9999px;

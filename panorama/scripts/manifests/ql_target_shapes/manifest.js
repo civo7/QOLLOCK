@@ -4,12 +4,12 @@
 // =============================================================================
 // OWNS:        Unit target shape size, opacity, red diamond scaling.
 //              Finds target_shape and qol_hint_target panels via class traversal
-//              and applies preTransformScale2d + opacity.
+//              and applies crisp uiScale + opacity.
 // DOES NOT OWN: Target shape panels (Valve), red diamond feature gate (core)
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
 // CONFIG KEYS: ENABLE_RED_DIAMOND, UNIT_TARGET_SIZE, UNIT_TARGET_OPACITY,
 //              UNIT_TARGET_HINT_SIZE
-// CSS:         none (preTransformScale2d + SetPanelOpacitySafe only)
+// CSS:         none (uiScale + SetPanelOpacitySafe only)
 // PATTERN:     Polling (5Hz with panels, 2Hz discovery, 1Hz idle).
 //              Reads State.lastResolvedGates.redDiamondEnabled (cross-feature gate).
 // CONFIG SRC:  State.lastConfig (Pattern B — enabledByDefault:true, no enableKey)
@@ -170,18 +170,18 @@
                 for (var ts = 0; ts < targetShapes.length; ts++) {
                     var shape = targetShapes[ts];
                     if (!shape) continue;
-                    if (shape.style.preTransformScale2d !== scaleText) {
-                        shape.style.preTransformScale2d = scaleText;
-                    }
+                    if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
+                    var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
+                    if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
                     SetPanelOpacitySafe(shape, opacityText, 1.0);
                 }
                 var hintContainers = State.hintContainerCache || [];
                 for (var hc = 0; hc < hintContainers.length; hc++) {
                     var hint = hintContainers[hc];
                     if (!hint) continue;
-                    if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
-                        hint.style.preTransformScale2d = (hintScaleText || "1.000");
-                    }
+                    if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
+                    var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
+                    if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
                 }
                 State.targetShapeStyleSig = styleSig;
                 if (!isDefaultUnitTargetStyle) {

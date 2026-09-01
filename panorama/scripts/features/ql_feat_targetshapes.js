@@ -155,18 +155,18 @@
         for (var ts = 0; ts < targetShapes.length; ts++) {
             var shape = targetShapes[ts];
             if (!shape) continue;
-            if (shape.style.preTransformScale2d !== scaleText) {
-                shape.style.preTransformScale2d = scaleText;
-            }
+            if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
+            var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
+            if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
             SetPanelOpacitySafe(shape, opacityText, 1.0);
         }
         var hintContainers = State.hintContainerCache || [];
         for (var hc = 0; hc < hintContainers.length; hc++) {
             var hint = hintContainers[hc];
             if (!hint) continue;
-            if (hint.style.preTransformScale2d !== (hintScaleText || "1.000")) {
-                hint.style.preTransformScale2d = (hintScaleText || "1.000");
-            }
+            if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
+            var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
+            if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
         }
         State.targetShapeStyleSig = styleSig;
         if (!isDefaultUnitTargetStyle) {

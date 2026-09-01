@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "3.1.9";
+var QOL_SCHEMA_SEMVER = "3.2.0";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -690,6 +690,19 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeVoiceTypeConfig !== "function") {
         configTarget.VOICE_TYPE = QOL_SCHEMA_UTILS.NormalizeVoiceTypeValue(configTarget.VOICE_TYPE);
         configTarget.VOICE_VOLUME = QOL_SCHEMA_UTILS.NormalizeVoiceVolumeValue(configTarget.VOICE_VOLUME);
         QOL_SCHEMA_UTILS.NormalizeBridgeBuffFilterConfig(configTarget);
+    };
+}
+
+if (typeof QOL_SCHEMA_UTILS.NormalizeQuickbuyDependencyConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeQuickbuyDependencyConfig = function(configTarget) {
+        if (!configTarget) return;
+        // Parent-child invariant and legacy migration: older settings UI could
+        // persist Enhanced=1 while its parent Quick Buy toggle was disabled.
+        // Enhanced is unreachable in that state, so normalize it to 0 on every
+        // load/save/import. This is idempotent and leaves valid configs untouched.
+        if (Number(configTarget.DISABLE_QUICK_BUY) === 1) {
+            configTarget.ENABLE_ENHANCED_QUICKBUY = 0;
+        }
     };
 }
 
@@ -1744,6 +1757,10 @@ var QOL_COMPACT_SCHEMA_3_1_8 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
     CROSSHAIR_STATS_PERSTAT_SCHEMA_FIELDS
 );
 var QOL_COMPACT_SCHEMA_3_1_9 = QOL_COMPACT_SCHEMA_3_1_8;
+// 3.2.0 adds no payload fields — same wire layout as 3.1.9, so tokens written by
+// either version decode identically. The bump exists to version the release, not
+// the wire format (QOL_SCHEMA_WIRE_VERSION stays 2).
+var QOL_COMPACT_SCHEMA_3_2_0 = QOL_COMPACT_SCHEMA_3_1_9;
 
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -2013,6 +2030,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "3.1.9": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_3_1_9
+    },
+    "3.2.0": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_3_2_0
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2831,7 +2852,6 @@ var QOL_PRESETS = {
         ENABLE_SIMPLIFY_ITEMS: 1,
         ENABLE_SIMPLIFY_SHOP: 1,
         ENABLE_STATLOCKER: 1,
-        ENABLE_UNSPENT_SOULS: 1,
         ENABLE_ULT_COOLDOWNS: 1,
         ENABLE_URN_DIFF: 1,
         ENABLE_URN_TIMER: 1,
@@ -6510,8 +6530,8 @@ QOL_PRESETS["loony"] = {
     ENABLE_PASSIVE_COOLDOWN: 1,
     ENABLE_REJUV_HUD: 1,
     ENABLE_SHOP_STATS: 1,
+    ENABLE_UNSPENT_SOULS: 1,
     ENABLE_URN_DIFF: 1,
-    ENABLE_URN_TIMER: 1,
     ENABLE_ZIP_BOOST: 1,
     HUD_INDICATOR_SIZE: 16,
     MINIMAL_MINIMAP: 1,
@@ -6569,3 +6589,65 @@ QOL_PRESETS["leah"] = {
 
 var QOL_ACCOUNT_PRESET_BINDINGS = {};
 
+QOL_PRESETS["Thorkizzle"] = {
+    CROSSHAIR_STATS_SHOW_BULLETRESIST: 0,
+    CROSSHAIR_STATS_SHOW_CLIPSIZE: 0,
+    CROSSHAIR_STATS_SHOW_DURATION: 0,
+    CROSSHAIR_STATS_SHOW_FIRERATE: 0,
+    CROSSHAIR_STATS_SHOW_HEALAMP: 0,
+    CROSSHAIR_STATS_SHOW_MOVESPEED: 0,
+    CROSSHAIR_STATS_SHOW_RANGE: 0,
+    CROSSHAIR_STATS_SHOW_SPIRIT: 0,
+    CROSSHAIR_STATS_SHOW_TECHRESIST: 0,
+    CROSSHAIR_STATS_SHOW_WEAPONPOWER: 0,
+    CROSSHAIR_STATS_X_OFFSET: 150,
+    DEFAULT_HERO: "hero_unicorn",
+    ENABLE_AMMO_STATUS: 1,
+    ENABLE_BETTER_UNSECURED: 1,
+    ENABLE_BUFF_HUD: 1,
+    ENABLE_CLEAN_DAMAGE_INDICATORS: 1,
+    ENABLE_COLORED_HEALTHBAR: 1,
+    ENABLE_COLOR_WARNING_25: 1,
+    ENABLE_COMBAT_INDICATOR: 1,
+    ENABLE_CROSSHAIR_STATS: 1,
+    ENABLE_DL4D_REMINDERS: 1,
+    ENABLE_DL4D_RUNE_FAST_TROOPERS: 0,
+    ENABLE_DL4D_RUNE_GOLD_BUFFS: 0,
+    ENABLE_DL4D_RUNE_TROOPERS20_HP: 0,
+    ENABLE_HERO_PURCHASE_POPUPS: 1,
+    ENABLE_HERO_SCENE_PANEL: 0,
+    ENABLE_IMAGES_IN_CHAT: 1,
+    ENABLE_IMPROVED_HINT: 1,
+    ENABLE_LANE_WITH_PARTY: 1,
+    ENABLE_LEGACY_COOLDOWNS: 1,
+    ENABLE_MINIMAP_BUFF_TIMER: 1,
+    ENABLE_MINIMAP_ELEVATION_MARKERS: 1,
+    ENABLE_MINIMAP_REJUV_TIMER: 1,
+    ENABLE_MISSING_HERO: 1,
+    ENABLE_NICKNAMES: 1,
+    ENABLE_OBJ_DMG: 1,
+    ENABLE_OBJ_MAP: 1,
+    ENABLE_OLD_ITEM_COOLDOWNS: 0,
+    ENABLE_PASSIVE_COOLDOWN: 1,
+    ENABLE_RED_DIAMOND: 1,
+    ENABLE_REJUV_HUD: 1,
+    ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
+    ENABLE_SHOP_STATS: 1,
+    ENABLE_SHOW_BUILD_ID_TITLE: 1,
+    ENABLE_SIMPLIFY_SHOP_STATS: 1,
+    ENABLE_TAB_ZOOM: 1,
+    ENABLE_TOPBAR_ENEMY_HP_WARNING: 1,
+    ENABLE_TOPBAR_ENEMY_HP_WARNING_25: 1,
+    ENABLE_ULT_COOLDOWNS: 1,
+    ENABLE_URN_DIFF: 1,
+    ENABLE_URN_TIMER: 1,
+    ENABLE_ZIP_BOOST: 1,
+    ITEM_FILTER_DEF_ACTIVE: 1,
+    ITEM_FILTER_OFF_ACTIVE: 1,
+    ITEM_FILTER_OFF_PASSIVE: 0,
+    MINIMAP_SMALL_SIZE: 500,
+    PASSIVE_COOLDOWN_OPACITY: 1,
+    TAB_ZOOM_DRAW_OVER_UI: 1,
+    TAB_ZOOM_OPACITY: 0.9
+};

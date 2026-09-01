@@ -63,7 +63,25 @@
     var BUILD_SAVE_MAX_RETRIES = 12;
     var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
     var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
+    // Mirrors ql_bridge.js — "1" authorizes overwriting a config this session
+    // could not read. Consumed on use.
+    var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
+    // How long a "press Save again to overwrite" window stays armed.
+    var BUILD_SAVE_OVERWRITE_CONFIRM_MS = 60000;
+    // citadel_hud_hero_builds.xml:25 — maxchars="50", so keep the marker short.
+    var PANEL_ID_BUILD_NAME_ENTRY = "BuildNameTextEntry";
+    // Must match MARKER_TITLE in manifests/ql_build_payload/manifest.js.
+    var BUILD_SAVE_MARKER_TITLE = "QOLLOCK-Settings";
+    // Clear/prune channel (mirrors ql_bridge.js) — used to enqueue post-save
+    // junk-build cleanup.
+    var BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
+    var BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
+    var BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
     var BUILD_SAVE_RETURN_DELAY_SEC = 0.3;
+    // Kill switch for the post-save junk-build prune. See FinishBuildSaveRequest for
+    // the reasoning: cosmetic benefit, irreversible failure mode, unverifiable outside
+    // the real client. An explicit prune request still works.
+    var AUTO_PRUNE_AFTER_SAVE = false;
     var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
     var BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 3;
     var BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;
@@ -82,6 +100,26 @@
     var BUILD_SAVE_TIMEOUT_MS = 12000;
     var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
     var BUILD_SAVE_VERIFY_DELAY_MS = 200;
+    // How long to wait for the client to close edit mode after we press Save.
+    // Closing is the commit signal (see handleVerify), and it is a network-adjacent
+    // round trip, so the window is generous relative to the 200ms verify poll.
+    // Bounded well inside BUILD_SAVE_TIMEOUT_MS so the overall budget still wins.
+    var BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS = 6000;
+    // How long to keep trying the payload readback AFTER the editor closes, before
+    // settling for the editor-close proof alone.
+    //
+    // Kept short on purpose. In-game evidence (2026-08-21) says the readback cannot
+    // normally succeed here at all: comparing payload tokens through a save shows the
+    // rendered category label still holding the PREVIOUS payload while the new one
+    // appears only twice — once as we write it into the entry, once as the client
+    // reads that entry to commit. The client does not re-render the category header
+    // until something refreshes the build list, so no window we could afford would
+    // catch it. A 1500ms window was measured doing exactly nothing but delaying every
+    // save by 1.5s.
+    //
+    // So this is an opportunistic attempt, not the plan. saved_commit_confirmed is the
+    // expected outcome of a healthy save, not a degraded one.
+    var BUILD_SAVE_READBACK_GRACE_MS = 400;
     var PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     // SAVE_SETTINGS_LOADER_ENABLED is imported via _deps (line 43).
 
@@ -118,6 +156,9 @@ function ResetBuildSaveRequestAttributes(root) {
         State.storageHeroSignatureConfirmHits = 0;
         State.storageHeroSignatureLastDetail = "";
         State.buildSaveMutationClosed = false;
+        State.buildSaveCommitPressedInEditor = false;
+        State.buildSaveCommitPressedMs = 0;
+        State.buildSaveEditorClosedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -482,6 +523,55 @@ function ResetBuildSaveRequestAttributes(root) {
         ResetBuildSaveRuntimeState();
         if (root) ResetBuildSaveRequestAttributes(root);
         QOL.setBuildSaveStatus(root, state, message, token);
+        // Auto-prune after a save is OFF.
+        //
+        // The feature is cosmetic — it tidies away junk "New Skyrunner Build" entries
+        // — and its failure mode is not. Three separate ways it could delete the
+        // user's real builds were found and fixed on 2026-08-22 (blind payload reader,
+        // a guard counting a header strip as a build, and no proof the list on screen
+        // even belonged to the storage hero). The fixes hold in the simulator, but the
+        // simulator's latencies are guesses, and the deletes ride a path that cannot
+        // report failure. Measured convergence is poor either way: at most one build
+        // per run, before any of these changes.
+        //
+        // Cosmetic upside against irreversible downside, on a path that cannot be
+        // verified outside the real client, is not a trade worth making automatically.
+        // Everything below still works and a prune can be requested explicitly by
+        // writing "prune" to BUILD_CLEAR_REQUEST_ATTR; flip this to true once the
+        // pipeline has been watched end to end in a running game.
+        if (AUTO_PRUNE_AFTER_SAVE && state === "success" && root) QueueStorageBuildPrune(root);
+    }
+
+    // ── QueueStorageBuildPrune ──
+    // After a verified save, ask the clear pipeline to delete the junk builds
+    // around the one we just wrote, so they stop accumulating for existing users.
+    //
+    // Enqueued as a separate request rather than a save stage on purpose: the save
+    // machine has a 12s budget (BUILD_SAVE_TIMEOUT_MS) and a multi-build delete
+    // loop with confirmation popups will not reliably fit in what is left of it
+    // after switch + confirm + lock + write + commit + verify.
+    //
+    // Runs only when the shop is already open, which is both a correctness
+    // requirement (the delete controls do not exist otherwise) and a consent
+    // signal — we do not repoint the user's shop to delete things unprompted.
+    function QueueStorageBuildPrune(root) {
+        if (!root || !root.SetAttributeString) return false;
+        // Never start a prune while any clear request is already in flight.
+        var existing = String(root.GetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "") || "").trim();
+        var clearState = String(root.GetAttributeString(BUILD_CLEAR_STATE_ATTR, "") || "").trim();
+        if (existing.length > 0 || clearState === "pending") return false;
+        if (!QOL.isHudClassActive(root, "gShopOpen")) return false;
+
+        try {
+            root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "prune");
+            root.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "pending");
+            root.SetAttributeString(BUILD_CLEAR_MSG_ATTR, "queued");
+        } catch (e0) {
+            if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0 && e0.message ? e0.message : String(e0 || "")));
+            return false;
+        }
+        _TLog("save:QueuePrune", "requested post-save junk cleanup");
+        return true;
     }
 
     // ── TriggerBuildEditMode ──
@@ -525,40 +615,75 @@ function ResetBuildSaveRequestAttributes(root) {
     }
 
     // ── SetBuildCategoryNameText ──
+    // ── SetTextEntryValue ──
+    // Shared TextEntry writer. Prefers SetText() (which honours the field's
+    // maxchars) and falls back to assigning .text, then fires the two events the
+    // C++ side listens for. Neither entry declares a handler in
+    // citadel_hud_hero_builds.xml — the builds panel subscribes by id — so the
+    // events are what make the client notice the change.
+    function SetTextEntryValue(entry, value) {
+        if (!entry) return false;
+        var didSet = false;
+        var setViaMethod = false;
+        if (typeof entry.SetText === "function") {
+            try {
+                entry.SetText(value);
+                setViaMethod = true;
+                didSet = true;
+            } catch(e0) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0 && e0.message ? e0.message : String(e0 || ""))); }
+        }
+        if (!setViaMethod) {
+            try {
+                entry.text = value;
+                didSet = true;
+            } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e1 && e1.message ? e1.message : String(e1 || ""))); }
+        }
+        try { $.DispatchEvent("TextEntryChanged", entry); } catch(e2) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e2 && e2.message ? e2.message : String(e2 || ""))); }
+        if (typeof entry.Submit === "function") {
+            try { entry.Submit(); didSet = true; } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e3 && e3.message ? e3.message : String(e3 || ""))); }
+        }
+        try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e4) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e4 && e4.message ? e4.message : String(e4 || ""))); }
+        return didSet;
+    }
+
+    // ── SetBuildTitleMarker ──
+    // Stamp an identifiable title on the storage build so the startup loader can
+    // jump straight to it instead of visiting every build in turn.
+    //
+    // Best-effort by design. BuildNameTextEntry
+    // (citadel_hud_hero_builds.xml:25) is the same element type, class and parent
+    // as the category entry and carries no XML handler either, so the same write
+    // technique should apply — but nothing in the game reads a build title back
+    // to us, and vanilla renders titles from a dialog variable
+    // ({s:selected_hero_build_name}), so we cannot verify from JS that this took.
+    // Never gate a save on it: the loader's full sweep remains the guarantee.
+    //
+    // maxchars="50" on that field means the marker must stay short — which is why
+    // the payload itself lives in the category name, which has no such cap.
+    function SetBuildTitleMarker(root) {
+        var entry = null;
+        var hudBuilds = QOL.getBuildSaveHudPanel(root);
+        if (hudBuilds && hudBuilds.FindChildTraverse) {
+            try { entry = hudBuilds.FindChildTraverse(PANEL_ID_BUILD_NAME_ENTRY); } catch(e0) { entry = null; }
+        }
+        if (!entry && root && root.FindChildTraverse) {
+            try { entry = root.FindChildTraverse(PANEL_ID_BUILD_NAME_ENTRY); } catch(e1) { entry = null; }
+        }
+        if (!entry || !IsPanelValid(entry)) return false;
+
+        var current = String(QOL.readPanelTextMaybe(entry) || "");
+        if (current === BUILD_SAVE_MARKER_TITLE) return true;   // already stamped
+        return SetTextEntryValue(entry, BUILD_SAVE_MARKER_TITLE);
+    }
+
     function SetBuildCategoryNameText(root, payloadText) {
         if (!root || !payloadText) return false;
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var didSet = false;
         var entry = GetBuildSaveCategoryNameEntry(root);
-        if (entry) {
-            var before = QOL.readPanelTextMaybe(entry);
-            var setViaMethod = false;
-            if (typeof entry.SetText === "function") {
-                try {
-                    entry.SetText(payloadText);
-                    setViaMethod = true;
-                    didSet = true;
-                } catch(e0m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e0m && e0m.message ? e0m.message : String(e0m || ""))); }
-            }
-            try {
-                if (!setViaMethod) {
-                    entry.text = payloadText;
-                    didSet = true;
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e1) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e1 && e1.message ? e1.message : String(e1 || ""))); }
-                } else {
-                    try { $.DispatchEvent("TextEntryChanged", entry); } catch(e3) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e3 && e3.message ? e3.message : String(e3 || ""))); }
-                }
-            } catch(e5) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e5 && e5.message ? e5.message : String(e5 || ""))); }
-            if (typeof entry.Submit === "function") {
-                try {
-                    entry.Submit();
-                    didSet = true;
-                } catch(e6m) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e6m && e6m.message ? e6m.message : String(e6m || ""))); }
-            }
-            try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e7) { if (typeof Utils !== "undefined" && Utils.WarnLog) Utils.WarnLog("ql_feat_buildsave", (e7 && e7.message ? e7.message : String(e7 || ""))); }
-            DefocusBuildSaveCategoryEntry(root, null);
-            var after = QOL.readPanelTextMaybe(entry);
-        }
+        if (!entry) return false;
+        var didSet = SetTextEntryValue(entry, payloadText);
+        // Click away from the field before the commit. Without it the entry keeps
+        // focus and the client writes the old value back on save.
+        DefocusBuildSaveCategoryEntry(root, null);
         return didSet;
     }
 
@@ -587,49 +712,131 @@ function ResetBuildSaveRequestAttributes(root) {
         return didCommit;
     }
 
+    // ── ReadPayloadTextAnyStore ──
+    // Read a panel's text from BOTH stores the engine keeps for it.
+    //
+    // A Label declared `text="#Citadel_HeroBuilds_CategoryName"`
+    // (citadel_shop_mods_build_category.xml:10) renders from the dialog variable
+    // that token expands to ("{s:category_name}", citadel_main_english.txt:2230),
+    // so `.text` holds the TEMPLATE while the value the client pushed in is
+    // reachable as the "text" attribute. The two are separate stores.
+    //
+    // ReadPanelTextMaybe (ql_core.js:7146) reads `.text` first and returns as soon
+    // as it is non-empty — and a template is non-empty. So on these labels it
+    // always returns "#Citadel_HeroBuilds_CategoryName" and never reaches the
+    // attribute. That is why save verification could not see a payload the startup
+    // loader reads without trouble: the loader's reader
+    // (manifests/ql_build_payload/manifest.js:116) checks the attribute FIRST.
+    //
+    // Order here does not matter because the caller only asks "does either store
+    // contain our token", so this cannot mask a value the way an early return does.
+    // The mod writes no "text" attribute anywhere, so nothing stale can live there.
+    function ReadPayloadTextAnyStore(panel) {
+        if (!panel) return "";
+        var fromAttr = "";
+        if (panel.GetAttributeString) {
+            try { fromAttr = String(panel.GetAttributeString("text", "") || ""); } catch (e0) { fromAttr = ""; }
+        }
+        if (QOL.extractBuildCategoryPayloadToken(fromAttr)) return fromAttr;
+        var fromProp = QOL.readPanelTextMaybe(panel);
+        if (QOL.extractBuildCategoryPayloadToken(fromProp)) return fromProp;
+        return fromAttr || fromProp || "";
+    }
+
     // ── CurrentBuildHasPayload ──
+    // ── CurrentBuildHasPayload ──
+    // Proof that the payload is PERSISTED, not merely typed.
+    //
+    // Only rendered category labels count — BuildCategoryName by id, .CategoryName by
+    // class. The client repopulates those from the committed build, so our token
+    // appears there only once the save actually landed.
+    //
+    // CategoryNameTextEntry is deliberately NOT accepted: it is the editor's own
+    // input buffer and still holds whatever we typed even when
+    // CitadelHudHeroBuildsSaveEdits() did nothing (it is ignored outside edit
+    // mode). Verification used to check that buffer first, so a no-op save
+    // verified as success and the config was silently never written — the caller
+    // then reported "saved" and the next boot found nothing. It is excluded
+    // structurally rather than by ordering: it carries class EditFieldTextEntry and
+    // id CategoryNameTextEntry (citadel_hud_hero_builds.xml:40), so neither the class
+    // nor the id below can reach it.
+    //
+    // Not scoped to a single ShopModsSelectedBuild lookup. The panel tree holds
+    // several CitadelShopModsBuild instances and only one is live (see
+    // manifests/ql_build_payload/manifest.js:317) — FindChildTraverse returns the
+    // first in traversal order, which is not necessarily the one showing the build we
+    // just wrote. Verified in-game 2026-08-20 with the Panorama debugger: the payload
+    // sat in #BuildCategoryName's own `text` under a CitadelShopModsBuild that this
+    // lookup did not resolve to, so the save was committed and still reported failed.
+    //
+    // The token is unique to this request, so a match anywhere in the tree is proof.
+    // The selected-build scan stays as a cheap fast path.
     function CurrentBuildHasPayload(root, payloadText) {
         var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
         if (!expectedToken || expectedToken.length === 0) return false;
 
-        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        var seen = [];
-        function checkToken(token) {
-            if (!token || token.length === 0) return false;
-            seen.push(token);
-            return token === expectedToken;
+        function matches(panel) {
+            var token = QOL.extractBuildCategoryPayloadToken(ReadPayloadTextAnyStore(panel));
+            return !!(token && token === expectedToken);
         }
 
-        var directEntry = GetBuildSaveCategoryNameEntry(root);
-        if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntry)))) return true;
-
-        if (selectedBuild && selectedBuild.FindChildTraverse) {
-            var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
-            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directHeader)))) return true;
-            var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
-            if (checkToken(QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(directEntryInBuild)))) return true;
-        }
-
-        if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
+        function scanHost(host) {
+            if (!host) return false;
+            if (host.FindChildTraverse) {
+                if (matches(host.FindChildTraverse("BuildCategoryName"))) return true;
+            }
+            if (host.FindChildrenWithClassTraverse) {
+                var labels = host.FindChildrenWithClassTraverse("CategoryName") || [];
+                for (var i = 0; i < labels.length; i++) {
+                    if (matches(labels[i])) return true;
+                }
+            }
             return false;
         }
 
-        var classNames = ["CategoryName", "CategoryNameTextEntry", "BuildCategoryName"];
-        for (var c = 0; c < classNames.length; c++) {
-            var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
-            for (var i = 0; i < labels.length; i++) {
-                var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(labels[i]));
-                if (checkToken(token)) return true;
+        var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
+        if (scanHost(selectedBuild)) return true;
+
+        // Every CitadelShopModsBuild instance carries class shopModsBuild
+        // (citadel_shop_mods_build.xml:20), so this reaches the live one whichever it is.
+        if (root && root.FindChildrenWithClassTraverse) {
+            var builds = root.FindChildrenWithClassTraverse("shopModsBuild") || [];
+            for (var b = 0; b < builds.length; b++) {
+                if (builds[b] !== selectedBuild && scanHost(builds[b])) return true;
             }
         }
-        return false;
+
+        // Last resort: the labels may hang outside any shopModsBuild host.
+        return scanHost(root);
+    }
+
+    // True when our text is sitting in the editor buffer but has not been
+    // committed. Distinguishes "write landed, commit failed" from "write never
+    // happened" — used only for diagnostics, never as proof of a save.
+    function BuildSavePayloadIsUncommitted(root, payloadText) {
+        var expectedToken = QOL.extractBuildCategoryPayloadToken(payloadText);
+        if (!expectedToken || expectedToken.length === 0) return false;
+        var entry = GetBuildSaveCategoryNameEntry(root);
+        var token = QOL.extractBuildCategoryPayloadToken(QOL.readPanelTextMaybe(entry));
+        return !!(token && token === expectedToken);
     }
 
     // ── CurrentBuildHasAnyPayload ──
     // Unlike CurrentBuildHasPayload (which requires an exact token match), this
     // checks whether the currently selected build contains ANY valid QOLLOCK
-    // payload. Used as a guard in bootstrap_via_save_enqueue to avoid
-    // overwriting an existing user config with a fresh default payload.
+    // payload. Two callers, both of which use it to decide "there is something
+    // here, leave it alone": the load bootstrap (don't overwrite an existing
+    // config with a fresh default) and the post-save prune (don't delete the build
+    // holding the settings).
+    //
+    // Reads through ReadPayloadTextAnyStore, NOT ReadPanelTextMaybe. On a category
+    // label declared text="#Citadel_HeroBuilds_CategoryName" the `.text` property
+    // holds that template — non-empty — so ReadPanelTextMaybe returns it and never
+    // reaches the attribute store where the payload actually sits. See the long
+    // note on ReadPayloadTextAnyStore above; save verification had the same bug and
+    // was fixed there. Here the consequence was worse than a failed verify: the
+    // prune's only safety check answered "no payload in this build" for the build
+    // that held the payload, and then deleted it.
     function CurrentBuildHasAnyPayload(root) {
         var selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
 
@@ -639,13 +846,13 @@ function ResetBuildSaveRequestAttributes(root) {
         }
 
         var directEntry = GetBuildSaveCategoryNameEntry(root);
-        if (hasToken(QOL.readPanelTextMaybe(directEntry))) return true;
+        if (hasToken(ReadPayloadTextAnyStore(directEntry))) return true;
 
         if (selectedBuild && selectedBuild.FindChildTraverse) {
             var directHeader = selectedBuild.FindChildTraverse("BuildCategoryName");
-            if (hasToken(QOL.readPanelTextMaybe(directHeader))) return true;
+            if (hasToken(ReadPayloadTextAnyStore(directHeader))) return true;
             var directEntryInBuild = selectedBuild.FindChildTraverse("CategoryNameTextEntry");
-            if (hasToken(QOL.readPanelTextMaybe(directEntryInBuild))) return true;
+            if (hasToken(ReadPayloadTextAnyStore(directEntryInBuild))) return true;
         }
 
         if (!selectedBuild || !selectedBuild.FindChildrenWithClassTraverse) {
@@ -656,7 +863,7 @@ function ResetBuildSaveRequestAttributes(root) {
         for (var c = 0; c < classNames.length; c++) {
             var labels = selectedBuild.FindChildrenWithClassTraverse(classNames[c]) || [];
             for (var i = 0; i < labels.length; i++) {
-                if (hasToken(QOL.readPanelTextMaybe(labels[i]))) return true;
+                if (hasToken(ReadPayloadTextAnyStore(labels[i]))) return true;
             }
         }
         return false;
@@ -889,6 +1096,28 @@ function ResetBuildSaveRequestAttributes(root) {
             QOL.setBuildSaveStatus(root, "pending", "validating_skyrunner_signature", requestToken);
             return true;
         }
+        // Require edit mode before touching any field. Two of the three routes
+        // into this stage (handleWaitCategoryFocus's post-init and focus-success
+        // paths) did not check it, so a write could land in a field the client was
+        // not reading — and the subsequent save would commit nothing. The title
+        // field is only live in edit mode at all, so it must be checked here.
+        if (!IsBuildSaveEditModeActive(root)) {
+            _TLog("save:WriteCheck", "edit mode inactive — reopening");
+            TriggerBuildEditMode(selectedBuild);
+            State.buildSaveRetries += 1;
+            State.buildSaveStage = "wait_editor";
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "opening_edit_mode", requestToken);
+            if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+                FinishBuildSaveRequest(root, requestToken, "failed", "edit_mode_unavailable");
+            }
+            return true;
+        }
+        // Stamp the marker title before the payload. SetBuildCategoryNameText
+        // ends by defocusing the category field (which handleSave depends on), so
+        // writing the title afterwards would either be undone by that defocus or
+        // steal focus back from it.
+        SetBuildTitleMarker(root);
         if (!SetBuildCategoryNameText(root, payloadText)) {
             State.buildSaveRetries += 1;
             State.buildSaveNextActionMs = nowMs + BUILD_SAVE_ACTION_DELAY_MS;
@@ -917,10 +1146,16 @@ function ResetBuildSaveRequestAttributes(root) {
             }
         }
         var committed = CommitCategoryNameEdit(root, selectedBuild, payloadText);
+        // Record that we pressed Save from inside an open editor. handleVerify uses
+        // the editor closing as its proof of commit, and that inference is only
+        // valid if the editor was actually open when we pressed.
+        State.buildSaveCommitPressedInEditor = IsBuildSaveEditModeActive(root);
+        State.buildSaveCommitPressedMs = nowMs;
         var saveTriggered = TriggerBuildSaveCommit(selectedBuild);
         State.buildSaveMutationClosed = true;
         _TLog("save:AdvanceStage", "save triggered → verify ok=" + (saveTriggered ? "1" : "0"));
-        _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0"));
+        _TLog("save:SaveCommit", "committed=" + (committed ? "1" : "0") + " triggered=" + (saveTriggered ? "1" : "0") +
+              " inEditor=" + (State.buildSaveCommitPressedInEditor ? "1" : "0"));
         State.buildSaveStage = "verify";
         State.buildSaveRetries += 1;
         State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
@@ -928,11 +1163,55 @@ function ResetBuildSaveRequestAttributes(root) {
         return true;
     }
 
+    // Two independent facts make a save verified, and neither alone is enough:
+    //
+    //   1. The client closed edit mode. Only the client can do that, and
+    //      CitadelHudHeroBuildsSaveEdits() is ignored outside edit mode — so an
+    //      editor that stays open is precisely the no-op save that used to be
+    //      reported as success (the silent config loss 20a49f1 set out to stop).
+    //   2. The payload reads back out of the committed build.
+    //
+    // (2) is the stronger claim and is tried first. But it depends on reading a
+    // dialog-variable-backed label, and if that read is unavailable — which is how
+    // this pipeline came to fail every save in-game while Steam wrote the file
+    // successfully — then refusing the save is the more destructive answer of the
+    // two: the settings ARE on disk and the user is told they are not. So (1) alone
+    // is accepted as a fallback, under its own timeout and reported distinctly in
+    // the log so a readback failure stays visible rather than becoming invisible.
     function handleVerify(root, nowMs, requestToken, selectedBuild, payloadText) {
         if (State.buildSaveStage !== "verify") return false;
         if (CurrentBuildHasPayload(root, payloadText)) {
             _TLog("save:VerifyOk", "payload confirmed in build");
             FinishBuildSaveRequest(root, requestToken, "success", "saved");
+            return true;
+        }
+
+        var editorOpen = IsBuildSaveEditModeActive(root);
+        var pressedInEditor = !!State.buildSaveCommitPressedInEditor;
+        var pressedMs = Number(State.buildSaveCommitPressedMs) || nowMs;
+
+        // Committed. Try the readback briefly, then accept the editor-close proof.
+        //
+        // Both proofs mean the save landed; the readback is just the stronger evidence
+        // when it is available, and in-game it usually is not — the client keeps
+        // showing the previously committed category name until the build list
+        // refreshes (see BUILD_SAVE_READBACK_GRACE_MS). saved_commit_confirmed is
+        // therefore a normal success, not a warning sign. It stays a distinct message
+        // only so the log can tell the two apart.
+        if (pressedInEditor && !editorOpen) {
+            var closedMs = Number(State.buildSaveEditorClosedMs) || 0;
+            if (closedMs <= 0) {
+                State.buildSaveEditorClosedMs = nowMs;
+                closedMs = nowMs;
+            }
+            if ((nowMs - closedMs) < BUILD_SAVE_READBACK_GRACE_MS) {
+                State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+                QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
+                return true;
+            }
+            _TLog("save:VerifyOk", "commit confirmed by editor close; payload readback unavailable after " +
+                  (nowMs - closedMs) + "ms");
+            FinishBuildSaveRequest(root, requestToken, "success", "saved_commit_confirmed");
             return true;
         }
 
@@ -951,9 +1230,30 @@ function ResetBuildSaveRequestAttributes(root) {
             return true;
         }
 
-        if (State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
-            _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries);
-            FinishBuildSaveRequest(root, requestToken, "failed", "verify_failed");
+        // While the editor is still open the retry budget must not end the save:
+        // the commit has not been refused, it has not happened yet. Bound that wait
+        // on elapsed time instead, so a client that never closes the editor still
+        // fails rather than hanging.
+        if (editorOpen && (nowMs - pressedMs) <= BUILD_SAVE_COMMIT_CLOSE_TIMEOUT_MS) {
+            TriggerBuildSaveCommit(selectedBuild);
+            State.buildSaveRetries += 1;
+            State.buildSaveNextActionMs = nowMs + BUILD_SAVE_VERIFY_DELAY_MS;
+            QOL.setBuildSaveStatus(root, "pending", "verifying", requestToken);
+            return true;
+        }
+
+        if (editorOpen || State.buildSaveRetries > BUILD_SAVE_MAX_RETRIES) {
+            // Distinguish the two failure shapes in the log: our text sitting in
+            // the editor buffer means the write landed and only the commit failed
+            // (usually focus still on the entry); nothing there means the write
+            // itself never took.
+            var uncommitted = BuildSavePayloadIsUncommitted(root, payloadText);
+            _TLog("save:Failed", "reason=verify_failed retries=" + State.buildSaveRetries +
+                  " uncommitted=" + (uncommitted ? "1" : "0") +
+                  " editorOpen=" + (editorOpen ? "1" : "0") +
+                  " pressedInEditor=" + (pressedInEditor ? "1" : "0"));
+            FinishBuildSaveRequest(root, requestToken, "failed",
+                uncommitted ? "verify_failed_uncommitted" : "verify_failed");
             return true;
         }
         var saveTriggeredAgain = TriggerBuildSaveCommit(selectedBuild);
@@ -1045,7 +1345,89 @@ function ResetBuildSaveRequestAttributes(root) {
             FinishBuildSaveRequest(root, requestToken, "failed", "invalid_payload");
             return "";
         }
+        if (!IsBuildSaveAllowedByLoadState(root, requestToken)) return "";
         return payloadText;
+    }
+
+    // ── ClearBuildSaveForceFlag ──
+    // Wipe the one-shot override from the root, the Hud panel and this context
+    // panel. The settings side sets it on more than one surface, so clearing only
+    // the root it happened to be read from would leave a copy behind.
+    function ClearBuildSaveForceFlag(root) {
+        var targets = [root];
+        try {
+            var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+            if (hud) targets.push(hud);
+        } catch (e0) {}
+        try {
+            var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+            if (ctx) targets.push(ctx);
+        } catch (e1) {}
+        for (var i = 0; i < targets.length; i++) {
+            var panel = targets[i];
+            if (!panel || !panel.SetAttributeString) continue;
+            try { panel.SetAttributeString(BUILD_SAVE_FORCE_ATTR, ""); } catch (e2) {}
+        }
+    }
+
+    // ── IsBuildSaveAllowedByLoadState ──
+    // Refuse to write when this session never managed to read the stored config.
+    //
+    // There is exactly one copy of the user's settings and it lives in the build.
+    // If load could not read it, the running config is defaults — so saving writes
+    // defaults over real settings and they are gone for good. That is the one
+    // unrecoverable failure in this pipeline, and it is also why the community
+    // workaround began with deleting every build: by then the config was already
+    // lost, so there was nothing left to protect.
+    //
+    // "failed" only means "a storage build exists but we could not read a payload
+    // from it". Genuinely empty storage records "loaded", so a first-time save
+    // still works.
+    //
+    // Escape hatch: QOL_BUILD_SAVE_FORCE = "1" bypasses the guard, for the case
+    // where the user really does want to overwrite (e.g. importing a config
+    // string). It is consumed on use so it cannot silently persist.
+    function IsBuildSaveAllowedByLoadState(root, requestToken) {
+        // Evaluate once per request, not once per tick. ResolveBuildSavePayloadText
+        // runs on every loop iteration, and the force flag is one-shot — consuming
+        // it on the first tick meant the second tick saw no flag and blocked the
+        // save that had just been authorized. Once the runtime is live for this
+        // token the decision has already been made.
+        if (State.buildSaveActiveToken && State.buildSaveActiveToken === requestToken) return true;
+
+        var loadState = State.configLoadState ? String(State.configLoadState) : "pending";
+        if (loadState !== "failed") return true;
+
+        var forced = String(root.GetAttributeString(BUILD_SAVE_FORCE_ATTR, "") || "").trim();
+        if (forced === "1") {
+            // Clear on every surface the settings context writes to
+            // (ql_settings.js:1730-1741 writes both its context panel and the
+            // root), or a stale "1" would silently authorize the next save too.
+            ClearBuildSaveForceFlag(root);
+            _TLog("save:ForceOverride", "loadState=failed detail=" +
+                  String(State.configLoadStateDetail || "-"));
+            return true;
+        }
+
+        // Second press within the confirm window counts as consent.
+        //
+        // Blocking outright turned a load failure into "you cannot save at all",
+        // with no way out from the UI — which is worse than the risk it guards
+        // against, because the user's config is already unreadable. The first press
+        // explains the situation and arms this window; pressing Save again inside
+        // it goes through.
+        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        if (State.buildSaveOverwriteArmedUntilMs && nowMs < State.buildSaveOverwriteArmedUntilMs) {
+            State.buildSaveOverwriteArmedUntilMs = 0;
+            _TLog("save:ConfirmedOverwrite", "second press accepted; loadState=failed");
+            return true;
+        }
+
+        State.buildSaveOverwriteArmedUntilMs = nowMs + BUILD_SAVE_OVERWRITE_CONFIRM_MS;
+        _TLog("save:Blocked", "loadState=failed detail=" +
+              String(State.configLoadStateDetail || "-") + " (armed confirm window)");
+        FinishBuildSaveRequest(root, requestToken, "failed", "blocked_unread_config");
+        return false;
     }
 
     // ── EnsureBuildSaveRequestRuntimeInitialized ──
@@ -1075,6 +1457,9 @@ function ResetBuildSaveRequestAttributes(root) {
             State.storageHeroSignatureLastDetail = "";
         }
         State.buildSaveMutationClosed = false;
+        State.buildSaveCommitPressedInEditor = false;
+        State.buildSaveCommitPressedMs = 0;
+        State.buildSaveEditorClosedMs = 0;
         State.buildSaveTargetBuildPanel = null;
         State.buildSaveTargetBuildSig = "";
         State.buildSaveTargetBuildTitle = "";
@@ -1113,6 +1498,7 @@ function ResetBuildSaveRequestAttributes(root) {
     QOL.countBuildCategoryHeaders = CountBuildCategoryHeaders;
     QOL.currentBuildHasPayload = CurrentBuildHasPayload;
     QOL.currentBuildHasAnyPayload = CurrentBuildHasAnyPayload;
+    QOL.queueStorageBuildPrune = QueueStorageBuildPrune;
     QOL.getBuildSaveCategoryNameEntry = GetBuildSaveCategoryNameEntry;
     QOL.isBuildSaveMutationStage = IsBuildSaveMutationStage;
     QOL.isBuildSaveEditModeActive = IsBuildSaveEditModeActive;
@@ -1148,6 +1534,8 @@ function ResetBuildSaveRequestAttributes(root) {
             "buildSaveStorageShopReopenNextMs", "buildSaveStorageShopReopenAttempts",
             "buildSaveFavoritesActionNextMs", "buildSaveStorageProvisionalHits",
             "buildSaveMutationClosed", "buildSaveTargetBuildPanel",
+            "buildSaveCommitPressedInEditor", "buildSaveCommitPressedMs",
+            "buildSaveEditorClosedMs",
             "buildSaveTargetBuildSig", "buildSaveTargetBuildTitle",
             "buildSaveTargetStableHits", "buildSaveTargetDriftRetries",
             "buildSaveTargetQuietUntilMs", "buildSaveLastTraceStage"

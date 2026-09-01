@@ -55,7 +55,8 @@
         if (shouldShow) {
             topBar.style.x = String(offsetX) + "px";
             topBar.style.y = String(-offsetY) + "px";
-            topBar.style.preTransformScale2d = scaleText + ", " + scaleText;
+            topBar.style.preTransformScale2d = "1.00, 1.00";
+            topBar.style.uiScale = Math.round(Number(scaleText) * 100) + "%";
             Utils.SetPanelOpacitySafe(topBar, opacityText, 1.0);
         } else {
             // Clear inline style.opacity set during a previous match — otherwise it

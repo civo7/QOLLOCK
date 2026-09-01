@@ -30,6 +30,10 @@ var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
 var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
 var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
 var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
+// Set to "1" by the settings UI to authorize a save even though this session
+// could not read the stored config. Consumed on use — see
+// IsBuildSaveAllowedByLoadState in features/ql_feat_buildsave.js.
+var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
 var BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
 var BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
 var BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
@@ -45,6 +49,7 @@ var QOL_BRIDGE_CHANNELS = {
     "buildSaveState":      { attr: BUILD_SAVE_STATE_ATTR,                     type: "string",      desc: "Pending or empty" },
     "buildSaveMsg":        { attr: BUILD_SAVE_MSG_ATTR,                       type: "string",      desc: "Progress message" },
     "buildSaveToken":      { attr: BUILD_SAVE_TOKEN_ATTR,                     type: "string",      desc: "Correlation token" },
+    "buildSaveForce":      { attr: BUILD_SAVE_FORCE_ATTR,                     type: "flag",        desc: "1 to overwrite an unread config" },
     "buildClearRequest":   { attr: BUILD_CLEAR_REQUEST_ATTR,                  type: "flag",        desc: "1 to trigger" },
     "buildClearState":     { attr: BUILD_CLEAR_STATE_ATTR,                    type: "string",      desc: "Pending or empty" },
     "buildClearMsg":       { attr: BUILD_CLEAR_MSG_ATTR,                      type: "string",      desc: "Progress message" },
@@ -167,7 +172,7 @@ QOL.bridge = {
         if (typeof QOLBridgeRead !== "function") throw new Error("QOLBridgeRead not defined");
         if (typeof QOLBridgeWrite !== "function") throw new Error("QOLBridgeWrite not defined");
         if (typeof QOL.bridge !== "object" || QOL.bridge === null) throw new Error("QOL.bridge not published");
-        // Verify all 18 channels have attr + type + desc
+        // Verify every channel has attr + type + desc
         var _channelCount = 0;
         for (var _ch2 in QOL_BRIDGE_CHANNELS) {
             if (QOL_BRIDGE_CHANNELS.hasOwnProperty(_ch2)) {
@@ -178,7 +183,7 @@ QOL.bridge = {
                 if (typeof _c.desc !== "string") throw new Error("Channel '" + _ch2 + "' missing desc");
             }
         }
-        if (_channelCount !== 18) throw new Error("Expected 18 channels, got " + _channelCount);
+        if (_channelCount !== 19) throw new Error("Expected 19 channels, got " + _channelCount);
 
         if (typeof $ !== "undefined" && $.Msg) {
             $.Msg("[QOL DEBUG] ql_bridge.js self-test passed: " + _channelCount + " channels");

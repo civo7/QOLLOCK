@@ -35,7 +35,8 @@ const TARGETS = [
     { key: "Blank2762", form: "assign" },
     { key: "Keta", form: "assign" },
     { key: "loony", form: "assign" },
-    { key: "Starjadian", form: "assign" }
+    { key: "Starjadian", form: "assign" },
+    { key: "Thorkizzle", form: "assign" }
 ];
 
 TARGETS.forEach(function(t) {

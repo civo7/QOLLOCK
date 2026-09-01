@@ -50,6 +50,22 @@
             var _loop = null;
             var _root = null;
 
+            function ResolveOnDeathArcadeBridgeRoot(panel) {
+                var root = panel;
+                var depth = 0;
+                // hud.xml scripts run with #Hud as their context panel, while the
+                // settings isolate reads bridge attributes from the absolute
+                // WindowRoot. Walk up explicitly so both contexts share one host.
+                while (root && root.GetParent && depth < 64) {
+                    var parent = null;
+                    try { parent = root.GetParent(); } catch(e0) { parent = null; }
+                    if (!parent) break;
+                    root = parent;
+                    depth++;
+                }
+                return root || panel;
+            }
+
             // ── Constants (verbatim from old feature) ──
             var ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
             var ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
@@ -177,7 +193,8 @@
 
             // ── Main tick (adapted from UpdateOnDeathArcadeBridge + postUpdate) ──
             function _tick() {
-                var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
+                var root = IsPanelValid(_root) ? _root : ResolveOnDeathArcadeBridgeRoot($.GetContextPanel());
+                if (root && root !== _root) _root = root;
                 var cfg = ctx.config.view();
 
                 if (!root || !cfg) return;
@@ -234,7 +251,7 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_on_death_arcade");
                     // Clear bridge attributes on disable
-                    var root = _root || $.GetContextPanel();
+                    var root = IsPanelValid(_root) ? _root : ResolveOnDeathArcadeBridgeRoot($.GetContextPanel());
                     try { SetOnDeathArcadeBridgeAttributes(root, false, "", ""); } catch(e) {}
                     try { SetOnDeathArcadeEscapeMenuOpen(root, false); } catch(e) {}
                     State.onDeathArcadeWasDead = false;

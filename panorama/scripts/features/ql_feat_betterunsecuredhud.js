@@ -17,6 +17,18 @@
 
     var PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;
     var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+
+    // Backoff applied when the gold container cannot be found. This was referenced
+    // at the one site below but never declared anywhere in the HUD context — only as
+    // a function-local inside the (disabled) ql_better_unsecured_hud manifest. So
+    // whenever the container was absent, the assignment threw a ReferenceError
+    // BEFORE the backoff could be recorded, which meant:
+    //   - the three full-tree searches above it re-ran on the very next tick,
+    //     because hudNextSearchMs stayed 0 and could never advance, and
+    //   - the throw hit the dispatch error streak, so after 10 ticks (~2s) the
+    //     feature auto-disabled, re-armed 30s later, and thrashed for the session.
+    // Reproduced in tests/perf_guards.test.js by deleting the container.
+    var UNSECURED_SOULS_HUD_SEARCH_MS = 2000;
 function GetGameplayHudPanel(root) {
         if (!root || !root.FindChildTraverse) return root || null;
         return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
@@ -57,13 +69,20 @@ function ParseUnsecuredSoulsValue(valueText) {
 
     function FindUnsecuredSoulsHudLabel(root, container) {
         var label = null;
+        // Valve's label id carries a typo — "hudDealthGoldLabel"
+        // (hud_gold_and_ap_container.xml:30). The correctly-spelled
+        // "hudDeathGoldLabel" exists in no layout, vanilla or modded, so looking for
+        // it first cost two guaranteed-miss traversals (one scoped to the container,
+        // one over the whole HUD) before every successful lookup. Search the id that
+        // exists; keep the corrected spelling as a fallback in case Valve ever fixes
+        // it, but pay for it only when the real one is missing.
         if (container && container.FindChildTraverse) {
-            label = container.FindChildTraverse("hudDeathGoldLabel");
-            if (!label) label = container.FindChildTraverse("hudDealthGoldLabel");
+            label = container.FindChildTraverse("hudDealthGoldLabel");
+            if (!label) label = container.FindChildTraverse("hudDeathGoldLabel");
         }
         if (!label && root && root.FindChildTraverse) {
-            label = root.FindChildTraverse("hudDeathGoldLabel");
-            if (!label) label = root.FindChildTraverse("hudDealthGoldLabel");
+            label = root.FindChildTraverse("hudDealthGoldLabel");
+            if (!label) label = root.FindChildTraverse("hudDeathGoldLabel");
         }
         if (!label && container && container.FindChildrenWithClassTraverse) {
             var labels = container.FindChildrenWithClassTraverse("death_penalty_gold") || [];

@@ -124,7 +124,8 @@
                                 _mainPanel.style.marginBottom = marginBottomText;
                                 _mainPanel.style.x = "0px";
                                 _mainPanel.style.y = "0px";
-                                _mainPanel.style.preTransformScale2d = scaleText + ", " + scaleText;
+                                _mainPanel.style.preTransformScale2d = "1.00, 1.00";
+                                _mainPanel.style.uiScale = Math.round(Number(scaleText) * 100) + "%";
                                 if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !shopEnabled);
                                 else _mainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
                                 try {
@@ -166,6 +167,7 @@
                                 _mainPanel.style.x = "0px";
                                 _mainPanel.style.y = "0px";
                                 _mainPanel.style.preTransformScale2d = "1.00, 1.00";
+                                _mainPanel.style.uiScale = "100%";
                                 if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
                                 else _mainPanel.style.visibility = "visible";
                                 try {
@@ -220,6 +222,7 @@
                             _mainPanel.style.x = "0px";
                             _mainPanel.style.y = "0px";
                             _mainPanel.style.preTransformScale2d = "1.00, 1.00";
+                            _mainPanel.style.uiScale = "100%";
                             if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
                             try { _mainPanel.style.opacity = "1.00"; } catch(e2) {}
                         } catch(e) {}

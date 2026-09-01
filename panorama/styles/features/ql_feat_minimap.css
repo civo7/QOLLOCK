@@ -195,6 +195,10 @@
     wash-color: #c7c3bd;
 }
 
+/* No rule for #QOLMinimapBuffBridgeLeftIcon / …RightIcon on purpose: the manifest
+   keeps both permanently in qol-hidden, so if one ever renders the bug is that
+   .qol-hidden stopped working — not that the icon lacks a size. */
+
 .QOLMinimapTimerLabel
 {
     width: fill-parent-flow(1.0);

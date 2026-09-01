@@ -97,7 +97,8 @@
 
                 bp.style.x = ox + "px";
                 bp.style.y = (-oy) + "px";
-                bp.style.preTransformScale2d = sc + ", " + sc;
+                bp.style.preTransformScale2d = "1.00, 1.00";
+                bp.style.uiScale = Math.round(Number(sc) * 100) + "%";
                 if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
                 try { bp.style.washColor = wc; bp.style.opacity = op; } catch(e) {}
             }
@@ -113,6 +114,7 @@
                         if (bp && bp.style) {
                             bp.style.x = "0px"; bp.style.y = "0px";
                             bp.style.preTransformScale2d = "1.00, 1.00";
+                            bp.style.uiScale = "100%";
                             bp.style.opacity = "1.00"; bp.style.washColor = "";
                             if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
                         }

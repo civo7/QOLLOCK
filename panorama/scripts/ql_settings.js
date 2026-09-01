@@ -1761,6 +1761,13 @@ function ReadBuildSaveStatus() {
     return { state: "", msg: "", token: "" };
 }
 
+// Two vocabularies land here. The old build-save pipeline published the
+// message names below; ql_build_storage publishes its own stage names instead,
+// and because none of them matched, every stage of a save fell through to the
+// default and the button read "SAVING" from the first tick to the last — about
+// four and a half seconds of nothing changing, which reads as a hang.
+// Deliberately mapped onto the labels that already exist rather than new ones:
+// six distinct labels the user can watch move, no new strings to translate.
 function ResolveBuildSavePendingLabel(message) {
     if (message === "starting") return "START";
     if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
@@ -1770,6 +1777,16 @@ function ResolveBuildSavePendingLabel(message) {
     if (message === "writing_category_name") return "WRITING";
     if (message === "saving") return "SAVING";
     if (message === "verifying") return "VERIFY";
+    // ql_build_storage stage names.
+    if (message === "switching_to_storage_hero" || message === "switch_hero") return "SKYRUNNER";
+    if (message === "confirm_hero") return "SKYRUNNER";
+    if (message === "open_shop") return "OPEN SHOP";
+    if (message === "open_browser" || message === "await_list") return "INIT BUILD";
+    if (message === "pick_target" || message === "await_selected") return "INIT BUILD";
+    if (message === "await_editor") return "EDITING";
+    if (message === "write_description") return "WRITING";
+    if (message === "commit" || message === "await_commit") return "SAVING";
+    if (message === "verify") return "VERIFY";
     return "SAVING";
 }
 
@@ -1783,15 +1800,19 @@ function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
         if (key === lastFeedbackKey) return;
         lastFeedbackKey = key;
         var message = String(msg || "");
-        if (message === "waiting_for_shop") {
+        if (message === "waiting_for_shop" || message === "open_shop") {
             SetLocalizedConfigFeedbackMessage("Open shop to continue save.", "warning", 0);
             return;
         }
-        if (message === "switching_to_skyrunner" || message === "switching_to_airheart") {
+        if (message === "switching_to_skyrunner" || message === "switching_to_airheart" ||
+            message === "switching_to_storage_hero" || message === "switch_hero" ||
+            message === "confirm_hero") {
             SetLocalizedConfigFeedbackMessage("Switching to Skyrunner...", "info", 0);
             return;
         }
-        if (message === "writing_category_name" || message === "saving") {
+        if (message === "writing_category_name" || message === "saving" ||
+            message === "write_description" || message === "commit" ||
+            message === "await_commit") {
             SetLocalizedConfigFeedbackMessage("Writing settings string to build...", "info", 0);
             return;
         }
@@ -2121,6 +2142,7 @@ function NormalizeConfig(config, parsed) {
     NormalizeTopbarEnemyHpWarningConfig(config, parsed);
     NormalizeTopbarAllyHpWarningConfig(config, parsed);
     NormalizeShopItemNotificationsConfig(config, parsed);
+    NormalizeQuickbuyDependencyConfig(config);
 }
 
 function SyncConfigFromStorage() {
@@ -3422,6 +3444,7 @@ function BuildCandidateConfigFromParsed(parsed, schemaVersion, baseConfig) {
     NormalizeTopbarEnemyHpWarningConfig(candidateConfig, parsed);
     NormalizeTopbarAllyHpWarningConfig(candidateConfig, parsed);
     NormalizeShopItemNotificationsConfig(candidateConfig, parsed);
+    NormalizeQuickbuyDependencyConfig(candidateConfig);
     NormalizeCompassSpeedSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(candidateConfig, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
 
@@ -3637,6 +3660,7 @@ function BuildPresetCandidateConfigByName(presetName) {
     NormalizeTopbarEnemyHpWarningConfig(candidate, presetData);
     NormalizeTopbarAllyHpWarningConfig(candidate, presetData);
     NormalizeShopItemNotificationsConfig(candidate, presetData);
+    NormalizeQuickbuyDependencyConfig(candidate);
 
     PreserveUiOnlySettings(candidate);
 
@@ -3961,6 +3985,7 @@ function BuildCommunityPresetEntries() {
     entries.push({ label: "nkonin.me", preset: "nkonin.me" });
     entries.push({ label: "loony", preset: "loony" });
     entries.push({ label: "leah", preset: "leah" });
+    entries.push({ label: "Thorkizzle", preset: "Thorkizzle" });
     for (var i = entries.length; i < 90; i++) {
         entries.push({ label: "Available", available: false });
     }
@@ -5244,7 +5269,18 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             }
             return parsed;
         };
-        slider.min = isFloat ? 0 : min;
+        // Float sliders carry their value scaled by 100 (Panorama sliders step in
+        // integers), so BOTH bounds have to be scaled — min was left at a literal 0.
+        // For opacity that is invisible because its min really is 0, but every scale
+        // slider could be dragged below its own floor: a Scale of 0.22 on a 0.5–1.5
+        // slider, which the runtime then clamps back to 0.5. The UI showed one number
+        // and the HUD applied another, and the reporter's screenshot of the Item Buy
+        // Notification sliders is exactly that.
+        //
+        // A config already holding an out-of-range value is not lost: syncRowVisualState
+        // clamps to [min,max] before display, so it shows the value the HUD is really
+        // using.
+        slider.min = isFloat ? min * 100 : min;
         slider.max = isFloat ? max * 100 : max;
         slider.value = isFloat ? MOD_CONFIG[configId] * 100 : MOD_CONFIG[configId];
         var input = $.CreatePanel("TextEntry", sliderValueGroup, "");
@@ -6444,6 +6480,15 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
     var rowTooltipDescLine = hasRowDescription ? localizedDescription : "";
     var hasRowTooltip = QOL.tooltip.hasMeaningfulContent(rowPerfTier, rowTooltipDescLine, rowCreatedBy);
     if (gSearchCollectMode && gSearchCollectState) {
+        var searchInlineOptions = [{
+            inlineSecondaryCheckbox: secondaryConfigId || "",
+            secondaryLabel: LocalizeSettingsText(secondaryLabel || ""),
+            secondaryDescription: LocalizeSettingsText(secondaryDescription || ""),
+            rowOptions: {
+                invert: invertMain,
+                clearSecondaryWhenDisabled: rowOptions.clearSecondaryWhenDisabled === true
+            }
+        }];
         GetActiveSearchCollectSection().rows.push(BuildSearchCollectedRow(
             localizedLabel,
             configId,
@@ -6451,7 +6496,7 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
             null,
             null,
             null,
-            [{ inlineSecondaryCheckbox: secondaryConfigId || "" }],
+            searchInlineOptions,
             localizedDescription,
             [LocalizeSettingsText(secondaryLabel || ""), secondaryConfigId || "", secondaryDescription || ""]
         ));
@@ -6581,6 +6626,10 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
 
     switchButton.SetPanelEvent("onactivate", function() {
         MOD_CONFIG[configId] = (MOD_CONFIG[configId] === 1) ? 0 : 1;
+        var mainEnabled = invertMain ? (MOD_CONFIG[configId] !== 1) : (MOD_CONFIG[configId] === 1);
+        // Keep dependent controls in sync immediately; the central config
+        // normalizer enforces the same invariant for load/import/preset paths.
+        if (!mainEnabled && rowOptions.clearSecondaryWhenDisabled === true) MOD_CONFIG[secondaryConfigId] = 0;
         update();
         SaveAndSync();
         refreshRowChangedState();
@@ -6633,6 +6682,7 @@ function ApplyPresetConfig(presetData) {
     NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
     NormalizeShopItemNotificationsConfig(MOD_CONFIG, presetData);
+    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
 
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
@@ -6737,6 +6787,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
         NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
         NormalizeShopItemNotificationsConfig(resolved, presetData);
+        NormalizeQuickbuyDependencyConfig(resolved);
     } else {
         NormalizeNeutralCampFlags(resolved, resolved);
         NormalizeItemCooldownModeConfig(resolved, resolved);
@@ -6749,6 +6800,7 @@ function ResolvePresetConfigByName(presetName) {
         NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
         NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
         NormalizeShopItemNotificationsConfig(resolved, resolved);
+        NormalizeQuickbuyDependencyConfig(resolved);
     }
     return resolved;
 }
@@ -7364,9 +7416,32 @@ function RenderSearchResults(list, query) {
             for (var mr = 0; mr < sectionEntry.rows.length; mr++) {
                 var row = sectionEntry.rows[mr];
                 var rowPanel = null;
+                var inlineSecondaryOption = null;
+                if (Array.isArray(row.options)) {
+                    for (var optionIndex = 0; optionIndex < row.options.length; optionIndex++) {
+                        var searchOption = row.options[optionIndex];
+                        if (searchOption && searchOption.inlineSecondaryCheckbox) {
+                            inlineSecondaryOption = searchOption;
+                            break;
+                        }
+                    }
+                }
                 gSearchResultRenderMode = true;
                 try {
-                    rowPanel = CreateRow(list, row.label, row.configId, row.type, row.min, row.max, row.step, row.options, row.subInfo);
+                    if (inlineSecondaryOption) {
+                        rowPanel = CreateInlineSecondaryCheckboxToggleRow(
+                            list,
+                            row.label,
+                            row.configId,
+                            inlineSecondaryOption.secondaryLabel || "",
+                            inlineSecondaryOption.inlineSecondaryCheckbox,
+                            row.subInfo,
+                            inlineSecondaryOption.secondaryDescription || "",
+                            inlineSecondaryOption.rowOptions || {}
+                        );
+                    } else {
+                        rowPanel = CreateRow(list, row.label, row.configId, row.type, row.min, row.max, row.step, row.options, row.subInfo);
+                    }
                 } finally {
                     gSearchResultRenderMode = false;
                 }
@@ -7639,7 +7714,7 @@ function RenderCurrentTabContent(list) {
                 "ENABLE_ENHANCED_QUICKBUY",
                 null,
                 "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
-                { invert: true }
+                { invert: true, clearSecondaryWhenDisabled: true }
             );
             CreateSliderRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
             CreateRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
@@ -8111,6 +8186,94 @@ function RenderCurrentTabContent(list) {
                     $.Schedule(interval, pollResults);
                 }
                 $.Schedule(0.2, pollResults);
+            });
+        }
+
+        // ── Panel Tree Dump ──
+        // Writes the real HUD panel tree to the console log, one line per panel, so
+        // scripts/import_tree_dump.js can turn it into a captured tree for the headless
+        // profiler. Everything that profiler reports is otherwise relative to a tree we
+        // modelled from XML plus guesses about what C++ builds at runtime, and those
+        // guesses have been wrong by more than an order of magnitude in both directions.
+        //
+        // Fire-and-forget: unlike Manifest Tests there is no result to poll for. The
+        // payload goes to the log rather than back over the attribute bridge, because a
+        // full HUD is tens of thousands of lines — far past what an attribute should
+        // carry. Run it in a real match, then save the console log.
+        var treeDumpHeader = CreateSectionTitle(list, "Panel Tree Dump");
+        var treeDumpBtn = CreateSectionInlineIconButton(treeDumpHeader, "TreeDumpBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Dump the live panel tree to the console log for the offline profiler. Requires HUD context; save your console log afterwards.");
+        var treeDumpStatus = $.CreatePanel("Label", treeDumpHeader, "TreeDumpStatus");
+        treeDumpStatus.text = "Idle";
+        treeDumpStatus.style.fontSize = "13px";
+        treeDumpStatus.style.color = "#666";
+        treeDumpStatus.style.marginLeft = "6px";
+        treeDumpStatus.style.verticalAlign = "center";
+
+        function _tdSetStatus(text, color) {
+            try {
+                if (treeDumpStatus && treeDumpStatus.IsValid && treeDumpStatus.IsValid()) {
+                    treeDumpStatus.text = text;
+                    treeDumpStatus.style.color = color;
+                }
+            } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+        }
+
+        if (treeDumpBtn) {
+            treeDumpBtn.SetPanelEvent("onactivate", function() {
+                var hudPanel = _findHudPanel();
+                if (!hudPanel || !hudPanel.SetAttributeString) {
+                    _tdSetStatus("Hud panel not found", "#cc4444");
+                    return;
+                }
+                var forceToken = "dt_" + Date.now();
+                try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); }
+                catch(e) {
+                    WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || "")));
+                    _tdSetStatus("Request failed", "#cc4444");
+                    return;
+                }
+                $.Msg("[QOLLock][TreeDump] requested, token: " + forceToken);
+                _tdSetStatus("Dumped to console log", "#66cc99");
+                SetLocalizedConfigFeedbackMessage("Panel tree written to console log", "success", 5000);
+            });
+        }
+
+        // ── Build Storage UI Dump ──
+        // Automates the switch -> open shop -> open browse steps, and then dumps
+        // the state of the panels before returning the player. Helps verify model
+        // accuracy without performing an actual write.
+        var bsDumpHeader = CreateSectionTitle(list, "Build Storage Dry Run");
+        var bsDumpBtn = CreateSectionInlineIconButton(bsDumpHeader, "BsDumpBtn",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Perform a dry run of the build storage pipeline (switch hero, open shop, open popup) and dump tree to console. Requires HUD context.");
+        var bsDumpStatus = $.CreatePanel("Label", bsDumpHeader, "BsDumpStatus");
+        bsDumpStatus.text = "Idle";
+        bsDumpStatus.style.fontSize = "13px";
+        bsDumpStatus.style.color = "#666";
+        bsDumpStatus.style.marginLeft = "6px";
+        bsDumpStatus.style.verticalAlign = "center";
+
+        if (bsDumpBtn) {
+            bsDumpBtn.SetPanelEvent("onactivate", function() {
+                var hudPanel = _findHudPanel();
+                if (!hudPanel || !hudPanel.SetAttributeString) {
+                    bsDumpStatus.text = "Hud panel not found";
+                    bsDumpStatus.style.color = "#cc4444";
+                    return;
+                }
+                try { hudPanel.SetAttributeString("QOL_BUILD_DUMP_TREE", "1"); }
+                catch(e) {
+                    WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || "")));
+                    bsDumpStatus.text = "Request failed";
+                    bsDumpStatus.style.color = "#cc4444";
+                    return;
+                }
+                $.Msg("[QOLLock][BuildStorage] requested tree dump dry run");
+                bsDumpStatus.text = "Dry run started";
+                bsDumpStatus.style.color = "#66cc99";
+                SetLocalizedConfigFeedbackMessage("Build storage dry run started", "success", 5000);
             });
         }
         // ── Run Full Suite + Copy Report ──
@@ -9128,7 +9291,7 @@ function RenderCurrentTabContent(list) {
                 title: "Commission",
                 hint: "Request a custom feature or preset",
                 iconSrc: "s2r://panorama/images/icons/icon_feedback.vsvg",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions"); }
+                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
             },
             {
                 id: "SupportCtaChangeLogBtn",
