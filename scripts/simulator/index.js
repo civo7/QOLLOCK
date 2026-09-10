@@ -32,13 +32,14 @@ function createHud({
     titleMode = TITLE_MODE.RESOLVED,
     hero = "hero_werewolf",
     inHideout = true,
+    shopOpensTab = "favorites",
     boot = true,
 } = {}) {
     const clock = new Clock(startMs);
     const doc = new Document(clock);
     const sandbox = new Sandbox({ clock, doc, name: "hud" });
 
-    const game = new BuildsModel({ sandbox, latency, titleMode, hero, inHideout });
+    const game = new BuildsModel({ sandbox, latency, titleMode, hero, inHideout, shopOpensTab });
 
     // Hideout connection is what gates the loader's wait_hideout stage.
     setHideout(doc, inHideout);
