@@ -5342,7 +5342,7 @@ function GetUIRoot() {
     }
 
     function ResetSettingsLoaderSession(hideOverlay) {
-        _TLog("load:ResetSession", "hideOverlay=" + (hideOverlay ? "1" : "0") + " prevAccount=" + String(State.settingsLoaderSessionAccountId || "-").slice(0, 8));
+        _TLog("load:ResetSession", "hideOverlay=" + (hideOverlay ? "1" : "0") + " prevSession=" + String(State.settingsLoaderSessionAccountId || "-"));
         var prevAccountId = State.settingsLoaderSessionAccountId ? String(State.settingsLoaderSessionAccountId) : "";
         State.settingsLoaderSessionAccountId = "";
         State.settingsLoaderSessionActive = false;
@@ -5392,7 +5392,13 @@ function GetUIRoot() {
         ) {
             return;
         }
-        _TLog("load:BeginSession", "account=" + String(id).slice(0,8));
+        // NOT truncated. slice(0,8) dates from when this really was a Steam
+        // account id, where a prefix was enough to tell two apart. Callers now
+        // pass a de-dup key ("storage_read_<ms>"), and eight characters of that
+        // is the literal string "storage_" for every session ever started —
+        // which is what the 2026-09-05 report showed, and it reads like the
+        // account failed to resolve rather than like a full value being cut.
+        _TLog("load:BeginSession", "session=" + String(id));
         ResetSettingsLoaderStepStates();
         State.settingsLoaderSessionAccountId = id;
         State.settingsLoaderSessionActive = true;
@@ -6788,6 +6794,14 @@ function GetUIRoot() {
 
         // ── Language-agnostic ASCII folding ──
     var _sigFoldDiagLogged = false;
+    // One line per DISTINCT resolution, not one per lookup. The confirm stage
+    // re-reads every signature slot on every poll, so an unthrottled log emits
+    // the same line ~4x/s for as long as the stage runs — 19 identical
+    // "ENTANGLING BOLA" lines in the 2026-09-05 report, which is what pushed the
+    // stage transitions that actually explained the failure out of the window.
+    // Keyed by resolution rather than by name so a slot whose ability CHANGES
+    // (the whole point of the confirm) still logs.
+    var _sigLocaleDiagSeen = {};
 
     // ── Language-agnostic ASCII folding ──
 // Maps ALL Latin-script accented/diacritic characters (Latin-1 Supplement
@@ -6866,7 +6880,11 @@ function GetUIRoot() {
         if (typeof QOL !== "undefined" && typeof QOL.lookupLocaleAbility === "function") {
             var localeAbility = QOL.lookupLocaleAbility(clean);
             if (localeAbility) {
-                $.Msg("[QOLLock][LANG] NormalizeStorageHeroSignatureAbilityName: locale lookup resolved \"" + String(clean) + "\" → \"" + String(localeAbility) + "\"");
+                var diagKey = String(clean) + "|" + String(localeAbility);
+                if (!_sigLocaleDiagSeen[diagKey]) {
+                    _sigLocaleDiagSeen[diagKey] = true;
+                    $.Msg("[QOLLock][LANG] NormalizeStorageHeroSignatureAbilityName: locale lookup resolved \"" + String(clean) + "\" → \"" + String(localeAbility) + "\"");
+                }
                 return localeAbility;
             }
         }
@@ -15580,6 +15598,11 @@ function GetUIRoot() {
         ["extractBuildCategoryPayloadToken", function() { return ExtractBuildCategoryPayloadToken; }],
         ["getAccountIdForBuildCategoryPayload", function() { return (typeof QOL !== "undefined" && QOL.getAccountIdForBuildCategoryPayload) || (function() { return ""; }); }],
         ["confirmStorageHeroSignatureAbilities", function() { return ConfirmStorageHeroSignatureAbilities; }],
+        // The pure read underneath the confirm. Exported so a caller that only
+        // wants to know WHICH hero the ability HUD is showing can ask without
+        // going through ConfirmStorageHeroSignatureAbilities, which mutates the
+        // consecutive-hit counters that the confirm stage depends on.
+        ["readStorageHeroSignatureSlots", function() { return ReadStorageHeroSignatureSlots; }],
         ["ensureStorageBuildInitialized", function() { return EnsureStorageBuildInitialized; }],
         ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
         ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
