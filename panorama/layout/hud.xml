@@ -133,6 +133,7 @@
 		     the manifest resolves it lazily off QOL, so order is convention not a
 		     requirement. -->
 		<include src="s2r://panorama/scripts/manifests/ql_build_storage/legacy_3_1_9.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_build_storage/driver.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_build_storage/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
