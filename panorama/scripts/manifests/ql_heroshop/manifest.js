@@ -19,7 +19,7 @@
 
     FR.register({
         id: "ql_heroshop",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle", default: true },
             { key: "SHOP_OFFSET_X", type: "slider", min: -500, max: 500, step: 5, default: 0 },

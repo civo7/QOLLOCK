@@ -18,7 +18,7 @@
 
     FR.register({
         id: "ql_items",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "HUD_ITEMS_ENABLED", type: "toggle", default: true },
             { key: "ITEMS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -32,11 +32,13 @@
             var _loop = null;
 
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_ITEMS_ENABLED) !== 1 ||
-                    Number(cfg.ITEMS_OPACITY) !== 1.0 ||
-                    Number(cfg.ITEMS_X_OFFSET) !== 0 ||
-                    Number(cfg.ITEMS_Y_OFFSET) !== 0 ||
-                    Number(cfg.ITEMS_WASH_COLOR) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_ITEMS_ENABLED === undefined || cfg.HUD_ITEMS_ENABLED === true || Number(cfg.HUD_ITEMS_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.ITEMS_OPACITY !== undefined ? cfg.ITEMS_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.ITEMS_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.ITEMS_Y_OFFSET || 0) !== 0 ||
+                    Number(cfg.ITEMS_WASH_COLOR || 0) !== 0;
             }
 
             function _resolveModsContainer(root) {
@@ -71,7 +73,7 @@
                 if (!mc) return;
 
                 var active = _hasNonDefault(cfg);
-                var enabled = Number(cfg.HUD_ITEMS_ENABLED) === 1;
+                var enabled = (cfg.HUD_ITEMS_ENABLED === undefined || cfg.HUD_ITEMS_ENABLED === true || Number(cfg.HUD_ITEMS_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.ITEMS_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.ITEMS_Y_OFFSET : 0)) || 0;
                 var op = active ? Number(cfg.ITEMS_OPACITY).toFixed(2) : "1.00";

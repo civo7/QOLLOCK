@@ -24,7 +24,7 @@
 
     FR.register({
         id: "ql_damage_numbers",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "DAMAGE_NUMBER_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "HUD_INDICATOR_SIZE", type: "slider", min: 10, max: 60, step: 1, default: 18 },

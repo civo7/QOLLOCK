@@ -21,6 +21,7 @@
     FR.register({
         id: "ql_ammo",
         enabledByDefault: false,
+        enableKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL"],
         settings: [
             { key: "ENABLE_AMMO_STATUS", type: "toggle", default: false },
             { key: "ENABLE_HIDE_MAGAZINE", type: "toggle", default: false },

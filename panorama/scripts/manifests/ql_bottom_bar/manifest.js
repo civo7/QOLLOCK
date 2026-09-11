@@ -18,7 +18,7 @@
 
     FR.register({
         id: "ql_bottom_bar",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
             { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -31,12 +31,14 @@
             var _lastSig = "";
 
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_BOTTOM_BAR_ENABLED) !== 1 ||
-                    Number(cfg.BOTTOM_BAR_OPACITY) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_SCALE) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_X_OFFSET) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_Y_OFFSET) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_WASH_COLOR) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) !== 1.0 ||
+                    Number(cfg.BOTTOM_BAR_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.BOTTOM_BAR_Y_OFFSET || 0) !== 0 ||
+                    Number(cfg.BOTTOM_BAR_WASH_COLOR || 0) !== 0;
             }
 
             function _applyCurrencyColor(root, washColor) {
@@ -85,7 +87,7 @@
                 var bp = root.FindChildTraverse("hud_signature");
                 if (!bp) return;
 
-                var enabled = Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
+                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
                 var op = active ? Number(cfg.BOTTOM_BAR_OPACITY).toFixed(2) : "1.00";
