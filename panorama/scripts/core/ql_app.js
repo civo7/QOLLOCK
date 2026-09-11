@@ -275,14 +275,17 @@
     function isBooted() { return _booted; }
     function getHud() { return _hudPanel || _findHud(); }
 
-    QOL.core.App = {
+    var appApi = {
         boot: boot,
         shutdown: shutdown,
         isBooted: isBooted,
         getHud: getHud
     };
 
-    $.Msg("[QOLLock] core/ql_app: attached to QOL.core.App");
+    QOL.core.app = appApi;
+    QOL.core.App = appApi;
+
+    $.Msg("[QOLLock] core/ql_app: attached to QOL.core.app and QOL.core.App");
 
     // Auto-boot: call boot() immediately after all core modules and manifests load.
     QOL.core.App.boot();

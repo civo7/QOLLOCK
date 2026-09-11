@@ -303,7 +303,7 @@
     function enableFeature(id) { _safeEnableFeature(id); }
     function disableFeature(id) { _safeDisableFeature(id); }
 
-    QOL.core.FeatureRegistry = {
+    var registryApi = {
         register: register, boot: boot, shutdown: shutdown,
         createContext: createContext, isEnabled: isEnabled,
         isRegistered: isRegistered, getRegisteredIds: getRegisteredIds,
@@ -312,5 +312,8 @@
         enable: enableFeature, disable: disableFeature
     };
 
-    $.Msg("[QOLLock] core/ql_feature_registry: attached to QOL.core.FeatureRegistry");
+    QOL.core.registry = registryApi;
+    QOL.core.FeatureRegistry = registryApi;
+
+    $.Msg("[QOLLock] core/ql_feature_registry: attached to QOL.core.registry and QOL.core.FeatureRegistry");
 })();

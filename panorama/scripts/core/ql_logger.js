@@ -110,7 +110,11 @@
     }
 
     // -- Attach to namespace --
-    QOL.core.Logger = {
+    var loggerApi = {
+        error: logError,
+        warn: logWarn,
+        info: logInfo,
+        debug: logDebug,
         logError: logError,
         logWarn: logWarn,
         logInfo: logInfo,
@@ -123,6 +127,9 @@
         clear: clear
     };
 
-    $.Msg("[QOLLock] core/ql_logger: attached to QOL.core.Logger " +
+    QOL.core.logger = loggerApi;
+    QOL.core.Logger = loggerApi;
+
+    $.Msg("[QOLLock] core/ql_logger: attached to QOL.core.logger and QOL.core.Logger " +
           "(ring buffer: " + MAX_ENTRIES + " entries)");
 })();

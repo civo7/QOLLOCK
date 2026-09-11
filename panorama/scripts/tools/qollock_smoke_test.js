@@ -55,6 +55,19 @@ global.globalThis = global;
 
 // ── HUD context load order (from hud.xml) ──
 var HUD_LOAD_ORDER = [
+    // Core modules (Phase 1+ infrastructure — loaded first)
+    path.join("core", "ql_namespace.js"),
+    path.join("core", "ql_logger.js"),
+    path.join("core", "ql_event_bus.js"),
+    path.join("core", "ql_scheduler.js"),
+    path.join("core", "ql_panel_helpers.js"),
+    path.join("core", "ql_hud.js"),
+    path.join("core", "ql_time.js"),
+    path.join("core", "ql_config_store.js"),
+    path.join("core", "ql_config_adapter.js"),
+    path.join("core", "ql_feature_registry.js"),
+    path.join("core", "ql_manifest_tests.js"),
+    // Transitional runtime infrastructure
     "ql_utils.js",
     "ql_shared_presets.js",
     "ql_bridge.js",
@@ -67,16 +80,6 @@ var HUD_LOAD_ORDER = [
     "ql_perf_overlay.js",
     path.join("features", "ql_feat_buildbridge.js"),
     "ql_locale_lookup.js",
-    // Core modules (Phase 1+ infrastructure)
-    path.join("core", "ql_namespace.js"),
-    path.join("core", "ql_logger.js"),
-    path.join("core", "ql_event_bus.js"),
-    path.join("core", "ql_scheduler.js"),
-    path.join("core", "ql_panel_helpers.js"),
-    path.join("core", "ql_config_store.js"),
-    path.join("core", "ql_config_adapter.js"),
-    path.join("core", "ql_feature_registry.js"),
-    path.join("core", "ql_manifest_tests.js"),
     "ql_core.js"
 ];
 

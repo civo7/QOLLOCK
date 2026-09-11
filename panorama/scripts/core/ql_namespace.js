@@ -33,10 +33,55 @@
     }
 
     // Create sub-namespace buckets
+    QOL.VERSION = QOL.VERSION || "3.2.0";
+    try {
+        var _ctxId = ($.GetContextPanel() && $.GetContextPanel().id) || "";
+        QOL.ROLE = (_ctxId === "EscapeMenu") ? "em" : "hud";
+    } catch(e) {
+        QOL.ROLE = "hud";
+    }
+
     QOL.core = QOL.core || {};
     QOL.ui = QOL.ui || {};
     QOL.features = QOL.features || {};
     QOL.adapters = QOL.adapters || {};
+
+    // Forward/backward compat aliases
+    QOL.core.panel = QOL.core.panel || {};
+    QOL.ui.PanelHelpers = QOL.core.panel;
+    QOL.core.hud = QOL.core.hud || {};
+    QOL.core.time = QOL.core.time || {};
+    QOL.core.perf = QOL.core.perf || {};
+    QOL.core.Scheduler = QOL.core.perf;
+    QOL.core.registry = QOL.core.registry || {};
+    QOL.core.FeatureRegistry = QOL.core.registry;
+    QOL.core.logger = QOL.core.logger || {};
+    QOL.core.Logger = QOL.core.logger;
+    QOL.core.app = QOL.core.app || {};
+    QOL.core.App = QOL.core.app;
+
+    // Resilient QOL.import fallback for transitional features
+    if (!QOL.import) {
+        QOL.import = function(names) {
+            var out = {};
+            if (!Array.isArray(names)) return out;
+            for (var i = 0; i < names.length; i++) {
+                var k = names[i];
+                if (k === "state") {
+                    out.state = (typeof QOL !== "undefined" && QOL.state) || (typeof State !== "undefined" ? State : {});
+                } else if (k === "utils") {
+                    out.utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : {});
+                } else if (k === "getCachedPanel") {
+                    out.getCachedPanel = (typeof QOL !== "undefined" && QOL.getCachedPanel) || function(key) { return (typeof State !== "undefined" && State.cachedPanels) ? State.cachedPanels[key] : null; };
+                } else if (k === "setCachedPanel") {
+                    out.setCachedPanel = (typeof QOL !== "undefined" && QOL.setCachedPanel) || function(key, val) { if (typeof State !== "undefined" && State.cachedPanels) { State.cachedPanels[key] = val; } };
+                } else {
+                    out[k] = (typeof QOL !== "undefined" ? QOL[k] : undefined);
+                }
+            }
+            return out;
+        };
+    }
 
     // Mark as initialized so subsequent loads are no-ops
     QOL.core.__initialized = true;
@@ -45,5 +90,6 @@
           "(core=" + (!!QOL.core) +
           " ui=" + (!!QOL.ui) +
           " features=" + (!!QOL.features) +
-          " adapters=" + (!!QOL.adapters) + ")");
+          " adapters=" + (!!QOL.adapters) +
+          " role=" + QOL.ROLE + ")");
 })();

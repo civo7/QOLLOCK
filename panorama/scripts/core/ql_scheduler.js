@@ -186,12 +186,17 @@
         } catch(e) { /* best-effort */ }
     }
 
-    QOL.core.Scheduler = {
+    var perfApi = {
+        schedule: createPollLoop,
         createPollLoop: createPollLoop,
+        cancelAll: cancelAllForFeature,
         cancelAllForFeature: cancelAllForFeature,
         getTimings: getTimings,
         resetTimings: resetTimings
     };
 
-    $.Msg("[QOLLock] core/ql_scheduler: attached to QOL.core.Scheduler");
+    QOL.core.perf = perfApi;
+    QOL.core.Scheduler = perfApi;
+
+    $.Msg("[QOLLock] core/ql_scheduler: attached to QOL.core.perf and QOL.core.Scheduler");
 })();

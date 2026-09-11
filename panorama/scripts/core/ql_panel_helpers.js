@@ -136,11 +136,25 @@
         catch (e) { return false; }
     }
 
+    function findRoot() {
+        var ctx = $.GetContextPanel();
+        if (!isPanelAlive(ctx)) return null;
+        var curr = ctx;
+        while (curr.GetParent && isPanelAlive(curr.GetParent())) {
+            curr = curr.GetParent();
+        }
+        return curr;
+    }
+
     // -- Attach to namespace --
-    QOL.ui.PanelHelpers = {
+    var panelApi = {
+        isAlive: isPanelAlive,
         isPanelAlive: isPanelAlive,
+        create: safeCreatePanel,
         createPanel: safeCreatePanel,
+        delete: safeDeletePanel,
         deletePanel: safeDeletePanel,
+        findRoot: findRoot,
         findHud: findHud,
         setClass: setClass,
         setVisible: setVisible,
@@ -148,5 +162,10 @@
         clearStyleProperty: clearStyleProperty
     };
 
-    $.Msg("[QOLLock] core/ql_panel_helpers: attached to QOL.ui.PanelHelpers");
+    QOL.core = QOL.core || {};
+    QOL.core.panel = panelApi;
+    QOL.ui = QOL.ui || {};
+    QOL.ui.PanelHelpers = panelApi;
+
+    $.Msg("[QOLLock] core/ql_panel_helpers: attached to QOL.core.panel and QOL.ui.PanelHelpers");
 })();
