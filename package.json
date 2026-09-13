@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint . --quiet",
     "lint:all": "eslint .",
+    "check:api": "node scripts/validate_game_api_usage.js",
     "test": "node panorama/scripts/tools/qollock_smoke_test.js && node --test tests/*.test.js && node scripts/simulator/fuzz_build_storage.js 20 && node scripts/validate_compact_schema.js && npm run lint"
   },
   "devDependencies": {
