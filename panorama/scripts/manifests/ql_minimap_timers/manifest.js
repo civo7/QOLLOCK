@@ -41,21 +41,21 @@
             { key: "MINIMAP_LARGE_SIZE_TAB", type: "slider", min: 400, max: 1200, step: 10, default: 750 }
         ],
         create: function(ctx) {
-            var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var ResolveCachedPanel = _deps.resolveCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var SetPanelClassCached = _deps.setPanelClassCached;
-            var IsHudClassActive = _deps.isHudClassActive;
-            var hasClassInHierarchy = _deps.hasClassInHierarchy;
-            var EnsureMinimapOverlayAnchor = _deps.ensureMinimapOverlayAnchor;
-            var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
+            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
+            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+            var ResolveCachedPanel = QOL.resolveCachedPanel || function(r, k, id) { return GetCachedPanel(k) || (r && r.FindChildTraverse ? r.FindChildTraverse(id) : null); };
+            var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var IsHudClassActive = function(r, cls) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? QOL.core.hud.isClassActive(cls) : (QOL.isHudClassActive ? QOL.isHudClassActive(r, cls) : false); };
+            var hasClassInHierarchy = QOL.hasClassInHierarchy || function(p, cls) { return !!(p && p.BHasClass && p.BHasClass(cls)); };
+            var EnsureMinimapOverlayAnchor = function(m, r) { return QOL.ensureMinimapOverlayAnchor ? QOL.ensureMinimapOverlayAnchor(m, r) : null; };
+            var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
             var BRIDGE_DURATION_SEC = 300;
 
             var _loop = null;

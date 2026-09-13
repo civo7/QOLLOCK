@@ -19,20 +19,13 @@
     if (!FR) { $.Msg("[QOLLock] ql_chat_translate: FeatureRegistry not found — aborting"); return; }
     var logger = QOL.core.Logger;
 
-    var _deps = QOL.import([
-        "buildImagesInChatContainerWatermark",
-        "findChatMessageLabel",
-        "state",
-        "tryReadAccountIdFromKnownPartyPath",
-        "utils"
-    ]);
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var IsPanelValid = Utils.IsPanelValid;
-    var PerfNowMs = Utils.PerfNowMs;
-    var BuildWatermark = _deps.buildImagesInChatContainerWatermark;
-    var FindChatMessageLabel = _deps.findChatMessageLabel;
-    var TryReadAccountIdFromKnownPartyPath = _deps.tryReadAccountIdFromKnownPartyPath;
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+    var IsPanelValid = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) || Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var PerfNowMs = Utils.PerfNowMs || (QOL.core && QOL.core.time && QOL.core.time.nowMs) || function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    var BuildWatermark = function(c) { return QOL.buildImagesInChatContainerWatermark ? QOL.buildImagesInChatContainerWatermark(c) : ""; };
+    var FindChatMessageLabel = function(p) { return QOL.findChatMessageLabel ? QOL.findChatMessageLabel(p) : null; };
+    var TryReadAccountIdFromKnownPartyPath = function(r) { return QOL.tryReadAccountIdFromKnownPartyPath ? QOL.tryReadAccountIdFromKnownPartyPath(r) : ""; };
 
     var ENDPOINT = "http://127.0.0.1:8765/translate.webp";
     var OWNER_ACCOUNT_ID = "841196165";

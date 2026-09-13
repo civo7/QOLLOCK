@@ -37,13 +37,12 @@
             { key: "ON_DEATH_GAME_WHACK_A_REM", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["isPanelVisibleMaybe","state","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe || function(p) { try { return p ? p.visible : false; } catch(e) { return false; } };
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
+            var IsPanelVisibleMaybe = Panel.isVisible || QOL.isPanelVisibleMaybe || function(p) { try { return p ? p.visible : false; } catch(e) { return false; } };
             // QOL_PANEL_ID_HUD is a bare global (loaded before manifests in hud.xml)
             var PANEL_ID_HUD = (typeof QOL_PANEL_ID_HUD !== "undefined") ? QOL_PANEL_ID_HUD : "Hud";
 

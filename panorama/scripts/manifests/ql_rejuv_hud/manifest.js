@@ -43,20 +43,19 @@
             { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps ──
-            var _deps = QOL.import(["getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","isConnectedToHideout","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","state","setPanelClassIfChanged","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
-            var PANEL_ID_TOP_BAR = _deps.panelIdTopBar;
-            var GetHighestRejuvChargeTokenOnPanel = _deps.getHighestRejuvChargeTokenOnPanel;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
-            var PanelHasClassToken = _deps.panelHasClassToken;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
+            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
+            var SetPanelClassIfChanged = QOL.setPanelClassIfChanged || function(p, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
+            var PANEL_ID_TOP_BAR = QOL.panelIdTopBar || "TopBar";
+            var GetHighestRejuvChargeTokenOnPanel = function(p) { return QOL.getHighestRejuvChargeTokenOnPanel ? QOL.getHighestRejuvChargeTokenOnPanel(p) : 0; };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
+            var PanelHasClassToken = Panel.hasClassToken || QOL.panelHasClassToken || function(p, c) { return !!(p && p.BHasClass && p.BHasClass(c)); };
 
             // ── Constants ──
             var BRIDGE_DURATION_SEC = 300;

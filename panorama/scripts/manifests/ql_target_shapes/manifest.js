@@ -31,12 +31,12 @@
             { key: "UNIT_TARGET_HINT_SIZE", type: "slider", min: 50, max: 200, step: 5, default: 100 }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["getUnitTargetDefaultStyleTexts","state","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
+            var GetUnitTargetDefaultStyleTexts = QOL.getUnitTargetDefaultStyleTexts || function() {
+                return ResolveUnitTargetStyleTexts(QOL.buildDefaultConfig ? QOL.buildDefaultConfig() : {});
+            };
 
             var _loop = null;
             var _root = null;

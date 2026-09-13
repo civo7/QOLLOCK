@@ -62,19 +62,18 @@
             { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (matches old feature verbatim) ──
-            var _deps = QOL.import(["getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isConnectedToHideout","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","setCachedPanel","setPanelClassCached","state","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var SetStyleSafe = Utils.SetStyleSafe;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var ResolvePassiveCooldownMode = _deps.resolvePassiveCooldownMode;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var IsPassiveCooldownBasicMode = _deps.isPassiveCooldownBasicMode;
-            var IsColorWarningEnabled = _deps.isColorWarningEnabled;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var SetStyleSafe = Utils.SetStyleSafe || function(p, prop, val) { if (p && p.style) p.style[prop] = val; };
+            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
+            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
+            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+            var ResolvePassiveCooldownMode = function(cfg) { return QOL.resolvePassiveCooldownMode ? QOL.resolvePassiveCooldownMode(cfg) : 0; };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var IsPassiveCooldownBasicMode = function(mode) { return QOL.isPassiveCooldownBasicMode ? QOL.isPassiveCooldownBasicMode(mode) : false; };
+            var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
             function _ensureCachedByIds(root, cacheKey, ids) {
                 if (State && State.cachedPanels && State.cachedPanels[cacheKey] && Utils && Utils.IsPanelValid && Utils.IsPanelValid(State.cachedPanels[cacheKey])) {
@@ -98,11 +97,11 @@
             var EnsurePassiveHudPanelCache = function(root) {
                 return _ensureCachedByIds(root, "passiveHud", ["hud_passive_items"]);
             };
-            var NormalizeVoiceTypeValue = _deps.normalizeVoiceTypeValue;
-            var NormalizeVoiceVolumeValue = _deps.normalizeVoiceVolumeValue;
-            var GetSharedSchemaUtils = _deps.getSharedSchemaUtils;
-            var SetPanelClassCached = _deps.setPanelClassCached;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
+            var NormalizeVoiceTypeValue = function(v) { return QOL.normalizeVoiceTypeValue ? QOL.normalizeVoiceTypeValue(v) : v; };
+            var NormalizeVoiceVolumeValue = function(v) { return QOL.normalizeVoiceVolumeValue ? QOL.normalizeVoiceVolumeValue(v) : v; };
+            var GetSharedSchemaUtils = function() { return QOL.getSharedSchemaUtils ? QOL.getSharedSchemaUtils() : null; };
+            var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive('connectedToHideout') || QOL.core.hud.isClassActive('InHideout')) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
 
             var _loop = null;
             var _root = null;

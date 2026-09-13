@@ -27,23 +27,21 @@
             { key: "ENABLE_IMAGES_IN_CHAT", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["buildImagesInChatContainerWatermark","clearInjectedChatImagesForMessage","findChatMessageLabel","findImagesInChatMessageCacheEntry","getCachedPanel","getImagesInChatMessageCache","injectBottomChatImage","injectTopChatImage","pruneImagesInChatMessageCache","state","setCachedPanel","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var PerfNowMs = Utils.PerfNowMs;
-            var BuildImagesInChatContainerWatermark = _deps.buildImagesInChatContainerWatermark;
-            var GetImagesInChatMessageCache = _deps.getImagesInChatMessageCache;
-            var FindImagesInChatMessageCacheEntry = _deps.findImagesInChatMessageCacheEntry;
-            var PruneImagesInChatMessageCache = _deps.pruneImagesInChatMessageCache;
-            var ClearInjectedChatImagesForMessage = _deps.clearInjectedChatImagesForMessage;
-            var FindChatMessageLabel = _deps.findChatMessageLabel;
-            var InjectTopChatImage = _deps.injectTopChatImage;
-            var InjectBottomChatImage = _deps.injectBottomChatImage;
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var IsPanelValid = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) || Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
+            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+            var PerfNowMs = Utils.PerfNowMs || (QOL.core && QOL.core.time && QOL.core.time.nowMs) || function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+            var BuildImagesInChatContainerWatermark = function(c) { return QOL.buildImagesInChatContainerWatermark ? QOL.buildImagesInChatContainerWatermark(c) : ""; };
+            var GetImagesInChatMessageCache = function() { return QOL.getImagesInChatMessageCache ? QOL.getImagesInChatMessageCache() : []; };
+            var FindImagesInChatMessageCacheEntry = function(m, p) { return QOL.findImagesInChatMessageCacheEntry ? QOL.findImagesInChatMessageCacheEntry(m, p) : null; };
+            var PruneImagesInChatMessageCache = function(n) { if (QOL.pruneImagesInChatMessageCache) QOL.pruneImagesInChatMessageCache(n); };
+            var ClearInjectedChatImagesForMessage = function(p) { if (QOL.clearInjectedChatImagesForMessage) QOL.clearInjectedChatImagesForMessage(p); };
+            var FindChatMessageLabel = function(p) { return QOL.findChatMessageLabel ? QOL.findChatMessageLabel(p) : null; };
+            var InjectTopChatImage = function(p, u, m) { return QOL.injectTopChatImage ? QOL.injectTopChatImage(p, u, m) : false; };
+            var InjectBottomChatImage = function(p, u, m) { return QOL.injectBottomChatImage ? QOL.injectBottomChatImage(p, u, m) : false; };
 
             var _loop = null;
             var _root = null;

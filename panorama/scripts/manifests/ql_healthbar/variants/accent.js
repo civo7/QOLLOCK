@@ -3,21 +3,16 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_accent";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, resolveWashColorFromPalette, setWashColorSafe, normalizePaletteColorIndex
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "resolveWashColorFromPalette", "setWashColorSafe",
-        "normalizePaletteColorIndex"
-    ]);
-
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsPanelValid = Utils.IsPanelValid;
-    var SetStyleSafe = Utils.SetStyleSafe;
-    var SetWashColorSafe = _deps.setWashColorSafe;
-    var NormalizePaletteColorIndex = _deps.normalizePaletteColorIndex;
-    var ResolveWashColorFromPalette = _deps.resolveWashColorFromPalette;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
+    var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
+    var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+    var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
+    var SetStyleSafe = Utils.SetStyleSafe || function(p, prop, val) { if (p && p.style) p.style[prop] = val; };
+    var SetWashColorSafe = Panel.setWashColor || QOL.setWashColorSafe;
+    var NormalizePaletteColorIndex = Panel.normalizePaletteIndex || QOL.normalizePaletteColorIndex;
+    var ResolveWashColorFromPalette = Panel.resolvePaletteColor || QOL.resolveWashColorFromPalette;
 
     // ── Functions ──
 
