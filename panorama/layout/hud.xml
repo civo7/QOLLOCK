@@ -79,8 +79,8 @@
 		<!-- CUT-OVER: old sigflash disabled, see manifests/ql_sigflash/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_sigflash.vjs_c" /> -->
 		<!-- CUT-OVER: old imagesInChat disabled, see manifests/ql_chat_images/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_chatimg.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_chattranslate.vjs_c" />
+		<!-- CUT-OVER: old chattranslate disabled, see manifests/ql_chat_translate/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_chattranslate.vjs_c" /> -->
 		<!-- CUT-OVER: old mousecursor disabled, see manifests/ql_mouse_cursor/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_mousecursor.vjs_c" /> -->
 		<!-- CUT-OVER: old laneWithParty disabled, see manifests/ql_lane_with_party/ -->
@@ -147,6 +147,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_damage_report/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_passive_cooldown/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_chat_images/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_chat_translate/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
