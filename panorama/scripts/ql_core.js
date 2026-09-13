@@ -1975,24 +1975,6 @@ function ShouldRunBuildCategoryPayloadUiAction(nowMs, stateField, cooldownMs) {
     return true;
 }
 
-function IsBuildCategoryPayloadSourceReady(root) {
-    if (!root || !root.FindChildTraverse) return false;
-    var selectedBuild = GetCachedPanel("shopModsSelectedBuild");
-    if (!selectedBuild) {
-        selectedBuild = root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD);
-        SetCachedPanel("shopModsSelectedBuild", selectedBuild);
-    }
-    if (!selectedBuild) return false;
-    if (selectedBuild.FindChildTraverse && selectedBuild.FindChildTraverse("BuildCategoryName")) return true;
-    if (!selectedBuild.FindChildrenWithClassTraverse) return false;
-    var categoryNames = selectedBuild.FindChildrenWithClassTraverse("CategoryName") || [];
-    if (categoryNames.length > 0) return true;
-    var buildEntries = selectedBuild.FindChildrenWithClassTraverse("FavoriteBuildEntryContainer") || [];
-    if (buildEntries.length > 0) return true;
-    if (QOL.collectStorageBuildEntryPanels && QOL.collectStorageBuildEntryPanels(root).length > 0) return true;
-    return false;
-}
-
 function ResetBuildCategoryPayloadProbeInitState() {
     State.buildCategoryPayloadHeroProbeInitAttempted = false;
     State.buildCategoryPayloadHeroProbeInitStage = "";
@@ -2000,37 +1982,6 @@ function ResetBuildCategoryPayloadProbeInitState() {
     State.buildCategoryPayloadHeroProbeInitRetries = 0;
     State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
     State.buildCategoryPayloadHeroProbeInitCreateVerifyUntilMs = 0;
-}
-
-function TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader(root) {
-    if (!root || !root.FindChildTraverse) return { hero: "", source: "shopFavoritesHeaderMissing" };
-    var shopPanel = root.FindChildTraverse("CitadelHudHeroShop");
-    if (!shopPanel || !shopPanel.FindChildrenWithClassTraverse) {
-        return { hero: "", source: "shopFavoritesHeaderMissing" };
-    }
-    var labels = [];
-    try { labels = shopPanel.FindChildrenWithClassTraverse("HeroFavoritesHeaderLabel") || []; } catch (e0) { labels = []; }
-    var fallbackHero = "";
-    for (var i = 0; i < labels.length; i++) {
-        var label = labels[i];
-        if (!label) continue;
-        var txt = ReadPanelTextMaybe(label);
-        if (!txt || txt.length === 0) continue;
-        var parsed = QOL.normalizeHeroId(QOL.extractHeroTokenFromText(txt) || QOL.extractLastHeroTokenFromText(txt));
-        if (!parsed && typeof QOL.extractHeroFromLabelText === "function") {
-            parsed = QOL.normalizeHeroId(QOL.extractHeroFromLabelText(txt));
-        }
-        if (!parsed) continue;
-        if (!fallbackHero) fallbackHero = parsed;
-    }
-    if (fallbackHero) {
-        return { hero: fallbackHero, source: "shopFavoritesHeader" };
-    }
-    var cmdHero = QOL.normalizeHeroId(TryReadSelectedHeroIncludingStorageFromCommandPanels(root));
-    if (cmdHero) {
-        return { hero: cmdHero, source: "shopCommands" };
-    }
-    return { hero: "", source: "shopFavoritesHeaderMissing" };
 }
 
 function IsStartupCorruptRepairPending(root) {
@@ -9068,15 +9019,12 @@ function GetUIRoot() {
         ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
         ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
         ["tryReadBuildSaveStorageHeroFromSettings", function() { return TryReadBuildSaveStorageHeroFromSettings; }],
-        ["tryReadSelectedHeroIncludingStorageFromCommandPanels", function() { return TryReadSelectedHeroIncludingStorageFromCommandPanels; }],
         ["extractHeroTokenFromText", function() { return ExtractHeroTokenFromText; }],
         ["finalizeSaveSettingsLoaderSession", function() { return FinalizeSaveSettingsLoaderSession; }],
         ["beginSaveSettingsLoaderSession", function() { return BeginSaveSettingsLoaderSession; }],
         ["setSaveSettingsLoaderStepState", function() { return SetSaveSettingsLoaderStepState; }],
         ["beginSettingsLoaderSession", function() { return BeginSettingsLoaderSession; }],
         ["finalizeSettingsLoaderSession", function() { return FinalizeSettingsLoaderSession; }],
-        ["resetSettingsLoaderSession", function() { return ResetSettingsLoaderSession; }],
-        ["pulseShopAfterBuildPayloadStartupReturn", function() { return PulseShopAfterBuildPayloadStartupReturn; }],
         ["buildDefaultConfig", function() { return (typeof QOL !== "undefined" && QOL.buildDefaultConfig) || _BDC; }],
         ["heroReturnDebugLog", function() { return HeroReturnDebugLog; }],
         ["settingsLoaderDebugLogThrottled", function() { return SettingsLoaderDebugLogThrottled; }],
@@ -9089,9 +9037,6 @@ function GetUIRoot() {
         ["isBrowseBuildsPopupOpen", function() { return IsBrowseBuildsPopupOpen; }],
         ["tryOpenBuildBrowserPopup", function() { return TryOpenBuildBrowserPopup; }],
         ["shouldRunBuildCategoryPayloadUiAction", function() { return ShouldRunBuildCategoryPayloadUiAction; }],
-        ["isBuildCategoryPayloadSourceReady", function() { return IsBuildCategoryPayloadSourceReady; }],
-        ["resetBuildCategoryPayloadProbeInitState", function() { return ResetBuildCategoryPayloadProbeInitState; }],
-        ["tryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader", function() { return TryReadBuildCategoryPayloadStorageHeroFromFavoritesHeader; }],
         // Surviving stubs: called from FinalizeSettingsLoaderSession skip/reset paths.
         // The manifest never sets old-loader probe State fields, so probeWasActive is
         // always false — these are only reached on the else/cleanup branches.
@@ -9109,9 +9054,7 @@ function GetUIRoot() {
         ["queueBuildSaveRequestFromLoader", function() { return QueueBuildSaveRequestFromLoader; }],
         ["setSettingsLoaderStepState", function() { return SetSettingsLoaderStepState; }],
         ["setStartupCorruptRepairPending", function() { return SetStartupCorruptRepairPending; }],
-        ["settingsLoaderBuildProbeSnapshot", function() { return SettingsLoaderBuildProbeSnapshot; }],
         ["settingsLoaderDebugLog", function() { return SettingsLoaderDebugLog; }],
-        ["settingsLoaderTraceLogThrottled", function() { return SettingsLoaderTraceLogThrottled; }],
         ["tryReadAccountIdFromKnownPartyPath", function() { return TryReadAccountIdFromKnownPartyPath; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
         ["washColorPalette", function() { return QOL_WASH_COLOR_PALETTE; }],
