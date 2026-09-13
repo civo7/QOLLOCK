@@ -8307,9 +8307,12 @@ function GetUIRoot() {
         gates.damageNumbers = gates.damageNumbersActive ||
             !!(State.lastIndicatorConfigSig && State.lastIndicatorConfigSig !== DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG) ||
             State.accountPresetTestActive;
-        // minimapRuntime gate resolved via feature registry (extracted to ql_feat_minimapruntime.js)
-        var _mmFeat = QOL_FEATURE_REGISTRY["minimapRuntime"];
-        gates.minimapRuntime = _mmFeat && _mmFeat.gate ? _mmFeat.gate(cfg, raw) : false;
+        var _minimapManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _minimapManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_minimap_runtime"); } } catch(e) {}
+        if (!_minimapManifestActive) {
+            var _mmFeat = QOL_FEATURE_REGISTRY["minimapRuntime"];
+            gates.minimapRuntime = _mmFeat && _mmFeat.gate ? _mmFeat.gate(cfg, raw) : false;
+        }
         // coreRoot is computed first — healthbarRuntimeHelpers is blocked when coreRoot is active
         var _coreRootActive = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.coreRoot = _coreRootActive;

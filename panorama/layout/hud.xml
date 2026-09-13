@@ -95,8 +95,8 @@
 		<!-- CUT-OVER: old betterunsecuredhud disabled, see manifests/ql_better_unsecured_hud/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
+		<!-- CUT-OVER: old minimapruntime disabled, see manifests/ql_minimap_runtime/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" /> -->
 		<!-- CUT-OVER: old colorwarnings disabled, see manifests/ql_color_warnings/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
 		<!-- CUT-OVER: old damageNumbers disabled, see manifests/ql_damage_numbers/ -->
