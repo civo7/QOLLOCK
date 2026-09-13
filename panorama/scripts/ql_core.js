@@ -8317,7 +8317,6 @@ function GetUIRoot() {
         var _coreRootActive = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.coreRoot = _coreRootActive;
         gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled) && !_coreRootActive;
-        gates.panelCache = false;
 
 
         // Hard-gate optimization: track whether any runtime feature needs execution.

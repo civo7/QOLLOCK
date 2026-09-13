@@ -108,8 +108,8 @@
 		<!-- CUT-OVER: old unspent disabled, see manifests/ql_unspent/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" /> -->
 		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_nicknames.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" />
+		<!-- CUT-OVER: old panelcache disabled (dead no-op) -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_panelcache.vjs_c" /> -->
 		<!-- CUT-OVER: old rejuvtimers disabled, see manifests/ql_rejuv_timers/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_rejuvtimers.vjs_c" /> -->
 		<!-- CUT-OVER: old showrank disabled, see manifests/ql_showrank/ -->
