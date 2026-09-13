@@ -4652,163 +4652,8 @@ function GetUIRoot() {
     function ShouldUpdateSaveLoaderOverlay() {
         return !!(State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted);
     }
+    // [DECOUPLED] Images in chat migrated to manifests/ql_chat_images/manifest.js
 
-    var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
-    var IMAGES_IN_CHAT_MAX_W = 150;
-    var IMAGES_IN_CHAT_MAX_H = 150;
-    var IMAGES_IN_CHAT_CACHE_MAX_MESSAGES = 80;
-    var IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
-    var IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
-    function FindChatMessageLabel(msgPanel) {
-        var msgText = msgPanel.FindChildTraverse("MessageText");
-        if (msgText) return msgText;
-        var msgContents = msgPanel.FindChildTraverse("MessageContents");
-        if (!msgContents) return null;
-        for (var i = 0; i < msgContents.GetChildCount(); i++) {
-            var child = msgContents.GetChild(i);
-            if (child && child.paneltype === "Label") return child;
-        }
-        return null;
-    }
-
-    function InjectTopChatImage(msgPanel, url) {
-        var msgContainer = msgPanel.FindChildTraverse("MessageContents");
-        if (!msgContainer) return;
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (!msgText) return;
-        var textContainer = msgText.GetParent();
-        if (!textContainer) return;
-        textContainer.style.maxWidth = "9999px";
-        var panelId = "InjectedChatImage_" + PerfNowMs();
-        var img = $.CreatePanel("Image", textContainer, panelId);
-        if (!img) {
-            $.Msg("[QOLLock][imgchat] FAILED to create Image panel");
-            return;
-        }
-        img.AddClass("InjectedChatImage");
-        img.SetImage("https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=150&h=150&fit=inside");
-        img.style.maxWidth = IMAGES_IN_CHAT_MAX_W + "px";
-        img.style.maxHeight = IMAGES_IN_CHAT_MAX_H + "px";
-        img.style.margin = "8px 8px 8px 8px";
-        msgText.style.visibility = "collapse";
-        $.Msg("[QOLLock][imgchat] injected \"" + url.substring(0, 60) + "\" on " + panelId);
-    }
-
-    function InjectBottomChatImage(msgPanel, url) {
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (!msgText) return;
-        var textContainer = msgText.GetParent();
-        if (!textContainer) return;
-        textContainer.style.maxWidth = "9999px";
-        var panelId = "InjectedChatImage_bot_" + PerfNowMs();
-        var img = $.CreatePanel("Image", textContainer, panelId);
-        if (!img) {
-            $.Msg("[QOLLock][imgchat] FAILED to create Image panel (bottom)");
-            return;
-        }
-        img.AddClass("InjectedChatImage");
-        img.SetImage("https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=150&h=150&fit=inside");
-        img.style.maxWidth = IMAGES_IN_CHAT_MAX_W + "px";
-        img.style.maxHeight = IMAGES_IN_CHAT_MAX_H + "px";
-        img.style.margin = "4px 4px 4px 4px";
-        msgText.style.visibility = "collapse";
-        $.Msg("[QOLLock][imgchat] injected(bot) \"" + url.substring(0, 60) + "\" on " + panelId);
-    }
-
-    function ClearInjectedChatImagesForMessage(msgPanel) {
-        if (!IsPanelValid(msgPanel)) return;
-        var msgText = FindChatMessageLabel(msgPanel);
-        if (msgText) {
-            try { msgText.style.visibility = "visible"; } catch(eText) { QOL_WARN("core", "op failed: " + (eText && eText.message ? eText.message : String(eText || ""))); }
-        }
-        var msgContainer = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
-        if (msgContainer) {
-            try { msgContainer.style.opacity = 1; } catch(eContainer) { QOL_WARN("core", "op failed: " + (eContainer && eContainer.message ? eContainer.message : String(eContainer || ""))); }
-        }
-        var textContainer = msgText && msgText.GetParent ? msgText.GetParent() : null;
-        if (textContainer && textContainer.Children) {
-            var children = textContainer.Children() || [];
-            for (var i = 0; i < children.length; i++) {
-                var child = children[i];
-                if (!child) continue;
-                var id = child.id ? String(child.id) : "";
-                var isInjected = false;
-                if (id.indexOf("InjectedChatImage_") === 0) {
-                    isInjected = true;
-                } else if (child.BHasClass && child.BHasClass("InjectedChatImage")) {
-                    isInjected = true;
-                }
-                if (isInjected && child.DeleteAsync) {
-                    try { child.DeleteAsync(0); } catch(eDelete) { QOL_WARN("core", "op failed: " + (eDelete && eDelete.message ? eDelete.message : String(eDelete || ""))); }
-                }
-            }
-        }
-        if (msgPanel.SetHasClass) {
-            msgPanel.SetHasClass("imageProcessed", false);
-        } else if (msgPanel.RemoveClass) {
-            msgPanel.RemoveClass("imageProcessed");
-        }
-    }
-
-    function GetImagesInChatMessageCache(cacheKey) {
-        var cache = State[cacheKey];
-        if (!Array.isArray(cache)) {
-            cache = [];
-            State[cacheKey] = cache;
-        }
-        return cache;
-    }
-
-    function FindImagesInChatMessageCacheEntry(cache, msgPanel) {
-        for (var i = 0; i < cache.length; i++) {
-            var entry = cache[i];
-            if (!entry || !IsPanelValid(entry.panel)) {
-                cache.splice(i, 1);
-                i--;
-                continue;
-            }
-            if (entry.panel === msgPanel) return entry;
-        }
-        return null;
-    }
-
-    function PruneImagesInChatMessageCache(cache) {
-        for (var i = 0; i < cache.length; i++) {
-            var entry = cache[i];
-            if (!entry || !IsPanelValid(entry.panel)) {
-                cache.splice(i, 1);
-                i--;
-            }
-        }
-        while (cache.length > IMAGES_IN_CHAT_CACHE_MAX_MESSAGES) {
-            cache.shift();
-        }
-    }
-
-    function BuildImagesInChatContainerWatermark(container) {
-        if (!IsPanelValid(container) || !container.GetChildCount) return "";
-        var childCount = 0;
-        try { childCount = container.GetChildCount(); } catch (eCount) { childCount = 0; }
-        var parts = [String(childCount)];
-        var start = Math.max(0, childCount - 3);
-        for (var i = start; i < childCount; i++) {
-            var child = null;
-            try { child = container.GetChild(i); } catch (eChild) { child = null; }
-            if (!child) {
-                parts.push("-");
-                continue;
-            }
-            parts.push(String(child.id || ""));
-            var label = null;
-            if (child.BHasClass && child.BHasClass("ChatMessage")) {
-                label = FindChatMessageLabel(child);
-            }
-            var text = (label && typeof label.text === "string") ? String(label.text).trim() : "";
-            if (text.length > 160) text = text.slice(0, 160);
-            parts.push(text);
-        }
-        return parts.join("|");
-    }
 
     // ── Loop helpers extracted from loop() ──
 
@@ -5302,13 +5147,13 @@ function GetUIRoot() {
     // try/catch loop runs, so a single missing symbol doesn't crash the script.
     var _qolExportDefs = [
 
-        ["buildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
+        ["buildImagesInChatContainerWatermark", function() { return QOL.buildImagesInChatContainerWatermark; }],
         ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
-        ["clearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
+        ["clearInjectedChatImagesForMessage", function() { return QOL.clearInjectedChatImagesForMessage; }],
         ["ensureMinimapOverlayAnchor", function() { return EnsureMinimapOverlayAnchor; }],
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
-        ["findChatMessageLabel", function() { return FindChatMessageLabel; }],
-        ["findImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
+        ["findChatMessageLabel", function() { return QOL.findChatMessageLabel; }],
+        ["findImagesInChatMessageCacheEntry", function() { return QOL.findImagesInChatMessageCacheEntry; }],
         ["findUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
@@ -5316,15 +5161,15 @@ function GetUIRoot() {
         ["getHighestRejuvChargeTokenOnPanel", function() { return GetHighestRejuvChargeTokenOnPanel; }],
         ["getUnitTargetDefaultStyleTexts", function() { return GetUnitTargetDefaultStyleTexts; }],
         ["hasClassInHierarchy", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.HasClassInHierarchy : function() { return false; }; }],
-        ["getImagesInChatMessageCache", function() { return GetImagesInChatMessageCache; }],
+        ["getImagesInChatMessageCache", function() { return QOL.getImagesInChatMessageCache; }],
         ["getKeyboardCachedPanels", function() { return GetKeyboardCachedPanels; }],
         ["getSharedSchemaUtils", function() { return (typeof QOL !== "undefined" && QOL.getSharedSchemaUtils) || (function() { return null; }); }],
         ["getSoulValueFromLabels", function() { return GetSoulValueFromLabels; }],
         ["getTopBarPlayerPanel", function() { return GetTopBarPlayerPanel; }],
         ["getUIRoot", function() { return GetUIRoot; }],
         ["getUnsecuredSoulsDangerLevel", function() { return GetUnsecuredSoulsDangerLevel; }],
-        ["injectBottomChatImage", function() { return InjectBottomChatImage; }],
-        ["injectTopChatImage", function() { return InjectTopChatImage; }],
+        ["injectBottomChatImage", function() { return QOL.injectBottomChatImage; }],
+        ["injectTopChatImage", function() { return QOL.injectTopChatImage; }],
         ["isColorWarningEnabled", function() { return IsColorWarningEnabled; }],
         ["isCombatSignalActive", function() { return IsCombatSignalActive; }],
         ["isConnectedToHideout", function() { return IsConnectedToHideout; }],
@@ -5345,7 +5190,7 @@ function GetUIRoot() {
         ["perfEnd", function() { return PerfEnd; }],
         ["perfNowMs", function() { return PerfNowMs; }],
         ["perfStart", function() { return PerfStart; }],
-        ["pruneImagesInChatMessageCache", function() { return PruneImagesInChatMessageCache; }],
+        ["pruneImagesInChatMessageCache", function() { return QOL.pruneImagesInChatMessageCache; }],
         ["readKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
         ["resetKeyboardOverlayCaches", function() { return ResetKeyboardOverlayCaches; }],
         ["resetUnsecuredSoulsTracking", function() { return ResetUnsecuredSoulsTracking; }],
