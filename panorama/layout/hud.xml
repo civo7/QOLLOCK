@@ -103,7 +103,8 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" /> -->
 		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_legacyaudiopassive.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" />
+		<!-- CUT-OVER: old spm disabled, see manifests/ql_spm/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_spm.vjs_c" /> -->
 		<!-- CUT-OVER: old unspent disabled, see manifests/ql_unspent/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unspent.vjs_c" /> -->
 		<!-- CUT-OVER TEST: old nicknames disabled, new manifest runs instead -->
@@ -159,8 +160,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_zipboost/manifest.vjs_c" />
-		<!-- SHADOW DISABLED: SPM manifest tick is a no-op; legacy runtime remains authoritative. -->
-		<!-- <include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" /> -->
+		<include src="s2r://panorama/scripts/manifests/ql_spm/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_combat_status/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />
