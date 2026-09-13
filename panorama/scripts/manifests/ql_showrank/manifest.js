@@ -588,7 +588,6 @@
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
                             }
-                        } else {
                         }
                     }
                     $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);

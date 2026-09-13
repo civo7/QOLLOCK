@@ -80,10 +80,10 @@
         try {
             var hud = findHud();
             if (isAlive(hud)) {
-                if (hud.BHasClass("gamemode_streetbrawl")
-                    || hud.BHasClass("StreetBrawlInterstitial")
-                    || hud.BHasClass("StreetBrawlBuyPhase")
-                    || hud.BHasClass("GameMode_StreetBrawl")) {
+                if (hud.BHasClass("gamemode_streetbrawl") ||
+                    hud.BHasClass("StreetBrawlInterstitial") ||
+                    hud.BHasClass("StreetBrawlBuyPhase") ||
+                    hud.BHasClass("GameMode_StreetBrawl")) {
                     return true;
                 }
                 var sb = hud.FindChildTraverse("StretBrawlContainer");
@@ -91,17 +91,17 @@
                     return true;
                 }
                 var topBar = hud.FindChildTraverse("TopBar");
-                if (isAlive(topBar) && (topBar.BHasClass("gamemode_streetbrawl")
-                    || topBar.BHasClass("StreetBrawlInterstitial")
-                    || topBar.BHasClass("StreetBrawlBuyPhase"))) {
+                if (isAlive(topBar) && (topBar.BHasClass("gamemode_streetbrawl") ||
+                    topBar.BHasClass("StreetBrawlInterstitial") ||
+                    topBar.BHasClass("StreetBrawlBuyPhase"))) {
                     return true;
                 }
             }
             if (isAlive(root)) {
-                if (root.BHasClass("gamemode_streetbrawl")
-                    || root.BHasClass("StreetBrawlInterstitial")
-                    || root.BHasClass("StreetBrawlBuyPhase")
-                    || root.BHasClass("GameMode_StreetBrawl")) {
+                if (root.BHasClass("gamemode_streetbrawl") ||
+                    root.BHasClass("StreetBrawlInterstitial") ||
+                    root.BHasClass("StreetBrawlBuyPhase") ||
+                    root.BHasClass("GameMode_StreetBrawl")) {
                     return true;
                 }
             }

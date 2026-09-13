@@ -2561,6 +2561,7 @@ function ShowDamageReportPreview() {
 
     var baseX = fallbackX;
     var baseY = fallbackY;
+    var anchoredToLive = false;
     var root = _FindRoot();
     var livePanel = root && root.FindChildTraverse ? root.FindChildTraverse("CitadelHudDamageReport") : null;
     var liveRect = GetPanelRectRelativeToContext(livePanel);

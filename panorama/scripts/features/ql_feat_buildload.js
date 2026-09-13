@@ -102,6 +102,10 @@
     var isConnectedToHideout = _deps.isConnectedToHideout;
     var BUILD_LOADER_TEMP_DISABLED = false;
 
+    function _TLog(label, detail) {
+        try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+    }
+
     // ── One-shot diagnostic sentinels ──
     var _startupConfigLoadDiagLogged = false;
     var _startupConfigDefaultDiagLogged = false;
@@ -898,8 +902,8 @@
         }
 
         var anyPayloadSkipCount = Number(State.buildCategoryPayloadAnyPayloadGuardSkips) || 0;
-        if (QOL.currentBuildHasAnyPayload && QOL.currentBuildHasAnyPayload(root)
-            && anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
+        if (QOL.currentBuildHasAnyPayload && QOL.currentBuildHasAnyPayload(root) &&
+            anyPayloadSkipCount < BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES) {
             State.buildCategoryPayloadAnyPayloadGuardSkips = anyPayloadSkipCount + 1;
             SetSettingsLoaderStepState("read_payload", "active", "Existing payload found in current build; skipping save bootstrap.");
             SetSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context verified via existing payload.");
@@ -1230,7 +1234,7 @@
         var doneResult = handleProbeDoneCheck(accountId, nowMs);
         if (doneResult !== null) return doneResult;
 
-        if (handleCorruptRepairInit(root, nowMs)) {}
+        handleCorruptRepairInit(root, nowMs);
 
         if (nowMs < (State.buildCategoryPayloadHeroProbeNextMs || 0)) {
             return "wait";

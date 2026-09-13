@@ -74,7 +74,7 @@ _TLog = function(label, detail) {
         QOL_UTILS.SetDebugEnabled(next);
         $.Msg("[QOLLock] debug logging " + (next ? "ENABLED" : "DISABLED"));
     }
-    try { ToggleQollockDebug = ToggleQollockDebug; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    try { if (typeof globalThis !== "undefined") globalThis.ToggleQollockDebug = ToggleQollockDebug; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
     try { if (typeof window !== "undefined") window.ToggleQollockDebug = ToggleQollockDebug; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
 
     var IsCfgEnabled = QOL_UTILS_LOADED ? QOL_UTILS.IsCfgEnabled : function(cfg, key) { return Number(cfg && cfg[key]) === 1; };
@@ -896,10 +896,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         var categoryCount = 0;
         try { categoryCount = selectedBuild ? QOL.countBuildCategoryHeaders(selectedBuild) : 0; } catch (e2) { categoryCount = 0; }
 
-        var selectedTitle = "";
-        try { selectedTitle = String(TryReadSelectedBuildTitleText(root, selectedBuild) || ""); } catch (e3) { selectedTitle = ""; }
-        if (selectedTitle.length > 48) selectedTitle = selectedTitle.slice(0, 48) + "...";
-        if (!selectedTitle || selectedTitle.length === 0) selectedTitle = "-";
+        var selectedTitle = "-";
 
         var signal = { hero: "", source: "none" };
         try { signal = ResolveBuildSaveStorageHeroSignal(root) || signal; } catch (e4) { signal = { hero: "", source: "none" }; }
@@ -5382,7 +5379,7 @@ function GetUIRoot() {
             }
         }
         if (!favoritesNav) {
-            var roots = CollectBuildUiSearchRoots(root);
+            var roots = [root, GetUIRoot()];
             for (var i = 0; i < roots.length; i++) {
                 var host = roots[i];
                 if (!host || !host.FindChildTraverse) continue;
@@ -6434,9 +6431,10 @@ function GetUIRoot() {
             sampleWashColor,
             sampleValueColor
         ].join("|");
-        CombatIndicatorDebugLogThrottled(
-            sig,
-            "enabled=" + (enabled ? "1" : "0") +
+        QOL_DEBUG(
+            "combat_indicator",
+            "sig=" + sig +
+            " enabled=" + (enabled ? "1" : "0") +
             " rawEnabled=" + (isFinite(rawEnabled) ? String(rawEnabled) : "<nan>") +
             " signal=" + (combatSignal ? "1" : "0") +
             " recovery=" + (recoveryActive ? "1" : "0") +
@@ -6453,8 +6451,7 @@ function GetUIRoot() {
             " sampleStyles=" + (sampleStyleFlags || "-") +
             " sampleCombatClasses=" + (sampleCombatFlags || "-") +
             " sampleWash=" + (sampleWashColor || "-") +
-            " sampleColor=" + (sampleValueColor || "-"),
-            nowMs
+            " sampleColor=" + (sampleValueColor || "-")
         );
     }
     // Apply the combat-indicator classes to every panel the CSS keys off.
@@ -8234,7 +8231,7 @@ function GetUIRoot() {
         ["readStorageHeroSignatureSlots", function() { return ReadStorageHeroSignatureSlots; }],
         ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
         ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
-        ["tryReadBuildSaveStorageHeroFromSettings", function() { return TryReadBuildSaveStorageHeroFromSettings; }],
+        ["tryReadBuildSaveStorageHeroFromSettings", function() { return function() { return null; }; }],
         ["extractHeroTokenFromText", function() { return ExtractHeroTokenFromText; }],
         ["finalizeSaveSettingsLoaderSession", function() { return FinalizeSaveSettingsLoaderSession; }],
         ["beginSaveSettingsLoaderSession", function() { return BeginSaveSettingsLoaderSession; }],

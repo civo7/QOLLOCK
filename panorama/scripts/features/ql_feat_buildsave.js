@@ -54,6 +54,10 @@
     var TryOpenHeroShopForHeroProbe = _deps.tryOpenHeroShopForHeroProbe;
     var TryReselectBuildSaveTargetByTitle = _deps.tryReselectBuildSaveTargetByTitle;
 
+    function _TLog(label, detail) {
+        try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {}
+    }
+
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 10;
     var BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
