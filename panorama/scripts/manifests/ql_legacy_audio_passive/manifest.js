@@ -63,7 +63,7 @@
         ],
         create: function(ctx) {
             // ── QOL.import deps (matches old feature verbatim) ──
-            var _deps = QOL.import(["ensureAbilitiesContainerPanelCache","ensureGameTimePanelCache","ensurePassiveHudPanelCache","getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isConnectedToHideout","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","setCachedPanel","setPanelClassCached","state","utils"]);
+            var _deps = QOL.import(["getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isConnectedToHideout","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","setCachedPanel","setPanelClassCached","state","utils"]);
             var GetCachedPanel = _deps.getCachedPanel;
             var State = _deps.state;
             var SetCachedPanel = _deps.setCachedPanel;
@@ -75,9 +75,29 @@
             var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
             var IsPassiveCooldownBasicMode = _deps.isPassiveCooldownBasicMode;
             var IsColorWarningEnabled = _deps.isColorWarningEnabled;
-            var EnsureAbilitiesContainerPanelCache = _deps.ensureAbilitiesContainerPanelCache;
-            var EnsureGameTimePanelCache = _deps.ensureGameTimePanelCache;
-            var EnsurePassiveHudPanelCache = _deps.ensurePassiveHudPanelCache;
+
+            function _ensureCachedByIds(root, cacheKey, ids) {
+                if (State && State.cachedPanels && State.cachedPanels[cacheKey] && Utils && Utils.IsPanelValid && Utils.IsPanelValid(State.cachedPanels[cacheKey])) {
+                    return State.cachedPanels[cacheKey];
+                }
+                if (!root || !root.FindChildTraverse) return null;
+                var panel = null;
+                for (var i = 0; i < ids.length; i++) {
+                    panel = root.FindChildTraverse(ids[i]);
+                    if (panel) break;
+                }
+                if (State && State.cachedPanels) State.cachedPanels[cacheKey] = panel || null;
+                return panel || null;
+            }
+            var EnsureAbilitiesContainerPanelCache = function(root) {
+                return _ensureCachedByIds(root, "abilitiesContainer", ["abilities_container", "AbilitiesContainer"]);
+            };
+            var EnsureGameTimePanelCache = function(root) {
+                return _ensureCachedByIds(root, "gameTime", ["HudGameTime", "GameTime"]);
+            };
+            var EnsurePassiveHudPanelCache = function(root) {
+                return _ensureCachedByIds(root, "passiveHud", ["hud_passive_items"]);
+            };
             var NormalizeVoiceTypeValue = _deps.normalizeVoiceTypeValue;
             var NormalizeVoiceVolumeValue = _deps.normalizeVoiceVolumeValue;
             var GetSharedSchemaUtils = _deps.getSharedSchemaUtils;

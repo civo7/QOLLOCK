@@ -7351,55 +7351,6 @@ function GetUIRoot() {
 
     // [DECOUPLED] buildRequestLoop removed — superseded by manifests/ql_build_storage
 
-    function EnsureCachedPanelByIds(root, cacheKey, ids) {
-        var cached = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-        if (cached) return cached;
-        if (!root || !root.FindChildTraverse || !ids || ids.length <= 0) {
-            State.cachedPanels[cacheKey] = null;
-            return null;
-        }
-        var panel = null;
-        for (var i = 0; i < ids.length; i++) {
-            panel = root.FindChildTraverse(ids[i]);
-            if (panel) break;
-        }
-        State.cachedPanels[cacheKey] = panel || null;
-        return panel || null;
-    }
-
-    function EnsureMinimapPanelCache(root) {
-        if (State.cachedPanels.minimap && IsPanelListValid(State.cachedPanels.minimap)) {
-            return State.cachedPanels.minimap;
-        }
-        var panels = [];
-        if (root && root.FindChildTraverse) {
-            var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
-            for (var i = 0; i < ids.length; i++) {
-                var panel = root.FindChildTraverse(ids[i]);
-                if (panel) panels.push(panel);
-            }
-        }
-        State.cachedPanels.minimap = panels;
-        return panels;
-    }
-
-    function EnsurePassiveHudPanelCache(root) {
-        return EnsureCachedPanelByIds(root, "passiveHud", ["hud_passive_items"]);
-    }
-
-    function EnsureGameTimePanelCache(root) {
-        return EnsureCachedPanelByIds(root, "gameTime", ["HudGameTime", "GameTime"]);
-    }
-
-    function EnsureAbilitiesContainerPanelCache(root) {
-        return EnsureCachedPanelByIds(root, "abilitiesContainer", [PANEL_ID_ABILITIES_CONTAINER]);
-    }
-
-
-    function TryGetGameplayMouseCursorPosition() {
-        // GameUI.GetCursorPosition confirmed absent — custom gameplay cursor disabled.
-        return null;
-    }
 
     function ApplyCoreLoopRootClassesAndState(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
         var redDiamondEnabled = IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
@@ -9044,13 +8995,7 @@ function GetUIRoot() {
         ["buildImagesInChatContainerWatermark", function() { return BuildImagesInChatContainerWatermark; }],
         ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
         ["clearInjectedChatImagesForMessage", function() { return ClearInjectedChatImagesForMessage; }],
-        ["detectTopBarPlayerTeam", function() { return DetectTopBarPlayerTeam; }],
-        ["ensureAbilitiesContainerPanelCache", function() { return EnsureAbilitiesContainerPanelCache; }],
-        ["ensureCachedPanelByIds", function() { return EnsureCachedPanelByIds; }],
-        ["ensureGameTimePanelCache", function() { return EnsureGameTimePanelCache; }],
         ["ensureMinimapOverlayAnchor", function() { return EnsureMinimapOverlayAnchor; }],
-        ["ensureMinimapPanelCache", function() { return EnsureMinimapPanelCache; }],
-        ["ensurePassiveHudPanelCache", function() { return EnsurePassiveHudPanelCache; }],
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
         ["findChatMessageLabel", function() { return FindChatMessageLabel; }],
         ["findImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
@@ -9123,7 +9068,6 @@ function GetUIRoot() {
         ["setPanelClassIfChanged", function() { return SetPanelClassIfChanged; }],
         ["setWashColorSafe", function() { return SetWashColorSafe; }],
         ["state", function() { return State; }],
-        ["tryGetGameplayMouseCursorPosition", function() { return TryGetGameplayMouseCursorPosition; }],
         ["readPanelTextMaybe", function() { return ReadPanelTextMaybe; }],
         ["extractBuildCategoryPayloadToken", function() { return ExtractBuildCategoryPayloadToken; }],
         ["getAccountIdForBuildCategoryPayload", function() { return (typeof QOL !== "undefined" && QOL.getAccountIdForBuildCategoryPayload) || (function() { return ""; }); }],
