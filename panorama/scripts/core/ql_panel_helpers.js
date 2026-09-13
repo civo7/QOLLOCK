@@ -146,6 +146,135 @@
         return curr;
     }
 
+    function activate(panel) {
+        if (!isPanelAlive(panel)) return false;
+        try { $.DispatchEvent("Activated", panel, "mouse"); return true; } catch (e1) {}
+        try { $.DispatchEvent("Activated", panel); return true; } catch (e2) {}
+        return false;
+    }
+
+    function isVisible(panel) {
+        if (!isPanelAlive(panel)) return false;
+        try {
+            if (panel.visible === false || panel.visible === "false") return false;
+            if (panel.BHasClass && (panel.BHasClass("hidden") || panel.BHasClass("Hidden") || panel.BHasClass("Collapsed"))) return false;
+            return true;
+        } catch (e) { return false; }
+    }
+
+    function readText(panel) {
+        if (!isPanelAlive(panel)) return "";
+        try {
+            if (typeof panel.text === "string") return panel.text;
+            if (panel.GetAttributeString) {
+                var attr = panel.GetAttributeString("text", "");
+                if (attr) return attr;
+            }
+        } catch (e) {}
+        return "";
+    }
+
+    function readTextDeep(panel, maxDepth) {
+        if (!isPanelAlive(panel)) return "";
+        var depth = typeof maxDepth === "number" ? maxDepth : 4;
+        var direct = readText(panel);
+        if (direct) return direct;
+        if (depth <= 0 || !panel.Children) return "";
+        var kids = panel.Children();
+        for (var i = 0; i < kids.length; i++) {
+            var t = readTextDeep(kids[i], depth - 1);
+            if (t) return t;
+        }
+        return "";
+    }
+
+    function readId(panel) {
+        if (!panel) return "";
+        try { return panel.id ? String(panel.id) : ""; } catch (e) { return ""; }
+    }
+
+    function hasClassToken(panel, token) {
+        if (!isPanelAlive(panel) || !token) return false;
+        try {
+            return typeof panel.BHasClass === "function" && panel.BHasClass(token);
+        } catch (e) { return false; }
+    }
+
+    function findChild(parent, id) {
+        if (!isPanelAlive(parent) || !id) return null;
+        try { return parent.FindChild ? parent.FindChild(id) : null; } catch (e) { return null; }
+    }
+
+    function findTraverse(root, id) {
+        if (!isPanelAlive(root) || !id) return null;
+        try { return root.FindChildTraverse ? root.FindChildTraverse(id) : null; } catch (e) { return null; }
+    }
+
+    var QOL_WASH_COLOR_PALETTE = [
+        "",
+        "#f7f4e8",
+        "#bfc7cf",
+        "#33363f",
+        "#ff3b47",
+        "#ff6f61",
+        "#ff8a2a",
+        "#ffb52e",
+        "#ffe45c",
+        "#a8f04f",
+        "#45d66b",
+        "#63f0b5",
+        "#24c6a8",
+        "#44e3ff",
+        "#64bfff",
+        "#3f78ff",
+        "#6157ff",
+        "#9b5cff",
+        "#c15cff",
+        "#ff4de3",
+        "#ff78bd",
+        "#ff5d89",
+        "#9a6743",
+        "#d9a441",
+        "#8cff4f",
+        "#7c4dff",
+        "#b8142f",
+        "#b9f4ff",
+        "#d7b2ff",
+        "#05070a"
+    ];
+
+    function normalizePaletteIndex(value) {
+        var numeric = Math.round(Number(value));
+        if (!isFinite(numeric)) numeric = 0;
+        if (numeric < 0) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        return numeric;
+    }
+
+    function resolvePaletteColor(value) {
+        var index = normalizePaletteIndex(value);
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        return color ? String(color) : "";
+    }
+
+    function setWashColor(panel, color) {
+        if (!isPanelAlive(panel)) return false;
+        try {
+            if (color) {
+                panel.style.washColor = String(color);
+            } else {
+                panel.ClearPropertyFromCode("wash-color");
+                panel.style.washColor = "";
+            }
+            return true;
+        } catch (e) { return false; }
+    }
+
+    function setWashColorFromPalette(panel, value) {
+        var color = resolvePaletteColor(value);
+        return setWashColor(panel, color);
+    }
+
     // -- Attach to namespace --
     var panelApi = {
         isAlive: isPanelAlive,
@@ -156,16 +285,41 @@
         deletePanel: safeDeletePanel,
         findRoot: findRoot,
         findHud: findHud,
+        findChild: findChild,
+        findTraverse: findTraverse,
         setClass: setClass,
         setVisible: setVisible,
         syncStyles: syncStyles,
-        clearStyleProperty: clearStyleProperty
+        clearStyleProperty: clearStyleProperty,
+        activate: activate,
+        isVisible: isVisible,
+        readText: readText,
+        readTextDeep: readTextDeep,
+        readId: readId,
+        hasClassToken: hasClassToken,
+        setWashColor: setWashColor,
+        setWashColorFromPalette: setWashColorFromPalette,
+        normalizePaletteIndex: normalizePaletteIndex,
+        resolvePaletteColor: resolvePaletteColor,
+        washColorPalette: QOL_WASH_COLOR_PALETTE
     };
 
     QOL.core = QOL.core || {};
     QOL.core.panel = panelApi;
     QOL.ui = QOL.ui || {};
     QOL.ui.PanelHelpers = panelApi;
+
+    // Backward-compat aliases on root QOL namespace
+    QOL.activatePanelSafe = activate;
+    QOL.isPanelVisibleMaybe = isVisible;
+    QOL.readPanelTextMaybe = readText;
+    QOL.readPanelTextDeepMaybe = readTextDeep;
+    QOL.readPanelIdTextMaybe = readId;
+    QOL.panelHasClassToken = hasClassToken;
+    QOL.setWashColorSafe = setWashColor;
+    QOL.resolveWashColorFromPalette = resolvePaletteColor;
+    QOL.normalizePaletteColorIndex = normalizePaletteIndex;
+    QOL.washColorPalette = QOL_WASH_COLOR_PALETTE;
 
     $.Msg("[QOLLock] core/ql_panel_helpers: attached to QOL.core.panel and QOL.ui.PanelHelpers");
 })();

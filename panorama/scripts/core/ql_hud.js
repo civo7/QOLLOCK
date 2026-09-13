@@ -109,11 +109,18 @@
         return false;
     }
 
+    function isHudClassActive(root, className) {
+        var target = root || findHud();
+        if (!isAlive(target) || !className) return false;
+        try { return target.BHasClass(className); } catch (e) { return false; }
+    }
+
     // Attach to namespace
     Q.core.hud = {
         findHud: findHud,
         isInHideout: isInHideout,
-        isStreetBrawl: isStreetBrawl
+        isStreetBrawl: isStreetBrawl,
+        isHudClassActive: isHudClassActive
     };
 
     // Backward compat: alias on PanelHelpers if not already present
@@ -123,6 +130,12 @@
     if (Q.core.panel) {
         Q.core.panel.findHud = findHud;
     }
+
+    // Direct backward compat on QOL root
+    Q.findHud = findHud;
+    Q.isConnectedToHideout = isInHideout;
+    Q.isHudClassActive = isHudClassActive;
+    Q.isStreetBrawlModeActive = isStreetBrawl;
 
     $.Msg("[QOLLock] core/ql_hud: attached to QOL.core.hud");
 })();
