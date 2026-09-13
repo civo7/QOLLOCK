@@ -8254,7 +8254,9 @@ function GetUIRoot() {
         if (!_legacyManifestActive) { gates.legacyAudioPassive = gates.legacyAudioPassiveActive; }
         gates.imagesInChat = gates.imagesInChatActive;
         gates.showRank = gates.showRankActive;
-        gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled;
+        var _recentPurchasesManifestActive = false;
+        try { if (typeof QOL !== "undefined" && QOL.core && QOL.core.FeatureRegistry) { _recentPurchasesManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_recent_purchases"); } } catch(e) {}
+        if (!_recentPurchasesManifestActive) { gates.recentPurchases = gates.recentPurchasesActive || State.recentPurchasesWasEnabled; }
         gates.gameplayMouseCursor = NeedsGameplayMouseCursorRuntimeWork(root, hideoutConnected);
 // P1: skip when new manifest is active to prevent dual execution
         var _betterUnsecuredHudManifestActive = false;

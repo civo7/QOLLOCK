@@ -90,8 +90,8 @@
 		<!-- CUT-OVER: old onDeathArcade disabled, see manifests/ql_on_death_arcade/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_ondeatharcade.vjs_c" /> -->
 		<!-- CUT-OVER: old heroShop disabled, see manifests/ql_heroshop/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
+		<!-- CUT-OVER: old recentpurchases disabled, see manifests/ql_recent_purchases/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" /> -->
 		<!-- CUT-OVER: old betterunsecuredhud disabled, see manifests/ql_better_unsecured_hud/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
