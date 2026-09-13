@@ -541,14 +541,14 @@
         }
 
         // Call optional subsystem handlers if present
-        if (typeof QOL.updateChatRuntime === "function" && (QOL.hasNonDefaultChatRuntimeConfig?.(cfg) || state.chatStyleApplied)) {
-            QOL.updateChatRuntime(root, cfg);
+        if (hasNonDefaultChatRuntimeConfig(cfg) || state.chatStyleApplied) {
+            updateChatRuntime(root, cfg);
         }
         if (typeof QOL.updateShowBuildIdRuntime === "function") {
             QOL.updateShowBuildIdRuntime(root, cfg);
         }
-        if (typeof QOL.updateDamageReportOffsets === "function" && QOL.needsDamageReportOffsetWork?.(cfg)) {
-            QOL.updateDamageReportOffsets(root, cfg);
+        if (needsDamageReportOffsetWork(cfg)) {
+            updateDamageReportOffsets(root, cfg);
         }
         if (typeof QOL.updateUrnTrackerOverlay === "function" && QOL.needsUrnTrackerRuntimeWork?.(cfg)) {
             QOL.updateUrnTrackerOverlay(root, cfg, nowMsLoop);
@@ -556,6 +556,191 @@
 
         return redDiamondEnabled;
     }
+
+    const resetDamageReportOffsetRuntime = (panel) => {
+        if (!isAlive(panel)) return;
+        try { panel.style.x = "0px"; } catch (_) {}
+        try { panel.style.y = "0px"; } catch (_) {}
+    };
+
+    const needsDamageReportOffsetWork = (cfg) => {
+        if (!cfg) return false;
+        let offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
+        let offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
+        const st = getState();
+        return Boolean(st.damageReportOffsetApplied || st.damageReportOffsetSig || isAlive(st.damageReportOffsetPanel));
+    };
+
+    const hasNonDefaultChatRuntimeConfig = (cfg) => {
+        if (!cfg) return false;
+        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
+        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
+        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
+        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
+        if (!Number.isFinite(enabled)) enabled = 1;
+        if (!Number.isFinite(scale)) scale = 100;
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        return enabled !== 1 || scale !== 100 || offsetX !== 0 || offsetY !== 0;
+    };
+
+    const resetChatRuntime = (panel) => {
+        if (!isAlive(panel)) return;
+        try { panel.style.x = "0px"; } catch (_) {}
+        try { panel.style.y = "0px"; } catch (_) {}
+        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (_) {}
+        try { panel.style.uiScale = "100%"; } catch (_) {}
+        try { panel.style.visibility = "visible"; } catch (_) {}
+    };
+
+    const updateChatRuntime = (root, cfg) => {
+        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("Chat") : null;
+        const chatPanel = isAlive(livePanel) ? livePanel : getCachedPanel("chatPanel");
+        if (chatPanel !== getCachedPanel("chatPanel")) {
+            setCachedPanel("chatPanel", chatPanel);
+        }
+
+        const st = getState();
+        const previousPanel = isAlive(st.chatStylePanel) ? st.chatStylePanel : null;
+        if (previousPanel && previousPanel !== chatPanel) {
+            resetChatRuntime(previousPanel);
+        }
+
+        if (!chatPanel) {
+            st.chatStyleSig = "";
+            st.chatStyleApplied = false;
+            st.chatStylePanel = null;
+            return;
+        }
+
+        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
+        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
+        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
+        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
+        if (!Number.isFinite(enabled)) enabled = 1;
+        if (!Number.isFinite(scale)) scale = 100;
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        if (scale < 50) scale = 50;
+        if (scale > 200) scale = 200;
+        if (offsetX < -1500) offsetX = -1500;
+        if (offsetX > 1500) offsetX = 1500;
+        if (offsetY < -250) offsetY = -250;
+        if (offsetY > 800) offsetY = 800;
+
+        const scaleText = `${scale}%`;
+        const styleSig = `${enabled}|${scaleText}|${offsetX}|${offsetY}`;
+        if (st.chatStyleApplied && st.chatStylePanel === chatPanel && st.chatStyleSig === styleSig) {
+            return;
+        }
+
+        chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
+        chatPanel.style.x = `${offsetX}px`;
+        chatPanel.style.y = `${-offsetY}px`;
+        chatPanel.style.preTransformScale2d = "1.00, 1.00";
+        chatPanel.style.uiScale = scaleText;
+
+        st.chatStyleSig = styleSig;
+        st.chatStyleApplied = true;
+        st.chatStylePanel = chatPanel;
+    };
+
+    const updateDamageReportOffsets = (root, cfg) => {
+        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("CitadelHudDamageReport") : null;
+        const damageReportPanel = isAlive(livePanel) ? livePanel : getCachedPanel("damageReportPanel");
+        if (damageReportPanel !== getCachedPanel("damageReportPanel")) {
+            setCachedPanel("damageReportPanel", damageReportPanel);
+        }
+
+        const st = getState();
+        const previousPanel = isAlive(st.damageReportOffsetPanel) ? st.damageReportOffsetPanel : null;
+        if (previousPanel && previousPanel !== damageReportPanel) {
+            resetDamageReportOffsetRuntime(previousPanel);
+        }
+
+        if (!damageReportPanel) {
+            st.damageReportOffsetSig = "";
+            st.damageReportOffsetApplied = false;
+            st.damageReportOffsetPanel = null;
+            return;
+        }
+
+        let offsetX = (cfg.DAMAGE_REPORT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.DAMAGE_REPORT_X_OFFSET));
+        let offsetY = (cfg.DAMAGE_REPORT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.DAMAGE_REPORT_Y_OFFSET));
+        const styleSig = `${offsetX}|${offsetY}`;
+
+        if (st.damageReportOffsetApplied && st.damageReportOffsetPanel === damageReportPanel && st.damageReportOffsetSig === styleSig) {
+            return;
+        }
+
+        damageReportPanel.style.x = `${offsetX}px`;
+        damageReportPanel.style.y = `${-offsetY}px`;
+
+        if (offsetX === 0 && offsetY === 0) {
+            st.damageReportOffsetSig = "";
+            st.damageReportOffsetApplied = false;
+            st.damageReportOffsetPanel = null;
+        } else {
+            st.damageReportOffsetSig = styleSig;
+            st.damageReportOffsetApplied = true;
+            st.damageReportOffsetPanel = damageReportPanel;
+        }
+    };
+
+    const getPanelClassTokens = (panel) => {
+        if (!panel?.GetAttributeString) return [];
+        const classAttr = panel.GetAttributeString("class", "");
+        if (!classAttr) return [];
+        return classAttr.split(/\s+/).filter(Boolean);
+    };
+
+    const panelHasClassToken = (panel, token) => {
+        if (!panel || !token) return false;
+        if (panel.BHasClass && panel.BHasClass(token)) return true;
+        const cls = getPanelClassTokens(panel);
+        if (cls.includes(token)) return true;
+        const kids = (panel.Children && panel.Children()) || [];
+        for (let k = 0; k < kids.length; k++) {
+            const child = kids[k];
+            if (!child) continue;
+            if (child.BHasClass && child.BHasClass(token)) return true;
+            if (getPanelClassTokens(child).includes(token)) return true;
+        }
+        return false;
+    };
+
+    const getHighestRejuvChargeTokenOnPanel = (panel) => {
+        if (!panel) return 0;
+        let max = 0;
+
+        const scanNode = (node) => {
+            if (!node) return;
+            const tokens = getPanelClassTokens(node);
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
+                if (!token?.startsWith("RejuvCount_")) continue;
+                const value = parseInt(token.slice("RejuvCount_".length), 10);
+                if (Number.isFinite(value) && value > max) max = value;
+            }
+            if (node.BHasClass) {
+                for (let count = 1; count <= 4; count++) {
+                    if (node.BHasClass(`RejuvCount_${count}`) && count > max) {
+                        max = count;
+                    }
+                }
+            }
+        };
+
+        scanNode(panel);
+        const kids = (panel.Children && panel.Children()) || [];
+        for (let k = 0; k < kids.length; k++) {
+            scanNode(kids[k]);
+        }
+        return max;
+    };
 
     // Attach to namespace
     Q.core.hud = {
@@ -568,7 +753,16 @@
         setPanelClassIfChanged,
         isCombatSignalActive,
         syncCombatIndicatorHealthbarClasses,
-        applyRootClasses
+        applyRootClasses,
+        updateChatRuntime,
+        hasNonDefaultChatRuntimeConfig,
+        resetChatRuntime,
+        updateDamageReportOffsets,
+        needsDamageReportOffsetWork,
+        resetDamageReportOffsetRuntime,
+        getPanelClassTokens,
+        panelHasClassToken,
+        getHighestRejuvChargeTokenOnPanel
     };
 
     // Backward compat: alias on PanelHelpers if not already present
@@ -587,6 +781,15 @@
     Q.applyCoreLoopRootClassesAndState = applyRootClasses;
     Q.setPanelClassCached = setPanelClassCached;
     Q.setPanelClassIfChanged = setPanelClassIfChanged;
+    Q.updateChatRuntime = updateChatRuntime;
+    Q.hasNonDefaultChatRuntimeConfig = hasNonDefaultChatRuntimeConfig;
+    Q.resetChatRuntime = resetChatRuntime;
+    Q.updateDamageReportOffsets = updateDamageReportOffsets;
+    Q.needsDamageReportOffsetWork = needsDamageReportOffsetWork;
+    Q.resetDamageReportOffsetRuntime = resetDamageReportOffsetRuntime;
+    Q.getPanelClassTokens = getPanelClassTokens;
+    Q.panelHasClassToken = panelHasClassToken;
+    Q.getHighestRejuvChargeTokenOnPanel = getHighestRejuvChargeTokenOnPanel;
 
     $.Msg("[QOLLock] core/ql_hud: attached to QOL.core.hud");
 })();

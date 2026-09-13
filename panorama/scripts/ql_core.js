@@ -1780,203 +1780,7 @@ function GetUIRoot() {
 
 
 
-    function ResetDamageReportOffsetRuntime(panel) {
-        if (!IsPanelValid(panel)) return;
-        try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-    }
-
-    function NeedsDamageReportOffsetWork(cfg) {
-        if (!cfg) return false;
-        var offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
-        var offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
-        if (!isFinite(offsetX)) offsetX = 0;
-        if (!isFinite(offsetY)) offsetY = 0;
-        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
-        return !!(
-            State.damageReportOffsetApplied ||
-            State.damageReportOffsetSig ||
-            IsPanelValid(State.damageReportOffsetPanel)
-        );
-    }
-
-    function SyncLegacyCooldownsUiFlag(enabled) {
-        var normalized = enabled ? 1 : 0;
-        if (State.legacyCooldownsUiFlag === normalized) return;
-        State.legacyCooldownsUiFlag = normalized;
-        // GameUI.CustomUIConfig confirmed absent — flag tracked in State only.
-    }
-
-    function HasNonDefaultChatRuntimeConfig(cfg) {
-        if (!cfg) return false;
-        var enabled = (cfg.ENABLE_CHAT === undefined || cfg.ENABLE_CHAT === null)
-            ? 1
-            : Math.round(Number(cfg.ENABLE_CHAT));
-        var scale = (cfg.CHAT_SCALE === undefined || cfg.CHAT_SCALE === null)
-            ? 100
-            : Math.round(Number(cfg.CHAT_SCALE));
-        var offsetX = (cfg.CHAT_X_OFFSET === undefined || cfg.CHAT_X_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.CHAT_X_OFFSET));
-        var offsetY = (cfg.CHAT_Y_OFFSET === undefined || cfg.CHAT_Y_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!isFinite(enabled)) enabled = 1;
-        if (!isFinite(scale)) scale = 100;
-        if (!isFinite(offsetX)) offsetX = 0;
-        if (!isFinite(offsetY)) offsetY = 0;
-        return enabled !== 1 || scale !== 100 || offsetX !== 0 || offsetY !== 0;
-    }
-
-    function ResetChatRuntime(panel) {
-        if (!IsPanelValid(panel)) return;
-        try { panel.style.x = "0px"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style.y = "0px"; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-        try { panel.style.uiScale = "100%"; } catch(e3) { QOL_WARN("core", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
-        try { panel.style.visibility = "visible"; } catch(e4) { QOL_WARN("core", "op failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
-    }
-
-    function UpdateChatRuntime(root, cfg) {
-        var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("Chat") : null;
-        var chatPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("chatPanel"));
-        if (chatPanel !== GetCachedPanel("chatPanel")) {
-            SetCachedPanel("chatPanel", chatPanel);
-        }
-
-        var previousPanel = IsPanelValid(State.chatStylePanel) ? State.chatStylePanel : null;
-        if (previousPanel && previousPanel !== chatPanel) {
-            ResetChatRuntime(previousPanel);
-        }
-
-        if (!chatPanel) {
-            State.chatStyleSig = "";
-            State.chatStyleApplied = false;
-            State.chatStylePanel = null;
-            return;
-        }
-
-        var scale = (cfg.CHAT_SCALE === undefined || cfg.CHAT_SCALE === null)
-            ? 100
-            : Math.round(Number(cfg.CHAT_SCALE));
-        var enabled = (cfg.ENABLE_CHAT === undefined || cfg.ENABLE_CHAT === null)
-            ? 1
-            : Math.round(Number(cfg.ENABLE_CHAT));
-        var offsetX = (cfg.CHAT_X_OFFSET === undefined || cfg.CHAT_X_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.CHAT_X_OFFSET));
-        var offsetY = (cfg.CHAT_Y_OFFSET === undefined || cfg.CHAT_Y_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!isFinite(enabled)) enabled = 1;
-        if (!isFinite(scale)) scale = 100;
-        if (!isFinite(offsetX)) offsetX = 0;
-        if (!isFinite(offsetY)) offsetY = 0;
-        if (scale < 50) scale = 50;
-        if (scale > 200) scale = 200;
-        if (offsetX < -1500) offsetX = -1500;
-        if (offsetX > 1500) offsetX = 1500;
-        if (offsetY < -250) offsetY = -250;
-        if (offsetY > 800) offsetY = 800;
-
-        var scaleText = String(scale) + "%";
-        var styleSig = enabled + "|" + scaleText + "|" + offsetX + "|" + offsetY;
-        if (
-            State.chatStyleApplied &&
-            State.chatStylePanel === chatPanel &&
-            State.chatStyleSig === styleSig
-        ) {
-            return;
-        }
-
-        chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
-        chatPanel.style.x = String(offsetX) + "px";
-        chatPanel.style.y = String(-offsetY) + "px";
-        chatPanel.style.preTransformScale2d = "1.00, 1.00";
-        chatPanel.style.uiScale = scaleText;
-
-        State.chatStyleSig = styleSig;
-        State.chatStyleApplied = true;
-        State.chatStylePanel = chatPanel;
-    }
-
-    function UpdateDamageReportOffsets(root, cfg) {
-        var livePanel = (root && root.FindChildTraverse) ? root.FindChildTraverse("CitadelHudDamageReport") : null;
-        var damageReportPanel = IsPanelValid(livePanel) ? livePanel : (GetCachedPanel("damageReportPanel"));
-        if (damageReportPanel !== GetCachedPanel("damageReportPanel")) {
-            SetCachedPanel("damageReportPanel", damageReportPanel);
-        }
-
-        var previousPanel = IsPanelValid(State.damageReportOffsetPanel) ? State.damageReportOffsetPanel : null;
-        if (previousPanel && previousPanel !== damageReportPanel) {
-            ResetDamageReportOffsetRuntime(previousPanel);
-        }
-
-        if (!damageReportPanel) {
-            State.damageReportOffsetSig = "";
-            State.damageReportOffsetApplied = false;
-            State.damageReportOffsetPanel = null;
-            return;
-        }
-
-        var offsetX = (cfg.DAMAGE_REPORT_X_OFFSET === undefined || cfg.DAMAGE_REPORT_X_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.DAMAGE_REPORT_X_OFFSET));
-        var offsetY = (cfg.DAMAGE_REPORT_Y_OFFSET === undefined || cfg.DAMAGE_REPORT_Y_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.DAMAGE_REPORT_Y_OFFSET));
-        var styleSig = offsetX + "|" + offsetY;
-
-        if (
-            State.damageReportOffsetApplied &&
-            State.damageReportOffsetPanel === damageReportPanel &&
-            State.damageReportOffsetSig === styleSig
-        ) {
-            return;
-        }
-
-        damageReportPanel.style.x = String(offsetX) + "px";
-        damageReportPanel.style.y = String(-offsetY) + "px";
-
-        if (offsetX === 0 && offsetY === 0) {
-            State.damageReportOffsetSig = "";
-            State.damageReportOffsetApplied = false;
-            State.damageReportOffsetPanel = null;
-        } else {
-            State.damageReportOffsetSig = styleSig;
-            State.damageReportOffsetApplied = true;
-            State.damageReportOffsetPanel = damageReportPanel;
-        }
-    }
-
-    function IsStreetBrawlModeActive(root) {
-        var gameplayHud = GetCachedPanel("gameplayHud");
-        if (!gameplayHud && root) {
-            gameplayHud = root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD);
-            if (!gameplayHud) {
-                gameplayHud = $.GetContextPanel ? $.GetContextPanel() : null;
-            }
-            SetCachedPanel("gameplayHud", gameplayHud);
-        }
-        if (gameplayHud && hasClassInHierarchy(gameplayHud, "gamemode_streetbrawl")) {
-            return true;
-        }
-        return !!(root && root.BHasClass && root.BHasClass("gamemode_streetbrawl"));
-    }
-
-    function GetPanelClassTokens(panel) {
-        if (!panel || !panel.GetAttributeString) return [];
-        var classAttr = panel.GetAttributeString("class", "");
-        if (!classAttr || classAttr.length === 0) return [];
-        var split = classAttr.split(/\s+/);
-        var out = [];
-        for (var i = 0; i < split.length; i++) {
-            var token = split[i];
-            if (!token || token.length === 0) continue;
-            out.push(token);
-        }
-        return out;
-    }
+    // [DECOUPLED] Damage report offsets, chat runtime, and street brawl checks migrated to core/ql_hud.js
 
     // [DECOUPLED] Reload cooldown routines migrated to manifests/ql_reload_cooldown/manifest.js
 
@@ -2621,54 +2425,7 @@ function GetUIRoot() {
 
 
 
-    function PanelHasClassToken(panel, token) {
-        if (!panel || !token) return false;
-        if (panel.BHasClass && panel.BHasClass(token)) return true;
-        var cls = GetPanelClassTokens(panel);
-        for (var i = 0; i < cls.length; i++) {
-            if (cls[i] === token) return true;
-        }
-        var kids = (panel.Children && panel.Children()) || [];
-        for (var k = 0; k < kids.length; k++) {
-            var child = kids[k];
-            if (!child) continue;
-            if (child.BHasClass && child.BHasClass(token)) return true;
-            var ccls = GetPanelClassTokens(child);
-            for (var j = 0; j < ccls.length; j++) {
-                if (ccls[j] === token) return true;
-            }
-        }
-        return false;
-    }
-    function GetHighestRejuvChargeTokenOnPanel(panel) {
-        if (!panel) return 0;
-        var max = 0;
-
-        function scanNode(node) {
-            if (!node) return;
-            var tokens = GetPanelClassTokens(node);
-            for (var i = 0; i < tokens.length; i++) {
-                var token = tokens[i];
-                if (!token || token.indexOf("RejuvCount_") !== 0) continue;
-                var value = parseInt(token.slice("RejuvCount_".length), 10);
-                if (isFinite(value) && value > max) max = value;
-            }
-            if (node.BHasClass) {
-                for (var count = 1; count <= 4; count++) {
-                    if (node.BHasClass("RejuvCount_" + String(count)) && count > max) {
-                        max = count;
-                    }
-                }
-            }
-        }
-
-        scanNode(panel);
-        var kids = (panel.Children && panel.Children()) || [];
-        for (var k = 0; k < kids.length; k++) {
-            scanNode(kids[k]);
-        }
-        return max;
-    }
+    // [DECOUPLED] PanelHasClassToken and GetHighestRejuvChargeTokenOnPanel migrated to core/ql_hud.js
 
 
 
@@ -2838,100 +2595,7 @@ function GetUIRoot() {
         return result;
     }
 
-    function CreateKeyboardOverlayKey(parent, spec) {
-        if (!parent || !spec) return null;
-        if (spec.emptyClass) {
-            var empty = $.CreatePanel("Panel", parent, "");
-            empty.AddClass("Key");
-            empty.AddClass(spec.emptyClass);
-            return empty;
-        }
-
-        var binding = $.CreatePanel("CitadelBinding", parent, "", {
-            action: spec.action,
-            glyphstyle: spec.glyphstyle,
-            solid: "false"
-        });
-        binding.AddClass("Key");
-        if (spec.keyClass) binding.AddClass(spec.keyClass);
-        return binding;
-    }
-
-    function CreateKeyboardOverlayRow(layout, specs) {
-        var row = $.CreatePanel("Panel", layout, "");
-        row.AddClass("KeyboardRow");
-        for (var i = 0; i < specs.length; i++) {
-            CreateKeyboardOverlayKey(row, specs[i]);
-        }
-        return row;
-    }
-
-    function BuildKeyboardOverlayLayouts(allBindingsBox) {
-        var baseLayout = $.CreatePanel("Panel", allBindingsBox, "");
-        baseLayout.AddClass("KeyboardLayout");
-        baseLayout.AddClass("KeyboardLayoutBase");
-        CreateKeyboardOverlayRow(baseLayout, [
-            { emptyClass: "EmptyKeyWide" },
-            { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
-            { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
-        ]);
-        CreateKeyboardOverlayRow(baseLayout, [
-            { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
-            { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
-        ]);
-        CreateKeyboardOverlayRow(baseLayout, [
-            { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
-            { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
-        ]);
-
-        var fullLayout = $.CreatePanel("Panel", allBindingsBox, "");
-        fullLayout.AddClass("KeyboardLayout");
-        fullLayout.AddClass("KeyboardLayoutFull");
-        CreateKeyboardOverlayRow(fullLayout, [
-            { emptyClass: "EmptyKey" },
-            { action: "Ability1", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Ability2", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Ability3", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Ability4", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
-            { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
-        ]);
-        CreateKeyboardOverlayRow(fullLayout, [
-            { action: "Scoreboard", glyphstyle: "light", keyClass: "TabKey" },
-            { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Cosmetic1", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Reload", glyphstyle: "light", keyClass: "QWERTYKey" }
-        ]);
-        CreateKeyboardOverlayRow(fullLayout, [
-            { emptyClass: "EmptyKeyWide" },
-            { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
-        ]);
-        CreateKeyboardOverlayRow(fullLayout, [
-            { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
-            { action: "Item1", glyphstyle: "light", keyClass: "ZXCVKey" },
-            { action: "Item2", glyphstyle: "light", keyClass: "ZXCVKey" },
-            { action: "Item3", glyphstyle: "light", keyClass: "ZXCVKey" },
-            { action: "Item4", glyphstyle: "light", keyClass: "ZXCVKey" }
-        ]);
-        CreateKeyboardOverlayRow(fullLayout, [
-            { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
-            { action: "ExtraInfo", glyphstyle: "light", keyClass: "AltKey" },
-            { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
-        ]);
-    }
-
-    function ResetKeyboardOverlayCaches() {
-        State.keyboardBoxCaches = [];
-    }
+    // [DECOUPLED] Keyboard overlay layout builders migrated to manifests/ql_keyboard/manifest.js
 
     function IsPanelListValid(list) {
         return QOL_UTILS_LOADED ? QOL_UTILS.IsPanelListValid(list) : (function() {
@@ -3801,14 +3465,7 @@ function GetUIRoot() {
         return activated;
     }
 
-    function GetKeyboardCachedPanels(cache, allBindingsBox, fieldName, className) {
-        var list = cache[fieldName];
-        if (!IsPanelListValid(list)) {
-            list = allBindingsBox.FindChildrenWithClassTraverse(className) || [];
-            cache[fieldName] = list;
-        }
-        return list;
-    }
+    // [DECOUPLED] GetKeyboardCachedPanels migrated to manifests/ql_keyboard/manifest.js
 
     function FindUnsecuredSoulsSource(root) {
         if (!root) return null;
@@ -4070,11 +3727,7 @@ function GetUIRoot() {
 
     if (typeof QOL !== "undefined" && QOL) {
         QOL.updateReloadCircleExceptionState = UpdateReloadCircleExceptionState;
-        QOL.updateChatRuntime = UpdateChatRuntime;
-        QOL.hasNonDefaultChatRuntimeConfig = HasNonDefaultChatRuntimeConfig;
         QOL.updateShowBuildIdRuntime = UpdateShowBuildIdRuntime;
-        QOL.updateDamageReportOffsets = UpdateDamageReportOffsets;
-        QOL.needsDamageReportOffsetWork = NeedsDamageReportOffsetWork;
         QOL.updateUrnTrackerOverlay = UpdateUrnTrackerOverlay;
         QOL.needsUrnTrackerRuntimeWork = NeedsUrnTrackerRuntimeWork;
     }
@@ -4338,7 +3991,7 @@ function GetUIRoot() {
             passiveCooldownMode: passiveCooldownMode,
             reloadCircleActive: IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"),
             healthbarRuntimeActive: false,
-            chatRuntimeActive: HasNonDefaultChatRuntimeConfig(cfg),
+            chatRuntimeActive: !!(QOL.hasNonDefaultChatRuntimeConfig && QOL.hasNonDefaultChatRuntimeConfig(cfg)),
             damageReportOffsetActive: (
                 Math.round(damageReportOffsetX) !== 0 ||
                 Math.round(damageReportOffsetY) !== 0
@@ -5148,7 +4801,7 @@ function GetUIRoot() {
     var _qolExportDefs = [
 
         ["buildImagesInChatContainerWatermark", function() { return QOL.buildImagesInChatContainerWatermark; }],
-        ["buildKeyboardOverlayLayouts", function() { return BuildKeyboardOverlayLayouts; }],
+        ["buildKeyboardOverlayLayouts", function() { return QOL.buildKeyboardOverlayLayouts; }],
         ["clearInjectedChatImagesForMessage", function() { return QOL.clearInjectedChatImagesForMessage; }],
         ["ensureMinimapOverlayAnchor", function() { return EnsureMinimapOverlayAnchor; }],
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
@@ -5158,11 +4811,11 @@ function GetUIRoot() {
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
         ["getGameplayHudPanel", function() { return GetGameplayHudPanel; }],
-        ["getHighestRejuvChargeTokenOnPanel", function() { return GetHighestRejuvChargeTokenOnPanel; }],
+        ["getHighestRejuvChargeTokenOnPanel", function() { return QOL.getHighestRejuvChargeTokenOnPanel; }],
         ["getUnitTargetDefaultStyleTexts", function() { return GetUnitTargetDefaultStyleTexts; }],
         ["hasClassInHierarchy", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.HasClassInHierarchy : function() { return false; }; }],
         ["getImagesInChatMessageCache", function() { return QOL.getImagesInChatMessageCache; }],
-        ["getKeyboardCachedPanels", function() { return GetKeyboardCachedPanels; }],
+        ["getKeyboardCachedPanels", function() { return QOL.getKeyboardCachedPanels; }],
         ["getSharedSchemaUtils", function() { return (typeof QOL !== "undefined" && QOL.getSharedSchemaUtils) || (function() { return null; }); }],
         ["getSoulValueFromLabels", function() { return GetSoulValueFromLabels; }],
         ["getTopBarPlayerPanel", function() { return GetTopBarPlayerPanel; }],
@@ -5179,7 +4832,7 @@ function GetUIRoot() {
         ["isPanelListValid", function() { return IsPanelListValid; }],
         ["isPanelVisibleMaybe", function() { return IsPanelVisibleMaybe; }],
         ["isPassiveCooldownBasicMode", function() { return IsPassiveCooldownBasicMode; }],
-        ["isStreetBrawlModeActive", function() { return IsStreetBrawlModeActive; }],
+        ["isStreetBrawlModeActive", function() { return QOL.isStreetBrawlModeActive; }],
         ["normalizeHudOffsetNumber", function() { return NormalizeHudOffsetNumber; }],
         ["normalizeHudScaleNumber", function() { return NormalizeHudScaleNumber; }],
         ["normalizePaletteColorIndex", function() { return NormalizePaletteColorIndex; }],
@@ -5192,7 +4845,7 @@ function GetUIRoot() {
         ["perfStart", function() { return PerfStart; }],
         ["pruneImagesInChatMessageCache", function() { return QOL.pruneImagesInChatMessageCache; }],
         ["readKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
-        ["resetKeyboardOverlayCaches", function() { return ResetKeyboardOverlayCaches; }],
+        ["resetKeyboardOverlayCaches", function() { return QOL.resetKeyboardOverlayCaches; }],
         ["resetUnsecuredSoulsTracking", function() { return ResetUnsecuredSoulsTracking; }],
         ["resolveCachedPanel", function() { return ResolveCachedPanel; }],
         ["resolvePassiveCooldownMode", function() { return ResolvePassiveCooldownMode; }],
@@ -5204,7 +4857,7 @@ function GetUIRoot() {
         ["findAncestorWithClass", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.FindAncestorWithClass : function() { return null; }; }],
         ["readPanelIdTextMaybe", function() { return ReadPanelIdTextMaybe; }],
         ["readPanelTextDeepMaybe", function() { return ReadPanelTextDeepMaybe; }],
-        ["panelHasClassToken", function() { return PanelHasClassToken; }],
+        ["panelHasClassToken", function() { return QOL.panelHasClassToken; }],
         ["panelIdGoldApContainer", function() { return PANEL_ID_GOLD_AP_CONTAINER; }],
         ["panelIdTopBar", function() { return PANEL_ID_TOP_BAR; }],
         ["readMinimapIconColorIndex", function() { return ReadMinimapIconColorIndex; }],
