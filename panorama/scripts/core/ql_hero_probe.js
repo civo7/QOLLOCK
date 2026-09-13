@@ -749,6 +749,21 @@
         return { hero: "", source: "none" };
     };
 
+    const GetLoaderBaseDefaultHeroId = () => {
+        const bdc = (typeof globalThis._BDC === "function") ? globalThis._BDC : (QOL.buildDefaultConfig || null);
+        const defaults = bdc ? bdc() : {};
+        const rawHero = (defaults && Object.prototype.hasOwnProperty.call(defaults, "DEFAULT_HERO"))
+            ? String(defaults.DEFAULT_HERO || "")
+            : "";
+        const normalize = QOL.normalizeHeroId || ((h) => h);
+        const normalized = normalize(rawHero);
+        if (normalized && normalized !== "hero_skyrunner") return normalized;
+        const fallbackId = globalThis.BUILD_SAVE_RETURN_HERO_ID || "hero_werewolf";
+        const fallback = normalize(fallbackId);
+        if (fallback && fallback !== "hero_skyrunner") return fallback;
+        return "hero_werewolf";
+    };
+
     // ── Module registration ──
     const api = {
         foldToAscii: FoldToAscii,
@@ -764,7 +779,11 @@
         readHeroFromPanelDetails: TryReadHeroFromPanelDetails,
         readHeroFromPanelSubtree: TryReadHeroFromPanelSubtree,
         resolvePlayableHeroAlias: ResolvePlayableHeroAlias,
-        extractHeroTokenFromText: ExtractHeroTokenFromText
+        extractHeroTokenFromText: ExtractHeroTokenFromText,
+        readPanelIdTextMaybe: ReadPanelIdTextMaybe,
+        readPanelClassTextMaybe: ReadPanelClassTextMaybe,
+        readPanelTypeTextMaybe: ReadPanelTypeTextMaybe,
+        getLoaderBaseDefaultHeroId: GetLoaderBaseDefaultHeroId
     };
 
     Q.core.heroProbe = api;
@@ -779,6 +798,10 @@
     Q.tryReadHeroFromPanelSubtree = TryReadHeroFromPanelSubtree;
     Q.resolvePlayableHeroAlias = ResolvePlayableHeroAlias;
     Q.extractHeroTokenFromText = ExtractHeroTokenFromText;
+    Q.readPanelIdTextMaybe = ReadPanelIdTextMaybe;
+    Q.readPanelClassTextMaybe = ReadPanelClassTextMaybe;
+    Q.readPanelTypeTextMaybe = ReadPanelTypeTextMaybe;
+    Q.getLoaderBaseDefaultHeroId = GetLoaderBaseDefaultHeroId;
 
     $.Msg("[QOLLock] core/ql_hero_probe: attached to QOL.core.heroProbe");
 })();

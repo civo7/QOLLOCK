@@ -412,266 +412,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     }
 
     // Settings loader logging & theme helpers extracted to core/ql_settings_loader.js
-    const HERO_DETECT_ALIAS_MAP = {
-        // Internal storage hero used by save/load flow.
-        airheart: 1,
-        inferno: 1,
-        gigawatt: 1,
-        hornet: 1,
-        ghost: 1,
-        atlas: 1,
-        wraith: 1,
-        forge: 1,
-        chrono: 1,
-        dynamo: 1,
-        kelvin: 1,
-        haze: 1,
-        astro: 1,
-        bebop: 1,
-        nano: 1,
-        orion: 1,
-        krill: 1,
-        shiv: 1,
-        tengu: 1,
-        kali: 1,
-        warden: 1,
-        yamato: 1,
-        lash: 1,
-        viscous: 1,
-        gunslinger: 1,
-        yakuza: 1,
-        genericperson: 1,
-        tokamak: 1,
-        wrecker: 1,
-        rutger: 1,
-        synth: 1,
-        thumper: 1,
-        mirage: 1,
-        slork: 1,
-        cadence: 1,
-        targetdummy: 1,
-        bomber: 1,
-        shieldguy: 1,
-        viper: 1,
-        vandal: 1,
-        magician: 1,
-        trapper: 1,
-        operative: 1,
-        vampirebat: 1,
-        drifter: 1,
-        priest: 1,
-        frank: 1,
-        bookworm: 1,
-        boho: 1,
-        doorman: 1,
-        skyrunner: 1,
-        swan: 1,
-        punkgoat: 1,
-        fortuna: 1,
-        necro: 1,
-        fencer: 1,
-        druid: 1,
-        graf: 1,
-        opera: 1,
-        familiar: 1,
-        werewolf: 1,
-        unicorn: 1
-    };
-
-    function ResolvePlayableHeroAlias(rawAlias) {
-        if (!rawAlias) return "";
-        var alias = String(rawAlias).toLowerCase().replace(/[^a-z0-9_]/g, "");
-        if (!alias) return "";
-        if (alias.indexOf("hero_") === 0) alias = alias.slice(5);
-        if (alias.indexOf("cut_") === 0) alias = alias.slice(4);
-        if (alias.indexOf("npc_") === 0) alias = alias.slice(4);
-        if (!alias) return "";
-        if (HERO_DETECT_ALIAS_MAP[alias]) return alias;
-
-        // Common variant suffixes seen in model/asset names (e.g. yamato_v2).
-        var variant = alias
-            .replace(/_v[0-9]+$/i, "")
-            .replace(/_[0-9]+$/i, "")
-            .replace(/_(staging|wip|test|preview|prototype|dev)$/i, "");
-        if (variant && HERO_DETECT_ALIAS_MAP[variant]) return variant;
-
-        // Progressive trim for composite aliases: foo_bar_baz -> foo_bar -> foo.
-        var parts = alias.split("_");
-        while (parts.length > 1) {
-            parts.pop();
-            var candidate = parts.join("_");
-            if (candidate && HERO_DETECT_ALIAS_MAP[candidate]) return candidate;
-        }
-
-        return "";
-    }
-
-    function NormalizeHeroAliasToken(aliasText) {
-        var alias = ResolvePlayableHeroAlias(aliasText);
-        if (!alias) return "";
-        return "hero_" + alias;
-    }
-
-    function ExtractHeroTokenFromText(rawText) {
-        if (!rawText) return "";
-        var text = String(rawText);
-
-        // Highest-confidence path: canonical internal name token.
-        var canonical = text.match(/\b(hero_[a-z0-9_]+)\b/i);
-        if (canonical && canonical[1]) return String(canonical[1]).toLowerCase();
-
-        // Fallback for hero image/resource paths that often omit the hero_ prefix.
-        var aliasPatterns = [
-            /\/heroes\/([a-z0-9_]+)(?:[\/._-]|$)/i,
-            /\/heroes(?:[_-][a-z0-9]+)\/([a-z0-9_]+)(?:[\/._-]|$)/i,
-            /\/heroes(?:[_-][a-z0-9]+)\/([a-z0-9_]+)\/(?:materials|textures|models|abilities)(?:[\/._-]|$)/i,
-            /\/heroes_(?:staging|wip)\/([a-z0-9_]+)(?:[\/._-]|$)/i,
-            /\/hero_portraits\/([a-z0-9_]+)(?:[\/._-]|$)/i,
-            /\/heroes?\/(?:hero_)?([a-z0-9_]+)\.vmdl(?:_c)?\b/i,
-            /\bselected[_:\- ]*hero[_:= ]+([a-z0-9_]+)\b/i,
-            /\bhero[_:\-/ ]+([a-z0-9_]+)\b/i
-        ];
-        for (var i = 0; i < aliasPatterns.length; i++) {
-            var m = text.match(aliasPatterns[i]);
-            if (!m || !m[1]) continue;
-            var heroToken = NormalizeHeroAliasToken(m[1]);
-            if (heroToken) return heroToken;
-        }
-
-        // Language-agnostic fallback: use locale lookup table (generated from
-        // Deadlock's localization files) to resolve translated hero names.
-        if (typeof QOL !== "undefined" && typeof QOL.lookupLocaleHero === "function") {
-            var localeHero = QOL.lookupLocaleHero(rawText);
-            if (localeHero) return localeHero;
-        }
-
-        return "";
-    }
-
-    function ExtractLastHeroTokenFromText(rawText) {
-        if (!rawText) return "";
-        var text = String(rawText);
-        var re = /\b(hero_[a-z0-9_]+)\b/ig;
-        var match = null;
-        var last = "";
-        while ((match = re.exec(text)) !== null) {
-            if (match[1]) last = String(match[1]).toLowerCase();
-        }
-        if (!last) {
-            var fallback = ExtractHeroTokenFromText(text);
-            if (fallback) last = fallback;
-        }
-        return last;
-    }
-
-    function ExtractHeroFromLooseAliasTokens(rawText) {
-        if (!rawText) return "";
-        var text = String(rawText).toLowerCase();
-        if (!text || text.length === 0) return "";
-
-        var parts = text.split(/[^a-z0-9]+/);
-        for (var i = 0; i < parts.length; i++) {
-            var token = parts[i];
-            if (!token || token.length < 3) continue;
-            var alias = ResolvePlayableHeroAlias(token);
-            if (alias) return "hero_" + alias;
-        }
-        return "";
-    }
-
-    function TryReadHeroFromPanelBHasClass(panel) {
-        if (!panel || !panel.BHasClass) return "";
-        for (var alias in HERO_DETECT_ALIAS_MAP) {
-            if (!alias) continue;
-            try {
-                if (panel.BHasClass("hero_" + alias)) return "hero_" + alias;
-            } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-            try {
-                if (panel.BHasClass(alias)) return "hero_" + alias;
-            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        }
-        return "";
-    }
-
-    function PanelLooksSelected(panel) {
-        if (!panel) return false;
-        var classText = "";
-        try {
-            if (panel.GetAttributeString) classText = String(panel.GetAttributeString("class", "") || "");
-        } catch (e0) {
-            classText = "";
-        }
-        if (!classText || classText.length === 0) {
-            try {
-                if (panel.GetClasses) classText = String(panel.GetClasses() || "");
-            } catch (e1) {
-                classText = "";
-            }
-        }
-        var normalized = classText.toLowerCase();
-        if (!normalized || normalized.length === 0) return false;
-        if (/(^|[\s,_-])(selected|active|current|isselected|is_active)([\s,_-]|$)/.test(normalized)) return true;
-        return false;
-    }
-
-    function GetLoaderBaseDefaultHeroId() {
-        var defaults = _BDC();
-        var rawHero = (defaults && defaults.hasOwnProperty("DEFAULT_HERO"))
-            ? String(defaults.DEFAULT_HERO || "")
-            : "";
-        var normalized = QOL.normalizeHeroId(rawHero);
-        if (normalized && normalized !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return normalized;
-        var fallback = QOL.normalizeHeroId(BUILD_SAVE_RETURN_HERO_ID);
-        if (fallback && fallback !== BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) return fallback;
-        return "hero_werewolf";
-    }
-    function ReadPanelClassTextMaybe(panel) {
-        if (!panel) return "";
-        var classText = "";
-        try {
-            if (panel.GetAttributeString) classText = String(panel.GetAttributeString("class", "") || "");
-        } catch (e0) {
-            classText = "";
-        }
-        if (!classText || classText.length === 0) {
-            try {
-                if (panel.GetClasses) classText = String(panel.GetClasses() || "");
-            } catch (e1) {
-                classText = "";
-            }
-        }
-        return classText || "";
-    }
-
-    function ReadPanelTypeTextMaybe(panel) {
-        if (!panel) return "";
-        var typeText = "";
-        try { if (panel.paneltype !== undefined && panel.paneltype !== null) typeText = String(panel.paneltype); } catch (e0) { typeText = ""; }
-        if (!typeText || typeText.length === 0) {
-            try { if (panel.type !== undefined && panel.type !== null) typeText = String(panel.type); } catch (e1) { typeText = ""; }
-        }
-        if (!typeText || typeText.length === 0) {
-            try { if (panel.panelType !== undefined && panel.panelType !== null) typeText = String(panel.panelType); } catch (e2) { typeText = ""; }
-        }
-        return typeText || "";
-    }
-
-    function ReadPanelIdTextMaybe(panel) {
-        if (!panel) return "";
-        var idText = "";
-        try { idText = panel.id ? String(panel.id) : ""; } catch (e0) { idText = ""; }
-        return idText || "";
-    }
-
-    function TryReadHeroFromPanelDetails(panel) {
-        if (QOL.core && QOL.core.heroProbe) return QOL.core.heroProbe.readHeroFromPanelDetails(panel);
-        return "";
-    }
-
-    function TryReadHeroFromPanelSubtree(panel, maxNodes) {
-        if (QOL.core && QOL.core.heroProbe) return QOL.core.heroProbe.readHeroFromPanelSubtree(panel, maxNodes);
-        return "";
-    }
+    // [DECOUPLED] Hero detection and signature probing migrated to core/ql_hero_probe.js
     function LogLoopException(loopName, err, stateKey, nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         var key = stateKey || "loopErrorNextLogMs";
@@ -4855,7 +4596,7 @@ function GetUIRoot() {
         ["setPanelClassCached", function() { return SetPanelClassCached; }],
         ["activatePanelSafe", function() { return ActivatePanelSafe; }],
         ["findAncestorWithClass", function() { return (typeof QOL_UTILS !== "undefined") ? QOL_UTILS.FindAncestorWithClass : function() { return null; }; }],
-        ["readPanelIdTextMaybe", function() { return ReadPanelIdTextMaybe; }],
+        ["readPanelIdTextMaybe", function() { return QOL.readPanelIdTextMaybe; }],
         ["readPanelTextDeepMaybe", function() { return ReadPanelTextDeepMaybe; }],
         ["panelHasClassToken", function() { return QOL.panelHasClassToken; }],
         ["panelIdGoldApContainer", function() { return PANEL_ID_GOLD_AP_CONTAINER; }],
@@ -4866,16 +4607,16 @@ function GetUIRoot() {
         ["state", function() { return State; }],
         ["extractBuildCategoryPayloadToken", function() { return ExtractBuildCategoryPayloadToken; }],
         ["getAccountIdForBuildCategoryPayload", function() { return (typeof QOL !== "undefined" && QOL.getAccountIdForBuildCategoryPayload) || (function() { return ""; }); }],
-        ["confirmStorageHeroSignatureAbilities", function() { return ConfirmStorageHeroSignatureAbilities; }],
+        ["confirmStorageHeroSignatureAbilities", function() { return QOL.confirmStorageHeroSignatureAbilities; }],
         // The pure read underneath the confirm. Exported so a caller that only
         // wants to know WHICH hero the ability HUD is showing can ask without
         // going through ConfirmStorageHeroSignatureAbilities, which mutates the
         // consecutive-hit counters that the confirm stage depends on.
-        ["readStorageHeroSignatureSlots", function() { return ReadStorageHeroSignatureSlots; }],
-        ["resolvePlayableHeroAlias", function() { return ResolvePlayableHeroAlias; }],
-        ["resolveBuildSaveStorageHeroSignal", function() { return ResolveBuildSaveStorageHeroSignal; }],
+        ["readStorageHeroSignatureSlots", function() { return QOL.readStorageHeroSignatureSlots; }],
+        ["resolvePlayableHeroAlias", function() { return QOL.resolvePlayableHeroAlias; }],
+        ["resolveBuildSaveStorageHeroSignal", function() { return QOL.resolveBuildSaveStorageHeroSignal; }],
         ["tryReadBuildSaveStorageHeroFromSettings", function() { return function() { return null; }; }],
-        ["extractHeroTokenFromText", function() { return ExtractHeroTokenFromText; }],
+        ["extractHeroTokenFromText", function() { return QOL.extractHeroTokenFromText; }],
         ["finalizeSaveSettingsLoaderSession", function() { return QOL.finalizeSaveSettingsLoaderSession; }],
         ["beginSaveSettingsLoaderSession", function() { return QOL.beginSaveSettingsLoaderSession; }],
         ["setSaveSettingsLoaderStepState", function() { return QOL.setSaveSettingsLoaderStepState; }],
@@ -4888,8 +4629,8 @@ function GetUIRoot() {
         ["buildDefaultPayloadToken", function() { return BuildDefaultPayloadToken; }],
         ["buildPayloadFromBase64Url", function() { return BuildPayloadFromBase64Url; }],
         ["deserializeBuildPayloadCompact", function() { return DeserializeBuildPayloadCompact; }],
-        ["ensureStorageHeroFavoritesHeaderVisible", function() { return EnsureStorageHeroFavoritesHeaderVisible; }],
-        ["getLoaderBaseDefaultHeroId", function() { return GetLoaderBaseDefaultHeroId; }],
+        ["ensureStorageHeroFavoritesHeaderVisible", function() { return QOL.ensureStorageHeroFavoritesHeaderVisible; }],
+        ["getLoaderBaseDefaultHeroId", function() { return QOL.getLoaderBaseDefaultHeroId; }],
         ["isBrowseBuildsPopupOpen", function() { return IsBrowseBuildsPopupOpen; }],
         ["tryOpenBuildBrowserPopup", function() { return TryOpenBuildBrowserPopup; }],
         ["shouldRunBuildCategoryPayloadUiAction", function() { return ShouldRunBuildCategoryPayloadUiAction; }],
@@ -4914,7 +4655,7 @@ function GetUIRoot() {
         ["tryReadAccountIdFromKnownPartyPath", function() { return TryReadAccountIdFromKnownPartyPath; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
         ["washColorPalette", function() { return QOL_WASH_COLOR_PALETTE; }],
-        ["tryReadHeroFromPanelDetails", function() { return TryReadHeroFromPanelDetails; }],
+        ["tryReadHeroFromPanelDetails", function() { return QOL.tryReadHeroFromPanelDetails; }],
     ];
 
     // Publish to QOL namespace with error logging
