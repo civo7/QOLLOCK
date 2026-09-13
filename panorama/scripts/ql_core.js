@@ -295,10 +295,6 @@ _TLog = function(label, detail) {
     const MINIMAP_CRATE_OVERLAY_DEBUG = false;
     const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
     const BOTTOM_BAR_CURRENCY_DEBUG = false;
-    const ULT_CD_DEBUG_ENABLED = false;
-    const ENEMY_ULT_OLD_PANEL_SCAN_MS = 1200;
-    const ENEMY_UNIT_STATUS_OLD_PANEL_SCAN_MS = Math.min(ENEMY_COLORED_HEALTH_PANEL_SCAN_MS, ENEMY_ULT_OLD_PANEL_SCAN_MS);
-    const ENEMY_ULT_OLD_TOPBAR_NAME_REFRESH_MS = 1500;
     // ---- Unsecured Souls overlay ----
     // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
     // re-scanning faster than 1Hz provides no benefit while wasting CPU
@@ -349,15 +345,6 @@ _TLog = function(label, detail) {
     const ENEMY_COLORED_HEALTH_PULSE_COLOR = [225, 97, 97];
     const ENEMY_COLORED_HEALTH_PULSE_DARK_COLOR = [85, 28, 28];
     const ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
-    const ITEM_MIRROR_RAPID_RETRIGGER_WINDOW_MS = 1300;
-    const ITEM_MIRROR_RAPID_RETRIGGER_SUPPRESS_MS = 900;
-    const ITEM_MIRROR_READY_OVERLAY_FLASH_MS = 420;
-const ITEM_MIRROR_FLASH_DEBUG = false;
-const ITEM_MIRROR_PROBE_DEBUG = false;
-const ITEM_MIRROR_COOLDOWN_DEBUG = false;
-const ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS = 350;
-const ITEM_MIRROR_EXPRESS_DEBUG = false;
-const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     // TEMP TEST SWITCH: keep base + optimize item cooldown paths enabled together for offset alignment checks.
     const ITEM_COOLDOWN_DUAL_MODE_TEST = false;
     // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
@@ -564,8 +551,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "ability_skyrunner_magic_beam",
         "Waiting..."
     ];
-    const ENEMY_ULT_OLD_DEBUG = false;
-    const ENEMY_ULT_OLD_DEBUG_THROTTLE_MS = 500;
     const HERO_DETECT_DEBUG = false;
     const HERO_RETURN_DEBUG = false;
     const HERO_RETURN_DEBUG_THROTTLE_MS = 350;
@@ -601,36 +586,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         $.Msg("[QOLLock][AccountProbe] " + msg);
     }
 
-function ItemMirrorFlashLog(msg) {
-    if (!ITEM_MIRROR_FLASH_DEBUG) return;
-    $.Msg("[QOLLock][ItemMirrorFlash] " + msg);
-}
-
-function ItemMirrorCooldownDebugLog(msg) {
-    if (!ITEM_MIRROR_COOLDOWN_DEBUG) return;
-    $.Msg("[QOLLock][ItemMirrorCooldown] " + msg);
-}
-
-function ItemMirrorCooldownDebugLogThrottled(sig, msg, nowMs) {
-    if (!ITEM_MIRROR_COOLDOWN_DEBUG) return;
-    var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-    var sameSig = sig && sig === State.itemMirror.debugLastSig;
-    if (sameSig && now < (State.itemMirror.debugLastMs || 0)) return;
-    State.itemMirror.debugLastSig = sig || "";
-    State.itemMirror.debugLastMs = now + ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS;
-    ItemMirrorCooldownDebugLog(msg);
-}
-
-function ExpressShotLog(msg) {
-    if (!ITEM_MIRROR_EXPRESS_DEBUG) return;
-    $.Msg("[QOLLock][ItemExpressShot] " + msg);
-    }
-
-    function ItemMirrorExceptionLog(msg) {
-        if (!ITEM_MIRROR_EXCEPTION_DEBUG) return;
-        $.Msg("[QOLLock][ItemMirrorException] " + msg);
-    }
-
     function UrnTrackerLog(msg) {
         if (!URN_TRACKER_DEBUG) return;
         $.Msg("[QOLLock][UrnTracker] " + msg);
@@ -658,22 +613,6 @@ function ExpressShotLog(msg) {
 
     // Phase A.3: EnemyColoredHealthDebugLogThrottled + MinimapCrateOverlayDebugLogThrottled
     // removed — dead code (feature files have their own copies).
-
-
-    function EnemyUltOldDebugLog(msg) {
-        if (!ENEMY_ULT_OLD_DEBUG) return;
-        $.Msg("[QOLLock][EnemyUltOldDebug] " + msg);
-    }
-
-    function EnemyUltOldDebugLogThrottled(sig, msg, nowMs) {
-        if (!ENEMY_ULT_OLD_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.enemyUltOldDebugLastSig;
-        if (sameSig && now < (State.enemyUltOldDebugNextMs || 0)) return;
-        State.enemyUltOldDebugLastSig = sig || "";
-        State.enemyUltOldDebugNextMs = now + ENEMY_ULT_OLD_DEBUG_THROTTLE_MS;
-        EnemyUltOldDebugLog(msg);
-    }
 
     function _TLog(label, detail) {
         try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
@@ -2695,121 +2634,6 @@ function GetUIRoot() {
         return out;
     }
 
-    function SyncPanelClasses(source, target, cacheKey, seedClasses) {
-        if (!source || !target) return;
-        var prior = State.itemMirror.classCache[cacheKey] || [];
-        var map = {};
-        function addToken(token) {
-            if (!token || token.length === 0) return;
-            map[token] = true;
-        }
-        for (var i = 0; i < prior.length; i++) addToken(prior[i]);
-        if (seedClasses) {
-            for (var s = 0; s < seedClasses.length; s++) addToken(seedClasses[s]);
-        }
-        var fromAttr = GetPanelClassTokens(source);
-        for (var a = 0; a < fromAttr.length; a++) addToken(fromAttr[a]);
-
-        var tokens = Object.keys(map);
-        for (var t = 0; t < tokens.length; t++) {
-            var cls = tokens[t];
-            target.SetHasClass(cls, source.BHasClass && source.BHasClass(cls));
-        }
-        State.itemMirror.classCache[cacheKey] = tokens;
-    }
-
-    function GetInlineStyleProperty(panel, propName) {
-        if (!panel || !panel.GetAttributeString || !propName) return "";
-        var styleText = panel.GetAttributeString("style", "");
-        if (!styleText || styleText.length === 0) return "";
-        var match = new RegExp(propName + "\\s*:\\s*([^;]+)", "i").exec(styleText);
-        return match && match[1] ? match[1].trim() : "";
-    }
-
-    function ResolveMirrorItemSize(sourceIcon, sourceMod) {
-        var sizePx = Math.round(Number(ITEM_MIRROR_ICON_BASE_SIZE_PX));
-        if (!isFinite(sizePx) || sizePx <= 0) sizePx = 45;
-        var sizeText = String(sizePx) + "px";
-        return { width: sizeText, height: sizeText };
-    }
-
-    function ParseRadialClipEndDeg(clipText) {
-        if (!clipText || clipText.length === 0) return null;
-        var m = /,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*\)/i.exec(String(clipText));
-        if (!m || !m[1]) return null;
-        var v = parseFloat(m[1]);
-        return isFinite(v) ? v : null;
-    }
-
-    function ParseRadialClipStartDeg(clipText) {
-        if (!clipText || clipText.length === 0) return null;
-        var text = String(clipText);
-        var m = /radial\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i.exec(text);
-        if ((!m || !m[1]) && text.indexOf(",") >= 0) {
-            m = /,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i.exec(text);
-        }
-        if (!m || !m[1]) return null;
-        var v = parseFloat(m[1]);
-        return isFinite(v) ? v : null;
-    }
-
-    function ResolveRadialProgressDeg(clipText, previousDeg) {
-        var startDeg = ParseRadialClipStartDeg(clipText);
-        var endDeg = ParseRadialClipEndDeg(clipText);
-
-        if (startDeg === null && endDeg === null) return null;
-        if (startDeg === null) return endDeg;
-        if (endDeg === null) return startDeg;
-
-        if (!isFinite(startDeg) && !isFinite(endDeg)) return null;
-        if (!isFinite(startDeg)) return endDeg;
-        if (!isFinite(endDeg)) return startDeg;
-
-        if (Math.abs(startDeg) <= 0.01 && endDeg > 0.01) return endDeg;
-        if (Math.abs(endDeg) <= 0.01 && startDeg > 0.01) return startDeg;
-
-        if (previousDeg !== null && isFinite(previousDeg)) {
-            var ds = Math.abs(startDeg - previousDeg);
-            var de = Math.abs(endDeg - previousDeg);
-            if (ds < de) return startDeg;
-            if (de < ds) return endDeg;
-        }
-
-        return (Math.abs(startDeg) >= Math.abs(endDeg)) ? startDeg : endDeg;
-    }
-
-    function TriggerItemMirrorReadyFlash(overlayPanel, debugKey) {
-        if (!IsPanelValid(overlayPanel)) return;
-        var key = debugKey ? String(debugKey) : "unknown";
-        try {
-            if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
-            overlayPanel.style.visibility = "visible";
-        } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        ItemMirrorFlashLog(key + " overlay flash trigger");
-        $.Schedule(0.01, function() {
-            if (!IsPanelValid(overlayPanel)) return;
-            try {
-                if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", true);
-                ItemMirrorFlashLog(key + " overlay class=ready_flash ON");
-            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-            $.Schedule((ITEM_MIRROR_READY_OVERLAY_FLASH_MS + 40) / 1000.0, function() {
-                if (!IsPanelValid(overlayPanel)) return;
-                try {
-                    if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
-                    ItemMirrorFlashLog(key + " overlay class=ready_flash OFF");
-                } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-            });
-        });
-    }
-
-    function FormatDerivedCooldownSeconds(sec) {
-        if (!isFinite(sec) || sec <= 0) return "";
-        if (sec >= 1) return String(Math.ceil(sec));
-        // Keep sub-1s smooth.
-        var rounded = Math.round(sec * 10) / 10;
-        return rounded.toFixed(1);
-    }
-
     // [DECOUPLED] Reload cooldown routines migrated to manifests/ql_reload_cooldown/manifest.js
 
     function UpdateReloadCircleExceptionState(root, cfg) {
@@ -2842,14 +2666,6 @@ function GetUIRoot() {
 
         var exceptionActive = hasActiveReloadClass && attackDelayedActive && reloadingActive;
         SetPanelClassCached(root, State.rootClassCache, "hide_reload_circle_exception_active", exceptionActive);
-    }
-
-    function PanelHasAllClasses(panel, classes) {
-        if (!panel || !panel.BHasClass) return false;
-        for (var i = 0; i < classes.length; i++) {
-            if (!panel.BHasClass(classes[i])) return false;
-        }
-        return true;
     }
 
     function IsConnectedToHideout(root) {
@@ -3277,10 +3093,6 @@ function GetUIRoot() {
         return null;
     }
 
-    function IsUltCooldownTrackedIndex(index) {
-        return index >= ULT_CD_SLOT_MIN_INDEX && index <= ULT_CD_SLOT_MAX_INDEX;
-    }
-
     function EnsureTopBarPlayerPanelCacheState(root) {
         if (State.topbarPlayerPanelRoot && State.topbarPlayerPanelRoot !== root) {
             State.topbarPlayerPanels = null;
@@ -3415,57 +3227,6 @@ function GetUIRoot() {
     // -------------------------------------------------------------------------
     // Ultimate Cooldown Overlay — panel lookup helpers
     // -------------------------------------------------------------------------
-    // We traverse through known intermediate IDs with FindChild (non-recursive)
-    // and verify that the returned panels actually descend from the expected
-    // player panel via a parent-walk.  This defends against any cross-player
-    // contamination if FindChildTraverse resolves a duplicate ID to a different
-    // player's subtree.
-    //
-    // Player panel DOM path:
-    //   CitadelHudTopBarPlayer
-    //     PlayerDetailsContainer
-    //       StatusRow
-    //         UltimateStatus
-    //           UltimateStatusBG
-    //             UltimateCooldownTextHidden  (Label — game-managed binding)
-    //         UltimateCooldownTextShown       (Label — we write this)
-
-    function FindUltCooldownElements(playerPanel) {
-        var statusRow = playerPanel && playerPanel.FindChildTraverse
-            ? playerPanel.FindChildTraverse("StatusRow")
-            : null;
-        if (!statusRow || !IsPanelValid(statusRow)) return null;
-
-        // UltimateCooldownTextShown is a direct child of StatusRow
-        var elShown = statusRow.FindChild
-            ? statusRow.FindChild("UltimateCooldownTextShown")
-            : null;
-
-        // UltimateCooldownTextHidden is nested: StatusRow > UltimateStatus > UltimateStatusBG > label
-        var ultimateStatus = statusRow.FindChild
-            ? statusRow.FindChild("UltimateStatus")
-            : null;
-        var elHidden = null;
-        if (ultimateStatus && IsPanelValid(ultimateStatus) && ultimateStatus.FindChild) {
-            var bg = ultimateStatus.FindChild("UltimateStatusBG");
-            if (bg && IsPanelValid(bg) && bg.FindChild) {
-                elHidden = bg.FindChild("UltimateCooldownTextHidden");
-            }
-        }
-
-        if (!elShown || !IsPanelValid(elShown) || !elHidden || !IsPanelValid(elHidden)) return null;
-
-        // Verify both elements actually descend from the player panel we were
-        // given (belt-and-suspenders against any ancestor mismatch).
-        if (!IsDescendantOf(elShown, playerPanel) || !IsDescendantOf(elHidden, playerPanel)) return null;
-
-        return { elHidden: elHidden, elShown: elShown };
-    }
-
-    function UpdateUltimateCooldownOverlay(root, cfg) {
-        // Obsolete: Handled by manifests/ql_ult_cooldowns/manifest.js at 4Hz
-    }
-
     function EnsureMinimapOverlayAnchor(root) {
         if (!root || !root.FindChildTraverse) return null;
         var anchor = GetCachedPanel("minimapObjectiveTimersAnchor");
@@ -3731,138 +3492,6 @@ function GetUIRoot() {
         _forcedConfigInput = cfg;
         _forcedConfigOutput = result;
         return result;
-    }
-
-    function GetFirstPanelTextByClass(panel, className) {
-        if (!panel || !panel.FindChildrenWithClassTraverse) return "";
-        var items = panel.FindChildrenWithClassTraverse(className) || [];
-        for (var i = 0; i < items.length; i++) {
-            var p = items[i];
-            if (p && p.text && p.text.length > 0) return p.text;
-        }
-        return "";
-    }
-
-    function GetFirstPanelTextById(panel, idName) {
-        if (!panel || !panel.FindChildTraverse || !idName) return "";
-        var p = panel.FindChildTraverse(idName);
-        if (!p || typeof p.text !== "string") return "";
-        return p.text;
-    }
-
-    function NormalizeCooldownNumberText(text) {
-        if (!text || typeof text !== "string") return "";
-        var trimmed = text.trim();
-        if (trimmed.length === 0) return "";
-        var exact = /^(\d+(?:\.\d+)?)(?:s)?$/i.exec(trimmed);
-        if (exact && exact[1]) return exact[1];
-        var contains = /(\d+(?:\.\d+)?)/.exec(trimmed);
-        if (contains && contains[1]) return contains[1];
-        return "";
-    }
-
-    function IsItemMirrorCooldownProbeExcludedPanel(panel) {
-        if (!panel) return false;
-        var panelId = "";
-        try { panelId = String(panel.id || ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        if (
-            panelId === "UpgradeLevelContainer" ||
-            panelId === "UpgradeLevel" ||
-            panelId === "TierContainer" ||
-            panelId === "mod_tier_label" ||
-            panelId === "ItemHidden" ||
-            panelId === "embedded_active_tag" ||
-            panelId === "ActiveTagContainer"
-        ) {
-            return true;
-        }
-        if (panel.BHasClass) {
-            try {
-                if (
-                    panel.BHasClass("tier_bg") ||
-                    panel.BHasClass("mod_icon_background_container")
-                ) {
-                    return true;
-                }
-            } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        }
-        return false;
-    }
-
-    function FindNumericLabelTextInTree(panel) {
-        if (!panel || !panel.Children) return "";
-        var queue = [panel];
-        var best = "";
-        while (queue.length > 0) {
-            var current = queue.shift();
-            if (!current) continue;
-
-            if (IsItemMirrorCooldownProbeExcludedPanel(current)) continue;
-
-            if (typeof current.text === "string") {
-                var t = current.text.trim();
-                var norm = NormalizeCooldownNumberText(t);
-                if (norm && norm.length > 0) {
-                    if (!best || norm.length <= best.length) {
-                        best = norm;
-                        if (t.length <= 2) return best;
-                    }
-                }
-            }
-
-            var kids = current.Children ? current.Children() : [];
-            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
-        }
-        return best;
-    }
-
-    function ProbeCooldownTextFromSourceIcon(sourceIcon) {
-        var classCandidates = ["Countdown", "cooldown_text", "CooldownText", "CooldownLabel"];
-        var idCandidates = ["Countdown", "cooldown_text", "CooldownText", "CooldownLabel"];
-        var byClass = {};
-        var byId = {};
-        var chosen = "";
-        var chosenSource = "";
-
-        if (!sourceIcon) {
-            return { chosen: "", chosenSource: "", byClass: byClass, byId: byId, numeric: "" };
-        }
-
-        for (var i = 0; i < classCandidates.length; i++) {
-            var cls = classCandidates[i];
-            var rawByClass = GetFirstPanelTextByClass(sourceIcon, cls);
-            var normByClass = NormalizeCooldownNumberText(rawByClass);
-            byClass[cls] = normByClass || "";
-            if (!chosen && normByClass) {
-                chosen = normByClass;
-                chosenSource = "class:" + cls;
-            }
-        }
-
-        for (var j = 0; j < idCandidates.length; j++) {
-            var id = idCandidates[j];
-            var rawById = GetFirstPanelTextById(sourceIcon, id);
-            var normById = NormalizeCooldownNumberText(rawById);
-            byId[id] = normById || "";
-            if (!chosen && normById) {
-                chosen = normById;
-                chosenSource = "id:" + id;
-            }
-        }
-
-        var numeric = FindNumericLabelTextInTree(sourceIcon);
-        if (!chosen && numeric) {
-            chosen = numeric;
-            chosenSource = "numeric";
-        }
-
-        return {
-            chosen: chosen || "",
-            chosenSource: chosenSource || "",
-            byClass: byClass,
-            byId: byId,
-            numeric: numeric || ""
-        };
     }
 
     function CreateKeyboardOverlayKey(parent, spec) {
@@ -4132,14 +3761,6 @@ function GetUIRoot() {
     function NormalizeStaminaChargeAngle(value) {
         var angle = Math.round(Number(value));
         if (!isFinite(angle)) angle = 45;
-        if (angle < 0) angle = 0;
-        if (angle > 360) angle = 360;
-        return angle;
-    }
-
-    function NormalizeAmmoClipAngle(value) {
-        var angle = Math.round(Number(value));
-        if (!isFinite(angle)) angle = 0;
         if (angle < 0) angle = 0;
         if (angle > 360) angle = 360;
         return angle;
@@ -6703,178 +6324,6 @@ function GetUIRoot() {
         State.unsecuredSouls.etaEndMs = 0;
     }
 
-    function NormalizeEnemyUltNameKey(text) {
-        if (text === undefined || text === null) return "";
-        var normalized = String(text || "");
-        normalized = normalized.replace(/<[^>]*>/g, " ");
-        normalized = normalized.toLowerCase();
-        normalized = normalized.replace(/\s+/g, " ").trim();
-        if (!normalized) return "";
-        normalized = normalized.replace(/[\u200b\u200c\u200d\ufeff]/g, "");
-        normalized = normalized.replace(/[ \t\r\n]+/g, "");
-        normalized = normalized.replace(/[.,'"`~!@#$%^&*()+={}\[\]|\\:;<>/?_-]/g, "");
-        return normalized;
-    }
-
-    function ReadEnemyUltOldNameText(unitStatusPanel) {
-        if (!unitStatusPanel || !unitStatusPanel.FindChildTraverse) return "";
-        var namePanel = unitStatusPanel.FindChildTraverse("name");
-        if (!namePanel || !IsPanelValid(namePanel) || typeof namePanel.text !== "string") return "";
-        return String(namePanel.text || "");
-    }
-
-    function ParseUltTrackedIndexFromText(rawText) {
-        if (rawText === undefined || rawText === null) return -1;
-        var text = String(rawText || "");
-        if (!text || text.length === 0) return -1;
-        var regexes = [
-            /topbarplayer[_:-]?(\d{1,2})/i,
-            /player[_:-]?(\d{1,2})/i,
-            /playerslot[_:-]?(\d{1,2})/i,
-            /playerid[_:-]?(\d{1,2})/i,
-            /slot[_:-]?(\d{1,2})/i,
-            /idx[_:-]?(\d{1,2})/i,
-            /index[_:-]?(\d{1,2})/i
-        ];
-        for (var ri = 0; ri < regexes.length; ri++) {
-            var m = regexes[ri].exec(text);
-            if (!m || !m[1]) continue;
-            var parsed = parseInt(m[1], 10);
-            if (IsUltCooldownTrackedIndex(parsed)) return parsed;
-        }
-        return -1;
-    }
-
-    function TryReadUltTrackedIndexFromPanel(panel) {
-        if (!panel) return -1;
-        var index = ParseUltTrackedIndexFromText(ReadPanelIdTextMaybe(panel));
-        if (IsUltCooldownTrackedIndex(index)) return index;
-        index = ParseUltTrackedIndexFromText(ReadPanelClassTextMaybe(panel));
-        if (IsUltCooldownTrackedIndex(index)) return index;
-        index = ParseUltTrackedIndexFromText(ReadPanelTypeTextMaybe(panel));
-        if (IsUltCooldownTrackedIndex(index)) return index;
-        if (panel.GetAttributeString) {
-            var attrKeys = [
-                "player_slot",
-                "playerslot",
-                "player_slot_index",
-                "player_index",
-                "player_id",
-                "index",
-                "idx",
-                "slot",
-                "hero_index",
-                "entityindex",
-                "entindex",
-                "id",
-                "class",
-                "style",
-                "onactivate"
-            ];
-            for (var ai = 0; ai < attrKeys.length; ai++) {
-                var attrVal = "";
-                try { attrVal = String(panel.GetAttributeString(attrKeys[ai], "") || ""); } catch (eA0) { attrVal = ""; }
-                if (!attrVal || attrVal.length === 0) continue;
-                index = ParseUltTrackedIndexFromText(attrVal);
-                if (IsUltCooldownTrackedIndex(index)) return index;
-            }
-        }
-        return -1;
-    }
-
-    function ExtractEnemyUltIndexFromHints(unitStatusPanel, windowRoot, root) {
-        var nodes = [unitStatusPanel, windowRoot];
-        var current = unitStatusPanel;
-        for (var ai = 0; ai < 5 && current; ai++) {
-            current = current && current.GetParent ? current.GetParent() : null;
-            if (current) nodes.push(current);
-        }
-        for (var ni = 0; ni < nodes.length; ni++) {
-            var n = nodes[ni];
-            if (!n) continue;
-            var panelIndex = TryReadUltTrackedIndexFromPanel(n);
-            if (IsUltCooldownTrackedIndex(panelIndex)) return panelIndex;
-        }
-        var namePanel = unitStatusPanel && unitStatusPanel.FindChildTraverse ? unitStatusPanel.FindChildTraverse("name") : null;
-        var nameText = (namePanel && typeof namePanel.text === "string") ? String(namePanel.text || "") : "";
-        var key = NormalizeEnemyUltNameKey(nameText);
-        if (key && State.enemyUltOldTopBarNameToIndex && State.enemyUltOldTopBarNameToIndex.hasOwnProperty(key)) {
-            var mapped = parseInt(State.enemyUltOldTopBarNameToIndex[key], 10);
-            if (IsUltCooldownTrackedIndex(mapped)) return mapped;
-        }
-        return -1;
-    }
-
-    function CollectEnemyUltOldScanRoots(root) {
-        var roots = [];
-        function addRoot(panel, label) {
-            if (!panel || !IsPanelValid(panel)) return;
-            for (var i = 0; i < roots.length; i++) {
-                if (roots[i] && roots[i].panel === panel) return;
-            }
-            roots.push({ panel: panel, label: label || "root" });
-        }
-        function addTopmostAncestor(panel, labelPrefix, maxDepth) {
-            var cur = panel;
-            var top = null;
-            var topLabel = labelPrefix + "0";
-            for (var d = 0; d < maxDepth && cur; d++) {
-                try {
-                    if (IsPanelValid(cur)) { top = cur; topLabel = labelPrefix + String(d); }
-                    cur = cur.GetParent ? cur.GetParent() : null;
-                } catch (e0) { cur = null; }
-            }
-            if (top) addRoot(top, topLabel);
-        }
-        var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        addTopmostAncestor(root, "root_", 5);
-        addTopmostAncestor(GetGameplayHudPanel(root), "gameplay_", 4);
-        addTopmostAncestor(ctx, "ctx_", 5);
-        return roots;
-    }
-
-    function GetSharedUnitStatusOldPanels(root, nowMs, forceRefresh) {
-        var cachedPanels = Array.isArray(State.enemyUnitStatusOldPanelCache) ? State.enemyUnitStatusOldPanelCache : [];
-        if (!forceRefresh && State.enemyUnitStatusOldPanelCacheRoot === root && nowMs < (State.enemyUnitStatusOldPanelCacheNextMs || 0)) {
-            return cachedPanels;
-        }
-        var roots = CollectEnemyUltOldScanRoots(root);
-        var panels = [];
-        var rootCounts = [];
-        function pushPanel(panel) {
-            if (!panel || !IsPanelValid(panel)) return;
-            for (var i = 0; i < panels.length; i++) {
-                if (panels[i] === panel) return;
-            }
-            panels.push(panel);
-        }
-        for (var ri = 0; ri < roots.length; ri++) {
-            var scanRoot = roots[ri] && roots[ri].panel ? roots[ri].panel : null;
-            if (!scanRoot || !scanRoot.FindChildrenWithClassTraverse) continue;
-            var found = scanRoot.FindChildrenWithClassTraverse("UnitStatusOld") || [];
-            for (var fi = 0; fi < found.length; fi++) pushPanel(found[fi]);
-            var label = roots[ri] && roots[ri].label ? roots[ri].label : ("r" + String(ri));
-            rootCounts.push(label + ":" + String(found.length));
-        }
-        EnemyUltOldDebugLogThrottled(
-            "scanroots|" + rootCounts.join("|"),
-            "scan_roots " + rootCounts.join(" "),
-            nowMs
-        );
-        State.enemyUnitStatusOldPanelCacheRoot = root;
-        State.enemyUnitStatusOldPanelCache = panels;
-        State.enemyUnitStatusOldPanelCacheNextMs = nowMs + ENEMY_UNIT_STATUS_OLD_PANEL_SCAN_MS;
-        State.enemyUnitStatusOldPanelScanStats = {
-            roots: roots.length,
-            panels: panels.length,
-            rootCounts: rootCounts.join("|")
-        };
-        return panels;
-    }
-
-    function CollectUnitStatusOldPanelsForEnemyUlt(root, nowMs) {
-        return GetSharedUnitStatusOldPanels(root, nowMs, false);
-    }
     function IsEnemyColorWarningEnabled(cfg) {
         if (!cfg) return false;
         return IsColorWarningEnabled(cfg) ||
@@ -8718,7 +8167,6 @@ function GetUIRoot() {
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
         ["findChatMessageLabel", function() { return FindChatMessageLabel; }],
         ["findImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
-        ["findNumericLabelTextInTree", function() { return FindNumericLabelTextInTree; }],
         ["findUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],

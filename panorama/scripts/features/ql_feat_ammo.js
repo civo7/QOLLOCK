@@ -3,8 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_ammo";
-    // DEPENDS: getCachedPanel, normalizeAmmoClipAngle, readAmmoTextColorIndex, resolveWashColorFromPalette, state, setCachedPanel, utils
-    var _deps = QOL.import(["getCachedPanel","normalizeAmmoClipAngle","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
+    // DEPENDS: getCachedPanel, readAmmoTextColorIndex, resolveWashColorFromPalette, state, setCachedPanel, utils
+    var _deps = QOL.import(["getCachedPanel","readAmmoTextColorIndex","resolveWashColorFromPalette","state","setCachedPanel","utils"]);
     // State = _deps.state, Utils = _deps.utils, GetCachedPanel/SetCachedPanel = panel cache get/set.
     var GetCachedPanel = _deps.getCachedPanel;
     var RWP = _deps.resolveWashColorFromPalette;
@@ -12,7 +12,13 @@
     var SetCachedPanel = _deps.setCachedPanel;
     var Utils = _deps.utils;
     var RAI = _deps.readAmmoTextColorIndex;
-    var NAC = _deps.normalizeAmmoClipAngle;
+    function NAC(value) {
+        var angle = Math.round(Number(value));
+        if (!isFinite(angle)) angle = 0;
+        if (angle < 0) angle = 0;
+        if (angle > 360) angle = 360;
+        return angle;
+    }
     // ── Gate ──
     function gate(cfg) {
         if (!cfg) return false;

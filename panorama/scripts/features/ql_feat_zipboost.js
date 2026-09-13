@@ -3,8 +3,8 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_zipboost";
-    // DEPENDS: findNumericLabelTextInTree, findZipBoostSource, getCachedPanel, getGameplayHudPanel, isCustomHudContextActive, state, setCachedPanel, utils, isConnectedToHideout
-    var _deps = QOL.import(["findNumericLabelTextInTree","findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
+    // DEPENDS: findZipBoostSource, getCachedPanel, getGameplayHudPanel, isCustomHudContextActive, state, setCachedPanel, utils, isConnectedToHideout
+    var _deps = QOL.import(["findZipBoostSource","getCachedPanel","getGameplayHudPanel","isCustomHudContextActive","state","setCachedPanel","utils","isConnectedToHideout"]);
     var GetCachedPanel = _deps.getCachedPanel;
     var GGHP = _deps.getGameplayHudPanel;
     var State = _deps.state;
@@ -15,10 +15,33 @@
     var IsCustomHudContextActive = _deps.isCustomHudContextActive;
     var GetGameplayHudPanel = _deps.getGameplayHudPanel;
     var FindZipBoostSource = _deps.findZipBoostSource;
-    var FindNumericLabelTextInTree = _deps.findNumericLabelTextInTree;
     var isConnectedToHideout = _deps.isConnectedToHideout;
     var ZIP_BOOST_READY_FLASH_MS = 2000;
     var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+
+    function FindNumericLabelTextInTree(panel) {
+        if (!panel || !panel.Children) return "";
+        var queue = [panel];
+        var best = "";
+        while (queue.length > 0) {
+            var current = queue.shift();
+            if (!current) continue;
+            if (typeof current.text === "string") {
+                var t = current.text.trim();
+                var m = t.match(/^(\d+(?:\.\d+)?)/);
+                if (m) {
+                    var norm = m[1];
+                    if (!best || norm.length <= best.length) {
+                        best = norm;
+                        if (t.length <= 2) return best;
+                    }
+                }
+            }
+            var kids = current.Children ? current.Children() : [];
+            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
+        }
+        return best;
+    }
     function EnsureZipBoostOverlay(root) {
         var overlay = GetCachedPanel("zipBoostOverlay");
         if (IsPanelValid(overlay)) {
