@@ -5259,7 +5259,7 @@ function GetUIRoot() {
                 if (ActivatePanelSafe(preLeftCommandPanel)) preClosed = true;
             }
             if (!preClosed) {
-                QOL.dispatchCitadelConCommand("-openherosheet");
+                QOL.dispatchCitadelConCommand("citadel_open_hero_sheet");
             }
         }
 
@@ -5285,7 +5285,7 @@ function GetUIRoot() {
             }
         }
         if (!opened) {
-            opened = QOL.dispatchCitadelConCommand("+openherosheet") || QOL.dispatchCitadelConCommand("openherosheet");
+            opened = QOL.dispatchCitadelConCommand("citadel_open_hero_sheet");
         }
 
         $.Schedule(BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC, function() {
@@ -5306,7 +5306,7 @@ function GetUIRoot() {
                 }
             }
             if (!closed) {
-                QOL.dispatchCitadelConCommand("-openherosheet");
+                QOL.dispatchCitadelConCommand("citadel_open_hero_sheet");
             }
         });
 
@@ -5340,7 +5340,7 @@ function GetUIRoot() {
             if (ActivatePanelSafe(leftCommandPanel)) closed = true;
         }
         if (!closed) {
-            QOL.dispatchCitadelConCommand("-openherosheet");
+            QOL.dispatchCitadelConCommand("citadel_open_hero_sheet");
             closed = true;
         }
         return closed || closedBrowsePopup;
@@ -5472,7 +5472,7 @@ function GetUIRoot() {
             if (ActivatePanelSafe(actionUpgrade)) opened = true;
         }
         if (!opened) {
-            opened = QOL.dispatchCitadelConCommand("+openherosheet") || QOL.dispatchCitadelConCommand("openherosheet");
+            opened = QOL.dispatchCitadelConCommand("citadel_open_hero_sheet");
         }
         if (opened || IsHudClassActive(root, "gShopOpen")) {
             EnsureShopFavoritesNavActive(root, now, "buildCategoryPayloadFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS);
