@@ -78,6 +78,7 @@ var HUD_LOAD_ORDER = [
     "ql_recent_purchases_data.js",
     "ql_minimap_crate_data.js",
     "ql_perf_overlay.js",
+    path.join("core", "ql_settings_loader.js"),
     path.join("features", "ql_feat_buildbridge.js"),
     "ql_locale_lookup.js",
     "ql_core.js",

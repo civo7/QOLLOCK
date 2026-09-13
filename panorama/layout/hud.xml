@@ -12,6 +12,7 @@
 		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
 	<include src="s2r://panorama/styles/showrank.vcss_c" />
 	<include src="s2r://panorama/styles/qollock_global.vcss_c" />
+	<include src="s2r://panorama/styles/core/ql_settings_loader.vcss_c" />
 	</styles>
 	<scripts>
 		<!-- ============================================================= -->
@@ -43,6 +44,7 @@
 		<!-- Dev tool: dumps the real panel tree to the console log so the headless
 		     profiler can be fed a captured tree instead of a modelled one. -->
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_settings_loader.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_core.vjs_c" />
