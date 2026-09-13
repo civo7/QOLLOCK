@@ -69,7 +69,7 @@
         "spm": "ql_spm",
         "statBonuses": "ql_stat_bonuses",
         "statlocker": "ql_statlocker",
-        "statsPosition": "_legacy",
+        "statsPosition": "ql_stats_position",
         "targetShapes": "ql_target_shapes",
         "unsecuredSoulsTimer": "ql_unsecured_souls_timer",
         "unspent": "ql_unspent",

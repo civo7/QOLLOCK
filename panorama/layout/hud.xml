@@ -72,8 +72,8 @@
 		<!-- CUT-OVER: old statbonuses disabled, see manifests/ql_stat_bonuses/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" /> -->
 		<!-- CUT-OVER: old crosshair stats disabled, see manifests/ql_crosshair_stats/ -->
-		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
+		<!-- CUT-OVER: old statsposition disabled, see manifests/ql_stats_position/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" /> -->
 		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
 		<!-- CUT-OVER: old sigflash disabled, see manifests/ql_sigflash/ -->
@@ -157,6 +157,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />
 		<!-- Disabled: these style manifests do not track the authoritative flat config live. -->
 		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_stats_position/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_sigflash/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_zipboost/manifest.vjs_c" />
