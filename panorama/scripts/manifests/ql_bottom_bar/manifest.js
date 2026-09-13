@@ -73,6 +73,15 @@
                     try { amounts[ij].style.color = wc; } catch(e) {}
             }
 
+            var SIGNATURE_UI_SCALE_BASE_PCT = 90;
+
+            function _clearStyle(panel, prop) {
+                if (!panel || !panel.style || !prop) return;
+                try { delete panel.style[prop]; } catch (e0) {}
+                try { panel.style[prop] = null; } catch (e1) {}
+                try { panel.style[prop] = ""; } catch (e2) {}
+            }
+
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
@@ -90,19 +99,36 @@
                 var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.BOTTOM_BAR_OPACITY).toFixed(2) : "1.00";
-                var sc = active ? Number(cfg.BOTTOM_BAR_SCALE).toFixed(2) : "1.00";
+                var opNum = active ? Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opNum)) opNum = 1.0;
+                var scNum = active ? Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) : 1.0;
+                if (!isFinite(scNum)) scNum = 1.0;
 
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + wcIdx + "|" + (enabled ? "1" : "0");
+                var op = opNum.toFixed(2);
+                var scText = Math.round(SIGNATURE_UI_SCALE_BASE_PCT * scNum) + "%";
+
+                var sig = ox + "|" + oy + "|" + op + "|" + scText + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                bp.style.x = ox + "px";
-                bp.style.y = (-oy) + "px";
-                bp.style.preTransformScale2d = "1.00, 1.00";
-                bp.style.uiScale = Math.round(Number(sc) * 100) + "%";
+                if (ox !== 0) bp.style.x = ox + "px";
+                else _clearStyle(bp, "x");
+
+                if (oy !== 0) bp.style.y = (-oy) + "px";
+                else _clearStyle(bp, "y");
+
+                _clearStyle(bp, "preTransformScale2d");
+
+                if (Math.abs(scNum - 1.0) > 0.0001) bp.style.uiScale = scText;
+                else _clearStyle(bp, "uiScale");
+
                 if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
-                try { bp.style.washColor = wc; bp.style.opacity = op; } catch(e) {}
+
+                if (wc) bp.style.washColor = wc;
+                else _clearStyle(bp, "washColor");
+
+                if (Math.abs(opNum - 1.0) > 0.0001) bp.style.opacity = op;
+                else _clearStyle(bp, "opacity");
             }
 
             return {
@@ -114,10 +140,12 @@
                         _applyCurrencyColor(root, "");
                         var bp = root.FindChildTraverse("hud_signature");
                         if (bp && bp.style) {
-                            bp.style.x = "0px"; bp.style.y = "0px";
-                            bp.style.preTransformScale2d = "1.00, 1.00";
-                            bp.style.uiScale = "100%";
-                            bp.style.opacity = "1.00"; bp.style.washColor = "";
+                            _clearStyle(bp, "x");
+                            _clearStyle(bp, "y");
+                            _clearStyle(bp, "preTransformScale2d");
+                            _clearStyle(bp, "uiScale");
+                            _clearStyle(bp, "opacity");
+                            _clearStyle(bp, "washColor");
                             if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
                         }
                     } catch(e) {}

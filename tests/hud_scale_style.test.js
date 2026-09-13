@@ -149,8 +149,7 @@ const BB_DEFAULTS = {
 function runBottomBar(cfg) {
     const h = boot();
     const QOL = h.sandbox.global.QOL;
-    const entry = h.sandbox.global.QOL_FEATURE_REGISTRY.bottomBarRuntime;
-    assert.ok(entry, "bottomBarRuntime is not registered");
+    const entry = h.sandbox.global.QOL_FEATURE_REGISTRY && h.sandbox.global.QOL_FEATURE_REGISTRY.bottomBarRuntime;
 
     const panel = recordingPanel({
         id: "hud_signature",
@@ -159,13 +158,40 @@ function runBottomBar(cfg) {
         FindChildTraverse: () => null,
         FindChildrenWithClassTraverse: () => [],
     });
-    // The feature resolves the panel through the cache, so seed it there and skip
-    // needing #hud_signature to exist in the modelled tree.
-    QOL.setCachedPanel("bottomBarPanel", panel);
-    QOL.state.bottomBarRuntimeStyleSig = "";
 
-    entry.update(h.doc.root, Object.assign({}, BB_DEFAULTS, cfg), 1000);
-    return panel;
+    if (entry) {
+        // The feature resolves the panel through the cache, so seed it there and skip
+        // needing #hud_signature to exist in the modelled tree.
+        QOL.setCachedPanel("bottomBarPanel", panel);
+        QOL.state.bottomBarRuntimeStyleSig = "";
+        entry.update(h.doc.root, Object.assign({}, BB_DEFAULTS, cfg), 1000);
+        return panel;
+    }
+
+    const FR = QOL.core && QOL.core.FeatureRegistry;
+    const manifest = FR && FR.getManifest && FR.getManifest("ql_bottom_bar");
+    if (manifest) {
+        const origFindChild = h.doc.root.FindChildTraverse;
+        h.doc.root.FindChildTraverse = (id) => {
+            if (id === "hud_signature") return panel;
+            return origFindChild ? origFindChild.call(h.doc.root, id) : null;
+        };
+        const fullCfg = Object.assign({}, BB_DEFAULTS, cfg);
+        const ctx = {
+            id: "ql_bottom_bar",
+            config: {
+                all: () => fullCfg,
+                get: (k) => fullCfg[k],
+                set: (k, v) => { fullCfg[k] = v; }
+            },
+            events: { on: () => {}, off: () => {}, emit: () => {} }
+        };
+        const inst = manifest.create(ctx);
+        inst.onEnable();
+        return panel;
+    }
+
+    assert.fail("neither bottomBarRuntime nor ql_bottom_bar manifest is registered");
 }
 
 test("bottom bar: default config forces nothing on #hud_signature", () => {

@@ -50,8 +50,8 @@
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_buildsave.vjs_c" /> -->
 		<!-- CUT-OVER: ql_feat_buildload.js replaced by manifests/ql_build_payload/manifest.js -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_buildload.vjs_c" /> -->
-		<!-- These flat-config runtimes remain authoritative for live HUD styling. -->
-		<include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" />
+		<!-- CUT-OVER: old topbar disabled, see manifests/ql_topbar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_topbar.vjs_c" /> -->
 		<!-- CUT-OVER: old bottomBarRuntime disabled, see manifests/ql_bottom_bar/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_bottombar.vjs_c" /> -->
 		<!-- CUT-OVER: old itemsRuntime disabled, see manifests/ql_items/ -->
@@ -70,10 +70,8 @@
 		<!-- CUT-OVER: old unsecuredSoulsTimer disabled, see manifests/ql_unsecured_souls_timer/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_unsecuredsouls.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_statbonuses.vjs_c" />
-		<!-- Active Stats remains on the legacy runtime while settings are stored in the
-		     legacy flat config.  The manifest bridge could leave this feature disabled
-		     in-game even though its settings preview still rendered. -->
-		<include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" />
+		<!-- CUT-OVER: old crosshair stats disabled, see manifests/ql_crosshair_stats/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_crosshairstats.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_statsposition.vjs_c" />
 		<!-- CUT-OVER: old keyboard disabled, see manifests/ql_keyboard/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_keyboard.vjs_c" /> -->
@@ -93,12 +91,13 @@
 		<!-- CUT-OVER: old heroShop disabled, see manifests/ql_heroshop/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_heroshop.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_recentpurchases.vjs_c" />
-		<!-- Unsecured Plus uses the verified Aug 1 flat-config runtime. -->
-		<include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" />
+		<!-- CUT-OVER: old betterunsecuredhud disabled, see manifests/ql_better_unsecured_hud/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_betterunsecuredhud.vjs_c" /> -->
 		<!-- CUT-OVER: old targetShapes disabled, see manifests/ql_target_shapes/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_targetshapes.vjs_c" /> -->
 		<include src="s2r://panorama/scripts/features/ql_feat_minimapruntime.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" />
+		<!-- CUT-OVER: old colorwarnings disabled, see manifests/ql_color_warnings/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_colorwarnings.vjs_c" /> -->
 		<!-- CUT-OVER: old damageNumbers disabled, see manifests/ql_damage_numbers/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_damagenumbers.vjs_c" /> -->
 		<!-- CUT-OVER: old legacyaudiopassive disabled, see manifests/ql_legacy_audio_passive/ -->
@@ -166,9 +165,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_heroshop/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_keyboard/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_numbers/manifest.vjs_c" />
-		<!-- Kept out of the manifest runtime until its config source is authoritative. -->
-		<!-- <include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" /> -->
-		<!-- Disabled: legacy color warnings remains authoritative above. -->
+		<include src="s2r://panorama/scripts/manifests/ql_topbar/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_crosshair_stats/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_unsecured_hud/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_color_warnings/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_showrank/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_rejuv_hud/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_timers/manifest.vjs_c" />
