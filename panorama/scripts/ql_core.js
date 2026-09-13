@@ -384,8 +384,6 @@ const ITEM_MIRROR_EXCEPTION_DEBUG = false;
     const ULT_CD_FULL_RESCAN_MS = 30000;     // WHY: periodic full cache flush every 30s to self-heal stale lookups from destroyed/recreated panels
     const TARGET_SHAPE_DEBUG = false;
     const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
-    const HEALTHBAR_VIS_DEBUG = false;
-    const HEALTHBAR_VIS_DEBUG_THROTTLE_MS = 1000;
     const MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
     const MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
     const MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
@@ -2497,113 +2495,6 @@ function GetUIRoot() {
         return true;
     }
 
-    function IsHudVisibleForPlayerHealthbarRuntime(root, healthContainer) {
-        if (!root) return true;
-
-        function hasAnyClassInHierarchySafe(panel, classNames) {
-            if (!panel || !classNames || classNames.length <= 0) return false;
-            for (var i = 0; i < classNames.length; i++) {
-                var cls = classNames[i];
-                if (!cls) continue;
-                try {
-                    if (hasClassInHierarchy(panel, cls)) return true;
-                } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-            }
-            return false;
-        }
-
-        // WHY: connectedToHideout must be here so inline style.opacity is never
-        // set anywhere in the hideout (hero sandbox has connectedToHideout but
-        // NOT InHideout/inHideoutIntro). Inline opacity overrides CSS rules.
-        var hiddenContextClasses = [
-            "connectedToHideout",
-            "InHideout",
-            "inHideout",
-            "inHideoutIntro",
-            "HideoutIntro"
-        ];
-        var hiddenUiClasses = [
-            "ShowEscapeMenu",
-            "HudTakeoverEnabled"
-        ];
-
-        var hud = ResolveCachedPanel(root, "hudPanel", PANEL_ID_HUD);
-        if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
-        if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
-        var isHeroTesting = hasClassInHierarchy(root, "connectedToHeroTesting");
-        if (!isHeroTesting) {
-            if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
-            if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
-            if (hasAnyClassInHierarchySafe(healthContainer, hiddenContextClasses)) return false;
-        } else {
-            var heroTestingHiddenClasses = ["inHideoutIntro", "HideoutIntro"];
-            if (hasAnyClassInHierarchySafe(root, heroTestingHiddenClasses)) return false;
-        }
-
-        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
-        var gameplayHudAlive = ResolveCachedPanel(root, "gameplayHudAlive", "gameplay_hud_alive");
-        var topBar = ResolveCachedPanel(root, "topBarPanel", PANEL_ID_TOP_BAR);
-        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
-        var statsAndMods = ResolveCachedPanel(root, "statsAndModsContainer", "StatsAndModsContainer");
-
-        if (!IsPanelEffectivelyVisibleMaybe(healthContainer, root)) return false;
-        if (statsAndMods && !IsPanelEffectivelyVisibleMaybe(statsAndMods, root)) return false;
-
-        var signalPanels = [gameplayHud, gameplayHudAlive, topBar, abilities, statsAndMods, healthContainer];
-        var signalCount = 0;
-        var suppressedCount = 0;
-        for (var i = 0; i < signalPanels.length; i++) {
-            var signalPanel = signalPanels[i];
-            if (!IsPanelValid(signalPanel)) continue;
-            signalCount++;
-            if (IsPanelSuppressedMaybe(signalPanel)) suppressedCount++;
-        }
-        if (signalCount > 0 && suppressedCount >= signalCount) return false;
-
-        return true;
-    }
-
-    function HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) {
-        if (!cfg) return false;
-        var playerOffsetX = (cfg.PLAYER_HEALTHBAR_X_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_X_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.PLAYER_HEALTHBAR_X_OFFSET));
-        var playerOffsetY = (cfg.PLAYER_HEALTHBAR_Y_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_Y_OFFSET === null)
-            ? 0
-            : Math.round(Number(cfg.PLAYER_HEALTHBAR_Y_OFFSET));
-        var playerScale = (cfg.PLAYER_HEALTHBAR_SCALE === undefined || cfg.PLAYER_HEALTHBAR_SCALE === null)
-            ? 100
-            : Math.round(Number(cfg.PLAYER_HEALTHBAR_SCALE));
-        var playerOpacity = (cfg.PLAYER_HEALTHBAR_OPACITY === undefined || cfg.PLAYER_HEALTHBAR_OPACITY === null)
-            ? 1.0
-            : Number(cfg.PLAYER_HEALTHBAR_OPACITY);
-        if (!isFinite(playerOffsetX)) playerOffsetX = 0;
-        if (!isFinite(playerOffsetY)) playerOffsetY = 0;
-        if (!isFinite(playerScale)) playerScale = 100;
-        if (!isFinite(playerOpacity)) playerOpacity = 1.0;
-        return (
-            playerOffsetX !== 0 ||
-            playerOffsetY !== 0 ||
-            playerScale !== 100 ||
-            Math.abs(playerOpacity - 1.0) > 0.0001 ||
-            ReadPlayerHealthbarAccentColorIndex(cfg) !== 0
-        );
-    }
-
-
-    function NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled) {
-        var shouldRunMinimalistRuntime =
-            minimalistHealthbarEnabled ||
-            HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
-            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
-            State.minimalistHealthbarOffsetApplied ||
-            State.playerHealthbarScaleOpacityRuntimeApplied;
-        if (shouldRunMinimalistRuntime) return true;
-        if ((Number(healthbarType) === 2) || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "") return true;
-        if ((Number(healthbarType) === 4) || State.budhudWasEnabled) return true;
-        if ((Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT) || State.mcWasEnabled) return true;
-        return false;
-    }
 
 
     function ResetDamageReportOffsetRuntime(panel) {
@@ -3840,86 +3731,6 @@ function GetUIRoot() {
         _forcedConfigInput = cfg;
         _forcedConfigOutput = result;
         return result;
-    }
-
-    function LogHealthbarVisibilityDebug(root, healthContainer, cfg) {
-        if (!HEALTHBAR_VIS_DEBUG) return;
-        var nowMs = PerfNowMs();
-        if (nowMs < (State.healthbarVisDebugNextMs || 0)) return;
-        State.healthbarVisDebugNextMs = nowMs + HEALTHBAR_VIS_DEBUG_THROTTLE_MS;
-
-        var hasContainer = !!(healthContainer && IsPanelValid(healthContainer));
-        var gateVisible = IsHudVisibleForPlayerHealthbarRuntime(root, healthContainer);
-        var styleOpacity = hasContainer ? ReadPanelOpacityMaybe(healthContainer) : NaN;
-        var styleVisibility = "";
-        var runtimeVisible = false;
-        var geomW = 0;
-        var geomH = 0;
-        var posX = 0;
-        var posY = 0;
-        if (hasContainer) {
-            try { styleVisibility = String((healthContainer.style && healthContainer.style.visibility) || ""); } catch (e0) { styleVisibility = ""; }
-            try { runtimeVisible = !!healthContainer.visible; } catch (e1) { runtimeVisible = false; }
-            try { geomW = Math.round(Number(healthContainer.actuallayoutwidth) || 0); } catch (e2) { geomW = 0; }
-            try { geomH = Math.round(Number(healthContainer.actuallayoutheight) || 0); } catch (e3) { geomH = 0; }
-            try { posX = Math.round(Number(healthContainer.actualxoffset) || 0); } catch (e4) { posX = 0; }
-            try { posY = Math.round(Number(healthContainer.actualyoffset) || 0); } catch (e5) { posY = 0; }
-        }
-
-        var topBar = GetCachedPanel("topBarPanel");
-        var abilities = GetCachedPanel("abilitiesContainer");
-        var gameplayHud = GetCachedPanel("gameplayHud");
-        var topBarSupp = topBar ? (IsPanelSuppressedMaybe(topBar) ? 1 : 0) : -1;
-        var abilitiesSupp = abilities ? (IsPanelSuppressedMaybe(abilities) ? 1 : 0) : -1;
-        var gameplaySupp = gameplayHud ? (IsPanelSuppressedMaybe(gameplayHud) ? 1 : 0) : -1;
-
-        var healthbarType = _NHV(cfg && cfg.HEALTHBAR_TYPE);
-        var playerOpacity = Number(cfg && cfg.PLAYER_HEALTHBAR_OPACITY);
-        if (!isFinite(playerOpacity)) playerOpacity = -1;
-        var playerScale = Number(cfg && cfg.PLAYER_HEALTHBAR_SCALE);
-        if (!isFinite(playerScale)) playerScale = -1;
-        var playerX = Number(cfg && cfg.PLAYER_HEALTHBAR_X_OFFSET);
-        if (!isFinite(playerX)) playerX = -99999;
-        var playerY = Number(cfg && cfg.PLAYER_HEALTHBAR_Y_OFFSET);
-        if (!isFinite(playerY)) playerY = -99999;
-
-        var rootInHideout = (root && root.BHasClass && (root.BHasClass("InHideout") || root.BHasClass("inHideoutIntro"))) ? 1 : 0;
-        var rootShowEscape = (root && root.BHasClass && root.BHasClass("ShowEscapeMenu")) ? 1 : 0;
-        var rootTakeover = (root && root.BHasClass && root.BHasClass("HudTakeoverEnabled")) ? 1 : 0;
-
-        var sig = [
-            hasContainer ? 1 : 0,
-            gateVisible ? 1 : 0,
-            rootInHideout,
-            rootShowEscape,
-            rootTakeover,
-            topBarSupp,
-            abilitiesSupp,
-            gameplaySupp,
-            healthbarType,
-            playerOpacity.toFixed(2),
-            playerScale,
-            playerX,
-            playerY,
-            isFinite(styleOpacity) ? styleOpacity.toFixed(2) : "nan",
-            styleVisibility,
-            runtimeVisible ? 1 : 0,
-            geomW + "x" + geomH + "@" + posX + "," + posY
-        ].join("|");
-        if (sig === State.healthbarVisDebugLastSig) return;
-        State.healthbarVisDebugLastSig = sig;
-
-        $.Msg(
-            "[QOLLock][HealthbarVis] " +
-            "has=" + (hasContainer ? 1 : 0) +
-            " gate=" + (gateVisible ? 1 : 0) +
-            " rootHideout=" + rootInHideout +
-            " rootEsc=" + rootShowEscape +
-            " rootTakeover=" + rootTakeover +
-            " supp[top,abil,gp]=" + topBarSupp + "," + abilitiesSupp + "," + gameplaySupp +
-            " cfg[type,op,scale,x,y]=" + healthbarType + "," + playerOpacity.toFixed(2) + "," + playerScale + "," + playerX + "," + playerY +
-            " panel[op,vis,rt,geo]=" + (isFinite(styleOpacity) ? styleOpacity.toFixed(2) : "nan") + "," + styleVisibility + "," + (runtimeVisible ? 1 : 0) + "," + geomW + "x" + geomH + "@" + posX + "," + posY
-        );
     }
 
     function GetFirstPanelTextByClass(panel, className) {
@@ -7577,18 +7388,7 @@ function GetUIRoot() {
         if (IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE") || GetCachedPanel("activeReloadProgressBar")) {
             UpdateReloadCircleExceptionState(root, cfg);
         }
-        // Player healthbar offsets, scale and opacity are user-controlled in both
-        // live matches and the hideout/sandbox. Visibility is handled separately.
-        var needsHealthbarRuntime = NeedsHealthbarRuntimeHelperWork(cfg, healthbarType, minimalistHealthbarEnabled);
-        // P1: skip old healthbar dispatcher when ql_healthbar manifest is active.
-        var _hbManifestActive = false;
-        try { if (QOL && QOL.core && QOL.core.FeatureRegistry) { _hbManifestActive = QOL.core.FeatureRegistry.isEnabled("ql_healthbar"); } } catch(e) {}
-        if (needsHealthbarRuntime && !_hbManifestActive && typeof QOL.updateHealthbarRuntimeHelpers === "function") {
-            QOL.updateHealthbarRuntimeHelpers(root, cfg, nowMsLoop, healthbarType, minimalistHealthbarEnabled, fgHealthbarEnabled);
-        }
         var needsHealthContainerWork =
-            needsHealthbarRuntime ||
-            HEALTHBAR_VIS_DEBUG ||
             colorWarningEnabled ||
             State.coloredHealthbarBridgeValue !== "" ||
             shouldApplyStaticClasses;
@@ -7598,15 +7398,6 @@ function GetUIRoot() {
                 healthContainer = root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER);
                 SetCachedPanel("healthContainer", healthContainer);
             }
-            LogHealthbarVisibilityDebug(root, healthContainer, cfg);
-            var fgIconPulseMid = false;
-            var fgIconPulseLow = false;
-            if (fgHealthbarEnabled && healthContainer && healthContainer.BHasClass) {
-                try { fgIconPulseMid = !!healthContainer.BHasClass("localPlayerMidHealth"); } catch (eMid) { fgIconPulseMid = false; }
-                try { fgIconPulseLow = !!healthContainer.BHasClass("localPlayerLowHealth"); } catch (eLow) { fgIconPulseLow = false; }
-            }
-            SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_mid", fgIconPulseMid);
-            SetPanelClassCached(root, State.rootClassCache, "qol_fg_icon_health_low", fgIconPulseLow);
             if (healthContainer && healthContainer.SetAttributeString) {
                 var coloredHealthbarFlag = colorWarningEnabled ? "1" : "0";
                 if (State.coloredHealthbarBridgeValue !== coloredHealthbarFlag) {
@@ -7905,13 +7696,7 @@ function GetUIRoot() {
             fgHealthbarEnabled: fgHealthbarEnabled,
             passiveCooldownMode: passiveCooldownMode,
             reloadCircleActive: IsCfgEnabled(cfg, "ENABLE_HIDE_RELOAD_CIRCLE"),
-            healthbarRuntimeActive: (
-                minimalistHealthbarEnabled ||
-                HasNonDefaultPlayerHealthbarRuntimeConfig(cfg) ||
-                !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
-                Number(healthbarType) === 4 ||
-                Number(healthbarType) === HEALTHBAR_TYPE_MINECRAFT
-            ),
+            healthbarRuntimeActive: false,
             chatRuntimeActive: HasNonDefaultChatRuntimeConfig(cfg),
             damageReportOffsetActive: (
                 Math.round(damageReportOffsetX) !== 0 ||
@@ -7943,23 +7728,8 @@ function GetUIRoot() {
     function NeedsCoreRootDynamicRuntimeWorkFromState(featureState) {
         if (!featureState) return false;
         if (featureState.reloadCircleActive || GetCachedPanel("activeReloadProgressBar")) return true;
-        if (
-            featureState.healthbarRuntimeActive ||
-            State.minimalistHealthbarOffsetApplied ||
-            !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
-            State.playerHealthbarScaleOpacityRuntimeApplied ||
-            State.budhudWasEnabled ||
-            State.mcWasEnabled
-        ) return true;
-        if (
-            featureState.fgHealthbarEnabled ||
-            State.fgHeroImageMoved ||
-            State.fgHeroImageRuntimeStyleSig !== "" ||
-            State.fgHeroImageCurrentSig !== ""
-        ) return true;
         if (State.passiveCooldownModeApplied !== featureState.passiveCooldownMode || State.oldItemCooldownRuntimeWasActive) return true;
         if (featureState.passiveCooldownMode !== "default" && !GetCachedPanel("passiveHud")) return true;
-        if (HEALTHBAR_VIS_DEBUG) return true;
         if (featureState.colorBridgeTarget === "1" && State.coloredHealthbarBridgeValue !== "1") return true;
         if (featureState.colorBridgeTarget === "0" && State.coloredHealthbarBridgeValue !== "" && State.coloredHealthbarBridgeValue !== "0") return true;
         if (featureState.chatRuntimeActive || State.chatStyleApplied) return true;
@@ -8215,10 +7985,8 @@ function GetUIRoot() {
             var _mmFeat = QOL_FEATURE_REGISTRY["minimapRuntime"];
             gates.minimapRuntime = _mmFeat && _mmFeat.gate ? _mmFeat.gate(cfg, raw) : false;
         }
-        // coreRoot is computed first — healthbarRuntimeHelpers is blocked when coreRoot is active
         var _coreRootActive = (State.rootClassCache && State.rootClassCache.panel !== root) || State.coreRootGateSig !== gates.sig || NeedsCoreRootDynamicRuntimeWorkFromState(gates.featureState);
         gates.coreRoot = _coreRootActive;
-        gates.healthbarRuntimeHelpers = NeedsHealthbarRuntimeHelperWork(cfg, gates.featureState.healthbarType, gates.featureState.minimalistHealthbarEnabled) && !_coreRootActive;
 
 
         // Hard-gate optimization: track whether any runtime feature needs execution.
@@ -9058,11 +8826,6 @@ function GetUIRoot() {
         ["tryReadAccountIdFromKnownPartyPath", function() { return TryReadAccountIdFromKnownPartyPath; }],
         ["writeStorageConfigRawToUi", function() { return WriteStorageConfigRawToUi; }],
         ["washColorPalette", function() { return QOL_WASH_COLOR_PALETTE; }],
-        // Bridge for healthbar feature — these are set by ql_feat_healthbar.js at load time,
-        // but coreRoot needs to call them. Fallback no-ops ensure safe loading order.
-        ["isHudVisibleForPlayerHealthbarRuntime", function() { return IsHudVisibleForPlayerHealthbarRuntime; }],
-        ["hasNonDefaultPlayerHealthbarRuntimeConfig", function() { return HasNonDefaultPlayerHealthbarRuntimeConfig; }],
-        ["needsHealthbarRuntimeHelperWork", function() { return NeedsHealthbarRuntimeHelperWork; }],
         ["tryReadHeroFromPanelDetails", function() { return TryReadHeroFromPanelDetails; }],
     ];
 
