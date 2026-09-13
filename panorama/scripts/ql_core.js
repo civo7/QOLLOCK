@@ -1382,14 +1382,6 @@ function ResetBuildCategoryPayloadProbeInitState() {
     State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
     State.buildCategoryPayloadHeroProbeInitCreateVerifyUntilMs = 0;
 }
-
-function IsStartupCorruptRepairPending(root) {
-    if (!root || !root.GetAttributeString) return false;
-    var raw = "";
-    try { raw = String(root.GetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, "")); } catch (e0) { raw = ""; }
-    return raw === "1";
-}
-
 function SetStartupCorruptRepairPending(root, pending) {
     if (!root || !root.SetAttributeString) return;
     try { root.SetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, pending ? "1" : ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
@@ -3257,127 +3249,8 @@ function GetUIRoot() {
     }
 
 
-    function ResolveUnitTargetStyleTexts(cfg) {
-        var unitTargetSize = (cfg && cfg.UNIT_TARGET_SIZE !== undefined && cfg.UNIT_TARGET_SIZE !== null)
-            ? Math.round(Number(cfg.UNIT_TARGET_SIZE))
-            : 150;
-        var unitTargetOpacity = (cfg && cfg.UNIT_TARGET_OPACITY !== undefined && cfg.UNIT_TARGET_OPACITY !== null)
-            ? parseFloat(cfg.UNIT_TARGET_OPACITY)
-            : 1.0;
-        var unitTargetHintSize = (cfg && cfg.UNIT_TARGET_HINT_SIZE !== undefined && cfg.UNIT_TARGET_HINT_SIZE !== null)
-            ? Math.round(Number(cfg.UNIT_TARGET_HINT_SIZE))
-            : 100;
-
-        if (!isFinite(unitTargetSize)) unitTargetSize = 150;
-        if (!isFinite(unitTargetOpacity)) unitTargetOpacity = 1.0;
-        if (!isFinite(unitTargetHintSize)) unitTargetHintSize = 100;
-        if (unitTargetSize < 50) unitTargetSize = 50;
-        if (unitTargetSize > 300) unitTargetSize = 300;
-        if (unitTargetOpacity < 0) unitTargetOpacity = 0;
-        if (unitTargetOpacity > 1) unitTargetOpacity = 1;
-        if (unitTargetHintSize < 50) unitTargetHintSize = 50;
-        if (unitTargetHintSize > 200) unitTargetHintSize = 200;
-
-        return {
-            scaleText: (unitTargetSize / 100).toFixed(3),
-            opacityText: unitTargetOpacity.toFixed(2),
-            hintScaleText: (unitTargetHintSize / 100).toFixed(3)
-        };
-    }
-
-    function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
-        var redDiamondActive = !!redDiamondEnabledHint;
-        if (!redDiamondActive && root && root.BHasClass) {
-            try {
-                redDiamondActive = !!root.BHasClass("red_diamond_active");
-            } catch (e0) {
-                redDiamondActive = false;
-            }
-        }
-
-        var defaultStyle = GetUnitTargetDefaultStyleTexts();
-        var isDefaultUnitTargetStyle =
-            !redDiamondActive &&
-            scaleText === defaultStyle.scaleText &&
-            opacityText === defaultStyle.opacityText &&
-            (hintScaleText || "1.000") === defaultStyle.hintScaleText;
-        var needsCleanupPass = isDefaultUnitTargetStyle && !!State.targetShapeHadNonDefaultRuntime;
-
-        if (isDefaultUnitTargetStyle && !needsCleanupPass) {
-            State.targetShapesCache = [];
-            State.hintContainerCache = [];
-            State.targetShapeStyleSig = "";
-            State.nextTargetShapeRefreshMs = 0;
-            return;
-        }
-
-        var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0") + "|" + (hintScaleText || "1.000");
-        var styleChanged = (styleSig !== State.targetShapeStyleSig);
-        var cacheValid = IsPanelListValid(State.targetShapesCache);
-        var shouldRefreshList = needsCleanupPass || styleChanged || !cacheValid || nowMs >= (State.nextTargetShapeRefreshMs || 0);
-        if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
-
-        if (shouldRefreshList) {
-            State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
-            State.hintContainerCache = root.FindChildrenWithClassTraverse("qol_hint_target") || [];
-            var _tsDefaultStyle = GetUnitTargetDefaultStyleTexts();
-            var _tsRefreshMs = (
-                redDiamondActive ||
-                styleChanged ||
-                scaleText !== _tsDefaultStyle.scaleText ||
-                opacityText !== _tsDefaultStyle.opacityText ||
-                (hintScaleText || "1.000") !== _tsDefaultStyle.hintScaleText
-            ) ? 60 : 1000;
-            State.nextTargetShapeRefreshMs = nowMs + _tsRefreshMs;
-        }
-
-        var targetShapes = State.targetShapesCache || [];
-        for (var ts = 0; ts < targetShapes.length; ts++) {
-            var shape = targetShapes[ts];
-            if (!shape) continue;
-            if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
-            var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
-            if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
-            SetPanelOpacitySafe(shape, opacityText, 1.0);
-        }
-        var hintContainers = State.hintContainerCache || [];
-        for (var hc = 0; hc < hintContainers.length; hc++) {
-            var hint = hintContainers[hc];
-            if (!hint) continue;
-            if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
-            var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
-            if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
-        }
-        State.targetShapeStyleSig = styleSig;
-        if (!isDefaultUnitTargetStyle) {
-            State.targetShapeHadNonDefaultRuntime = true;
-            return;
-        }
-
-        if (needsCleanupPass) {
-            State.targetShapeHadNonDefaultRuntime = false;
-            State.targetShapesCache = [];
-            State.hintContainerCache = [];
-            State.targetShapeStyleSig = "";
-            State.nextTargetShapeRefreshMs = 0;
-        }
-    }
-
-
-    var UnitTargetDefaultStyleTexts = null;
-
     function GetUnitTargetDefaultStyleTexts() {
-        if (UnitTargetDefaultStyleTexts) return UnitTargetDefaultStyleTexts;
-        var result = ResolveUnitTargetStyleTexts(_BDC());
-        // Clone to avoid aliasing when ResolveUnitTargetStyleTexts reuses internal scratch objects.
-        UnitTargetDefaultStyleTexts = { scaleText: result.scaleText, opacityText: result.opacityText, hintScaleText: result.hintScaleText };
-        return UnitTargetDefaultStyleTexts;
-    }
-
-    function IsUnitTargetStyleCustomized(cfg) {
-        var style = ResolveUnitTargetStyleTexts(cfg);
-        var defaultStyle = GetUnitTargetDefaultStyleTexts();
-        return style.scaleText !== defaultStyle.scaleText || style.opacityText !== defaultStyle.opacityText || style.hintScaleText !== defaultStyle.hintScaleText;
+        return { scaleText: "1.500", opacityText: "1.00", hintScaleText: "1.000" };
     }
 
 
@@ -3563,17 +3436,6 @@ function GetUIRoot() {
         return closed || closedBrowsePopup;
     }
 
-    function QueueCloseHeroShopForLoaderSuccess() {
-        var delays = [0.00, 0.20, 0.55];
-        for (var i = 0; i < delays.length; i++) {
-            var delaySec = delays[i];
-            $.Schedule(delaySec, function() {
-                var closeRoot = GetUIRoot();
-                TryCloseHeroShopForLoader(closeRoot);
-            });
-        }
-    }
-
     function QueueShopPulseAfterHeroRestore(nowMs) {
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (now < (State.heroRestoreShopPulseNextMs || 0)) return;
@@ -3695,56 +3557,6 @@ function GetUIRoot() {
             EnsureShopFavoritesNavActive(root, now, "buildCategoryPayloadFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS);
         }
         return opened;
-    }
-    function ResetStartupDefaultPayloadBootstrapState() {
-        State.buildCategoryPayloadDefaultBootstrapPayloadText = "";
-        State.buildCategoryPayloadDefaultBootstrapRetries = 0;
-        State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
-        State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
-        State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
-    }
-
-    function SetSettingsLoaderStepState(key, status, detail) {
-        if (QOL.setSettingsLoaderStepState) return QOL.setSettingsLoaderStepState(key, status, detail);
-    }
-    function SettingsLoaderDebugLog(msg) {
-        if (QOL.settingsLoaderDebugLog) return QOL.settingsLoaderDebugLog(msg);
-    }
-    function SetSettingsLoaderDebugOverlayLine(line) {
-        if (QOL.setSettingsLoaderDebugOverlayLine) return QOL.setSettingsLoaderDebugOverlayLine(line);
-    }
-    function SettingsLoaderTraceLogThrottled(sig, msg, nowMs) {
-        if (QOL.settingsLoaderTraceLogThrottled) return QOL.settingsLoaderTraceLogThrottled(sig, msg, nowMs);
-    }
-
-    function EnterStartupCorruptRepairPrompt(root, nowMs, reason) {
-        var why = reason ? String(reason) : "unknown";
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        SetStartupCorruptRepairPending(root, true);
-        SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
-        SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Skyrunner context for repair.");
-        SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
-        SetSettingsLoaderStepState("decode_payload", "skipped", "Repair bootstrap in progress.");
-        SetSettingsLoaderStepState("apply_config", "skipped", "Waiting for repaired payload.");
-        State.buildCategoryPayloadPromptEscClosed = true;
-        State.buildCategoryPayloadDefaultBootstrapPostSavePrompt = false;
-        State.buildCategoryPayloadDefaultBootstrapRetries = 0;
-        State.buildCategoryPayloadDefaultBootstrapSaveToken = "";
-        State.buildCategoryPayloadDefaultBootstrapSaveVerifyHits = 0;
-        State.buildCategoryPayloadCorruptRepairActive = true;
-        State.buildCategoryPayloadCorruptRepairStartedMs = now;
-        State.buildCategoryPayloadCorruptRepairCleared = false;
-        State.buildCategoryPayloadCorruptRepairClearRetries = 0;
-        State.buildCategoryPayloadCorruptRepairClearNextMs = now;
-        State.buildCategoryPayloadCorruptRepairClearEmptyHits = 0;
-        State.buildCategoryPayloadCorruptRepairBrowseReady = false;
-        State.buildCategoryPayloadCorruptRepairLastDeleteTitle = "";
-        State.buildCategoryPayloadCorruptRepairSameTitleDeleteHits = 0;
-        State.buildCategoryPayloadCorruptRepairPostClearUntilMs = 0;
-        State.buildCategoryPayloadHeroProbeStage = "bootstrap_via_save_enqueue";
-        State.buildCategoryPayloadHeroProbeNextMs = now;
-        SettingsLoaderDebugLog("payload_override entering automatic repair bootstrap reason=" + why);
-        SetSettingsLoaderDebugOverlayLine("corrupt repair bootstrap reason=" + why);
     }
     function CleanStorageHeroSignatureText(text) {
         if (text === null || text === undefined) return "";
@@ -4100,15 +3912,17 @@ function GetUIRoot() {
         }
         var favoritesNav = FindShopFavoritesNavButton(root);
         if (EnsureShopFavoritesNavActive(root, now, "buildCategoryPayloadFavoritesActionNextMs", BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS)) acted = true;
-        SettingsLoaderTraceLogThrottled(
-            "ensure_favorites|" + (hero || "-") + "|" + (acted ? "1" : "0"),
-            "ensure_favorites hero=" + (hero || "-") +
-                " source=" + (signal && signal.source ? String(signal.source) : "none") +
-                " acted=" + (acted ? "1" : "0") +
-                " shopOpen=" + (IsHudClassActive(root, "gShopOpen") ? "1" : "0") +
-                " hasFavoritesNav=" + (favoritesNav ? "1" : "0"),
-            now
-        );
+        if (QOL.settingsLoaderTraceLogThrottled) {
+            QOL.settingsLoaderTraceLogThrottled(
+                "ensure_favorites|" + (hero || "-") + "|" + (acted ? "1" : "0"),
+                "ensure_favorites hero=" + (hero || "-") +
+                    " source=" + (signal && signal.source ? String(signal.source) : "none") +
+                    " acted=" + (acted ? "1" : "0") +
+                    " shopOpen=" + (IsHudClassActive(root, "gShopOpen") ? "1" : "0") +
+                    " hasFavoritesNav=" + (favoritesNav ? "1" : "0"),
+                now
+            );
+        }
         return acted;
     }
 
@@ -4341,17 +4155,6 @@ function GetUIRoot() {
             }
         }
         return "";
-    }
-
-    function FindHeroBuildListPanel(root) {
-        if (!root || !root.FindChildTraverse) return null;
-        var ids = ["HeroBuildList", "BuildList", "CitadelHeroBuildList"];
-        for (var i = 0; i < ids.length; i++) {
-            var p = null;
-            try { p = root.FindChildTraverse(ids[i]); } catch (e) { p = null; }
-            if (p && IsPanelValid(p)) return p;
-        }
-        return null;
     }
 
     function TryReadSelectedHeroIncludingStorageFromCommandPanels(root) {
@@ -5017,7 +4820,10 @@ function GetUIRoot() {
             ),
             targetShapesActive: (
                 IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") ||
-                IsUnitTargetStyleCustomized(cfg)
+                IsCfgEnabled(cfg, "ENABLE_TARGET_SHAPES") ||
+                Number(cfg && cfg.UNIT_TARGET_SIZE) !== 150 ||
+                Number(cfg && cfg.UNIT_TARGET_OPACITY) !== 1 ||
+                Number(cfg && cfg.UNIT_TARGET_HINT_SIZE) !== 100
             ),
             damageImpactRuntimeActive: HasNonDefaultDamageImpactRuntimeConfig(cfg),
             staminaChargeColorRuntimeActive: NeedsStaminaChargeColorRuntimeWork(cfg),
@@ -5906,53 +5712,6 @@ function GetUIRoot() {
         }
     }
 
-    function BootstrapUnitTargetStyles() {
-        if (State.unitTargetBootstrapDone) return;
-        if (IsManifestFeatureEnabled("ql_target_shapes")) {
-            State.unitTargetBootstrapDone = true;
-            return;
-        }
-        State.unitTargetBootstrapTryCount = (Number(State.unitTargetBootstrapTryCount) || 0) + 1;
-
-        var root = GetUIRoot();
-        if (root) {
-            var raw = ReadStorageConfigRawFromUi(root);
-            var cfg = null;
-
-            if (raw === State.lastRawConfig && State.lastConfig) {
-                cfg = State.lastConfig;
-            } else {
-                cfg = _SPC(raw);
-                if (!cfg) cfg = _BDC();
-            }
-
-            // Lazy-init: skip if neither target shapes nor red diamond is enabled (Fix 8)
-            if (Number(cfg.ENABLE_TARGET_SHAPES) !== 1 && Number(cfg.ENABLE_RED_DIAMOND) !== 1) {
-                State.unitTargetBootstrapDone = true;
-                return;
-            }
-
-            var style = ResolveUnitTargetStyleTexts(cfg);
-            var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-            ApplyTargetShapeStyles(root, style.scaleText, style.opacityText, nowMs, IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND"), style.hintScaleText);
-
-            var hasTargetShapes = !!(State.targetShapesCache && State.targetShapesCache.length > 0);
-            var hasStoredConfig = (raw && raw.length > 0);
-            if (hasTargetShapes && (hasStoredConfig || State.unitTargetBootstrapTryCount >= 2)) {
-                State.unitTargetBootstrapDone = true;
-                return;
-            }
-        }
-
-        if (State.unitTargetBootstrapTryCount >= UNIT_TARGET_BOOTSTRAP_MAX_TRIES) {
-            State.unitTargetBootstrapDone = true;
-            return;
-        }
-
-        $.Schedule(UNIT_TARGET_BOOTSTRAP_RETRY_SEC, BootstrapUnitTargetStyles);
-    }
-
-    $.Schedule(0.0, BootstrapUnitTargetStyles);
     $.Schedule(CORE_START_DELAY_LOOP_SEC, loop);
 
     // ── Feature registrations (Phase 2: registry-based dispatch) ──

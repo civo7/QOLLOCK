@@ -76,8 +76,14 @@
     Q.core.time = {
         formatSeconds: formatSeconds,
         readGameTime: readGameTime,
-        parseClockSeconds: parseClockSeconds
+        parseClockSeconds: parseClockSeconds,
+        getGameSecondsForUrn: readGameTime
     };
+
+    // Direct backward compat on QOL root
+    Q.getGameSecondsForUrn = readGameTime;
+    Q.parseClockSeconds = parseClockSeconds;
+    Q.formatSeconds = formatSeconds;
 
     $.Msg("[QOLLock] core/ql_time: attached to QOL.core.time");
 })();
