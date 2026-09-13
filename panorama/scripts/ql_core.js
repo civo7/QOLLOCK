@@ -111,14 +111,11 @@ _TLog = function(label, detail) {
     // Too low: panels not found, bootstrap retries waste CPU.
     // Too high: user sees default HUD before QOLLOCK activates.
     const CORE_START_DELAY_LOOP_SEC = 0.05;   // poll immediately; IsConnectedToHideout defers if not ready
-    const CORE_START_DELAY_COMPASS_SEC = 0.10; // compass/minimap loop
-    const CORE_START_DELAY_BUILD_SEC = 0.10;   // build category payload loop
     // Phase slot assignments (which feature runs in which corePhase % 5)
     const CORE_PHASE_REJUV_NICKNAMES = 0;
     const CORE_PHASE_SPM_STATLOCKER  = 1;
     const CORE_PHASE_UNSPENT_LANE    = 2;
     const CORE_PHASE_UNSECURED       = 3;
-    const CORE_PHASE_STAT_BONUSES    = 4;
 
     // ── Constants index by feature ─────────────────────────────────────────
     // Compass:    COMPASS_INTERVAL_SEC, COMPASS_SPEED_SCALE/QUANT/SAMPLE_MS,
@@ -164,13 +161,8 @@ _TLog = function(label, detail) {
     const COMPASS_INTERVAL_SEC = 0.05;
 
     // Build request loop intervals at three degradation levels
-    const BUILD_REQUEST_LOOP_ACTIVE_SEC = 0.05;       // tight poll during save/clear
-    const BUILD_REQUEST_LOOP_IDLE_SEC = 0.20;          // in match but not in shop
-    const BUILD_REQUEST_LOOP_DEEP_IDLE_SEC = 1.80;     // outside match (menus)
 
     // Compass idle degradation — uses idle interval when not in custom HUD context
-    const COMPASS_INTERVAL_IDLE_SEC = 0.50;
-    const COMPASS_INTERVAL_DEEP_IDLE_SEC = 1.0;
 
     // ==========================================================================
     // MAIN LOOP — IDLE DEGRADATION (Fix 9)
@@ -198,10 +190,6 @@ _TLog = function(label, detail) {
     // WHY: idle refresh rates trade visual responsiveness for CPU. 1200ms for idle
     // is just above human perception of "stale" (1s), and 2500ms for panel cache
     // is long enough to avoid tree walks while still catching new panels within ~2.5s.
-    const HUD_INDICATOR_REFRESH_MS_IDLE = 1200;
-    const HUD_INDICATOR_REFRESH_MS_HIDE_SMALL = 500;
-    const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_IDLE = 2500;
-    const HUD_INDICATOR_PANEL_CACHE_REFRESH_MS_HIDE_SMALL = 700;
     const DAMAGE_NUMBERS_DEFAULT_RUNTIME_SIG = "18|1.00|0|0"; // default damage number config signature
 
     function ResolveDamageNumbersRuntimeSig(cfg) {
@@ -222,8 +210,6 @@ _TLog = function(label, detail) {
     // COMPASS — GEOMETRY
     // ==========================================================================
     // 360° / 22.5° = 16 base ticks + 1 overlap for seamless wrapping at 360°
-    const COMPASS_TICK_STEP_DEG = 22.5;
-    const COMPASS_TICK_SPACING_PX = 12.5;  // horizontal px between tick marks (controls ring diameter)
     const COMPASS_TICK_COUNT = 17;          // total ticks including wrap-overlap
 
     // ==========================================================================
@@ -243,44 +229,20 @@ _TLog = function(label, detail) {
     // per-sample quantization noise averages out and intermittent updates are
     // handled gracefully. A light EMA then smooths display flicker.
     const COMPASS_SPEED_SCALE = 2.12;       // unitless multiplier applied to raw speed
-    const COMPASS_SPEED_QUANT = 2;          // round display to multiples of this
-    const COMPASS_SPEED_SAMPLE_MS = 40;     // position sample cadence (ms); ~6-7 points per window
-    const COMPASS_SPEED_WINDOW_MS = 260;    // least-squares velocity window (ms)
-    const COMPASS_SPEED_MIN_SPAN_MS = 90;   // need at least this much spanned time before trusting a fit
-    const COMPASS_SPEED_EMA_TAU_SEC = 0.11; // light display smoothing on top of the LSQ velocity
-    const COMPASS_SPEED_DEADBAND_FRAC = 0.07; // hold steady when change is within this fraction of current
 
     // ==========================================================================
     // MINIMAP — ROTATION SMOOTHING
     // ==========================================================================
     // North-offset rotation uses an exponential moving average ("tau" = time constant).
     // Two tau values: fast for large heading deltas, slow for small corrections.
-    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;      // north = +90° in Source 2 coordinate system
-    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;     // ignore rotation below this when stationary
-    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;   // tighter deadzone when moving
-    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;          // smoothing time-constant for large heading changes
-    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;          // smoothing time-constant for small heading changes
-    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;        // heading delta threshold to switch to fast tau
-    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0; // cap on rotation speed
-    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;         // hold heading for this long before switching to slow tau
-    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;           // look-ahead time for velocity-based heading prediction
-    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;        // cap on predicted heading delta
-    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;       // EMA alpha for velocity filtering (0-1, higher = faster response)
 
     // ==========================================================================
     // MINIMAP — LAYOUT & SCANNING
     // ==========================================================================
     // WHY: minimap player position scanning at 250ms (4Hz) balances smooth rotation
     // with CPU cost. 90ms fast-path used after teleports/respawns for instant snap.
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
     // Cap for the escalating backoff applied after repeated scan misses. See
     // NextMinimapScanBackoffMs.
-    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
-    const MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;           // WHY: re-assert Z-order at 4Hz — infrequent enough to avoid layout thrash, frequent enough to beat game's own reordering
-    const MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;             // WHY: 400px at default minimap zoom maps to in-game cast range radius empirically
-    const MINIMAP_LAYOUT_BASE_SIZE_PX = 400;                // WHY: default minimap size is 400px square; all zoom levels scale from this base
-    const PANEL_LAYOUT_OFFSET_ABS_MAX = 100000;             // WHY: sanity cap prevents runaway layout values from corrupting HUD; 100k px is far beyond any valid screen position
     const GAMEPLAY_MOUSE_CURSOR_ENABLED = true;             // WHY: feature-gate constant — set false to globally disable the custom cursor without touching config
     // WHY: zip boost ready flash lasts 2s — long enough to notice, short enough to not distract during combat
     const ZIP_BOOST_READY_FLASH_MS = 2000;
@@ -288,25 +250,13 @@ _TLog = function(label, detail) {
     // WHY: enemy health panel scanning at 1200ms — full-tree scan is expensive;
     // 1200ms is the sweet spot where health changes are still visible quickly
     // but the scan cost is amortized over many frames
-    const ENEMY_COLORED_HEALTH_PANEL_SCAN_MS = 1200;
-    const ENEMY_COLORED_HEALTH_UPDATE_MS = 160;
     const ENEMY_COLORED_HEALTH_DEBUG = false;               // WHY: debug gate — must be false in production; enables per-panel color dump every ~700ms
-    const ENEMY_COLORED_HEALTH_DEBUG_THROTTLE_MS = 700;
-    const MINIMAP_CRATE_OVERLAY_DEBUG = false;
-    const MINIMAP_CRATE_OVERLAY_DEBUG_THROTTLE_MS = 700;
-    const BOTTOM_BAR_CURRENCY_DEBUG = false;
     // ---- Unsecured Souls overlay ----
     // WHY: source search at 1000ms — the unsecured souls HUD panel doesn't move;
     // re-scanning faster than 1Hz provides no benefit while wasting CPU
-    const UNSECURED_SOULS_SOURCE_SEARCH_MS = 1000;
-    const UNSECURED_SOULS_MIN_SAMPLE_MS = 250;
     // WHY: EMA alpha of 0.35 gives ~3-sample smoothing window (1/α ≈ 2.86),
     // enough to filter jitter without introducing perceptible lag in the rate display
     const UNSECURED_SOULS_RATE_EMA_ALPHA = 0.35;
-    const UNSECURED_SOULS_RATE_MIN = 0.01;
-    const UNSECURED_SOULS_RATE_STALE_MS = 12000;
-    const UNSECURED_SOULS_RATE_TO_FALLBACK_MAX_RATIO = 2.0;
-    const UNSECURED_SOULS_ETA_MAX_SEC = 999;
     // WHY: fallback drain at 0.5%/sec — conservative estimate when rate tracking
     // is stale; matches observed unsecured soul decay in testing
     const UNSECURED_SOULS_FALLBACK_PCT_DRAIN = 0.005;
@@ -314,21 +264,6 @@ _TLog = function(label, detail) {
     const UNSECURED_SOULS_FALLBACK_FLAT_GROWTH = 0.08;
     const UNSECURED_SOULS_THRESH_YELLOW = 500;
     const UNSECURED_SOULS_THRESH_RED = 1000;
-    const ITEM_MIRROR_PROBE_SCAN_MS = 1630;
-    const ITEM_MIRROR_PROBE_SCAN_MS_STABLE = 5270;
-    const ITEM_MIRROR_PROBE_SCAN_MS_AFTER_SHOP = 500;
-    const ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE = 120;
-    const ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE = 50;
-    const ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS = 80;
-    const ITEM_MIRROR_ICON_BASE_SIZE_PX = 45;
-    const COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
-    const COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
-    const COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
-    const COLORED_HEALTHBAR_PULSE_STEP = 0.1;
-    const COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
-    const COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
-    const COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
-    const COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
     // Healthbar type enum (matches ql_settings.js healthbar type dropdown order)
     const HEALTHBAR_TYPE_DEFAULT    = 0;
     const HEALTHBAR_TYPE_MINIMALIST = 1;
@@ -337,14 +272,6 @@ _TLog = function(label, detail) {
     const HEALTHBAR_TYPE_BUDHUD     = 4;
     const HEALTHBAR_TYPE_MINECRAFT  = 5;
     const COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
-    const ENEMY_TOPBAR_HEALTH_DEFAULT_COLOR = [255, 86, 86];
-    const ALLY_TOPBAR_HEALTH_DEFAULT_COLOR = COLORED_HEALTHBAR_COLOR_WHITE;
-    const ENEMY_COLORED_HEALTH_TEAM1_COLOR = [255, 201, 97];
-    const ENEMY_COLORED_HEALTH_TEAM2_COLOR = [100, 133, 252];
-    const ENEMY_COLORED_HEALTH_NEUTRAL_COLOR = [91, 239, 181];
-    const ENEMY_COLORED_HEALTH_PULSE_COLOR = [225, 97, 97];
-    const ENEMY_COLORED_HEALTH_PULSE_DARK_COLOR = [85, 28, 28];
-    const ENEMY_COLORED_HEALTH_MID_COLOR = [255, 123, 0];
     // TEMP TEST SWITCH: keep base + optimize item cooldown paths enabled together for offset alignment checks.
     const ITEM_COOLDOWN_DUAL_MODE_TEST = false;
     // WHY: max 13 players covers 6v6 (12) + 1 extra slot for spectators/bots.
@@ -352,8 +279,6 @@ _TLog = function(label, detail) {
     const SPM_MAX_PLAYERS = 13;
     // WHY: panel cache at 7s — SPM changes slowly (1 sample/sec), re-scanning
     // faster provides no benefit while wasting CPU on tree walks
-    const SPM_PANEL_CACHE_REFRESH_MS = 7000;
-    const SPM_PLAYER_CACHE_REFRESH_BATCH = 4;
     const TOPBAR_PLAYER_PANEL_CACHE_REFRESH_MS = 1500;
     // Cooldown for a slot that has never resolved. Deliberately far longer than the
     // stale-cache refresh above: the cost of re-checking is a whole-HUD walk (31k
@@ -365,18 +290,6 @@ _TLog = function(label, detail) {
     // urn fights, slow enough to not dominate the main loop budget
     const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
     const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
-    const ULT_CD_MAX_PLAYERS = 13;
-    const ULT_CD_SLOT_MIN_INDEX = 1;
-    const ULT_CD_SLOT_MAX_INDEX = 12;
-    const ULT_CD_FULL_RESCAN_MS = 30000;     // WHY: periodic full cache flush every 30s to self-heal stale lookups from destroyed/recreated panels
-    const TARGET_SHAPE_DEBUG = false;
-    const TARGET_SHAPE_DEBUG_THROTTLE_MS = 1000;
-    const MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
-    const MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
-    const MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
-    const ACCOUNT_PROBE_DEEP_SCAN_INTERVAL_MS = 2000;
-    const ACCOUNT_PROBE_REPORT_INTERVAL_MS = 10000;
-    const ACCOUNT_PROBE_MAX_PANELS = 4000;
     const ACCOUNT_PROBE_LOG = false;
     const URN_TRACKER_DEBUG = false;
     const PERF_DEBUG_FLUSH_MS = 10000;     // snapshot capture interval
@@ -394,35 +307,10 @@ _TLog = function(label, detail) {
     const PANEL_ID_TOP_BAR = "TopBar";
     const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
     const PANEL_ID_HERO_SHOP = "CitadelHudHeroShop";
-    const PANEL_ID_MINIMAP = "hud_minimap";
     const PANEL_ID_SIGNATURE = "hud_signature";
     const PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
-    const BUILD_CATEGORY_PAYLOAD_ENABLED = true;
-    const BUILD_LOADER_TEMP_DISABLED = false;
-    const BUILD_CATEGORY_PAYLOAD_SCAN_INTERVAL_MS = 1000;
-    const BUILD_CATEGORY_PAYLOAD_TEXT_SCAN_MAX_PANELS = 1500;
     const BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_DELAY_MS = 50;   // poll immediately after switch
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_POLL_MS = 100;   // poll interval (was 20 — too tight)
-    const BUILD_CATEGORY_PAYLOAD_HERO_SWITCH_MAX_WAIT_MS = 4000;  // reduced timeout
-    const BUILD_CATEGORY_PAYLOAD_STORAGE_CONFIRM_REQUIRED_HITS = 2;
-    const BUILD_CATEGORY_PAYLOAD_HERO_SCAN_WAIT_MS = 50;   // poll every tick
-    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MS = 4000;  // reduced timeout
-    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_RETRY_DELAY_MS = 1500;  // reduced backoff
-    const BUILD_CATEGORY_PAYLOAD_HERO_PROBE_MAX_MISSES = 3;
-    const BUILD_CATEGORY_PAYLOAD_MISSING_SCAN_MAX_ADVANCES = 6;  // fewer scans per build
     const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;  // minimal UI settle time
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_STEP_MS = 100;  // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_DELETE_SETTLE_MS = 150;  // reduced
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_MAX_RETRIES = 60;  // more retries, faster
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_TIMEOUT_MS = 15000;  // reduced
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_PROMPT_RETRIES = 3;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_EMPTY_CONFIRM_HITS = 3;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_SAME_TITLE_LIMIT = 1;
-    const BUILD_CATEGORY_PAYLOAD_CORRUPT_CLEAR_POST_SETTLE_MS = 300;  // reduced from 900
-    const BUILD_CATEGORY_PAYLOAD_WAIT_STORAGE_USER_PROMPT_MS = 2500;  // reduced from 6000
-    const BUILD_CATEGORY_PAYLOAD_USER_PROMPT_POLL_MS = 50;   // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_BOOTSTRAP_MAX_RETRIES = 15;
 const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
     ? QOL_SCHEMA_SEMVER
     : "2.3.5";
@@ -430,18 +318,8 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX = "[QOL-" + BUILD_CATEGORY_PAYLOAD_SCHEMA_TOKEN_VERSION + "]:";
     const BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
     const BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
-    const BUILD_CATEGORY_PAYLOAD_DONE_REARM_MAX_ATTEMPTS = 4;
-    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_STEP_MS = 50;   // poll every tick
-    const BUILD_CATEGORY_PAYLOAD_SOURCE_BOOTSTRAP_MAX_RETRIES = 14;
-    const BUILD_CATEGORY_PAYLOAD_INIT_STEP_DELAY_MS = 50;   // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_INIT_VERIFY_DELAY_MS = 50;  // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_INIT_CREATE_VERIFY_WINDOW_MS = 1200;  // extended for non-English UI render latency
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_RETRIES = 30;  // must exceed create_verify window (1200ms / 50ms = 24 ticks)
-    const BUILD_CATEGORY_PAYLOAD_INIT_MAX_CREATE_ATTEMPTS = 3;
-    const BUILD_CATEGORY_PAYLOAD_LOADER_SESSION_MAX_CREATE_ATTEMPTS = 2;
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_OPEN_DELAY_SEC = 0.05;  // poll-driven
     const BUILD_CATEGORY_PAYLOAD_POST_SWITCH_SHOP_CLOSE_DELAY_SEC = 0.05; // poll-driven
-    const BUILD_CATEGORY_PAYLOAD_PRE_RESTORE_DELAY_SEC = 0.20;  // minimal settle
     const SETTINGS_LOADER_ENABLED = true;
     const SETTINGS_LOADER_DEBUG = false;
     const SETTINGS_LOADER_DEBUG_THROTTLE_MS = 350;
@@ -471,7 +349,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     const SETTINGS_LOADER_ICON_DONE = "s2r://panorama/images/getting_started/checklist_task_complete_png.vtex";
     const SETTINGS_LOADER_ICON_ACTIVE = "s2r://panorama/images/glyphs/arrow_right.vsvg";
     const SETTINGS_LOADER_ICON_ERROR = "s2r://panorama/images/control_icons/x_close_filled_png.vtex";
-    const SETTINGS_LOADER_CORRUPT_PROMPT_DETAIL = "Potential corrupt save detected.\nPlease open your shop to resolve.\nPlease patient and allow the loader to run.";
     const LOADER_DETAIL_SPINNER_FRAMES = ["|", "/", "-", "\\"];
     const LOADER_DETAIL_SPINNER_FRAME_MS = 180;
     const SETTINGS_LOADER_STEPS = [
@@ -511,30 +388,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     ];
     // (Build save/clear + hero hint bridge constants now live in ql_bridge.js — Phase 4)
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
-    const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
-    const BUILD_SAVE_AFTER_WRITE_DELAY_MS = 30;   // poll-driven
-    const BUILD_SAVE_VERIFY_DELAY_MS = 200;   // poll-driven
-    const BUILD_SAVE_TIMEOUT_MS = 12000;  // reduced
-    const BUILD_SAVE_MAX_RETRIES = 12;  // more retries, faster polling
-    const BUILD_SAVE_STORAGE_HERO_ID = "hero_skyrunner";
     const BUILD_SAVE_RETURN_HERO_ID = "hero_werewolf";
-    const BUILD_SAVE_STORAGE_SETTLE_DELAY_MS = 300;   // poll-driven
-    const BUILD_SAVE_RETURN_DELAY_SEC = 0.3;    // poll-driven
-    const BUILD_SAVE_PRE_RESTORE_DELAY_SEC = 0.3;    // poll-driven
-    const BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS = 15000;
-    const BUILD_SAVE_STORAGE_CONFIRM_POLL_MS = 200;  // poll-driven (was 50)
-    const BUILD_SAVE_STORAGE_CONFIRM_TIMEOUT_MS = 4000;   // reduced
-    const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_RETRIES = 8;
-    const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_MIN_ELAPSED_MS = 1000;  // reduced
-    const BUILD_SAVE_STORAGE_CONFIRM_PROVISIONAL_REQUIRED_HITS = 2;
-    const BUILD_SAVE_STORAGE_CONFIRM_REOPEN_MIN_RETRIES = 6;
-    const BUILD_SAVE_STORAGE_CONFIRM_REOPEN_COOLDOWN_MS = 1200;  // reduced
-    const BUILD_SAVE_STORAGE_CONFIRM_MAX_REOPEN_ATTEMPTS = 1;
-    const BUILD_SAVE_TARGET_LOCK_STABLE_HITS = 3;
-    const BUILD_SAVE_TARGET_LOCK_QUIET_MS = 150;  // reduced
-    const BUILD_SAVE_TARGET_LOCK_RETRY_DELAY_MS = 80;  // reduced
-    const BUILD_SAVE_TARGET_LOCK_MAX_DRIFT_RETRIES = 12;
-    const BUILD_SAVE_STORAGE_SIGNATURE_CONFIRM_HITS = 2;
     const BUILD_SAVE_STORAGE_SIGNATURE_SLOT_IDS = [
         "slot_signature_1",
         "slot_signature_2",
@@ -551,40 +405,19 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "ability_skyrunner_magic_beam",
         "Waiting..."
     ];
-    const HERO_DETECT_DEBUG = false;
     const HERO_RETURN_DEBUG = false;
     const HERO_RETURN_DEBUG_THROTTLE_MS = 350;
     const HERO_SELECT_COMMAND_SCAN_MAX_PANELS = 2500;
-    const HERO_PERSISTED_KEY = "__QOL_LAST_KNOWN_PLAYABLE_HERO";
-    const HERO_PERSIST_MIN_INTERVAL_MS = 1200;
-    const HERO_RESTORE_VERIFY_DELAY_MS = 450;
     const HERO_RESTORE_RETRY_DELAY_MS = 350;
     const HERO_RESTORE_MAX_WAIT_MS = 3200;
     const HERO_RESTORE_MAX_RETRIES = 1;
     const HERO_RESTORE_BLIND_SUCCESS_MS = 800;   // reduced from 1300
-    const LANE_PREF_WITH_PARTY_OPTION_ID = "lanepreference_1";
-    const LANE_PREF_APPLY_INTERVAL_MS = 650;
-    const LANE_PREF_HIDDEN_INTERVAL_MS = 2630;
-    const LANE_PREF_SELECTED_INTERVAL_MS = 4870;
-    const HERO_SHOP_PANEL_SEARCH_MS = 2470;
-    const RECENT_PURCHASE_MAX_ITEMS  = 50;
     // Repeated CSS class names
     const CLASS_OUT_OF_COMBAT = "out_of_combat";
     const CLASS_IN_COMBAT = "inCombat";
-    const CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
-    const RECENT_PURCHASE_QUICK_FADE_SEC            = 0.4;
-    const RECENT_PURCHASE_QUICK_CLASSES = [
-        "isTier1Purchase", "isTier2Purchase", "isTier3Purchase", "isTier4Purchase",
-        "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
-        "isTeam1Purchase", "isTeam2Purchase"
-    ];
-    const ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+
     // Phase A.2: 16 MC constants removed — already extracted to ql_feat_healthbar.js.
 
-    function AccountProbeLog(msg) {
-        if (!ACCOUNT_PROBE_LOG) return;
-        $.Msg("[QOLLock][AccountProbe] " + msg);
-    }
 
     function UrnTrackerLog(msg) {
         if (!URN_TRACKER_DEBUG) return;
@@ -1407,20 +1240,7 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         store[taskKey] = now + delay;
     }
 
-    function RuntimeTaskConsume(taskKey, nowMs, intervalMs) {
-        if (!taskKey) return true;
-        if (!RuntimeTaskIsDue(taskKey, nowMs)) return false;
-        RuntimeTaskSetDelay(taskKey, nowMs, intervalMs);
-        return true;
-    }
 
-    function RuntimeTaskReset(taskKey) {
-        if (!taskKey) return;
-        var store = RuntimeSchedulerGetStore();
-        if (store.hasOwnProperty(taskKey)) {
-            delete store[taskKey];
-        }
-    }
 
     function PerfNowMs() {
         return Date.now ? Date.now() : (new Date()).getTime();
@@ -2201,17 +2021,6 @@ function GetUIRoot() {
         return null;
     };
 
-    function FindItemOwnerFromContainer(iconContainer) {
-        var current = iconContainer;
-        while (current) {
-            if (current.BHasClass) {
-                if (current.BHasClass("isWeapon") || current.BHasClass("isArmor") || current.BHasClass("isTech")) return current;
-                if (current.BHasClass("isTier1") || current.BHasClass("isTier2") || current.BHasClass("isTier3") || current.BHasClass("isTier4")) return current;
-            }
-            current = current.GetParent ? current.GetParent() : null;
-        }
-        return null;
-    }
 
     // IsPanelValid is now provided by QOL_UTILS (ql_utils.js) — alias at top of file
 
@@ -2353,19 +2162,6 @@ function GetUIRoot() {
     }
 
 
-    function ResetPassiveCooldownCustomRuntimeState(root) {
-        if (!root) return;
-        SetPanelClassCached(root, State.rootClassCache, "passive_cooldown_advanced_active", false);
-        var passiveHud = GetCachedPanel("passiveHud");
-        if (!passiveHud && root.FindChildTraverse) {
-            passiveHud = root.FindChildTraverse("hud_passive_items");
-            SetCachedPanel("passiveHud", passiveHud);
-        }
-        if (passiveHud) {
-            SetStyleSafe(passiveHud, "visibility", "");
-            SetStyleSafe(passiveHud, "opacity", "");
-        }
-    }
 
     function ApplyPassiveCooldownModeClasses(root, passiveHud, passiveCooldownMode) {
         var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
@@ -4002,25 +3798,6 @@ function GetUIRoot() {
         return parts.join(">");
     }
 
-    function IsLikelyLocalAccountCarrier(panel) {
-        var cur = panel;
-        var depth = 0;
-        while (cur && depth < 10) {
-            var idText = "";
-            try { idText = cur.id ? String(cur.id).toLowerCase() : ""; } catch (e0) { idText = ""; }
-            if (idText.length > 0) {
-                if (idText.indexOf("localplayer") !== -1 || idText === "avatarimage") return true;
-                if (idText.indexOf("local") !== -1) return true;
-                if (idText.indexOf("profile") !== -1) return true;
-                if (idText.indexOf("party") !== -1) return true;
-                if (idText.indexOf("username") !== -1 || idText === "pusername" || idText === "username") return true;
-                if (idText.indexOf("scoreboard") !== -1 || idText.indexOf("teammate") !== -1 || idText.indexOf("enemy") !== -1) return false;
-            }
-            cur = cur.GetParent ? cur.GetParent() : null;
-            depth++;
-        }
-        return false;
-    }
 
     function TryReadAccountIdFromKnownPartyPath(root) {
         if (!root) return "";
@@ -4957,22 +4734,7 @@ function GetUIRoot() {
         }
     }
 
-    function IsSettingsLoaderVisibleNow(nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (State.settingsLoaderSessionActive) return true;
-        if (State.settingsLoaderSessionCompleted && now < (State.settingsLoaderShowUntilMs || 0)) return true;
-        return false;
-    }
 
-    function GetPanelLayoutHeightPx(panel, minPx) {
-        var h = 0;
-        if (panel) {
-            try { h = Number(panel.actuallayoutheight) || 0; } catch (e0) { h = 0; }
-        }
-        var minHeight = Number(minPx) || 0;
-        if (h < minHeight) h = minHeight;
-        return Math.round(h);
-    }
 
     function ReadPanelMarginTopPx(panel, fallbackPx) {
         var fallback = Number(fallbackPx) || 0;
@@ -6491,31 +6253,6 @@ function GetUIRoot() {
         }
     }
 
-    function FindFirstImageSrcInTree(panel) {
-        if (!panel || !panel.Children) return "";
-        var queue = [panel];
-        while (queue.length > 0) {
-            var current = queue.shift();
-            if (!current) continue;
-            if (current.GetAttributeString) {
-                var src = current.GetAttributeString("src", "");
-                if (src && src !== "none") return src;
-                var def = current.GetAttributeString("defaultsrc", "");
-                if (def && def !== "none") return def;
-            }
-            var bg = "";
-            try {
-                bg = (current.style && current.style.backgroundImage) ? String(current.style.backgroundImage) : "";
-            } catch (e) {
-                bg = "";
-            }
-            var fromBg = ExtractUrlFromBackgroundImage(bg);
-            if (fromBg && fromBg !== "none") return fromBg;
-            var kids = current.Children ? current.Children() : [];
-            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
-        }
-        return "";
-    }
 
     function ExtractUrlFromBackgroundImage(styleValue) {
         if (!styleValue) return "";
