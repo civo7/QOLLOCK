@@ -117,12 +117,13 @@
 		<!-- Profile-card-only helper; loaded by profile_card.xml, not the HUD. -->
 		<!-- CUT-OVER: old urnTimer disabled, see manifests/ql_urn_timer/ -->
 		<!-- <include src="s2r://panorama/scripts/features/ql_feat_urntimer.vjs_c" /> -->
-		<include src="s2r://panorama/scripts/features/ql_feat_healthbar.vjs_c" />
-		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_accent.vjs_c" />
-		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_budhud.vjs_c" />
-		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_minimalist.vjs_c" />
-		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_fg.vjs_c" />
-		<include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_mc.vjs_c" />
+		<!-- CUT-OVER: old healthbar disabled, see manifests/ql_healthbar/ -->
+		<!-- <include src="s2r://panorama/scripts/features/ql_feat_healthbar.vjs_c" /> -->
+		<!-- <include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_accent.vjs_c" /> -->
+		<!-- <include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_budhud.vjs_c" /> -->
+		<!-- <include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_minimalist.vjs_c" /> -->
+		<!-- <include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_fg.vjs_c" /> -->
+		<!-- <include src="s2r://panorama/scripts/features/healthbar/ql_feat_healthbar_mc.vjs_c" /> -->
 		<!-- Phase 9: New feature manifests (order-independent; all depend on FeatureRegistry) -->
 		<include src="s2r://panorama/scripts/manifests/ql_build_payload/manifest.vjs_c" />
 		<!-- Description-carrier storage: reads AND writes the config in the storage
@@ -181,6 +182,14 @@
 		<include src="s2r://panorama/scripts/manifests/ql_compass/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_reload_cooldown/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/manifest.vjs_c" />
+		<!-- Healthbar: shared style helpers, variants, and manifest -->
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/shared.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/accent.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/minimalist.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/budhud.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/fg.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/mc.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_healthbar/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>

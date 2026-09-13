@@ -17,9 +17,26 @@
     if (!FR) { $.Msg("[QOLLock] ql_healthbar: FeatureRegistry not found — aborting"); return; }
     var logger = QOL.core.Logger;
 
+    var State = (typeof QOL !== "undefined" && QOL.state) ? QOL.state : {};
+
+    function _hasNonDefaultPlayerHealthbar(cfg) {
+        if (!cfg) return false;
+        var ox = (cfg.PLAYER_HEALTHBAR_X_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_X_OFFSET === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_X_OFFSET));
+        var oy = (cfg.PLAYER_HEALTHBAR_Y_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_Y_OFFSET === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_Y_OFFSET));
+        var sc = (cfg.PLAYER_HEALTHBAR_SCALE === undefined || cfg.PLAYER_HEALTHBAR_SCALE === null) ? 100 : Math.round(Number(cfg.PLAYER_HEALTHBAR_SCALE));
+        var op = (cfg.PLAYER_HEALTHBAR_OPACITY === undefined || cfg.PLAYER_HEALTHBAR_OPACITY === null) ? 1.0 : Number(cfg.PLAYER_HEALTHBAR_OPACITY);
+        var ac = (cfg.PLAYER_HEALTHBAR_ACCENT_COLOR === undefined || cfg.PLAYER_HEALTHBAR_ACCENT_COLOR === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_ACCENT_COLOR));
+        if (!isFinite(ox)) ox = 0;
+        if (!isFinite(oy)) oy = 0;
+        if (!isFinite(sc)) sc = 100;
+        if (!isFinite(op)) op = 1.0;
+        if (!isFinite(ac)) ac = 0;
+        return (ox !== 0 || oy !== 0 || sc !== 100 || Math.abs(op - 1.0) > 0.0001 || ac !== 0);
+    }
+
     FR.register({
         id: "ql_healthbar",
-        enabledByDefault: false,
+        enabledByDefault: true,
         stateKeys: [
             // Dispatcher (35 keys from ql_feat_healthbar.js)
             "minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
@@ -67,36 +84,92 @@
             { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", type: "palette", default: 0 }
         ],
         create: function(ctx) {
-            var _runtimeSettings = {};
             var _loop = null;
-
 
             function _tick() {
                 try { _update(); } catch(e) {
-                    logger.logError("ql_healthbar", "_tick threw: " + (e.message || e));
-                    throw e;
+                    if (logger && logger.logError) {
+                        logger.logError("ql_healthbar", "_tick threw: " + (e.message || e));
+                    }
                 }
             }
 
             function _update() {
-                var cfg = _runtimeSettings;
-                // TODO: implement polling logic
+                var root = $.GetContextPanel();
+                if (!root) return;
+                var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
+                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                var healthbarType = Number(cfg.HEALTHBAR_TYPE) || 0;
+                var minimalistHealthbarEnabled = (healthbarType === 1);
+                var fgHealthbarEnabled = (healthbarType === 2);
+
+                var shouldRunMinimalistRuntime =
+                    minimalistHealthbarEnabled ||
+                    _hasNonDefaultPlayerHealthbar(cfg) ||
+                    !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
+                    State.minimalistHealthbarOffsetApplied ||
+                    State.playerHealthbarScaleOpacityRuntimeApplied;
+                if (shouldRunMinimalistRuntime && QOL.healthbar && QOL.healthbar.minimalist && QOL.healthbar.minimalist.update) {
+                    QOL.healthbar.minimalist.update(root, cfg, minimalistHealthbarEnabled);
+                }
+
+                var shouldRunBudhudRuntime = (healthbarType === 4) || State.budhudWasEnabled;
+                if (shouldRunBudhudRuntime && QOL.healthbar && QOL.healthbar.budhud && QOL.healthbar.budhud.update) {
+                    QOL.healthbar.budhud.update(root, cfg, healthbarType, nowMs);
+                }
+
+                var shouldRunFgRuntime = fgHealthbarEnabled || State.fgHeroImageMoved || State.fgHeroImageRuntimeStyleSig !== "" || State.fgHeroImageCurrentSig !== "";
+                if (shouldRunFgRuntime && QOL.healthbar && QOL.healthbar.fg && QOL.healthbar.fg.update) {
+                    QOL.healthbar.fg.update(root, cfg);
+                }
+
+                var shouldRunMinecraftRuntime = (healthbarType === 5) || State.mcWasEnabled;
+                if (shouldRunMinecraftRuntime && QOL.healthbar && QOL.healthbar.mc && QOL.healthbar.mc.update) {
+                    QOL.healthbar.mc.update(root, cfg, nowMs, healthbarType === 5);
+                }
             }
-
-
 
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_healthbar") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_healthbar") : null;
+                    _update();
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_healthbar");
-                    logger.clearThrottle("ql_healthbar");
+                    if (logger && logger.clearThrottle) logger.clearThrottle("ql_healthbar");
+                    try {
+                        var root = $.GetContextPanel();
+                        var hc = root ? root.FindChildTraverse("health_and_abilities_container") : null;
+                        if (QOL.healthbar && QOL.healthbar.resetPlayerStyle && hc) {
+                            QOL.healthbar.resetPlayerStyle(hc);
+                        }
+                        if (QOL.healthbar && QOL.healthbar.accent && QOL.healthbar.accent.reset) {
+                            QOL.healthbar.accent.reset();
+                        }
+                        if (QOL.healthbar && QOL.healthbar.resetMinimalistOffsetRuntimeAll) {
+                            QOL.healthbar.resetMinimalistOffsetRuntimeAll(root, null, null);
+                        }
+                        if (QOL.healthbar && QOL.healthbar.budhud && QOL.healthbar.budhud.update) {
+                            QOL.healthbar.budhud.update(root, {}, 0, Date.now ? Date.now() : 0);
+                        }
+                        if (QOL.healthbar && QOL.healthbar.fg && QOL.healthbar.fg.update) {
+                            QOL.healthbar.fg.update(root, {});
+                        }
+                        if (QOL.healthbar && QOL.healthbar.mc && QOL.healthbar.mc.update) {
+                            QOL.healthbar.mc.update(root, {}, Date.now ? Date.now() : 0, false);
+                        }
+                        State.minimalistHealthbarOffsetSig = "";
+                        State.minimalistHealthbarOffsetApplied = false;
+                        State.minimalistHealthbarOffsetPanel = null;
+                        State.playerHealthbarScaleOpacityRuntimeApplied = false;
+                    } catch(e) {}
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _update();
+                }
             };
         },
     test: function(ctx) {

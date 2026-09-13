@@ -82,7 +82,13 @@ var HUD_LOAD_ORDER = [
     "ql_locale_lookup.js",
     "ql_core.js",
     path.join("manifests", "ql_build_storage", "legacy_3_1_9.js"),
-    path.join("manifests", "ql_build_storage", "driver.js")
+    path.join("manifests", "ql_build_storage", "driver.js"),
+    path.join("manifests", "ql_healthbar", "shared.js"),
+    path.join("manifests", "ql_healthbar", "variants", "accent.js"),
+    path.join("manifests", "ql_healthbar", "variants", "minimalist.js"),
+    path.join("manifests", "ql_healthbar", "variants", "budhud.js"),
+    path.join("manifests", "ql_healthbar", "variants", "fg.js"),
+    path.join("manifests", "ql_healthbar", "variants", "mc.js")
 ];
 
 // ── Feature files (loaded after core) ──
