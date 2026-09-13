@@ -567,28 +567,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         { key: "return_hero", label: "Returning To Selected Hero" },
         { key: "complete", label: "Complete" }
     ];
-    const CLEAR_SETTINGS_LOADER_ENABLED = true;
-    const CLEAR_SETTINGS_LOADER_REASSERT_MS = 250;
-    const CLEAR_SETTINGS_LOADER_HOLD_MS = 1000;
-    const CLEAR_SETTINGS_LOADER_OVERLAY_ID = "QOLClearSettingsLoaderOverlay";
-    const CLEAR_SETTINGS_LOADER_CARD_ID = "QOLClearSettingsLoaderCard";
-    const CLEAR_SETTINGS_LOADER_WARNING_ID = "QOLClearSettingsLoaderWarning";
-    const CLEAR_SETTINGS_LOADER_TITLE_ID = "QOLClearSettingsLoaderTitle";
-    const CLEAR_SETTINGS_LOADER_STEPS_WRAP_ID = "QOLClearSettingsLoaderStepsWrap";
-    const CLEAR_SETTINGS_LOADER_STEP_ROW_ID_PREFIX = "QOLClearSettingsLoaderStepRow_";
-    const CLEAR_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX = "_Icon";
-    const CLEAR_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX = "_Label";
-    const CLEAR_SETTINGS_LOADER_DETAIL_ID = "QOLClearSettingsLoaderDetail";
-    const CLEAR_SETTINGS_LOADER_STEPS = [
-        { key: "start", label: "Start" },
-        { key: "switch_airheart", label: "Switching to Skyrunner" },
-        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
-        { key: "open_builds", label: "Opening Builds List" },
-        { key: "delete_builds", label: "Deleting Builds" },
-        { key: "verify_clear", label: "Verifying Clear" },
-        { key: "return_hero", label: "Returning To Selected Hero" },
-        { key: "complete", label: "Complete" }
-    ];
     // (Build save/clear + hero hint bridge constants now live in ql_bridge.js — Phase 4)
     const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
     const BUILD_SAVE_ACTION_DELAY_MS = 20;    // poll-driven
@@ -631,29 +609,6 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
         "ability_skyrunner_magic_beam",
         "Waiting..."
     ];
-    const BUILD_CLEAR_ACTION_DELAY_MS = 60;   // poll-driven
-    const BUILD_CLEAR_POST_DELETE_DELAY_MS = 150;  // poll-driven
-    const BUILD_CLEAR_POST_SELECT_DELAY_MS = 80;   // poll-driven
-    // How long to let a newly selected build's categories render before reading them.
-    //
-    // BUILD_CLEAR_POST_SELECT_DELAY_MS (80ms) is the cadence for pressing on to the
-    // next entry, which is fine while the loop only needs the entry list. It is NOT
-    // enough to then READ that build: selecting is asynchronous and the categories —
-    // where the payload lives — arrive later (the simulator models 250ms, which is
-    // itself a guess but the right order of magnitude). Reading at 80ms sees the
-    // PREVIOUS build's categories, so a prune walking the list decided every build
-    // was payload-free and, before the walk-first guard, deleted them.
-    const BUILD_CLEAR_POST_SELECT_READ_DELAY_MS = 400;
-    const BUILD_CLEAR_TIMEOUT_MS = 30000;  // reduced
-    const BUILD_CLEAR_MAX_RETRIES = 40;  // more retries, faster
-    const BUILD_CLEAR_EMPTY_CONFIRM_HITS = 2;
-    // Prune mode (post-save junk cleanup) bounds. Deliberately tight: this deletes
-    // user-visible data through a delete path that cannot report failure, so it
-    // stops early rather than trying harder.
-    const BUILD_PRUNE_MAX_DELETES = 12;
-    const BUILD_PRUNE_MAX_NO_PROGRESS = 4;
-    const BUILD_CLEAR_STORAGE_CONFIRM_POLL_MS = 200; // poll-driven (was 60)
-    // (debug infrastructure removed — BUILD_CLEAR_DEBUG, BUILD_SAVE_DEBUG)
     const ENEMY_ULT_OLD_DEBUG = false;
     const ENEMY_ULT_OLD_DEBUG_THROTTLE_MS = 500;
     const HERO_DETECT_DEBUG = false;
@@ -2062,14 +2017,6 @@ function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
     return token;
 }
 
-function ResetBuildClearRequestAttributes(root) {
-    if (!root || !root.SetAttributeString) return;
-    root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "");
-    root.SetAttributeString(BUILD_CLEAR_TOKEN_ATTR, "");
-    root.SetAttributeString(BUILD_CLEAR_MSG_ATTR, "");
-    root.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "");
-}
-
 // ── Surviving buildload utilities (ported from ql_feat_buildload.js) ──
 // These were defined only in the old buildload file (now commented out in
 // hud.xml Phase B). The save pipeline (ql_feat_buildsave.js) and buildbridge
@@ -3476,43 +3423,6 @@ function GetUIRoot() {
         );
     }
 
-    function EnsureSpmState() {
-        if (!State.spm.playerHistory || !State.spm.teamHistory) {
-            var histories = [];
-            for (var i = 0; i < SPM_MAX_PLAYERS; i++) histories.push([]);
-            State.spm.playerHistory = histories;
-            State.spm.teamHistory = {
-                friendly: [],
-                enemy: []
-            };
-        }
-        if (!State.spm.playerPanels) {
-            State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
-        }
-        if (!State.spm.playerDisplayLabels) {
-            State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
-        }
-        if (!State.spm.playerTeamByIndex) {
-            State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
-        }
-        if (!State.spm.playerHiddenGoldLabels) {
-            State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
-        }
-        if (!State.spm.playerSoulsLabels) {
-            State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
-        }
-        if (!isFinite(State.spm.playerRefreshCursor)) {
-            State.spm.playerRefreshCursor = 0;
-        }
-        if (!isFinite(State.spm.playerRefreshRemaining)) {
-            State.spm.playerRefreshRemaining = 0;
-        }
-        if (State.spm.needsFullPlayerCache === undefined || State.spm.needsFullPlayerCache === null) {
-            State.spm.needsFullPlayerCache = true;
-        }
-    }
-
-
     function ParseSpmNumber(valueText) {
         if (!valueText) return 0;
         var raw = String(valueText).replace(/,/g, "").trim().toLowerCase();
@@ -3772,69 +3682,6 @@ function GetUIRoot() {
         // Obsolete: Handled by manifests/ql_ult_cooldowns/manifest.js at 4Hz
     }
 
-
-
-
-    function RefreshSpmPlayerSlotCache(root, index) {
-        if (!root || index < 0 || index >= SPM_MAX_PLAYERS) return;
-        var playerPanel = GetTopBarPlayerPanel(root, index, PerfNowMs(), true);
-        State.spm.playerPanels[index] = playerPanel || null;
-        State.spm.playerDisplayLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("PlayerSPMDisplay") || null) : null;
-        State.spm.playerTeamByIndex[index] = playerPanel ? DetectTopBarPlayerTeam(playerPanel) : null;
-        State.spm.playerHiddenGoldLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("HiddenGoldValue") || null) : null;
-        State.spm.playerSoulsLabels[index] = playerPanel && playerPanel.FindChildTraverse ? (playerPanel.FindChildTraverse("SoulsValue") || null) : null;
-    }
-
-    function RefreshSpmPanelCache(root, nowMs) {
-        if (!root) return;
-        EnsureSpmState();
-        var shouldRefreshScorePanels =
-            !IsPanelValid(State.spm.cachedFriendlyScore) ||
-            !IsPanelValid(State.spm.cachedEnemyScore) ||
-            !IsPanelValid(State.spm.cachedFriendlyLabel) ||
-            !IsPanelValid(State.spm.cachedEnemyLabel) ||
-            nowMs >= (State.spm.panelCacheNextMs || 0);
-
-        if (shouldRefreshScorePanels) {
-            State.spm.cachedFriendlyScore = root.FindChildTraverse("TeamScoreFriendly") || null;
-            State.spm.cachedEnemyScore = root.FindChildTraverse("TeamScoreEnemy") || null;
-            State.spm.cachedFriendlyLabel = State.spm.cachedFriendlyScore ? (State.spm.cachedFriendlyScore.FindChildTraverse("TeamSPMDisplay_friendly") || null) : null;
-            State.spm.cachedEnemyLabel = State.spm.cachedEnemyScore ? (State.spm.cachedEnemyScore.FindChildTraverse("TeamSPMDisplay_enemy") || null) : null;
-            State.spm.panelCacheNextMs = nowMs + SPM_PANEL_CACHE_REFRESH_MS + 137;
-        }
-
-        if (!State.spm.playerPanels) State.spm.playerPanels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spm.playerDisplayLabels) State.spm.playerDisplayLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spm.playerTeamByIndex) State.spm.playerTeamByIndex = new Array(SPM_MAX_PLAYERS);
-        if (!State.spm.playerHiddenGoldLabels) State.spm.playerHiddenGoldLabels = new Array(SPM_MAX_PLAYERS);
-        if (!State.spm.playerSoulsLabels) State.spm.playerSoulsLabels = new Array(SPM_MAX_PLAYERS);
-        var remaining = Number(State.spm.playerRefreshRemaining);
-        if (!isFinite(remaining) || remaining < 0) remaining = 0;
-        if (State.spm.needsFullPlayerCache && remaining <= 0) {
-            remaining = SPM_MAX_PLAYERS;
-        } else if (shouldRefreshScorePanels && remaining <= 0) {
-            remaining = SPM_MAX_PLAYERS;
-        }
-        if (remaining <= 0) return;
-
-        var refreshCount = Math.min(SPM_PLAYER_CACHE_REFRESH_BATCH, remaining);
-        var cursor = Number(State.spm.playerRefreshCursor);
-        if (!isFinite(cursor) || cursor < 0 || cursor >= SPM_MAX_PLAYERS) cursor = 0;
-        if (refreshCount < 1) refreshCount = 1;
-        if (refreshCount > SPM_MAX_PLAYERS) refreshCount = SPM_MAX_PLAYERS;
-        for (var i = 0; i < refreshCount; i++) {
-            var index = (cursor + i) % SPM_MAX_PLAYERS;
-            RefreshSpmPlayerSlotCache(root, index);
-        }
-
-        State.spm.playerRefreshCursor = (cursor + refreshCount) % SPM_MAX_PLAYERS;
-        State.spm.playerRefreshRemaining = remaining - refreshCount;
-        if (State.spm.playerRefreshRemaining <= 0 && State.spm.needsFullPlayerCache) {
-            State.spm.needsFullPlayerCache = false;
-        }
-        State.topbarSoulSnapshot = null;
-        State.topbarSoulSnapshotUntilMs = 0;
-    }
     function EnsureMinimapOverlayAnchor(root) {
         if (!root || !root.FindChildTraverse) return null;
         var anchor = GetCachedPanel("minimapObjectiveTimersAnchor");
@@ -4312,18 +4159,6 @@ function GetUIRoot() {
             byId: byId,
             numeric: numeric || ""
         };
-    }
-
-    function FindZipBoostSource(root) {
-        var byId = root.FindChildTraverse("citadel_ability_zipline_boost_");
-        if (byId) return byId;
-
-        var candidates = root.FindChildrenWithClassTraverse("buttonContainer") || [];
-        for (var i = 0; i < candidates.length; i++) {
-            var c = candidates[i];
-            if (c && c.BHasClass && c.BHasClass("citadel_ability_zipline_boost")) return c;
-        }
-        return null;
     }
 
     function CreateKeyboardOverlayKey(parent, spec) {
@@ -5292,12 +5127,9 @@ function GetUIRoot() {
 
         if (root) {
             QOL.resetBuildSaveRequestAttributes(root);
-            ResetBuildClearRequestAttributes(root);
         }
         QOL.resetBuildSaveRuntimeState();
-        ResetBuildClearRuntimeState();
         ResetSaveSettingsLoaderSession(true);
-        ResetClearSettingsLoaderSession(true);
 
         SetSettingsLoaderStepState("read_payload", "skipped", "Loading skipped by user.");
         SetSettingsLoaderStepState("decode_payload", "skipped", "Loading skipped by user.");
@@ -5429,23 +5261,6 @@ function GetUIRoot() {
         reassertMs: SAVE_SETTINGS_LOADER_REASSERT_MS,
         reassertStateKey: "saveSettingsLoaderNextReassertMs",
         ensureStepRows: EnsureSaveSettingsLoaderStepRows
-    };
-
-    var CLEAR_OVERLAY_CFG = {
-        enabled: CLEAR_SETTINGS_LOADER_ENABLED,
-        cachePrefix: "clearSettingsLoader",
-        overlayId: CLEAR_SETTINGS_LOADER_OVERLAY_ID,
-        cardId: CLEAR_SETTINGS_LOADER_CARD_ID,
-        warningId: CLEAR_SETTINGS_LOADER_WARNING_ID,
-        titleId: CLEAR_SETTINGS_LOADER_TITLE_ID,
-        stepsWrapId: CLEAR_SETTINGS_LOADER_STEPS_WRAP_ID,
-        detailId: CLEAR_SETTINGS_LOADER_DETAIL_ID,
-        zIndex: "2147483645",
-        overlayHittestChildren: false,
-        cardHittestChildren: false,
-        reassertMs: CLEAR_SETTINGS_LOADER_REASSERT_MS,
-        reassertStateKey: "clearSettingsLoaderNextReassertMs",
-        ensureStepRows: EnsureClearSettingsLoaderStepRows
     };
 
     function EnsureLoaderOverlayCore(root, nowMs, cfg) {
@@ -5827,13 +5642,6 @@ function GetUIRoot() {
         return false;
     }
 
-    function IsClearSettingsLoaderVisibleNow(nowMs) {
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        if (State.clearSettingsLoaderSessionActive) return true;
-        if (State.clearSettingsLoaderSessionCompleted && now < (State.clearSettingsLoaderShowUntilMs || 0)) return true;
-        return false;
-    }
-
     function GetPanelLayoutHeightPx(panel, minPx) {
         var h = 0;
         if (panel) {
@@ -6111,204 +5919,6 @@ function GetUIRoot() {
         }
     }
 
-    // ── Clear overlay config ──
-    var _clearLoader = _CreateLoaderOverlay({
-        statePrefix: "clearSettingsLoader",
-        steps: CLEAR_SETTINGS_LOADER_STEPS,
-        cachedOverlayKey: "clearSettingsLoaderOverlay",
-        enabledCheck: function() { return CLEAR_SETTINGS_LOADER_ENABLED; },
-        stepRowIdPrefix: CLEAR_SETTINGS_LOADER_STEP_ROW_ID_PREFIX,
-        iconSuffix: CLEAR_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX,
-        labelSuffix: CLEAR_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX,
-        cachedStepRowsKey: "clearSettingsLoaderStepRows",
-    });
-
-    function ResetClearSettingsLoaderSession(hideOverlay) {
-        _clearLoader.resetSession(hideOverlay);
-    }
-    function BeginClearSettingsLoaderSession(requestToken, nowMs) {
-        _clearLoader.beginSession(requestToken, nowMs, "Initializing clear request.");
-    }
-    function SetClearSettingsLoaderStepState(stepKey, status, detail) {
-        _clearLoader.setStepState(stepKey, status, detail);
-    }
-    function GetClearSettingsLoaderStepState(stepKey) {
-        return _clearLoader.getStepState(stepKey);
-    }
-    function FinalizeClearSettingsLoaderSession(resultCode, detail, nowMs, didSwitchToStorageHero) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
-        if (!State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var code = resultCode ? String(resultCode) : "success";
-        var info = detail ? String(detail) : "";
-        if (code === "failed") {
-            var activeStep = State.clearSettingsLoaderCurrentStep ? String(State.clearSettingsLoaderCurrentStep) : "";
-            if (activeStep && activeStep !== "complete") {
-                SetClearSettingsLoaderStepState(activeStep, "error", info || "Clear failed.");
-            }
-        } else if (GetClearSettingsLoaderStepState("verify_clear") === "active") {
-            SetClearSettingsLoaderStepState("verify_clear", "done", "Storage build list is empty.");
-        }
-        if (didSwitchToStorageHero) {
-            SetClearSettingsLoaderStepState("return_hero", "done", "Returned to selected hero.");
-        } else {
-            SetClearSettingsLoaderStepState("return_hero", "skipped", "No hero return needed.");
-        }
-        State.clearSettingsLoaderResult = code;
-        State.clearSettingsLoaderSessionActive = false;
-        State.clearSettingsLoaderSessionCompleted = true;
-        State.clearSettingsLoaderShowUntilMs = now + CLEAR_SETTINGS_LOADER_HOLD_MS;
-        SetClearSettingsLoaderStepState("complete", code === "failed" ? "error" : "done", info || "");
-        State.clearSettingsLoaderCurrentStep = "complete";
-    }
-    function GetClearSettingsLoaderDetailForMessage(statusMessage) {
-        var msg = statusMessage ? String(statusMessage) : "";
-        if (msg === "starting") return "Initializing clear request.";
-        if (msg === "switching_to_skyrunner" || msg === "switching_to_airheart") return "Switching to Skyrunner.";
-        if (msg === "confirming_skyrunner" || msg === "confirming_airheart") return "Confirming Skyrunner context.";
-        if (msg === "reuse_skyrunner_context" || msg === "reuse_airheart_context") return "Reusing confirmed Skyrunner context.";
-        if (msg === "await_user_open_shop") return "Open shop to continue. This will delete your Skyrunner builds, if this is another character press ALT+F4! May need to be ran a few times to full clear.";
-        if (msg === "waiting_for_shop") return "Waiting for build shop panel.";
-        if (msg === "opening_builds_list") return "Opening builds list.";
-        if (msg === "deleting_build") return "Deleting a build.";
-        if (msg === "confirming_delete") return "Confirming build deletion.";
-        if (msg === "verifying_clear") return "Verifying build list is empty.";
-        if (msg === "cleared") return "Clear completed.";
-        if (msg === "storage_not_confirmed") return "Failed to confirm Skyrunner context.";
-        if (!msg) return "";
-        var clean = msg.replace(/_/g, " ");
-        if (!clean) return "";
-        return clean.charAt(0).toUpperCase() + clean.slice(1) + ".";
-    }
-
-    function UpdateClearSettingsLoaderFromBuildClearState(stageName, statusMessage) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
-        if (!State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) return;
-        var stage = stageName ? String(stageName) : "";
-        var detail = GetClearSettingsLoaderDetailForMessage(statusMessage);
-        SetClearSettingsLoaderStepState("start", "done", detail || "Clear request started.");
-        if (stage === "switch_to_storage") {
-            SetClearSettingsLoaderStepState("switch_airheart", "active", detail || "Switching to Skyrunner.");
-            return;
-        }
-        if (stage === "wait_storage_switch") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
-            SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Skyrunner confirmation.");
-            return;
-        }
-        if (stage === "await_user_shop_open" || stage === "confirm_storage") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
-            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_skyrunner_context" || statusMessage === "reuse_airheart_context") {
-                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
-            } else {
-                SetClearSettingsLoaderStepState("confirm_airheart", "active", detail || "Open shop on Skyrunner.");
-            }
-            return;
-        }
-        if (stage === "open_browse") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Skyrunner.");
-            if (State.buildClearStorageHeroConfirmed || statusMessage === "reuse_skyrunner_context" || statusMessage === "reuse_airheart_context") {
-                SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
-            } else {
-                SetClearSettingsLoaderStepState("confirm_airheart", "pending", "Awaiting Skyrunner confirmation.");
-            }
-            SetClearSettingsLoaderStepState("open_builds", "active", detail || "Opening builds list.");
-            return;
-        }
-        if (stage === "clear_loop") {
-            SetClearSettingsLoaderStepState("switch_airheart", "done", "Switched to Skyrunner.");
-            SetClearSettingsLoaderStepState("confirm_airheart", "done", "Skyrunner context confirmed.");
-            SetClearSettingsLoaderStepState("open_builds", "done", "Builds list ready.");
-            if (statusMessage === "verifying_clear" || statusMessage === "cleared") {
-                SetClearSettingsLoaderStepState("delete_builds", "done", "Build delete actions completed.");
-                SetClearSettingsLoaderStepState("verify_clear", "active", detail || "Verifying build list is empty.");
-            } else {
-                SetClearSettingsLoaderStepState("delete_builds", "active", detail || "Deleting builds.");
-            }
-            return;
-        }
-    }
-
-    function EnsureClearSettingsLoaderStepRows(stepsWrap) {
-        return _clearLoader.ensureStepRows(stepsWrap);
-    }
-    function RenderClearSettingsLoaderStepRows(stepsWrap) {
-        return _clearLoader.renderStepRows(stepsWrap);
-    }
-    function EnsureClearSettingsLoaderOverlay(root, nowMs) {
-        var panels = EnsureLoaderOverlayCore(root, nowMs, CLEAR_OVERLAY_CFG);
-        if (!panels) return null;
-
-        SetCachedPanel("clearSettingsLoaderOverlay", panels.overlay);
-        SetCachedPanel("clearSettingsLoaderCard", panels.card);
-        SetCachedPanel("clearSettingsLoaderWarning", panels.warning);
-        SetCachedPanel("clearSettingsLoaderTitle", panels.title);
-        SetCachedPanel("clearSettingsLoaderStepsWrap", panels.stepsWrap);
-        SetCachedPanel("clearSettingsLoaderDetail", panels.detailLabel);
-        return panels.overlay;
-    }
-
-    function UpdateClearSettingsLoaderOverlay(root, nowMs) {
-        if (!CLEAR_SETTINGS_LOADER_ENABLED) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var shouldShow = !!State.clearSettingsLoaderSessionActive;
-        if (!shouldShow && State.clearSettingsLoaderSessionCompleted) {
-            shouldShow = now < (State.clearSettingsLoaderShowUntilMs || 0);
-        }
-        var overlay = GetCachedPanel("clearSettingsLoaderOverlay");
-        if (!shouldShow) {
-            if (overlay) {
-                try { overlay.style.visibility = "collapse"; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-            }
-            if (State.clearSettingsLoaderSessionCompleted) {
-                ResetClearSettingsLoaderSession(true);
-            }
-            TraceLoaderOverlay("clear", overlay, false);
-            return;
-        }
-
-        overlay = EnsureClearSettingsLoaderOverlay(root, now);
-        if (!overlay) {
-            TraceLoaderOverlay("clear", null, true);
-            return;
-        }
-        overlay.style.visibility = "visible";
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
-        TraceLoaderOverlay("clear", overlay, true);
-
-        var clearCard = GetCachedPanel("clearSettingsLoaderCard");
-
-        var title = GetCachedPanel("clearSettingsLoaderTitle");
-        var warning = GetCachedPanel("clearSettingsLoaderWarning");
-        var stepsWrap = GetCachedPanel("clearSettingsLoaderStepsWrap");
-        var detailLabel = GetCachedPanel("clearSettingsLoaderDetail");
-        var stepSig = RenderClearSettingsLoaderStepRows(stepsWrap);
-        var resultPrefix = "";
-        if (State.clearSettingsLoaderSessionCompleted) {
-            if (State.clearSettingsLoaderResult === "success") resultPrefix = "Result: Clear complete.";
-            else if (State.clearSettingsLoaderResult === "failed") resultPrefix = "Result: Clear failed.";
-            else resultPrefix = "Result: Complete.";
-        }
-        var detailText = State.clearSettingsLoaderDetail || "";
-        if (resultPrefix.length > 0) detailText = detailText ? (resultPrefix + " " + detailText) : resultPrefix;
-        var isPromptDetail = IsSettingsLoaderShopPromptDetail(detailText);
-        var renderDetailText = DecorateLoaderDetailWithSpinner(
-            detailText,
-            now,
-            !!State.clearSettingsLoaderSessionActive,
-            !!State.clearSettingsLoaderSessionCompleted
-        );
-        var sig = stepSig + "|" + renderDetailText + "|" + String(State.clearSettingsLoaderSessionCompleted ? 1 : 0) + "|prompt=" + (isPromptDetail ? "1" : "0");
-        if (sig === State.clearSettingsLoaderLastRenderSig) return;
-        State.clearSettingsLoaderLastRenderSig = sig;
-        if (warning && warning.text !== SETTINGS_LOADER_WARNING_TEXT) warning.text = SETTINGS_LOADER_WARNING_TEXT;
-        if (title && title.text !== "QOLLOCK CLEARING...") title.text = "QOLLOCK CLEARING...";
-        if (detailLabel) {
-            ApplyLoaderDetailPromptStyle(detailLabel, isPromptDetail);
-            if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
-        }
-    }
-
     function PulseShopAfterBuildPayloadStartupReturn() {
         var root = GetUIRoot();
         if (!root || !IsConnectedToHideout(root)) return false;
@@ -6559,12 +6169,6 @@ function GetUIRoot() {
         var why = reason ? String(reason) : "unknown";
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         SetStartupCorruptRepairPending(root, true);
-        // Startup corruption repair uses loader-owned clear; suppress standalone clear queue if present.
-        ResetBuildClearRequestAttributes(root);
-        ResetBuildClearRuntimeState();
-        if (CLEAR_SETTINGS_LOADER_ENABLED) {
-            ResetClearSettingsLoaderSession(true);
-        }
         SetSettingsLoaderStepState("switch_airheart", "done", "Skyrunner switch command sent.");
         SetSettingsLoaderStepState("confirm_airheart", "active", "Verifying Skyrunner context for repair.");
         SetSettingsLoaderStepState("read_payload", "active", "Corrupt payload detected. Running automatic repair.");
@@ -9328,10 +8932,6 @@ function GetUIRoot() {
         return !!(State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted);
     }
 
-    function ShouldUpdateClearLoaderOverlay() {
-        return !!(State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted);
-    }
-
     var IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
     var IMAGES_IN_CHAT_MAX_W = 150;
     var IMAGES_IN_CHAT_MAX_H = 150;
@@ -9546,8 +9146,7 @@ function GetUIRoot() {
         if (State.allFeaturesDisabled && raw === State.lastRawConfig &&
             !State.heroRestorePendingTarget &&
             !State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted &&
-            !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted &&
-            !State.clearSettingsLoaderSessionActive && !State.clearSettingsLoaderSessionCompleted) {
+            !State.saveSettingsLoaderSessionActive && !State.saveSettingsLoaderSessionCompleted) {
             return true;
         }
         return false;
@@ -9678,17 +9277,15 @@ function GetUIRoot() {
     function updateLoaderOverlays(root, nowMs) {
         var _settingsLoaderShowing = State.settingsLoaderSessionActive || State.settingsLoaderSessionCompleted;
         if (_settingsLoaderShowing ||
-            State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted ||
-            State.clearSettingsLoaderSessionActive || State.clearSettingsLoaderSessionCompleted) {
+            State.saveSettingsLoaderSessionActive || State.saveSettingsLoaderSessionCompleted) {
             if (ShouldUpdateStartupLoaderOverlay()) UpdateSettingsLoaderOverlay(root, nowMs);
             // The load loader wins the screen outright: a stale load session that
             // was never reset therefore hides a save behind a plate frozen on the
             // read checklist, with nothing anywhere saying so.
-            if (_settingsLoaderShowing && (ShouldUpdateSaveLoaderOverlay() || ShouldUpdateClearLoaderOverlay())) {
+            if (_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) {
                 TraceLoaderOverlay("suppressed-by-load", GetCachedPanel("settingsLoaderOverlay"), true);
             }
             if (!_settingsLoaderShowing && ShouldUpdateSaveLoaderOverlay()) UpdateSaveSettingsLoaderOverlay(root, nowMs);
-            if (!_settingsLoaderShowing && ShouldUpdateClearLoaderOverlay()) UpdateClearSettingsLoaderOverlay(root, nowMs);
         }
     }
 
@@ -10044,14 +9641,12 @@ function GetUIRoot() {
         ["ensureMinimapOverlayAnchor", function() { return EnsureMinimapOverlayAnchor; }],
         ["ensureMinimapPanelCache", function() { return EnsureMinimapPanelCache; }],
         ["ensurePassiveHudPanelCache", function() { return EnsurePassiveHudPanelCache; }],
-        ["ensureSpmState", function() { return EnsureSpmState; }],
         ["estimateUnsecuredSoulsEtaFallbackSec", function() { return EstimateUnsecuredSoulsEtaFallbackSec; }],
         ["extractStatDisplayText", function() { return ExtractStatDisplayText; }],
         ["findChatMessageLabel", function() { return FindChatMessageLabel; }],
         ["findImagesInChatMessageCacheEntry", function() { return FindImagesInChatMessageCacheEntry; }],
         ["findNumericLabelTextInTree", function() { return FindNumericLabelTextInTree; }],
         ["findUnsecuredSoulsSource", function() { return FindUnsecuredSoulsSource; }],
-        ["findZipBoostSource", function() { return FindZipBoostSource; }],
         ["getCachedPanel", function() { return GetCachedPanel; }],
         ["getGameSecondsForUrn", function() { return GetGameSecondsForUrn; }],
         ["getGameplayHudPanel", function() { return GetGameplayHudPanel; }],
@@ -10098,7 +9693,6 @@ function GetUIRoot() {
         ["readBottomBarWashColorIndex", function() { return ReadBottomBarWashColorIndex; }],
         ["readKeyboardOverlayWashColorIndex", function() { return ReadKeyboardOverlayWashColorIndex; }],
         ["readStaminaChargeColorIndex", function() { return ReadStaminaChargeColorIndex; }],
-        ["refreshSpmPanelCache", function() { return RefreshSpmPanelCache; }],
         ["resetKeyboardOverlayCaches", function() { return ResetKeyboardOverlayCaches; }],
         ["resetUnsecuredSoulsTracking", function() { return ResetUnsecuredSoulsTracking; }],
         ["resolveCachedPanel", function() { return ResolveCachedPanel; }],
