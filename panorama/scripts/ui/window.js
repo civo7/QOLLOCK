@@ -567,6 +567,460 @@
     };
 
     // =========================================================================
+    // Match Transition Watchdog
+    // =========================================================================
+
+    const SETTINGS_TRANSITION_WATCH_INTERVAL_SEC = 0.25;
+    const SETTINGS_TRANSITION_CLOSE_COOLDOWN_MS = 1000;
+    const SETTINGS_TRANSITION_SIGNAL_RECHECK_SEC = [0.0, 0.2, 0.6];
+
+    let _transitionWatchToken = 0;
+    let _transitionWatchRunning = false;
+    let _transitionCloseCooldownUntilMs = 0;
+    let _openedInHideout = false;
+
+    const findRootPanel = () => {
+        if (Q.core?.panel?.findRoot) return Q.core.panel.findRoot();
+        let root = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
+        while (root && root.GetParent && isAlive(root.GetParent())) {
+            root = root.GetParent();
+        }
+        return root;
+    };
+
+    const getNowMs = () => {
+        try {
+            return Date.now ? Date.now() : (new Date()).getTime();
+        } catch (_) {
+            return (new Date()).getTime();
+        }
+    };
+
+    const hasPanelClassToken = (panel, className) => {
+        if (!panel || !panel.BHasClass || !className) return false;
+        try {
+            return panel.BHasClass(className);
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const isInHideout = () => {
+        const root = findRootPanel();
+        if (root && root.BHasClass) {
+            try {
+                if (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout")) return true;
+            } catch (_) {}
+        }
+        const hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+        if (hud && hud.BHasClass) {
+            try {
+                if (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout")) return true;
+            } catch (_) {}
+        }
+        return false;
+    };
+
+    const isInActiveMatch = () => {
+        const root = findRootPanel();
+        if (!root) return false;
+
+        const hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+        const gameplayHud = root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
+        const hideout = isInHideout();
+
+        const hasAnyClass = (className) => {
+            return hasPanelClassToken(root, className) ||
+                hasPanelClassToken(hud, className) ||
+                hasPanelClassToken(gameplayHud, className);
+        };
+
+        if (
+            hasAnyClass("GameStateGameInProgress") ||
+            hasAnyClass("GameStatePostGame") ||
+            hasAnyClass("GameStatePostGamePlayOfTheGame") ||
+            hasAnyClass("inPostGame")
+        ) {
+            return true;
+        }
+
+        if (
+            !hideout &&
+            (
+                hasAnyClass("connectedToGame") ||
+                hasAnyClass("joined_team") ||
+                hasAnyClass("GameStatePreGame") ||
+                hasAnyClass("GameStatePreGameWait") ||
+                hasAnyClass("GameStateWaitForMapToLoad") ||
+                hasAnyClass("GameStateHeroSelection") ||
+                hasAnyClass("GameStateMatchIntro")
+            )
+        ) {
+            return true;
+        }
+
+        return false;
+    };
+
+    const stopTransitionWatch = () => {
+        _transitionWatchToken++;
+        _transitionWatchRunning = false;
+        if (typeof globalThis.gSettingsTransitionWatchToken !== "undefined") {
+            globalThis.gSettingsTransitionWatchToken++;
+        }
+        if (typeof globalThis.gSettingsTransitionWatchRunning !== "undefined") {
+            globalThis.gSettingsTransitionWatchRunning = false;
+        }
+    };
+
+    const tryCloseForTransition = (reason) => {
+        const isVisible = (typeof IsSettingsWindowVisible === "function") ? IsSettingsWindowVisible() : isOpen();
+        if (!isVisible) return false;
+        const openedInHideout = (typeof globalThis.gSettingsOpenedInHideout !== "undefined") ? globalThis.gSettingsOpenedInHideout : _openedInHideout;
+        if (!openedInHideout) return false;
+        if (!isInActiveMatch()) return false;
+
+        const now = getNowMs();
+        if (now < _transitionCloseCooldownUntilMs) return false;
+        _transitionCloseCooldownUntilMs = now + SETTINGS_TRANSITION_CLOSE_COOLDOWN_MS;
+
+        if (typeof $.ForceCloseModSettings === "function") {
+            $.ForceCloseModSettings();
+        } else {
+            setOpen(false);
+        }
+        return true;
+    };
+
+    const handleTransitionSignal = (reason) => {
+        const isVisible = (typeof IsSettingsWindowVisible === "function") ? IsSettingsWindowVisible() : isOpen();
+        if (!isVisible) return;
+        const openedInHideout = (typeof globalThis.gSettingsOpenedInHideout !== "undefined") ? globalThis.gSettingsOpenedInHideout : _openedInHideout;
+        if (!openedInHideout) return;
+
+        for (let i = 0; i < SETTINGS_TRANSITION_SIGNAL_RECHECK_SEC.length; i++) {
+            const delaySec = SETTINGS_TRANSITION_SIGNAL_RECHECK_SEC[i];
+            if (typeof $.Schedule === "function") {
+                $.Schedule(delaySec, () => {
+                    tryCloseForTransition(reason);
+                });
+            }
+        }
+    };
+
+    const startTransitionWatch = () => {
+        stopTransitionWatch();
+        _transitionWatchRunning = true;
+        if (typeof globalThis.gSettingsTransitionWatchRunning !== "undefined") {
+            globalThis.gSettingsTransitionWatchRunning = true;
+        }
+        const token = _transitionWatchToken;
+
+        const tick = () => {
+            if (token !== _transitionWatchToken) return;
+            const isVisible = (typeof IsSettingsWindowVisible === "function") ? IsSettingsWindowVisible() : isOpen();
+            if (!isVisible) {
+                _transitionWatchRunning = false;
+                return;
+            }
+
+            if (tryCloseForTransition("watchdog")) {
+                _transitionWatchRunning = false;
+                return;
+            }
+
+            if (typeof $.Schedule === "function") {
+                $.Schedule(SETTINGS_TRANSITION_WATCH_INTERVAL_SEC, tick);
+            }
+        };
+
+        if (typeof $.Schedule === "function") {
+            $.Schedule(SETTINGS_TRANSITION_WATCH_INTERVAL_SEC, tick);
+        }
+    };
+
+    // =========================================================================
+    // Tab List Signature Caching & Dynamic Row Sync
+    // =========================================================================
+
+    const _settingsListContentPanelBySig = {};
+    let _settingsListActiveRenderSig = "";
+    const _settingsListRowSyncFnsBySig = {};
+    let _settingsListRowSyncFns = [];
+    let _settingsListRefreshToken = 0;
+    let _settingsListRefreshForcePending = false;
+    let _settingsListSoftRefreshToken = 0;
+
+    const makeSettingsListSignatureKey = (sig) => {
+        return String(sig || "default").replace(/[^a-zA-Z0-9_]/g, "_");
+    };
+
+    const ensureSettingsListHosts = (list) => {
+        if (!isAlive(list)) return null;
+
+        let cacheHost = list.FindChildTraverse ? list.FindChildTraverse("SettingsListCacheHost") : null;
+        if (!isAlive(cacheHost)) {
+            cacheHost = $.CreatePanel("Panel", list, "SettingsListCacheHost");
+        }
+        if (cacheHost) {
+            cacheHost.AddClass("SettingsListContentHost");
+            cacheHost.AddClass("SettingsListCacheHost");
+        }
+
+        let searchHost = list.FindChildTraverse ? list.FindChildTraverse("SettingsListSearchHost") : null;
+        if (!isAlive(searchHost)) {
+            searchHost = $.CreatePanel("Panel", list, "SettingsListSearchHost");
+        }
+        if (searchHost) {
+            searchHost.AddClass("SettingsListContentHost");
+            searchHost.AddClass("SettingsListSearchHost");
+        }
+
+        return {
+            cacheHost,
+            searchHost
+        };
+    };
+
+    const pruneInvalidSettingsListContentCaches = () => {
+        for (const sig in _settingsListContentPanelBySig) {
+            if (!Object.prototype.hasOwnProperty.call(_settingsListContentPanelBySig, sig)) continue;
+            if (!isAlive(_settingsListContentPanelBySig[sig])) {
+                delete _settingsListContentPanelBySig[sig];
+            }
+        }
+    };
+
+    const ensureSettingsListContentPanelForSignature = (list, renderSig, forceRebuild) => {
+        const hosts = ensureSettingsListHosts(list);
+        if (!hosts || !isAlive(hosts.cacheHost)) {
+            return { panel: null, created: false };
+        }
+
+        pruneInvalidSettingsListContentCaches();
+
+        const sig = String(renderSig || "");
+        let panel = _settingsListContentPanelBySig[sig];
+        let created = false;
+
+        if (!isAlive(panel)) panel = null;
+
+        if (forceRebuild === true && panel) {
+            delete _settingsListRowSyncFnsBySig[sig];
+        }
+
+        if (!panel) {
+            const panelId = "SettingsListSig_" + makeSettingsListSignatureKey(sig);
+            panel = hosts.cacheHost.FindChildTraverse ? hosts.cacheHost.FindChildTraverse(panelId) : null;
+            if (!isAlive(panel)) {
+                panel = $.CreatePanel("Panel", hosts.cacheHost, panelId);
+            }
+            if (panel) {
+                panel.AddClass("SettingsListCachedTabContent");
+                _settingsListContentPanelBySig[sig] = panel;
+                created = true;
+            }
+        } else if (panel.GetParent && panel.GetParent() !== hosts.cacheHost) {
+            panel.SetParent(hosts.cacheHost);
+        }
+
+        return {
+            panel,
+            created
+        };
+    };
+
+    const setActiveSettingsListRenderSignature = (renderSig) => {
+        _settingsListActiveRenderSig = String(renderSig || "");
+        if (typeof globalThis.gSettingsListActiveRenderSig !== "undefined") {
+            globalThis.gSettingsListActiveRenderSig = _settingsListActiveRenderSig;
+        }
+        if (!_settingsListRowSyncFnsBySig[_settingsListActiveRenderSig]) {
+            _settingsListRowSyncFnsBySig[_settingsListActiveRenderSig] = [];
+        }
+    };
+
+    const showSettingsListTabPanel = (list, renderSig) => {
+        const hosts = ensureSettingsListHosts(list);
+        if (!hosts || !isAlive(hosts.cacheHost) || !isAlive(hosts.searchHost)) return;
+        const sig = String(renderSig || "");
+
+        hosts.searchHost.SetHasClass("Hidden", true);
+        for (const key in _settingsListContentPanelBySig) {
+            if (!Object.prototype.hasOwnProperty.call(_settingsListContentPanelBySig, key)) continue;
+            const panel = _settingsListContentPanelBySig[key];
+            if (!isAlive(panel)) continue;
+            panel.SetHasClass("Hidden", key !== sig);
+        }
+    };
+
+    const resetSettingsListRowSyncRegistry = () => {
+        const sig = String(_settingsListActiveRenderSig || "");
+        _settingsListRowSyncFns = [];
+        _settingsListRowSyncFnsBySig[sig] = [];
+        if (typeof globalThis.gSettingsListRowSyncFns !== "undefined") {
+            globalThis.gSettingsListRowSyncFns = _settingsListRowSyncFns;
+        }
+    };
+
+    const registerSettingsListRowSync = (fn) => {
+        if (typeof fn !== "function") return;
+        const sig = String(_settingsListActiveRenderSig || "");
+        if (!_settingsListRowSyncFnsBySig[sig]) {
+            _settingsListRowSyncFnsBySig[sig] = [];
+        }
+        _settingsListRowSyncFnsBySig[sig].push(fn);
+        _settingsListRowSyncFns = _settingsListRowSyncFnsBySig[sig];
+        if (typeof globalThis.gSettingsListRowSyncFns !== "undefined") {
+            globalThis.gSettingsListRowSyncFns = _settingsListRowSyncFns;
+        }
+    };
+
+    const runSettingsListRowSync = () => {
+        const sig = String(_settingsListActiveRenderSig || "");
+        const bucket = _settingsListRowSyncFnsBySig[sig];
+        if (!Array.isArray(bucket) || bucket.length <= 0) return;
+        for (let i = bucket.length - 1; i >= 0; i--) {
+            const fn = bucket[i];
+            if (typeof fn !== "function") {
+                bucket.splice(i, 1);
+                continue;
+            }
+            let keep = true;
+            try {
+                keep = (fn() !== false);
+            } catch (_) {
+                keep = false;
+            }
+            if (!keep) {
+                bucket.splice(i, 1);
+            }
+        }
+        _settingsListRowSyncFnsBySig[sig] = bucket;
+        _settingsListRowSyncFns = bucket;
+        if (typeof globalThis.gSettingsListRowSyncFns !== "undefined") {
+            globalThis.gSettingsListRowSyncFns = bucket;
+        }
+    };
+
+    const refreshRuntimeControlVisuals = () => {
+        const btnGroupRefreshers = (typeof globalThis.gRuntimeButtonGroupRefreshers !== "undefined")
+            ? globalThis.gRuntimeButtonGroupRefreshers
+            : null;
+        if (btnGroupRefreshers) {
+            for (const key in btnGroupRefreshers) {
+                if (!Object.prototype.hasOwnProperty.call(btnGroupRefreshers, key)) continue;
+                const refreshFn = btnGroupRefreshers[key];
+                if (typeof refreshFn !== "function") continue;
+                try { refreshFn(); } catch (_) {}
+            }
+        }
+        const arcadeSyncFns = (typeof globalThis.gArcadeOnDeathSyncFns !== "undefined")
+            ? globalThis.gArcadeOnDeathSyncFns
+            : null;
+        if (Array.isArray(arcadeSyncFns)) {
+            for (let i = arcadeSyncFns.length - 1; i >= 0; i--) {
+                const syncFn = arcadeSyncFns[i];
+                let keep = true;
+                if (typeof syncFn !== "function") {
+                    keep = false;
+                } else {
+                    try { keep = (syncFn() !== false); } catch (_) { keep = false; }
+                }
+                if (!keep) arcadeSyncFns.splice(i, 1);
+            }
+        }
+    };
+
+    const softRefreshSettingsListContent = (list) => {
+        const getList = (typeof GetSettingsListPanel === "function") ? GetSettingsListPanel : globalThis.GetSettingsListPanel;
+        const targetList = list || (getList ? getList() : null);
+        if (!isAlive(targetList)) return false;
+        refreshRuntimeControlVisuals();
+        runSettingsListRowSync();
+        if (typeof QueueActivePresetHighlightRefresh === "function") {
+            QueueActivePresetHighlightRefresh(0.02);
+        } else if (typeof globalThis.QueueActivePresetHighlightRefresh === "function") {
+            globalThis.QueueActivePresetHighlightRefresh(0.02);
+        }
+        return true;
+    };
+
+    const requestSettingsListRefresh = (delaySec, forceRebuild) => {
+        let delay = Number(delaySec);
+        if (!isFinite(delay) || delay < 0) delay = 0;
+        if (forceRebuild === true) _settingsListRefreshForcePending = true;
+        _settingsListRefreshToken += 1;
+        const refreshToken = _settingsListRefreshToken;
+
+        if (typeof $.Schedule === "function") {
+            $.Schedule(delay, () => {
+                if (refreshToken !== _settingsListRefreshToken) return;
+                const getList = (typeof GetSettingsListPanel === "function") ? GetSettingsListPanel : globalThis.GetSettingsListPanel;
+                const list = getList ? getList() : null;
+                const shouldForce = (_settingsListRefreshForcePending === true);
+                _settingsListRefreshForcePending = false;
+                if (!list) return;
+                const updateFn = (typeof UpdateListContent === "function") ? UpdateListContent : globalThis.UpdateListContent;
+                if (updateFn) updateFn(list, shouldForce);
+            });
+        }
+    };
+
+    const refreshSettingsLanguageUiAfterConfigChange = (previousLanguage) => {
+        const getLang = (typeof GetSettingsLanguage === "function")
+            ? GetSettingsLanguage
+            : (Q.ui?.theme?.getLanguage ? Q.ui.theme.getLanguage : null);
+        if (getLang && Math.round(Number(previousLanguage)) === getLang()) return false;
+        if (typeof InvalidateSearchSectionIndexCache === "function") {
+            InvalidateSearchSectionIndexCache();
+        } else if (Q.ui?.search?.invalidateSearchSectionIndexCache) {
+            Q.ui.search.invalidateSearchSectionIndexCache();
+        }
+
+        if (typeof $.Schedule === "function") {
+            $.Schedule(0.02, () => {
+                const isVis = (typeof IsSettingsWindowVisible === "function") ? IsSettingsWindowVisible() : isOpen();
+                if (typeof $.BuildUI === "function" && isVis) {
+                    $.BuildUI();
+                    return;
+                }
+
+                const rootPanel = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
+                const tabBar = rootPanel ? rootPanel.FindChildTraverse("SettingsTabBar") : null;
+                const settingsList = rootPanel ? rootPanel.FindChildTraverse("SettingsList") : null;
+                if (typeof SyncTabActiveStates === "function") {
+                    SyncTabActiveStates(tabBar);
+                } else if (typeof globalThis.SyncTabActiveStates === "function") {
+                    globalThis.SyncTabActiveStates(tabBar);
+                }
+                if (isAlive(settingsList)) {
+                    requestSettingsListRefresh(0, true);
+                }
+            });
+        }
+        return true;
+    };
+
+    const requestSettingsListSoftRefresh = (delaySec) => {
+        let delay = Number(delaySec);
+        if (!isFinite(delay) || delay < 0) delay = 0;
+        _settingsListSoftRefreshToken += 1;
+        const refreshToken = _settingsListSoftRefreshToken;
+        if (typeof $.Schedule === "function") {
+            $.Schedule(delay, () => {
+                if (refreshToken !== _settingsListSoftRefreshToken) return;
+                const getList = (typeof GetSettingsListPanel === "function") ? GetSettingsListPanel : globalThis.GetSettingsListPanel;
+                softRefreshSettingsListContent(getList ? getList() : null);
+            });
+        }
+    };
+
+    const refreshSettingsListContent = () => {
+        requestSettingsListSoftRefresh(0);
+    };
+
+    // =========================================================================
     // Escape Menu Keyboard & Background Hook
     // =========================================================================
 
@@ -645,6 +1099,27 @@
         boot,
         ensureDiscordTextureLogo,
         ensureDiscordFooterTextureLogo,
+        isInHideout,
+        isInActiveMatch,
+        startTransitionWatch,
+        stopTransitionWatch,
+        tryCloseForTransition,
+        handleTransitionSignal,
+        makeSettingsListSignatureKey,
+        ensureSettingsListHosts,
+        pruneInvalidSettingsListContentCaches,
+        ensureSettingsListContentPanelForSignature,
+        setActiveSettingsListRenderSignature,
+        showSettingsListTabPanel,
+        resetSettingsListRowSyncRegistry,
+        registerSettingsListRowSync,
+        runSettingsListRowSync,
+        refreshRuntimeControlVisuals,
+        softRefreshSettingsListContent,
+        requestSettingsListRefresh,
+        refreshSettingsLanguageUiAfterConfigChange,
+        requestSettingsListSoftRefresh,
+        refreshSettingsListContent,
     };
 
     Q.ui.window = windowApi;
@@ -659,6 +1134,29 @@
     globalThis.IsSettingsWindowVisible = isOpen;
     globalThis.EnsureDiscordTextureLogo = ensureDiscordTextureLogo;
     globalThis.EnsureDiscordFooterTextureLogo = ensureDiscordFooterTextureLogo;
+    globalThis.IsInHideoutForBuildSave = isInHideout;
+    globalThis.GetNowMs = getNowMs;
+    globalThis.HasPanelClassToken = hasPanelClassToken;
+    globalThis.IsSettingsInActiveMatchContext = isInActiveMatch;
+    globalThis.StopSettingsGameTransitionWatch = stopTransitionWatch;
+    globalThis.TryCloseSettingsForGameTransition = tryCloseForTransition;
+    globalThis.HandleSettingsGameTransitionSignal = handleTransitionSignal;
+    globalThis.StartSettingsGameTransitionWatch = startTransitionWatch;
+    globalThis.MakeSettingsListSignatureKey = makeSettingsListSignatureKey;
+    globalThis.EnsureSettingsListHosts = ensureSettingsListHosts;
+    globalThis.PruneInvalidSettingsListContentCaches = pruneInvalidSettingsListContentCaches;
+    globalThis.EnsureSettingsListContentPanelForSignature = ensureSettingsListContentPanelForSignature;
+    globalThis.SetActiveSettingsListRenderSignature = setActiveSettingsListRenderSignature;
+    globalThis.ShowSettingsListTabPanel = showSettingsListTabPanel;
+    globalThis.ResetSettingsListRowSyncRegistry = resetSettingsListRowSyncRegistry;
+    globalThis.RegisterSettingsListRowSync = registerSettingsListRowSync;
+    globalThis.RunSettingsListRowSync = runSettingsListRowSync;
+    globalThis.RefreshRuntimeControlVisuals = refreshRuntimeControlVisuals;
+    globalThis.SoftRefreshSettingsListContent = softRefreshSettingsListContent;
+    globalThis.RequestSettingsListRefresh = requestSettingsListRefresh;
+    globalThis.RefreshSettingsLanguageUiAfterConfigChange = refreshSettingsLanguageUiAfterConfigChange;
+    globalThis.RequestSettingsListSoftRefresh = requestSettingsListSoftRefresh;
+    globalThis.RefreshSettingsListContent = refreshSettingsListContent;
 
     $.Msg("[QOLLock] ui/window: settings window manager ready.");
 })();

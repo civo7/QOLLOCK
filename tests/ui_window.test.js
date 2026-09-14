@@ -99,6 +99,7 @@ function createTestEnvironment() {
         win,
         closeBtn,
         bg,
+        list,
         windowApi: sandbox.QOL.ui.window,
         QOL: sandbox.QOL,
         mockDollar,
@@ -238,4 +239,56 @@ test("window: ensureDiscordTextureLogo and ensureDiscordFooterTextureLogo attach
     assert.ok(logoImg, "FooterDiscordLogoTexture should be created");
     assert.strictEqual(logoImg.BHasClass("FooterDiscordLogoTexture"), true);
 });
+
+test("window: isInHideout and isInActiveMatch evaluate context classes", () => {
+    const { windowApi, emRoot } = createTestEnvironment();
+
+    assert.strictEqual(windowApi.isInHideout(), false);
+    assert.strictEqual(windowApi.isInActiveMatch(), false);
+
+    emRoot.AddClass("InHideout");
+    assert.strictEqual(windowApi.isInHideout(), true);
+
+    emRoot.AddClass("GameStateGameInProgress");
+    assert.strictEqual(windowApi.isInActiveMatch(), true);
+});
+
+test("window: ensureSettingsListHosts and ensureSettingsListContentPanelForSignature create panels", () => {
+    const { windowApi, list } = createTestEnvironment();
+
+    const hosts = windowApi.ensureSettingsListHosts(list);
+    assert.ok(hosts, "Hosts should be created");
+    assert.ok(hosts.cacheHost, "CacheHost should exist");
+    assert.ok(hosts.searchHost, "SearchHost should exist");
+
+    const entry = windowApi.ensureSettingsListContentPanelForSignature(list, "tab=Healthbar", false);
+    assert.ok(entry, "Panel entry should exist");
+    assert.ok(entry.panel, "Content panel should exist");
+    assert.strictEqual(entry.created, true);
+
+    // Second call retrieves cached panel
+    const cachedEntry = windowApi.ensureSettingsListContentPanelForSignature(list, "tab=Healthbar", false);
+    assert.strictEqual(cachedEntry.panel, entry.panel);
+    assert.strictEqual(cachedEntry.created, false);
+});
+
+test("window: registerSettingsListRowSync and runSettingsListRowSync invoke registered callbacks", () => {
+    const { windowApi } = createTestEnvironment();
+
+    windowApi.setActiveSettingsListRenderSignature("test_sig");
+    let called = false;
+    windowApi.registerSettingsListRowSync(() => {
+        called = true;
+        return true;
+    });
+
+    windowApi.runSettingsListRowSync();
+    assert.strictEqual(called, true);
+
+    windowApi.resetSettingsListRowSyncRegistry();
+    called = false;
+    windowApi.runSettingsListRowSync();
+    assert.strictEqual(called, false);
+});
+
 
