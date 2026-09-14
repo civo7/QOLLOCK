@@ -50,6 +50,7 @@
 		<include src="s2r://panorama/scripts/ui/arcade_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/dev_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/gameplay_tabs.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/theme.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
