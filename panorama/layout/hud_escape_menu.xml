@@ -35,6 +35,7 @@
 		<include src="s2r://panorama/scripts/ql_settings_persistence.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_update_checker.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_metadata.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/ql_settings_tabs.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/renderer.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/layout.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/breadcrumb.vjs_c" />

@@ -20,6 +20,7 @@ const settingsArcadeTabPath = path.join(projectRoot, "panorama", "scripts", "ui"
 const settingsDevTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "dev_tab.js");
 const settingsGameplayTabsPath = path.join(projectRoot, "panorama", "scripts", "ui", "gameplay_tabs.js");
 const settingsMetadataPath = path.join(projectRoot, "panorama", "scripts", "ui", "ql_settings_metadata.js");
+const settingsTabsPath = path.join(projectRoot, "panorama", "scripts", "ui", "ql_settings_tabs.js");
 const settingsThemePath = path.join(projectRoot, "panorama", "scripts", "ui", "theme.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
@@ -567,7 +568,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsDevTabPath, settingsGameplayTabsPath, settingsThemePath, settingsMetadataPath, settingsPath],
+        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsDevTabPath, settingsGameplayTabsPath, settingsThemePath, settingsMetadataPath, settingsTabsPath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,

@@ -1,0 +1,54 @@
+// tests/ui_tabs.test.js
+// =============================================================================
+// Unit tests for Settings Tabs subsystem (panorama/scripts/ui/ql_settings_tabs.js)
+// =============================================================================
+
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+
+test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
+    const ctx = {
+        QOL: {},
+        globalThis: null
+    };
+    ctx.globalThis = ctx;
+
+    const script = fs.readFileSync(
+        path.join(__dirname, "../panorama/scripts/ui/ql_settings_tabs.js"),
+        "utf8"
+    );
+    vm.runInNewContext(script, ctx);
+
+    assert.ok(ctx.QOL.ui.tabs, "QOL.ui.tabs must exist");
+
+    // Order
+    const order = ctx.QOL.ui.tabs.GetSettingsTabOrder();
+    assert.strictEqual(order.length, 12);
+    assert.strictEqual(order[0], "Support");
+    assert.strictEqual(order[1], "Config");
+
+    // Display Name
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabDisplayName("Config"), "Settings");
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabDisplayName("MOG"), "MOGLOCK");
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabDisplayName("Crosshair"), "Crosshair");
+
+    // Groups
+    const groups = ctx.QOL.ui.tabs.GetSettingsTabGroups();
+    assert.strictEqual(groups.length, 2);
+    assert.strictEqual(groups[0].title, "General");
+    assert.strictEqual(groups[1].title, "Gameplay");
+
+    // Icons
+    assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Support").includes("icon_thumbsup"));
+    assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Config").includes("icon_gear"));
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Unknown"), "");
+
+    // Globals
+    assert.strictEqual(ctx.GetSettingsTabOrder, ctx.QOL.ui.tabs.GetSettingsTabOrder);
+    assert.strictEqual(ctx.GetSettingsTabDisplayName, ctx.QOL.ui.tabs.GetSettingsTabDisplayName);
+});

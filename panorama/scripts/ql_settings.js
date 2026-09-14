@@ -4431,49 +4431,8 @@ function NormalizeSearchText(value) {
     if (value === undefined || value === null) return "";
     return String(value).toLowerCase();
 }
+// Settings tab definitions extracted to ui/ql_settings_tabs.js
 
-function GetSettingsTabOrder() {
-    return ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "Console"];
-}
-
-function GetSettingsTabDisplayName(tabName) {
-    var raw = String(tabName || "");
-    if (raw === "Config") return "Settings";
-    if (raw === "MOG") return "MOGLOCK";
-    return raw;
-}
-
-function GetSettingsTabGroups() {
-    return [
-        {
-            title: "General",
-            tabs: ["Support", "Config", "Presets", "Console", "Arcade"]
-        },
-        {
-            title: "Gameplay",
-            tabs: ["Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio"]
-        }
-    ];
-}
-
-function GetSettingsTabIconSource(tabName) {
-    switch (String(tabName || "")) {
-        case "Support": return "s2r://panorama/images/icons/icon_thumbsup.vsvg";
-        case "Config": return "s2r://panorama/images/icons/icon_gear.vsvg";
-        case "Presets": return "s2r://panorama/images/icons/icon_player.vsvg";
-        case "Console": return "s2r://panorama/images/icons/icon_feedback.vsvg";
-        case "MOG": return "s2r://panorama/images/icons/properties/armor_alt.vsvg";
-        case "Arcade": return "s2r://panorama/images/icons/properties/condition_burn.vsvg";
-        case "Crosshair": return "s2r://panorama/images/icons/properties/range_aoe.vsvg";
-        case "Healthbar": return "s2r://panorama/images/icons/properties/health.vsvg";
-        case "HUD": return "s2r://panorama/images/icons/properties/spirit.vsvg";
-        case "UI": return "s2r://panorama/images/icons/icon_reorder.vsvg";
-        case "Overlay": return "s2r://panorama/images/icons/icon_graph.vsvg";
-        case "Minimap": return "s2r://panorama/images/icons/icon_report.vsvg";
-        case "Audio": return "s2r://panorama/images/qollock/audio_nav_icon.vsvg";
-        default: return "";
-    }
-}
 
 function GetActiveSearchCollectSection() {
     if (!gSearchCollectState) return null;
