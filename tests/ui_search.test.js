@@ -227,3 +227,32 @@ test("search: search and clear update window content and search state", () => {
     assert.strictEqual(QOL.ui.search.isSearching(), false);
     assert.strictEqual(QOL.ui.search.getQuery(), "");
 });
+
+test("search: normalizeSearchText, buildSearchAliasList, and isSearchRowMatch", () => {
+    const env = createTestEnvironment();
+    const { search } = env.sandbox.QOL.ui;
+
+    assert.strictEqual(search.normalizeSearchText("  FOO  BAR  "), "  foo  bar  ");
+    assert.strictEqual(search.normalizeSearchText(null), "");
+
+    const aliases = search.buildSearchAliasList("My Label", "cfg_key_1", "Sub Info", ["extra alias"]);
+    assert.ok(aliases.includes("my label"));
+    assert.ok(aliases.includes("cfg_key_1"));
+    assert.ok(aliases.includes("sub info"));
+    assert.ok(aliases.includes("extra alias"));
+
+    const row = search.buildSearchCollectedRow("Crosshair Scale", "cfg_crosshair", "toggle", 0, 100, 1, null, "Scale size", ["reticle"]);
+    assert.strictEqual(search.isSearchRowMatch(row, "reticle"), true);
+    assert.strictEqual(search.isSearchRowMatch(row, "crosshair"), true);
+    assert.strictEqual(search.isSearchRowMatch(row, "scale size"), true);
+    assert.strictEqual(search.isSearchRowMatch(row, "nonexistent"), false);
+
+    assert.strictEqual(search.buildSearchSectionIndexCacheKey(), "lang=en");
+    search.invalidateSearchSectionIndexCache();
+
+    env.sandbox.currentSearchQuery = "test query";
+    assert.strictEqual(search.isSettingsSearchActiveQuery(), true);
+    search.clearSettingsSearchQuery(env.emRoot);
+    assert.strictEqual(search.isSettingsSearchActiveQuery(), false);
+});
+
