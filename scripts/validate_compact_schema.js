@@ -11,6 +11,8 @@ const settingsPreviewsPath = path.join(projectRoot, "panorama", "scripts", "ql_s
 const settingsTooltipsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings_tooltips.js");
 const settingsPersistencePath = path.join(projectRoot, "panorama", "scripts", "ql_settings_persistence.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
+const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
+const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
 const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
 
 function readFile(filePath) {
@@ -571,7 +573,7 @@ function main() {
         false
     );
     const coreContext = loadContext(
-        [sharedPath, bridgePath, corePath],
+        [sharedPath, bridgePath, namespacePath, codecPath, corePath],
         `globalThis.__schemaGuardExports = {
             latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
             registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,

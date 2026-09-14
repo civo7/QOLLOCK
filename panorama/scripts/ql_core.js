@@ -908,185 +908,30 @@ const BUILD_CATEGORY_PAYLOAD_SCHEMA_SEMVER = (typeof QOL_SCHEMA_SEMVER === "stri
     };
 
 
-    function BuildPayloadDecodeBase64(str) {
-        if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.DecodeBase64 === "function") {
-            return QOL_CODEC.DecodeBase64(str);
-        }
-        return "";
-    }
+    var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = (typeof QOL !== "undefined" && QOL.core?.codec?.getCompactSchemaRegistry) ? QOL.core.codec.getCompactSchemaRegistry() : QOL_COMPACT_SCHEMA_REGISTRY;
+    var BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = (typeof QOL !== "undefined" && QOL.core?.codec?.getCompactWireToSemver) ? QOL.core.codec.getCompactWireToSemver() : QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
+    var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = (typeof QOL !== "undefined" && QOL.core?.codec?.getLatestCompactSemver) ? QOL.core.codec.getLatestCompactSemver() : QOL_LATEST_COMPACT_SEMVER;
 
-// ── Compatibility aliases (commit 1.1: redirect to shared module) ──
-var BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY = QOL_COMPACT_SCHEMA_REGISTRY;
-var BUILD_CATEGORY_COMPACT_WIRE_TO_SEMVER = QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
-var BUILD_CATEGORY_LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
-function GetBuildPayloadCompactSchema(s)     { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(s); }
-function GetBuildPayloadCompactWireVersion(s) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(s); }
-function ResolveBuildPayloadCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
-var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD = QOL_COMPACT_DEFAULT_HERO_FIELD;
-var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS = QOL_COMPACT_DEFAULT_HERO_OPTIONS;
+    const GetBuildPayloadCompactSchema = (s) => ((typeof QOL !== "undefined" && QOL.core?.codec?.getSchema) ? QOL.core.codec.getSchema(s) : QOL_COMPACT_SCHEMA_UTILS.GetSchema(s));
+    const GetBuildPayloadCompactWireVersion = (s) => ((typeof QOL !== "undefined" && QOL.core?.codec?.getWireVersion) ? QOL.core.codec.getWireVersion(s) : QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(s));
+    const ResolveBuildPayloadCompactSemverFromWireVersion = (wv) => ((typeof QOL !== "undefined" && QOL.core?.codec?.resolveSemverFromWire) ? QOL.core.codec.resolveSemverFromWire(wv) : QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv));
 
-function BuildPayloadFromBase64Url(urlStr) {
-    if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.FromBase64Url === "function") {
-        return QOL_CODEC.FromBase64Url(urlStr);
-    }
-    var padded = String(urlStr || "").replace(/-/g, "+").replace(/_/g, "/");
-    while (padded.length % 4 !== 0) padded += "=";
-    return BuildPayloadDecodeBase64(padded);
-}
+    var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD = (typeof QOL !== "undefined" && QOL.core?.codec?.getCompactDefaultHeroField) ? QOL.core.codec.getCompactDefaultHeroField() : QOL_COMPACT_DEFAULT_HERO_FIELD;
+    var BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS = (typeof QOL !== "undefined" && QOL.core?.codec?.getCompactDefaultHeroOptions) ? QOL.core.codec.getCompactDefaultHeroOptions() : QOL_COMPACT_DEFAULT_HERO_OPTIONS;
 
-function BuildPayloadEncodeBase64(binaryStr) {
-    if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.EncodeBase64Raw === "function") {
-        return QOL_CODEC.EncodeBase64Raw(binaryStr);
-    }
-    return "";
-}
+    const BuildPayloadDecodeBase64 = (str) => ((typeof QOL !== "undefined" && QOL.core?.codec?.decodeBase64) ? QOL.core.codec.decodeBase64(str) : "");
+    const BuildPayloadEncodeBase64 = (binaryStr) => ((typeof QOL !== "undefined" && QOL.core?.codec?.encodeBase64) ? QOL.core.codec.encodeBase64(binaryStr) : "");
+    const BuildPayloadFromBase64Url = (urlStr) => ((typeof QOL !== "undefined" && QOL.core?.codec?.fromBase64Url) ? QOL.core.codec.fromBase64Url(urlStr) : "");
+    const BuildPayloadToBase64Url = (binaryStr) => ((typeof QOL !== "undefined" && QOL.core?.codec?.toBase64Url) ? QOL.core.codec.toBase64Url(binaryStr) : "");
 
-function BuildPayloadToBase64Url(binaryStr) {
-    if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.ToBase64Url === "function") {
-        return QOL_CODEC.ToBase64Url(binaryStr);
-    }
-    return BuildPayloadEncodeBase64(binaryStr).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
+    const SerializeBuildPayloadCompact = (config, semverOverride) => ((typeof QOL !== "undefined" && QOL.core?.codec?.serializeBuildPayloadCompact) ? QOL.core.codec.serializeBuildPayloadCompact(config, semverOverride) : "");
+    const DeserializeBuildPayloadCompact = (binaryStr, expectedSemver) => ((typeof QOL !== "undefined" && QOL.core?.codec?.deserializeBuildPayloadCompact) ? QOL.core.codec.deserializeBuildPayloadCompact(binaryStr, expectedSemver) : null);
+    const BuildDefaultPayloadToken = (cfg) => ((typeof QOL !== "undefined" && QOL.core?.codec?.buildDefaultPayloadToken) ? QOL.core.codec.buildDefaultPayloadToken(cfg) : "");
 
-function SerializeBuildPayloadCompact(config, semverOverride) {
-    var semver = String(semverOverride || BUILD_CATEGORY_LATEST_COMPACT_SEMVER);
-    var wireVersion = GetBuildPayloadCompactWireVersion(semver);
-    var schema = GetBuildPayloadCompactSchema(semver);
-    var defaults = _BDC();
-    if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.SerializeCompactBinary === "function") {
-        return QOL_CODEC.SerializeCompactBinary(config, schema, wireVersion, function(field, cfg) {
-            var val = cfg && cfg.hasOwnProperty(field.key) ? cfg[field.key] : field.min;
-            if (field.key === "ULT_COOLDOWN_X_OFFSET" || field.key === "ULT_COOLDOWN_Y_OFFSET") {
-                val = 0;
-            }
-            if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
-                var configuredHero = cfg && cfg.DEFAULT_HERO ? String(cfg.DEFAULT_HERO) : "";
-                var heroIndex = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.indexOf(configuredHero);
-                if (heroIndex < 0) {
-                    var defaultHero = defaults && defaults.DEFAULT_HERO ? String(defaults.DEFAULT_HERO) : "";
-                    heroIndex = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.indexOf(defaultHero);
-                }
-                if (heroIndex < 0) heroIndex = 0;
-                val = heroIndex;
-            }
-            return val;
-        });
-    }
-    throw new Error("Build payload serializer unavailable");
-}
-
-function BuildDefaultPayloadToken(cfg) {
-    var defaults = _BDC();
-    var payloadConfig = {};
-    for (var key in defaults) {
-        payloadConfig[key] = defaults[key];
-    }
-    var defaultHero = QOL.getConfiguredDefaultHeroId(cfg);
-    if (defaultHero && defaultHero.length > 0) {
-        payloadConfig.DEFAULT_HERO = defaultHero;
-    }
-    var compact = SerializeBuildPayloadCompact(payloadConfig);
-    var encoded = BuildPayloadToBase64Url(compact);
-    if (!encoded || encoded.length === 0) return "";
-    return BUILD_CATEGORY_PAYLOAD_EXPORT_PREFIX + encoded;
-}
-
-function QueueBuildSaveRequestFromLoader(root, payloadText, nowMs) {
-    if (!root || !root.SetAttributeString) return "";
-    var payload = payloadText ? String(payloadText).replace(/\s+/g, "") : "";
-    if (!payload || !BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX.test(payload)) return "";
-    // Guard: if a save is already in-flight, don't overwrite its attributes.
-    // Return the existing token so the caller can wait for it to complete.
-    var existingState = "";
-    try { existingState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    if (existingState === "pending") {
-        var existingToken = "";
-        try { existingToken = String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "") || ""); } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        return existingToken;
-    }
-    var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-    var token = "startup_" + String(now) + "_" + String(Math.floor(Math.random() * 1000000));
-    root.SetAttributeString(BUILD_SAVE_REQUEST_ATTR, payload);
-    root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, token);
-    root.SetAttributeString(BUILD_SAVE_MSG_ATTR, "queued");
-    root.SetAttributeString(BUILD_SAVE_STATE_ATTR, "pending");
-    return token;
-}
-
-// ── Surviving buildload utilities (ported from ql_feat_buildload.js) ──
-// These were defined only in the old buildload file (now commented out in
-// hud.xml Phase B). The save pipeline (ql_feat_buildsave.js) and buildbridge
-// still call them, so they must survive the cut-over.
-
-function ShouldRunBuildCategoryPayloadUiAction(nowMs, stateField, cooldownMs) {
-    if (!stateField || stateField.length === 0) return true;
-    var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-    var nextMs = Number(State[stateField]) || 0;
-    if (now < nextMs) return false;
-    var cd = Number(cooldownMs);
-    if (!isFinite(cd) || cd < 0) cd = BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS;
-    State[stateField] = now + cd;
-    return true;
-}
-
-function ResetBuildCategoryPayloadProbeInitState() {
-    State.buildCategoryPayloadHeroProbeInitAttempted = false;
-    State.buildCategoryPayloadHeroProbeInitStage = "";
-    State.buildCategoryPayloadHeroProbeInitNextMs = 0;
-    State.buildCategoryPayloadHeroProbeInitRetries = 0;
-    State.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
-    State.buildCategoryPayloadHeroProbeInitCreateVerifyUntilMs = 0;
-}
-function SetStartupCorruptRepairPending(root, pending) {
-    if (!root || !root.SetAttributeString) return;
-    try { root.SetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, pending ? "1" : ""); } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-}
-
-
-function DeserializeBuildPayloadCompact(binaryStr, expectedSemver) {
-    var raw = String(binaryStr || "");
-    if (raw.length < 1) throw new Error("Compact string too short");
-    var wireVersion = raw.charCodeAt(0) & 255;
-    var semver = "";
-    if (expectedSemver) {
-        var expected = String(expectedSemver);
-        var expectedWireVersion = GetBuildPayloadCompactWireVersion(expected);
-        if (expectedWireVersion !== wireVersion) throw new Error("Build payload schema wire version mismatch");
-        semver = expected;
-    } else {
-        semver = ResolveBuildPayloadCompactSemverFromWireVersion(wireVersion);
-    }
-    var schema = GetBuildPayloadCompactSchema(semver);
-    if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.DeserializeCompactBinary === "function") {
-        return QOL_CODEC.DeserializeCompactBinary(
-            raw,
-            schema,
-            function(field, value, parsed) {
-                if (field.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
-                    var heroIndex = Math.round(value);
-                    if (heroIndex < 0 || heroIndex >= BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS.length) heroIndex = 0;
-                    var defaults = _BDC();
-                    var fallbackHeroId = defaults && defaults.DEFAULT_HERO ? String(defaults.DEFAULT_HERO) : "";
-                    var resolvedHeroId = BUILD_CATEGORY_COMPACT_DEFAULT_HERO_OPTIONS[heroIndex] || fallbackHeroId || "hero_werewolf";
-                    parsed.DEFAULT_HERO = resolvedHeroId;
-                    return true;
-                }
-                return false;
-            },
-            function(missingField, parsed) {
-                if (!missingField || !missingField.key) return;
-                var defaults = _BDC();
-                if (missingField.key === BUILD_CATEGORY_COMPACT_DEFAULT_HERO_FIELD) {
-                    var fallbackHero = (defaults && defaults.DEFAULT_HERO) ? String(defaults.DEFAULT_HERO) : "hero_werewolf";
-                    parsed.DEFAULT_HERO = fallbackHero;
-                } else if (defaults && defaults.hasOwnProperty(missingField.key)) {
-                    parsed[missingField.key] = defaults[missingField.key];
-                }
-            }
-        );
-    }
-    throw new Error("Build payload deserializer unavailable");
-}
+    const QueueBuildSaveRequestFromLoader = (root, payloadText, nowMs) => ((typeof QOL !== "undefined" && QOL.core?.codec?.queueBuildSaveRequestFromLoader) ? QOL.core.codec.queueBuildSaveRequestFromLoader(root, payloadText, nowMs) : "");
+    const ShouldRunBuildCategoryPayloadUiAction = (nowMs, stateField, cooldownMs) => ((typeof QOL !== "undefined" && QOL.core?.codec?.shouldRunBuildCategoryPayloadUiAction) ? QOL.core.codec.shouldRunBuildCategoryPayloadUiAction(nowMs, stateField, cooldownMs) : true);
+    const ResetBuildCategoryPayloadProbeInitState = () => { if (typeof QOL !== "undefined" && QOL.core?.codec?.resetBuildCategoryPayloadProbeInitState) QOL.core.codec.resetBuildCategoryPayloadProbeInitState(); };
+    const SetStartupCorruptRepairPending = (root, pending) => { if (typeof QOL !== "undefined" && QOL.core?.codec?.setStartupCorruptRepairPending) QOL.core.codec.setStartupCorruptRepairPending(root, pending); };
 
 
 
