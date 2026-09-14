@@ -271,6 +271,39 @@
         } catch (_) {}
     };
 
+    const BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX = /^\[QOL-\d+-\d+-\d+\]:([A-Za-z0-9\-_]+)$/i;
+
+    const extractBuildCategoryPayloadToken = (rawText) => {
+        if (!rawText) return "";
+        const normalized = String(rawText).replace(/\s+/g, "");
+        if (!normalized || normalized.length === 0) return "";
+        const match = normalized.match(BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX);
+        if (!match || !match[1]) return "";
+        return String(match[1]);
+    };
+
+    const isBrowseBuildsPopupOpen = (root) => {
+        if (!root?.FindChildTraverse) return false;
+        const ids = ["PopupBuildBrowser", "BrowseBuilds", "HeroBuildSelector"];
+        const isAlive = (p) => !!(p && typeof p.IsValid === "function" && p.IsValid());
+        for (let i = 0; i < ids.length; i++) {
+            let panel = null;
+            try { panel = root.FindChildTraverse(ids[i]); } catch (_) { panel = null; }
+            if (panel && isAlive(panel) && panel.visible !== false) return true;
+        }
+        return false;
+    };
+
+    const tryOpenBuildBrowserPopup = (root) => {
+        if (isBrowseBuildsPopupOpen(root)) return true;
+        try {
+            if (typeof CitadelOpenBuildBrowser === "function") {
+                CitadelOpenBuildBrowser(1);
+            }
+        } catch (_) {}
+        return isBrowseBuildsPopupOpen(root);
+    };
+
     const codecApi = {
         decodeBase64: buildPayloadDecodeBase64,
         encodeBase64: buildPayloadEncodeBase64,
@@ -279,6 +312,9 @@
         serializeBuildPayloadCompact,
         deserializeBuildPayloadCompact,
         buildDefaultPayloadToken,
+        extractBuildCategoryPayloadToken,
+        isBrowseBuildsPopupOpen,
+        tryOpenBuildBrowserPopup,
         queueBuildSaveRequestFromLoader,
         shouldRunBuildCategoryPayloadUiAction,
         resetBuildCategoryPayloadProbeInitState,
@@ -301,6 +337,9 @@
     Q.buildDefaultPayloadToken = buildDefaultPayloadToken;
     Q.buildPayloadFromBase64Url = buildPayloadFromBase64Url;
     Q.buildPayloadToBase64Url = buildPayloadToBase64Url;
+    Q.extractBuildCategoryPayloadToken = extractBuildCategoryPayloadToken;
+    Q.isBrowseBuildsPopupOpen = isBrowseBuildsPopupOpen;
+    Q.tryOpenBuildBrowserPopup = tryOpenBuildBrowserPopup;
     Q.queueBuildSaveRequestFromLoader = queueBuildSaveRequestFromLoader;
     Q.shouldRunBuildCategoryPayloadUiAction = shouldRunBuildCategoryPayloadUiAction;
     Q.resetBuildCategoryPayloadProbeInitState = resetBuildCategoryPayloadProbeInitState;

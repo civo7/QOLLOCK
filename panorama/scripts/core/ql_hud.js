@@ -115,6 +115,102 @@
         try { return target.BHasClass(className); } catch (e) { return false; }
     }
 
+    const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
+    const PANEL_ID_TOP_BAR = "TopBar";
+    const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
+
+    const getGameplayHudPanel = (root) => {
+        if (!root?.FindChildTraverse) return root || null;
+        return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
+    };
+
+    const isCustomHudContextActive = (_root) => true;
+
+    const readPanelOpacityMaybe = (panel) => {
+        if (!panel || !isAlive(panel) || !panel.style) return NaN;
+        const opacity = Number(panel.style.opacity);
+        if (Number.isFinite(opacity)) return opacity;
+        const wash = String(panel.style.washColor || "");
+        const m = wash.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\s*\)/i);
+        if (m) {
+            const val = Number(m[1]);
+            if (Number.isFinite(val)) return val;
+        }
+        return NaN;
+    };
+
+    const isPanelSuppressedMaybe = (panel) => {
+        if (!panel || !isAlive(panel)) return true;
+        const isVisible = (typeof QOL !== "undefined" && QOL.isPanelVisibleMaybe)
+            ? QOL.isPanelVisibleMaybe(panel)
+            : (panel.visible !== false);
+        if (!isVisible) return true;
+        const opacity = readPanelOpacityMaybe(panel);
+        if (Number.isFinite(opacity) && opacity <= 0.01) return true;
+        return false;
+    };
+
+    const isPanelEffectivelyVisibleMaybe = (panel, stopAncestor) => {
+        let current = panel;
+        while (current && isAlive(current)) {
+            if (isPanelSuppressedMaybe(current)) return false;
+            if (stopAncestor && current === stopAncestor) break;
+            current = current.GetParent ? current.GetParent() : null;
+        }
+        return true;
+    };
+
+    const isHudVisibleForTopBarRuntime = (root, topBar) => {
+        if (!root) return true;
+        const hasAnyClassInHierarchySafe = (panel, classNames) => {
+            if (!panel || !classNames?.length) return false;
+            for (let i = 0; i < classNames.length; i++) {
+                const cls = classNames[i];
+                if (!cls) continue;
+                try {
+                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) {
+                        if (QOL_UTILS.HasClassInHierarchy(panel, cls)) return true;
+                    } else if (panel.BHasClass && panel.BHasClass(cls)) {
+                        return true;
+                    }
+                } catch (_) {}
+            }
+            return false;
+        };
+
+        const hiddenContextClasses = ["connectedToHideout", "InHideout", "inHideout", "inHideoutIntro", "HideoutIntro"];
+        const hiddenUiClasses = ["ShowEscapeMenu", "HudTakeoverEnabled"];
+
+        const hud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
+            ? QOL.getCachedPanel("hudPanel")
+            : (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
+
+        if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
+        if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
+        if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
+        if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
+        if (hasAnyClassInHierarchySafe(topBar, hiddenContextClasses)) return false;
+
+        const gameplayHud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
+            ? QOL.getCachedPanel("gameplayHud")
+            : (root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null);
+        const gameplayHudAlive = (typeof QOL !== "undefined" && QOL.getCachedPanel)
+            ? QOL.getCachedPanel("gameplayHudAlive")
+            : (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud_alive") : null);
+
+        if (gameplayHud && !isPanelEffectivelyVisibleMaybe(gameplayHud, root)) return false;
+        if (gameplayHudAlive && !isPanelEffectivelyVisibleMaybe(gameplayHudAlive, root)) return false;
+
+        return true;
+    };
+
+    const isColorWarningEnabled = (cfg) => {
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsCfgEnabled) {
+            return QOL_UTILS.IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING");
+        }
+        return Number(cfg?.ENABLE_COLOR_WARNING) === 1;
+    };
+
     const getState = () => (typeof QOL !== "undefined" && QOL.state) ? QOL.state : (typeof State !== "undefined" ? State : { cachedPanels: {} });
     const getCachedPanel = (key) => (typeof QOL !== "undefined" && QOL.getCachedPanel) ? QOL.getCachedPanel(key) : getState()?.cachedPanels?.[key];
     const setCachedPanel = (key, p) => {
@@ -762,7 +858,14 @@
         resetDamageReportOffsetRuntime,
         getPanelClassTokens,
         panelHasClassToken,
-        getHighestRejuvChargeTokenOnPanel
+        getHighestRejuvChargeTokenOnPanel,
+        getGameplayHudPanel,
+        isCustomHudContextActive,
+        isHudVisibleForTopBarRuntime,
+        isColorWarningEnabled,
+        PANEL_ID_GAMEPLAY_HUD,
+        PANEL_ID_TOP_BAR,
+        PANEL_ID_GOLD_AP_CONTAINER
     };
 
     // Backward compat: alias on PanelHelpers if not already present
@@ -790,6 +893,12 @@
     Q.getPanelClassTokens = getPanelClassTokens;
     Q.panelHasClassToken = panelHasClassToken;
     Q.getHighestRejuvChargeTokenOnPanel = getHighestRejuvChargeTokenOnPanel;
+    Q.getGameplayHudPanel = getGameplayHudPanel;
+    Q.isCustomHudContextActive = isCustomHudContextActive;
+    Q.isHudVisibleForTopBarRuntime = isHudVisibleForTopBarRuntime;
+    Q.isColorWarningEnabled = isColorWarningEnabled;
+    Q.panelIdTopBar = PANEL_ID_TOP_BAR;
+    Q.panelIdGoldApContainer = PANEL_ID_GOLD_AP_CONTAINER;
 
     $.Msg("[QOLLock] core/ql_hud: attached to QOL.core.hud");
 })();

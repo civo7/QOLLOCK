@@ -84,7 +84,6 @@ var HUD_LOAD_ORDER = [
     path.join("core", "ql_settings_loader.js"),
     path.join("features", "ql_feat_buildbridge.js"),
     "ql_locale_lookup.js",
-    "ql_core.js",
     path.join("manifests", "ql_build_storage", "legacy_3_1_9.js"),
     path.join("manifests", "ql_build_storage", "driver.js"),
     path.join("manifests", "ql_healthbar", "shared.js"),

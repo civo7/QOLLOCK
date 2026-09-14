@@ -13,7 +13,6 @@ const settingsPersistencePath = path.join(projectRoot, "panorama", "scripts", "q
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
 const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
-const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
 
 function readFile(filePath) {
     return fs.readFileSync(filePath, "utf8");
@@ -573,14 +572,14 @@ function main() {
         false
     );
     const coreContext = loadContext(
-        [sharedPath, bridgePath, namespacePath, codecPath, corePath],
+        [sharedPath, bridgePath, namespacePath, codecPath],
         `globalThis.__schemaGuardExports = {
-            latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
-            registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,
-            serialize: SerializeBuildPayloadCompact,
-            deserialize: DeserializeBuildPayloadCompact
+            latestSemver: QOL.core.codec.getLatestCompactSemver(),
+            registry: QOL.core.codec.getCompactSchemaRegistry(),
+            serialize: QOL.core.codec.serializeBuildPayloadCompact,
+            deserialize: QOL.core.codec.deserializeBuildPayloadCompact
         };`,
-        true
+        false
     );
     var mirrorSettingsContext = null; // mirror not available
     var mirrorCoreContext = null; // mirror not available

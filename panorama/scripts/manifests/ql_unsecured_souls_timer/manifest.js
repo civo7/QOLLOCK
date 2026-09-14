@@ -74,20 +74,79 @@
                 return v;
             }
             function _parseUnsecuredSoulsValue(valueText) {
-                try { if (typeof QOL !== "undefined" && QOL.parseUnsecuredSoulsValue) return QOL.parseUnsecuredSoulsValue(valueText); } catch(e) {}
-                return 0;
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseNumber) {
+                    return Math.max(0, Math.round(QOL_UTILS.ParseNumber(valueText)));
+                }
+                const cleaned = String(valueText || "").replace(/[^0-9.-]/g, "");
+                const n = Number(cleaned);
+                return (!isFinite(n) || n < 0) ? 0 : Math.round(n);
             }
             function _estimateUnsecuredSoulsEtaFallbackSec(souls, gameMin) {
-                try { if (typeof QOL !== "undefined" && QOL.estimateUnsecuredSoulsEtaFallbackSec) return QOL.estimateUnsecuredSoulsEtaFallbackSec(souls, gameMin); } catch(e) {}
-                return 60;
+                const remaining = Math.max(0, Number(souls) || 0);
+                if (remaining <= 0) return 0;
+                const minuteScale = 1 + (Math.max(0, Number(gameMin) || 0) * 0.05);
+                const flatRate = 15 * minuteScale;
+                const perSecond = (remaining * 0.02) + flatRate;
+                if (!isFinite(perSecond) || perSecond <= 0) return 0;
+                return remaining / perSecond;
             }
             function _findUnsecuredSoulsSource(root) {
-                try { if (typeof QOL !== "undefined" && QOL.findUnsecuredSoulsSource) return QOL.findUnsecuredSoulsSource(root); } catch(e) {}
+                if (!root) return null;
+                const modernUnsecured = root.FindChildTraverse ? root.FindChildTraverse("HudUnsecuredLabel") : null;
+                if (_isPanelValid(modernUnsecured)) return modernUnsecured;
+
+                const goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
+                if (goldContainer && goldContainer.FindChildTraverse) {
+                    const fromGoldById = goldContainer.FindChildTraverse("hudDealthGoldLabel");
+                    if (_isPanelValid(fromGoldById)) return fromGoldById;
+
+                    const fromGoldByClass = goldContainer.FindChildrenWithClassTraverse ? (goldContainer.FindChildrenWithClassTraverse("death_penalty_gold") || []) : [];
+                    for (let i = 0; i < fromGoldByClass.length; i++) {
+                        if (_isPanelValid(fromGoldByClass[i])) return fromGoldByClass[i];
+                    }
+                }
+
+                const byId = root.FindChildTraverse ? root.FindChildTraverse("hudDealthGoldLabel") : null;
+                if (_isPanelValid(byId)) return byId;
+
+                const candidates = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("death_penalty_gold") || []) : [];
+                for (let j = 0; j < candidates.length; j++) {
+                    const candidate = candidates[j];
+                    if (!_isPanelValid(candidate)) continue;
+                    let anc = candidate.GetParent ? candidate.GetParent() : null;
+                    while (anc) {
+                        if (anc.BHasClass && anc.BHasClass("hudDeathGoldContainer")) return candidate;
+                        anc = anc.GetParent ? anc.GetParent() : null;
+                    }
+                }
+                for (let k = 0; k < candidates.length; k++) {
+                    if (_isPanelValid(candidates[k])) return candidates[k];
+                }
                 return null;
             }
             function _getUnsecuredSoulsDangerLevel(source, souls) {
-                try { if (typeof QOL !== "undefined" && QOL.getUnsecuredSoulsDangerLevel) return QOL.getUnsecuredSoulsDangerLevel(source, souls); } catch(e) {}
+                let current = source;
+                while (current) {
+                    if (current.BHasClass) {
+                        if (current.BHasClass("death_penalty_gold_danger_level_4")) return 4;
+                        if (current.BHasClass("death_penalty_gold_danger_level_3")) return 3;
+                        if (current.BHasClass("death_penalty_gold_danger_level_2")) return 2;
+                        if (current.BHasClass("death_penalty_gold_danger_level_1")) return 1;
+                    }
+                    current = current.GetParent ? current.GetParent() : null;
+                }
+                if (souls >= 1000) return 3;
+                if (souls >= 400) return 2;
+                if (souls > 0) return 1;
                 return 0;
+            }
+
+            // Export to QOL namespace for cross-manifest callers
+            if (typeof QOL !== "undefined") {
+                QOL.parseUnsecuredSoulsValue = _parseUnsecuredSoulsValue;
+                QOL.estimateUnsecuredSoulsEtaFallbackSec = _estimateUnsecuredSoulsEtaFallbackSec;
+                QOL.findUnsecuredSoulsSource = _findUnsecuredSoulsSource;
+                QOL.getUnsecuredSoulsDangerLevel = _getUnsecuredSoulsDangerLevel;
             }
             // ── Constants ──
             var UNSECURED_SOULS_ETA_MAX_SEC = 999;
