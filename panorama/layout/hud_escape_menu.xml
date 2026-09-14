@@ -6,6 +6,8 @@
 		<include src="s2r://panorama/styles/ql_settings.vcss_c" />
 	</styles>
 	<scripts>
+		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
@@ -32,6 +34,7 @@
 		<include src="s2r://panorama/scripts/ql_settings_tooltips.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_persistence.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_update_checker.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/renderer.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
