@@ -9,121 +9,139 @@
 // LOAD ORDER:  Included in hud.xml before build storage and ql_core.js
 // =============================================================================
 
-(function() {
-    'use strict';
+(() => {
+    "use strict";
 
-    var Q = (typeof globalThis !== 'undefined' && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== 'undefined' ? QOL : {});
-    var State = (typeof globalThis !== 'undefined' && globalThis.State) ? globalThis.State : (typeof window !== 'undefined' && window.State ? window.State : { cachedPanels: {} });
-    var Panel = (Q.core && Q.core.panel) ? Q.core.panel : (Q.ui && Q.ui.PanelHelpers ? Q.ui.PanelHelpers : {});
-    var Hud = (Q.core && Q.core.hud) ? Q.core.hud : {};
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : {});
+    const State = (typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : (typeof window !== "undefined" && window.State ? window.State : { cachedPanels: {} });
+    const Panel = Q.core?.panel || Q.ui?.PanelHelpers || {};
+    const Hud = Q.core?.hud || {};
 
-    var IsPanelValid = Panel.isAlive || function(p) { return p != null && typeof p.IsValid === 'function' && p.IsValid(); };
-    var GetCachedPanel = (Q.getCachedPanel) || function(k) { var p = State.cachedPanels ? State.cachedPanels[k] : null; if (IsPanelValid(p)) return p; if (State.cachedPanels) State.cachedPanels[k] = null; return null; };
-    var SetCachedPanel = (Q.setCachedPanel) || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = IsPanelValid(p) ? p : null; };
-    var GetUIRoot = (Q.getUIRoot) || function() { return Panel.findRoot ? Panel.findRoot() : (typeof $.GetContextPanel === 'function' ? $.GetContextPanel() : null); };
-    var ActivatePanelSafe = Panel.activate || function(p) { if (!IsPanelValid(p)) return false; try { $.DispatchEvent('Activated', p, 'mouse'); return true; } catch(e) {} try { $.DispatchEvent('Activated', p); return true; } catch(e2) {} return false; };
-    var SetPanelOpacitySafe = (typeof QOL_UTILS !== 'undefined' && QOL_UTILS.SetPanelOpacitySafe) ? QOL_UTILS.SetPanelOpacitySafe : function(p, o) { if (p && p.style) p.style.opacity = String(o); };
-    var QOL_WARN = (typeof QOL_UTILS !== 'undefined' && QOL_UTILS.WarnLog) ? QOL_UTILS.WarnLog : function() {};
+    const isPanelValid = Panel.isAlive || ((p) => p != null && typeof p.IsValid === "function" && p.IsValid());
+    const getCachedPanel = Q.getCachedPanel || ((k) => {
+        const p = State.cachedPanels ? State.cachedPanels[k] : null;
+        if (isPanelValid(p)) return p;
+        if (State.cachedPanels) State.cachedPanels[k] = null;
+        return null;
+    });
+    const setCachedPanel = Q.setCachedPanel || ((k, p) => {
+        if (State.cachedPanels) State.cachedPanels[k] = isPanelValid(p) ? p : null;
+    });
+    const getUIRoot = Q.getUIRoot || (() => (Panel.findRoot ? Panel.findRoot() : (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null)));
+    const activatePanelSafe = Panel.activate || ((p) => {
+        if (!isPanelValid(p)) return false;
+        try { $.DispatchEvent("Activated", p, "mouse"); return true; } catch (_) {}
+        try { $.DispatchEvent("Activated", p); return true; } catch (_) {}
+        return false;
+    });
+    const setPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe)
+        ? QOL_UTILS.SetPanelOpacitySafe
+        : ((p, o) => { if (p?.style) p.style.opacity = String(o); });
+    const QOL_WARN = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.WarnLog)
+        ? QOL_UTILS.WarnLog
+        : (() => {});
 
     // ── Engine HUD & Hideout Detection ──
-    function IsHudClassActive(root, className) {
+    const isHudClassActive = (root, className) => {
         if (!className) return false;
-        if (Hud && typeof Hud.isClassActive === 'function') {
+        if (typeof Hud?.isClassActive === "function") {
             return Hud.isClassActive(className);
         }
-        var r = root || GetUIRoot();
+        const r = root || getUIRoot();
         if (!r) return false;
         return Panel.hasClassToken ? Panel.hasClassToken(r, className) : (r.BHasClass ? r.BHasClass(className) : false);
-    }
+    };
 
-    function IsConnectedToHideout(root) {
-        var r = root || GetUIRoot();
+    const isConnectedToHideout = (root) => {
+        const r = root || getUIRoot();
         if (!r) return false;
-        var hud = (Q.resolveHudPanel ? Q.resolveHudPanel(r) : null) || (r.FindChildTraverse ? r.FindChildTraverse('Hud') : null);
-        if (hud && hud.BHasClass && (hud.BHasClass('connectedToHideout') || hud.BHasClass('InHideout'))) return true;
-        if (r.BHasClass && (r.BHasClass('connectedToHideout') || r.BHasClass('InHideout'))) return true;
-        return IsHudClassActive(r, 'connectedToHideout') || IsHudClassActive(r, 'InHideout');
-    }
+        const hud = (Q.resolveHudPanel ? Q.resolveHudPanel(r) : null) || (r.FindChildTraverse ? r.FindChildTraverse("Hud") : null);
+        if (hud?.BHasClass && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) return true;
+        if (r.BHasClass && (r.BHasClass("connectedToHideout") || r.BHasClass("InHideout"))) return true;
+        return isHudClassActive(r, "connectedToHideout") || isHudClassActive(r, "InHideout");
+    };
 
     // ── Shop and Browse Popup Cleanup ──
-    function FindBrowseBuildsCancelButton(root) {
-        if (!root || !root.FindChildTraverse) return { panel: null };
-        var popup = root.FindChildTraverse('PopupBuildBrowser') || root.FindChildTraverse('BrowseBuilds');
+    const findBrowseBuildsCancelButton = (root) => {
+        if (!root?.FindChildTraverse) return { panel: null };
+        let popup = root.FindChildTraverse("PopupBuildBrowser") || root.FindChildTraverse("BrowseBuilds");
         if (!popup) {
-            var uiRoot = GetUIRoot();
-            if (uiRoot && uiRoot.FindChildTraverse) {
-                popup = uiRoot.FindChildTraverse('PopupBuildBrowser') || uiRoot.FindChildTraverse('BrowseBuilds');
+            const uiRoot = getUIRoot();
+            if (uiRoot?.FindChildTraverse) {
+                popup = uiRoot.FindChildTraverse("PopupBuildBrowser") || uiRoot.FindChildTraverse("BrowseBuilds");
             }
         }
         if (!popup) return { panel: null };
-        var btn = popup.FindChildTraverse ? (popup.FindChildTraverse('Button1') || popup.FindChildTraverse('CancelButton')) : null;
-        if (btn && IsPanelValid(btn)) return { panel: btn };
-        var stack = [popup];
-        var scanned = 0;
+        const btn = popup.FindChildTraverse ? (popup.FindChildTraverse("Button1") || popup.FindChildTraverse("CancelButton")) : null;
+        if (btn && isPanelValid(btn)) return { panel: btn };
+        const stack = [popup];
+        let scanned = 0;
         while (stack.length > 0 && scanned < 100) {
-            var p = stack.pop();
+            const p = stack.pop();
             scanned++;
             if (!p || !p.IsValid || !p.IsValid()) continue;
-            var id = (p.id || '').toLowerCase();
-            if (id.indexOf('cancel') !== -1 || id.indexOf('close') !== -1) {
+            const id = (p.id || "").toLowerCase();
+            if (id.includes("cancel") || id.includes("close")) {
                 return { panel: p };
             }
-            var kids = p.Children ? p.Children() : [];
-            for (var i = 0; i < kids.length; i++) stack.push(kids[i]);
+            const kids = p.Children ? p.Children() : [];
+            for (let i = 0; i < kids.length; i++) stack.push(kids[i]);
         }
         return { panel: null };
-    }
+    };
 
-    function TryCloseBrowseBuildsPopupForLoader(root) {
-        if (!root || !IsConnectedToHideout(root)) return false;
-        var cancelLookup = FindBrowseBuildsCancelButton(root);
-        var cancelBtn = cancelLookup && cancelLookup.panel ? cancelLookup.panel : null;
-        if (!cancelBtn || (typeof cancelBtn.visible !== 'undefined' && cancelBtn.visible === false)) return false;
-        return ActivatePanelSafe(cancelBtn);
-    }
+    const tryCloseBrowseBuildsPopupForLoader = (root) => {
+        if (!root || !isConnectedToHideout(root)) return false;
+        const cancelLookup = findBrowseBuildsCancelButton(root);
+        const cancelBtn = cancelLookup?.panel || null;
+        if (!cancelBtn || cancelBtn.visible === false) return false;
+        return activatePanelSafe(cancelBtn);
+    };
 
-    function TryCloseHeroShopForLoader(root) {
-        if (!root || !IsConnectedToHideout(root)) return false;
-        var closedBrowsePopup = TryCloseBrowseBuildsPopupForLoader(root);
-        var wasOpen = IsHudClassActive(root, 'gShopOpen');
+    const tryCloseHeroShopForLoader = (root) => {
+        if (!root || !isConnectedToHideout(root)) return false;
+        const closedBrowsePopup = tryCloseBrowseBuildsPopupForLoader(root);
+        const wasOpen = isHudClassActive(root, "gShopOpen");
         if (!wasOpen) return closedBrowsePopup || true;
 
-        var closed = false;
+        let closed = false;
         try {
-            if (typeof CitadelExitUpgradeShop === 'function') {
+            if (typeof CitadelExitUpgradeShop === "function") {
                 CitadelExitUpgradeShop();
                 closed = true;
             }
-        } catch(e0) { QOL_WARN('core', 'op failed: ' + (e0 && e0.message ? e0.message : String(e0 || ''))); }
+        } catch (e0) {
+            QOL_WARN("core", `op failed: ${e0?.message || e0}`);
+        }
         if (!closed) {
-            var shopPanel = root.FindChildTraverse ? root.FindChildTraverse('HeroShop') : null;
-            var leftCommandPanel = shopPanel && shopPanel.FindChildTraverse ? shopPanel.FindChildTraverse('LeftCommandPanel') : null;
-            if (ActivatePanelSafe(leftCommandPanel)) closed = true;
+            const shopPanel = root.FindChildTraverse ? root.FindChildTraverse("HeroShop") : null;
+            const leftCommandPanel = shopPanel?.FindChildTraverse ? shopPanel.FindChildTraverse("LeftCommandPanel") : null;
+            if (activatePanelSafe(leftCommandPanel)) closed = true;
         }
         if (!closed) {
             if (Q.dispatchCitadelConCommand) {
-                Q.dispatchCitadelConCommand('citadel_open_hero_sheet');
+                Q.dispatchCitadelConCommand("citadel_open_hero_sheet");
             }
             closed = true;
         }
         return closed || closedBrowsePopup;
-    }
+    };
 
-    function QueueCloseHeroShopForLoaderSuccess() {
-        var delays = [0.00, 0.20, 0.55];
-        for (var i = 0; i < delays.length; i++) {
-            var delaySec = delays[i];
-            $.Schedule(delaySec, function() {
-                var closeRoot = GetUIRoot();
+    const queueCloseHeroShopForLoaderSuccess = () => {
+        const delays = [0.00, 0.20, 0.55];
+        for (let i = 0; i < delays.length; i++) {
+            const delaySec = delays[i];
+            $.Schedule(delaySec, () => {
+                const closeRoot = getUIRoot();
                 if (closeRoot) {
-                    TryCloseHeroShopForLoader(closeRoot);
+                    tryCloseHeroShopForLoader(closeRoot);
                 }
             });
         }
-    }
+    };
 
     // ── Constants ──
-    const PANEL_ID_SHOP_MODS_SELECTED_BUILD = 'ShopModsSelectedBuild';
+    const PANEL_ID_SHOP_MODS_SELECTED_BUILD = "ShopModsSelectedBuild";
     const SETTINGS_LOADER_ENABLED = true;
     const SETTINGS_LOADER_DEBUG = false;
     const SETTINGS_LOADER_DEBUG_THROTTLE_MS = 350;
@@ -131,358 +149,358 @@
     const SETTINGS_LOADER_TRACE_THROTTLE_MS = 1000;
     const SETTINGS_LOADER_REASSERT_MS = 250;
     const SETTINGS_LOADER_HOLD_MS = 1000;
-    const SETTINGS_LOADER_OVERLAY_ID = 'QOLSettingsLoaderOverlay';
-    const SETTINGS_LOADER_CARD_ID = 'QOLSettingsLoaderCard';
-    const SETTINGS_LOADER_WARNING_ID = 'QOLSettingsLoaderWarning';
-    const SETTINGS_LOADER_TITLE_ID = 'QOLSettingsLoaderTitle';
-    const SETTINGS_LOADER_STEPS_WRAP_ID = 'QOLSettingsLoaderStepsWrap';
-    const SETTINGS_LOADER_STEP_ROW_ID_PREFIX = 'QOLSettingsLoaderStepRow_';
-    const SETTINGS_LOADER_STEP_ICON_ID_SUFFIX = '_Icon';
-    const SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX = '_Label';
-    const SETTINGS_LOADER_DETAIL_ID = 'QOLSettingsLoaderDetail';
-    const SETTINGS_LOADER_WARNING_TEXT = 'DO NOT PRESS ANYTHING';
-    const SETTINGS_LOADER_ICON_PENDING = 's2r://panorama/images/getting_started/checklist_task_empty_png.vtex';
-    const SETTINGS_LOADER_ICON_DONE = 's2r://panorama/images/getting_started/checklist_task_complete_png.vtex';
-    const SETTINGS_LOADER_ICON_ACTIVE = 's2r://panorama/images/glyphs/arrow_right.vsvg';
-    const SETTINGS_LOADER_ICON_ERROR = 's2r://panorama/images/control_icons/x_close_filled_png.vtex';
-    const LOADER_DETAIL_SPINNER_FRAMES = ['|', '/', '-', '\\'];
+    const SETTINGS_LOADER_OVERLAY_ID = "QOLSettingsLoaderOverlay";
+    const SETTINGS_LOADER_CARD_ID = "QOLSettingsLoaderCard";
+    const SETTINGS_LOADER_WARNING_ID = "QOLSettingsLoaderWarning";
+    const SETTINGS_LOADER_TITLE_ID = "QOLSettingsLoaderTitle";
+    const SETTINGS_LOADER_STEPS_WRAP_ID = "QOLSettingsLoaderStepsWrap";
+    const SETTINGS_LOADER_STEP_ROW_ID_PREFIX = "QOLSettingsLoaderStepRow_";
+    const SETTINGS_LOADER_STEP_ICON_ID_SUFFIX = "_Icon";
+    const SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX = "_Label";
+    const SETTINGS_LOADER_DETAIL_ID = "QOLSettingsLoaderDetail";
+    const SETTINGS_LOADER_WARNING_TEXT = "DO NOT PRESS ANYTHING";
+    const SETTINGS_LOADER_ICON_PENDING = "s2r://panorama/images/getting_started/checklist_task_empty_png.vtex";
+    const SETTINGS_LOADER_ICON_DONE = "s2r://panorama/images/getting_started/checklist_task_complete_png.vtex";
+    const SETTINGS_LOADER_ICON_ACTIVE = "s2r://panorama/images/glyphs/arrow_right.vsvg";
+    const SETTINGS_LOADER_ICON_ERROR = "s2r://panorama/images/control_icons/x_close_filled_png.vtex";
+    const LOADER_DETAIL_SPINNER_FRAMES = ["|", "/", "-", "\\"];
     const LOADER_DETAIL_SPINNER_FRAME_MS = 180;
 
     const SETTINGS_LOADER_STEPS = [
-        { key: 'start', label: 'Start' },
-        { key: 'switch_airheart', label: 'Switching to Skyrunner' },
-        { key: 'confirm_airheart', label: 'Confirming Skyrunner Context' },
-        { key: 'read_payload', label: 'Reading Build Payload (Read-Only)' },
-        { key: 'decode_payload', label: 'Decoding Payload' },
-        { key: 'apply_config', label: 'Applying Config' },
-        { key: 'return_hero', label: 'Returning To Original Hero' },
-        { key: 'complete', label: 'Complete' }
+        { key: "start", label: "Start" },
+        { key: "switch_airheart", label: "Switching to Skyrunner" },
+        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
+        { key: "read_payload", label: "Reading Build Payload (Read-Only)" },
+        { key: "decode_payload", label: "Decoding Payload" },
+        { key: "apply_config", label: "Applying Config" },
+        { key: "return_hero", label: "Returning To Original Hero" },
+        { key: "complete", label: "Complete" }
     ];
 
     const SAVE_SETTINGS_LOADER_ENABLED = true;
     const SAVE_SETTINGS_LOADER_REASSERT_MS = 250;
     const SAVE_SETTINGS_LOADER_HOLD_MS = 1000;
-    const SAVE_SETTINGS_LOADER_OVERLAY_ID = 'QOLSaveSettingsLoaderOverlay';
-    const SAVE_SETTINGS_LOADER_CARD_ID = 'QOLSaveSettingsLoaderCard';
-    const SAVE_SETTINGS_LOADER_WARNING_ID = 'QOLSaveSettingsLoaderWarning';
-    const SAVE_SETTINGS_LOADER_TITLE_ID = 'QOLSaveSettingsLoaderTitle';
-    const SAVE_SETTINGS_LOADER_STEPS_WRAP_ID = 'QOLSaveSettingsLoaderStepsWrap';
-    const SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX = 'QOLSaveSettingsLoaderStepRow_';
-    const SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX = '_Icon';
-    const SAVE_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX = '_Label';
-    const SAVE_SETTINGS_LOADER_DETAIL_ID = 'QOLSaveSettingsLoaderDetail';
-    const SAVE_SETTINGS_LOADER_STALL_HINT_ID = 'QOLSaveSettingsLoaderStallHint';
-    const SAVE_SETTINGS_LOADER_STALL_HINT_TEXT = 'If saving stalls, open your shop.';
+    const SAVE_SETTINGS_LOADER_OVERLAY_ID = "QOLSaveSettingsLoaderOverlay";
+    const SAVE_SETTINGS_LOADER_CARD_ID = "QOLSaveSettingsLoaderCard";
+    const SAVE_SETTINGS_LOADER_WARNING_ID = "QOLSaveSettingsLoaderWarning";
+    const SAVE_SETTINGS_LOADER_TITLE_ID = "QOLSaveSettingsLoaderTitle";
+    const SAVE_SETTINGS_LOADER_STEPS_WRAP_ID = "QOLSaveSettingsLoaderStepsWrap";
+    const SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX = "QOLSaveSettingsLoaderStepRow_";
+    const SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX = "_Icon";
+    const SAVE_SETTINGS_LOADER_STEP_LABEL_ID_SUFFIX = "_Label";
+    const SAVE_SETTINGS_LOADER_DETAIL_ID = "QOLSaveSettingsLoaderDetail";
+    const SAVE_SETTINGS_LOADER_STALL_HINT_ID = "QOLSaveSettingsLoaderStallHint";
+    const SAVE_SETTINGS_LOADER_STALL_HINT_TEXT = "If saving stalls, open your shop.";
 
     const SAVE_SETTINGS_LOADER_STEPS = [
-        { key: 'start', label: 'Start' },
-        { key: 'switch_airheart', label: 'Switching to Skyrunner' },
-        { key: 'confirm_airheart', label: 'Confirming Skyrunner Context' },
-        { key: 'prepare_build', label: 'Preparing Build UI' },
-        { key: 'write_payload', label: 'Writing Payload' },
-        { key: 'commit_save', label: 'Saving Build' },
-        { key: 'verify_save', label: 'Verifying Save' },
-        { key: 'return_hero', label: 'Returning To Selected Hero' },
-        { key: 'complete', label: 'Complete' }
+        { key: "start", label: "Start" },
+        { key: "switch_airheart", label: "Switching to Skyrunner" },
+        { key: "confirm_airheart", label: "Confirming Skyrunner Context" },
+        { key: "prepare_build", label: "Preparing Build UI" },
+        { key: "write_payload", label: "Writing Payload" },
+        { key: "commit_save", label: "Saving Build" },
+        { key: "verify_save", label: "Verifying Save" },
+        { key: "return_hero", label: "Returning To Selected Hero" },
+        { key: "complete", label: "Complete" }
     ];
 
     // ── Diagnostics & Logging ──
-    function SettingsLoaderDebugLog(msg) {
+    const settingsLoaderDebugLog = (msg) => {
         if (!SETTINGS_LOADER_DEBUG) return;
-        $.Msg('[QOLLock][SettingsLoaderDebug] ' + msg);
-    }
+        $.Msg(`[QOLLock][SettingsLoaderDebug] ${msg}`);
+    };
 
-    function SettingsLoaderTraceLog(msg) {
+    const settingsLoaderTraceLog = (msg) => {
         if (!SETTINGS_LOADER_TRACE) return;
-        $.Msg('[QOLLock][SettingsLoaderTrace] ' + msg);
-    }
+        $.Msg(`[QOLLock][SettingsLoaderTrace] ${msg}`);
+    };
 
-    function SettingsLoaderTraceLogThrottled(sig, msg, nowMs) {
+    const settingsLoaderTraceLogThrottled = (sig, msg, nowMs) => {
         if (!SETTINGS_LOADER_TRACE) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.settingsLoaderTraceLastSig;
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const sameSig = sig && sig === State.settingsLoaderTraceLastSig;
         if (sameSig && now < (State.settingsLoaderTraceNextMs || 0)) return;
-        State.settingsLoaderTraceLastSig = sig || '';
+        State.settingsLoaderTraceLastSig = sig || "";
         State.settingsLoaderTraceNextMs = now + SETTINGS_LOADER_TRACE_THROTTLE_MS;
-        SettingsLoaderTraceLog(msg);
-    }
+        settingsLoaderTraceLog(msg);
+    };
 
-    function SettingsLoaderDebugLogThrottled(sig, msg, nowMs) {
+    const settingsLoaderDebugLogThrottled = (sig, msg, nowMs) => {
         if (!SETTINGS_LOADER_DEBUG) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var sameSig = sig && sig === State.settingsLoaderDebugLastSig;
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const sameSig = sig && sig === State.settingsLoaderDebugLastSig;
         if (sameSig && now < (State.settingsLoaderDebugNextMs || 0)) return;
-        State.settingsLoaderDebugLastSig = sig || '';
+        State.settingsLoaderDebugLastSig = sig || "";
         State.settingsLoaderDebugNextMs = now + SETTINGS_LOADER_DEBUG_THROTTLE_MS;
-        SettingsLoaderDebugLog(msg);
-    }
+        settingsLoaderDebugLog(msg);
+    };
 
-    function SetSettingsLoaderDebugOverlayLine(lineText) {
+    const setSettingsLoaderDebugOverlayLine = (lineText) => {
         if (!SETTINGS_LOADER_DEBUG) return;
-        State.settingsLoaderDebugOverlayLine = lineText ? String(lineText) : '';
-        State.settingsLoaderLastRenderSig = '';
-    }
+        State.settingsLoaderDebugOverlayLine = lineText ? String(lineText) : "";
+        State.settingsLoaderLastRenderSig = "";
+    };
 
-    function IsSettingsLoaderShopPromptDetail(text) {
+    const isSettingsLoaderShopPromptDetail = (text) => {
         if (!text) return false;
-        var lower = String(text).toLowerCase();
-        return lower.indexOf('open your shop') !== -1 ||
-            lower.indexOf('open shop') !== -1 ||
-            lower.indexOf('potential corrupt save') !== -1 ||
-            lower.indexOf('welcome to qol lock') !== -1 ||
-            lower.indexOf('press alt+f4') !== -1 ||
-            lower.indexOf('let the loader run') !== -1;
-    }
+        const lower = String(text).toLowerCase();
+        return lower.includes("open your shop") ||
+            lower.includes("open shop") ||
+            lower.includes("potential corrupt save") ||
+            lower.includes("welcome to qol lock") ||
+            lower.includes("press alt+f4") ||
+            lower.includes("let the loader run");
+    };
 
-    function ResolveSettingsThemeId(cfg) {
-        var raw = Math.round(Number(cfg && cfg.SETTINGS_THEME));
+    const resolveSettingsThemeId = (cfg) => {
+        const raw = Math.round(Number(cfg && cfg.SETTINGS_THEME));
         if (raw >= 1 && raw <= 5) return raw;
         return 0;
-    }
+    };
 
-    function DecorateLoaderDetailWithSpinner(detailText, nowMs, isSessionActive, isSessionCompleted) {
-        var text = detailText ? String(detailText) : '';
+    const decorateLoaderDetailWithSpinner = (detailText, nowMs, isSessionActive, isSessionCompleted) => {
+        const text = detailText ? String(detailText) : "";
         if (!text || !isSessionActive || isSessionCompleted) return text;
-        var frameMs = Number(LOADER_DETAIL_SPINNER_FRAME_MS) || 180;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var frameIndex = Math.floor(now / frameMs) % LOADER_DETAIL_SPINNER_FRAMES.length;
-        return LOADER_DETAIL_SPINNER_FRAMES[frameIndex] + ' ' + text;
-    }
+        const frameMs = Number(LOADER_DETAIL_SPINNER_FRAME_MS) || 180;
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const frameIndex = Math.floor(now / frameMs) % LOADER_DETAIL_SPINNER_FRAMES.length;
+        return `${LOADER_DETAIL_SPINNER_FRAMES[frameIndex]} ${text}`;
+    };
 
-    function TraceLoaderOverlay(tag, overlay, shouldShow) {
+    const traceLoaderOverlay = (tag, overlay, shouldShow) => {
         if (!SETTINGS_LOADER_TRACE) return;
-        var now = Date.now ? Date.now() : (new Date()).getTime();
-        SettingsLoaderTraceLogThrottled(
-            'overlay_' + tag + '_' + (shouldShow ? 'show' : 'hide'),
-            'overlay tag=' + tag + ' visible=' + (shouldShow ? '1' : '0') + ' valid=' + (IsPanelValid(overlay) ? '1' : '0'),
+        const now = Date.now ? Date.now() : (new Date()).getTime();
+        settingsLoaderTraceLogThrottled(
+            `overlay_${tag}_${shouldShow ? "show" : "hide"}`,
+            `overlay tag=${tag} visible=${shouldShow ? "1" : "0"} valid=${isPanelValid(overlay) ? "1" : "0"}`,
             now
         );
-    }
+    };
 
     // ── Generic Step & Overlay Factory ──
-    function _GetLoaderStepIndex(stepKey, steps) {
+    const getLoaderStepIndex = (stepKey, steps) => {
         if (!stepKey) return -1;
-        for (var i = 0; i < steps.length; i++) {
+        for (let i = 0; i < steps.length; i++) {
             if (steps[i].key === stepKey) return i;
         }
         return -1;
-    }
+    };
 
-    function _ResetLoaderStepStates(stateObj, steps) {
-        if (!stateObj || typeof stateObj !== 'object') return;
-        for (var k in stateObj) {
-            if (stateObj.hasOwnProperty(k)) delete stateObj[k];
+    const resetLoaderStepStates = (stateObj, steps) => {
+        if (!stateObj || typeof stateObj !== "object") return;
+        for (const k of Object.keys(stateObj)) {
+            delete stateObj[k];
         }
-        for (var i = 0; i < steps.length; i++) {
-            stateObj[steps[i].key] = 'pending';
+        for (let i = 0; i < steps.length; i++) {
+            stateObj[steps[i].key] = "pending";
         }
-    }
+    };
 
-    function _ResetLoaderSession(statePrefix, cachedOverlayKey, steps, hideOverlay) {
-        State[statePrefix + 'SessionToken'] = '';
-        State[statePrefix + 'SessionActive'] = false;
-        State[statePrefix + 'SessionCompleted'] = false;
-        State[statePrefix + 'CurrentStep'] = '';
-        State[statePrefix + 'Detail'] = '';
-        State[statePrefix + 'Result'] = '';
-        State[statePrefix + 'ShowUntilMs'] = 0;
-        State[statePrefix + 'NextReassertMs'] = 0;
-        State[statePrefix + 'LastRenderSig'] = '';
-        _ResetLoaderStepStates(State[statePrefix + 'StepStates'], steps);
+    const resetLoaderSessionInternal = (statePrefix, cachedOverlayKey, steps, hideOverlay) => {
+        State[`${statePrefix}SessionToken`] = "";
+        State[`${statePrefix}SessionActive`] = false;
+        State[`${statePrefix}SessionCompleted`] = false;
+        State[`${statePrefix}CurrentStep`] = "";
+        State[`${statePrefix}Detail`] = "";
+        State[`${statePrefix}Result`] = "";
+        State[`${statePrefix}ShowUntilMs`] = 0;
+        State[`${statePrefix}NextReassertMs`] = 0;
+        State[`${statePrefix}LastRenderSig`] = "";
+        resetLoaderStepStates(State[`${statePrefix}StepStates`], steps);
         if (hideOverlay) {
-            var overlay = GetCachedPanel(cachedOverlayKey);
-            if (overlay) {
-                try { overlay.style.visibility = 'collapse'; } catch(e0) {}
+            const overlay = getCachedPanel(cachedOverlayKey);
+            if (overlay?.style) {
+                try { overlay.style.visibility = "collapse"; } catch (_) {}
             }
         }
-    }
+    };
 
-    function _BeginLoaderSession(statePrefix, steps, requestToken, nowMs, initialDetail, enabledCheck) {
+    const beginLoaderSessionInternal = (statePrefix, steps, requestToken, nowMs, initialDetail, enabledCheck) => {
         if (enabledCheck && !enabledCheck()) return;
-        var token = requestToken ? String(requestToken) : '';
+        const token = requestToken ? String(requestToken) : "";
         if (!token) return;
-        if (State[statePrefix + 'SessionToken'] === token &&
-            (State[statePrefix + 'SessionActive'] || State[statePrefix + 'SessionCompleted'])) return;
+        if (State[`${statePrefix}SessionToken`] === token &&
+            (State[`${statePrefix}SessionActive`] || State[`${statePrefix}SessionCompleted`])) return;
 
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        State[statePrefix + 'SessionToken'] = token;
-        State[statePrefix + 'SessionActive'] = true;
-        State[statePrefix + 'SessionCompleted'] = false;
-        State[statePrefix + 'CurrentStep'] = 'start';
-        State[statePrefix + 'Detail'] = initialDetail || '';
-        State[statePrefix + 'Result'] = '';
-        State[statePrefix + 'ShowUntilMs'] = 0;
-        State[statePrefix + 'NextReassertMs'] = now + SETTINGS_LOADER_REASSERT_MS;
-        State[statePrefix + 'LastRenderSig'] = '';
-        _ResetLoaderStepStates(State[statePrefix + 'StepStates'], steps);
-        State[statePrefix + 'StepStates'].start = 'active';
-    }
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        State[`${statePrefix}SessionToken`] = token;
+        State[`${statePrefix}SessionActive`] = true;
+        State[`${statePrefix}SessionCompleted`] = false;
+        State[`${statePrefix}CurrentStep`] = "start";
+        State[`${statePrefix}Detail`] = initialDetail || "";
+        State[`${statePrefix}Result`] = "";
+        State[`${statePrefix}ShowUntilMs`] = 0;
+        State[`${statePrefix}NextReassertMs`] = now + SETTINGS_LOADER_REASSERT_MS;
+        State[`${statePrefix}LastRenderSig`] = "";
+        resetLoaderStepStates(State[`${statePrefix}StepStates`], steps);
+        State[`${statePrefix}StepStates`].start = "active";
+    };
 
-    function _SetLoaderStepState(statePrefix, steps, stepKey, status, detail, onDoneNextActive) {
-        if (!stepKey || !State[statePrefix + 'StepStates']) return;
-        var normalized = status === 'active' || status === 'done' || status === 'error' || status === 'skipped'
-            ? status : 'pending';
-        State[statePrefix + 'StepStates'][stepKey] = normalized;
+    const setLoaderStepStateInternal = (statePrefix, steps, stepKey, status, detail, onDoneNextActive) => {
+        if (!stepKey || !State[`${statePrefix}StepStates`]) return;
+        const normalized = status === "active" || status === "done" || status === "error" || status === "skipped"
+            ? status : "pending";
+        State[`${statePrefix}StepStates`][stepKey] = normalized;
         if (detail !== undefined && detail !== null) {
-            State[statePrefix + 'Detail'] = String(detail);
+            State[`${statePrefix}Detail`] = String(detail);
         }
-        if (normalized === 'active') {
-            State[statePrefix + 'CurrentStep'] = stepKey;
-        } else if (normalized === 'done' && onDoneNextActive) {
-            var idx = _GetLoaderStepIndex(stepKey, steps);
+        if (normalized === "active") {
+            State[`${statePrefix}CurrentStep`] = stepKey;
+        } else if (normalized === "done" && onDoneNextActive) {
+            const idx = getLoaderStepIndex(stepKey, steps);
             if (idx >= 0 && idx < steps.length - 1) {
-                var nextKey = steps[idx + 1].key;
-                if (State[statePrefix + 'StepStates'][nextKey] === 'pending') {
-                    State[statePrefix + 'StepStates'][nextKey] = 'active';
-                    State[statePrefix + 'CurrentStep'] = nextKey;
+                const nextKey = steps[idx + 1].key;
+                if (State[`${statePrefix}StepStates`][nextKey] === "pending") {
+                    State[`${statePrefix}StepStates`][nextKey] = "active";
+                    State[`${statePrefix}CurrentStep`] = nextKey;
                 }
             }
         }
-    }
+    };
 
     // ── Build Single UI Card (Shared for Load and Save) ──
-    function CreateLoaderCard(root, cfg) {
-        var overlay = root.FindChildTraverse ? root.FindChildTraverse(cfg.overlayId) : null;
+    const createLoaderCard = (root, cfg) => {
+        let overlay = root.FindChildTraverse ? root.FindChildTraverse(cfg.overlayId) : null;
         if (!overlay) {
-            overlay = $.CreatePanel('Panel', root, cfg.overlayId);
+            overlay = $.CreatePanel("Panel", root, cfg.overlayId);
         }
-        overlay.SetHasClass('QOLLoaderOverlay', true);
+        overlay.SetHasClass("QOLLoaderOverlay", true);
 
         // Apply theme class
-        var themeId = ResolveSettingsThemeId(State.lastConfig || (Q.buildDefaultConfig ? Q.buildDefaultConfig() : {}));
-        for (var t = 1; t <= 5; t++) {
-            overlay.SetHasClass('theme-' + t, t === themeId);
+        const themeId = resolveSettingsThemeId(State.lastConfig || (Q.buildDefaultConfig ? Q.buildDefaultConfig() : {}));
+        for (let t = 1; t <= 5; t++) {
+            overlay.SetHasClass(`theme-${t}`, t === themeId);
         }
 
-        var card = overlay.FindChildTraverse ? overlay.FindChildTraverse(cfg.cardId) : null;
+        let card = overlay.FindChildTraverse ? overlay.FindChildTraverse(cfg.cardId) : null;
         if (!card) {
-            card = $.CreatePanel('Panel', overlay, cfg.cardId);
-            card.SetHasClass('QOLLoaderCard', true);
+            card = $.CreatePanel("Panel", overlay, cfg.cardId);
+            card.SetHasClass("QOLLoaderCard", true);
         }
 
-        var warning = card.FindChildTraverse ? card.FindChildTraverse(cfg.warningId) : null;
+        let warning = card.FindChildTraverse ? card.FindChildTraverse(cfg.warningId) : null;
         if (!warning) {
-            warning = $.CreatePanel('Label', card, cfg.warningId);
-            warning.SetHasClass('QOLLoaderWarning', true);
+            warning = $.CreatePanel("Label", card, cfg.warningId);
+            warning.SetHasClass("QOLLoaderWarning", true);
             warning.text = SETTINGS_LOADER_WARNING_TEXT;
         }
 
-        var title = card.FindChildTraverse ? card.FindChildTraverse(cfg.titleId) : null;
+        let title = card.FindChildTraverse ? card.FindChildTraverse(cfg.titleId) : null;
         if (!title) {
-            title = $.CreatePanel('Label', card, cfg.titleId);
-            title.SetHasClass('QOLLoaderTitle', true);
+            title = $.CreatePanel("Label", card, cfg.titleId);
+            title.SetHasClass("QOLLoaderTitle", true);
             title.text = cfg.titleText;
         }
 
-        var stepsWrap = card.FindChildTraverse ? card.FindChildTraverse(cfg.stepsWrapId) : null;
+        let stepsWrap = card.FindChildTraverse ? card.FindChildTraverse(cfg.stepsWrapId) : null;
         if (!stepsWrap) {
-            stepsWrap = $.CreatePanel('Panel', card, cfg.stepsWrapId);
-            stepsWrap.SetHasClass('QOLLoaderStepsWrap', true);
+            stepsWrap = $.CreatePanel("Panel", card, cfg.stepsWrapId);
+            stepsWrap.SetHasClass("QOLLoaderStepsWrap", true);
         }
 
-        for (var i = 0; i < cfg.steps.length; i++) {
-            var step = cfg.steps[i];
-            var rowId = cfg.stepRowPrefix + step.key;
-            var row = stepsWrap.FindChildTraverse ? stepsWrap.FindChildTraverse(rowId) : null;
+        for (let i = 0; i < cfg.steps.length; i++) {
+            const step = cfg.steps[i];
+            const rowId = cfg.stepRowPrefix + step.key;
+            let row = stepsWrap.FindChildTraverse ? stepsWrap.FindChildTraverse(rowId) : null;
             if (!row) {
-                row = $.CreatePanel('Panel', stepsWrap, rowId);
-                row.SetHasClass('QOLLoaderStepRow', true);
+                row = $.CreatePanel("Panel", stepsWrap, rowId);
+                row.SetHasClass("QOLLoaderStepRow", true);
 
-                var icon = $.CreatePanel('Image', row, rowId + cfg.stepIconSuffix);
-                icon.SetHasClass('QOLLoaderStepIcon', true);
+                const icon = $.CreatePanel("Image", row, rowId + cfg.stepIconSuffix);
+                icon.SetHasClass("QOLLoaderStepIcon", true);
                 icon.SetImage(SETTINGS_LOADER_ICON_PENDING);
 
-                var label = $.CreatePanel('Label', row, rowId + cfg.stepLabelSuffix);
-                label.SetHasClass('QOLLoaderStepLabel', true);
+                const label = $.CreatePanel("Label", row, rowId + cfg.stepLabelSuffix);
+                label.SetHasClass("QOLLoaderStepLabel", true);
                 label.text = step.label;
             }
         }
 
-        var detailLabel = card.FindChildTraverse ? card.FindChildTraverse(cfg.detailId) : null;
+        let detailLabel = card.FindChildTraverse ? card.FindChildTraverse(cfg.detailId) : null;
         if (!detailLabel) {
-            detailLabel = $.CreatePanel('Label', card, cfg.detailId);
-            detailLabel.SetHasClass('QOLLoaderDetail', true);
-            detailLabel.text = '';
+            detailLabel = $.CreatePanel("Label", card, cfg.detailId);
+            detailLabel.SetHasClass("QOLLoaderDetail", true);
+            detailLabel.text = "";
         }
 
-        var stallHint = null;
+        let stallHint = null;
         if (cfg.stallHintId) {
             stallHint = card.FindChildTraverse ? card.FindChildTraverse(cfg.stallHintId) : null;
             if (!stallHint) {
-                stallHint = $.CreatePanel('Label', card, cfg.stallHintId);
-                stallHint.SetHasClass('QOLLoaderStallHint', true);
+                stallHint = $.CreatePanel("Label", card, cfg.stallHintId);
+                stallHint.SetHasClass("QOLLoaderStallHint", true);
                 stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
             }
         }
 
-        var skipButton = null;
+        let skipButton = null;
         if (cfg.hasSkip) {
-            var skipDock = card.FindChildTraverse ? card.FindChildTraverse('QOLSettingsLoaderSkipDock') : null;
+            let skipDock = card.FindChildTraverse ? card.FindChildTraverse("QOLSettingsLoaderSkipDock") : null;
             if (!skipDock) {
-                skipDock = $.CreatePanel('Panel', card, 'QOLSettingsLoaderSkipDock');
-                skipDock.SetHasClass('QOLLoaderSkipDock', true);
+                skipDock = $.CreatePanel("Panel", card, "QOLSettingsLoaderSkipDock");
+                skipDock.SetHasClass("QOLLoaderSkipDock", true);
             }
-            skipButton = skipDock.FindChildTraverse ? skipDock.FindChildTraverse('QOLSettingsLoaderSkipButton') : null;
+            skipButton = skipDock.FindChildTraverse ? skipDock.FindChildTraverse("QOLSettingsLoaderSkipButton") : null;
             if (!skipButton) {
-                skipButton = $.CreatePanel('Button', skipDock, 'QOLSettingsLoaderSkipButton');
-                skipButton.SetHasClass('QOLLoaderSkipButton', true);
-                var skipLabel = $.CreatePanel('Label', skipButton, 'QOLSettingsLoaderSkipButtonLabel');
-                skipLabel.SetHasClass('QOLLoaderSkipLabel', true);
-                skipLabel.text = 'Skip';
-                skipButton.SetPanelEvent('onactivate', function() {
-                    SkipSettingsLoaderSession(GetUIRoot(), Date.now ? Date.now() : (new Date()).getTime());
+                skipButton = $.CreatePanel("Button", skipDock, "QOLSettingsLoaderSkipButton");
+                skipButton.SetHasClass("QOLLoaderSkipButton", true);
+                const skipLabel = $.CreatePanel("Label", skipButton, "QOLSettingsLoaderSkipButtonLabel");
+                skipLabel.SetHasClass("QOLLoaderSkipLabel", true);
+                skipLabel.text = "Skip";
+                skipButton.SetPanelEvent("onactivate", () => {
+                    skipSettingsLoaderSession(getUIRoot(), Date.now ? Date.now() : (new Date()).getTime());
                 });
             }
         }
 
         return {
-            overlay: overlay,
-            card: card,
-            warning: warning,
-            title: title,
-            stepsWrap: stepsWrap,
-            detailLabel: detailLabel,
-            stallHint: stallHint,
-            skipButton: skipButton
+            overlay,
+            card,
+            warning,
+            title,
+            stepsWrap,
+            detailLabel,
+            stallHint,
+            skipButton
         };
-    }
+    };
 
-    function RenderStepRows(stepsWrap, steps, stepRowPrefix, stepIconSuffix, stepStates) {
-        if (!stepsWrap || !stepsWrap.FindChildTraverse) return '';
-        var sig = '';
-        var states = stepStates || {};
-        for (var i = 0; i < steps.length; i++) {
-            var step = steps[i];
-            var status = states[step.key] || 'pending';
-            sig += step.key + '=' + status + ';';
-            var rowId = stepRowPrefix + step.key;
-            var row = stepsWrap.FindChildTraverse(rowId);
+    const renderStepRows = (stepsWrap, steps, stepRowPrefix, stepIconSuffix, stepStates) => {
+        if (!stepsWrap?.FindChildTraverse) return "";
+        let sig = "";
+        const states = stepStates || {};
+        for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            const status = states[step.key] || "pending";
+            sig += `${step.key}=${status};`;
+            const rowId = stepRowPrefix + step.key;
+            const row = stepsWrap.FindChildTraverse(rowId);
             if (!row) continue;
 
-            row.SetHasClass('step-active', status === 'active');
-            row.SetHasClass('step-done', status === 'done');
-            row.SetHasClass('step-error', status === 'error');
-            row.SetHasClass('step-skipped', status === 'skipped');
+            row.SetHasClass("step-active", status === "active");
+            row.SetHasClass("step-done", status === "done");
+            row.SetHasClass("step-error", status === "error");
+            row.SetHasClass("step-skipped", status === "skipped");
 
-            var icon = row.FindChildTraverse(rowId + stepIconSuffix);
-            if (icon && icon.SetImage) {
-                var iconSrc = SETTINGS_LOADER_ICON_PENDING;
-                if (status === 'done') iconSrc = SETTINGS_LOADER_ICON_DONE;
-                else if (status === 'active') iconSrc = SETTINGS_LOADER_ICON_ACTIVE;
-                else if (status === 'error') iconSrc = SETTINGS_LOADER_ICON_ERROR;
+            const icon = row.FindChildTraverse(rowId + stepIconSuffix);
+            if (icon?.SetImage) {
+                let iconSrc = SETTINGS_LOADER_ICON_PENDING;
+                if (status === "done") iconSrc = SETTINGS_LOADER_ICON_DONE;
+                else if (status === "active") iconSrc = SETTINGS_LOADER_ICON_ACTIVE;
+                else if (status === "error") iconSrc = SETTINGS_LOADER_ICON_ERROR;
                 icon.SetImage(iconSrc);
             }
         }
         return sig;
-    }
+    };
 
     // ── Load Settings Loader Overlay ──
-    function EnsureSettingsLoaderOverlay(root) {
+    const ensureSettingsLoaderOverlay = (root) => {
         if (!SETTINGS_LOADER_ENABLED || !root) return null;
-        var overlay = GetCachedPanel('settingsLoaderOverlay');
-        if (IsPanelValid(overlay)) return overlay;
+        const overlay = getCachedPanel("settingsLoaderOverlay");
+        if (isPanelValid(overlay)) return overlay;
 
-        var panels = CreateLoaderCard(root, {
+        const panels = createLoaderCard(root, {
             overlayId: SETTINGS_LOADER_OVERLAY_ID,
             cardId: SETTINGS_LOADER_CARD_ID,
             warningId: SETTINGS_LOADER_WARNING_ID,
@@ -495,86 +513,86 @@
             stallHintId: null,
             hasSkip: true,
             steps: SETTINGS_LOADER_STEPS,
-            titleText: 'QOLLOCK LOADING...'
+            titleText: "QOLLOCK LOADING..."
         });
 
-        SetCachedPanel('settingsLoaderOverlay', panels.overlay);
-        SetCachedPanel('settingsLoaderCard', panels.card);
-        SetCachedPanel('settingsLoaderWarning', panels.warning);
-        SetCachedPanel('settingsLoaderTitle', panels.title);
-        SetCachedPanel('settingsLoaderStepsWrap', panels.stepsWrap);
-        SetCachedPanel('settingsLoaderDetail', panels.detailLabel);
-        SetCachedPanel('settingsLoaderSkipButton', panels.skipButton);
+        setCachedPanel("settingsLoaderOverlay", panels.overlay);
+        setCachedPanel("settingsLoaderCard", panels.card);
+        setCachedPanel("settingsLoaderWarning", panels.warning);
+        setCachedPanel("settingsLoaderTitle", panels.title);
+        setCachedPanel("settingsLoaderStepsWrap", panels.stepsWrap);
+        setCachedPanel("settingsLoaderDetail", panels.detailLabel);
+        setCachedPanel("settingsLoaderSkipButton", panels.skipButton);
         return panels.overlay;
-    }
+    };
 
-    function UpdateSettingsLoaderOverlay(root, nowMs) {
+    const updateSettingsLoaderOverlay = (root, nowMs) => {
         if (!SETTINGS_LOADER_ENABLED) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var shouldShow = !!State.settingsLoaderSessionActive;
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        let shouldShow = !!State.settingsLoaderSessionActive;
         if (!shouldShow && State.settingsLoaderSessionCompleted) {
             shouldShow = now < (State.settingsLoaderShowUntilMs || 0);
         }
-        var overlay = GetCachedPanel('settingsLoaderOverlay');
+        let overlay = getCachedPanel("settingsLoaderOverlay");
         if (!shouldShow) {
-            if (overlay) {
-                try { overlay.style.visibility = 'collapse'; } catch(e0) {}
+            if (overlay?.style) {
+                try { overlay.style.visibility = "collapse"; } catch (_) {}
             }
             if (State.settingsLoaderSessionCompleted) {
-                ResetSettingsLoaderSession(true);
+                resetSettingsLoaderSession(true);
             }
-            TraceLoaderOverlay('load', overlay, false);
+            traceLoaderOverlay("load", overlay, false);
             return;
         }
 
-        overlay = EnsureSettingsLoaderOverlay(root);
+        overlay = ensureSettingsLoaderOverlay(root);
         if (!overlay) {
-            TraceLoaderOverlay('load', null, true);
+            traceLoaderOverlay("load", null, true);
             return;
         }
-        overlay.style.visibility = 'visible';
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
-        TraceLoaderOverlay('load', overlay, true);
+        overlay.style.visibility = "visible";
+        setPanelOpacitySafe(overlay, 1.0, 1.0);
+        traceLoaderOverlay("load", overlay, true);
 
-        var stepsWrap = GetCachedPanel('settingsLoaderStepsWrap');
-        var detailLabel = GetCachedPanel('settingsLoaderDetail');
-        var stepSig = RenderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, State.settingsLoaderStepStates);
+        const stepsWrap = getCachedPanel("settingsLoaderStepsWrap");
+        const detailLabel = getCachedPanel("settingsLoaderDetail");
+        const stepSig = renderStepRows(stepsWrap, SETTINGS_LOADER_STEPS, SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, State.settingsLoaderStepStates);
 
-        var resultPrefix = '';
+        let resultPrefix = "";
         if (State.settingsLoaderSessionCompleted) {
-            if (State.settingsLoaderResult === 'success') resultPrefix = 'Result: Settings loaded.';
-            else if (State.settingsLoaderResult === 'failed') resultPrefix = 'Result: Load failed.';
-            else resultPrefix = 'Result: Complete.';
+            if (State.settingsLoaderResult === "success") resultPrefix = "Result: Settings loaded.";
+            else if (State.settingsLoaderResult === "failed") resultPrefix = "Result: Load failed.";
+            else resultPrefix = "Result: Complete.";
         }
-        var detailText = State.settingsLoaderDetail || '';
+        let detailText = State.settingsLoaderDetail || "";
         if (resultPrefix.length > 0) {
-            detailText = detailText ? (resultPrefix + ' ' + detailText) : resultPrefix;
+            detailText = detailText ? `${resultPrefix} ${detailText}` : resultPrefix;
         }
-        var isPromptDetail = IsSettingsLoaderShopPromptDetail(detailText);
-        var renderDetailText = DecorateLoaderDetailWithSpinner(
+        const isPromptDetail = isSettingsLoaderShopPromptDetail(detailText);
+        const renderDetailText = decorateLoaderDetailWithSpinner(
             detailText,
             now,
             !!State.settingsLoaderSessionActive,
             !!State.settingsLoaderSessionCompleted
         );
 
-        var sig = stepSig + '|' + renderDetailText + '|' + String(State.settingsLoaderSessionCompleted ? 1 : 0);
+        const sig = `${stepSig}|${renderDetailText}|${State.settingsLoaderSessionCompleted ? 1 : 0}`;
         if (sig === State.settingsLoaderLastRenderSig) return;
         State.settingsLoaderLastRenderSig = sig;
 
         if (detailLabel) {
-            detailLabel.SetHasClass('is-shop-prompt', isPromptDetail);
+            detailLabel.SetHasClass("is-shop-prompt", isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
         }
-    }
+    };
 
     // ── Save Settings Loader Overlay ──
-    function EnsureSaveSettingsLoaderOverlay(root) {
+    const ensureSaveSettingsLoaderOverlay = (root) => {
         if (!SAVE_SETTINGS_LOADER_ENABLED || !root) return null;
-        var overlay = GetCachedPanel('saveSettingsLoaderOverlay');
-        if (IsPanelValid(overlay)) return overlay;
+        const overlay = getCachedPanel("saveSettingsLoaderOverlay");
+        if (isPanelValid(overlay)) return overlay;
 
-        var panels = CreateLoaderCard(root, {
+        const panels = createLoaderCard(root, {
             overlayId: SAVE_SETTINGS_LOADER_OVERLAY_ID,
             cardId: SAVE_SETTINGS_LOADER_CARD_ID,
             warningId: SAVE_SETTINGS_LOADER_WARNING_ID,
@@ -587,123 +605,123 @@
             stallHintId: SAVE_SETTINGS_LOADER_STALL_HINT_ID,
             hasSkip: false,
             steps: SAVE_SETTINGS_LOADER_STEPS,
-            titleText: 'QOLLOCK SAVING...'
+            titleText: "QOLLOCK SAVING..."
         });
 
-        SetCachedPanel('saveSettingsLoaderOverlay', panels.overlay);
-        SetCachedPanel('saveSettingsLoaderCard', panels.card);
-        SetCachedPanel('saveSettingsLoaderWarning', panels.warning);
-        SetCachedPanel('saveSettingsLoaderTitle', panels.title);
-        SetCachedPanel('saveSettingsLoaderStepsWrap', panels.stepsWrap);
-        SetCachedPanel('saveSettingsLoaderDetail', panels.detailLabel);
-        SetCachedPanel('saveSettingsLoaderStallHint', panels.stallHint);
+        setCachedPanel("saveSettingsLoaderOverlay", panels.overlay);
+        setCachedPanel("saveSettingsLoaderCard", panels.card);
+        setCachedPanel("saveSettingsLoaderWarning", panels.warning);
+        setCachedPanel("saveSettingsLoaderTitle", panels.title);
+        setCachedPanel("saveSettingsLoaderStepsWrap", panels.stepsWrap);
+        setCachedPanel("saveSettingsLoaderDetail", panels.detailLabel);
+        setCachedPanel("saveSettingsLoaderStallHint", panels.stallHint);
         return panels.overlay;
-    }
+    };
 
-    function UpdateSaveSettingsLoaderOverlay(root, nowMs) {
+    const updateSaveSettingsLoaderOverlay = (root, nowMs) => {
         if (!SAVE_SETTINGS_LOADER_ENABLED) return;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        var shouldShow = !!State.saveSettingsLoaderSessionActive;
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        let shouldShow = !!State.saveSettingsLoaderSessionActive;
         if (!shouldShow && State.saveSettingsLoaderSessionCompleted) {
             shouldShow = now < (State.saveSettingsLoaderShowUntilMs || 0);
         }
-        var overlay = GetCachedPanel('saveSettingsLoaderOverlay');
+        let overlay = getCachedPanel("saveSettingsLoaderOverlay");
         if (!shouldShow) {
-            if (overlay) {
-                try { overlay.style.visibility = 'collapse'; } catch(e0) {}
+            if (overlay?.style) {
+                try { overlay.style.visibility = "collapse"; } catch (_) {}
             }
             if (State.saveSettingsLoaderSessionCompleted) {
-                ResetSaveSettingsLoaderSession(true);
+                resetSaveSettingsLoaderSession(true);
             }
-            TraceLoaderOverlay('save', overlay, false);
+            traceLoaderOverlay("save", overlay, false);
             return;
         }
 
-        overlay = EnsureSaveSettingsLoaderOverlay(root);
+        overlay = ensureSaveSettingsLoaderOverlay(root);
         if (!overlay) {
-            TraceLoaderOverlay('save', null, true);
+            traceLoaderOverlay("save", null, true);
             return;
         }
-        overlay.style.visibility = 'visible';
-        SetPanelOpacitySafe(overlay, 1.0, 1.0);
-        TraceLoaderOverlay('save', overlay, true);
+        overlay.style.visibility = "visible";
+        setPanelOpacitySafe(overlay, 1.0, 1.0);
+        traceLoaderOverlay("save", overlay, true);
 
-        var stepsWrap = GetCachedPanel('saveSettingsLoaderStepsWrap');
-        var detailLabel = GetCachedPanel('saveSettingsLoaderDetail');
-        var stallHint = GetCachedPanel('saveSettingsLoaderStallHint');
-        var stepSig = RenderStepRows(stepsWrap, SAVE_SETTINGS_LOADER_STEPS, SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, State.saveSettingsLoaderStepStates);
+        const stepsWrap = getCachedPanel("saveSettingsLoaderStepsWrap");
+        const detailLabel = getCachedPanel("saveSettingsLoaderDetail");
+        const stallHint = getCachedPanel("saveSettingsLoaderStallHint");
+        const stepSig = renderStepRows(stepsWrap, SAVE_SETTINGS_LOADER_STEPS, SAVE_SETTINGS_LOADER_STEP_ROW_ID_PREFIX, SAVE_SETTINGS_LOADER_STEP_ICON_ID_SUFFIX, State.saveSettingsLoaderStepStates);
 
-        var resultPrefix = '';
+        let resultPrefix = "";
         if (State.saveSettingsLoaderSessionCompleted) {
-            if (State.saveSettingsLoaderResult === 'success') resultPrefix = 'Result: Save complete.';
-            else if (State.saveSettingsLoaderResult === 'failed') resultPrefix = 'Result: Save failed.';
-            else resultPrefix = 'Result: Complete.';
+            if (State.saveSettingsLoaderResult === "success") resultPrefix = "Result: Save complete.";
+            else if (State.saveSettingsLoaderResult === "failed") resultPrefix = "Result: Save failed.";
+            else resultPrefix = "Result: Complete.";
         }
-        var detailText = State.saveSettingsLoaderDetail || '';
+        let detailText = State.saveSettingsLoaderDetail || "";
         if (resultPrefix.length > 0) {
-            detailText = detailText ? (resultPrefix + ' ' + detailText) : resultPrefix;
+            detailText = detailText ? `${resultPrefix} ${detailText}` : resultPrefix;
         }
-        var isPromptDetail = IsSettingsLoaderShopPromptDetail(detailText);
-        var renderDetailText = DecorateLoaderDetailWithSpinner(
+        const isPromptDetail = isSettingsLoaderShopPromptDetail(detailText);
+        const renderDetailText = decorateLoaderDetailWithSpinner(
             detailText,
             now,
             !!State.saveSettingsLoaderSessionActive,
             !!State.saveSettingsLoaderSessionCompleted
         );
 
-        var sig = stepSig + '|' + renderDetailText + '|' + String(State.saveSettingsLoaderSessionCompleted ? 1 : 0);
+        const sig = `${stepSig}|${renderDetailText}|${State.saveSettingsLoaderSessionCompleted ? 1 : 0}`;
         if (sig === State.saveSettingsLoaderLastRenderSig) return;
         State.saveSettingsLoaderLastRenderSig = sig;
 
         if (detailLabel) {
-            detailLabel.SetHasClass('is-shop-prompt', isPromptDetail);
+            detailLabel.SetHasClass("is-shop-prompt", isPromptDetail);
             if (detailLabel.text !== renderDetailText) detailLabel.text = renderDetailText;
         }
         if (stallHint && stallHint.text !== SAVE_SETTINGS_LOADER_STALL_HINT_TEXT) {
             stallHint.text = SAVE_SETTINGS_LOADER_STALL_HINT_TEXT;
         }
-    }
+    };
 
     // ── Session Control Methods ──
-    function BeginSettingsLoaderSession(accountId, nowMs) {
-        _BeginLoaderSession('settingsLoader', SETTINGS_LOADER_STEPS, accountId, nowMs, 'Starting settings loader session...', function() { return SETTINGS_LOADER_ENABLED; });
-        State.settingsLoaderSessionAccountId = accountId ? String(accountId) : '';
-    }
+    const beginSettingsLoaderSession = (accountId, nowMs) => {
+        beginLoaderSessionInternal("settingsLoader", SETTINGS_LOADER_STEPS, accountId, nowMs, "Starting settings loader session...", () => SETTINGS_LOADER_ENABLED);
+        State.settingsLoaderSessionAccountId = accountId ? String(accountId) : "";
+    };
 
-    function SetSettingsLoaderStepState(stepKey, status, detail) {
-        _SetLoaderStepState('settingsLoader', SETTINGS_LOADER_STEPS, stepKey, status, detail, true);
-    }
+    const setSettingsLoaderStepState = (stepKey, status, detail) => {
+        setLoaderStepStateInternal("settingsLoader", SETTINGS_LOADER_STEPS, stepKey, status, detail, true);
+    };
 
-    function FinalizeSettingsLoaderSession(resultCode, resultDetail, nowMs) {
+    const finalizeSettingsLoaderSession = (resultCode, resultDetail, nowMs) => {
         if (!SETTINGS_LOADER_ENABLED) return;
-        var code = resultCode === 'failed' || resultCode === 'skipped' ? resultCode : 'success';
-        var detail = resultDetail !== undefined && resultDetail !== null ? String(resultDetail) : '';
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const code = resultCode === "failed" || resultCode === "skipped" ? resultCode : "success";
+        const detail = resultDetail !== undefined && resultDetail !== null ? String(resultDetail) : "";
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         State.settingsLoaderSessionActive = false;
         State.settingsLoaderSessionCompleted = true;
         State.settingsLoaderResult = code;
         State.settingsLoaderDetail = detail;
         State.settingsLoaderSkipRequested = false;
         State.settingsLoaderShowUntilMs = now + SETTINGS_LOADER_HOLD_MS;
-        SetSettingsLoaderStepState('complete', code === 'failed' ? 'error' : 'done', detail || '');
-        State.settingsLoaderCurrentStep = 'complete';
+        setSettingsLoaderStepState("complete", code === "failed" ? "error" : "done", detail || "");
+        State.settingsLoaderCurrentStep = "complete";
 
-        SettingsLoaderDebugLog('session_finalize result=' + code + ' detail="' + detail + '" account=' + (State.settingsLoaderSessionAccountId || '-'));
-        SettingsLoaderTraceLog('session_finalize result=' + code + ' detail="' + detail + '" account=' + (State.settingsLoaderSessionAccountId || '-'));
+        settingsLoaderDebugLog(`session_finalize result=${code} detail="${detail}" account=${State.settingsLoaderSessionAccountId || "-"}`);
+        settingsLoaderTraceLog(`session_finalize result=${code} detail="${detail}" account=${State.settingsLoaderSessionAccountId || "-"}`);
 
-        if (code !== 'failed') {
-            QueueCloseHeroShopForLoaderSuccess();
+        if (code !== "failed") {
+            queueCloseHeroShopForLoaderSuccess();
         }
         if (SETTINGS_LOADER_HOLD_MS <= 0) {
-            $.Schedule(0.03, function() {
-                ResetSettingsLoaderSession(true);
+            $.Schedule(0.03, () => {
+                resetSettingsLoaderSession(true);
             });
         }
-    }
+    };
 
-    function SkipSettingsLoaderSession(root, nowMs) {
+    const skipSettingsLoaderSession = (root, nowMs) => {
         if (!SETTINGS_LOADER_ENABLED) return false;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (!State.settingsLoaderSessionActive && !State.settingsLoaderSessionCompleted) return false;
 
         State.settingsLoaderSkipRequested = true;
@@ -714,164 +732,150 @@
             Q.resetBuildSaveRequestAttributes(root);
         }
         if (Q.resetBuildSaveRuntimeState) Q.resetBuildSaveRuntimeState();
-        ResetSaveSettingsLoaderSession(true);
+        resetSaveSettingsLoaderSession(true);
 
-        SetSettingsLoaderStepState('read_payload', 'skipped', 'Loading skipped by user.');
-        SetSettingsLoaderStepState('decode_payload', 'skipped', 'Loading skipped by user.');
-        SetSettingsLoaderStepState('apply_config', 'skipped', 'Config unchanged.');
+        setSettingsLoaderStepState("read_payload", "skipped", "Loading skipped by user.");
+        setSettingsLoaderStepState("decode_payload", "skipped", "Loading skipped by user.");
+        setSettingsLoaderStepState("apply_config", "skipped", "Config unchanged.");
 
-        FinalizeSettingsLoaderSession('skipped', 'Loading skipped by user.', now);
+        finalizeSettingsLoaderSession("skipped", "Loading skipped by user.", now);
         return true;
-    }
+    };
 
-    function ResetSettingsLoaderSession(hideOverlay) {
-        _ResetLoaderSession('settingsLoader', 'settingsLoaderOverlay', SETTINGS_LOADER_STEPS, hideOverlay);
-        State.settingsLoaderSessionAccountId = '';
+    const resetSettingsLoaderSession = (hideOverlay) => {
+        resetLoaderSessionInternal("settingsLoader", "settingsLoaderOverlay", SETTINGS_LOADER_STEPS, hideOverlay);
+        State.settingsLoaderSessionAccountId = "";
         State.settingsLoaderSkipRequested = false;
-    }
+    };
 
-    function BeginSaveSettingsLoaderSession(requestToken, nowMs) {
-        _BeginLoaderSession('saveSettingsLoader', SAVE_SETTINGS_LOADER_STEPS, requestToken, nowMs, 'Preparing settings save...', function() { return SAVE_SETTINGS_LOADER_ENABLED; });
-    }
+    const beginSaveSettingsLoaderSession = (requestToken, nowMs) => {
+        beginLoaderSessionInternal("saveSettingsLoader", SAVE_SETTINGS_LOADER_STEPS, requestToken, nowMs, "Preparing settings save...", () => SAVE_SETTINGS_LOADER_ENABLED);
+    };
 
-    function SetSaveSettingsLoaderStepState(stepKey, status, detail) {
-        _SetLoaderStepState('saveSettingsLoader', SAVE_SETTINGS_LOADER_STEPS, stepKey, status, detail, true);
-    }
+    const setSaveSettingsLoaderStepState = (stepKey, status, detail) => {
+        setLoaderStepStateInternal("saveSettingsLoader", SAVE_SETTINGS_LOADER_STEPS, stepKey, status, detail, true);
+    };
 
-    function GetSaveSettingsLoaderStepState(stepKey) {
-        if (!stepKey || !State.saveSettingsLoaderStepStates) return 'pending';
-        return State.saveSettingsLoaderStepStates[stepKey] || 'pending';
-    }
+    const getSaveSettingsLoaderStepState = (stepKey) => {
+        if (!stepKey || !State.saveSettingsLoaderStepStates) return "pending";
+        return State.saveSettingsLoaderStepStates[stepKey] || "pending";
+    };
 
-    function FinalizeSaveSettingsLoaderSession(resultCode, resultDetail, nowMs) {
+    const finalizeSaveSettingsLoaderSession = (resultCode, resultDetail, nowMs) => {
         if (!SAVE_SETTINGS_LOADER_ENABLED) return;
-        var code = resultCode === 'failed' || resultCode === 'skipped' ? resultCode : 'success';
-        var detail = resultDetail !== undefined && resultDetail !== null ? String(resultDetail) : '';
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const code = resultCode === "failed" || resultCode === "skipped" ? resultCode : "success";
+        const detail = resultDetail !== undefined && resultDetail !== null ? String(resultDetail) : "";
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         State.saveSettingsLoaderSessionActive = false;
         State.saveSettingsLoaderSessionCompleted = true;
         State.saveSettingsLoaderResult = code;
         State.saveSettingsLoaderDetail = detail;
         State.saveSettingsLoaderShowUntilMs = now + SAVE_SETTINGS_LOADER_HOLD_MS;
-        SetSaveSettingsLoaderStepState('complete', code === 'failed' ? 'error' : 'done', detail || '');
-        State.saveSettingsLoaderCurrentStep = 'complete';
+        setSaveSettingsLoaderStepState("complete", code === "failed" ? "error" : "done", detail || "");
+        State.saveSettingsLoaderCurrentStep = "complete";
 
-        if (code !== 'failed') {
-            QueueCloseHeroShopForLoaderSuccess();
+        if (code !== "failed") {
+            queueCloseHeroShopForLoaderSuccess();
         }
         if (SAVE_SETTINGS_LOADER_HOLD_MS <= 0) {
-            $.Schedule(0.03, function() {
-                ResetSaveSettingsLoaderSession(true);
+            $.Schedule(0.03, () => {
+                resetSaveSettingsLoaderSession(true);
             });
         }
-    }
+    };
 
-    function ResetSaveSettingsLoaderSession(hideOverlay) {
-        _ResetLoaderSession('saveSettingsLoader', 'saveSettingsLoaderOverlay', SAVE_SETTINGS_LOADER_STEPS, hideOverlay);
-    }
+    const resetSaveSettingsLoaderSession = (hideOverlay) => {
+        resetLoaderSessionInternal("saveSettingsLoader", "saveSettingsLoaderOverlay", SAVE_SETTINGS_LOADER_STEPS, hideOverlay);
+    };
 
-    function GetSaveSettingsLoaderDetailForMessage(msg) {
-        var text = msg ? String(msg) : '';
-        if (!text) return '';
-        var lower = text.toLowerCase();
-        if (lower.indexOf('re-opening shop') !== -1) return 'Waiting for hero shop to open...';
-        if (lower.indexOf('opening hero shop') !== -1) return 'Opening hero shop...';
-        if (lower.indexOf('switched to airheart') !== -1) return 'Switched to Skyrunner.';
+    const getSaveSettingsLoaderDetailForMessage = (msg) => {
+        const text = msg ? String(msg) : "";
+        if (!text) return "";
+        const lower = text.toLowerCase();
+        if (lower.includes("re-opening shop")) return "Waiting for hero shop to open...";
+        if (lower.includes("opening hero shop")) return "Opening hero shop...";
+        if (lower.includes("switched to airheart")) return "Switched to Skyrunner.";
         return text;
-    }
+    };
 
-    function UpdateSaveSettingsLoaderFromBuildSaveState() {
+    const updateSaveSettingsLoaderFromBuildSaveState = () => {
         // Kept for backward compatibility with build save hooks
-    }
+    };
 
     // ── Build Probe Snapshot ──
-    function SettingsLoaderBuildProbeSnapshot(root) {
-        var shopOpen = false;
-        try { shopOpen = !!IsHudClassActive(root, 'gShopOpen'); } catch (e0) { shopOpen = false; }
+    const settingsLoaderBuildProbeSnapshot = (root) => {
+        let shopOpen = false;
+        try { shopOpen = !!isHudClassActive(root, "gShopOpen"); } catch (_) { shopOpen = false; }
 
-        var selectedBuild = null;
+        let selectedBuild = null;
         try {
-            selectedBuild = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
-        } catch (e1) {
+            selectedBuild = root?.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_SHOP_MODS_SELECTED_BUILD) : null;
+        } catch (_) {
             selectedBuild = null;
         }
-        var hasSelectedBuild = !!selectedBuild;
-        var categoryCount = 0;
-        try { categoryCount = selectedBuild ? QOL.countBuildCategoryHeaders(selectedBuild) : 0; } catch (e2) { categoryCount = 0; }
+        const hasSelectedBuild = !!selectedBuild;
+        let categoryCount = 0;
+        try { categoryCount = selectedBuild ? QOL.countBuildCategoryHeaders(selectedBuild) : 0; } catch (_) { categoryCount = 0; }
 
-        var signal = { hero: '', source: 'none' };
-        try { signal = (Q.resolveBuildSaveStorageHeroSignal ? Q.resolveBuildSaveStorageHeroSignal(root) : signal) || signal; } catch (e4) { signal = { hero: '', source: 'none' }; }
-        var signalHero = '';
-        try { signalHero = QOL.normalizeHeroId(signal.hero); } catch (e5) { signalHero = ''; }
-        var signalSource = signal && signal.source ? String(signal.source) : 'none';
+        let signal = { hero: "", source: "none" };
+        try { signal = (Q.resolveBuildSaveStorageHeroSignal ? Q.resolveBuildSaveStorageHeroSignal(root) : signal) || signal; } catch (_) { signal = { hero: "", source: "none" }; }
+        let signalHero = "";
+        try { signalHero = QOL.normalizeHeroId(signal.hero); } catch (_) { signalHero = ""; }
+        const signalSource = signal?.source ? String(signal.source) : "none";
 
-        return 'shopOpen=' + (shopOpen ? '1' : '0') +
-            ' selectedBuild=' + (hasSelectedBuild ? '1' : '0') +
-            ' categories=' + String(categoryCount) +
-            ' title="-"' +
-            ' signalHero=' + (signalHero || '-') +
-            ' signalSource=' + signalSource;
-    }
+        return `shopOpen=${shopOpen ? "1" : "0"} selectedBuild=${hasSelectedBuild ? "1" : "0"} categories=${String(categoryCount)} title="-" signalHero=${signalHero || "-"} signalSource=${signalSource}`;
+    };
 
-    function TraceSettingsLoaderProbeHeartbeat(root, accountId, nowMs, reason) {
+    const traceSettingsLoaderProbeHeartbeat = (root, accountId, nowMs, reason) => {
         if (!SETTINGS_LOADER_TRACE) return;
-        var stage = State.buildCategoryPayloadHeroProbeStage ? String(State.buildCategoryPayloadHeroProbeStage) : '-';
-        var nextMs = Number(State.buildCategoryPayloadHeroProbeNextMs) || 0;
-        var waitMs = nextMs > nowMs ? (nextMs - nowMs) : 0;
-        var traceReason = reason ? String(reason) : 'tick';
-        var snapshot = SettingsLoaderBuildProbeSnapshot(root);
-        SettingsLoaderTraceLogThrottled(
-            'probe|' + (accountId || '-') + '|' + stage + '|' + traceReason,
-            'account=' + (accountId || '-') +
-                ' stage=' + stage +
-                ' step=' + (State.settingsLoaderCurrentStep || '-') +
-                ' reason=' + traceReason +
-                ' waitMs=' + String(waitMs) +
-                ' switchRetries=' + String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0) +
-                ' misses=' + String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0) +
-                ' confirmHits=' + String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0) +
-                ' headerConfirmed=' + (State.buildCategoryPayloadSkyrunnerHeaderConfirmed ? '1' : '0') +
-                ' ' + snapshot,
+        const stage = State.buildCategoryPayloadHeroProbeStage ? String(State.buildCategoryPayloadHeroProbeStage) : "-";
+        const nextMs = Number(State.buildCategoryPayloadHeroProbeNextMs) || 0;
+        const waitMs = nextMs > nowMs ? (nextMs - nowMs) : 0;
+        const traceReason = reason ? String(reason) : "tick";
+        const snapshot = settingsLoaderBuildProbeSnapshot(root);
+        settingsLoaderTraceLogThrottled(
+            `probe|${accountId || "-"}|${stage}|${traceReason}`,
+            `account=${accountId || "-"} stage=${stage} step=${State.settingsLoaderCurrentStep || "-"} reason=${traceReason} waitMs=${String(waitMs)} switchRetries=${String(Number(State.buildCategoryPayloadHeroProbeSwitchRetries) || 0)} misses=${String(Number(State.buildCategoryPayloadHeroProbeMisses) || 0)} confirmHits=${String(Number(State.buildCategoryPayloadStorageConfirmHits) || 0)} headerConfirmed=${State.buildCategoryPayloadSkyrunnerHeaderConfirmed ? "1" : "0"} ${snapshot}`,
             nowMs
         );
-    }
+    };
 
     // ── Public API on QOL ──
-    var api = {
-        beginSettingsLoaderSession: BeginSettingsLoaderSession,
-        setSettingsLoaderStepState: SetSettingsLoaderStepState,
-        finalizeSettingsLoaderSession: FinalizeSettingsLoaderSession,
-        skipSettingsLoaderSession: SkipSettingsLoaderSession,
-        resetSettingsLoaderSession: ResetSettingsLoaderSession,
-        ensureSettingsLoaderOverlay: EnsureSettingsLoaderOverlay,
-        updateSettingsLoaderOverlay: UpdateSettingsLoaderOverlay,
-        beginSaveSettingsLoaderSession: BeginSaveSettingsLoaderSession,
-        setSaveSettingsLoaderStepState: SetSaveSettingsLoaderStepState,
-        getSaveSettingsLoaderStepState: GetSaveSettingsLoaderStepState,
-        finalizeSaveSettingsLoaderSession: FinalizeSaveSettingsLoaderSession,
-        resetSaveSettingsLoaderSession: ResetSaveSettingsLoaderSession,
-        ensureSaveSettingsLoaderOverlay: EnsureSaveSettingsLoaderOverlay,
-        updateSaveSettingsLoaderOverlay: UpdateSaveSettingsLoaderOverlay,
-        updateSaveSettingsLoaderFromBuildSaveState: UpdateSaveSettingsLoaderFromBuildSaveState,
-        getSaveSettingsLoaderDetailForMessage: GetSaveSettingsLoaderDetailForMessage,
-        setSettingsLoaderDebugOverlayLine: SetSettingsLoaderDebugOverlayLine,
-        settingsLoaderDebugLogThrottled: SettingsLoaderDebugLogThrottled,
-        settingsLoaderTraceLogThrottled: SettingsLoaderTraceLogThrottled,
-        traceSettingsLoaderProbeHeartbeat: TraceSettingsLoaderProbeHeartbeat,
-        settingsLoaderBuildProbeSnapshot: SettingsLoaderBuildProbeSnapshot,
-        tryCloseHeroShopForLoader: TryCloseHeroShopForLoader,
-        tryCloseBrowseBuildsPopupForLoader: TryCloseBrowseBuildsPopupForLoader
+    const api = {
+        beginSettingsLoaderSession,
+        setSettingsLoaderStepState,
+        finalizeSettingsLoaderSession,
+        skipSettingsLoaderSession,
+        resetSettingsLoaderSession,
+        ensureSettingsLoaderOverlay,
+        updateSettingsLoaderOverlay,
+        beginSaveSettingsLoaderSession,
+        setSaveSettingsLoaderStepState,
+        getSaveSettingsLoaderStepState,
+        finalizeSaveSettingsLoaderSession,
+        resetSaveSettingsLoaderSession,
+        ensureSaveSettingsLoaderOverlay,
+        updateSaveSettingsLoaderOverlay,
+        updateSaveSettingsLoaderFromBuildSaveState,
+        getSaveSettingsLoaderDetailForMessage,
+        setSettingsLoaderDebugOverlayLine,
+        settingsLoaderDebugLogThrottled,
+        settingsLoaderTraceLogThrottled,
+        traceSettingsLoaderProbeHeartbeat,
+        settingsLoaderBuildProbeSnapshot,
+        tryCloseHeroShopForLoader,
+        tryCloseBrowseBuildsPopupForLoader
     };
 
     Q.core = Q.core || {};
     Q.core.settingsLoader = api;
 
     // Backward-compat exports directly on QOL namespace
-    for (var k in api) {
-        if (api.hasOwnProperty(k)) {
+    for (const k in api) {
+        if (Object.prototype.hasOwnProperty.call(api, k)) {
             Q[k] = api[k];
         }
     }
 
-    $.Msg('[QOLLock] core/ql_settings_loader: ready');
+    $.Msg("[QOLLock] core/ql_settings_loader: ready");
 })();
