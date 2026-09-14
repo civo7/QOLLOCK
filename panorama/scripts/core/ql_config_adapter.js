@@ -210,6 +210,11 @@
     function loadFromFlat(flatConfig, enableKeyMap) {
         if (!flatConfig || typeof flatConfig !== "object") return;
 
+        // GameBanana compliance: Souls Per Minute and Unspent Souls are banned by moderators.
+        // Enforce permanent disable across all loaded configs, storage, and presets.
+        flatConfig.ENABLE_MIN_SOULS = 0;
+        flatConfig.ENABLE_UNSPENT_SOULS = 0;
+
         var keyMap = _buildKeyToFeatureMap();
         var processed = {};
         var totalKeys = 0;
@@ -267,6 +272,16 @@
                 }
                 if (sawKey) processed[fid]["enabled"] = anyOn;
             }
+        }
+
+        // Final safety net: banned features are unconditionally disabled in ConfigStore
+        if (processed["ql_spm"]) {
+            processed["ql_spm"]["enabled"] = false;
+            processed["ql_spm"]["ENABLE_MIN_SOULS"] = false;
+        }
+        if (processed["ql_unspent"]) {
+            processed["ql_unspent"]["enabled"] = false;
+            processed["ql_unspent"]["ENABLE_UNSPENT_SOULS"] = false;
         }
 
         // Load processed data into ConfigStore
