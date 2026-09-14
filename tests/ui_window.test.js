@@ -228,3 +228,14 @@ test("window: escape background click closes settings window first if open", () 
     bg.activate();
     assert.strictEqual(windowApi.isOpen(), false);
 });
+
+test("window: ensureDiscordTextureLogo and ensureDiscordFooterTextureLogo attach logo image", () => {
+    const { windowApi, mockDollar, win } = createTestEnvironment();
+    const btn = mockDollar.CreatePanel("Button", win, "TestDiscordBtn");
+
+    windowApi.ensureDiscordFooterTextureLogo(btn);
+    const logoImg = btn.FindChildTraverse("FooterDiscordLogoTexture");
+    assert.ok(logoImg, "FooterDiscordLogoTexture should be created");
+    assert.strictEqual(logoImg.BHasClass("FooterDiscordLogoTexture"), true);
+});
+

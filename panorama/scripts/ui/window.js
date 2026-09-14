@@ -276,6 +276,30 @@
         highlightActiveTab();
     };
 
+    const ensureDiscordTextureLogo = (targetBtn, logoId, logoClass) => {
+        if (!targetBtn) return;
+        const resolvedLogoId = logoId || "FooterDiscordLogoTexture";
+        const resolvedLogoClass = logoClass || "FooterDiscordLogoTexture";
+
+        const legacyCssLogo = targetBtn.FindChildTraverse ? targetBtn.FindChildTraverse("FooterDiscordLogoCss") : null;
+        if (legacyCssLogo && legacyCssLogo.DeleteAsync) legacyCssLogo.DeleteAsync(0);
+
+        let logoImage = targetBtn.FindChildTraverse ? targetBtn.FindChildTraverse(resolvedLogoId) : null;
+        if (!logoImage) {
+            logoImage = $.CreatePanel ? $.CreatePanel("Image", targetBtn, resolvedLogoId) : createPanel("Image", targetBtn, resolvedLogoId);
+        }
+        if (!logoImage) return;
+
+        logoImage.AddClass(resolvedLogoClass);
+        if (logoImage.SetImage) {
+            logoImage.SetImage("s2r://panorama/images/qollock/discord_logo_png.vtex");
+        }
+    };
+
+    const ensureDiscordFooterTextureLogo = (discordFooterBtn) => {
+        ensureDiscordTextureLogo(discordFooterBtn, "FooterDiscordLogoTexture", "FooterDiscordLogoTexture");
+    };
+
     const rebuildFooter = () => {
         if (!isAlive(_tabRailFooter)) return;
         try {
@@ -619,6 +643,8 @@
         toggle,
         isOpen,
         boot,
+        ensureDiscordTextureLogo,
+        ensureDiscordFooterTextureLogo,
     };
 
     Q.ui.window = windowApi;
@@ -631,6 +657,8 @@
         $.ForceCloseModSettings = () => windowApi.setOpen(false);
     }
     globalThis.IsSettingsWindowVisible = isOpen;
+    globalThis.EnsureDiscordTextureLogo = ensureDiscordTextureLogo;
+    globalThis.EnsureDiscordFooterTextureLogo = ensureDiscordFooterTextureLogo;
 
     $.Msg("[QOLLock] ui/window: settings window manager ready.");
 })();
