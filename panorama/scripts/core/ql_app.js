@@ -8,63 +8,53 @@
 //              scheduler, panel_helpers, feature_registry, config_adapter)
 // USED BY:     hud.xml (loaded LAST in <scripts> block, after all feature manifests)
 // LOAD ORDER:  8th (LAST) — after all core modules and feature manifests
-//
-// Boundary validation: Checks all dependencies exist. Aborts with clear messages.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
     if (!QOL || !QOL.core) {
         $.Msg("[QOLLock] core/ql_app: QOL.core not found — aborting.");
         return;
     }
-    var ConfigStore = QOL.core.ConfigStore;
-    var ConfigAdapter = QOL.core.ConfigAdapter;
-    var FeatureRegistry = QOL.core.FeatureRegistry;
-    var Logger = QOL.core.Logger;
-    var PanelHelpers = QOL.ui.PanelHelpers;
+    const { ConfigStore, ConfigAdapter, FeatureRegistry, Logger } = QOL.core;
+    const PanelHelpers = QOL.ui?.PanelHelpers || QOL.core.panel;
 
     if (!ConfigStore || !FeatureRegistry) {
-        $.Msg("[QOLLock] core/ql_app: dependencies missing " +
-              "(ConfigStore=" + !!ConfigStore + ", FeatureRegistry=" + !!FeatureRegistry +
-              ") — aborting.");
+        $.Msg(`[QOLLock] core/ql_app: dependencies missing (ConfigStore=${Boolean(ConfigStore)}, FeatureRegistry=${Boolean(FeatureRegistry)}) — aborting.`);
         return;
     }
 
-    var _hudPanel = null;
-    var _booted = false;
-    var _lastConfigRaw = "";
-    var _lastRevision = 0;
-    var _configPollTimer = null;
-    var _enableKeyMap = null;
-    // Step 0a: during migration, read from old system's attribute
-    var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
-    var _REV_ATTRIBUTE = (typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR :
-                         ((typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
-    var _lastDiagForceToken = "";
-    var _diagWriteNextMs = 0;
+    let _hudPanel = null;
+    let _booted = false;
+    let _lastConfigRaw = "";
+    let _lastRevision = 0;
+    let _configPollTimer = null;
+    let _enableKeyMap = null;
 
-    // Build featureId → enableKey map from registered manifests.
-    // A manifest declares either enableKey (single legacy toggle) or enableKeys
-    // (array, OR semantics — any one toggle boots the feature). Multi-key features
-    // need the array form: gating them on one key leaves their other toggles dead.
-    function _buildEnableKeyMap() {
-        var map = {};
+    const _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
+    const _REV_ATTRIBUTE = (typeof QOL_USER_EDIT_REV_ATTR !== "undefined")
+        ? QOL_USER_EDIT_REV_ATTR
+        : ((typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
+    let _lastDiagForceToken = "";
+    let _diagWriteNextMs = 0;
+
+    const _buildEnableKeyMap = () => {
+        const map = {};
         if (!FeatureRegistry) return map;
-        var ids = FeatureRegistry.getRegisteredIds();
-        for (var i = 0; i < ids.length; i++) {
-            var m = FeatureRegistry.getManifest(ids[i]);
+        const ids = FeatureRegistry.getRegisteredIds();
+        for (let i = 0; i < ids.length; i++) {
+            const m = FeatureRegistry.getManifest(ids[i]);
             if (!m) continue;
             if (m.enableKeys && m.enableKeys.length > 0) {
                 map[ids[i]] = m.enableKeys;
             } else if (m.enableKey) {
                 map[ids[i]] = m.enableKey;
             } else if (m.settings && m.settings.length > 0) {
-                var detected = [];
-                for (var s = 0; s < m.settings.length; s++) {
-                    var k = m.settings[s].key;
-                    if (m.settings[s].type === "toggle" && (k.indexOf("ENABLE") !== -1 || k.indexOf("ENABLED") !== -1 || k.indexOf("HUD_") === 0)) {
+                const detected = [];
+                for (let s = 0; s < m.settings.length; s++) {
+                    const k = m.settings[s].key;
+                    if (m.settings[s].type === "toggle" && (k.includes("ENABLE") || k.includes("ENABLED") || k.startsWith("HUD_"))) {
                         detected.push(k);
                     }
                 }
@@ -76,86 +66,78 @@
             }
         }
         return map;
-    }
+    };
 
-    // Sync FeatureRegistry enabled state with ConfigStore after config changes.
-    // Detects runtime toggles of legacy ENABLE_X keys and calls
-    // FeatureRegistry.enable()/disable() to match old system's real-time responsiveness.
-    function _syncFeatureEnabledState() {
+    const _syncFeatureEnabledState = () => {
         if (!FeatureRegistry || !ConfigStore || !_enableKeyMap) return;
-        for (var id in _enableKeyMap) {
-            if (!_enableKeyMap.hasOwnProperty(id)) continue;
-            var nowEnabled = ConfigStore.get(id, "enabled");
-            var wasEnabled = FeatureRegistry.isEnabled(id);
+        for (const id of Object.keys(_enableKeyMap)) {
+            const nowEnabled = ConfigStore.get(id, "enabled");
+            const wasEnabled = FeatureRegistry.isEnabled(id);
             if (nowEnabled && !wasEnabled) {
                 FeatureRegistry.enable(id);
-                if (Logger) Logger.logInfo("App", "runtime enable: " + id);
+                if (Logger) Logger.logInfo("App", `runtime enable: ${id}`);
             } else if (!nowEnabled && wasEnabled) {
                 FeatureRegistry.disable(id);
-                if (Logger) Logger.logInfo("App", "runtime disable: " + id);
+                if (Logger) Logger.logInfo("App", `runtime disable: ${id}`);
             }
         }
-    }
+    };
 
-    function _findHud() {
+    const _findHud = () => {
         if (_hudPanel && PanelHelpers && PanelHelpers.isPanelAlive(_hudPanel)) return _hudPanel;
-        if (PanelHelpers) {
+        if (PanelHelpers?.findHud) {
             _hudPanel = PanelHelpers.findHud();
             return _hudPanel;
         }
-        // Fallback if PanelHelpers not loaded
-        var hud = $.GetContextPanel().FindChildTraverse("Hud");
-        if (!hud) {
-            var absRoot = $.GetContextPanel();
-            var depth = 0;
-            while (absRoot.GetParent() && depth < 64) {
+        const ctx = $.GetContextPanel();
+        let hud = ctx?.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
+        if (!hud && ctx) {
+            let absRoot = ctx;
+            let depth = 0;
+            while (absRoot.GetParent && depth < 64) {
                 absRoot = absRoot.GetParent();
                 depth++;
             }
-            hud = absRoot.FindChildTraverse("Hud");
+            hud = absRoot?.FindChildTraverse ? absRoot.FindChildTraverse("Hud") : null;
         }
         if (hud) _hudPanel = hud;
         return hud;
-    }
+    };
 
-    // Step 0a+0d: unwrap the old system's config envelope {schema, data} → flat object
-    function _unwrapEnvelope(raw) {
+    const _unwrapEnvelope = (raw) => {
         if (!raw) return null;
         try {
-            var envelope = JSON.parse(raw);
-            // Old system wraps config: { schema: "3.1.9", data: { KEY: value, ... } }
+            const envelope = JSON.parse(raw);
             if (envelope && envelope.data && typeof envelope.data === "object") {
                 return envelope.data;
             }
-            // If no envelope wrapper, assume the raw JSON is already flat config
             if (envelope && typeof envelope === "object" && !envelope.schema) {
                 return envelope;
             }
-        } catch (e) {}
+        } catch (_) {}
         return null;
-    }
+    };
 
-    function _parseRev(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    }
+    const _parseRev = (v) => {
+        const n = Number(v);
+        return (!Number.isFinite(n) || n < 0) ? 0 : Math.floor(n);
+    };
 
-    function _getSearchPanels(hudPanel) {
-        var panels = [];
-        var seen = [];
-        function add(p) {
+    const _getSearchPanels = (hudPanel) => {
+        const panels = [];
+        const seen = new Set();
+        const add = (p) => {
             if (!p || typeof p.GetAttributeString !== "function") return;
-            if (seen.indexOf(p) !== -1) return;
-            seen.push(p);
+            if (seen.has(p)) return;
+            seen.add(p);
             panels.push(p);
-        }
+        };
         add(hudPanel);
         if (typeof $.GetContextPanel === "function") {
-            var ctx = $.GetContextPanel();
+            const ctx = $.GetContextPanel();
             add(ctx);
-            var cur = ctx;
-            var depth = 0;
+            let cur = ctx;
+            let depth = 0;
             while (cur && cur.GetParent && depth < 64) {
                 cur = cur.GetParent();
                 add(cur);
@@ -163,19 +145,19 @@
             }
         }
         return panels;
-    }
+    };
 
-    function _readBestConfig(hudPanel) {
-        var panels = _getSearchPanels(hudPanel);
-        var bestRaw = "";
-        var bestRev = -1;
-        var bestPanel = null;
+    const _readBestConfig = (hudPanel) => {
+        const panels = _getSearchPanels(hudPanel);
+        let bestRaw = "";
+        let bestRev = -1;
+        let bestPanel = null;
 
-        for (var i = 0; i < panels.length; i++) {
-            var p = panels[i];
+        for (let i = 0; i < panels.length; i++) {
+            const p = panels[i];
             try {
-                var raw = p.GetAttributeString(_CONFIG_ATTRIBUTE, "");
-                var rev = _parseRev(p.GetAttributeString(_REV_ATTRIBUTE, "0"));
+                const raw = p.GetAttributeString(_CONFIG_ATTRIBUTE, "");
+                const rev = _parseRev(p.GetAttributeString(_REV_ATTRIBUTE, "0"));
                 if (raw) {
                     if (rev > bestRev) {
                         bestRev = rev;
@@ -186,106 +168,102 @@
                         bestPanel = p;
                     }
                 }
-            } catch (e) {}
+            } catch (_) {}
         }
         return { raw: bestRaw, rev: bestRev > 0 ? bestRev : 0, sourcePanel: bestPanel };
-    }
+    };
 
-    function _syncRootClasses(hudPanel, flatConfig) {
+    const _syncRootClasses = (hudPanel, flatConfig) => {
         if (!hudPanel) hudPanel = _findHud();
         if (!hudPanel) return;
         if (!flatConfig) {
-            var globalState = (typeof State !== "undefined" && State) ? State :
+            const globalState = (typeof State !== "undefined" && State) ? State :
                               ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-            if (globalState && globalState.lastConfig) flatConfig = globalState.lastConfig;
+            if (globalState?.lastConfig) flatConfig = globalState.lastConfig;
             else if (ConfigAdapter) flatConfig = ConfigAdapter.exportToFlat();
         }
         if (!flatConfig) return;
-        if (QOL && QOL.core && QOL.core.hud && typeof QOL.core.hud.applyRootClasses === "function") {
+        if (QOL?.core?.hud && typeof QOL.core.hud.applyRootClasses === "function") {
             try {
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                var isHideout = (QOL.isConnectedToHideout && QOL.isConnectedToHideout(hudPanel)) || false;
+                const nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                const isHideout = (QOL.isConnectedToHideout && QOL.isConnectedToHideout(hudPanel)) || false;
                 QOL.core.hud.applyRootClasses(hudPanel, flatConfig, nowMs, isHideout, true);
             } catch (e) {
-                if (Logger) Logger.logWarn("App", "applyRootClasses failed: " + (e.message || e));
+                if (Logger) Logger.logWarn("App", `applyRootClasses failed: ${e.message || e}`);
             }
         }
-    }
+    };
 
-    function _applyConfigUpdate(raw, rev, hudPanel, sourcePanel) {
+    const _applyConfigUpdate = (raw, rev, hudPanel, sourcePanel) => {
         _lastConfigRaw = raw;
         if (rev > _lastRevision) _lastRevision = rev;
 
-        // Propagate the latest config & revision down to hudPanel if read from an ancestor
         if (hudPanel && sourcePanel && sourcePanel !== hudPanel && typeof hudPanel.SetAttributeString === "function") {
             try {
                 hudPanel.SetAttributeString(_CONFIG_ATTRIBUTE, raw);
                 hudPanel.SetAttributeString(_REV_ATTRIBUTE, String(_lastRevision));
-            } catch (eSync) {}
+            } catch (_) {}
         }
 
-        var flatConfig = _unwrapEnvelope(raw);
+        const flatConfig = _unwrapEnvelope(raw);
         if (flatConfig) {
-            var globalState = (typeof State !== "undefined" && State) ? State :
+            const globalState = (typeof State !== "undefined" && State) ? State :
                               ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
             if (globalState) {
                 globalState.lastConfig = flatConfig;
             }
             if (ConfigAdapter) {
                 try {
-                    // Step 0d: use loadFromFlat which handles flat→nested mapping
                     ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
-                    // Runtime toggle detection: sync FeatureRegistry enabled state
-                    // with ConfigStore after legacy enableKey injection
                     _syncFeatureEnabledState();
-                    if (Logger) Logger.logDebug("App", "config: applied revision " + _lastRevision);
+                    if (Logger) Logger.logDebug("App", `config: applied revision ${_lastRevision}`);
                 } catch (e) {
-                    if (Logger) Logger.logWarn("App", "config adapter failed: " + (e.message || e));
+                    if (Logger) Logger.logWarn("App", `config adapter failed: ${e.message || e}`);
                 }
             }
             _syncRootClasses(hudPanel, flatConfig);
         }
-    }
+    };
 
-    function _readDiagRequest(hudPanel) {
+    const _readDiagRequest = (hudPanel) => {
         if (!hudPanel) return "";
         try {
-            var tok = hudPanel.GetAttributeString("QOL_DiagRequest", "");
+            const tok = hudPanel.GetAttributeString("QOL_DiagRequest", "");
             if (tok) return tok;
-        } catch (e) {}
-        var panels = _getSearchPanels(hudPanel);
-        for (var i = 0; i < panels.length; i++) {
+        } catch (_) {}
+        const panels = _getSearchPanels(hudPanel);
+        for (let i = 0; i < panels.length; i++) {
             try {
-                var pTok = panels[i].GetAttributeString("QOL_DiagRequest", "");
+                const pTok = panels[i].GetAttributeString("QOL_DiagRequest", "");
                 if (pTok) return pTok;
-            } catch (e2) {}
+            } catch (_) {}
         }
         return "";
-    }
+    };
 
-    function _buildDiagSnapshot(forceToken) {
-        var registered = FeatureRegistry ? FeatureRegistry.getRegisteredIds().sort() : [];
-        var enabled = FeatureRegistry ? FeatureRegistry.getEnabledIds().sort() : [];
-        var errors = FeatureRegistry ? FeatureRegistry.getErrorCounts() : {};
-        var disabledList = [];
+    const _buildDiagSnapshot = (forceToken) => {
+        const registered = FeatureRegistry ? FeatureRegistry.getRegisteredIds().sort() : [];
+        const enabled = FeatureRegistry ? FeatureRegistry.getEnabledIds().sort() : [];
+        const errors = FeatureRegistry ? FeatureRegistry.getErrorCounts() : {};
+        let disabledList = [];
         if (typeof QOL !== "undefined" && QOL.autoDisabledFeatures) {
             disabledList = QOL.autoDisabledFeatures.slice();
         }
-        var globalState = (typeof State !== "undefined" && State) ? State :
+        const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (globalState && globalState.featureAutoDisabled) {
-            var keys = Object.keys(globalState.featureAutoDisabled);
-            for (var k = 0; k < keys.length; k++) {
-                if (globalState.featureAutoDisabled[keys[k]] && disabledList.indexOf(keys[k]) === -1) {
+        if (globalState?.featureAutoDisabled) {
+            const keys = Object.keys(globalState.featureAutoDisabled);
+            for (let k = 0; k < keys.length; k++) {
+                if (globalState.featureAutoDisabled[keys[k]] && !disabledList.includes(keys[k])) {
                     disabledList.push(keys[k]);
                 }
             }
         }
 
-        var diag = {
+        const diag = {
             features: registered,
-            missing: (globalState && globalState._missingFeatureLogged) ? globalState._missingFeatureLogged : {},
-            errors: errors,
+            missing: globalState?._missingFeatureLogged ? globalState._missingFeatureLogged : {},
+            errors,
             disabled: disabledList,
             logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : [],
             diagToken: forceToken || "",
@@ -294,8 +272,8 @@
             newErrors: errors
         };
 
-        if (QOL && QOL.core && QOL.core.ManifestTests) {
-            var tr = QOL.core.ManifestTests.getResults();
+        if (QOL?.core?.ManifestTests) {
+            const tr = QOL.core.ManifestTests.getResults();
             if (tr) {
                 diag.testResults = {
                     summary: tr.summary,
@@ -307,56 +285,53 @@
         }
 
         return diag;
-    }
+    };
 
-    function _writeDiagSnapshot(hudPanel, forceToken) {
+    const _writeDiagSnapshot = (hudPanel, forceToken) => {
         if (!hudPanel || typeof hudPanel.SetAttributeString !== "function") return;
         try {
-            var diag = _buildDiagSnapshot(forceToken);
+            const diag = _buildDiagSnapshot(forceToken);
             hudPanel.SetAttributeString("QOL_Diag", JSON.stringify(diag));
             if (forceToken && Logger) {
-                Logger.logInfo("App", "diag force-sync written, token=" + String(forceToken).substring(0, 16) +
-                    " features=" + diag.features.length + " disabled=" + diag.disabled.length);
+                Logger.logInfo("App", `diag force-sync written, token=${String(forceToken).substring(0, 16)} features=${diag.features.length} disabled=${diag.disabled.length}`);
             }
         } catch (e) {
-            if (Logger) Logger.logWarn("App", "writeDiagSnapshot failed: " + (e.message || e));
+            if (Logger) Logger.logWarn("App", `writeDiagSnapshot failed: ${e.message || e}`);
         }
-    }
+    };
 
-    function _syncDiagnosticState(hudPanel, nowMs) {
+    const _syncDiagnosticState = (hudPanel, nowMs) => {
         if (!hudPanel) return;
-        var forceSync = false;
-        var forceToken = "";
+        let forceSync = false;
+        let forceToken = "";
         try {
             forceToken = _readDiagRequest(hudPanel);
             if (forceToken && forceToken !== _lastDiagForceToken) {
                 _lastDiagForceToken = forceToken;
                 forceSync = true;
-                if (Logger) Logger.logInfo("App", "diag force-sync requested, token=" + String(forceToken).substring(0, 16));
+                if (Logger) Logger.logInfo("App", `diag force-sync requested, token=${String(forceToken).substring(0, 16)}`);
 
-                // Command dispatch: manifest test runner ("mt_" or "fs_")
-                if (forceToken.indexOf("mt_") === 0 || forceToken.indexOf("fs_") === 0) {
-                    if (QOL && QOL.core && QOL.core.ManifestTests) {
+                if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_")) {
+                    if (QOL?.core?.ManifestTests) {
                         try {
                             QOL.core.ManifestTests.runAll({
                                 token: forceToken,
-                                onComplete: function () {
+                                onComplete: () => {
                                     _writeDiagSnapshot(hudPanel, forceToken);
                                 }
                             });
                         } catch (mtErr) {
-                            if (Logger) Logger.logWarn("App", "manifest test run failed: " + (mtErr.message || mtErr));
+                            if (Logger) Logger.logWarn("App", `manifest test run failed: ${mtErr.message || mtErr}`);
                         }
                     }
                 }
 
-                // Tree dump summary ("dt_")
-                if (forceToken.indexOf("dt_") === 0) {
+                if (forceToken.startsWith("dt_")) {
                     if (QOL && typeof QOL.dumpTreeSummary === "function") {
                         try {
                             QOL.dumpTreeSummary(hudPanel);
                         } catch (dtErr) {
-                            if (Logger) Logger.logWarn("App", "tree summary failed: " + (dtErr.message || dtErr));
+                            if (Logger) Logger.logWarn("App", `tree summary failed: ${dtErr.message || dtErr}`);
                         }
                     } else if (Logger) {
                         Logger.logWarn("App", "tree summary requested but QOL.dumpTreeSummary unavailable");
@@ -367,42 +342,42 @@
                 _diagWriteNextMs = nowMs + 5000;
                 return;
             }
-        } catch (eReq) {}
+        } catch (_) {}
 
         if (!forceSync && _diagWriteNextMs && _diagWriteNextMs > nowMs) return;
         _diagWriteNextMs = nowMs + 5000;
         _writeDiagSnapshot(hudPanel, "");
-    }
+    };
 
-    function _syncLoaderOverlays(hudPanel, nowMs) {
-        var globalState = (typeof State !== "undefined" && State) ? State :
+    const _syncLoaderOverlays = (hudPanel, nowMs) => {
+        const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
         if (!globalState) return;
-        var settingsShowing = !!(globalState.settingsLoaderSessionActive || globalState.settingsLoaderSessionCompleted);
-        var saveShowing = !!(globalState.saveSettingsLoaderSessionActive || globalState.saveSettingsLoaderSessionCompleted);
+        const settingsShowing = Boolean(globalState.settingsLoaderSessionActive || globalState.settingsLoaderSessionCompleted);
+        const saveShowing = Boolean(globalState.saveSettingsLoaderSessionActive || globalState.saveSettingsLoaderSessionCompleted);
 
         if (settingsShowing || saveShowing) {
             if (settingsShowing && QOL && typeof QOL.updateSettingsLoaderOverlay === "function") {
-                try { QOL.updateSettingsLoaderOverlay(hudPanel, nowMs); } catch (e1) {}
+                try { QOL.updateSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
             }
             if (!settingsShowing && saveShowing && QOL && typeof QOL.updateSaveSettingsLoaderOverlay === "function") {
-                try { QOL.updateSaveSettingsLoaderOverlay(hudPanel, nowMs); } catch (e2) {}
+                try { QOL.updateSaveSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
             }
         }
-    }
+    };
 
-    function _syncPendingHeroRestore(nowMs) {
-        var globalState = (typeof State !== "undefined" && State) ? State :
+    const _syncPendingHeroRestore = (nowMs) => {
+        const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (!globalState || !globalState.heroRestorePendingTarget) return;
-        var targetHero = (QOL && QOL.normalizeHeroId) ? QOL.normalizeHeroId(globalState.heroRestorePendingTarget) : globalState.heroRestorePendingTarget;
+        if (!globalState?.heroRestorePendingTarget) return;
+        const targetHero = (QOL && QOL.normalizeHeroId) ? QOL.normalizeHeroId(globalState.heroRestorePendingTarget) : globalState.heroRestorePendingTarget;
         if (!targetHero) {
             globalState.heroRestorePendingTarget = "";
             return;
         }
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
         if (now < (globalState.heroRestorePendingNextMs || 0)) return;
-        var elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
+        const elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
         if (elapsed >= 1200 || elapsed > 3000) {
             if (QOL && typeof QOL.queueShopPulseAfterHeroRestore === "function") {
                 QOL.queueShopPulseAfterHeroRestore(now);
@@ -419,20 +394,19 @@
             return;
         }
         globalState.heroRestorePendingNextMs = now + 450;
-    }
+    };
 
-    function _startConfigPolling(hud) {
+    const _startConfigPolling = (hud) => {
         if (_configPollTimer) return;
 
-        function poll() {
+        const poll = () => {
             if (!_booted) return;
-            var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-            var hudPanel = _findHud();
-            var best = _readBestConfig(hudPanel);
-            var raw = best.raw;
-            var rev = best.rev;
+            const nowMs = Date.now ? Date.now() : (new Date()).getTime();
+            const hudPanel = _findHud();
+            const best = _readBestConfig(hudPanel);
+            const { raw, rev } = best;
 
-            var changed = false;
+            let changed = false;
             if (raw && rev > _lastRevision) {
                 changed = true;
             } else if (raw && raw !== _lastConfigRaw) {
@@ -450,53 +424,45 @@
             _syncPendingHeroRestore(nowMs);
 
             _configPollTimer = $.Schedule(0.25, poll);
-        }
+        };
         _configPollTimer = $.Schedule(0.25, poll);
-    }
+    };
 
     // -- Public API --
-    function boot() {
+    const boot = () => {
         if (_booted) {
             $.Msg("[QOLLock] App: already booted — skipping.");
             return true;
         }
 
-        $.Msg("[QOLLock] App: booting QOLLock v" +
-              (QOL.VERSION || "?.?.?") + " (build " + (QOL.BUILD || "?") + ")");
+        $.Msg(`[QOLLock] App: booting QOLLock v${QOL.VERSION || "?.?.?"} (build ${QOL.BUILD || "?"})`);
 
-        var hud = _findHud();
+        const hud = _findHud();
         if (!hud) {
             $.Msg("[QOLLock] App: Hud panel not found — cannot boot.");
             return false;
         }
 
-        // Build enableKey map from registered manifests (for legacy config bridging)
         _enableKeyMap = _buildEnableKeyMap();
 
-        // Step 0a+0c: Load config from old system's attribute, unwrap envelope,
-        // use ConfigAdapter to handle flat→nested mapping
-        var storedConfig = null;
-        var flatConfig = null;
+        let flatConfig = null;
         try {
-            var best = _readBestConfig(hud);
-            var raw = best.raw;
+            const best = _readBestConfig(hud);
+            const raw = best.raw;
             _lastRevision = best.rev;
             if (raw) {
                 _lastConfigRaw = raw;
                 flatConfig = _unwrapEnvelope(raw);
                 if (flatConfig && ConfigAdapter) {
-                    // Step 0c: use loadFromFlat for flat→nested transformation
-                    // Pass enableKeyMap so legacy ENABLE_X keys inject "enabled: true"
                     ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
                     if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
                 }
-                storedConfig = JSON.parse(raw);
             }
         } catch (e) {
-            if (Logger) Logger.logWarn("App", "config load failed, using defaults: " + (e.message || e));
+            if (Logger) Logger.logWarn("App", `config load failed, using defaults: ${e.message || e}`);
         }
 
-        var globalState = (typeof State !== "undefined" && State) ? State :
+        const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
         if (globalState) {
             if (!flatConfig && ConfigAdapter) {
@@ -505,9 +471,7 @@
             globalState.lastConfig = flatConfig || {};
         }
 
-        // Step 0c: Pass reconstructed per-feature config to FeatureRegistry
-        // (ConfigStore.exportAll() returns {featureId: {key: value}} format)
-        var featureConfig = ConfigStore.exportAll();
+        const featureConfig = ConfigStore.exportAll();
         if (FeatureRegistry) {
             FeatureRegistry.boot(featureConfig);
         }
@@ -517,76 +481,56 @@
         _startConfigPolling(hud);
         _booted = true;
 
-        // P0: Boot health summary — one-line check for registration + errors.
         if (FeatureRegistry) {
-            var ids = FeatureRegistry.getRegisteredIds();
-            var enabled = [];
-            for (var i = 0; i < ids.length; i++) {
+            const ids = FeatureRegistry.getRegisteredIds();
+            const enabled = [];
+            for (let i = 0; i < ids.length; i++) {
                 if (FeatureRegistry.isEnabled(ids[i])) enabled.push(ids[i]);
             }
-            var errors = (Logger && Logger.getErrors) ? Logger.getErrors(10) : null;
-            $.Msg("[QOLLock] Boot health: " + ids.length + " registered, " +
-                  enabled.length + " enabled, " + (errors && errors.length ? errors.length + " errors" : "0 errors"));
-        }
-
-        // Step 0f: Diagnostic canary — verify config bridge is working.
-        // Only test features that have been wired (schema registered).
-        if (Logger) {
-            var canaryFeature = ConfigStore.hasSchema("ql_ammo") ? "ql_ammo" :
-                               ConfigStore.hasSchema("ql_cast_failed_hint") ? "ql_cast_failed_hint" : null;
-            if (canaryFeature) {
-                var canaryVal = ConfigStore.get(canaryFeature, "ENABLE_AMMO_STATUS");
-                var canaryScale = ConfigStore.get(canaryFeature, "AMMO_PANEL_SCALE");
-                Logger.logInfo("App", "ConfigBridge canary (" + canaryFeature + "): ENABLE_AMMO_STATUS=" +
-                    canaryVal + " AMMO_PANEL_SCALE=" + canaryScale +
-                    " (undefined=broken, default=no-user-config)");
-                if (canaryScale !== undefined && (typeof canaryScale !== "number" || canaryScale < 50 || canaryScale > 200)) {
-                    Logger.logWarn("App", "Normalization canary FAIL: AMMO_PANEL_SCALE=" + canaryScale);
-                }
-            } else {
-                Logger.logInfo("App", "ConfigBridge canary: no wired features to test (expected until Step 2)");
-            }
+            const errors = Logger?.getErrors ? Logger.getErrors(10) : null;
+            $.Msg(`[QOLLock] Boot health: ${ids.length} registered, ${enabled.length} enabled, ${errors && errors.length ? errors.length + " errors" : "0 errors"}`);
         }
 
         return true;
-    }
+    };
 
-    function _stopConfigPolling() {
-        if (_configPollTimer) { $.CancelScheduled(_configPollTimer); _configPollTimer = null; }
-    }
+    const _stopConfigPolling = () => {
+        if (_configPollTimer) {
+            $.CancelScheduled(_configPollTimer);
+            _configPollTimer = null;
+        }
+    };
 
-    function shutdown() {
+    const shutdown = () => {
         if (!_booted) return;
         _stopConfigPolling();
         if (FeatureRegistry) FeatureRegistry.shutdown();
-        // Save config to Hud panel attribute (write back to old system's attribute during migration)
         if (ConfigStore) {
-            var hud = _findHud();
+            const hud = _findHud();
             if (hud && typeof hud.SetAttributeString === "function") {
                 try {
-                    var flatExport = ConfigAdapter ? ConfigAdapter.exportToFlat() : {};
-                    // Wrap in old system's envelope format for backward compat
-                    var envelope = JSON.stringify({
+                    const flatExport = ConfigAdapter ? ConfigAdapter.exportToFlat() : {};
+                    const envelope = JSON.stringify({
                         schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "3.2.0"),
                         data: flatExport
                     });
                     hud.SetAttributeString(_CONFIG_ATTRIBUTE, envelope);
                 } catch (e) {
-                    if (Logger) Logger.logWarn("App", "config save failed: " + (e.message || e));
+                    if (Logger) Logger.logWarn("App", `config save failed: ${e.message || e}`);
                 }
             }
         }
         _booted = false;
-    }
+    };
 
-    function isBooted() { return _booted; }
-    function getHud() { return _hudPanel || _findHud(); }
+    const isBooted = () => _booted;
+    const getHud = () => _hudPanel || _findHud();
 
-    var appApi = {
-        boot: boot,
-        shutdown: shutdown,
-        isBooted: isBooted,
-        getHud: getHud,
+    const appApi = {
+        boot,
+        shutdown,
+        isBooted,
+        getHud,
         syncRootClasses: _syncRootClasses,
         syncDiagnosticState: _syncDiagnosticState,
         writeDiagSnapshot: _writeDiagSnapshot,
@@ -598,6 +542,5 @@
 
     $.Msg("[QOLLock] core/ql_app: attached to QOL.core.app and QOL.core.App");
 
-    // Auto-boot: call boot() immediately after all core modules and manifests load.
     QOL.core.App.boot();
 })();

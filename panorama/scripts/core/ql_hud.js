@@ -1,7 +1,9 @@
 // =============================================================================
 // QOLLOCK — core/ql_hud.js
 // =============================================================================
-// OWNS:        Deadlock HUD lookups: findHud, isInHideout, isStreetBrawl.
+// OWNS:        Deadlock HUD lookups: findHud, isInHideout, isStreetBrawl,
+//              ensureTopBarGated, root class synchronizer, and HUD sub-element
+//              helpers.
 // DOES NOT OWN: Pure DOM panel manipulation (core/ql_panel_helpers.js),
 //               Feature lifecycle (FeatureRegistry)
 // DEPENDS ON:  core/ql_namespace.js, core/ql_panel_helpers.js
@@ -9,122 +11,153 @@
 // LOAD ORDER:  6th — after ql_panel_helpers.js
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
-    var Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : null);
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : null);
     if (!Q || !Q.core) {
         $.Msg("[QOLLock] core/ql_hud: QOL.core not found — aborting.");
         return;
     }
 
-    var _panelHelpers = Q.core.panel || Q.ui.PanelHelpers || {};
-    var isAlive = _panelHelpers.isPanelAlive || _panelHelpers.isAlive || function (p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    };
+    const _panelHelpers = Q.core.panel || Q.ui.PanelHelpers || {};
+    const isAlive = _panelHelpers.isPanelAlive || _panelHelpers.isAlive || ((p) => !!(p && typeof p.IsValid === "function" && p.IsValid()));
 
-    var _cachedHud = null;
+    let _cachedHud = null;
 
     /**
      * Finds the primary Deadlock #Hud panel with caching.
      */
-    function findHud() {
-        if (isAlive(_cachedHud)) return _cachedHud;
+    const findHud = (preferredRoot) => {
+        if (!preferredRoot && isAlive(_cachedHud)) return _cachedHud;
         _cachedHud = null;
 
-        var MAX_DEPTH = 64;
+        const MAX_DEPTH = 64;
         try {
-            var ctx = $.GetContextPanel();
+            const ctx = preferredRoot || $.GetContextPanel();
             if (!isAlive(ctx)) return null;
-            if (ctx.id === "Hud") { _cachedHud = ctx; return ctx; }
+            if (ctx.id === "Hud" || ctx.paneltype === "CitadelHud") {
+                if (!preferredRoot) _cachedHud = ctx;
+                return ctx;
+            }
 
-            var hud = ctx.FindChildTraverse("Hud");
-            if (isAlive(hud)) { _cachedHud = hud; return hud; }
+            let hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
+            if (isAlive(hud)) {
+                if (!preferredRoot) _cachedHud = hud;
+                return hud;
+            }
 
-            var absRoot = ctx;
-            var depth = 0;
+            let absRoot = ctx;
+            let depth = 0;
             while (depth < MAX_DEPTH) {
-                var parent = absRoot.GetParent();
+                const parent = absRoot.GetParent ? absRoot.GetParent() : null;
                 if (!parent || !isAlive(parent)) break;
                 absRoot = parent;
                 depth++;
             }
-            hud = absRoot.FindChildTraverse("Hud");
-            if (isAlive(hud)) { _cachedHud = hud; return hud; }
-            return null;
-        } catch (e) {
+            hud = absRoot.FindChildTraverse ? absRoot.FindChildTraverse("Hud") : null;
+            if (isAlive(hud)) {
+                if (!preferredRoot) _cachedHud = hud;
+                return hud;
+            }
+            if (!preferredRoot) _cachedHud = absRoot;
+            return absRoot;
+        } catch (_) {
             return null;
         }
-    }
+    };
 
     /**
      * Whether the player is in hideout / sandbox / hero testing mode.
      */
-    function isInHideout(root) {
+    const isInHideout = (root) => {
         try {
-            var hud = findHud();
+            const hud = findHud();
             if (isAlive(hud) && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout"))) {
                 return true;
             }
             if (isAlive(root) && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) {
                 return true;
             }
-        } catch (e) {}
+        } catch (_) {}
         return false;
-    }
+    };
 
     /**
      * Whether the match is in street brawl mode.
      */
-    function isStreetBrawl(root) {
+    const isStreetBrawl = (root) => {
+        const BRAWL_CLASSES = [
+            "gamemode_streetbrawl",
+            "StreetBrawlInterstitial",
+            "StreetBrawlBuyPhase",
+            "GameMode_StreetBrawl"
+        ];
+        const hasBrawlClass = (p) => {
+            if (!isAlive(p)) return false;
+            for (const cls of BRAWL_CLASSES) {
+                if (p.BHasClass(cls)) return true;
+            }
+            return false;
+        };
+
         try {
-            var hud = findHud();
+            const hud = findHud();
             if (isAlive(hud)) {
-                if (hud.BHasClass("gamemode_streetbrawl") ||
-                    hud.BHasClass("StreetBrawlInterstitial") ||
-                    hud.BHasClass("StreetBrawlBuyPhase") ||
-                    hud.BHasClass("GameMode_StreetBrawl")) {
+                if (hasBrawlClass(hud)) return true;
+                const sb = hud.FindChildTraverse("StretBrawlContainer");
+                if (isAlive(sb) && (sb.visible || sb.BHasClass("visible") || sb.style?.visibility === "visible")) {
                     return true;
                 }
-                var sb = hud.FindChildTraverse("StretBrawlContainer");
-                if (isAlive(sb) && (sb.visible || (sb.BHasClass && sb.BHasClass("visible")) || (sb.style && sb.style.visibility === "visible"))) {
-                    return true;
-                }
-                var topBar = hud.FindChildTraverse("TopBar");
-                if (isAlive(topBar) && (topBar.BHasClass("gamemode_streetbrawl") ||
-                    topBar.BHasClass("StreetBrawlInterstitial") ||
-                    topBar.BHasClass("StreetBrawlBuyPhase"))) {
-                    return true;
-                }
+                const gpHud = hud.FindChildTraverse("gameplay_hud");
+                if (hasBrawlClass(gpHud)) return true;
+                const topBar = hud.FindChildTraverse("TopBar");
+                if (hasBrawlClass(topBar)) return true;
             }
             if (isAlive(root)) {
-                if (root.BHasClass("gamemode_streetbrawl") ||
-                    root.BHasClass("StreetBrawlInterstitial") ||
-                    root.BHasClass("StreetBrawlBuyPhase") ||
-                    root.BHasClass("GameMode_StreetBrawl")) {
-                    return true;
+                if (hasBrawlClass(root)) return true;
+                let curr = root;
+                while (isAlive(curr)) {
+                    if (hasBrawlClass(curr)) return true;
+                    curr = curr.GetParent ? curr.GetParent() : null;
                 }
             }
-        } catch (e) {}
+        } catch (_) {}
         return false;
-    }
+    };
 
-    function isHudClassActive(root, className) {
+    const isHudClassActive = (root, className) => {
         const target = root || findHud();
         if (!isAlive(target) || !className) return false;
-        try { return target.BHasClass(className); } catch (e) { return false; }
-    }
+        try {
+            return target.BHasClass(className);
+        } catch (_) {
+            return false;
+        }
+    };
 
     const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     const PANEL_ID_TOP_BAR = "TopBar";
     const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
+
+    /**
+     * Ensures TopBar has feature CSS gate class (mirroring peer/thirdeye ensureTopBarGated).
+     */
+    const ensureTopBarGated = (featureId) => {
+        const hud = findHud();
+        if (!isAlive(hud)) return null;
+        const topBar = hud.FindChildTraverse("TopBar");
+        if (!isAlive(topBar)) return null;
+        topBar.SetHasClass(`ql_${featureId}_enabled_active`, true);
+        return topBar;
+    };
 
     const getGameplayHudPanel = (root) => {
         if (!root?.FindChildTraverse) return root || null;
         return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
     };
 
-    const isCustomHudContextActive = (_root) => true;
+    const isCustomHudContextActive = () => true;
 
     const readPanelOpacityMaybe = (panel) => {
         if (!panel || !isAlive(panel) || !panel.style) return NaN;
@@ -141,10 +174,10 @@
 
     const isPanelSuppressedMaybe = (panel) => {
         if (!panel || !isAlive(panel)) return true;
-        const isVisible = (typeof QOL !== "undefined" && QOL.isPanelVisibleMaybe)
+        const isVis = (typeof QOL !== "undefined" && QOL.isPanelVisibleMaybe)
             ? QOL.isPanelVisibleMaybe(panel)
             : (panel.visible !== false);
-        if (!isVisible) return true;
+        if (!isVis) return true;
         const opacity = readPanelOpacityMaybe(panel);
         if (Number.isFinite(opacity) && opacity <= 0.01) return true;
         return false;
@@ -162,10 +195,9 @@
 
     const isHudVisibleForTopBarRuntime = (root, topBar) => {
         if (!root) return true;
-        const hasAnyClassInHierarchySafe = (panel, classNames) => {
+        const hasAnyClass = (panel, classNames) => {
             if (!panel || !classNames?.length) return false;
-            for (let i = 0; i < classNames.length; i++) {
-                const cls = classNames[i];
+            for (const cls of classNames) {
                 if (!cls) continue;
                 try {
                     if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) {
@@ -185,11 +217,11 @@
             ? QOL.getCachedPanel("hudPanel")
             : (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
 
-        if (hasAnyClassInHierarchySafe(root, hiddenUiClasses)) return false;
-        if (hasAnyClassInHierarchySafe(hud, hiddenUiClasses)) return false;
-        if (hasAnyClassInHierarchySafe(root, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(hud, hiddenContextClasses)) return false;
-        if (hasAnyClassInHierarchySafe(topBar, hiddenContextClasses)) return false;
+        if (hasAnyClass(root, hiddenUiClasses)) return false;
+        if (hasAnyClass(hud, hiddenUiClasses)) return false;
+        if (hasAnyClass(root, hiddenContextClasses)) return false;
+        if (hasAnyClass(hud, hiddenContextClasses)) return false;
+        if (hasAnyClass(topBar, hiddenContextClasses)) return false;
 
         const gameplayHud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
             ? QOL.getCachedPanel("gameplayHud")
@@ -228,37 +260,37 @@
         return parent?.FindChildTraverse ? parent.FindChildTraverse(traverseId) : null;
     };
 
-    function ensurePanelClassCache(cacheObj, panel) {
+    const ensurePanelClassCache = (cacheObj, panel) => {
         if (!cacheObj) return;
         if (cacheObj.panel !== panel) {
             cacheObj.panel = panel;
             cacheObj.values = {};
         }
-    }
+    };
 
-    function setPanelClassCached(panel, cacheObj, className, enabled) {
+    const setPanelClassCached = (panel, cacheObj, className, enabled) => {
         if (!isAlive(panel) || !cacheObj || !className) return false;
         ensurePanelClassCache(cacheObj, panel);
-        const value = !!enabled;
+        const value = Boolean(enabled);
         if (cacheObj.values[className] === value) return false;
         panel.SetHasClass(className, value);
         cacheObj.values[className] = value;
         return true;
-    }
+    };
 
-    function setPanelClassIfChanged(panel, className, enabled) {
+    const setPanelClassIfChanged = (panel, className, enabled) => {
         if (!isAlive(panel) || !className || !panel.SetHasClass) return false;
-        const value = !!enabled;
+        const value = Boolean(enabled);
         if (panel.BHasClass && panel.BHasClass(className) === value) return false;
         panel.SetHasClass(className, value);
         return true;
-    }
+    };
 
     const COMBAT_STATUS_ALERT_PROBE_MS = 500;
     const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
     const COMBAT_STATUS_RECOVERY_MS = 3000;
 
-    function isCombatSignalActive(root, nowMs) {
+    const isCombatSignalActive = (root, nowMs) => {
         if (!root) return false;
         const state = getState();
         if (!state.combatStatus) state.combatStatus = {};
@@ -280,12 +312,12 @@
                 state.combatStatus.signalActive = true;
                 return true;
             }
-        } catch (e) {}
+        } catch (_) {}
         return false;
-    }
+    };
 
-    function syncCombatIndicatorHealthbarClasses(root, active, enabled) {
-        if (!root || !root.FindChildTraverse) return;
+    const syncCombatIndicatorHealthbarClasses = (root, active, enabled) => {
+        if (!root?.FindChildTraverse) return;
         const panels = [];
         const pushPanel = (panel) => {
             if (!isAlive(panel)) return;
@@ -301,9 +333,9 @@
             setPanelClassIfChanged(p, "combat_indicator_enabled", enabled);
             setPanelClassIfChanged(p, "combat_indicator_active", active);
         }
-    }
+    };
 
-    function hasClassInHierarchy(panel, className) {
+    const hasClassInHierarchy = (panel, className) => {
         if (!panel || !className) return false;
         if (typeof QOL_UTILS !== "undefined" && typeof QOL_UTILS.HasClassInHierarchy === "function") {
             return QOL_UTILS.HasClassInHierarchy(panel, className);
@@ -313,14 +345,14 @@
         while (cur && depth < 32) {
             try {
                 if (cur.BHasClass && cur.BHasClass(className)) return true;
-            } catch (e) {}
+            } catch (_) {}
             cur = cur.GetParent ? cur.GetParent() : null;
             depth++;
         }
         return false;
-    }
+    };
 
-    function updateReloadCircleExceptionState(root, cfg) {
+    const updateReloadCircleExceptionState = (root, cfg) => {
         const hideReloadCircleEnabled = Number(cfg?.ENABLE_HIDE_RELOAD_CIRCLE) === 1;
         const state = getState();
         if (!hideReloadCircleEnabled) {
@@ -351,9 +383,187 @@
 
         const exceptionActive = hasActiveReloadClass && attackDelayedActive && reloadingActive;
         setPanelClassCached(root, state.rootClassCache, "hide_reload_circle_exception_active", exceptionActive);
-    }
+    };
 
-    function applyRootClasses(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
+    const resetChatRuntime = (panel) => {
+        if (!isAlive(panel)) return;
+        try { panel.style.x = "0px"; } catch (_) {}
+        try { panel.style.y = "0px"; } catch (_) {}
+        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (_) {}
+        try { panel.style.uiScale = "100%"; } catch (_) {}
+        try { panel.style.visibility = "visible"; } catch (_) {}
+    };
+
+    const hasNonDefaultChatRuntimeConfig = (cfg) => {
+        if (!cfg) return false;
+        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
+        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
+        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
+        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
+        if (!Number.isFinite(enabled)) enabled = 1;
+        if (!Number.isFinite(scale)) scale = 100;
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        return enabled !== 1 || scale !== 100 || offsetX !== 0 || offsetY !== 0;
+    };
+
+    const updateChatRuntime = (root, cfg) => {
+        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("Chat") : null;
+        const chatPanel = isAlive(livePanel) ? livePanel : getCachedPanel("chatPanel");
+        if (chatPanel !== getCachedPanel("chatPanel")) {
+            setCachedPanel("chatPanel", chatPanel);
+        }
+
+        const st = getState();
+        const previousPanel = isAlive(st.chatStylePanel) ? st.chatStylePanel : null;
+        if (previousPanel && previousPanel !== chatPanel) {
+            resetChatRuntime(previousPanel);
+        }
+
+        if (!chatPanel) {
+            st.chatStyleSig = "";
+            st.chatStyleApplied = false;
+            st.chatStylePanel = null;
+            return;
+        }
+
+        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
+        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
+        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
+        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
+        if (!Number.isFinite(enabled)) enabled = 1;
+        if (!Number.isFinite(scale)) scale = 100;
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        if (scale < 50) scale = 50;
+        if (scale > 200) scale = 200;
+        if (offsetX < -1500) offsetX = -1500;
+        if (offsetX > 1500) offsetX = 1500;
+        if (offsetY < -250) offsetY = -250;
+        if (offsetY > 800) offsetY = 800;
+
+        const scaleText = `${scale}%`;
+        const styleSig = `${enabled}|${scaleText}|${offsetX}|${offsetY}`;
+        if (st.chatStyleApplied && st.chatStylePanel === chatPanel && st.chatStyleSig === styleSig) {
+            return;
+        }
+
+        chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
+        chatPanel.style.x = `${offsetX}px`;
+        chatPanel.style.y = `${-offsetY}px`;
+        chatPanel.style.preTransformScale2d = "1.00, 1.00";
+        chatPanel.style.uiScale = scaleText;
+
+        st.chatStyleSig = styleSig;
+        st.chatStyleApplied = true;
+        st.chatStylePanel = chatPanel;
+    };
+
+    const resetDamageReportOffsetRuntime = (panel) => {
+        if (!isAlive(panel)) return;
+        try { panel.style.x = "0px"; } catch (_) {}
+        try { panel.style.y = "0px"; } catch (_) {}
+    };
+
+    const needsDamageReportOffsetWork = (cfg) => {
+        if (!cfg) return false;
+        let offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
+        let offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
+        const st = getState();
+        return Boolean(st.damageReportOffsetApplied || st.damageReportOffsetSig || isAlive(st.damageReportOffsetPanel));
+    };
+
+    const updateDamageReportOffsets = (root, cfg) => {
+        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("CitadelHudDamageReport") : null;
+        const damageReportPanel = isAlive(livePanel) ? livePanel : getCachedPanel("damageReportPanel");
+        if (damageReportPanel !== getCachedPanel("damageReportPanel")) {
+            setCachedPanel("damageReportPanel", damageReportPanel);
+        }
+
+        const st = getState();
+        const previousPanel = isAlive(st.damageReportOffsetPanel) ? st.damageReportOffsetPanel : null;
+        if (previousPanel && previousPanel !== damageReportPanel) {
+            resetDamageReportOffsetRuntime(previousPanel);
+        }
+
+        if (!damageReportPanel) {
+            st.damageReportOffsetSig = "";
+            st.damageReportOffsetApplied = false;
+            st.damageReportOffsetPanel = null;
+            return;
+        }
+
+        let offsetX = (cfg?.DAMAGE_REPORT_X_OFFSET == null) ? 0 : Math.round(Number(cfg?.DAMAGE_REPORT_X_OFFSET));
+        let offsetY = (cfg?.DAMAGE_REPORT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg?.DAMAGE_REPORT_Y_OFFSET));
+        if (!Number.isFinite(offsetX)) offsetX = 0;
+        if (!Number.isFinite(offsetY)) offsetY = 0;
+        if (offsetX < -1500) offsetX = -1500;
+        if (offsetX > 1500) offsetX = 1500;
+        if (offsetY < -500) offsetY = -500;
+        if (offsetY > 500) offsetY = 500;
+
+        const offsetSig = `${offsetX}|${offsetY}`;
+        if (st.damageReportOffsetApplied && st.damageReportOffsetPanel === damageReportPanel && st.damageReportOffsetSig === offsetSig) {
+            return;
+        }
+
+        damageReportPanel.style.x = `${offsetX}px`;
+        damageReportPanel.style.y = `${-offsetY}px`;
+
+        st.damageReportOffsetSig = offsetSig;
+        st.damageReportOffsetApplied = true;
+        st.damageReportOffsetPanel = damageReportPanel;
+    };
+
+    const getPanelClassTokens = (panel) => {
+        if (!isAlive(panel)) return [];
+        try {
+            if (typeof panel.GetClassTokens === "function") {
+                const tokens = panel.GetClassTokens();
+                if (Array.isArray(tokens)) return tokens;
+            }
+        } catch (_) {}
+        return [];
+    };
+
+    const panelHasClassToken = (panel, token) => {
+        if (!isAlive(panel) || !token) return false;
+        try {
+            return typeof panel.BHasClass === "function" && panel.BHasClass(token);
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const getHighestRejuvChargeTokenOnPanel = (panel) => {
+        if (!isAlive(panel)) return 0;
+        let max = 0;
+        const scanNode = (node) => {
+            if (!isAlive(node)) return;
+            const tokens = getPanelClassTokens(node);
+            for (const t of tokens) {
+                const m = String(t).match(/^rejuv_charges_(\d+)$/i);
+                if (m) {
+                    const num = parseInt(m[1], 10);
+                    if (num > max) max = num;
+                }
+            }
+        };
+        scanNode(panel);
+        const kids = panel.Children ? panel.Children() : [];
+        for (let k = 0; k < kids.length; k++) {
+            scanNode(kids[k]);
+        }
+        return max;
+    };
+
+    /**
+     * Root CSS classes synchronizer for HUD.
+     */
+    const applyRootClasses = (root, cfg, nowMsLoop, hideoutConnected) => {
         if (!root) return false;
         const state = getState();
         if (!state.rootClassCache) state.rootClassCache = { panel: root, values: {} };
@@ -380,11 +590,11 @@
         if (!compassEnabled && !compassSpeedEnabled) {
             const compassRoot = getCachedPanel("compassRoot");
             if (compassRoot?.style) {
-                try { compassRoot.style.visibility = "collapse"; } catch (e) {}
+                try { compassRoot.style.visibility = "collapse"; } catch (_) {}
             }
             const speedRoot = getCachedPanel("speedRoot");
             if (speedRoot?.style) {
-                try { speedRoot.style.visibility = "collapse"; } catch (e) {}
+                try { speedRoot.style.visibility = "collapse"; } catch (_) {}
             }
         }
 
@@ -484,7 +694,7 @@
             try {
                 const gameplayHud = getCachedPanel("gameplayHud") || (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
                 if (gameplayHud?.SetAttributeString) gameplayHud.SetAttributeString("qol_legacy_cooldowns_enabled", legacyFlag);
-            } catch (e) {}
+            } catch (_) {}
         }
 
         const enhancedQuickbuyEnabled = Number(cfg?.ENABLE_ENHANCED_QUICKBUY) === 1 && Number(cfg?.DISABLE_QUICK_BUY) !== 1;
@@ -494,91 +704,95 @@
 
         if (shouldApplyStaticClasses) {
             const rc = state.rootClassCache;
-            setPanelClassCached(root, rc, "hide_ammo_custom", cfg?.ENABLE_AMMO_STATUS === 0);
-            setPanelClassCached(root, rc, "hide_magazine_active", cfg?.ENABLE_HIDE_MAGAZINE === 1);
-            setPanelClassCached(root, rc, "hide_current_ammo_active", cfg?.ENABLE_HIDE_AMMO_ALL === 1);
-            setPanelClassCached(root, rc, "hide_reload_icon_active", cfg?.ENABLE_HIDE_RELOAD_ICON === 1);
-            setPanelClassCached(root, rc, "hide_reload_circle_active", cfg?.ENABLE_HIDE_RELOAD_CIRCLE === 1);
+            const notDevTestMode = cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE !== 1;
+
+            const staticRules = [
+                ["hide_ammo_custom", cfg?.ENABLE_AMMO_STATUS === 0],
+                ["hide_magazine_active", cfg?.ENABLE_HIDE_MAGAZINE === 1],
+                ["hide_current_ammo_active", cfg?.ENABLE_HIDE_AMMO_ALL === 1],
+                ["hide_reload_icon_active", cfg?.ENABLE_HIDE_RELOAD_ICON === 1],
+                ["hide_reload_circle_active", cfg?.ENABLE_HIDE_RELOAD_CIRCLE === 1],
+                ["improved_hint_active", Number(cfg?.ENABLE_IMPROVED_HINT) === 1],
+                ["zip_boost_active", false],
+                ["zip_boost_overlay_active", cfg?.ENABLE_ZIP_BOOST === 1 && !hideoutConnected],
+                ["unsecured_souls_overlay_active", Number(cfg?.ENABLE_UNSECURED_SOUL_TIMER) === 1 && !hideoutConnected],
+                ["stat_bonuses_overlay_active", cfg?.ENABLE_STAT_BONUSES === 1 && !hideoutConnected],
+                ["center_esc_active", cfg?.ENABLE_CENTER_ESC === 1],
+                ["center_friends_list_active", Number(cfg?.ENABLE_CENTER_FRIENDS_LIST) === 1],
+                ["legacy_cooldowns_active", legacyCooldownsEnabled],
+                ["minimal_pause_active", Number(cfg?.ENABLE_MINIMALISTIC_PAUSE) === 1],
+                ["force_testing_tools_active", forceShowTestingTools],
+                ["hide_testing_tools_active", hideTestingTools],
+                ["specials_active", cfg?.ENABLE_SPECIALS === 1],
+                ["hero_scene_panel_visible", cfg?.ENABLE_HERO_SCENE_PANEL === 1],
+                ["hide_failed_hint_active", notDevTestMode && cfg?.ENABLE_HIDE_FAILED_HINT === 1],
+                ["hide_ability_suggestion_active", cfg?.ENABLE_HIDE_ABILITY_SUGGESTION === 1],
+                ["hide_cosmetic_ability_active", notDevTestMode && cfg?.ENABLE_HIDE_COSMETIC_ABILITY === 1],
+                ["simplify_ability_icons_active", notDevTestMode && cfg?.ENABLE_SIMPLIFY_ABILITY_ICONS === 1],
+                ["hide_behavior_summary_active", cfg?.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1],
+                ["buff_hud_disabled", cfg?.ENABLE_BUFF_HUD === 0],
+                ["rejuv_hud_disabled", cfg?.ENABLE_REJUV_HUD === 0],
+                ["minimap_buff_timer_disabled", Number(cfg?.ENABLE_MINIMAP_BUFF_TIMER) !== 1],
+                ["minimap_rejuv_timer_disabled", Number(cfg?.ENABLE_MINIMAP_REJUV_TIMER) !== 1],
+                ["bhop_gamemode_active", false],
+                ["minimalist_healthbar_active", minimalistHealthbarEnabled],
+                ["fg_healthbar_active", fgHealthbarEnabled],
+                ["klutz_healthbar_active", klutzHealthbarEnabled],
+                ["budhud_healthbar_active", budhudHealthbarEnabled],
+                ["minecraft_healthbar_active", minecraftHealthbarEnabled],
+                ["minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg?.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1],
+                ["enemy_v2_enhanced_active", enemyV2EnhancedEnabled],
+                ["enemy_v2_enhanced_off", !enemyV2EnhancedEnabled],
+                ["colored_healthbar_active", colorWarningEnabled && healthbarType === 0],
+                ["clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled],
+                ["clean_stacks_inactive", false],
+                ["compass_active", compassEnabled],
+                ["simplify_compass_active", cfg?.ENABLE_SIMPLIFY_COMPASS === 1],
+                ["ult_cooldowns_active", cfg?.ENABLE_ULT_COOLDOWNS === 1],
+                ["keyboard_overlay_active", cfg?.ENABLE_KEYBOARD_OVERLAY === 1],
+                ["keyboard_overlay_full_active", cfg?.ENABLE_FULL_KEYBOARD_LAYOUT === 1],
+                ["minimalist_minimap_active", cfg?.MINIMAL_MINIMAP === 1],
+                ["qol_minimap_elevation_markers_active", Number(cfg?.ENABLE_MINIMAP_ELEVATION_MARKERS) === 1],
+                ["disable_damage_report_active", notDevTestMode && cfg?.DISABLE_DAMAGE_REPORT === 1],
+                ["disable_quick_buy_active", cfg?.DISABLE_QUICK_BUY === 1],
+                ["hud_shift_active", cfg?.ENABLE_HUD_SHIFT === 1],
+                ["support_16_10_active", cfg?.SUPPORT_16_10 === 1],
+                ["support_4_3_active", cfg?.SUPPORT_4_3 === 1],
+                ["unspent_souls_disabled", cfg?.ENABLE_UNSPENT_SOULS === 0],
+                ["better_unsecured_active", cfg?.ENABLE_BETTER_UNSECURED === 1],
+                ["min_souls_disabled", cfg?.ENABLE_MIN_SOULS === 0],
+                ["obj_dmg_disabled", cfg?.ENABLE_OBJ_DMG === 0],
+                ["obj_map_disabled", cfg?.ENABLE_OBJ_MAP === 0],
+                ["urn_diff_disabled", cfg?.ENABLE_URN_DIFF === 0],
+                ["rift_timer_disabled", cfg?.ENABLE_URN_TIMER === 0],
+                ["missing_hero_disabled", cfg?.ENABLE_MISSING_HERO === 0],
+                ["nicknames_active", Number(cfg?.ENABLE_NICKNAMES) === 1],
+                ["disable_player_name_blur_active", Number(cfg?.DISABLE_PLAYER_NAME_BLUR) === 1],
+                ["cumulative_dmg_disabled", cfg?.ENABLE_CUMULATIVE_DMG === 0],
+                ["clean_damage_indicators_active", Number(cfg?.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1],
+                ["damage_fountain_active", cfg?.ENABLE_DAMAGE_FOUNTAIN === 1],
+                ["hide_small_numbers_active", cfg?.ENABLE_HIDE_SMALL_NUMBERS === 1],
+                ["hide_trooper_damage_active", cfg?.ENABLE_HIDE_TROOPER_DAMAGE === 1],
+                ["shop_stats_disabled", cfg?.ENABLE_SHOP_STATS === 0],
+                ["simplify_shop_active", cfg?.ENABLE_SIMPLIFY_SHOP === 1],
+                ["simplify_items_active", cfg?.ENABLE_SIMPLIFY_ITEMS === 1],
+                ["enhanced_quickbuy_active", enhancedQuickbuyEnabled],
+                ["shop_click_to_notify_active", quickbuyClickToNotifyEnabled],
+                ["shop_recent_purchases_active", shopRecentPurchasesEnabled],
+                ["shop_recent_purchases_redux", shopRecentPurchasesRedux],
+                ["shop_item_notifications_active", Number(cfg?.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1]
+            ];
+
             const redDiamondChanged = setPanelClassCached(root, rc, "red_diamond_active", redDiamondEnabled);
             if (redDiamondChanged) {
                 state.targetShapeStyleSig = "";
                 state.nextTargetShapeRefreshMs = 0;
             }
-            setPanelClassCached(root, rc, "improved_hint_active", Number(cfg?.ENABLE_IMPROVED_HINT) === 1);
-            setPanelClassCached(root, rc, "zip_boost_active", false);
-            setPanelClassCached(root, rc, "zip_boost_overlay_active", cfg?.ENABLE_ZIP_BOOST === 1 && !hideoutConnected);
-            setPanelClassCached(root, rc, "unsecured_souls_overlay_active", Number(cfg?.ENABLE_UNSECURED_SOUL_TIMER) === 1 && !hideoutConnected);
-            setPanelClassCached(root, rc, "stat_bonuses_overlay_active", cfg?.ENABLE_STAT_BONUSES === 1 && !hideoutConnected);
-            setPanelClassCached(root, rc, "center_esc_active", cfg?.ENABLE_CENTER_ESC === 1);
-            setPanelClassCached(root, rc, "center_friends_list_active", Number(cfg?.ENABLE_CENTER_FRIENDS_LIST) === 1);
-            setPanelClassCached(root, rc, "legacy_cooldowns_active", legacyCooldownsEnabled);
-            setPanelClassCached(root, rc, "minimal_pause_active", Number(cfg?.ENABLE_MINIMALISTIC_PAUSE) === 1);
-            setPanelClassCached(root, rc, "force_testing_tools_active", forceShowTestingTools);
-            setPanelClassCached(root, rc, "hide_testing_tools_active", hideTestingTools);
-            setPanelClassCached(root, rc, "specials_active", cfg?.ENABLE_SPECIALS === 1);
-            setPanelClassCached(root, rc, "hero_scene_panel_visible", cfg?.ENABLE_HERO_SCENE_PANEL === 1);
-            if (!(cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
-                setPanelClassCached(root, rc, "hide_failed_hint_active", cfg?.ENABLE_HIDE_FAILED_HINT === 1);
+
+            for (const [cls, active] of staticRules) {
+                setPanelClassCached(root, rc, cls, active);
             }
-            setPanelClassCached(root, rc, "hide_ability_suggestion_active", cfg?.ENABLE_HIDE_ABILITY_SUGGESTION === 1);
-            if (!(cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
-                setPanelClassCached(root, rc, "hide_cosmetic_ability_active", cfg?.ENABLE_HIDE_COSMETIC_ABILITY === 1);
-                setPanelClassCached(root, rc, "simplify_ability_icons_active", cfg?.ENABLE_SIMPLIFY_ABILITY_ICONS === 1);
-            }
-            setPanelClassCached(root, rc, "hide_behavior_summary_active", cfg?.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1);
-            setPanelClassCached(root, rc, "buff_hud_disabled", cfg?.ENABLE_BUFF_HUD === 0);
-            setPanelClassCached(root, rc, "rejuv_hud_disabled", cfg?.ENABLE_REJUV_HUD === 0);
-            setPanelClassCached(root, rc, "minimap_buff_timer_disabled", Number(cfg?.ENABLE_MINIMAP_BUFF_TIMER) !== 1);
-            setPanelClassCached(root, rc, "minimap_rejuv_timer_disabled", Number(cfg?.ENABLE_MINIMAP_REJUV_TIMER) !== 1);
-            setPanelClassCached(root, rc, "bhop_gamemode_active", false);
-            setPanelClassCached(root, rc, "minimalist_healthbar_active", minimalistHealthbarEnabled);
-            setPanelClassCached(root, rc, "fg_healthbar_active", fgHealthbarEnabled);
-            setPanelClassCached(root, rc, "klutz_healthbar_active", klutzHealthbarEnabled);
-            setPanelClassCached(root, rc, "budhud_healthbar_active", budhudHealthbarEnabled);
-            setPanelClassCached(root, rc, "minecraft_healthbar_active", minecraftHealthbarEnabled);
-            setPanelClassCached(root, rc, "minecraft_health_numbers_disabled", minecraftHealthbarEnabled && Number(cfg?.ENABLE_MINECRAFT_HEALTH_NUMBERS) !== 1);
-            setPanelClassCached(root, rc, "enemy_v2_enhanced_active", enemyV2EnhancedEnabled);
-            setPanelClassCached(root, rc, "enemy_v2_enhanced_off", !enemyV2EnhancedEnabled);
-            setPanelClassCached(root, rc, "colored_healthbar_active", colorWarningEnabled && healthbarType === 0);
-            setPanelClassCached(root, rc, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
-            setPanelClassCached(root, rc, "clean_stacks_inactive", false);
-            setPanelClassCached(root, rc, "compass_active", compassEnabled);
-            setPanelClassCached(root, rc, "simplify_compass_active", cfg?.ENABLE_SIMPLIFY_COMPASS === 1);
-            setPanelClassCached(root, rc, "ult_cooldowns_active", cfg?.ENABLE_ULT_COOLDOWNS === 1);
-            setPanelClassCached(root, rc, "keyboard_overlay_active", cfg?.ENABLE_KEYBOARD_OVERLAY === 1);
-            setPanelClassCached(root, rc, "keyboard_overlay_full_active", cfg?.ENABLE_FULL_KEYBOARD_LAYOUT === 1);
-            setPanelClassCached(root, rc, "minimalist_minimap_active", cfg?.MINIMAL_MINIMAP === 1);
-            setPanelClassCached(root, rc, "qol_minimap_elevation_markers_active", Number(cfg?.ENABLE_MINIMAP_ELEVATION_MARKERS) === 1);
-            if (!(cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
-                setPanelClassCached(root, rc, "disable_damage_report_active", cfg?.DISABLE_DAMAGE_REPORT === 1);
-            }
-            setPanelClassCached(root, rc, "disable_quick_buy_active", cfg?.DISABLE_QUICK_BUY === 1);
-            setPanelClassCached(root, rc, "hud_shift_active", cfg?.ENABLE_HUD_SHIFT === 1);
-            setPanelClassCached(root, rc, "support_16_10_active", cfg?.SUPPORT_16_10 === 1);
-            setPanelClassCached(root, rc, "support_4_3_active", cfg?.SUPPORT_4_3 === 1);
-            setPanelClassCached(root, rc, "unspent_souls_disabled", cfg?.ENABLE_UNSPENT_SOULS === 0);
-            setPanelClassCached(root, rc, "better_unsecured_active", cfg?.ENABLE_BETTER_UNSECURED === 1);
-            setPanelClassCached(root, rc, "min_souls_disabled", cfg?.ENABLE_MIN_SOULS === 0);
-            setPanelClassCached(root, rc, "obj_dmg_disabled", cfg?.ENABLE_OBJ_DMG === 0);
-            setPanelClassCached(root, rc, "obj_map_disabled", cfg?.ENABLE_OBJ_MAP === 0);
-            setPanelClassCached(root, rc, "urn_diff_disabled", cfg?.ENABLE_URN_DIFF === 0);
-            setPanelClassCached(root, rc, "rift_timer_disabled", cfg?.ENABLE_URN_TIMER === 0);
-            setPanelClassCached(root, rc, "missing_hero_disabled", cfg?.ENABLE_MISSING_HERO === 0);
-            setPanelClassCached(root, rc, "nicknames_active", Number(cfg?.ENABLE_NICKNAMES) === 1);
-            setPanelClassCached(root, rc, "disable_player_name_blur_active", Number(cfg?.DISABLE_PLAYER_NAME_BLUR) === 1);
-            setPanelClassCached(root, rc, "cumulative_dmg_disabled", cfg?.ENABLE_CUMULATIVE_DMG === 0);
-            setPanelClassCached(root, rc, "clean_damage_indicators_active", Number(cfg?.ENABLE_CLEAN_DAMAGE_INDICATORS) === 1);
-            setPanelClassCached(root, rc, "damage_fountain_active", cfg?.ENABLE_DAMAGE_FOUNTAIN === 1);
-            setPanelClassCached(root, rc, "hide_small_numbers_active", cfg?.ENABLE_HIDE_SMALL_NUMBERS === 1);
-            setPanelClassCached(root, rc, "hide_trooper_damage_active", cfg?.ENABLE_HIDE_TROOPER_DAMAGE === 1);
-            setPanelClassCached(root, rc, "shop_stats_disabled", cfg?.ENABLE_SHOP_STATS === 0);
-            setPanelClassCached(root, rc, "simplify_shop_active", cfg?.ENABLE_SIMPLIFY_SHOP === 1);
-            setPanelClassCached(root, rc, "simplify_items_active", cfg?.ENABLE_SIMPLIFY_ITEMS === 1);
-            setPanelClassCached(root, rc, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
-            setPanelClassCached(root, rc, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
-            setPanelClassCached(root, rc, "shop_recent_purchases_active", shopRecentPurchasesEnabled);
-            setPanelClassCached(root, rc, "shop_recent_purchases_redux", shopRecentPurchasesRedux);
-            setPanelClassCached(root, rc, "shop_item_notifications_active", Number(cfg?.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1);
+
             state.coreRootStaticSig = staticSig;
         }
 
@@ -617,7 +831,7 @@
             try {
                 quickbuyPanel.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
                 root.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
-            } catch (e) {}
+            } catch (_) {}
         } else {
             state.quickbuyClassCache = null;
         }
@@ -668,7 +882,7 @@
                 passiveHud = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
                 setCachedPanel("passiveHud", passiveHud);
             }
-            if (!(cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE === 1)) {
+            if (cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE !== 1) {
                 const basicModeActive = passiveCooldownMode === "basic";
                 const advancedModeActive = passiveCooldownMode === "advanced";
                 setPanelClassCached(root, state.rootClassCache, "passive_cooldown_basic_active", basicModeActive);
@@ -684,7 +898,6 @@
             }
         }
 
-        // Call optional subsystem handlers if present
         if (hasNonDefaultChatRuntimeConfig(cfg) || state.chatStyleApplied) {
             updateChatRuntime(root, cfg);
         }
@@ -696,191 +909,6 @@
         }
 
         return redDiamondEnabled;
-    }
-
-    const resetDamageReportOffsetRuntime = (panel) => {
-        if (!isAlive(panel)) return;
-        try { panel.style.x = "0px"; } catch (_) {}
-        try { panel.style.y = "0px"; } catch (_) {}
-    };
-
-    const needsDamageReportOffsetWork = (cfg) => {
-        if (!cfg) return false;
-        let offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
-        let offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
-        const st = getState();
-        return Boolean(st.damageReportOffsetApplied || st.damageReportOffsetSig || isAlive(st.damageReportOffsetPanel));
-    };
-
-    const hasNonDefaultChatRuntimeConfig = (cfg) => {
-        if (!cfg) return false;
-        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
-        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
-        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
-        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!Number.isFinite(enabled)) enabled = 1;
-        if (!Number.isFinite(scale)) scale = 100;
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        return enabled !== 1 || scale !== 100 || offsetX !== 0 || offsetY !== 0;
-    };
-
-    const resetChatRuntime = (panel) => {
-        if (!isAlive(panel)) return;
-        try { panel.style.x = "0px"; } catch (_) {}
-        try { panel.style.y = "0px"; } catch (_) {}
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (_) {}
-        try { panel.style.uiScale = "100%"; } catch (_) {}
-        try { panel.style.visibility = "visible"; } catch (_) {}
-    };
-
-    const updateChatRuntime = (root, cfg) => {
-        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("Chat") : null;
-        const chatPanel = isAlive(livePanel) ? livePanel : getCachedPanel("chatPanel");
-        if (chatPanel !== getCachedPanel("chatPanel")) {
-            setCachedPanel("chatPanel", chatPanel);
-        }
-
-        const st = getState();
-        const previousPanel = isAlive(st.chatStylePanel) ? st.chatStylePanel : null;
-        if (previousPanel && previousPanel !== chatPanel) {
-            resetChatRuntime(previousPanel);
-        }
-
-        if (!chatPanel) {
-            st.chatStyleSig = "";
-            st.chatStyleApplied = false;
-            st.chatStylePanel = null;
-            return;
-        }
-
-        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
-        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
-        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
-        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!Number.isFinite(enabled)) enabled = 1;
-        if (!Number.isFinite(scale)) scale = 100;
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        if (scale < 50) scale = 50;
-        if (scale > 200) scale = 200;
-        if (offsetX < -1500) offsetX = -1500;
-        if (offsetX > 1500) offsetX = 1500;
-        if (offsetY < -250) offsetY = -250;
-        if (offsetY > 800) offsetY = 800;
-
-        const scaleText = `${scale}%`;
-        const styleSig = `${enabled}|${scaleText}|${offsetX}|${offsetY}`;
-        if (st.chatStyleApplied && st.chatStylePanel === chatPanel && st.chatStyleSig === styleSig) {
-            return;
-        }
-
-        chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
-        chatPanel.style.x = `${offsetX}px`;
-        chatPanel.style.y = `${-offsetY}px`;
-        chatPanel.style.preTransformScale2d = "1.00, 1.00";
-        chatPanel.style.uiScale = scaleText;
-
-        st.chatStyleSig = styleSig;
-        st.chatStyleApplied = true;
-        st.chatStylePanel = chatPanel;
-    };
-
-    const updateDamageReportOffsets = (root, cfg) => {
-        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("CitadelHudDamageReport") : null;
-        const damageReportPanel = isAlive(livePanel) ? livePanel : getCachedPanel("damageReportPanel");
-        if (damageReportPanel !== getCachedPanel("damageReportPanel")) {
-            setCachedPanel("damageReportPanel", damageReportPanel);
-        }
-
-        const st = getState();
-        const previousPanel = isAlive(st.damageReportOffsetPanel) ? st.damageReportOffsetPanel : null;
-        if (previousPanel && previousPanel !== damageReportPanel) {
-            resetDamageReportOffsetRuntime(previousPanel);
-        }
-
-        if (!damageReportPanel) {
-            st.damageReportOffsetSig = "";
-            st.damageReportOffsetApplied = false;
-            st.damageReportOffsetPanel = null;
-            return;
-        }
-
-        let offsetX = (cfg.DAMAGE_REPORT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.DAMAGE_REPORT_X_OFFSET));
-        let offsetY = (cfg.DAMAGE_REPORT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.DAMAGE_REPORT_Y_OFFSET));
-        const styleSig = `${offsetX}|${offsetY}`;
-
-        if (st.damageReportOffsetApplied && st.damageReportOffsetPanel === damageReportPanel && st.damageReportOffsetSig === styleSig) {
-            return;
-        }
-
-        damageReportPanel.style.x = `${offsetX}px`;
-        damageReportPanel.style.y = `${-offsetY}px`;
-
-        if (offsetX === 0 && offsetY === 0) {
-            st.damageReportOffsetSig = "";
-            st.damageReportOffsetApplied = false;
-            st.damageReportOffsetPanel = null;
-        } else {
-            st.damageReportOffsetSig = styleSig;
-            st.damageReportOffsetApplied = true;
-            st.damageReportOffsetPanel = damageReportPanel;
-        }
-    };
-
-    const getPanelClassTokens = (panel) => {
-        if (!panel?.GetAttributeString) return [];
-        const classAttr = panel.GetAttributeString("class", "");
-        if (!classAttr) return [];
-        return classAttr.split(/\s+/).filter(Boolean);
-    };
-
-    const panelHasClassToken = (panel, token) => {
-        if (!panel || !token) return false;
-        if (panel.BHasClass && panel.BHasClass(token)) return true;
-        const cls = getPanelClassTokens(panel);
-        if (cls.includes(token)) return true;
-        const kids = (panel.Children && panel.Children()) || [];
-        for (let k = 0; k < kids.length; k++) {
-            const child = kids[k];
-            if (!child) continue;
-            if (child.BHasClass && child.BHasClass(token)) return true;
-            if (getPanelClassTokens(child).includes(token)) return true;
-        }
-        return false;
-    };
-
-    const getHighestRejuvChargeTokenOnPanel = (panel) => {
-        if (!panel) return 0;
-        let max = 0;
-
-        const scanNode = (node) => {
-            if (!node) return;
-            const tokens = getPanelClassTokens(node);
-            for (let i = 0; i < tokens.length; i++) {
-                const token = tokens[i];
-                if (!token?.startsWith("RejuvCount_")) continue;
-                const value = parseInt(token.slice("RejuvCount_".length), 10);
-                if (Number.isFinite(value) && value > max) max = value;
-            }
-            if (node.BHasClass) {
-                for (let count = 1; count <= 4; count++) {
-                    if (node.BHasClass(`RejuvCount_${count}`) && count > max) {
-                        max = count;
-                    }
-                }
-            }
-        };
-
-        scanNode(panel);
-        const kids = (panel.Children && panel.Children()) || [];
-        for (let k = 0; k < kids.length; k++) {
-            scanNode(kids[k]);
-        }
-        return max;
     };
 
     // Attach to namespace
@@ -889,6 +917,7 @@
         isInHideout,
         isStreetBrawl,
         isHudClassActive,
+        ensureTopBarGated,
         ensurePanelClassCache,
         setPanelClassCached,
         setPanelClassIfChanged,

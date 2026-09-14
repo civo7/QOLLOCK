@@ -13,7 +13,7 @@
 // Boundary validation: Checks QOL.core and QOL.ui exist.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
     if (!QOL || !QOL.core || !QOL.ui) {
@@ -23,68 +23,60 @@
     }
 
     // -- Panel safety --
-    function isPanelAlive(panel) {
+    const isPanelAlive = (panel) => {
         return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    }
+    };
 
-    function safeCreatePanel(type, parent, id) {
-        if (!isPanelAlive(parent)) return null;
-        if (typeof type !== "string" || !type) return null;
+    const safeCreatePanel = (type, parent, id, properties) => {
+        if (!isPanelAlive(parent) || typeof type !== "string" || !type) return null;
         try {
+            if (properties) {
+                return $.CreatePanel(type, parent, id || "", properties);
+            }
             return $.CreatePanel(type, parent, id || "");
         } catch (e) {
-            $.Msg("[QOLLock][WARN][PanelHelpers] CreatePanel('" + type +
-                  "') threw: " + (e && e.message ? e.message : String(e)));
+            $.Msg(`[QOLLock][WARN][PanelHelpers] CreatePanel('${type}') threw: ${e && e.message ? e.message : String(e)}`);
             return null;
         }
-    }
+    };
 
-    function safeDeletePanel(panel) {
+    const safeDeletePanel = (panel) => {
         if (!isPanelAlive(panel)) return;
-        try { panel.DeleteAsync(0); }
-        catch (e) { /* panel may already be destroyed */ }
-    }
+        try {
+            panel.DeleteAsync(0);
+        } catch (_) {
+            /* panel may already be destroyed */
+        }
+    };
 
     // -- Hud resolution --
-    //
-    // Cached, because this is called from poll loops and is not cheap when it
-    // fails. The first attempt — ctx.FindChildTraverse("Hud") — MISSES whenever the
-    // context panel is itself the Hud panel, which is the normal case in the HUD
-    // context: FindChildTraverse never returns the panel it was called on. A miss
-    // walks the whole subtree before returning null, so the uncached version cost
-    // two full-tree walks (one from the context panel, one from the absolute root)
-    // every time a caller asked.
-    //
-    // The Hud panel lives for the whole context, so one resolution is enough;
-    // isPanelAlive re-validates on every call and a torn-down panel is re-resolved
-    // on the next one.
-    var _cachedHud = null;
+    let _cachedHud = null;
 
-    function findHud(preferredRoot) {
+    const findHud = (preferredRoot) => {
         if (!preferredRoot && isPanelAlive(_cachedHud)) return _cachedHud;
 
-        var MAX_DEPTH = 64;
+        const MAX_DEPTH = 64;
         try {
-            var ctx = preferredRoot || $.GetContextPanel();
+            const ctx = preferredRoot || $.GetContextPanel();
             if (!isPanelAlive(ctx)) return null;
-            if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud")) {
+            if (ctx.id === "Hud" || ctx.paneltype === "CitadelHud") {
                 if (!preferredRoot) _cachedHud = ctx;
                 return ctx;
             }
-            var hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
+            let hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
             if (isPanelAlive(hud)) {
                 if (!preferredRoot) _cachedHud = hud;
                 return hud;
             }
-            var absRoot = ctx;
-            var depth = 0;
+            let absRoot = ctx;
+            let depth = 0;
             while (depth < MAX_DEPTH) {
-                var parent = absRoot.GetParent ? absRoot.GetParent() : null;
+                const parent = absRoot.GetParent ? absRoot.GetParent() : null;
                 if (!parent || !isPanelAlive(parent)) break;
                 absRoot = parent;
                 depth++;
             }
-            if (absRoot && (absRoot.id === "Hud" || (absRoot.paneltype && absRoot.paneltype === "CitadelHud"))) {
+            if (absRoot && (absRoot.id === "Hud" || absRoot.paneltype === "CitadelHud")) {
                 if (!preferredRoot) _cachedHud = absRoot;
                 return absRoot;
             }
@@ -93,9 +85,7 @@
                 if (!preferredRoot) _cachedHud = hud;
                 return hud;
             }
-            // The context panel IS the Hud in the HUD context, where neither search
-            // can return it. Recognise that rather than reporting no Hud at all.
-            if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud") || (ctx.BHasClass && ctx.BHasClass("WindowRoot"))) {
+            if (ctx.id === "Hud" || ctx.paneltype === "CitadelHud" || (ctx.BHasClass && ctx.BHasClass("WindowRoot"))) {
                 if (!preferredRoot) _cachedHud = ctx;
                 return ctx;
             }
@@ -104,133 +94,164 @@
                 return _cachedHud;
             }
             return absRoot || ctx;
-        } catch (e) {
+        } catch (_) {
             return null;
         }
-    }
+    };
 
     // -- Class helpers --
-    function setClass(panel, className, active) {
-        if (!isPanelAlive(panel)) return false;
-        if (typeof className !== "string" || !className) return false;
+    const setClass = (panel, className, active) => {
+        if (!isPanelAlive(panel) || typeof className !== "string" || !className) return false;
         try {
-            var has = panel.BHasClass(className);
-            if (active && !has) { panel.SetHasClass(className, true); return true; }
-            if (!active && has) { panel.SetHasClass(className, false); return true; }
+            const has = panel.BHasClass(className);
+            if (active && !has) {
+                panel.SetHasClass(className, true);
+                return true;
+            }
+            if (!active && has) {
+                panel.SetHasClass(className, false);
+                return true;
+            }
         } catch (e) {
-            $.Msg("[QOLLock][WARN][PanelHelpers] setClass('" + className +
-                  "') threw: " + (e && e.message ? e.message : String(e)));
+            $.Msg(`[QOLLock][WARN][PanelHelpers] setClass('${className}') threw: ${e && e.message ? e.message : String(e)}`);
         }
         return false;
-    }
+    };
 
-    function setVisible(panel, visible) {
+    const setVisible = (panel, visible) => {
         if (!isPanelAlive(panel)) return;
-        try { panel.visible = !!visible; }
-        catch (e) { /* panel may be destroyed */ }
-    }
+        try {
+            panel.visible = Boolean(visible);
+        } catch (_) {}
+    };
 
     // -- Style helpers --
-    function syncStyles(panel, styles, lastSig) {
-        if (!isPanelAlive(panel)) return { changed: false, sig: lastSig || "" };
-        if (typeof styles !== "object" || !styles) return { changed: false, sig: lastSig || "" };
-        var parts = [];
-        for (var prop in styles) {
-            if (styles.hasOwnProperty(prop)) { parts.push(prop + "=" + styles[prop]); }
+    const syncStyles = (panel, styles, lastSig) => {
+        if (!isPanelAlive(panel) || typeof styles !== "object" || !styles) {
+            return { changed: false, sig: lastSig || "" };
         }
-        var sig = parts.join(";");
-        if (sig === lastSig) return { changed: false, sig: sig };
-        for (var prop2 in styles) {
-            if (styles.hasOwnProperty(prop2)) {
-                try { panel.style[prop2] = styles[prop2]; }
-                catch (e) { /* property may be read-only */ }
-            }
+        const parts = [];
+        for (const prop of Object.keys(styles)) {
+            parts.push(`${prop}=${styles[prop]}`);
         }
-        return { changed: true, sig: sig };
-    }
+        const sig = parts.join(";");
+        if (sig === lastSig) return { changed: false, sig };
+        for (const prop of Object.keys(styles)) {
+            try {
+                panel.style[prop] = styles[prop];
+            } catch (_) {}
+        }
+        return { changed: true, sig };
+    };
 
-    function clearStyleProperty(panel, prop) {
-        if (!isPanelAlive(panel)) return false;
-        if (typeof prop !== "string") return false;
-        try { panel.ClearPropertyFromCode(prop); return true; }
-        catch (e) { return false; }
-    }
+    const clearStyleProperty = (panel, prop) => {
+        if (!isPanelAlive(panel) || typeof prop !== "string") return false;
+        try {
+            panel.ClearPropertyFromCode(prop);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    };
 
-    function findRoot() {
-        var ctx = $.GetContextPanel();
+    const findRoot = () => {
+        const ctx = $.GetContextPanel();
         if (!isPanelAlive(ctx)) return null;
-        var curr = ctx;
+        let curr = ctx;
         while (curr.GetParent && isPanelAlive(curr.GetParent())) {
             curr = curr.GetParent();
         }
         return curr;
-    }
+    };
 
-    function activate(panel) {
+    const activate = (panel) => {
         if (!isPanelAlive(panel)) return false;
-        try { $.DispatchEvent("Activated", panel, "mouse"); return true; } catch (e1) {}
-        try { $.DispatchEvent("Activated", panel); return true; } catch (e2) {}
+        try {
+            $.DispatchEvent("Activated", panel, "mouse");
+            return true;
+        } catch (_) {}
+        try {
+            $.DispatchEvent("Activated", panel);
+            return true;
+        } catch (_) {}
         return false;
-    }
+    };
 
-    function isVisible(panel) {
+    const isVisible = (panel) => {
         if (!isPanelAlive(panel)) return false;
         try {
             if (panel.visible === false || panel.visible === "false") return false;
-            if (panel.BHasClass && (panel.BHasClass("hidden") || panel.BHasClass("Hidden") || panel.BHasClass("Collapsed"))) return false;
+            if (panel.BHasClass && (panel.BHasClass("hidden") || panel.BHasClass("Hidden") || panel.BHasClass("Collapsed"))) {
+                return false;
+            }
             return true;
-        } catch (e) { return false; }
-    }
+        } catch (_) {
+            return false;
+        }
+    };
 
-    function readText(panel) {
+    const readText = (panel) => {
         if (!isPanelAlive(panel)) return "";
         try {
             if (typeof panel.text === "string") return panel.text;
             if (panel.GetAttributeString) {
-                var attr = panel.GetAttributeString("text", "");
+                const attr = panel.GetAttributeString("text", "");
                 if (attr) return attr;
             }
-        } catch (e) {}
+        } catch (_) {}
         return "";
-    }
+    };
 
-    function readTextDeep(panel, maxDepth) {
+    const readTextDeep = (panel, maxDepth = 4) => {
         if (!isPanelAlive(panel)) return "";
-        var depth = typeof maxDepth === "number" ? maxDepth : 4;
-        var direct = readText(panel);
+        const direct = readText(panel);
         if (direct) return direct;
-        if (depth <= 0 || !panel.Children) return "";
-        var kids = panel.Children();
-        for (var i = 0; i < kids.length; i++) {
-            var t = readTextDeep(kids[i], depth - 1);
+        if (maxDepth <= 0 || !panel.Children) return "";
+        const kids = panel.Children();
+        for (let i = 0; i < kids.length; i++) {
+            const t = readTextDeep(kids[i], maxDepth - 1);
             if (t) return t;
         }
         return "";
-    }
+    };
 
-    function readId(panel) {
+    const readId = (panel) => {
         if (!panel) return "";
-        try { return panel.id ? String(panel.id) : ""; } catch (e) { return ""; }
-    }
+        try {
+            return panel.id ? String(panel.id) : "";
+        } catch (_) {
+            return "";
+        }
+    };
 
-    function hasClassToken(panel, token) {
+    const hasClassToken = (panel, token) => {
         if (!isPanelAlive(panel) || !token) return false;
         try {
             return typeof panel.BHasClass === "function" && panel.BHasClass(token);
-        } catch (e) { return false; }
-    }
+        } catch (_) {
+            return false;
+        }
+    };
 
-    function findChild(parent, id) {
+    const findChild = (parent, id) => {
         if (!isPanelAlive(parent) || !id) return null;
-        try { return parent.FindChild ? parent.FindChild(id) : null; } catch (e) { return null; }
-    }
+        try {
+            return parent.FindChild ? parent.FindChild(id) : null;
+        } catch (_) {
+            return null;
+        }
+    };
 
-    function findTraverse(root, id) {
+    const findTraverse = (root, id) => {
         if (!isPanelAlive(root) || !id) return null;
-        try { return root.FindChildTraverse ? root.FindChildTraverse(id) : null; } catch (e) { return null; }
-    }
+        try {
+            return root.FindChildTraverse ? root.FindChildTraverse(id) : null;
+        } catch (_) {
+            return null;
+        }
+    };
 
-    var QOL_WASH_COLOR_PALETTE = [
+    const QOL_WASH_COLOR_PALETTE = [
         "",
         "#f7f4e8",
         "#bfc7cf",
@@ -263,21 +284,20 @@
         "#05070a"
     ];
 
-    function normalizePaletteIndex(value) {
-        var numeric = Math.round(Number(value));
-        if (!isFinite(numeric)) numeric = 0;
-        if (numeric < 0) numeric = 0;
-        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+    const normalizePaletteIndex = (value) => {
+        let numeric = Math.round(Number(value));
+        if (!Number.isFinite(numeric) || numeric < 0 || numeric >= QOL_WASH_COLOR_PALETTE.length) {
+            numeric = 0;
+        }
         return numeric;
-    }
+    };
 
-    function resolvePaletteColor(value) {
-        var index = normalizePaletteIndex(value);
-        var color = QOL_WASH_COLOR_PALETTE[index] || "";
-        return color ? String(color) : "";
-    }
+    const resolvePaletteColor = (value) => {
+        const index = normalizePaletteIndex(value);
+        return String(QOL_WASH_COLOR_PALETTE[index] || "");
+    };
 
-    function setWashColor(panel, color) {
+    const setWashColor = (panel, color) => {
         if (!isPanelAlive(panel)) return false;
         try {
             if (color) {
@@ -287,40 +307,42 @@
                 panel.style.washColor = "";
             }
             return true;
-        } catch (e) { return false; }
-    }
+        } catch (_) {
+            return false;
+        }
+    };
 
-    function setWashColorFromPalette(panel, value) {
-        var color = resolvePaletteColor(value);
+    const setWashColorFromPalette = (panel, value) => {
+        const color = resolvePaletteColor(value);
         return setWashColor(panel, color);
-    }
+    };
 
     // -- Attach to namespace --
-    var panelApi = {
+    const panelApi = {
         isAlive: isPanelAlive,
-        isPanelAlive: isPanelAlive,
+        isPanelAlive,
         create: safeCreatePanel,
         createPanel: safeCreatePanel,
         delete: safeDeletePanel,
         deletePanel: safeDeletePanel,
-        findRoot: findRoot,
-        findHud: findHud,
-        findChild: findChild,
-        findTraverse: findTraverse,
-        setClass: setClass,
-        setVisible: setVisible,
-        syncStyles: syncStyles,
-        clearStyleProperty: clearStyleProperty,
-        activate: activate,
-        isVisible: isVisible,
-        readText: readText,
-        readTextDeep: readTextDeep,
-        readId: readId,
-        hasClassToken: hasClassToken,
-        setWashColor: setWashColor,
-        setWashColorFromPalette: setWashColorFromPalette,
-        normalizePaletteIndex: normalizePaletteIndex,
-        resolvePaletteColor: resolvePaletteColor,
+        findRoot,
+        findHud,
+        findChild,
+        findTraverse,
+        setClass,
+        setVisible,
+        syncStyles,
+        clearStyleProperty,
+        activate,
+        isVisible,
+        readText,
+        readTextDeep,
+        readId,
+        hasClassToken,
+        setWashColor,
+        setWashColorFromPalette,
+        normalizePaletteIndex,
+        resolvePaletteColor,
         washColorPalette: QOL_WASH_COLOR_PALETTE
     };
 
