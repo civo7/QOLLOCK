@@ -189,6 +189,27 @@
         return { raw: bestRaw, rev: bestRev > 0 ? bestRev : 0, sourcePanel: bestPanel };
     }
 
+    function _syncRootClasses(hudPanel, flatConfig) {
+        if (!hudPanel) hudPanel = _findHud();
+        if (!hudPanel) return;
+        if (!flatConfig) {
+            var globalState = (typeof State !== "undefined" && State) ? State :
+                              ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+            if (globalState && globalState.lastConfig) flatConfig = globalState.lastConfig;
+            else if (ConfigAdapter) flatConfig = ConfigAdapter.exportToFlat();
+        }
+        if (!flatConfig) return;
+        if (QOL && QOL.core && QOL.core.hud && typeof QOL.core.hud.applyRootClasses === "function") {
+            try {
+                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                var isHideout = (QOL.isConnectedToHideout && QOL.isConnectedToHideout(hudPanel)) || false;
+                QOL.core.hud.applyRootClasses(hudPanel, flatConfig, nowMs, isHideout, true);
+            } catch (e) {
+                if (Logger) Logger.logWarn("App", "applyRootClasses failed: " + (e.message || e));
+            }
+        }
+    }
+
     function _applyConfigUpdate(raw, rev, hudPanel, sourcePanel) {
         _lastConfigRaw = raw;
         if (rev > _lastRevision) _lastRevision = rev;
@@ -220,6 +241,7 @@
                     if (Logger) Logger.logWarn("App", "config adapter failed: " + (e.message || e));
                 }
             }
+            _syncRootClasses(hudPanel, flatConfig);
         }
     }
 
@@ -242,10 +264,12 @@
 
             if (changed) {
                 _applyConfigUpdate(raw, rev, hudPanel, best.sourcePanel);
+            } else {
+                _syncRootClasses(hudPanel);
             }
-            _configPollTimer = $.Schedule(0.5, poll);
+            _configPollTimer = $.Schedule(0.25, poll);
         }
-        _configPollTimer = $.Schedule(0.5, poll);
+        _configPollTimer = $.Schedule(0.25, poll);
     }
 
     // -- Public API --
@@ -306,6 +330,7 @@
             FeatureRegistry.boot(featureConfig);
         }
 
+        _syncRootClasses(hud, flatConfig);
         _startConfigPolling(hud);
         _booted = true;
 
@@ -378,7 +403,8 @@
         boot: boot,
         shutdown: shutdown,
         isBooted: isBooted,
-        getHud: getHud
+        getHud: getHud,
+        syncRootClasses: _syncRootClasses
     };
 
     QOL.core.app = appApi;

@@ -19,8 +19,16 @@
         enabledByDefault: false,
         settings: [{ key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false }],
         create: function(ctx) {
+            function _findHud() {
+                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
+                if (PH && PH.findHud) return PH.findHud();
+                var c = $.GetContextPanel();
+                if (c && (c.id === "Hud" || (c.paneltype && c.paneltype === "CitadelHud"))) return c;
+                return (c && c.FindChildTraverse) ? c.FindChildTraverse("Hud") : c;
+            }
+
             function _apply(cfg) {
-                var h = $.GetContextPanel().FindChildTraverse("Hud");
+                var h = _findHud();
                 if (!h) return;
                 cfg.ENABLE_PASSIVE_COOLDOWN ? h.AddClass("passive_cooldown_basic_active")
                                             : h.RemoveClass("passive_cooldown_basic_active");
@@ -28,7 +36,7 @@
             return {
                 onEnable: function() { _apply(ctx.config.all()); },
                 onDisable: function() {
-                    var h = $.GetContextPanel().FindChildTraverse("Hud");
+                    var h = _findHud();
                     if (h) { h.RemoveClass("passive_cooldown_basic_active"); h.RemoveClass("passive_cooldown_advanced_active"); }
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
@@ -36,8 +44,8 @@
         },
         test: function(ctx) {
             try {
-                var root = $.GetContextPanel();
-                var hud = root ? root.FindChildTraverse("Hud") : null;
+                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
+                var hud = PH && PH.findHud ? PH.findHud() : ($.GetContextPanel() ? ($.GetContextPanel().id === "Hud" ? $.GetContextPanel() : $.GetContextPanel().FindChildTraverse("Hud")) : null);
                 if (!hud) return null;  // Skip — not in a match context
                 return { passed: true, name: "Passive cooldown Hud panel exists", message: "", assertions: [{ passed: true, name: "Hud panel exists" }] };
             } catch(e) { return { passed: false, name: "Passive cooldown panel check", message: (e && e.message ? e.message : String(e)) }; }
