@@ -5,14 +5,19 @@
 // OWNS:        PERF_IMPACT_TIERS, SETTING_CREATED_BY_BY_CONFIG,
 //              SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG, and related metadata tables
 // DOES NOT OWN: Settings rendering, config persistence, search, presets
-// DEPENDS ON:  Nothing — pure data declarations
-// USED BY:     ql_settings.js (tooltip rendering, search indexing, CreateRow)
-//
-// Extracted from ql_settings.js (Phase 8). Zero-risk — pure data, no logic.
-// Coexists with original — both declare the same global variables.
+// DEPENDS ON:  core/ql_namespace.js
+// USED BY:     ql_settings.js, ql_settings_tooltips.js, ui/renderer.js
 // =============================================================================
 
-const PERF_IMPACT_TIER_NONE = "none";
+(() => {
+    "use strict";
+
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL)
+        ? globalThis.QOL
+        : (typeof QOL !== "undefined" ? QOL : (globalThis.QOL = {}));
+    Q.ui = Q.ui || {};
+
+    const PERF_IMPACT_TIER_NONE = "none";
 const PERF_IMPACT_TIER_LOW = "low";
 const PERF_IMPACT_TIER_MEDIUM = "medium";
 const PERF_IMPACT_TIER_HIGH = "high";
@@ -718,3 +723,25 @@ const SETTING_PERF_IMPACT_TIERS = {
     SHOW_RANK_TOPBAR: "low",
 };
 
+    const MetadataApi = {
+        PERF_IMPACT_TIER_NONE,
+        PERF_IMPACT_TIER_LOW,
+        PERF_IMPACT_TIER_MEDIUM,
+        PERF_IMPACT_TIER_HIGH,
+        PERF_IMPACT_TIER_ORDER,
+        PERF_IMPACT_LABEL_BY_TIER,
+        SETTING_CREATED_BY_BY_CONFIG,
+        SETTING_CREATED_BY_BY_LABEL,
+        SECTION_CREATED_BY_BY_TITLE,
+        SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG,
+        SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW,
+        SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE,
+        SETTING_PERF_IMPACT_TIERS
+    };
+
+    Q.ui.metadata = MetadataApi;
+
+    if (typeof globalThis !== "undefined") {
+        Object.assign(globalThis, MetadataApi);
+    }
+})();
