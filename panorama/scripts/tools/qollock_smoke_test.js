@@ -68,6 +68,7 @@ var HUD_LOAD_ORDER = [
     path.join("core", "ql_feature_registry.js"),
     path.join("core", "ql_manifest_tests.js"),
     path.join("core", "ql_hero_probe.js"),
+    path.join("core", "ql_persistence.js"),
     // Transitional runtime infrastructure
     "ql_utils.js",
     "ql_shared_presets.js",

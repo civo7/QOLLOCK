@@ -730,6 +730,91 @@
     }
     exports.SetWashColorSafe = SetWashColorSafe;
 
+    const QOL_WASH_COLOR_PALETTE = [
+        "",
+        "#f7f4e8",
+        "#bfc7cf",
+        "#33363f",
+        "#ff3b47",
+        "#ff6f61",
+        "#ff8a2a",
+        "#ffb52e",
+        "#ffe45c",
+        "#a8f04f",
+        "#45d66b",
+        "#63f0b5",
+        "#24c6a8",
+        "#44e3ff",
+        "#64bfff",
+        "#3f78ff",
+        "#6157ff",
+        "#9b5cff",
+        "#c15cff",
+        "#ff4de3",
+        "#ff78bd",
+        "#ff5d89",
+        "#9a6743",
+        "#d9a441",
+        "#8cff4f",
+        "#7c4dff",
+        "#b8142f",
+        "#b9f4ff",
+        "#d7b2ff",
+        "#05070a"
+    ];
+    exports.QOL_WASH_COLOR_PALETTE = QOL_WASH_COLOR_PALETTE;
+
+    function NormalizePaletteColorIndex(value) {
+        var numeric = Math.round(Number(value));
+        if (!isFinite(numeric)) numeric = 0;
+        if (numeric < 0) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        return numeric;
+    }
+    exports.NormalizePaletteColorIndex = NormalizePaletteColorIndex;
+
+    function ResolveWashColorFromPalette(value) {
+        var index = NormalizePaletteColorIndex(value);
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        return color ? String(color) : "";
+    }
+    exports.ResolveWashColorFromPalette = ResolveWashColorFromPalette;
+
+    function ReadPaletteColorIndexWithPanelAttr(cfg, key, _attrName) {
+        return NormalizePaletteColorIndex(cfg && cfg[key]);
+    }
+    exports.ReadPaletteColorIndexWithPanelAttr = ReadPaletteColorIndexWithPanelAttr;
+
+    function ReadPlayerHealthbarAccentColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR");
+    }
+    exports.ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex;
+
+    function ReadBottomBarWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR");
+    }
+    exports.ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex;
+
+    function ReadKeyboardOverlayWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR");
+    }
+    exports.ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex;
+
+    function ReadStaminaChargeColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "STAMINA_CHARGE_COLOR");
+    }
+    exports.ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex;
+
+    function ReadAmmoTextColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR");
+    }
+    exports.ReadAmmoTextColorIndex = ReadAmmoTextColorIndex;
+
+    function ReadMinimapIconColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR");
+    }
+    exports.ReadMinimapIconColorIndex = ReadMinimapIconColorIndex;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it

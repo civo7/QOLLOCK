@@ -30,6 +30,7 @@
 		<include src="s2r://panorama/scripts/core/ql_feature_registry.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_manifest_tests.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_hero_probe.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
 		<!-- ============================================================= -->
 		<!-- Transitional runtime infrastructure                           -->
 		<!-- ============================================================= -->

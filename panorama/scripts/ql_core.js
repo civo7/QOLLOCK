@@ -1090,353 +1090,109 @@ function DeserializeBuildPayloadCompact(binaryStr, expectedSemver) {
 
 
 
-function GetUIRoot() {
-        var cached = GetCachedPanel("uiRoot");
-        if (IsPanelValid(cached)) {
-            return cached;
+    const GetUIRoot = () => ((typeof QOL !== "undefined" && QOL.core?.persistence?.getUIRoot) ? QOL.core.persistence.getUIRoot() : null);
+
+    const ResolveHudPanel = (root) => ((typeof QOL !== "undefined" && QOL.core?.persistence?.resolveHudPanel) ? QOL.core.persistence.resolveHudPanel(root) : null);
+
+    const ReadStorageConfigRawFromUi = (root) => ((typeof QOL !== "undefined" && QOL.core?.persistence?.readStorageConfigRawFromUi) ? QOL.core.persistence.readStorageConfigRawFromUi(root) : "");
+
+    const ReadStorageConfigRawUncached = (root, hud, rootRev, hudRev) => ((typeof QOL !== "undefined" && QOL.core?.persistence?.readStorageConfigRawUncached) ? QOL.core.persistence.readStorageConfigRawUncached(root, hud, rootRev, hudRev) : "");
+
+    const WriteStorageConfigRawToUi = (root, rawText) => ((typeof QOL !== "undefined" && QOL.core?.persistence?.writeStorageConfigRawToUi) ? QOL.core.persistence.writeStorageConfigRawToUi(root, rawText) : { raw: String(rawText || ""), revision: 0, count: 0 });
+
+    const FindFirstPanelByClass = (root, className) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.FindFirstPanelByClass) ? QOL_UTILS.FindFirstPanelByClass(root, className) : null);
+
+    const hasClassInHierarchy = (panel, className) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) ? QOL_UTILS.HasClassInHierarchy(panel, className) : false);
+
+    const IsHudClassActive = (root, className) => ((typeof QOL !== "undefined" && QOL.core?.hud?.isHudClassActive) ? QOL.core.hud.isHudClassActive(root, className) : false);
+
+    const FindAncestorWithClass = (panel, className) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.FindAncestorWithClass) ? QOL_UTILS.FindAncestorWithClass(panel, className) : null);
+
+    const ToRgbString = (rgb) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ToRgbString) ? QOL_UTILS.ToRgbString(rgb) : `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+
+    const BlendRgb = (a, b, t) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.BlendRgb) ? QOL_UTILS.BlendRgb(a, b, t) : [
+        Math.round(a[0] + ((b[0] - a[0]) * t)),
+        Math.round(a[1] + ((b[1] - a[1]) * t)),
+        Math.round(a[2] + ((b[2] - a[2]) * t))
+    ]);
+
+    const SetStyleSafe = (panel, prop, value) => {
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetStyleSafe) {
+            QOL_UTILS.SetStyleSafe(panel, prop, value);
+        } else if (panel?.style && prop) {
+            try { panel.style[prop] = value; } catch (_) {}
         }
-        var p = $.GetContextPanel();
-        var uiRootGuard = 0;
-        while (p && p.GetParent && p.GetParent() && uiRootGuard < 64) { p = p.GetParent(); uiRootGuard++; }
-        if (uiRootGuard >= 64) QOL_WARN("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
-        SetCachedPanel("uiRoot", p);
-        return p || null;
-    }
-
-    var _readStorageDiagLogged = false;
-    var _writeStorageDiagLogged = false;
-    var _startupConfigLoadDiagLogged = false;
-    var _startupConfigDefaultDiagLogged = false;
-
-    // Resolve the Hud panel, cached. The parent-chain position of #Hud never
-    // changes for the life of the context, but four separate call sites used to
-    // re-run FindChildTraverse for it on every tick. GetCachedPanel validates via
-    // IsValid() and sweepStalePanelCache() drops dead entries once a second, so
-    // the cache is safe across the panel being torn down and rebuilt.
-    function ResolveHudPanel(root) {
-        var hud = GetCachedPanel("cachedHudPanel");
-        if (hud) return hud;
-        if (!root || !root.FindChildTraverse) return null;
-        try { hud = root.FindChildTraverse(PANEL_ID_HUD); } catch (e) { hud = null; }
-        if (hud) SetCachedPanel("cachedHudPanel", hud);
-        return hud;
-    }
-
-    var _parseRevisionNumber = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) || function(v) {
-        var n = Number(v);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
     };
 
-    // ── Revision-gated config read ──
-    //
-    // The stored config is a ~9.2 KB JSON envelope (335 keys, all of them always
-    // present because MergeConfig fills from defaults). GetAttributeString does
-    // not hand back a view of the C++ buffer — it marshals a fresh JS string of
-    // the full length. Reading it from both the root and the Hud panel therefore
-    // allocated ~18.4 KB per tick, ~92 KB/s, ~220 MB over a 40-minute match, all
-    // of it immediately garbage. Panorama's V8 runs on the UI thread, so those
-    // scavenges land inside frames: exactly the shape of a 1%-low complaint
-    // rather than an average-FPS one.
-    //
-    // Every writer of the config attribute pairs it with an increment of
-    // USER_EDIT_REV_ATTR — ql_core.js WriteStorageConfigRawToUi, ql_settings.js
-    // SaveAndSync, ql_arcade_games.js — on both the root and the Hud panel. So the
-    // revision is a trustworthy 1-3 byte proxy for "did the config change", and
-    // the 9.2 KB read only has to happen when it did.
-    //
-    // A wall-clock backstop still forces a full read periodically. If a future
-    // writer ever forgets to bump the revision, that turns a permanent stale-config
-    // bug into a bounded delay, which is the failure mode worth having.
-    var _cfgCacheRevision = -1;
-    var _cfgCacheRaw = "";
-    var _cfgCacheFullReadMs = 0;
-    const CONFIG_FULL_REREAD_INTERVAL_MS = 2000;
-
-    // ReadStorageConfigRawFromUi — reads the serialized config from both the root and Hud
-    // panel attributes, picking the version with the highest user-edit revision number.
-    // Returns the SAME string instance while the revision is unchanged, which also makes
-    // the callers' `raw === State.lastRawConfig` checks true pointer compares instead of
-    // 9.2 KB memcmps.
-    function ReadStorageConfigRawFromUi(root) {
-        if (!root || !root.GetAttributeString) return "";
-
-        var hud = ResolveHudPanel(root);
-
-        // Cheap probe: two small attribute reads.
-        var rootRev = 0;
-        var hudRev = 0;
-        try { rootRev = _parseRevisionNumber(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eR) { rootRev = 0; }
-        if (hud && hud.GetAttributeString) {
-            try { hudRev = _parseRevisionNumber(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (eH) { hudRev = 0; }
+    const SetStyleIfChanged = (panel, prop, value) => {
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetStyleIfChanged) {
+            return QOL_UTILS.SetStyleIfChanged(panel, prop, value);
         }
-        var revision = (hudRev > rootRev) ? hudRev : rootRev;
-
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var backstopDue = (nowMs - _cfgCacheFullReadMs) >= CONFIG_FULL_REREAD_INTERVAL_MS;
-        if (revision === _cfgCacheRevision && _cfgCacheRaw !== "" && !backstopDue) {
-            return _cfgCacheRaw;
-        }
-
-        var result = ReadStorageConfigRawUncached(root, hud, rootRev, hudRev);
-        _cfgCacheRevision = revision;
-        _cfgCacheRaw = result;
-        _cfgCacheFullReadMs = nowMs;
-        return result;
-    }
-
-    // The full read. Split out so the revision fast path above stays obvious, and
-    // so a caller that genuinely needs current bytes can bypass the cache.
-    function ReadStorageConfigRawUncached(root, hud, rootRev, hudRev) {
-        var result = "";
-        var source = "none";
-        var rootLen = 0;
-        var hudLen = 0;
-        if (root && root.GetAttributeString) {
-            var rootRaw = "";
-            try { rootRaw = String(root.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { rootRaw = ""; }
-            rootLen = rootRaw.length;
-
-            if (!hud || !hud.GetAttributeString) {
-                result = rootRaw;
-                if (rootLen > 0) source = "root_attr";
-            } else {
-                var hudRaw = "";
-                try { hudRaw = String(hud.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e2) { hudRaw = ""; }
-                hudLen = hudRaw.length;
-                if (!hudRaw) {
-                    result = rootRaw;
-                    source = rootLen > 0 ? "root_attr" : "none";
-                } else if (!rootRaw) {
-                    result = hudRaw;
-                    source = "hud_attr";
-                } else {
-                    result = (hudRev >= rootRev) ? hudRaw : rootRaw;
-                    source = "attr_rev(" + rootRev + "/" + hudRev + ")";
-                }
-            }
-        }
-        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
-        // Panel attributes are the only persistence mechanism.
-        if (!_readStorageDiagLogged) {
-            _readStorageDiagLogged = true;
-            $.Msg("[QOLLock][DIAG][storage] ReadStorageConfig: source=" + source + " resultLen=" + result.length + " rootAttrLen=" + rootLen + " hudAttrLen=" + hudLen);
-        }
-        return result;
-    }
-
-    // WriteStorageConfigRawToUi — persists config to both root and Hud panel attributes,
-    // increments the user-edit revision, and mirrors to persistentStorage as backup.
-    function WriteStorageConfigRawToUi(root, rawText) {
-        _TLog("config:WriteToUi", "len=" + (rawText ? String(rawText).length : 0));
-        if (!root || !root.SetAttributeString) {
-            return { raw: String(rawText || ""), revision: 0, count: 0 };
-        }
-
-        var nextRaw = String(rawText || "");
-        var hud = ResolveHudPanel(root);
-        var parseRev = _parseRevisionNumber;
-        var rootRev = 0;
-        var hudRev = 0;
-        try { rootRev = parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { rootRev = 0; }
-        try { hudRev = hud && hud.GetAttributeString ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0; } catch (e2) { hudRev = 0; }
-        var nextRevision = Math.max(rootRev, hudRev) + 1;
-
-        // Write data + revision as a paired update per panel so an interrupted
-        // save never orphans new data with an old revision number.
-        try { root.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e3) { QOL_ERROR("persist", "root.SetAttributeString(STORAGE_KEY) failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
-        try { root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e4) { QOL_ERROR("persist", "root.SetAttributeString(USER_EDIT_REV) failed: " + (e4 && e4.message ? e4.message : String(e4 || ""))); }
-        if (hud && hud.SetAttributeString) {
-            try { hud.SetAttributeString(STORAGE_KEY, nextRaw); } catch (e5) { QOL_ERROR("persist", "hud.SetAttributeString(STORAGE_KEY) failed: " + (e5 && e5.message ? e5.message : String(e5 || ""))); }
-            try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRevision)); } catch (e6) { QOL_ERROR("persist", "hud.SetAttributeString(USER_EDIT_REV) failed: " + (e6 && e6.message ? e6.message : String(e6 || ""))); }
-        }
-        // $.persistentStorage confirmed absent (panorama_api_test, 2026-06-11).
-
-        // Seed the read cache with what we just wrote. Without this the next
-        // ReadStorageConfigRawFromUi would see a bumped revision and re-marshal
-        // 9.2 KB it already has — and, worse, a write that loses a race with a
-        // concurrent read would leave the cache holding pre-write bytes.
-        _cfgCacheRevision = nextRevision;
-        _cfgCacheRaw = nextRaw;
-        _cfgCacheFullReadMs = Date.now ? Date.now() : (new Date()).getTime();
-
-        if (!_writeStorageDiagLogged) {
-            _writeStorageDiagLogged = true;
-            $.Msg("[QOLLock][DIAG][storage] WriteStorageConfig: len=" + nextRaw.length + " rev=" + nextRevision + " hud=" + (hud && hud.SetAttributeString ? "yes" : "no"));
-        }
-
-        return {
-            raw: nextRaw,
-            revision: nextRevision,
-            count: hud && hud.SetAttributeString ? 2 : 1
-        };
-
-    }
-
-    var FindFirstPanelByClass = QOL_UTILS_LOADED ? QOL_UTILS.FindFirstPanelByClass : function(root, className) {
-        if (!root || !root.FindChildrenWithClassTraverse || !className) return null;
-        var panels = root.FindChildrenWithClassTraverse(className) || [];
-        for (var i = 0; i < panels.length; i++) {
-            if (IsPanelValid(panels[i])) return panels[i];
-        }
-        return null;
-    };
-
-    var hasClassInHierarchy = QOL_UTILS_LOADED ? QOL_UTILS.HasClassInHierarchy : function(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass(className)) return true;
-            current = current.GetParent();
-        }
-        return false;
-    };
-
-    function IsHudClassActive(root, className) {
-        if (!className) return false;
-        if (root && root.BHasClass && root.BHasClass(className)) return true;
-
-        var gameplayHud = ResolveCachedPanel(root, "gameplayHud", PANEL_ID_GAMEPLAY_HUD);
-        if (gameplayHud && gameplayHud.BHasClass && gameplayHud.BHasClass(className)) return true;
-
-        var abilities = ResolveCachedPanel(root, "abilitiesContainer", PANEL_ID_ABILITIES_CONTAINER);
-        if (abilities && abilities.BHasClass && abilities.BHasClass(className)) return true;
-
-        return false;
-    }
-
-    var FindAncestorWithClass = QOL_UTILS_LOADED ? QOL_UTILS.FindAncestorWithClass : function(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass && current.BHasClass(className)) return current;
-            current = current.GetParent ? current.GetParent() : null;
-        }
-        return null;
-    };
-
-
-    // IsPanelValid is now provided by QOL_UTILS (ql_utils.js) — alias at top of file
-
-    function ToRgbString(rgb) {
-        return "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")";
-    }
-
-    function BlendRgb(a, b, t) {
-        return [
-            Math.round(a[0] + ((b[0] - a[0]) * t)),
-            Math.round(a[1] + ((b[1] - a[1]) * t)),
-            Math.round(a[2] + ((b[2] - a[2]) * t))
-        ];
-    }
-
-    var SetStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.SetStyleSafe : function(panel, prop, value) {
-        if (!panel || !panel.style || !prop) return;
-        try { panel.style[prop] = value; } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
-    };
-
-    // Compare-then-write. See ql_utils.js for why this is separate from SetStyleSafe.
-    var SetStyleIfChanged = (QOL_UTILS_LOADED && QOL_UTILS.SetStyleIfChanged) ? QOL_UTILS.SetStyleIfChanged : function(panel, prop, value) {
-        if (!panel || !panel.style || !prop) return false;
+        if (!panel?.style || !prop) return false;
         try {
             if (panel.style[prop] === value) return false;
             panel.style[prop] = value;
             return true;
-        } catch(e) { QOL_WARN("core", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
-        return false;
+        } catch (_) { return false; }
     };
 
-    var ClearStyleSafe = QOL_UTILS_LOADED ? QOL_UTILS.ClearStyleSafe : function(panel, prop) {
-        if (!panel || !panel.style || !prop) return;
-        try { delete panel.style[prop]; } catch(e0) { QOL_WARN("core", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        try { panel.style[prop] = null; } catch(e1) { QOL_WARN("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        try { panel.style[prop] = ""; } catch(e2) { QOL_WARN("core", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-    };
-
-    function SetWashColorSafe(panel, color) {
-        if (color) {
-            SetStyleSafe(panel, "washColor", String(color));
-        } else {
-            ClearStyleSafe(panel, "washColor");
+    const ClearStyleSafe = (panel, prop) => {
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClearStyleSafe) {
+            QOL_UTILS.ClearStyleSafe(panel, prop);
+        } else if (panel?.style && prop) {
+            try { delete panel.style[prop]; } catch (_) {}
+            try { panel.style[prop] = null; } catch (_) {}
+            try { panel.style[prop] = ""; } catch (_) {}
         }
-    }
+    };
 
-    const QOL_WASH_COLOR_PALETTE = [
-        "",
-        "#f7f4e8",
-        "#bfc7cf",
-        "#33363f",
-        "#ff3b47",
-        "#ff6f61",
-        "#ff8a2a",
-        "#ffb52e",
-        "#ffe45c",
-        "#a8f04f",
-        "#45d66b",
-        "#63f0b5",
-        "#24c6a8",
-        "#44e3ff",
-        "#64bfff",
-        "#3f78ff",
-        "#6157ff",
-        "#9b5cff",
-        "#c15cff",
-        "#ff4de3",
-        "#ff78bd",
-        "#ff5d89",
-        "#9a6743",
-        "#d9a441",
-        "#8cff4f",
-        "#7c4dff",
-        "#b8142f",
-        "#b9f4ff",
-        "#d7b2ff",
-        "#05070a"
-    ];
+    const SetWashColorSafe = (panel, color) => {
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetWashColorSafe) {
+            QOL_UTILS.SetWashColorSafe(panel, color);
+        } else if (typeof QOL !== "undefined" && QOL.setWashColorSafe) {
+            QOL.setWashColorSafe(panel, color);
+        }
+    };
 
-    function NormalizePaletteColorIndex(value) {
-        var numeric = Math.round(Number(value));
-        if (!isFinite(numeric)) numeric = 0;
-        if (numeric < 0) numeric = 0;
-        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
-        return numeric;
-    }
+    const QOL_WASH_COLOR_PALETTE = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.QOL_WASH_COLOR_PALETTE)
+        ? QOL_UTILS.QOL_WASH_COLOR_PALETTE
+        : ((typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : []);
 
-    function ResolveWashColorFromPalette(value) {
-        var index = NormalizePaletteColorIndex(value);
-        var color = QOL_WASH_COLOR_PALETTE[index] || "";
-        return color ? String(color) : "";
-    }
+    const NormalizePaletteColorIndex = (value) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.NormalizePaletteColorIndex)
+        ? QOL_UTILS.NormalizePaletteColorIndex(value)
+        : ((typeof QOL !== "undefined" && QOL.normalizePaletteColorIndex) ? QOL.normalizePaletteColorIndex(value) : 0));
 
-    function ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName) {
-        // Config is the canonical source. Panel attributes are a secondary
-        // bridge that can go stale when config is updated via preset import,
-        // build payload override, or migration — none of which update the
-        // per-color bridge attributes. Always trust config.
-        return NormalizePaletteColorIndex(cfg && cfg[key]);
-    }
+    const ResolveWashColorFromPalette = (value) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ResolveWashColorFromPalette)
+        ? QOL_UTILS.ResolveWashColorFromPalette(value)
+        : ((typeof QOL !== "undefined" && QOL.resolveWashColorFromPalette) ? QOL.resolveWashColorFromPalette(value) : ""));
 
-    function ReadPlayerHealthbarAccentColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR", PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR);
-    }
+    const ReadPaletteColorIndexWithPanelAttr = (cfg, key, attrName) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadPaletteColorIndexWithPanelAttr)
+        ? QOL_UTILS.ReadPaletteColorIndexWithPanelAttr(cfg, key, attrName)
+        : NormalizePaletteColorIndex(cfg && cfg[key]));
 
-    function ReadBottomBarWashColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR", BOTTOM_BAR_WASH_COLOR_ATTR);
-    }
+    const ReadPlayerHealthbarAccentColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadPlayerHealthbarAccentColorIndex)
+        ? QOL_UTILS.ReadPlayerHealthbarAccentColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR"));
 
-    function ReadKeyboardOverlayWashColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR", KEYBOARD_OVERLAY_WASH_COLOR_ATTR, "");
-    }
+    const ReadBottomBarWashColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadBottomBarWashColorIndex)
+        ? QOL_UTILS.ReadBottomBarWashColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR"));
 
-    function ReadStaminaChargeColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "STAMINA_CHARGE_COLOR", STAMINA_CHARGE_COLOR_ATTR, "");
-    }
+    const ReadKeyboardOverlayWashColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadKeyboardOverlayWashColorIndex)
+        ? QOL_UTILS.ReadKeyboardOverlayWashColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR"));
 
-    function ReadAmmoTextColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR", AMMO_TEXT_COLOR_ATTR, "");
-    }
+    const ReadStaminaChargeColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadStaminaChargeColorIndex)
+        ? QOL_UTILS.ReadStaminaChargeColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "STAMINA_CHARGE_COLOR"));
 
-    function ReadMinimapIconColorIndex(cfg) {
-        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR", MINIMAP_ICON_COLOR_ATTR, "");
-    }
+    const ReadAmmoTextColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadAmmoTextColorIndex)
+        ? QOL_UTILS.ReadAmmoTextColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR"));
+
+    const ReadMinimapIconColorIndex = (cfg) => ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.ReadMinimapIconColorIndex)
+        ? QOL_UTILS.ReadMinimapIconColorIndex(cfg)
+        : ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR"));
 
     function ResolvePassiveCooldownMode(cfg) {
         var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");

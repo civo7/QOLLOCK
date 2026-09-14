@@ -159,6 +159,19 @@ QOL.bridge = {
     writeAttr: QOLBridgeWriteAttr
 };
 
+if (typeof QOL_UTILS === "object" && QOL_UTILS) {
+    QOL.readKeyboardOverlayWashColorIndex = QOL_UTILS.ReadKeyboardOverlayWashColorIndex;
+    QOL.readMinimapIconColorIndex = QOL_UTILS.ReadMinimapIconColorIndex;
+    QOL.readPlayerHealthbarAccentColorIndex = QOL_UTILS.ReadPlayerHealthbarAccentColorIndex;
+    QOL.readBottomBarWashColorIndex = QOL_UTILS.ReadBottomBarWashColorIndex;
+    QOL.readStaminaChargeColorIndex = QOL_UTILS.ReadStaminaChargeColorIndex;
+    QOL.readAmmoTextColorIndex = QOL_UTILS.ReadAmmoTextColorIndex;
+    QOL.readPaletteColorIndexWithPanelAttr = QOL_UTILS.ReadPaletteColorIndexWithPanelAttr;
+    QOL.normalizePaletteColorIndex = QOL_UTILS.NormalizePaletteColorIndex;
+    QOL.resolveWashColorFromPalette = QOL_UTILS.ResolveWashColorFromPalette;
+    QOL.washColorPalette = QOL_UTILS.QOL_WASH_COLOR_PALETTE;
+}
+
 // ── Self-test ──
 
 (function() {
