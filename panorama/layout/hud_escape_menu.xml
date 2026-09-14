@@ -38,6 +38,7 @@
 		<include src="s2r://panorama/scripts/ui/layout.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/breadcrumb.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/search.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/drag.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/window.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
