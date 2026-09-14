@@ -3239,239 +3239,151 @@ function RefreshEnumSections() {
     }
 }
 
+// Announcer and DL4D audio subsystem extracted to ui/audio.js
 function GetAnnouncerVoiceToken(rawVoiceType) {
-    var utils = GetSharedSchemaUtils();
-    if (utils && typeof utils.GetAnnouncerVoiceToken === "function") {
-        return utils.GetAnnouncerVoiceToken(rawVoiceType);
-    }
-    var normalized = NormalizeVoiceTypeValue(rawVoiceType);
-    switch (normalized) {
-        case 4: return "Beep";
-        case 5: return "Custom_Slot2";
-        case 6: return "Custom_Slot3";
-        case 7: return "Custom_Slot4";
-        case 8: return "Custom_Slot5";
-        case 0:
-        default:
-            break;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.getAnnouncerVoiceToken(rawVoiceType);
     }
     return "Custom_Slot1";
 }
 
 function ResolveCustomAnnouncerMetaField(source, keys) {
-    if (!source || typeof source !== "object") return "";
-    for (var k = 0; k < keys.length; k++) {
-        var val = source[keys[k]];
-        if (val && typeof val === "string" && val.trim().length > 0) return val.trim();
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveCustomAnnouncerMetaField(source, keys);
     }
     return "";
 }
 
 function ResolveCustomAnnouncerSlotScriptMetadata(slotIndex) {
-    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
-    var source = null;
-    var globalKey = "QOL_CUSTOM_ANNOUNCER_SLOT" + String(safeIndex) + "_META";
-    var registryKey = String(safeIndex);
-    try {
-        if (typeof globalThis === "object" && globalThis) {
-            var registry = globalThis.QOL_CUSTOM_ANNOUNCER_PACK_SLOTS;
-            if (registry && typeof registry === "object") {
-                if (Object.prototype.hasOwnProperty.call(registry, registryKey)) {
-                    source = registry[registryKey];
-                } else if (Object.prototype.hasOwnProperty.call(registry, safeIndex)) {
-                    source = registry[safeIndex];
-                }
-            }
-            if (!source) source = globalThis[globalKey];
-        }
-    } catch (e0) { source = null; }
-    return {
-        name: ResolveCustomAnnouncerMetaField(source, ["name", "Name", "NAME"]),
-        author: ResolveCustomAnnouncerMetaField(source, ["author", "Author", "AUTHOR"]),
-        voiceActor: ResolveCustomAnnouncerMetaField(source, ["voiceActor", "voice_actor", "VoiceActor", "Voice_Actor", "voice actor", "Voice Actor", "VOICE_ACTOR"])
-    };
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveCustomAnnouncerSlotScriptMetadata(slotIndex);
+    }
+    return { name: "", author: "", voiceActor: "" };
 }
 
 function ResolveCustomAnnouncerSlotLabel(slotIndex, fallbackLabel) {
-    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
-    var scriptMeta = ResolveCustomAnnouncerSlotScriptMetadata(safeIndex);
-    if (scriptMeta && scriptMeta.name) return scriptMeta.name;
-    return String(fallbackLabel || ("Custom Slot " + String(safeIndex)));
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveCustomAnnouncerSlotLabel(slotIndex, fallbackLabel);
+    }
+    return String(fallbackLabel || ("Custom Slot " + String(slotIndex)));
 }
 
 function ResolveCustomAnnouncerSlotMetadata(slotIndex) {
-    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
-    var scriptMeta = ResolveCustomAnnouncerSlotScriptMetadata(safeIndex);
-    return {
-        name: String(scriptMeta && scriptMeta.name ? scriptMeta.name : ""),
-        author: String(scriptMeta && scriptMeta.author ? scriptMeta.author : ""),
-        voiceActor: String(scriptMeta && scriptMeta.voiceActor ? scriptMeta.voiceActor : "")
-    };
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveCustomAnnouncerSlotMetadata(slotIndex);
+    }
+    return { name: "", author: "", voiceActor: "" };
 }
 
 function GetCustomAnnouncerSlotIndexFromVoiceType(rawVoiceType) {
-    var voiceType = NormalizeVoiceTypeValue(rawVoiceType);
-    if (voiceType === 0) return 1;
-    if (voiceType === 5) return 2;
-    if (voiceType === 6) return 3;
-    if (voiceType === 7) return 4;
-    if (voiceType === 8) return 5;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.getCustomAnnouncerSlotIndexFromVoiceType(rawVoiceType);
+    }
     return 0;
 }
 
 function GetCustomAnnouncerSlotIndexFromOptionValue(optionValue) {
-    var asInt = Math.round(Number(optionValue));
-    if (!isFinite(asInt)) return 0;
-    if (asInt === 0) return 1;
-    if (asInt === 5) return 2;
-    if (asInt === 6) return 3;
-    if (asInt === 7) return 4;
-    if (asInt === 8) return 5;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.getCustomAnnouncerSlotIndexFromOptionValue(optionValue);
+    }
     return 0;
 }
 
 function BuildCustomAnnouncerSlotMetadataTooltipText(slotIndex) {
-    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
-    var slotMeta = ResolveCustomAnnouncerSlotMetadata(safeIndex);
-    var authorText = String(slotMeta && slotMeta.author ? slotMeta.author : "").trim();
-    var voiceActorText = String(slotMeta && slotMeta.voiceActor ? slotMeta.voiceActor : "").trim();
-    var lines = [];
-    if (authorText.length > 0) lines.push("Author: " + authorText);
-    if (voiceActorText.length > 0) lines.push("Voice Actor: " + voiceActorText);
-    return lines.join("\n");
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildCustomAnnouncerSlotMetadataTooltipText(slotIndex);
+    }
+    return "";
 }
 
 function BuildCustomAnnouncerSlotMetadataHoverInfo(slotIndex) {
-    var safeIndex = Math.max(1, Math.min(5, Math.round(Number(slotIndex) || 1)));
-    var slotMeta = ResolveCustomAnnouncerSlotMetadata(safeIndex);
-    var authorText = String(slotMeta && slotMeta.author ? slotMeta.author : "").trim();
-    var voiceActorText = String(slotMeta && slotMeta.voiceActor ? slotMeta.voiceActor : "").trim();
-    return {
-        author: authorText,
-        voiceActor: voiceActorText
-    };
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildCustomAnnouncerSlotMetadataHoverInfo(slotIndex);
+    }
+    return { author: "", voiceActor: "" };
 }
 
 function BuildCustomAnnouncerVoiceDescription(baseDescription, rawVoiceType) {
-    var base = String(baseDescription || "");
-    var slotIndex = GetCustomAnnouncerSlotIndexFromVoiceType(rawVoiceType);
-    if (slotIndex <= 0) return base;
-
-    var lines = [];
-    if (base) lines.push(base);
-    var slotMetaText = BuildCustomAnnouncerSlotMetadataTooltipText(slotIndex);
-    if (slotMetaText) lines.push(slotMetaText);
-    return lines.join("\n");
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildCustomAnnouncerVoiceDescription(baseDescription, rawVoiceType);
+    }
+    return String(baseDescription || "");
 }
 
 function BuildVoiceDropdownOptions() {
-    return [
-        { label: "Beep", value: 4 },
-        { label: ResolveCustomAnnouncerSlotLabel(1, "Custom Slot 1"), value: 0 },
-        { label: ResolveCustomAnnouncerSlotLabel(2, "Custom Slot 2"), value: 5 },
-        { label: ResolveCustomAnnouncerSlotLabel(3, "Custom Slot 3"), value: 6 },
-        { label: ResolveCustomAnnouncerSlotLabel(4, "Custom Slot 4"), value: 7 },
-        { label: ResolveCustomAnnouncerSlotLabel(5, "Custom Slot 5"), value: 8 }
-    ];
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildVoiceDropdownOptions();
+    }
+    return [{ label: "Beep", value: 4 }];
 }
+
 function BuildAnnouncerPreviewEventName() {
-    var voiceToken = GetAnnouncerVoiceToken(MOD_CONFIG.VOICE_TYPE);
-    if (voiceToken === "Beep") return "BuffReminder.Beep";
-    return "BuffReminder.Bridge1_" + voiceToken;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildAnnouncerPreviewEventName();
+    }
+    return "BuffReminder.Beep";
 }
 
 function BuildAnnouncerBridgeVariantPreviewEventName(variantIndex) {
-    var voiceToken = GetAnnouncerVoiceToken(MOD_CONFIG.VOICE_TYPE);
-    var variant = Math.round(Number(variantIndex) || 1);
-    if (!isFinite(variant) || variant < 1 || variant > 3) variant = 1;
-    if (voiceToken === "Beep") return "BuffReminder.Beep";
-    return "BuffReminder.Bridge" + String(variant) + "_" + voiceToken;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.buildAnnouncerBridgeVariantPreviewEventName(variantIndex);
+    }
+    return "BuffReminder.Beep";
 }
 
 function ResolveAnnouncerEventForVolume(baseEventName) {
-    var baseName = String(baseEventName || "");
-    if (!baseName) return "";
-    var voiceVolume = NormalizeVoiceVolumeValue(MOD_CONFIG.VOICE_VOLUME);
-    return baseName + "_V" + String(voiceVolume);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveAnnouncerEventForVolume(baseEventName);
+    }
+    return "";
 }
 
 function PlayAnnouncerPreviewSound() {
-    var eventName = ResolveAnnouncerEventForVolume(BuildAnnouncerPreviewEventName());
-    $.DispatchEvent("PlaySoundEffect", eventName);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        QOL.ui.audio.playAnnouncerPreviewSound();
+    }
 }
 
 function PlayAnnouncerBridgeVariantPreviewSound(variantIndex) {
-    var eventName = ResolveAnnouncerEventForVolume(BuildAnnouncerBridgeVariantPreviewEventName(variantIndex));
-    $.DispatchEvent("PlaySoundEffect", eventName);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        QOL.ui.audio.playAnnouncerBridgeVariantPreviewSound(variantIndex);
+    }
 }
 
-const DL4D_REMINDER_OPTIONS = [
-    { label: "Small Camps + Boxes", key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes" },
-    { label: "Rune + Melee Troopers", key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers" },
-    { label: "Medium Camps", key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps" },
-    { label: "Big Camps + Sinners", key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners" },
-    { label: "Urn + Gold Rune", key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune" },
-    { label: "Lane Guardian Weak", key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak" },
-    { label: "Rune", key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune" },
-    { label: "Walker Weak", key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak" },
-    { label: "Rune + Fast Troopers", key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers" },
-    { label: "Rune + Gold Buffs", key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs" },
-    { label: "Rune + Troopers 20s HP", key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp" }
-];
+const DL4D_REMINDER_OPTIONS = (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio && QOL.ui.audio.DL4D_REMINDER_OPTIONS)
+    ? QOL.ui.audio.DL4D_REMINDER_OPTIONS
+    : [
+        { label: "Small Camps + Boxes", key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes" },
+        { label: "Rune + Melee Troopers", key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers" },
+        { label: "Medium Camps", key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps" },
+        { label: "Big Camps + Sinners", key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners" },
+        { label: "Urn + Gold Rune", key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune" },
+        { label: "Lane Guardian Weak", key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak" },
+        { label: "Rune", key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune" },
+        { label: "Walker Weak", key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak" },
+        { label: "Rune + Fast Troopers", key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers" },
+        { label: "Rune + Gold Buffs", key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs" },
+        { label: "Rune + Troopers 20s HP", key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp" }
+    ];
 
 function ResolveDl4dReminderEventForVolume(eventBase) {
-    var baseName = String(eventBase || "");
-    if (!baseName) return "";
-    return baseName + "_V" + String(NormalizeVoiceVolumeValue(MOD_CONFIG.DL4D_VOLUME));
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.resolveDl4dReminderEventForVolume(eventBase);
+    }
+    return "";
 }
 
 function PlayDl4dReminderPreviewSound(eventBase) {
-    var eventName = ResolveDl4dReminderEventForVolume(eventBase);
-    if (!eventName) return;
-    $.DispatchEvent("PlaySoundEffect", eventName);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        QOL.ui.audio.playDl4dReminderPreviewSound(eventBase);
+    }
 }
 
 function CreateDl4dReminderRow(parent, reminder) {
-    if (!reminder || !reminder.key) return null;
-    var row = CreateRow(parent, reminder.label, reminder.key, "toggle", null, null, null, null);
-    if (!row || !row.IsValid || !row.IsValid()) return row;
-    row.AddClass("DL4DReminderRow");
-
-    var testBtn = $.CreatePanel("Button", row, "");
-    testBtn.AddClass("SectionTitleActionBtn");
-    testBtn.AddClass("DL4DReminderTestBtn");
-    var testIcon = $.CreatePanel("Image", testBtn, "", {
-        src: "s2r://panorama/images/icons/icon_sound_on.vsvg",
-        defaultsrc: "",
-        scaling: "contain"
-    });
-    testIcon.AddClass("SectionTitleActionIcon");
-    testIcon.AddClass("DL4DReminderTestIcon");
-
-    testBtn.SetPanelEvent("onmouseover", function() {
-        QOL.tooltip.hideTextTooltip();
-        QOL.tooltip.cancelHide();
-        QOL.tooltip.showRowTooltip(
-            testBtn,
-            "",
-            LocalizeSettingsText("Play Sound", true) + " " + LocalizeSettingsText(reminder.label || "", true),
-            PERF_IMPACT_TIER_NONE,
-            ""
-        );
-    });
-    testBtn.SetPanelEvent("onmouseout", function() {
-        QOL.tooltip.hideTooltipDeferred("dl4d_reminder_test_mouseout");
-    });
-    testBtn.SetPanelEvent("onactivate", function() {
-        PlayDl4dReminderPreviewSound(reminder.eventBase);
-        testBtn.AddClass("SuccessState");
-        $.Schedule(0.28, function() {
-            if (testBtn && testBtn.IsValid && testBtn.IsValid()) {
-                testBtn.RemoveClass("SuccessState");
-            }
-        });
-    });
-    return row;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio) {
+        return QOL.ui.audio.createDl4dReminderRow(parent, reminder);
+    }
+    return null;
 }
 
 function RunConsoleCommand(commandText) {
@@ -7100,30 +7012,9 @@ function RenderCurrentTabContent(list) {
             CreateSliderRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_TAB", "offset_n1000_1000");
         });
     } else if (currentTab === "Audio") {
-        CreateSectionTitle(list, "Announcer");
-        CreateRow(list, "Voice", "VOICE_TYPE", "dropdown", null, null, null, BuildVoiceDropdownOptions());
-        CreateSliderRow(list, "Volume", "VOICE_VOLUME", "volume_0_100");
-        var announcerTypeRow = CreateRow(list, "Type", null, "multitoggle", null, null, null, NEUTRAL_CAMP_TIER_OPTIONS);
-        if (announcerTypeRow && announcerTypeRow.IsValid && announcerTypeRow.IsValid()) {
-            announcerTypeRow.AddClass("AnnouncerTypeFilterRow");
+        if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.audio && typeof QOL.ui.audio.render === "function") {
+            QOL.ui.audio.render(list);
         }
-        var announcerBuffFilterRow = CreateRow(list, "Buff Filter", null, "multitoggle", null, null, null, BRIDGE_BUFF_FILTER_OPTIONS);
-        if (announcerBuffFilterRow && announcerBuffFilterRow.IsValid && announcerBuffFilterRow.IsValid()) {
-            announcerBuffFilterRow.AddClass("AnnouncerTypeFilterRow");
-        }
-        CreateSliderRow(list, "Buff Delay", "BRIDGE_BUFF_START", "sec_0_60", "In Seconds");
-        CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Minimap Reminder", "ENABLE_MINIMAP_REMINDER", "Ding to Check Minimap", function(sectionParent) {
-            CreateSliderRow(sectionParent, "Timer", "MINIMAP_REMINDER_INTERVAL", "sec_5_60", "In Seconds");
-        });
-        CreateSeparator(list);
-        CreateAnimatedInlineToggleSection(list, "Deadlock For Dummies", "ENABLE_DL4D_REMINDERS", "Timed audio reminders from Deadlock For Dummies.", function(sectionParent) {
-            CreateSliderRow(sectionParent, "Volume", "DL4D_VOLUME", "volume_0_100");
-            CreateRow(sectionParent, "Captions", "ENABLE_DL4D_CAPTIONS", "toggle", null, null, null, null);
-            for (var dl4dIndex = 0; dl4dIndex < DL4D_REMINDER_OPTIONS.length; dl4dIndex++) {
-                CreateDl4dReminderRow(sectionParent, DL4D_REMINDER_OPTIONS[dl4dIndex]);
-            }
-        });
     } else if (currentTab === "Console") {
         if (gSearchCollectMode && gSearchCollectState) {
             CreateRuntimeSectionTitle(list, "General");

@@ -14,6 +14,7 @@ const settingsModalPath = path.join(projectRoot, "panorama", "scripts", "ui", "m
 const settingsConfigTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "config_tab.js");
 const settingsCloudSyncPath = path.join(projectRoot, "panorama", "scripts", "ui", "cloud_sync.js");
 const settingsSupportPath = path.join(projectRoot, "panorama", "scripts", "ui", "support.js");
+const settingsAudioPath = path.join(projectRoot, "panorama", "scripts", "ui", "audio.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
 const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
@@ -560,7 +561,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsPath],
+        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
