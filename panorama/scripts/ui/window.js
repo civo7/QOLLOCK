@@ -467,28 +467,35 @@
         return true;
     };
 
-    const renderTab = (tabId) => {
-        if (!findShell() || !isAlive(_contentList)) return;
+    const renderTab = (tabId, targetContainer) => {
+        const isSearchCollect = (typeof globalThis.gSearchCollectMode !== "undefined" && globalThis.gSearchCollectMode);
+        let container = null;
+        if (!isSearchCollect) {
+            container = (isAlive(targetContainer))
+                ? targetContainer
+                : (findShell() && isAlive(_contentList) ? _contentList : null);
+            if (!container || !isAlive(container)) return;
 
-        try {
-            _contentList.RemoveAndDeleteChildren();
-        } catch (_) {}
+            try {
+                container.RemoveAndDeleteChildren();
+            } catch (_) {}
+        }
 
         const customRenderer = _tabRenderers.get(tabId);
         if (typeof customRenderer === "function") {
-            customRenderer(_contentList, Q.ui.renderer);
+            customRenderer(container, Q.ui.renderer);
             return;
         }
 
         // Layout-driven declarative rendering
-        if (renderLayoutTab(tabId, _contentList)) {
+        if (container && renderLayoutTab(tabId, container)) {
             return;
         }
 
         // Fallback: If ql_settings.js or legacy renderer exists, delegate
-        if (typeof globalThis.RenderCurrentTabContent === "function") {
+        if (container && typeof globalThis.RenderCurrentTabContent === "function") {
             try {
-                globalThis.RenderCurrentTabContent(_contentList);
+                globalThis.RenderCurrentTabContent(container);
                 return;
             } catch (e) {
                 $.Msg(`[QOLLock][WARN][Window] RenderCurrentTabContent failed: ${e?.message || e}`);
@@ -496,10 +503,12 @@
         }
 
         // Default placeholder for unmapped tabs
-        const placeholder = createPanel("Label", _contentList, "");
-        if (placeholder) {
-            placeholder.AddClass("SettingRow");
-            placeholder.text = `${localize(getTabDisplayName(tabId))} — content ready.`;
+        if (container) {
+            const placeholder = createPanel("Label", container, "");
+            if (placeholder) {
+                placeholder.AddClass("SettingRow");
+                placeholder.text = `${localize(getTabDisplayName(tabId))} — content ready.`;
+            }
         }
     };
 
