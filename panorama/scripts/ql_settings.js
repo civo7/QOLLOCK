@@ -2294,7 +2294,9 @@ function SaveAndSync() {
         try { hud = QOL.core.PanelHelpers.findHud(panel) || QOL.core.PanelHelpers.findHud(root); } catch(ePh) {}
     }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
-    RefreshActivePresetConfigMarkerBeforeSave();
+    if (typeof globalThis.RefreshActivePresetConfigMarkerBeforeSave === "function") {
+        globalThis.RefreshActivePresetConfigMarkerBeforeSave();
+    }
     var data = WrapConfigForStorage(MOD_CONFIG);
     if (data === gLastSavedConfigRaw) {
         PublishPaletteColorBridges();
@@ -3913,100 +3915,7 @@ function OpenAvailableModal() {
     SetActiveTabAndRefresh("Support");
 }
 
-function BuildCommunityPresetEntries() {
-    var entries = [];
-    entries.push({ label: "Saiah", preset: "Saiah" });
-    entries.push({ label: "Basil", preset: "Basil" });
-    entries.push({ label: "Vegas", preset: "Vegas" });
-    entries.push({ label: "Poshy", preset: "Poshy" });
-    entries.push({ label: "Goober", preset: "Goober" });
-    entries.push({ label: "Piggy", preset: "Piggy" });
-    entries.push({ label: "BSQTT", preset: "BSQTT" });
-    entries.push({ label: BREAD_PRESET_NAME, preset: BREAD_PRESET_NAME });
-    entries.push({ label: "Saintmxsm", preset: "Saintmxsm" });
-    entries.push({ label: "Tuna", preset: "Tuna" });
-    entries.push({ label: "Sneed", preset: "Sneed" });
-    entries.push({ label: "iKaritzu", preset: "iKaritzu" });
-    entries.push({ label: "Scuffed", preset: "Scuffed" });
-    entries.push({ label: "Gyzeh", preset: "Gyzeh" });
-    entries.push({ label: "bonclide", preset: "bonclide" });
-    entries.push({ label: "Zer0", preset: "Zer0" });
-    entries.push({ label: "Pops", preset: "Pops" });
-    entries.push({ label: "Wouwei", preset: "Wouwei" });
-    entries.push({ label: "Nairshark", preset: "Nairshark" });
-    entries.push({ label: "Satanael", preset: "Satanael" });
-    entries.push({ label: "Kr1stux", preset: "Kr1stux" });
-    entries.push({ label: "Wrvth", preset: "Wrvth" });
-    entries.push({ label: "Jared", preset: "Jared" });
-    entries.push({ label: "Profitable", preset: "Profitable" });
-    entries.push({ label: "Bubsito", preset: "Bubsito" });
-    entries.push({ label: "Gambler", preset: "Gambler" });
-    entries.push({ label: "Hikyo", preset: "Hikyo" });
-    entries.push({ label: "Chjcago", preset: "Chjcago" });
-    entries.push({ label: "Starjadian", preset: "Starjadian" });
-    entries.push({ label: "Synthronix", preset: "Synthronix" });
-    entries.push({ label: "Shark", preset: "Shark" });
-    entries.push({ label: "Neonvoid", preset: "Neonvoid" });
-    entries.push({ label: "Fenmore", preset: "Fenmore" });
-    entries.push({ label: "Deethirty", preset: "Deethirty" });
-    entries.push({ label: "Jerboa", preset: "Jerboa" });
-    entries.push({ label: "RiChew", preset: "RiChew" });
-    entries.push({ label: "Soramikali", preset: "Soramikali" });
-    entries.push({ label: "Jaundice", preset: "Jaundice" });
-    entries.push({ label: "Xavier", preset: "Xavier" });
-    entries.push({ label: "Spookyy", preset: "Spookyy" });
-    entries.push({ label: "Specty", preset: "Specty" });
-    entries.push({ label: "Wirdly", preset: "Wirdly" });
-    entries.push({ label: "Radiant", preset: "Radiant" });
-    entries.push({ label: "Chumba", preset: "Chumba" });
-    entries.push({ label: "FakeThread", preset: "FakeThread" });
-    entries.push({ label: "7eventy7", preset: "7eventy7" });
-    entries.push({ label: "XD_HECTICC", preset: "XD_HECTICC" });
-    entries.push({ label: "Enova", preset: "Enova" });
-    entries.push({ label: "Boredom", preset: "Boredom" });
-    entries.push({ label: "PrivateProf", preset: "PrivateProf" });
-    entries.push({ label: "Munfins", preset: "Munfins" });
-    entries.push({ label: "Gmanc2", preset: "Gmanc2" });
-    entries.push({ label: "Keta", preset: "Keta" });
-    entries.push({ label: "Torque", preset: "Torque" });
-    entries.push({ label: "iMicro", preset: "iMicro" });
-    entries.push({ label: "TW1G", preset: "TW1G" });
-    entries.push({ label: "Veradox", preset: "Veradox" });
-    entries.push({ label: "Antetheosis", preset: "Antetheosis" });
-    entries.push({ label: "k49", preset: "k49" });
-    entries.push({ label: "ninjabladejr", preset: "ninjabladeJr" });
-    entries.push({ label: "FlintSnow", preset: "FlintSnow" });
-    entries.push({ label: "Fiizypopdrinkk", preset: "Fiizypopdrinkk" });
-    entries.push({ label: "Steqdyy", preset: "Steqdyy" });
-    entries.push({ label: "Synapses_", preset: "Synapses_" });
-    entries.push({ label: "Gerglee", preset: "Gerglee" });
-    entries.push({ label: "Dappa", preset: "Dappa" });
-    entries.push({ label: "Seyer", preset: "Seyer" });
-    entries.push({
-        label: "T1FF4NNY",
-        preset: "T1FF4NNY"
-    });
-    entries.push({ label: "Joey", preset: "Joey" });
-    entries.push({ label: "Zyartic", preset: "Zyartic" });
-    entries.push({ label: "billyyy", preset: "billyyy" });
-    entries.push({ label: "mituu", preset: "mituu" });
-    entries.push({ label: "qlt", preset: "qlt" });
-    entries.push({ label: "munchkin", preset: "munchkinman" });
-    entries.push({ label: "Blank2762", preset: "Blank2762" });
-    entries.push({ label: "Valerie", preset: "Valerie" });
-    entries.push({ label: "Rosalia", preset: "Rosalia" });
-    entries.push({ label: "notah", preset: "notah" });
-    entries.push({ label: "Anguish", preset: "Anguish" });
-    entries.push({ label: "_ZODUK_", preset: "_ZODUK_" });
-    entries.push({ label: "nkonin.me", preset: "nkonin.me" });
-    entries.push({ label: "loony", preset: "loony" });
-    entries.push({ label: "leah", preset: "leah" });
-    entries.push({ label: "Thorkizzle", preset: "Thorkizzle" });
-    for (var i = entries.length; i < 90; i++) {
-        entries.push({ label: "Available", available: false });
-    }
-    return entries;
-}
+// BuildCommunityPresetEntries extracted to panorama/scripts/ui/presets.js
 
 function CreateSeparator(parent) {
     if (gSearchCollectMode && gSearchCollectState) {
@@ -6201,7 +6110,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
             btnLbl.text = opt.label;
             btn.SetPanelEvent("onactivate", function() {
                 var presetData = opt.label === "Default" ? DEFAULT_CONFIG : PRESETS[opt.label];
-                if (ApplyPresetConfig(presetData)) {
+                var applyPreset = globalThis.ApplyPresetConfig || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && QOL.ui.presets.applyPresetConfig);
+                if (applyPreset && applyPreset(presetData)) {
                     SaveAndSync();
                     btn.AddClass("SuccessState");
                     $.Schedule(0.28, function() {
@@ -6348,7 +6258,8 @@ function CreateRow(parent, label, configId, type, min, max, step, options, descr
                 handled = true;
             } else if (configId && configId.indexOf("SEARCH_PRESET:") === 0) {
                 var presetName = configId.slice("SEARCH_PRESET:".length);
-                handled = ApplyPresetByName(presetName);
+                var applyPresetName = globalThis.ApplyPresetByName || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && QOL.ui.presets.applyPresetByName);
+                handled = applyPresetName ? applyPresetName(presetName) : false;
             } else if (configId === "OPEN_COMMISSIONS") {
                 $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions");
                 handled = true;
@@ -6674,402 +6585,38 @@ function CreateInlineSecondaryCheckboxToggleRow(parent, label, configId, seconda
     return row;
 }
 
-function ApplyPresetConfig(presetData) {
-    if (!presetData) return false;
-
-    // Keep UI-only layout settings untouched by preset swaps.
-    var preservedDragEnabled = MOD_CONFIG.DRAG_ENABLED;
-    var preservedPreviewsEnabled = MOD_CONFIG.PREVIEWS_ENABLED;
-
-    for (var key in DEFAULT_CONFIG) {
-        MOD_CONFIG[key] = DEFAULT_CONFIG[key];
-    }
-    for (var presetKey in presetData) {
-        MOD_CONFIG[presetKey] = presetData[presetKey];
-    }
-    NormalizeNeutralCampFlags(MOD_CONFIG, presetData);
-    NormalizeItemCooldownModeConfig(MOD_CONFIG, presetData);
-    NormalizeAmmoScaleConfig(MOD_CONFIG, presetData);
-    NormalizeVoiceTypeConfig(MOD_CONFIG);
-    NormalizeHealthbarTypeConfig(MOD_CONFIG, presetData);
-    NormalizeColorWarningConfig(MOD_CONFIG, presetData);
-    NormalizeEnemyColorWarningConfig(MOD_CONFIG, presetData);
-    NormalizeAllyColorWarningConfig(MOD_CONFIG, presetData);
-    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, presetData);
-    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, presetData);
-    NormalizeShopItemNotificationsConfig(MOD_CONFIG, presetData);
-    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
-
-    MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
-    MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
-    return true;
-}
-
-function IsBreadPresetName(presetName) {
-    var name = String(presetName || "");
-    return name === BREAD_PRESET_NAME || name === LEGACY_BREAD_PRESET_NAME;
-}
-
-function NormalizeBreadPresetName(presetName) {
-    return IsBreadPresetName(presetName) ? BREAD_PRESET_NAME : String(presetName || "");
-}
-
-function ApplyPresetByName(presetName) {
-    presetName = NormalizeBreadPresetName(presetName);
-    var presetData = presetName === "Default" ? DEFAULT_CONFIG : PRESETS[presetName];
-    var previousLanguage = GetSettingsLanguage();
-    if (!ApplyPresetConfig(presetData)) return false;
-    MOD_CONFIG.ACTIVE_PRESET_NAME = IsBreadPresetName(presetName) ? BREAD_PRESET_NAME : "";
-    gLastAppliedPresetName = String(presetName || "");
-    SetRuntimePresetName(presetName);
-    SaveAndSync();
-    RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
-    return true;
-}
-
-var gPresetButtonRegistry = {};
-var gPresetButtonOrder = [];
-var gPresetHighlightPollToken = 0;
-var gPresetHighlightPollRunning = false;
-var gPresetHighlightRefreshToken = 0;
-var gLastAppliedPresetName = "";
-var PRESET_MATCH_EXCLUDED_KEYS = {
-    DRAG_ENABLED: 1,
-    PREVIEWS_ENABLED: 1,
-    ACTIVE_PRESET_NAME: 1
-};
-
-function RefreshActivePresetConfigMarkerBeforeSave() {
-    if (!MOD_CONFIG || !MOD_CONFIG.hasOwnProperty("ACTIVE_PRESET_NAME")) return;
-    var activePresetName = String(MOD_CONFIG.ACTIVE_PRESET_NAME || "");
-    if (!activePresetName) {
-        if (DoesCurrentConfigMatchPreset(BREAD_PRESET_NAME)) MOD_CONFIG.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
-        return;
-    }
-    if (IsBreadPresetName(activePresetName) && DoesCurrentConfigMatchPreset(BREAD_PRESET_NAME)) {
-        MOD_CONFIG.ACTIVE_PRESET_NAME = BREAD_PRESET_NAME;
-        return;
-    }
-    MOD_CONFIG.ACTIVE_PRESET_NAME = "";
-    if (MOD_CONFIG.hasOwnProperty("ENABLE_UNSPENT_SOULS")) MOD_CONFIG.ENABLE_UNSPENT_SOULS = 0;
-}
-
-function ResetPresetButtonRegistry() {
-    gPresetButtonRegistry = {};
-    gPresetButtonOrder = [];
-}
-
-function RegisterPresetButton(presetName, button, labelPanel, originalText) {
-    if (!presetName || !button || !labelPanel) return;
-    gPresetButtonRegistry[presetName] = {
-        button: button,
-        label: labelPanel,
-        text: originalText || presetName
-    };
-    gPresetButtonOrder.push(presetName);
-}
-
-function SetExplicitActivePresetButton(button) {
-    for (var i = 0; i < gPresetButtonOrder.length; i++) {
-        var presetName = gPresetButtonOrder[i];
-        var entry = gPresetButtonRegistry[presetName];
-        if (!entry || !entry.button || !entry.button.IsValid || !entry.button.IsValid()) continue;
-        entry.button.SetHasClass("PresetActive", entry.button === button);
-    }
-}
-
-function ResolvePresetConfigByName(presetName) {
-    if (!presetName) return null;
-    presetName = NormalizeBreadPresetName(presetName);
-    if (presetName !== "Default" && !PRESETS.hasOwnProperty(presetName)) return null;
-
-    var resolved = {};
-    for (var key in DEFAULT_CONFIG) {
-        resolved[key] = DEFAULT_CONFIG[key];
-    }
-    if (presetName !== "Default") {
-        var presetData = PRESETS[presetName];
-        for (var presetKey in presetData) {
-            resolved[presetKey] = presetData[presetKey];
-        }
-        NormalizeNeutralCampFlags(resolved, presetData);
-        NormalizeItemCooldownModeConfig(resolved, presetData);
-        NormalizeAmmoScaleConfig(resolved, presetData);
-        NormalizeVoiceTypeConfig(resolved);
-        NormalizeHealthbarTypeConfig(resolved, presetData);
-        NormalizeColorWarningConfig(resolved, presetData);
-        NormalizeEnemyColorWarningConfig(resolved, presetData);
-        NormalizeAllyColorWarningConfig(resolved, presetData);
-        NormalizeTopbarEnemyHpWarningConfig(resolved, presetData);
-        NormalizeTopbarAllyHpWarningConfig(resolved, presetData);
-        NormalizeShopItemNotificationsConfig(resolved, presetData);
-        NormalizeQuickbuyDependencyConfig(resolved);
-    } else {
-        NormalizeNeutralCampFlags(resolved, resolved);
-        NormalizeItemCooldownModeConfig(resolved, resolved);
-        NormalizeAmmoScaleConfig(resolved, resolved);
-        NormalizeVoiceTypeConfig(resolved);
-        NormalizeHealthbarTypeConfig(resolved, resolved);
-        NormalizeColorWarningConfig(resolved, resolved);
-        NormalizeEnemyColorWarningConfig(resolved, resolved);
-        NormalizeAllyColorWarningConfig(resolved, resolved);
-        NormalizeTopbarEnemyHpWarningConfig(resolved, resolved);
-        NormalizeTopbarAllyHpWarningConfig(resolved, resolved);
-        NormalizeShopItemNotificationsConfig(resolved, resolved);
-        NormalizeQuickbuyDependencyConfig(resolved);
-    }
-    return resolved;
-}
-
-function IsPresetValueMatch(currentValue, presetValue) {
-    if (typeof currentValue === "number" && typeof presetValue === "number") {
-        return Math.abs(currentValue - presetValue) <= 0.0001;
-    }
-    return currentValue === presetValue;
-}
-
-function DoesCurrentConfigMatchPreset(presetName) {
-    var resolved = ResolvePresetConfigByName(presetName);
-    if (!resolved) return false;
-
-    for (var key in resolved) {
-        if (PRESET_MATCH_EXCLUDED_KEYS[key]) continue;
-        if (!MOD_CONFIG.hasOwnProperty(key)) continue;
-        if (!IsPresetValueMatch(MOD_CONFIG[key], resolved[key])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function RefreshActivePresetHighlight() {
-    var matchedPreset = null;
-    if (gLastAppliedPresetName) {
-        var lastAppliedEntry = gPresetButtonRegistry[gLastAppliedPresetName];
-        if (
-            lastAppliedEntry &&
-            lastAppliedEntry.button &&
-            lastAppliedEntry.button.IsValid &&
-            lastAppliedEntry.button.IsValid() &&
-            DoesCurrentConfigMatchPreset(gLastAppliedPresetName)
-        ) {
-            matchedPreset = gLastAppliedPresetName;
-        } else {
-            gLastAppliedPresetName = "";
-        }
-    }
-
-    var runtimePreset = GetRuntimePresetName();
-    if (matchedPreset === null && runtimePreset) {
-        var runtimeEntry = gPresetButtonRegistry[runtimePreset];
-        if (
-            runtimeEntry &&
-            runtimeEntry.button &&
-            runtimeEntry.button.IsValid &&
-            runtimeEntry.button.IsValid() &&
-            DoesCurrentConfigMatchPreset(runtimePreset)
-        ) {
-            matchedPreset = runtimePreset;
-        }
-    }
-
-    if (matchedPreset === null) {
-        for (var i = 0; i < gPresetButtonOrder.length; i++) {
-            var presetName = gPresetButtonOrder[i];
-            var entry = gPresetButtonRegistry[presetName];
-            if (!entry || !entry.button || !entry.button.IsValid || !entry.button.IsValid()) continue;
-            if (DoesCurrentConfigMatchPreset(presetName)) {
-                matchedPreset = presetName;
-                break;
-            }
-        }
-    }
-
-    for (var j = 0; j < gPresetButtonOrder.length; j++) {
-        var name = gPresetButtonOrder[j];
-        var reg = gPresetButtonRegistry[name];
-        if (!reg || !reg.button || !reg.button.IsValid || !reg.button.IsValid()) continue;
-        reg.button.SetHasClass("PresetActive", name === matchedPreset);
-    }
-}
+// Presets subsystem extracted to panorama/scripts/ui/presets.js
 
 function IsSettingsWindowVisible() {
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.window && typeof QOL.ui.window.isOpen === "function") {
+        return QOL.ui.window.isOpen();
+    }
     var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
     return !!(win && win.IsValid && win.IsValid() && win.BHasClass && win.BHasClass("Visible"));
 }
 
-function ShouldRunPresetHighlightPolling() {
-    return IsSettingsWindowVisible() && currentTab === "Presets" && !currentSearchQuery && gPresetButtonOrder.length > 0;
+function UpdatePresetHighlightPollingState() {
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && typeof QOL.ui.presets.updatePresetHighlightPollingState === "function") {
+        QOL.ui.presets.updatePresetHighlightPollingState();
+    } else if (typeof globalThis.UpdatePresetHighlightPollingState === "function" && globalThis.UpdatePresetHighlightPollingState !== UpdatePresetHighlightPollingState) {
+        globalThis.UpdatePresetHighlightPollingState();
+    }
 }
 
 function StopPresetHighlightPolling() {
-    gPresetHighlightPollToken += 1;
-    gPresetHighlightPollRunning = false;
-}
-
-function StartPresetHighlightPolling() {
-    if (gPresetHighlightPollRunning) return;
-    gPresetHighlightPollRunning = true;
-    var token = ++gPresetHighlightPollToken;
-    var poll = function() {
-        if (token !== gPresetHighlightPollToken) return;
-        var panel = $.GetContextPanel();
-        if (!panel || !panel.IsValid || !panel.IsValid()) {
-            gPresetHighlightPollRunning = false;
-            return;
-        }
-        if (!ShouldRunPresetHighlightPolling()) {
-            gPresetHighlightPollRunning = false;
-            return;
-        }
-        RefreshActivePresetHighlight();
-        $.Schedule(1.0, poll);
-    };
-    $.Schedule(0.1, poll);
-}
-
-function UpdatePresetHighlightPollingState() {
-    if (ShouldRunPresetHighlightPolling()) {
-        StartPresetHighlightPolling();
-    } else {
-        StopPresetHighlightPolling();
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && typeof QOL.ui.presets.stopPresetHighlightPolling === "function") {
+        QOL.ui.presets.stopPresetHighlightPolling();
+    } else if (typeof globalThis.StopPresetHighlightPolling === "function" && globalThis.StopPresetHighlightPolling !== StopPresetHighlightPolling) {
+        globalThis.StopPresetHighlightPolling();
     }
 }
 
 function QueueActivePresetHighlightRefresh(delaySec) {
-    var delay = Number(delaySec);
-    if (!isFinite(delay) || delay < 0) delay = 0.01;
-    var token = ++gPresetHighlightRefreshToken;
-    $.Schedule(delay, function() {
-        if (token !== gPresetHighlightRefreshToken) return;
-        if (currentTab === "Presets" && gPresetButtonOrder.length > 0) {
-            RefreshActivePresetHighlight();
-        }
-        UpdatePresetHighlightPollingState();
-    });
-}
-
-function ShowPresetApplySuccess(button, labelPanel, originalText) {
-    if (!button || !labelPanel) return;
-    var fallbackText = originalText || labelPanel.text || "";
-
-    button.AddClass("PresetApplySuccess");
-    SetExplicitActivePresetButton(button);
-        labelPanel.text = LocalizeSettingsText("SUCCESS", true);
-    QueueActivePresetHighlightRefresh(0.01);
-
-    $.Schedule(0.6, function() {
-        if (labelPanel && labelPanel.IsValid && labelPanel.IsValid()) {
-            labelPanel.text = fallbackText;
-        }
-        if (button && button.IsValid && button.IsValid()) {
-            button.RemoveClass("PresetApplySuccess");
-        }
-        QueueActivePresetHighlightRefresh(0.01);
-    });
-}
-
-function CreatePresetGrid(parent, title, entries, columns, variant) {
-    var titleLabel = $.CreatePanel("Label", parent, "");
-    titleLabel.AddClass("SectionTitle");
-    titleLabel.AddClass("MainSectionTitle");
-    if (variant === "custom") {
-        titleLabel.AddClass("MainSectionTitleCustom");
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && typeof QOL.ui.presets.queueActivePresetHighlightRefresh === "function") {
+        QOL.ui.presets.queueActivePresetHighlightRefresh(delaySec);
+    } else if (typeof globalThis.QueueActivePresetHighlightRefresh === "function" && globalThis.QueueActivePresetHighlightRefresh !== QueueActivePresetHighlightRefresh) {
+        globalThis.QueueActivePresetHighlightRefresh(delaySec);
     }
-    titleLabel.text = title;
-
-    var grid = $.CreatePanel("Panel", parent, "");
-    grid.AddClass("PresetCategoryGrid");
-    if (variant === "custom") {
-        grid.AddClass("PresetCategoryGridCustom");
-    }
-
-    var cols = columns || 7;
-    var index = 0;
-    while (index < entries.length) {
-        var rowCount = Math.min(cols, entries.length - index);
-        var row = $.CreatePanel("Panel", grid, "");
-        row.AddClass("PresetGridRow");
-        var rowInner = $.CreatePanel("Panel", row, "");
-        rowInner.AddClass("PresetGridRowInner");
-
-        for (var c = 0; c < rowCount; c++) {
-            var entry = entries[index + c];
-            var btn = $.CreatePanel("Button", rowInner, "");
-            btn.AddClass("PresetGridBtn");
-            if (entry && entry.label) {
-                btn.AddClass("PresetGridBtn_" + String(entry.label || "").replace(/[^A-Za-z0-9_]/g, ""));
-            }
-            var entryVariant = (entry && entry.variant) ? String(entry.variant) : String(variant || "");
-            if (entryVariant === "base") btn.AddClass("PresetGridBtnBase");
-            else if (entryVariant === "great") btn.AddClass("PresetGridBtnGreat");
-            else if (entryVariant === "custom") {
-                btn.AddClass("PresetGridBtnCustom");
-                if (entry.available !== false) {
-                    btn.AddClass("PresetGridBtnCustomActive");
-                }
-            }
-
-            var lbl = $.CreatePanel("Label", btn, "");
-            lbl.text = entry.label;
-
-            if (entry.available === false) {
-                btn.AddClass("PresetGridBtnUnavailable");
-                btn.SetPanelEvent("onactivate", function() {
-                    OpenAvailableModal();
-                });
-            } else {
-                if (entry.preset && !entry.action) {
-                    RegisterPresetButton(entry.preset, btn, lbl, entry.label);
-                }
-                (function(button, labelPanel, originalLabel, presetName, actionName) {
-                    button.SetPanelEvent("onactivate", function() {
-                        var candidatePresetConfig = BuildPresetCandidateConfigByName(presetName);
-                        if (!candidatePresetConfig) return;
-                        var presetDiffRows = BuildConfigDiffRows(MOD_CONFIG, candidatePresetConfig);
-                        OpenConfigDiffPreviewModal({
-                            title: "Settings Changes",
-                            summary: "Changes: " + String(presetDiffRows.length),
-                            rows: presetDiffRows,
-                            applyText: "Confirm",
-                            cancelText: "Cancel",
-                            onApply: function() {
-                                var didApply = ApplyPresetByName(presetName);
-                                if (!didApply) {
-                        SetLocalizedConfigFeedbackMessage("Preset apply failed.", "error", 2200);
-                                    return false;
-                                }
-                                ShowPresetApplySuccess(button, labelPanel, originalLabel);
-                                return true;
-                            }
-                        });
-                    });
-                })(btn, lbl, entry.label, entry.preset, entry.action);
-            }
-        }
-
-        var shouldAddDivider = false;
-        for (var d = 0; d < rowCount; d++) {
-            var dividerEntry = entries[index + d];
-            if (dividerEntry && dividerEntry.dividerAfter === true) {
-                shouldAddDivider = true;
-                break;
-            }
-        }
-
-        index += rowCount;
-
-        if (shouldAddDivider && index < entries.length) {
-            var dividerRow = $.CreatePanel("Panel", grid, "");
-            dividerRow.AddClass("PresetGridDividerRow");
-            var dividerLine = $.CreatePanel("Panel", dividerRow, "");
-            dividerLine.AddClass("PresetGridDividerLine");
-        }
-    }
-    return {
-        titleLabel: titleLabel,
-        grid: grid
-    };
 }
 
 function CreateSupportThanksPlaques(parent, entries, columns) {
@@ -7479,80 +7026,19 @@ function RenderSearchResults(list, query) {
 function RenderCurrentTabContent(list) {
     gCurrentSettingsSectionTitle = "";
     if (!gSearchCollectMode && currentTab !== "Presets") {
-        ResetPresetButtonRegistry();
+        if (typeof globalThis.ResetPresetButtonRegistry === "function") {
+            globalThis.ResetPresetButtonRegistry();
+        }
     }
     if (currentTab === "Presets") {
-        var isRuSettings = IsRussianSettingsLanguage();
-        var playerPresetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B \u0438\u0433\u0440\u043E\u043A\u043E\u0432" : "Player Presets";
-        var presetsTitle = isRuSettings ? "\u041F\u0440\u0435\u0441\u0435\u0442\u044B" : "Presets";
-        var requestPresetText = "Request a Community Preset";
-
-        var basePresetEntries = [
-            { label: "Default", preset: "Default", variant: "base" },
-            { label: "16:10", preset: "16:10", variant: "base" },
-            { label: "4:3", preset: "4:3", variant: "base" },
-            { label: "Clean", preset: "Clean", variant: "base" },
-            { label: "Enhanced", preset: "Enhanced", variant: "base" },
-            { label: "Maximum", preset: "Maximum", variant: "base", dividerAfter: true }
-        ];
-        var playerPresetEntries = [];
-        var customEntries = basePresetEntries.concat(BuildCommunityPresetEntries());
-
-        if (gSearchCollectMode && gSearchCollectState) {
-            var addPresetSearchRows = function(sectionTitle, entries, sectionSubInfo) {
-                CreateSectionTitle(list, sectionTitle);
-                for (var pi = 0; pi < entries.length; pi++) {
-                    var entry = entries[pi];
-                    if (!entry || entry.available === false) continue;
-                    var configId = "SEARCH_TAB:Presets";
-                    var buttonLabel = "Open";
-                    var subInfo = sectionSubInfo;
-
-                    if (entry && entry.preset) {
-                        configId = "SEARCH_PRESET:" + entry.preset;
-                        buttonLabel = "Apply";
-                    }
-
-                    CreateRow(list, entry.label, configId, "actionbutton", null, null, null, [
-                        { label: buttonLabel }
-                    ], subInfo);
-                }
-            };
-
-            if (playerPresetEntries.length > 0) {
-                CreateSeparator(list);
-                addPresetSearchRows(playerPresetsTitle, playerPresetEntries, "Player preset");
-            }
-            addPresetSearchRows(presetsTitle, customEntries, "Preset");
-            CreateRow(list, requestPresetText, "OPEN_COMMISSIONS", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Request a community preset");
+        if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && typeof QOL.ui.presets.renderPresetsTab === "function") {
+            QOL.ui.presets.renderPresetsTab(list);
             return;
         }
-
-        ResetPresetButtonRegistry();
-        if (playerPresetEntries.length > 0) {
-            CreateSeparator(list);
-            CreatePresetGrid(list, playerPresetsTitle, playerPresetEntries, 6, "great");
+        if (typeof globalThis.RenderPresetsTab === "function") {
+            globalThis.RenderPresetsTab(list);
+            return;
         }
-        CreatePresetGrid(list, presetsTitle, customEntries, 6, "custom");
-
-        var communityHintRow = $.CreatePanel("Panel", list, "CommunityPresetHintRow");
-        communityHintRow.AddClass("CommunityPresetHintRow");
-        var communityHintInner = $.CreatePanel("Panel", communityHintRow, "CommunityPresetHintInner");
-        communityHintInner.AddClass("CommunityPresetHintInner");
-        var communityHintLink = $.CreatePanel("Button", communityHintInner, "CommunityPresetHintLink");
-        communityHintLink.AddClass("CommunityPresetHintLink");
-        var communityHintIcon = $.CreatePanel("Image", communityHintLink, "CommunityPresetHintIcon", {
-            src: "s2r://panorama/images/icons/icon_feedback.vsvg"
-        });
-        communityHintIcon.AddClass("CommunityPresetHintIcon");
-        var communityHintLinkLabel = $.CreatePanel("Label", communityHintLink, "CommunityPresetHintLinkLabel");
-        communityHintLinkLabel.text = requestPresetText;
-        communityHintLink.SetPanelEvent("onactivate", function() {
-            $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo/commissions");
-        });
-        RefreshActivePresetHighlight();
     } else if (currentTab === "Crosshair") {
         CreateAnimatedInlineToggleSection(list, "Item Cooldowns", "ENABLE_PASSIVE_COOLDOWN", "Tracked cooldowns near crosshair", function(sectionParent) {
             var advancedModeEnabled = QOL.preview.isAdvancedItemCooldownModeEnabled();
@@ -8588,7 +8074,12 @@ function RenderCurrentTabContent(list) {
                     var applyOk = true;
                     var applyErr = "";
                     try {
-                        ApplyPresetByName(presetName);
+                        var applyPresetFn = globalThis.ApplyPresetByName || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.presets && QOL.ui.presets.applyPresetByName);
+                        if (applyPresetFn) {
+                            applyPresetFn(presetName);
+                        } else {
+                            throw new Error("ApplyPresetByName not available");
+                        }
                     } catch(e) {
                         applyOk = false;
                         applyErr = (e && e.message) ? e.message : String(e || "");
