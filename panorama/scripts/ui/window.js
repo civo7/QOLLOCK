@@ -151,6 +151,10 @@
             });
         }
 
+        if (_header && Q.ui?.search?.bindHeader) {
+            Q.ui.search.bindHeader(_header);
+        }
+
         return _window;
     };
 
@@ -349,6 +353,9 @@
     // =========================================================================
 
     const setActiveTab = (tabId) => {
+        if (Q.ui?.search?.isSearching?.()) {
+            Q.ui.search.clear();
+        }
         _activeTab = tabId;
         highlightActiveTab();
         renderTab(tabId);
