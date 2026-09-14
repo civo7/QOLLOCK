@@ -1719,376 +1719,102 @@ function StartSettingsGameTransitionWatch() {
     $.Schedule(SETTINGS_TRANSITION_WATCH_INTERVAL_SEC, tick);
 }
 
+// Cloud sync / shop build save & clear subsystem extracted to panorama/scripts/ui/cloud_sync.js
 function QueueBuildSaveRequest(rawExportString) {
-    var payload = rawExportString ? String(rawExportString).replace(/\s+/g, "") : "";
-    if (!payload || !EXPORT_TOKEN_REGEX.test(payload)) return "";
-
-    var token = String(Date.now ? Date.now() : (new Date()).getTime()) + "_" + String(Math.floor(Math.random() * 1000000));
-    var panel = $.GetContextPanel();
-    var root = FindRootPanel();
-
-    if (panel && panel.SetAttributeString) {
-        panel.SetAttributeString(BUILD_SAVE_REQUEST_ATTR, payload);
-        panel.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, token);
-        panel.SetAttributeString(BUILD_SAVE_MSG_ATTR, "queued");
-        panel.SetAttributeString(BUILD_SAVE_STATE_ATTR, "pending");
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.queueBuildSaveRequest === "function") {
+        return QOL.ui.cloudSync.queueBuildSaveRequest(rawExportString);
     }
-    if (root && root.SetAttributeString) {
-        root.SetAttributeString(BUILD_SAVE_REQUEST_ATTR, payload);
-        root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, token);
-        root.SetAttributeString(BUILD_SAVE_MSG_ATTR, "queued");
-        root.SetAttributeString(BUILD_SAVE_STATE_ATTR, "pending");
+    if (typeof globalThis.QueueBuildSaveRequest === "function" && globalThis.QueueBuildSaveRequest !== QueueBuildSaveRequest) {
+        return globalThis.QueueBuildSaveRequest(rawExportString);
     }
-    return token;
+    return "";
 }
 
 function ReadBuildSaveStatus() {
-    var panel = $.GetContextPanel();
-    var root = FindRootPanel();
-    var fromRoot = root && root.GetAttributeString ? {
-        state: root.GetAttributeString(BUILD_SAVE_STATE_ATTR, ""),
-        msg: root.GetAttributeString(BUILD_SAVE_MSG_ATTR, ""),
-        token: root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "")
-    } : { state: "", msg: "", token: "" };
-    if (fromRoot.state || fromRoot.msg || fromRoot.token) return fromRoot;
-    if (panel && panel.GetAttributeString) {
-        return {
-            state: panel.GetAttributeString(BUILD_SAVE_STATE_ATTR, ""),
-            msg: panel.GetAttributeString(BUILD_SAVE_MSG_ATTR, ""),
-            token: panel.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "")
-        };
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.readBuildSaveStatus === "function") {
+        return QOL.ui.cloudSync.readBuildSaveStatus();
+    }
+    if (typeof globalThis.ReadBuildSaveStatus === "function" && globalThis.ReadBuildSaveStatus !== ReadBuildSaveStatus) {
+        return globalThis.ReadBuildSaveStatus();
     }
     return { state: "", msg: "", token: "" };
 }
 
-// Two vocabularies land here. The old build-save pipeline published the
-// message names below; ql_build_storage publishes its own stage names instead,
-// and because none of them matched, every stage of a save fell through to the
-// default and the button read "SAVING" from the first tick to the last — about
-// four and a half seconds of nothing changing, which reads as a hang.
-// Deliberately mapped onto the labels that already exist rather than new ones:
-// six distinct labels the user can watch move, no new strings to translate.
 function ResolveBuildSavePendingLabel(message) {
-    if (message === "starting") return "START";
-    if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
-    if (message === "waiting_for_shop") return "OPEN SHOP";
-    if (message === "initializing_storage_build") return "INIT BUILD";
-    if (message === "opening_edit_mode") return "EDITING";
-    if (message === "writing_category_name") return "WRITING";
-    if (message === "saving") return "SAVING";
-    if (message === "verifying") return "VERIFY";
-    // ql_build_storage stage names.
-    if (message === "switching_to_storage_hero" || message === "switch_hero") return "SKYRUNNER";
-    if (message === "confirm_hero") return "SKYRUNNER";
-    if (message === "open_shop") return "OPEN SHOP";
-    if (message === "open_browser" || message === "await_list") return "INIT BUILD";
-    if (message === "pick_target" || message === "await_selected") return "INIT BUILD";
-    if (message === "await_editor") return "EDITING";
-    if (message === "write_description") return "WRITING";
-    if (message === "commit" || message === "await_commit") return "SAVING";
-    if (message === "verify") return "VERIFY";
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.resolveBuildSavePendingLabel === "function") {
+        return QOL.ui.cloudSync.resolveBuildSavePendingLabel(message);
+    }
+    if (typeof globalThis.ResolveBuildSavePendingLabel === "function" && globalThis.ResolveBuildSavePendingLabel !== ResolveBuildSavePendingLabel) {
+        return globalThis.ResolveBuildSavePendingLabel(message);
+    }
     return "SAVING";
 }
 
 function WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel) {
-    var startMs = Date.now ? Date.now() : (new Date()).getTime();
-    var timeoutMs = 30000;
-    var lastFeedbackKey = "";
-
-    function setFeedbackForPending(msg) {
-        var key = "pending:" + String(msg || "");
-        if (key === lastFeedbackKey) return;
-        lastFeedbackKey = key;
-        var message = String(msg || "");
-        if (message === "waiting_for_shop" || message === "open_shop") {
-            SetLocalizedConfigFeedbackMessage("Open shop to continue save.", "warning", 0);
-            return;
-        }
-        if (message === "switching_to_skyrunner" || message === "switching_to_airheart" ||
-            message === "switching_to_storage_hero" || message === "switch_hero" ||
-            message === "confirm_hero") {
-            SetLocalizedConfigFeedbackMessage("Switching to Skyrunner...", "info", 0);
-            return;
-        }
-        if (message === "writing_category_name" || message === "saving" ||
-            message === "write_description" || message === "commit" ||
-            message === "await_commit") {
-            SetLocalizedConfigFeedbackMessage("Writing settings string to build...", "info", 0);
-            return;
-        }
-            SetLocalizedConfigFeedbackMessage("Save in progress...", "info", 0);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.watchBuildSaveStatus === "function") {
+        return QOL.ui.cloudSync.watchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel);
     }
-
-    function restoreDefault() {
-        if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
-        saveBtn.RemoveClass("SuccessState");
-        saveBtn.RemoveClass("FailureState");
-        saveLbl.text = defaultLabel;
+    if (typeof globalThis.WatchBuildSaveStatus === "function" && globalThis.WatchBuildSaveStatus !== WatchBuildSaveStatus) {
+        return globalThis.WatchBuildSaveStatus(saveBtn, saveLbl, expectedToken, defaultLabel);
     }
-
-    function tick() {
-        if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var elapsedMs = nowMs - startMs;
-        var status = ReadBuildSaveStatus();
-        var tokenMatches = !expectedToken || !status.token || status.token === expectedToken;
-
-        if (status.state === "pending" && tokenMatches) {
-            saveBtn.RemoveClass("FailureState");
-            saveBtn.AddClass("SuccessState");
-            saveLbl.text = LocalizeSettingsText(ResolveBuildSavePendingLabel(status.msg || ""), true);
-            setFeedbackForPending(status.msg || "");
-            if (elapsedMs >= timeoutMs) {
-                saveBtn.RemoveClass("SuccessState");
-                saveBtn.AddClass("FailureState");
-                saveLbl.text = LocalizeSettingsText("TIMEOUT", true);
-        SetLocalizedConfigFeedbackMessage("Save timed out. Try again.", "error", 2600);
-                $.Schedule(0.75, restoreDefault);
-                return;
-            }
-            $.Schedule(0.15, tick);
-            return;
-        }
-
-        if (status.state === "success" && tokenMatches) {
-            saveBtn.RemoveClass("FailureState");
-            saveBtn.AddClass("SuccessState");
-            saveLbl.text = LocalizeSettingsText("SAVED", true);
-            SetLocalizedConfigFeedbackMessage("Save completed.", "success", 2200);
-            $.Schedule(0.75, restoreDefault);
-            return;
-        }
-
-        if (status.state === "failed" && tokenMatches) {
-            saveBtn.RemoveClass("SuccessState");
-            saveBtn.AddClass("FailureState");
-            saveLbl.text = LocalizeSettingsText("FAILED", true);
-            SetLocalizedConfigFeedbackMessage("Save failed.", "error", 2600);
-            $.Schedule(0.75, restoreDefault);
-            return;
-        }
-
-        if (elapsedMs < timeoutMs) {
-            $.Schedule(0.15, tick);
-            return;
-        }
-        restoreDefault();
-    }
-
-    tick();
 }
-
-var gSaveButtonLastActionMs = 0;
-var SAVE_BUTTON_DEBOUNCE_MS = 1000;
 
 function ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue) {
-    if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
-    if (!saveLbl || !saveLbl.IsValid || !saveLbl.IsValid()) return;
-    var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-    if (gSaveButtonLastActionMs > nowMs - SAVE_BUTTON_DEBOUNCE_MS) return;
-    gSaveButtonLastActionMs = nowMs;
-    var cfgSave = LocalizeSettingsText("SAVE", true);
-    var cfgQueued = LocalizeSettingsText("QUEUED", true);
-    var cfgFailed = LocalizeSettingsText("FAILED", true);
-
-    if (typeof onBeforeQueue === "function") {
-        try { onBeforeQueue(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.activateBuildSaveFromUi === "function") {
+        return QOL.ui.cloudSync.activateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue);
     }
-
-    var exportRaw = GetCurrentExportSettingsString();
-    var token = QueueBuildSaveRequest(exportRaw);
-    if (!token || token.length === 0) {
-        saveBtn.RemoveClass("SuccessState");
-        saveBtn.AddClass("FailureState");
-        saveLbl.text = cfgFailed;
-        SetLocalizedConfigFeedbackMessage("Failed to queue save request.", "error", 2200);
-        $.Schedule(0.6, function() {
-            if (!saveBtn || !saveBtn.IsValid || !saveBtn.IsValid()) return;
-            saveBtn.RemoveClass("FailureState");
-            saveLbl.text = cfgSave;
-        });
-        return;
+    if (typeof globalThis.ActivateBuildSaveFromUi === "function" && globalThis.ActivateBuildSaveFromUi !== ActivateBuildSaveFromUi) {
+        return globalThis.ActivateBuildSaveFromUi(saveBtn, saveLbl, onBeforeQueue);
     }
-
-    saveBtn.RemoveClass("FailureState");
-    saveBtn.AddClass("SuccessState");
-    saveLbl.text = cfgQueued;
-        SetLocalizedConfigFeedbackMessage("Save queued.", "info", 0);
-    WatchBuildSaveStatus(saveBtn, saveLbl, token, cfgSave);
 }
 
-var gClearButtonLastActionMs = 0;
-var CLEAR_BUTTON_DEBOUNCE_MS = 1000;
-
 function QueueBuildClearRequest() {
-    var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-    if (gClearButtonLastActionMs > nowMs - CLEAR_BUTTON_DEBOUNCE_MS) return "";
-    gClearButtonLastActionMs = nowMs;
-    var token = String(Date.now ? Date.now() : (new Date()).getTime()) + "_" + String(Math.floor(Math.random() * 1000000));
-    var panel = $.GetContextPanel();
-    var root = FindRootPanel();
-
-    var saveStatus = ReadBuildSaveStatus();
-    if (saveStatus && saveStatus.state === "pending") return "";
-
-    if (panel && panel.SetAttributeString) {
-        panel.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "1");
-        panel.SetAttributeString(BUILD_CLEAR_TOKEN_ATTR, token);
-        panel.SetAttributeString(BUILD_CLEAR_MSG_ATTR, "queued");
-        panel.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "pending");
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.queueBuildClearRequest === "function") {
+        return QOL.ui.cloudSync.queueBuildClearRequest();
     }
-    if (root && root.SetAttributeString) {
-        root.SetAttributeString(BUILD_CLEAR_REQUEST_ATTR, "1");
-        root.SetAttributeString(BUILD_CLEAR_TOKEN_ATTR, token);
-        root.SetAttributeString(BUILD_CLEAR_MSG_ATTR, "queued");
-        root.SetAttributeString(BUILD_CLEAR_STATE_ATTR, "pending");
+    if (typeof globalThis.QueueBuildClearRequest === "function" && globalThis.QueueBuildClearRequest !== QueueBuildClearRequest) {
+        return globalThis.QueueBuildClearRequest();
     }
-    return token;
+    return "";
 }
 
 function ReadBuildClearStatus() {
-    var panel = $.GetContextPanel();
-    var root = FindRootPanel();
-    var fromRoot = root && root.GetAttributeString ? {
-        state: root.GetAttributeString(BUILD_CLEAR_STATE_ATTR, ""),
-        msg: root.GetAttributeString(BUILD_CLEAR_MSG_ATTR, ""),
-        token: root.GetAttributeString(BUILD_CLEAR_TOKEN_ATTR, "")
-    } : { state: "", msg: "", token: "" };
-    if (fromRoot.state || fromRoot.msg || fromRoot.token) return fromRoot;
-    if (panel && panel.GetAttributeString) {
-        return {
-            state: panel.GetAttributeString(BUILD_CLEAR_STATE_ATTR, ""),
-            msg: panel.GetAttributeString(BUILD_CLEAR_MSG_ATTR, ""),
-            token: panel.GetAttributeString(BUILD_CLEAR_TOKEN_ATTR, "")
-        };
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.readBuildClearStatus === "function") {
+        return QOL.ui.cloudSync.readBuildClearStatus();
+    }
+    if (typeof globalThis.ReadBuildClearStatus === "function" && globalThis.ReadBuildClearStatus !== ReadBuildClearStatus) {
+        return globalThis.ReadBuildClearStatus();
     }
     return { state: "", msg: "", token: "" };
 }
 
 function ResolveBuildClearPendingLabel(message) {
-    if (message === "starting") return "START";
-    if (message === "switching_to_skyrunner" || message === "switching_to_airheart") return "SKYRUNNER";
-    if (message === "confirming_skyrunner" || message === "confirming_airheart") return "SKYRUNNER";
-    if (message === "await_user_open_shop") return "OPEN SHOP";
-    if (message === "waiting_for_shop") return "OPEN SHOP";
-    if (message === "opening_builds_list") return "BROWSE";
-    if (message === "deleting_build") return "CLEARING";
-    if (message === "confirming_delete") return "CONFIRM";
-    if (message === "verifying_clear") return "VERIFY";
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.resolveBuildClearPendingLabel === "function") {
+        return QOL.ui.cloudSync.resolveBuildClearPendingLabel(message);
+    }
+    if (typeof globalThis.ResolveBuildClearPendingLabel === "function" && globalThis.ResolveBuildClearPendingLabel !== ResolveBuildClearPendingLabel) {
+        return globalThis.ResolveBuildClearPendingLabel(message);
+    }
     return "CLEARING";
 }
 
 function IsBuildClearUserPromptStage(message) {
-    return message === "await_user_open_shop" || message === "waiting_for_shop";
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.isBuildClearUserPromptStage === "function") {
+        return QOL.ui.cloudSync.isBuildClearUserPromptStage(message);
+    }
+    if (typeof globalThis.IsBuildClearUserPromptStage === "function" && globalThis.IsBuildClearUserPromptStage !== IsBuildClearUserPromptStage) {
+        return globalThis.IsBuildClearUserPromptStage(message);
+    }
+    return false;
 }
 
 function WatchBuildClearStatus(clearBtn, clearLbl, expectedToken, defaultLabel) {
-    var startMs = Date.now ? Date.now() : (new Date()).getTime();
-    var timeoutMs = 30000;
-    var forcedCloseForPrompt = false;
-    var lastFeedbackKey = "";
-
-    function setFeedbackForPending(msg, isPrompt) {
-        var key = String(msg || "") + "|" + String(isPrompt ? 1 : 0);
-        if (key === lastFeedbackKey) return;
-        lastFeedbackKey = key;
-        if (isPrompt) {
-            SetLocalizedConfigFeedbackMessage("Open shop to continue clear.", "warning", 0);
-            return;
-        }
-        if (
-            msg === "switching_to_skyrunner" ||
-            msg === "switching_to_airheart" ||
-            msg === "confirming_skyrunner" ||
-            msg === "confirming_airheart"
-        ) {
-            SetLocalizedConfigFeedbackMessage("Confirming Skyrunner for clear...", "info", 0);
-            return;
-        }
-        if (msg === "deleting_build" || msg === "confirming_delete") {
-            SetLocalizedConfigFeedbackMessage("Clearing builds...", "info", 0);
-            return;
-        }
-            SetLocalizedConfigFeedbackMessage("Clear in progress...", "info", 0);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.cloudSync && typeof QOL.ui.cloudSync.watchBuildClearStatus === "function") {
+        return QOL.ui.cloudSync.watchBuildClearStatus(clearBtn, clearLbl, expectedToken, defaultLabel);
     }
-
-    function restoreDefault() {
-        if (!clearBtn || !clearBtn.IsValid || !clearBtn.IsValid()) return;
-        clearBtn.RemoveClass("SuccessState");
-        clearBtn.RemoveClass("FailureState");
-        clearBtn.RemoveClass("UserPromptState");
-        clearLbl.text = defaultLabel;
+    if (typeof globalThis.WatchBuildClearStatus === "function" && globalThis.WatchBuildClearStatus !== WatchBuildClearStatus) {
+        return globalThis.WatchBuildClearStatus(clearBtn, clearLbl, expectedToken, defaultLabel);
     }
-
-    function tick() {
-        if (!clearBtn || !clearBtn.IsValid || !clearBtn.IsValid()) return;
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-        var elapsedMs = nowMs - startMs;
-        var status = ReadBuildClearStatus();
-        var tokenMatches = !expectedToken || !status.token || status.token === expectedToken;
-
-        if (status.state === "pending" && tokenMatches) {
-            var pendingMsg = status.msg || "";
-            var isUserPromptStage = IsBuildClearUserPromptStage(pendingMsg);
-            if (isUserPromptStage) {
-                clearBtn.RemoveClass("SuccessState");
-                clearBtn.AddClass("FailureState");
-                clearBtn.AddClass("UserPromptState");
-                clearLbl.text = LocalizeSettingsText(ResolveBuildClearPendingLabel(pendingMsg), true);
-                setFeedbackForPending(pendingMsg, true);
-                if (!forcedCloseForPrompt) {
-                    forcedCloseForPrompt = true;
-                    $.ForceCloseModSettings();
-                }
-            } else {
-                forcedCloseForPrompt = false;
-                clearBtn.RemoveClass("UserPromptState");
-                clearBtn.RemoveClass("FailureState");
-                clearBtn.AddClass("SuccessState");
-                clearLbl.text = LocalizeSettingsText(ResolveBuildClearPendingLabel(pendingMsg), true);
-                setFeedbackForPending(pendingMsg, false);
-            }
-            if (elapsedMs >= timeoutMs) {
-                clearBtn.RemoveClass("SuccessState");
-                clearBtn.AddClass("FailureState");
-                clearBtn.RemoveClass("UserPromptState");
-                clearLbl.text = LocalizeSettingsText("TIMEOUT", true);
-        SetLocalizedConfigFeedbackMessage("Clear timed out. Try again.", "error", 2600);
-                $.Schedule(0.75, restoreDefault);
-                return;
-            }
-            $.Schedule(0.15, tick);
-            return;
-        }
-
-        if (status.state === "success" && tokenMatches) {
-            clearBtn.RemoveClass("FailureState");
-            clearBtn.AddClass("SuccessState");
-            clearBtn.RemoveClass("UserPromptState");
-            clearLbl.text = LocalizeSettingsText("CLEARED", true);
-            SetLocalizedConfigFeedbackMessage("Clear completed.", "success", 2200);
-            $.Schedule(0.75, restoreDefault);
-            return;
-        }
-
-        if (status.state === "failed" && tokenMatches) {
-            clearBtn.RemoveClass("SuccessState");
-            clearBtn.AddClass("FailureState");
-            clearBtn.RemoveClass("UserPromptState");
-            clearLbl.text = LocalizeSettingsText("FAILED", true);
-            SetLocalizedConfigFeedbackMessage("Clear failed.", "error", 2600);
-            $.Schedule(0.75, restoreDefault);
-            return;
-        }
-
-        if (elapsedMs < timeoutMs) {
-            $.Schedule(0.15, tick);
-            return;
-        }
-        restoreDefault();
-    }
-
-    tick();
 }
 
 function ReadConfigRawFromStorage() {
