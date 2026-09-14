@@ -640,9 +640,6 @@
         if (hasNonDefaultChatRuntimeConfig(cfg) || state.chatStyleApplied) {
             updateChatRuntime(root, cfg);
         }
-        if (typeof QOL.updateShowBuildIdRuntime === "function") {
-            QOL.updateShowBuildIdRuntime(root, cfg);
-        }
         if (needsDamageReportOffsetWork(cfg)) {
             updateDamageReportOffsets(root, cfg);
         }

@@ -154,3 +154,55 @@ test("enabling perf debug, detailed console, and overlay activates ql_perf manif
     assert.strictEqual(FR.isEnabled("ql_perf"), false, "ql_perf should be disabled after toggles turned off");
     assert.strictEqual(State.perfEnabled, false, "State.perfEnabled must be false after disable");
 });
+
+test("enabling ENABLE_SHOW_BUILD_ID activates ql_show_build_id and updates HUD build info panel", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const QOL = hud.sandbox.global.QOL;
+    const FR = QOL.core.FeatureRegistry;
+    const CS = QOL.core.ConfigStore;
+    const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
+
+    assert.ok(FR.isRegistered("ql_show_build_id"), "ql_show_build_id must be registered");
+    assert.strictEqual(FR.isEnabled("ql_show_build_id"), false, "ql_show_build_id should initially be disabled");
+
+    // Setup required DOM elements
+    const $ = hud.sandbox.global.$;
+    const lowerLeft = $.CreatePanel("Panel", hud.root, "LowerLeft");
+    const sourceTitle = $.CreatePanel("Label", hud.root, "SelectedBuildInfoTitle");
+    sourceTitle.text = "98765 - Competitive Ivy - 1";
+
+    // Enable show build id with title
+    const buildConfig = Object.assign({}, defaultCfg, {
+        ENABLE_SHOW_BUILD_ID: 1,
+        ENABLE_SHOW_BUILD_ID_TITLE: 1
+    });
+    hud.root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "3.1.9", data: buildConfig }));
+    hud.clock.advance(1500);
+
+    // Assert feature is enabled and ConfigStore holds values
+    assert.strictEqual(FR.isEnabled("ql_show_build_id"), true, "ql_show_build_id should be enabled");
+    assert.strictEqual(CS.get("ql_show_build_id", "ENABLE_SHOW_BUILD_ID"), true);
+    assert.strictEqual(CS.get("ql_show_build_id", "ENABLE_SHOW_BUILD_ID_TITLE"), true);
+
+    // Verify panel and label created with formatted build text
+    const container = lowerLeft.FindChildTraverse("selected_build_info");
+    assert.ok(container, "selected_build_info panel should be created in LowerLeft");
+    assert.strictEqual(container.style.visibility, "visible");
+
+    const label = container.FindChildTraverse("build_info");
+    assert.ok(label, "build_info label should be created");
+    assert.strictEqual(label.text, "Public Build: 98765 - Competitive Ivy");
+
+    // Disable feature
+    const disabledConfig = Object.assign({}, defaultCfg, {
+        ENABLE_SHOW_BUILD_ID: 0,
+        ENABLE_SHOW_BUILD_ID_TITLE: 0
+    });
+    hud.root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "3.1.9", data: disabledConfig }));
+    hud.clock.advance(1500);
+
+    assert.strictEqual(FR.isEnabled("ql_show_build_id"), false, "ql_show_build_id should be disabled");
+    assert.strictEqual(container.style.visibility, "collapse", "selected_build_info should be collapsed when disabled");
+});
+
