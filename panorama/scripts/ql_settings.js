@@ -2809,30 +2809,12 @@ function CreateSectionResetButton(titleRow, resolveKeysFn, includeEnableKey, par
 }
 
 function SetConfigFeedbackMessage(message, tone, holdMs) {
-    var label = gConfigFeedbackLabel;
-    if (!label || !label.IsValid || !label.IsValid()) return;
-
-    var safeMessage = String(message || "");
-    label.text = safeMessage;
-    label.SetHasClass("FeedbackInfo", tone === "info");
-    label.SetHasClass("FeedbackSuccess", tone === "success");
-    label.SetHasClass("FeedbackWarning", tone === "warning");
-    label.SetHasClass("FeedbackError", tone === "error");
-
-    var hold = Math.max(0, Math.round(Number(holdMs) || 0));
-    if (hold <= 0) return;
-
-    gConfigFeedbackClearToken++;
-    var token = gConfigFeedbackClearToken;
-    $.Schedule(hold / 1000.0, function() {
-        if (token !== gConfigFeedbackClearToken) return;
-        if (!gConfigFeedbackLabel || !gConfigFeedbackLabel.IsValid || !gConfigFeedbackLabel.IsValid()) return;
-        gConfigFeedbackLabel.text = "";
-        gConfigFeedbackLabel.SetHasClass("FeedbackInfo", true);
-        gConfigFeedbackLabel.SetHasClass("FeedbackSuccess", false);
-        gConfigFeedbackLabel.SetHasClass("FeedbackWarning", false);
-        gConfigFeedbackLabel.SetHasClass("FeedbackError", false);
-    });
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.setConfigFeedbackMessage === "function") {
+        return QOL.ui.configTab.setConfigFeedbackMessage(message, tone, holdMs);
+    }
+    if (typeof globalThis.SetConfigFeedbackMessage === "function" && globalThis.SetConfigFeedbackMessage !== SetConfigFeedbackMessage) {
+        return globalThis.SetConfigFeedbackMessage(message, tone, holdMs);
+    }
 }
 
 function CloseSettingsSideModalsIfOpen() {
@@ -3052,311 +3034,64 @@ function SetActiveTabAndRefresh(tabName) {
     UpdatePresetHighlightPollingState();
 }
 
-function GetCurrentExportSettingsString() {
-    var compact = QOL.persistence.serializeCompactV2(MOD_CONFIG);
-    var encoded = QOL.persistence.toBase64Url(compact);
-    return EXPORT_PREFIX + encoded;
+// Config tab subsystem extracted to panorama/scripts/ui/config_tab.js
+function GetCurrentExportSettingsString(config) {
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.getCurrentExportSettingsString === "function") {
+        return QOL.ui.configTab.getCurrentExportSettingsString(config);
+    }
+    if (typeof globalThis.GetCurrentExportSettingsString === "function" && globalThis.GetCurrentExportSettingsString !== GetCurrentExportSettingsString) {
+        return globalThis.GetCurrentExportSettingsString(config);
+    }
+    return "";
 }
 
 function FormatExportSettingsDisplayString(rawExport) {
-    if (!rawExport) return "";
-    var normalized = String(rawExport).replace(/\s+/g, "");
-    var prefixMatch = normalized.match(/^\[QOL-\d+-\d+-\d+\]:/i);
-    var prefixLen = prefixMatch ? prefixMatch[0].length : 0;
-    var payloadLen = normalized.length - prefixLen;
-    if (payloadLen <= 24) return normalized;
-    var firstPayloadLen = Math.ceil(payloadLen / 2);
-    var breakIndex = prefixLen + firstPayloadLen;
-    if (breakIndex <= 0 || breakIndex >= normalized.length) return normalized;
-    return normalized.slice(0, breakIndex) + "\n" + normalized.slice(breakIndex);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.formatExportSettingsDisplayString === "function") {
+        return QOL.ui.configTab.formatExportSettingsDisplayString(rawExport);
+    }
+    if (typeof globalThis.FormatExportSettingsDisplayString === "function" && globalThis.FormatExportSettingsDisplayString !== FormatExportSettingsDisplayString) {
+        return globalThis.FormatExportSettingsDisplayString(rawExport);
+    }
+    return String(rawExport || "");
 }
 
 function FormatImportSettingsDisplayString(rawImport) {
-    if (!rawImport) return "";
-    var normalized = String(rawImport).replace(/\s+/g, "");
-    if (!/^\[QOL-\d+-\d+-\d+\]:/i.test(normalized)) {
-        return rawImport;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.formatImportSettingsDisplayString === "function") {
+        return QOL.ui.configTab.formatImportSettingsDisplayString(rawImport);
     }
-    return FormatExportSettingsDisplayString(normalized);
+    if (typeof globalThis.FormatImportSettingsDisplayString === "function" && globalThis.FormatImportSettingsDisplayString !== FormatImportSettingsDisplayString) {
+        return globalThis.FormatImportSettingsDisplayString(rawImport);
+    }
+    return String(rawImport || "");
 }
 
 function TryCopyTextToClipboard(text, textEntryPanel) {
-    if (!text || text.length === 0) return false;
-    var copied = false;
-    var attempts = [
-        function() { $.DispatchEvent("CopyStringToClipboard", text, text); },
-        function() {
-            if (!textEntryPanel || !textEntryPanel.IsValid || !textEntryPanel.IsValid()) return;
-            textEntryPanel.SetFocus();
-            textEntryPanel.SelectAll();
-            $.DispatchEvent("TextEntryCopyToClipboard", textEntryPanel);
-        }
-    ];
-    for (var i = 0; i < attempts.length; i++) {
-        try {
-            attempts[i]();
-            copied = true;
-            break;
-        } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.tryCopyTextToClipboard === "function") {
+        return QOL.ui.configTab.tryCopyTextToClipboard(text, textEntryPanel);
     }
-    return copied;
+    if (typeof globalThis.TryCopyTextToClipboard === "function" && globalThis.TryCopyTextToClipboard !== TryCopyTextToClipboard) {
+        return globalThis.TryCopyTextToClipboard(text, textEntryPanel);
+    }
+    return false;
 }
 
 function TryPasteTextFromClipboard(textEntryPanel) {
-    if (!textEntryPanel || !textEntryPanel.IsValid || !textEntryPanel.IsValid()) return false;
-    textEntryPanel.SetFocus();
-    if (textEntryPanel.SelectAll) {
-        try { textEntryPanel.SelectAll(); } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.tryPasteTextFromClipboard === "function") {
+        return QOL.ui.configTab.tryPasteTextFromClipboard(textEntryPanel);
     }
-    var pasted = false;
-    var attempts = [
-        function() {
-            if (textEntryPanel.Paste) {
-                textEntryPanel.Paste();
-                return;
-            }
-            throw new Error("Paste method unavailable");
-        },
-        function() {
-            $.DispatchEvent("TextEntryInsertFromClipboard", textEntryPanel);
-        }
-    ];
-    for (var i = 0; i < attempts.length; i++) {
-        try {
-            attempts[i]();
-            pasted = true;
-            break;
-        } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); }
+    if (typeof globalThis.TryPasteTextFromClipboard === "function" && globalThis.TryPasteTextFromClipboard !== TryPasteTextFromClipboard) {
+        return globalThis.TryPasteTextFromClipboard(textEntryPanel);
     }
-    return pasted;
+    return false;
 }
 
 function RenderConfigTabContent(list) {
-    gCurrentSettingsSectionTitle = "";
-    var cfgCopy = LocalizeSettingsText("COPY", true);
-    var cfgCopied = LocalizeSettingsText("COPIED", true);
-    var cfgFailed = LocalizeSettingsText("FAILED", true);
-    var cfgClear = LocalizeSettingsText("CLEAR", true);
-    var cfgApply = LocalizeSettingsText("APPLY", true);
-    var cfgApplied = LocalizeSettingsText("APPLIED", true);
-    gConfigFeedbackLabel = null;
-    gConfigFeedbackClearToken++;
-
-    // Auto-disabled feature warning banner (Phase A.1: reads QOL namespace set by ql_core.js)
-    if (!gSearchCollectMode && QOL.autoDisabledFeatures && QOL.autoDisabledFeatures.length > 0) {
-        try {
-            var disabledFeatures = QOL.autoDisabledFeatures;
-            var filtered = [];
-            for (var di = 0; di < disabledFeatures.length; di++) {
-                var dn = String(disabledFeatures[di]).trim();
-                if (dn) filtered.push(dn);
-            }
-            if (filtered.length > 0) {
-                var warnSection = $.CreatePanel("Panel", list, "AutoDisableWarning");
-                warnSection.AddClass("ConfigFeedbackPanel");
-                warnSection.AddClass("AutoDisableWarning");
-                var warnTitle = $.CreatePanel("Label", warnSection, "AutoDisableWarningTitle");
-                warnTitle.AddClass("ConfigFeedbackLabel");
-                warnTitle.text = "Some QOLLOCK features were auto-disabled due to errors:";
-                var warnList = $.CreatePanel("Label", warnSection, "AutoDisableWarningList");
-                warnList.AddClass("ConfigFeedbackText");
-                warnList.text = filtered.join(", ");
-                var warnHint = $.CreatePanel("Label", warnSection, "AutoDisableWarningHint");
-                warnHint.AddClass("ConfigFeedbackText");
-                warnHint.text = "Restart your game to re-enable these features.";
-            }
-        } catch(eAutoDisableWarn) { WarnLog("settings", "op failed: " + (eAutoDisableWarn && eAutoDisableWarn.message ? eAutoDisableWarn.message : String(eAutoDisableWarn || ""))); }
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.render === "function") {
+        return QOL.ui.configTab.render(list);
     }
-
-    if (gSearchCollectMode && gSearchCollectState) {
-        CreateSectionTitle(list, "General");
-        CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
-        CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, SETTINGS_LANGUAGE_OPTIONS);
-        CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
-        CreateRow(list, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-            { label: "Swap" }
-        ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
-        CreateRow(list, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
-
-        CreateSeparator(list);
-        CreateSectionTitle(list, "Backup & Restore");
-        CreateRow(list, "Export String", "SEARCH_TAB:Config", "actionbutton", null, null, null, [
-            { label: "Open Settings" }
-        ], "Share your settings string");
-        CreateRow(list, "Import String", "SEARCH_TAB:Config", "actionbutton", null, null, null, [
-            { label: "Open Settings" }
-        ], "Paste and apply an exported settings string");
-        return;
+    if (typeof globalThis.RenderConfigTabContent === "function" && globalThis.RenderConfigTabContent !== RenderConfigTabContent) {
+        return globalThis.RenderConfigTabContent(list);
     }
-
-    list.AddClass("ConfigTabSurface");
-
-    var cardGeneral = $.CreatePanel("Panel", list, "ConfigCardGeneral");
-    cardGeneral.AddClass("ConfigTabCard");
-    CreateSectionTitle(cardGeneral, "General");
-    CreateRow(cardGeneral, "Preview Changes", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
-    CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, SETTINGS_LANGUAGE_OPTIONS);
-    CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, DEFAULT_HERO_DROPDOWN_OPTIONS);
-    CreateRow(cardGeneral, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-        { label: "Swap" }
-    ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
-    CreateRow(cardGeneral, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, SETTINGS_THEME_OPTIONS);
-
-    var dividerAfterGeneral = $.CreatePanel("Panel", list, "ConfigDividerAfterGeneral");
-    dividerAfterGeneral.AddClass("ConfigTabDivider");
-    dividerAfterGeneral.AddClass("RowSeparator");
-
-    var cardExport = $.CreatePanel("Panel", list, "ConfigCardExport");
-    cardExport.AddClass("ConfigTabCard");
-
-    var exportHeader = CreateSectionTitle(cardExport, "Export Settings");
-    var copyBtn = CreateSectionInlineIconButton(exportHeader, "ConfigCopyBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Copy our settings code to clipboard.");
-    var exportTextEntry = $.CreatePanel("TextEntry", cardExport, "ConfigExportTextEntry");
-    exportTextEntry.AddClass("ConfigTextEntry");
-    exportTextEntry.multiline = true;
-    exportTextEntry.maxchars = 2000;
-    exportTextEntry.text = FormatExportSettingsDisplayString(GetCurrentExportSettingsString());
-    exportTextEntry.SetPanelEvent("onfocus", function() {
-        exportTextEntry.SelectAll();
-    });
-
-    copyBtn.SetPanelEvent("onactivate", function() {
-        var exportRaw = GetCurrentExportSettingsString();
-        exportTextEntry.text = FormatExportSettingsDisplayString(exportRaw);
-        var copied = TryCopyTextToClipboard(exportRaw, exportTextEntry);
-        if (copied) {
-            copyBtn.RemoveClass("FailureState");
-            copyBtn.AddClass("SuccessState");
-        SetLocalizedConfigFeedbackMessage("Export string copied.", "success", 1800);
-            $.Schedule(0.6, function() {
-                if (!copyBtn || !copyBtn.IsValid || !copyBtn.IsValid()) return;
-                copyBtn.RemoveClass("SuccessState");
-            });
-        } else {
-            copyBtn.RemoveClass("SuccessState");
-            copyBtn.AddClass("FailureState");
-        SetLocalizedConfigFeedbackMessage("Clipboard copy failed.", "error", 2200);
-            $.Schedule(0.5, function() {
-                if (!copyBtn || !copyBtn.IsValid || !copyBtn.IsValid()) return;
-                copyBtn.RemoveClass("FailureState");
-            });
-        }
-    });
-
-    var dividerAfterExport = $.CreatePanel("Panel", list, "ConfigDividerAfterExport");
-    dividerAfterExport.AddClass("ConfigTabDivider");
-    dividerAfterExport.AddClass("RowSeparator");
-
-    var cardImport = $.CreatePanel("Panel", list, "ConfigCardImport");
-    cardImport.AddClass("ConfigTabCard");
-
-    var importHeader = CreateSectionTitle(cardImport, "Import Settings");
-    var applyBtn = CreateSectionInlineIconButton(importHeader, "ConfigApplyBtn", "s2r://panorama/images/icons/icon_checkmark.vsvg", "Apply your settings code to your configuration.");
-
-    var importTextEntry = $.CreatePanel("TextEntry", cardImport, "ConfigImportTextEntry");
-    importTextEntry.AddClass("ConfigTextEntry");
-    importTextEntry.multiline = true;
-    importTextEntry.text = "";
-    var importFormattingInProgress = false;
-    importTextEntry.SetPanelEvent("ontextentrychange", function() {
-        if (importFormattingInProgress) return;
-        var current = importTextEntry.text || "";
-        var formatted = FormatImportSettingsDisplayString(current);
-        if (formatted !== current) {
-            importFormattingInProgress = true;
-            importTextEntry.text = formatted;
-            importFormattingInProgress = false;
-        }
-    });
-
-    var configFeedback = $.CreatePanel("Label", cardImport, "ConfigFeedbackLabel");
-    configFeedback.AddClass("ConfigFeedbackLabel");
-    gConfigFeedbackLabel = configFeedback;
-    SetConfigFeedbackMessage("", "info", 0);
-
-    applyBtn.SetPanelEvent("onactivate", function() {
-        var raw = importTextEntry.text;
-        if (!raw || raw.length === 0) return;
-        try {
-            SetLocalizedConfigFeedbackMessage("Import: parsing string...", "info", 0);
-            var parseImportFn = globalThis.TryApplyImportStringWithDiagnostics || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.modal && QOL.ui.modal.tryApplyImportStringWithDiagnostics);
-            var importResult = parseImportFn ? parseImportFn(raw) : null;
-            if (!importResult || importResult.ok !== true || !importResult.parsedConfig || !importResult.candidateConfig) {
-                throw new Error("Invalid import string");
-            }
-
-            var diffRowsFn = globalThis.BuildConfigDiffRows || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.modal && QOL.ui.modal.buildConfigDiffRows);
-            var diffRows = diffRowsFn ? diffRowsFn(MOD_CONFIG, importResult.candidateConfig) : [];
-            var schemaText = importResult.schemaVersion
-                ? ("[QOL-" + String(importResult.schemaVersion).replace(/\./g, "-") + "]")
-                : "[unknown]";
-            var detailsText = IsRussianSettingsLanguage()
-                ? ("\u0421\u0445\u0435\u043C\u0430 " + schemaText + " | clamp=" + String(importResult.clampedKeys) + " | unknown=" + String(importResult.unknownKeys))
-                : ("Schema " + schemaText + " | clamped=" + String(importResult.clampedKeys) + " | unknown=" + String(importResult.unknownKeys));
-
-            var openModalFn = globalThis.OpenConfigDiffPreviewModal || (typeof QOL !== "undefined" && QOL.ui && QOL.ui.modal && QOL.ui.modal.openConfigDiffPreviewModal);
-            if (!openModalFn) throw new Error("Modal subsystem not available");
-            openModalFn({
-                title: "Settings Changes",
-                summary: "Changes: " + String(diffRows.length),
-                details: detailsText,
-                rows: diffRows,
-                applyText: "Confirm",
-                cancelText: "Cancel",
-                onApply: function() {
-                    try {
-                        SetLocalizedConfigFeedbackMessage("Import: applying settings...", "info", 0);
-                        var previousLanguage = GetSettingsLanguage();
-                        var appliedDiag = QOL.persistence.applyParsedConfigWithDiagnostics(importResult.parsedConfig, importResult.schemaVersion || LATEST_COMPACT_SEMVER);
-                        SaveAndSync();
-                        var didRefreshLanguageUi = RefreshSettingsLanguageUiAfterConfigChange(previousLanguage);
-                        SetLocalizedConfigFeedbackMessage("Import: refreshing UI...", "info", 0);
-                        if (importHeader && importHeader.IsValid && importHeader.IsValid()) {
-                            importHeader.text = LocalizeSettingsText("Import Settings", true);
-                        }
-                        applyBtn.RemoveClass("FailureState");
-                        applyBtn.AddClass("SuccessState");
-                        var diagText = IsRussianSettingsLanguage()
-                            ? ("\u0418\u043C\u043F\u043E\u0440\u0442 " + schemaText + " \u043F\u0440\u0438\u043C\u0435\u043D\u0435\u043D. clamp=" + String(appliedDiag.clampedKeys) + " unknown=" + String(appliedDiag.unknownKeys))
-                            : ("Import " + schemaText + " applied. clamped=" + String(appliedDiag.clampedKeys) + " unknown=" + String(appliedDiag.unknownKeys));
-                        var diagTone = (appliedDiag.unknownKeys > 0 || appliedDiag.clampedKeys > 0) ? "warning" : "success";
-                        SetConfigFeedbackMessage(diagText, diagTone, 3000);
-                        if (!didRefreshLanguageUi) {
-                            RequestSettingsListRefresh(0.02, true);
-                        }
-                        $.Schedule(0.6, function() {
-                            if (!applyBtn || !applyBtn.IsValid || !applyBtn.IsValid()) return;
-                            applyBtn.RemoveClass("SuccessState");
-                        });
-                        return true;
-                    } catch (applyErr) {
-                        applyBtn.RemoveClass("SuccessState");
-                        applyBtn.AddClass("FailureState");
-            SetLocalizedConfigFeedbackMessage("Import failed.", "error", 2600);
-                        $.Schedule(0.35, function() {
-                            if (applyBtn && applyBtn.IsValid && applyBtn.IsValid()) {
-                                applyBtn.RemoveClass("FailureState");
-                            }
-                        });
-                        return false;
-                    }
-                }
-            });
-        } catch (e) {
-            if (importHeader) {
-                importHeader.text = LocalizeSettingsText("ERROR: Invalid String", true);
-                importHeader.style.color = "#ff4d4d";
-            }
-            applyBtn.RemoveClass("SuccessState");
-            applyBtn.AddClass("FailureState");
-            SetLocalizedConfigFeedbackMessage("Invalid import string.", "error", 2600);
-            $.Schedule(0.35, function() {
-                if (applyBtn && applyBtn.IsValid && applyBtn.IsValid()) {
-                    applyBtn.RemoveClass("FailureState");
-                }
-            });
-        }
-    });
 }
 
 // Modal and config diff subsystem extracted to panorama/scripts/ui/modal.js
@@ -3402,41 +3137,13 @@ function CreateSectionTitle(parent, title, configIdForPerf) {
 }
 
 function CreateSectionInlineIconButton(titleLabel, buttonId, iconSrc, tooltipText) {
-    if (!titleLabel || !titleLabel.IsValid || !titleLabel.IsValid()) return null;
-    var titleHead = null;
-    try { titleHead = titleLabel.GetParent ? titleLabel.GetParent() : null; } catch (e0) { titleHead = null; }
-    if (!titleHead || !titleHead.IsValid || !titleHead.IsValid()) return null;
-    var button = $.CreatePanel("Button", titleHead, buttonId || "");
-    button.AddClass("SectionTitleActionBtn");
-    button.AddClass("ConfigSectionIconBtn");
-    var icon = $.CreatePanel("Image", button, (buttonId || "") + "_icon", {
-        src: iconSrc || "",
-        defaultsrc: "",
-        scaling: "contain"
-    });
-    icon.AddClass("SectionTitleActionIcon");
-    icon.AddClass("ConfigSectionIconBtnIcon");
-    if (tooltipText) {
-        var showTooltip = function() {
-            QOL.tooltip.hideTextTooltip();
-            QOL.tooltip.cancelHide();
-            QOL.tooltip.showRowTooltip(
-                button,
-                "",
-                LocalizeSettingsText(tooltipText, true),
-                PERF_IMPACT_TIER_NONE,
-                ""
-            );
-        };
-        var hideTooltip = function() {
-            QOL.tooltip.hideTooltipDeferred(String(buttonId || "config_section_icon_btn") + "_mouseout");
-        };
-        button.SetPanelEvent("onmouseover", showTooltip);
-        button.SetPanelEvent("onmouseout", hideTooltip);
-        icon.SetPanelEvent("onmouseover", showTooltip);
-        icon.SetPanelEvent("onmouseout", hideTooltip);
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.configTab && typeof QOL.ui.configTab.createSectionInlineIconButton === "function") {
+        return QOL.ui.configTab.createSectionInlineIconButton(titleLabel, buttonId, iconSrc, tooltipText);
     }
-    return button;
+    if (typeof globalThis.CreateSectionInlineIconButton === "function" && globalThis.CreateSectionInlineIconButton !== CreateSectionInlineIconButton) {
+        return globalThis.CreateSectionInlineIconButton(titleLabel, buttonId, iconSrc, tooltipText);
+    }
+    return null;
 }
 
 function CreateSectionTitleCheckboxToggle(titleHead, label, configId, toggleOptions) {
