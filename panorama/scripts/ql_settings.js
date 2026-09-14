@@ -5498,82 +5498,25 @@ function QueueActivePresetHighlightRefresh(delaySec) {
     }
 }
 
+// Support thanks plaques & groups extracted to panorama/scripts/ui/support.js
 function CreateSupportThanksPlaques(parent, entries, columns) {
-    if (!parent || !Array.isArray(entries) || entries.length === 0) return null;
-
-    var grid = $.CreatePanel("Panel", parent, "SupportThanksPlaqueGrid");
-    grid.AddClass("SupportThanksPlaqueGrid");
-
-    var cols = Math.max(1, columns || 4);
-    var index = 0;
-    while (index < entries.length) {
-        var rowEntries = [];
-        while (index < entries.length && rowEntries.length < cols) {
-            var candidate = entries[index];
-            if (rowEntries.length > 0 && candidate && typeof candidate === "object" && candidate.breakBefore) break;
-            rowEntries.push(candidate);
-            index++;
-        }
-        if (rowEntries.length === 0) {
-            rowEntries.push(entries[index]);
-            index++;
-        }
-        var row = $.CreatePanel("Panel", grid, "");
-        row.AddClass("SupportThanksPlaqueRow");
-        var rowInner = $.CreatePanel("Panel", row, "");
-        rowInner.AddClass("SupportThanksPlaqueRowInner");
-
-        for (var c = 0; c < rowEntries.length; c++) {
-            var entry = rowEntries[c];
-            var entryData = (typeof entry === "object" && entry) ? entry : { label: entry };
-            var plaque = $.CreatePanel(entryData.url ? "Button" : "Panel", rowInner, "");
-            plaque.AddClass("PresetGridBtn");
-            plaque.AddClass("PresetGridBtnBase");
-            plaque.AddClass("SupportThanksPlaque");
-            if (c % 2 === 1) plaque.AddClass("SupportThanksPlaqueAlt");
-            if (entryData.role) plaque.AddClass("SupportThanksPlaqueRole_" + entryData.role);
-            if (entryData.iconSrc) plaque.AddClass("SupportThanksPlaqueHasIcon");
-            if (entryData.url) {
-                plaque.AddClass("SupportThanksPlaqueClickable");
-                try { plaque.SetPanelEvent("onactivate", (function (url) {
-                    return function () {
-                        try { $.DispatchEvent("ExternalBrowserGoToURL", url); } catch(eSupportPlaqueClick0) { WarnLog("settings", "op failed: " + (eSupportPlaqueClick0 && eSupportPlaqueClick0.message ? eSupportPlaqueClick0.message : String(eSupportPlaqueClick0 || ""))); }
-                    };
-                })(entryData.url)); } catch(eSupportPlaqueClick) { WarnLog("settings", "op failed: " + (eSupportPlaqueClick && eSupportPlaqueClick.message ? eSupportPlaqueClick.message : String(eSupportPlaqueClick || ""))); }
-            }
-
-            var plaqueContent = $.CreatePanel("Panel", plaque, "");
-            plaqueContent.AddClass("SupportThanksPlaqueContent");
-
-            if (entryData.iconSrc) {
-                var icon = $.CreatePanel("Image", plaqueContent, "");
-                icon.AddClass("SupportThanksPlaqueIcon");
-                if (entryData.role) icon.AddClass("SupportThanksPlaqueIcon_" + entryData.role);
-                try { icon.SetImage(entryData.iconSrc); } catch(eSupportPlaqueIcon) { WarnLog("settings", "op failed: " + (eSupportPlaqueIcon && eSupportPlaqueIcon.message ? eSupportPlaqueIcon.message : String(eSupportPlaqueIcon || ""))); }
-            }
-
-            var label = $.CreatePanel("Label", plaqueContent, "");
-            label.text = entryData.label || "";
-            if (entryData.role) label.AddClass("SupportThanksPlaqueLabel_" + entryData.role);
-        }
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.support && typeof QOL.ui.support.createSupportThanksPlaques === "function") {
+        return QOL.ui.support.createSupportThanksPlaques(parent, entries, columns);
     }
-
-    return grid;
+    if (typeof globalThis.CreateSupportThanksPlaques === "function" && globalThis.CreateSupportThanksPlaques !== CreateSupportThanksPlaques) {
+        return globalThis.CreateSupportThanksPlaques(parent, entries, columns);
+    }
+    return null;
 }
 
 function CreateSupportThanksGroup(parent, title, entries, columns, roleClass) {
-    if (!parent || !Array.isArray(entries) || entries.length === 0) return null;
-    var group = $.CreatePanel("Panel", parent, "");
-    group.AddClass("SupportThanksGroup");
-    if (roleClass) group.AddClass(roleClass);
-
-    var groupTitle = $.CreatePanel("Label", group, "");
-    groupTitle.AddClass("SupportThanksGroupTitle");
-    if (roleClass) groupTitle.AddClass(roleClass + "Title");
-    groupTitle.text = LocalizeSettingsText(title || "", true);
-
-    group.thanksGrid = CreateSupportThanksPlaques(group, entries, columns || 4);
-    return group;
+    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.support && typeof QOL.ui.support.createSupportThanksGroup === "function") {
+        return QOL.ui.support.createSupportThanksGroup(parent, title, entries, columns, roleClass);
+    }
+    if (typeof globalThis.CreateSupportThanksGroup === "function" && globalThis.CreateSupportThanksGroup !== CreateSupportThanksGroup) {
+        return globalThis.CreateSupportThanksGroup(parent, title, entries, columns, roleClass);
+    }
+    return null;
 }
 
 function NormalizeSearchText(value) {
@@ -7591,197 +7534,11 @@ function RenderCurrentTabContent(list) {
     } else if (currentTab === "Config") {
         RenderConfigTabContent(list);
     } else if (currentTab === "Support") {
-        if (gSearchCollectMode && gSearchCollectState) {
-            CreateSectionTitle(list, "Help, Contact & Support");
-            CreateRow(list, "Discord", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Help and feedback");
-            CreateRow(list, "Commission", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Request a custom feature or preset");
-            CreateRow(list, "Change Log", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Latest updates and version notes");
-            CreateRow(list, "Support", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Support the mod - donate via Ko-fi (kofi) to help fund continued development");
-            CreateSectionTitle(list, "Special Thanks");
-            CreateRow(list, "Contributors", "SEARCH_TAB:Support", "actionbutton", null, null, null, [
-                { label: "Open" }
-            ], "Community acknowledgements");
-            return;
+        if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.support && typeof QOL.ui.support.render === "function") {
+            QOL.ui.support.render(list);
+        } else if (typeof globalThis.RenderSupportTabContent === "function") {
+            globalThis.RenderSupportTabContent(list);
         }
-        // --- Section 1: Hero / intro card ---
-        var supportIntroCard = $.CreatePanel("Panel", list, "SupportIntroCard");
-        supportIntroCard.AddClass("SupportTabCard");
-        supportIntroCard.AddClass("SupportIntroCard");
-        supportIntroCard.AddClass("SupportHeroCard");
-
-        var supportHeroTitle = $.CreatePanel("Label", supportIntroCard, "");
-        supportHeroTitle.AddClass("SupportTabSectionTitle");
-        supportHeroTitle.AddClass("SupportHeroTitle");
-        supportHeroTitle.text = LocalizeSettingsText("Welcome to QOL Lock", true);
-
-        var heroBodyLines = [
-            "This is a mod designed to give you complete freedom over your game.",
-            "By default everything is disabled and has nearly zero performance cost.",
-            "Be conscious of the features you are using and read carefully.",
-            "The majority of issues are caused by improper installation or conflicting mods."
-        ];
-        var supportHeroBulletList = $.CreatePanel("Panel", supportIntroCard, "SupportHeroBulletList");
-        supportHeroBulletList.AddClass("SupportHeroBulletList");
-        for (var heroLineIdx = 0; heroLineIdx < heroBodyLines.length; heroLineIdx++) {
-            var bulletRow = $.CreatePanel("Panel", supportHeroBulletList, "");
-            bulletRow.AddClass("SupportHeroBullet");
-            var marker = $.CreatePanel("Panel", bulletRow, "");
-            marker.AddClass("SupportHeroBulletMarker");
-            var bulletLabel = $.CreatePanel("Label", bulletRow, "");
-            bulletLabel.AddClass("SupportTabText");
-            bulletLabel.AddClass("SupportHeroBulletLabel");
-            var heroLineText = LocalizeSettingsText(heroBodyLines[heroLineIdx], true);
-            bulletLabel.text = (heroLineText && heroLineText.endsWith(".")) ? heroLineText.slice(0, -1) : heroLineText;
-        }
-
-        // --- Section 2: Help, Contact & Support CTA grid (merged) ---
-        var supportCtaSection = $.CreatePanel("Panel", list, "SupportCtaSection");
-        supportCtaSection.AddClass("SupportTabCard");
-        supportCtaSection.AddClass("SupportCtaCard");
-
-        var supportCtaSectionTitle = $.CreatePanel("Label", supportCtaSection, "");
-        supportCtaSectionTitle.AddClass("SupportTabSectionTitle");
-        supportCtaSectionTitle.AddClass("SupportCtaSectionTitle");
-        supportCtaSectionTitle.text = LocalizeSettingsText("Help, Contact & Support", true);
-
-        var supportCtaGrid = $.CreatePanel("Panel", supportCtaSection, "SupportCtaGrid");
-        supportCtaGrid.AddClass("SupportCtaGrid");
-
-        var ctaDefs = [
-            {
-                id: "SupportCtaSupportBtn",
-                title: "Support",
-                hint: "Help fund continued development",
-                iconSrc: "s2r://panorama/images/icons/icon_thumbsup.vsvg",
-                primary: true,
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://ko-fi.com/civocivocivo"); }
-            },
-            {
-                id: "SupportCtaDiscordBtn",
-                title: "Discord",
-                hint: "Help, feedback, and community",
-                iconSrc: "s2r://panorama/images/qollock/discord_logo_png.vtex",
-                iconClass: "SupportCtaBtnIconDiscord",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
-            },
-            {
-                id: "SupportCtaCommissionBtn",
-                title: "Commission",
-                hint: "Request a custom feature or preset",
-                iconSrc: "s2r://panorama/images/icons/icon_feedback.vsvg",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://discord.gg/npCvuMcTY7"); }
-            },
-            {
-                id: "SupportCtaChangeLogBtn",
-                title: "Change Log",
-                hint: "Latest updates and version notes",
-                iconSrc: "s2r://panorama/images/icons/icon_refresh.vsvg",
-                onactivate: function() { $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/updates/650634"); }
-            }
-        ];
-
-        for (var ctaIdx = 0; ctaIdx < ctaDefs.length; ctaIdx += 2) {
-            var ctaRow = $.CreatePanel("Panel", supportCtaGrid, "");
-            ctaRow.AddClass("SupportCtaRow");
-
-            for (var ctaColumn = 0; ctaColumn < 2 && (ctaIdx + ctaColumn) < ctaDefs.length; ctaColumn++) {
-                if (ctaColumn > 0) {
-                    var ctaGap = $.CreatePanel("Panel", ctaRow, "");
-                    ctaGap.AddClass("SupportCtaRowGap");
-                }
-
-                (function(def) {
-                    var ctaSlot = $.CreatePanel("Panel", ctaRow, "");
-                    ctaSlot.AddClass("SupportCtaBtnSlot");
-
-                    var ctaBtn = $.CreatePanel("Button", ctaSlot, def.id);
-                    ctaBtn.AddClass("SupportCtaBtn");
-                    ctaBtn.AddClass("SupportCtaGridBtn");
-                    if (def.primary) ctaBtn.AddClass("SupportCtaBtnPrimary");
-
-                    var ctaContent = $.CreatePanel("Panel", ctaBtn, "");
-                    ctaContent.AddClass("SupportCtaBtnContent");
-
-                    var ctaBtnIcon = $.CreatePanel("Image", ctaContent, "");
-                    ctaBtnIcon.AddClass("SupportCtaBtnIcon");
-                    if (def.iconClass) ctaBtnIcon.AddClass(def.iconClass);
-                    if (def.iconSrc) {
-                        try { ctaBtnIcon.SetImage(def.iconSrc); } catch(eSupportIcon) { WarnLog("settings", "op failed: " + (eSupportIcon && eSupportIcon.message ? eSupportIcon.message : String(eSupportIcon || ""))); }
-                    }
-
-                    var ctaText = $.CreatePanel("Panel", ctaContent, "");
-                    ctaText.AddClass("SupportCtaBtnText");
-
-                    var ctaBtnTitle = $.CreatePanel("Label", ctaText, "");
-                    ctaBtnTitle.AddClass("SupportCtaBtnTitle");
-                    ctaBtnTitle.text = LocalizeSettingsText(def.title, true);
-
-                    var ctaBtnHint = $.CreatePanel("Label", ctaText, "");
-                    ctaBtnHint.AddClass("SupportCtaBtnHint");
-                    ctaBtnHint.text = LocalizeSettingsText(def.hint, true);
-
-                    ctaBtn.SetPanelEvent("onactivate", def.onactivate);
-                })(ctaDefs[ctaIdx + ctaColumn]);
-            }
-        }
-
-        // --- Section 3: Community / Special Thanks ---
-        var supportThanksBlock = $.CreatePanel("Panel", list, "SupportTabThanksBlock");
-        supportThanksBlock.AddClass("SupportTabThanksBlock");
-        supportThanksBlock.AddClass("SupportTabCard");
-        var supportThanksTitle = $.CreatePanel("Label", supportThanksBlock, "");
-        supportThanksTitle.AddClass("SupportTabSectionTitle");
-        supportThanksTitle.text = LocalizeSettingsText("Credits", true);
-        var supportThanksRule = $.CreatePanel("Panel", supportThanksBlock, "");
-        supportThanksRule.AddClass("SupportThanksRule");
-
-        var supportThanksContributorEntries = [
-            { label: "Civo", role: "Contributor", url: "https://ko-fi.com/civocivocivo" },
-            { label: "Bytenode", role: "Contributor", url: "https://gamebanana.com/members/5222690" },
-            { label: "BreadRollius", role: "Contributor", url: "https://gamebanana.com/members/4296197" },
-            { label: "Bonclide", role: "Contributor", url: "https://gamebanana.com/members/2408486" },
-            { label: "Hanturaya", role: "Contributor", url: "https://gamebanana.com/members/4577138" },
-            { label: "Predi_i", role: "Contributor", url: "https://gamebanana.com/members/5107678" },
-            { label: "RizoBoy", role: "Contributor", url: "https://gamebanana.com/members/4436032" },
-            { label: "Klutzz", role: "Contributor", url: "https://gamebanana.com/members/4745216" },
-            { label: "ArkanoidVFX", role: "Contributor", url: "https://gamebanana.com/members/1359230" },
-            { label: "Goblin Man Sam", role: "Contributor", url: "https://gamebanana.com/members/4762321" },
-            { label: "NinjabladeJR", role: "Contributor", url: "https://gamebanana.com/members/4779465" },
-            { label: "Mikoboy", role: "Contributor", url: "https://gamebanana.com/members/2814130" },
-            { label: "Wouwei", role: "Contributor", url: "https://gamebanana.com/members/4788864" },
-            { label: "Mo_Difier", role: "Contributor", url: "https://gamebanana.com/members/4795931" },
-            { label: "Flameblast12", role: "Contributor", url: "https://gamebanana.com/members/4789815" },
-            { label: "Fascilux", role: "Contributor", url: "https://gamebanana.com/members/4690723" },
-            { label: "Karma", role: "Contributor" },
-            { label: "Somarotsaway", role: "Contributor", url: "https://gamebanana.com/members/3961199" },
-            { label: "EmilyVasquez", role: "Contributor", url: "https://gamebanana.com/members/1383839" },
-            { label: "gfkm", role: "Contributor", url: "https://gamebanana.com/members/5349748" },
-            { label: "Aminsx", role: "Contributor", url: "https://gamebanana.com/members/4798159" },
-            { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" },
-            { label: "Lustie", role: "Contributor", url: "https://gamebanana.com/mods/655927" },
-            { label: "0xluc4s", role: "Contributor", url: "https://gamebanana.com/members/5229080" }
-        ];
-        var supportThanksTranslatorEntries = [
-            { label: "QuicklyRemove", role: "Translator", iconSrc: "s2r://panorama/images/qollock/chinese_png.vtex" },
-            { label: "Gyzeh", role: "Translator", iconSrc: "s2r://panorama/images/qollock/french_png.vtex" },
-            { label: "Theran", role: "Translator", iconSrc: "s2r://panorama/images/qollock/brazil_png.vtex" },
-            { label: "Milorime", role: "Translator", iconSrc: "s2r://panorama/images/qollock/spanish_png.vtex" },
-            { label: "des_", role: "Translator", iconSrc: "s2r://panorama/images/qollock/russian_png.vtex", breakBefore: true },
-            { label: "Данон", role: "Translator", iconSrc: "s2r://panorama/images/qollock/belarus_png.vtex" },
-            { label: "Cactus330", role: "Translator", iconSrc: "s2r://panorama/images/qollock/poland_png.vtex" },
-            { label: "MBG Records", role: "Translator", iconSrc: "s2r://panorama/images/qollock/turkish_png.vtex" },
-            { label: "flameblast12", role: "Translator", iconSrc: "s2r://panorama/images/qollock/korean_png.vtex" }
-        ];
-        CreateSupportThanksGroup(supportThanksBlock, "Contributors", supportThanksContributorEntries, 6, "SupportThanksGroupContributor");
-        CreateSupportThanksGroup(supportThanksBlock, "Translators", supportThanksTranslatorEntries, 6, "SupportThanksGroupTranslator");
     }
 }
 
