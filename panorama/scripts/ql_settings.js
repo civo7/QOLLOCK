@@ -7013,103 +7013,13 @@ function RenderCurrentTabContent(list) {
             QOL.ui.consoleTab.render(list);
         }
     } else if (currentTab === "Arcade") {
-        CreateSectionTitle(list, "Game Settings");
-        CreateRow(list, "Game Audio", "ENABLE_GAME_AUDIO", "toggle", null, null, null, null, "Enable sounds in arcade games.");
-        CreateRow(list, "Difficulty", "GAME_DEFAULT_DIFFICULTY", "buttongroup", null, null, null, ARCADE_DEFAULT_DIFFICULTY_OPTIONS, "Default difficulty when opening games.");
-        CreateRow(list, "On Death", "ENABLE_ON_DEATH_GAMES", "toggle", null, null, null, null, "Randomly opens an enabled arcade game while dead.");
-        CreateSeparator(list);
-        CreateSectionTitle(list, "Games");
-        CreateRow(list, "Bebop Sweeper", "OPEN_MINESWEEPER", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_MINESWEEPER"
-            }
-        ], "");
-        CreateRow(list, "Wraithjack", "OPEN_BLACKJACK", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_BLACKJACK"
-            }
-        ], "");
-        CreateRow(list, "Flappy Bat", "OPEN_FLAPPY_BIRD", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_FLAPPY_BAT"
-            }
-        ], "");
-        CreateRow(list, "Graves Trainer", "OPEN_AIM_TRAINER", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_GRAVES_TRAINER"
-            }
-        ], "");
-        CreateRow(list, "Zerggy Mania", "OPEN_TRAIN_TRACKING", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_ZERGGY_MANIA"
-            }
-        ], "");
-        CreateRow(list, "Whack a Rem", "OPEN_WHACK_A_REM", "actionbutton", null, null, null, [
-            {
-                label: "Play",
-                onDeathCheckbox: true,
-                onDeathConfigKey: "ON_DEATH_GAME_WHACK_A_REM"
-            }
-        ], "");
-    } else if (currentTab === "MOG") {
-        if (!gSearchCollectMode) {
-            var mogNoteWrap = $.CreatePanel("Panel", list, "MogTabNoteWrap");
-            mogNoteWrap.AddClass("ConsoleTabNoteWrap");
-            mogNoteWrap.AddClass("MogTabNoteWrap");
-            mogNoteWrap.AddClass("SupportHeroCard");
-            var mogNoteTitle = $.CreatePanel("Label", mogNoteWrap, "MogTabNoteTitle");
-            mogNoteTitle.AddClass("SupportTabSectionTitle");
-            mogNoteTitle.AddClass("MogTabNoteTitle");
-            mogNoteTitle.text = "MOGLOCK";
-            var mogNoteList = $.CreatePanel("Panel", mogNoteWrap, "MogTabNoteList");
-            mogNoteList.AddClass("SupportHeroBulletList");
-            mogNoteList.AddClass("MogTabNoteList");
-            var mogInfoRow = $.CreatePanel("Panel", mogNoteList, "");
-            mogInfoRow.AddClass("SupportHeroBullet");
-            mogInfoRow.AddClass("MogTabNoteBullet");
-            var mogInfoMarker = $.CreatePanel("Panel", mogInfoRow, "");
-            mogInfoMarker.AddClass("SupportHeroBulletMarker");
-            mogInfoMarker.AddClass("MogTabNoteMarker");
-            var mogNoteText = $.CreatePanel("Label", mogInfoRow, "MogTabNoteText");
-            mogNoteText.AddClass("SupportTabText");
-            mogNoteText.AddClass("SupportHeroBulletLabel");
-            mogNoteText.AddClass("MogTabNoteText");
-            mogNoteText.text = LocalizeSettingsText("MOG is Deadlock's first custom gamemode community server network.", true);
-            var mogLinkRow = $.CreatePanel("Panel", mogNoteList, "");
-            mogLinkRow.AddClass("SupportHeroBullet");
-            mogLinkRow.AddClass("MogTabNoteBullet");
-            mogLinkRow.AddClass("MogTabSiteLine");
-            var mogLinkMarker = $.CreatePanel("Panel", mogLinkRow, "");
-            mogLinkMarker.AddClass("SupportHeroBulletMarker");
-            mogLinkMarker.AddClass("MogTabNoteMarker");
-            var mogLinkContent = $.CreatePanel("Panel", mogLinkRow, "MogTabSiteLineContent");
-            mogLinkContent.AddClass("MogTabSiteLineContent");
-            var mogLinkPrefix = $.CreatePanel("Label", mogLinkContent, "MogTabSiteLinkPrefix");
-            mogLinkPrefix.AddClass("SupportTabText");
-            mogLinkPrefix.AddClass("SupportHeroBulletLabel");
-            mogLinkPrefix.AddClass("MogTabSiteLinkPrefix");
-            mogLinkPrefix.text = LocalizeSettingsText("Check out our site to join", true);
-            var mogLinkBtn = $.CreatePanel("Button", mogLinkContent, "MogTabSiteLink");
-            mogLinkBtn.AddClass("MogTabSiteLink");
-            var mogLinkLbl = $.CreatePanel("Label", mogLinkBtn, "MogTabSiteLinkLabel");
-            mogLinkLbl.AddClass("MogTabSiteLinkLabel");
-            mogLinkLbl.text = LocalizeSettingsText("moglock.gg", true);
-            mogLinkBtn.SetPanelEvent("onactivate", function() {
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg");
-            });
+        if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.arcadeTab && typeof QOL.ui.arcadeTab.renderArcadeTab === "function") {
+            QOL.ui.arcadeTab.renderArcadeTab(list);
         }
-        CreateSectionTitle(list, "Gamemodes");
-        CreateRow(list, "BHOP UI", "ENABLE_BHOP", "toggle", null, null, null, null, "For custom BHop gamemode UI changes.");
+    } else if (currentTab === "MOG") {
+        if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.arcadeTab && typeof QOL.ui.arcadeTab.renderMogTab === "function") {
+            QOL.ui.arcadeTab.renderMogTab(list);
+        }
     } else if (currentTab === "Config") {
         RenderConfigTabContent(list);
     } else if (currentTab === "Support") {

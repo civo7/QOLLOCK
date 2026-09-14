@@ -16,6 +16,7 @@ const settingsCloudSyncPath = path.join(projectRoot, "panorama", "scripts", "ui"
 const settingsSupportPath = path.join(projectRoot, "panorama", "scripts", "ui", "support.js");
 const settingsAudioPath = path.join(projectRoot, "panorama", "scripts", "ui", "audio.js");
 const settingsConsoleTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "console_tab.js");
+const settingsArcadeTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "arcade_tab.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
 const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
@@ -562,7 +563,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsPath],
+        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
