@@ -42,6 +42,8 @@
     var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
     var _REV_ATTRIBUTE = (typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR :
                          ((typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
+    var _lastDiagForceToken = "";
+    var _diagWriteNextMs = 0;
 
     // Build featureId → enableKey map from registered manifests.
     // A manifest declares either enableKey (single legacy toggle) or enableKeys
@@ -245,11 +247,186 @@
         }
     }
 
+    function _readDiagRequest(hudPanel) {
+        if (!hudPanel) return "";
+        try {
+            var tok = hudPanel.GetAttributeString("QOL_DiagRequest", "");
+            if (tok) return tok;
+        } catch (e) {}
+        var panels = _getSearchPanels(hudPanel);
+        for (var i = 0; i < panels.length; i++) {
+            try {
+                var pTok = panels[i].GetAttributeString("QOL_DiagRequest", "");
+                if (pTok) return pTok;
+            } catch (e2) {}
+        }
+        return "";
+    }
+
+    function _buildDiagSnapshot(forceToken) {
+        var registered = FeatureRegistry ? FeatureRegistry.getRegisteredIds().sort() : [];
+        var enabled = FeatureRegistry ? FeatureRegistry.getEnabledIds().sort() : [];
+        var errors = FeatureRegistry ? FeatureRegistry.getErrorCounts() : {};
+        var disabledList = [];
+        if (typeof QOL !== "undefined" && QOL.autoDisabledFeatures) {
+            disabledList = QOL.autoDisabledFeatures.slice();
+        }
+        var globalState = (typeof State !== "undefined" && State) ? State :
+                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+        if (globalState && globalState.featureAutoDisabled) {
+            var keys = Object.keys(globalState.featureAutoDisabled);
+            for (var k = 0; k < keys.length; k++) {
+                if (globalState.featureAutoDisabled[keys[k]] && disabledList.indexOf(keys[k]) === -1) {
+                    disabledList.push(keys[k]);
+                }
+            }
+        }
+
+        var diag = {
+            features: registered,
+            missing: (globalState && globalState._missingFeatureLogged) ? globalState._missingFeatureLogged : {},
+            errors: errors,
+            disabled: disabledList,
+            logs: (typeof __qolLogBuf !== "undefined" && __qolLogBuf) ? __qolLogBuf.slice() : [],
+            diagToken: forceToken || "",
+            newFeatures: registered,
+            newEnabled: enabled,
+            newErrors: errors
+        };
+
+        if (QOL && QOL.core && QOL.core.ManifestTests) {
+            var tr = QOL.core.ManifestTests.getResults();
+            if (tr) {
+                diag.testResults = {
+                    summary: tr.summary,
+                    results: tr.results,
+                    timestamp: tr.timestamp,
+                    token: tr.token
+                };
+            }
+        }
+
+        return diag;
+    }
+
+    function _writeDiagSnapshot(hudPanel, forceToken) {
+        if (!hudPanel || typeof hudPanel.SetAttributeString !== "function") return;
+        try {
+            var diag = _buildDiagSnapshot(forceToken);
+            hudPanel.SetAttributeString("QOL_Diag", JSON.stringify(diag));
+            if (forceToken && Logger) {
+                Logger.logInfo("App", "diag force-sync written, token=" + String(forceToken).substring(0, 16) +
+                    " features=" + diag.features.length + " disabled=" + diag.disabled.length);
+            }
+        } catch (e) {
+            if (Logger) Logger.logWarn("App", "writeDiagSnapshot failed: " + (e.message || e));
+        }
+    }
+
+    function _syncDiagnosticState(hudPanel, nowMs) {
+        if (!hudPanel) return;
+        var forceSync = false;
+        var forceToken = "";
+        try {
+            forceToken = _readDiagRequest(hudPanel);
+            if (forceToken && forceToken !== _lastDiagForceToken) {
+                _lastDiagForceToken = forceToken;
+                forceSync = true;
+                if (Logger) Logger.logInfo("App", "diag force-sync requested, token=" + String(forceToken).substring(0, 16));
+
+                // Command dispatch: manifest test runner ("mt_" or "fs_")
+                if (forceToken.indexOf("mt_") === 0 || forceToken.indexOf("fs_") === 0) {
+                    if (QOL && QOL.core && QOL.core.ManifestTests) {
+                        try {
+                            QOL.core.ManifestTests.runAll({
+                                token: forceToken,
+                                onComplete: function () {
+                                    _writeDiagSnapshot(hudPanel, forceToken);
+                                }
+                            });
+                        } catch (mtErr) {
+                            if (Logger) Logger.logWarn("App", "manifest test run failed: " + (mtErr.message || mtErr));
+                        }
+                    }
+                }
+
+                // Tree dump summary ("dt_")
+                if (forceToken.indexOf("dt_") === 0) {
+                    if (QOL && typeof QOL.dumpTreeSummary === "function") {
+                        try {
+                            QOL.dumpTreeSummary(hudPanel);
+                        } catch (dtErr) {
+                            if (Logger) Logger.logWarn("App", "tree summary failed: " + (dtErr.message || dtErr));
+                        }
+                    } else if (Logger) {
+                        Logger.logWarn("App", "tree summary requested but QOL.dumpTreeSummary unavailable");
+                    }
+                }
+
+                _writeDiagSnapshot(hudPanel, forceToken);
+                _diagWriteNextMs = nowMs + 5000;
+                return;
+            }
+        } catch (eReq) {}
+
+        if (!forceSync && _diagWriteNextMs && _diagWriteNextMs > nowMs) return;
+        _diagWriteNextMs = nowMs + 5000;
+        _writeDiagSnapshot(hudPanel, "");
+    }
+
+    function _syncLoaderOverlays(hudPanel, nowMs) {
+        var globalState = (typeof State !== "undefined" && State) ? State :
+                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+        if (!globalState) return;
+        var settingsShowing = !!(globalState.settingsLoaderSessionActive || globalState.settingsLoaderSessionCompleted);
+        var saveShowing = !!(globalState.saveSettingsLoaderSessionActive || globalState.saveSettingsLoaderSessionCompleted);
+
+        if (settingsShowing || saveShowing) {
+            if (settingsShowing && QOL && typeof QOL.updateSettingsLoaderOverlay === "function") {
+                try { QOL.updateSettingsLoaderOverlay(hudPanel, nowMs); } catch (e1) {}
+            }
+            if (!settingsShowing && saveShowing && QOL && typeof QOL.updateSaveSettingsLoaderOverlay === "function") {
+                try { QOL.updateSaveSettingsLoaderOverlay(hudPanel, nowMs); } catch (e2) {}
+            }
+        }
+    }
+
+    function _syncPendingHeroRestore(nowMs) {
+        var globalState = (typeof State !== "undefined" && State) ? State :
+                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+        if (!globalState || !globalState.heroRestorePendingTarget) return;
+        var targetHero = (QOL && QOL.normalizeHeroId) ? QOL.normalizeHeroId(globalState.heroRestorePendingTarget) : globalState.heroRestorePendingTarget;
+        if (!targetHero) {
+            globalState.heroRestorePendingTarget = "";
+            return;
+        }
+        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        if (now < (globalState.heroRestorePendingNextMs || 0)) return;
+        var elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
+        if (elapsed >= 1200 || elapsed > 3000) {
+            if (QOL && typeof QOL.queueShopPulseAfterHeroRestore === "function") {
+                QOL.queueShopPulseAfterHeroRestore(now);
+            }
+            globalState.heroRestorePendingTarget = "";
+            return;
+        }
+        if ((Number(globalState.heroRestorePendingRetries) || 0) < 3) {
+            if (QOL && typeof QOL.selectHeroForBuildSave === "function") {
+                QOL.selectHeroForBuildSave(targetHero, "restore_retry");
+            }
+            globalState.heroRestorePendingRetries = (Number(globalState.heroRestorePendingRetries) || 0) + 1;
+            globalState.heroRestorePendingNextMs = now + 450;
+            return;
+        }
+        globalState.heroRestorePendingNextMs = now + 450;
+    }
+
     function _startConfigPolling(hud) {
         if (_configPollTimer) return;
 
         function poll() {
             if (!_booted) return;
+            var nowMs = Date.now ? Date.now() : (new Date()).getTime();
             var hudPanel = _findHud();
             var best = _readBestConfig(hudPanel);
             var raw = best.raw;
@@ -267,6 +444,11 @@
             } else {
                 _syncRootClasses(hudPanel);
             }
+
+            _syncDiagnosticState(hudPanel, nowMs);
+            _syncLoaderOverlays(hudPanel, nowMs);
+            _syncPendingHeroRestore(nowMs);
+
             _configPollTimer = $.Schedule(0.25, poll);
         }
         _configPollTimer = $.Schedule(0.25, poll);
@@ -331,6 +513,7 @@
         }
 
         _syncRootClasses(hud, flatConfig);
+        _writeDiagSnapshot(hud, "");
         _startConfigPolling(hud);
         _booted = true;
 
@@ -404,7 +587,10 @@
         shutdown: shutdown,
         isBooted: isBooted,
         getHud: getHud,
-        syncRootClasses: _syncRootClasses
+        syncRootClasses: _syncRootClasses,
+        syncDiagnosticState: _syncDiagnosticState,
+        writeDiagSnapshot: _writeDiagSnapshot,
+        buildDiagSnapshot: _buildDiagSnapshot
     };
 
     QOL.core.app = appApi;

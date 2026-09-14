@@ -49,7 +49,8 @@
 
         var classActive = !!(root && root.BHasClass && root.BHasClass("minimalist_healthbar_active"));
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, enabled, classActive);
-        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0");
+        var accentColor = (cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR !== undefined) ? cfg.PLAYER_HEALTHBAR_ACCENT_COLOR : 0;
+        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0") + "|" + accentColor;
 
         if (
             State.minimalistHealthbarOffsetApplied &&
