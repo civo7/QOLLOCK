@@ -303,6 +303,56 @@
         }
     }
 
+    function hasClassInHierarchy(panel, className) {
+        if (!panel || !className) return false;
+        if (typeof QOL_UTILS !== "undefined" && typeof QOL_UTILS.HasClassInHierarchy === "function") {
+            return QOL_UTILS.HasClassInHierarchy(panel, className);
+        }
+        let cur = panel;
+        let depth = 0;
+        while (cur && depth < 32) {
+            try {
+                if (cur.BHasClass && cur.BHasClass(className)) return true;
+            } catch (e) {}
+            cur = cur.GetParent ? cur.GetParent() : null;
+            depth++;
+        }
+        return false;
+    }
+
+    function updateReloadCircleExceptionState(root, cfg) {
+        const hideReloadCircleEnabled = Number(cfg?.ENABLE_HIDE_RELOAD_CIRCLE) === 1;
+        const state = getState();
+        if (!hideReloadCircleEnabled) {
+            setPanelClassCached(root, state.rootClassCache, "hide_reload_circle_exception_active", false);
+            setCachedPanel("activeReloadProgressBar", null);
+            return;
+        }
+
+        let activeReloadBar = getCachedPanel("activeReloadProgressBar");
+        if (!activeReloadBar) {
+            activeReloadBar = root?.FindChildTraverse ? root.FindChildTraverse("active_reload_progress_bar") : null;
+            setCachedPanel("activeReloadProgressBar", activeReloadBar);
+        }
+
+        let hasActiveReloadClass = false;
+        if (activeReloadBar) {
+            if (activeReloadBar.BHasClass && activeReloadBar.BHasClass("has_active_reload")) hasActiveReloadClass = true;
+            if (!hasActiveReloadClass) hasActiveReloadClass = hasClassInHierarchy(activeReloadBar, "has_active_reload");
+        }
+
+        let attackDelayedActive = false;
+        if (root?.BHasClass && root.BHasClass("attack_delayed")) attackDelayedActive = true;
+        if (!attackDelayedActive && activeReloadBar) attackDelayedActive = hasClassInHierarchy(activeReloadBar, "attack_delayed");
+
+        let reloadingActive = false;
+        if (root?.BHasClass && root.BHasClass("reloading")) reloadingActive = true;
+        if (!reloadingActive && activeReloadBar) reloadingActive = hasClassInHierarchy(activeReloadBar, "reloading");
+
+        const exceptionActive = hasActiveReloadClass && attackDelayedActive && reloadingActive;
+        setPanelClassCached(root, state.rootClassCache, "hide_reload_circle_exception_active", exceptionActive);
+    }
+
     function applyRootClasses(root, cfg, nowMsLoop, hideoutConnected, hasConfigSource) {
         if (!root) return false;
         const state = getState();
@@ -573,9 +623,7 @@
         }
 
         if (Number(cfg?.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || getCachedPanel("activeReloadProgressBar")) {
-            if (typeof QOL.updateReloadCircleExceptionState === "function") {
-                QOL.updateReloadCircleExceptionState(root, cfg);
-            }
+            updateReloadCircleExceptionState(root, cfg);
         }
 
         const needsHealthContainerWork = colorWarningEnabled || state.coloredHealthbarBridgeValue !== "" || shouldApplyStaticClasses;
@@ -860,6 +908,7 @@
         isCustomHudContextActive,
         isHudVisibleForTopBarRuntime,
         isColorWarningEnabled,
+        updateReloadCircleExceptionState,
         PANEL_ID_GAMEPLAY_HUD,
         PANEL_ID_TOP_BAR,
         PANEL_ID_GOLD_AP_CONTAINER
@@ -881,6 +930,7 @@
     Q.applyCoreLoopRootClassesAndState = applyRootClasses;
     Q.setPanelClassCached = setPanelClassCached;
     Q.setPanelClassIfChanged = setPanelClassIfChanged;
+    Q.updateReloadCircleExceptionState = updateReloadCircleExceptionState;
     Q.updateChatRuntime = updateChatRuntime;
     Q.hasNonDefaultChatRuntimeConfig = hasNonDefaultChatRuntimeConfig;
     Q.resetChatRuntime = resetChatRuntime;

@@ -14,6 +14,17 @@
         ? globalThis._TLog
         : function(label, detail) { try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {} };
 
+    var _heroReturnDebugLog = function(msg) {
+        if (typeof QOL !== "undefined" && typeof QOL.heroReturnDebugLog === "function" && QOL.heroReturnDebugLog !== _heroReturnDebugLog) {
+            try { QOL.heroReturnDebugLog(msg); } catch(e) {}
+        } else {
+            _TLog("bridge:HeroReturn", msg);
+        }
+    };
+    if (typeof QOL !== "undefined" && !QOL.heroReturnDebugLog) {
+        QOL.heroReturnDebugLog = _heroReturnDebugLog;
+    }
+
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
     var BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS = 15000;
@@ -119,7 +130,7 @@
     function BeginHeroRestoreWithVerification(targetHero, contextLabel, nowMs) {
         var hero = NormalizeHeroId(targetHero);
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            QOL.heroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
+            _heroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
             return false;
         }
         var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
@@ -129,7 +140,7 @@
         State.heroRestorePendingNextMs = now + HERO_RESTORE_VERIFY_DELAY_MS;
         State.heroRestorePendingRetries = 0;
         State.heroRestorePendingContext = contextLabel ? String(contextLabel) : "";
-        QOL.heroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
+        _heroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
         return switched;
     }
 
