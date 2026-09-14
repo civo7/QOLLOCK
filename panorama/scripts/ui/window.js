@@ -630,6 +630,7 @@
     if (typeof $.ForceCloseModSettings !== "function") {
         $.ForceCloseModSettings = () => windowApi.setOpen(false);
     }
+    globalThis.IsSettingsWindowVisible = isOpen;
 
     $.Msg("[QOLLock] ui/window: settings window manager ready.");
 })();
