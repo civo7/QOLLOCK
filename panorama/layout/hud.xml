@@ -49,7 +49,6 @@
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_settings_loader.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_locale_lookup.vjs_c" />
 		<!-- Feature manifests (order-independent; all depend on FeatureRegistry) -->
 		<include src="s2r://panorama/scripts/manifests/ql_build_payload/manifest.vjs_c" />
 		<!-- Description-carrier storage: reads AND writes the config in the storage
