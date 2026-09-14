@@ -723,6 +723,101 @@ const SETTING_PERF_IMPACT_TIERS = {
     SHOW_RANK_TOPBAR: "low",
 };
 
+    const DEFAULT_HERO_OPTIONS = [
+        "hero_inferno",
+        "hero_gigawatt",
+        "hero_hornet",
+        "hero_ghost",
+        "hero_atlas",
+        "hero_wraith",
+        "hero_forge",
+        "hero_chrono",
+        "hero_dynamo",
+        "hero_kelvin",
+        "hero_haze",
+        "hero_astro",
+        "hero_bebop",
+        "hero_nano",
+        "hero_orion",
+        "hero_krill",
+        "hero_shiv",
+        "hero_tengu",
+        "hero_warden",
+        "hero_yamato",
+        "hero_lash",
+        "hero_viscous",
+        "hero_synth",
+        "hero_mirage",
+        "hero_viper",
+        "hero_magician",
+        "hero_vampirebat",
+        "hero_drifter",
+        "hero_priest",
+        "hero_frank",
+        "hero_bookworm",
+        "hero_doorman",
+        "hero_punkgoat",
+        "hero_necro",
+        "hero_fencer",
+        "hero_familiar",
+        "hero_werewolf",
+        "hero_unicorn"
+    ];
+
+    const DEFAULT_HERO_DISPLAY_NAMES = {
+        hero_inferno: "Infernus",
+        hero_gigawatt: "Seven",
+        hero_hornet: "Vindicta",
+        hero_ghost: "Lady Geist",
+        hero_atlas: "Abrams",
+        hero_wraith: "Wraith",
+        hero_forge: "McGinnis",
+        hero_chrono: "Paradox",
+        hero_dynamo: "Dynamo",
+        hero_kelvin: "Kelvin",
+        hero_haze: "Haze",
+        hero_astro: "Holliday",
+        hero_bebop: "Bebop",
+        hero_nano: "Calico",
+        hero_orion: "Grey Talon",
+        hero_krill: "Mo & Krill",
+        hero_shiv: "Shiv",
+        hero_tengu: "Ivy",
+        hero_warden: "Warden",
+        hero_yamato: "Yamato",
+        hero_lash: "Lash",
+        hero_viscous: "Viscous",
+        hero_synth: "Pocket",
+        hero_mirage: "Mirage",
+        hero_viper: "Vyper",
+        hero_magician: "Sinclair",
+        hero_vampirebat: "Mina",
+        hero_drifter: "Drifter",
+        hero_priest: "Venator",
+        hero_frank: "Victor",
+        hero_bookworm: "Paige",
+        hero_doorman: "Doorman",
+        hero_punkgoat: "Billy",
+        hero_necro: "Graves",
+        hero_fencer: "Apollo",
+        hero_familiar: "Rem",
+        hero_werewolf: "Silver",
+        hero_unicorn: "Celeste"
+    };
+
+    const DEFAULT_HERO_DROPDOWN_OPTIONS = DEFAULT_HERO_OPTIONS.map((heroId) => {
+        return { label: DEFAULT_HERO_DISPLAY_NAMES[heroId] || heroId, value: heroId };
+    }).sort((a, b) => {
+        const labelA = String(a?.label || "").toLowerCase();
+        const labelB = String(b?.label || "").toLowerCase();
+        if (labelA < labelB) return -1;
+        if (labelA > labelB) return 1;
+        return 0;
+    });
+
+    const COMPACT_DEFAULT_HERO_FIELD = "DEFAULT_HERO_INDEX";
+    const HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
+
     const MetadataApi = {
         PERF_IMPACT_TIER_NONE,
         PERF_IMPACT_TIER_LOW,
@@ -736,7 +831,12 @@ const SETTING_PERF_IMPACT_TIERS = {
         SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG,
         SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW,
         SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE,
-        SETTING_PERF_IMPACT_TIERS
+        SETTING_PERF_IMPACT_TIERS,
+        DEFAULT_HERO_OPTIONS,
+        DEFAULT_HERO_DISPLAY_NAMES,
+        DEFAULT_HERO_DROPDOWN_OPTIONS,
+        COMPACT_DEFAULT_HERO_FIELD,
+        HERO_HINT_PUBLISH_INTERVAL_SEC
     };
 
     Q.ui.metadata = MetadataApi;

@@ -43,4 +43,11 @@ test("ui/metadata: exports all metadata tables on QOL.ui.metadata and globalThis
     // Globals
     assert.strictEqual(ctx.PERF_IMPACT_TIER_NONE, "none");
     assert.strictEqual(ctx.SETTING_PERF_IMPACT_TIERS, ctx.QOL.ui.metadata.SETTING_PERF_IMPACT_TIERS);
+
+    // Hero metadata
+    assert.ok(Array.isArray(ctx.DEFAULT_HERO_OPTIONS), "DEFAULT_HERO_OPTIONS must be an array");
+    assert.strictEqual(ctx.DEFAULT_HERO_OPTIONS.length, 38);
+    assert.strictEqual(ctx.DEFAULT_HERO_DISPLAY_NAMES.hero_inferno, "Infernus");
+    assert.ok(Array.isArray(ctx.DEFAULT_HERO_DROPDOWN_OPTIONS), "DEFAULT_HERO_DROPDOWN_OPTIONS must be an array");
+    assert.strictEqual(ctx.COMPACT_DEFAULT_HERO_FIELD, "DEFAULT_HERO_INDEX");
 });

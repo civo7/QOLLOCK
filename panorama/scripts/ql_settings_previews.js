@@ -1996,6 +1996,8 @@ function PublishHeroHintFromSettings() {
     // Hero detection relies on HUD-side UI panel scanning.
 }
 
+var HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
+
 function StartHeroHintPublisher() {
     function tick() {
         // Only publish hero hints while the settings window is open.

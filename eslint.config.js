@@ -157,6 +157,7 @@ const QOLLOCK_GLOBALS = {
 const SETTINGS_GLOBALS = {
     DEFAULT_CONFIG: "readonly",
     DEFAULT_HERO_OPTIONS: "readonly",
+    DEFAULT_HERO_DISPLAY_NAMES: "readonly",
     DEFAULT_HERO_DROPDOWN_OPTIONS: "readonly",
     COMPACT_DEFAULT_HERO_FIELD: "readonly",
     NormalizeComparableConfigValue: "readonly",
