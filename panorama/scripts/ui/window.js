@@ -362,6 +362,104 @@
         }
     };
 
+    // =========================================================================
+    // Layout-driven Tab Rendering
+    // =========================================================================
+
+    const getConfigValue = (featureId, key, fallback) => {
+        if (typeof globalThis.MOD_CONFIG === "object" && globalThis.MOD_CONFIG !== null && Object.prototype.hasOwnProperty.call(globalThis.MOD_CONFIG, key)) {
+            return globalThis.MOD_CONFIG[key];
+        }
+        if (Q.core?.ConfigStore?.hasSchema?.(featureId)) {
+            const val = Q.core.ConfigStore.get(featureId, key);
+            if (val !== undefined) return val;
+        }
+        return fallback;
+    };
+
+    const setConfigValue = (featureId, key, value) => {
+        if (Q.core?.ConfigStore?.hasSchema?.(featureId)) {
+            Q.core.ConfigStore.set(featureId, key, value);
+        }
+        if (typeof globalThis.MOD_CONFIG === "object" && globalThis.MOD_CONFIG !== null) {
+            globalThis.MOD_CONFIG[key] = value;
+        }
+        if (typeof globalThis.MarkConfigDirty === "function") {
+            globalThis.MarkConfigDirty();
+        } else if (typeof globalThis.SaveAndSync === "function") {
+            globalThis.SaveAndSync();
+        }
+    };
+
+    const renderSectionFeatures = (parent, features) => {
+        if (!Array.isArray(features) || !parent) return;
+        const renderer = Q.ui?.renderer;
+        if (!renderer) return;
+
+        for (let i = 0; i < features.length; i++) {
+            const item = features[i];
+            const featureId = typeof item === "string" ? item : item?.id;
+            const manifest = Q.core?.FeatureRegistry?.getManifest?.(featureId);
+            if (!manifest || !Array.isArray(manifest.settings)) continue;
+
+            const hideToggle = typeof item === "object" && item.hideToggle === true;
+
+            for (let j = 0; j < manifest.settings.length; j++) {
+                const setting = manifest.settings[j];
+                if (hideToggle && setting.key === manifest.enableKey) continue;
+
+                const curVal = getConfigValue(featureId, setting.key, setting.default);
+                const onChange = (k, v) => setConfigValue(featureId, k, v);
+
+                renderer.createControl(parent, setting, curVal, onChange, {
+                    getDependencyValue: (depKey) => getConfigValue(featureId, depKey)
+                });
+            }
+        }
+    };
+
+    const renderLayoutTab = (tabId, container) => {
+        const renderer = Q.ui?.renderer;
+        if (!renderer || !container) return false;
+
+        const tabDef = typeof Q.ui?.getTabLayout === "function"
+            ? Q.ui.getTabLayout(tabId)
+            : (Array.isArray(Q.ui?.layout) ? Q.ui.layout.find((t) => t.id === tabId) : null);
+
+        if (!tabDef || tabDef.custom || !Array.isArray(tabDef.sections)) {
+            return false;
+        }
+
+        for (let i = 0; i < tabDef.sections.length; i++) {
+            const section = tabDef.sections[i];
+            if (!section) continue;
+
+            if (i > 0) {
+                renderer.createSeparator(container);
+            }
+
+            if (section.animatedToggle && section.enableKey) {
+                renderer.createAnimatedInlineToggleSection(
+                    container,
+                    section.title || "",
+                    section.enableKey,
+                    section.description || "",
+                    (sectionBody) => {
+                        renderSectionFeatures(sectionBody, section.features);
+                    },
+                    { invert: section.invertToggle === true }
+                );
+            } else {
+                if (section.title) {
+                    renderer.createSectionHeader(container, section.title, section.description || "");
+                }
+                renderSectionFeatures(container, section.features);
+            }
+        }
+
+        return true;
+    };
+
     const renderTab = (tabId) => {
         if (!findShell() || !isAlive(_contentList)) return;
 
@@ -372,6 +470,11 @@
         const customRenderer = _tabRenderers.get(tabId);
         if (typeof customRenderer === "function") {
             customRenderer(_contentList, Q.ui.renderer);
+            return;
+        }
+
+        // Layout-driven declarative rendering
+        if (renderLayoutTab(tabId, _contentList)) {
             return;
         }
 
@@ -494,6 +597,7 @@
         setActiveTab,
         getActiveTab,
         renderTab,
+        renderLayoutTab,
         registerTabRenderer,
         setOpen,
         toggle,
